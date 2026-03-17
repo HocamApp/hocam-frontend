@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -67,7 +67,7 @@ function TutorCardSkeleton() {
   );
 }
 
-export default function TutorsPage() {
+function TutorsPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [filters, setFiltersState] = useState<TutorFiltersType>(() => {
@@ -199,5 +199,33 @@ export default function TutorsPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+function TutorsPageFallback() {
+  return (
+    <div className="mx-auto max-w-7xl px-4 py-8">
+      <div className="mb-6">
+        <Skeleton className="h-9 w-48" />
+        <Skeleton className="mt-2 h-5 w-96" />
+      </div>
+      <div className="flex gap-8">
+        <div className="min-w-0 flex-1">
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <TutorCardSkeleton key={i} />
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function TutorsPage() {
+  return (
+    <Suspense fallback={<TutorsPageFallback />}>
+      <TutorsPageContent />
+    </Suspense>
   );
 }
