@@ -61,6 +61,7 @@ export function LessonRequestModal({
   onSuccess,
 }: LessonRequestModalProps) {
   const [generalError, setGeneralError] = useState<string | null>(null);
+  const subjectSelectId = useId();
 
   const form = useForm<LessonRequestFormValues>({
     defaultValues: {
@@ -143,7 +144,6 @@ export function LessonRequestModal({
               control={form.control}
               name="subject"
               render={({ field }) => {
-                const subjectSelectId = useId();
                 const rawValue = field.value;
                 const selectValue = rawValue && String(rawValue).trim() !== "" ? String(rawValue) : LESSON_REQUEST_NONE;
                 return (
