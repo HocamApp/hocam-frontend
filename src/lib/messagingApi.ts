@@ -6,6 +6,11 @@ export async function fetchConversations(): Promise<Conversation[]> {
   return response.data;
 }
 
+export async function fetchConversation(conversationId: string): Promise<Conversation> {
+  const response = await api.get<Conversation>(`/conversations/${conversationId}/`);
+  return response.data;
+}
+
 // Backend may return sender as { id, email }; normalize to id string for Message type
 function normalizeMessage(m: { id: string; sender: string | { id: string }; message_text: string; created_at: string }): Message {
   return {

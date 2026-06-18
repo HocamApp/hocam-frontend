@@ -58,8 +58,11 @@ function TutorDashboardContent() {
   const handleAcceptRequest = async (lessonRequestId: string) => {
     setUpdatingRequestId(lessonRequestId);
     try {
-      await updateLessonRequestStatus(lessonRequestId, "accepted");
+      const updated = await updateLessonRequestStatus(lessonRequestId, "accepted");
       await queryClient.invalidateQueries({ queryKey: ["lesson-requests"] });
+      if (updated.conversation_id) {
+        window.location.href = `/messages/${updated.conversation_id}`;
+      }
     } catch {
       // could show toast
     } finally {
@@ -99,7 +102,7 @@ function TutorDashboardContent() {
 
       <Tabs defaultValue="requests">
         <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="requests">Gelen Talepler</TabsTrigger>
+          <TabsTrigger value="requests">Mesaj İstekleri</TabsTrigger>
           <TabsTrigger value="bookings">Rezervasyonlar</TabsTrigger>
           <TabsTrigger value="availability">Müsaitlik</TabsTrigger>
           <TabsTrigger value="verification">Doğrulama</TabsTrigger>
@@ -115,8 +118,8 @@ function TutorDashboardContent() {
           )}
           {!requestsLoading && (!lessonRequests || lessonRequests.length === 0) && (
             <EmptyState
-              title="Henüz ders talebiniz yok"
-              description="Öğrenciler profilinizi ziyaret ederek talep gönderebilir"
+              title="Henüz mesaj isteğiniz yok"
+              description="Öğrenciler profilinizi ziyaret ederek mesaj isteği gönderebilir"
             />
           )}
           {!requestsLoading && lessonRequests.length > 0 && (

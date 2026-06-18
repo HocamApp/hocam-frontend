@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Eye, EyeOff } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useAuth } from "@/hooks/useAuth";
@@ -55,13 +56,15 @@ export default function RegisterPage() {
   const router = useRouter();
   const { setAuth, isAuthenticated, isLoading, user } = useAuth();
   const [generalError, setGeneralError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
 
   const form = useForm<RegisterFormValues>({
     defaultValues: {
       email: "",
       password: "",
       password_confirm: "",
-      role: undefined,
+      role: "student",
     },
     mode: "onSubmit",
   });
@@ -124,11 +127,20 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-slate-50 px-4">
-      <Card className="w-full max-w-md shadow-md">
-        <CardHeader>
-          <CardTitle>Hocam&apos;a Katıl</CardTitle>
-          <CardDescription>Hesabını oluştur</CardDescription>
+    <div className="flex min-h-screen flex-col items-center justify-center bg-white px-4">
+      <div className="mb-6 text-center">
+        <Link href="/" className="text-2xl font-semibold text-black">
+          Hocam
+        </Link>
+      </div>
+      <Card className="w-full max-w-md border border-gray-200 shadow-sm">
+        <CardHeader className="space-y-1">
+          <CardTitle className="text-2xl font-semibold text-black">
+            Hesap Oluştur
+          </CardTitle>
+          <CardDescription className="text-sm text-gray-500">
+            Öğrenci olarak kaydol
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
@@ -156,60 +168,30 @@ export default function RegisterPage() {
               />
               <FormField
                 control={form.control}
-                name="role"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Hesap türü</FormLabel>
-                    <FormControl>
-                      <div className="grid grid-cols-2 gap-3">
-                        <button
-                          type="button"
-                          onClick={() => field.onChange("student")}
-                          className={cn(
-                            "rounded-lg border-2 p-4 text-left transition-colors",
-                            field.value === "student"
-                              ? "border-primary bg-primary/5"
-                              : "border-border hover:border-primary/50"
-                          )}
-                        >
-                          <span className="font-medium">Öğrenci</span>
-                          <p className="mt-1 text-sm text-muted-foreground">
-                            Özel ders almak istiyorum
-                          </p>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => field.onChange("tutor")}
-                          className={cn(
-                            "rounded-lg border-2 p-4 text-left transition-colors",
-                            field.value === "tutor"
-                              ? "border-primary bg-primary/5"
-                              : "border-border hover:border-primary/50"
-                          )}
-                        >
-                          <span className="font-medium">Hoca</span>
-                          <p className="mt-1 text-sm text-muted-foreground">
-                            Özel ders vermek istiyorum
-                          </p>
-                        </button>
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
                 name="password"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Şifre</FormLabel>
                     <FormControl>
-                      <Input
-                        type="password"
-                        autoComplete="new-password"
-                        {...field}
-                      />
+                      <div className="relative">
+                        <Input
+                          type={showPassword ? "text" : "password"}
+                          autoComplete="new-password"
+                          {...field}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword((prev) => !prev)}
+                          className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500"
+                          aria-label={showPassword ? "Şifreyi gizle" : "Şifreyi göster"}
+                        >
+                          {showPassword ? (
+                            <EyeOff className="h-4 w-4" aria-hidden="true" />
+                          ) : (
+                            <Eye className="h-4 w-4" aria-hidden="true" />
+                          )}
+                        </button>
+                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -222,11 +204,25 @@ export default function RegisterPage() {
                   <FormItem>
                     <FormLabel>Şifre tekrar</FormLabel>
                     <FormControl>
-                      <Input
-                        type="password"
-                        autoComplete="new-password"
-                        {...field}
-                      />
+                      <div className="relative">
+                        <Input
+                          type={showPasswordConfirm ? "text" : "password"}
+                          autoComplete="new-password"
+                          {...field}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPasswordConfirm((prev) => !prev)}
+                          className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500"
+                          aria-label={showPasswordConfirm ? "Şifreyi gizle" : "Şifreyi göster"}
+                        >
+                          {showPasswordConfirm ? (
+                            <EyeOff className="h-4 w-4" aria-hidden="true" />
+                          ) : (
+                            <Eye className="h-4 w-4" aria-hidden="true" />
+                          )}
+                        </button>
+                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -234,7 +230,7 @@ export default function RegisterPage() {
               />
               <Button
                 type="submit"
-                className="w-full"
+                className="w-full bg-black text-white hover:bg-black/90"
                 disabled={form.formState.isSubmitting}
               >
                 {form.formState.isSubmitting ? (
@@ -252,9 +248,12 @@ export default function RegisterPage() {
             </form>
           </Form>
         </CardContent>
-        <CardFooter className="flex justify-center text-sm text-muted-foreground">
-          Zaten hesabın var mı?{" "}
-          <Link href="/login" className="ml-1 font-medium text-primary underline-offset-4 hover:underline">
+        <CardFooter className="flex justify-center text-sm text-gray-600">
+          <span>Zaten hesabın var mı?</span>
+          <Link
+            href="/login"
+            className="ml-1 font-medium text-black underline-offset-4 hover:underline"
+          >
             Giriş yap
           </Link>
         </CardFooter>

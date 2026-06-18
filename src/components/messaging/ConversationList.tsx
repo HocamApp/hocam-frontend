@@ -24,10 +24,13 @@ function ConversationRow({
   isSelected: boolean;
   onSelect: (id: string) => void;
 }) {
-  const suffix = conversation.id.slice(-6).toUpperCase();
+  const displayName =
+    conversation.other_participant?.display_name ||
+    `Konuşma #${conversation.id.slice(-6).toUpperCase()}`;
   const created = conversation.created_at
     ? formatDate(conversation.created_at)
     : "";
+  const unreadCount = conversation.unread_count ?? 0;
 
   return (
     <button
@@ -38,13 +41,19 @@ function ConversationRow({
         isSelected ? "bg-slate-100" : "bg-white"
       )}
     >
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-200 text-sm font-medium text-slate-600">
-        ?
+      <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-200 text-sm font-medium text-slate-600">
+        {displayName.charAt(0).toUpperCase()}
+        {unreadCount > 0 && (
+          <span
+            className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold text-primary-foreground"
+            aria-label={`${unreadCount} okunmamış`}
+          >
+            {unreadCount > 99 ? "99+" : unreadCount}
+          </span>
+        )}
       </div>
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium">
-          Konuşma #{suffix}
-        </p>
+        <p className="truncate text-sm font-medium">{displayName}</p>
         <p className="text-xs text-muted-foreground">{created}</p>
       </div>
     </button>

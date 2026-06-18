@@ -4,9 +4,11 @@ import { useState, useMemo, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
-import { fetchMessages } from "@/lib/messagingApi";
+import { fetchMessages, fetchConversation } from "@/lib/messagingApi";
 import { MessageBubble } from "@/components/messaging/MessageBubble";
 import { MessageInput } from "@/components/messaging/MessageInput";
+import { BookingModal } from "@/components/lessons/BookingModal";
+import type { TutorProfile } from "@/types";
 import { RouteGuard } from "@/components/shared/RouteGuard";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
@@ -21,6 +23,13 @@ function ConversationContent({
   const { isAuthenticated, user } = useAuth();
   const bottomRef = useRef<HTMLDivElement>(null);
   const [localMessages, setLocalMessages] = useState<Message[]>([]);
+  const [isBookingOpen, setIsBookingOpen] = useState(false);
+
+  const { data: conversation } = useQuery({
+    queryKey: ["conversation", conversationId],
+    queryFn: () => fetchConversation(conversationId),
+    enabled: isAuthenticated && !!conversationId,
+  });
 
   const {
     data: messages,
@@ -50,21 +59,35 @@ function ConversationContent({
     setLocalMessages((prev) => [...prev, newMessage]);
   };
 
-  const suffix = conversationId.slice(-6).toUpperCase();
+  const headerTitle =
+    conversation?.other_participant?.display_name ?? `Konuşma #${conversationId.slice(-6).toUpperCase()}`;
+  const tutorForBooking = conversation?.tutor_profile ?? null;
+  const showBookingButton = !!tutorForBooking;
 
   return (
     <div className="flex h-[calc(100vh-64px)] flex-col">
       {/* Header */}
-      <header className="flex shrink-0 items-center gap-3 border-b p-4">
-        <button
-          type="button"
-          onClick={() => router.push("/messages")}
-          className="text-muted-foreground hover:text-foreground"
-          aria-label="Geri"
-        >
-          ←
-        </button>
-        <h1 className="font-semibold">Konuşma #{suffix}</h1>
+      <header className="flex shrink-0 items-center justify-between gap-3 border-b p-4">
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => router.push("/messages")}
+            className="text-muted-foreground hover:text-foreground"
+            aria-label="Geri"
+          >
+            ←
+          </button>
+          <h1 className="font-semibold">{headerTitle}</h1>
+        </div>
+        {showBookingButton && (
+          <button
+            type="button"
+            className="text-sm font-medium text-primary hover:underline"
+            onClick={() => setIsBookingOpen(true)}
+          >
+            Ders rezervasyonu yap
+          </button>
+        )}
       </header>
 
       {/* Messages area */}
@@ -107,6 +130,15 @@ function ConversationContent({
           disabled={!!messagesError}
         />
       </div>
+
+      {tutorForBooking && (
+        <BookingModal
+          tutor={tutorForBooking as TutorProfile}
+          isOpen={isBookingOpen}
+          onClose={() => setIsBookingOpen(false)}
+          onSuccess={() => setIsBookingOpen(false)}
+        />
+      )}
     </div>
   );
 }

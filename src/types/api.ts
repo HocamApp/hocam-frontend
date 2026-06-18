@@ -54,6 +54,7 @@ export interface LessonRequest {
   message: string;
   status: "pending" | "accepted" | "declined";
   created_at: string;
+  conversation_id?: string | null;
 }
 
 export interface Booking {
@@ -75,6 +76,9 @@ export interface Conversation {
   student: string;
   tutor: string;
   created_at: string;
+  other_participant?: { id: string; email: string; display_name: string };
+  unread_count?: number;
+  tutor_profile?: TutorProfile | null;
 }
 
 export interface Message {

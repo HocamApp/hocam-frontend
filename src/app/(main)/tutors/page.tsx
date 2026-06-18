@@ -4,12 +4,15 @@ import { useState, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import {
-  fetchTutors,
-  fetchSubjects,
-  type TutorFilters as TutorFiltersType,
-} from "@/lib/tutorsApi";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { fetchTutors, fetchSubjects, type TutorFilters as TutorFiltersType } from "@/lib/tutorsApi";
 import { TutorCard } from "@/components/tutors/TutorCard";
-import { TutorFilters } from "@/components/tutors/TutorFilters";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { Button } from "@/components/ui/button";
@@ -74,6 +77,7 @@ function TutorsPageContent() {
     const fromUrl = filtersFromSearchParams(searchParams);
     return { ...fromUrl, ordering: fromUrl.ordering || "rating" };
   });
+  const [maxPriceLocal, setMaxPriceLocal] = useState(filters.max_price ?? "");
 
   const setFilters = useCallback(
     (newFilters: TutorFiltersType) => {
@@ -119,40 +123,123 @@ function TutorsPageContent() {
   const isEmpty = Array.isArray(tutors) && tutors.length === 0;
   const showEmptyState = isEmpty && hasActiveFilters;
 
-  return (
-    <div className="mx-auto max-w-7xl px-4 py-8">
-      {/* Page header */}
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold">Hoca Bul</h1>
-        <p className="text-muted-foreground">
-          YKS&apos;de başarılı olmuş, üniversiteli hocalardan ders al
-        </p>
-        {!tutorsLoading && Array.isArray(tutors) && (
-          <p className="mt-1 text-sm text-muted-foreground">{tutors.length} hoca bulundu</p>
-        )}
-      </div>
+  const content = (
+    <>
+      <div className="mx-auto max-w-7xl px-4 py-8 space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold text-black">Hocanu Bul</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Türkiye&apos;nin en iyi YKS hocaları, seni bekliyor.
+          </p>
+          {!tutorsLoading && Array.isArray(tutors) && (
+            <p className="mt-1 text-xs text-muted-foreground">{tutors.length} hoca bulundu</p>
+          )}
+        </div>
 
-      {/* Mobile filter button row */}
-      <div className="mb-4 flex md:hidden">
-        <TutorFilters
-          filters={filters}
-          subjects={subjects ?? []}
-          onFiltersChange={handleFiltersChange}
-          isLoading={subjectsLoading}
-        />
-      </div>
+        {/* Horizontal filter bar */}
+        <div className="rounded-lg border bg-card px-4 py-3">
+          <div className="grid gap-4 md:grid-cols-4">
+            {/* Sıralama */}
+            <div className="space-y-1">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">
+                Sıralama
+              </Label>
+              <Select
+                value={filters.ordering ?? "rating"}
+                onValueChange={(v) => handleFiltersChange({ ...filters, ordering: v || "rating" })}
+                disabled={subjectsLoading || tutorsLoading}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="rating">En yüksek puan</SelectItem>
+                  <SelectItem value="price">En uygun fiyat</SelectItem>
+                  <SelectItem value="yks_rank">En iyi YKS sıralaması</SelectItem>
+                  <SelectItem value="newest">En yeni</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-      {/* Two-column layout */}
-      <div className="flex gap-8">
-        {/* Left: filters (desktop) */}
-        <TutorFilters
-          filters={filters}
-          subjects={subjects ?? []}
-          onFiltersChange={handleFiltersChange}
-          isLoading={subjectsLoading}
-        />
+          {/* Sınav */}
+          <div className="space-y-1">
+            <Label className="text-xs uppercase tracking-wide text-muted-foreground">
+              Sınav
+            </Label>
+            <Select
+              value={(filters.exam_type ?? "") || "__all__"}
+              onValueChange={(v) =>
+                handleFiltersChange({ ...filters, exam_type: v === "__all__" ? "" : v })
+              }
+              disabled={subjectsLoading}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Tüm sınavlar" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__all__">Tüm sınavlar</SelectItem>
+                <SelectItem value="TYT">TYT</SelectItem>
+                <SelectItem value="AYT">AYT</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
-        {/* Right: tutor grid */}
+          {/* Ders */}
+          <div className="space-y-1">
+            <Label className="text-xs uppercase tracking-wide text-muted-foreground">
+              Ders
+            </Label>
+            <Select
+              value={(filters.subject ?? "") || "__all__"}
+              onValueChange={(v) =>
+                handleFiltersChange({ ...filters, subject: v === "__all__" ? "" : v })
+              }
+              disabled={subjectsLoading}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Tüm dersler" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__all__">Tüm dersler</SelectItem>
+                {(subjects ?? []).map((s) => (
+                  <SelectItem key={s.id} value={s.name}>
+                    {s.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Fiyat */}
+          <div className="space-y-1">
+            <Label className="text-xs uppercase tracking-wide text-muted-foreground">
+              Fiyat
+            </Label>
+            <Select
+              value={maxPriceLocal || "__all__"}
+              onValueChange={(v) => {
+                const value = v === "__all__" ? "" : v;
+                setMaxPriceLocal(value);
+                handleFiltersChange({ ...filters, max_price: value });
+              }}
+              disabled={subjectsLoading || tutorsLoading}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Tümü" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__all__">Tümü</SelectItem>
+                <SelectItem value="250">250 TL&apos;ye kadar</SelectItem>
+                <SelectItem value="500">500 TL&apos;ye kadar</SelectItem>
+                <SelectItem value="750">750 TL&apos;ye kadar</SelectItem>
+                <SelectItem value="1000">1000 TL&apos;ye kadar</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          </div>
+        </div>
+
+        {/* Tutor grid and states */}
         <div className="min-w-0 flex-1">
           {tutorsError && (
             <ErrorMessage
@@ -163,7 +250,7 @@ function TutorsPageContent() {
           )}
 
           {tutorsLoading && (
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
               {Array.from({ length: 6 }).map((_, i) => (
                 <TutorCardSkeleton key={i} />
               ))}
@@ -182,8 +269,8 @@ function TutorsPageContent() {
             />
           )}
 
-          {!tutorsLoading && !tutorsError && !showEmptyState && Array.isArray(tutors) && tutors.length > 0 && (
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3">
+          {!tutorsLoading && !tutorsError && !showEmptyState && Array.isArray(tutors) && (tutors.length > 0) && (
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
               {tutors.map((tutor) => (
                 <TutorCard key={tutor.id} tutor={tutor} />
               ))}
@@ -198,8 +285,9 @@ function TutorsPageContent() {
           )}
         </div>
       </div>
-    </div>
+    </>
   );
+  return content;
 }
 
 function TutorsPageFallback() {
