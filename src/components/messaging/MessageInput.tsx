@@ -6,6 +6,7 @@ import { Message } from "@/types";
 import { sendMessage } from "@/lib/messagingApi";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 interface MessageInputProps {
@@ -36,7 +37,7 @@ export function MessageInput({
       setText("");
       onMessageSent(newMessage);
     } catch {
-      alert("Mesaj gönderilemedi. Lütfen tekrar deneyin.");
+      toast.error("Mesaj gönderilemedi. Lütfen tekrar deneyin.");
     } finally {
       setIsSubmitting(false);
     }

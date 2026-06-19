@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { fetchVerification, submitVerification } from "@/lib/dashboardApi";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -32,11 +33,13 @@ export function VerificationForm() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["verification"] });
       setSubmitError(null);
+      toast.success("Doğrulama başvurun gönderildi.");
     },
     onError: () => {
       setSubmitError(
         "Başvuru gönderilemedi. Zaten bir başvurunuz varsa destek ile iletişime geçin."
       );
+      toast.error("Doğrulama başvurusu gönderilemedi.");
     },
   });
 

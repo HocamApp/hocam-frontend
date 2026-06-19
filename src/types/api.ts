@@ -23,14 +23,14 @@ export interface RegisterRequest {
 }
 
 export interface Subject {
-  id: string;
+  id: number;
   name: string;
   exam_type: "TYT" | "AYT";
 }
 
 export interface TutorProfile {
-  id: string;
-  user: string;
+  id: number;
+  user: number;
   name: string;
   surname: string;
   profile_picture: string | null;
@@ -38,8 +38,8 @@ export interface TutorProfile {
   university: string;
   department: string;
   yks_rank: number;
-  hourly_price: number;
-  rating: number;
+  hourly_price: string;
+  rating: string;
   total_reviews: number;
   is_verified: boolean;
   subjects: Subject[];

@@ -71,7 +71,11 @@ export default function RegisterPage() {
 
   useEffect(() => {
     if (!isLoading && isAuthenticated && user) {
-      router.replace(user.role === "tutor" ? "/dashboard/tutor" : "/dashboard/student");
+      if (user.role === "tutor") {
+        router.replace(user.tutor_profile_id ? "/dashboard/tutor" : "/tutor/setup");
+      } else {
+        router.replace("/dashboard/student");
+      }
     }
   }, [isLoading, isAuthenticated, user, router]);
 
@@ -93,8 +97,11 @@ export default function RegisterPage() {
         role: parsed.data.role as "student" | "tutor",
       });
       setAuth(res.user, res.token);
-      if (res.user.role === "tutor") router.push("/dashboard/tutor");
-      else router.push("/dashboard/student");
+      if (res.user.role === "tutor") {
+        router.push("/tutor/setup");
+      } else {
+        router.push("/dashboard/student");
+      }
     } catch (err) {
       if (axios.isAxiosError(err) && err.response?.status === 400 && err.response?.data) {
         const body = err.response.data as ApiError;

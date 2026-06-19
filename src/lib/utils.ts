@@ -6,17 +6,17 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 // Format a price number as Turkish Lira
-export function formatPrice(price: number): string {
+export function formatPrice(price: number | string): string {
   return new Intl.NumberFormat("tr-TR", {
     style: "currency",
     currency: "TRY",
     maximumFractionDigits: 0,
-  }).format(price);
+  }).format(Number(price));
 }
 
 // Format a rating to one decimal place
-export function formatRating(rating: number): string {
-  return rating.toFixed(1);
+export function formatRating(rating: number | string): string {
+  return Number(rating).toFixed(1);
 }
 
 // Format a date string to Turkish locale

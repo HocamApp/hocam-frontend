@@ -51,7 +51,11 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (!isLoading && isAuthenticated && user) {
-      router.replace(user.role === "tutor" ? "/dashboard/tutor" : "/dashboard/student");
+      if (user.role === "tutor") {
+        router.replace(user.tutor_profile_id ? "/dashboard/tutor" : "/tutor/setup");
+      } else {
+        router.replace("/dashboard/student");
+      }
     }
   }, [isLoading, isAuthenticated, user, router]);
 
@@ -70,8 +74,11 @@ export default function LoginPage() {
       Cookies.set("auth_token", token, { expires: 7 });
       const user = await fetchMe();
       setAuth(user, token);
-      if (user.role === "tutor") router.push("/dashboard/tutor");
-      else router.push("/dashboard/student");
+      if (user.role === "tutor") {
+        router.push(user.tutor_profile_id ? "/dashboard/tutor" : "/tutor/setup");
+      } else {
+        router.push("/dashboard/student");
+      }
     } catch {
       setGeneralError("E-posta veya şifre hatalı.");
     }

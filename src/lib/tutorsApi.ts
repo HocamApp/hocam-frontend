@@ -1,6 +1,19 @@
 import api from "./api";
 import { TutorProfile, Subject, Review } from "@/types";
 
+export interface CreateTutorProfilePayload {
+  name: string;
+  surname: string;
+  university: string;
+  department: string;
+  yks_rank: number;
+  yks_exam_type: "SAY" | "SOZ" | "EA" | "DIL";
+  hourly_price: string;
+  bio: string;
+  subject_ids: number[];
+  grade: number;
+}
+
 export interface TutorFilters {
   subject?: string;
   exam_type?: string;
@@ -36,5 +49,17 @@ export async function fetchTutorById(id: string): Promise<TutorProfile> {
 
 export async function fetchTutorReviews(tutorId: string): Promise<Review[]> {
   const response = await api.get<Review[]>(`/tutors/${tutorId}/reviews/`);
+  return response.data;
+}
+
+export async function fetchMyTutorProfile(): Promise<TutorProfile> {
+  const response = await api.get<TutorProfile>("/tutors/me/");
+  return response.data;
+}
+
+export async function createTutorProfile(
+  payload: CreateTutorProfilePayload
+): Promise<TutorProfile> {
+  const response = await api.post<TutorProfile>("/tutors/profile/", payload);
   return response.data;
 }

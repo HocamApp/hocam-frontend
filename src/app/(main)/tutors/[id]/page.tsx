@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 import { Check, MessageSquare } from "lucide-react";
 import { fetchTutorById, fetchTutorReviews } from "@/lib/tutorsApi";
@@ -129,7 +130,7 @@ export default function TutorProfilePage({
     enabled: !!tutor && isAuthenticated,
   });
 
-  const isOwnProfile = !!tutor && !!user && user.id === tutor.user;
+  const isOwnProfile = !!tutor && !!user && Number(user.id) === tutor.user;
   const tytSubjects = tutor?.subjects?.filter((s) => s.exam_type === "TYT") ?? [];
   const aytSubjects = tutor?.subjects?.filter((s) => s.exam_type === "AYT") ?? [];
   const displayReviews = Array.isArray(reviews)
@@ -201,7 +202,7 @@ export default function TutorProfilePage({
                 {tutor.total_reviews > 0 ? (
                   <>
                     <div className="flex items-center gap-2">
-                      <Stars rating={tutor.rating} />
+                      <Stars rating={Number(tutor.rating)} />
                       <span className="font-medium">{formatRating(tutor.rating)}</span>
                     </div>
                     <p className="text-sm text-muted-foreground">
@@ -366,7 +367,7 @@ export default function TutorProfilePage({
               <div className="mb-6 flex items-baseline gap-4">
                 <span className="text-4xl font-bold">{formatRating(tutor.rating)}</span>
                 <div>
-                  <Stars rating={tutor.rating} />
+                  <Stars rating={Number(tutor.rating)} />
                   <p className="text-sm text-muted-foreground">
                     {reviews.length} değerlendirme
                   </p>
@@ -398,6 +399,7 @@ export default function TutorProfilePage({
         onSuccess={() => {
           setRequestSent(true);
           setIsRequestModalOpen(false);
+          toast.success("Ders talebin gönderildi.");
         }}
       />
       <BookingModal
@@ -407,6 +409,7 @@ export default function TutorProfilePage({
         onSuccess={(booking) => {
           setBookingComplete(true);
           setIsBookingModalOpen(false);
+          toast.success("Ders rezervasyonu oluşturuldu.");
         }}
       />
     </div>

@@ -19,6 +19,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Booking } from "@/types";
+import { toast } from "sonner";
 
 function StudentDashboardContent() {
   const queryClient = useQueryClient();
@@ -58,7 +59,7 @@ function StudentDashboardContent() {
       await updateBookingStatus(bookingId, status);
       refetchBookings();
     } catch {
-      // could show toast
+      toast.error("Rezervasyon güncellenemedi.");
     } finally {
       setUpdatingId(null);
     }
@@ -70,7 +71,7 @@ function StudentDashboardContent() {
       await withdrawLessonRequest(lessonRequestId);
       await queryClient.invalidateQueries({ queryKey: ["lesson-requests"] });
     } catch {
-      // could show toast
+      toast.error("Ders talebi geri alınamadı.");
     } finally {
       setWithdrawingRequestId(null);
     }

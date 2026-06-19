@@ -17,6 +17,7 @@ import { AvailabilityEditor } from "@/components/tutors/AvailabilityEditor";
 import { VerificationForm } from "@/components/tutors/VerificationForm";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
 
 function TutorDashboardContent() {
   const queryClient = useQueryClient();
@@ -49,7 +50,7 @@ function TutorDashboardContent() {
       await updateBookingStatus(bookingId, status);
       refetchBookings();
     } catch {
-      // could show toast
+      toast.error("Rezervasyon güncellenemedi.");
     } finally {
       setUpdatingId(null);
     }
@@ -64,7 +65,7 @@ function TutorDashboardContent() {
         window.location.href = `/messages/${updated.conversation_id}`;
       }
     } catch {
-      // could show toast
+      toast.error("Ders talebi güncellenemedi.");
     } finally {
       setUpdatingRequestId(null);
     }
@@ -76,7 +77,7 @@ function TutorDashboardContent() {
       await updateLessonRequestStatus(lessonRequestId, "declined");
       await queryClient.invalidateQueries({ queryKey: ["lesson-requests"] });
     } catch {
-      // could show toast
+      toast.error("Ders talebi güncellenemedi.");
     } finally {
       setUpdatingRequestId(null);
     }

@@ -19,6 +19,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Trash2 } from "lucide-react";
 import { AvailabilityRule } from "@/types";
+import { toast } from "sonner";
 
 const DAY_NAMES = [
   "Pazartesi",
@@ -54,6 +55,10 @@ export function AvailabilityEditor() {
       setStartTime("");
       setEndTime("");
       setTimeError(null);
+      toast.success("Müsaitlik güncellendi.");
+    },
+    onError: () => {
+      toast.error("Müsaitlik güncellenemedi.");
     },
   });
 
@@ -61,6 +66,10 @@ export function AvailabilityEditor() {
     mutationFn: deleteAvailabilityRule,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["availability"] });
+      toast.success("Müsaitlik güncellendi.");
+    },
+    onError: () => {
+      toast.error("Müsaitlik güncellenemedi.");
     },
   });
 

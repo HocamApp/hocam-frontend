@@ -114,7 +114,7 @@ export function BookingModal({
 
   const { data: availabilityRules = [] } = useQuery({
     queryKey: ["tutor-availability", tutor.id],
-    queryFn: () => fetchTutorAvailability(tutor.id),
+    queryFn: () => fetchTutorAvailability(String(tutor.id)),
     enabled: isOpen,
   });
 
@@ -135,7 +135,7 @@ export function BookingModal({
     setSelectedTime("");
   }, [selectedDate]);
 
-  const calculatedPrice = (tutor.hourly_price * selectedDuration) / 60;
+  const calculatedPrice = (Number(tutor.hourly_price) * selectedDuration) / 60;
   const endTime = selectedTime
     ? (() => {
         const [h, m] = selectedTime.split(":").map(Number);
@@ -158,7 +158,7 @@ export function BookingModal({
         )
       : [];
 
-  const selectedSubject = tutor.subjects?.find((s) => s.id === selectedSubjectId);
+  const selectedSubject = tutor.subjects?.find((s) => String(s.id) === selectedSubjectId);
 
   const handleNextStep1 = () => {
     if (!selectedSubjectId) {
@@ -186,7 +186,7 @@ export function BookingModal({
 
     try {
       const booking = await createBooking({
-        tutor: tutor.id,
+        tutor: String(tutor.id),
         subject: selectedSubjectId,
         start_time,
         duration_minutes: selectedDuration,
@@ -249,10 +249,10 @@ export function BookingModal({
                     <button
                       key={s.id}
                       type="button"
-                      onClick={() => setSelectedSubjectId(s.id)}
+                      onClick={() => setSelectedSubjectId(String(s.id))}
                       className={cn(
                         "rounded-lg border p-3 text-left transition-colors",
-                        selectedSubjectId === s.id
+                        selectedSubjectId === String(s.id)
                           ? "border-primary bg-primary/5"
                           : "border-border"
                       )}

@@ -94,7 +94,7 @@ export function LessonRequestModal({
     }
     try {
       const result = await createLessonRequest({
-        tutor: tutor.id,
+        tutor: String(tutor.id),
         subject: subjectId,
         message: parsed.data.message,
       });
