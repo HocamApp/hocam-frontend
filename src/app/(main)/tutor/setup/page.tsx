@@ -70,7 +70,7 @@ export default function TutorSetupPage() {
   const router = useRouter();
   const { isAuthenticated, isLoading, isTutor, user, setAuth, token } =
     useAuth();
-  const [selectedSubjectIds, setSelectedSubjectIds] = useState<number[]>([]);
+  const [selectedSubjectIds, setSelectedSubjectIds] = useState<string[]>([]);
   const [subjectError, setSubjectError] = useState<string | null>(null);
   const [generalError, setGeneralError] = useState<string | null>(null);
 
@@ -110,7 +110,7 @@ export default function TutorSetupPage() {
     mode: "onSubmit",
   });
 
-  const toggleSubject = (id: number) => {
+  const toggleSubject = (id: string) => {
     setSelectedSubjectIds((prev) =>
       prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id]
     );

@@ -135,7 +135,7 @@ export function BookingModal({
     setSelectedTime("");
   }, [selectedDate]);
 
-  const calculatedPrice = (Number(tutor.hourly_price) * selectedDuration) / 60;
+  const calculatedPrice = (tutor.hourly_price * selectedDuration) / 60;
   const endTime = selectedTime
     ? (() => {
         const [h, m] = selectedTime.split(":").map(Number);

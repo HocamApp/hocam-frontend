@@ -10,7 +10,7 @@ export interface CreateTutorProfilePayload {
   yks_exam_type: "SAY" | "SOZ" | "EA" | "DIL";
   hourly_price: string;
   bio: string;
-  subject_ids: number[];
+  subject_ids: string[];
   grade: number;
 }
 

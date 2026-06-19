@@ -2,7 +2,7 @@ export interface User {
   id: string;
   email: string;
   role: "student" | "tutor";
-  tutor_profile_id?: string; // present only when role is "tutor"
+  tutor_profile_id: string | null;
 }
 
 export interface AuthResponse {
@@ -23,23 +23,23 @@ export interface RegisterRequest {
 }
 
 export interface Subject {
-  id: number;
+  id: string;
   name: string;
   exam_type: "TYT" | "AYT";
 }
 
 export interface TutorProfile {
-  id: number;
-  user: number;
+  id: string;
+  user: string;
   name: string;
   surname: string;
-  profile_picture: string | null;
+  profile_picture: string;
   bio: string;
   university: string;
   department: string;
   yks_rank: number;
-  hourly_price: string;
-  rating: string;
+  hourly_price: number;
+  rating: number;
   total_reviews: number;
   is_verified: boolean;
   subjects: Subject[];
