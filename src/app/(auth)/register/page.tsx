@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -54,6 +54,8 @@ type RegisterFormValues = z.infer<typeof registerSchema>;
 
 export default function RegisterPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const initialRole = searchParams.get("role") === "tutor" ? "tutor" : "student";
   const { setAuth, isAuthenticated, isLoading, user } = useAuth();
   const [generalError, setGeneralError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
@@ -64,7 +66,7 @@ export default function RegisterPage() {
       email: "",
       password: "",
       password_confirm: "",
-      role: "student",
+      role: initialRole,
     },
     mode: "onSubmit",
   });
@@ -146,7 +148,7 @@ export default function RegisterPage() {
             Hesap Oluştur
           </CardTitle>
           <CardDescription className="text-sm text-gray-500">
-            Öğrenci olarak kaydol
+            {initialRole === "tutor" ? "Hoca olarak kaydol" : "Öğrenci olarak kaydol"}
           </CardDescription>
         </CardHeader>
         <CardContent>
