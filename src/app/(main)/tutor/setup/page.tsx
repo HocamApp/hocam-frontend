@@ -144,11 +144,9 @@ export default function TutorSetupPage() {
         university: parsed.data.university,
         department: parsed.data.department,
         yks_rank: Number(parsed.data.yks_rank),
-        yks_exam_type: parsed.data.yks_exam_type,
         hourly_price: parsed.data.hourly_price,
         bio: parsed.data.bio ?? "",
         subject_ids: selectedSubjectIds,
-        grade: Number(parsed.data.grade),
       });
 
       const updatedUser = await fetchMe();

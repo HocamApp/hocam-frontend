@@ -7,11 +7,9 @@ export interface CreateTutorProfilePayload {
   university: string;
   department: string;
   yks_rank: number;
-  yks_exam_type: "SAY" | "SOZ" | "EA" | "DIL";
   hourly_price: string;
   bio: string;
   subject_ids: string[];
-  grade: number;
 }
 
 export interface TutorFilters {
