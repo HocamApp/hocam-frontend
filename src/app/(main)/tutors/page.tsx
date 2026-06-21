@@ -268,13 +268,11 @@ function TutorsPageContent() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="__all__">Tümü</SelectItem>
-                <SelectItem value="1">1★ ve üzeri</SelectItem>
-                <SelectItem value="2">2★ ve üzeri</SelectItem>
-                <SelectItem value="3">3★ ve üzeri</SelectItem>
-                <SelectItem value="3.5">3.5★ ve üzeri</SelectItem>
-                <SelectItem value="4">4★ ve üzeri</SelectItem>
-                <SelectItem value="4.5">4.5★ ve üzeri</SelectItem>
-                <SelectItem value="5">5★</SelectItem>
+                <SelectItem value="1">1+ puan</SelectItem>
+                <SelectItem value="2">2+ puan</SelectItem>
+                <SelectItem value="3">3+ puan</SelectItem>
+                <SelectItem value="4">4+ puan</SelectItem>
+                <SelectItem value="5">5 puan</SelectItem>
               </SelectContent>
             </Select>
           </div>
