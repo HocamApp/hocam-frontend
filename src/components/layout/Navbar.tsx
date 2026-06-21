@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Menu } from "lucide-react";
-import { useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { Menu, Search } from "lucide-react";
+import { useState, useCallback } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Sheet,
   SheetContent,
@@ -22,8 +23,23 @@ function truncateEmail(email: string, maxLen = 20): string {
 
 export function Navbar() {
   const pathname = usePathname();
+  const router = useRouter();
   const { user, isAuthenticated, isStudent, isTutor, isLoading, logout } = useAuth();
   const [open, setOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const doSearch = useCallback(() => {
+    const term = searchQuery.trim();
+    if (!term) return;
+    if (typeof window !== "undefined" && window.location.pathname === "/tutors") {
+      const params = new URLSearchParams(window.location.search);
+      params.set("search", term);
+      router.push(`/tutors?${params.toString()}`);
+    } else {
+      router.push(`/tutors?search=${encodeURIComponent(term)}`);
+    }
+    setSearchQuery("");
+  }, [searchQuery, router]);
 
   const linkClass = (path: string) =>
     cn(
@@ -98,6 +114,21 @@ export function Navbar() {
 
   const mobileLinks = (
     <div className="flex flex-col gap-2">
+      <form
+        onSubmit={(e) => { e.preventDefault(); doSearch(); setOpen(false); }}
+        className="flex items-center gap-1"
+      >
+        <Input
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Hoca ara..."
+          className="h-8 flex-1 text-sm"
+        />
+        <Button type="submit" variant="ghost" size="icon" className="h-8 w-8 shrink-0" aria-label="Ara">
+          <Search className="h-4 w-4" />
+        </Button>
+      </form>
+
       {!isLoading && !isAuthenticated && (
         <>
           <Link href="/tutors" onClick={() => setOpen(false)} className={linkClass("/tutors")}>
@@ -167,6 +198,22 @@ export function Navbar() {
             </Link>
           )}
         </div>
+
+        {/* Desktop search */}
+        <form
+          onSubmit={(e) => { e.preventDefault(); doSearch(); }}
+          className="hidden md:flex items-center gap-1"
+        >
+          <Input
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Hoca ara..."
+            className="h-8 w-44 text-sm"
+          />
+          <Button type="submit" variant="ghost" size="icon" className="h-8 w-8 shrink-0" aria-label="Ara">
+            <Search className="h-4 w-4" />
+          </Button>
+        </form>
 
         {/* Desktop right */}
         <div className="hidden items-center gap-4 md:flex">

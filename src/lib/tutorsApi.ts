@@ -13,6 +13,7 @@ export interface CreateTutorProfilePayload {
 }
 
 export interface TutorFilters {
+  search?: string;
   subject?: string;
   exam_type?: string;
   university?: string;

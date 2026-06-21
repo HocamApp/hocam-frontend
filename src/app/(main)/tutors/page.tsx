@@ -20,6 +20,7 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 
 function filtersFromSearchParams(searchParams: URLSearchParams): TutorFiltersType {
+  const search = searchParams.get("search");
   const subject = searchParams.get("subject");
   const exam_type = searchParams.get("exam_type");
   const min_rating = searchParams.get("min_rating");
@@ -28,6 +29,7 @@ function filtersFromSearchParams(searchParams: URLSearchParams): TutorFiltersTyp
   const yks_rank_max = searchParams.get("yks_rank_max");
   const ordering = searchParams.get("ordering") || "rating";
   return {
+    ...(search != null && search !== "" && { search }),
     ...(subject != null && subject !== "" && { subject }),
     ...(exam_type != null && exam_type !== "" && { exam_type }),
     ...(min_rating != null && min_rating !== "" && { min_rating }),
@@ -40,6 +42,7 @@ function filtersFromSearchParams(searchParams: URLSearchParams): TutorFiltersTyp
 
 function searchParamsFromFilters(filters: TutorFiltersType): URLSearchParams {
   const p = new URLSearchParams();
+  if (filters.search) p.set("search", filters.search);
   if (filters.subject) p.set("subject", filters.subject);
   if (filters.exam_type) p.set("exam_type", filters.exam_type);
   if (filters.min_rating) p.set("min_rating", filters.min_rating);
@@ -81,6 +84,7 @@ function TutorsPageContent() {
     const fromUrl = filtersFromSearchParams(searchParams);
     return { ...fromUrl, ordering: fromUrl.ordering || "rating" };
   });
+  const [searchLocal, setSearchLocal] = useState(filters.search ?? "");
   const [maxPriceLocal, setMaxPriceLocal] = useState(filters.max_price ?? "");
   const [universityLocal, setUniversityLocal] = useState(filters.university ?? "");
 
@@ -104,6 +108,7 @@ function TutorsPageContent() {
   );
 
   const handleClearFilters = useCallback(() => {
+    setSearchLocal("");
     setMaxPriceLocal("");
     setUniversityLocal("");
     handleFiltersChange({});
@@ -125,6 +130,7 @@ function TutorsPageContent() {
   });
 
   const hasActiveFilters =
+    (filters.search ?? "") !== "" ||
     (filters.subject ?? "") !== "" ||
     (filters.exam_type ?? "") !== "" ||
     (filters.min_rating ?? "") !== "" ||
@@ -151,6 +157,24 @@ function TutorsPageContent() {
         {/* Horizontal filter bar */}
         <div className="rounded-lg border bg-card px-4 py-3">
           <div className="grid gap-4 md:grid-cols-4">
+            {/* Arama */}
+            <div className="space-y-1">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">
+                Arama
+              </Label>
+              <Input
+                value={searchLocal}
+                onChange={(e) => setSearchLocal(e.target.value)}
+                onBlur={() => handleFiltersChange({ ...filters, search: searchLocal || undefined })}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter")
+                    handleFiltersChange({ ...filters, search: searchLocal || undefined });
+                }}
+                placeholder="Hoca veya üniversite ara..."
+                disabled={tutorsLoading}
+              />
+            </div>
+
             {/* Sıralama */}
             <div className="space-y-1">
               <Label className="text-xs uppercase tracking-wide text-muted-foreground">
