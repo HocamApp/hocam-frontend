@@ -139,7 +139,7 @@ function TutorsPageContent() {
     <>
       <div className="mx-auto max-w-7xl px-4 py-8 space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-black">Hocanu Bul</h1>
+          <h1 className="text-3xl font-bold text-black">Hocanı Bul</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Türkiye&apos;nin en iyi YKS hocaları, seni bekliyor.
           </p>
@@ -213,8 +213,8 @@ function TutorsPageContent() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="__all__">Tüm dersler</SelectItem>
-                {(subjects ?? []).map((s) => (
-                  <SelectItem key={s.id} value={s.name}>
+                {Array.from(new Map((subjects ?? []).map((s) => [s.name, s])).values()).map((s) => (
+                  <SelectItem key={s.name} value={s.name}>
                     {s.name}
                   </SelectItem>
                 ))}
@@ -316,6 +316,13 @@ function TutorsPageContent() {
             />
           </div>
           </div>
+          {hasActiveFilters && (
+            <div className="mt-3 flex justify-end">
+              <Button variant="ghost" size="sm" onClick={handleClearFilters} className="text-xs text-muted-foreground">
+                Filtreleri Temizle
+              </Button>
+            </div>
+          )}
         </div>
 
         {/* Tutor grid and states */}
