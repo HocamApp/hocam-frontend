@@ -192,6 +192,7 @@ function TutorsPageContent() {
                 <SelectItem value="__all__">Tüm sınavlar</SelectItem>
                 <SelectItem value="TYT">TYT</SelectItem>
                 <SelectItem value="AYT">AYT</SelectItem>
+                <SelectItem value="YDT">YDT</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -241,10 +242,11 @@ function TutorsPageContent() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="__all__">Tümü</SelectItem>
-                <SelectItem value="250">250 TL&apos;ye kadar</SelectItem>
                 <SelectItem value="500">500 TL&apos;ye kadar</SelectItem>
                 <SelectItem value="750">750 TL&apos;ye kadar</SelectItem>
                 <SelectItem value="1000">1000 TL&apos;ye kadar</SelectItem>
+                <SelectItem value="1250">1250 TL&apos;ye kadar</SelectItem>
+                <SelectItem value="1500">1500 TL&apos;ye kadar</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -266,9 +268,13 @@ function TutorsPageContent() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="__all__">Tümü</SelectItem>
-                <SelectItem value="3">3+</SelectItem>
-                <SelectItem value="4">4+</SelectItem>
-                <SelectItem value="4.5">4.5+</SelectItem>
+                <SelectItem value="1">1★ ve üzeri</SelectItem>
+                <SelectItem value="2">2★ ve üzeri</SelectItem>
+                <SelectItem value="3">3★ ve üzeri</SelectItem>
+                <SelectItem value="3.5">3.5★ ve üzeri</SelectItem>
+                <SelectItem value="4">4★ ve üzeri</SelectItem>
+                <SelectItem value="4.5">4.5★ ve üzeri</SelectItem>
+                <SelectItem value="5">5★</SelectItem>
               </SelectContent>
             </Select>
           </div>
