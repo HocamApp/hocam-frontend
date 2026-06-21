@@ -16,6 +16,7 @@ import { TutorCard } from "@/components/tutors/TutorCard";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 
 function filtersFromSearchParams(searchParams: URLSearchParams): TutorFiltersType {
@@ -23,14 +24,16 @@ function filtersFromSearchParams(searchParams: URLSearchParams): TutorFiltersTyp
   const exam_type = searchParams.get("exam_type");
   const min_rating = searchParams.get("min_rating");
   const max_price = searchParams.get("max_price");
-  const is_verified = searchParams.get("is_verified");
+  const university = searchParams.get("university");
+  const yks_rank_max = searchParams.get("yks_rank_max");
   const ordering = searchParams.get("ordering") || "rating";
   return {
     ...(subject != null && subject !== "" && { subject }),
     ...(exam_type != null && exam_type !== "" && { exam_type }),
     ...(min_rating != null && min_rating !== "" && { min_rating }),
     ...(max_price != null && max_price !== "" && { max_price }),
-    ...(is_verified != null && is_verified !== "" && { is_verified }),
+    ...(university != null && university !== "" && { university }),
+    ...(yks_rank_max != null && yks_rank_max !== "" && { yks_rank_max }),
     ordering: ordering || "rating",
   };
 }
@@ -41,7 +44,8 @@ function searchParamsFromFilters(filters: TutorFiltersType): URLSearchParams {
   if (filters.exam_type) p.set("exam_type", filters.exam_type);
   if (filters.min_rating) p.set("min_rating", filters.min_rating);
   if (filters.max_price) p.set("max_price", filters.max_price);
-  if (filters.is_verified) p.set("is_verified", filters.is_verified);
+  if (filters.university) p.set("university", filters.university);
+  if (filters.yks_rank_max) p.set("yks_rank_max", filters.yks_rank_max);
   if (filters.ordering && filters.ordering !== "rating") p.set("ordering", filters.ordering);
   return p;
 }
@@ -78,6 +82,7 @@ function TutorsPageContent() {
     return { ...fromUrl, ordering: fromUrl.ordering || "rating" };
   });
   const [maxPriceLocal, setMaxPriceLocal] = useState(filters.max_price ?? "");
+  const [universityLocal, setUniversityLocal] = useState(filters.university ?? "");
 
   const setFilters = useCallback(
     (newFilters: TutorFiltersType) => {
@@ -97,6 +102,12 @@ function TutorsPageContent() {
     },
     [setFilters]
   );
+
+  const handleClearFilters = useCallback(() => {
+    setMaxPriceLocal("");
+    setUniversityLocal("");
+    handleFiltersChange({});
+  }, [handleFiltersChange]);
 
   const {
     data: tutors,
@@ -118,7 +129,8 @@ function TutorsPageContent() {
     (filters.exam_type ?? "") !== "" ||
     (filters.min_rating ?? "") !== "" ||
     (filters.max_price ?? "") !== "" ||
-    (filters.is_verified ?? "") !== "" ||
+    (filters.university ?? "") !== "" ||
+    (filters.yks_rank_max ?? "") !== "" ||
     (filters.ordering ?? "rating") !== "rating";
   const isEmpty = Array.isArray(tutors) && tutors.length === 0;
   const showEmptyState = isEmpty && hasActiveFilters;
@@ -236,6 +248,73 @@ function TutorsPageContent() {
               </SelectContent>
             </Select>
           </div>
+
+          {/* Puan */}
+          <div className="space-y-1">
+            <Label className="text-xs uppercase tracking-wide text-muted-foreground">
+              Min. Puan
+            </Label>
+            <Select
+              value={(filters.min_rating ?? "") || "__all__"}
+              onValueChange={(v) =>
+                handleFiltersChange({ ...filters, min_rating: v === "__all__" ? "" : v })
+              }
+              disabled={tutorsLoading}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Tümü" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__all__">Tümü</SelectItem>
+                <SelectItem value="3">3+</SelectItem>
+                <SelectItem value="4">4+</SelectItem>
+                <SelectItem value="4.5">4.5+</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* YKS Sıralaması */}
+          <div className="space-y-1">
+            <Label className="text-xs uppercase tracking-wide text-muted-foreground">
+              YKS Sıralaması
+            </Label>
+            <Select
+              value={(filters.yks_rank_max ?? "") || "__all__"}
+              onValueChange={(v) =>
+                handleFiltersChange({ ...filters, yks_rank_max: v === "__all__" ? "" : v })
+              }
+              disabled={tutorsLoading}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Tümü" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__all__">Tümü</SelectItem>
+                <SelectItem value="1000">İlk 1.000</SelectItem>
+                <SelectItem value="5000">İlk 5.000</SelectItem>
+                <SelectItem value="10000">İlk 10.000</SelectItem>
+                <SelectItem value="15000">İlk 15.000</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Üniversite */}
+          <div className="space-y-1">
+            <Label className="text-xs uppercase tracking-wide text-muted-foreground">
+              Üniversite
+            </Label>
+            <Input
+              value={universityLocal}
+              onChange={(e) => setUniversityLocal(e.target.value)}
+              onBlur={() => handleFiltersChange({ ...filters, university: universityLocal || undefined })}
+              onKeyDown={(e) => {
+                if (e.key === "Enter")
+                  handleFiltersChange({ ...filters, university: universityLocal || undefined });
+              }}
+              placeholder="Üniversite ara..."
+              disabled={tutorsLoading}
+            />
+          </div>
           </div>
         </div>
 
@@ -262,7 +341,7 @@ function TutorsPageContent() {
               title="Hoca bulunamadı"
               description="Filtrelerinizi değiştirmeyi deneyin"
               action={
-                <Button variant="outline" onClick={() => handleFiltersChange({})}>
+                <Button variant="outline" onClick={handleClearFilters}>
                   Filtreleri Temizle
                 </Button>
               }

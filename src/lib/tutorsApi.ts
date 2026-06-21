@@ -19,6 +19,7 @@ export interface TutorFilters {
   min_rating?: string;
   max_price?: string;
   is_verified?: string;
+  yks_rank_max?: string;
   ordering?: string;
 }
 
