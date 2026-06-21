@@ -15,6 +15,7 @@ import { fetchTutors, fetchSubjects, type TutorFilters as TutorFiltersType } fro
 import { TutorCard } from "@/components/tutors/TutorCard";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
+import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -162,17 +163,30 @@ function TutorsPageContent() {
               <Label className="text-xs uppercase tracking-wide text-muted-foreground">
                 Arama
               </Label>
-              <Input
-                value={searchLocal}
-                onChange={(e) => setSearchLocal(e.target.value)}
-                onBlur={() => handleFiltersChange({ ...filters, search: searchLocal || undefined })}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter")
-                    handleFiltersChange({ ...filters, search: searchLocal || undefined });
-                }}
-                placeholder="Hoca veya üniversite ara..."
-                disabled={tutorsLoading}
-              />
+              <div className="flex gap-1">
+                <Input
+                  value={searchLocal}
+                  onChange={(e) => setSearchLocal(e.target.value)}
+                  onBlur={() => handleFiltersChange({ ...filters, search: searchLocal || undefined })}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter")
+                      handleFiltersChange({ ...filters, search: searchLocal || undefined });
+                  }}
+                  placeholder="Hoca veya üniversite ara..."
+                  disabled={tutorsLoading}
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="shrink-0"
+                  aria-label="Ara"
+                  disabled={tutorsLoading}
+                  onClick={() => handleFiltersChange({ ...filters, search: searchLocal || undefined })}
+                >
+                  <Search className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
 
             {/* Sıralama */}
