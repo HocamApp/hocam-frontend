@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 import { Check, MessageSquare } from "lucide-react";
 import { fetchTutorById, fetchTutorReviews } from "@/lib/tutorsApi";
+import { fetchTutorAvailability } from "@/lib/dashboardApi";
 import { useAuth } from "@/hooks/useAuth";
 import { formatPrice, formatRating } from "@/lib/utils";
 import { ReviewCard } from "@/components/tutors/ReviewCard";
@@ -128,6 +129,12 @@ export default function TutorProfilePage({
     queryKey: ["tutor-reviews", id],
     queryFn: () => fetchTutorReviews(id),
     enabled: !!tutor && isAuthenticated,
+  });
+
+  const { data: availability = [], isLoading: availabilityLoading } = useQuery({
+    queryKey: ["tutor-availability", id],
+    queryFn: () => fetchTutorAvailability(id),
+    enabled: !!tutor,
   });
 
   const isOwnProfile = !!tutor && !!user && user.id === tutor.user;
@@ -328,15 +335,46 @@ export default function TutorProfilePage({
         )}
       </section>
 
-      {/* Section 3 — Availability placeholder */}
+      {/* Section 3 — Availability */}
       <section className="mt-10">
         <h2 className="text-xl font-semibold">Müsaitlik</h2>
         <Separator className="mt-2" />
-        <Card className="mt-4">
-          <CardContent className="py-6 text-center text-muted-foreground">
-            Müsaitlik bilgisi yakında eklenecek
-          </CardContent>
-        </Card>
+        <div className="mt-4">
+          {availabilityLoading ? (
+            <Card>
+              <CardContent className="py-4 space-y-2">
+                <Skeleton className="h-5 w-48" />
+                <Skeleton className="h-5 w-40" />
+                <Skeleton className="h-5 w-44" />
+              </CardContent>
+            </Card>
+          ) : availability.length === 0 ? (
+            <Card>
+              <CardContent className="py-6 text-center text-muted-foreground">
+                Müsaitlik bilgisi henüz eklenmemiş
+              </CardContent>
+            </Card>
+          ) : (
+            <Card>
+              <CardContent className="py-4">
+                <ul className="space-y-2">
+                  {[...availability]
+                    .sort((a, b) => a.day_of_week - b.day_of_week)
+                    .map((rule) => (
+                      <li key={rule.id} className="flex gap-2 text-sm">
+                        <span className="w-24 font-medium">
+                          {["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar"][rule.day_of_week]}:
+                        </span>
+                        <span className="text-muted-foreground">
+                          {rule.start_time.slice(0, 5)} – {rule.end_time.slice(0, 5)}
+                        </span>
+                      </li>
+                    ))}
+                </ul>
+              </CardContent>
+            </Card>
+          )}
+        </div>
       </section>
 
       {/* Section 4 — Reviews */}
