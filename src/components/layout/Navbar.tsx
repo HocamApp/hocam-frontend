@@ -208,7 +208,7 @@ export function Navbar() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Hoca ara..."
-            className="h-8 w-44 text-sm"
+            className="h-8 w-64 text-sm"
           />
           <Button type="submit" variant="ghost" size="icon" className="h-8 w-8 shrink-0" aria-label="Ara">
             <Search className="h-4 w-4" />

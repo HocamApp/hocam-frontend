@@ -353,6 +353,16 @@ function TutorsPageContent() {
           )}
         </div>
 
+        {/* Active search chip */}
+        {filters.search && (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <span>Arama:</span>
+            <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+              &quot;{filters.search}&quot;
+            </span>
+          </div>
+        )}
+
         {/* Tutor grid and states */}
         <div className="min-w-0 flex-1">
           {tutorsError && (
@@ -374,7 +384,11 @@ function TutorsPageContent() {
           {!tutorsLoading && !tutorsError && showEmptyState && (
             <EmptyState
               title="Hoca bulunamadı"
-              description="Filtrelerinizi değiştirmeyi deneyin"
+              description={
+                filters.search
+                  ? `"${filters.search}" aramasıyla eşleşen hoca bulunamadı. Filtrelerinizi veya arama teriminizi değiştirmeyi deneyin.`
+                  : "Filtrelerinizi değiştirmeyi deneyin."
+              }
               action={
                 <Button variant="outline" onClick={handleClearFilters}>
                   Filtreleri Temizle
