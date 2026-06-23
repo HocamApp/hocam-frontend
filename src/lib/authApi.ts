@@ -1,5 +1,5 @@
 import api from "./api";
-import { AuthResponse, LoginRequest, RegisterRequest, User } from "@/types";
+import { AuthResponse, LoginRequest, PasswordResetConfirmRequest, PasswordResetRequest, RegisterRequest, User } from "@/types";
 
 export async function registerUser(
   data: RegisterRequest
@@ -27,4 +27,12 @@ export async function fetchCurrentUser(): Promise<User> {
 export async function fetchMe(): Promise<User> {
   const response = await api.get<User>("/auth/me/");
   return response.data;
+}
+
+export async function requestPasswordReset(data: PasswordResetRequest): Promise<void> {
+  await api.post("/auth/password-reset/", data);
+}
+
+export async function confirmPasswordReset(data: PasswordResetConfirmRequest): Promise<void> {
+  await api.post("/auth/password-reset-confirm/", data);
 }

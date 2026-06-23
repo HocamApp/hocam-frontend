@@ -129,3 +129,14 @@ export interface TutorVerification {
 export interface ApiError {
   [field: string]: string[];
 }
+
+export interface PasswordResetRequest {
+  email: string;
+}
+
+export interface PasswordResetConfirmRequest {
+  uid: string;
+  token: string;
+  new_password: string;
+  password_confirm: string;
+}
