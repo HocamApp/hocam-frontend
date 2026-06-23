@@ -77,15 +77,20 @@ function StudentDashboardContent() {
     }
   };
 
-  const activeBookings =
+  const now = new Date();
+  const upcomingConfirmed =
     bookings?.filter((b) => {
       const s = (b.status || "").toLowerCase();
-      return s === "pending" || s === "confirmed";
+      return s === "confirmed" && new Date(b.start_time) > now;
     }) ?? [];
+  const pendingBookings =
+    bookings?.filter((b) => (b.status || "").toLowerCase() === "pending") ?? [];
   const pastBookings =
     bookings?.filter((b) => {
       const s = (b.status || "").toLowerCase();
-      return s === "completed" || s === "cancelled";
+      const isConfirmedPast =
+        s === "confirmed" && new Date(b.start_time) <= now;
+      return s === "completed" || s === "cancelled" || isConfirmedPast;
     }) ?? [];
 
   return (
@@ -145,41 +150,71 @@ function StudentDashboardContent() {
           )}
           {!bookingsLoading && (
             <>
-              <h3 className="mb-2 text-sm font-medium">Yaklaşan Dersler</h3>
-              {activeBookings.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Yok</p>
-              ) : (
-                <div className="mb-6 space-y-3">
-                  {activeBookings.map((b) => (
-                    <BookingCard
-                      key={b.id}
-                      booking={b}
-                      currentUserRole="student"
-                      onStatusUpdate={handleStatusUpdate}
-                      onReviewClick={reviewedBookingIds.has(b.id) ? undefined : setReviewBooking}
-                      isUpdating={updatingId === b.id}
-                    />
-                  ))}
-                </div>
-              )}
+              <section className="mb-8">
+                <h3 className="mb-3 text-sm font-semibold">Yaklaşan Onaylı Dersler</h3>
+                {upcomingConfirmed.length === 0 ? (
+                  <EmptyState
+                    title="Yaklaşan onaylı dersiniz yok"
+                    description="Hoca ile rezervasyon oluşturulduktan ve onaylandıktan sonra burada görünecek"
+                    action={
+                      <Button asChild variant="outline" size="sm">
+                        <Link href="/tutors">Hoca Bul</Link>
+                      </Button>
+                    }
+                  />
+                ) : (
+                  <div className="space-y-3">
+                    {upcomingConfirmed.map((b) => (
+                      <BookingCard
+                        key={b.id}
+                        booking={b}
+                        currentUserRole="student"
+                        onStatusUpdate={handleStatusUpdate}
+                        isUpdating={updatingId === b.id}
+                      />
+                    ))}
+                  </div>
+                )}
+              </section>
 
-              <h3 className="mb-2 text-sm font-medium">Geçmiş Dersler</h3>
-              {pastBookings.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Yok</p>
-              ) : (
-                <div className="space-y-3">
-                  {pastBookings.map((b) => (
-                    <BookingCard
-                      key={b.id}
-                      booking={b}
-                      currentUserRole="student"
-                      onStatusUpdate={handleStatusUpdate}
-                      onReviewClick={reviewedBookingIds.has(b.id) ? undefined : setReviewBooking}
-                      isUpdating={updatingId === b.id}
-                    />
-                  ))}
-                </div>
-              )}
+              <section className="mb-8">
+                <h3 className="mb-3 text-sm font-semibold">Onay Bekleyen Rezervasyonlar</h3>
+                {pendingBookings.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">Yok</p>
+                ) : (
+                  <div className="space-y-3">
+                    {pendingBookings.map((b) => (
+                      <BookingCard
+                        key={b.id}
+                        booking={b}
+                        currentUserRole="student"
+                        onStatusUpdate={handleStatusUpdate}
+                        isUpdating={updatingId === b.id}
+                      />
+                    ))}
+                  </div>
+                )}
+              </section>
+
+              <section>
+                <h3 className="mb-3 text-sm font-semibold">Geçmiş Dersler</h3>
+                {pastBookings.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">Yok</p>
+                ) : (
+                  <div className="space-y-3">
+                    {pastBookings.map((b) => (
+                      <BookingCard
+                        key={b.id}
+                        booking={b}
+                        currentUserRole="student"
+                        onStatusUpdate={handleStatusUpdate}
+                        onReviewClick={reviewedBookingIds.has(b.id) ? undefined : setReviewBooking}
+                        isUpdating={updatingId === b.id}
+                      />
+                    ))}
+                  </div>
+                )}
+              </section>
             </>
           )}
         </TabsContent>
