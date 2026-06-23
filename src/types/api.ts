@@ -48,8 +48,8 @@ export interface TutorProfile {
 
 export interface LessonRequest {
   id: string;
-  student: string;
-  tutor: string;
+  student: { id: string; email: string };
+  tutor: { id: string; name: string; surname: string };
   subject: Subject;
   message: string;
   status: "pending" | "accepted" | "declined";
@@ -59,8 +59,8 @@ export interface LessonRequest {
 
 export interface Booking {
   id: string;
-  student: string;
-  tutor: string;
+  student: { id: string; email: string };
+  tutor: { id: string; name: string; surname: string };
   subject: Subject;
   start_time: string;
   duration_minutes: number;
