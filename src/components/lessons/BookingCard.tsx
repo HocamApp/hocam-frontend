@@ -41,6 +41,7 @@ export function BookingCard({
   const isConfirmed = status === "confirmed";
   const isCompleted = status === "completed";
   const isCancelled = status === "cancelled";
+  const isFuture = new Date(booking.start_time) > new Date();
   const canCancel =
     currentUserRole === "student" && !isCompleted && !isCancelled;
 
@@ -111,6 +112,11 @@ export function BookingCard({
 
           {currentUserRole === "student" && (
             <>
+              {isConfirmed && isFuture && (
+                <Button size="sm" variant="outline" disabled>
+                  Derse Katıl
+                </Button>
+              )}
               {canCancel && (
                 <Button
                   size="sm"
@@ -134,6 +140,12 @@ export function BookingCard({
             </>
           )}
         </div>
+
+        {currentUserRole === "student" && isConfirmed && isFuture && (
+          <p className="mt-2 text-xs text-muted-foreground">
+            Ders bağlantısı, dersten önce burada görünecek.
+          </p>
+        )}
       </CardContent>
     </Card>
   );
