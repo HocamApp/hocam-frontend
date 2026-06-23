@@ -54,6 +54,16 @@ export function BookingCard({
         </div>
 
         <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
+          {currentUserRole === "student" && (
+            <>
+              <span className="text-muted-foreground">Eğitmen:</span>
+              <span>
+                {booking.tutor.name
+                  ? `${booking.tutor.name} ${booking.tutor.surname}`
+                  : "—"}
+              </span>
+            </>
+          )}
           <span className="text-muted-foreground">Tarih:</span>
           <span>{formatDate(booking.start_time)}</span>
           <span className="text-muted-foreground">Saat:</span>
