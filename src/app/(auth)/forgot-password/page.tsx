@@ -42,8 +42,14 @@ export default function ForgotPasswordPage() {
 
   const onSubmit = async (data: ForgotFormValues) => {
     setGeneralError(null);
+    const parsed = forgotSchema.safeParse(data);
+    if (!parsed.success) {
+      const err = parsed.error.flatten();
+      if (err.fieldErrors.email) form.setError("email", { message: err.fieldErrors.email[0] });
+      return;
+    }
     try {
-      await requestPasswordReset(data.email);
+      await requestPasswordReset(parsed.data.email);
       setSubmitted(true);
     } catch {
       setGeneralError("Bir hata oluştu. Lütfen tekrar deneyin.");

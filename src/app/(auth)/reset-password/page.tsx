@@ -79,12 +79,19 @@ function ResetPasswordContent() {
 
   const onSubmit = async (data: ResetFormValues) => {
     setGeneralError(null);
+    const parsed = resetSchema.safeParse(data);
+    if (!parsed.success) {
+      const err = parsed.error.flatten();
+      if (err.fieldErrors.new_password) form.setError("new_password", { message: err.fieldErrors.new_password[0] });
+      if (err.fieldErrors.password_confirm) form.setError("password_confirm", { message: err.fieldErrors.password_confirm[0] });
+      return;
+    }
     try {
       await confirmPasswordReset({
         uid,
         token,
-        new_password: data.new_password,
-        password_confirm: data.password_confirm,
+        new_password: parsed.data.new_password,
+        password_confirm: parsed.data.password_confirm,
       });
       setSuccess(true);
     } catch {
