@@ -44,7 +44,7 @@ export default function Home() {
                 Giriş Yap
               </Link>
               <Link
-                href="/register/tutor"
+                href="/register?role=tutor"
                 className="rounded-md bg-black px-6 py-2 text-sm font-medium text-white"
               >
                 Hesap Oluştur
