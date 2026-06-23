@@ -18,6 +18,7 @@ import { VerificationForm } from "@/components/tutors/VerificationForm";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
+import Link from "next/link";
 
 function TutorDashboardContent() {
   const queryClient = useQueryClient();
@@ -96,9 +97,17 @@ function TutorDashboardContent() {
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8">
-      <header className="mb-6">
-        <h1 className="text-3xl font-bold">Hoca Panosu</h1>
-        <p className="text-muted-foreground">{user?.email}</p>
+      <header className="mb-6 flex items-start justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">Hoca Panosu</h1>
+          <p className="text-muted-foreground">{user?.email}</p>
+        </div>
+        <Link
+          href="/dashboard/tutor/edit"
+          className="rounded-md border border-input bg-background px-4 py-2 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground transition-colors"
+        >
+          Profili Düzenle
+        </Link>
       </header>
 
       <Tabs defaultValue="requests">

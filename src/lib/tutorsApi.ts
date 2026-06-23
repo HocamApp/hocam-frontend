@@ -63,3 +63,19 @@ export async function createTutorProfile(
   const response = await api.post<TutorProfile>("/tutors/profile/", payload);
   return response.data;
 }
+
+export interface UpdateTutorProfilePayload {
+  bio?: string;
+  hourly_price?: string;
+  university?: string;
+  department?: string;
+  yks_rank?: number;
+  subject_ids?: string[];
+}
+
+export async function updateMyTutorProfile(
+  payload: UpdateTutorProfilePayload
+): Promise<TutorProfile> {
+  const response = await api.patch<TutorProfile>("/tutors/me/", payload);
+  return response.data;
+}
