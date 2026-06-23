@@ -28,3 +28,16 @@ export async function fetchMe(): Promise<User> {
   const response = await api.get<User>("/auth/me/");
   return response.data;
 }
+
+export async function requestPasswordReset(email: string): Promise<void> {
+  await api.post("/auth/password-reset/", { email });
+}
+
+export async function confirmPasswordReset(data: {
+  uid: string;
+  token: string;
+  new_password: string;
+  password_confirm: string;
+}): Promise<void> {
+  await api.post("/auth/password-reset-confirm/", data);
+}

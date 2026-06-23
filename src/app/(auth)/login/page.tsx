@@ -164,11 +164,16 @@ export default function LoginPage() {
             </form>
           </Form>
         </CardContent>
-        <CardFooter className="flex justify-center text-sm text-muted-foreground">
-          Hesabın yok mu?{" "}
-          <Link href="/register" className="ml-1 font-medium text-primary underline-offset-4 hover:underline">
-            Kayıt ol
+        <CardFooter className="flex flex-col items-center gap-2 text-sm text-muted-foreground">
+          <Link href="/forgot-password" className="font-medium text-primary underline-offset-4 hover:underline">
+            Şifremi unuttum
           </Link>
+          <span>
+            Hesabın yok mu?{" "}
+            <Link href="/register" className="font-medium text-primary underline-offset-4 hover:underline">
+              Kayıt ol
+            </Link>
+          </span>
         </CardFooter>
       </Card>
     </div>
