@@ -49,7 +49,7 @@ export default function ForgotPasswordPage() {
       return;
     }
     try {
-      await requestPasswordReset(parsed.data.email);
+      await requestPasswordReset({ email: parsed.data.email });
       setSubmitted(true);
     } catch {
       setGeneralError("Bir hata oluştu. Lütfen tekrar deneyin.");

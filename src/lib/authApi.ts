@@ -1,5 +1,5 @@
 import api from "./api";
-import { AuthResponse, LoginRequest, RegisterRequest, User } from "@/types";
+import { AuthResponse, LoginRequest, PasswordResetConfirmRequest, PasswordResetRequest, RegisterRequest, User } from "@/types";
 
 export async function registerUser(
   data: RegisterRequest
@@ -29,15 +29,10 @@ export async function fetchMe(): Promise<User> {
   return response.data;
 }
 
-export async function requestPasswordReset(email: string): Promise<void> {
-  await api.post("/auth/password-reset/", { email });
+export async function requestPasswordReset(data: PasswordResetRequest): Promise<void> {
+  await api.post("/auth/password-reset/", data);
 }
 
-export async function confirmPasswordReset(data: {
-  uid: string;
-  token: string;
-  new_password: string;
-  password_confirm: string;
-}): Promise<void> {
+export async function confirmPasswordReset(data: PasswordResetConfirmRequest): Promise<void> {
   await api.post("/auth/password-reset-confirm/", data);
 }

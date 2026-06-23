@@ -3,6 +3,7 @@
 import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import axios from "axios";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { confirmPasswordReset } from "@/lib/authApi";
@@ -94,10 +95,14 @@ function ResetPasswordContent() {
         password_confirm: parsed.data.password_confirm,
       });
       setSuccess(true);
-    } catch {
-      setGeneralError(
-        "Bağlantı geçersiz veya süresi dolmuş. Lütfen yeni bir şifre sıfırlama isteği gönderin."
-      );
+    } catch (err) {
+      if (axios.isAxiosError(err) && err.response && err.response.status >= 400 && err.response.status < 500) {
+        setGeneralError(
+          "Bağlantı geçersiz veya süresi dolmuş. Lütfen yeni bir şifre sıfırlama isteği gönderin."
+        );
+      } else {
+        setGeneralError("Bir hata oluştu. Lütfen tekrar deneyin.");
+      }
     }
   };
 
