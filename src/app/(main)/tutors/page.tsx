@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, Suspense } from "react";
+import { useState, useCallback, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -12,6 +12,8 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { fetchTutors, fetchSubjects, type TutorFilters as TutorFiltersType } from "@/lib/tutorsApi";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Slider } from "@/components/ui/slider";
 import { TutorCard } from "@/components/tutors/TutorCard";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
@@ -88,6 +90,13 @@ function TutorsPageContent() {
   const [searchLocal, setSearchLocal] = useState(filters.search ?? "");
   const [maxPriceLocal, setMaxPriceLocal] = useState(filters.max_price ?? "");
   const [universityLocal, setUniversityLocal] = useState(filters.university ?? "");
+  const [pricePopoverDraft, setPricePopoverDraft] = useState<number>(
+    filters.max_price ? Number(filters.max_price) : 2000,
+  );
+
+  useEffect(() => {
+    setPricePopoverDraft(maxPriceLocal ? Number(maxPriceLocal) : 2000);
+  }, [maxPriceLocal]);
 
   const setFilters = useCallback(
     (newFilters: TutorFiltersType) => {
@@ -266,27 +275,46 @@ function TutorsPageContent() {
             <Label className="text-xs uppercase tracking-wide text-muted-foreground">
               Fiyat
             </Label>
-            <Select
-              value={maxPriceLocal || "__all__"}
-              onValueChange={(v) => {
-                const value = v === "__all__" ? "" : v;
-                setMaxPriceLocal(value);
-                handleFiltersChange({ ...filters, max_price: value });
-              }}
-              disabled={subjectsLoading || tutorsLoading}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Tümü" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__all__">Tümü</SelectItem>
-                <SelectItem value="500">500 TL&apos;ye kadar</SelectItem>
-                <SelectItem value="750">750 TL&apos;ye kadar</SelectItem>
-                <SelectItem value="1000">1000 TL&apos;ye kadar</SelectItem>
-                <SelectItem value="1250">1250 TL&apos;ye kadar</SelectItem>
-                <SelectItem value="1500">1500 TL&apos;ye kadar</SelectItem>
-              </SelectContent>
-            </Select>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="w-full justify-start font-normal"
+                  disabled={subjectsLoading || tutorsLoading}
+                >
+                  {maxPriceLocal
+                    ? `Maks. ₺${Number(maxPriceLocal).toLocaleString("tr-TR")}`
+                    : "Tümü"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[280px] p-4" align="start">
+                <div className="space-y-3">
+                  <Label className="tabular-nums">
+                    {pricePopoverDraft >= 2000
+                      ? "₺2.000+ (Tümü)"
+                      : `Maks. ₺${pricePopoverDraft.toLocaleString("tr-TR")}`}
+                  </Label>
+                  <Slider
+                    min={100}
+                    max={2000}
+                    step={50}
+                    value={[pricePopoverDraft]}
+                    onValueChange={([val]) => setPricePopoverDraft(val)}
+                    onValueCommit={([val]) => {
+                      const value = val >= 2000 ? "" : String(val);
+                      setMaxPriceLocal(value);
+                      handleFiltersChange({ ...filters, max_price: value });
+                    }}
+                    showTooltip
+                    tooltipContent={(v) =>
+                      v >= 2000 ? "₺2.000+" : `₺${v.toLocaleString("tr-TR")}`
+                    }
+                    disabled={tutorsLoading}
+                    aria-label="Maksimum ücret filtresi"
+                  />
+                </div>
+              </PopoverContent>
+            </Popover>
           </div>
 
           {/* Puan */}

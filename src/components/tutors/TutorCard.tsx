@@ -31,9 +31,10 @@ export function TutorCard({ tutor }: { tutor: TutorProfile }) {
           {/* Top section */}
           <div className="flex gap-4 p-4">
             <Avatar className="h-16 w-16 shrink-0">
-              {tutor.profile_picture ? (
-                <AvatarImage src={tutor.profile_picture} alt={`${tutor.name} ${tutor.surname}`} />
-              ) : null}
+              <AvatarImage
+                src={tutor.profile_picture || '/images/demo-teacher.jpg'}
+                alt={`${tutor.name} ${tutor.surname}`}
+              />
               <AvatarFallback className="bg-primary/10 text-primary text-lg font-medium">
                 {getInitials(tutor.name, tutor.surname)}
               </AvatarFallback>
