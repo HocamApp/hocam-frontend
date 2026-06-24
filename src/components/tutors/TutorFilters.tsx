@@ -3,8 +3,8 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Slider } from "@/components/ui/slider";
 import {
   Select,
   SelectContent,
@@ -112,14 +112,29 @@ function FilterPanelContent({
         </Select>
       </div>
 
-      <div className="space-y-2">
-        <Label>Maksimum ücret</Label>
-        <Input
-          type="number"
-          placeholder="örn. 500"
-          value={maxPriceLocal}
-          onChange={(e) => onMaxPriceLocalChange(e.target.value)}
+      <div className="space-y-3">
+        <Label className="tabular-nums">
+          Maksimum ücret:{" "}
+          <span className="font-semibold">
+            {maxPriceLocal
+              ? `₺${Number(maxPriceLocal).toLocaleString("tr-TR")}`
+              : "₺2.000+ (Tümü)"}
+          </span>
+        </Label>
+        <Slider
+          min={100}
+          max={2000}
+          step={50}
+          value={[maxPriceLocal ? Number(maxPriceLocal) : 2000]}
+          onValueChange={([val]) =>
+            onMaxPriceLocalChange(val >= 2000 ? "" : String(val))
+          }
+          showTooltip
+          tooltipContent={(v) =>
+            v >= 2000 ? "₺2.000+" : `₺${v.toLocaleString("tr-TR")}`
+          }
           disabled={isLoading}
+          aria-label="Maksimum ücret filtresi"
         />
       </div>
 

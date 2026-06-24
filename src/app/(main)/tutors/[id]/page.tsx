@@ -15,6 +15,7 @@ import { LessonRequestModal } from "@/components/tutors/LessonRequestModal";
 import { BookingModal } from "@/components/lessons/BookingModal";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { Button } from "@/components/ui/button";
+import { OriginButton } from "@/components/ui/origin-button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
@@ -171,9 +172,10 @@ export default function TutorProfilePage({
         <div className="lg:col-span-2 space-y-4">
           <div className="flex gap-4">
             <Avatar className="h-24 w-24 shrink-0">
-              {tutor.profile_picture ? (
-                <AvatarImage src={tutor.profile_picture} alt={`${tutor.name} ${tutor.surname}`} />
-              ) : null}
+              <AvatarImage
+                src={tutor.profile_picture || '/images/demo-teacher.jpg'}
+                alt={`${tutor.name} ${tutor.surname}`}
+              />
               <AvatarFallback className="bg-primary/10 text-primary text-2xl font-medium">
                 {getInitials(tutor.name, tutor.surname)}
               </AvatarFallback>
@@ -249,12 +251,12 @@ export default function TutorProfilePage({
                     >
                       Ders Talebi Gönder
                     </Button>
-                    <Button
+                    <OriginButton
                       className="w-full"
                       onClick={() => setIsBookingModalOpen(true)}
                     >
                       Rezervasyon Yap
-                    </Button>
+                    </OriginButton>
                   </>
                 )}
                 {isAuthenticated && isStudent && !isOwnProfile && requestSent && !bookingComplete && (
@@ -272,12 +274,12 @@ export default function TutorProfilePage({
                         Mesajlar
                       </Link>
                     </Button>
-                    <Button
+                    <OriginButton
                       className="w-full mt-2"
                       onClick={() => setIsBookingModalOpen(true)}
                     >
                       Rezervasyon Yap
-                    </Button>
+                    </OriginButton>
                   </div>
                 )}
                 {isAuthenticated && isStudent && !isOwnProfile && bookingComplete && (

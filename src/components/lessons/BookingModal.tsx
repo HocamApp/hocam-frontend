@@ -390,12 +390,10 @@ export function BookingModal({
             <>
               <div className="flex items-center gap-3">
                 <Avatar className="h-10 w-10">
-                  {tutor.profile_picture ? (
-                    <AvatarImage
-                      src={tutor.profile_picture}
-                      alt={`${tutor.name} ${tutor.surname}`}
-                    />
-                  ) : null}
+                  <AvatarImage
+                    src={tutor.profile_picture || '/images/demo-teacher.jpg'}
+                    alt={`${tutor.name} ${tutor.surname}`}
+                  />
                   <AvatarFallback className="bg-primary/10 text-primary">
                     {getInitials(tutor.name, tutor.surname)}
                   </AvatarFallback>
