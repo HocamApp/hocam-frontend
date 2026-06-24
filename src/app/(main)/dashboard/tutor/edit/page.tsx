@@ -51,6 +51,7 @@ const editSchema = z.object({
     .refine((v) => !isNaN(Number(v)) && Number(v) > 0, {
       message: "Ücret pozitif olmalıdır",
     }),
+  intro_video_url: z.string().optional(),
   bio: z.string().optional(),
 });
 
@@ -83,6 +84,7 @@ function TutorProfileEditContent() {
       department: "",
       yks_rank: "",
       hourly_price: "",
+      intro_video_url: "",
       bio: "",
     },
     mode: "onSubmit",
@@ -95,6 +97,7 @@ function TutorProfileEditContent() {
         department: profile.department ?? "",
         yks_rank: profile.yks_rank != null ? String(profile.yks_rank) : "",
         hourly_price: profile.hourly_price != null ? String(profile.hourly_price) : "",
+        intro_video_url: profile.intro_video_url ?? "",
         bio: profile.bio ?? "",
       });
       setSelectedSubjectIds(profile.subjects.map((s) => s.id));
@@ -135,6 +138,7 @@ function TutorProfileEditContent() {
         department: parsed.data.department,
         yks_rank: Number(parsed.data.yks_rank),
         hourly_price: parsed.data.hourly_price,
+        intro_video_url: parsed.data.intro_video_url ?? "",
         bio: parsed.data.bio ?? "",
         subject_ids: selectedSubjectIds,
       });
@@ -152,6 +156,7 @@ function TutorProfileEditContent() {
           department: "department",
           yks_rank: "yks_rank",
           hourly_price: "hourly_price",
+          intro_video_url: "intro_video_url",
           bio: "bio",
         };
         let hasFieldError = false;
@@ -288,6 +293,23 @@ function TutorProfileEditContent() {
                       <Textarea
                         rows={4}
                         placeholder="Kendinden, eğitim tarzından ve öğrencilerine neler kazandırabileceğinden bahset..."
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="intro_video_url"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>YouTube Tanıtım Videosu</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="https://www.youtube.com/watch?v=..."
                         {...field}
                       />
                     </FormControl>

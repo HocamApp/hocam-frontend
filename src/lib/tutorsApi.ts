@@ -67,6 +67,7 @@ export async function createTutorProfile(
 export interface UpdateTutorProfilePayload {
   bio?: string;
   hourly_price?: string;
+  intro_video_url?: string;
   university?: string;
   department?: string;
   yks_rank?: number;
@@ -77,5 +78,18 @@ export async function updateMyTutorProfile(
   payload: UpdateTutorProfilePayload
 ): Promise<TutorProfile> {
   const response = await api.patch<TutorProfile>("/tutors/me/", payload);
+  return response.data;
+}
+
+export async function uploadTutorProfilePicture(
+  file: File
+): Promise<TutorProfile> {
+  const formData = new FormData();
+  formData.append("profile_picture", file);
+  const response = await api.post<TutorProfile>(
+    "/tutors/me/profile-picture/",
+    formData,
+    { headers: { "Content-Type": "multipart/form-data" } }
+  );
   return response.data;
 }

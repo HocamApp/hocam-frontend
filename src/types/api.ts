@@ -34,6 +34,7 @@ export interface TutorProfile {
   name: string;
   surname: string;
   profile_picture: string;
+  intro_video_url: string;
   bio: string;
   university: string;
   department: string;
@@ -67,6 +68,8 @@ export interface Booking {
   price: number;
   status: "pending" | "confirmed" | "completed" | "cancelled";
   lesson_request: string | null;
+  room_url?: string;
+  daily_room_name?: string;
   created_at: string;
 }
 
