@@ -18,6 +18,7 @@ export interface TutorFilters {
   exam_type?: string;
   university?: string;
   min_rating?: string;
+  min_price?: string;
   max_price?: string;
   is_verified?: string;
   yks_rank_max?: string;

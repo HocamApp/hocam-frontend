@@ -1,10 +1,14 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useCallback } from "react";
 import { Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Slider } from "@/components/ui/slider";
+import {
+  PriceRangeSlider,
+  priceTupleToFilters,
+  filtersToPriceTuple,
+} from "@/components/tutors/PriceRangeSlider";
 import {
   Select,
   SelectContent,
@@ -27,16 +31,16 @@ function FilterPanelContent({
   filters,
   subjects,
   onFiltersChange,
-  maxPriceLocal,
-  onMaxPriceLocalChange,
+  priceValue,
+  onPriceCommit,
   isMobile,
   isLoading,
 }: {
   filters: TutorFiltersType;
   subjects: Subject[];
   onFiltersChange: (filters: TutorFiltersType) => void;
-  maxPriceLocal: string;
-  onMaxPriceLocalChange: (v: string) => void;
+  priceValue: [number, number];
+  onPriceCommit: (value: [number, number]) => void;
   isMobile: boolean;
   isLoading: boolean;
 }) {
@@ -44,12 +48,12 @@ function FilterPanelContent({
     (filters.subject ?? "") !== "" ||
     (filters.exam_type ?? "") !== "" ||
     (filters.min_rating ?? "") !== "" ||
+    (filters.min_price ?? "") !== "" ||
     (filters.max_price ?? "") !== "" ||
     (filters.is_verified ?? "") !== "" ||
     (filters.ordering ?? "rating") !== "rating";
 
   const handleClear = () => {
-    onMaxPriceLocalChange("");
     onFiltersChange({});
   };
 
@@ -112,31 +116,11 @@ function FilterPanelContent({
         </Select>
       </div>
 
-      <div className="space-y-3">
-        <Label className="tabular-nums">
-          Maksimum ücret:{" "}
-          <span className="font-semibold">
-            {maxPriceLocal
-              ? `₺${Number(maxPriceLocal).toLocaleString("tr-TR")}`
-              : "₺2.000+ (Tümü)"}
-          </span>
-        </Label>
-        <Slider
-          min={100}
-          max={2000}
-          step={50}
-          value={[maxPriceLocal ? Number(maxPriceLocal) : 2000]}
-          onValueChange={([val]) =>
-            onMaxPriceLocalChange(val >= 2000 ? "" : String(val))
-          }
-          showTooltip
-          tooltipContent={(v) =>
-            v >= 2000 ? "₺2.000+" : `₺${v.toLocaleString("tr-TR")}`
-          }
-          disabled={isLoading}
-          aria-label="Maksimum ücret filtresi"
-        />
-      </div>
+      <PriceRangeSlider
+        value={priceValue}
+        onValueCommit={onPriceCommit}
+        disabled={isLoading}
+      />
 
       <div className="space-y-2">
         <Label>Sadece onaylı hocalar</Label>
@@ -189,30 +173,23 @@ export function TutorFilters({
   onFiltersChange,
   isLoading,
 }: TutorFiltersProps) {
-  const [maxPriceLocal, setMaxPriceLocal] = useState(filters.max_price ?? "");
   const [sheetOpen, setSheetOpen] = useState(false);
-  const filtersRef = useRef(filters);
-  filtersRef.current = filters;
 
-  // Debounce max_price: sync local -> filters after 500ms
-  useEffect(() => {
-    if ((filtersRef.current.max_price ?? "") === maxPriceLocal) return;
-    const t = setTimeout(() => {
-      onFiltersChange({ ...filtersRef.current, max_price: maxPriceLocal });
-    }, 500);
-    return () => clearTimeout(t);
-  }, [maxPriceLocal, onFiltersChange]);
-
-  // When filters.max_price is set externally (e.g. URL), sync to local
-  useEffect(() => {
-    setMaxPriceLocal(filters.max_price ?? "");
-  }, [filters.max_price]);
+  const priceValue = filtersToPriceTuple(filters.min_price, filters.max_price);
 
   const handleFiltersChange = useCallback(
     (newFilters: TutorFiltersType) => {
       onFiltersChange({ ...newFilters, ordering: newFilters.ordering || "rating" });
     },
     [onFiltersChange]
+  );
+
+  // Commit price changes without closing the mobile Sheet.
+  const onPriceCommit = useCallback(
+    (tuple: [number, number]) => {
+      handleFiltersChange({ ...filters, ...priceTupleToFilters(tuple) });
+    },
+    [filters, handleFiltersChange]
   );
 
   return (
@@ -223,8 +200,8 @@ export function TutorFilters({
           filters={filters}
           subjects={subjects}
           onFiltersChange={handleFiltersChange}
-          maxPriceLocal={maxPriceLocal}
-          onMaxPriceLocalChange={setMaxPriceLocal}
+          priceValue={priceValue}
+          onPriceCommit={onPriceCommit}
           isMobile={false}
           isLoading={isLoading}
         />
@@ -251,8 +228,8 @@ export function TutorFilters({
                   handleFiltersChange(f);
                   setSheetOpen(false);
                 }}
-                maxPriceLocal={maxPriceLocal}
-                onMaxPriceLocalChange={setMaxPriceLocal}
+                priceValue={priceValue}
+                onPriceCommit={onPriceCommit}
                 isMobile={true}
                 isLoading={isLoading}
               />

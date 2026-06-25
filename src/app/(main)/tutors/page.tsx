@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect, Suspense } from "react";
+import { useState, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -13,7 +13,12 @@ import {
 import { Label } from "@/components/ui/label";
 import { fetchTutors, fetchSubjects, type TutorFilters as TutorFiltersType } from "@/lib/tutorsApi";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Slider } from "@/components/ui/slider";
+import {
+  PriceRangeSlider,
+  priceRangeLabel,
+  priceTupleToFilters,
+  filtersToPriceTuple,
+} from "@/components/tutors/PriceRangeSlider";
 import { TutorCard } from "@/components/tutors/TutorCard";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
@@ -27,6 +32,7 @@ function filtersFromSearchParams(searchParams: URLSearchParams): TutorFiltersTyp
   const subject = searchParams.get("subject");
   const exam_type = searchParams.get("exam_type");
   const min_rating = searchParams.get("min_rating");
+  const min_price = searchParams.get("min_price");
   const max_price = searchParams.get("max_price");
   const university = searchParams.get("university");
   const yks_rank_max = searchParams.get("yks_rank_max");
@@ -36,6 +42,7 @@ function filtersFromSearchParams(searchParams: URLSearchParams): TutorFiltersTyp
     ...(subject != null && subject !== "" && { subject }),
     ...(exam_type != null && exam_type !== "" && { exam_type }),
     ...(min_rating != null && min_rating !== "" && { min_rating }),
+    ...(min_price != null && min_price !== "" && { min_price }),
     ...(max_price != null && max_price !== "" && { max_price }),
     ...(university != null && university !== "" && { university }),
     ...(yks_rank_max != null && yks_rank_max !== "" && { yks_rank_max }),
@@ -49,6 +56,7 @@ function searchParamsFromFilters(filters: TutorFiltersType): URLSearchParams {
   if (filters.subject) p.set("subject", filters.subject);
   if (filters.exam_type) p.set("exam_type", filters.exam_type);
   if (filters.min_rating) p.set("min_rating", filters.min_rating);
+  if (filters.min_price) p.set("min_price", filters.min_price);
   if (filters.max_price) p.set("max_price", filters.max_price);
   if (filters.university) p.set("university", filters.university);
   if (filters.yks_rank_max) p.set("yks_rank_max", filters.yks_rank_max);
@@ -88,15 +96,7 @@ function TutorsPageContent() {
     return { ...fromUrl, ordering: fromUrl.ordering || "rating" };
   });
   const [searchLocal, setSearchLocal] = useState(filters.search ?? "");
-  const [maxPriceLocal, setMaxPriceLocal] = useState(filters.max_price ?? "");
   const [universityLocal, setUniversityLocal] = useState(filters.university ?? "");
-  const [pricePopoverDraft, setPricePopoverDraft] = useState<number>(
-    filters.max_price ? Number(filters.max_price) : 2000,
-  );
-
-  useEffect(() => {
-    setPricePopoverDraft(maxPriceLocal ? Number(maxPriceLocal) : 2000);
-  }, [maxPriceLocal]);
 
   const setFilters = useCallback(
     (newFilters: TutorFiltersType) => {
@@ -119,7 +119,6 @@ function TutorsPageContent() {
 
   const handleClearFilters = useCallback(() => {
     setSearchLocal("");
-    setMaxPriceLocal("");
     setUniversityLocal("");
     handleFiltersChange({});
   }, [handleFiltersChange]);
@@ -144,6 +143,7 @@ function TutorsPageContent() {
     (filters.subject ?? "") !== "" ||
     (filters.exam_type ?? "") !== "" ||
     (filters.min_rating ?? "") !== "" ||
+    (filters.min_price ?? "") !== "" ||
     (filters.max_price ?? "") !== "" ||
     (filters.university ?? "") !== "" ||
     (filters.yks_rank_max ?? "") !== "" ||
@@ -282,37 +282,19 @@ function TutorsPageContent() {
                   className="w-full justify-start font-normal"
                   disabled={subjectsLoading || tutorsLoading}
                 >
-                  {maxPriceLocal
-                    ? `Maks. ₺${Number(maxPriceLocal).toLocaleString("tr-TR")}`
-                    : "Tümü"}
+                  {priceRangeLabel(
+                    filtersToPriceTuple(filters.min_price, filters.max_price),
+                  )}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-[280px] p-4" align="start">
-                <div className="space-y-3">
-                  <Label className="tabular-nums">
-                    {pricePopoverDraft >= 2000
-                      ? "₺2.000+ (Tümü)"
-                      : `Maks. ₺${pricePopoverDraft.toLocaleString("tr-TR")}`}
-                  </Label>
-                  <Slider
-                    min={100}
-                    max={2000}
-                    step={50}
-                    value={[pricePopoverDraft]}
-                    onValueChange={([val]) => setPricePopoverDraft(val)}
-                    onValueCommit={([val]) => {
-                      const value = val >= 2000 ? "" : String(val);
-                      setMaxPriceLocal(value);
-                      handleFiltersChange({ ...filters, max_price: value });
-                    }}
-                    showTooltip
-                    tooltipContent={(v) =>
-                      v >= 2000 ? "₺2.000+" : `₺${v.toLocaleString("tr-TR")}`
-                    }
-                    disabled={tutorsLoading}
-                    aria-label="Maksimum ücret filtresi"
-                  />
-                </div>
+                <PriceRangeSlider
+                  value={filtersToPriceTuple(filters.min_price, filters.max_price)}
+                  onValueCommit={(t) =>
+                    handleFiltersChange({ ...filters, ...priceTupleToFilters(t) })
+                  }
+                  disabled={tutorsLoading}
+                />
               </PopoverContent>
             </Popover>
           </div>
