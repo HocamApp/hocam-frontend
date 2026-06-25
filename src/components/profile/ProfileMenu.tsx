@@ -122,7 +122,6 @@ export function ProfileMenu() {
     toast.info("Bu özellik yakında eklenecek.");
   };
 
-  const dashboardHref = role === "tutor" ? "/dashboard/tutor" : "/dashboard/student";
   const editHref = role === "tutor" ? "/dashboard/tutor/edit" : "/dashboard/student";
 
   const handleNotificationToggle = async (
@@ -227,29 +226,29 @@ export function ProfileMenu() {
               label="Yaklaşan dersler"
               badgeCount={stats?.upcoming_lessons_count}
               showChevron
-              onClick={() => go(dashboardHref)}
+              onClick={() => go("/profile/lessons/upcoming")}
             />
             <ProfileMenuRow
               icon={<BookOpen className="h-4 w-4" />}
               label="Onay bekleyen rezervasyonlar"
               badgeCount={stats?.pending_bookings_count}
               showChevron
-              onClick={() => go(dashboardHref)}
+              onClick={() => go("/profile/reservations/pending")}
             />
             <ProfileMenuRow
               icon={<CalendarClock className="h-4 w-4" />}
               label="Geçmiş dersler"
               showChevron
-              onClick={() => go(dashboardHref)}
+              onClick={() => go("/profile/lessons/history")}
             />
             <ProfileMenuRow
               icon={<Star className="h-4 w-4" />}
               label="Değerlendirme bekleyenler"
               badgeCount={stats?.pending_reviews_count}
               showChevron
-              onClick={() => go(dashboardHref)}
+              onClick={() => go("/profile/reviews/pending")}
             />
-            <Button className="w-full" onClick={() => go(dashboardHref)}>
+            <Button className="w-full" onClick={() => go("/profile/calendar")}>
               Ders Takvimine Git
             </Button>
           </ProfileAccordionSection>
