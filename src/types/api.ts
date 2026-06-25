@@ -143,3 +143,52 @@ export interface PasswordResetConfirmRequest {
   new_password: string;
   password_confirm: string;
 }
+
+export interface UserPreferences {
+  dark_mode: boolean;
+  notify_messages: boolean;
+  notify_lesson_requests: boolean;
+  notify_booking_reminders: boolean;
+  notify_email: boolean;
+}
+
+export interface ProfileStats {
+  upcoming_lessons_count: number;
+  pending_bookings_count: number;
+  pending_reviews_count: number;
+}
+
+export interface ProfileTutor {
+  id: string;
+  name: string;
+  surname: string;
+  profile_picture: string;
+  university: string;
+  department: string;
+  hourly_price: number;
+  intro_video_url: string;
+  subjects: Subject[];
+  availability: Array<{
+    day_of_week: number;
+    start_time: string;
+    end_time: string;
+  }>;
+}
+
+export interface ProfileStudent {
+  id: string;
+  name: string;
+  surname: string;
+  grade: string;
+  school: string;
+  target_exam_type: string;
+  target_rank: number | null;
+  bio: string;
+}
+
+export interface ProfileMeResponse {
+  user: { id: string; role: "student" | "tutor" };
+  profile: ProfileTutor | ProfileStudent | null;
+  preferences: UserPreferences;
+  stats: ProfileStats;
+}

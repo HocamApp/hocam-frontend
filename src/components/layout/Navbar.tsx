@@ -13,16 +13,12 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { ProfileMenu } from "@/components/profile/ProfileMenu";
 import { cn } from "@/lib/utils";
-
-function truncateEmail(email: string, maxLen = 20): string {
-  if (email.length <= maxLen) return email;
-  return email.slice(0, maxLen) + "...";
-}
 
 export function Navbar() {
   const pathname = usePathname();
-  const { user, isAuthenticated, isStudent, isTutor, isLoading, logout } = useAuth();
+  const { isAuthenticated, isStudent, isTutor, isLoading, logout } = useAuth();
   const [open, setOpen] = useState(false);
 
   const linkClass = (path: string) =>
@@ -66,12 +62,10 @@ export function Navbar() {
           <Link href="/dashboard/student" className={linkClass("/dashboard/student")}>
             Panom
           </Link>
-          <span className="text-sm text-muted-foreground max-w-[120px] truncate">
-            {user?.email ? truncateEmail(user.email) : ""}
-          </span>
           <Button variant="ghost" onClick={logout}>
             Çıkış
           </Button>
+          <ProfileMenu />
         </>
       )}
       {!isLoading && isAuthenticated && isTutor && (
@@ -85,12 +79,10 @@ export function Navbar() {
           <Link href="/dashboard/tutor" className={linkClass("/dashboard/tutor")}>
             Panom
           </Link>
-          <span className="text-sm text-muted-foreground max-w-[120px] truncate">
-            {user?.email ? truncateEmail(user.email) : ""}
-          </span>
           <Button variant="ghost" onClick={logout}>
             Çıkış
           </Button>
+          <ProfileMenu />
         </>
       )}
     </>
@@ -122,9 +114,6 @@ export function Navbar() {
           <Link href="/dashboard/student" onClick={() => setOpen(false)} className={linkClass("/dashboard/student")}>
             Panom
           </Link>
-          <span className="text-sm text-muted-foreground py-2">
-            {user?.email ? truncateEmail(user.email) : ""}
-          </span>
           <Button variant="ghost" className="justify-start" onClick={() => { logout(); setOpen(false); }}>
             Çıkış
           </Button>
@@ -141,9 +130,6 @@ export function Navbar() {
           <Link href="/dashboard/tutor" onClick={() => setOpen(false)} className={linkClass("/dashboard/tutor")}>
             Panom
           </Link>
-          <span className="text-sm text-muted-foreground py-2">
-            {user?.email ? truncateEmail(user.email) : ""}
-          </span>
           <Button variant="ghost" className="justify-start" onClick={() => { logout(); setOpen(false); }}>
             Çıkış
           </Button>
@@ -157,15 +143,6 @@ export function Navbar() {
       <nav className="flex h-full items-center justify-between px-4">
         <div className="flex items-center gap-6">
           {leftBrand}
-          {/* Desktop: show Hoca Bul / Dersler next to brand when not loading */}
-          {!isLoading && (
-            <Link
-              href="/tutors"
-              className={cn("hidden md:inline-block", linkClass("/tutors"))}
-            >
-              {isTutor ? "Dersler" : "Hoca Bul"}
-            </Link>
-          )}
         </div>
 
         {/* Desktop right */}
@@ -173,8 +150,9 @@ export function Navbar() {
           {rightContent}
         </div>
 
-        {/* Mobile: hamburger + Sheet from left */}
-        <div className="flex items-center gap-2 md:hidden">
+        {/* Mobile: profile avatar (if signed in) + hamburger Sheet */}
+        <div className="flex items-center gap-1 md:hidden">
+          {!isLoading && isAuthenticated && <ProfileMenu />}
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" aria-label="Menüyü aç">
