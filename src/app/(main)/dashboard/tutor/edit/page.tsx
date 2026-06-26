@@ -198,8 +198,11 @@ function TutorProfileEditContent() {
     );
   }
 
-  const tytSubjects = subjects.filter((s) => s.exam_type === "TYT");
-  const aytSubjects = subjects.filter((s) => s.exam_type === "AYT");
+  const EXAM_ORDER = ["TYT", "AYT", "DGS", "KPSS"] as const;
+  const subjectGroups = EXAM_ORDER.map((exam) => ({
+    exam,
+    items: subjects.filter((s) => s.exam_type === exam),
+  })).filter((group) => group.items.length > 0);
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-10">
@@ -324,11 +327,11 @@ function TutorProfileEditContent() {
                   <p className="text-sm text-muted-foreground">Dersler yükleniyor...</p>
                 ) : (
                   <div className="space-y-3">
-                    {tytSubjects.length > 0 && (
-                      <div>
-                        <p className="mb-1 text-xs text-muted-foreground">TYT</p>
+                    {subjectGroups.map((group) => (
+                      <div key={group.exam}>
+                        <p className="mb-1 text-xs text-muted-foreground">{group.exam}</p>
                         <div className="flex flex-wrap gap-2">
-                          {tytSubjects.map((s) => (
+                          {group.items.map((s) => (
                             <button
                               key={s.id}
                               type="button"
@@ -345,29 +348,7 @@ function TutorProfileEditContent() {
                           ))}
                         </div>
                       </div>
-                    )}
-                    {aytSubjects.length > 0 && (
-                      <div>
-                        <p className="mb-1 text-xs text-muted-foreground">AYT</p>
-                        <div className="flex flex-wrap gap-2">
-                          {aytSubjects.map((s) => (
-                            <button
-                              key={s.id}
-                              type="button"
-                              onClick={() => toggleSubject(s.id)}
-                              className={cn(
-                                "rounded-full border px-3 py-1 text-sm transition-colors",
-                                selectedSubjectIds.includes(s.id)
-                                  ? "border-primary bg-primary text-primary-foreground"
-                                  : "border-border hover:bg-muted"
-                              )}
-                            >
-                              {s.name}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
+                    ))}
                     {selectedSubjectIds.length > 0 && (
                       <p className="text-xs text-muted-foreground">
                         {selectedSubjectIds.length} ders seçildi

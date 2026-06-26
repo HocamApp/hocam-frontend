@@ -1,5 +1,17 @@
 import api from "./api";
-import { AuthResponse, LoginRequest, PasswordResetConfirmRequest, PasswordResetRequest, RegisterRequest, User } from "@/types";
+import { AuthResponse, GoogleAuthResponse, LoginRequest, PasswordResetConfirmRequest, PasswordResetRequest, RegisterRequest, User } from "@/types";
+
+export interface GoogleAuthPayload {
+  credential: string;
+  role?: "student" | "tutor";
+}
+
+export async function googleAuth(
+  payload: GoogleAuthPayload
+): Promise<GoogleAuthResponse> {
+  const response = await api.post<GoogleAuthResponse>("/auth/google/", payload);
+  return response.data;
+}
 
 export async function registerUser(
   data: RegisterRequest

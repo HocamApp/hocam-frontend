@@ -94,6 +94,8 @@ function FilterPanelContent({
             <SelectItem value="__all__">Tüm sınavlar</SelectItem>
             <SelectItem value="TYT">TYT</SelectItem>
             <SelectItem value="AYT">AYT</SelectItem>
+            <SelectItem value="DGS">DGS</SelectItem>
+            <SelectItem value="KPSS">KPSS</SelectItem>
           </SelectContent>
         </Select>
       </div>

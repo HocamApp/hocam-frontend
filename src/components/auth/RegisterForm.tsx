@@ -1,14 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import axios from "axios";
+import Cookies from "js-cookie";
 import { useAuth } from "@/hooks/useAuth";
-import { registerUser } from "@/lib/authApi";
+import { fetchMe, googleAuth, registerUser } from "@/lib/authApi";
+import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 import { AuthResponse } from "@/types";
 import { ApiError } from "@/types";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
@@ -131,6 +133,32 @@ export function RegisterForm({
       }
     }
   };
+
+  const handleGoogleCredential = useCallback(
+    async (credential: string) => {
+      setGeneralError(null);
+      const selectedRole =
+        form.getValues("role") === "tutor" ? "tutor" : "student";
+      try {
+        const resp = await googleAuth({ credential, role: selectedRole });
+        if ("needs_role" in resp) {
+          setGeneralError("Kayıt tamamlanamadı. Lütfen tekrar deneyin.");
+          return;
+        }
+        Cookies.set("auth_token", resp.token, { expires: 7 });
+        const me = await fetchMe();
+        setAuth(me, resp.token);
+        if (me.role === "tutor") {
+          router.push(me.tutor_profile_id ? "/dashboard/tutor" : "/tutor/setup");
+        } else {
+          router.push("/dashboard/student");
+        }
+      } catch {
+        setGeneralError("Google ile kayıt başarısız oldu. Lütfen tekrar deneyin.");
+      }
+    },
+    [form, router, setAuth]
+  );
 
   if (isLoading) {
     return (
@@ -305,6 +333,15 @@ export function RegisterForm({
           </button>
         </form>
       </Form>
+
+      <div className="relative flex items-center justify-center">
+        <span className="w-full border-t border-white/10" />
+        <span className="absolute bg-neutral-950 px-4 text-sm text-neutral-400">
+          veya devam et
+        </span>
+      </div>
+
+      <GoogleSignInButton onCredential={handleGoogleCredential} text="signup_with" />
 
       <p className="animate-element animate-delay-800 text-center text-sm text-neutral-400">
         Zaten hesabın var mı?{" "}

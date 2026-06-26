@@ -168,8 +168,11 @@ export default function TutorProfilePage({
   });
 
   const isOwnProfile = !!tutor && !!user && user.id === tutor.user;
-  const tytSubjects = tutor?.subjects?.filter((s) => s.exam_type === "TYT") ?? [];
-  const aytSubjects = tutor?.subjects?.filter((s) => s.exam_type === "AYT") ?? [];
+  const EXAM_ORDER = ["TYT", "AYT", "DGS", "KPSS"] as const;
+  const subjectGroups = EXAM_ORDER.map((exam) => ({
+    exam,
+    items: (tutor?.subjects ?? []).filter((s) => s.exam_type === exam),
+  })).filter((group) => group.items.length > 0);
   const introVideoEmbedUrl = getYouTubeEmbedUrl(tutor?.intro_video_url);
   const displayReviews = Array.isArray(reviews)
     ? reviewsExpanded ? reviews : reviews.slice(0, 5)
@@ -358,30 +361,20 @@ export default function TutorProfilePage({
           <p className="mt-4 text-muted-foreground">Henüz ders eklenmemiş</p>
         ) : (
           <div className="mt-4 space-y-4">
-            {tytSubjects.length > 0 && (
-              <div>
-                <h3 className="text-sm font-medium text-muted-foreground">TYT Dersleri</h3>
+            {subjectGroups.map((group) => (
+              <div key={group.exam}>
+                <h3 className="text-sm font-medium text-muted-foreground">
+                  {group.exam} Dersleri
+                </h3>
                 <div className="mt-2 flex flex-wrap gap-2">
-                  {tytSubjects.map((s) => (
+                  {group.items.map((s) => (
                     <Badge key={s.id} variant="secondary" className="py-1.5 px-3">
                       {s.name}
                     </Badge>
                   ))}
                 </div>
               </div>
-            )}
-            {aytSubjects.length > 0 && (
-              <div>
-                <h3 className="text-sm font-medium text-muted-foreground">AYT Dersleri</h3>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {aytSubjects.map((s) => (
-                    <Badge key={s.id} variant="secondary" className="py-1.5 px-3">
-                      {s.name}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            )}
+            ))}
           </div>
         )}
       </section>

@@ -22,11 +22,25 @@ export interface RegisterRequest {
   role: "student" | "tutor";
 }
 
+export type ExamType = "TYT" | "AYT" | "DGS" | "KPSS";
+
 export interface Subject {
   id: string;
   name: string;
-  exam_type: "TYT" | "AYT";
+  exam_type: ExamType;
 }
+
+export interface GoogleAuthSuccess {
+  token: string;
+  user: { id: string; email: string; role: "student" | "tutor" };
+}
+
+export interface GoogleAuthNeedsRole {
+  needs_role: true;
+  email: string;
+}
+
+export type GoogleAuthResponse = GoogleAuthSuccess | GoogleAuthNeedsRole;
 
 export interface TutorProfile {
   id: string;
