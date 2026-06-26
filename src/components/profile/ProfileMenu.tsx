@@ -72,6 +72,7 @@ export function ProfileMenu() {
   const queryClient = useQueryClient();
   const { user, isAuthenticated, logout } = useAuth();
   const [open, setOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState<string | null>(null);
   const [theme, setThemeState] = useState<Theme>("light");
   const [prefOverrides, setPrefOverrides] = useState<Partial<UserPreferences>>({});
 
@@ -146,6 +147,36 @@ export function ProfileMenu() {
     updateProfileMe({ preferences: { dark_mode: next } }).catch(() => undefined);
   };
 
+  // Single-open connected accordion: one active section key (null = all collapsed).
+  // Role-aware key order must mirror the rendered sections below so the group math
+  // (marginTop + corner radius) lines up with the visible rows.
+  const sectionKeys = useMemo(
+    () => [
+      "profile",
+      "lessons",
+      "security",
+      "notifications",
+      ...(tutor ? ["tutor"] : []),
+      "advanced",
+    ],
+    [tutor]
+  );
+  const activeIndex = sectionKeys.indexOf(activeSection ?? "");
+
+  const sectionProps = (key: string) => {
+    const index = sectionKeys.indexOf(key);
+    const isOpen = activeSection === key;
+    const previousIsOpen = activeIndex === index - 1;
+    const nextIsOpen = activeIndex === index + 1;
+    return {
+      open: isOpen,
+      onToggle: () => setActiveSection((curr) => (curr === key ? null : key)),
+      startsGroup: isOpen || index === 0 || previousIsOpen,
+      endsGroup: isOpen || index === sectionKeys.length - 1 || nextIsOpen,
+      separatedFromPrevious: index > 0 && (isOpen || previousIsOpen),
+    };
+  };
+
   if (!isAuthenticated) return null;
 
   return (
@@ -171,11 +202,12 @@ export function ProfileMenu() {
         sideOffset={10}
         className="w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-border bg-background p-0 shadow-xl sm:w-[440px]"
       >
-        <div className="max-h-[min(80vh,640px)] overflow-y-auto">
+        <div className="max-h-[min(80vh,640px)] overflow-y-auto p-3">
           {/* ---- Profil Detayları ---- */}
           <ProfileAccordionSection
             icon={<UserCog className="h-4 w-4" />}
             title="Profil Detayları"
+            {...sectionProps("profile")}
           >
             <div className="flex items-center gap-3">
               <Avatar className="h-14 w-14 border border-border">
@@ -218,6 +250,7 @@ export function ProfileMenu() {
           <ProfileAccordionSection
             icon={<CalendarClock className="h-4 w-4" />}
             title="Dersler ve Rezervasyonlar"
+            {...sectionProps("lessons")}
           >
             <ProfileMenuRow
               icon={<CalendarClock className="h-4 w-4" />}
@@ -255,6 +288,7 @@ export function ProfileMenu() {
           <ProfileAccordionSection
             icon={<ShieldCheck className="h-4 w-4" />}
             title="Güvenlik ve Gizlilik"
+            {...sectionProps("security")}
           >
             <ProfileMenuRow
               icon={<KeyRound className="h-4 w-4" />}
@@ -289,6 +323,7 @@ export function ProfileMenu() {
           <ProfileAccordionSection
             icon={<Bell className="h-4 w-4" />}
             title="Bildirimler"
+            {...sectionProps("notifications")}
           >
             <ProfileToggleRow
               label="Yeni mesajlar"
@@ -317,6 +352,7 @@ export function ProfileMenu() {
             <ProfileAccordionSection
               icon={<GraduationCap className="h-4 w-4" />}
               title="Eğitmen Profili"
+              {...sectionProps("tutor")}
             >
               {tutor.subjects.length > 0 && (
                 <div className="flex flex-wrap gap-1.5">
@@ -382,6 +418,7 @@ export function ProfileMenu() {
           <ProfileAccordionSection
             icon={<UserCog className="h-4 w-4" />}
             title="Gelişmiş Ayarlar"
+            {...sectionProps("advanced")}
           >
             <ProfileToggleRow
               label="Karanlık mod"
