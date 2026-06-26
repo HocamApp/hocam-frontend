@@ -26,6 +26,9 @@ import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import SlidingPagination from "@/components/ui/sliding-pagination";
+
+const PAGE_SIZE = 8;
 
 function filtersFromSearchParams(searchParams: URLSearchParams): TutorFiltersType {
   const search = searchParams.get("search");
@@ -97,11 +100,13 @@ function TutorsPageContent() {
   });
   const [searchLocal, setSearchLocal] = useState(filters.search ?? "");
   const [universityLocal, setUniversityLocal] = useState(filters.university ?? "");
+  const [page, setPage] = useState(1);
 
   const setFilters = useCallback(
     (newFilters: TutorFiltersType) => {
       const merged = { ...newFilters, ordering: newFilters.ordering || "rating" };
       setFiltersState(merged);
+      setPage(1);
       const params = searchParamsFromFilters(merged);
       const query = params.toString();
       const url = query ? `/tutors?${query}` : "/tutors";
@@ -150,6 +155,11 @@ function TutorsPageContent() {
     (filters.ordering ?? "rating") !== "rating";
   const isEmpty = Array.isArray(tutors) && tutors.length === 0;
   const showEmptyState = isEmpty && hasActiveFilters;
+
+  const tutorList = Array.isArray(tutors) ? tutors : [];
+  const totalPages = Math.max(1, Math.ceil(tutorList.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages); // clamp if list shrank
+  const pageTutors = tutorList.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   const content = (
     <>
@@ -399,8 +409,8 @@ function TutorsPageContent() {
           )}
 
           {tutorsLoading && (
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {Array.from({ length: 6 }).map((_, i) => (
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              {Array.from({ length: PAGE_SIZE }).map((_, i) => (
                 <TutorCardSkeleton key={i} />
               ))}
             </div>
@@ -423,11 +433,25 @@ function TutorsPageContent() {
           )}
 
           {!tutorsLoading && !tutorsError && !showEmptyState && Array.isArray(tutors) && (tutors.length > 0) && (
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {tutors.map((tutor) => (
-                <TutorCard key={tutor.id} tutor={tutor} />
-              ))}
-            </div>
+            <>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                {pageTutors.map((tutor) => (
+                  <TutorCard key={tutor.id} tutor={tutor} />
+                ))}
+              </div>
+              {totalPages > 1 && (
+                <div className="mt-8 flex justify-center">
+                  <SlidingPagination
+                    totalPages={totalPages}
+                    currentPage={currentPage}
+                    onPageChange={(p) => {
+                      setPage(p);
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }}
+                  />
+                </div>
+              )}
+            </>
           )}
 
           {!tutorsLoading && !tutorsError && Array.isArray(tutors) && tutors.length === 0 && !hasActiveFilters && (
