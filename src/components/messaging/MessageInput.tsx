@@ -6,6 +6,7 @@ import { Message } from "@/types";
 import { sendMessage } from "@/lib/messagingApi";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { SymbolPicker } from "@/components/messaging/SymbolPicker";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -43,6 +44,11 @@ export function MessageInput({
     }
   };
 
+  const insertSymbol = (symbol: string) => {
+    setText((prev) => prev + symbol);
+    textareaRef.current?.focus();
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -71,6 +77,10 @@ export function MessageInput({
         className={cn(
           "min-h-[40px] max-h-[120px] resize-none overflow-y-auto"
         )}
+      />
+      <SymbolPicker
+        onSelect={insertSymbol}
+        disabled={isSubmitting || disabled}
       />
       <Button
         type="button"
