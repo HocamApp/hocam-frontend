@@ -18,9 +18,10 @@ function formatYksRank(rank: number): string {
 }
 
 export function TutorCard({ tutor }: { tutor: TutorProfile }) {
-  const tytSubjects = tutor.subjects.filter((s) => s.exam_type === "TYT");
-  const aytSubjects = tutor.subjects.filter((s) => s.exam_type === "AYT");
-  const orderedSubjects = [...tytSubjects, ...aytSubjects];
+  const examOrder = ["TYT", "AYT", "DGS", "KPSS"] as const;
+  const orderedSubjects = examOrder.flatMap((exam) =>
+    tutor.subjects.filter((s) => s.exam_type === exam)
+  );
   const visibleSubjects = orderedSubjects.slice(0, 4);
   const remainingCount = orderedSubjects.length - 4;
 
@@ -49,11 +50,6 @@ export function TutorCard({ tutor }: { tutor: TutorProfile }) {
               <p className="text-sm text-muted-foreground">
                 YKS Sıralaması: {formatYksRank(tutor.yks_rank)}
               </p>
-              {tutor.is_verified && (
-                <Badge variant="secondary" className="mt-1 text-xs text-green-700 dark:text-green-400">
-                  ✓ Onaylı
-                </Badge>
-              )}
             </div>
           </div>
 

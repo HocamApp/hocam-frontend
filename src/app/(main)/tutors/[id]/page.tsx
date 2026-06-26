@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 import { Check, MessageSquare, PlayCircle } from "lucide-react";
-import { fetchTutorById, fetchTutorReviews } from "@/lib/tutorsApi";
+import { fetchTutorById, fetchTutorReviews, fetchTutorSubjectRatings } from "@/lib/tutorsApi";
 import { fetchTutorAvailability } from "@/lib/dashboardApi";
 import { useAuth } from "@/hooks/useAuth";
 import { formatPrice, formatRating } from "@/lib/utils";
@@ -158,7 +158,13 @@ export default function TutorProfilePage({
   const { data: reviews, isLoading: reviewsLoading } = useQuery({
     queryKey: ["tutor-reviews", id],
     queryFn: () => fetchTutorReviews(id),
-    enabled: !!tutor && isAuthenticated,
+    enabled: !!tutor,
+  });
+
+  const { data: subjectRatings = [] } = useQuery({
+    queryKey: ["tutor-subject-ratings", id],
+    queryFn: () => fetchTutorSubjectRatings(id),
+    enabled: !!tutor,
   });
 
   const { data: availability = [], isLoading: availabilityLoading } = useQuery({
@@ -217,11 +223,6 @@ export default function TutorProfilePage({
               <h1 className="text-3xl font-bold">
                 {tutor.name} {tutor.surname}
               </h1>
-              {tutor.is_verified && (
-                <Badge className="mt-1 text-green-700 dark:text-green-400" variant="secondary">
-                  ✓ Onaylı Hoca
-                </Badge>
-              )}
               <p className="mt-1 text-lg text-muted-foreground">
                 {tutor.university} · {tutor.department}
               </p>
@@ -425,26 +426,42 @@ export default function TutorProfilePage({
       <section className="mt-10">
         <h2 className="text-xl font-semibold">Değerlendirmeler</h2>
         <Separator className="mt-2" />
-        <div className="mt-4">
-          {!isAuthenticated && (
-            <div className="rounded-lg border p-6 text-center">
-              <p className="text-muted-foreground">Değerlendirmeleri görmek için giriş yapın</p>
-              <Button className="mt-3" asChild>
-                <Link href="/login">Giriş Yap</Link>
-              </Button>
+        <div className="mt-4 space-y-6">
+          {subjectRatings.length > 0 && (
+            <div>
+              <h3 className="mb-2 text-sm font-medium text-muted-foreground">
+                Derslere göre puan
+              </h3>
+              <div className="space-y-2">
+                {subjectRatings.map((sr) => (
+                  <div key={sr.subject.id} className="flex items-center gap-3 text-sm">
+                    <span className="w-40 shrink-0 truncate font-medium">
+                      {sr.subject.name}
+                      <span className="ml-1 text-xs text-muted-foreground">
+                        {sr.subject.exam_type}
+                      </span>
+                    </span>
+                    <Stars rating={sr.average} />
+                    <span className="text-muted-foreground">
+                      {formatRating(sr.average)} ({sr.count})
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
-          {isAuthenticated && reviewsLoading && (
+
+          {reviewsLoading && (
             <div className="space-y-3">
               <ReviewSkeletonCard />
               <ReviewSkeletonCard />
               <ReviewSkeletonCard />
             </div>
           )}
-          {isAuthenticated && !reviewsLoading && Array.isArray(reviews) && reviews.length === 0 && (
+          {!reviewsLoading && Array.isArray(reviews) && reviews.length === 0 && (
             <p className="text-muted-foreground">Henüz değerlendirme yok</p>
           )}
-          {isAuthenticated && !reviewsLoading && Array.isArray(reviews) && reviews.length > 0 && (
+          {!reviewsLoading && Array.isArray(reviews) && reviews.length > 0 && (
             <>
               <div className="mb-6 flex items-baseline gap-4">
                 <span className="text-4xl font-bold">{formatRating(tutor.rating)}</span>

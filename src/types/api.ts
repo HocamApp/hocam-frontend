@@ -114,6 +114,13 @@ export interface Review {
   rating: number;
   comment: string;
   created_at: string;
+  subject?: Subject;
+}
+
+export interface SubjectRating {
+  subject: Subject;
+  average: number;
+  count: number;
 }
 
 export interface PaginatedResponse<T> {

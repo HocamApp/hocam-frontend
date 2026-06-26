@@ -30,7 +30,14 @@ export function ReviewCard({ review }: { review: Review }) {
             {formatDate(review.created_at)}
           </span>
         </div>
-        <p className="text-sm font-medium text-muted-foreground">Öğrenci</p>
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="text-sm font-medium text-muted-foreground">Öğrenci</p>
+          {review.subject && (
+            <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+              {review.subject.name} · {review.subject.exam_type}
+            </span>
+          )}
+        </div>
         <p className="mt-1 text-sm">{review.comment}</p>
       </CardContent>
     </Card>

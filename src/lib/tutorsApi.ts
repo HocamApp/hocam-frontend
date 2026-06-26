@@ -1,5 +1,5 @@
 import api from "./api";
-import { TutorProfile, Subject, Review } from "@/types";
+import { TutorProfile, Subject, Review, SubjectRating } from "@/types";
 
 export interface CreateTutorProfilePayload {
   name: string;
@@ -50,6 +50,15 @@ export async function fetchTutorById(id: string): Promise<TutorProfile> {
 
 export async function fetchTutorReviews(tutorId: string): Promise<Review[]> {
   const response = await api.get<Review[]>(`/tutors/${tutorId}/reviews/`);
+  return response.data;
+}
+
+export async function fetchTutorSubjectRatings(
+  tutorId: string
+): Promise<SubjectRating[]> {
+  const response = await api.get<SubjectRating[]>(
+    `/tutors/${tutorId}/subject-ratings/`
+  );
   return response.data;
 }
 
