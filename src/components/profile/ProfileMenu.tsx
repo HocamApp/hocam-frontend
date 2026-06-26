@@ -176,7 +176,6 @@ export function ProfileMenu() {
           <ProfileAccordionSection
             icon={<UserCog className="h-4 w-4" />}
             title="Profil Detayları"
-            defaultOpen
           >
             <div className="flex items-center gap-3">
               <Avatar className="h-14 w-14 border border-border">
@@ -219,7 +218,6 @@ export function ProfileMenu() {
           <ProfileAccordionSection
             icon={<CalendarClock className="h-4 w-4" />}
             title="Dersler ve Rezervasyonlar"
-            defaultOpen
           >
             <ProfileMenuRow
               icon={<CalendarClock className="h-4 w-4" />}
@@ -257,7 +255,6 @@ export function ProfileMenu() {
           <ProfileAccordionSection
             icon={<ShieldCheck className="h-4 w-4" />}
             title="Güvenlik ve Gizlilik"
-            defaultOpen
           >
             <ProfileMenuRow
               icon={<KeyRound className="h-4 w-4" />}
@@ -292,7 +289,6 @@ export function ProfileMenu() {
           <ProfileAccordionSection
             icon={<Bell className="h-4 w-4" />}
             title="Bildirimler"
-            defaultOpen
           >
             <ProfileToggleRow
               label="Yeni mesajlar"
@@ -321,7 +317,6 @@ export function ProfileMenu() {
             <ProfileAccordionSection
               icon={<GraduationCap className="h-4 w-4" />}
               title="Eğitmen Profili"
-              defaultOpen
             >
               {tutor.subjects.length > 0 && (
                 <div className="flex flex-wrap gap-1.5">
@@ -387,7 +382,6 @@ export function ProfileMenu() {
           <ProfileAccordionSection
             icon={<UserCog className="h-4 w-4" />}
             title="Gelişmiş Ayarlar"
-            defaultOpen
           >
             <ProfileToggleRow
               label="Karanlık mod"
