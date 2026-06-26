@@ -31,7 +31,31 @@ export function MessageBubble({ message, isOwnMessage }: MessageBubbleProps) {
             : "bg-muted text-foreground rounded-tl-sm"
         )}
       >
-        <p className="whitespace-pre-wrap text-sm">{message.message_text}</p>
+        {message.attachment_url && (
+          <a
+            href={message.attachment_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={message.attachment_url}
+              alt="Mesaj eki"
+              className="max-h-64 max-w-full rounded-lg object-contain"
+            />
+          </a>
+        )}
+        {message.message_text && (
+          <p
+            className={cn(
+              "whitespace-pre-wrap text-sm",
+              message.attachment_url && "mt-2"
+            )}
+          >
+            {message.message_text}
+          </p>
+        )}
         <p
           className={cn(
             "mt-1 text-xs opacity-70",

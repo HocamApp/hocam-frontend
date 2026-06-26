@@ -105,6 +105,8 @@ export interface Message {
   sender: string;
   message_text: string;
   created_at: string;
+  attachment_url?: string | null;
+  attachment_content_type?: string;
 }
 
 export interface Review {
