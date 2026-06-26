@@ -6,6 +6,7 @@ import { formatPrice, formatRating } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { TutorPresenceBadge } from "@/components/tutors/TutorPresenceBadge";
 
 function getInitials(name: string, surname: string): string {
   const n = (name || "").trim()[0] || "";
@@ -47,6 +48,7 @@ export function TutorCard({ tutor }: { tutor: TutorProfile }) {
               <p className="text-sm text-muted-foreground">
                 {tutor.university} · {tutor.department}
               </p>
+              <TutorPresenceBadge isOnline={tutor.is_online} className="mt-1" />
               <p className="text-sm text-muted-foreground">
                 YKS Sıralaması: {formatYksRank(tutor.yks_rank)}
               </p>

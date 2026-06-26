@@ -57,6 +57,7 @@ export interface TutorProfile {
   rating: number;
   total_reviews: number;
   is_verified: boolean;
+  is_online: boolean;
   subjects: Subject[];
   created_at: string;
 }

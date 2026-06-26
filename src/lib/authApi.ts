@@ -48,3 +48,8 @@ export async function requestPasswordReset(data: PasswordResetRequest): Promise<
 export async function confirmPasswordReset(data: PasswordResetConfirmRequest): Promise<void> {
   await api.post("/auth/password-reset-confirm/", data);
 }
+
+
+export async function sendPresenceHeartbeat(): Promise<void> {
+  await api.post("/auth/presence/");
+}

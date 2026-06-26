@@ -1,5 +1,6 @@
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
+import { PresenceHeartbeat } from "@/components/shared/PresenceHeartbeat";
 
 export default function MainLayout({
   children,
@@ -9,6 +10,7 @@ export default function MainLayout({
   return (
     <>
       <Navbar />
+      <PresenceHeartbeat />
       <main className="min-h-[calc(100vh-64px)] flex-1">{children}</main>
       <Footer />
     </>

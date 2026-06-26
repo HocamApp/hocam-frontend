@@ -11,6 +11,7 @@ import { fetchTutorAvailability } from "@/lib/dashboardApi";
 import { useAuth } from "@/hooks/useAuth";
 import { formatPrice, formatRating } from "@/lib/utils";
 import { ReviewCard } from "@/components/tutors/ReviewCard";
+import { TutorPresenceBadge } from "@/components/tutors/TutorPresenceBadge";
 import { LessonRequestModal } from "@/components/tutors/LessonRequestModal";
 import { BookingModal } from "@/components/lessons/BookingModal";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
@@ -226,6 +227,7 @@ export default function TutorProfilePage({
               <p className="mt-1 text-lg text-muted-foreground">
                 {tutor.university} · {tutor.department}
               </p>
+              <TutorPresenceBadge isOnline={tutor.is_online} className="mt-2" />
               <p className="text-muted-foreground">
                 YKS Sıralaması: {tutor.yks_rank.toLocaleString("tr-TR")}
               </p>
