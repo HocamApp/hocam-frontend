@@ -200,9 +200,9 @@ export function ProfileMenu() {
       <PopoverContent
         align="end"
         sideOffset={10}
-        className="w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-border bg-background p-0 shadow-xl sm:w-[440px]"
+        className="w-[calc(100vw-2rem)] border-none bg-transparent p-0 shadow-none sm:w-[440px]"
       >
-        <div className="max-h-[min(80vh,640px)] overflow-y-auto p-3">
+        <div className="max-h-[min(80vh,640px)] overflow-y-auto rounded-[32px] bg-background/[0.08] p-3 backdrop-blur-lg">
           {/* ---- Profil Detayları ---- */}
           <ProfileAccordionSection
             icon={<UserCog className="h-4 w-4" />}
