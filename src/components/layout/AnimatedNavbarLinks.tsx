@@ -84,7 +84,7 @@ export function AnimatedNavbarLinks() {
         <span className="relative inline-flex">
           <PopoverTrigger asChild>{node}</PopoverTrigger>
           {descriptor.badge && (
-            <NotificationMark className="pointer-events-none absolute right-1 top-1" />
+            <NotificationMark className="absolute right-0.5 top-0.5" />
           )}
         </span>
         <PopoverContent align="end" className="w-72">
