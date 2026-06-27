@@ -38,7 +38,8 @@ import { BookingCard } from "@/components/lessons/BookingCard";
 import { LessonRequestCard } from "@/components/lessons/LessonRequestCard";
 import { AvailabilityEditor } from "@/components/tutors/AvailabilityEditor";
 import { VerificationForm } from "@/components/tutors/VerificationForm";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
+import { AnimatedTabs } from "@/components/ui/animated-tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -47,6 +48,14 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+
+const TUTOR_TABS = [
+  { value: "profile", label: "Profil" },
+  { value: "requests", label: "Mesaj İstekleri" },
+  { value: "bookings", label: "Rezervasyonlar" },
+  { value: "availability", label: "Müsaitlik" },
+  { value: "verification", label: "Doğrulama" },
+];
 
 const DAY_NAMES = [
   "Pazartesi",
@@ -349,6 +358,7 @@ function TutorDashboardContent() {
   const [introVideoInput, setIntroVideoInput] = useState("");
   const [isSavingVideo, setIsSavingVideo] = useState(false);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const [activeTab, setActiveTab] = useState("profile");
 
   const {
     data: profile,
@@ -675,14 +685,10 @@ function TutorDashboardContent() {
         </Card>
       </div>
 
-      <Tabs defaultValue="profile">
-        <TabsList className="grid h-auto w-full grid-cols-2 gap-1 md:grid-cols-5">
-          <TabsTrigger value="profile">Profil</TabsTrigger>
-          <TabsTrigger value="requests">Mesaj İstekleri</TabsTrigger>
-          <TabsTrigger value="bookings">Rezervasyonlar</TabsTrigger>
-          <TabsTrigger value="availability">Müsaitlik</TabsTrigger>
-          <TabsTrigger value="verification">Doğrulama</TabsTrigger>
-        </TabsList>
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <div className="overflow-x-auto pb-1">
+          <AnimatedTabs tabs={TUTOR_TABS} value={activeTab} onValueChange={setActiveTab} />
+        </div>
 
         <TabsContent value="profile" className="mt-6">
           <ProfileStudio
