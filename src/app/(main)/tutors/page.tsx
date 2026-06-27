@@ -19,12 +19,11 @@ import {
   priceTupleToFilters,
   filtersToPriceTuple,
 } from "@/components/tutors/PriceRangeSlider";
+import { AnimatedSearchBar } from "@/components/tutors/AnimatedSearchBar";
 import { TutorCard } from "@/components/tutors/TutorCard";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
-import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import SlidingPagination from "@/components/ui/sliding-pagination";
 
@@ -198,40 +197,21 @@ function TutorsPageContent() {
 
         {/* Horizontal filter bar */}
         <div className="rounded-lg border bg-card px-4 py-3">
-          <div className="grid gap-4 md:grid-cols-4">
-            {/* Arama */}
-            <div className="space-y-1">
-              <Label className="text-xs uppercase tracking-wide text-muted-foreground">
-                Arama
-              </Label>
-              <div className="flex gap-1">
-                <Input
-                  value={searchLocal}
-                  onChange={(e) => setSearchLocal(e.target.value)}
-                  onBlur={() => handleFiltersChange({ ...filters, search: searchLocal || undefined })}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter")
-                      handleFiltersChange({ ...filters, search: searchLocal || undefined });
-                  }}
-                  placeholder="Hoca veya üniversite ara..."
-                  disabled={tutorsLoading}
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="shrink-0"
-                  aria-label="Ara"
-                  disabled={tutorsLoading}
-                  onClick={() => handleFiltersChange({ ...filters, search: searchLocal || undefined })}
-                >
-                  <Search className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
+          <div className="mb-5 space-y-2">
+            <Label className="text-xs uppercase tracking-wide text-muted-foreground">
+              Arama
+            </Label>
+            <AnimatedSearchBar
+              value={searchLocal}
+              onChange={setSearchLocal}
+              onCommit={(search) => handleFiltersChange({ ...filters, search })}
+              disabled={tutorsLoading}
+            />
+          </div>
 
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-12">
             {/* Sıralama */}
-            <div className="space-y-1">
+            <div className="space-y-1 lg:col-span-3">
               <Label className="text-xs uppercase tracking-wide text-muted-foreground">
                 Sıralama
               </Label>
@@ -253,7 +233,7 @@ function TutorsPageContent() {
             </div>
 
           {/* Sınav */}
-          <div className="space-y-1">
+          <div className="space-y-1 lg:col-span-2">
             <Label className="text-xs uppercase tracking-wide text-muted-foreground">
               Sınav
             </Label>
@@ -278,7 +258,7 @@ function TutorsPageContent() {
           </div>
 
           {/* Ders */}
-          <div className="space-y-1">
+          <div className="space-y-1 lg:col-span-3">
             <Label className="text-xs uppercase tracking-wide text-muted-foreground">
               Ders
             </Label>
@@ -304,7 +284,7 @@ function TutorsPageContent() {
           </div>
 
           {/* Fiyat */}
-          <div className="space-y-1">
+          <div className="space-y-1 lg:col-span-2">
             <Label className="text-xs uppercase tracking-wide text-muted-foreground">
               Fiyat
             </Label>
@@ -333,7 +313,7 @@ function TutorsPageContent() {
           </div>
 
           {/* Puan */}
-          <div className="space-y-1">
+          <div className="space-y-1 lg:col-span-2">
             <Label className="text-xs uppercase tracking-wide text-muted-foreground">
               Min. Puan
             </Label>
@@ -359,7 +339,7 @@ function TutorsPageContent() {
           </div>
 
           {/* YKS Sıralaması */}
-          <div className="space-y-1">
+          <div className="space-y-1 lg:col-span-2">
             <Label className="text-xs uppercase tracking-wide text-muted-foreground">
               YKS Sıralaması
             </Label>
@@ -384,7 +364,7 @@ function TutorsPageContent() {
           </div>
 
           {/* Popüler Üniversiteler */}
-          <div className="space-y-1">
+          <div className="space-y-1 lg:col-span-3">
             <Label className="text-xs uppercase tracking-wide text-muted-foreground">
               Popüler Üniversiteler
             </Label>
@@ -401,7 +381,7 @@ function TutorsPageContent() {
               <SelectTrigger className="h-9 text-sm">
                 <SelectValue placeholder="Popülerden seç" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent side="bottom" align="start" sideOffset={4} avoidCollisions={false}>
                 <SelectItem value="__all__">Popülerden seç</SelectItem>
                 {universityOptions.map((u) => (
                   <SelectItem key={u} value={u}>
