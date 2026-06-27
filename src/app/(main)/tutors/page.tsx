@@ -30,6 +30,23 @@ import SlidingPagination from "@/components/ui/sliding-pagination";
 
 const PAGE_SIZE = 8;
 
+// Curated quick-filter suggestions only — NOT the full university database and
+// NOT a ranking. Selecting one applies the existing `university` filter.
+const POPULAR_UNIVERSITIES = [
+  "Yıldız Teknik Üniversitesi",
+  "Orta Doğu Teknik Üniversitesi",
+  "İstanbul Teknik Üniversitesi",
+  "Boğaziçi Üniversitesi",
+  "Koç Üniversitesi",
+  "Sabancı Üniversitesi",
+  "Hacettepe Üniversitesi",
+  "Bilkent Üniversitesi",
+  "İstanbul Üniversitesi",
+  "Ankara Üniversitesi",
+  "Ege Üniversitesi",
+  "Gebze Teknik Üniversitesi",
+];
+
 function filtersFromSearchParams(searchParams: URLSearchParams): TutorFiltersType {
   const search = searchParams.get("search");
   const subject = searchParams.get("subject");
@@ -99,7 +116,6 @@ function TutorsPageContent() {
     return { ...fromUrl, ordering: fromUrl.ordering || "rating" };
   });
   const [searchLocal, setSearchLocal] = useState(filters.search ?? "");
-  const [universityLocal, setUniversityLocal] = useState(filters.university ?? "");
   const [page, setPage] = useState(1);
 
   const setFilters = useCallback(
@@ -124,7 +140,6 @@ function TutorsPageContent() {
 
   const handleClearFilters = useCallback(() => {
     setSearchLocal("");
-    setUniversityLocal("");
     handleFiltersChange({});
   }, [handleFiltersChange]);
 
@@ -155,6 +170,13 @@ function TutorsPageContent() {
     (filters.ordering ?? "rating") !== "rating";
   const isEmpty = Array.isArray(tutors) && tutors.length === 0;
   const showEmptyState = isEmpty && hasActiveFilters;
+
+  // Keep an active out-of-list university visible in the curated dropdown.
+  const activeUniversity = filters.university ?? "";
+  const universityOptions =
+    activeUniversity && !POPULAR_UNIVERSITIES.includes(activeUniversity)
+      ? [activeUniversity, ...POPULAR_UNIVERSITIES]
+      : POPULAR_UNIVERSITIES;
 
   const tutorList = Array.isArray(tutors) ? tutors : [];
   const totalPages = Math.max(1, Math.ceil(tutorList.length / PAGE_SIZE));
@@ -218,7 +240,7 @@ function TutorsPageContent() {
                 onValueChange={(v) => handleFiltersChange({ ...filters, ordering: v || "rating" })}
                 disabled={subjectsLoading || tutorsLoading}
               >
-                <SelectTrigger>
+                <SelectTrigger className="h-9 text-sm">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -242,7 +264,7 @@ function TutorsPageContent() {
               }
               disabled={subjectsLoading}
             >
-              <SelectTrigger>
+              <SelectTrigger className="h-9 text-sm">
                 <SelectValue placeholder="Tüm sınavlar" />
               </SelectTrigger>
               <SelectContent>
@@ -267,7 +289,7 @@ function TutorsPageContent() {
               }
               disabled={subjectsLoading}
             >
-              <SelectTrigger>
+              <SelectTrigger className="h-9 text-sm">
                 <SelectValue placeholder="Tüm dersler" />
               </SelectTrigger>
               <SelectContent>
@@ -290,7 +312,7 @@ function TutorsPageContent() {
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
-                  className="w-full justify-start font-normal"
+                  className="h-9 w-full justify-start text-sm font-normal"
                   disabled={subjectsLoading || tutorsLoading}
                 >
                   {priceRangeLabel(
@@ -322,7 +344,7 @@ function TutorsPageContent() {
               }
               disabled={tutorsLoading}
             >
-              <SelectTrigger>
+              <SelectTrigger className="h-9 text-sm">
                 <SelectValue placeholder="Tümü" />
               </SelectTrigger>
               <SelectContent>
@@ -348,7 +370,7 @@ function TutorsPageContent() {
               }
               disabled={tutorsLoading}
             >
-              <SelectTrigger>
+              <SelectTrigger className="h-9 text-sm">
                 <SelectValue placeholder="Tümü" />
               </SelectTrigger>
               <SelectContent>
@@ -361,22 +383,33 @@ function TutorsPageContent() {
             </Select>
           </div>
 
-          {/* Üniversite */}
+          {/* Popüler Üniversiteler */}
           <div className="space-y-1">
             <Label className="text-xs uppercase tracking-wide text-muted-foreground">
-              Üniversite
+              Popüler Üniversiteler
             </Label>
-            <Input
-              value={universityLocal}
-              onChange={(e) => setUniversityLocal(e.target.value)}
-              onBlur={() => handleFiltersChange({ ...filters, university: universityLocal || undefined })}
-              onKeyDown={(e) => {
-                if (e.key === "Enter")
-                  handleFiltersChange({ ...filters, university: universityLocal || undefined });
-              }}
-              placeholder="Üniversite ara..."
+            <Select
+              value={(filters.university ?? "") || "__all__"}
+              onValueChange={(v) =>
+                handleFiltersChange({
+                  ...filters,
+                  university: v === "__all__" ? undefined : v,
+                })
+              }
               disabled={tutorsLoading}
-            />
+            >
+              <SelectTrigger className="h-9 text-sm">
+                <SelectValue placeholder="Popülerden seç" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__all__">Popülerden seç</SelectItem>
+                {universityOptions.map((u) => (
+                  <SelectItem key={u} value={u}>
+                    {u}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           </div>
           {hasActiveFilters && (
