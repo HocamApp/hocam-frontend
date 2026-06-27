@@ -177,6 +177,14 @@ export function ProfileMenu() {
     };
   };
 
+  // Reset accordion to fully collapsed whenever the dropdown closes, so it
+  // always reopens fresh instead of restoring the previously expanded section.
+  // An effect (not just onOpenChange) covers every close path, including the
+  // direct setOpen(false) calls in go()/comingSoon()/logout.
+  useEffect(() => {
+    if (!open) setActiveSection(null);
+  }, [open]);
+
   if (!isAuthenticated) return null;
 
   return (
