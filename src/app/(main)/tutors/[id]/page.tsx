@@ -143,9 +143,10 @@ export default function TutorProfilePage({
   const id = params.id;
   const router = useRouter();
   const { isAuthenticated, isStudent, user } = useAuth();
-  const { favoriteIds, toggle, isPending: favoritePending } = useFavorites();
+  const { favoriteIds, toggle, isFavoritePending } = useFavorites();
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
   const [requestSent, setRequestSent] = useState(false);
+  const [requestConversationId, setRequestConversationId] = useState<string | null>(null);
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   const [bookingComplete, setBookingComplete] = useState(false);
   const [reviewsExpanded, setReviewsExpanded] = useState(false);
@@ -231,7 +232,7 @@ export default function TutorProfilePage({
                 <FavoriteButton
                   tutorId={tutor.id}
                   isFavorite={favoriteIds.has(tutor.id)}
-                  isPending={favoritePending}
+                  isPending={isFavoritePending(tutor.id)}
                   onToggle={toggle}
                   className="mt-1 shrink-0"
                 />
@@ -339,7 +340,7 @@ export default function TutorProfilePage({
                       Mesajlar bölümünden takip edebilirsiniz
                     </p>
                     <Button variant="outline" className="w-full" asChild>
-                      <Link href="/messages">
+                      <Link href={requestConversationId ? `/messages/${requestConversationId}` : "/messages"}>
                         <MessageSquare className="mr-2 h-4 w-4" />
                         Mesajlar
                       </Link>
@@ -531,7 +532,8 @@ export default function TutorProfilePage({
         tutor={tutor}
         isOpen={isRequestModalOpen}
         onClose={() => setIsRequestModalOpen(false)}
-        onSuccess={() => {
+        onSuccess={(lessonRequest) => {
+          setRequestConversationId(lessonRequest.conversation_id ?? null);
           setRequestSent(true);
           setIsRequestModalOpen(false);
           toast.success("Ders talebin gönderildi.");

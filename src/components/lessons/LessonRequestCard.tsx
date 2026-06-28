@@ -32,6 +32,9 @@ export function LessonRequestCard({
       : lessonRequest.message;
   const status = (lessonRequest.status || "").toLowerCase();
   const isPending = status === "pending";
+  const conversationHref = lessonRequest.conversation_id
+    ? `/messages/${lessonRequest.conversation_id}`
+    : "/messages";
 
   return (
     <Card>
@@ -54,7 +57,7 @@ export function LessonRequestCard({
         {currentUserRole === "student" && (
           <div className="mt-3 flex flex-wrap gap-2">
             <Button size="sm" variant="outline" asChild>
-              <Link href="/messages">Mesajı Gör</Link>
+              <Link href={conversationHref}>Mesajı Gör</Link>
             </Button>
             {isPending && onWithdraw && (
               <Button
@@ -71,6 +74,9 @@ export function LessonRequestCard({
 
         {currentUserRole === "tutor" && isPending && (onAccept || onDecline) && (
           <div className="mt-3 flex flex-wrap gap-2">
+            <Button size="sm" variant="outline" asChild>
+              <Link href={conversationHref}>Mesajı Gör</Link>
+            </Button>
             {onAccept && (
               <Button
                 size="sm"
@@ -95,7 +101,12 @@ export function LessonRequestCard({
         )}
 
         {currentUserRole === "tutor" && !isPending && (
-          <p className="mt-2 text-xs text-muted-foreground">Talep alındı</p>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <p className="text-xs text-muted-foreground">Talep alındı</p>
+            <Button size="sm" variant="outline" asChild>
+              <Link href={conversationHref}>Mesajı Gör</Link>
+            </Button>
+          </div>
         )}
       </CardContent>
     </Card>

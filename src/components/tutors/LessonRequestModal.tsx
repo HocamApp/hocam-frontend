@@ -135,7 +135,7 @@ export function LessonRequestModal({
           <DialogTitle>Mesaj İsteği Gönder</DialogTitle>
           <DialogDescription>
             Hocaya kendini tanıt, hangi derste yardım istediğini ve beklentilerini yaz.
-            Hoca isteğini kabul ettikten sonra mesajlaşmaya başlayabilirsiniz.
+            Talebin gönderildiğinde mesajlaşma konuşması hemen açılır.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>

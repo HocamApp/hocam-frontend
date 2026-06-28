@@ -26,19 +26,24 @@ interface TutorCardProps {
   favoritePending?: boolean;
 }
 
-export function TutorCard({ tutor, isFavorite, onToggleFavorite, favoritePending }: TutorCardProps) {
+export function TutorCard({
+  tutor,
+  isFavorite,
+  onToggleFavorite,
+  favoritePending,
+}: TutorCardProps) {
   const examOrder = ["TYT", "AYT", "DGS", "KPSS"] as const;
   const orderedSubjects = examOrder.flatMap((exam) =>
     tutor.subjects.filter((s) => s.exam_type === exam)
   );
   const visibleSubjects = orderedSubjects.slice(0, 4);
   const remainingCount = orderedSubjects.length - 4;
+  const tutorHref = `/tutors/${tutor.id}`;
 
   return (
-    <Link href={`/tutors/${tutor.id}`} className="block cursor-pointer">
-      <Card className="h-full transition-shadow duration-200 hover:shadow-md hover:border-primary/30">
-        <CardContent className="p-0">
-          {/* Top section */}
+    <Card className="h-full transition-shadow duration-200 hover:border-primary/30 hover:shadow-md">
+      <CardContent className="p-0">
+        <Link href={tutorHref} className="block cursor-pointer">
           <div className="flex gap-4 p-4">
             <Avatar className="h-16 w-16 shrink-0">
               <AvatarImage
@@ -63,7 +68,6 @@ export function TutorCard({ tutor, isFavorite, onToggleFavorite, favoritePending
             </div>
           </div>
 
-          {/* Middle section - subjects */}
           <div className="flex flex-wrap gap-1 px-4 pb-3">
             {visibleSubjects.map((sub) => (
               <Badge key={sub.id} variant="outline" className="text-xs">
@@ -74,10 +78,11 @@ export function TutorCard({ tutor, isFavorite, onToggleFavorite, favoritePending
               <span className="text-xs text-muted-foreground">+{remainingCount} daha</span>
             )}
           </div>
+        </Link>
 
-          {/* Bottom section */}
-          <div className="flex items-center justify-between border-t px-4 py-3">
-            <div>
+        <div className="flex items-center justify-between border-t px-4 py-3">
+          <Link href={tutorHref} className="min-w-0 flex-1 cursor-pointer">
+            <div className="truncate">
               {tutor.total_reviews > 0 ? (
                 <>
                   <span className="font-medium">★ {formatRating(tutor.rating)}</span>
@@ -89,23 +94,25 @@ export function TutorCard({ tutor, isFavorite, onToggleFavorite, favoritePending
                 <span className="text-sm text-muted-foreground">Henüz değerlendirme yok</span>
               )}
             </div>
-            <div className="flex items-center gap-1">
+          </Link>
+          <div className="flex items-center gap-1">
+            <Link href={tutorHref} className="cursor-pointer">
               <div className="text-right">
                 <span className="font-medium">{formatPrice(tutor.hourly_price)}</span>
                 <span className="ml-1 text-sm text-muted-foreground">/saat</span>
               </div>
-              {onToggleFavorite && (
-                <FavoriteButton
-                  tutorId={tutor.id}
-                  isFavorite={isFavorite ?? false}
-                  isPending={favoritePending ?? false}
-                  onToggle={onToggleFavorite}
-                />
-              )}
-            </div>
+            </Link>
+            {onToggleFavorite && (
+              <FavoriteButton
+                tutorId={tutor.id}
+                isFavorite={isFavorite ?? false}
+                isPending={favoritePending ?? false}
+                onToggle={onToggleFavorite}
+              />
+            )}
           </div>
-        </CardContent>
-      </Card>
-    </Link>
+        </div>
+      </CardContent>
+    </Card>
   );
 }

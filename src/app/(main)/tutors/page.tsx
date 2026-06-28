@@ -164,7 +164,7 @@ function TutorsPageContent() {
     staleTime: Infinity,
   });
 
-  const { favoriteIds, toggle, isPending: favoritePending } = useFavorites();
+  const { favoriteIds, toggle, isFavoritePending } = useFavorites();
 
   const hasActiveFilters =
     (filters.search ?? "") !== "" ||
@@ -522,7 +522,7 @@ function TutorsPageContent() {
                     tutor={tutor}
                     isFavorite={favoriteIds.has(tutor.id)}
                     onToggleFavorite={toggle}
-                    favoritePending={favoritePending}
+                    favoritePending={isFavoritePending(tutor.id)}
                   />
                 ))}
               </div>
