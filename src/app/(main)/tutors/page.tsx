@@ -220,9 +220,9 @@ function TutorsPageContent() {
             />
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-12">
+          <div className="flex flex-wrap gap-4">
             {/* Sıralama */}
-            <div className="space-y-1 lg:col-span-3">
+            <div className="w-full space-y-1 sm:w-[300px]">
               <Label className="text-xs uppercase tracking-wide text-muted-foreground">
                 Sıralama
               </Label>
@@ -244,7 +244,7 @@ function TutorsPageContent() {
             </div>
 
           {/* Sınav */}
-          <div className="space-y-1 lg:col-span-2">
+          <div className="w-full space-y-1 sm:w-[210px]">
             <Label className="text-xs uppercase tracking-wide text-muted-foreground">
               Sınav
             </Label>
@@ -269,7 +269,7 @@ function TutorsPageContent() {
           </div>
 
           {/* Ders */}
-          <div className="space-y-1 lg:col-span-3">
+          <div className="w-full space-y-1 sm:w-[300px]">
             <Label className="text-xs uppercase tracking-wide text-muted-foreground">
               Ders
             </Label>
@@ -295,7 +295,7 @@ function TutorsPageContent() {
           </div>
 
           {/* Fiyat */}
-          <div className="space-y-1 lg:col-span-2">
+          <div className="w-full space-y-1 sm:w-[220px]">
             <Label className="text-xs uppercase tracking-wide text-muted-foreground">
               Fiyat
             </Label>
@@ -324,7 +324,7 @@ function TutorsPageContent() {
           </div>
 
           {/* Puan */}
-          <div className="space-y-1 lg:col-span-2">
+          <div className="w-full space-y-1 sm:w-[190px]">
             <Label className="text-xs uppercase tracking-wide text-muted-foreground">
               Min. Puan
             </Label>
@@ -350,7 +350,7 @@ function TutorsPageContent() {
           </div>
 
           {/* YKS Sıralaması */}
-          <div className="space-y-1 lg:col-span-2">
+          <div className="w-full space-y-1 sm:w-[210px]">
             <Label className="text-xs uppercase tracking-wide text-muted-foreground">
               YKS Sıralaması
             </Label>
@@ -375,7 +375,7 @@ function TutorsPageContent() {
           </div>
 
           {/* Popüler Üniversiteler */}
-          <div className="space-y-1 lg:col-span-3">
+          <div className="w-full space-y-1 sm:w-[300px]">
             <Label className="text-xs uppercase tracking-wide text-muted-foreground">
               Popüler Üniversiteler
             </Label>
@@ -404,7 +404,7 @@ function TutorsPageContent() {
           </div>
 
           {/* Müsaitlik Günü */}
-          <div className="space-y-1">
+          <div className="w-full space-y-1 sm:w-[160px]">
             <Label className="text-xs uppercase tracking-wide text-muted-foreground">
               Müsaitlik Günü
             </Label>
@@ -419,7 +419,7 @@ function TutorsPageContent() {
               }
               disabled={tutorsLoading}
             >
-              <SelectTrigger>
+              <SelectTrigger className="h-9 text-sm">
                 <SelectValue placeholder="Herhangi bir gün" />
               </SelectTrigger>
               <SelectContent>
@@ -436,7 +436,7 @@ function TutorsPageContent() {
           </div>
 
           {/* Müsaitlik Saati */}
-          <div className="space-y-1">
+          <div className="w-full space-y-1 sm:w-[170px]">
             <Label className="text-xs uppercase tracking-wide text-muted-foreground">
               Müsaitlik Saati
             </Label>
@@ -447,7 +447,7 @@ function TutorsPageContent() {
               }
               disabled={tutorsLoading || !filters.availability_day}
             >
-              <SelectTrigger>
+              <SelectTrigger className="h-9 text-sm">
                 <SelectValue placeholder="Herhangi bir saat" />
               </SelectTrigger>
               <SelectContent>
