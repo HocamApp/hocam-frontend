@@ -19,17 +19,33 @@ import {
   priceTupleToFilters,
   filtersToPriceTuple,
 } from "@/components/tutors/PriceRangeSlider";
+import { AnimatedSearchBar } from "@/components/tutors/AnimatedSearchBar";
 import { TutorCard } from "@/components/tutors/TutorCard";
 import { useFavorites } from "@/hooks/useFavorites";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
-import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import SlidingPagination from "@/components/ui/sliding-pagination";
 
 const PAGE_SIZE = 8;
+
+// Curated quick-filter suggestions only — NOT the full university database and
+// NOT a ranking. Selecting one applies the existing `university` filter.
+const POPULAR_UNIVERSITIES = [
+  "Yıldız Teknik Üniversitesi",
+  "Orta Doğu Teknik Üniversitesi",
+  "İstanbul Teknik Üniversitesi",
+  "Boğaziçi Üniversitesi",
+  "Koç Üniversitesi",
+  "Sabancı Üniversitesi",
+  "Hacettepe Üniversitesi",
+  "Bilkent Üniversitesi",
+  "İstanbul Üniversitesi",
+  "Ankara Üniversitesi",
+  "Ege Üniversitesi",
+  "Gebze Teknik Üniversitesi",
+];
 
 function filtersFromSearchParams(searchParams: URLSearchParams): TutorFiltersType {
   const search = searchParams.get("search");
@@ -106,7 +122,6 @@ function TutorsPageContent() {
     return { ...fromUrl, ordering: fromUrl.ordering || "rating" };
   });
   const [searchLocal, setSearchLocal] = useState(filters.search ?? "");
-  const [universityLocal, setUniversityLocal] = useState(filters.university ?? "");
   const [page, setPage] = useState(1);
 
   const setFilters = useCallback(
@@ -131,7 +146,6 @@ function TutorsPageContent() {
 
   const handleClearFilters = useCallback(() => {
     setSearchLocal("");
-    setUniversityLocal("");
     handleFiltersChange({});
   }, [handleFiltersChange]);
 
@@ -167,6 +181,13 @@ function TutorsPageContent() {
   const isEmpty = Array.isArray(tutors) && tutors.length === 0;
   const showEmptyState = isEmpty && hasActiveFilters;
 
+  // Keep an active out-of-list university visible in the curated dropdown.
+  const activeUniversity = filters.university ?? "";
+  const universityOptions =
+    activeUniversity && !POPULAR_UNIVERSITIES.includes(activeUniversity)
+      ? [activeUniversity, ...POPULAR_UNIVERSITIES]
+      : POPULAR_UNIVERSITIES;
+
   const tutorList = Array.isArray(tutors) ? tutors : [];
   const totalPages = Math.max(1, Math.ceil(tutorList.length / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages); // clamp if list shrank
@@ -187,40 +208,21 @@ function TutorsPageContent() {
 
         {/* Horizontal filter bar */}
         <div className="rounded-lg border bg-card px-4 py-3">
-          <div className="grid gap-4 md:grid-cols-4">
-            {/* Arama */}
-            <div className="space-y-1">
-              <Label className="text-xs uppercase tracking-wide text-muted-foreground">
-                Arama
-              </Label>
-              <div className="flex gap-1">
-                <Input
-                  value={searchLocal}
-                  onChange={(e) => setSearchLocal(e.target.value)}
-                  onBlur={() => handleFiltersChange({ ...filters, search: searchLocal || undefined })}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter")
-                      handleFiltersChange({ ...filters, search: searchLocal || undefined });
-                  }}
-                  placeholder="Hoca veya üniversite ara..."
-                  disabled={tutorsLoading}
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="shrink-0"
-                  aria-label="Ara"
-                  disabled={tutorsLoading}
-                  onClick={() => handleFiltersChange({ ...filters, search: searchLocal || undefined })}
-                >
-                  <Search className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
+          <div className="mb-5 space-y-2">
+            <Label className="text-xs uppercase tracking-wide text-muted-foreground">
+              Arama
+            </Label>
+            <AnimatedSearchBar
+              value={searchLocal}
+              onChange={setSearchLocal}
+              onCommit={(search) => handleFiltersChange({ ...filters, search })}
+              disabled={tutorsLoading}
+            />
+          </div>
 
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-12">
             {/* Sıralama */}
-            <div className="space-y-1">
+            <div className="space-y-1 lg:col-span-3">
               <Label className="text-xs uppercase tracking-wide text-muted-foreground">
                 Sıralama
               </Label>
@@ -229,7 +231,7 @@ function TutorsPageContent() {
                 onValueChange={(v) => handleFiltersChange({ ...filters, ordering: v || "rating" })}
                 disabled={subjectsLoading || tutorsLoading}
               >
-                <SelectTrigger>
+                <SelectTrigger className="h-9 text-sm">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -242,7 +244,7 @@ function TutorsPageContent() {
             </div>
 
           {/* Sınav */}
-          <div className="space-y-1">
+          <div className="space-y-1 lg:col-span-2">
             <Label className="text-xs uppercase tracking-wide text-muted-foreground">
               Sınav
             </Label>
@@ -253,7 +255,7 @@ function TutorsPageContent() {
               }
               disabled={subjectsLoading}
             >
-              <SelectTrigger>
+              <SelectTrigger className="h-9 text-sm">
                 <SelectValue placeholder="Tüm sınavlar" />
               </SelectTrigger>
               <SelectContent>
@@ -267,7 +269,7 @@ function TutorsPageContent() {
           </div>
 
           {/* Ders */}
-          <div className="space-y-1">
+          <div className="space-y-1 lg:col-span-3">
             <Label className="text-xs uppercase tracking-wide text-muted-foreground">
               Ders
             </Label>
@@ -278,7 +280,7 @@ function TutorsPageContent() {
               }
               disabled={subjectsLoading}
             >
-              <SelectTrigger>
+              <SelectTrigger className="h-9 text-sm">
                 <SelectValue placeholder="Tüm dersler" />
               </SelectTrigger>
               <SelectContent>
@@ -293,7 +295,7 @@ function TutorsPageContent() {
           </div>
 
           {/* Fiyat */}
-          <div className="space-y-1">
+          <div className="space-y-1 lg:col-span-2">
             <Label className="text-xs uppercase tracking-wide text-muted-foreground">
               Fiyat
             </Label>
@@ -301,7 +303,7 @@ function TutorsPageContent() {
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
-                  className="w-full justify-start font-normal"
+                  className="h-9 w-full justify-start text-sm font-normal"
                   disabled={subjectsLoading || tutorsLoading}
                 >
                   {priceRangeLabel(
@@ -322,7 +324,7 @@ function TutorsPageContent() {
           </div>
 
           {/* Puan */}
-          <div className="space-y-1">
+          <div className="space-y-1 lg:col-span-2">
             <Label className="text-xs uppercase tracking-wide text-muted-foreground">
               Min. Puan
             </Label>
@@ -333,7 +335,7 @@ function TutorsPageContent() {
               }
               disabled={tutorsLoading}
             >
-              <SelectTrigger>
+              <SelectTrigger className="h-9 text-sm">
                 <SelectValue placeholder="Tümü" />
               </SelectTrigger>
               <SelectContent>
@@ -348,7 +350,7 @@ function TutorsPageContent() {
           </div>
 
           {/* YKS Sıralaması */}
-          <div className="space-y-1">
+          <div className="space-y-1 lg:col-span-2">
             <Label className="text-xs uppercase tracking-wide text-muted-foreground">
               YKS Sıralaması
             </Label>
@@ -359,7 +361,7 @@ function TutorsPageContent() {
               }
               disabled={tutorsLoading}
             >
-              <SelectTrigger>
+              <SelectTrigger className="h-9 text-sm">
                 <SelectValue placeholder="Tümü" />
               </SelectTrigger>
               <SelectContent>
@@ -372,22 +374,33 @@ function TutorsPageContent() {
             </Select>
           </div>
 
-          {/* Üniversite */}
-          <div className="space-y-1">
+          {/* Popüler Üniversiteler */}
+          <div className="space-y-1 lg:col-span-3">
             <Label className="text-xs uppercase tracking-wide text-muted-foreground">
-              Üniversite
+              Popüler Üniversiteler
             </Label>
-            <Input
-              value={universityLocal}
-              onChange={(e) => setUniversityLocal(e.target.value)}
-              onBlur={() => handleFiltersChange({ ...filters, university: universityLocal || undefined })}
-              onKeyDown={(e) => {
-                if (e.key === "Enter")
-                  handleFiltersChange({ ...filters, university: universityLocal || undefined });
-              }}
-              placeholder="Üniversite ara..."
+            <Select
+              value={(filters.university ?? "") || "__all__"}
+              onValueChange={(v) =>
+                handleFiltersChange({
+                  ...filters,
+                  university: v === "__all__" ? undefined : v,
+                })
+              }
               disabled={tutorsLoading}
-            />
+            >
+              <SelectTrigger className="h-9 text-sm">
+                <SelectValue placeholder="Popülerden seç" />
+              </SelectTrigger>
+              <SelectContent side="bottom" align="start" sideOffset={4} avoidCollisions={false}>
+                <SelectItem value="__all__">Popülerden seç</SelectItem>
+                {universityOptions.map((u) => (
+                  <SelectItem key={u} value={u}>
+                    {u}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Müsaitlik Günü */}
