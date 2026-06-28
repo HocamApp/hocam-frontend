@@ -113,7 +113,9 @@ export function VerificationForm() {
             <div>
               <h3 className="font-semibold">Başvurunuz Reddedildi</h3>
               <p className="mt-1 text-sm text-muted-foreground">
-                Belgeleriniz doğrulanamadı. Lütfen tekrar başvurun.
+                {verification.rejection_reason
+                  ? verification.rejection_reason
+                  : "Belgeleriniz doğrulanamadı. Lütfen bilgilerinizi kontrol edip tekrar deneyin."}
               </p>
             </div>
           </div>

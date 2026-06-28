@@ -57,6 +57,31 @@ const editSchema = z.object({
 
 type EditFormValues = z.infer<typeof editSchema>;
 
+function getYouTubeEmbedUrl(url?: string): string | null {
+  if (!url) return null;
+  try {
+    const parsed = new URL(url);
+    const host = parsed.hostname.replace(/^www\./, "");
+    let videoId = "";
+    if (host === "youtu.be") {
+      videoId = parsed.pathname.split("/").filter(Boolean)[0] || "";
+    }
+    if (host === "youtube.com" || host === "m.youtube.com") {
+      if (parsed.pathname === "/watch") {
+        videoId = parsed.searchParams.get("v") || "";
+      } else {
+        const parts = parsed.pathname.split("/").filter(Boolean);
+        if (["embed", "shorts", "live"].includes(parts[0] || "")) {
+          videoId = parts[1] || "";
+        }
+      }
+    }
+    return videoId ? `https://www.youtube-nocookie.com/embed/${videoId}` : null;
+  } catch {
+    return null;
+  }
+}
+
 function TutorProfileEditContent() {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -104,6 +129,10 @@ function TutorProfileEditContent() {
       setProfileLoaded(true);
     }
   }, [profile, profileLoaded, form]);
+
+  const bioValue = form.watch("bio") ?? "";
+  const introVideoValue = form.watch("intro_video_url") ?? "";
+  const introEmbedUrl = getYouTubeEmbedUrl(introVideoValue);
 
   const toggleSubject = (id: string) => {
     setSelectedSubjectIds((prev) =>
@@ -300,6 +329,12 @@ function TutorProfileEditContent() {
                       />
                     </FormControl>
                     <FormMessage />
+                    <p className={cn(
+                      "mt-1 text-xs",
+                      bioValue.length < 80 ? "text-destructive" : "text-muted-foreground"
+                    )}>
+                      {bioValue.length} karakter{bioValue.length < 80 ? " (en az 80 önerilir)" : ""}
+                    </p>
                   </FormItem>
                 )}
               />
@@ -317,6 +352,17 @@ function TutorProfileEditContent() {
                       />
                     </FormControl>
                     <FormMessage />
+                    {introEmbedUrl && (
+                      <div className="mt-2 aspect-video overflow-hidden rounded-md border bg-muted">
+                        <iframe
+                          className="h-full w-full"
+                          src={introEmbedUrl}
+                          title="YouTube video önizlemesi"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                        />
+                      </div>
+                    )}
                   </FormItem>
                 )}
               />

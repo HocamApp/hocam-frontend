@@ -27,3 +27,21 @@ export function formatDate(dateString: string): string {
     day: "numeric",
   });
 }
+
+// Format a date as a Turkish relative string ("2 gün önce", "1 hafta önce", etc.)
+// Falls back to formatDate for dates older than a year.
+export function formatRelativeDate(dateString: string): string {
+  const days = Math.floor(
+    (Date.now() - new Date(dateString).getTime()) / 86_400_000
+  );
+  if (days === 0) return "Bugün";
+  if (days === 1) return "Dün";
+  if (days < 7) return `${days} gün önce`;
+  const weeks = Math.floor(days / 7);
+  if (weeks === 1) return "1 hafta önce";
+  if (weeks < 5) return `${weeks} hafta önce`;
+  const months = Math.floor(days / 30);
+  if (months === 1) return "1 ay önce";
+  if (months < 12) return `${months} ay önce`;
+  return formatDate(dateString);
+}

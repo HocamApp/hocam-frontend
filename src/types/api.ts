@@ -149,6 +149,7 @@ export interface TutorVerification {
   status: "pending" | "approved" | "rejected";
   submitted_at: string;
   reviewed_at: string | null;
+  rejection_reason?: string;
 }
 
 export interface ApiError {
@@ -278,4 +279,10 @@ export interface CalendarEvent {
   participant_name: string;
   participant_role: ParticipantRole;
   room_url: string;
+}
+
+export interface FavoriteTutor {
+  id: string;
+  tutor: TutorProfile;
+  created_at: string;
 }

@@ -23,6 +23,8 @@ export interface TutorFilters {
   is_verified?: string;
   yks_rank_max?: string;
   ordering?: string;
+  availability_day?: string;
+  availability_time?: string;
 }
 
 export async function fetchTutors(

@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 import { Check, MessageSquare, PlayCircle } from "lucide-react";
+import { useFavorites } from "@/hooks/useFavorites";
+import { FavoriteButton } from "@/components/tutors/FavoriteButton";
 import { fetchTutorById, fetchTutorReviews, fetchTutorSubjectRatings } from "@/lib/tutorsApi";
 import { fetchTutorAvailability } from "@/lib/dashboardApi";
 import { useAuth } from "@/hooks/useAuth";
@@ -141,6 +143,7 @@ export default function TutorProfilePage({
   const id = params.id;
   const router = useRouter();
   const { isAuthenticated, isStudent, user } = useAuth();
+  const { favoriteIds, toggle, isPending: favoritePending } = useFavorites();
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
   const [requestSent, setRequestSent] = useState(false);
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
@@ -220,20 +223,57 @@ export default function TutorProfilePage({
                 {getInitials(tutor.name, tutor.surname)}
               </AvatarFallback>
             </Avatar>
-            <div>
-              <h1 className="text-3xl font-bold">
-                {tutor.name} {tutor.surname}
-              </h1>
-              <p className="mt-1 text-lg text-muted-foreground">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-start justify-between gap-2">
+                <h1 className="text-3xl font-bold leading-tight">
+                  {tutor.name} {tutor.surname}
+                </h1>
+                <FavoriteButton
+                  tutorId={tutor.id}
+                  isFavorite={favoriteIds.has(tutor.id)}
+                  isPending={favoritePending}
+                  onToggle={toggle}
+                  className="mt-1 shrink-0"
+                />
+              </div>
+              <p className="mt-1 text-muted-foreground">
                 {tutor.university} · {tutor.department}
               </p>
-              <TutorPresenceBadge isOnline={tutor.is_online} className="mt-2" />
-              <p className="text-muted-foreground">
-                YKS Sıralaması: {tutor.yks_rank.toLocaleString("tr-TR")}
-              </p>
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <TutorPresenceBadge isOnline={tutor.is_online} />
+                {tutor.is_verified && (
+                  <Badge variant="secondary" className="gap-1 text-xs">
+                    <Check className="h-3 w-3 text-green-600" />
+                    Doğrulanmış
+                  </Badge>
+                )}
+              </div>
+              {tutor.total_reviews > 0 && (
+                <div className="mt-2 flex items-center gap-1.5 text-sm">
+                  <Stars rating={tutor.rating} />
+                  <span className="font-medium">{formatRating(tutor.rating)}</span>
+                  <span className="text-muted-foreground">
+                    ({tutor.total_reviews} değerlendirme)
+                  </span>
+                </div>
+              )}
+              {tutor.yks_rank > 0 && (
+                <p className="mt-1.5 text-sm text-muted-foreground">
+                  YKS Sıralaması: {tutor.yks_rank.toLocaleString("tr-TR")}
+                </p>
+              )}
+              {subjectGroups.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-1">
+                  {subjectGroups.map((g) => (
+                    <Badge key={g.exam} variant="outline" className="text-xs">
+                      {g.exam}
+                    </Badge>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
-          {tutor.bio && <p className="text-base mt-4">{tutor.bio}</p>}
+          {tutor.bio && <p className="mt-4 text-base">{tutor.bio}</p>}
         </div>
 
         <div className="lg:col-span-1">

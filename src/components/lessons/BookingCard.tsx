@@ -64,6 +64,12 @@ export function BookingCard({
               </span>
             </>
           )}
+          {currentUserRole === "tutor" && (
+            <>
+              <span className="text-muted-foreground">Öğrenci:</span>
+              <span>{booking.student.email}</span>
+            </>
+          )}
           <span className="text-muted-foreground">Tarih:</span>
           <span>{formatDate(booking.start_time)}</span>
           <span className="text-muted-foreground">Saat:</span>

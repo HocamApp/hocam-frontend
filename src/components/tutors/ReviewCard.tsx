@@ -1,8 +1,9 @@
 "use client";
 
 import { Review } from "@/types";
-import { formatDate } from "@/lib/utils";
+import { formatDate, formatRelativeDate } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 function Stars({ rating }: { rating: number }) {
   return (
@@ -26,16 +27,19 @@ export function ReviewCard({ review }: { review: Review }) {
       <CardContent className="pt-4">
         <div className="mb-2 flex items-center justify-between">
           <Stars rating={review.rating} />
-          <span className="text-sm text-muted-foreground">
-            {formatDate(review.created_at)}
+          <span
+            className="text-sm text-muted-foreground"
+            title={formatDate(review.created_at)}
+          >
+            {formatRelativeDate(review.created_at)}
           </span>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <p className="text-sm font-medium text-muted-foreground">Öğrenci</p>
           {review.subject && (
-            <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+            <Badge variant="secondary" className="text-xs font-normal">
               {review.subject.name} · {review.subject.exam_type}
-            </span>
+            </Badge>
           )}
         </div>
         <p className="mt-1 text-sm">{review.comment}</p>

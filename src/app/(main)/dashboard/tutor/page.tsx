@@ -370,7 +370,12 @@ function TutorDashboardContent() {
     enabled: isAuthenticated,
   });
 
-  const { data: lessonRequests = [], isLoading: requestsLoading } = useQuery({
+  const {
+    data: lessonRequests = [],
+    isLoading: requestsLoading,
+    error: requestsError,
+    refetch: refetchRequests,
+  } = useQuery({
     queryKey: ["lesson-requests"],
     queryFn: fetchLessonRequests,
     enabled: isAuthenticated,
@@ -379,6 +384,7 @@ function TutorDashboardContent() {
   const {
     data: bookings,
     isLoading: bookingsLoading,
+    error: bookingsError,
     refetch: refetchBookings,
   } = useQuery({
     queryKey: ["bookings"],
@@ -386,7 +392,7 @@ function TutorDashboardContent() {
     enabled: isAuthenticated,
   });
 
-  const { data: availability = [] } = useQuery({
+  const { data: availability = [], isLoading: availabilityLoading } = useQuery({
     queryKey: ["availability"],
     queryFn: fetchAvailability,
     enabled: isAuthenticated,
@@ -425,6 +431,11 @@ function TutorDashboardContent() {
     0
   );
   const profileCompletion = getProfileCompletion(profile, availability.length);
+
+  const availabilityDays = useMemo(
+    () => Array.from(new Set(availability.map((r) => r.day_of_week))).sort((a, b) => a - b),
+    [availability]
+  );
 
   const handleStatusUpdate = async (
     bookingId: string,
@@ -685,6 +696,47 @@ function TutorDashboardContent() {
         </Card>
       </div>
 
+      <Card className="mb-6">
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Calendar className="h-4 w-4 text-primary" />
+              Müsaitlik
+            </CardTitle>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setActiveTab("availability")}
+            >
+              {availability.length === 0 ? "Ekle" : "Düzenle"}
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {availabilityLoading ? (
+            <Skeleton className="h-6 w-48" />
+          ) : availability.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Müsaitlik eklenmemiş.</p>
+          ) : (
+            <div className="space-y-2">
+              <p className="text-sm">
+                <span className="font-medium">{availabilityDays.length} gün aktif</span>
+                <span className="ml-2 text-muted-foreground">
+                  · {availability.length} zaman aralığı
+                </span>
+              </p>
+              <div className="flex flex-wrap gap-1">
+                {availabilityDays.map((day) => (
+                  <Badge key={day} variant="secondary">
+                    {DAY_NAMES[day]}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <div className="overflow-x-auto pb-1">
           <AnimatedTabs tabs={TUTOR_TABS} value={activeTab} onValueChange={setActiveTab} />
@@ -706,20 +758,28 @@ function TutorDashboardContent() {
         </TabsContent>
 
         <TabsContent value="requests" className="mt-6">
-          {requestsLoading && (
+          {requestsError && (
+            <div className="flex flex-col items-center gap-3 py-10 text-center">
+              <p className="text-sm text-muted-foreground">Ders talepleri yüklenemedi.</p>
+              <Button variant="outline" size="sm" onClick={() => refetchRequests()}>
+                Tekrar Dene
+              </Button>
+            </div>
+          )}
+          {!requestsError && requestsLoading && (
             <div className="space-y-3">
               {[1, 2, 3].map((i) => (
                 <Skeleton key={i} className="h-32 w-full rounded-lg" />
               ))}
             </div>
           )}
-          {!requestsLoading && (!lessonRequests || lessonRequests.length === 0) && (
+          {!requestsError && !requestsLoading && lessonRequests.length === 0 && (
             <EmptyState
               title="Henüz mesaj isteğiniz yok"
               description="Öğrenciler profilinizi ziyaret ederek mesaj isteği gönderebilir"
             />
           )}
-          {!requestsLoading && lessonRequests.length > 0 && (
+          {!requestsError && !requestsLoading && lessonRequests.length > 0 && (
             <div className="space-y-3">
               {lessonRequests.map((lr) => (
                 <LessonRequestCard
@@ -736,14 +796,22 @@ function TutorDashboardContent() {
         </TabsContent>
 
         <TabsContent value="bookings" className="mt-6">
-          {bookingsLoading && (
+          {bookingsError && (
+            <div className="flex flex-col items-center gap-3 py-10 text-center">
+              <p className="text-sm text-muted-foreground">Rezervasyonlar yüklenemedi.</p>
+              <Button variant="outline" size="sm" onClick={() => refetchBookings()}>
+                Tekrar Dene
+              </Button>
+            </div>
+          )}
+          {!bookingsError && bookingsLoading && (
             <div className="space-y-3">
               {[1, 2, 3].map((i) => (
                 <Skeleton key={i} className="h-40 w-full rounded-lg" />
               ))}
             </div>
           )}
-          {!bookingsLoading && (
+          {!bookingsError && !bookingsLoading && (
             <>
               <h3 className="mb-2 text-sm font-medium">Yaklaşan Dersler</h3>
               {activeBookings.length === 0 ? (

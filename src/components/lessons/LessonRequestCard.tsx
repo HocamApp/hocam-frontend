@@ -44,6 +44,12 @@ export function LessonRequestCard({
         <p className="mt-2 text-xs text-muted-foreground">
           {formatDate(lessonRequest.created_at)}
         </p>
+        {currentUserRole === "tutor" && (
+          <p className="mt-1 text-xs text-muted-foreground">
+            <span className="font-medium">Öğrenci:</span>{" "}
+            {lessonRequest.student.email}
+          </p>
+        )}
 
         {currentUserRole === "student" && (
           <div className="mt-3 flex flex-wrap gap-2">

@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { TutorPresenceBadge } from "@/components/tutors/TutorPresenceBadge";
+import { FavoriteButton } from "@/components/tutors/FavoriteButton";
 
 function getInitials(name: string, surname: string): string {
   const n = (name || "").trim()[0] || "";
@@ -18,7 +19,14 @@ function formatYksRank(rank: number): string {
   return rank.toLocaleString("tr-TR");
 }
 
-export function TutorCard({ tutor }: { tutor: TutorProfile }) {
+interface TutorCardProps {
+  tutor: TutorProfile;
+  isFavorite?: boolean;
+  onToggleFavorite?: (id: string) => void;
+  favoritePending?: boolean;
+}
+
+export function TutorCard({ tutor, isFavorite, onToggleFavorite, favoritePending }: TutorCardProps) {
   const examOrder = ["TYT", "AYT", "DGS", "KPSS"] as const;
   const orderedSubjects = examOrder.flatMap((exam) =>
     tutor.subjects.filter((s) => s.exam_type === exam)
@@ -81,9 +89,19 @@ export function TutorCard({ tutor }: { tutor: TutorProfile }) {
                 <span className="text-sm text-muted-foreground">Henüz değerlendirme yok</span>
               )}
             </div>
-            <div className="text-right">
-              <span className="font-medium">{formatPrice(tutor.hourly_price)}</span>
-              <span className="ml-1 text-sm text-muted-foreground">/saat</span>
+            <div className="flex items-center gap-1">
+              <div className="text-right">
+                <span className="font-medium">{formatPrice(tutor.hourly_price)}</span>
+                <span className="ml-1 text-sm text-muted-foreground">/saat</span>
+              </div>
+              {onToggleFavorite && (
+                <FavoriteButton
+                  tutorId={tutor.id}
+                  isFavorite={isFavorite ?? false}
+                  isPending={favoritePending ?? false}
+                  onToggle={onToggleFavorite}
+                />
+              )}
             </div>
           </div>
         </CardContent>

@@ -20,6 +20,7 @@ import {
   filtersToPriceTuple,
 } from "@/components/tutors/PriceRangeSlider";
 import { TutorCard } from "@/components/tutors/TutorCard";
+import { useFavorites } from "@/hooks/useFavorites";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { Search } from "lucide-react";
@@ -40,6 +41,8 @@ function filtersFromSearchParams(searchParams: URLSearchParams): TutorFiltersTyp
   const university = searchParams.get("university");
   const yks_rank_max = searchParams.get("yks_rank_max");
   const ordering = searchParams.get("ordering") || "rating";
+  const availability_day = searchParams.get("availability_day");
+  const availability_time = searchParams.get("availability_time");
   return {
     ...(search != null && search !== "" && { search }),
     ...(subject != null && subject !== "" && { subject }),
@@ -49,6 +52,8 @@ function filtersFromSearchParams(searchParams: URLSearchParams): TutorFiltersTyp
     ...(max_price != null && max_price !== "" && { max_price }),
     ...(university != null && university !== "" && { university }),
     ...(yks_rank_max != null && yks_rank_max !== "" && { yks_rank_max }),
+    ...(availability_day != null && availability_day !== "" && { availability_day }),
+    ...(availability_time != null && availability_time !== "" && { availability_time }),
     ordering: ordering || "rating",
   };
 }
@@ -63,6 +68,8 @@ function searchParamsFromFilters(filters: TutorFiltersType): URLSearchParams {
   if (filters.max_price) p.set("max_price", filters.max_price);
   if (filters.university) p.set("university", filters.university);
   if (filters.yks_rank_max) p.set("yks_rank_max", filters.yks_rank_max);
+  if (filters.availability_day) p.set("availability_day", filters.availability_day);
+  if (filters.availability_time) p.set("availability_time", filters.availability_time);
   if (filters.ordering && filters.ordering !== "rating") p.set("ordering", filters.ordering);
   return p;
 }
@@ -143,6 +150,8 @@ function TutorsPageContent() {
     staleTime: Infinity,
   });
 
+  const { favoriteIds, toggle, isPending: favoritePending } = useFavorites();
+
   const hasActiveFilters =
     (filters.search ?? "") !== "" ||
     (filters.subject ?? "") !== "" ||
@@ -152,6 +161,8 @@ function TutorsPageContent() {
     (filters.max_price ?? "") !== "" ||
     (filters.university ?? "") !== "" ||
     (filters.yks_rank_max ?? "") !== "" ||
+    (filters.availability_day ?? "") !== "" ||
+    (filters.availability_time ?? "") !== "" ||
     (filters.ordering ?? "rating") !== "rating";
   const isEmpty = Array.isArray(tutors) && tutors.length === 0;
   const showEmptyState = isEmpty && hasActiveFilters;
@@ -378,6 +389,63 @@ function TutorsPageContent() {
               disabled={tutorsLoading}
             />
           </div>
+
+          {/* Müsaitlik Günü */}
+          <div className="space-y-1">
+            <Label className="text-xs uppercase tracking-wide text-muted-foreground">
+              Müsaitlik Günü
+            </Label>
+            <Select
+              value={(filters.availability_day ?? "") || "__all__"}
+              onValueChange={(v) =>
+                handleFiltersChange({
+                  ...filters,
+                  availability_day: v === "__all__" ? "" : v,
+                  availability_time: v === "__all__" ? "" : filters.availability_time,
+                })
+              }
+              disabled={tutorsLoading}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Herhangi bir gün" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__all__">Herhangi bir gün</SelectItem>
+                <SelectItem value="0">Pazartesi</SelectItem>
+                <SelectItem value="1">Salı</SelectItem>
+                <SelectItem value="2">Çarşamba</SelectItem>
+                <SelectItem value="3">Perşembe</SelectItem>
+                <SelectItem value="4">Cuma</SelectItem>
+                <SelectItem value="5">Cumartesi</SelectItem>
+                <SelectItem value="6">Pazar</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Müsaitlik Saati */}
+          <div className="space-y-1">
+            <Label className="text-xs uppercase tracking-wide text-muted-foreground">
+              Müsaitlik Saati
+            </Label>
+            <Select
+              value={(filters.availability_time ?? "") || "__all__"}
+              onValueChange={(v) =>
+                handleFiltersChange({ ...filters, availability_time: v === "__all__" ? "" : v })
+              }
+              disabled={tutorsLoading || !filters.availability_day}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Herhangi bir saat" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__all__">Herhangi bir saat</SelectItem>
+                {["08:00","09:00","10:00","11:00","12:00","13:00","14:00",
+                  "15:00","16:00","17:00","18:00","19:00","20:00","21:00","22:00"].map((t) => (
+                  <SelectItem key={t} value={t}>{t}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           </div>
           {hasActiveFilters && (
             <div className="mt-3 flex justify-end">
@@ -436,7 +504,13 @@ function TutorsPageContent() {
             <>
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 {pageTutors.map((tutor) => (
-                  <TutorCard key={tutor.id} tutor={tutor} />
+                  <TutorCard
+                    key={tutor.id}
+                    tutor={tutor}
+                    isFavorite={favoriteIds.has(tutor.id)}
+                    onToggleFavorite={toggle}
+                    favoritePending={favoritePending}
+                  />
                 ))}
               </div>
               {totalPages > 1 && (
