@@ -241,12 +241,6 @@ export default function TutorProfilePage({
               </p>
               <div className="mt-2 flex flex-wrap items-center gap-2">
                 <TutorPresenceBadge isOnline={tutor.is_online} />
-                {tutor.is_verified && (
-                  <Badge variant="secondary" className="gap-1 text-xs">
-                    <Check className="h-3 w-3 text-green-600" />
-                    Doğrulanmış
-                  </Badge>
-                )}
               </div>
               {tutor.total_reviews > 0 && (
                 <div className="mt-2 flex items-center gap-1.5 text-sm">
