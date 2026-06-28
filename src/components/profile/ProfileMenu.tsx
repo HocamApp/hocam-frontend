@@ -25,7 +25,7 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { fetchProfileMe, updateProfileMe } from "@/lib/profileApi";
 import { formatPrice } from "@/lib/utils";
-import { getStoredTheme, setTheme, type Theme } from "@/lib/theme";
+import type { Theme } from "@/lib/theme";
 import type { ProfileStudent, ProfileTutor, UserPreferences } from "@/types";
 import {
   Popover,
@@ -36,6 +36,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { AnimatedThemeToggler } from "@/components/theme/AnimatedThemeToggler";
 import {
   ProfileAccordionSection,
 } from "@/components/profile/ProfileAccordionSection";
@@ -73,13 +74,7 @@ export function ProfileMenu() {
   const { user, isAuthenticated, logout } = useAuth();
   const [open, setOpen] = useState(false);
   const [activeSection, setActiveSection] = useState<string | null>(null);
-  const [theme, setThemeState] = useState<Theme>("light");
   const [prefOverrides, setPrefOverrides] = useState<Partial<UserPreferences>>({});
-
-  // Theme is owned by localStorage (applied pre-paint); mirror it into local state.
-  useEffect(() => {
-    setThemeState(getStoredTheme());
-  }, []);
 
   const { data, isLoading } = useQuery({
     queryKey: ["profile-me"],
@@ -139,12 +134,11 @@ export function ProfileMenu() {
     }
   };
 
-  const handleDarkModeToggle = (next: boolean) => {
-    const nextTheme: Theme = next ? "dark" : "light";
-    setThemeState(nextTheme);
-    setTheme(nextTheme); // localStorage + <html> class, immediately
+  const handleThemeChange = (nextTheme: Theme) => {
     // Best-effort backend sync; local preference stands regardless.
-    updateProfileMe({ preferences: { dark_mode: next } }).catch(() => undefined);
+    updateProfileMe({ preferences: { dark_mode: nextTheme === "dark" } }).catch(
+      () => undefined
+    );
   };
 
   // Single-open connected accordion: one active section key (null = all collapsed).
@@ -428,12 +422,16 @@ export function ProfileMenu() {
             title="Gelişmiş Ayarlar"
             {...sectionProps("advanced")}
           >
-            <ProfileToggleRow
-              label="Karanlık mod"
-              icon={<Moon className="h-4 w-4" />}
-              checked={theme === "dark"}
-              onChange={handleDarkModeToggle}
-            />
+            <div className="flex items-center gap-3 px-2 py-1.5 text-sm">
+              <span className="shrink-0 text-muted-foreground">
+                <Moon className="h-4 w-4" />
+              </span>
+              <span className="flex-1 text-foreground">Tema</span>
+              <AnimatedThemeToggler
+                className="shrink-0"
+                onThemeChange={handleThemeChange}
+              />
+            </div>
             <ProfileMenuRow
               icon={<LifeBuoy className="h-4 w-4" />}
               label="Destek ile iletişime geç"
