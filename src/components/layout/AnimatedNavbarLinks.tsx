@@ -10,6 +10,7 @@ import {
   LucideIcon,
   MessageCircle,
 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { ExpandableTabs } from "@/components/ui/expandable-tabs";
 import {
@@ -18,6 +19,8 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { NotificationMark } from "@/components/shared/NotificationMark";
+import { NotificationPopoverContent } from "@/components/shared/NotificationPopoverContent";
+import { fetchNotificationSummary } from "@/lib/notificationsApi";
 
 type NavDescriptor =
   | { kind: "route"; title: string; icon: LucideIcon; href: string }
@@ -26,7 +29,8 @@ type NavDescriptor =
       kind: "popover";
       title: string;
       icon: LucideIcon;
-      content: { title: string; body: string };
+      content?: { title: string; body: string };
+      contentNode?: React.ReactNode;
       badge?: boolean;
     };
 
@@ -39,6 +43,14 @@ export function AnimatedNavbarLinks() {
   const pathname = usePathname();
   const router = useRouter();
   const { isAuthenticated, isTutor, isLoading } = useAuth();
+
+  const { data: summary } = useQuery({
+    queryKey: ["notification-summary"],
+    queryFn: fetchNotificationSummary,
+    enabled: isAuthenticated,
+    refetchInterval: 30_000,
+  });
+  const hasUnread = summary?.has_unread ?? false;
 
   if (isLoading || !isAuthenticated) return null;
 
@@ -53,11 +65,7 @@ export function AnimatedNavbarLinks() {
       kind: "popover",
       title: "Bildirimler",
       icon: Bell,
-      badge: true,
-      content: {
-        title: "Bildirimler yakında",
-        body: "Yeni mesajlar, rezervasyon güncellemeleri ve ders hatırlatmaları burada görünecek.",
-      },
+      contentNode: <NotificationPopoverContent />,
     },
     {
       kind: "popover",
@@ -77,26 +85,34 @@ export function AnimatedNavbarLinks() {
     (d) => d.kind === "route" && isActive(d.href)
   );
 
-  const makePopoverWrapper = (descriptor: NavDescriptor & { kind: "popover" }) =>
+  const makePopoverWrapper = (descriptor: NavDescriptor & { kind: "popover" }) => {
+    const showBadge = descriptor.contentNode != null ? hasUnread : (descriptor.badge ?? false);
     // eslint-disable-next-line react/display-name -- render fn, not a component
-    (node: React.ReactNode) => (
+    return (node: React.ReactNode) => (
       <Popover>
         <span className="relative inline-flex">
           <PopoverTrigger asChild>{node}</PopoverTrigger>
-          {descriptor.badge && (
-            <NotificationMark className="absolute right-0.5 top-0.5" />
+          {showBadge && (
+            <NotificationMark hasUnread={showBadge} className="absolute right-0.5 top-0.5" />
           )}
         </span>
-        <PopoverContent align="end" className="w-72">
-          <p className="text-sm font-semibold text-foreground">
-            {descriptor.content.title}
-          </p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {descriptor.content.body}
-          </p>
+        <PopoverContent align="end" className="w-80 p-0">
+          {descriptor.contentNode != null ? (
+            descriptor.contentNode
+          ) : (
+            <div className="p-4">
+              <p className="text-sm font-semibold text-foreground">
+                {descriptor.content?.title}
+              </p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {descriptor.content?.body}
+              </p>
+            </div>
+          )}
         </PopoverContent>
       </Popover>
     );
+  };
 
   const tabs = descriptors.map((d) => {
     if (d.kind === "separator") return { type: "separator" as const };

@@ -286,3 +286,19 @@ export interface FavoriteTutor {
   tutor: TutorProfile;
   created_at: string;
 }
+
+export interface Notification {
+  id: string;
+  type: string;
+  title: string;
+  body: string;
+  is_read: boolean;
+  related_object_type: string;
+  related_object_id: string | null;
+  created_at: string;
+}
+
+export interface NotificationSummary {
+  has_unread: boolean;
+  unread_count: number;
+}
