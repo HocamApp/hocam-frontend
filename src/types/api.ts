@@ -49,6 +49,14 @@ export type LearningActivityStatus =
 
 export type LearningConfirmationSource = "system" | "tutor" | "student";
 
+export type TutorProgressResult = "low" | "good" | "completed";
+
+export interface ConfirmLearningActivityPayload {
+  progress_result: TutorProgressResult;
+  tutor_note?: string;
+  student_level_after_lesson?: LearningLevel | "";
+}
+
 export interface LearningTopic {
   id: string;
   exam_type: string;

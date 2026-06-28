@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import StatusBadge from "@/components/shared/StatusBadge";
 import { formatDate, formatPrice } from "@/lib/utils";
-import { Booking } from "@/types";
+import type { Booking, LearningActivityStatus } from "@/types";
 
 interface BookingCardProps {
   booking: Booking;
@@ -14,7 +14,9 @@ interface BookingCardProps {
     status: "confirmed" | "completed" | "cancelled"
   ) => void;
   onReviewClick?: (booking: Booking) => void;
+  onConfirmLearningProgress?: (booking: Booking) => void;
   isUpdating?: boolean;
+  isConfirmingLearning?: boolean;
 }
 
 function formatTime(isoString: string): string {
@@ -24,12 +26,25 @@ function formatTime(isoString: string): string {
   });
 }
 
+function formatLearningActivityStatus(status: LearningActivityStatus): string {
+  const labels: Record<LearningActivityStatus, string> = {
+    planned: "Planlandı",
+    pending_confirmation: "Onay bekliyor",
+    confirmed: "Onaylandı",
+    cancelled: "İptal edildi",
+  };
+
+  return labels[status] ?? status;
+}
+
 export function BookingCard({
   booking,
   currentUserRole,
   onStatusUpdate,
   onReviewClick,
+  onConfirmLearningProgress,
   isUpdating = false,
+  isConfirmingLearning = false,
 }: BookingCardProps) {
   const rawStatus = booking.status;
   const status =
@@ -44,6 +59,16 @@ export function BookingCard({
   const isFuture = new Date(booking.start_time) > new Date();
   const canCancel =
     currentUserRole === "student" && !isCompleted && !isCancelled;
+  const learningContext = booking.learning_context;
+  const canConfirmLearningProgress =
+    currentUserRole === "tutor" &&
+    isCompleted &&
+    Boolean(learningContext?.activity_id) &&
+    learningContext?.status === "pending_confirmation";
+  const isLearningProgressConfirmed =
+    currentUserRole === "tutor" &&
+    isCompleted &&
+    learningContext?.status === "confirmed";
 
   return (
     <Card>
@@ -79,6 +104,35 @@ export function BookingCard({
           <span className="text-muted-foreground">Ücret:</span>
           <span>{formatPrice(booking.price)}</span>
         </div>
+
+        {learningContext && (
+          <div className="mt-3 rounded-lg border bg-muted/40 p-3 text-xs text-muted-foreground">
+            <div className="grid gap-1">
+              {learningContext.goal?.title && (
+                <p>
+                  <span className="font-medium text-foreground">Hedef:</span>{" "}
+                  {learningContext.goal.title}
+                </p>
+              )}
+              {learningContext.milestone?.title && (
+                <p>
+                  <span className="font-medium text-foreground">Milestone:</span>{" "}
+                  {learningContext.milestone.title}
+                </p>
+              )}
+              {learningContext.topic?.title && (
+                <p>
+                  <span className="font-medium text-foreground">Konu:</span>{" "}
+                  {learningContext.topic.title}
+                </p>
+              )}
+              <p>
+                <span className="font-medium text-foreground">İlerleme durumu:</span>{" "}
+                {formatLearningActivityStatus(learningContext.status)}
+              </p>
+            </div>
+          </div>
+        )}
 
         <div className="mt-3 flex flex-wrap gap-2">
           {currentUserRole === "tutor" && (
@@ -122,6 +176,21 @@ export function BookingCard({
                     İptal Et
                   </Button>
                 </>
+              )}
+              {canConfirmLearningProgress && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => onConfirmLearningProgress?.(booking)}
+                  disabled={isConfirmingLearning}
+                >
+                  İlerlemeyi Onayla
+                </Button>
+              )}
+              {isLearningProgressConfirmed && (
+                <span className="inline-flex items-center rounded-md border px-2.5 py-1 text-xs font-medium text-muted-foreground">
+                  İlerleme onaylandı
+                </span>
               )}
             </>
           )}

@@ -2,6 +2,7 @@
 
 import { ChangeEvent, ReactNode, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import axios from "axios";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Calendar,
@@ -29,8 +30,16 @@ import {
   uploadTutorProfilePicture,
 } from "@/lib/tutorsApi";
 import { fetchAvailability } from "@/lib/dashboardApi";
+import { confirmLearningActivity } from "@/lib/learningApi";
 import { formatDate, formatPrice, formatRating } from "@/lib/utils";
-import type { AvailabilityRule, Booking, TutorProfile } from "@/types";
+import type {
+  AvailabilityRule,
+  Booking,
+  ConfirmLearningActivityPayload,
+  LearningLevel,
+  TutorProfile,
+  TutorProgressResult,
+} from "@/types";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { RouteGuard } from "@/components/shared/RouteGuard";
 import { BookingCard } from "@/components/lessons/BookingCard";
@@ -47,6 +56,21 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const TUTOR_TABS = [
   { value: "profile", label: "Profil" },
@@ -159,6 +183,171 @@ function DashboardSkeleton() {
         ))}
       </div>
     </div>
+  );
+}
+
+function getApiErrorMessage(error: unknown, fallback: string): string {
+  if (!axios.isAxiosError(error)) {
+    return fallback;
+  }
+
+  const data = error.response?.data;
+  if (!data || typeof data !== "object") {
+    return fallback;
+  }
+
+  const body = data as Record<string, unknown>;
+  if (typeof body.detail === "string") {
+    return body.detail;
+  }
+
+  for (const value of Object.values(body)) {
+    if (Array.isArray(value) && value[0]) {
+      return String(value[0]);
+    }
+    if (typeof value === "string") {
+      return value;
+    }
+  }
+
+  return fallback;
+}
+
+function formatLearningLevel(level: LearningLevel | "") {
+  const labels: Record<LearningLevel | "", string> = {
+    "": "Seçme",
+    beginner: "Başlangıç",
+    intermediate: "Orta",
+    advanced: "İleri",
+  };
+
+  return labels[level] ?? level;
+}
+
+function LearningProgressConfirmModal({
+  booking,
+  isSubmitting,
+  onClose,
+  onSubmit,
+}: {
+  booking: Booking;
+  isSubmitting: boolean;
+  onClose: () => void;
+  onSubmit: (payload: ConfirmLearningActivityPayload) => void;
+}) {
+  const [progressResult, setProgressResult] = useState<TutorProgressResult>("good");
+  const [tutorNote, setTutorNote] = useState("");
+  const [studentLevel, setStudentLevel] = useState<LearningLevel | "">("");
+  const milestoneTitle = booking.learning_context?.milestone?.title;
+
+  useEffect(() => {
+    setProgressResult("good");
+    setTutorNote("");
+    setStudentLevel("");
+  }, [booking.id]);
+
+  const handleSubmit = () => {
+    onSubmit({
+      progress_result: progressResult,
+      ...(tutorNote.trim() ? { tutor_note: tutorNote.trim() } : {}),
+      student_level_after_lesson: studentLevel,
+    });
+  };
+
+  return (
+    <Dialog open onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>İlerlemeyi Onayla</DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-5">
+          <div className="rounded-lg border bg-muted/40 p-3 text-sm">
+            <p>
+              <span className="text-muted-foreground">Öğrenci:</span>{" "}
+              {booking.student.email}
+            </p>
+            <p>
+              <span className="text-muted-foreground">Ders:</span>{" "}
+              {booking.subject.name}
+            </p>
+            {milestoneTitle && (
+              <p>
+                <span className="text-muted-foreground">Milestone:</span>{" "}
+                {milestoneTitle}
+              </p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label>İlerleme sonucu</Label>
+            <div className="grid gap-2 sm:grid-cols-3">
+              {[
+                { value: "low", label: "Düşük ilerleme" },
+                { value: "good", label: "İyi ilerleme" },
+                { value: "completed", label: "Milestone tamamlandı" },
+              ].map((option) => (
+                <Button
+                  key={option.value}
+                  type="button"
+                  variant={progressResult === option.value ? "default" : "outline"}
+                  onClick={() => setProgressResult(option.value as TutorProgressResult)}
+                  disabled={isSubmitting}
+                  className="h-auto min-h-10 whitespace-normal"
+                >
+                  {option.label}
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="tutor-note">Hoca notu</Label>
+            <Textarea
+              id="tutor-note"
+              value={tutorNote}
+              onChange={(event) => setTutorNote(event.target.value)}
+              placeholder="Öğrencinin güçlü olduğu noktalar ve sonraki önerin..."
+              rows={4}
+              disabled={isSubmitting}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Ders sonrası seviye</Label>
+            <Select
+              value={studentLevel || "__none__"}
+              onValueChange={(value) =>
+                setStudentLevel(value === "__none__" ? "" : (value as LearningLevel))
+              }
+              disabled={isSubmitting}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {(["", "beginner", "intermediate", "advanced"] as Array<
+                  LearningLevel | ""
+                >).map((level) => (
+                  <SelectItem key={level || "__none__"} value={level || "__none__"}>
+                    {formatLearningLevel(level)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <DialogFooter className="gap-2 sm:gap-0">
+          <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
+            İptal
+          </Button>
+          <Button type="button" onClick={handleSubmit} disabled={isSubmitting}>
+            {isSubmitting ? "Onaylanıyor..." : "Onayla"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -358,6 +547,8 @@ function TutorDashboardContent() {
   const [isSavingVideo, setIsSavingVideo] = useState(false);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [activeTab, setActiveTab] = useState("profile");
+  const [confirmingBooking, setConfirmingBooking] = useState<Booking | null>(null);
+  const [isConfirmingLearning, setIsConfirmingLearning] = useState(false);
 
   const {
     data: profile,
@@ -449,6 +640,29 @@ function TutorDashboardContent() {
       toast.error("Rezervasyon güncellenemedi.");
     } finally {
       setUpdatingId(null);
+    }
+  };
+
+  const handleConfirmLearningProgress = async (
+    payload: ConfirmLearningActivityPayload
+  ) => {
+    const activityId = confirmingBooking?.learning_context?.activity_id;
+    if (!activityId) {
+      toast.error("İlerleme onaylanamadı.");
+      return;
+    }
+
+    setIsConfirmingLearning(true);
+    try {
+      await confirmLearningActivity(activityId, payload);
+      toast.success("İlerleme onaylandı.");
+      setConfirmingBooking(null);
+      await refetchBookings();
+      await queryClient.invalidateQueries({ queryKey: ["learning-dashboard"] });
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, "İlerleme onaylanamadı."));
+    } finally {
+      setIsConfirmingLearning(false);
     }
   };
 
@@ -832,7 +1046,11 @@ function TutorDashboardContent() {
                       booking={b}
                       currentUserRole="tutor"
                       onStatusUpdate={handleStatusUpdate}
+                      onConfirmLearningProgress={setConfirmingBooking}
                       isUpdating={updatingId === b.id}
+                      isConfirmingLearning={
+                        isConfirmingLearning && confirmingBooking?.id === b.id
+                      }
                     />
                   ))}
                 </div>
@@ -849,6 +1067,19 @@ function TutorDashboardContent() {
           <VerificationForm />
         </TabsContent>
       </Tabs>
+
+      {confirmingBooking && (
+        <LearningProgressConfirmModal
+          booking={confirmingBooking}
+          isSubmitting={isConfirmingLearning}
+          onClose={() => {
+            if (!isConfirmingLearning) {
+              setConfirmingBooking(null);
+            }
+          }}
+          onSubmit={handleConfirmLearningProgress}
+        />
+      )}
     </div>
   );
 }

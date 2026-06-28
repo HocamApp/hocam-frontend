@@ -1,5 +1,6 @@
 import api from "./api";
 import type {
+  ConfirmLearningActivityPayload,
   LearningDashboardResponse,
   LearningGoalTemplate,
   StudentGoal,
@@ -77,4 +78,15 @@ export async function updateStudentNote(
 
 export async function deleteStudentNote(noteId: string): Promise<void> {
   await api.delete(`/learning/notes/${noteId}/`);
+}
+
+export async function confirmLearningActivity(
+  activityId: string,
+  payload: ConfirmLearningActivityPayload
+): Promise<unknown> {
+  const response = await api.post(
+    `/learning/activities/${activityId}/confirm/`,
+    payload
+  );
+  return response.data;
 }
