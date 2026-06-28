@@ -88,12 +88,19 @@ function getInitials(name: string, surname: string): string {
   return (n + s).toUpperCase() || "?";
 }
 
+type LearningContextQuery = {
+  learning_goal_id: string;
+  learning_milestone_id: string;
+  learning_topic_id?: string | null;
+};
+
 interface BookingModalProps {
   tutor: TutorProfile;
   isOpen: boolean;
   onClose: () => void;
   onSuccess: (booking: Booking) => void;
   lessonRequestId?: string;
+  learningContext?: LearningContextQuery | null;
 }
 
 export function BookingModal({
@@ -102,6 +109,7 @@ export function BookingModal({
   onClose,
   onSuccess,
   lessonRequestId,
+  learningContext,
 }: BookingModalProps) {
   const [step, setStep] = useState(1);
   const [selectedSubjectId, setSelectedSubjectId] = useState<string>("");
@@ -191,6 +199,15 @@ export function BookingModal({
         start_time,
         duration_minutes: selectedDuration,
         ...(lessonRequestId ? { lesson_request: lessonRequestId } : {}),
+        ...(learningContext
+          ? {
+              learning_goal_id: learningContext.learning_goal_id,
+              learning_milestone_id: learningContext.learning_milestone_id,
+              ...(learningContext.learning_topic_id
+                ? { learning_topic_id: learningContext.learning_topic_id }
+                : {}),
+            }
+          : {}),
       });
       onSuccess(booking);
       onClose();
@@ -242,6 +259,11 @@ export function BookingModal({
           {/* Step 1 */}
           {step === 1 && (
             <>
+              {learningContext && (
+                <div className="rounded-lg border bg-muted/50 p-3 text-sm text-muted-foreground">
+                  Bu rezervasyon öğrenme hedefinle ilişkilendirilecek.
+                </div>
+              )}
               <div>
                 <label className="text-sm font-medium">Ders konusu</label>
                 <div className="mt-2 grid grid-cols-2 gap-2">
@@ -388,6 +410,11 @@ export function BookingModal({
           {/* Step 3 */}
           {step === 3 && selectedSubject && (
             <>
+              {learningContext && (
+                <div className="rounded-lg border bg-muted/50 p-3 text-sm text-muted-foreground">
+                  Bu rezervasyon öğrenme hedefinle ilişkilendirilecek.
+                </div>
+              )}
               <div className="flex items-center gap-3">
                 <Avatar className="h-10 w-10">
                   <AvatarImage

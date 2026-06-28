@@ -47,11 +47,18 @@ const lessonRequestSchema = z.object({
 
 type LessonRequestFormValues = z.infer<typeof lessonRequestSchema>;
 
+type LearningContextQuery = {
+  learning_goal_id: string;
+  learning_milestone_id: string;
+  learning_topic_id?: string | null;
+};
+
 interface LessonRequestModalProps {
   tutor: TutorProfile;
   isOpen: boolean;
   onClose: () => void;
   onSuccess: (lessonRequest: LessonRequest) => void;
+  learningContext?: LearningContextQuery | null;
 }
 
 export function LessonRequestModal({
@@ -59,6 +66,7 @@ export function LessonRequestModal({
   isOpen,
   onClose,
   onSuccess,
+  learningContext,
 }: LessonRequestModalProps) {
   const [generalError, setGeneralError] = useState<string | null>(null);
   const subjectSelectId = useId();
@@ -97,6 +105,15 @@ export function LessonRequestModal({
         tutor: String(tutor.id),
         subject: subjectId,
         message: parsed.data.message,
+        ...(learningContext
+          ? {
+              learning_goal_id: learningContext.learning_goal_id,
+              learning_milestone_id: learningContext.learning_milestone_id,
+              ...(learningContext.learning_topic_id
+                ? { learning_topic_id: learningContext.learning_topic_id }
+                : {}),
+            }
+          : {}),
       });
       onSuccess(result);
       onClose();
@@ -141,6 +158,11 @@ export function LessonRequestModal({
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             {generalError && <ErrorMessage message={generalError} />}
+            {learningContext && (
+              <div className="rounded-lg border bg-muted/50 p-3 text-sm text-muted-foreground">
+                Bu mesaj isteği öğrenme hedefinle ilişkilendirilecek.
+              </div>
+            )}
             <FormField
               control={form.control}
               name="subject"
