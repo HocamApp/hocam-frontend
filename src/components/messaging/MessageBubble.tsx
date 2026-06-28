@@ -31,7 +31,25 @@ export function MessageBubble({ message, isOwnMessage }: MessageBubbleProps) {
             : "bg-muted text-foreground rounded-tl-sm"
         )}
       >
-        <p className="whitespace-pre-wrap text-sm">{message.message_text}</p>
+        {message.image_url && (
+          <a
+            href={message.image_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mb-2 block"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={message.image_url}
+              alt="Görsel ek"
+              className="max-w-full rounded-lg object-cover"
+              style={{ maxHeight: 200 }}
+            />
+          </a>
+        )}
+        {message.message_text && (
+          <p className="whitespace-pre-wrap text-sm">{message.message_text}</p>
+        )}
         <p
           className={cn(
             "mt-1 text-xs opacity-70",

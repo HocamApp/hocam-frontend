@@ -3,6 +3,9 @@
 import { useState, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
+import { Heart } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/useAuth";
 import {
   Select,
   SelectContent,
@@ -117,12 +120,16 @@ function TutorCardSkeleton() {
 function TutorsPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { isAuthenticated } = useAuth();
   const [filters, setFiltersState] = useState<TutorFiltersType>(() => {
     const fromUrl = filtersFromSearchParams(searchParams);
     return { ...fromUrl, ordering: fromUrl.ordering || "rating" };
   });
   const [searchLocal, setSearchLocal] = useState(filters.search ?? "");
   const [page, setPage] = useState(1);
+
+  // Favorites toggle is URL-synced but not a backend filter (client-side only).
+  const showFavorites = searchParams.get("favorites") === "1";
 
   const setFilters = useCallback(
     (newFilters: TutorFiltersType) => {
@@ -146,8 +153,27 @@ function TutorsPageContent() {
 
   const handleClearFilters = useCallback(() => {
     setSearchLocal("");
-    handleFiltersChange({});
-  }, [handleFiltersChange]);
+    setFiltersState({});
+    setPage(1);
+    // Navigate to bare /tutors — clears both filters and the favorites param.
+    router.replace("/tutors", { scroll: false });
+  }, [router]);
+
+  const toggleFavorites = useCallback(() => {
+    if (!isAuthenticated) {
+      router.push("/login");
+      return;
+    }
+    const params = searchParamsFromFilters(filters);
+    if (showFavorites) {
+      params.delete("favorites");
+    } else {
+      params.set("favorites", "1");
+    }
+    setPage(1);
+    const query = params.toString();
+    router.replace(query ? `/tutors?${query}` : "/tutors", { scroll: false });
+  }, [isAuthenticated, router, filters, showFavorites]);
 
   const {
     data: tutors,
@@ -167,6 +193,7 @@ function TutorsPageContent() {
   const { favoriteIds, toggle, isFavoritePending } = useFavorites();
 
   const hasActiveFilters =
+    showFavorites ||
     (filters.search ?? "") !== "" ||
     (filters.subject ?? "") !== "" ||
     (filters.exam_type ?? "") !== "" ||
@@ -178,8 +205,19 @@ function TutorsPageContent() {
     (filters.availability_day ?? "") !== "" ||
     (filters.availability_time ?? "") !== "" ||
     (filters.ordering ?? "rating") !== "rating";
-  const isEmpty = Array.isArray(tutors) && tutors.length === 0;
-  const showEmptyState = isEmpty && hasActiveFilters;
+
+  // Client-side favorites filter applied after the API response.
+  const tutorList = Array.isArray(tutors) ? tutors : [];
+  const filteredTutors =
+    showFavorites && isAuthenticated
+      ? tutorList.filter((t) => favoriteIds.has(t.id))
+      : tutorList;
+
+  // showEmptyState: user applied filters/favorites and got 0 results.
+  const apiEmpty = Array.isArray(tutors) && tutors.length === 0;
+  const showEmptyState = !tutorsLoading && !tutorsError && (
+    (filteredTutors.length === 0 && hasActiveFilters)
+  );
 
   // Keep an active out-of-list university visible in the curated dropdown.
   const activeUniversity = filters.university ?? "";
@@ -188,10 +226,9 @@ function TutorsPageContent() {
       ? [activeUniversity, ...POPULAR_UNIVERSITIES]
       : POPULAR_UNIVERSITIES;
 
-  const tutorList = Array.isArray(tutors) ? tutors : [];
-  const totalPages = Math.max(1, Math.ceil(tutorList.length / PAGE_SIZE));
+  const totalPages = Math.max(1, Math.ceil(filteredTutors.length / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages); // clamp if list shrank
-  const pageTutors = tutorList.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+  const pageTutors = filteredTutors.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   const content = (
     <>
@@ -202,7 +239,9 @@ function TutorsPageContent() {
             Türkiye&apos;nin en iyi YKS hocaları, seni bekliyor.
           </p>
           {!tutorsLoading && Array.isArray(tutors) && (
-            <p className="mt-1 text-xs text-muted-foreground">{tutors.length} hoca bulundu</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {showFavorites ? filteredTutors.length : tutors.length} hoca bulundu
+            </p>
           )}
         </div>
 
@@ -460,8 +499,31 @@ function TutorsPageContent() {
             </Select>
           </div>
           </div>
+          {/* Favorilerim toggle */}
+          <div className="w-full space-y-1 sm:w-auto">
+            <Label className="text-xs uppercase tracking-wide text-muted-foreground">
+              Favoriler
+            </Label>
+            <button
+              type="button"
+              onClick={toggleFavorites}
+              title={!isAuthenticated ? "Filtrelemek için giriş yapın" : undefined}
+              className={cn(
+                "flex h-9 items-center gap-1.5 rounded-md border px-3 text-sm transition-colors",
+                showFavorites
+                  ? "border-primary bg-primary/10 text-primary"
+                  : "border-input bg-background text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <Heart
+                className={cn("h-4 w-4", showFavorites && "fill-current")}
+              />
+              Favorilerim
+            </button>
+          </div>
+
           {hasActiveFilters && (
-            <div className="mt-3 flex justify-end">
+            <div className="w-full mt-3 flex justify-end sm:mt-0 sm:w-auto sm:self-end">
               <Button variant="ghost" size="sm" onClick={handleClearFilters} className="text-xs text-muted-foreground">
                 Filtreleri Temizle
               </Button>
@@ -497,11 +559,19 @@ function TutorsPageContent() {
             </div>
           )}
 
-          {!tutorsLoading && !tutorsError && showEmptyState && (
+          {showEmptyState && (
             <EmptyState
-              title="Hoca bulunamadı"
+              title={
+                showFavorites && !filters.search
+                  ? "Favori hoca bulunamadı"
+                  : "Hoca bulunamadı"
+              }
               description={
-                filters.search
+                showFavorites && tutorList.length > 0
+                  ? "Favori hocalarınız bu filtrelerle eşleşmiyor. Filtreleri değiştirmeyi deneyin."
+                  : showFavorites
+                  ? "Henüz favori hoca eklemediniz. Hoca profillerindeki kalp ikonuna tıklayarak favorilere ekleyebilirsiniz."
+                  : filters.search
                   ? `"${filters.search}" aramasıyla eşleşen hoca bulunamadı. Filtrelerinizi veya arama teriminizi değiştirmeyi deneyin.`
                   : "Filtrelerinizi değiştirmeyi deneyin."
               }
@@ -513,7 +583,7 @@ function TutorsPageContent() {
             />
           )}
 
-          {!tutorsLoading && !tutorsError && !showEmptyState && Array.isArray(tutors) && (tutors.length > 0) && (
+          {!tutorsLoading && !tutorsError && !showEmptyState && filteredTutors.length > 0 && (
             <>
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 {pageTutors.map((tutor) => (
@@ -541,7 +611,7 @@ function TutorsPageContent() {
             </>
           )}
 
-          {!tutorsLoading && !tutorsError && Array.isArray(tutors) && tutors.length === 0 && !hasActiveFilters && (
+          {!tutorsLoading && !tutorsError && apiEmpty && !hasActiveFilters && (
             <EmptyState
               title="Henüz hoca yok"
               description="Yakında burada hocalar listelenecek."

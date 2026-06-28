@@ -104,6 +104,7 @@ export interface Message {
   conversation: string;
   sender: string;
   message_text: string;
+  image_url?: string;
   created_at: string;
 }
 
