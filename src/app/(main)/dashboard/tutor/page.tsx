@@ -12,7 +12,6 @@ import {
   MessageSquare,
   PlayCircle,
   Star,
-  UserCheck,
   Video,
   Wallet,
 } from "lucide-react";
@@ -580,15 +579,7 @@ function TutorDashboardContent() {
             </AvatarFallback>
           </Avatar>
           <div>
-            <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-3xl font-bold">Hoca Panosu</h1>
-              {profile.is_verified && (
-                <Badge variant="secondary" className="text-green-700 dark:text-green-400">
-                  <UserCheck className="mr-1 h-3.5 w-3.5" />
-                  Onaylı
-                </Badge>
-              )}
-            </div>
+            <h1 className="text-3xl font-bold">Hoca Panosu</h1>
             <p className="text-muted-foreground">
               {profile.name} {profile.surname} · {user?.email}
             </p>
