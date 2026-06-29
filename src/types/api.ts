@@ -298,7 +298,12 @@ export interface Conversation {
   student: string;
   tutor: string;
   created_at: string;
-  other_participant?: { id: string; email: string; display_name: string };
+  other_participant?: {
+    id: string;
+    email: string;
+    display_name: string;
+    avatar_url?: string | null;
+  };
   unread_count?: number;
   tutor_profile?: TutorProfile | null;
 }

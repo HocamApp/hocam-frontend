@@ -1,9 +1,11 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { AxiosError } from "axios";
 import { ImageIcon, Send, X } from "lucide-react";
 import { Message } from "@/types";
 import { sendMessage } from "@/lib/messagingApi";
+import { playSendSound } from "@/lib/sound";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { SymbolPicker } from "@/components/messaging/SymbolPicker";
@@ -75,8 +77,21 @@ export function MessageInput({
       setSelectedImage(null);
       setPreviewUrl(null);
       onMessageSent(newMessage);
-    } catch {
-      toast.error("Mesaj gönderilemedi. Lütfen tekrar deneyin.");
+      // Success-only feedback — never plays on a failed send.
+      playSendSound();
+    } catch (err) {
+      const data = (err as AxiosError<Record<string, unknown>>)?.response?.data;
+      const imageError = Array.isArray(data?.image)
+        ? (data?.image[0] as string)
+        : undefined;
+      const nonFieldError = Array.isArray(data?.non_field_errors)
+        ? (data?.non_field_errors[0] as string)
+        : undefined;
+      toast.error(
+        imageError ||
+          nonFieldError ||
+          "Mesaj gönderilemedi. Lütfen tekrar deneyin."
+      );
     } finally {
       setIsSubmitting(false);
       focusTextarea();

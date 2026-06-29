@@ -45,7 +45,11 @@ export async function sendMessage(
     formData.append("conversation_id", payload.conversation_id);
     if (payload.message_text) formData.append("message_text", payload.message_text);
     formData.append("image", payload.image);
-    response = await api.post<Message>("/messages/", formData);
+    // Clear the global JSON default so the browser sets multipart/form-data WITH
+    // its boundary; otherwise Django cannot parse the upload and the image is dropped.
+    response = await api.post<Message>("/messages/", formData, {
+      headers: { "Content-Type": undefined },
+    });
   } else {
     response = await api.post<Message>("/messages/", {
       conversation_id: payload.conversation_id,

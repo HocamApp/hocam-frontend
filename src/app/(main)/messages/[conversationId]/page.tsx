@@ -7,6 +7,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { fetchMessages, fetchConversation } from "@/lib/messagingApi";
 import { MessageBubble } from "@/components/messaging/MessageBubble";
 import { MessageInput } from "@/components/messaging/MessageInput";
+import { ParticipantAvatar } from "@/components/messaging/ParticipantAvatar";
+import { TypingIndicator } from "@/components/messaging/TypingIndicator";
 import { BookingModal } from "@/components/lessons/BookingModal";
 import type { TutorProfile } from "@/types";
 import { RouteGuard } from "@/components/shared/RouteGuard";
@@ -22,8 +24,13 @@ function ConversationContent({
   const router = useRouter();
   const { isAuthenticated, user } = useAuth();
   const bottomRef = useRef<HTMLDivElement>(null);
+  const sentIdsRef = useRef<Set<string>>(new Set());
   const [localMessages, setLocalMessages] = useState<Message[]>([]);
   const [isBookingOpen, setIsBookingOpen] = useState(false);
+  // UI-ready typing indicator. Messaging is HTTP polling only, so there is no
+  // realtime presence signal yet — this stays false until a backend/realtime
+  // typing source exists (see TypingIndicator).
+  const [isOtherTyping] = useState(false);
 
   const { data: conversation } = useQuery({
     queryKey: ["conversation", conversationId],
@@ -56,11 +63,13 @@ function ConversationContent({
   }, [allMessages]);
 
   const handleMessageSent = (newMessage: Message) => {
+    sentIdsRef.current.add(newMessage.id);
     setLocalMessages((prev) => [...prev, newMessage]);
   };
 
   const headerTitle =
     conversation?.other_participant?.display_name ?? `Konuşma #${conversationId.slice(-6).toUpperCase()}`;
+  const headerAvatarUrl = conversation?.other_participant?.avatar_url;
   const tutorForBooking = conversation?.tutor_profile ?? null;
   const showBookingButton = !!tutorForBooking;
 
@@ -77,6 +86,7 @@ function ConversationContent({
           >
             ←
           </button>
+          <ParticipantAvatar name={headerTitle} avatarUrl={headerAvatarUrl} />
           <h1 className="font-semibold">{headerTitle}</h1>
         </div>
         {showBookingButton && (
@@ -90,8 +100,15 @@ function ConversationContent({
         )}
       </header>
 
-      {/* Messages area */}
-      <div className="flex-1 overflow-y-auto p-4">
+      {/* Messages area — mostly-white with a subtle dot texture for depth */}
+      <div
+        className="flex-1 overflow-y-auto bg-background p-4"
+        style={{
+          backgroundImage:
+            "radial-gradient(hsl(var(--muted-foreground) / 0.08) 1px, transparent 1px)",
+          backgroundSize: "22px 22px",
+        }}
+      >
         {messagesLoading && (
           <div className="flex justify-center py-8">
             <LoadingSpinner />
@@ -115,8 +132,10 @@ function ConversationContent({
                 key={msg.id}
                 message={msg}
                 isOwnMessage={msg.sender === user?.id}
+                isNew={sentIdsRef.current.has(msg.id)}
               />
             ))}
+            {isOtherTyping && <TypingIndicator name={headerTitle} />}
             <div ref={bottomRef} />
           </div>
         )}

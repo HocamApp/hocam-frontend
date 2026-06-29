@@ -6,6 +6,8 @@ import { cn } from "@/lib/utils";
 interface MessageBubbleProps {
   message: Message;
   isOwnMessage: boolean;
+  /** Animate the bubble in — used for messages the user just sent. */
+  isNew?: boolean;
 }
 
 function formatMessageTime(createdAt: string): string {
@@ -15,7 +17,11 @@ function formatMessageTime(createdAt: string): string {
   });
 }
 
-export function MessageBubble({ message, isOwnMessage }: MessageBubbleProps) {
+export function MessageBubble({
+  message,
+  isOwnMessage,
+  isNew = false,
+}: MessageBubbleProps) {
   return (
     <div
       className={cn(
@@ -25,10 +31,11 @@ export function MessageBubble({ message, isOwnMessage }: MessageBubbleProps) {
     >
       <div
         className={cn(
-          "max-w-[70%] rounded-2xl px-4 py-2",
+          "max-w-[70%] rounded-2xl px-4 py-2 shadow-sm",
           isOwnMessage
             ? "bg-primary text-primary-foreground rounded-tr-sm"
-            : "bg-muted text-foreground rounded-tl-sm"
+            : "bg-muted text-foreground rounded-tl-sm",
+          isNew && "motion-safe:animate-message-pop"
         )}
       >
         {message.image_url && (

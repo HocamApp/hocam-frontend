@@ -5,6 +5,7 @@ import { Conversation } from "@/types";
 import { formatDate } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ParticipantAvatar } from "@/components/messaging/ParticipantAvatar";
 import { cn } from "@/lib/utils";
 
 interface ConversationListProps {
@@ -41,8 +42,11 @@ function ConversationRow({
         isSelected ? "bg-slate-100" : "bg-white"
       )}
     >
-      <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-200 text-sm font-medium text-slate-600">
-        {displayName.charAt(0).toUpperCase()}
+      <div className="relative shrink-0">
+        <ParticipantAvatar
+          name={displayName}
+          avatarUrl={conversation.other_participant?.avatar_url}
+        />
         {unreadCount > 0 && (
           <span
             className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold text-primary-foreground"
