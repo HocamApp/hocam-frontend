@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AxiosError } from "axios";
 import { toast } from "sonner";
@@ -21,7 +21,17 @@ import { createSupportTicket } from "@/lib/supportApi";
 import type { SupportTicketCategory } from "@/types/api";
 import { CATEGORY_LABELS, CATEGORY_OPTIONS } from "./supportContent";
 
-export function SupportTicketForm() {
+interface SupportTicketFormPreset {
+  category?: SupportTicketCategory;
+  subject?: string;
+  message?: string;
+}
+
+interface SupportTicketFormProps {
+  preset?: SupportTicketFormPreset;
+}
+
+export function SupportTicketForm({ preset }: SupportTicketFormProps) {
   const queryClient = useQueryClient();
   const [category, setCategory] = useState<SupportTicketCategory | "">("");
   const [subject, setSubject] = useState("");
@@ -31,6 +41,14 @@ export function SupportTicketForm() {
     subject?: string;
     message?: string;
   }>({});
+
+  useEffect(() => {
+    if (!preset) return;
+    setCategory(preset.category ?? "");
+    setSubject(preset.subject ?? "");
+    setMessage(preset.message ?? "");
+    setErrors({});
+  }, [preset]);
 
   const mutation = useMutation({
     mutationFn: createSupportTicket,

@@ -467,7 +467,7 @@ function ProfileContent() {
         )}
 
         {/* ---- Hesap görünürlüğü ---- */}
-        <Card>
+        <Card id="account-visibility" className="scroll-mt-24">
           <CardHeader>
             <CardTitle className="text-lg">Hesap görünürlüğü</CardTitle>
           </CardHeader>
@@ -500,7 +500,7 @@ function ProfileContent() {
         </Card>
 
         {/* ---- Oturumları yönet ---- */}
-        <Card>
+        <Card id="data-export" className="scroll-mt-24">
           <CardHeader>
             <CardTitle className="text-lg">Oturumları yönet</CardTitle>
           </CardHeader>
@@ -585,6 +585,18 @@ function ProfileContent() {
                 onClick={() => router.push("/profile/reviews/pending")}
               />
             )}
+            <ProfileMenuRow
+              icon={<Eye className="h-4 w-4" />}
+              label="Hesap görünürlüğü"
+              showChevron
+              onClick={() => router.push("/profile#account-visibility")}
+            />
+            <ProfileMenuRow
+              icon={<Download className="h-4 w-4" />}
+              label="Verilerimi indir"
+              showChevron
+              onClick={() => router.push("/profile#data-export")}
+            />
             <ProfileMenuRow
               icon={<LifeBuoy className="h-4 w-4" />}
               label="Destek"

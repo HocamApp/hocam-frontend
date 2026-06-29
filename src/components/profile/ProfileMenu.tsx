@@ -555,13 +555,13 @@ export function ProfileMenu() {
               icon={<Eye className="h-4 w-4" />}
               label="Hesap görünürlüğü"
               showChevron
-              onClick={comingSoon}
+              onClick={() => go("/profile#account-visibility")}
             />
             <ProfileMenuRow
               icon={<Download className="h-4 w-4" />}
               label="Verilerimi indir"
               showChevron
-              onClick={comingSoon}
+              onClick={() => go("/profile#data-export")}
             />
             <Button variant="outline" className="w-full" onClick={comingSoon}>
               Güvenlik Ayarları

@@ -1,14 +1,26 @@
 "use client";
 
-import { LifeBuoy } from "lucide-react";
+import { useRef, useState } from "react";
+import { LifeBuoy, MessageSquareText } from "lucide-react";
 
 import { RouteGuard } from "@/components/shared/RouteGuard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { SupportTicketForm } from "@/components/support/SupportTicketForm";
 import { SupportTicketList } from "@/components/support/SupportTicketList";
 import { HELP_SECTIONS } from "@/components/support/supportContent";
 
 function SupportContent() {
+  const formRef = useRef<HTMLDivElement>(null);
+  const [feedbackPreset, setFeedbackPreset] = useState(0);
+
+  const startWebsiteFeedback = () => {
+    setFeedbackPreset((value) => value + 1);
+    requestAnimationFrame(() => {
+      formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  };
+
   return (
     <div className="mx-auto w-full max-w-5xl px-4 py-8 sm:py-10">
       {/* Header */}
@@ -32,12 +44,21 @@ function SupportContent() {
       <div className="mt-8 grid gap-6 lg:grid-cols-5">
         {/* Ticket form + list */}
         <div className="space-y-6 lg:col-span-3">
-          <Card>
+          <Card ref={formRef} className="scroll-mt-24">
             <CardHeader>
               <CardTitle className="text-lg">Destek talebi oluştur</CardTitle>
             </CardHeader>
             <CardContent>
-              <SupportTicketForm />
+              <SupportTicketForm
+                preset={
+                  feedbackPreset
+                    ? {
+                        category: "technical",
+                        subject: "Web sitesi geri bildirimi",
+                      }
+                    : undefined
+                }
+              />
             </CardContent>
           </Card>
 
@@ -54,6 +75,30 @@ function SupportContent() {
           <h2 className="text-lg font-semibold text-foreground">
             Yardım & kurallar
           </h2>
+          <Card>
+            <CardContent className="space-y-3 p-4">
+              <div className="flex items-center gap-2">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                  <MessageSquareText className="h-4 w-4" />
+                </span>
+                <h3 className="font-medium text-foreground">
+                  Web sitesi geri bildirimi
+                </h3>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Tasarım, metin, akış veya teknik sorunlarla ilgili geri bildirimleri
+                destek talebi olarak iletebilirsiniz.
+              </p>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={startWebsiteFeedback}
+              >
+                Geri bildirim yaz
+              </Button>
+            </CardContent>
+          </Card>
           {HELP_SECTIONS.map((section) => {
             const Icon = section.icon;
             return (

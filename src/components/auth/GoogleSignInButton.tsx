@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface GoogleCredentialResponse {
   credential?: string;
@@ -66,11 +66,13 @@ export function GoogleSignInButton({
   text = "continue_with",
 }: GoogleSignInButtonProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [loadFailed, setLoadFailed] = useState(false);
   const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 
   useEffect(() => {
     if (!clientId || !containerRef.current) return;
     let cancelled = false;
+    setLoadFailed(false);
 
     loadGisScript()
       .then(() => {
@@ -93,7 +95,7 @@ export function GoogleSignInButton({
         });
       })
       .catch(() => {
-        /* network/script error — the notice below covers the missing-config case */
+        if (!cancelled) setLoadFailed(true);
       });
 
     return () => {
@@ -109,5 +111,13 @@ export function GoogleSignInButton({
     );
   }
 
-  return <div ref={containerRef} className="flex justify-center" />;
+  if (loadFailed) {
+    return (
+      <p className="text-center text-xs text-neutral-500">
+        Google ile giriş yüklenemedi. Lütfen daha sonra tekrar deneyin.
+      </p>
+    );
+  }
+
+  return <div ref={containerRef} className="flex min-h-10 justify-center" />;
 }
