@@ -76,7 +76,7 @@ export default function SlidingPagination({
     <div className={cn("relative inline-flex items-center gap-2", className)}>
       {pagesToShow.map((pageNum, i) =>
         pageNum === -1 ? (
-          <span key={`dots-${i}`} className="px-2 text-gray-400">…</span>
+          <span key={`dots-${i}`} className="px-2 text-muted-foreground">…</span>
         ) : (
           <Button
             key={pageNum}

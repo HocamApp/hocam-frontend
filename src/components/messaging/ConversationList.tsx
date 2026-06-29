@@ -38,8 +38,8 @@ function ConversationRow({
       type="button"
       onClick={() => onSelect(conversation.id)}
       className={cn(
-        "flex w-full cursor-pointer items-center gap-3 border-b p-4 text-left transition-colors hover:bg-slate-50",
-        isSelected ? "bg-slate-100" : "bg-white"
+        "flex w-full cursor-pointer items-center gap-3 border-b p-4 text-left transition-colors hover:bg-muted/60",
+        isSelected ? "bg-muted" : "bg-transparent"
       )}
     >
       <div className="relative shrink-0">

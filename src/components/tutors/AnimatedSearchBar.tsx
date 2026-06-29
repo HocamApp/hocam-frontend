@@ -68,10 +68,10 @@ export function AnimatedSearchBar({
         expandedOffset={50}
         classNames={{
           trigger:
-            "border border-slate-300/60 bg-slate-100/90 text-slate-700 ring-slate-300/80 hover:bg-slate-100 focus-visible:ring-blue-400 focus-visible:ring-offset-white",
-          input: "text-slate-700 placeholder:text-slate-500",
+            "border border-input bg-muted/80 text-foreground ring-ring/30 hover:bg-accent focus-visible:ring-ring focus-visible:ring-offset-background",
+          input: "text-foreground placeholder:text-muted-foreground",
           bubbleSurface:
-            "border border-slate-300/60 bg-slate-100/90 text-slate-700 ring-slate-300/80",
+            "border border-input bg-popover text-foreground ring-ring/30",
         }}
       />
     </div>
