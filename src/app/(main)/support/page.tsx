@@ -6,6 +6,7 @@ import { LifeBuoy, MessageSquareText } from "lucide-react";
 import { RouteGuard } from "@/components/shared/RouteGuard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { SupportFAQ } from "@/components/support/SupportFAQ";
 import { SupportTicketForm } from "@/components/support/SupportTicketForm";
 import { SupportTicketList } from "@/components/support/SupportTicketList";
 import { HELP_SECTIONS } from "@/components/support/supportContent";
@@ -44,7 +45,7 @@ function SupportContent() {
       <div className="mt-8 grid gap-6 lg:grid-cols-5">
         {/* Ticket form + list */}
         <div className="space-y-6 lg:col-span-3">
-          <Card ref={formRef} className="scroll-mt-24">
+          <Card id="support-request-form" ref={formRef} className="scroll-mt-24">
             <CardHeader>
               <CardTitle className="text-lg">Destek talebi oluştur</CardTitle>
             </CardHeader>
@@ -132,6 +133,8 @@ function SupportContent() {
           })}
         </aside>
       </div>
+
+      <SupportFAQ />
     </div>
   );
 }
