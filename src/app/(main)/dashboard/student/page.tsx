@@ -3,9 +3,9 @@
 import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { ArrowRight, BookOpen, CheckCircle2, Clock3, Target } from "lucide-react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
-import { fetchLearningDashboard } from "@/lib/learningApi";
+import { createStudentGoal, fetchLearningDashboard } from "@/lib/learningApi";
 import {
   fetchLessonRequests,
   fetchBookings,
@@ -203,6 +203,17 @@ function StudentDashboardContent() {
     enabled: isAuthenticated,
   });
 
+  const startGoalMutation = useMutation({
+    mutationFn: (templateId: string) => createStudentGoal({ template: templateId }),
+    onSuccess: async () => {
+      toast.success("Hedef başlatıldı.");
+      await queryClient.invalidateQueries({ queryKey: ["learning-dashboard"] });
+    },
+    onError: () => {
+      toast.error("Hedef başlatılamadı.");
+    },
+  });
+
   const activeLessonRequests = lessonRequests.filter((lr) => {
     const s = (lr.status || "").toLowerCase();
     return s === "pending" || s === "accepted";
@@ -359,40 +370,52 @@ function StudentDashboardContent() {
                 />
               ) : (
                 <div className="grid gap-4 md:grid-cols-2">
-                  {templates.map((template) => (
-                    <article
-                      key={template.id}
-                      className="flex min-h-64 flex-col rounded-2xl border bg-card p-5 shadow-sm"
-                    >
-                      <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-muted-foreground">
-                        <span className="rounded-full bg-muted px-2.5 py-1">
-                          {template.exam_type} / {template.subject_name}
-                        </span>
-                        <span className="rounded-full bg-primary/10 px-2.5 py-1 text-primary">
-                          {formatLevel(template.level)}
-                        </span>
-                      </div>
-                      <h3 className="mt-4 text-lg font-semibold tracking-normal">
-                        {template.title}
-                      </h3>
-                      <p className="mt-2 line-clamp-3 text-sm text-muted-foreground">
-                        {template.description}
-                      </p>
-                      <div className="mt-auto pt-5">
-                        <p className="mb-3 text-xs font-medium text-muted-foreground">
-                          {template.estimated_milestones} milestone
+                  {templates.map((template) => {
+                    const goalExists = goals.some((goal) => goal.template === template.id);
+                    const isStarting =
+                      startGoalMutation.isPending &&
+                      startGoalMutation.variables === template.id;
+
+                    return (
+                      <article
+                        key={template.id}
+                        className="flex min-h-64 flex-col rounded-2xl border bg-card p-5 shadow-sm"
+                      >
+                        <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-muted-foreground">
+                          <span className="rounded-full bg-muted px-2.5 py-1">
+                            {template.exam_type} / {template.subject_name}
+                          </span>
+                          <span className="rounded-full bg-primary/10 px-2.5 py-1 text-primary">
+                            {formatLevel(template.level)}
+                          </span>
+                        </div>
+                        <h3 className="mt-4 text-lg font-semibold tracking-normal">
+                          {template.title}
+                        </h3>
+                        <p className="mt-2 line-clamp-3 text-sm text-muted-foreground">
+                          {template.description}
                         </p>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          className="w-full"
-                          onClick={() => toast.info("Yakında")}
-                        >
-                          Hedefe başla
-                        </Button>
-                      </div>
-                    </article>
-                  ))}
+                        <div className="mt-auto pt-5">
+                          <p className="mb-3 text-xs font-medium text-muted-foreground">
+                            {template.estimated_milestones} milestone
+                          </p>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            className="w-full"
+                            disabled={goalExists || startGoalMutation.isPending}
+                            onClick={() => startGoalMutation.mutate(template.id)}
+                          >
+                            {goalExists
+                              ? "Hedefe eklendi"
+                              : isStarting
+                                ? "Başlatılıyor..."
+                                : "Hedefe başla"}
+                          </Button>
+                        </div>
+                      </article>
+                    );
+                  })}
                 </div>
               )}
             </LearningSection>
