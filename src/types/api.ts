@@ -378,6 +378,7 @@ export interface UserPreferences {
   notify_lesson_requests: boolean;
   notify_booking_reminders: boolean;
   notify_email: boolean;
+  language: string;
 }
 
 export interface ProfileStats {
@@ -395,6 +396,7 @@ export interface ProfileTutor {
   department: string;
   hourly_price: number;
   intro_video_url: string;
+  auto_approve_bookings: boolean;
   subjects: Subject[];
   availability: Array<{
     day_of_week: number;

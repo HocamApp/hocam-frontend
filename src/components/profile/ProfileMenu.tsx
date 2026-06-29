@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -8,14 +8,19 @@ import {
   Bell,
   BookOpen,
   CalendarClock,
+  Camera,
   ChevronDown,
+  CreditCard,
   Download,
   Eye,
+  Globe,
   GraduationCap,
   KeyRound,
   LifeBuoy,
   LogOut,
+  Mail,
   Moon,
+  Pencil,
   PlayCircle,
   ShieldCheck,
   Star,
@@ -24,6 +29,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { fetchProfileMe, updateProfileMe } from "@/lib/profileApi";
+import { uploadTutorProfilePicture } from "@/lib/tutorsApi";
 import { formatPrice } from "@/lib/utils";
 import type { Theme } from "@/lib/theme";
 import type { ProfileStudent, ProfileTutor, UserPreferences } from "@/types";
@@ -35,6 +41,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AnimatedThemeToggler } from "@/components/theme/AnimatedThemeToggler";
 import {
@@ -54,6 +61,9 @@ const DAY_NAMES = [
   "Cumartesi",
   "Pazar",
 ];
+
+// Boolean-valued preference keys — excludes string fields like `language`
+type BoolPrefKey = keyof Omit<UserPreferences, "language">;
 
 function getInitials(name: string, surname: string): string {
   const n = (name || "").trim()[0] || "";
@@ -75,6 +85,19 @@ export function ProfileMenu() {
   const [open, setOpen] = useState(false);
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const [prefOverrides, setPrefOverrides] = useState<Partial<UserPreferences>>({});
+
+  // Inline name/surname editing
+  const [nameEdit, setNameEdit] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [editSurname, setEditSurname] = useState("");
+  const [nameSaving, setNameSaving] = useState(false);
+
+  // Profile photo upload (tutor only)
+  const [photoUploading, setPhotoUploading] = useState(false);
+  const photoInputRef = useRef<HTMLInputElement>(null);
+
+  // Optimistic override for auto_approve_bookings
+  const [autoApproveOverride, setAutoApproveOverride] = useState<boolean | null>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ["profile-me"],
@@ -102,6 +125,7 @@ export function ProfileMenu() {
       notify_lesson_requests: true,
       notify_booking_reminders: true,
       notify_email: false,
+      language: "tr",
       ...(data?.preferences ?? {}),
       ...prefOverrides,
     }),
@@ -120,34 +144,99 @@ export function ProfileMenu() {
 
   const editHref = role === "tutor" ? "/dashboard/tutor/edit" : "/dashboard/student";
 
-  const handleNotificationToggle = async (
-    key: keyof UserPreferences,
-    next: boolean
-  ) => {
-    setPrefOverrides((prev) => ({ ...prev, [key]: next }));
+  const handleNotificationToggle = async (key: BoolPrefKey, next: boolean) => {
+    setPrefOverrides((prev) => ({ ...prev, [key]: next } as Partial<UserPreferences>));
     try {
       await updateProfileMe({ preferences: { [key]: next } });
       queryClient.invalidateQueries({ queryKey: ["profile-me"] });
     } catch {
-      setPrefOverrides((prev) => ({ ...prev, [key]: !next }));
+      setPrefOverrides((prev) => ({ ...prev, [key]: !next } as Partial<UserPreferences>));
       toast.error("Tercih kaydedilemedi.");
     }
   };
 
   const handleThemeChange = (nextTheme: Theme) => {
-    // Best-effort backend sync; local preference stands regardless.
     updateProfileMe({ preferences: { dark_mode: nextTheme === "dark" } }).catch(
       () => undefined
     );
   };
 
+  const handleLanguageChange = async (nextLang: string) => {
+    const prevLang = prefs.language;
+    setPrefOverrides((prev) => ({ ...prev, language: nextLang }));
+    try {
+      await updateProfileMe({ preferences: { language: nextLang } });
+      queryClient.invalidateQueries({ queryKey: ["profile-me"] });
+    } catch {
+      setPrefOverrides((prev) => ({ ...prev, language: prevLang }));
+      toast.error("Dil ayarı kaydedilemedi.");
+    }
+  };
+
+  const handleNameSave = async () => {
+    const trimmedName = editName.trim();
+    const trimmedSurname = editSurname.trim();
+    if (!trimmedName || !trimmedSurname) {
+      toast.error("İsim ve soyisim boş olamaz.");
+      return;
+    }
+    setNameSaving(true);
+    try {
+      await updateProfileMe({ profile: { name: trimmedName, surname: trimmedSurname } });
+      await queryClient.invalidateQueries({ queryKey: ["profile-me"] });
+      setNameEdit(false);
+      toast.success("İsim güncellendi.");
+    } catch {
+      toast.error("İsim güncellenemedi.");
+    } finally {
+      setNameSaving(false);
+    }
+  };
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = "";
+    const allowed = ["image/jpeg", "image/png", "image/webp"];
+    if (!allowed.includes(file.type)) {
+      toast.error("Yalnızca JPEG, PNG veya WebP görseller yüklenebilir.");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Görsel 5 MB'dan küçük olmalıdır.");
+      return;
+    }
+    setPhotoUploading(true);
+    try {
+      await uploadTutorProfilePicture(file);
+      await queryClient.invalidateQueries({ queryKey: ["profile-me"] });
+      await queryClient.invalidateQueries({ queryKey: ["tutor-me"] });
+      toast.success("Profil fotoğrafı güncellendi.");
+    } catch {
+      toast.error("Fotoğraf yüklenemedi. Lütfen tekrar deneyin.");
+    } finally {
+      setPhotoUploading(false);
+    }
+  };
+
+  const handleAutoApproveToggle = async (next: boolean) => {
+    const prev = autoApproveOverride ?? tutor?.auto_approve_bookings ?? false;
+    setAutoApproveOverride(next);
+    try {
+      await updateProfileMe({ profile: { auto_approve_bookings: next } });
+      queryClient.invalidateQueries({ queryKey: ["profile-me"] });
+    } catch {
+      setAutoApproveOverride(prev);
+      toast.error("Tercih kaydedilemedi.");
+    }
+  };
+
   // Single-open connected accordion: one active section key (null = all collapsed).
-  // Role-aware key order must mirror the rendered sections below so the group math
-  // (marginTop + corner radius) lines up with the visible rows.
   const sectionKeys = useMemo(
     () => [
       "profile",
       "lessons",
+      "payment",
       "security",
       "notifications",
       ...(tutor ? ["tutor"] : []),
@@ -171,15 +260,18 @@ export function ProfileMenu() {
     };
   };
 
-  // Reset accordion to fully collapsed whenever the dropdown closes, so it
-  // always reopens fresh instead of restoring the previously expanded section.
-  // An effect (not just onOpenChange) covers every close path, including the
-  // direct setOpen(false) calls in go()/comingSoon()/logout.
   useEffect(() => {
-    if (!open) setActiveSection(null);
+    if (!open) {
+      setActiveSection(null);
+      setNameEdit(false);
+      setEditName("");
+      setEditSurname("");
+    }
   }, [open]);
 
   if (!isAuthenticated) return null;
+
+  const currentAutoApprove = autoApproveOverride ?? tutor?.auto_approve_bookings ?? false;
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -205,20 +297,51 @@ export function ProfileMenu() {
         className="w-[calc(100vw-2rem)] border-none bg-transparent p-0 shadow-none sm:w-[440px]"
       >
         <div className="max-h-[min(80vh,640px)] overflow-y-auto rounded-[32px] bg-background/[0.08] p-3 backdrop-blur-lg">
+
           {/* ---- Profil Detayları ---- */}
           <ProfileAccordionSection
             icon={<UserCog className="h-4 w-4" />}
             title="Profil Detayları"
             {...sectionProps("profile")}
           >
-            <div className="flex items-center gap-3">
-              <Avatar className="h-14 w-14 border border-border">
-                {avatarImage ? <AvatarImage src={avatarImage} alt={fullName} /> : null}
-                <AvatarFallback className="bg-primary/10 text-lg font-semibold text-primary">
-                  {initials || <UserCog className="h-5 w-5" />}
-                </AvatarFallback>
-              </Avatar>
-              <div className="min-w-0">
+            {/* Avatar row with photo upload for tutors */}
+            <div className="flex items-start gap-3">
+              <div className="relative shrink-0">
+                <Avatar className="h-14 w-14 border border-border">
+                  {avatarImage ? <AvatarImage src={avatarImage} alt={fullName} /> : null}
+                  <AvatarFallback className="bg-primary/10 text-lg font-semibold text-primary">
+                    {initials || <UserCog className="h-5 w-5" />}
+                  </AvatarFallback>
+                </Avatar>
+                {tutor && (
+                  <>
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      hidden
+                      ref={photoInputRef}
+                      onChange={handlePhotoUpload}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => photoInputRef.current?.click()}
+                      disabled={photoUploading}
+                      className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground shadow transition-opacity disabled:opacity-60"
+                      aria-label="Profil fotoğrafı değiştir"
+                    >
+                      {photoUploading ? (
+                        <span
+                          className="h-3 w-3 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent"
+                          aria-hidden
+                        />
+                      ) : (
+                        <Camera className="h-3 w-3" />
+                      )}
+                    </button>
+                  </>
+                )}
+              </div>
+              <div className="min-w-0 flex-1">
                 {isLoading && !data ? (
                   <Skeleton className="h-5 w-32" />
                 ) : (
@@ -240,9 +363,94 @@ export function ProfileMenu() {
                 )}
               </div>
             </div>
-            <p className="text-sm text-muted-foreground">
-              Hesap bilgileri ve ayarlarınız.
-            </p>
+
+            {/* Photo label (tutor only) */}
+            {tutor && (
+              <p className="px-1 text-xs text-muted-foreground">
+                Profil fotoğrafı — JPEG, PNG veya WebP, en fazla 5 MB
+              </p>
+            )}
+
+            {/* Email (read-only) */}
+            <div className="flex items-center gap-3 rounded-lg px-2 py-1.5 text-sm">
+              <Mail className="h-4 w-4 shrink-0 text-muted-foreground" />
+              <span className="flex-1 truncate text-foreground">{user?.email}</span>
+              <span className="shrink-0 text-xs text-muted-foreground">E-posta</span>
+            </div>
+
+            {/* Role (read-only) */}
+            <div className="flex items-center gap-3 rounded-lg px-2 py-1.5 text-sm">
+              <UserCog className="h-4 w-4 shrink-0 text-muted-foreground" />
+              <span className="flex-1 text-foreground">Rol</span>
+              <Badge variant="secondary" className="shrink-0">
+                {role === "tutor" ? "Hoca" : "Öğrenci"}
+              </Badge>
+            </div>
+
+            {/* Inline name / surname edit */}
+            {!nameEdit ? (
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full"
+                onClick={() => {
+                  setEditName(name);
+                  setEditSurname(surname);
+                  setNameEdit(true);
+                }}
+              >
+                <Pencil className="mr-1.5 h-3 w-3" />
+                İsim ve soyismi düzenle
+              </Button>
+            ) : (
+              <div className="space-y-2">
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="İsim"
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    className="h-8 text-sm"
+                    disabled={nameSaving}
+                    // eslint-disable-next-line jsx-a11y/no-autofocus
+                    autoFocus
+                  />
+                  <Input
+                    placeholder="Soyisim"
+                    value={editSurname}
+                    onChange={(e) => setEditSurname(e.target.value)}
+                    className="h-8 text-sm"
+                    disabled={nameSaving}
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1"
+                    onClick={() => setNameEdit(false)}
+                    disabled={nameSaving}
+                  >
+                    İptal
+                  </Button>
+                  <Button
+                    size="sm"
+                    className="flex-1"
+                    onClick={handleNameSave}
+                    disabled={nameSaving}
+                  >
+                    {nameSaving ? (
+                      <span
+                        className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent"
+                        aria-hidden
+                      />
+                    ) : (
+                      "Kaydet"
+                    )}
+                  </Button>
+                </div>
+              </div>
+            )}
+
             <Button variant="outline" className="w-full" onClick={() => go(editHref)}>
               Profili Düzenle
             </Button>
@@ -254,6 +462,13 @@ export function ProfileMenu() {
             title="Dersler ve Rezervasyonlar"
             {...sectionProps("lessons")}
           >
+            {tutor && (
+              <ProfileToggleRow
+                label="Otomatik onay"
+                checked={currentAutoApprove}
+                onChange={handleAutoApproveToggle}
+              />
+            )}
             <ProfileMenuRow
               icon={<CalendarClock className="h-4 w-4" />}
               label="Yaklaşan dersler"
@@ -284,6 +499,30 @@ export function ProfileMenu() {
             <Button className="w-full" onClick={() => go("/profile/calendar")}>
               Ders Takvimine Git
             </Button>
+          </ProfileAccordionSection>
+
+          {/* ---- Ödeme ve Faturalandırma ---- */}
+          <ProfileAccordionSection
+            icon={<CreditCard className="h-4 w-4" />}
+            title="Ödeme ve Faturalandırma"
+            {...sectionProps("payment")}
+          >
+            <div>
+              <p className="px-1 pb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Ödeme yöntemleri
+              </p>
+              <p className="px-1 py-1.5 text-sm text-muted-foreground">
+                Henüz kayıtlı ödeme yöntemi yok.
+              </p>
+            </div>
+            <div>
+              <p className="px-1 pb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Ödeme geçmişi
+              </p>
+              <p className="px-1 py-1.5 text-sm text-muted-foreground">
+                Henüz ödeme geçmişi yok.
+              </p>
+            </div>
           </ProfileAccordionSection>
 
           {/* ---- Güvenlik ve Gizlilik ---- */}
@@ -422,6 +661,20 @@ export function ProfileMenu() {
             title="Gelişmiş Ayarlar"
             {...sectionProps("advanced")}
           >
+            <div className="flex items-center gap-3 px-2 py-1.5 text-sm">
+              <span className="shrink-0 text-muted-foreground">
+                <Globe className="h-4 w-4" />
+              </span>
+              <span className="flex-1 text-foreground">Dil</span>
+              <select
+                value={prefs.language}
+                onChange={(e) => handleLanguageChange(e.target.value)}
+                className="rounded-md border border-input bg-background px-2 py-0.5 text-xs text-foreground"
+              >
+                <option value="tr">Türkçe</option>
+                <option value="en">İngilizce</option>
+              </select>
+            </div>
             <div className="flex items-center gap-3 px-2 py-1.5 text-sm">
               <span className="shrink-0 text-muted-foreground">
                 <Moon className="h-4 w-4" />
