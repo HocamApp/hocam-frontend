@@ -1,12 +1,12 @@
 "use client";
 
 import * as React from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   Bell,
   GraduationCap,
+  Heart,
   LayoutDashboard,
-  LifeBuoy,
   LucideIcon,
   MessageCircle,
 } from "lucide-react";
@@ -37,11 +37,12 @@ type NavDescriptor =
 /**
  * Animated icon navigation for authenticated users. Active item is derived from
  * the current route (route-driven), so the browser back/forward buttons keep it
- * in sync. Notifications and Support are placeholders that open a small popover.
+ * in sync. Notifications open a small popover.
  */
 export function AnimatedNavbarLinks() {
   const pathname = usePathname();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { isAuthenticated, isTutor, isLoading } = useAuth();
 
   const { data: summary } = useQuery({
@@ -55,6 +56,8 @@ export function AnimatedNavbarLinks() {
   if (isLoading || !isAuthenticated) return null;
 
   const panomHref = isTutor ? "/dashboard/tutor" : "/dashboard/student";
+  const isFavoritesView =
+    pathname === "/tutors" && searchParams.get("favorites") === "1";
 
   const descriptors: NavDescriptor[] = [
     { kind: "route", title: "Dersler", icon: GraduationCap, href: "/tutors" },
@@ -67,11 +70,18 @@ export function AnimatedNavbarLinks() {
       icon: Bell,
       contentNode: <NotificationPopoverContent />,
     },
-    { kind: "route", title: "Destek", icon: LifeBuoy, href: "/support" },
+    ...(!isTutor
+      ? [{ kind: "route" as const, title: "Favoriler", icon: Heart, href: "/tutors?favorites=1" }]
+      : []),
   ];
 
-  const isActive = (href: string) =>
-    pathname === href || pathname.startsWith(`${href}/`);
+  const isActive = (href: string) => {
+    if (href === "/tutors?favorites=1") return isFavoritesView;
+    if (href === "/tutors" && isFavoritesView) return false;
+
+    const [hrefPathname] = href.split("?");
+    return pathname === hrefPathname || pathname.startsWith(`${hrefPathname}/`);
+  };
 
   const activeIndex = descriptors.findIndex(
     (d) => d.kind === "route" && isActive(d.href)
