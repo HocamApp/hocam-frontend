@@ -30,6 +30,208 @@ export interface Subject {
   exam_type: ExamType;
 }
 
+export type LearningLevel = "beginner" | "intermediate" | "advanced";
+
+export type StudentGoalStatus = "active" | "completed" | "paused" | "archived";
+
+export type StudentMilestoneStatus =
+  | "not_started"
+  | "planned"
+  | "in_progress"
+  | "pending_confirmation"
+  | "completed";
+
+export type LearningActivityStatus =
+  | "planned"
+  | "pending_confirmation"
+  | "confirmed"
+  | "cancelled";
+
+export type LearningConfirmationSource = "system" | "tutor" | "student";
+
+export type TutorProgressResult = "low" | "good" | "completed";
+
+export interface ConfirmLearningActivityPayload {
+  progress_result: TutorProgressResult;
+  tutor_note?: string;
+  student_level_after_lesson?: LearningLevel | "";
+}
+
+export interface LearningTopic {
+  id: string;
+  exam_type: string;
+  subject_name: string;
+  title: string;
+  slug: string;
+  level: LearningLevel;
+  description: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface LearningMilestoneTemplate {
+  id: string;
+  goal_template: string;
+  topic: string | null;
+  title: string;
+  slug: string;
+  description: string;
+  order: number;
+  required_confirmed_lessons: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface LearningGoalTemplate {
+  id: string;
+  title: string;
+  slug: string;
+  exam_type: string;
+  subject_name: string;
+  level: LearningLevel;
+  description: string;
+  estimated_milestones: number;
+  is_featured: boolean;
+  is_active: boolean;
+  milestone_templates: LearningMilestoneTemplate[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface StudentMilestone {
+  id: string;
+  student: string;
+  goal: string;
+  template: string | null;
+  topic: string | null;
+  title: string;
+  description: string;
+  status: StudentMilestoneStatus;
+  progress: number;
+  order: number;
+  required_confirmed_lessons: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface StudentGoal {
+  id: string;
+  student: string;
+  template: string | null;
+  title: string;
+  description: string;
+  status: StudentGoalStatus;
+  target_date: string | null;
+  milestones: StudentMilestone[];
+  progress: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface StudentNote {
+  id: string;
+  student: string;
+  goal: string | null;
+  milestone: string | null;
+  title: string;
+  body: string;
+  tag: string;
+  is_pinned: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface LearningProgressEvent {
+  id: string;
+  student: string;
+  goal: string | null;
+  milestone: string | null;
+  topic: string | null;
+  activity: string | null;
+  progress_delta: number;
+  confirmation_source: LearningConfirmationSource;
+  tutor_note: string;
+  student_level_after_lesson: LearningLevel | "";
+  created_at: string;
+}
+
+export interface LearningDashboardStats {
+  active_goals_count: number;
+  open_milestones_count: number;
+  completed_milestones_count: number;
+  notes_count: number;
+  pending_confirmations_count: number;
+  average_progress: number;
+  completed_goals_count: number;
+  total_progress_events_count: number;
+}
+
+export interface NextLearningMilestone {
+  id: string;
+  goal_id: string;
+  goal_title: string;
+  topic_id: string | null;
+  topic_title: string | null;
+  title: string;
+  description: string;
+  status: StudentMilestoneStatus;
+  progress: number;
+  required_confirmed_lessons: number;
+  cta: {
+    label: string;
+    query: {
+      learning_goal_id: string;
+      learning_milestone_id: string;
+      learning_topic_id: string | null;
+    };
+  };
+}
+
+export interface PendingLearningConfirmation {
+  id: string;
+  status: LearningActivityStatus;
+  goal: { id: string; title: string } | null;
+  milestone: { id: string; title: string; progress: number } | null;
+  topic: { id: string; title: string } | null;
+  booking: {
+    id: string;
+    status: string;
+    start_time: string;
+    tutor: { id: string; name: string; surname: string };
+    subject: { id: string; name: string; exam_type: string };
+  } | null;
+}
+
+export interface LearningDashboardResponse {
+  templates: LearningGoalTemplate[];
+  goals: StudentGoal[];
+  notes: StudentNote[];
+  stats: LearningDashboardStats;
+  recent_progress: LearningProgressEvent[];
+  next_milestones: NextLearningMilestone[];
+  pending_confirmations: PendingLearningConfirmation[];
+}
+
+export interface LearningContext {
+  activity_id: string;
+  goal: { id: string; title: string } | null;
+  milestone: {
+    id: string;
+    title: string;
+    status: StudentMilestoneStatus;
+    progress: number;
+  } | null;
+  topic: {
+    id: string;
+    title: string;
+    exam_type: string;
+    subject_name: string;
+  } | null;
+  status: LearningActivityStatus;
+}
+
 export interface GoogleAuthSuccess {
   token: string;
   user: { id: string; email: string; role: "student" | "tutor" };
@@ -71,6 +273,7 @@ export interface LessonRequest {
   status: "pending" | "accepted" | "declined";
   created_at: string;
   conversation_id?: string | null;
+  learning_context?: LearningContext | null;
 }
 
 export interface Booking {
@@ -86,6 +289,7 @@ export interface Booking {
   room_url?: string;
   daily_room_name?: string;
   created_at: string;
+  learning_context?: LearningContext | null;
 }
 
 export interface Conversation {

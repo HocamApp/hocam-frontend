@@ -32,6 +32,17 @@ import { Skeleton } from "@/components/ui/skeleton";
 import SlidingPagination from "@/components/ui/sliding-pagination";
 
 const PAGE_SIZE = 8;
+const LEARNING_CONTEXT_KEYS = [
+  "learning_goal_id",
+  "learning_milestone_id",
+  "learning_topic_id",
+] as const;
+
+type LearningContextQuery = {
+  learning_goal_id: string;
+  learning_milestone_id: string;
+  learning_topic_id?: string | null;
+};
 
 // Curated quick-filter suggestions only — NOT the full university database and
 // NOT a ranking. Selecting one applies the existing `university` filter.
@@ -93,6 +104,39 @@ function searchParamsFromFilters(filters: TutorFiltersType): URLSearchParams {
   return p;
 }
 
+function learningContextFromSearchParams(
+  searchParams: URLSearchParams
+): LearningContextQuery | null {
+  const learning_goal_id = searchParams.get("learning_goal_id");
+  const learning_milestone_id = searchParams.get("learning_milestone_id");
+  const learning_topic_id = searchParams.get("learning_topic_id");
+
+  if (!learning_goal_id || !learning_milestone_id) {
+    return null;
+  }
+
+  return {
+    learning_goal_id,
+    learning_milestone_id,
+    ...(learning_topic_id ? { learning_topic_id } : {}),
+  };
+}
+
+function appendLearningContextParams(
+  params: URLSearchParams,
+  learningContext?: LearningContextQuery | null
+) {
+  if (!learningContext) return params;
+
+  params.set("learning_goal_id", learningContext.learning_goal_id);
+  params.set("learning_milestone_id", learningContext.learning_milestone_id);
+  if (learningContext.learning_topic_id) {
+    params.set("learning_topic_id", learningContext.learning_topic_id);
+  }
+
+  return params;
+}
+
 function TutorCardSkeleton() {
   return (
     <div className="rounded-lg border bg-card p-4 shadow-sm">
@@ -130,18 +174,24 @@ function TutorsPageContent() {
 
   // Favorites toggle is URL-synced but not a backend filter (client-side only).
   const showFavorites = searchParams.get("favorites") === "1";
+  const learningContext = learningContextFromSearchParams(
+    new URLSearchParams(searchParams.toString())
+  );
 
   const setFilters = useCallback(
     (newFilters: TutorFiltersType) => {
       const merged = { ...newFilters, ordering: newFilters.ordering || "rating" };
       setFiltersState(merged);
       setPage(1);
-      const params = searchParamsFromFilters(merged);
+      const params = appendLearningContextParams(
+        searchParamsFromFilters(merged),
+        learningContext
+      );
       const query = params.toString();
       const url = query ? `/tutors?${query}` : "/tutors";
       router.replace(url, { scroll: false });
     },
-    [router]
+    [learningContext, router]
   );
 
   const handleFiltersChange = useCallback(
@@ -155,16 +205,20 @@ function TutorsPageContent() {
     setSearchLocal("");
     setFiltersState({});
     setPage(1);
-    // Navigate to bare /tutors — clears both filters and the favorites param.
-    router.replace("/tutors", { scroll: false });
-  }, [router]);
+    const params = appendLearningContextParams(new URLSearchParams(), learningContext);
+    const query = params.toString();
+    router.replace(query ? `/tutors?${query}` : "/tutors", { scroll: false });
+  }, [learningContext, router]);
 
   const toggleFavorites = useCallback(() => {
     if (!isAuthenticated) {
       router.push("/login");
       return;
     }
-    const params = searchParamsFromFilters(filters);
+    const params = appendLearningContextParams(
+      searchParamsFromFilters(filters),
+      learningContext
+    );
     if (showFavorites) {
       params.delete("favorites");
     } else {
@@ -173,7 +227,14 @@ function TutorsPageContent() {
     setPage(1);
     const query = params.toString();
     router.replace(query ? `/tutors?${query}` : "/tutors", { scroll: false });
-  }, [isAuthenticated, router, filters, showFavorites]);
+  }, [filters, isAuthenticated, learningContext, router, showFavorites]);
+
+  const clearLearningContext = useCallback(() => {
+    const params = new URLSearchParams(searchParams.toString());
+    LEARNING_CONTEXT_KEYS.forEach((key) => params.delete(key));
+    const query = params.toString();
+    router.replace(query ? `/tutors?${query}` : "/tutors", { scroll: false });
+  }, [router, searchParams]);
 
   const {
     data: tutors,
@@ -244,6 +305,23 @@ function TutorsPageContent() {
             </p>
           )}
         </div>
+
+        {learningContext && (
+          <div className="flex flex-col gap-3 rounded-lg border bg-primary/5 px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-muted-foreground">
+              Seçtiğin öğrenme konusu için hoca arıyorsun. Ders talebi veya rezervasyon bu hedefe bağlanacak.
+            </p>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="w-fit shrink-0"
+              onClick={clearLearningContext}
+            >
+              Bağlamı temizle
+            </Button>
+          </div>
+        )}
 
         {/* Horizontal filter bar */}
         <div className="rounded-lg border bg-card px-4 py-3">
@@ -593,6 +671,7 @@ function TutorsPageContent() {
                     isFavorite={favoriteIds.has(tutor.id)}
                     onToggleFavorite={toggle}
                     favoritePending={isFavoritePending(tutor.id)}
+                    learningContext={learningContext}
                   />
                 ))}
               </div>

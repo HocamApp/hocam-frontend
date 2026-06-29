@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 import { Check, MessageSquare, PlayCircle } from "lucide-react";
@@ -29,6 +29,30 @@ function getInitials(name: string, surname: string): string {
   const n = (name || "").trim()[0] || "";
   const s = (surname || "").trim()[0] || "";
   return (n + s).toUpperCase() || "?";
+}
+
+type LearningContextQuery = {
+  learning_goal_id: string;
+  learning_milestone_id: string;
+  learning_topic_id?: string | null;
+};
+
+function learningContextFromSearchParams(
+  searchParams: URLSearchParams
+): LearningContextQuery | null {
+  const learning_goal_id = searchParams.get("learning_goal_id");
+  const learning_milestone_id = searchParams.get("learning_milestone_id");
+  const learning_topic_id = searchParams.get("learning_topic_id");
+
+  if (!learning_goal_id || !learning_milestone_id) {
+    return null;
+  }
+
+  return {
+    learning_goal_id,
+    learning_milestone_id,
+    ...(learning_topic_id ? { learning_topic_id } : {}),
+  };
 }
 
 function Stars({ rating }: { rating: number }) {
@@ -142,6 +166,7 @@ export default function TutorProfilePage({
 }) {
   const id = params.id;
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { isAuthenticated, isStudent, user } = useAuth();
   const { favoriteIds, toggle, isFavoritePending } = useFavorites();
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
@@ -150,6 +175,9 @@ export default function TutorProfilePage({
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   const [bookingComplete, setBookingComplete] = useState(false);
   const [reviewsExpanded, setReviewsExpanded] = useState(false);
+  const learningContext = learningContextFromSearchParams(
+    new URLSearchParams(searchParams.toString())
+  );
 
   const {
     data: tutor,
@@ -300,6 +328,12 @@ export default function TutorProfilePage({
                   </Badge>
                 ))}
               </div>
+
+              {learningContext && (
+                <div className="rounded-lg border bg-primary/5 p-3 text-sm text-muted-foreground">
+                  Bu ders seçtiğin öğrenme hedefiyle ilişkilendirilecek.
+                </div>
+              )}
 
               {/* CTA */}
               <div className="pt-2 space-y-2">
@@ -532,6 +566,7 @@ export default function TutorProfilePage({
         tutor={tutor}
         isOpen={isRequestModalOpen}
         onClose={() => setIsRequestModalOpen(false)}
+        learningContext={learningContext}
         onSuccess={(lessonRequest) => {
           setRequestConversationId(lessonRequest.conversation_id ?? null);
           setRequestSent(true);
@@ -543,6 +578,7 @@ export default function TutorProfilePage({
         tutor={tutor}
         isOpen={isBookingModalOpen}
         onClose={() => setIsBookingModalOpen(false)}
+        learningContext={learningContext}
         onSuccess={(booking) => {
           setBookingComplete(true);
           setIsBookingModalOpen(false);

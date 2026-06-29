@@ -1,7 +1,13 @@
 import api from "./api";
 import { LessonRequest, Booking } from "@/types";
 
-export interface CreateBookingPayload {
+export interface LearningContextPayload {
+  learning_goal_id?: string;
+  learning_milestone_id?: string;
+  learning_topic_id?: string | null;
+}
+
+export interface CreateBookingPayload extends LearningContextPayload {
   tutor: string;
   subject: string;
   start_time: string;
@@ -16,7 +22,7 @@ export async function createBooking(
   return response.data;
 }
 
-export interface CreateLessonRequestPayload {
+export interface CreateLessonRequestPayload extends LearningContextPayload {
   tutor: string;
   subject: string;
   message: string;

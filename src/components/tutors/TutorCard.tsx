@@ -24,6 +24,33 @@ interface TutorCardProps {
   isFavorite?: boolean;
   onToggleFavorite?: (id: string) => void;
   favoritePending?: boolean;
+  learningContext?: LearningContextQuery | null;
+}
+
+type LearningContextQuery = {
+  learning_goal_id: string;
+  learning_milestone_id: string;
+  learning_topic_id?: string | null;
+};
+
+function buildTutorHref(
+  tutorId: string,
+  learningContext?: LearningContextQuery | null
+): string {
+  if (!learningContext) {
+    return `/tutors/${tutorId}`;
+  }
+
+  const params = new URLSearchParams({
+    learning_goal_id: learningContext.learning_goal_id,
+    learning_milestone_id: learningContext.learning_milestone_id,
+  });
+
+  if (learningContext.learning_topic_id) {
+    params.set("learning_topic_id", learningContext.learning_topic_id);
+  }
+
+  return `/tutors/${tutorId}?${params.toString()}`;
 }
 
 export function TutorCard({
@@ -31,6 +58,7 @@ export function TutorCard({
   isFavorite,
   onToggleFavorite,
   favoritePending,
+  learningContext,
 }: TutorCardProps) {
   const examOrder = ["TYT", "AYT", "DGS", "KPSS"] as const;
   const orderedSubjects = examOrder.flatMap((exam) =>
@@ -38,7 +66,7 @@ export function TutorCard({
   );
   const visibleSubjects = orderedSubjects.slice(0, 4);
   const remainingCount = orderedSubjects.length - 4;
-  const tutorHref = `/tutors/${tutor.id}`;
+  const tutorHref = buildTutorHref(tutor.id, learningContext);
 
   return (
     <Card className="h-full transition-shadow duration-200 hover:border-primary/30 hover:shadow-md">
