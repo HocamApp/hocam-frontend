@@ -5,6 +5,7 @@ import { AxiosError } from "axios";
 import { ImageIcon, Send, X } from "lucide-react";
 import { Message } from "@/types";
 import { sendMessage } from "@/lib/messagingApi";
+import { formatImageSize, prepareMessageImage } from "@/lib/messageImage";
 import { playSendSound } from "@/lib/sound";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -25,26 +26,38 @@ export function MessageInput({
 }: MessageInputProps) {
   const [text, setText] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isPreparingImage, setIsPreparingImage] = useState(false);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (!file.type.startsWith("image/")) {
-      toast.error("Yalnızca görsel dosyaları (JPEG, PNG, GIF, WebP) gönderilebilir.");
-      return;
+    setIsPreparingImage(true);
+    try {
+      const prepared = await prepareMessageImage(file);
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+      setSelectedImage(prepared.file);
+      setPreviewUrl(URL.createObjectURL(prepared.file));
+      if (prepared.compressed) {
+        toast.success(
+          `Görsel hız için optimize edildi (${formatImageSize(
+            prepared.originalSize
+          )} → ${formatImageSize(prepared.file.size)}).`
+        );
+      }
+    } catch (err) {
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : "Görsel hazırlanamadı. Lütfen tekrar deneyin."
+      );
+    } finally {
+      setIsPreparingImage(false);
+      e.target.value = "";
     }
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("Görsel 5 MB'dan küçük olmalıdır.");
-      return;
-    }
-    if (previewUrl) URL.revokeObjectURL(previewUrl);
-    setSelectedImage(file);
-    setPreviewUrl(URL.createObjectURL(file));
-    e.target.value = "";
   };
 
   const focusTextarea = () => {
@@ -63,7 +76,7 @@ export function MessageInput({
 
   const handleSubmit = async () => {
     const trimmed = text.trim();
-    if ((!trimmed && !selectedImage) || isSubmitting || disabled) return;
+    if ((!trimmed && !selectedImage) || isSubmitting || isPreparingImage || disabled) return;
 
     setIsSubmitting(true);
     try {
@@ -140,6 +153,11 @@ export function MessageInput({
           </div>
         </div>
       )}
+      {isPreparingImage && (
+        <div className="px-4 pt-3 text-xs text-muted-foreground">
+          Görsel gönderim için hazırlanıyor...
+        </div>
+      )}
       <div className="flex gap-2 p-4">
         <input
           type="file"
@@ -153,11 +171,18 @@ export function MessageInput({
           size="icon"
           variant="ghost"
           onClick={() => fileInputRef.current?.click()}
-          disabled={isSubmitting || disabled}
+          disabled={isSubmitting || isPreparingImage || disabled}
           className="h-10 w-10 shrink-0 text-muted-foreground hover:text-foreground"
           aria-label="Görsel ekle"
         >
-          <ImageIcon className="h-4 w-4" />
+          {isPreparingImage ? (
+            <span
+              className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"
+              aria-hidden
+            />
+          ) : (
+            <ImageIcon className="h-4 w-4" />
+          )}
         </Button>
         <Textarea
           ref={textareaRef}
@@ -173,13 +198,18 @@ export function MessageInput({
         />
         <SymbolPicker
           onSelect={insertSymbol}
-          disabled={isSubmitting || disabled}
+          disabled={isSubmitting || isPreparingImage || disabled}
         />
         <Button
           type="button"
           size="icon"
           onClick={handleSubmit}
-          disabled={(!text.trim() && !selectedImage) || isSubmitting || disabled}
+          disabled={
+            (!text.trim() && !selectedImage) ||
+            isSubmitting ||
+            isPreparingImage ||
+            disabled
+          }
           className="h-10 w-10 shrink-0"
         >
           {isSubmitting ? (
