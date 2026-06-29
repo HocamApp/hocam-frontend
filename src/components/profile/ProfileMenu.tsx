@@ -689,7 +689,7 @@ export function ProfileMenu() {
               icon={<LifeBuoy className="h-4 w-4" />}
               label="Destek ile iletişime geç"
               showChevron
-              onClick={comingSoon}
+              onClick={() => go("/support")}
             />
             <ProfileMenuRow
               icon={<LogOut className="h-4 w-4" />}

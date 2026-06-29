@@ -67,15 +67,7 @@ export function AnimatedNavbarLinks() {
       icon: Bell,
       contentNode: <NotificationPopoverContent />,
     },
-    {
-      kind: "popover",
-      title: "Destek",
-      icon: LifeBuoy,
-      content: {
-        title: "Destek yakında",
-        body: "Yardım talepleri ve destek geçmişi burada görünecek.",
-      },
-    },
+    { kind: "route", title: "Destek", icon: LifeBuoy, href: "/support" },
   ];
 
   const isActive = (href: string) =>

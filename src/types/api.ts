@@ -514,3 +514,35 @@ export interface NotificationSummary {
   has_unread: boolean;
   unread_count: number;
 }
+
+export type SupportTicketCategory =
+  | "account"
+  | "booking"
+  | "payment"
+  | "messaging"
+  | "technical"
+  | "other";
+
+export type SupportTicketStatus =
+  | "open"
+  | "in_progress"
+  | "resolved"
+  | "closed";
+
+export interface SupportTicket {
+  id: string;
+  user: string;
+  subject: string;
+  message: string;
+  category: SupportTicketCategory;
+  status: SupportTicketStatus;
+  admin_note: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateSupportTicketPayload {
+  category: SupportTicketCategory;
+  subject: string;
+  message: string;
+}
