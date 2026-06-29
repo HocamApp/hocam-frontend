@@ -45,10 +45,18 @@ export function MessageInput({
     e.target.value = "";
   };
 
+  const focusTextarea = () => {
+    if (disabled) return;
+    requestAnimationFrame(() => {
+      textareaRef.current?.focus();
+    });
+  };
+
   const handleRemoveImage = () => {
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     setSelectedImage(null);
     setPreviewUrl(null);
+    focusTextarea();
   };
 
   const handleSubmit = async () => {
@@ -71,6 +79,7 @@ export function MessageInput({
       toast.error("Mesaj gönderilemedi. Lütfen tekrar deneyin.");
     } finally {
       setIsSubmitting(false);
+      focusTextarea();
     }
   };
 
