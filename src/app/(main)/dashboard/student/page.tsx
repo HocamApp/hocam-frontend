@@ -89,6 +89,11 @@ function formatDateTime(value?: string | null) {
   });
 }
 
+function formatHours(hours: number): string {
+  if (!hours) return "0";
+  return Number.isInteger(hours) ? String(hours) : hours.toFixed(1);
+}
+
 function buildTutorSearchHref(item: NextLearningMilestone) {
   const params = new URLSearchParams({
     learning_goal_id: item.cta.query.learning_goal_id,
@@ -271,6 +276,10 @@ function StudentDashboardContent() {
         s === "confirmed" && new Date(b.start_time) <= now;
       return s === "completed" || s === "cancelled" || isConfirmedPast;
     }) ?? [];
+  const completedBookings =
+    bookings?.filter((b) => (b.status || "").toLowerCase() === "completed") ?? [];
+  const completedHours =
+    completedBookings.reduce((sum, b) => sum + (b.duration_minutes || 0), 0) / 60;
 
   const templates = learningDashboard?.templates ?? [];
   const goals = learningDashboard?.goals ?? [];
@@ -622,6 +631,30 @@ function StudentDashboardContent() {
           </aside>
         </div>
         )}
+
+        <section className="space-y-4">
+          <h2 className="text-xl font-semibold tracking-normal">Ders Özeti</h2>
+          <div className="grid gap-4 sm:grid-cols-3">
+            <StatCard
+              label="Tamamlanan ders"
+              value={completedBookings.length}
+              detail="Bugüne kadar aldığın dersler"
+              isLoading={bookingsLoading}
+            />
+            <StatCard
+              label="Toplam ders saati"
+              value={formatHours(completedHours)}
+              detail="Tamamlanan derslerin toplam süresi"
+              isLoading={bookingsLoading}
+            />
+            <StatCard
+              label="Yaklaşan onaylı ders"
+              value={upcomingConfirmed.length}
+              detail="Onaylanmış, henüz gerçekleşmemiş dersler"
+              isLoading={bookingsLoading}
+            />
+          </div>
+        </section>
 
         <section className="rounded-2xl border bg-card p-5 shadow-sm sm:p-6">
           <div className="mb-5">
