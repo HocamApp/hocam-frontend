@@ -387,6 +387,14 @@ export function ProfileMenu() {
               </Badge>
             </div>
 
+            {/* Full profile page */}
+            <ProfileMenuRow
+              icon={<UserCog className="h-4 w-4" />}
+              label="Profil sayfasına git"
+              showChevron
+              onClick={() => go("/profile")}
+            />
+
             {/* Inline name / surname edit */}
             {!nameEdit ? (
               <Button
