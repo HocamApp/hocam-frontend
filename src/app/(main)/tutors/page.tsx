@@ -3,9 +3,6 @@
 import { useState, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { Heart } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { useAuth } from "@/hooks/useAuth";
 import {
   Select,
   SelectContent,
@@ -164,7 +161,6 @@ function TutorCardSkeleton() {
 function TutorsPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { isAuthenticated } = useAuth();
   const [filters, setFiltersState] = useState<TutorFiltersType>(() => {
     const fromUrl = filtersFromSearchParams(searchParams);
     return { ...fromUrl, ordering: fromUrl.ordering || "rating" };
@@ -210,25 +206,6 @@ function TutorsPageContent() {
     router.replace(query ? `/tutors?${query}` : "/tutors", { scroll: false });
   }, [learningContext, router]);
 
-  const toggleFavorites = useCallback(() => {
-    if (!isAuthenticated) {
-      router.push("/login");
-      return;
-    }
-    const params = appendLearningContextParams(
-      searchParamsFromFilters(filters),
-      learningContext
-    );
-    if (showFavorites) {
-      params.delete("favorites");
-    } else {
-      params.set("favorites", "1");
-    }
-    setPage(1);
-    const query = params.toString();
-    router.replace(query ? `/tutors?${query}` : "/tutors", { scroll: false });
-  }, [filters, isAuthenticated, learningContext, router, showFavorites]);
-
   const clearLearningContext = useCallback(() => {
     const params = new URLSearchParams(searchParams.toString());
     LEARNING_CONTEXT_KEYS.forEach((key) => params.delete(key));
@@ -254,7 +231,6 @@ function TutorsPageContent() {
   const { favoriteIds, toggle, isFavoritePending } = useFavorites();
 
   const hasActiveFilters =
-    showFavorites ||
     (filters.search ?? "") !== "" ||
     (filters.subject ?? "") !== "" ||
     (filters.exam_type ?? "") !== "" ||
@@ -270,15 +246,20 @@ function TutorsPageContent() {
   // Client-side favorites filter applied after the API response.
   const tutorList = Array.isArray(tutors) ? tutors : [];
   const filteredTutors =
-    showFavorites && isAuthenticated
+    showFavorites
       ? tutorList.filter((t) => favoriteIds.has(t.id))
       : tutorList;
 
   // showEmptyState: user applied filters/favorites and got 0 results.
   const apiEmpty = Array.isArray(tutors) && tutors.length === 0;
-  const showEmptyState = !tutorsLoading && !tutorsError && (
-    (filteredTutors.length === 0 && hasActiveFilters)
-  );
+  const showFavoritesEmptyState =
+    showFavorites && !tutorsLoading && !tutorsError && filteredTutors.length === 0;
+  const showEmptyState =
+    !showFavorites &&
+    !tutorsLoading &&
+    !tutorsError &&
+    filteredTutors.length === 0 &&
+    hasActiveFilters;
 
   // Keep an active out-of-list university visible in the curated dropdown.
   const activeUniversity = filters.university ?? "";
@@ -294,50 +275,52 @@ function TutorsPageContent() {
   const content = (
     <>
       <div className="mx-auto max-w-7xl px-4 py-8 space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold text-black">Hocanı Bul</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Türkiye&apos;nin en iyi YKS hocaları, seni bekliyor.
-          </p>
-          {!tutorsLoading && Array.isArray(tutors) && (
-            <p className="mt-1 text-xs text-muted-foreground">
-              {showFavorites ? filteredTutors.length : tutors.length} hoca bulundu
-            </p>
-          )}
-        </div>
+        {!showFavorites && (
+          <>
+            <div>
+              <h1 className="text-3xl font-bold text-black">Hocanı Bul</h1>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Türkiye&apos;nin en iyi YKS hocaları, seni bekliyor.
+              </p>
+              {!tutorsLoading && Array.isArray(tutors) && (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {tutors.length} hoca bulundu
+                </p>
+              )}
+            </div>
 
-        {learningContext && (
-          <div className="flex flex-col gap-3 rounded-lg border bg-primary/5 px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-muted-foreground">
-              Seçtiğin öğrenme konusu için hoca arıyorsun. Ders talebi veya rezervasyon bu hedefe bağlanacak.
-            </p>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="w-fit shrink-0"
-              onClick={clearLearningContext}
-            >
-              Bağlamı temizle
-            </Button>
-          </div>
-        )}
+            {learningContext && (
+              <div className="flex flex-col gap-3 rounded-lg border bg-primary/5 px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-muted-foreground">
+                  Seçtiğin öğrenme konusu için hoca arıyorsun. Ders talebi veya rezervasyon bu hedefe bağlanacak.
+                </p>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="w-fit shrink-0"
+                  onClick={clearLearningContext}
+                >
+                  Bağlamı temizle
+                </Button>
+              </div>
+            )}
 
-        {/* Horizontal filter bar */}
-        <div className="rounded-lg border bg-card px-4 py-3">
-          <div className="mb-5 space-y-2">
-            <Label className="text-xs uppercase tracking-wide text-muted-foreground">
-              Arama
-            </Label>
-            <AnimatedSearchBar
-              value={searchLocal}
-              onChange={setSearchLocal}
-              onCommit={(search) => handleFiltersChange({ ...filters, search })}
-              disabled={tutorsLoading}
-            />
-          </div>
+            {/* Horizontal filter bar */}
+            <div className="rounded-lg border bg-card px-4 py-3">
+              <div className="mb-5 space-y-2">
+                <Label className="text-xs uppercase tracking-wide text-muted-foreground">
+                  Arama
+                </Label>
+                <AnimatedSearchBar
+                  value={searchLocal}
+                  onChange={setSearchLocal}
+                  onCommit={(search) => handleFiltersChange({ ...filters, search })}
+                  disabled={tutorsLoading}
+                />
+              </div>
 
-          <div className="flex flex-wrap gap-4">
+              <div className="flex flex-wrap gap-4">
             {/* Sıralama */}
             <div className="w-full space-y-1 sm:w-[300px]">
               <Label className="text-xs uppercase tracking-wide text-muted-foreground">
@@ -576,29 +559,6 @@ function TutorsPageContent() {
               </SelectContent>
             </Select>
           </div>
-          </div>
-          {/* Favorilerim toggle */}
-          <div className="w-full space-y-1 sm:w-auto">
-            <Label className="text-xs uppercase tracking-wide text-muted-foreground">
-              Favoriler
-            </Label>
-            <button
-              type="button"
-              onClick={toggleFavorites}
-              title={!isAuthenticated ? "Filtrelemek için giriş yapın" : undefined}
-              className={cn(
-                "flex h-9 items-center gap-1.5 rounded-md border px-3 text-sm transition-colors",
-                showFavorites
-                  ? "border-primary bg-primary/10 text-primary"
-                  : "border-input bg-background text-muted-foreground hover:text-foreground"
-              )}
-            >
-              <Heart
-                className={cn("h-4 w-4", showFavorites && "fill-current")}
-              />
-              Favorilerim
-            </button>
-          </div>
 
           {hasActiveFilters && (
             <div className="w-full mt-3 flex justify-end sm:mt-0 sm:w-auto sm:self-end">
@@ -608,15 +568,18 @@ function TutorsPageContent() {
             </div>
           )}
         </div>
+        </div>
 
-        {/* Active search chip */}
-        {filters.search && (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <span>Arama:</span>
-            <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
-              &quot;{filters.search}&quot;
-            </span>
-          </div>
+            {/* Active search chip */}
+            {filters.search && (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <span>Arama:</span>
+                <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                  &quot;{filters.search}&quot;
+                </span>
+              </div>
+            )}
+          </>
         )}
 
         {/* Tutor grid and states */}
@@ -637,19 +600,16 @@ function TutorsPageContent() {
             </div>
           )}
 
-          {showEmptyState && (
+          {showFavoritesEmptyState ? (
             <EmptyState
-              title={
-                showFavorites && !filters.search
-                  ? "Favori hoca bulunamadı"
-                  : "Hoca bulunamadı"
-              }
+              title="Henüz favori hocan yok."
+              description="Hoca profillerindeki kalp ikonuna tıklayarak favorilerine ekleyebilirsin."
+            />
+          ) : showEmptyState ? (
+            <EmptyState
+              title="Hoca bulunamadı"
               description={
-                showFavorites && tutorList.length > 0
-                  ? "Favori hocalarınız bu filtrelerle eşleşmiyor. Filtreleri değiştirmeyi deneyin."
-                  : showFavorites
-                  ? "Henüz favori hoca eklemediniz. Hoca profillerindeki kalp ikonuna tıklayarak favorilere ekleyebilirsiniz."
-                  : filters.search
+                filters.search
                   ? `"${filters.search}" aramasıyla eşleşen hoca bulunamadı. Filtrelerinizi veya arama teriminizi değiştirmeyi deneyin.`
                   : "Filtrelerinizi değiştirmeyi deneyin."
               }
@@ -659,7 +619,7 @@ function TutorsPageContent() {
                 </Button>
               }
             />
-          )}
+          ) : null}
 
           {!tutorsLoading && !tutorsError && !showEmptyState && filteredTutors.length > 0 && (
             <>
@@ -690,7 +650,7 @@ function TutorsPageContent() {
             </>
           )}
 
-          {!tutorsLoading && !tutorsError && apiEmpty && !hasActiveFilters && (
+          {!showFavorites && !tutorsLoading && !tutorsError && apiEmpty && !hasActiveFilters && (
             <EmptyState
               title="Henüz hoca yok"
               description="Yakında burada hocalar listelenecek."
