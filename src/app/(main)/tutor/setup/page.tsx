@@ -30,13 +30,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
 const setupSchema = z.object({
@@ -44,9 +37,6 @@ const setupSchema = z.object({
   surname: z.string().min(1, "Soyad zorunludur"),
   university: z.string().min(1, "Üniversite zorunludur"),
   department: z.string().min(1, "Bölüm zorunludur"),
-  yks_exam_type: z.enum(["SAY", "SOZ", "EA", "DIL"], {
-    errorMap: () => ({ message: "Sınav türü seçin" }),
-  }),
   yks_rank: z
     .string()
     .min(1, "YKS sıralaması zorunludur")
@@ -54,7 +44,6 @@ const setupSchema = z.object({
       (v) => !isNaN(Number(v)) && Number(v) >= 1 && Number(v) <= 15000,
       { message: "Sıralama 1-15000 arasında olmalıdır" }
     ),
-  grade: z.string().min(1, "Sınıf seçin"),
   hourly_price: z
     .string()
     .min(1, "Saatlik ücret zorunludur")
@@ -101,9 +90,7 @@ export default function TutorSetupPage() {
       surname: "",
       university: "",
       department: "",
-      yks_exam_type: undefined,
       yks_rank: "",
-      grade: "",
       hourly_price: "",
       bio: "",
     },
@@ -125,9 +112,7 @@ export default function TutorSetupPage() {
       if (err.fieldErrors.surname) form.setError("surname", { message: err.fieldErrors.surname[0] });
       if (err.fieldErrors.university) form.setError("university", { message: err.fieldErrors.university[0] });
       if (err.fieldErrors.department) form.setError("department", { message: err.fieldErrors.department[0] });
-      if (err.fieldErrors.yks_exam_type) form.setError("yks_exam_type", { message: err.fieldErrors.yks_exam_type[0] });
       if (err.fieldErrors.yks_rank) form.setError("yks_rank", { message: err.fieldErrors.yks_rank[0] });
-      if (err.fieldErrors.grade) form.setError("grade", { message: err.fieldErrors.grade[0] });
       if (err.fieldErrors.hourly_price) form.setError("hourly_price", { message: err.fieldErrors.hourly_price[0] });
       return;
     }
@@ -163,9 +148,7 @@ export default function TutorSetupPage() {
           surname: "surname",
           university: "university",
           department: "department",
-          yks_exam_type: "yks_exam_type",
           yks_rank: "yks_rank",
-          grade: "grade",
           hourly_price: "hourly_price",
           bio: "bio",
         };
@@ -272,62 +255,6 @@ export default function TutorSetupPage() {
                   </FormItem>
                 )}
               />
-
-              {/* YKS Exam Type + Grade */}
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="yks_exam_type"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>YKS Puan Türü</FormLabel>
-                      <Select
-                        value={field.value ?? ""}
-                        onValueChange={field.onChange}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Puan türü seçin" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="SAY">SAY</SelectItem>
-                          <SelectItem value="SOZ">SÖZ</SelectItem>
-                          <SelectItem value="EA">EA</SelectItem>
-                          <SelectItem value="DIL">DİL</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="grade"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Sınıf</FormLabel>
-                      <Select
-                        value={field.value ?? ""}
-                        onValueChange={field.onChange}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Sınıf seçin" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="1">1. Sınıf</SelectItem>
-                          <SelectItem value="2">2. Sınıf</SelectItem>
-                          <SelectItem value="3">3. Sınıf</SelectItem>
-                          <SelectItem value="4">4. Sınıf</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
 
               {/* YKS Rank + Hourly Price */}
               <div className="grid grid-cols-2 gap-4">
