@@ -9,16 +9,22 @@ import {
   BookOpen,
   Camera,
   CalendarClock,
+  Download,
+  Eye,
   GraduationCap,
   LifeBuoy,
+  LogOut,
   Mail,
+  Monitor,
   Pencil,
+  ShieldCheck,
   Star,
   UserCog,
 } from "lucide-react";
 
 import { useAuth } from "@/hooks/useAuth";
-import { fetchProfileMe, updateProfileMe } from "@/lib/profileApi";
+import { fetchProfileMe, updateProfileMe, exportMyData } from "@/lib/profileApi";
+import { logoutAllSessions } from "@/lib/authApi";
 import { uploadTutorProfilePicture } from "@/lib/tutorsApi";
 import { formatPrice } from "@/lib/utils";
 import type { Theme } from "@/lib/theme";
@@ -76,8 +82,11 @@ function isTutorProfile(
 function ProfileContent() {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const [prefOverrides, setPrefOverrides] = useState<Partial<UserPreferences>>({});
+  const [isPublicOverride, setIsPublicOverride] = useState<boolean | null>(null);
+  const [loggingOutAll, setLoggingOutAll] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const [nameEdit, setNameEdit] = useState(false);
   const [editName, setEditName] = useState("");
   const [editSurname, setEditSurname] = useState("");
@@ -110,6 +119,7 @@ function ProfileContent() {
   };
   const currentAutoApprove =
     autoApproveOverride ?? tutor?.auto_approve_bookings ?? false;
+  const currentIsPublic = isPublicOverride ?? tutor?.is_public ?? true;
 
   const handleNotificationToggle = async (key: BoolPrefKey, next: boolean) => {
     setPrefOverrides((prev) => ({ ...prev, [key]: next }));
@@ -200,6 +210,56 @@ function ProfileContent() {
     } catch {
       setAutoApproveOverride(prev);
       toast.error("Tercih kaydedilemedi.");
+    }
+  };
+
+  const handleVisibilityToggle = async (next: boolean) => {
+    const prev = currentIsPublic;
+    setIsPublicOverride(next);
+    try {
+      await updateProfileMe({ profile: { is_public: next } });
+      queryClient.invalidateQueries({ queryKey: ["profile-me"] });
+      toast.success(
+        next ? "Profiliniz artık herkese açık." : "Profiliniz artık gizli."
+      );
+    } catch {
+      setIsPublicOverride(prev);
+      toast.error("Görünürlük ayarı kaydedilemedi.");
+    }
+  };
+
+  const handleLogoutAll = async () => {
+    setLoggingOutAll(true);
+    try {
+      await logoutAllSessions();
+      toast.success("Tüm oturumlardan çıkış yapıldı.");
+      logout();
+    } catch {
+      toast.error("Oturumlar kapatılamadı. Lütfen tekrar deneyin.");
+      setLoggingOutAll(false);
+    }
+  };
+
+  const handleExportData = async () => {
+    setExporting(true);
+    try {
+      const data = await exportMyData();
+      const blob = new Blob([JSON.stringify(data, null, 2)], {
+        type: "application/json",
+      });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `hocam-verilerim-${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      toast.success("Verileriniz indirildi.");
+    } catch {
+      toast.error("Veriler indirilemedi. Lütfen tekrar deneyin.");
+    } finally {
+      setExporting(false);
     }
   };
 
@@ -405,6 +465,99 @@ function ProfileContent() {
             </CardContent>
           </Card>
         )}
+
+        {/* ---- Hesap görünürlüğü ---- */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Hesap görünürlüğü</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {tutor ? (
+              <>
+                <ProfileToggleRow
+                  label="Profilim herkese açık olsun"
+                  checked={currentIsPublic}
+                  onChange={handleVisibilityToggle}
+                  icon={<Eye className="h-4 w-4" />}
+                />
+                <p className="px-2 text-xs text-muted-foreground">
+                  {currentIsPublic
+                    ? "Profiliniz hoca listesinde görünür ve öğrenciler tarafından bulunabilir."
+                    : "Profiliniz şu anda gizli; hoca listesinde ve aramalarda görünmez. Mevcut konuşmalarınız ve panonuz etkilenmez."}
+                </p>
+              </>
+            ) : (
+              <div className="flex gap-3 px-2 text-sm text-muted-foreground">
+                <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" />
+                <p>
+                  Öğrenci profilleri herkese açık değildir. Bilgileriniz yalnızca
+                  ders aldığınız hocalarla ve platform politikası gereği gerekli
+                  durumlarda paylaşılır.
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* ---- Oturumları yönet ---- */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Oturumları yönet</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Hesabınıza giriş bir oturum anahtarı (token) ile sağlanır. Şu anda
+              cihazlar ayrı ayrı listelenmez; tüm oturumlardan çıkış, oturum
+              anahtarınızı sıfırlayarak giriş yapılmış tüm cihazları kapatır.
+            </p>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <Button variant="outline" onClick={logout}>
+                <Monitor className="mr-2 h-4 w-4" />
+                Bu cihazdan çıkış yap
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleLogoutAll}
+                disabled={loggingOutAll}
+              >
+                {loggingOutAll ? (
+                  <span
+                    className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"
+                    aria-hidden
+                  />
+                ) : (
+                  <LogOut className="mr-2 h-4 w-4" />
+                )}
+                Tüm oturumlardan çıkış yap
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* ---- Verilerimi indir ---- */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Verilerimi indir</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Hesabınıza ait verileri (profil, tercihler, destek talepleri, ders
+              talepleri ve rezervasyonlar) JSON dosyası olarak indirebilirsiniz.
+              Yalnızca size ait veriler dışa aktarılır.
+            </p>
+            <Button variant="outline" onClick={handleExportData} disabled={exporting}>
+              {exporting ? (
+                <span
+                  className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"
+                  aria-hidden
+                />
+              ) : (
+                <Download className="mr-2 h-4 w-4" />
+              )}
+              Verilerimi indir (.json)
+            </Button>
+          </CardContent>
+        </Card>
 
         {/* ---- Hızlı Erişim ---- */}
         <Card>

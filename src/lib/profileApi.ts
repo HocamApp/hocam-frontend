@@ -17,3 +17,9 @@ export async function updateProfileMe(
   const response = await api.patch<ProfileMeResponse>("/profile/me/", payload);
   return response.data;
 }
+
+/** Fetch the authenticated user's own account/profile data for download. */
+export async function exportMyData(): Promise<Record<string, unknown>> {
+  const response = await api.get<Record<string, unknown>>("/profile/export/");
+  return response.data;
+}

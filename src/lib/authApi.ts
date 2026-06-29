@@ -53,3 +53,11 @@ export async function confirmPasswordReset(data: PasswordResetConfirmRequest): P
 export async function sendPresenceHeartbeat(): Promise<void> {
   await api.post("/auth/presence/");
 }
+
+/**
+ * Invalidate the user's auth token on the backend (single-token DRF auth), which
+ * signs out every device using it. Caller must clear the local cookie afterwards.
+ */
+export async function logoutAllSessions(): Promise<void> {
+  await api.post("/auth/logout-all/");
+}

@@ -402,6 +402,7 @@ export interface ProfileTutor {
   hourly_price: number;
   intro_video_url: string;
   auto_approve_bookings: boolean;
+  is_public: boolean;
   subjects: Subject[];
   availability: Array<{
     day_of_week: number;
