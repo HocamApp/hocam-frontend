@@ -9,16 +9,42 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 
-interface SymbolPickerProps {
-  onSelect: (symbol: string) => void;
-  disabled?: boolean;
-}
+// Sık kullanılan sohbet emojileri
+const EMOJIS = [
+  "😀",
+  "😄",
+  "😊",
+  "😍",
+  "😎",
+  "🤔",
+  "😅",
+  "😂",
+  "🥳",
+  "😴",
+  "😢",
+  "😡",
+  "👍",
+  "👎",
+  "👏",
+  "🙏",
+  "💪",
+  "🤝",
+  "🎉",
+  "🔥",
+  "💯",
+  "⭐",
+  "❤️",
+  "💡",
+  "✅",
+  "❌",
+  "✏️",
+  "📚",
+  "⏰",
+  "🎯",
+];
 
 // Eğitim/mesaj için kısa semboller
 const SYMBOLS = [
-  "👍",
-  "✅",
-  "❌",
   "?",
   "!",
   "➕",
@@ -35,6 +61,11 @@ const SYMBOLS = [
   "↑",
   "↓",
 ];
+
+interface SymbolPickerProps {
+  onSelect: (symbol: string) => void;
+  disabled?: boolean;
+}
 
 export function SymbolPicker({ onSelect, disabled = false }: SymbolPickerProps) {
   const [open, setOpen] = useState(false);
@@ -55,10 +86,27 @@ export function SymbolPicker({ onSelect, disabled = false }: SymbolPickerProps) 
           className="h-10 w-10 shrink-0"
         >
           <Smile className="h-4 w-4" />
-          <span className="sr-only">Sembol ekle</span>
+          <span className="sr-only">Emoji ve sembol ekle</span>
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-auto p-2">
+      <PopoverContent align="end" className="w-auto max-w-[16rem] p-2">
+        <p className="px-1 pb-1 text-xs font-medium text-muted-foreground">Emoji</p>
+        <div className="grid grid-cols-6 gap-1">
+          {EMOJIS.map((emoji) => (
+            <button
+              key={emoji}
+              type="button"
+              onClick={() => handlePick(emoji)}
+              className="flex h-8 w-8 items-center justify-center rounded text-lg hover:bg-accent"
+            >
+              {emoji}
+              <span className="sr-only">{`Emoji ${emoji} ekle`}</span>
+            </button>
+          ))}
+        </div>
+        <p className="px-1 pb-1 pt-2 text-xs font-medium text-muted-foreground">
+          Semboller
+        </p>
         <div className="grid grid-cols-6 gap-1">
           {SYMBOLS.map((symbol) => (
             <button
