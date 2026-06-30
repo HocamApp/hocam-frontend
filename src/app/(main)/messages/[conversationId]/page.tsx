@@ -2,12 +2,14 @@
 
 import { useState, useMemo, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import {
   fetchMessages,
   fetchConversation,
   fetchConversations,
+  deleteMessage,
 } from "@/lib/messagingApi";
 import { MessageBubble } from "@/components/messaging/MessageBubble";
 import { MessageInput } from "@/components/messaging/MessageInput";
@@ -21,17 +23,78 @@ import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { Message } from "@/types";
 
+function sameDay(a: Date, b: Date): boolean {
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+  );
+}
+
+function formatDaySeparator(iso: string): string {
+  const date = new Date(iso);
+  const now = new Date();
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+  if (sameDay(date, now)) return "Bugün";
+  if (sameDay(date, yesterday)) return "Dün";
+  return date.toLocaleDateString("tr-TR", {
+    day: "numeric",
+    month: "long",
+    year: date.getFullYear() === now.getFullYear() ? undefined : "numeric",
+  });
+}
+
+type ThreadItem =
+  | { kind: "separator"; key: string; label: string }
+  | {
+      kind: "message";
+      message: Message;
+      groupedWithPrev: boolean;
+      showTime: boolean;
+    };
+
+/** Build a flat render list with day separators and same-sender grouping. */
+function buildThreadItems(messages: Message[]): ThreadItem[] {
+  const items: ThreadItem[] = [];
+  for (let i = 0; i < messages.length; i++) {
+    const msg = messages[i];
+    const prev = messages[i - 1];
+    const next = messages[i + 1];
+    const date = new Date(msg.created_at);
+    const newDay = !prev || !sameDay(new Date(prev.created_at), date);
+    if (newDay) {
+      items.push({
+        kind: "separator",
+        key: `sep-${msg.id}`,
+        label: formatDaySeparator(msg.created_at),
+      });
+    }
+    const groupedWithPrev =
+      !newDay && !!prev && prev.sender === msg.sender;
+    const showTime =
+      !next ||
+      next.sender !== msg.sender ||
+      !sameDay(new Date(next.created_at), date);
+    items.push({ kind: "message", message: msg, groupedWithPrev, showTime });
+  }
+  return items;
+}
+
 function ConversationContent({
   conversationId,
 }: {
   conversationId: string;
 }) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { isAuthenticated, user } = useAuth();
   const bottomRef = useRef<HTMLDivElement>(null);
   const sentIdsRef = useRef<Set<string>>(new Set());
   const [localMessages, setLocalMessages] = useState<Message[]>([]);
   const [isBookingOpen, setIsBookingOpen] = useState(false);
+  const [replyTo, setReplyTo] = useState<Message | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   // UI-ready typing indicator. Messaging is HTTP polling only, so there is no
   // realtime presence signal yet — this stays false until a backend/realtime
   // typing source exists (see TypingIndicator).
@@ -70,6 +133,8 @@ function ConversationContent({
     );
   }, [messages, localMessages]);
 
+  const threadItems = useMemo(() => buildThreadItems(allMessages), [allMessages]);
+
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [allMessages]);
@@ -81,6 +146,30 @@ function ConversationContent({
 
   const handleSelectConversation = (selectedConversationId: string) => {
     router.push(`/messages/${selectedConversationId}`);
+  };
+
+  const handleDeleteMessage = async (message: Message) => {
+    if (deletingId) return;
+    const confirmed = window.confirm("Bu mesaj herkes için silinsin mi?");
+    if (!confirmed) return;
+    setDeletingId(message.id);
+    try {
+      const tombstone = await deleteMessage(message.id);
+      setLocalMessages((prev) =>
+        prev.map((m) => (m.id === message.id ? tombstone : m))
+      );
+      await queryClient.invalidateQueries({ queryKey: ["messages", conversationId] });
+      if (replyTo?.id === message.id) setReplyTo(null);
+    } catch {
+      toast.error("Mesaj silinemedi. Lütfen tekrar deneyin.");
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const handleJumpToReply = (messageId: string) => {
+    const el = document.getElementById(`message-${messageId}`);
+    el?.scrollIntoView({ behavior: "smooth", block: "center" });
   };
 
   const headerTitle =
@@ -156,15 +245,30 @@ function ConversationContent({
           )}
 
           {!messagesLoading && !messagesError && allMessages.length > 0 && (
-            <div className="flex flex-col gap-3">
-              {allMessages.map((msg) => (
-                <MessageBubble
-                  key={msg.id}
-                  message={msg}
-                  isOwnMessage={msg.sender === user?.id}
-                  isNew={sentIdsRef.current.has(msg.id)}
-                />
-              ))}
+            <div className="flex flex-col">
+              {threadItems.map((item) =>
+                item.kind === "separator" ? (
+                  <div key={item.key} className="my-3 flex justify-center">
+                    <span className="rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
+                      {item.label}
+                    </span>
+                  </div>
+                ) : (
+                  <MessageBubble
+                    key={item.message.id}
+                    message={item.message}
+                    isOwnMessage={item.message.sender === user?.id}
+                    isNew={sentIdsRef.current.has(item.message.id)}
+                    showTime={item.showTime}
+                    groupedWithPrev={item.groupedWithPrev}
+                    onReply={setReplyTo}
+                    onDelete={
+                      item.message.sender === user?.id ? handleDeleteMessage : undefined
+                    }
+                    onJumpToReply={handleJumpToReply}
+                  />
+                )
+              )}
               {isOtherTyping && <TypingIndicator name={headerTitle} />}
               <div ref={bottomRef} />
             </div>
@@ -177,6 +281,15 @@ function ConversationContent({
             conversationId={conversationId}
             onMessageSent={handleMessageSent}
             disabled={!!messagesError}
+            replyTo={replyTo}
+            replyToName={
+              replyTo
+                ? replyTo.sender === user?.id
+                  ? "Kendine"
+                  : headerTitle
+                : undefined
+            }
+            onCancelReply={() => setReplyTo(null)}
           />
         </div>
 

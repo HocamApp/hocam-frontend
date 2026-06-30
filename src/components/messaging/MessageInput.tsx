@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { AxiosError } from "axios";
-import { ImageIcon, Send, X } from "lucide-react";
+import { ImageIcon, Reply, Send, X } from "lucide-react";
 import { Message } from "@/types";
 import { sendMessage } from "@/lib/messagingApi";
 import { formatImageSize, prepareMessageImage } from "@/lib/messageImage";
@@ -17,12 +17,18 @@ interface MessageInputProps {
   conversationId: string;
   onMessageSent: (message: Message) => void;
   disabled?: boolean;
+  replyTo?: Message | null;
+  replyToName?: string;
+  onCancelReply?: () => void;
 }
 
 export function MessageInput({
   conversationId,
   onMessageSent,
   disabled = false,
+  replyTo = null,
+  replyToName,
+  onCancelReply,
 }: MessageInputProps) {
   const [text, setText] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -84,11 +90,13 @@ export function MessageInput({
         conversation_id: conversationId,
         message_text: trimmed || undefined,
         image: selectedImage ?? undefined,
+        reply_to: replyTo?.id,
       });
       setText("");
       if (previewUrl) URL.revokeObjectURL(previewUrl);
       setSelectedImage(null);
       setPreviewUrl(null);
+      onCancelReply?.();
       onMessageSent(newMessage);
       // Success-only feedback — never plays on a failed send.
       playSendSound();
@@ -133,6 +141,31 @@ export function MessageInput({
 
   return (
     <div className="border-t bg-background">
+      {replyTo && (
+        <div className="flex items-center gap-2 px-4 pt-3">
+          <div className="flex min-w-0 flex-1 items-center gap-2 rounded-md border-l-2 border-primary/60 bg-muted/60 px-3 py-1.5">
+            <Reply className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+            <div className="min-w-0">
+              <p className="text-xs font-medium text-foreground">
+                {replyToName ? `${replyToName} kişisine yanıt` : "Yanıtlanıyor"}
+              </p>
+              <p className="truncate text-xs text-muted-foreground">
+                {replyTo.is_deleted
+                  ? "Bu mesaj silindi"
+                  : replyTo.message_text || (replyTo.image_url ? "Görsel" : "Mesaj")}
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onCancelReply}
+            className="shrink-0 rounded-full p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+            aria-label="Yanıtı iptal et"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
       {previewUrl && (
         <div className="flex items-start gap-2 px-4 pt-3">
           <div className="relative inline-block">

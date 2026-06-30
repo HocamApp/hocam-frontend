@@ -308,6 +308,13 @@ export interface Conversation {
   tutor_profile?: TutorProfile | null;
 }
 
+export interface MessageReplyPreview {
+  id: string;
+  sender_id: string;
+  preview: string;
+  is_image: boolean;
+}
+
 export interface Message {
   id: string;
   conversation: string;
@@ -315,6 +322,9 @@ export interface Message {
   message_text: string;
   image_url?: string;
   created_at: string;
+  read_at?: string | null;
+  reply_to?: MessageReplyPreview | null;
+  is_deleted?: boolean;
 }
 
 export interface Review {
