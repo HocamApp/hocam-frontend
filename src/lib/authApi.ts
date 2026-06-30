@@ -1,5 +1,14 @@
 import api from "./api";
-import { AuthResponse, GoogleAuthResponse, LoginRequest, PasswordResetConfirmRequest, PasswordResetRequest, RegisterRequest, User } from "@/types";
+import {
+  AuthResponse,
+  GoogleAuthResponse,
+  LoginRequest,
+  PasswordResetConfirmRequest,
+  PasswordResetRequest,
+  RegisterRequest,
+  SecuritySettings,
+  User,
+} from "@/types";
 
 export interface GoogleAuthPayload {
   credential: string;
@@ -49,6 +58,28 @@ export async function confirmPasswordReset(data: PasswordResetConfirmRequest): P
   await api.post("/auth/password-reset-confirm/", data);
 }
 
+export async function fetchSecuritySettings(): Promise<SecuritySettings> {
+  const response = await api.get<SecuritySettings>("/auth/security/");
+  return response.data;
+}
+
+export async function requestEmailVerificationCode(): Promise<{
+  detail: string;
+  expires_in_seconds?: number;
+}> {
+  const response = await api.post("/auth/email-verification/request/");
+  return response.data;
+}
+
+export async function confirmEmailVerificationCode(
+  code: string
+): Promise<SecuritySettings> {
+  const response = await api.post<SecuritySettings>(
+    "/auth/email-verification/confirm/",
+    { code }
+  );
+  return response.data;
+}
 
 export async function sendPresenceHeartbeat(): Promise<void> {
   await api.post("/auth/presence/");

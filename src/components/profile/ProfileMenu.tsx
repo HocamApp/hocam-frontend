@@ -656,7 +656,7 @@ export function ProfileMenu() {
               icon={<ShieldCheck className="h-4 w-4" />}
               label="Oturumları yönet"
               showChevron
-              onClick={comingSoon}
+              onClick={() => go("/profile/security")}
             />
             <ProfileMenuRow
               icon={<Eye className="h-4 w-4" />}
@@ -670,7 +670,11 @@ export function ProfileMenu() {
               showChevron
               onClick={() => go("/profile#data-export")}
             />
-            <Button variant="outline" className="w-full" onClick={comingSoon}>
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => go("/profile/security")}
+            >
               Güvenlik Ayarları
             </Button>
           </ProfileAccordionSection>

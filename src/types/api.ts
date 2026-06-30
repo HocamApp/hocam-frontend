@@ -3,6 +3,7 @@ export interface User {
   email: string;
   role: "student" | "tutor";
   tutor_profile_id: string | null;
+  is_email_verified: boolean;
 }
 
 export interface AuthResponse {
@@ -234,7 +235,7 @@ export interface LearningContext {
 
 export interface GoogleAuthSuccess {
   token: string;
-  user: { id: string; email: string; role: "student" | "tutor" };
+  user: User;
 }
 
 export interface GoogleAuthNeedsRole {
@@ -385,6 +386,12 @@ export interface PasswordResetConfirmRequest {
   token: string;
   new_password: string;
   password_confirm: string;
+}
+
+export interface SecuritySettings {
+  email: string;
+  is_email_verified: boolean;
+  last_seen_at: string | null;
 }
 
 export interface UserPreferences {

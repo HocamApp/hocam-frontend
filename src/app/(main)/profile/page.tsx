@@ -592,6 +592,12 @@ function ProfileContent() {
               onClick={() => router.push("/profile#account-visibility")}
             />
             <ProfileMenuRow
+              icon={<ShieldCheck className="h-4 w-4" />}
+              label="Güvenlik ayarları"
+              showChevron
+              onClick={() => router.push("/profile/security")}
+            />
+            <ProfileMenuRow
               icon={<Download className="h-4 w-4" />}
               label="Verilerimi indir"
               showChevron
