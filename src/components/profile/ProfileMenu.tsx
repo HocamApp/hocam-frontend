@@ -296,7 +296,7 @@ export function ProfileMenu() {
         sideOffset={10}
         className="w-[calc(100vw-2rem)] border-none bg-transparent p-0 shadow-none sm:w-[440px]"
       >
-        <div className="max-h-[min(80vh,640px)] overflow-y-auto rounded-[32px] bg-background/[0.08] p-3 backdrop-blur-lg">
+        <div className="scrollbar-none max-h-[min(80vh,640px)] overflow-y-auto rounded-[32px] bg-background/[0.08] p-3 backdrop-blur-lg">
 
           {/* ---- Profil Detayları ---- */}
           <ProfileAccordionSection
