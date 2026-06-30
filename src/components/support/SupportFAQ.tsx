@@ -62,7 +62,7 @@ export function SupportFAQ() {
           <p className="text-sm font-medium text-primary">
             Sorularının cevapları
           </p>
-          <h2 className="mt-3 text-4xl font-semibold tracking-tight text-foreground">
+          <h2 className="mt-3 text-2xl font-semibold tracking-tight text-foreground">
             Sıkça Sorulan Sorular
           </h2>
           <p className="mt-5 text-base leading-7 text-muted-foreground">
