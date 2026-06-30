@@ -41,6 +41,13 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AnimatedThemeToggler } from "@/components/theme/AnimatedThemeToggler";
@@ -51,6 +58,10 @@ import {
   ProfileMenuRow,
   ProfileToggleRow,
 } from "@/components/profile/ProfileMenuRow";
+import {
+  PaymentMethodSelector,
+  type PaymentMethod,
+} from "@/components/profile/PaymentMethodSelector";
 
 const DAY_NAMES = [
   "Pazartesi",
@@ -78,6 +89,43 @@ function isTutorProfile(
   return role === "tutor" && !!profile;
 }
 
+function normalizeProfileName(value: string): string {
+  return value
+    .trim()
+    .toLocaleLowerCase("tr-TR")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/ı/g, "i")
+    .replace(/\s+/g, " ");
+}
+
+function isBurakYilmazTutor(name: string, surname: string, role: string | undefined) {
+  return (
+    role === "tutor" &&
+    normalizeProfileName(`${name} ${surname}`) === "burak yilmaz"
+  );
+}
+
+function PaymentBrandBadge({
+  children,
+  tone,
+}: {
+  children: string;
+  tone: "visa" | "mastercard";
+}) {
+  return (
+    <span
+      className={
+        tone === "visa"
+          ? "rounded-md bg-blue-700 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-white"
+          : "rounded-md bg-slate-950 px-2 py-1 text-[10px] font-semibold text-white"
+      }
+    >
+      {children}
+    </span>
+  );
+}
+
 export function ProfileMenu() {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -85,6 +133,8 @@ export function ProfileMenu() {
   const [open, setOpen] = useState(false);
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const [prefOverrides, setPrefOverrides] = useState<Partial<UserPreferences>>({});
+  const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
+  const [paymentNotice, setPaymentNotice] = useState("");
 
   // Inline name/surname editing
   const [nameEdit, setNameEdit] = useState(false);
@@ -116,6 +166,7 @@ export function ProfileMenu() {
   const fullName = `${name} ${surname}`.trim();
   const initials = getInitials(name, surname);
   const avatarImage = tutor?.profile_picture || "";
+  const showDemoPaymentMethods = isBurakYilmazTutor(name, surname, role);
 
   const stats = data?.stats;
   const prefs: UserPreferences = useMemo(
@@ -159,6 +210,50 @@ export function ProfileMenu() {
     updateProfileMe({ preferences: { dark_mode: nextTheme === "dark" } }).catch(
       () => undefined
     );
+  };
+
+  const paymentMethods = useMemo<PaymentMethod[]>(
+    () =>
+      showDemoPaymentMethods
+        ? [
+            {
+              id: "demo-visa",
+              icon: <PaymentBrandBadge tone="visa">Visa</PaymentBrandBadge>,
+              label: "Demo Visa Kart",
+              description: "Test ödeme yöntemi — gerçek ödeme alınmaz.",
+            },
+            {
+              id: "demo-mastercard",
+              icon: (
+                <PaymentBrandBadge tone="mastercard">Mastercard</PaymentBrandBadge>
+              ),
+              label: "Demo Mastercard Kart",
+              description: "Test ödeme yöntemi — gerçek ödeme alınmaz.",
+            },
+          ]
+        : [
+            {
+              id: "card",
+              icon: <CreditCard className="h-5 w-5" />,
+              label: "Kredi veya banka kartı",
+              description:
+                "Kart ekleme akışı ödeme altyapısı bağlandıktan sonra aktif olacak.",
+            },
+          ],
+    [showDemoPaymentMethods]
+  );
+
+  const openPaymentDialog = () => {
+    setPaymentNotice("");
+    setPaymentDialogOpen(true);
+    setOpen(false);
+  };
+
+  const handlePaymentDialogChange = (nextOpen: boolean) => {
+    setPaymentDialogOpen(nextOpen);
+    if (!nextOpen) {
+      setPaymentNotice("");
+    }
   };
 
   const handleLanguageChange = async (nextLang: string) => {
@@ -274,6 +369,7 @@ export function ProfileMenu() {
   const currentAutoApprove = autoApproveOverride ?? tutor?.auto_approve_bookings ?? false;
 
   return (
+    <>
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <button
@@ -520,8 +616,19 @@ export function ProfileMenu() {
                 Ödeme yöntemleri
               </p>
               <p className="px-1 py-1.5 text-sm text-muted-foreground">
-                Henüz kayıtlı ödeme yöntemi yok.
+                {showDemoPaymentMethods
+                  ? "2 demo ödeme yöntemi kayıtlı."
+                  : "Henüz kayıtlı ödeme yöntemi yok."}
               </p>
+              <Button
+                variant="outline"
+                size="sm"
+                className="ml-1 mt-2 h-8"
+                onClick={openPaymentDialog}
+              >
+                <CreditCard className="mr-1.5 h-3.5 w-3.5" />
+                Ödeme yöntemi ekle
+              </Button>
             </div>
             <div>
               <p className="px-1 pb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -718,5 +825,37 @@ export function ProfileMenu() {
         </div>
       </PopoverContent>
     </Popover>
+    <Dialog open={paymentDialogOpen} onOpenChange={handlePaymentDialogChange}>
+      <DialogContent className="w-[calc(100vw-2rem)] sm:max-w-xl">
+        <DialogHeader>
+          <DialogTitle>Ödeme Yöntemleri</DialogTitle>
+          <DialogDescription>
+            Hocam&apos;da ödeme yöntemi yönetimi için hazırlanan ön arayüz.
+            Gerçek kart bilgisi alınmaz.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-3">
+          <PaymentMethodSelector
+            title="Kayıtlı yöntemler"
+            actionText="Kart ekle"
+            methods={paymentMethods}
+            defaultSelectedId={paymentMethods[0]?.id}
+            onActionClick={() =>
+              setPaymentNotice("Kart ekleme yakında aktif olacak.")
+            }
+            className="max-w-none"
+          />
+          {paymentNotice ? (
+            <p
+              role="status"
+              className="rounded-lg border border-border bg-muted/50 px-3 py-2 text-sm text-muted-foreground"
+            >
+              {paymentNotice}
+            </p>
+          ) : null}
+        </div>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }
