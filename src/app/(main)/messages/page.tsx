@@ -26,7 +26,7 @@ function MessagesContent() {
   return (
     <div className="flex h-[calc(100vh-64px)] overflow-hidden">
       {/* Left panel */}
-      <div className="flex w-80 flex-col border-r overflow-y-auto">
+      <div className="flex w-full shrink-0 flex-col overflow-y-auto border-r md:w-80">
         <header className="shrink-0 border-b p-4">
           <h1 className="text-xl font-semibold">Mesajlar</h1>
         </header>

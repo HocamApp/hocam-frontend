@@ -4,11 +4,16 @@ import { useState, useMemo, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
-import { fetchMessages, fetchConversation } from "@/lib/messagingApi";
+import {
+  fetchMessages,
+  fetchConversation,
+  fetchConversations,
+} from "@/lib/messagingApi";
 import { MessageBubble } from "@/components/messaging/MessageBubble";
 import { MessageInput } from "@/components/messaging/MessageInput";
 import { ParticipantAvatar } from "@/components/messaging/ParticipantAvatar";
 import { TypingIndicator } from "@/components/messaging/TypingIndicator";
+import { ConversationList } from "@/components/messaging/ConversationList";
 import { BookingModal } from "@/components/lessons/BookingModal";
 import type { TutorProfile } from "@/types";
 import { RouteGuard } from "@/components/shared/RouteGuard";
@@ -31,6 +36,13 @@ function ConversationContent({
   // realtime presence signal yet — this stays false until a backend/realtime
   // typing source exists (see TypingIndicator).
   const [isOtherTyping] = useState(false);
+
+  const { data: conversations, isLoading: conversationsLoading } = useQuery({
+    queryKey: ["conversations"],
+    queryFn: fetchConversations,
+    refetchInterval: 30000,
+    enabled: isAuthenticated,
+  });
 
   const { data: conversation } = useQuery({
     queryKey: ["conversation", conversationId],
@@ -67,6 +79,10 @@ function ConversationContent({
     setLocalMessages((prev) => [...prev, newMessage]);
   };
 
+  const handleSelectConversation = (selectedConversationId: string) => {
+    router.push(`/messages/${selectedConversationId}`);
+  };
+
   const headerTitle =
     conversation?.other_participant?.display_name ?? `Konuşma #${conversationId.slice(-6).toUpperCase()}`;
   const headerAvatarUrl = conversation?.other_participant?.avatar_url;
@@ -74,90 +90,105 @@ function ConversationContent({
   const showBookingButton = !!tutorForBooking;
 
   return (
-    <div className="flex h-[calc(100vh-64px)] flex-col">
-      {/* Header */}
-      <header className="flex shrink-0 items-center justify-between gap-3 border-b p-4">
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => router.push("/messages")}
-            className="text-muted-foreground hover:text-foreground"
-            aria-label="Geri"
-          >
-            ←
-          </button>
-          <ParticipantAvatar name={headerTitle} avatarUrl={headerAvatarUrl} />
-          <h1 className="font-semibold">{headerTitle}</h1>
+    <div className="flex h-[calc(100vh-64px)] overflow-hidden">
+      <aside className="hidden w-80 shrink-0 flex-col overflow-y-auto border-r md:flex">
+        <header className="shrink-0 border-b p-4">
+          <h1 className="text-xl font-semibold">Mesajlar</h1>
+        </header>
+        <ConversationList
+          conversations={conversations ?? []}
+          selectedId={conversationId}
+          currentUserId={user?.id ?? ""}
+          onSelect={handleSelectConversation}
+          isLoading={conversationsLoading}
+        />
+      </aside>
+
+      <section className="flex min-w-0 flex-1 flex-col">
+        {/* Header */}
+        <header className="flex shrink-0 items-center justify-between gap-3 border-b p-4">
+          <div className="flex min-w-0 items-center gap-3">
+            <button
+              type="button"
+              onClick={() => router.push("/messages")}
+              className="text-muted-foreground hover:text-foreground md:hidden"
+              aria-label="Geri"
+            >
+              ←
+            </button>
+            <ParticipantAvatar name={headerTitle} avatarUrl={headerAvatarUrl} />
+            <h1 className="truncate font-semibold">{headerTitle}</h1>
+          </div>
+          {showBookingButton && (
+            <button
+              type="button"
+              className="shrink-0 text-sm font-medium text-primary hover:underline"
+              onClick={() => setIsBookingOpen(true)}
+            >
+              Ders rezervasyonu yap
+            </button>
+          )}
+        </header>
+
+        {/* Messages area — mostly-white with a subtle dot texture for depth */}
+        <div
+          className="min-h-0 flex-1 overflow-y-auto bg-background p-4"
+          style={{
+            backgroundImage:
+              "radial-gradient(hsl(var(--muted-foreground) / 0.08) 1px, transparent 1px)",
+            backgroundSize: "22px 22px",
+          }}
+        >
+          {messagesLoading && (
+            <div className="flex justify-center py-8">
+              <LoadingSpinner />
+            </div>
+          )}
+
+          {!messagesLoading && messagesError && (
+            <ErrorMessage message="Mesajlar yüklenemedi" />
+          )}
+
+          {!messagesLoading && !messagesError && allMessages.length === 0 && (
+            <div className="flex flex-col items-center justify-center py-12 text-center text-muted-foreground">
+              <p>Henüz mesaj yok. İlk mesajı siz gönderin!</p>
+            </div>
+          )}
+
+          {!messagesLoading && !messagesError && allMessages.length > 0 && (
+            <div className="flex flex-col gap-3">
+              {allMessages.map((msg) => (
+                <MessageBubble
+                  key={msg.id}
+                  message={msg}
+                  isOwnMessage={msg.sender === user?.id}
+                  isNew={sentIdsRef.current.has(msg.id)}
+                />
+              ))}
+              {isOtherTyping && <TypingIndicator name={headerTitle} />}
+              <div ref={bottomRef} />
+            </div>
+          )}
         </div>
-        {showBookingButton && (
-          <button
-            type="button"
-            className="text-sm font-medium text-primary hover:underline"
-            onClick={() => setIsBookingOpen(true)}
-          >
-            Ders rezervasyonu yap
-          </button>
+
+        {/* Input */}
+        <div className="shrink-0">
+          <MessageInput
+            conversationId={conversationId}
+            onMessageSent={handleMessageSent}
+            disabled={!!messagesError}
+          />
+        </div>
+
+        {tutorForBooking && (
+          <BookingModal
+            tutor={tutorForBooking as TutorProfile}
+            isOpen={isBookingOpen}
+            onClose={() => setIsBookingOpen(false)}
+            onSuccess={() => setIsBookingOpen(false)}
+          />
         )}
-      </header>
-
-      {/* Messages area — mostly-white with a subtle dot texture for depth */}
-      <div
-        className="flex-1 overflow-y-auto bg-background p-4"
-        style={{
-          backgroundImage:
-            "radial-gradient(hsl(var(--muted-foreground) / 0.08) 1px, transparent 1px)",
-          backgroundSize: "22px 22px",
-        }}
-      >
-        {messagesLoading && (
-          <div className="flex justify-center py-8">
-            <LoadingSpinner />
-          </div>
-        )}
-
-        {!messagesLoading && messagesError && (
-          <ErrorMessage message="Mesajlar yüklenemedi" />
-        )}
-
-        {!messagesLoading && !messagesError && allMessages.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-12 text-center text-muted-foreground">
-            <p>Henüz mesaj yok. İlk mesajı siz gönderin!</p>
-          </div>
-        )}
-
-        {!messagesLoading && !messagesError && allMessages.length > 0 && (
-          <div className="flex flex-col gap-3">
-            {allMessages.map((msg) => (
-              <MessageBubble
-                key={msg.id}
-                message={msg}
-                isOwnMessage={msg.sender === user?.id}
-                isNew={sentIdsRef.current.has(msg.id)}
-              />
-            ))}
-            {isOtherTyping && <TypingIndicator name={headerTitle} />}
-            <div ref={bottomRef} />
-          </div>
-        )}
-      </div>
-
-      {/* Input */}
-      <div className="shrink-0">
-        <MessageInput
-          conversationId={conversationId}
-          onMessageSent={handleMessageSent}
-          disabled={!!messagesError}
-        />
-      </div>
-
-      {tutorForBooking && (
-        <BookingModal
-          tutor={tutorForBooking as TutorProfile}
-          isOpen={isBookingOpen}
-          onClose={() => setIsBookingOpen(false)}
-          onSuccess={() => setIsBookingOpen(false)}
-        />
-      )}
+      </section>
     </div>
   );
 }
