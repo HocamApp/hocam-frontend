@@ -37,6 +37,13 @@ export function PaymentMethodSelector({
     defaultSelectedId ?? (methods.length > 0 ? methods[0].id : null)
   );
 
+  React.useEffect(() => {
+    const nextSelectedId = defaultSelectedId ?? (methods.length > 0 ? methods[0].id : null);
+    setSelectedId((current) =>
+      methods.some((method) => method.id === current) ? current : nextSelectedId
+    );
+  }, [defaultSelectedId, methods]);
+
   const handleSelect = (id: string | number) => {
     setSelectedId(id);
     onSelectionChange?.(id);

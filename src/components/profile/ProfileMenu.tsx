@@ -89,6 +89,43 @@ function isTutorProfile(
   return role === "tutor" && !!profile;
 }
 
+function normalizeProfileName(value: string): string {
+  return value
+    .trim()
+    .toLocaleLowerCase("tr-TR")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/ı/g, "i")
+    .replace(/\s+/g, " ");
+}
+
+function isBurakYilmazTutor(name: string, surname: string, role: string | undefined) {
+  return (
+    role === "tutor" &&
+    normalizeProfileName(`${name} ${surname}`) === "burak yilmaz"
+  );
+}
+
+function PaymentBrandBadge({
+  children,
+  tone,
+}: {
+  children: string;
+  tone: "visa" | "mastercard";
+}) {
+  return (
+    <span
+      className={
+        tone === "visa"
+          ? "rounded-md bg-blue-700 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-white"
+          : "rounded-md bg-slate-950 px-2 py-1 text-[10px] font-semibold text-white"
+      }
+    >
+      {children}
+    </span>
+  );
+}
+
 export function ProfileMenu() {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -129,6 +166,7 @@ export function ProfileMenu() {
   const fullName = `${name} ${surname}`.trim();
   const initials = getInitials(name, surname);
   const avatarImage = tutor?.profile_picture || "";
+  const showDemoPaymentMethods = isBurakYilmazTutor(name, surname, role);
 
   const stats = data?.stats;
   const prefs: UserPreferences = useMemo(
@@ -175,16 +213,34 @@ export function ProfileMenu() {
   };
 
   const paymentMethods = useMemo<PaymentMethod[]>(
-    () => [
-      {
-        id: "card",
-        icon: <CreditCard className="h-5 w-5" />,
-        label: "Kredi veya banka kartı",
-        description:
-          "Kart ekleme akışı ödeme altyapısı bağlandıktan sonra aktif olacak.",
-      },
-    ],
-    []
+    () =>
+      showDemoPaymentMethods
+        ? [
+            {
+              id: "demo-visa",
+              icon: <PaymentBrandBadge tone="visa">Visa</PaymentBrandBadge>,
+              label: "Demo Visa Kart",
+              description: "Test ödeme yöntemi — gerçek ödeme alınmaz.",
+            },
+            {
+              id: "demo-mastercard",
+              icon: (
+                <PaymentBrandBadge tone="mastercard">Mastercard</PaymentBrandBadge>
+              ),
+              label: "Demo Mastercard Kart",
+              description: "Test ödeme yöntemi — gerçek ödeme alınmaz.",
+            },
+          ]
+        : [
+            {
+              id: "card",
+              icon: <CreditCard className="h-5 w-5" />,
+              label: "Kredi veya banka kartı",
+              description:
+                "Kart ekleme akışı ödeme altyapısı bağlandıktan sonra aktif olacak.",
+            },
+          ],
+    [showDemoPaymentMethods]
   );
 
   const openPaymentDialog = () => {
@@ -560,7 +616,9 @@ export function ProfileMenu() {
                 Ödeme yöntemleri
               </p>
               <p className="px-1 py-1.5 text-sm text-muted-foreground">
-                Henüz kayıtlı ödeme yöntemi yok.
+                {showDemoPaymentMethods
+                  ? "2 demo ödeme yöntemi kayıtlı."
+                  : "Henüz kayıtlı ödeme yöntemi yok."}
               </p>
               <Button
                 variant="outline"
@@ -781,7 +839,7 @@ export function ProfileMenu() {
             title="Kayıtlı yöntemler"
             actionText="Kart ekle"
             methods={paymentMethods}
-            defaultSelectedId="card"
+            defaultSelectedId={paymentMethods[0]?.id}
             onActionClick={() =>
               setPaymentNotice("Kart ekleme yakında aktif olacak.")
             }
