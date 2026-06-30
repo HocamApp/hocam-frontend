@@ -52,6 +52,13 @@
 @layer base {
   * {
     @apply border-border;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  *::-webkit-scrollbar {
+    display: none;
+    height: 0;
+    width: 0;
   }
   body {
     @apply bg-background text-foreground;
