@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Video } from "lucide-react";
+import { CalendarDays, Clock, Video } from "lucide-react";
 import { RouteGuard } from "@/components/shared/RouteGuard";
 import { ProfileScreen } from "@/components/profile/ProfileScreen";
 import { LessonItemCard } from "@/components/profile/LessonItemCard";
@@ -14,22 +14,39 @@ import { fetchCalendar } from "@/lib/profileLessonsApi";
 import { formatDate } from "@/lib/utils";
 import type { CalendarEvent } from "@/types";
 
+function formatTime(iso: string): string {
+  return new Date(iso).toLocaleTimeString("tr-TR", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 function CalendarContent() {
   const { data, isLoading, isError } = useQuery({
     queryKey: ["profile-calendar"],
     queryFn: fetchCalendar,
   });
 
+  const sortedEvents = useMemo(
+    () =>
+      [...(data ?? [])].sort(
+        (a, b) => new Date(a.start).getTime() - new Date(b.start).getTime()
+      ),
+    [data]
+  );
+
   const groups = useMemo(() => {
     const map = new Map<string, CalendarEvent[]>();
-    for (const event of data ?? []) {
+    for (const event of sortedEvents) {
       const key = formatDate(event.start);
       const list = map.get(key) ?? [];
       list.push(event);
       map.set(key, list);
     }
     return Array.from(map.entries());
-  }, [data]);
+  }, [sortedEvents]);
+
+  const nextEvent = sortedEvents[0];
 
   return (
     <ProfileScreen
@@ -49,11 +66,44 @@ function CalendarContent() {
         />
       ) : (
         <div className="space-y-6">
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div className="rounded-lg border bg-card p-4">
+              <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                <Video className="h-4 w-4" />
+                Toplam ders
+              </p>
+              <p className="mt-1 text-2xl font-semibold">{sortedEvents.length}</p>
+            </div>
+            <div className="rounded-lg border bg-card p-4">
+              <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                <CalendarDays className="h-4 w-4" />
+                Takvim günü
+              </p>
+              <p className="mt-1 text-2xl font-semibold">{groups.length}</p>
+            </div>
+            <div className="rounded-lg border bg-card p-4">
+              <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                <Clock className="h-4 w-4" />
+                Sıradaki
+              </p>
+              <p className="mt-1 truncate text-sm font-medium">
+                {nextEvent
+                  ? `${formatDate(nextEvent.start)} · ${formatTime(nextEvent.start)}`
+                  : "-"}
+              </p>
+            </div>
+          </div>
+
           {groups.map(([date, events]) => (
             <div key={date}>
-              <h2 className="mb-2 text-sm font-semibold text-muted-foreground">
-                {date}
-              </h2>
+              <div className="mb-2 flex items-center justify-between gap-3">
+                <h2 className="text-sm font-semibold text-muted-foreground">
+                  {date}
+                </h2>
+                <span className="text-xs text-muted-foreground">
+                  {events.length} ders
+                </span>
+              </div>
               <div className="space-y-3">
                 {events.map((event) => (
                   <LessonItemCard

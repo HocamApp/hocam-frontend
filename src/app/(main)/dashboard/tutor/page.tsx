@@ -1020,7 +1020,20 @@ function TutorDashboardContent() {
             <>
               <h3 className="mb-2 text-sm font-medium">Yaklaşan Dersler</h3>
               {activeBookings.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Yok</p>
+                <EmptyState
+                  title="Yaklaşan ders yok"
+                  description="Onay bekleyen rezervasyonlar ve yaklaşan dersler burada görünür."
+                  action={
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setActiveTab("availability")}
+                    >
+                      Müsaitliği Düzenle
+                    </Button>
+                  }
+                />
               ) : (
                 <div className="mb-6 space-y-3">
                   {sortByStartTime(activeBookings).map((b) => (
@@ -1037,7 +1050,10 @@ function TutorDashboardContent() {
 
               <h3 className="mb-2 text-sm font-medium">Geçmiş Dersler</h3>
               {pastBookings.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Yok</p>
+                <EmptyState
+                  title="Geçmiş ders yok"
+                  description="Tamamlanan ve iptal edilen rezervasyonların burada arşivlenir."
+                />
               ) : (
                 <div className="space-y-3">
                   {sortByStartTime(pastBookings).map((b) => (
