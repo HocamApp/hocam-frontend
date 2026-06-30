@@ -15,16 +15,16 @@ const LESSON_REQUEST_LABELS: Record<string, string> = {
 };
 
 const BOOKING_STYLES: Record<string, string> = {
-  pending: "border-amber-500 text-amber-700",
-  confirmed: "border-blue-500 text-blue-700",
-  completed: "border-green-500 text-green-700",
-  cancelled: "border-red-500 text-red-700",
+  pending: "border-amber-500 text-amber-700 dark:border-amber-400 dark:text-amber-300",
+  confirmed: "border-blue-500 text-blue-700 dark:border-blue-400 dark:text-blue-300",
+  completed: "border-green-500 text-green-700 dark:border-green-400 dark:text-green-300",
+  cancelled: "border-red-500 text-red-700 dark:border-red-400 dark:text-red-300",
 };
 
 const LESSON_REQUEST_STYLES: Record<string, string> = {
-  pending: "border-amber-500 text-amber-700",
-  accepted: "border-green-500 text-green-700",
-  declined: "border-red-500 text-red-700",
+  pending: "border-amber-500 text-amber-700 dark:border-amber-400 dark:text-amber-300",
+  accepted: "border-green-500 text-green-700 dark:border-green-400 dark:text-green-300",
+  declined: "border-red-500 text-red-700 dark:border-red-400 dark:text-red-300",
 };
 
 interface StatusBadgeProps {
