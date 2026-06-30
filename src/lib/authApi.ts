@@ -101,3 +101,12 @@ export async function sendPresenceHeartbeat(): Promise<void> {
 export async function logoutAllSessions(): Promise<void> {
   await api.post("/auth/logout-all/");
 }
+
+/**
+ * Permanently delete the authenticated user's own account. The backend deletes
+ * the auth token and the user row (related data via CASCADE). The caller must
+ * clear local auth state afterwards — the old token is no longer valid.
+ */
+export async function deleteMyAccount(): Promise<void> {
+  await api.delete("/auth/account/");
+}

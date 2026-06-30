@@ -2,9 +2,11 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
+  AlertTriangle,
   ArrowLeft,
   BadgeCheck,
   Clock,
@@ -13,15 +15,18 @@ import {
   MailCheck,
   ShieldCheck,
   Send,
+  Trash2,
 } from "lucide-react";
 
 import {
   confirmEmailVerificationCode,
+  deleteMyAccount,
   fetchSecuritySettings,
   logoutAllSessions,
   requestEmailVerificationCode,
 } from "@/lib/authApi";
 import { useAuth } from "@/hooks/useAuth";
+import { useAuthContext } from "@/providers/AuthProvider";
 import { RouteGuard } from "@/components/shared/RouteGuard";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -44,12 +49,22 @@ function formatLastSeen(value: string | null): string {
 
 function SecurityContent() {
   const queryClient = useQueryClient();
-  const { logout } = useAuth();
+  const router = useRouter();
+  const { logout, user } = useAuth();
+  const { clearAuth } = useAuthContext();
   const [code, setCode] = useState("");
   const [requestingCode, setRequestingCode] = useState(false);
   const [confirmingCode, setConfirmingCode] = useState(false);
   const [loggingOutAll, setLoggingOutAll] = useState(false);
   const [codeSent, setCodeSent] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState("");
+  const [deletingAccount, setDeletingAccount] = useState(false);
+
+  const accountEmail = user?.email ?? "";
+  const canDeleteAccount =
+    deleteConfirm.trim() === "SİL" ||
+    (accountEmail.length > 0 &&
+      deleteConfirm.trim().toLowerCase() === accountEmail.toLowerCase());
 
   const { data, isLoading } = useQuery({
     queryKey: ["security-settings"],
@@ -102,6 +117,21 @@ function SecurityContent() {
     } catch {
       toast.error("Oturumlar kapatılamadı. Lütfen tekrar deneyin.");
       setLoggingOutAll(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!canDeleteAccount || deletingAccount) return;
+    setDeletingAccount(true);
+    try {
+      await deleteMyAccount();
+      // Clear local auth state/cookie, then send the user to sign-up again.
+      clearAuth();
+      toast.success("Hesabınız kalıcı olarak silindi.");
+      router.push("/register");
+    } catch {
+      toast.error("Hesap silinemedi. Lütfen tekrar deneyin.");
+      setDeletingAccount(false);
     }
   };
 
@@ -263,6 +293,58 @@ function SecurityContent() {
                 mevcut erişim tokenınızı geçersiz kılar.
               </p>
             </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-destructive/40">
+          <CardHeader>
+            <CardTitle className="text-lg text-destructive">Hesabı sil</CardTitle>
+            <CardDescription>
+              Hesabınızı kalıcı olarak silin. Bu işlem geri alınamaz.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Alert variant="destructive">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle>Bu işlem kalıcıdır.</AlertTitle>
+              <AlertDescription>
+                Profiliniz, ders talepleriniz, rezervasyonlarınız ve mesajlarınız
+                dahil tüm hesap verileriniz kalıcı olarak silinir ve geri getirilemez.
+              </AlertDescription>
+            </Alert>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="delete-confirm">
+                Onaylamak için{" "}
+                <span className="font-semibold text-foreground">SİL</span> yazın
+                veya e-posta adresinizi girin.
+              </Label>
+              <Input
+                id="delete-confirm"
+                value={deleteConfirm}
+                onChange={(e) => setDeleteConfirm(e.target.value)}
+                placeholder="SİL"
+                autoComplete="off"
+                className="max-w-xs"
+              />
+            </div>
+
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={handleDeleteAccount}
+              disabled={!canDeleteAccount || deletingAccount}
+            >
+              {deletingAccount ? (
+                <span
+                  className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"
+                  aria-hidden
+                />
+              ) : (
+                <Trash2 className="mr-2 h-4 w-4" />
+              )}
+              Hesabı kalıcı olarak sil
+            </Button>
           </CardContent>
         </Card>
       </div>
