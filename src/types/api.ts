@@ -23,6 +23,17 @@ export interface RegisterRequest {
   role: "student" | "tutor";
 }
 
+export interface RegisterStartResponse {
+  requires_verification: true;
+  email: string;
+  expires_in_seconds: number;
+}
+
+export interface RegisterConfirmRequest {
+  email: string;
+  code: string;
+}
+
 export type ExamType = "TYT" | "AYT" | "DGS" | "KPSS";
 
 export interface Subject {

@@ -5,7 +5,9 @@ import {
   LoginRequest,
   PasswordResetConfirmRequest,
   PasswordResetRequest,
+  RegisterConfirmRequest,
   RegisterRequest,
+  RegisterStartResponse,
   SecuritySettings,
   User,
 } from "@/types";
@@ -24,8 +26,15 @@ export async function googleAuth(
 
 export async function registerUser(
   data: RegisterRequest
+): Promise<RegisterStartResponse> {
+  const response = await api.post<RegisterStartResponse>("/auth/register/", data);
+  return response.data;
+}
+
+export async function confirmRegistration(
+  data: RegisterConfirmRequest
 ): Promise<AuthResponse> {
-  const response = await api.post<AuthResponse>("/auth/register/", data);
+  const response = await api.post<AuthResponse>("/auth/register/confirm/", data);
   return response.data;
 }
 
