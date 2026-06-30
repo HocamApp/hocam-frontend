@@ -58,6 +58,22 @@ const POPULAR_UNIVERSITIES = [
   "Gebze Teknik Üniversitesi",
 ];
 
+const FILTER_WIDTHS = {
+  sort: "w-full sm:w-[13.5rem]",
+  exam: "w-full sm:w-[8.75rem]",
+  subject: "w-full sm:w-[11.75rem]",
+  minRating: "w-full sm:w-[9.75rem]",
+  yksRank: "w-full sm:w-[8.75rem]",
+} as const;
+
+const FILTER_CONTENT_WIDTHS = {
+  sort: "sm:w-[13.5rem]",
+  exam: "sm:w-[8.75rem]",
+  subject: "sm:w-[11.75rem]",
+  minRating: "sm:w-[9.75rem]",
+  yksRank: "sm:w-[8.75rem]",
+} as const;
+
 function filtersFromSearchParams(searchParams: URLSearchParams): TutorFiltersType {
   const search = searchParams.get("search");
   const subject = searchParams.get("subject");
@@ -322,7 +338,7 @@ function TutorsPageContent() {
 
               <div className="flex flex-wrap gap-4">
             {/* Sıralama */}
-            <div className="w-full space-y-1 sm:w-[300px]">
+            <div className={`${FILTER_WIDTHS.sort} space-y-1`}>
               <Label className="text-xs uppercase tracking-wide text-muted-foreground">
                 Sıralama
               </Label>
@@ -334,7 +350,7 @@ function TutorsPageContent() {
                 <SelectTrigger className="h-9 text-sm">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className={FILTER_CONTENT_WIDTHS.sort}>
                   <SelectItem value="rating">En yüksek puan</SelectItem>
                   <SelectItem value="price">En uygun fiyat</SelectItem>
                   <SelectItem value="yks_rank">En iyi YKS sıralaması</SelectItem>
@@ -344,7 +360,7 @@ function TutorsPageContent() {
             </div>
 
           {/* Sınav */}
-          <div className="w-full space-y-1 sm:w-[210px]">
+          <div className={`${FILTER_WIDTHS.exam} space-y-1`}>
             <Label className="text-xs uppercase tracking-wide text-muted-foreground">
               Sınav
             </Label>
@@ -358,7 +374,7 @@ function TutorsPageContent() {
               <SelectTrigger className="h-9 text-sm">
                 <SelectValue placeholder="Tüm sınavlar" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className={FILTER_CONTENT_WIDTHS.exam}>
                 <SelectItem value="__all__">Tüm sınavlar</SelectItem>
                 <SelectItem value="TYT">TYT</SelectItem>
                 <SelectItem value="AYT">AYT</SelectItem>
@@ -369,7 +385,7 @@ function TutorsPageContent() {
           </div>
 
           {/* Ders */}
-          <div className="w-full space-y-1 sm:w-[300px]">
+          <div className={`${FILTER_WIDTHS.subject} space-y-1`}>
             <Label className="text-xs uppercase tracking-wide text-muted-foreground">
               Ders
             </Label>
@@ -383,7 +399,7 @@ function TutorsPageContent() {
               <SelectTrigger className="h-9 text-sm">
                 <SelectValue placeholder="Tüm dersler" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className={FILTER_CONTENT_WIDTHS.subject}>
                 <SelectItem value="__all__">Tüm dersler</SelectItem>
                 {Array.from(new Map((subjects ?? []).map((s) => [s.name, s])).values()).map((s) => (
                   <SelectItem key={s.name} value={s.name}>
@@ -411,7 +427,10 @@ function TutorsPageContent() {
                   )}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-[280px] p-4" align="start">
+              <PopoverContent
+                className="w-[var(--radix-popover-trigger-width)] p-4"
+                align="start"
+              >
                 <PriceRangeSlider
                   value={filtersToPriceTuple(filters.min_price, filters.max_price)}
                   onValueCommit={(t) =>
@@ -423,10 +442,10 @@ function TutorsPageContent() {
             </Popover>
           </div>
 
-          {/* Puan */}
-          <div className="w-full space-y-1 sm:w-[190px]">
+          {/* Minimum yıldız */}
+          <div className={`${FILTER_WIDTHS.minRating} space-y-1`}>
             <Label className="text-xs uppercase tracking-wide text-muted-foreground">
-              Min. Puan
+              Min. Yıldız
             </Label>
             <Select
               value={(filters.min_rating ?? "") || "__all__"}
@@ -438,19 +457,18 @@ function TutorsPageContent() {
               <SelectTrigger className="h-9 text-sm">
                 <SelectValue placeholder="Tümü" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className={FILTER_CONTENT_WIDTHS.minRating}>
                 <SelectItem value="__all__">Tümü</SelectItem>
-                <SelectItem value="1">1+ puan</SelectItem>
-                <SelectItem value="2">2+ puan</SelectItem>
-                <SelectItem value="3">3+ puan</SelectItem>
-                <SelectItem value="4">4+ puan</SelectItem>
-                <SelectItem value="5">5 puan</SelectItem>
+                <SelectItem value="3.5">3.5+ yıldız</SelectItem>
+                <SelectItem value="4">4+ yıldız</SelectItem>
+                <SelectItem value="4.5">4.5+ yıldız</SelectItem>
+                <SelectItem value="5">5 yıldız</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           {/* YKS Sıralaması */}
-          <div className="w-full space-y-1 sm:w-[210px]">
+          <div className={`${FILTER_WIDTHS.yksRank} space-y-1`}>
             <Label className="text-xs uppercase tracking-wide text-muted-foreground">
               YKS Sıralaması
             </Label>
@@ -464,7 +482,7 @@ function TutorsPageContent() {
               <SelectTrigger className="h-9 text-sm">
                 <SelectValue placeholder="Tümü" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className={FILTER_CONTENT_WIDTHS.yksRank}>
                 <SelectItem value="__all__">Tümü</SelectItem>
                 <SelectItem value="1000">İlk 1.000</SelectItem>
                 <SelectItem value="5000">İlk 5.000</SelectItem>
