@@ -256,6 +256,7 @@ function HeroSection() {
           preload="metadata"
           aria-hidden
         />
+        <div className={styles.heroScreenOverlay} aria-hidden />
       </div>
     </section>
   );
