@@ -245,27 +245,7 @@ function FloatingNav() {
 function HeroSection() {
   return (
     <section className={styles.hero} id="flow-reference-hero">
-      <Reveal className={styles.heroContent}>
-        <h1 className={styles.heroTitle}>
-          <span>Doğru hocayı bul, </span>
-          <strong>hedefe daha sağlam ilerle</strong>
-        </h1>
-        <p>
-          TYT, AYT, KPSS ve daha fazlası için sana uygun hocayı keşfet, iletişime geç ve
-          online derslere başla.
-        </p>
-        <div className={styles.ctaRow}>
-          <WisprButton href="/tutors" icon={<BookOpen size={15} />}>
-            Hoca Bul
-          </WisprButton>
-          <WisprButton href="/register" variant="ghost" icon={<UserPlus size={15} />}>
-            Hoca Olarak Başla
-          </WisprButton>
-        </div>
-        <p className={styles.heroFootnote}>
-          Öğrenciler, veliler ve hocalar için modern eğitim platformu.
-        </p>
-      </Reveal>
+      <div className={styles.heroVideoStage} aria-hidden />
     </section>
   );
 }
