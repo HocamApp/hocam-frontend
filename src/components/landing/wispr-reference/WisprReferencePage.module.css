@@ -194,7 +194,11 @@
   box-shadow: 0 30px 60px -20px rgba(26, 26, 26, 0.25);
 }
 
-.heroImage {
+.heroVideo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
   object-fit: cover;
   object-position: center 30%;
 }
