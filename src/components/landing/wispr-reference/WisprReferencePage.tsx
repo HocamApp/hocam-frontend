@@ -252,7 +252,6 @@ function HeroSection() {
           poster="/landing/hocam-hero-study-room.png"
           autoPlay
           muted
-          loop
           playsInline
           preload="metadata"
           aria-hidden
