@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
-import { Check, MessageSquare, PlayCircle, Share2 } from "lucide-react";
+import { Check, Copy, MessageCircle, MessageSquare, PlayCircle, Share2 } from "lucide-react";
 import { useFavorites } from "@/hooks/useFavorites";
 import { FavoriteButton } from "@/components/tutors/FavoriteButton";
 import { fetchTutorById, fetchTutorReviews, fetchTutorSubjectRatings } from "@/lib/tutorsApi";
@@ -21,6 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -94,6 +95,27 @@ function getYouTubeEmbedUrl(url?: string): string | null {
     return videoId ? `https://www.youtube-nocookie.com/embed/${videoId}` : null;
   } catch {
     return null;
+  }
+}
+
+async function copyTextToClipboard(text: string): Promise<void> {
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(text);
+    return;
+  }
+
+  const textarea = document.createElement("textarea");
+  textarea.value = text;
+  textarea.setAttribute("readonly", "");
+  textarea.style.position = "fixed";
+  textarea.style.opacity = "0";
+  document.body.appendChild(textarea);
+  textarea.select();
+  const copied = document.execCommand("copy");
+  document.body.removeChild(textarea);
+
+  if (!copied) {
+    throw new Error("Copy failed");
   }
 }
 
@@ -174,6 +196,9 @@ export default function TutorProfilePage({
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   const [bookingComplete, setBookingComplete] = useState(false);
   const [reviewsExpanded, setReviewsExpanded] = useState(false);
+  const [isSharePreviewOpen, setIsSharePreviewOpen] = useState(false);
+  const [shareCopied, setShareCopied] = useState(false);
+  const [shareUrl, setShareUrl] = useState("");
   const learningContext = learningContextFromSearchParams(
     new URLSearchParams(searchParams.toString())
   );
@@ -216,23 +241,27 @@ export default function TutorProfilePage({
     ? reviewsExpanded ? reviews : reviews.slice(0, 5)
     : [];
   const hasMoreReviews = Array.isArray(reviews) && reviews.length > 5 && !reviewsExpanded;
+  const shareTitle = tutor
+    ? `${tutor.name} ${tutor.surname} · Hocam`
+    : "Hocam";
+  const whatsappShareUrl = shareUrl
+    ? `https://wa.me/?text=${encodeURIComponent(`${shareTitle}\n${shareUrl}`)}`
+    : "";
+
+  useEffect(() => {
+    if (!shareCopied) return;
+    const timer = window.setTimeout(() => setShareCopied(false), 1600);
+    return () => window.clearTimeout(timer);
+  }, [shareCopied]);
 
   const handleShare = async () => {
     if (typeof window === "undefined") return;
     const url = window.location.href;
-    const shareTitle = tutor
-      ? `${tutor.name} ${tutor.surname} · Hocam`
-      : "Hocam";
-    if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
-      try {
-        await navigator.share({ title: shareTitle, url });
-      } catch {
-        // User dismissed the native share sheet — nothing to do.
-      }
-      return;
-    }
+    setShareUrl(url);
+    setIsSharePreviewOpen(true);
     try {
-      await navigator.clipboard.writeText(url);
+      await copyTextToClipboard(url);
+      setShareCopied(true);
       toast.success("Profil bağlantısı kopyalandı.");
     } catch {
       toast.error("Bağlantı kopyalanamadı.");
@@ -425,17 +454,81 @@ export default function TutorProfilePage({
                     isPending={isFavoritePending(tutor.id)}
                     onToggle={toggle}
                   />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                    aria-label="Profili paylaş"
-                    title="Profili paylaş"
-                    onClick={handleShare}
-                  >
-                    <Share2 className="h-5 w-5" />
-                  </Button>
+                  <Popover open={isSharePreviewOpen} onOpenChange={setIsSharePreviewOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        aria-label={shareCopied ? "Profil bağlantısı kopyalandı" : "Profili paylaş"}
+                        title={shareCopied ? "Kopyalandı" : "Profili paylaş"}
+                        onClick={handleShare}
+                      >
+                        {shareCopied ? (
+                          <Check className="h-5 w-5 motion-safe:animate-message-pop" />
+                        ) : (
+                          <Share2 className="h-5 w-5 transition-transform duration-200" />
+                        )}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent align="end" className="w-64 p-3">
+                      <div className="space-y-3">
+                        <div className="flex items-start gap-3">
+                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted">
+                            <Check className="h-4 w-4 motion-safe:animate-message-pop" />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium">Link kopyalandı</p>
+                            <p className="mt-0.5 text-xs text-muted-foreground">
+                              Şimdi yapıştırabilir veya hızlıca paylaşabilirsin.
+                            </p>
+                          </div>
+                        </div>
+                        <div className="rounded-md border bg-muted/40 px-2.5 py-2">
+                          <p className="truncate text-xs text-muted-foreground">
+                            {shareUrl || "Profil bağlantısı hazırlanıyor"}
+                          </p>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              if (!shareUrl) return;
+                              copyTextToClipboard(shareUrl)
+                                .then(() => {
+                                  setShareCopied(true);
+                                  toast.success("Profil bağlantısı kopyalandı.");
+                                })
+                                .catch(() => toast.error("Bağlantı kopyalanamadı."));
+                            }}
+                          >
+                            <Copy className="mr-1.5 h-3.5 w-3.5" />
+                            Linki kopyala
+                          </Button>
+                          {whatsappShareUrl ? (
+                            <Button type="button" variant="outline" size="sm" asChild>
+                              <a
+                                href={whatsappShareUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                              >
+                                <MessageCircle className="mr-1.5 h-3.5 w-3.5" />
+                                WhatsApp
+                              </a>
+                            </Button>
+                          ) : (
+                            <Button type="button" variant="outline" size="sm" disabled>
+                              <MessageCircle className="mr-1.5 h-3.5 w-3.5" />
+                              WhatsApp
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
                 </div>
               </div>
             </CardContent>
