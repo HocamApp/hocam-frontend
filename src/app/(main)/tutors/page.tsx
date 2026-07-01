@@ -308,7 +308,7 @@ function TutorsPageContent() {
             {learningContext && (
               <div className="flex flex-col gap-3 rounded-lg border bg-primary/5 px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-between">
                 <p className="text-muted-foreground">
-                  Seçtiğin öğrenme konusu için hoca arıyorsun. Ders talebi veya rezervasyon bu hedefe bağlanacak.
+                  Seçtiğin öğrenme konusu için hoca arıyorsun. Mesaj veya rezervasyon bu hedefe bağlanacak.
                 </p>
                 <Button
                   type="button"

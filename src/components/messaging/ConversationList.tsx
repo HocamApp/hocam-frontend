@@ -98,7 +98,7 @@ export function ConversationList({
       <div className="flex flex-col items-center justify-center p-8 text-center">
         <p className="text-sm font-medium">Henüz mesajınız yok</p>
         <p className="mt-1 text-xs text-muted-foreground">
-          Bir hocaya ders talebi göndererek başlayabilirsiniz
+          Bir hocaya mesaj göndererek başlayabilirsiniz
         </p>
         <Button className="mt-4" asChild>
           <Link href="/tutors">Hoca Bul</Link>

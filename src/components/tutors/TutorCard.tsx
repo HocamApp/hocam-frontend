@@ -127,7 +127,7 @@ export function TutorCard({
             <Link href={tutorHref} className="cursor-pointer">
               <div className="text-right">
                 <span className="font-medium">{formatPrice(tutor.hourly_price)}</span>
-                <span className="ml-1 text-sm text-muted-foreground">/saat</span>
+                <span className="ml-1 text-sm text-muted-foreground">/40 dk</span>
               </div>
             </Link>
             {onToggleFavorite && (
