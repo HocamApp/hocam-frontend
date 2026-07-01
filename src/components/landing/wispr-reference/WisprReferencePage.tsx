@@ -1,6 +1,7 @@
 "use client";
 
 import type { CSSProperties, ReactNode } from "react";
+import Image from "next/image";
 import {
   ArrowUpRight,
   BookOpen,
@@ -245,7 +246,17 @@ function FloatingNav() {
 function HeroSection() {
   return (
     <section className={styles.hero} id="flow-reference-hero">
-      <div className={styles.heroVideoStage} aria-hidden />
+      <div className={styles.heroVideoStage}>
+        <Image
+          src="/landing/hocam-hero-study-room.png"
+          alt=""
+          fill
+          priority
+          sizes="100vw"
+          className={styles.heroImage}
+          aria-hidden
+        />
+      </div>
     </section>
   );
 }

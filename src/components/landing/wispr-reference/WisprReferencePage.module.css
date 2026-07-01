@@ -186,7 +186,17 @@
 }
 
 .heroVideoStage {
+  position: relative;
   min-height: calc(100vh - 208px);
+  overflow: hidden;
+  border-radius: 24px;
+  background: #eef1f6;
+  box-shadow: 0 30px 60px -20px rgba(26, 26, 26, 0.25);
+}
+
+.heroImage {
+  object-fit: cover;
+  object-position: center 30%;
 }
 
 .claimHeader h2,
@@ -1184,6 +1194,7 @@
 
   .heroVideoStage {
     min-height: calc(100vh - 164px);
+    border-radius: 18px;
   }
 
   .character {
