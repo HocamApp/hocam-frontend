@@ -46,7 +46,7 @@ const setupSchema = z.object({
     ),
   hourly_price: z
     .string()
-    .min(1, "Saatlik ücret zorunludur")
+    .min(1, "Ders ücreti zorunludur")
     .refine((v) => !isNaN(Number(v)) && Number(v) > 0, {
       message: "Ücret pozitif olmalıdır",
     }),
@@ -282,15 +282,19 @@ export default function TutorSetupPage() {
                   name="hourly_price"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Saatlik Ücret (₺)</FormLabel>
+                      <FormLabel>40 dk ders ücreti (₺)</FormLabel>
                       <FormControl>
                         <Input
                           type="number"
                           min={1}
-                          placeholder="Örn: 300"
+                          placeholder="Örn: 400"
                           {...field}
                         />
                       </FormControl>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        40 dakikalık ders ücreti. Daha uzun dersler bu ücretten
+                        orantılı hesaplanır.
+                      </p>
                       <FormMessage />
                     </FormItem>
                   )}

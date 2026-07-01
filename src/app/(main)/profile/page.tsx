@@ -453,7 +453,7 @@ function ProfileContent() {
                   </dd>
                 </div>
                 <div className="flex justify-between gap-3">
-                  <dt className="text-muted-foreground">Saatlik ücret</dt>
+                  <dt className="text-muted-foreground">40 dk ders ücreti</dt>
                   <dd className="text-right font-medium text-foreground">
                     {tutor.hourly_price ? formatPrice(tutor.hourly_price) : "—"}
                   </dd>

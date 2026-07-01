@@ -18,7 +18,11 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 
-const DURATION_OPTIONS = [45, 60, 90] as const;
+// Tutor price is the price for the minimum (40-minute) lesson; longer lessons
+// scale proportionally from that base. Keep in sync with the backend
+// (apps/lessons/pricing.py).
+const LESSON_BASE_MINUTES = 40;
+const DURATION_OPTIONS = [40, 50, 60] as const;
 
 // Backend: 0=Monday, 6=Sunday. JS getDay(): 0=Sunday, 6=Saturday.
 function jsDayToBackendDay(jsDay: number): number {
@@ -79,6 +83,8 @@ function translateApiError(message: string): string {
     return "Bu saat dilimi hocanın müsait saatleri dışında.";
   if (message.includes("cannot cross midnight"))
     return "Gece yarısını geçen rezervasyon oluşturulamaz.";
+  if (message.includes("at least 40 minutes"))
+    return "Ders süresi en az 40 dakika olmalıdır.";
   return message;
 }
 
@@ -113,7 +119,7 @@ export function BookingModal({
 }: BookingModalProps) {
   const [step, setStep] = useState(1);
   const [selectedSubjectId, setSelectedSubjectId] = useState<string>("");
-  const [selectedDuration, setSelectedDuration] = useState<number>(60);
+  const [selectedDuration, setSelectedDuration] = useState<number>(LESSON_BASE_MINUTES);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState<string>("");
   const [apiError, setApiError] = useState<string | null>(null);
@@ -130,7 +136,7 @@ export function BookingModal({
     if (!isOpen) {
       setStep(1);
       setSelectedSubjectId("");
-      setSelectedDuration(60);
+      setSelectedDuration(LESSON_BASE_MINUTES);
       setSelectedDate(null);
       setSelectedTime("");
       setApiError(null);
@@ -143,7 +149,9 @@ export function BookingModal({
     setSelectedTime("");
   }, [selectedDate]);
 
-  const calculatedPrice = (tutor.hourly_price * selectedDuration) / 60;
+  const calculatedPrice = Math.round(
+    (tutor.hourly_price * selectedDuration) / LESSON_BASE_MINUTES
+  );
   const endTime = selectedTime
     ? (() => {
         const [h, m] = selectedTime.split(":").map(Number);

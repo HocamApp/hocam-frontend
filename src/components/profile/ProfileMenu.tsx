@@ -724,7 +724,7 @@ export function ProfileMenu() {
                 </div>
               )}
               <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Saatlik ücret</span>
+                <span className="text-muted-foreground">40 dk ders ücreti</span>
                 <span className="font-medium text-foreground">
                   {formatPrice(tutor.hourly_price)}
                 </span>
