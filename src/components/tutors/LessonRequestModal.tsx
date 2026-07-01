@@ -149,10 +149,10 @@ export function LessonRequestModal({
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Mesaj İsteği Gönder</DialogTitle>
+          <DialogTitle>Hocaya Mesaj Gönder</DialogTitle>
           <DialogDescription>
             Hocaya kendini tanıt, hangi derste yardım istediğini ve beklentilerini yaz.
-            Talebin gönderildiğinde mesajlaşma konuşması hemen açılır.
+            Mesajın gönderildiğinde mesajlaşma konuşması hemen açılır.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -236,10 +236,10 @@ export function LessonRequestModal({
                       className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent"
                       aria-hidden
                     />
-                    İstek Gönderiliyor
+                    Gönderiliyor
                   </span>
                 ) : (
-                  "Mesaj İsteği Gönder"
+                  "Mesaj Gönder"
                 )}
               </Button>
             </DialogFooter>

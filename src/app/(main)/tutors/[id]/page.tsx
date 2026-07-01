@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
-import { Check, MessageSquare, PlayCircle } from "lucide-react";
+import { Check, MessageSquare, PlayCircle, Share2 } from "lucide-react";
 import { useFavorites } from "@/hooks/useFavorites";
 import { FavoriteButton } from "@/components/tutors/FavoriteButton";
 import { fetchTutorById, fetchTutorReviews, fetchTutorSubjectRatings } from "@/lib/tutorsApi";
@@ -18,7 +18,6 @@ import { LessonRequestModal } from "@/components/tutors/LessonRequestModal";
 import { BookingModal } from "@/components/lessons/BookingModal";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { Button } from "@/components/ui/button";
-import { OriginButton } from "@/components/ui/origin-button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
@@ -218,6 +217,28 @@ export default function TutorProfilePage({
     : [];
   const hasMoreReviews = Array.isArray(reviews) && reviews.length > 5 && !reviewsExpanded;
 
+  const handleShare = async () => {
+    if (typeof window === "undefined") return;
+    const url = window.location.href;
+    const shareTitle = tutor
+      ? `${tutor.name} ${tutor.surname} · Hocam`
+      : "Hocam";
+    if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
+      try {
+        await navigator.share({ title: shareTitle, url });
+      } catch {
+        // User dismissed the native share sheet — nothing to do.
+      }
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success("Profil bağlantısı kopyalandı.");
+    } catch {
+      toast.error("Bağlantı kopyalanamadı.");
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="mx-auto max-w-4xl px-4 py-8">
@@ -253,18 +274,9 @@ export default function TutorProfilePage({
               </AvatarFallback>
             </Avatar>
             <div className="min-w-0 flex-1">
-              <div className="flex items-start justify-between gap-2">
-                <h1 className="text-3xl font-bold leading-tight">
-                  {tutor.name} {tutor.surname}
-                </h1>
-                <FavoriteButton
-                  tutorId={tutor.id}
-                  isFavorite={favoriteIds.has(tutor.id)}
-                  isPending={isFavoritePending(tutor.id)}
-                  onToggle={toggle}
-                  className="mt-1 shrink-0"
-                />
-              </div>
+              <h1 className="text-3xl font-bold leading-tight">
+                {tutor.name} {tutor.surname}
+              </h1>
               <p className="mt-1 text-muted-foreground">
                 {tutor.university} · {tutor.department}
               </p>
@@ -302,25 +314,36 @@ export default function TutorProfilePage({
         <div className="lg:col-span-1">
           <Card className="sticky top-24">
             <CardContent className="pt-6 space-y-4">
-              <p className="text-3xl font-bold">
-                {formatPrice(tutor.hourly_price)}
-                <span className="text-lg font-normal text-muted-foreground">/saat</span>
-              </p>
+              {/* Price + lesson duration */}
               <div>
+                <p className="text-3xl font-bold">
+                  {formatPrice(tutor.hourly_price)}
+                  <span className="text-base font-normal text-muted-foreground">
+                    {" "}/ 40 dk
+                  </span>
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  40 dakikalık ders. Daha uzun dersler orantılı ücretlendirilir.
+                </p>
+              </div>
+
+              {/* Rating / reviews */}
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
                 {tutor.total_reviews > 0 ? (
                   <>
-                    <div className="flex items-center gap-2">
+                    <span className="flex items-center gap-1.5">
                       <Stars rating={tutor.rating} />
                       <span className="font-medium">{formatRating(tutor.rating)}</span>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      ({tutor.total_reviews} değerlendirme)
-                    </p>
+                    </span>
+                    <span className="text-muted-foreground">
+                      {tutor.total_reviews} değerlendirme
+                    </span>
                   </>
                 ) : (
-                  <p className="text-sm text-muted-foreground">Henüz değerlendirme yok</p>
+                  <span className="text-muted-foreground">Henüz değerlendirme yok</span>
                 )}
               </div>
+
               <div className="flex flex-wrap gap-1">
                 {tutor.subjects.map((s) => (
                   <Badge key={s.id} variant="secondary" className="py-1">
@@ -335,71 +358,85 @@ export default function TutorProfilePage({
                 </div>
               )}
 
-              {/* CTA */}
-              <div className="pt-2 space-y-2">
+              {/* Primary CTA (book a lesson) */}
+              <div className="space-y-3 pt-1">
                 {!isAuthenticated && (
                   <Button className="w-full" onClick={() => router.push("/login")}>
-                    Ders İstemek İçin Giriş Yap
+                    Ders ayırtmak için giriş yap
                   </Button>
                 )}
                 {isAuthenticated && (isOwnProfile || !isStudent) && (
                   <p className="text-sm text-muted-foreground">
-                    Ders talep etmek için öğrenci hesabı gereklidir
+                    Ders ayırtmak için öğrenci hesabı gereklidir.
                   </p>
                 )}
-                {isAuthenticated && isStudent && !isOwnProfile && !requestSent && !bookingComplete && (
+                {isAuthenticated && isStudent && !isOwnProfile && (
                   <>
-                    <Button
-                      variant="outline"
-                      className="w-full"
-                      onClick={() => setIsRequestModalOpen(true)}
-                    >
-                      Ders Talebi Gönder
-                    </Button>
-                    <OriginButton
-                      className="w-full"
-                      onClick={() => setIsBookingModalOpen(true)}
-                    >
-                      Rezervasyon Yap
-                    </OriginButton>
+                    {bookingComplete ? (
+                      <div className="space-y-2 rounded-lg border bg-muted/40 p-3 text-center">
+                        <div className="flex justify-center">
+                          <Check className="h-6 w-6 text-green-600" />
+                        </div>
+                        <p className="text-sm font-medium">Rezervasyonunuz oluşturuldu!</p>
+                        <Button variant="outline" size="sm" className="w-full" asChild>
+                          <Link href="/dashboard/student">Rezervasyonlarımı gör</Link>
+                        </Button>
+                      </div>
+                    ) : (
+                      <Button
+                        className="w-full"
+                        onClick={() => setIsBookingModalOpen(true)}
+                      >
+                        Deneme dersi ayırt
+                      </Button>
+                    )}
+                    {requestSent && !bookingComplete && (
+                      <div className="rounded-lg border bg-muted/40 p-2 text-center text-sm">
+                        <p className="text-muted-foreground">Mesajın gönderildi.</p>
+                        <Link
+                          href={requestConversationId ? `/messages/${requestConversationId}` : "/messages"}
+                          className="font-medium text-primary hover:underline"
+                        >
+                          Mesajlara git
+                        </Link>
+                      </div>
+                    )}
                   </>
                 )}
-                {isAuthenticated && isStudent && !isOwnProfile && requestSent && !bookingComplete && (
-                  <div className="space-y-2 text-center">
-                    <div className="flex justify-center">
-                      <Check className="h-8 w-8 text-green-600" />
-                    </div>
-                    <p className="font-medium">Talebiniz gönderildi!</p>
-                    <p className="text-sm text-muted-foreground">
-                      Mesajlar bölümünden takip edebilirsiniz
-                    </p>
-                    <Button variant="outline" className="w-full" asChild>
-                      <Link href={requestConversationId ? `/messages/${requestConversationId}` : "/messages"}>
-                        <MessageSquare className="mr-2 h-4 w-4" />
-                        Mesajlar
-                      </Link>
-                    </Button>
-                    <OriginButton
-                      className="w-full mt-2"
-                      onClick={() => setIsBookingModalOpen(true)}
+
+                {/* Secondary icon actions: message, favorite, share */}
+                <div className="flex items-center justify-center gap-1">
+                  {isAuthenticated && isStudent && !isOwnProfile && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      aria-label="Hocaya mesaj gönder"
+                      title="Hocaya mesaj gönder"
+                      onClick={() => setIsRequestModalOpen(true)}
                     >
-                      Rezervasyon Yap
-                    </OriginButton>
-                  </div>
-                )}
-                {isAuthenticated && isStudent && !isOwnProfile && bookingComplete && (
-                  <div className="space-y-2 text-center">
-                    <div className="flex justify-center">
-                      <Check className="h-8 w-8 text-green-600" />
-                    </div>
-                    <p className="font-medium">Rezervasyonunuz oluşturuldu!</p>
-                    <Button variant="outline" className="w-full" asChild>
-                      <Link href="/dashboard/student">
-                        Rezervasyonlarımı Gör
-                      </Link>
+                      <MessageSquare className="h-5 w-5" />
                     </Button>
-                  </div>
-                )}
+                  )}
+                  <FavoriteButton
+                    tutorId={tutor.id}
+                    isFavorite={favoriteIds.has(tutor.id)}
+                    isPending={isFavoritePending(tutor.id)}
+                    onToggle={toggle}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    aria-label="Profili paylaş"
+                    title="Profili paylaş"
+                    onClick={handleShare}
+                  >
+                    <Share2 className="h-5 w-5" />
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -571,7 +608,7 @@ export default function TutorProfilePage({
           setRequestConversationId(lessonRequest.conversation_id ?? null);
           setRequestSent(true);
           setIsRequestModalOpen(false);
-          toast.success("Ders talebin gönderildi.");
+          toast.success("Mesajın hocaya gönderildi.");
         }}
       />
       <BookingModal
