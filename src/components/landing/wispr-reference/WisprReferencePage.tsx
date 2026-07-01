@@ -24,7 +24,13 @@ import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion
 import { cn } from "@/lib/utils";
 import styles from "./WisprReferencePage.module.css";
 
-const navLinks = ["Product", "Individuals", "Business", "Resources", "Company"];
+const navLinks = [
+  { label: "Hocalar", href: "/tutors" },
+  { label: "Nasıl Çalışır", href: "#flow-reference-demo" },
+  { label: "Dersler", href: "/tutors" },
+  { label: "Yorumlar", href: "#testimonials" },
+  { label: "Destek", href: "/support" },
+];
 const platformPills = ["Mac", "Windows", "iPhone", "Android"];
 const logoMarks = ["replit", "nuuly", "warp", "RIVIAN", "Notion", "Mercury"];
 const workTabs = [
@@ -147,6 +153,19 @@ function FlowLogo() {
   );
 }
 
+function HocamBrand() {
+  return (
+    <span className={styles.brandLockup} aria-label="Hocam">
+      <span className={styles.brandBars} aria-hidden>
+        <span />
+        <span />
+        <span />
+      </span>
+      <span>Hocam</span>
+    </span>
+  );
+}
+
 function WisprButton({
   children,
   variant = "primary",
@@ -196,14 +215,14 @@ function PlatformPills({ inverse = false }: { inverse?: boolean }) {
 function FloatingNav() {
   return (
     <header className={styles.floatingHeader}>
-      <nav className={styles.nav} aria-label="Wispr Flow reference navigation">
+      <nav className={styles.nav} aria-label="Hocam navigation">
         <a href="#flow-reference-hero" className={styles.logoLink}>
-          <FlowLogo />
+          <HocamBrand />
         </a>
         <div className={styles.navLinks}>
           {navLinks.map((link) => (
-            <a href="#flow-reference-demo" key={link}>
-              {link}
+            <a href={link.href} key={link.label}>
+              {link.label}
             </a>
           ))}
         </div>
@@ -226,37 +245,27 @@ function FloatingNav() {
 function HeroSection() {
   return (
     <section className={styles.hero} id="flow-reference-hero">
-      <div className={styles.heroOrbLeft} aria-hidden>
-        <span>Speak naturally and let Flow write everywhere</span>
-      </div>
-      <div className={styles.heroWave} aria-hidden>
-        <span />
-        <span />
-        <span />
-        <span />
-        <span />
-      </div>
       <Reveal className={styles.heroContent}>
         <h1 className={styles.heroTitle}>
-          <span>Don&apos;t type, </span>
-          <strong>just speak</strong>
+          <span>Doğru hocayı bul, </span>
+          <strong>hedefe daha sağlam ilerle</strong>
         </h1>
         <p>
-          The voice-to-text AI that turns speech into clear, polished writing in every app.
+          TYT, AYT, KPSS ve daha fazlası için sana uygun hocayı keşfet, iletişime geç ve
+          online derslere başla.
         </p>
         <div className={styles.ctaRow}>
           <WisprButton href="/tutors" icon={<BookOpen size={15} />}>
-            Dersleri keşfet
+            Hoca Bul
           </WisprButton>
           <WisprButton href="/register" variant="ghost" icon={<UserPlus size={15} />}>
-            Kayıt Ol
+            Hoca Olarak Başla
           </WisprButton>
         </div>
-        <p className={styles.heroFootnote}>Available on Mac, Windows, iPhone, and Android</p>
+        <p className={styles.heroFootnote}>
+          Öğrenciler, veliler ve hocalar için modern eğitim platformu.
+        </p>
       </Reveal>
-      <div className={styles.voiceRibbon} aria-hidden>
-        <span>translate documents, dictate messages, write faster, speak freely</span>
-      </div>
     </section>
   );
 }
@@ -563,7 +572,7 @@ function LavenderCta() {
 
 function TestimonialsSection() {
   return (
-    <section className={styles.testimonials}>
+    <section className={styles.testimonials} id="testimonials">
       <Reveal>
         <h2>Flow love</h2>
       </Reveal>
