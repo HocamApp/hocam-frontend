@@ -21,6 +21,30 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
+function readCachedUser(): User | null {
+  try {
+    const raw = localStorage.getItem("auth_user");
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Partial<User>;
+    if (
+      typeof parsed.id === "string" &&
+      typeof parsed.email === "string" &&
+      (parsed.role === "student" || parsed.role === "tutor")
+    ) {
+      return {
+        id: parsed.id,
+        email: parsed.email,
+        role: parsed.role,
+        tutor_profile_id: parsed.tutor_profile_id ?? null,
+        is_email_verified: Boolean(parsed.is_email_verified),
+      };
+    }
+  } catch {
+    localStorage.removeItem("auth_user");
+  }
+  return null;
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
@@ -35,18 +59,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      try {
-        const user = await fetchMe();
+      const cachedUser = readCachedUser();
+      if (cachedUser) {
         setToken(storedToken);
-        setUser(user);
-        localStorage.setItem("auth_user", JSON.stringify(user));
+        setUser(cachedUser);
+        setIsLoading(false);
+      }
+
+      try {
+        const freshUser = await fetchMe();
+        setToken(storedToken);
+        setUser(freshUser);
+        localStorage.setItem("auth_user", JSON.stringify(freshUser));
       } catch {
         Cookies.remove("auth_token");
         localStorage.removeItem("auth_user");
         setToken(null);
         setUser(null);
       } finally {
-        setIsLoading(false);
+        if (!cachedUser) {
+          setIsLoading(false);
+        }
       }
     };
 

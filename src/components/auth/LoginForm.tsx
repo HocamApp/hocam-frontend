@@ -6,12 +6,12 @@ import { useRouter } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import Cookies from "js-cookie";
 import { useAuth } from "@/hooks/useAuth";
-import { googleAuth, loginUser, fetchMe } from "@/lib/authApi";
+import { googleAuth, loginUser } from "@/lib/authApi";
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
+import type { AuthResponse } from "@/types";
 import {
   Form,
   FormControl,
@@ -71,12 +71,10 @@ export function LoginForm({ onCreateAccount }: LoginFormProps) {
     }
 
     try {
-      const { token } = await loginUser(parsed.data.email, parsed.data.password);
-      Cookies.set("auth_token", token, { expires: 7 });
-      const user = await fetchMe();
-      setAuth(user, token);
-      if (user.role === "tutor") {
-        router.push(user.tutor_profile_id ? "/dashboard/tutor" : "/tutor/setup");
+      const auth = await loginUser(parsed.data.email, parsed.data.password);
+      setAuth(auth.user, auth.token);
+      if (auth.user.role === "tutor") {
+        router.push(auth.user.tutor_profile_id ? "/dashboard/tutor" : "/tutor/setup");
       } else {
         router.push("/dashboard/student");
       }
@@ -86,12 +84,10 @@ export function LoginForm({ onCreateAccount }: LoginFormProps) {
   };
 
   const finishGoogleSuccess = useCallback(
-    async (token: string) => {
-      Cookies.set("auth_token", token, { expires: 7 });
-      const me = await fetchMe();
-      setAuth(me, token);
-      if (me.role === "tutor") {
-        router.push(me.tutor_profile_id ? "/dashboard/tutor" : "/tutor/setup");
+    (auth: AuthResponse) => {
+      setAuth(auth.user, auth.token);
+      if (auth.user.role === "tutor") {
+        router.push(auth.user.tutor_profile_id ? "/dashboard/tutor" : "/tutor/setup");
       } else {
         router.push("/dashboard/student");
       }
@@ -109,7 +105,7 @@ export function LoginForm({ onCreateAccount }: LoginFormProps) {
           // New user — collect a role, then retry with the same credential.
           setPendingCredential(credential);
         } else {
-          await finishGoogleSuccess(resp.token);
+          finishGoogleSuccess(resp);
         }
       } catch {
         setGeneralError("Google ile giriş başarısız oldu. Lütfen tekrar deneyin.");
@@ -132,7 +128,7 @@ export function LoginForm({ onCreateAccount }: LoginFormProps) {
           setPendingCredential(null);
           return;
         }
-        await finishGoogleSuccess(resp.token);
+        finishGoogleSuccess(resp);
       } catch {
         setGeneralError(
           "Google ile giriş başarısız oldu. Bağlantının süresi dolmuş olabilir, tekrar deneyin."

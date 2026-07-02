@@ -13,7 +13,7 @@ export function useFavorites() {
   const [pendingTutorId, setPendingTutorId] = useState<string | null>(null);
   const queryKey = ["favorites", user?.id] as const;
 
-  const { data } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey,
     queryFn: fetchFavoriteTutors,
     enabled: isAuthenticated && !!user?.id,
@@ -72,7 +72,9 @@ export function useFavorites() {
   }
 
   return {
+    favorites,
     favoriteIds,
+    isLoading,
     toggle,
     isFavoritePending: (tutorId: string) => pendingTutorId === tutorId,
     isPending: addMutation.isPending || removeMutation.isPending,

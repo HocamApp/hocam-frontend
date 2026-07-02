@@ -7,11 +7,9 @@ import { ArrowLeft, Eye, EyeOff, MailCheck } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import axios from "axios";
-import Cookies from "js-cookie";
 import { useAuth } from "@/hooks/useAuth";
 import {
   confirmRegistration,
-  fetchMe,
   googleAuth,
   registerUser,
 } from "@/lib/authApi";
@@ -193,11 +191,9 @@ export function RegisterForm({
           setGeneralError("Kayıt tamamlanamadı. Lütfen tekrar deneyin.");
           return;
         }
-        Cookies.set("auth_token", resp.token, { expires: 7 });
-        const me = await fetchMe();
-        setAuth(me, resp.token);
-        if (me.role === "tutor") {
-          router.push(me.tutor_profile_id ? "/dashboard/tutor" : "/tutor/setup");
+        setAuth(resp.user, resp.token);
+        if (resp.user.role === "tutor") {
+          router.push(resp.user.tutor_profile_id ? "/dashboard/tutor" : "/tutor/setup");
         } else {
           router.push("/dashboard/student");
         }

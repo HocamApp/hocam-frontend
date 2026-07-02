@@ -2,7 +2,6 @@ import api from "./api";
 import {
   AuthResponse,
   GoogleAuthResponse,
-  LoginRequest,
   PasswordResetConfirmRequest,
   PasswordResetRequest,
   RegisterConfirmRequest,
@@ -41,8 +40,8 @@ export async function confirmRegistration(
 export async function loginUser(
   email: string,
   password: string
-): Promise<{ token: string }> {
-  const response = await api.post<{ token: string }>("/auth/token/", {
+): Promise<AuthResponse> {
+  const response = await api.post<AuthResponse>("/auth/token/", {
     username: email,
     password,
   });

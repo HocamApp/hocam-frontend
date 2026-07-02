@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
+import { usePageVisibility } from "@/hooks/usePageVisibility";
 import { fetchConversations } from "@/lib/messagingApi";
 import { ConversationList } from "@/components/messaging/ConversationList";
 import { RouteGuard } from "@/components/shared/RouteGuard";
@@ -14,6 +15,7 @@ const CONVERSATIONS_REFETCH_INTERVAL_MS = 60_000;
 function MessagesContent() {
   const router = useRouter();
   const { isAuthenticated, user } = useAuth();
+  const isPageVisible = usePageVisibility();
 
   const {
     data: conversations,
@@ -22,7 +24,7 @@ function MessagesContent() {
   } = useQuery({
     queryKey: ["conversations"],
     queryFn: fetchConversations,
-    refetchInterval: CONVERSATIONS_REFETCH_INTERVAL_MS,
+    refetchInterval: isPageVisible ? CONVERSATIONS_REFETCH_INTERVAL_MS : false,
     enabled: isAuthenticated,
   });
 

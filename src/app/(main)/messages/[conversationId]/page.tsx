@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
+import { usePageVisibility } from "@/hooks/usePageVisibility";
 import {
   fetchMessages,
   fetchConversation,
@@ -93,6 +94,7 @@ function ConversationContent({
   const router = useRouter();
   const queryClient = useQueryClient();
   const { isAuthenticated, user } = useAuth();
+  const isPageVisible = usePageVisibility();
   const bottomRef = useRef<HTMLDivElement>(null);
   const sentIdsRef = useRef<Set<string>>(new Set());
   const [localMessages, setLocalMessages] = useState<Message[]>([]);
@@ -111,7 +113,7 @@ function ConversationContent({
   } = useQuery({
     queryKey: ["conversations"],
     queryFn: fetchConversations,
-    refetchInterval: CONVERSATIONS_REFETCH_INTERVAL_MS,
+    refetchInterval: isPageVisible ? CONVERSATIONS_REFETCH_INTERVAL_MS : false,
     enabled: isAuthenticated,
   });
 
@@ -128,9 +130,15 @@ function ConversationContent({
   } = useQuery({
     queryKey: ["messages", conversationId],
     queryFn: () => fetchMessages(conversationId),
-    refetchInterval: MESSAGES_REFETCH_INTERVAL_MS,
-    enabled: isAuthenticated && !!conversationId,
+    refetchInterval: isPageVisible ? MESSAGES_REFETCH_INTERVAL_MS : false,
+    enabled: isAuthenticated && !!conversationId && isPageVisible,
   });
+
+  useEffect(() => {
+    if (!isAuthenticated || !conversationId || !isPageVisible) return;
+    queryClient.invalidateQueries({ queryKey: ["conversations"] });
+    queryClient.invalidateQueries({ queryKey: ["messages", conversationId] });
+  }, [conversationId, isAuthenticated, isPageVisible, queryClient]);
 
   const allMessages = useMemo(() => {
     const serverIds = new Set((messages || []).map((m) => m.id));

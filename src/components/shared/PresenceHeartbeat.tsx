@@ -3,14 +3,16 @@
 import { useEffect } from "react";
 import { sendPresenceHeartbeat } from "@/lib/authApi";
 import { useAuth } from "@/hooks/useAuth";
+import { usePageVisibility } from "@/hooks/usePageVisibility";
 
 const HEARTBEAT_INTERVAL_MS = 30_000;
 
 export function PresenceHeartbeat() {
   const { isAuthenticated, token } = useAuth();
+  const isPageVisible = usePageVisibility();
 
   useEffect(() => {
-    if (!isAuthenticated || !token) return;
+    if (!isAuthenticated || !token || !isPageVisible) return;
 
     const ping = async () => {
       try {
@@ -24,7 +26,7 @@ export function PresenceHeartbeat() {
     const intervalId = window.setInterval(ping, HEARTBEAT_INTERVAL_MS);
 
     return () => window.clearInterval(intervalId);
-  }, [isAuthenticated, token]);
+  }, [isAuthenticated, token, isPageVisible]);
 
   return null;
 }

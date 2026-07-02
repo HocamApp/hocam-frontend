@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
+import { usePageVisibility } from "@/hooks/usePageVisibility";
 import { ExpandableTabs } from "@/components/ui/expandable-tabs";
 import {
   Popover,
@@ -44,12 +45,13 @@ export function AnimatedNavbarLinks() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { isAuthenticated, isTutor, isLoading } = useAuth();
+  const isPageVisible = usePageVisibility();
 
   const { data: summary } = useQuery({
     queryKey: ["notification-summary"],
     queryFn: fetchNotificationSummary,
     enabled: isAuthenticated,
-    refetchInterval: 30_000,
+    refetchInterval: isPageVisible ? 30_000 : false,
   });
   const hasUnread = summary?.has_unread ?? false;
 

@@ -1,5 +1,5 @@
 import api from "./api";
-import { TutorProfile, Subject, Review, SubjectRating } from "@/types";
+import { TutorProfile, Subject, Review, SubjectRating, PaginatedResponse } from "@/types";
 
 export interface CreateTutorProfilePayload {
   name: string;
@@ -28,15 +28,21 @@ export interface TutorFilters {
 }
 
 export async function fetchTutors(
-  filters: TutorFilters = {}
-): Promise<TutorProfile[]> {
+  filters: TutorFilters = {},
+  page = 1,
+  pageSize = 8
+): Promise<PaginatedResponse<TutorProfile>> {
   const params = new URLSearchParams();
   Object.entries(filters).forEach(([key, value]) => {
     if (value !== undefined && value !== "") {
       params.append(key, value);
     }
   });
-  const response = await api.get<TutorProfile[]>(`/tutors/?${params.toString()}`);
+  params.set("page", String(page));
+  params.set("page_size", String(pageSize));
+  const response = await api.get<PaginatedResponse<TutorProfile>>(
+    `/tutors/?${params.toString()}`
+  );
   return response.data;
 }
 

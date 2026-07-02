@@ -234,8 +234,10 @@ function TutorsPageContent() {
     isLoading: tutorsLoading,
     error: tutorsError,
   } = useQuery({
-    queryKey: ["tutors", filters],
-    queryFn: () => fetchTutors(filters),
+    queryKey: ["tutors", filters, page],
+    queryFn: () => fetchTutors(filters, page, PAGE_SIZE),
+    enabled: !showFavorites,
+    placeholderData: (previousData) => previousData,
   });
 
   const { data: subjects, isLoading: subjectsLoading } = useQuery({
@@ -244,7 +246,15 @@ function TutorsPageContent() {
     staleTime: Infinity,
   });
 
-  const { favoriteIds, toggle, isFavoritePending } = useFavorites();
+  const {
+    favorites,
+    favoriteIds,
+    isLoading: favoritesLoading,
+    toggle,
+    isFavoritePending,
+  } = useFavorites();
+  const isListLoading = showFavorites ? favoritesLoading : tutorsLoading;
+  const listError = showFavorites ? null : tutorsError;
 
   const hasActiveFilters =
     (filters.search ?? "") !== "" ||
@@ -259,21 +269,19 @@ function TutorsPageContent() {
     (filters.availability_time ?? "") !== "" ||
     (filters.ordering ?? "rating") !== "rating";
 
-  // Client-side favorites filter applied after the API response.
-  const tutorList = Array.isArray(tutors) ? tutors : [];
-  const filteredTutors =
-    showFavorites
-      ? tutorList.filter((t) => favoriteIds.has(t.id))
-      : tutorList;
+  const tutorList = showFavorites
+    ? favorites.map((favorite) => favorite.tutor)
+    : tutors?.results ?? [];
+  const filteredTutors = tutorList;
 
   // showEmptyState: user applied filters/favorites and got 0 results.
-  const apiEmpty = Array.isArray(tutors) && tutors.length === 0;
+  const apiEmpty = !showFavorites && tutors?.count === 0;
   const showFavoritesEmptyState =
-    showFavorites && !tutorsLoading && !tutorsError && filteredTutors.length === 0;
+    showFavorites && !isListLoading && !listError && filteredTutors.length === 0;
   const showEmptyState =
     !showFavorites &&
-    !tutorsLoading &&
-    !tutorsError &&
+    !isListLoading &&
+    !listError &&
     filteredTutors.length === 0 &&
     hasActiveFilters;
 
@@ -284,9 +292,12 @@ function TutorsPageContent() {
       ? [activeUniversity, ...POPULAR_UNIVERSITIES]
       : POPULAR_UNIVERSITIES;
 
-  const totalPages = Math.max(1, Math.ceil(filteredTutors.length / PAGE_SIZE));
+  const totalItems = showFavorites ? filteredTutors.length : tutors?.count ?? 0;
+  const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages); // clamp if list shrank
-  const pageTutors = filteredTutors.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+  const pageTutors = showFavorites
+    ? filteredTutors.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
+    : filteredTutors;
 
   const content = (
     <>
@@ -298,9 +309,9 @@ function TutorsPageContent() {
               <p className="mt-1 text-sm text-muted-foreground">
                 Türkiye&apos;nin en iyi YKS hocaları, seni bekliyor.
               </p>
-              {!tutorsLoading && Array.isArray(tutors) && (
+              {!isListLoading && tutors && (
                 <p className="mt-1 text-xs text-muted-foreground">
-                  {tutors.length} hoca bulundu
+                  {tutors.count} hoca bulundu
                 </p>
               )}
             </div>
@@ -332,7 +343,7 @@ function TutorsPageContent() {
                   value={searchLocal}
                   onChange={setSearchLocal}
                   onCommit={(search) => handleFiltersChange({ ...filters, search })}
-                  disabled={tutorsLoading}
+                  disabled={isListLoading}
                 />
               </div>
 
@@ -345,7 +356,7 @@ function TutorsPageContent() {
               <Select
                 value={filters.ordering ?? "rating"}
                 onValueChange={(v) => handleFiltersChange({ ...filters, ordering: v || "rating" })}
-                disabled={subjectsLoading || tutorsLoading}
+                disabled={subjectsLoading || isListLoading}
               >
                 <SelectTrigger className="h-9 text-sm">
                   <SelectValue />
@@ -420,7 +431,7 @@ function TutorsPageContent() {
                 <Button
                   variant="outline"
                   className="h-9 w-full justify-start text-sm font-normal"
-                  disabled={subjectsLoading || tutorsLoading}
+                  disabled={subjectsLoading || isListLoading}
                 >
                   {priceRangeLabel(
                     filtersToPriceTuple(filters.min_price, filters.max_price),
@@ -436,7 +447,7 @@ function TutorsPageContent() {
                   onValueCommit={(t) =>
                     handleFiltersChange({ ...filters, ...priceTupleToFilters(t) })
                   }
-                  disabled={tutorsLoading}
+                  disabled={isListLoading}
                 />
               </PopoverContent>
             </Popover>
@@ -452,7 +463,7 @@ function TutorsPageContent() {
               onValueChange={(v) =>
                 handleFiltersChange({ ...filters, min_rating: v === "__all__" ? "" : v })
               }
-              disabled={tutorsLoading}
+              disabled={isListLoading}
             >
               <SelectTrigger className="h-9 text-sm">
                 <SelectValue placeholder="Tümü" />
@@ -477,7 +488,7 @@ function TutorsPageContent() {
               onValueChange={(v) =>
                 handleFiltersChange({ ...filters, yks_rank_max: v === "__all__" ? "" : v })
               }
-              disabled={tutorsLoading}
+              disabled={isListLoading}
             >
               <SelectTrigger className="h-9 text-sm">
                 <SelectValue placeholder="Tümü" />
@@ -505,7 +516,7 @@ function TutorsPageContent() {
                   university: v === "__all__" ? undefined : v,
                 })
               }
-              disabled={tutorsLoading}
+              disabled={isListLoading}
             >
               <SelectTrigger className="h-9 text-sm">
                 <SelectValue placeholder="Popülerden seç" />
@@ -535,7 +546,7 @@ function TutorsPageContent() {
                   availability_time: v === "__all__" ? "" : filters.availability_time,
                 })
               }
-              disabled={tutorsLoading}
+              disabled={isListLoading}
             >
               <SelectTrigger className="h-9 text-sm">
                 <SelectValue placeholder="Herhangi bir gün" />
@@ -563,7 +574,7 @@ function TutorsPageContent() {
               onValueChange={(v) =>
                 handleFiltersChange({ ...filters, availability_time: v === "__all__" ? "" : v })
               }
-              disabled={tutorsLoading || !filters.availability_day}
+              disabled={isListLoading || !filters.availability_day}
             >
               <SelectTrigger className="h-9 text-sm">
                 <SelectValue placeholder="Herhangi bir saat" />
@@ -602,15 +613,15 @@ function TutorsPageContent() {
 
         {/* Tutor grid and states */}
         <div className="min-w-0 flex-1">
-          {tutorsError && (
+          {listError && (
             <ErrorMessage
               message={
-                tutorsError instanceof Error ? tutorsError.message : "Hocalar yüklenirken bir hata oluştu."
+                listError instanceof Error ? listError.message : "Hocalar yüklenirken bir hata oluştu."
               }
             />
           )}
 
-          {tutorsLoading && (
+          {isListLoading && (
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               {Array.from({ length: PAGE_SIZE }).map((_, i) => (
                 <TutorCardSkeleton key={i} />
@@ -639,7 +650,7 @@ function TutorsPageContent() {
             />
           ) : null}
 
-          {!tutorsLoading && !tutorsError && !showEmptyState && filteredTutors.length > 0 && (
+          {!isListLoading && !listError && !showEmptyState && filteredTutors.length > 0 && (
             <>
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 {pageTutors.map((tutor) => (
@@ -668,7 +679,7 @@ function TutorsPageContent() {
             </>
           )}
 
-          {!showFavorites && !tutorsLoading && !tutorsError && apiEmpty && !hasActiveFilters && (
+          {!showFavorites && !isListLoading && !listError && apiEmpty && !hasActiveFilters && (
             <EmptyState
               title="Henüz hoca yok"
               description="Yakında burada hocalar listelenecek."
