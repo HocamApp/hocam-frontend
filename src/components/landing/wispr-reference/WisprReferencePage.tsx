@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { CSSProperties, ReactNode } from "react";
 import Image from "next/image";
 import {
@@ -21,7 +22,14 @@ import {
   UserPlus,
   WandSparkles,
 } from "lucide-react";
-import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
+import {
+  motion,
+  useMotionTemplate,
+  useMotionValueEvent,
+  useReducedMotion,
+  useScroll,
+  useTransform,
+} from "framer-motion";
 import { cn } from "@/lib/utils";
 import { HeroTutorsMockup } from "./HeroTutorsMockup";
 import styles from "./WisprReferencePage.module.css";
@@ -283,21 +291,240 @@ function FloatingNav() {
   );
 }
 
+// Scroll-driven camera-zoom hero. A static study-room photo scales up around
+// the laptop screen while the Hocam tutors mockup sits inside that screen from
+// the first frame; near handoff a full-viewport copy of the mockup crossfades
+// in, then its content scrolls like a page. Pure transforms/opacity/light blur
+// — no video element, no seeks, no per-scroll React state.
+//
+// Phases: 0–0.45 slow approach (UI small, subtle, slightly blurred inside the
+// laptop) · 0.45–0.72 push through the screen (bezel exits the viewport)
+// · ~0.70–0.74 white-glass beat · 0.74–0.86 full page materializes
+// · 0.84–0.92 inner page scroll · 0.92–1 the page shrinks into a product
+// panel on the right while the marketing copy column appears on the left
+// · ≥0.995 one-shot completion latch freezes that split composition for the
+// rest of the mount.
+//
+// The in-slot mockup renders at a fixed internal size (1200×750, set in the
+// .slotContent CSS) and is scaled to the slot; the slot's on-screen width is
+// the only measured value (ResizeObserver). SLOT_TILT_DEG leans the top of the
+// in-slot page away from the camera to follow the poster screen's perspective
+// (its CSS twin is the perspective set on .screenSlot).
+const SLOT_UI_WIDTH = 1200;
+const SLOT_TILT_DEG = 2;
+const HERO_COMPLETE_AT = 0.995;
+
+const heroCopyPoints = [
+  "Sınava ve derse göre filtrele",
+  "Hoca profillerini karşılaştır",
+  "Uygun saatleri kolayca gör",
+];
+
 function HeroSection() {
+  const heroRef = useRef<HTMLElement>(null);
+  const slotRef = useRef<HTMLDivElement>(null);
+  const slotContentRef = useRef<HTMLDivElement>(null);
+  const completedRef = useRef(false);
+  const preCollapseHeightRef = useRef(0);
+  // One-shot latch: once the sequence has been seen to the end, the hero stays
+  // in the completed product-page state until the page remounts.
+  const [completed, setCompleted] = useState(false);
+  // useReducedMotion() is null on the server but resolves on the first client
+  // render — branching on it directly would make SSR and hydration markup
+  // disagree, and React keeps the stale server attributes. Adopt it in state
+  // after hydration instead.
+  const prefersReducedMotion = useReducedMotion();
+  const [reduceMotion, setReduceMotion] = useState(false);
+  useEffect(() => {
+    setReduceMotion(Boolean(prefersReducedMotion));
+  }, [prefersReducedMotion]);
+
+  const frozen = reduceMotion || completed;
+
+  // Breakpoint for the final split composition (side-by-side vs stacked).
+  // State updates only when the 720px boundary is crossed — never per scroll.
+  const [isNarrow, setIsNarrow] = useState(false);
+  useEffect(() => {
+    const query = window.matchMedia("(max-width: 720px)");
+    const update = () => setIsNarrow(query.matches);
+    update();
+    query.addEventListener("change", update);
+    return () => query.removeEventListener("change", update);
+  }, []);
+
+  const { scrollYProgress } = useScroll({
+    target: heroRef,
+    offset: ["start start", "end end"],
+  });
+
+  // Camera: scale the scene around the laptop-screen center (transform-origin
+  // in CSS). End scale 4.8 pushes the screen past the viewport edges on both
+  // axes for all sane aspect ratios.
+  const sceneScale = useTransform(scrollYProgress, [0, 0.45, 0.75, 0.92], [1, 1.6, 4.8, 5.5]);
+  const sceneTransform = useMotionTemplate`translate3d(-50%, -50%, 0) scale(${sceneScale})`;
+  // Fades live in filter strings (opacity() function) rather than the CSS
+  // opacity property: plain motion-value opacity in `style` fails to update on
+  // scroll with framer-motion 12.42, while filter/transform bindings flush
+  // reliably. Visually identical for these flat layers.
+  const sceneOpacity = useTransform(scrollYProgress, [0.82, 0.9], [1, 0]);
+  const sceneFilter = useMotionTemplate`opacity(${sceneOpacity})`;
+
+  // Handoff is sequential, not a crossfade: the in-slot copy dissolves into
+  // the screen's white glow just before the zoomed screen fills the viewport
+  // (~0.72), leaving a beat of pure white "glass", and the full-viewport copy
+  // materializes out of that white. Two overlapping copies at different
+  // scales read as ghosting; through-white never does.
+
+  // In-slot mockup: visible from the very first frame — distant, subtle,
+  // lightly blurred — sharpening as the camera approaches.
+  const slotBlur = useTransform(scrollYProgress, [0, 0.45, 0.66], [2.5, 1.5, 0]);
+  const slotOpacity = useTransform(scrollYProgress, [0, 0.45, 0.62, 0.7], [0.95, 1, 1, 0]);
+  const slotFilter = useMotionTemplate`blur(${slotBlur}px) opacity(${slotOpacity})`;
+
+  // Full-viewport mockup: fades in from the white screen, settles, then owns
+  // the page-scroll phase.
+  const fullOpacity = useTransform(scrollYProgress, [0.74, 0.85], [0, 1]);
+  const fullBlur = useTransform(scrollYProgress, [0.74, 0.83], [2, 0]);
+  const fullFilter = useMotionTemplate`blur(${fullBlur}px) opacity(${fullOpacity})`;
+  const fullScale = useTransform(scrollYProgress, [0.74, 0.88], [0.975, 1]);
+  const contentY = useTransform(scrollYProgress, [0.84, 0.92], [0, -140]);
+
+  // Final split: the page shrinks into a right-side product panel (bottom-
+  // anchored card on narrow screens) while the copy column fades in on the
+  // left (top block on narrow screens).
+  const panelXEnd = isNarrow ? 0 : -2;
+  const panelScaleEnd = isNarrow ? 0.66 : 0.68;
+  const panelX = useTransform(scrollYProgress, [0.92, 1], [0, panelXEnd]);
+  const panelScale = useTransform(scrollYProgress, [0.92, 1], [1, panelScaleEnd]);
+  const panelTransform = useMotionTemplate`translate3d(${panelX}vw, 0, 0) scale(${panelScale})`;
+  const panelFrozenTransform = isNarrow
+    ? `scale(${panelScaleEnd})`
+    : `translate3d(${panelXEnd}vw, 0, 0) scale(${panelScaleEnd})`;
+
+  const copyOpacity = useTransform(scrollYProgress, [0.93, 1], [0, 1]);
+  const copyBlur = useTransform(scrollYProgress, [0.93, 1], [8, 0]);
+  const copyFilter = useMotionTemplate`blur(${copyBlur}px) opacity(${copyOpacity})`;
+  const copyY = useTransform(scrollYProgress, [0.93, 1], [24, 0]);
+
+  useMotionValueEvent(scrollYProgress, "change", (progress) => {
+    if (completedRef.current || reduceMotion) return;
+    if (progress < HERO_COMPLETE_AT) return;
+    const hero = heroRef.current;
+    if (!hero) return;
+    // Transient degenerate measurements (style reflow, dev fast-refresh) can
+    // collapse the hero for a frame, making useScroll's span ~0 and progress
+    // spike to 1. Only latch when the scrub region really exists and the
+    // actual scroll position agrees. Runs at most once per candidate frame.
+    const scrubRange = hero.offsetHeight - window.innerHeight;
+    if (scrubRange < window.innerHeight || window.scrollY < scrubRange * 0.9) return;
+    completedRef.current = true;
+    preCollapseHeightRef.current = hero.offsetHeight;
+    setCompleted(true);
+  });
+
+  // Collapsing the 300vh scrub region on latch shifts everything below the
+  // hero up; compensate the scroll position in the same frame so the user
+  // stays on the exact frame they were looking at.
+  useLayoutEffect(() => {
+    if (!completed || !heroRef.current || preCollapseHeightRef.current === 0) return;
+    const delta = heroRef.current.offsetHeight - preCollapseHeightRef.current;
+    if (delta !== 0) window.scrollBy(0, delta);
+  }, [completed]);
+
+  // The slot's rendered width depends on viewport size only; measure it once
+  // per resize, never per scroll. The scale is written imperatively to a plain
+  // div: a bare MotionValue set from a ResizeObserver does not flush to the
+  // DOM in framer-motion 12.42 (same dead-binding family as the opacity
+  // workaround above), and this path is resize-time anyway.
+  useEffect(() => {
+    const slot = slotRef.current;
+    const content = slotContentRef.current;
+    if (!slot || !content) return;
+    const update = () => {
+      if (slot.clientWidth > 0) {
+        content.style.transform = `scale(${slot.clientWidth / SLOT_UI_WIDTH}) rotateX(${SLOT_TILT_DEG}deg)`;
+      }
+    };
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(slot);
+    return () => observer.disconnect();
+  }, [frozen]);
+
   return (
-    <section className={styles.hero} id="flow-reference-hero">
-      <div className={styles.heroVideoStage}>
-        <video
-          className={styles.heroVideo}
-          src="/landing/hocam-hero-blank-screen.mp4"
-          poster="/landing/hocam-hero-monitor-entry-poster.jpg"
-          autoPlay
-          muted
-          playsInline
-          preload="metadata"
-          aria-hidden
-        />
-        <HeroTutorsMockup />
+    <section
+      ref={heroRef}
+      className={cn(
+        styles.hero,
+        reduceMotion && styles.heroReduced,
+        completed && styles.heroCompleted
+      )}
+      id="flow-reference-hero"
+    >
+      <div className={styles.heroSticky}>
+        {!frozen && (
+          <motion.div
+            className={styles.sceneLayer}
+            style={{ transform: sceneTransform, filter: sceneFilter }}
+            aria-hidden
+          >
+            <Image
+              className={styles.sceneImg}
+              src="/landing/hocam-hero-monitor-entry-poster.jpg"
+              alt=""
+              fill
+              priority
+              sizes="100vw"
+            />
+            <div ref={slotRef} className={styles.screenSlot}>
+              <motion.div className={styles.slotFade} style={{ filter: slotFilter }}>
+                <div ref={slotContentRef} className={styles.slotContent}>
+                  <HeroTutorsMockup />
+                </div>
+              </motion.div>
+            </div>
+          </motion.div>
+        )}
+        {/* Frozen states pass explicit static values (not undefined): framer
+            keeps previously written inline styles for keys that simply
+            disappear from the style prop. */}
+        <motion.div
+          className={styles.fullUiLayer}
+          style={frozen ? { filter: "none", scale: 1 } : { filter: fullFilter, scale: fullScale }}
+        >
+          <motion.div
+            className={cn(styles.heroCopy, frozen && styles.heroCopyActive)}
+            style={frozen ? { filter: "none", y: 0 } : { filter: copyFilter, y: copyY }}
+          >
+            <h2 className={styles.heroCopyTitle}>YKS yolculuğunda doğru hocayı bul.</h2>
+            <p className={styles.heroCopyText}>
+              TYT, AYT ve okul dersleri için güvenilir hocaları karşılaştır, filtrele ve sana
+              en uygun dersi planla.
+            </p>
+            <ul className={styles.heroCopyList}>
+              {heroCopyPoints.map((point) => (
+                <li key={point}>
+                  <Check size={15} />
+                  {point}
+                </li>
+              ))}
+            </ul>
+            <a className={cn(styles.button, styles.buttonPrimary)} href="/tutors">
+              Hocaları Keşfet
+            </a>
+          </motion.div>
+          <motion.div
+            className={styles.productPanel}
+            style={frozen ? { transform: panelFrozenTransform } : { transform: panelTransform }}
+          >
+            <div className={styles.productClip}>
+              <HeroTutorsMockup
+                scrollClassName={styles.productScrollPad}
+                contentStyle={reduceMotion ? { y: 0 } : completed ? { y: -140 } : { y: contentY }}
+              />
+            </div>
+          </motion.div>
+        </motion.div>
       </div>
     </section>
   );

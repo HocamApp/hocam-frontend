@@ -1,13 +1,9 @@
 /*
  * Product reveal overlay for the hero video stage.
- * The 7s hero video ends on a blank white monitor screen; this overlay
- * fades the Hocam tutors-page mockup in on that surface.
- *
- * Timeline (single 7.4s reveal animation, then a delayed scroll):
- *   0s–5.4s   (0%–73%)    hidden
- *   5.4s–6.8s (73%–91.9%) soft fade in, slightly blurred, slightly scaled
- *   6.8s–7.4s (91.9%–100%) sharpens into place, fully visible
- *   7.4s–10s              inner content scrolls up slightly, then holds
+ * The hero video ends on a blank white monitor screen; this overlay is the
+ * Hocam tutors-page mockup shown on that surface. All motion (opacity, blur,
+ * scale, in-page scroll) is scroll-driven from HeroSection via framer-motion
+ * style props — this file holds static layout/visual styles only.
  */
 
 .reveal {
@@ -20,10 +16,8 @@
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
     "Segoe UI", sans-serif;
   pointer-events: none;
-  opacity: 0;
-  filter: blur(6px);
-  transform: scale(0.97);
-  animation: mockupReveal 7.4s both;
+  /* Scale toward the monitor's position in the video frame (object-position center 30%). */
+  transform-origin: 50% 40%;
 }
 
 .scroll {
@@ -32,7 +26,6 @@
   padding: 46px 36px 96px;
   min-height: calc(100% + 120px);
   will-change: transform;
-  animation: mockupScroll 2.6s cubic-bezier(0.22, 1, 0.36, 1) 7.4s both;
 }
 
 .pageHeader {
@@ -218,36 +211,6 @@
   color: #64748b;
 }
 
-@keyframes mockupReveal {
-  0%,
-  73% {
-    opacity: 0;
-    filter: blur(6px);
-    transform: scale(0.97);
-    animation-timing-function: cubic-bezier(0.33, 0, 0.4, 1);
-  }
-  91.9% {
-    opacity: 0.92;
-    filter: blur(2px);
-    transform: scale(0.988);
-    animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
-  }
-  100% {
-    opacity: 1;
-    filter: blur(0);
-    transform: scale(1);
-  }
-}
-
-@keyframes mockupScroll {
-  from {
-    transform: translateY(0);
-  }
-  to {
-    transform: translateY(-72px);
-  }
-}
-
 @media (max-width: 720px) {
   .scroll {
     padding: 26px 16px 72px;
@@ -268,18 +231,5 @@
 
   .cardGrid {
     grid-template-columns: 1fr;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .reveal {
-    animation: none;
-    opacity: 1;
-    filter: none;
-    transform: none;
-  }
-
-  .scroll {
-    animation: none;
   }
 }

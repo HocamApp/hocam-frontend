@@ -1,6 +1,8 @@
 "use client";
 
 import { ChevronDown, Search } from "lucide-react";
+import { motion, type MotionStyle } from "framer-motion";
+import { cn } from "@/lib/utils";
 import styles from "./HeroTutorsMockup.module.css";
 
 const mockTutors = [
@@ -39,10 +41,23 @@ const mockSelects = [
   { label: "Ders", value: "Tüm dersler" },
 ];
 
-export function HeroTutorsMockup() {
+interface HeroTutorsMockupProps {
+  /** Scroll-driven opacity/filter/scale for the whole overlay; omit for a static, fully visible mockup. */
+  overlayStyle?: MotionStyle;
+  /** Scroll-driven y offset simulating in-page scrolling; omit for a static mockup. */
+  contentStyle?: MotionStyle;
+  /** Extra class for the inner scroll surface — the full-page instance uses it for navbar-safe top padding. */
+  scrollClassName?: string;
+}
+
+export function HeroTutorsMockup({
+  overlayStyle,
+  contentStyle,
+  scrollClassName,
+}: HeroTutorsMockupProps) {
   return (
-    <div className={styles.reveal} aria-hidden>
-      <div className={styles.scroll}>
+    <motion.div className={styles.reveal} style={overlayStyle} aria-hidden>
+      <motion.div className={cn(styles.scroll, scrollClassName)} style={contentStyle}>
         <div className={styles.pageHeader}>
           <div className={styles.pageTitle}>Hocanı Bul</div>
           <p className={styles.pageSub}>
@@ -105,7 +120,7 @@ export function HeroTutorsMockup() {
             </div>
           ))}
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }
