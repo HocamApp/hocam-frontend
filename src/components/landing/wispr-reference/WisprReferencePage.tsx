@@ -24,6 +24,7 @@ import {
   useMotionValueEvent,
   useReducedMotion,
   useScroll,
+  useSpring,
   useTransform,
 } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -339,22 +340,41 @@ function FloatingNav() {
 // in, then its content scrolls like a page. Pure transforms/opacity/light blur
 // — no video element, no seeks, no per-scroll React state.
 //
-// Phases: 0–0.45 slow approach (UI small, subtle, slightly blurred inside the
-// laptop) · 0.45–0.72 push through the screen (bezel exits the viewport)
-// · ~0.70–0.74 white-glass beat · 0.74–0.86 full page materializes
-// · 0.84–0.92 inner page scroll · 0.92–1 the page shrinks into a product
-// panel on the right while the marketing copy column appears on the left
-// · ≥0.995 one-shot completion latch freezes that split composition for the
-// rest of the mount.
+// Phases: 0–0.74 exponential dolly toward the laptop (UI visible inside the
+// screen from the first frame, blurred-to-sharp; the screen fills the
+// viewport ~0.73) · 0.74–0.82 geometry-locked crossfade — the full-page copy
+// is transform-matched onto the in-screen copy, so the dissolve is invisible
+// and the UI never disappears (no white beat) · 0.84–0.90 the locked
+// transform settles to identity · 0.89–0.94 inner page scroll · 0.94–1 split
+// into right product panel + left copy column · ≥0.995 one-shot latch.
 //
-// The in-slot mockup renders at a fixed internal size (1200×750, set in the
-// .slotContent CSS) and is scaled to the slot; the slot's on-screen width is
-// the only measured value (ResizeObserver). SLOT_TILT_DEG leans the top of the
-// in-slot page away from the camera to follow the poster screen's perspective
-// (its CSS twin is the perspective set on .screenSlot).
+// The in-slot mockup renders at a fixed internal size (1200×750, mirrored in
+// the .slotContent CSS) and is cover-fitted into the slot — the mask crops the
+// ~1% overflow so the screen never shows blank strips. The slot's layout size
+// is the only DOM measurement (ResizeObserver); everything else is derived
+// from the aspect-locked scene-box formulas below (CSS twins: .sceneLayer
+// size/transform-origin, .screenSlot rect).
 const SLOT_UI_WIDTH = 1200;
-const SLOT_TILT_DEG = 2;
+const SLOT_UI_HEIGHT = 750;
+// The mockup's own .scroll top padding — needed to align the two instances'
+// content tops during the locked crossfade.
+const SLOT_UI_TOP_PAD = 46;
+const SLOT_ORIGIN_X = 0.5085;
+const SLOT_ORIGIN_Y = 0.3685;
+// Dolly runs 0 → ZOOM_END; end scale overshoots the exact viewport-fill scale
+// so the screen edges sit just past the viewport when the crossfade starts.
+const ZOOM_END = 0.86;
+const ZOOM_OVERSHOOT = 1.08;
+const LOCK_BLEND_START = 0.84;
+const LOCK_BLEND_END = 0.9;
 const HERO_COMPLETE_AT = 0.995;
+
+const easeInOutSine = (t: number) => -(Math.cos(Math.PI * t) - 1) / 2;
+const clamp01 = (t: number) => Math.min(Math.max(t, 0), 1);
+const smoothstep = (a: number, b: number, x: number) => {
+  const t = clamp01((x - a) / (b - a));
+  return t * t * (3 - 2 * t);
+};
 
 const heroCopyPoints = [
   "Sınava ve derse göre filtrele",
@@ -399,56 +419,103 @@ function HeroSection() {
     offset: ["start start", "end end"],
   });
 
-  // Camera: scale the scene around the laptop-screen center (transform-origin
-  // in CSS). End scale 4.8 pushes the screen past the viewport edges on both
-  // axes for all sane aspect ratios.
-  const sceneScale = useTransform(scrollYProgress, [0, 0.45, 0.75, 0.92], [1, 1.6, 4.8, 5.5]);
+  // Spring-smoothed progress: every transform derives from this, which turns
+  // discrete wheel steps into a continuous, slightly inertial dolly. Fully
+  // reversible; near-settled by the time the latch threshold is crossed.
+  const smooth = useSpring(scrollYProgress, {
+    stiffness: 120,
+    damping: 28,
+    restDelta: 0.0005,
+    restSpeed: 0.001,
+  });
+
+  // Geometry derived once per resize (see the ResizeObserver effect below).
+  // Everything is computable from the viewport + the slot's layout size —
+  // client sizes ignore ancestor transforms, so no per-scroll DOM reads.
+  const geomRef = useRef({
+    k: 0.27, // cover-fit scale of the 1200×750 board into the slot
+    sEnd: 4.8, // dolly end scale (viewport-fill × overshoot)
+    tx: 0, // slot center x − viewport center x
+    cy: 0, // slot center y in viewport px
+    slotH: 0, // slot layout height in px
+    vh: 800,
+    pf: 96, // full instance's top padding (.productScrollPad clamp, in JS)
+  });
+
+  // Exponential dolly: constant perceived zoom rate (a linear scale ramp feels
+  // like it decelerates), eased at both ends, held at sEnd past ZOOM_END.
+  const zoomAt = (p: number) =>
+    Math.exp(easeInOutSine(clamp01(p / ZOOM_END)) * Math.log(geomRef.current.sEnd));
+
+  const sceneScale = useTransform(smooth, (p) => zoomAt(p));
   const sceneTransform = useMotionTemplate`translate3d(-50%, -50%, 0) scale(${sceneScale})`;
   // Fades live in filter strings (opacity() function) rather than the CSS
   // opacity property: plain motion-value opacity in `style` fails to update on
   // scroll with framer-motion 12.42, while filter/transform bindings flush
   // reliably. Visually identical for these flat layers.
-  const sceneOpacity = useTransform(scrollYProgress, [0.82, 0.9], [1, 0]);
+  const sceneOpacity = useTransform(smooth, [0.86, 0.92], [1, 0]);
   const sceneFilter = useMotionTemplate`opacity(${sceneOpacity})`;
 
-  // Handoff is sequential, not a crossfade: the in-slot copy dissolves into
-  // the screen's white glow just before the zoomed screen fills the viewport
-  // (~0.72), leaving a beat of pure white "glass", and the full-viewport copy
-  // materializes out of that white. Two overlapping copies at different
-  // scales read as ghosting; through-white never does.
-
   // In-slot mockup: visible from the very first frame — distant, subtle,
-  // lightly blurred — sharpening as the camera approaches.
-  const slotBlur = useTransform(scrollYProgress, [0, 0.45, 0.66], [2.5, 1.5, 0]);
-  const slotOpacity = useTransform(scrollYProgress, [0, 0.45, 0.62, 0.7], [0.95, 1, 1, 0]);
+  // lightly blurred — sharpening as the camera approaches. Blur only ever
+  // animates on this small layer, never on the full-page layer.
+  const slotBlur = useTransform(smooth, [0, 0.55], [2.2, 0]);
+  const slotOpacity = useTransform(smooth, [0, 0.4, 0.74, 0.82], [0.94, 1, 1, 0]);
   const slotFilter = useMotionTemplate`blur(${slotBlur}px) opacity(${slotOpacity})`;
 
-  // Full-viewport mockup: fades in from the white screen, settles, then owns
-  // the page-scroll phase.
-  const fullOpacity = useTransform(scrollYProgress, [0.74, 0.85], [0, 1]);
-  const fullBlur = useTransform(scrollYProgress, [0.74, 0.83], [2, 0]);
-  const fullFilter = useMotionTemplate`blur(${fullBlur}px) opacity(${fullOpacity})`;
-  const fullScale = useTransform(scrollYProgress, [0.74, 0.88], [0.975, 1]);
-  const contentY = useTransform(scrollYProgress, [0.84, 0.92], [0, -140]);
+  // Geometry-locked handoff: while the crossfade runs (0.74–0.82, after the
+  // zoomed screen has filled the viewport), the full-page copy is transform-
+  // matched onto the in-screen copy — same apparent content width (both render
+  // a 920px column on wide viewports) and aligned content tops — so the
+  // dissolve between the two is invisible and the UI never leaves the screen.
+  // Afterwards the locked transform settles to identity, reading as the tail
+  // of the same dolly.
+  const lockAt = (p: number) => {
+    const g = geomRef.current;
+    const S = zoomAt(p);
+    const sigmaLock = g.k * S;
+    // Board is height-fitted (cover), so its top edge equals the slot's top.
+    const slotContentTop = g.cy - (g.slotH * S) / 2 + SLOT_UI_TOP_PAD * g.k * S;
+    const tyLock = slotContentTop - g.vh / 2 - (g.pf - g.vh / 2) * sigmaLock;
+    const m = smoothstep(LOCK_BLEND_START, LOCK_BLEND_END, p);
+    return {
+      sigma: sigmaLock + (1 - sigmaLock) * m,
+      tx: g.tx * (1 - m),
+      ty: tyLock * (1 - m),
+    };
+  };
+  // Narrow screens render a fluid column, so the pixel lock doesn't hold —
+  // fall back to a plain overlapping fade with a gentle settle (still no
+  // blank frame: the fades overlap).
+  const fullSigma = useTransform(smooth, (p) =>
+    isNarrow ? 0.97 + 0.03 * smoothstep(0.74, 0.86, p) : lockAt(p).sigma
+  );
+  const fullTx = useTransform(smooth, (p) => (isNarrow ? 0 : lockAt(p).tx));
+  const fullTy = useTransform(smooth, (p) => (isNarrow ? 0 : lockAt(p).ty));
+  const lockTransform = useMotionTemplate`translate3d(${fullTx}px, ${fullTy}px, 0) scale(${fullSigma})`;
+
+  const fullOpacity = useTransform(smooth, [0.74, 0.82], [0, 1]);
+  const fullFilter = useMotionTemplate`opacity(${fullOpacity})`;
+  const contentY = useTransform(smooth, [0.89, 0.94], [0, -140]);
 
   // Final split: the page shrinks into a right-side product panel (bottom-
   // anchored card on narrow screens) while the copy column fades in on the
   // left (top block on narrow screens).
   const panelXEnd = isNarrow ? 0 : -2;
   const panelScaleEnd = isNarrow ? 0.66 : 0.68;
-  const panelX = useTransform(scrollYProgress, [0.92, 1], [0, panelXEnd]);
-  const panelScale = useTransform(scrollYProgress, [0.92, 1], [1, panelScaleEnd]);
+  const panelX = useTransform(smooth, [0.94, 1], [0, panelXEnd]);
+  const panelScale = useTransform(smooth, [0.94, 1], [1, panelScaleEnd]);
   const panelTransform = useMotionTemplate`translate3d(${panelX}vw, 0, 0) scale(${panelScale})`;
   const panelFrozenTransform = isNarrow
     ? `scale(${panelScaleEnd})`
     : `translate3d(${panelXEnd}vw, 0, 0) scale(${panelScaleEnd})`;
 
-  const copyOpacity = useTransform(scrollYProgress, [0.93, 1], [0, 1]);
-  const copyBlur = useTransform(scrollYProgress, [0.93, 1], [8, 0]);
+  const copyOpacity = useTransform(smooth, [0.95, 1], [0, 1]);
+  const copyBlur = useTransform(smooth, [0.95, 1], [8, 0]);
   const copyFilter = useMotionTemplate`blur(${copyBlur}px) opacity(${copyOpacity})`;
-  const copyY = useTransform(scrollYProgress, [0.93, 1], [24, 0]);
+  const copyY = useTransform(smooth, [0.95, 1], [24, 0]);
 
-  useMotionValueEvent(scrollYProgress, "change", (progress) => {
+  useMotionValueEvent(smooth, "change", (progress) => {
     if (completedRef.current || reduceMotion) return;
     if (progress < HERO_COMPLETE_AT) return;
     const hero = heroRef.current;
@@ -473,19 +540,47 @@ function HeroSection() {
     if (delta !== 0) window.scrollBy(0, delta);
   }, [completed]);
 
-  // The slot's rendered width depends on viewport size only; measure it once
-  // per resize, never per scroll. The scale is written imperatively to a plain
+  // Slot geometry depends on viewport size only; measure once per resize,
+  // never per scroll. The cover-fit scale is written imperatively to a plain
   // div: a bare MotionValue set from a ResizeObserver does not flush to the
   // DOM in framer-motion 12.42 (same dead-binding family as the opacity
-  // workaround above), and this path is resize-time anyway.
+  // workaround above), and this path is resize-time anyway. The same pass
+  // derives all constants the dolly and the locked handoff need.
   useEffect(() => {
     const slot = slotRef.current;
     const content = slotContentRef.current;
     if (!slot || !content) return;
     const update = () => {
-      if (slot.clientWidth > 0) {
-        content.style.transform = `scale(${slot.clientWidth / SLOT_UI_WIDTH}) rotateX(${SLOT_TILT_DEG}deg)`;
-      }
+      const slotW = slot.clientWidth;
+      const slotH = slot.clientHeight;
+      if (slotW === 0 || slotH === 0) return;
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      // Cover-fit: the board always fills the screen area; the slot mask
+      // crops the small overflow, so no blank strips inside the screen.
+      const k = Math.max(slotW / SLOT_UI_WIDTH, slotH / SLOT_UI_HEIGHT);
+      content.style.transform = `translate(-50%, -50%) scale(${k})`;
+      // Slot center in viewport coords, from the aspect-locked scene-box
+      // formulas (CSS twins in .sceneLayer). The box is centered, so the slot
+      // center never moves while the scene scales around it.
+      const boxW = Math.max(vw, vh * (16 / 9));
+      const boxH = Math.max(vh, vw * (9 / 16));
+      const cx = vw / 2 + (SLOT_ORIGIN_X - 0.5) * boxW;
+      const cy = vh / 2 + (SLOT_ORIGIN_Y - 0.5) * boxH;
+      // JS twin of the .productScrollPad clamp() values.
+      const pf =
+        vw <= 720
+          ? Math.min(Math.max(72, vh * 0.1), 112)
+          : Math.min(Math.max(88, vh * 0.12), 132);
+      geomRef.current = {
+        k,
+        sEnd: ZOOM_OVERSHOOT * Math.max(vw / slotW, vh / slotH),
+        tx: cx - vw / 2,
+        cy,
+        slotH,
+        vh,
+        pf,
+      };
     };
     update();
     const observer = new ResizeObserver(update);
@@ -532,8 +627,12 @@ function HeroSection() {
             disappear from the style prop. */}
         <motion.div
           className={styles.fullUiLayer}
-          style={frozen ? { filter: "none", scale: 1 } : { filter: fullFilter, scale: fullScale }}
+          style={frozen ? { filter: "none" } : { filter: fullFilter }}
         >
+          <motion.div
+            className={styles.lockLayer}
+            style={frozen ? { transform: "none" } : { transform: lockTransform }}
+          >
           <motion.div
             className={cn(styles.heroCopy, frozen && styles.heroCopyActive)}
             style={frozen ? { filter: "none", y: 0 } : { filter: copyFilter, y: copyY }}
@@ -565,6 +664,7 @@ function HeroSection() {
                 contentStyle={reduceMotion ? { y: 0 } : completed ? { y: -140 } : { y: contentY }}
               />
             </div>
+          </motion.div>
           </motion.div>
         </motion.div>
       </div>

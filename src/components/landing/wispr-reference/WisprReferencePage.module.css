@@ -184,7 +184,7 @@
    stage stays on screen for. The black section flows in only after it ends. */
 .hero {
   position: relative;
-  height: 300vh;
+  height: 340vh;
   background: #f8fafc;
 }
 
@@ -235,8 +235,8 @@
 
 /* Laptop screen quad, measured from the 1920×1080 poster. The rect sits just
    inside the screen's white glow; the mask (overflow + radius) keeps the UI
-   from ever crossing the bezel, and the perspective pairs with the in-slot
-   rotateX (SLOT_TILT_DEG in the TSX) to follow the screen's slight lean.
+   from ever crossing the bezel. The board is cover-fitted and centered, so
+   the mask crops the small overflow instead of leaving blank strips.
    Center = sceneLayer's transform-origin. */
 .screenSlot {
   position: absolute;
@@ -245,8 +245,18 @@
   width: 23.7%;
   height: 26.9%;
   overflow: hidden;
-  border-radius: 6px;
-  perspective: 1600px;
+  border-radius: 8px;
+}
+
+/* Inset vignette melts the board edge into the bezel so the UI reads as
+   emitted by the screen rather than pasted onto the photo. */
+.screenSlot::after {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 0 16px rgba(15, 23, 42, 0.22);
+  content: "";
+  pointer-events: none;
 }
 
 /* Scroll-driven blur/fade lives on this wrapper so it applies to the already
@@ -263,11 +273,15 @@
    resize; the CSS value is a visible-by-default approximation for the first
    paint before hydration. */
 .slotContent {
-  position: relative;
+  position: absolute;
+  top: 50%;
+  left: 50%;
   width: 1200px;
   height: 750px;
-  transform: scale(0.27);
-  transform-origin: 0 0;
+  /* Cover-centered in the slot; the exact factor is set imperatively on
+     resize — this is a visible-by-default approximation for first paint. */
+  transform: translate(-50%, -50%) scale(0.27);
+  transform-origin: 50% 50%;
   will-change: transform;
 }
 
@@ -277,7 +291,15 @@
   z-index: 2;
   background: #ffffff;
   pointer-events: none;
-  will-change: transform, filter;
+  will-change: filter;
+}
+
+/* Carries the geometry-locked handoff transform (matched onto the in-screen
+   copy during the crossfade, then settled to identity). */
+.lockLayer {
+  position: absolute;
+  inset: 0;
+  will-change: transform;
 }
 
 /* Right-shifting product panel of the final split composition. Its card
