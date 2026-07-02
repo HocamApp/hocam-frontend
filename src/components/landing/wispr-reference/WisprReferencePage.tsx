@@ -82,16 +82,71 @@ const universityLogos = [
     alt: "İstanbul Üniversitesi logosu",
   },
 ];
-const workTabs = [
-  "Teams",
-  "Students",
-  "Developers",
-  "Creators",
-  "Sales",
-  "Customer Support",
-  "Lawyers",
-  "Leaders",
-  "Accessibility",
+const tutorDiscoveryPills = [
+  "YKS",
+  "TYT",
+  "AYT",
+  "Matematik",
+  "Fizik",
+  "Türkçe",
+  "İngilizce",
+  "Lise",
+  "Ortaokul",
+];
+
+const tutorJourneyTabs = [
+  {
+    title: "Hoca keşfi",
+    eyebrow: "01 / Hedefini seç",
+    heading: "Ders, sınav ve seviyene göre doğru hocaları daralt.",
+    body: "YKS hazırlığı, TYT netleri, AYT konuları veya okul desteği için aradığın dersi ve seviyeyi seç; karşına daha uygun profiller gelsin.",
+    chips: ["Matematik", "TYT", "AYT", "Online"],
+    stats: [
+      { label: "Sınav odağı", value: "TYT + AYT" },
+      { label: "Ders formatı", value: "Online / yüz yüze" },
+    ],
+  },
+  {
+    title: "Profilleri karşılaştır",
+    eyebrow: "02 / Kararını netleştir",
+    heading: "Puan, yorum, deneyim ve ücreti tek akışta karşılaştır.",
+    body: "Hocaların üniversite, bölüm, ders alanı, öğrenci yorumları ve saatlik ücret bilgilerini yan yana değerlendir.",
+    chips: ["Puan", "Yorum", "Ücret", "Deneyim"],
+    stats: [
+      { label: "Ortalama puan", value: "4.9" },
+      { label: "Öğrenci yorumu", value: "120+" },
+    ],
+  },
+  {
+    title: "Dersini planla",
+    eyebrow: "03 / Ritmini kur",
+    heading: "Uygun zamanı seç, ders planını güvenle oluştur.",
+    body: "Hedefine, bütçene ve haftalık çalışma temposuna göre düzenli ilerleyebileceğin bir ders akışı kur.",
+    chips: ["Haftalık plan", "Bütçe", "Takip", "Hedef"],
+    stats: [
+      { label: "Plan aralığı", value: "14 gün" },
+      { label: "Ders süresi", value: "45 / 60 / 90 dk" },
+    ],
+  },
+];
+
+const hocamDifferenceItems = [
+  {
+    title: "Sınava göre filtrele",
+    body: "YKS, TYT, AYT veya okul derslerine göre ihtiyacın olan desteği netleştir.",
+  },
+  {
+    title: "Derse göre eşleştir",
+    body: "Matematikten İngilizceye, aradığın alanda uygun hoca seçeneklerini keşfet.",
+  },
+  {
+    title: "Kararını rahat ver",
+    body: "Puan, yorum, deneyim ve saatlik ücretleri karşılaştırarak daha bilinçli seçim yap.",
+  },
+  {
+    title: "Planını kolay kur",
+    body: "Uygun zamanı seç, ders ritmini oluştur ve hedeflerine düzenli ilerle.",
+  },
 ];
 
 const appIcons = [
@@ -670,39 +725,87 @@ function ClaimSection() {
 }
 
 function WorkSection() {
+  const reduceMotion = useReducedMotion();
+  const [activeTab, setActiveTab] = useState(0);
+  const activeJourney = tutorJourneyTabs[activeTab];
+
   return (
     <section className={styles.workSection}>
       <Reveal className={styles.workHeader}>
+        <span className={styles.workEyebrow}>Hocam&apos;ın farkı</span>
         <h2>
-          Made for the way <em>you</em> work
+          Sana uygun <em>hocayı</em> bulmanın daha akıllı yolu
         </h2>
-        <p>Select one to see Flow in action.</p>
+        <p>
+          YKS, TYT, AYT ve okul dersleri için hocaları filtrele, profilleri
+          karşılaştır ve ders planını güvenle oluştur.
+        </p>
         <div className={styles.workTabs}>
-          {workTabs.map((tab) => (
-            <button key={tab}>{tab}</button>
+          {tutorDiscoveryPills.map((pill) => (
+            <span key={pill}>{pill}</span>
           ))}
         </div>
       </Reveal>
       <Reveal className={styles.workPanel} delay={0.1}>
-        <div className={styles.editorShell}>
-          <div className={styles.editorTopbar}>
-            <span />
-            <span />
-            <span />
+        <div className={styles.tutorMatchShell}>
+          <div className={styles.journeyTabs} aria-label="Hocam öğrenci yolculuğu">
+            {tutorJourneyTabs.map((tab, index) => (
+              <button
+                type="button"
+                key={tab.title}
+                className={cn(index === activeTab && styles.journeyTabActive)}
+                aria-pressed={index === activeTab}
+                onClick={() => setActiveTab(index)}
+              >
+                {tab.title}
+              </button>
+            ))}
           </div>
-          <div className={styles.editorBody}>
-            <div className={styles.editorText}>
-              <span>Team update</span>
-              <p>
-                Tell Flow what changed. It rewrites the update with the right tone,
-                structure, and context.
-              </p>
+          <motion.div
+            key={activeJourney.title}
+            className={styles.journeyPanel}
+            initial={reduceMotion ? false : { opacity: 0, y: -28, filter: "blur(4px)" }}
+            animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+            transition={{ duration: 0.22, ease: "easeInOut" }}
+          >
+            <div className={styles.journeyCopy}>
+              <span>{activeJourney.eyebrow}</span>
+              <h3>{activeJourney.heading}</h3>
+              <p>{activeJourney.body}</p>
+              <div className={styles.journeyChips}>
+                {activeJourney.chips.map((chip) => (
+                  <span key={chip}>{chip}</span>
+                ))}
+              </div>
             </div>
-            <div className={styles.editorStack}>
-              <span>Meeting notes</span>
-              <span>Action items</span>
-              <span>Customer follow-up</span>
+            <div className={styles.journeyPreview}>
+              {activeJourney.stats.map((stat) => (
+                <div className={styles.statCard} key={stat.label}>
+                  <span>{stat.label}</span>
+                  <strong>{stat.value}</strong>
+                </div>
+              ))}
+              <div className={styles.tutorCardStack}>
+                <article>
+                  <strong>Elif K.</strong>
+                  <span>Boğaziçi · Matematik</span>
+                  <small>4.9 puan · 86 yorum</small>
+                </article>
+                <article>
+                  <strong>Mert A.</strong>
+                  <span>İTÜ · Fizik</span>
+                  <small>4.8 puan · 64 yorum</small>
+                </article>
+              </div>
             </div>
+          </motion.div>
+          <div className={styles.differenceGrid}>
+            {hocamDifferenceItems.map((item) => (
+              <article key={item.title}>
+                <h4>{item.title}</h4>
+                <p>{item.body}</p>
+              </article>
+            ))}
           </div>
         </div>
       </Reveal>
