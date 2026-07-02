@@ -1,8 +1,13 @@
 import axios from "axios";
 import Cookies from "js-cookie";
 
+const DEFAULT_API_URL =
+  process.env.NODE_ENV === "production"
+    ? "https://web-production-22415.up.railway.app/api"
+    : "http://localhost:8000/api";
+
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api",
+  baseURL: process.env.NEXT_PUBLIC_API_URL || DEFAULT_API_URL,
   headers: {
     "Content-Type": "application/json",
   },

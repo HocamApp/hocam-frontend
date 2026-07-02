@@ -6,16 +6,23 @@ import { useAuth } from "@/hooks/useAuth";
 import { fetchConversations } from "@/lib/messagingApi";
 import { ConversationList } from "@/components/messaging/ConversationList";
 import { RouteGuard } from "@/components/shared/RouteGuard";
+import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { MessageCircle } from "lucide-react";
+
+const CONVERSATIONS_REFETCH_INTERVAL_MS = 60_000;
 
 function MessagesContent() {
   const router = useRouter();
   const { isAuthenticated, user } = useAuth();
 
-  const { data: conversations, isLoading: conversationsLoading } = useQuery({
+  const {
+    data: conversations,
+    isLoading: conversationsLoading,
+    error: conversationsError,
+  } = useQuery({
     queryKey: ["conversations"],
     queryFn: fetchConversations,
-    refetchInterval: 30000,
+    refetchInterval: CONVERSATIONS_REFETCH_INTERVAL_MS,
     enabled: isAuthenticated,
   });
 
@@ -30,13 +37,19 @@ function MessagesContent() {
         <header className="shrink-0 border-b p-4">
           <h1 className="text-xl font-semibold">Mesajlar</h1>
         </header>
-        <ConversationList
-          conversations={conversations ?? []}
-          selectedId={null}
-          currentUserId={user?.id ?? ""}
-          onSelect={handleSelectConversation}
-          isLoading={conversationsLoading}
-        />
+        {conversationsError ? (
+          <div className="p-4">
+            <ErrorMessage message="Mesajlar yüklenemedi. Lütfen tekrar deneyin." />
+          </div>
+        ) : (
+          <ConversationList
+            conversations={conversations ?? []}
+            selectedId={null}
+            currentUserId={user?.id ?? ""}
+            onSelect={handleSelectConversation}
+            isLoading={conversationsLoading}
+          />
+        )}
       </div>
 
       {/* Right panel - empty state when no conversation selected */}

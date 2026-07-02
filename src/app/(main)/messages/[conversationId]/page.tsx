@@ -55,6 +55,9 @@ type ThreadItem =
       showTime: boolean;
     };
 
+const CONVERSATIONS_REFETCH_INTERVAL_MS = 60_000;
+const MESSAGES_REFETCH_INTERVAL_MS = 15_000;
+
 /** Build a flat render list with day separators and same-sender grouping. */
 function buildThreadItems(messages: Message[]): ThreadItem[] {
   const items: ThreadItem[] = [];
@@ -101,10 +104,14 @@ function ConversationContent({
   // typing source exists (see TypingIndicator).
   const [isOtherTyping] = useState(false);
 
-  const { data: conversations, isLoading: conversationsLoading } = useQuery({
+  const {
+    data: conversations,
+    isLoading: conversationsLoading,
+    error: conversationsError,
+  } = useQuery({
     queryKey: ["conversations"],
     queryFn: fetchConversations,
-    refetchInterval: 30000,
+    refetchInterval: CONVERSATIONS_REFETCH_INTERVAL_MS,
     enabled: isAuthenticated,
   });
 
@@ -121,7 +128,7 @@ function ConversationContent({
   } = useQuery({
     queryKey: ["messages", conversationId],
     queryFn: () => fetchMessages(conversationId),
-    refetchInterval: 5000,
+    refetchInterval: MESSAGES_REFETCH_INTERVAL_MS,
     enabled: isAuthenticated && !!conversationId,
   });
 
@@ -186,13 +193,19 @@ function ConversationContent({
         <header className="shrink-0 border-b p-4">
           <h1 className="text-xl font-semibold">Mesajlar</h1>
         </header>
-        <ConversationList
-          conversations={conversations ?? []}
-          selectedId={conversationId}
-          currentUserId={user?.id ?? ""}
-          onSelect={handleSelectConversation}
-          isLoading={conversationsLoading}
-        />
+        {conversationsError ? (
+          <div className="p-4">
+            <ErrorMessage message="Konuşmalar yüklenemedi." />
+          </div>
+        ) : (
+          <ConversationList
+            conversations={conversations ?? []}
+            selectedId={conversationId}
+            currentUserId={user?.id ?? ""}
+            onSelect={handleSelectConversation}
+            isLoading={conversationsLoading}
+          />
+        )}
       </aside>
 
       <section className="flex min-w-0 flex-1 flex-col overflow-hidden">
