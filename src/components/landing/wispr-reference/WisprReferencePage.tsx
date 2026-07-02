@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { HeroTutorsMockup } from "./HeroTutorsMockup";
 import styles from "./WisprReferencePage.module.css";
 
 const navLinks = [
@@ -256,6 +257,7 @@ function HeroSection() {
           preload="metadata"
           aria-hidden
         />
+        <HeroTutorsMockup />
       </div>
     </section>
   );
