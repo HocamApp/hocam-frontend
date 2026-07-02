@@ -348,19 +348,38 @@ function FloatingNav() {
 // transform settles to identity · 0.89–0.94 inner page scroll · 0.94–1 split
 // into right product panel + left copy column · ≥0.995 one-shot latch.
 //
-// The in-slot mockup renders at a fixed internal size (1200×750, mirrored in
-// the .slotContent CSS) and is cover-fitted into the slot — the mask crops the
-// ~1% overflow so the screen never shows blank strips. The slot's layout size
-// is the only DOM measurement (ResizeObserver); everything else is derived
-// from the aspect-locked scene-box formulas below (CSS twins: .sceneLayer
-// size/transform-origin, .screenSlot rect).
+// The in-slot mockup renders at a fixed internal size (1200×750) and is
+// mapped onto the laptop screen with a true projective transform (matrix3d
+// homography): its four corners land exactly on the screen's four corners as
+// measured on the poster, so the page sits in the display like a Mercury-
+// style device composite — no gaps, no pasted-rectangle look. As the camera
+// pushes in, the quad eases to a flat cover rect ("the camera aligns with the
+// screen"), which is exactly the geometry the locked crossfade math assumes.
+//
+// Everything is pure math from the viewport size and the aspect-locked
+// scene-box formulas (CSS twins: .sceneLayer size/transform-origin,
+// .screenSlot rect) — zero DOM measurement, zero per-scroll layout reads.
 const SLOT_UI_WIDTH = 1200;
 const SLOT_UI_HEIGHT = 750;
 // The mockup's own .scroll top padding — needed to align the two instances'
 // content tops during the locked crossfade.
 const SLOT_UI_TOP_PAD = 46;
-const SLOT_ORIGIN_X = 0.5085;
-const SLOT_ORIGIN_Y = 0.3685;
+// Laptop-screen inner corners, measured on the 1920×1080 poster (px / 1920,
+// px / 1080): TL (741,258) TR (1211,260) BR (1210,554) BL (740,546).
+const SCREEN_QUAD = [
+  { x: 741 / 1920, y: 258 / 1080 },
+  { x: 1211 / 1920, y: 260 / 1080 },
+  { x: 1210 / 1920, y: 554 / 1080 },
+  { x: 740 / 1920, y: 546 / 1080 },
+];
+// Quad centroid — the camera zooms into this point (CSS twin: .sceneLayer
+// transform-origin) and the .screenSlot rect is the quad's bounding box.
+const SLOT_ORIGIN_X = (SCREEN_QUAD[0].x + SCREEN_QUAD[1].x + SCREEN_QUAD[2].x + SCREEN_QUAD[3].x) / 4;
+const SLOT_ORIGIN_Y = (SCREEN_QUAD[0].y + SCREEN_QUAD[1].y + SCREEN_QUAD[2].y + SCREEN_QUAD[3].y) / 4;
+// Perspective flattens out during the approach, finishing well before the
+// crossfade so the locked handoff sees a plain flat rect.
+const FLATTEN_START = 0.45;
+const FLATTEN_END = 0.7;
 // Dolly runs 0 → ZOOM_END; end scale overshoots the exact viewport-fill scale
 // so the screen edges sit just past the viewport when the crossfade starts.
 const ZOOM_END = 0.86;
@@ -376,6 +395,71 @@ const smoothstep = (a: number, b: number, x: number) => {
   return t * t * (3 - 2 * t);
 };
 
+type Point = { x: number; y: number };
+
+// 4-point homography: maps the W×H board onto an arbitrary quad
+// (TL, TR, BR, BL, in px of the target coordinate space) as a CSS matrix3d.
+// Closed-form projective solve — a handful of flops, safe to run per frame.
+function quadMatrix3d(w: number, h: number, [p0, p1, p2, p3]: Point[]) {
+  const dx1 = p1.x - p2.x;
+  const dx2 = p3.x - p2.x;
+  const dx3 = p0.x - p1.x + p2.x - p3.x;
+  const dy1 = p1.y - p2.y;
+  const dy2 = p3.y - p2.y;
+  const dy3 = p0.y - p1.y + p2.y - p3.y;
+  const den = dx1 * dy2 - dx2 * dy1;
+  const g = (dx3 * dy2 - dx2 * dy3) / den;
+  const hh = (dx1 * dy3 - dx3 * dy1) / den;
+  const a = p1.x - p0.x + g * p1.x;
+  const b = p3.x - p0.x + hh * p3.x;
+  const d = p1.y - p0.y + g * p1.y;
+  const e = p3.y - p0.y + hh * p3.y;
+  return `matrix3d(${a / w}, ${d / w}, 0, ${g / w}, ${b / h}, ${e / h}, 0, ${hh / h}, 0, 0, 1, 0, ${p0.x}, ${p0.y}, 0, 1)`;
+}
+
+// All geometry the hero needs, derived from the viewport alone. The board
+// quad and flat rect are in .screenSlot-local px (the slot is the quad's
+// bounding box); the rest feeds the dolly and the locked handoff.
+function computeGeom(vw: number, vh: number) {
+  const boxW = Math.max(vw, vh * (16 / 9));
+  const boxH = Math.max(vh, vw * (9 / 16));
+  const left = Math.min(SCREEN_QUAD[0].x, SCREEN_QUAD[3].x);
+  const top = Math.min(SCREEN_QUAD[0].y, SCREEN_QUAD[1].y);
+  const quad = SCREEN_QUAD.map((c) => ({
+    x: (c.x - left) * boxW,
+    y: (c.y - top) * boxH,
+  }));
+  const center = {
+    x: (quad[0].x + quad[1].x + quad[2].x + quad[3].x) / 4,
+    y: (quad[0].y + quad[1].y + quad[2].y + quad[3].y) / 4,
+  };
+  // Flat cover rect the quad settles into: quad's average height, board
+  // aspect, centered on the quad centroid.
+  const hFlat = (quad[3].y - quad[0].y + quad[2].y - quad[1].y) / 2;
+  const wFlat = hFlat * (SLOT_UI_WIDTH / SLOT_UI_HEIGHT);
+  const flat = [
+    { x: center.x - wFlat / 2, y: center.y - hFlat / 2 },
+    { x: center.x + wFlat / 2, y: center.y - hFlat / 2 },
+    { x: center.x + wFlat / 2, y: center.y + hFlat / 2 },
+    { x: center.x - wFlat / 2, y: center.y + hFlat / 2 },
+  ];
+  const pf =
+    vw <= 720
+      ? Math.min(Math.max(72, vh * 0.1), 112)
+      : Math.min(Math.max(88, vh * 0.12), 132);
+  return {
+    quad,
+    flat,
+    kFlat: hFlat / SLOT_UI_HEIGHT,
+    hFlat,
+    sEnd: ZOOM_OVERSHOOT * Math.max(vw / wFlat, vh / hFlat),
+    tx: vw / 2 + (SLOT_ORIGIN_X - 0.5) * boxW - vw / 2,
+    cy: vh / 2 + (SLOT_ORIGIN_Y - 0.5) * boxH,
+    vh,
+    pf,
+  };
+}
+
 const heroCopyPoints = [
   "Sınava ve derse göre filtrele",
   "Hoca profillerini karşılaştır",
@@ -384,8 +468,6 @@ const heroCopyPoints = [
 
 function HeroSection() {
   const heroRef = useRef<HTMLElement>(null);
-  const slotRef = useRef<HTMLDivElement>(null);
-  const slotContentRef = useRef<HTMLDivElement>(null);
   const completedRef = useRef(false);
   const preCollapseHeightRef = useRef(0);
   // One-shot latch: once the sequence has been seen to the end, the hero stays
@@ -429,23 +511,19 @@ function HeroSection() {
     restSpeed: 0.001,
   });
 
-  // Geometry derived once per resize (see the ResizeObserver effect below).
-  // Everything is computable from the viewport + the slot's layout size —
-  // client sizes ignore ancestor transforms, so no per-scroll DOM reads.
-  const geomRef = useRef({
-    k: 0.27, // cover-fit scale of the 1200×750 board into the slot
-    sEnd: 4.8, // dolly end scale (viewport-fill × overshoot)
-    tx: 0, // slot center x − viewport center x
-    cy: 0, // slot center y in viewport px
-    slotH: 0, // slot layout height in px
-    vh: 800,
-    pf: 96, // full instance's top padding (.productScrollPad clamp, in JS)
-  });
+  // Geometry derived once per mount/resize — pure math. React STATE, not a
+  // ref: the motion transforms only re-evaluate when the scroll value changes,
+  // so a silent ref update after mount would leave them rendering stale
+  // geometry until the next scroll tick (and framer 12.42 drops externally
+  // .set() motion values entirely). A state update re-renders and re-binds
+  // them with fresh closures — same pattern as isNarrow above, and it fires
+  // only on actual viewport changes, never per scroll.
+  const [geom, setGeom] = useState(() => computeGeom(1280, 800));
 
   // Exponential dolly: constant perceived zoom rate (a linear scale ramp feels
   // like it decelerates), eased at both ends, held at sEnd past ZOOM_END.
   const zoomAt = (p: number) =>
-    Math.exp(easeInOutSine(clamp01(p / ZOOM_END)) * Math.log(geomRef.current.sEnd));
+    Math.exp(easeInOutSine(clamp01(p / ZOOM_END)) * Math.log(geom.sEnd));
 
   const sceneScale = useTransform(smooth, (p) => zoomAt(p));
   const sceneTransform = useMotionTemplate`translate3d(-50%, -50%, 0) scale(${sceneScale})`;
@@ -463,6 +541,18 @@ function HeroSection() {
   const slotOpacity = useTransform(smooth, [0, 0.4, 0.74, 0.82], [0.94, 1, 1, 0]);
   const slotFilter = useMotionTemplate`blur(${slotBlur}px) opacity(${slotOpacity})`;
 
+  // Projective board placement: corners glued to the measured screen quad at
+  // the start, easing to the flat cover rect as the camera closes in.
+  const slotMatrix = useTransform(smooth, (p) => {
+    const g = geom;
+    const m = smoothstep(FLATTEN_START, FLATTEN_END, p);
+    const corners = g.quad.map((q, i) => ({
+      x: q.x + (g.flat[i].x - q.x) * m,
+      y: q.y + (g.flat[i].y - q.y) * m,
+    }));
+    return quadMatrix3d(SLOT_UI_WIDTH, SLOT_UI_HEIGHT, corners);
+  });
+
   // Geometry-locked handoff: while the crossfade runs (0.74–0.82, after the
   // zoomed screen has filled the viewport), the full-page copy is transform-
   // matched onto the in-screen copy — same apparent content width (both render
@@ -471,11 +561,12 @@ function HeroSection() {
   // Afterwards the locked transform settles to identity, reading as the tail
   // of the same dolly.
   const lockAt = (p: number) => {
-    const g = geomRef.current;
+    const g = geom;
     const S = zoomAt(p);
-    const sigmaLock = g.k * S;
-    // Board is height-fitted (cover), so its top edge equals the slot's top.
-    const slotContentTop = g.cy - (g.slotH * S) / 2 + SLOT_UI_TOP_PAD * g.k * S;
+    const sigmaLock = g.kFlat * S;
+    // By the time the lock runs the board has flattened into the cover rect,
+    // whose top edge sits hFlat/2 above the quad centroid.
+    const slotContentTop = g.cy - (g.hFlat * S) / 2 + SLOT_UI_TOP_PAD * g.kFlat * S;
     const tyLock = slotContentTop - g.vh / 2 - (g.pf - g.vh / 2) * sigmaLock;
     const m = smoothstep(LOCK_BLEND_START, LOCK_BLEND_END, p);
     return {
@@ -540,53 +631,23 @@ function HeroSection() {
     if (delta !== 0) window.scrollBy(0, delta);
   }, [completed]);
 
-  // Slot geometry depends on viewport size only; measure once per resize,
-  // never per scroll. The cover-fit scale is written imperatively to a plain
-  // div: a bare MotionValue set from a ResizeObserver does not flush to the
-  // DOM in framer-motion 12.42 (same dead-binding family as the opacity
-  // workaround above), and this path is resize-time anyway. The same pass
-  // derives all constants the dolly and the locked handoff need.
+  // Geometry depends on the viewport alone (the scene box and slot rect are
+  // pure functions of it), so a debounced resize listener is all that's
+  // needed — no ResizeObserver, no DOM measurement, no per-scroll reads.
   useEffect(() => {
-    const slot = slotRef.current;
-    const content = slotContentRef.current;
-    if (!slot || !content) return;
-    const update = () => {
-      const slotW = slot.clientWidth;
-      const slotH = slot.clientHeight;
-      if (slotW === 0 || slotH === 0) return;
-      const vw = window.innerWidth;
-      const vh = window.innerHeight;
-      // Cover-fit: the board always fills the screen area; the slot mask
-      // crops the small overflow, so no blank strips inside the screen.
-      const k = Math.max(slotW / SLOT_UI_WIDTH, slotH / SLOT_UI_HEIGHT);
-      content.style.transform = `translate(-50%, -50%) scale(${k})`;
-      // Slot center in viewport coords, from the aspect-locked scene-box
-      // formulas (CSS twins in .sceneLayer). The box is centered, so the slot
-      // center never moves while the scene scales around it.
-      const boxW = Math.max(vw, vh * (16 / 9));
-      const boxH = Math.max(vh, vw * (9 / 16));
-      const cx = vw / 2 + (SLOT_ORIGIN_X - 0.5) * boxW;
-      const cy = vh / 2 + (SLOT_ORIGIN_Y - 0.5) * boxH;
-      // JS twin of the .productScrollPad clamp() values.
-      const pf =
-        vw <= 720
-          ? Math.min(Math.max(72, vh * 0.1), 112)
-          : Math.min(Math.max(88, vh * 0.12), 132);
-      geomRef.current = {
-        k,
-        sEnd: ZOOM_OVERSHOOT * Math.max(vw / slotW, vh / slotH),
-        tx: cx - vw / 2,
-        cy,
-        slotH,
-        vh,
-        pf,
-      };
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const apply = () => setGeom(computeGeom(window.innerWidth, window.innerHeight));
+    const onResize = () => {
+      if (timer !== null) clearTimeout(timer);
+      timer = setTimeout(apply, 150);
     };
-    update();
-    const observer = new ResizeObserver(update);
-    observer.observe(slot);
-    return () => observer.disconnect();
-  }, [frozen]);
+    apply();
+    window.addEventListener("resize", onResize);
+    return () => {
+      if (timer !== null) clearTimeout(timer);
+      window.removeEventListener("resize", onResize);
+    };
+  }, []);
 
   return (
     <section
@@ -613,11 +674,11 @@ function HeroSection() {
               priority
               sizes="100vw"
             />
-            <div ref={slotRef} className={styles.screenSlot}>
+            <div className={styles.screenSlot}>
               <motion.div className={styles.slotFade} style={{ filter: slotFilter }}>
-                <div ref={slotContentRef} className={styles.slotContent}>
+                <motion.div className={styles.slotContent} style={{ transform: slotMatrix }}>
                   <HeroTutorsMockup />
-                </div>
+                </motion.div>
               </motion.div>
             </div>
           </motion.div>

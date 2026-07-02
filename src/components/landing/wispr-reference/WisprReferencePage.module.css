@@ -224,7 +224,9 @@
   width: max(100vw, 177.78svh);
   height: max(100svh, 56.25vw);
   transform: translate3d(-50%, -50%, 0);
-  transform-origin: 50.85% 36.85%;
+  /* Quad centroid of the measured laptop-screen corners — TSX twin:
+     SLOT_ORIGIN_X/Y derived from SCREEN_QUAD. */
+  transform-origin: 50.807% 37.454%;
   will-change: transform;
   pointer-events: none;
 }
@@ -233,30 +235,16 @@
   object-fit: cover;
 }
 
-/* Laptop screen quad, measured from the 1920×1080 poster. The rect sits just
-   inside the screen's white glow; the mask (overflow + radius) keeps the UI
-   from ever crossing the bezel. The board is cover-fitted and centered, so
-   the mask crops the small overflow instead of leaving blank strips.
-   Center = sceneLayer's transform-origin. */
+/* Bounding box of the measured laptop-screen quad (TSX twin: SCREEN_QUAD).
+   The board itself is projectively mapped onto the exact quad corners via
+   matrix3d, so this box only anchors the blur/fade wrapper — no mask needed:
+   the board's edges ARE the screen's edges. */
 .screenSlot {
   position: absolute;
-  left: 39%;
-  top: 23.4%;
-  width: 23.7%;
-  height: 26.9%;
-  overflow: hidden;
-  border-radius: 8px;
-}
-
-/* Inset vignette melts the board edge into the bezel so the UI reads as
-   emitted by the screen rather than pasted onto the photo. */
-.screenSlot::after {
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  box-shadow: inset 0 0 16px rgba(15, 23, 42, 0.22);
-  content: "";
-  pointer-events: none;
+  left: 38.542%;
+  top: 23.889%;
+  width: 24.531%;
+  height: 27.407%;
 }
 
 /* Scroll-driven blur/fade lives on this wrapper so it applies to the already
@@ -274,15 +262,31 @@
    paint before hydration. */
 .slotContent {
   position: absolute;
-  top: 50%;
-  left: 50%;
+  top: 0;
+  left: 0;
   width: 1200px;
   height: 750px;
-  /* Cover-centered in the slot; the exact factor is set imperatively on
-     resize — this is a visible-by-default approximation for first paint. */
-  transform: translate(-50%, -50%) scale(0.27);
-  transform-origin: 50% 50%;
+  overflow: hidden;
+  border-radius: 10px;
+  /* The matrix3d homography maps from the board's top-left corner. The CSS
+     value is a visible first-paint approximation; framer writes the real
+     matrix on hydration. */
+  transform: scale(0.29);
+  transform-origin: 0 0;
   will-change: transform;
+}
+
+/* Inset vignette melts the board edge into the bezel so the UI reads as
+   emitted by the screen rather than pasted onto the photo. Overlay element
+   (not box-shadow on the board itself) so it paints above the content. */
+.slotContent::after {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  border-radius: inherit;
+  box-shadow: inset 0 0 22px rgba(15, 23, 42, 0.2);
+  content: "";
+  pointer-events: none;
 }
 
 .fullUiLayer {
