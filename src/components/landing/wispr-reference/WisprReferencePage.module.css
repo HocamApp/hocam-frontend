@@ -380,54 +380,12 @@
   font-feature-settings: "liga" 1, "dlig" 1;
 }
 
-.darkDeviceSection {
-  position: relative;
-  min-height: 800px;
-  overflow: hidden;
-  border-radius: 28px 28px 0 0;
-  background: var(--ink);
-  color: var(--white);
-  padding: 80px 20px 0;
-}
-
-.darkGrid {
-  position: relative;
-  z-index: 2;
-  display: grid;
-  max-width: 1160px;
-  margin: 0 auto;
-  grid-template-columns: minmax(0, 0.9fr) minmax(360px, 1.1fr);
-  gap: 48px;
-}
-
-.darkCopy {
-  padding-top: 28px;
-}
-
-.darkCopy h2 {
-  max-width: 620px;
-  margin: 24px 0 18px;
-  font-size: clamp(38px, 5vw, 70px);
-  font-weight: 600;
-  line-height: 0.95;
-  letter-spacing: -0.05em;
-}
-
-.darkCopy h2 em,
 .workHeader h2 em,
 .autoHeader h2 em {
   display: inline-block;
   padding-bottom: 4px;
   font-style: italic;
   line-height: 1.1;
-}
-
-.darkCopy p {
-  max-width: 430px;
-  margin: 0 0 24px;
-  color: rgba(255, 255, 255, 0.72);
-  font-size: 17px;
-  line-height: 1.45;
 }
 
 .platformPills {
@@ -453,125 +411,6 @@
   color: var(--white);
 }
 
-.deviceStage {
-  display: flex;
-  min-height: 620px;
-  align-items: center;
-  justify-content: center;
-  will-change: transform;
-}
-
-.phoneMockup {
-  position: relative;
-  width: min(360px, 78vw);
-  height: 640px;
-  border: 2px solid #3a3a3a;
-  border-radius: 42px;
-  background:
-    linear-gradient(180deg, rgba(240, 215, 255, 0.08), transparent 38%),
-    #101010;
-  padding: 22px;
-  box-shadow:
-    0 28px 80px rgba(0, 0, 0, 0.45),
-    inset 0 0 0 8px #0d0d0d;
-}
-
-.phoneSpeaker {
-  position: absolute;
-  top: 16px;
-  left: 50%;
-  width: 78px;
-  height: 6px;
-  border-radius: 999px;
-  background: #2e2e2e;
-  transform: translateX(-50%);
-}
-
-.phoneCard {
-  display: flex;
-  height: 100%;
-  flex-direction: column;
-  justify-content: flex-end;
-  border-radius: 30px;
-  background:
-    linear-gradient(180deg, rgba(3, 79, 70, 0.4), rgba(3, 79, 70, 0.08) 52%),
-    #171717;
-  padding: 28px;
-}
-
-.phoneLabel {
-  width: fit-content;
-  border-radius: 9px;
-  background: var(--lavender);
-  color: var(--ink);
-  padding: 7px 10px;
-  font-size: 13px;
-  font-weight: 800;
-}
-
-.phoneCard p {
-  margin: 18px 0 22px;
-  font-size: 28px;
-  font-weight: 700;
-  line-height: 1;
-  letter-spacing: -0.05em;
-}
-
-.waveBars {
-  display: flex;
-  height: 64px;
-  align-items: center;
-  gap: 5px;
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.08);
-  padding: 0 14px;
-}
-
-.waveBars span {
-  width: 5px;
-  border-radius: 999px;
-  background: var(--lavender);
-}
-
-.phoneCard button {
-  margin-top: 18px;
-  border: 1px solid var(--white);
-  border-radius: 14px;
-  background: transparent;
-  color: var(--white);
-  padding: 11px 14px;
-  font-weight: 700;
-}
-
-.appArc {
-  position: absolute;
-  right: -42px;
-  bottom: 48px;
-  left: -40px;
-  z-index: 1;
-  height: 360px;
-  border-top: 2px solid rgba(255, 255, 255, 0.14);
-  border-radius: 50% 50% 0 0;
-  transform: rotate(-10deg);
-  will-change: transform;
-}
-
-.appIcon {
-  position: absolute;
-  top: var(--icon-y);
-  left: var(--icon-x);
-  display: grid;
-  width: 44px;
-  height: 44px;
-  place-items: center;
-  border-radius: 14px;
-  background: var(--icon-color);
-  color: var(--white);
-  font-size: 15px;
-  font-weight: 900;
-  box-shadow: 0 12px 22px rgba(0, 0, 0, 0.22);
-  transform: rotate(var(--icon-rotate));
-}
 
 .logoStrip {
   position: relative;
@@ -810,20 +649,22 @@
 
 .workSection {
   position: relative;
+  isolation: isolate;
   overflow: hidden;
   border-radius: 28px;
   background:
-    radial-gradient(circle at 18% 12%, rgba(240, 215, 255, 0.12), transparent 24rem),
-    radial-gradient(circle at 86% 18%, rgba(3, 79, 70, 0.42), transparent 26rem),
+    radial-gradient(circle at 15% 6%, rgba(240, 215, 255, 0.14), transparent 25rem),
+    radial-gradient(circle at 88% 18%, rgba(3, 79, 70, 0.46), transparent 28rem),
+    linear-gradient(180deg, rgba(255, 255, 235, 0.04), transparent 28%),
     var(--ink);
   color: var(--white);
-  padding: 90px 20px 96px;
+  padding: clamp(72px, 8vw, 110px) 20px clamp(84px, 9vw, 118px);
 }
 
 .workHeader {
   display: flex;
-  max-width: 1040px;
-  margin: 0 auto 38px;
+  max-width: 1120px;
+  margin: 0 auto 42px;
   flex-direction: column;
   align-items: flex-start;
 }
@@ -840,15 +681,51 @@
 }
 
 .workHeader h2 {
-  max-width: 880px;
+  max-width: 960px;
   margin: 0;
   font-size: clamp(48px, 7vw, 92px);
   line-height: 0.92;
   letter-spacing: 0;
+  text-wrap: balance;
 }
 
 .workHeader h2 em {
   color: var(--lavender);
+}
+
+.squigglyWord {
+  position: relative;
+  display: inline-block;
+  color: var(--lavender);
+  white-space: nowrap;
+}
+
+.squigglyText {
+  position: relative;
+  z-index: 1;
+}
+
+.squigglyMark {
+  position: absolute;
+  right: -0.1em;
+  bottom: -0.1em;
+  left: -0.08em;
+  z-index: 0;
+  width: calc(100% + 0.18em);
+  height: 0.23em;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.squigglyMark path {
+  fill: none;
+  stroke: rgba(240, 215, 255, 0.86);
+  stroke-width: 5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 235;
+  filter: drop-shadow(0 0 10px rgba(240, 215, 255, 0.22));
+  animation: squiggleTrace 4.2s ease-in-out infinite;
 }
 
 .workHeader p {
@@ -887,7 +764,9 @@
     linear-gradient(135deg, rgba(240, 215, 255, 0.13), transparent 38%),
     linear-gradient(180deg, rgba(255, 255, 255, 0.05), transparent),
     #101010;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 24px 80px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 .journeyTabs {
@@ -916,9 +795,18 @@
   transform: translateY(-1px);
 }
 
+.journeyTabs button:focus-visible {
+  outline: 2px solid var(--lavender);
+  outline-offset: 3px;
+}
+
 .journeyTabActive {
   background: var(--lavender) !important;
   color: var(--ink) !important;
+}
+
+.journeyPanelViewport {
+  overflow: hidden;
 }
 
 .journeyPanel {
@@ -1031,9 +919,33 @@
   font-weight: 800;
 }
 
+.differenceHeader {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.65fr) minmax(260px, 1fr);
+  gap: 24px;
+  align-items: end;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 24px 18px 18px;
+}
+
+.differenceHeader span {
+  color: var(--cream);
+  font-family: "EB Garamond", "Cormorant Garamond", Georgia, serif;
+  font-size: clamp(30px, 3.6vw, 46px);
+  line-height: 0.96;
+}
+
+.differenceHeader p {
+  max-width: 560px;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 15px;
+  line-height: 1.48;
+}
+
 .differenceGrid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
   padding: 0 18px 18px;
 }
@@ -1452,6 +1364,22 @@
   }
 }
 
+@keyframes squiggleTrace {
+  0%,
+  100% {
+    stroke-dashoffset: 0;
+    transform: translateX(0);
+  }
+  45% {
+    stroke-dashoffset: 24;
+    transform: translateX(1.5%);
+  }
+  70% {
+    stroke-dashoffset: -10;
+    transform: translateX(-0.8%);
+  }
+}
+
 @media (max-width: 1020px) {
   .navLinks,
   .navActions {
@@ -1462,7 +1390,6 @@
     display: grid;
   }
 
-  .darkGrid,
   .speedGrid,
   .journeyPanel,
   .featureBlock,
@@ -1470,25 +1397,16 @@
     grid-template-columns: 1fr;
   }
 
-  .darkCopy,
   .workHeader {
     text-align: center;
     align-items: center;
-  }
-
-  .darkCopy p {
-    margin-right: auto;
-    margin-left: auto;
-  }
-
-  .deviceStage {
-    min-height: 520px;
   }
 
   .proofGrid {
     max-width: 620px;
   }
 
+  .differenceHeader,
   .differenceGrid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -1545,13 +1463,11 @@
     display: none;
   }
 
-  .darkDeviceSection,
   .workSection,
   .testimonials {
     border-radius: 20px 20px 0 0;
   }
 
-  .darkDeviceSection,
   .claimSection,
   .autoSection,
   .dictionarySection,
@@ -1585,29 +1501,15 @@
   }
 
   .journeyPreview,
+  .differenceHeader,
   .differenceGrid {
     grid-template-columns: 1fr;
   }
 
+  .differenceHeader,
   .differenceGrid {
     padding-right: 16px;
     padding-left: 16px;
-  }
-
-  .phoneMockup {
-    height: 520px;
-  }
-
-  .appArc {
-    bottom: 0;
-    height: 260px;
-  }
-
-  .appIcon {
-    width: 34px;
-    height: 34px;
-    border-radius: 11px;
-    font-size: 12px;
   }
 
   .speedCard,
@@ -1667,7 +1569,8 @@
 
 @media (prefers-reduced-motion: reduce) {
   .logoTrack,
-  .claimHeader h2 span::after {
+  .claimHeader h2 span::after,
+  .squigglyMark path {
     animation: none;
   }
 

@@ -1,28 +1,24 @@
 "use client";
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import type { CSSProperties, ReactNode } from "react";
+import type { ReactNode } from "react";
 import Image from "next/image";
 import {
   ArrowUpRight,
   BookOpen,
   Check,
-  Download,
   Globe2,
   Keyboard,
   LogIn,
   Menu,
-  Mic,
   Monitor,
-  PanelsTopLeft,
-  Play,
   Plus,
   Smartphone,
   Sparkles,
   UserPlus,
-  WandSparkles,
 } from "lucide-react";
 import {
+  AnimatePresence,
   motion,
   useMotionTemplate,
   useMotionValueEvent,
@@ -32,6 +28,7 @@ import {
 } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { HeroTutorsMockup } from "./HeroTutorsMockup";
+import { SquigglyWord } from "./SquigglyWord";
 import styles from "./WisprReferencePage.module.css";
 
 const navLinks = [
@@ -41,7 +38,7 @@ const navLinks = [
   { label: "Yorumlar", href: "#testimonials" },
   { label: "Destek", href: "/support" },
 ];
-const platformPills = ["Mac", "Windows", "iPhone", "Android"];
+const platformPills = ["Web", "Mobil", "Online ders", "Yüz yüze"];
 const universityLogos = [
   { name: "ODTÜ", logoSrc: "/landing/university-logos/odtu.svg", alt: "ODTÜ logosu" },
   { name: "İTÜ", logoSrc: "/landing/university-logos/itu.png", alt: "İTÜ logosu" },
@@ -140,6 +137,10 @@ const hocamDifferenceItems = [
     body: "Matematikten İngilizceye, aradığın alanda uygun hoca seçeneklerini keşfet.",
   },
   {
+    title: "Doğrulanmış profilleri gör",
+    body: "Üniversite, bölüm ve deneyim bilgileriyle güven veren hocaları daha kolay ayırt et.",
+  },
+  {
     title: "Kararını rahat ver",
     body: "Puan, yorum, deneyim ve saatlik ücretleri karşılaştırarak daha bilinçli seçim yap.",
   },
@@ -147,76 +148,75 @@ const hocamDifferenceItems = [
     title: "Planını kolay kur",
     body: "Uygun zamanı seç, ders ritmini oluştur ve hedeflerine düzenli ilerle.",
   },
+  {
+    title: "Sade bir akışta ilerle",
+    body: "Filtrele, karşılaştır, dersini planla; aradığın desteğe yorulmadan ulaş.",
+  },
 ];
 
-const appIcons = [
-  { label: "N", color: "#6f5cff", x: "4%", y: "78%", rotate: "-17deg" },
-  { label: "F", color: "#7458ff", x: "13%", y: "72%", rotate: "-12deg" },
-  { label: "W", color: "#1ab56f", x: "22%", y: "65%", rotate: "-8deg" },
-  { label: "S", color: "#f05d42", x: "32%", y: "57%", rotate: "-3deg" },
-  { label: "G", color: "#f46a43", x: "43%", y: "48%", rotate: "8deg" },
-  { label: "D", color: "#4b88ff", x: "54%", y: "39%", rotate: "15deg" },
-  { label: "A", color: "#3b82f6", x: "65%", y: "31%", rotate: "22deg" },
-  { label: "W", color: "#1fbf75", x: "77%", y: "23%", rotate: "29deg" },
-  { label: "S", color: "#f44336", x: "88%", y: "17%", rotate: "35deg" },
+const dictionaryWords = ["Limit", "Türev", "Paragraf", "Optik", "Elektrik", "Kimyasal Denge"];
+const snippetItems = [
+  "Haftalık plan",
+  "Deneme takibi",
+  "Net analizi",
+  "Konu listesi",
+  "Soru bankası",
+  "Tekrar programı",
 ];
-
-const dictionaryWords = ["Retar", "Vistar", "Lest", "Catrivia", "Hackney", "Altruyn"];
-const snippetItems = ["Calendar", "Hours", "Support inbox", "FAQ", "Careers links", "Elevator pitch"];
 const languageItems = [
-  "English",
-  "Spanish",
-  "Turkish",
-  "French",
-  "German",
-  "Italian",
-  "Japanese",
-  "Korean",
-  "Portuguese",
-  "Dutch",
-  "Arabic",
-  "Hindi",
+  "Matematik",
+  "Geometri",
+  "Fizik",
+  "Kimya",
+  "Biyoloji",
+  "Türkçe",
+  "Edebiyat",
+  "Tarih",
+  "Coğrafya",
+  "Felsefe",
+  "Din Kültürü",
+  "İngilizce",
 ];
 
 const testimonials = [
   {
     quote:
-      "Flow is that extra little part of your brain that helps you formulate full sentences when you might be stuck in thought and have a jittery response.",
-    name: "Jeanette Fox",
-    role: "Founder",
+      "Hocamı seçmeden önce puanlarına ve yorumlarına baktım. İlk dersten itibaren ne çalışacağımı biliyordum; TYT matematik netim iki ayda ciddi şekilde arttı.",
+    name: "Zeynep A.",
+    role: "12. sınıf öğrencisi",
   },
   {
     quote:
-      "Stuttering and it still works really well. I think it's really slick. I love it.",
-    name: "Agnes Wells",
-    role: "UX Director",
+      "Mezun olarak tekrar hazırlanıyordum ve zamanım kısıtlıydı. Filtreleyip birkaç profili karşılaştırdım, kendi programıma uyan hocayı aynı gün buldum.",
+    name: "Emre K.",
+    role: "Mezun, YKS tekrar",
   },
   {
     quote:
-      "It has become the fastest way for me to get an idea out before it disappears.",
-    name: "Mira Chen",
-    role: "Product Lead",
+      "Veli olarak en çok güven arıyordum. Hocanın üniversitesini, deneyimini ve diğer öğrencilerin yorumlarını görebilmek kararımızı çok kolaylaştırdı.",
+    name: "Selin D.",
+    role: "Veli",
   },
 ];
 
 const proofCards = [
   {
-    title: "From typing to talking",
-    body: "Voice is the shortcut from concept to execution.",
-    person: "Bejal Hoffmann",
-    role: "Co-founder of Limelight",
+    title: "Hedefinden hocana giden kısa yol",
+    body: "Doğru filtrelerle dakikalar içinde sana uygun hoca listesine ulaş.",
+    person: "Deniz Y.",
+    role: "11. sınıf öğrencisi",
   },
   {
-    title: "90% faster everywhere",
-    body: "Flow fits into every corner of how I work.",
-    person: "Steven Bartlett",
-    role: "Host of Diary of a CEO",
+    title: "Karşılaştır, sonra karar ver",
+    body: "Puan, yorum, ücret ve deneyimi yan yana görüp bilinçli seçim yap.",
+    person: "Baran T.",
+    role: "Mezun, YKS tekrar",
   },
   {
-    title: "20% faster GTM execution",
-    body: "Flow gave our team a shared speed advantage.",
-    person: "Maya Patel",
-    role: "Growth Lead",
+    title: "Planını güvenle kur",
+    body: "Uygun saati seç, dersini planla, haftalık ritmini oturt.",
+    person: "Elif K.",
+    role: "Matematik hocası",
   },
 ];
 
@@ -241,19 +241,6 @@ function Reveal({
     >
       {children}
     </motion.div>
-  );
-}
-
-function FlowLogo() {
-  return (
-    <span className={styles.brandLockup} aria-label="Flow">
-      <span className={styles.brandBars} aria-hidden>
-        <span />
-        <span />
-        <span />
-      </span>
-      <span>Flow</span>
-    </span>
   );
 }
 
@@ -299,16 +286,16 @@ function WisprButton({
 
 function PlatformPills({ inverse = false }: { inverse?: boolean }) {
   return (
-    <div className={styles.platformPills} aria-label="Supported platforms">
+    <div className={styles.platformPills} aria-label="Kullanım kanalları">
       {platformPills.map((platform) => (
         <span
           className={cn(styles.platformPill, inverse && styles.platformPillInverse)}
           key={platform}
         >
-          {platform === "Mac" ? <Monitor size={13} /> : null}
-          {platform === "Windows" ? <PanelsTopLeft size={13} /> : null}
-          {platform === "iPhone" ? <Smartphone size={13} /> : null}
-          {platform === "Android" ? <Globe2 size={13} /> : null}
+          {platform === "Web" ? <Monitor size={13} /> : null}
+          {platform === "Mobil" ? <Smartphone size={13} /> : null}
+          {platform === "Online ders" ? <Globe2 size={13} /> : null}
+          {platform === "Yüz yüze" ? <BookOpen size={13} /> : null}
           {platform}
         </span>
       ))}
@@ -338,7 +325,7 @@ function FloatingNav() {
             Kayıt Ol
           </WisprButton>
         </div>
-        <button className={styles.menuButton} aria-label="Open navigation">
+        <button className={styles.menuButton} aria-label="Menüyü aç">
           <Menu size={18} />
         </button>
       </nav>
@@ -585,79 +572,6 @@ function HeroSection() {
   );
 }
 
-function PhoneMockup() {
-  return (
-    <div className={styles.phoneMockup} aria-label="Flow phone mockup">
-      <div className={styles.phoneSpeaker} />
-      <div className={styles.phoneCard}>
-        <span className={styles.phoneLabel}>Flow</span>
-        <p>Write faster in all your apps, on any device</p>
-        <div className={styles.waveBars}>
-          {Array.from({ length: 18 }).map((_, index) => (
-            <span key={index} style={{ height: `${12 + (index % 5) * 7}px` }} />
-          ))}
-        </div>
-        <button>tap to speak</button>
-      </div>
-    </div>
-  );
-}
-
-function DarkPlatformSection() {
-  const reduceMotion = useReducedMotion();
-  const { scrollYProgress } = useScroll();
-  const phoneY = useTransform(scrollYProgress, [0.05, 0.28], [80, -72]);
-  const iconsY = useTransform(scrollYProgress, [0.08, 0.35], [70, -46]);
-
-  return (
-    <section className={styles.darkDeviceSection} id="flow-reference-demo">
-      <div className={styles.darkGrid}>
-        <Reveal className={styles.darkCopy}>
-          <PlatformPills inverse />
-          <h2>
-            Write faster in all your apps, on <em>any device</em>
-          </h2>
-          <p>
-            Flow follows your cursor, catches your voice, and formats your thoughts without
-            leaving the app you already use.
-          </p>
-          <WisprButton variant="dark" icon={<Play size={14} />}>
-            Watch in action
-          </WisprButton>
-        </Reveal>
-        <motion.div
-          className={styles.deviceStage}
-          style={{ y: reduceMotion ? 0 : phoneY }}
-        >
-          <PhoneMockup />
-        </motion.div>
-      </div>
-      <motion.div
-        className={styles.appArc}
-        aria-hidden
-        style={{ y: reduceMotion ? 0 : iconsY }}
-      >
-        {appIcons.map((icon) => (
-          <span
-            className={styles.appIcon}
-            key={icon.label + icon.x}
-            style={
-              {
-                "--icon-color": icon.color,
-                "--icon-x": icon.x,
-                "--icon-y": icon.y,
-                "--icon-rotate": icon.rotate,
-              } as CSSProperties
-            }
-          >
-            {icon.label}
-          </span>
-        ))}
-      </motion.div>
-    </section>
-  );
-}
-
 function LogoStrip() {
   const renderUniversityItems = (isDuplicate = false) =>
     universityLogos.map((university) => (
@@ -693,52 +607,55 @@ function ClaimSection() {
     <section className={styles.claimSection}>
       <Reveal className={styles.claimHeader}>
         <h2>
-          4x <span>faster</span> than typing
+          Hedefinden <span>hocana</span> giden kısa yol
         </h2>
         <p>
-          Voice that finally works in forms, docs, code, messages, and anywhere else you write.
+          Sınavına, dersine ve bütçene uygun hocayı dakikalar içinde bul; yorumları oku,
+          karşılaştır, kararını ver.
         </p>
         <div className={styles.ctaRow}>
-          <WisprButton variant="ghost" icon={<Mic size={14} />}>
-            Try Flow
+          <WisprButton variant="ghost" icon={<Sparkles size={14} />} href="/tutors">
+            Hocaları Keşfet
           </WisprButton>
-          <WisprButton icon={<Download size={14} />}>Download for macOS</WisprButton>
+          <WisprButton icon={<UserPlus size={14} />} href="/register">
+            Hoca Olarak Katıl
+          </WisprButton>
         </div>
       </Reveal>
       <div className={styles.speedGrid}>
         <Reveal className={styles.speedCard}>
           <Keyboard size={24} />
-          <span>Keyboard</span>
-          <strong>45 wpm</strong>
+          <span>Tek başına arama</span>
+          <strong>Saatler sürer</strong>
         </Reveal>
         <Reveal className={styles.mediaCard} delay={0.08}>
           <div className={styles.mediaBlur} />
           <div className={styles.curvedPrompt}>
-            How would you like to speed up the file. Here are a few options.
+            Matematik · TYT · Online — sana uygun 24 hoca bulundu.
           </div>
-          <div className={styles.mediaBadge}>Flow</div>
-          <strong>220 wpm</strong>
+          <div className={styles.mediaBadge}>Hocam</div>
+          <strong>Dakikalar içinde</strong>
         </Reveal>
       </div>
     </section>
   );
 }
 
-function WorkSection() {
+function LowerHocamDarkSection() {
   const reduceMotion = useReducedMotion();
   const [activeTab, setActiveTab] = useState(0);
   const activeJourney = tutorJourneyTabs[activeTab];
 
   return (
-    <section className={styles.workSection}>
+    <section className={styles.workSection} id="flow-reference-demo">
       <Reveal className={styles.workHeader}>
         <span className={styles.workEyebrow}>Hocam&apos;ın farkı</span>
         <h2>
-          Sana uygun <em>hocayı</em> bulmanın daha akıllı yolu
+          Sana uygun <SquigglyWord>hocayı</SquigglyWord> daha hızlı bul
         </h2>
         <p>
-          YKS, TYT, AYT ve okul dersleri için hocaları filtrele, profilleri
-          karşılaştır ve ders planını güvenle oluştur.
+          YKS, TYT, AYT ve okul dersleri için hocaları filtrele, profilleri karşılaştır
+          ve ders planını güvenle oluştur.
         </p>
         <div className={styles.workTabs}>
           {tutorDiscoveryPills.map((pill) => (
@@ -746,7 +663,7 @@ function WorkSection() {
           ))}
         </div>
       </Reveal>
-      <Reveal className={styles.workPanel} delay={0.1}>
+      <div className={styles.workPanel}>
         <div className={styles.tutorMatchShell}>
           <div className={styles.journeyTabs} aria-label="Hocam öğrenci yolculuğu">
             {tutorJourneyTabs.map((tab, index) => (
@@ -761,44 +678,56 @@ function WorkSection() {
               </button>
             ))}
           </div>
-          <motion.div
-            key={activeJourney.title}
-            className={styles.journeyPanel}
-            initial={reduceMotion ? false : { opacity: 0, y: -28, filter: "blur(4px)" }}
-            animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-            transition={{ duration: 0.22, ease: "easeInOut" }}
-          >
-            <div className={styles.journeyCopy}>
-              <span>{activeJourney.eyebrow}</span>
-              <h3>{activeJourney.heading}</h3>
-              <p>{activeJourney.body}</p>
-              <div className={styles.journeyChips}>
-                {activeJourney.chips.map((chip) => (
-                  <span key={chip}>{chip}</span>
-                ))}
-              </div>
-            </div>
-            <div className={styles.journeyPreview}>
-              {activeJourney.stats.map((stat) => (
-                <div className={styles.statCard} key={stat.label}>
-                  <span>{stat.label}</span>
-                  <strong>{stat.value}</strong>
+          <div className={styles.journeyPanelViewport}>
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.div
+                key={activeJourney.title}
+                className={styles.journeyPanel}
+                initial={reduceMotion ? false : { opacity: 0, y: -50, filter: "blur(4px)" }}
+                animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                exit={reduceMotion ? undefined : { opacity: 0, y: 50, filter: "blur(4px)" }}
+                transition={{ duration: 0.2, ease: "easeInOut" }}
+              >
+                <div className={styles.journeyCopy}>
+                  <span>{activeJourney.eyebrow}</span>
+                  <h3>{activeJourney.heading}</h3>
+                  <p>{activeJourney.body}</p>
+                  <div className={styles.journeyChips}>
+                    {activeJourney.chips.map((chip) => (
+                      <span key={chip}>{chip}</span>
+                    ))}
+                  </div>
                 </div>
-              ))}
-              <div className={styles.tutorCardStack}>
-                <article>
-                  <strong>Elif K.</strong>
-                  <span>Boğaziçi · Matematik</span>
-                  <small>4.9 puan · 86 yorum</small>
-                </article>
-                <article>
-                  <strong>Mert A.</strong>
-                  <span>İTÜ · Fizik</span>
-                  <small>4.8 puan · 64 yorum</small>
-                </article>
-              </div>
-            </div>
-          </motion.div>
+                <div className={styles.journeyPreview}>
+                  {activeJourney.stats.map((stat) => (
+                    <div className={styles.statCard} key={stat.label}>
+                      <span>{stat.label}</span>
+                      <strong>{stat.value}</strong>
+                    </div>
+                  ))}
+                  <div className={styles.tutorCardStack}>
+                    <article>
+                      <strong>Elif K.</strong>
+                      <span>Boğaziçi · Matematik</span>
+                      <small>4.9 puan · 86 yorum</small>
+                    </article>
+                    <article>
+                      <strong>Mert A.</strong>
+                      <span>İTÜ · Fizik</span>
+                      <small>4.8 puan · 64 yorum</small>
+                    </article>
+                  </div>
+                </div>
+              </motion.div>
+            </AnimatePresence>
+          </div>
+          <div className={styles.differenceHeader}>
+            <span>Hocam&apos;ın farkı ne?</span>
+            <p>
+              Öğrencinin hedefini, seviyesini ve bütçesini dikkate alan sade bir akışla
+              doğru hoca seçeneklerini görünür kılıyoruz.
+            </p>
+          </div>
           <div className={styles.differenceGrid}>
             {hocamDifferenceItems.map((item) => (
               <article key={item.title}>
@@ -808,7 +737,7 @@ function WorkSection() {
             ))}
           </div>
         </div>
-      </Reveal>
+      </div>
     </section>
   );
 }
@@ -818,33 +747,35 @@ function AutoEditsSection() {
     <section className={styles.autoSection}>
       <Reveal className={styles.autoHeader}>
         <h2>
-          AI Auto <em>Edits</em>
+          Gerçek <em>öğrenci yorumları</em>
         </h2>
         <p>
-          Speak naturally and Flow researches your meaning, fixes rough wording, and
-          turns scattered thoughts into finished text.
+          Her hoca profilinde geçmiş öğrencilerin puanları ve yorumları var; kararını
+          gerçek deneyimlere göre ver.
         </p>
         <div className={styles.ctaRow}>
-          <WisprButton variant="ghost" icon={<Sparkles size={14} />}>
-            Try Flow
+          <WisprButton variant="ghost" icon={<Sparkles size={14} />} href="/tutors">
+            Hocaları Keşfet
           </WisprButton>
-          <WisprButton icon={<Download size={14} />}>Download for macOS</WisprButton>
+          <WisprButton icon={<UserPlus size={14} />} href="/register">
+            Hoca Olarak Katıl
+          </WisprButton>
         </div>
       </Reveal>
       <Reveal className={styles.annotationStage}>
-        <span className={styles.annotationOne}>Remove filler</span>
-        <span className={styles.annotationTwo}>Added to Dictionary</span>
-        <span className={styles.annotationThree}>Fixed spelling</span>
+        <span className={styles.annotationOne}>Doğrulanmış profil</span>
+        <span className={styles.annotationTwo}>4.9 puan</span>
+        <span className={styles.annotationThree}>86 yorum</span>
         <div className={styles.annotationCanvas}>
           <p>
-            Let&apos;s reach out to Jenny from Legal. She may have mentioned the NDA
-            isn&apos;t finalized yet, or possibly already sent it. Let&apos;s ask Claire.
+            Elif Hoca ile 8 haftada TYT matematik netim 18&apos;den 31&apos;e çıktı.
+            Konu anlatımı çok net, dersler planlı ilerliyor.
           </p>
           <div className={styles.inputBar}>
             <span />
             <span />
             <span />
-            <button aria-label="Send dictation">
+            <button aria-label="Yorumu gönder">
               <ArrowUpRight size={16} />
             </button>
           </div>
@@ -878,12 +809,12 @@ function DictionarySections() {
   return (
     <section className={styles.dictionarySection}>
       <FeatureMockup
-        title="Personal dictionary"
-        body="Flow automatically learns your unique words and adds them to your personal dictionary."
+        title="Konu bazlı eşleşme"
+        body="Zorlandığın konuları seç; o alanda güçlü hocalar öne çıksın."
       >
         <div className={styles.mockHeader}>
-          <strong>Your Dictionary</strong>
-          <button aria-label="Add dictionary item">
+          <strong>Konuların</strong>
+          <button aria-label="Konu ekle">
             <Plus size={16} />
           </button>
         </div>
@@ -894,12 +825,12 @@ function DictionarySections() {
         </div>
       </FeatureMockup>
       <FeatureMockup
-        title="Snippet library"
-        body="Create shortcuts for the things your team says over and over."
+        title="Çalışma düzenin hazır"
+        body="Ders planı, deneme takibi ve tekrar programı tek yerde."
       >
         <div className={styles.mockHeader}>
-          <strong>Your Snippets</strong>
-          <button aria-label="Add snippet">
+          <strong>Çalışma Araçların</strong>
+          <button aria-label="Araç ekle">
             <Plus size={16} />
           </button>
         </div>
@@ -910,8 +841,8 @@ function DictionarySections() {
         </div>
       </FeatureMockup>
       <FeatureMockup
-        title="100+ languages"
-        body="Flow automatically detects and transcribes in your language."
+        title="Tüm YKS dersleri"
+        body="TYT'den AYT'ye bütün derslerde uygun hoca bul."
       >
         <div className={styles.languagePanel}>
           {languageItems.map((language) => (
@@ -922,8 +853,8 @@ function DictionarySections() {
           ))}
         </div>
       </FeatureMockup>
-      <WisprButton variant="ghost" icon={<BookOpen size={14} />}>
-        Explore all features
+      <WisprButton variant="ghost" icon={<BookOpen size={14} />} href="/tutors">
+        Tüm Hocaları Gör
       </WisprButton>
     </section>
   );
@@ -933,12 +864,14 @@ function LavenderCta() {
   return (
     <section className={styles.lavenderCta}>
       <PlatformPills />
-      <h2>Flow, wherever you work</h2>
+      <h2>Ders desteğin her yerde yanında</h2>
       <p>
-        Flow runs natively on Mac, Windows, iOS, and Android. Use it at your desk
-        or deep work, and on your phone when you are on the move.
+        Hocam web&apos;de ve mobilde çalışır. İster evde ister yolda; hocanı bul,
+        dersini planla, ilerlemeni takip et.
       </p>
-      <WisprButton icon={<Download size={14} />}>Download for macOS</WisprButton>
+      <WisprButton icon={<Sparkles size={14} />} href="/tutors">
+        Hocaları Keşfet
+      </WisprButton>
     </section>
   );
 }
@@ -947,7 +880,7 @@ function TestimonialsSection() {
   return (
     <section className={styles.testimonials} id="testimonials">
       <Reveal>
-        <h2>Flow love</h2>
+        <h2>Öğrenciler neden Hocam&apos;ı seçiyor?</h2>
       </Reveal>
       <div className={styles.quoteScroller}>
         {testimonials.map((testimonial) => (
@@ -978,14 +911,14 @@ function FinalBrandFooter() {
   return (
     <footer className={styles.footer}>
       <Reveal>
-        <span className={styles.finalBrand}>Flow</span>
+        <span className={styles.finalBrand}>Hocam</span>
       </Reveal>
       <div className={styles.footerLinks}>
-        <FlowLogo />
-        <a href="#flow-reference-hero">Product</a>
-        <a href="#flow-reference-demo">Demo</a>
-        <a href="#flow-reference-demo">Privacy</a>
-        <a href="#flow-reference-demo">Contact</a>
+        <HocamBrand />
+        <a href="/tutors">Hocalar</a>
+        <a href="#flow-reference-demo">Nasıl Çalışır</a>
+        <a href="/support">Gizlilik</a>
+        <a href="/support">İletişim</a>
       </div>
     </footer>
   );
@@ -996,10 +929,9 @@ export function WisprReferencePage() {
     <div className={styles.page}>
       <FloatingNav />
       <HeroSection />
-      <DarkPlatformSection />
       <LogoStrip />
+      <LowerHocamDarkSection />
       <ClaimSection />
-      <WorkSection />
       <AutoEditsSection />
       <DictionarySections />
       <LavenderCta />
