@@ -32,21 +32,35 @@ function ConversationRow({
     ? formatDate(conversation.created_at)
     : "";
   const unreadCount = conversation.unread_count ?? 0;
+  const profileHref = conversation.tutor_profile
+    ? `/tutors/${conversation.tutor_profile.id}`
+    : null;
 
   return (
-    <button
-      type="button"
-      onClick={() => onSelect(conversation.id)}
+    <div
       className={cn(
         "flex w-full cursor-pointer items-center gap-3 border-b p-4 text-left transition-colors hover:bg-muted/60",
         isSelected ? "bg-muted" : "bg-transparent"
       )}
     >
       <div className="relative shrink-0">
-        <ParticipantAvatar
-          name={displayName}
-          avatarUrl={conversation.other_participant?.avatar_url}
-        />
+        {profileHref ? (
+          <Link
+            href={profileHref}
+            className="block rounded-full focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+            title={`${displayName} profilini aç`}
+          >
+            <ParticipantAvatar
+              name={displayName}
+              avatarUrl={conversation.other_participant?.avatar_url}
+            />
+          </Link>
+        ) : (
+          <ParticipantAvatar
+            name={displayName}
+            avatarUrl={conversation.other_participant?.avatar_url}
+          />
+        )}
         {unreadCount > 0 && (
           <span
             className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold text-primary-foreground"
@@ -56,11 +70,15 @@ function ConversationRow({
           </span>
         )}
       </div>
-      <div className="min-w-0 flex-1">
+      <button
+        type="button"
+        onClick={() => onSelect(conversation.id)}
+        className="min-w-0 flex-1 text-left"
+      >
         <p className="truncate text-sm font-medium">{displayName}</p>
         <p className="text-xs text-muted-foreground">{created}</p>
-      </div>
-    </button>
+      </button>
+    </div>
   );
 }
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect, useRef } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -177,9 +178,10 @@ function ConversationContent({
   const headerAvatarUrl = conversation?.other_participant?.avatar_url;
   const tutorForBooking = conversation?.tutor_profile ?? null;
   const showBookingButton = !!tutorForBooking;
+  const profileHref = tutorForBooking ? `/tutors/${tutorForBooking.id}` : null;
 
   return (
-    <div className="flex h-[calc(100vh-64px)] overflow-hidden">
+    <div className="flex h-[calc(100vh-64px)] w-full min-w-0 overflow-hidden">
       <aside className="hidden w-80 shrink-0 flex-col overflow-y-auto border-r md:flex">
         <header className="shrink-0 border-b p-4">
           <h1 className="text-xl font-semibold">Mesajlar</h1>
@@ -193,7 +195,7 @@ function ConversationContent({
         />
       </aside>
 
-      <section className="flex min-w-0 flex-1 flex-col">
+      <section className="flex min-w-0 flex-1 flex-col overflow-hidden">
         {/* Header */}
         <header className="flex shrink-0 items-center justify-between gap-3 border-b p-4">
           <div className="flex min-w-0 items-center gap-3">
@@ -205,8 +207,21 @@ function ConversationContent({
             >
               ←
             </button>
-            <ParticipantAvatar name={headerTitle} avatarUrl={headerAvatarUrl} />
-            <h1 className="truncate font-semibold">{headerTitle}</h1>
+            {profileHref ? (
+              <Link
+                href={profileHref}
+                className="flex min-w-0 items-center gap-3 rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                title={`${headerTitle} profilini aç`}
+              >
+                <ParticipantAvatar name={headerTitle} avatarUrl={headerAvatarUrl} />
+                <h1 className="truncate font-semibold hover:underline">{headerTitle}</h1>
+              </Link>
+            ) : (
+              <>
+                <ParticipantAvatar name={headerTitle} avatarUrl={headerAvatarUrl} />
+                <h1 className="truncate font-semibold">{headerTitle}</h1>
+              </>
+            )}
           </div>
           {showBookingButton && (
             <button
@@ -221,7 +236,7 @@ function ConversationContent({
 
         {/* Messages area — mostly-white with a subtle dot texture for depth */}
         <div
-          className="min-h-0 flex-1 overflow-y-auto bg-background p-4"
+          className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto bg-background p-3 sm:p-4"
           style={{
             backgroundImage:
               "radial-gradient(hsl(var(--muted-foreground) / 0.08) 1px, transparent 1px)",
@@ -245,7 +260,7 @@ function ConversationContent({
           )}
 
           {!messagesLoading && !messagesError && allMessages.length > 0 && (
-            <div className="flex flex-col">
+            <div className="flex min-w-0 flex-col">
               {threadItems.map((item) =>
                 item.kind === "separator" ? (
                   <div key={item.key} className="my-3 flex justify-center">

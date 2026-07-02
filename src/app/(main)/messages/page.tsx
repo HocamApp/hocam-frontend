@@ -24,9 +24,9 @@ function MessagesContent() {
   };
 
   return (
-    <div className="flex h-[calc(100vh-64px)] overflow-hidden">
+    <div className="flex h-[calc(100vh-64px)] w-full min-w-0 overflow-hidden">
       {/* Left panel */}
-      <div className="flex w-full shrink-0 flex-col overflow-y-auto border-r md:w-80">
+      <div className="flex w-full min-w-0 shrink-0 flex-col overflow-x-hidden overflow-y-auto border-r md:w-80">
         <header className="shrink-0 border-b p-4">
           <h1 className="text-xl font-semibold">Mesajlar</h1>
         </header>
@@ -40,7 +40,7 @@ function MessagesContent() {
       </div>
 
       {/* Right panel - empty state when no conversation selected */}
-      <div className="hidden flex-1 flex-col items-center justify-center p-8 md:flex">
+      <div className="hidden min-w-0 flex-1 flex-col items-center justify-center p-8 md:flex">
         <MessageCircle className="h-12 w-12 text-muted-foreground" />
         <p className="mt-4 font-medium">Bir konuşma seçin</p>
         <p className="mt-1 text-sm text-muted-foreground">

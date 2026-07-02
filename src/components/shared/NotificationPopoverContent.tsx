@@ -80,16 +80,16 @@ export function NotificationPopoverContent() {
               n.is_read ? "bg-transparent" : "bg-blue-500"
             }`}
           />
-          <div className="min-w-0 flex-1">
+          <div className="min-w-0 flex-1 overflow-hidden">
             <p
-              className={`text-sm leading-snug ${
+              className={`break-words text-sm leading-snug [overflow-wrap:anywhere] ${
                 n.is_read ? "font-normal" : "font-semibold"
               }`}
             >
               {n.title}
             </p>
             {n.body && (
-              <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">
+              <p className="mt-0.5 line-clamp-2 break-words text-xs text-muted-foreground [overflow-wrap:anywhere]">
                 {n.body}
               </p>
             )}

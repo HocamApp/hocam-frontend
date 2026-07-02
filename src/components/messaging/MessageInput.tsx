@@ -191,7 +191,7 @@ export function MessageInput({
           Görsel gönderim için hazırlanıyor...
         </div>
       )}
-      <div className="flex gap-2 p-4">
+      <div className="flex min-w-0 items-end gap-2 p-3 sm:p-4">
         <input
           type="file"
           accept="image/*"
@@ -226,7 +226,7 @@ export function MessageInput({
           rows={1}
           disabled={isSubmitting || disabled}
           className={cn(
-            "min-h-[40px] max-h-[120px] resize-none overflow-y-auto"
+            "min-h-[40px] min-w-0 max-h-[120px] resize-none overflow-y-auto break-words [overflow-wrap:anywhere]"
           )}
         />
         <SymbolPicker
