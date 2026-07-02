@@ -311,7 +311,7 @@ function TutorsPageContent() {
               </p>
               {!isListLoading && tutors && (
                 <p className="mt-1 text-xs text-muted-foreground">
-                  {tutors.count} hoca bulundu
+                  {tutors.count ?? 0} hoca bulundu
                 </p>
               )}
             </div>

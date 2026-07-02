@@ -27,6 +27,17 @@ export interface TutorFilters {
   availability_time?: string;
 }
 
+// Backend may still return a plain array during a deploy/cache lag instead of
+// the paginated { count, next, previous, results } shape; normalize to paginated.
+function normalizeTutorsResponse(
+  data: PaginatedResponse<TutorProfile> | TutorProfile[]
+): PaginatedResponse<TutorProfile> {
+  if (Array.isArray(data)) {
+    return { count: data.length, next: null, previous: null, results: data };
+  }
+  return data;
+}
+
 export async function fetchTutors(
   filters: TutorFilters = {},
   page = 1,
@@ -40,10 +51,10 @@ export async function fetchTutors(
   });
   params.set("page", String(page));
   params.set("page_size", String(pageSize));
-  const response = await api.get<PaginatedResponse<TutorProfile>>(
+  const response = await api.get<PaginatedResponse<TutorProfile> | TutorProfile[]>(
     `/tutors/?${params.toString()}`
   );
-  return response.data;
+  return normalizeTutorsResponse(response.data);
 }
 
 export async function fetchSubjects(): Promise<Subject[]> {
