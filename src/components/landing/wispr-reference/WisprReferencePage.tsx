@@ -1,6 +1,7 @@
 "use client";
 
 import type { CSSProperties, ReactNode } from "react";
+import Image from "next/image";
 import {
   ArrowUpRight,
   BookOpen,
@@ -33,7 +34,46 @@ const navLinks = [
   { label: "Destek", href: "/support" },
 ];
 const platformPills = ["Mac", "Windows", "iPhone", "Android"];
-const logoMarks = ["replit", "nuuly", "warp", "RIVIAN", "Notion", "Mercury"];
+const universityLogos = [
+  { name: "ODTÜ", logoSrc: "/landing/university-logos/odtu.svg", alt: "ODTÜ logosu" },
+  { name: "İTÜ", logoSrc: "/landing/university-logos/itu.png", alt: "İTÜ logosu" },
+  { name: "YTÜ", logoSrc: "/landing/university-logos/ytu.svg", alt: "YTÜ logosu" },
+  {
+    name: "Boğaziçi",
+    logoSrc: "/landing/university-logos/bogazici.svg",
+    alt: "Boğaziçi Üniversitesi logosu",
+  },
+  {
+    name: "Koç",
+    logoSrc: "/landing/university-logos/koc.svg",
+    alt: "Koç Üniversitesi logosu",
+  },
+  {
+    name: "Sabancı",
+    logoSrc: "/landing/university-logos/sabanci.svg",
+    alt: "Sabancı Üniversitesi logosu",
+  },
+  {
+    name: "Bilkent",
+    logoSrc: "/landing/university-logos/bilkent.png",
+    alt: "Bilkent Üniversitesi logosu",
+  },
+  {
+    name: "Hacettepe",
+    logoSrc: "/landing/university-logos/hacettepe.svg",
+    alt: "Hacettepe Üniversitesi logosu",
+  },
+  {
+    name: "Ege Üniversitesi",
+    logoSrc: "/landing/university-logos/ege.svg",
+    alt: "Ege Üniversitesi logosu",
+  },
+  {
+    name: "İstanbul Üniversitesi",
+    logoSrc: "/landing/university-logos/istanbul.png",
+    alt: "İstanbul Üniversitesi logosu",
+  },
+];
 const workTabs = [
   "Teams",
   "Students",
@@ -337,19 +377,29 @@ function DarkPlatformSection() {
 }
 
 function LogoStrip() {
+  const renderUniversityItems = (isDuplicate = false) =>
+    universityLogos.map((university) => (
+      <span className={styles.universityItem} key={`${university.name}-${isDuplicate ? "copy" : "main"}`}>
+        <Image
+          className={styles.universityLogo}
+          src={university.logoSrc}
+          alt={isDuplicate ? "" : university.alt}
+          width={56}
+          height={56}
+        />
+        <span>{university.name}</span>
+      </span>
+    ));
+
   return (
     <section className={styles.logoStrip}>
-      <div className={styles.character} aria-hidden>
-        <span />
-        <span />
-        <span />
-      </div>
-      <p>Used by professionals everywhere to speak up their thoughts</p>
+      <p>Türkiye&apos;nin önde gelen üniversitelerinden öğrencilerle uyumlu hocalar</p>
       <div className={styles.logoViewport}>
         <div className={styles.logoTrack}>
-          {[...logoMarks, ...logoMarks].map((logo, index) => (
-            <span key={`${logo}-${index}`}>{logo}</span>
-          ))}
+          <div className={styles.logoGroup}>{renderUniversityItems()}</div>
+          <div className={styles.logoGroup} aria-hidden="true">
+            {renderUniversityItems(true)}
+          </div>
         </div>
       </div>
     </section>
