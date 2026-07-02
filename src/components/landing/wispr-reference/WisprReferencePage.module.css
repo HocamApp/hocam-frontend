@@ -203,40 +203,6 @@
   object-position: center 30%;
 }
 
-.heroScreenOverlay {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: clamp(320px, 58vw, 920px);
-  max-width: calc(100% - 32px);
-  aspect-ratio: 16 / 10;
-  background: #fdfdfb;
-  border: 1px solid rgba(26, 26, 26, 0.08);
-  border-radius: 12px;
-  box-shadow:
-    0 8px 24px rgba(26, 26, 26, 0.14),
-    0 24px 64px rgba(26, 26, 26, 0.18);
-  pointer-events: none;
-  opacity: 0;
-  transform: translate(-50%, -50%) scale(0.96);
-  animation: heroScreenReveal 0.7s ease-out 3.7s forwards;
-}
-
-@keyframes heroScreenReveal {
-  to {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .heroScreenOverlay {
-    animation: none;
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
-  }
-}
-
 .claimHeader h2,
 .workHeader h2,
 .autoHeader h2,

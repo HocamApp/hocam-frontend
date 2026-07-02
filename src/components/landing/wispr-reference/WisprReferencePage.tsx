@@ -249,14 +249,13 @@ function HeroSection() {
         <video
           className={styles.heroVideo}
           src="/landing/hocam-hero-blank-screen.mp4"
-          poster="/landing/hocam-hero-study-room.png"
+          poster="/landing/hocam-hero-monitor-entry-poster.jpg"
           autoPlay
           muted
           playsInline
           preload="metadata"
           aria-hidden
         />
-        <div className={styles.heroScreenOverlay} aria-hidden />
       </div>
     </section>
   );
