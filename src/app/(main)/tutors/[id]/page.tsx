@@ -14,7 +14,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { formatLessonCount, formatPrice, formatRating } from "@/lib/utils";
 import { ReviewCard } from "@/components/tutors/ReviewCard";
 import { TutorPresenceBadge } from "@/components/tutors/TutorPresenceBadge";
-import { LessonRequestModal } from "@/components/tutors/LessonRequestModal";
+import { MessageRequestModal } from "@/components/tutors/MessageRequestModal";
 import { BookingModal } from "@/components/lessons/BookingModal";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { Button } from "@/components/ui/button";
@@ -426,13 +426,17 @@ export default function TutorProfilePage({
                     )}
                     {requestSent && !bookingComplete && (
                       <div className="rounded-lg border bg-muted/40 p-2 text-center text-sm">
-                        <p className="text-muted-foreground">Mesajın gönderildi.</p>
-                        <Link
-                          href={requestConversationId ? `/messages/${requestConversationId}` : "/messages"}
-                          className="font-medium text-primary hover:underline"
-                        >
-                          Mesajlara git
-                        </Link>
+                        <p className="text-muted-foreground">
+                          Mesaj isteğin gönderildi. Hoca kabul ederse konuşma başlayacak.
+                        </p>
+                        {requestConversationId && (
+                          <Link
+                            href={`/messages/${requestConversationId}`}
+                            className="font-medium text-primary hover:underline"
+                          >
+                            Mesajlara git
+                          </Link>
+                        )}
                       </div>
                     )}
                   </>
@@ -697,16 +701,17 @@ export default function TutorProfilePage({
         </div>
       </section>
 
-      <LessonRequestModal
+      <MessageRequestModal
         tutor={tutor}
         isOpen={isRequestModalOpen}
         onClose={() => setIsRequestModalOpen(false)}
-        learningContext={learningContext}
-        onSuccess={(lessonRequest) => {
-          setRequestConversationId(lessonRequest.conversation_id ?? null);
+        onSuccess={(messageRequest) => {
+          setRequestConversationId(messageRequest.conversation_id ?? null);
           setRequestSent(true);
           setIsRequestModalOpen(false);
-          toast.success("Mesajın hocaya gönderildi.");
+          toast.success(
+            "Mesaj isteğin hocaya gönderildi. Hoca kabul ederse konuşma başlayacak."
+          );
         }}
       />
       <BookingModal
