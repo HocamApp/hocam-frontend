@@ -105,11 +105,15 @@ export function MessageInput({
       const imageError = Array.isArray(data?.image)
         ? (data?.image[0] as string)
         : undefined;
+      const messageTextError = Array.isArray(data?.message_text)
+        ? (data?.message_text[0] as string)
+        : undefined;
       const nonFieldError = Array.isArray(data?.non_field_errors)
         ? (data?.non_field_errors[0] as string)
         : undefined;
       toast.error(
         imageError ||
+          messageTextError ||
           nonFieldError ||
           "Mesaj gönderilemedi. Lütfen tekrar deneyin."
       );
