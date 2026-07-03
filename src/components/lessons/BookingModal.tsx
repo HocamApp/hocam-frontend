@@ -243,7 +243,10 @@ export function BookingModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-lg" showClose>
+      <DialogContent
+        className="box-border w-[min(42rem,calc(100vw-2rem))] max-w-none overflow-hidden"
+        showClose
+      >
         <DialogHeader>
           <DialogTitle className="text-center">
             <span className="mr-2">
@@ -263,7 +266,7 @@ export function BookingModal({
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6 py-2">
+        <div className="min-w-0 max-w-full space-y-6 py-2">
           {/* Step 1 */}
           {step === 1 && (
             <>
@@ -274,14 +277,14 @@ export function BookingModal({
               )}
               <div>
                 <label className="text-sm font-medium">Ders konusu</label>
-                <div className="mt-2 grid grid-cols-2 gap-2">
+                <div className="mt-2 grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-2">
                   {(tutor.subjects ?? []).map((s) => (
                     <button
                       key={s.id}
                       type="button"
                       onClick={() => setSelectedSubjectId(String(s.id))}
                       className={cn(
-                        "rounded-lg border p-3 text-left transition-colors",
+                        "min-w-0 rounded-lg border p-3 text-left transition-colors",
                         selectedSubjectId === String(s.id)
                           ? "border-primary bg-primary/5"
                           : "border-border"
@@ -300,7 +303,7 @@ export function BookingModal({
               </div>
               <div>
                 <label className="text-sm font-medium">Ders süresi</label>
-                <div className="mt-2 flex gap-2">
+                <div className="mt-2 flex flex-wrap gap-2">
                   {DURATION_OPTIONS.map((dur) => (
                     <Button
                       key={dur}
@@ -317,7 +320,9 @@ export function BookingModal({
                 </p>
               </div>
               <div className="flex justify-end">
-                <Button onClick={handleNextStep1}>İleri →</Button>
+                <Button className="w-full sm:w-auto" onClick={handleNextStep1}>
+                  İleri →
+                </Button>
               </div>
             </>
           )}
@@ -328,9 +333,9 @@ export function BookingModal({
               {apiError && (
                 <ErrorMessage message={apiError} />
               )}
-              <div>
+              <div className="min-w-0 max-w-full">
                 <label className="text-sm font-medium">Tarih</label>
-                <div className="mt-2 flex gap-2 overflow-x-auto pb-2">
+                <div className="mt-2 flex max-w-full gap-2 overflow-x-auto overscroll-x-contain pb-2">
                   {next14Days.map((d) => {
                     const disabled = !hasAvailabilityOnDay(d);
                     const selected =
@@ -343,7 +348,7 @@ export function BookingModal({
                         disabled={disabled}
                         onClick={() => !disabled && setSelectedDate(d)}
                         className={cn(
-                          "shrink-0 rounded-lg border px-3 py-2 text-center text-sm transition-colors",
+                          "w-16 shrink-0 rounded-lg border px-3 py-2 text-center text-sm transition-colors",
                           disabled && "cursor-not-allowed opacity-50",
                           selected && "bg-primary text-primary-foreground border-primary",
                           !selected && !disabled && "border-border hover:bg-muted"
@@ -358,7 +363,7 @@ export function BookingModal({
                   })}
                 </div>
               </div>
-              <div>
+              <div className="min-w-0 max-w-full">
                 <label className="text-sm font-medium">Saat</label>
                 {!selectedDate ? (
                   <p className="mt-2 text-sm text-muted-foreground">
@@ -369,13 +374,14 @@ export function BookingModal({
                     Bu tarihte müsait saat yok
                   </p>
                 ) : (
-                  <div className="mt-2 grid grid-cols-4 gap-2">
+                  <div className="mt-2 grid min-w-0 grid-cols-[repeat(auto-fit,minmax(5.5rem,1fr))] gap-2">
                     {slotsForSelectedDay.map((slot) => (
                       <Button
                         key={slot}
                         type="button"
                         variant={selectedTime === slot ? "default" : "outline"}
                         size="sm"
+                        className="w-full min-w-0"
                         onClick={() => setSelectedTime(slot)}
                       >
                         {slot}
@@ -385,7 +391,7 @@ export function BookingModal({
                 )}
               </div>
               {selectedDate && selectedTime && (
-                <div className="rounded-lg bg-muted p-3 text-sm">
+                <div className="min-w-0 max-w-full rounded-lg bg-muted p-3 text-sm">
                   <p>
                     📅{" "}
                     {selectedDate.toLocaleDateString("tr-TR", {
@@ -395,17 +401,22 @@ export function BookingModal({
                     })}{" "}
                     {selectedTime} — {endTime}
                   </p>
-                  <p className="mt-1 text-muted-foreground">
+                  <p className="mt-1 break-words text-muted-foreground">
                     {selectedSubject?.name} · {selectedDuration} dakika ·{" "}
                     {formatPrice(calculatedPrice)}
                   </p>
                 </div>
               )}
-              <div className="flex justify-between">
-                <Button variant="ghost" onClick={() => setStep(1)}>
+              <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <Button
+                  className="w-full sm:w-auto"
+                  variant="ghost"
+                  onClick={() => setStep(1)}
+                >
                   ← Geri
                 </Button>
                 <Button
+                  className="w-full sm:w-auto"
                   onClick={handleNextStep2}
                   disabled={!selectedDate || !selectedTime}
                 >
@@ -423,7 +434,7 @@ export function BookingModal({
                   Bu rezervasyon öğrenme hedefinle ilişkilendirilecek.
                 </div>
               )}
-              <div className="flex items-center gap-3">
+              <div className="flex min-w-0 items-center gap-3">
                 <Avatar className="h-10 w-10">
                   <AvatarImage
                     src={tutor.profile_picture || '/images/demo-teacher.jpg'}
@@ -433,26 +444,26 @@ export function BookingModal({
                     {getInitials(tutor.name, tutor.surname)}
                   </AvatarFallback>
                 </Avatar>
-                <div>
-                  <p className="font-medium">
+                <div className="min-w-0">
+                  <p className="truncate font-medium">
                     {tutor.name} {tutor.surname}
                   </p>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="truncate text-sm text-muted-foreground">
                     {tutor.university}
                   </p>
                 </div>
               </div>
               <dl className="space-y-2 text-sm">
-                <div className="flex justify-between">
+                <div className="flex min-w-0 flex-wrap justify-between gap-x-4 gap-y-1">
                   <dt className="text-muted-foreground">Ders:</dt>
-                  <dd>
+                  <dd className="min-w-0 break-words text-right">
                     {selectedSubject.name}{" "}
                     <Badge variant="secondary" className="text-xs">
                       {selectedSubject.exam_type}
                     </Badge>
                   </dd>
                 </div>
-                <div className="flex justify-between">
+                <div className="flex flex-wrap justify-between gap-x-4 gap-y-1">
                   <dt className="text-muted-foreground">Tarih:</dt>
                   <dd>
                     {selectedDate?.toLocaleDateString("tr-TR", {
@@ -482,12 +493,16 @@ export function BookingModal({
               <p className="text-xs text-muted-foreground">
                 Ödeme ders sonrasında hoca ile mutabık kalınan yöntemle yapılır.
               </p>
-              <div className="flex justify-between gap-2">
-                <Button variant="ghost" onClick={() => setStep(2)}>
+              <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <Button
+                  className="w-full sm:w-auto"
+                  variant="ghost"
+                  onClick={() => setStep(2)}
+                >
                   ← Geri
                 </Button>
                 <Button
-                  className="flex-1"
+                  className="w-full sm:flex-1"
                   onClick={handleSubmit}
                   disabled={isSubmitting}
                 >
