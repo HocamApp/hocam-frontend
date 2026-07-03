@@ -11,7 +11,7 @@ import { FavoriteButton } from "@/components/tutors/FavoriteButton";
 import { fetchTutorById, fetchTutorReviews, fetchTutorSubjectRatings } from "@/lib/tutorsApi";
 import { fetchTutorAvailability } from "@/lib/dashboardApi";
 import { useAuth } from "@/hooks/useAuth";
-import { formatPrice, formatRating } from "@/lib/utils";
+import { formatLessonCount, formatPrice, formatRating } from "@/lib/utils";
 import { ReviewCard } from "@/components/tutors/ReviewCard";
 import { TutorPresenceBadge } from "@/components/tutors/TutorPresenceBadge";
 import { LessonRequestModal } from "@/components/tutors/LessonRequestModal";
@@ -241,6 +241,7 @@ export default function TutorProfilePage({
     ? reviewsExpanded ? reviews : reviews.slice(0, 5)
     : [];
   const hasMoreReviews = Array.isArray(reviews) && reviews.length > 5 && !reviewsExpanded;
+  const completedLessonsLabel = `${formatLessonCount(tutor?.completed_lessons_count ?? 0)} ders`;
   const shareTitle = tutor
     ? `${tutor.name} ${tutor.surname} · Hocam`
     : "Hocam";
@@ -313,12 +314,14 @@ export default function TutorProfilePage({
                 <TutorPresenceBadge isOnline={tutor.is_online} />
               </div>
               {tutor.total_reviews > 0 && (
-                <div className="mt-2 flex items-center gap-1.5 text-sm">
+                <div className="mt-2 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-sm">
                   <Stars rating={tutor.rating} />
                   <span className="font-medium">{formatRating(tutor.rating)}</span>
                   <span className="text-muted-foreground">
                     ({tutor.total_reviews} değerlendirme)
                   </span>
+                  <span className="text-muted-foreground">·</span>
+                  <span className="text-muted-foreground">{completedLessonsLabel}</span>
                 </div>
               )}
               {tutor.yks_rank > 0 && (
@@ -371,6 +374,8 @@ export default function TutorProfilePage({
                 ) : (
                   <span className="text-muted-foreground">Henüz değerlendirme yok</span>
                 )}
+                <span className="text-muted-foreground">·</span>
+                <span className="text-muted-foreground">{completedLessonsLabel}</span>
               </div>
 
               <div className="flex flex-wrap gap-1">

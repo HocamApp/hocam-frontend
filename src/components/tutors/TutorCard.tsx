@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { TutorProfile } from "@/types";
-import { formatPrice, formatRating } from "@/lib/utils";
+import { formatLessonCount, formatPrice, formatRating } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -67,6 +67,7 @@ export function TutorCard({
   const visibleSubjects = orderedSubjects.slice(0, 4);
   const remainingCount = orderedSubjects.length - 4;
   const tutorHref = buildTutorHref(tutor.id, learningContext);
+  const completedLessonsLabel = `${formatLessonCount(tutor.completed_lessons_count ?? 0)} ders`;
 
   return (
     <Card className="h-full transition-shadow duration-200 hover:border-primary/30 hover:shadow-md">
@@ -110,17 +111,19 @@ export function TutorCard({
 
         <div className="flex items-center justify-between border-t px-4 py-3">
           <Link href={tutorHref} className="min-w-0 flex-1 cursor-pointer">
-            <div className="truncate">
+            <div className="flex min-w-0 flex-wrap items-center gap-x-1 text-sm">
               {tutor.total_reviews > 0 ? (
                 <>
                   <span className="font-medium">★ {formatRating(tutor.rating)}</span>
-                  <span className="ml-1 text-sm text-muted-foreground">
+                  <span className="text-muted-foreground">
                     ({tutor.total_reviews} değerlendirme)
                   </span>
                 </>
               ) : (
-                <span className="text-sm text-muted-foreground">Henüz değerlendirme yok</span>
+                <span className="text-muted-foreground">Henüz değerlendirme yok</span>
               )}
+              <span className="text-muted-foreground">·</span>
+              <span className="text-muted-foreground">{completedLessonsLabel}</span>
             </div>
           </Link>
           <div className="flex items-center gap-1">

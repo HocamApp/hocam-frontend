@@ -270,6 +270,7 @@ export interface TutorProfile {
   hourly_price: number;
   rating: number;
   total_reviews: number;
+  completed_lessons_count?: number | null;
   is_verified: boolean;
   is_online: boolean;
   subjects: Subject[];

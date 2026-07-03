@@ -19,6 +19,19 @@ export function formatRating(rating: number | string): string {
   return Number(rating).toFixed(1);
 }
 
+export function formatLessonCount(count: number): string {
+  if (!Number.isFinite(count) || count < 0) return "0";
+  if (count < 1000) return String(count);
+
+  const compact = count / 1000;
+  const formatted =
+    Number.isInteger(compact)
+      ? Math.round(compact).toString()
+      : compact.toFixed(1).replace(".", ",");
+
+  return `${formatted} B`;
+}
+
 // Format a date string to Turkish locale
 export function formatDate(dateString: string): string {
   return new Date(dateString).toLocaleDateString("tr-TR", {
