@@ -289,6 +289,18 @@ export interface LessonRequest {
   learning_context?: LearningContext | null;
 }
 
+export interface MessageRequest {
+  id: string;
+  student: { id: string; email: string };
+  tutor: { id: string; name: string; surname: string };
+  message: string;
+  status: "pending" | "accepted" | "rejected" | "blocked";
+  conversation_id?: string | null;
+  created_at: string;
+  updated_at?: string;
+  responded_at?: string | null;
+}
+
 export interface Booking {
   id: string;
   student: { id: string; email: string };

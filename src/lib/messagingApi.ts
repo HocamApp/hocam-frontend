@@ -1,5 +1,21 @@
 import api from "./api";
-import { Conversation, Message, MessageReplyPreview } from "@/types";
+import { Conversation, Message, MessageReplyPreview, MessageRequest } from "@/types";
+
+export interface CreateMessageRequestPayload {
+  tutor: string;
+  message: string;
+}
+
+/** Create a first-contact message request to a tutor (no subject required). */
+export async function createMessageRequest(
+  payload: CreateMessageRequestPayload
+): Promise<MessageRequest> {
+  const response = await api.post<MessageRequest>(
+    "/messaging/message-requests/",
+    payload
+  );
+  return response.data;
+}
 
 export async function fetchConversations(): Promise<Conversation[]> {
   const response = await api.get<Conversation[]>("/conversations/");
