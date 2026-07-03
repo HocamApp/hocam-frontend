@@ -35,6 +35,8 @@ import {
 } from "@/components/ui/form";
 import { cn } from "@/lib/utils";
 
+const BIO_MAX_LENGTH = 1000;
+
 const editSchema = z.object({
   university: z.string().min(1, "Üniversite zorunludur"),
   department: z.string().min(1, "Bölüm zorunludur"),
@@ -52,7 +54,7 @@ const editSchema = z.object({
       message: "Ücret pozitif olmalıdır",
     }),
   intro_video_url: z.string().optional(),
-  bio: z.string().optional(),
+  bio: z.string().max(BIO_MAX_LENGTH, "Hakkımda en fazla 1000 karakter olabilir").optional(),
 });
 
 type EditFormValues = z.infer<typeof editSchema>;
@@ -123,7 +125,7 @@ function TutorProfileEditContent() {
         yks_rank: profile.yks_rank != null ? String(profile.yks_rank) : "",
         hourly_price: profile.hourly_price != null ? String(profile.hourly_price) : "",
         intro_video_url: profile.intro_video_url ?? "",
-        bio: profile.bio ?? "",
+        bio: (profile.bio ?? "").slice(0, BIO_MAX_LENGTH),
       });
       setSelectedSubjectIds(profile.subjects.map((s) => s.id));
       setProfileLoaded(true);
@@ -328,8 +330,12 @@ function TutorProfileEditContent() {
                     <FormControl>
                       <Textarea
                         rows={4}
+                        maxLength={BIO_MAX_LENGTH}
                         placeholder="Kendinden, eğitim tarzından ve öğrencilerine neler kazandırabileceğinden bahset..."
                         {...field}
+                        onChange={(event) => {
+                          field.onChange(event.target.value.slice(0, BIO_MAX_LENGTH));
+                        }}
                       />
                     </FormControl>
                     <FormMessage />
@@ -337,7 +343,7 @@ function TutorProfileEditContent() {
                       "mt-1 text-xs",
                       bioValue.length < 80 ? "text-destructive" : "text-muted-foreground"
                     )}>
-                      {bioValue.length} karakter{bioValue.length < 80 ? " (en az 80 önerilir)" : ""}
+                      {bioValue.length} / {BIO_MAX_LENGTH} karakter (en az 80 önerilir)
                     </p>
                   </FormItem>
                 )}
