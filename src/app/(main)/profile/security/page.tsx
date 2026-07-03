@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 
 import {
+  changePassword,
   confirmEmailVerificationCode,
   deleteMyAccount,
   fetchSecuritySettings,
@@ -51,7 +52,7 @@ function SecurityContent() {
   const queryClient = useQueryClient();
   const router = useRouter();
   const { logout, user } = useAuth();
-  const { clearAuth } = useAuthContext();
+  const { clearAuth, setAuth } = useAuthContext();
   const [code, setCode] = useState("");
   const [requestingCode, setRequestingCode] = useState(false);
   const [confirmingCode, setConfirmingCode] = useState(false);
@@ -59,6 +60,11 @@ function SecurityContent() {
   const [codeSent, setCodeSent] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState("");
   const [deletingAccount, setDeletingAccount] = useState(false);
+  const [showPasswordForm, setShowPasswordForm] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [newPasswordConfirm, setNewPasswordConfirm] = useState("");
+  const [changingPassword, setChangingPassword] = useState(false);
 
   const accountEmail = user?.email ?? "";
   const canDeleteAccount =
@@ -105,6 +111,41 @@ function SecurityContent() {
       toast.error("Kod doğrulanamadı. Kodu kontrol edip tekrar deneyin.");
     } finally {
       setConfirmingCode(false);
+    }
+  };
+
+  const handleChangePassword = async () => {
+    if (newPassword !== newPasswordConfirm) {
+      toast.error("Yeni şifreler eşleşmiyor.");
+      return;
+    }
+    if (newPassword.length < 8) {
+      toast.error("Yeni şifre en az 8 karakter olmalı.");
+      return;
+    }
+    setChangingPassword(true);
+    try {
+      const { token, user: updatedUser } = await changePassword({
+        current_password: currentPassword,
+        new_password: newPassword,
+        password_confirm: newPasswordConfirm,
+      });
+      setAuth(updatedUser, token);
+      setCurrentPassword("");
+      setNewPassword("");
+      setNewPasswordConfirm("");
+      setShowPasswordForm(false);
+      toast.success("Şifreniz güncellendi.");
+    } catch (err: any) {
+      const data = err?.response?.data;
+      const message =
+        data?.current_password?.[0] ||
+        data?.new_password?.[0] ||
+        data?.password_confirm?.[0] ||
+        "Şifre değiştirilemedi. Lütfen tekrar deneyin.";
+      toast.error(message);
+    } finally {
+      setChangingPassword(false);
     }
   };
 
@@ -263,11 +304,12 @@ function SecurityContent() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex flex-col gap-3 sm:flex-row">
-              <Button variant="outline" asChild>
-                <Link href="/forgot-password">
-                  <KeyRound className="mr-2 h-4 w-4" />
-                  Şifre değiştir
-                </Link>
+              <Button
+                variant="outline"
+                onClick={() => setShowPasswordForm((v) => !v)}
+              >
+                <KeyRound className="mr-2 h-4 w-4" />
+                Şifre değiştir
               </Button>
               <Button
                 variant="outline"
@@ -285,6 +327,67 @@ function SecurityContent() {
                 Tüm oturumlardan çıkış yap
               </Button>
             </div>
+
+            {showPasswordForm && (
+              <div className="space-y-3 rounded-lg border bg-muted/30 p-4">
+                <div className="space-y-1.5">
+                  <Label htmlFor="current-password">Mevcut şifre</Label>
+                  <Input
+                    id="current-password"
+                    type="password"
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    autoComplete="current-password"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="new-password">Yeni şifre</Label>
+                  <Input
+                    id="new-password"
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    autoComplete="new-password"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="new-password-confirm">Yeni şifre (tekrar)</Label>
+                  <Input
+                    id="new-password-confirm"
+                    type="password"
+                    value={newPasswordConfirm}
+                    onChange={(e) => setNewPasswordConfirm(e.target.value)}
+                    autoComplete="new-password"
+                  />
+                </div>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                  <Button
+                    type="button"
+                    onClick={handleChangePassword}
+                    disabled={
+                      changingPassword ||
+                      !currentPassword ||
+                      !newPassword ||
+                      !newPasswordConfirm
+                    }
+                  >
+                    {changingPassword && (
+                      <span
+                        className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"
+                        aria-hidden
+                      />
+                    )}
+                    Şifreyi güncelle
+                  </Button>
+                  <Link
+                    href="/forgot-password"
+                    className="text-sm text-muted-foreground underline-offset-4 hover:underline"
+                  >
+                    Mevcut şifrenizi mi unuttunuz?
+                  </Link>
+                </div>
+              </div>
+            )}
             <Separator />
             <div className="flex items-start gap-3 text-sm text-muted-foreground">
               <Clock className="mt-0.5 h-4 w-4 shrink-0" />
