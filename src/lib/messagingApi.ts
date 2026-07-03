@@ -17,6 +17,34 @@ export async function createMessageRequest(
   return response.data;
 }
 
+/** List message requests: tutors get incoming ones, students their sent ones. */
+export async function fetchMessageRequests(): Promise<MessageRequest[]> {
+  const response = await api.get<MessageRequest[]>("/messaging/message-requests/");
+  return response.data;
+}
+
+/** Accept a pending request; the response has conversation_id populated. */
+export async function acceptMessageRequest(id: string): Promise<MessageRequest> {
+  const response = await api.post<MessageRequest>(
+    `/messaging/message-requests/${id}/accept/`
+  );
+  return response.data;
+}
+
+export async function rejectMessageRequest(id: string): Promise<MessageRequest> {
+  const response = await api.post<MessageRequest>(
+    `/messaging/message-requests/${id}/reject/`
+  );
+  return response.data;
+}
+
+export async function blockMessageRequest(id: string): Promise<MessageRequest> {
+  const response = await api.post<MessageRequest>(
+    `/messaging/message-requests/${id}/block/`
+  );
+  return response.data;
+}
+
 export async function fetchConversations(): Promise<Conversation[]> {
   const response = await api.get<Conversation[]>("/conversations/");
   return response.data;
