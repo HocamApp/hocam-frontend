@@ -86,6 +86,7 @@ function filtersFromSearchParams(searchParams: URLSearchParams): TutorFiltersTyp
   const ordering = searchParams.get("ordering") || "rating";
   const availability_day = searchParams.get("availability_day");
   const availability_time = searchParams.get("availability_time");
+  const online = searchParams.get("online");
   return {
     ...(search != null && search !== "" && { search }),
     ...(subject != null && subject !== "" && { subject }),
@@ -97,6 +98,7 @@ function filtersFromSearchParams(searchParams: URLSearchParams): TutorFiltersTyp
     ...(yks_rank_max != null && yks_rank_max !== "" && { yks_rank_max }),
     ...(availability_day != null && availability_day !== "" && { availability_day }),
     ...(availability_time != null && availability_time !== "" && { availability_time }),
+    ...(online != null && online !== "" && { online }),
     ordering: ordering || "rating",
   };
 }
@@ -113,6 +115,7 @@ function searchParamsFromFilters(filters: TutorFiltersType): URLSearchParams {
   if (filters.yks_rank_max) p.set("yks_rank_max", filters.yks_rank_max);
   if (filters.availability_day) p.set("availability_day", filters.availability_day);
   if (filters.availability_time) p.set("availability_time", filters.availability_time);
+  if (filters.online) p.set("online", filters.online);
   if (filters.ordering && filters.ordering !== "rating") p.set("ordering", filters.ordering);
   return p;
 }
@@ -267,6 +270,7 @@ function TutorsPageContent() {
     (filters.yks_rank_max ?? "") !== "" ||
     (filters.availability_day ?? "") !== "" ||
     (filters.availability_time ?? "") !== "" ||
+    (filters.online ?? "") !== "" ||
     (filters.ordering ?? "rating") !== "rating";
 
   const tutorList = showFavorites
@@ -585,6 +589,28 @@ function TutorsPageContent() {
                   "15:00","16:00","17:00","18:00","19:00","20:00","21:00","22:00"].map((t) => (
                   <SelectItem key={t} value={t}>{t}</SelectItem>
                 ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Müsaitlik Durumu */}
+          <div className="w-full space-y-1 sm:w-[170px]">
+            <Label className="text-xs uppercase tracking-wide text-muted-foreground">
+              Müsaitlik durumu
+            </Label>
+            <Select
+              value={(filters.online ?? "") || "__all__"}
+              onValueChange={(v) =>
+                handleFiltersChange({ ...filters, online: v === "__all__" ? "" : v })
+              }
+              disabled={isListLoading}
+            >
+              <SelectTrigger className="h-9 text-sm">
+                <SelectValue placeholder="Tümü" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__all__">Tümü</SelectItem>
+                <SelectItem value="true">Sadece çevrim içi</SelectItem>
               </SelectContent>
             </Select>
           </div>

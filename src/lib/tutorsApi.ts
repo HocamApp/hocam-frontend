@@ -25,6 +25,7 @@ export interface TutorFilters {
   ordering?: string;
   availability_day?: string;
   availability_time?: string;
+  online?: string;
 }
 
 // Backend may still return a plain array during a deploy/cache lag instead of

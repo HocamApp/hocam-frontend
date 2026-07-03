@@ -51,6 +51,7 @@ function FilterPanelContent({
     (filters.min_price ?? "") !== "" ||
     (filters.max_price ?? "") !== "" ||
     (filters.is_verified ?? "") !== "" ||
+    (filters.online ?? "") !== "" ||
     (filters.ordering ?? "rating") !== "rating";
 
   const handleClear = () => {
@@ -137,6 +138,23 @@ function FilterPanelContent({
           <SelectContent>
             <SelectItem value="__all__">Tümü</SelectItem>
             <SelectItem value="true">Sadece onaylı</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="space-y-2">
+        <Label>Müsaitlik durumu</Label>
+        <Select
+          value={(filters.online ?? "") || "__all__"}
+          onValueChange={(v) => onFiltersChange({ ...filters, online: v === "__all__" ? "" : v })}
+          disabled={isLoading}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Tümü" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__all__">Tümü</SelectItem>
+            <SelectItem value="true">Sadece çevrim içi</SelectItem>
           </SelectContent>
         </Select>
       </div>
