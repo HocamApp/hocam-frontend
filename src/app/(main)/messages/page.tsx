@@ -6,15 +6,17 @@ import { useAuth } from "@/hooks/useAuth";
 import { usePageVisibility } from "@/hooks/usePageVisibility";
 import { fetchConversations } from "@/lib/messagingApi";
 import { ConversationList } from "@/components/messaging/ConversationList";
+import { MessageRequestList } from "@/components/messaging/MessageRequestList";
 import { RouteGuard } from "@/components/shared/RouteGuard";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MessageCircle } from "lucide-react";
 
 const CONVERSATIONS_REFETCH_INTERVAL_MS = 60_000;
 
 function MessagesContent() {
   const router = useRouter();
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, isTutor } = useAuth();
   const isPageVisible = usePageVisibility();
 
   const {
@@ -32,6 +34,20 @@ function MessagesContent() {
     router.push(`/messages/${conversationId}`);
   };
 
+  const conversationsPanel = conversationsError ? (
+    <div className="p-4">
+      <ErrorMessage message="Mesajlar yüklenemedi. Lütfen tekrar deneyin." />
+    </div>
+  ) : (
+    <ConversationList
+      conversations={conversations ?? []}
+      selectedId={null}
+      currentUserId={user?.id ?? ""}
+      onSelect={handleSelectConversation}
+      isLoading={conversationsLoading}
+    />
+  );
+
   return (
     <div className="flex h-[calc(100vh-64px)] w-full min-w-0 overflow-hidden">
       {/* Left panel */}
@@ -39,18 +55,23 @@ function MessagesContent() {
         <header className="shrink-0 border-b p-4">
           <h1 className="text-xl font-semibold">Mesajlar</h1>
         </header>
-        {conversationsError ? (
-          <div className="p-4">
-            <ErrorMessage message="Mesajlar yüklenemedi. Lütfen tekrar deneyin." />
-          </div>
+        {isTutor ? (
+          <Tabs defaultValue="conversations" className="flex min-h-0 flex-1 flex-col">
+            <div className="shrink-0 border-b p-2">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="conversations">Sohbetler</TabsTrigger>
+                <TabsTrigger value="message-requests">Mesaj İstekleri</TabsTrigger>
+              </TabsList>
+            </div>
+            <TabsContent value="conversations" className="mt-0">
+              {conversationsPanel}
+            </TabsContent>
+            <TabsContent value="message-requests" className="mt-0">
+              <MessageRequestList />
+            </TabsContent>
+          </Tabs>
         ) : (
-          <ConversationList
-            conversations={conversations ?? []}
-            selectedId={null}
-            currentUserId={user?.id ?? ""}
-            onSelect={handleSelectConversation}
-            isLoading={conversationsLoading}
-          />
+          conversationsPanel
         )}
       </div>
 
