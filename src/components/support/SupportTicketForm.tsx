@@ -17,6 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { createSupportTicket } from "@/lib/supportApi";
 import type { SupportTicketCategory } from "@/types/api";
 import { CATEGORY_LABELS, CATEGORY_OPTIONS } from "./supportContent";
@@ -41,6 +42,7 @@ export function SupportTicketForm({ preset }: SupportTicketFormProps) {
     subject?: string;
     message?: string;
   }>({});
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!preset) return;
@@ -58,13 +60,14 @@ export function SupportTicketForm({ preset }: SupportTicketFormProps) {
       setSubject("");
       setMessage("");
       setErrors({});
+      setSubmitError(null);
       queryClient.invalidateQueries({ queryKey: ["support-tickets"] });
     },
     onError: (err) => {
       const data = (err as AxiosError<Record<string, string[]>>)?.response?.data;
       const firstError =
         data?.subject?.[0] || data?.message?.[0] || data?.category?.[0];
-      toast.error(
+      setSubmitError(
         firstError || "Talebiniz gönderilemedi. Lütfen tekrar deneyin."
       );
     },
@@ -84,6 +87,7 @@ export function SupportTicketForm({ preset }: SupportTicketFormProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate() || mutation.isPending) return;
+    setSubmitError(null);
     mutation.mutate({
       category: category as SupportTicketCategory,
       subject: subject.trim(),
@@ -145,6 +149,8 @@ export function SupportTicketForm({ preset }: SupportTicketFormProps) {
           <p className="text-xs text-destructive">{errors.message}</p>
         )}
       </div>
+
+      {submitError && <ErrorMessage message={submitError} />}
 
       <Button type="submit" disabled={mutation.isPending} className="w-full sm:w-auto">
         {mutation.isPending ? (

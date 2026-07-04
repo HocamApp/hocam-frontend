@@ -151,6 +151,7 @@ export function ProfileMenu() {
 
   // Profile photo upload (tutor only)
   const [photoUploading, setPhotoUploading] = useState(false);
+  const [photoError, setPhotoError] = useState<string | null>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
 
   // Optimistic override for auto_approve_bookings
@@ -289,7 +290,7 @@ export function ProfileMenu() {
       setNameEdit(false);
       toast.success("İsim güncellendi.");
     } catch {
-      toast.error("İsim güncellenemedi.");
+      setNameError("İsim güncellenemedi. Lütfen tekrar deneyin.");
     } finally {
       setNameSaving(false);
     }
@@ -299,9 +300,10 @@ export function ProfileMenu() {
     const file = e.target.files?.[0];
     if (!file) return;
     e.target.value = "";
+    setPhotoError(null);
     const validationError = validateProfilePhotoFile(file);
     if (validationError) {
-      toast.error(validationError);
+      setPhotoError(validationError);
       return;
     }
     setPhotoUploading(true);
@@ -315,7 +317,7 @@ export function ProfileMenu() {
       await queryClient.invalidateQueries({ queryKey: ["tutors"] });
       toast.success("Profil fotoğrafı güncellendi.");
     } catch {
-      toast.error("Fotoğraf yüklenemedi. Lütfen tekrar deneyin.");
+      setPhotoError("Fotoğraf yüklenemedi. Lütfen tekrar deneyin.");
     } finally {
       setPhotoUploading(false);
     }
@@ -466,6 +468,12 @@ export function ProfileMenu() {
                 )}
               </div>
             </div>
+
+            {photoError && (
+              <p className="text-xs text-destructive" role="alert">
+                {photoError}
+              </p>
+            )}
 
             {tutor && (
               <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-100">

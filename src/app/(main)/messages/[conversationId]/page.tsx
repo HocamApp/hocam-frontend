@@ -23,6 +23,15 @@ import type { TutorProfile } from "@/types";
 import { RouteGuard } from "@/components/shared/RouteGuard";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Message } from "@/types";
 
 function sameDay(a: Date, b: Date): boolean {
@@ -101,6 +110,7 @@ function ConversationContent({
   const [isBookingOpen, setIsBookingOpen] = useState(false);
   const [replyTo, setReplyTo] = useState<Message | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<Message | null>(null);
   // UI-ready typing indicator. Messaging is HTTP polling only, so there is no
   // realtime presence signal yet — this stays false until a backend/realtime
   // typing source exists (see TypingIndicator).
@@ -164,10 +174,15 @@ function ConversationContent({
     router.push(`/messages/${selectedConversationId}`);
   };
 
-  const handleDeleteMessage = async (message: Message) => {
+  const handleDeleteMessage = (message: Message) => {
     if (deletingId) return;
-    const confirmed = window.confirm("Bu mesaj herkes için silinsin mi?");
-    if (!confirmed) return;
+    setPendingDelete(message);
+  };
+
+  const confirmDeleteMessage = async () => {
+    const message = pendingDelete;
+    if (!message || deletingId) return;
+    setPendingDelete(null);
     setDeletingId(message.id);
     try {
       const tombstone = await deleteMessage(message.id);
@@ -338,6 +353,30 @@ function ConversationContent({
           />
         )}
       </section>
+
+      <Dialog
+        open={pendingDelete !== null}
+        onOpenChange={(open) => {
+          if (!open) setPendingDelete(null);
+        }}
+      >
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Mesaj silinsin mi?</DialogTitle>
+            <DialogDescription>
+              Bu mesaj herkes için silinir ve geri alınamaz.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setPendingDelete(null)}>
+              Vazgeç
+            </Button>
+            <Button variant="destructive" onClick={confirmDeleteMessage}>
+              Sil
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

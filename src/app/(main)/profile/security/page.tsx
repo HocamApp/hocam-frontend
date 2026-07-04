@@ -62,6 +62,7 @@ function SecurityContent() {
   const [codeSent, setCodeSent] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState("");
   const [deletingAccount, setDeletingAccount] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [showPasswordForm, setShowPasswordForm] = useState(false);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -82,6 +83,7 @@ function SecurityContent() {
   });
 
   const handleRequestCode = async () => {
+    setCodeError(null);
     setRequestingCode(true);
     try {
       await requestEmailVerificationCode();
@@ -89,9 +91,9 @@ function SecurityContent() {
       toast.success("Doğrulama kodu e-postanıza gönderildi.");
     } catch (err: any) {
       if (err?.response?.status === 429) {
-        toast.error("Yeni kod istemeden önce kısa bir süre bekleyin.");
+        setCodeError("Yeni kod istemeden önce kısa bir süre bekleyin.");
       } else {
-        toast.error("Kod gönderilemedi. Lütfen tekrar deneyin.");
+        setCodeError("Kod gönderilemedi. Lütfen tekrar deneyin.");
       }
     } finally {
       setRequestingCode(false);
@@ -168,6 +170,7 @@ function SecurityContent() {
 
   const handleDeleteAccount = async () => {
     if (!canDeleteAccount || deletingAccount) return;
+    setDeleteError(null);
     setDeletingAccount(true);
     try {
       await deleteMyAccount();
@@ -176,7 +179,7 @@ function SecurityContent() {
       toast.success("Hesabınız kalıcı olarak silindi.");
       router.push("/register");
     } catch {
-      toast.error("Hesap silinemedi. Lütfen tekrar deneyin.");
+      setDeleteError("Hesap silinemedi. Lütfen tekrar deneyin.");
       setDeletingAccount(false);
     }
   };
@@ -452,6 +455,8 @@ function SecurityContent() {
                 className="max-w-xs"
               />
             </div>
+
+            {deleteError && <ErrorMessage message={deleteError} />}
 
             <Button
               type="button"
