@@ -274,6 +274,7 @@ export interface TutorProfile {
   is_verified: boolean;
   is_online: boolean;
   trial_lesson_eligible?: boolean | null;
+  trial_lessons_remaining?: number | null;
   subjects: Subject[];
   created_at: string;
 }

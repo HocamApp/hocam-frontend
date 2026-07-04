@@ -232,6 +232,13 @@ export default function TutorProfilePage({
   });
 
   const isOwnProfile = !!tutor && !!user && user.id === tutor.user;
+  const trialLessonsRemaining = tutor?.trial_lessons_remaining ?? 0;
+  const canBookFreeTrial =
+    isAuthenticated &&
+    isStudent &&
+    !isOwnProfile &&
+    tutor?.trial_lesson_eligible === true &&
+    trialLessonsRemaining > 0;
   const EXAM_ORDER = ["TYT", "AYT", "DGS", "KPSS"] as const;
   const subjectGroups = EXAM_ORDER.map((exam) => ({
     exam,
@@ -419,34 +426,28 @@ export default function TutorProfilePage({
                       </div>
                     ) : (
                       <>
-                        <Button
-                          className="w-full"
-                          onClick={() => setBookingModalMode("normal")}
-                        >
-                          Ders Rezervasyonu Yap
-                        </Button>
-                        {tutor.trial_lesson_eligible === true && (
-                          <div className="space-y-2 rounded-lg border border-primary/30 bg-primary/5 p-3">
-                            <div className="flex flex-wrap items-center gap-2">
-                              <Badge variant="secondary">20 dk</Badge>
-                              <Badge variant="secondary">{formatPrice(0)}</Badge>
-                            </div>
-                            <p className="text-sm text-muted-foreground">
-                              Bu hocayla 20 dakikalık ücretsiz bir tanışma dersi yapabilirsin.
-                            </p>
+                        {canBookFreeTrial ? (
+                          <div className="space-y-2">
                             <Button
-                              variant="outline"
                               className="w-full"
                               onClick={() => setBookingModalMode("trial")}
                             >
                               Ücretsiz deneme dersi ayırt
                             </Button>
+                            <div className="space-y-1 text-center text-xs text-muted-foreground">
+                              <p>Uygun değilse sorun yok.</p>
+                              <p>
+                                Bu ay {trialLessonsRemaining} ücretsiz deneme hakkın kaldı.
+                              </p>
+                            </div>
                           </div>
-                        )}
-                        {tutor.trial_lesson_eligible === false && (
-                          <p className="text-xs text-muted-foreground">
-                            Bu hoca için ücretsiz deneme hakkın bulunmuyor.
-                          </p>
+                        ) : (
+                          <Button
+                            className="w-full"
+                            onClick={() => setBookingModalMode("normal")}
+                          >
+                            Ders Rezervasyonu Yap
+                          </Button>
                         )}
                       </>
                     )}
