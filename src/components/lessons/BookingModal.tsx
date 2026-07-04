@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchTutorAvailability } from "@/lib/dashboardApi";
 import { createBooking, fetchTutorBusyIntervals } from "@/lib/lessonsApi";
@@ -185,7 +185,12 @@ export function BookingModal({
   const busyRangeStart = formatDateLocal(next14Days[0]);
   const busyRangeEnd = formatDateLocal(next14Days[next14Days.length - 1]);
 
-  const { data: busyIntervals = [], isLoading: busyIntervalsLoading } = useQuery({
+  const {
+    data: busyIntervals = [],
+    isLoading: busyIntervalsLoading,
+    isFetching: busyIntervalsFetching,
+    refetch: refetchBusyIntervals,
+  } = useQuery({
     queryKey: ["tutor-busy-intervals", tutor.id, busyRangeStart, busyRangeEnd],
     queryFn: () =>
       fetchTutorBusyIntervals(String(tutor.id), busyRangeStart, busyRangeEnd),
@@ -229,16 +234,35 @@ export function BookingModal({
   const backendDayForDate = (d: Date) => jsDayToBackendDay(d.getDay());
   const hasAvailabilityOnDay = (d: Date) =>
     availabilityRules.some((r) => r.day_of_week === backendDayForDate(d));
-  const slotsForSelectedDay =
-    selectedDate && availabilityRules.length > 0 && !busyIntervalsLoading
-      ? getSlotsForDay(
-          availabilityRules,
-          backendDayForDate(selectedDate),
-          selectedDuration,
-          busyIntervals,
-          formatDateLocal(selectedDate)
-        )
-      : [];
+  const slotsForSelectedDay = useMemo(
+    () =>
+      selectedDate && availabilityRules.length > 0 && !busyIntervalsLoading
+        ? getSlotsForDay(
+            availabilityRules,
+            backendDayForDate(selectedDate),
+            selectedDuration,
+            busyIntervals,
+            formatDateLocal(selectedDate)
+          )
+        : [],
+    [selectedDate, availabilityRules, busyIntervalsLoading, selectedDuration, busyIntervals]
+  );
+
+  useEffect(() => {
+    // Reconcile a previously-picked time against the current slot list:
+    // duration/availability/busy data can all change (or refetch) while the
+    // modal is open, so a selection that was valid a moment ago may no
+    // longer be. Skip while busy data isn't loaded yet — slotsForSelectedDay
+    // is empty during that window regardless, and would otherwise clear a
+    // perfectly valid selection just because data hasn't arrived yet.
+    if (!selectedTime || busyIntervalsLoading) return;
+    if (!slotsForSelectedDay.includes(selectedTime)) {
+      setSelectedTime("");
+      // If the user had already moved on to the confirmation step, send them
+      // back to Step 2 instead of leaving the summary on a stale/empty time.
+      setStep((s) => (s === 3 ? 2 : s));
+    }
+  }, [selectedTime, slotsForSelectedDay, busyIntervalsLoading]);
 
   const selectedSubject = tutor.subjects?.find((s) => String(s.id) === selectedSubjectId);
 
@@ -252,12 +276,12 @@ export function BookingModal({
   };
 
   const handleNextStep2 = () => {
-    if (!selectedDate || !selectedTime) return;
+    if (!selectedDate || !selectedTime || busyIntervalsFetching) return;
     setStep(3);
   };
 
   const handleSubmit = async () => {
-    if (!selectedDate || !selectedTime || !selectedSubjectId) return;
+    if (!selectedDate || !selectedTime || !selectedSubjectId || busyIntervalsFetching) return;
     setApiError(null);
     setIsSubmitting(true);
     const [hours, minutes] = selectedTime.split(":").map(Number);
@@ -300,6 +324,14 @@ export function BookingModal({
           const val = firstKey ? d[firstKey] : null;
           if (Array.isArray(val) && val[0]) message = String(val[0]);
         }
+      }
+      if (message.includes("already booked")) {
+        // Someone else took this slot between opening the modal and
+        // submitting. Refresh busy data and drop the stale selection so the
+        // user picks a slot that's actually still free, instead of being
+        // able to resubmit the same one.
+        setSelectedTime("");
+        refetchBusyIntervals();
       }
       setApiError(translateApiError(message));
       setStep(2);
@@ -451,7 +483,7 @@ export function BookingModal({
                   <p className="mt-2 text-sm text-muted-foreground">
                     Önce bir tarih seçin
                   </p>
-                ) : busyIntervalsLoading ? (
+                ) : busyIntervalsLoading || busyIntervalsFetching ? (
                   <p className="mt-2 text-sm text-muted-foreground">
                     Müsait saatler kontrol ediliyor...
                   </p>
@@ -504,7 +536,7 @@ export function BookingModal({
                 <Button
                   className="w-full sm:w-auto"
                   onClick={handleNextStep2}
-                  disabled={!selectedDate || !selectedTime}
+                  disabled={!selectedDate || !selectedTime || busyIntervalsFetching}
                 >
                   İleri →
                 </Button>
@@ -590,7 +622,13 @@ export function BookingModal({
                 <Button
                   className="w-full sm:flex-1"
                   onClick={handleSubmit}
-                  disabled={isSubmitting}
+                  disabled={
+                    !selectedDate ||
+                    !selectedTime ||
+                    !selectedSubjectId ||
+                    isSubmitting ||
+                    busyIntervalsFetching
+                  }
                 >
                   {isSubmitting ? "Gönderiliyor..." : "Rezervasyonu Tamamla"}
                 </Button>
