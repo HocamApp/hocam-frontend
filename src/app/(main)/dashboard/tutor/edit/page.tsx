@@ -34,6 +34,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { cn } from "@/lib/utils";
+import { filterSelectedSubjectIds, groupSubjectsByExam } from "@/lib/subjects";
 
 const BIO_MAX_LENGTH = 1000;
 
@@ -132,6 +133,11 @@ function TutorProfileEditContent() {
     }
   }, [profile, profileLoaded, form]);
 
+  useEffect(() => {
+    if (subjects.length === 0) return;
+    setSelectedSubjectIds((prev) => filterSelectedSubjectIds(subjects, prev));
+  }, [subjects]);
+
   const bioValue = form.watch("bio") ?? "";
   const introVideoValue = form.watch("intro_video_url") ?? "";
   const introEmbedUrl = getYouTubeEmbedUrl(introVideoValue);
@@ -157,7 +163,8 @@ function TutorProfileEditContent() {
         form.setError("hourly_price", { message: err.fieldErrors.hourly_price[0] });
       return;
     }
-    if (selectedSubjectIds.length === 0) {
+    const supportedSelectedSubjectIds = filterSelectedSubjectIds(subjects, selectedSubjectIds);
+    if (supportedSelectedSubjectIds.length === 0) {
       setSubjectError("En az bir ders seçin");
       return;
     }
@@ -171,7 +178,7 @@ function TutorProfileEditContent() {
         hourly_price: parsed.data.hourly_price,
         intro_video_url: parsed.data.intro_video_url ?? "",
         bio: parsed.data.bio ?? "",
-        subject_ids: selectedSubjectIds,
+        subject_ids: supportedSelectedSubjectIds,
       });
 
       await queryClient.invalidateQueries({ queryKey: ["tutor-me"] });
@@ -229,11 +236,7 @@ function TutorProfileEditContent() {
     );
   }
 
-  const EXAM_ORDER = ["TYT", "AYT", "DGS", "KPSS"] as const;
-  const subjectGroups = EXAM_ORDER.map((exam) => ({
-    exam,
-    items: subjects.filter((s) => s.exam_type === exam),
-  })).filter((group) => group.items.length > 0);
+  const subjectGroups = groupSubjectsByExam(subjects);
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-10">

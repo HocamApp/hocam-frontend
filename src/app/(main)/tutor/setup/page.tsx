@@ -14,7 +14,6 @@ import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
 import {
   Card,
   CardContent,
@@ -31,6 +30,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { cn } from "@/lib/utils";
+import { filterSelectedSubjectIds, groupSubjectsByExam } from "@/lib/subjects";
 
 const setupSchema = z.object({
   name: z.string().min(1, "Ad zorunludur"),
@@ -116,7 +116,8 @@ export default function TutorSetupPage() {
       if (err.fieldErrors.hourly_price) form.setError("hourly_price", { message: err.fieldErrors.hourly_price[0] });
       return;
     }
-    if (selectedSubjectIds.length === 0) {
+    const supportedSelectedSubjectIds = filterSelectedSubjectIds(subjects, selectedSubjectIds);
+    if (supportedSelectedSubjectIds.length === 0) {
       setSubjectError("En az bir ders seçin");
       return;
     }
@@ -131,7 +132,7 @@ export default function TutorSetupPage() {
         yks_rank: Number(parsed.data.yks_rank),
         hourly_price: parsed.data.hourly_price,
         bio: parsed.data.bio ?? "",
-        subject_ids: selectedSubjectIds,
+        subject_ids: supportedSelectedSubjectIds,
       });
 
       const updatedUser = await fetchMe();
@@ -181,8 +182,7 @@ export default function TutorSetupPage() {
     );
   }
 
-  const tytSubjects = subjects.filter((s) => s.exam_type === "TYT");
-  const aytSubjects = subjects.filter((s) => s.exam_type === "AYT");
+  const subjectGroups = groupSubjectsByExam(subjects);
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-10">
@@ -327,11 +327,11 @@ export default function TutorSetupPage() {
                   <p className="text-sm text-muted-foreground">Dersler yükleniyor...</p>
                 ) : (
                   <div className="space-y-3">
-                    {tytSubjects.length > 0 && (
-                      <div>
-                        <p className="text-xs text-muted-foreground mb-1">TYT</p>
+                    {subjectGroups.map((group) => (
+                      <div key={group.exam}>
+                        <p className="text-xs text-muted-foreground mb-1">{group.exam}</p>
                         <div className="flex flex-wrap gap-2">
-                          {tytSubjects.map((s) => (
+                          {group.items.map((s) => (
                             <button
                               key={s.id}
                               type="button"
@@ -348,29 +348,7 @@ export default function TutorSetupPage() {
                           ))}
                         </div>
                       </div>
-                    )}
-                    {aytSubjects.length > 0 && (
-                      <div>
-                        <p className="text-xs text-muted-foreground mb-1">AYT</p>
-                        <div className="flex flex-wrap gap-2">
-                          {aytSubjects.map((s) => (
-                            <button
-                              key={s.id}
-                              type="button"
-                              onClick={() => toggleSubject(s.id)}
-                              className={cn(
-                                "rounded-full border px-3 py-1 text-sm transition-colors",
-                                selectedSubjectIds.includes(s.id)
-                                  ? "border-primary bg-primary text-primary-foreground"
-                                  : "border-border hover:bg-muted"
-                              )}
-                            >
-                              {s.name}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
+                    ))}
                     {selectedSubjectIds.length > 0 && (
                       <p className="text-xs text-muted-foreground">
                         {selectedSubjectIds.length} ders seçildi

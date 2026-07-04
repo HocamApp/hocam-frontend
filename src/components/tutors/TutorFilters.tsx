@@ -19,6 +19,7 @@ import {
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import type { TutorFilters as TutorFiltersType } from "@/lib/tutorsApi";
 import type { Subject } from "@/types";
+import { getSubjectOptionsForExam, isSubjectValidForExam } from "@/lib/subjects";
 
 interface TutorFiltersProps {
   filters: TutorFiltersType;
@@ -44,6 +45,7 @@ function FilterPanelContent({
   isMobile: boolean;
   isLoading: boolean;
 }) {
+  const subjectOptions = getSubjectOptionsForExam(subjects, filters.exam_type);
   const hasActiveFilters =
     (filters.subject ?? "") !== "" ||
     (filters.exam_type ?? "") !== "" ||
@@ -72,7 +74,7 @@ function FilterPanelContent({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="__all__">Tüm dersler</SelectItem>
-            {subjects.map((s) => (
+            {subjectOptions.map((s) => (
               <SelectItem key={s.id} value={s.name}>
                 {s.name}
               </SelectItem>
@@ -85,7 +87,13 @@ function FilterPanelContent({
         <Label>Sınav</Label>
         <Select
           value={(filters.exam_type ?? "") || "__all__"}
-          onValueChange={(v) => onFiltersChange({ ...filters, exam_type: v === "__all__" ? "" : v })}
+          onValueChange={(v) => {
+            const exam_type = v === "__all__" ? "" : v;
+            const subject = isSubjectValidForExam(subjects, filters.subject, exam_type)
+              ? filters.subject
+              : "";
+            onFiltersChange({ ...filters, exam_type, subject });
+          }}
           disabled={isLoading}
         >
           <SelectTrigger>
