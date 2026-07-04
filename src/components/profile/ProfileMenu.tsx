@@ -22,6 +22,7 @@ import {
   Moon,
   Pencil,
   PlayCircle,
+  Receipt,
   ShieldCheck,
   Star,
   UserCog,
@@ -643,9 +644,12 @@ export function ProfileMenu() {
               <p className="px-1 pb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 Ödeme geçmişi
               </p>
-              <p className="px-1 py-1.5 text-sm text-muted-foreground">
-                Henüz ödeme geçmişi yok.
-              </p>
+              <ProfileMenuRow
+                icon={<Receipt className="h-4 w-4" />}
+                label="Paketlerim ve ödeme geçmişim"
+                showChevron
+                onClick={() => go("/profile/payments")}
+              />
             </div>
           </ProfileAccordionSection>
 

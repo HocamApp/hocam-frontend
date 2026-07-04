@@ -367,6 +367,59 @@ export interface Review {
   subject?: Subject;
 }
 
+// GET /api/payments/package-plans/ — ledger-first package foundation (no
+// real payment provider yet; see apps.payments on the backend).
+export interface PackagePlan {
+  id: string;
+  name: string;
+  lesson_count: number;
+  lesson_duration_minutes: number;
+  discount_percent: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export type PackagePurchaseStatus = "pending" | "paid" | "cancelled" | "refunded";
+
+export interface PackagePurchase {
+  id: string;
+  student: { id: string; name: string; surname: string };
+  tutor: { id: string; name: string; surname: string };
+  plan: {
+    id: string;
+    name: string;
+    lesson_count: number;
+    lesson_duration_minutes: number;
+    discount_percent: number;
+  };
+  status: PackagePurchaseStatus;
+  total_credits: number;
+  remaining_credits: number;
+  unit_price: number;
+  subtotal_price: number;
+  discount_amount: number;
+  total_price: number;
+  created_at: string;
+  paid_at: string | null;
+}
+
+export interface PaymentLedgerEntry {
+  id: string;
+  entry_type: string;
+  amount: number;
+  credit_delta: number;
+  description: string;
+  created_at: string;
+  package_purchase: string | null;
+  booking: string | null;
+}
+
+export interface CreatePackagePurchasePayload {
+  tutor: string;
+  plan: string;
+}
+
 export interface SubjectRating {
   subject: Subject;
   average: number;

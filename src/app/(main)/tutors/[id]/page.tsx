@@ -15,6 +15,7 @@ import { formatLessonCount, formatPrice, formatRating } from "@/lib/utils";
 import { ReviewCard } from "@/components/tutors/ReviewCard";
 import { TutorPresenceBadge } from "@/components/tutors/TutorPresenceBadge";
 import { MessageRequestModal } from "@/components/tutors/MessageRequestModal";
+import { PackageOfferPanel } from "@/components/tutors/PackageOfferPanel";
 import { BookingModal } from "@/components/lessons/BookingModal";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { Button } from "@/components/ui/button";
@@ -470,6 +471,10 @@ export default function TutorProfilePage({
                       </div>
                     )}
                   </>
+                )}
+
+                {isAuthenticated && isStudent && !isOwnProfile && (
+                  <PackageOfferPanel tutor={tutor} />
                 )}
 
                 {/* Secondary icon actions: message, favorite, share */}
