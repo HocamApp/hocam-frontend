@@ -171,7 +171,7 @@ export function ProfileMenu() {
   const surname = tutor?.surname ?? studentProfile?.surname ?? "";
   const fullName = `${name} ${surname}`.trim();
   const initials = getInitials(name, surname);
-  const avatarImage = tutor?.profile_picture || "";
+  const avatarImage = tutor?.profile_picture || studentProfile?.avatar_url || "";
   const showDemoPaymentMethods = isBurakYilmazTutor(name, surname, role);
 
   const stats = data?.stats;

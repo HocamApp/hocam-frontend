@@ -23,18 +23,33 @@ import {
 } from "lucide-react";
 
 import { useAuth } from "@/hooks/useAuth";
-import { fetchProfileMe, updateProfileMe, exportMyData } from "@/lib/profileApi";
+import {
+  fetchProfileMe,
+  updateProfileMe,
+  exportMyData,
+  uploadStudentProfileAvatar,
+  selectStudentAnonymousAvatar,
+} from "@/lib/profileApi";
 import { logoutAllSessions } from "@/lib/authApi";
 import { uploadTutorProfilePicture } from "@/lib/tutorsApi";
+import {
+  STUDENT_AVATAR_PRESETS,
+  type StudentAvatarKey,
+} from "@/lib/studentAvatars";
 import {
   PROFILE_PHOTO_ACCEPT,
   PROFILE_PHOTO_RULE_TEXT,
   TUTOR_REAL_PHOTO_RULE_TEXT,
   validateProfilePhotoFile,
 } from "@/lib/profilePhoto";
-import { formatPrice } from "@/lib/utils";
+import { cn, formatPrice } from "@/lib/utils";
 import type { Theme } from "@/lib/theme";
-import type { ProfileStudent, ProfileTutor, UserPreferences } from "@/types";
+import type {
+  ProfileMeResponse,
+  ProfileStudent,
+  ProfileTutor,
+  UserPreferences,
+} from "@/types";
 
 import { RouteGuard } from "@/components/shared/RouteGuard";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
@@ -98,6 +113,8 @@ function ProfileContent() {
   const [editSurname, setEditSurname] = useState("");
   const [nameSaving, setNameSaving] = useState(false);
   const [photoUploading, setPhotoUploading] = useState(false);
+  const [avatarChoicePendingKey, setAvatarChoicePendingKey] =
+    useState<StudentAvatarKey | null>(null);
   const [autoApproveOverride, setAutoApproveOverride] = useState<boolean | null>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
 
@@ -116,7 +133,7 @@ function ProfileContent() {
   const surname = tutor?.surname ?? studentProfile?.surname ?? "";
   const fullName = `${name} ${surname}`.trim();
   const initials = getInitials(name, surname);
-  const avatarImage = tutor?.profile_picture || "";
+  const avatarImage = tutor?.profile_picture || studentProfile?.avatar_url || "";
 
   const prefs: UserPreferences = {
     ...DEFAULT_PREFS,
@@ -153,6 +170,12 @@ function ProfileContent() {
   const handleThemeChange = (nextTheme: Theme) => {
     updateProfileMe({ preferences: { dark_mode: nextTheme === "dark" } }).catch(
       () => undefined
+    );
+  };
+
+  const updateStudentProfileCache = (nextProfile: ProfileStudent) => {
+    queryClient.setQueryData<ProfileMeResponse>(["profile-me"], (current) =>
+      current ? { ...current, profile: nextProfile } : current
     );
   };
 
@@ -193,18 +216,41 @@ function ProfileContent() {
     }
     setPhotoUploading(true);
     try {
-      await uploadTutorProfilePicture(file);
-      await queryClient.invalidateQueries({ queryKey: ["profile-me"] });
-      await queryClient.invalidateQueries({ queryKey: ["tutor-me"] });
-      if (tutor?.id) {
-        await queryClient.invalidateQueries({ queryKey: ["tutor", tutor.id] });
+      if (studentProfile) {
+        const updatedProfile = await uploadStudentProfileAvatar(file);
+        updateStudentProfileCache(updatedProfile);
+        await queryClient.invalidateQueries({ queryKey: ["profile-me"] });
+      } else if (tutor) {
+        await uploadTutorProfilePicture(file);
+        await queryClient.invalidateQueries({ queryKey: ["profile-me"] });
+        await queryClient.invalidateQueries({ queryKey: ["tutor-me"] });
+        if (tutor.id) {
+          await queryClient.invalidateQueries({ queryKey: ["tutor", tutor.id] });
+        }
+        await queryClient.invalidateQueries({ queryKey: ["tutors"] });
+      } else {
+        return;
       }
-      await queryClient.invalidateQueries({ queryKey: ["tutors"] });
       toast.success("Profil fotoğrafı güncellendi.");
     } catch {
       toast.error("Fotoğraf yüklenemedi. Lütfen tekrar deneyin.");
     } finally {
       setPhotoUploading(false);
+    }
+  };
+
+  const handleStudentAvatarChoice = async (avatarKey: StudentAvatarKey) => {
+    if (!studentProfile) return;
+    setAvatarChoicePendingKey(avatarKey);
+    try {
+      const updatedProfile = await selectStudentAnonymousAvatar(avatarKey);
+      updateStudentProfileCache(updatedProfile);
+      await queryClient.invalidateQueries({ queryKey: ["profile-me"] });
+      toast.success("Hazır avatar seçildi.");
+    } catch {
+      toast.error("Avatar seçilemedi. Lütfen tekrar deneyin.");
+    } finally {
+      setAvatarChoicePendingKey(null);
     }
   };
 
@@ -303,7 +349,7 @@ function ProfileContent() {
                     {initials || <UserCog className="h-5 w-5" />}
                   </AvatarFallback>
                 </Avatar>
-                {tutor && (
+                {(tutor || studentProfile) && (
                   <>
                     <input
                       type="file"
@@ -315,7 +361,7 @@ function ProfileContent() {
                     <button
                       type="button"
                       onClick={() => photoInputRef.current?.click()}
-                      disabled={photoUploading}
+                      disabled={photoUploading || Boolean(avatarChoicePendingKey)}
                       aria-label="Profil fotoğrafını değiştir"
                       className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-primary text-primary-foreground shadow transition-opacity disabled:opacity-60"
                     >
@@ -377,6 +423,72 @@ function ProfileContent() {
               <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-100">
                 <p>{PROFILE_PHOTO_RULE_TEXT}</p>
                 <p className="mt-1">{TUTOR_REAL_PHOTO_RULE_TEXT}</p>
+              </div>
+            )}
+            {studentProfile && (
+              <div className="space-y-4 rounded-md border border-border bg-muted/20 p-3">
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-foreground">Profil fotoğrafı</p>
+                  <p className="text-sm text-muted-foreground">
+                    Kendi fotoğrafını yükleyebilir veya hazır anonim avatarlardan
+                    birini seçebilirsin.
+                  </p>
+                </div>
+                <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-100">
+                  {PROFILE_PHOTO_RULE_TEXT}
+                </div>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => photoInputRef.current?.click()}
+                  disabled={photoUploading || Boolean(avatarChoicePendingKey)}
+                >
+                  {photoUploading ? (
+                    <span
+                      className="mr-2 h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent"
+                      aria-hidden
+                    />
+                  ) : (
+                    <Camera className="mr-2 h-4 w-4" />
+                  )}
+                  {photoUploading ? "Yükleniyor" : "Fotoğraf yükle"}
+                </Button>
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-foreground">
+                    Hazır avatar seç
+                  </p>
+                  <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
+                    {STUDENT_AVATAR_PRESETS.map((preset) => {
+                      const selected =
+                        studentProfile.avatar_kind === "anonymous" &&
+                        studentProfile.avatar_key === preset.key;
+                      const pending = avatarChoicePendingKey === preset.key;
+
+                      return (
+                        <button
+                          key={preset.key}
+                          type="button"
+                          aria-pressed={selected}
+                          onClick={() => handleStudentAvatarChoice(preset.key)}
+                          disabled={photoUploading || Boolean(avatarChoicePendingKey)}
+                          className={cn(
+                            "flex min-h-[92px] flex-col items-center justify-center gap-2 rounded-md border bg-background px-2 py-2 text-xs font-medium text-foreground transition hover:border-primary/60 hover:bg-primary/5 disabled:cursor-not-allowed disabled:opacity-60",
+                            selected && "border-primary bg-primary/10 text-primary"
+                          )}
+                        >
+                          <Avatar className="h-12 w-12 border border-border bg-muted">
+                            <AvatarImage src={preset.url} alt={preset.label} />
+                            <AvatarFallback>{preset.label.slice(0, 1)}</AvatarFallback>
+                          </Avatar>
+                          <span className="leading-none">
+                            {pending ? "Seçiliyor" : preset.label}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
             )}
 

@@ -471,6 +471,9 @@ export interface ProfileStudent {
   target_exam_type: string;
   target_rank: number | null;
   bio: string;
+  avatar_url?: string | null;
+  avatar_kind?: "uploaded" | "anonymous" | "" | null;
+  avatar_key?: string | null;
 }
 
 export interface ProfileMeResponse {
