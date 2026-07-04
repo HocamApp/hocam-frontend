@@ -319,7 +319,10 @@ export default function TutorProfilePage({
                 {tutor.university} · {tutor.department}
               </p>
               <div className="mt-2 flex flex-wrap items-center gap-2">
-                <TutorPresenceBadge isOnline={tutor.is_online} />
+                <TutorPresenceBadge
+                  isOnline={tutor.is_online}
+                  lastSeenAt={tutor.last_seen_at}
+                />
               </div>
               {tutor.total_reviews > 0 && (
                 <div className="mt-2 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-sm">

@@ -90,7 +90,11 @@ export function TutorCard({
               <p className="text-sm text-muted-foreground">
                 {tutor.university} · {tutor.department}
               </p>
-              <TutorPresenceBadge isOnline={tutor.is_online} className="mt-1" />
+              <TutorPresenceBadge
+                isOnline={tutor.is_online}
+                lastSeenAt={tutor.last_seen_at}
+                className="mt-1"
+              />
               <p className="text-sm text-muted-foreground">
                 YKS Sıralaması: {formatYksRank(tutor.yks_rank)}
               </p>

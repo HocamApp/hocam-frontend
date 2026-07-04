@@ -273,6 +273,7 @@ export interface TutorProfile {
   completed_lessons_count?: number | null;
   is_verified: boolean;
   is_online: boolean;
+  last_seen_at?: string | null;
   trial_lesson_eligible?: boolean | null;
   trial_lessons_remaining?: number | null;
   subjects: Subject[];
