@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, Suspense } from "react";
+import { useState, useCallback, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -27,6 +27,7 @@ import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import SlidingPagination from "@/components/ui/sliding-pagination";
+import { getSubjectOptionsForExam, isSubjectValidForExam } from "@/lib/subjects";
 
 const PAGE_SIZE = 8;
 const LEARNING_CONTEXT_KEYS = [
@@ -248,6 +249,13 @@ function TutorsPageContent() {
     queryFn: fetchSubjects,
     staleTime: Infinity,
   });
+  const subjectOptions = getSubjectOptionsForExam(subjects ?? [], filters.exam_type);
+
+  useEffect(() => {
+    if (!subjects || subjectsLoading) return;
+    if (isSubjectValidForExam(subjects, filters.subject, filters.exam_type)) return;
+    handleFiltersChange({ ...filters, subject: "" });
+  }, [subjects, subjectsLoading, filters, handleFiltersChange]);
 
   const {
     favorites,
@@ -381,9 +389,13 @@ function TutorsPageContent() {
             </Label>
             <Select
               value={(filters.exam_type ?? "") || "__all__"}
-              onValueChange={(v) =>
-                handleFiltersChange({ ...filters, exam_type: v === "__all__" ? "" : v })
-              }
+              onValueChange={(v) => {
+                const exam_type = v === "__all__" ? "" : v;
+                const subject = isSubjectValidForExam(subjects ?? [], filters.subject, exam_type)
+                  ? filters.subject
+                  : "";
+                handleFiltersChange({ ...filters, exam_type, subject });
+              }}
               disabled={subjectsLoading}
             >
               <SelectTrigger className="h-9 text-sm">
@@ -416,7 +428,7 @@ function TutorsPageContent() {
               </SelectTrigger>
               <SelectContent className={FILTER_CONTENT_WIDTHS.subject}>
                 <SelectItem value="__all__">Tüm dersler</SelectItem>
-                {Array.from(new Map((subjects ?? []).map((s) => [s.name, s])).values()).map((s) => (
+                {subjectOptions.map((s) => (
                   <SelectItem key={s.name} value={s.name}>
                     {s.name}
                   </SelectItem>
