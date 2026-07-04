@@ -26,6 +26,12 @@ import { useAuth } from "@/hooks/useAuth";
 import { fetchProfileMe, updateProfileMe, exportMyData } from "@/lib/profileApi";
 import { logoutAllSessions } from "@/lib/authApi";
 import { uploadTutorProfilePicture } from "@/lib/tutorsApi";
+import {
+  PROFILE_PHOTO_ACCEPT,
+  PROFILE_PHOTO_RULE_TEXT,
+  TUTOR_REAL_PHOTO_RULE_TEXT,
+  validateProfilePhotoFile,
+} from "@/lib/profilePhoto";
 import { formatPrice } from "@/lib/utils";
 import type { Theme } from "@/lib/theme";
 import type { ProfileStudent, ProfileTutor, UserPreferences } from "@/types";
@@ -180,12 +186,9 @@ function ProfileContent() {
     const file = e.target.files?.[0];
     if (!file) return;
     e.target.value = "";
-    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
-      toast.error("Yalnızca JPEG, PNG veya WebP görseller yüklenebilir.");
-      return;
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("Görsel 5 MB'dan küçük olmalıdır.");
+    const validationError = validateProfilePhotoFile(file);
+    if (validationError) {
+      toast.error(validationError);
       return;
     }
     setPhotoUploading(true);
@@ -193,6 +196,10 @@ function ProfileContent() {
       await uploadTutorProfilePicture(file);
       await queryClient.invalidateQueries({ queryKey: ["profile-me"] });
       await queryClient.invalidateQueries({ queryKey: ["tutor-me"] });
+      if (tutor?.id) {
+        await queryClient.invalidateQueries({ queryKey: ["tutor", tutor.id] });
+      }
+      await queryClient.invalidateQueries({ queryKey: ["tutors"] });
       toast.success("Profil fotoğrafı güncellendi.");
     } catch {
       toast.error("Fotoğraf yüklenemedi. Lütfen tekrar deneyin.");
@@ -300,7 +307,7 @@ function ProfileContent() {
                   <>
                     <input
                       type="file"
-                      accept="image/jpeg,image/png,image/webp"
+                      accept={PROFILE_PHOTO_ACCEPT}
                       hidden
                       ref={photoInputRef}
                       onChange={handlePhotoUpload}
@@ -366,6 +373,12 @@ function ProfileContent() {
                 </Badge>
               </div>
             </div>
+            {tutor && (
+              <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-100">
+                <p>{PROFILE_PHOTO_RULE_TEXT}</p>
+                <p className="mt-1">{TUTOR_REAL_PHOTO_RULE_TEXT}</p>
+              </div>
+            )}
 
             <Separator />
 

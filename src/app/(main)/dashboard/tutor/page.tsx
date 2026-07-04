@@ -31,6 +31,12 @@ import {
 } from "@/lib/tutorsApi";
 import { fetchAvailability } from "@/lib/dashboardApi";
 import { confirmLearningActivity } from "@/lib/learningApi";
+import {
+  PROFILE_PHOTO_ACCEPT,
+  PROFILE_PHOTO_RULE_TEXT,
+  TUTOR_REAL_PHOTO_RULE_TEXT,
+  validateProfilePhotoFile,
+} from "@/lib/profilePhoto";
 import { formatDate, formatPrice, formatRating } from "@/lib/utils";
 import type {
   AvailabilityRule,
@@ -416,7 +422,7 @@ function ProfileStudio({
                 <input
                   id="profile-picture-input"
                   type="file"
-                  accept="image/jpeg,image/png,image/webp"
+                  accept={PROFILE_PHOTO_ACCEPT}
                   className="sr-only"
                   onChange={onPhotoSelected}
                 />
@@ -426,6 +432,10 @@ function ProfileStudio({
                     {isUploadingPhoto ? "Yükleniyor" : "Fotoğraf Yükle"}
                   </label>
                 </Button>
+                <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-100">
+                  <p>{PROFILE_PHOTO_RULE_TEXT}</p>
+                  <p className="mt-1">{TUTOR_REAL_PHOTO_RULE_TEXT}</p>
+                </div>
               </div>
             </div>
 
@@ -698,8 +708,9 @@ function TutorDashboardContent() {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("Fotoğraf 5 MB veya daha küçük olmalı.");
+    const validationError = validateProfilePhotoFile(file);
+    if (validationError) {
+      toast.error(validationError);
       event.target.value = "";
       return;
     }
@@ -708,9 +719,11 @@ function TutorDashboardContent() {
     try {
       await uploadTutorProfilePicture(file);
       await queryClient.invalidateQueries({ queryKey: ["tutor-me"] });
+      await queryClient.invalidateQueries({ queryKey: ["profile-me"] });
       if (profile?.id) {
         await queryClient.invalidateQueries({ queryKey: ["tutor", profile.id] });
       }
+      await queryClient.invalidateQueries({ queryKey: ["tutors"] });
       toast.success("Profil fotoğrafı güncellendi.");
     } catch {
       toast.error("Profil fotoğrafı yüklenemedi.");
