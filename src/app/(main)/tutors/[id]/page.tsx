@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, Copy, MessageCircle, MessageSquare, PlayCircle, Share2 } from "lucide-react";
 import { useFavorites } from "@/hooks/useFavorites";
 import { FavoriteButton } from "@/components/tutors/FavoriteButton";
@@ -188,12 +188,13 @@ export default function TutorProfilePage({
   const id = params.id;
   const router = useRouter();
   const searchParams = useSearchParams();
+  const queryClient = useQueryClient();
   const { isAuthenticated, isStudent, user } = useAuth();
   const { favoriteIds, toggle, isFavoritePending } = useFavorites();
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
   const [requestSent, setRequestSent] = useState(false);
   const [requestConversationId, setRequestConversationId] = useState<string | null>(null);
-  const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
+  const [bookingModalMode, setBookingModalMode] = useState<"normal" | "trial" | null>(null);
   const [bookingComplete, setBookingComplete] = useState(false);
   const [reviewsExpanded, setReviewsExpanded] = useState(false);
   const [isSharePreviewOpen, setIsSharePreviewOpen] = useState(false);
@@ -417,12 +418,37 @@ export default function TutorProfilePage({
                         </Button>
                       </div>
                     ) : (
-                      <Button
-                        className="w-full"
-                        onClick={() => setIsBookingModalOpen(true)}
-                      >
-                        Deneme dersi ayırt
-                      </Button>
+                      <>
+                        <Button
+                          className="w-full"
+                          onClick={() => setBookingModalMode("normal")}
+                        >
+                          Ders Rezervasyonu Yap
+                        </Button>
+                        {tutor.trial_lesson_eligible === true && (
+                          <div className="space-y-2 rounded-lg border border-primary/30 bg-primary/5 p-3">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <Badge variant="secondary">20 dk</Badge>
+                              <Badge variant="secondary">{formatPrice(0)}</Badge>
+                            </div>
+                            <p className="text-sm text-muted-foreground">
+                              Bu hocayla 20 dakikalık ücretsiz bir tanışma dersi yapabilirsin.
+                            </p>
+                            <Button
+                              variant="outline"
+                              className="w-full"
+                              onClick={() => setBookingModalMode("trial")}
+                            >
+                              Ücretsiz deneme dersi ayırt
+                            </Button>
+                          </div>
+                        )}
+                        {tutor.trial_lesson_eligible === false && (
+                          <p className="text-xs text-muted-foreground">
+                            Bu hoca için ücretsiz deneme hakkın bulunmuyor.
+                          </p>
+                        )}
+                      </>
                     )}
                     {requestSent && !bookingComplete && (
                       <div className="rounded-lg border bg-muted/40 p-2 text-center text-sm">
@@ -716,13 +742,20 @@ export default function TutorProfilePage({
       />
       <BookingModal
         tutor={tutor}
-        isOpen={isBookingModalOpen}
-        onClose={() => setIsBookingModalOpen(false)}
+        isOpen={bookingModalMode !== null}
+        isTrial={bookingModalMode === "trial"}
+        onClose={() => setBookingModalMode(null)}
         learningContext={learningContext}
         onSuccess={(booking) => {
+          const wasTrial = bookingModalMode === "trial";
           setBookingComplete(true);
-          setIsBookingModalOpen(false);
-          toast.success("Ders rezervasyonu oluşturuldu.");
+          setBookingModalMode(null);
+          queryClient.invalidateQueries({ queryKey: ["tutor", id] });
+          toast.success(
+            wasTrial
+              ? "Ücretsiz deneme dersi isteğin gönderildi."
+              : "Ders rezervasyonu oluşturuldu."
+          );
         }}
       />
     </div>

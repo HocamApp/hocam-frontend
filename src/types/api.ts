@@ -273,6 +273,7 @@ export interface TutorProfile {
   completed_lessons_count?: number | null;
   is_verified: boolean;
   is_online: boolean;
+  trial_lesson_eligible?: boolean | null;
   subjects: Subject[];
   created_at: string;
 }
@@ -310,6 +311,7 @@ export interface Booking {
   duration_minutes: number;
   price: number;
   status: "pending" | "confirmed" | "completed" | "cancelled";
+  is_trial?: boolean;
   lesson_request: string | null;
   room_url?: string;
   daily_room_name?: string;

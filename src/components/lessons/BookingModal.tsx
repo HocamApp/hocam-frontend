@@ -23,6 +23,9 @@ import { cn } from "@/lib/utils";
 // (apps/lessons/pricing.py).
 const LESSON_BASE_MINUTES = 40;
 const DURATION_OPTIONS = [40, 50, 60] as const;
+// Free trial lessons are always this length; the backend forces it
+// regardless of what's sent (apps/lessons/pricing.py TRIAL_DURATION_MINUTES).
+const TRIAL_DURATION_MINUTES = 20;
 
 // Backend: 0=Monday, 6=Sunday. JS getDay(): 0=Sunday, 6=Saturday.
 function jsDayToBackendDay(jsDay: number): number {
@@ -107,6 +110,7 @@ interface BookingModalProps {
   onSuccess: (booking: Booking) => void;
   lessonRequestId?: string;
   learningContext?: LearningContextQuery | null;
+  isTrial?: boolean;
 }
 
 export function BookingModal({
@@ -116,6 +120,7 @@ export function BookingModal({
   onSuccess,
   lessonRequestId,
   learningContext,
+  isTrial = false,
 }: BookingModalProps) {
   const [step, setStep] = useState(1);
   const [selectedSubjectId, setSelectedSubjectId] = useState<string>("");
@@ -133,17 +138,20 @@ export function BookingModal({
   });
 
   useEffect(() => {
-    if (!isOpen) {
+    // Reset on open (not close): this modal instance is reused for both
+    // normal and trial bookings, so the fresh session must pick up whichever
+    // mode is being opened via `isTrial`.
+    if (isOpen) {
       setStep(1);
       setSelectedSubjectId("");
-      setSelectedDuration(LESSON_BASE_MINUTES);
+      setSelectedDuration(isTrial ? TRIAL_DURATION_MINUTES : LESSON_BASE_MINUTES);
       setSelectedDate(null);
       setSelectedTime("");
       setApiError(null);
       setIsSubmitting(false);
       setStep1Error(null);
     }
-  }, [isOpen]);
+  }, [isOpen, isTrial]);
 
   useEffect(() => {
     setSelectedTime("");
@@ -152,6 +160,8 @@ export function BookingModal({
   const calculatedPrice = Math.round(
     (tutor.hourly_price * selectedDuration) / LESSON_BASE_MINUTES
   );
+  // Trials are always free; never derive their price from the tutor's rate.
+  const displayPrice = isTrial ? 0 : calculatedPrice;
   const endTime = selectedTime
     ? (() => {
         const [h, m] = selectedTime.split(":").map(Number);
@@ -206,6 +216,7 @@ export function BookingModal({
         subject: selectedSubjectId,
         start_time,
         duration_minutes: selectedDuration,
+        ...(isTrial ? { is_trial: true } : {}),
         ...(lessonRequestId ? { lesson_request: lessonRequestId } : {}),
         ...(learningContext
           ? {
@@ -265,6 +276,11 @@ export function BookingModal({
             {step === 3 && "Rezervasyonu Onayla"}
           </DialogTitle>
         </DialogHeader>
+        {isTrial && (
+          <p className="-mt-2 text-center text-xs font-medium text-primary">
+            Ücretsiz Deneme Dersi
+          </p>
+        )}
 
         <div className="min-w-0 max-w-full space-y-6 py-2">
           {/* Step 1 */}
@@ -301,24 +317,34 @@ export function BookingModal({
                   <p className="mt-2 text-sm text-destructive">{step1Error}</p>
                 )}
               </div>
-              <div>
-                <label className="text-sm font-medium">Ders süresi</label>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {DURATION_OPTIONS.map((dur) => (
-                    <Button
-                      key={dur}
-                      type="button"
-                      variant={selectedDuration === dur ? "default" : "outline"}
-                      onClick={() => setSelectedDuration(dur)}
-                    >
-                      {dur} dk
-                    </Button>
-                  ))}
+              {isTrial ? (
+                <div>
+                  <label className="text-sm font-medium">Ders süresi</label>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <Badge variant="secondary">{TRIAL_DURATION_MINUTES} dk</Badge>
+                    <Badge variant="secondary">{formatPrice(displayPrice)}</Badge>
+                  </div>
                 </div>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  Tahmini ücret: {formatPrice(calculatedPrice)}
-                </p>
-              </div>
+              ) : (
+                <div>
+                  <label className="text-sm font-medium">Ders süresi</label>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {DURATION_OPTIONS.map((dur) => (
+                      <Button
+                        key={dur}
+                        type="button"
+                        variant={selectedDuration === dur ? "default" : "outline"}
+                        onClick={() => setSelectedDuration(dur)}
+                      >
+                        {dur} dk
+                      </Button>
+                    ))}
+                  </div>
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    Tahmini ücret: {formatPrice(displayPrice)}
+                  </p>
+                </div>
+              )}
               <div className="flex justify-end">
                 <Button className="w-full sm:w-auto" onClick={handleNextStep1}>
                   İleri →
@@ -403,7 +429,7 @@ export function BookingModal({
                   </p>
                   <p className="mt-1 break-words text-muted-foreground">
                     {selectedSubject?.name} · {selectedDuration} dakika ·{" "}
-                    {formatPrice(calculatedPrice)}
+                    {formatPrice(displayPrice)}
                   </p>
                 </div>
               )}
@@ -486,7 +512,7 @@ export function BookingModal({
                 <div className="flex justify-between">
                   <dt className="text-muted-foreground">Ücret:</dt>
                   <dd className="font-semibold">
-                    {formatPrice(calculatedPrice)}
+                    {formatPrice(displayPrice)}
                   </dd>
                 </div>
               </dl>
