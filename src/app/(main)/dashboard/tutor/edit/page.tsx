@@ -216,7 +216,6 @@ function TutorProfileEditContent() {
       } else {
         setGeneralError("Profil güncellenemedi. Lütfen bilgileri kontrol et.");
       }
-      toast.error("Profil güncellenemedi.");
     }
   };
 

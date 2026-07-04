@@ -111,6 +111,7 @@ function ProfileContent() {
   const [nameEdit, setNameEdit] = useState(false);
   const [editName, setEditName] = useState("");
   const [editSurname, setEditSurname] = useState("");
+  const [nameError, setNameError] = useState<string | null>(null);
   const [nameSaving, setNameSaving] = useState(false);
   const [photoUploading, setPhotoUploading] = useState(false);
   const [avatarChoicePendingKey, setAvatarChoicePendingKey] =
@@ -182,6 +183,7 @@ function ProfileContent() {
   const startNameEdit = () => {
     setEditName(name);
     setEditSurname(surname);
+    setNameError(null);
     setNameEdit(true);
   };
 
@@ -189,7 +191,7 @@ function ProfileContent() {
     const trimmedName = editName.trim();
     const trimmedSurname = editSurname.trim();
     if (!trimmedName || !trimmedSurname) {
-      toast.error("İsim ve soyisim boş olamaz.");
+      setNameError("İsim ve soyisim boş olamaz.");
       return;
     }
     setNameSaving(true);
@@ -376,15 +378,24 @@ function ProfileContent() {
                     <div className="flex flex-col gap-2 sm:flex-row">
                       <Input
                         value={editName}
-                        onChange={(e) => setEditName(e.target.value)}
+                        onChange={(e) => {
+                          setEditName(e.target.value);
+                          setNameError(null);
+                        }}
                         placeholder="İsim"
                       />
                       <Input
                         value={editSurname}
-                        onChange={(e) => setEditSurname(e.target.value)}
+                        onChange={(e) => {
+                          setEditSurname(e.target.value);
+                          setNameError(null);
+                        }}
                         placeholder="Soyisim"
                       />
                     </div>
+                    {nameError && (
+                      <p className="text-sm text-destructive">{nameError}</p>
+                    )}
                     <div className="flex gap-2">
                       <Button size="sm" onClick={handleNameSave} disabled={nameSaving}>
                         Kaydet

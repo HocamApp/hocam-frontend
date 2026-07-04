@@ -146,6 +146,7 @@ export function ProfileMenu() {
   const [nameEdit, setNameEdit] = useState(false);
   const [editName, setEditName] = useState("");
   const [editSurname, setEditSurname] = useState("");
+  const [nameError, setNameError] = useState<string | null>(null);
   const [nameSaving, setNameSaving] = useState(false);
 
   // Profile photo upload (tutor only)
@@ -278,7 +279,7 @@ export function ProfileMenu() {
     const trimmedName = editName.trim();
     const trimmedSurname = editSurname.trim();
     if (!trimmedName || !trimmedSurname) {
-      toast.error("İsim ve soyisim boş olamaz.");
+      setNameError("İsim ve soyisim boş olamaz.");
       return;
     }
     setNameSaving(true);
@@ -509,6 +510,7 @@ export function ProfileMenu() {
                 onClick={() => {
                   setEditName(name);
                   setEditSurname(surname);
+                  setNameError(null);
                   setNameEdit(true);
                 }}
               >
@@ -521,7 +523,10 @@ export function ProfileMenu() {
                   <Input
                     placeholder="İsim"
                     value={editName}
-                    onChange={(e) => setEditName(e.target.value)}
+                    onChange={(e) => {
+                      setEditName(e.target.value);
+                      setNameError(null);
+                    }}
                     className="h-8 text-sm"
                     disabled={nameSaving}
                     // eslint-disable-next-line jsx-a11y/no-autofocus
@@ -530,11 +535,17 @@ export function ProfileMenu() {
                   <Input
                     placeholder="Soyisim"
                     value={editSurname}
-                    onChange={(e) => setEditSurname(e.target.value)}
+                    onChange={(e) => {
+                      setEditSurname(e.target.value);
+                      setNameError(null);
+                    }}
                     className="h-8 text-sm"
                     disabled={nameSaving}
                   />
                 </div>
+                {nameError && (
+                  <p className="text-xs text-destructive">{nameError}</p>
+                )}
                 <div className="flex gap-2">
                   <Button
                     variant="outline"

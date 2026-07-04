@@ -4,6 +4,7 @@ import "./globals.css";
 import { Toaster } from "sonner";
 import { AuthProvider } from "@/providers/AuthProvider";
 import { QueryProvider } from "@/providers/QueryProvider";
+import { SessionExpiredDialog } from "@/components/shared/SessionExpiredDialog";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -27,6 +28,7 @@ export default function RootLayout({
         <AuthProvider>
           <QueryProvider>
             <div className="flex min-h-screen flex-1 flex-col">{children}</div>
+            <SessionExpiredDialog />
           </QueryProvider>
         </AuthProvider>
         <Toaster richColors position="top-right" />
