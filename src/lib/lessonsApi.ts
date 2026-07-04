@@ -1,5 +1,5 @@
 import api from "./api";
-import { LessonRequest, Booking } from "@/types";
+import { LessonRequest, Booking, BusyInterval } from "@/types";
 
 export interface LearningContextPayload {
   learning_goal_id?: string;
@@ -64,6 +64,22 @@ export async function updateLessonRequestStatus(
 
 export async function fetchBookings(): Promise<Booking[]> {
   const response = await api.get<Booking[]>("/bookings/");
+  return response.data;
+}
+
+/**
+ * Busy intervals (pending/confirmed bookings only) for a tutor within a date
+ * range — used to hide already-booked slots in BookingModal. Deliberately
+ * privacy-minimal: only start_time/end_time, per the backend contract.
+ */
+export async function fetchTutorBusyIntervals(
+  tutorId: string,
+  start: string,
+  end: string
+): Promise<BusyInterval[]> {
+  const response = await api.get<BusyInterval[]>(
+    `/bookings/busy/?tutor=${tutorId}&start=${start}&end=${end}`
+  );
   return response.data;
 }
 

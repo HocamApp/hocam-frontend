@@ -388,6 +388,13 @@ export interface AvailabilityRule {
   created_at: string;
 }
 
+// GET /api/bookings/busy/ — deliberately minimal: only enough to hide already
+// booked slots in the booking UI, never any other booking detail.
+export interface BusyInterval {
+  start_time: string;
+  end_time: string;
+}
+
 export interface TutorVerification {
   id: string;
   tutor: string;

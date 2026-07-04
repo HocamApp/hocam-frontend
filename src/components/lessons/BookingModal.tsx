@@ -3,8 +3,8 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchTutorAvailability } from "@/lib/dashboardApi";
-import { createBooking } from "@/lib/lessonsApi";
-import type { Booking, TutorProfile, AvailabilityRule } from "@/types";
+import { createBooking, fetchTutorBusyIntervals } from "@/lib/lessonsApi";
+import type { Booking, TutorProfile, AvailabilityRule, BusyInterval } from "@/types";
 import { formatPrice } from "@/lib/utils";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import {
@@ -44,6 +44,25 @@ function getNext14Days(): Date[] {
   return out;
 }
 
+// Local (not UTC) YYYY-MM-DD — must not use toISOString(), which would
+// convert to UTC and shift the calendar date by a day for Turkey (UTC+3).
+function formatDateLocal(d: Date): string {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+// Busy interval timestamps follow the project's naive wall-clock convention
+// (see handleSubmit below): the YYYY-MM-DD/HH:mm digits ARE Turkey local time,
+// with no real timezone conversion applied by the backend. Parsing via
+// `new Date(iso)` would apply a spurious +3h shift on display; read the
+// digits directly instead, exactly like the rest of this file already does.
+function parseNaiveLocalDateTime(iso: string): { dateStr: string; minutes: number } {
+  const match = iso.match(/^(\d{4}-\d{2}-\d{2})T(\d{2}):(\d{2})/);
+  if (!match) return { dateStr: "", minutes: 0 };
+  const [, dateStr, hh, mm] = match;
+  return { dateStr, minutes: parseInt(hh, 10) * 60 + parseInt(mm, 10) };
+}
+
 // Parse "16:00" or "16:00:00" to minutes since midnight
 function parseTimeToMinutes(t: string): number {
   const parts = t.trim().split(":");
@@ -58,20 +77,42 @@ function minutesToTimeStr(minutes: number): string {
   return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
 }
 
-// Generate 30-min slots for a day from availability rules. Exclude slots where start + duration would exceed rule end.
+// Generate 30-min slots for a day from availability rules. Exclude slots where
+// start + duration would exceed rule end, or where the candidate interval
+// overlaps an existing busy (pending/confirmed) booking on that exact date.
 function getSlotsForDay(
   rules: AvailabilityRule[],
   backendDay: number,
-  durationMinutes: number
+  durationMinutes: number,
+  busyIntervals: BusyInterval[],
+  dateStr: string
 ): string[] {
   const dayRules = rules.filter((r) => r.day_of_week === backendDay);
   if (dayRules.length === 0) return [];
+
+  // Only this exact calendar date's busy intervals, as local minutes-since-
+  // midnight. Bookings never cross midnight (backend-enforced), so comparing
+  // the start date's string is sufficient to scope busy intervals to this day.
+  const busyForDay = busyIntervals
+    .map((b) => ({
+      start: parseNaiveLocalDateTime(b.start_time),
+      end: parseNaiveLocalDateTime(b.end_time),
+    }))
+    .filter((b) => b.start.dateStr === dateStr)
+    .map((b) => ({ startMin: b.start.minutes, endMin: b.end.minutes }));
+
   const slotSet = new Set<number>();
   for (const r of dayRules) {
     const startMin = parseTimeToMinutes(r.start_time);
     const endMin = parseTimeToMinutes(r.end_time);
     for (let m = startMin; m + durationMinutes <= endMin; m += 30) {
-      slotSet.add(m);
+      const candidateEnd = m + durationMinutes;
+      const overlapsBusy = busyForDay.some(
+        (b) => m < b.endMin && candidateEnd > b.startMin
+      );
+      if (!overlapsBusy) {
+        slotSet.add(m);
+      }
     }
   }
   return Array.from(slotSet)
@@ -88,6 +129,8 @@ function translateApiError(message: string): string {
     return "Gece yarısını geçen rezervasyon oluşturulamaz.";
   if (message.includes("at least 40 minutes"))
     return "Ders süresi en az 40 dakika olmalıdır.";
+  if (message.includes("already booked"))
+    return "Bu saat az önce doldu. Lütfen başka bir saat seçin.";
   return message;
 }
 
@@ -137,6 +180,18 @@ export function BookingModal({
     enabled: isOpen,
   });
 
+  // Same rolling 14-day window the date picker below already shows.
+  const next14Days = getNext14Days();
+  const busyRangeStart = formatDateLocal(next14Days[0]);
+  const busyRangeEnd = formatDateLocal(next14Days[next14Days.length - 1]);
+
+  const { data: busyIntervals = [], isLoading: busyIntervalsLoading } = useQuery({
+    queryKey: ["tutor-busy-intervals", tutor.id, busyRangeStart, busyRangeEnd],
+    queryFn: () =>
+      fetchTutorBusyIntervals(String(tutor.id), busyRangeStart, busyRangeEnd),
+    enabled: isOpen && Boolean(tutor.id),
+  });
+
   useEffect(() => {
     // Reset on open (not close): this modal instance is reused for both
     // normal and trial bookings, so the fresh session must pick up whichever
@@ -171,16 +226,17 @@ export function BookingModal({
       })()
     : "";
 
-  const next14Days = getNext14Days();
   const backendDayForDate = (d: Date) => jsDayToBackendDay(d.getDay());
   const hasAvailabilityOnDay = (d: Date) =>
     availabilityRules.some((r) => r.day_of_week === backendDayForDate(d));
   const slotsForSelectedDay =
-    selectedDate && availabilityRules.length > 0
+    selectedDate && availabilityRules.length > 0 && !busyIntervalsLoading
       ? getSlotsForDay(
           availabilityRules,
           backendDayForDate(selectedDate),
-          selectedDuration
+          selectedDuration,
+          busyIntervals,
+          formatDateLocal(selectedDate)
         )
       : [];
 
@@ -394,6 +450,10 @@ export function BookingModal({
                 {!selectedDate ? (
                   <p className="mt-2 text-sm text-muted-foreground">
                     Önce bir tarih seçin
+                  </p>
+                ) : busyIntervalsLoading ? (
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    Müsait saatler kontrol ediliyor...
                   </p>
                 ) : slotsForSelectedDay.length === 0 ? (
                   <p className="mt-2 text-sm text-muted-foreground">
