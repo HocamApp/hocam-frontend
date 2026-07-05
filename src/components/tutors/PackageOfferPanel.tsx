@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ChevronDown, Gift, X } from "lucide-react";
+import { CheckCircle2, ChevronDown, Clock, Gift, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -198,11 +198,13 @@ export function PackageOfferPanel({ tutor }: PackageOfferPanelProps) {
 
           <div className="mt-4 space-y-2">
             {existing?.status === "pending" ? (
-              <p className="rounded-md bg-amber-500/10 px-2 py-2 text-center text-xs font-medium text-amber-700 dark:text-amber-300">
+              <p className="flex items-center justify-center gap-1.5 rounded-md bg-amber-500/10 px-2 py-2 text-center text-xs font-medium text-amber-700 dark:text-amber-300">
+                <Clock className="h-3.5 w-3.5 shrink-0" />
                 Admin onayı bekleniyor
               </p>
             ) : existing?.status === "paid" && existing.remaining_credits > 0 ? (
-              <p className="rounded-md bg-green-500/10 px-2 py-2 text-center text-xs font-medium text-green-700 dark:text-green-300">
+              <p className="flex items-center justify-center gap-1.5 rounded-md bg-green-500/10 px-2 py-2 text-center text-xs font-medium text-green-700 dark:text-green-300">
+                <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
                 Kullanılabilir {existing.remaining_credits} ders hakkı
               </p>
             ) : (
@@ -230,6 +232,9 @@ export function PackageOfferPanel({ tutor }: PackageOfferPanelProps) {
                 >
                   {createMutation.isPending ? "Oluşturuluyor..." : "Paket talebi oluştur"}
                 </Button>
+                <p className="text-center text-xs text-muted-foreground">
+                  Talep admin onayıyla aktifleşir; kartından anlık ödeme alınmaz.
+                </p>
               </>
             )}
             <Link

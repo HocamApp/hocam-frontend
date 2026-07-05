@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  BadgeCheck,
   Check,
   ChevronDown,
   ChevronUp,
@@ -445,9 +446,18 @@ export default function TutorProfilePage({
               </AvatarFallback>
             </Avatar>
             <div className="min-w-0 flex-1">
-              <h1 className="text-3xl font-bold leading-tight">
-                {tutor.name} {tutor.surname}
-              </h1>
+              <div className="flex flex-wrap items-center gap-1.5">
+                <h1 className="text-3xl font-bold leading-tight">
+                  {tutor.name} {tutor.surname}
+                </h1>
+                {tutor.is_verified && (
+                  <BadgeCheck
+                    className="h-6 w-6 shrink-0 text-primary"
+                    role="img"
+                    aria-label="Doğrulanmış hoca"
+                  />
+                )}
+              </div>
               <p className="mt-1 text-muted-foreground">
                 {tutor.university} · {tutor.department}
               </p>
@@ -540,7 +550,8 @@ export default function TutorProfilePage({
                 </div>
               )}
 
-              {/* Primary CTA (book a lesson) */}
+              <Separator />
+
               <div className="space-y-3 pt-1">
                 {!isAuthenticated && (
                   <Button className="w-full" onClick={() => router.push("/login")}>
@@ -591,6 +602,20 @@ export default function TutorProfilePage({
                         )}
                       </>
                     )}
+                  </>
+                )}
+
+                {isAuthenticated && isStudent && !isOwnProfile && (
+                  <>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => setIsRequestModalOpen(true)}
+                    >
+                      <MessageSquare className="mr-2 h-4 w-4" />
+                      Hocaya Mesaj Gönder
+                    </Button>
                     {requestSent && !bookingComplete && (
                       <div className="rounded-lg border bg-muted/40 p-2 text-center text-sm">
                         <p className="text-muted-foreground">
@@ -613,21 +638,8 @@ export default function TutorProfilePage({
                   <PackageOfferPanel tutor={tutor} />
                 )}
 
-                {/* Secondary icon actions: message, favorite, share */}
+                {/* Secondary icon actions: favorite, share */}
                 <div className="flex items-center justify-center gap-1">
-                  {isAuthenticated && isStudent && !isOwnProfile && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8"
-                      aria-label="Hocaya mesaj gönder"
-                      title="Hocaya mesaj gönder"
-                      onClick={() => setIsRequestModalOpen(true)}
-                    >
-                      <MessageSquare className="h-5 w-5" />
-                    </Button>
-                  )}
                   <FavoriteButton
                     tutorId={tutor.id}
                     isFavorite={favoriteIds.has(tutor.id)}
