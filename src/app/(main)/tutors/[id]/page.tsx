@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
@@ -25,6 +25,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
+import type { SubjectRating } from "@/types";
 
 function getInitials(name: string, surname: string): string {
   const n = (name || "").trim()[0] || "";
@@ -67,6 +68,123 @@ function Stars({ rating }: { rating: number }) {
         )
       )}
     </span>
+  );
+}
+
+function RatingSummaryPopover({
+  rating,
+  totalReviews,
+  subjectRatings,
+}: {
+  rating: number;
+  totalReviews: number;
+  subjectRatings: SubjectRating[];
+}) {
+  const [open, setOpen] = useState(false);
+  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const openPopover = () => {
+    if (closeTimerRef.current) {
+      clearTimeout(closeTimerRef.current);
+      closeTimerRef.current = null;
+    }
+    setOpen(true);
+  };
+
+  const closePopover = () => {
+    if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
+    closeTimerRef.current = setTimeout(() => setOpen(false), 120);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
+    };
+  }, []);
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className="inline-flex items-center gap-1.5 rounded-md transition-colors hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          aria-label={`${formatRating(rating)} yıldız puan detayları`}
+          onFocus={openPopover}
+          onBlur={closePopover}
+          onMouseEnter={openPopover}
+          onMouseLeave={closePopover}
+        >
+          <Stars rating={rating} />
+          <span className="font-medium">{formatRating(rating)}</span>
+        </button>
+      </PopoverTrigger>
+      <PopoverContent
+        align="start"
+        side="top"
+        sideOffset={8}
+        collisionPadding={16}
+        className="w-[calc(100vw-2rem)] p-0 sm:w-80"
+        onFocus={openPopover}
+        onBlur={closePopover}
+        onMouseEnter={openPopover}
+        onMouseLeave={closePopover}
+      >
+        <div className="p-4 text-sm">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="text-xs font-medium uppercase text-muted-foreground">
+                Genel puan
+              </p>
+              <div className="mt-1 flex items-center gap-2">
+                <Stars rating={rating} />
+                <span className="text-lg font-semibold">{formatRating(rating)}</span>
+              </div>
+            </div>
+            <span className="rounded-full bg-muted px-2 py-1 text-xs text-muted-foreground">
+              {totalReviews} değerlendirme
+            </span>
+          </div>
+
+          <div className="mt-4 border-t pt-4">
+            <p className="mb-3 text-xs font-medium uppercase text-muted-foreground">
+              Derslere göre puan
+            </p>
+            {subjectRatings.length > 0 ? (
+              <div className="space-y-3">
+                {subjectRatings.map((sr) => (
+                  <div
+                    key={sr.subject.id}
+                    className="flex items-center justify-between gap-3"
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate font-medium">
+                        {sr.subject.name}
+                        <span className="ml-1 text-xs text-muted-foreground">
+                          {sr.subject.exam_type}
+                        </span>
+                      </p>
+                    </div>
+                    <div className="shrink-0 text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        <Stars rating={sr.average} />
+                        <span className="font-medium">{formatRating(sr.average)}</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        {sr.count} değerlendirme
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Ders bazlı puan henüz yok.
+              </p>
+            )}
+          </div>
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }
 
@@ -327,8 +445,11 @@ export default function TutorProfilePage({
               </div>
               {tutor.total_reviews > 0 && (
                 <div className="mt-2 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-sm">
-                  <Stars rating={tutor.rating} />
-                  <span className="font-medium">{formatRating(tutor.rating)}</span>
+                  <RatingSummaryPopover
+                    rating={tutor.rating}
+                    totalReviews={tutor.total_reviews}
+                    subjectRatings={subjectRatings}
+                  />
                   <span className="text-muted-foreground">
                     ({tutor.total_reviews} değerlendirme)
                   </span>
@@ -375,10 +496,11 @@ export default function TutorProfilePage({
               <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
                 {tutor.total_reviews > 0 ? (
                   <>
-                    <span className="flex items-center gap-1.5">
-                      <Stars rating={tutor.rating} />
-                      <span className="font-medium">{formatRating(tutor.rating)}</span>
-                    </span>
+                    <RatingSummaryPopover
+                      rating={tutor.rating}
+                      totalReviews={tutor.total_reviews}
+                      subjectRatings={subjectRatings}
+                    />
                     <span className="text-muted-foreground">
                       {tutor.total_reviews} değerlendirme
                     </span>
@@ -672,30 +794,6 @@ export default function TutorProfilePage({
         <h2 className="text-xl font-semibold">Değerlendirmeler</h2>
         <Separator className="mt-2" />
         <div className="mt-4 space-y-6">
-          {subjectRatings.length > 0 && (
-            <div>
-              <h3 className="mb-2 text-sm font-medium text-muted-foreground">
-                Derslere göre puan
-              </h3>
-              <div className="space-y-2">
-                {subjectRatings.map((sr) => (
-                  <div key={sr.subject.id} className="flex items-center gap-3 text-sm">
-                    <span className="w-40 shrink-0 truncate font-medium">
-                      {sr.subject.name}
-                      <span className="ml-1 text-xs text-muted-foreground">
-                        {sr.subject.exam_type}
-                      </span>
-                    </span>
-                    <Stars rating={sr.average} />
-                    <span className="text-muted-foreground">
-                      {formatRating(sr.average)} ({sr.count})
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
           {reviewsLoading && (
             <div className="space-y-3">
               <ReviewSkeletonCard />
