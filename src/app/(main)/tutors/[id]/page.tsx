@@ -5,7 +5,16 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Check, Copy, MessageCircle, MessageSquare, PlayCircle, Share2 } from "lucide-react";
+import {
+  Check,
+  ChevronDown,
+  ChevronUp,
+  Copy,
+  MessageCircle,
+  MessageSquare,
+  PlayCircle,
+  Share2,
+} from "lucide-react";
 import { useFavorites } from "@/hooks/useFavorites";
 import { FavoriteButton } from "@/components/tutors/FavoriteButton";
 import { fetchTutorById, fetchTutorReviews, fetchTutorSubjectRatings } from "@/lib/tutorsApi";
@@ -38,6 +47,8 @@ type LearningContextQuery = {
   learning_milestone_id: string;
   learning_topic_id?: string | null;
 };
+
+const REVIEW_PREVIEW_COUNT = 3;
 
 function learningContextFromSearchParams(
   searchParams: URLSearchParams
@@ -365,9 +376,12 @@ export default function TutorProfilePage({
   })).filter((group) => group.items.length > 0);
   const introVideoEmbedUrl = getYouTubeEmbedUrl(tutor?.intro_video_url);
   const displayReviews = Array.isArray(reviews)
-    ? reviewsExpanded ? reviews : reviews.slice(0, 5)
+    ? reviewsExpanded ? reviews : reviews.slice(0, REVIEW_PREVIEW_COUNT)
     : [];
-  const hasMoreReviews = Array.isArray(reviews) && reviews.length > 5 && !reviewsExpanded;
+  const hasMoreReviews = Array.isArray(reviews) && reviews.length > REVIEW_PREVIEW_COUNT;
+  const hiddenReviewsCount = Array.isArray(reviews)
+    ? Math.max(reviews.length - REVIEW_PREVIEW_COUNT, 0)
+    : 0;
   const completedLessonsLabel = `${formatLessonCount(tutor?.completed_lessons_count ?? 0)} ders`;
   const shareTitle = tutor
     ? `${tutor.name} ${tutor.surname} · Hocam`
@@ -820,13 +834,41 @@ export default function TutorProfilePage({
                   <ReviewCard key={review.id} review={review} />
                 ))}
               </div>
-              {hasMoreReviews && (
+              {hasMoreReviews && !reviewsExpanded && (
+                <div className="rounded-lg border bg-card p-4">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex items-start gap-3">
+                      <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
+                        <MessageSquare className="h-4 w-4" />
+                      </span>
+                      <div>
+                        <p className="font-medium">
+                          {hiddenReviewsCount} yorum daha var
+                        </p>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          Öğrencilerin farklı ders deneyimlerini okumaya devam et.
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      variant="outline"
+                      className="shrink-0"
+                      onClick={() => setReviewsExpanded(true)}
+                    >
+                      Devamını gör
+                      <ChevronDown className="ml-2 h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+              {hasMoreReviews && reviewsExpanded && (
                 <Button
                   variant="ghost"
-                  className="mt-4"
-                  onClick={() => setReviewsExpanded(true)}
+                  className="mt-1"
+                  onClick={() => setReviewsExpanded(false)}
                 >
-                  Tüm değerlendirmeleri gör ({reviews.length})
+                  Daha az göster
+                  <ChevronUp className="ml-2 h-4 w-4" />
                 </Button>
               )}
             </>
