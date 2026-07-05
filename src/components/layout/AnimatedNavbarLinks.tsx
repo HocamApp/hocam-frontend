@@ -9,6 +9,7 @@ import {
   LayoutDashboard,
   LucideIcon,
   MessageCircle,
+  Route,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
@@ -24,7 +25,14 @@ import { NotificationPopoverContent } from "@/components/shared/NotificationPopo
 import { fetchNotificationSummary } from "@/lib/notificationsApi";
 
 type NavDescriptor =
-  | { kind: "route"; title: string; icon: LucideIcon; href: string }
+  | {
+      kind: "route";
+      title: string;
+      icon: LucideIcon;
+      href: string;
+      /** Extra path prefixes that should also mark this item active. */
+      activePrefixes?: string[];
+    }
   | { kind: "separator" }
   | {
       kind: "popover";
@@ -65,6 +73,17 @@ export function AnimatedNavbarLinks() {
     { kind: "route", title: "Dersler", icon: GraduationCap, href: "/tutors" },
     { kind: "route", title: "Mesajlar", icon: MessageCircle, href: "/messages" },
     { kind: "route", title: "Panom", icon: LayoutDashboard, href: panomHref },
+    ...(!isTutor
+      ? [
+          {
+            kind: "route" as const,
+            title: "Öğrenme",
+            icon: Route,
+            href: "/dashboard/student/learning",
+            activePrefixes: ["/dashboard/student/hedefler"],
+          },
+        ]
+      : []),
     { kind: "separator" },
     {
       kind: "popover",
@@ -77,17 +96,36 @@ export function AnimatedNavbarLinks() {
       : []),
   ];
 
-  const isActive = (href: string) => {
-    if (href === "/tutors?favorites=1") return isFavoritesView;
-    if (href === "/tutors" && isFavoritesView) return false;
+  // Returns the length of the most specific matched path for a route, or -1 if
+  // it isn't active. Longer match wins so nested routes (e.g. the learning hub)
+  // don't get shadowed by a shorter prefix like Panom's /dashboard/student.
+  const routeMatchLength = (descriptor: NavDescriptor): number => {
+    if (descriptor.kind !== "route") return -1;
+    const { href, activePrefixes } = descriptor;
+
+    if (href === "/tutors?favorites=1") return isFavoritesView ? href.length : -1;
+    if (href === "/tutors" && isFavoritesView) return -1;
 
     const [hrefPathname] = href.split("?");
-    return pathname === hrefPathname || pathname.startsWith(`${hrefPathname}/`);
+    const candidates = [hrefPathname, ...(activePrefixes ?? [])];
+    let best = -1;
+    for (const candidate of candidates) {
+      if (pathname === candidate || pathname.startsWith(`${candidate}/`)) {
+        best = Math.max(best, candidate.length);
+      }
+    }
+    return best;
   };
 
-  const activeIndex = descriptors.findIndex(
-    (d) => d.kind === "route" && isActive(d.href)
-  );
+  let activeIndex = -1;
+  let bestMatch = -1;
+  descriptors.forEach((descriptor, index) => {
+    const length = routeMatchLength(descriptor);
+    if (length > bestMatch) {
+      bestMatch = length;
+      activeIndex = index;
+    }
+  });
 
   const makePopoverWrapper = (descriptor: NavDescriptor & { kind: "popover" }) => {
     const showBadge = descriptor.contentNode != null ? hasUnread : (descriptor.badge ?? false);

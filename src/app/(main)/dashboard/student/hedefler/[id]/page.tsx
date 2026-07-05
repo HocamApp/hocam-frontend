@@ -83,9 +83,9 @@ function GoalPackageDetailContent() {
           description="Aradığın hedef paketi kaldırılmış veya bağlantı hatalı olabilir."
           action={
             <Button asChild variant="outline">
-              <Link href="/dashboard/student">
+              <Link href="/dashboard/student/learning">
                 <ArrowLeft className="mr-2 h-4 w-4" aria-hidden="true" />
-                Panoya dön
+                Öğrenmeye dön
               </Link>
             </Button>
           }
@@ -110,9 +110,9 @@ function GoalPackageDetailContent() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
       <Button asChild variant="ghost" size="sm" className="-ml-2 mb-4">
-        <Link href="/dashboard/student">
+        <Link href="/dashboard/student/learning">
           <ArrowLeft className="mr-2 h-4 w-4" aria-hidden="true" />
-          Panoya dön
+          Öğrenmeye dön
         </Link>
       </Button>
 
