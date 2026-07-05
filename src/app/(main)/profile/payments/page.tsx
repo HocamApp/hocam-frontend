@@ -1,13 +1,21 @@
 "use client";
 
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Check, Copy } from "lucide-react";
+import { toast } from "sonner";
 import { RouteGuard } from "@/components/shared/RouteGuard";
 import { ProfileScreen } from "@/components/profile/ProfileScreen";
+import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import StatusBadge from "@/components/shared/StatusBadge";
-import { fetchPackagePurchases, fetchPaymentHistory } from "@/lib/paymentsApi";
+import {
+  fetchPackagePurchases,
+  fetchPaymentHistory,
+  fetchReferralInfo,
+} from "@/lib/paymentsApi";
 import { formatDate, formatPrice } from "@/lib/utils";
 import type { PaymentLedgerEntry } from "@/types";
 
@@ -136,11 +144,63 @@ function PaymentHistorySection() {
   );
 }
 
+function ReferralSection() {
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ["referral-info"],
+    queryFn: fetchReferralInfo,
+  });
+  const [copied, setCopied] = useState(false);
+
+  if (isLoading) {
+    return (
+      <div className="py-8">
+        <LoadingSpinner />
+      </div>
+    );
+  }
+  if (isError || !data) {
+    return <ErrorMessage message="Referans bilgin yüklenemedi. Lütfen tekrar deneyin." />;
+  }
+
+  const handleCopy = async () => {
+    try {
+      if (!navigator.clipboard?.writeText) {
+        throw new Error("Clipboard API unavailable");
+      }
+      await navigator.clipboard.writeText(data.referral_url);
+      setCopied(true);
+      toast.success("Referans linki kopyalandı.");
+      setTimeout(() => setCopied(false), 1600);
+    } catch {
+      toast.error("Kopyalanamadı. Lütfen kodu elle kopyala.");
+    }
+  };
+
+  return (
+    <div className="rounded-lg border p-3 text-sm">
+      <p className="text-muted-foreground">
+        Arkadaşlarını Hocam&apos;a davet et. Referans ödülleri yakında aktif olacak.
+      </p>
+      <div className="mt-2 flex flex-wrap items-center gap-2">
+        <code className="rounded bg-muted px-2 py-1 font-medium">{data.referral_code}</code>
+        <Button type="button" variant="outline" size="sm" onClick={handleCopy}>
+          {copied ? (
+            <Check className="mr-1.5 h-3.5 w-3.5" />
+          ) : (
+            <Copy className="mr-1.5 h-3.5 w-3.5" />
+          )}
+          {copied ? "Kopyalandı" : "Linki kopyala"}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 function PaymentsContent() {
   return (
     <ProfileScreen
       title="Ödemeler"
-      description="Paketlerin ve ödeme geçmişin."
+      description="Paketlerin, ödeme geçmişin ve referans kodun."
     >
       <div className="space-y-8">
         <section>
@@ -150,6 +210,10 @@ function PaymentsContent() {
         <section>
           <h2 className="mb-3 text-lg font-semibold">Ödeme geçmişi</h2>
           <PaymentHistorySection />
+        </section>
+        <section>
+          <h2 className="mb-3 text-lg font-semibold">Referans kodu</h2>
+          <ReferralSection />
         </section>
       </div>
     </ProfileScreen>

@@ -401,9 +401,11 @@ export interface PackagePurchase {
   unit_price: number;
   subtotal_price: number;
   discount_amount: number;
+  promo_discount_amount: number;
   total_price: number;
   created_at: string;
   paid_at: string | null;
+  promotion_code: string | null;
 }
 
 export interface PaymentLedgerEntry {
@@ -420,6 +422,12 @@ export interface PaymentLedgerEntry {
 export interface CreatePackagePurchasePayload {
   tutor: string;
   plan: string;
+  promotion_code?: string;
+}
+
+export interface ReferralInfo {
+  referral_code: string;
+  referral_url: string;
 }
 
 export interface SubjectRating {

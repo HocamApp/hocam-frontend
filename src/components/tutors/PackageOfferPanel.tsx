@@ -1,9 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   createPackagePurchase,
   fetchPackagePlans,
@@ -16,6 +18,29 @@ interface PackageOfferPanelProps {
   tutor: TutorProfile;
 }
 
+// Covers both the pre-existing tutor/plan validation messages (previously
+// shown with zero detail — the old error handler was a no-arg generic
+// toast) and the new promotion_code ones. Matched on the fuller "promotion
+// code ..." phrases, not bare "is not active", to avoid colliding with
+// "This package plan is not active." sharing that substring.
+function translatePackagePurchaseError(message: string): string {
+  if (message.includes("not available for package purchase"))
+    return "Bu hoca şu anda paket satışına açık değil.";
+  if (message.includes("This package plan is not active"))
+    return "Bu paket planı artık aktif değil.";
+  if (message.includes("promotion code does not exist"))
+    return "Bu indirim kodu geçerli değil.";
+  if (message.includes("promotion code is not active"))
+    return "Bu indirim kodu artık aktif değil.";
+  if (message.includes("promotion code is not valid yet"))
+    return "Bu indirim kodu henüz geçerli değil.";
+  if (message.includes("promotion code has expired"))
+    return "Bu indirim kodunun süresi dolmuş.";
+  if (message.includes("promotion code has reached its usage limit"))
+    return "Bu indirim kodu kullanım limitine ulaşmış.";
+  return message;
+}
+
 /**
  * Compact "buy a lesson package" offer shown on the tutor detail page's
  * sticky CTA card, alongside (never instead of) normal single-lesson
@@ -26,6 +51,7 @@ interface PackageOfferPanelProps {
  */
 export function PackageOfferPanel({ tutor }: PackageOfferPanelProps) {
   const queryClient = useQueryClient();
+  const [promoCode, setPromoCode] = useState("");
 
   const { data: plans } = useQuery({
     queryKey: ["package-plans"],
@@ -44,9 +70,25 @@ export function PackageOfferPanel({ tutor }: PackageOfferPanelProps) {
       toast.success(
         "Paket talebin oluşturuldu. Admin onayından sonra ders hakların aktifleşecek."
       );
+      setPromoCode("");
     },
-    onError: () => {
-      toast.error("Paket talebi oluşturulamadı. Lütfen tekrar deneyin.");
+    onError: (err: unknown) => {
+      const axErr = err as { response?: { data?: unknown } };
+      const data = axErr.response?.data;
+      let message = "Paket talebi oluşturulamadı. Lütfen tekrar deneyin.";
+      if (data && typeof data === "object") {
+        const d = data as Record<string, unknown>;
+        if (typeof d.detail === "string") message = d.detail;
+        else if (Array.isArray(d.non_field_errors) && d.non_field_errors[0])
+          message = String(d.non_field_errors[0]);
+        else {
+          const firstKey = Object.keys(d)[0];
+          const val = firstKey ? d[firstKey] : null;
+          if (Array.isArray(val) && val[0]) message = String(val[0]);
+          else if (typeof val === "string" && val) message = val;
+        }
+      }
+      toast.error(translatePackagePurchaseError(message));
     },
   });
 
@@ -103,16 +145,31 @@ export function PackageOfferPanel({ tutor }: PackageOfferPanelProps) {
             Kullanılabilir {existing.remaining_credits} ders hakkı
           </p>
         ) : (
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="w-full"
-            onClick={() => createMutation.mutate({ tutor: tutor.id, plan: plan.id })}
-            disabled={createMutation.isPending}
-          >
-            {createMutation.isPending ? "Oluşturuluyor..." : "Paket talebi oluştur"}
-          </Button>
+          <>
+            <Input
+              value={promoCode}
+              onChange={(e) => setPromoCode(e.target.value)}
+              placeholder="İndirim kodu (opsiyonel)"
+              className="h-8 text-xs"
+              disabled={createMutation.isPending}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="w-full"
+              onClick={() =>
+                createMutation.mutate({
+                  tutor: tutor.id,
+                  plan: plan.id,
+                  ...(promoCode.trim() ? { promotion_code: promoCode.trim() } : {}),
+                })
+              }
+              disabled={createMutation.isPending}
+            >
+              {createMutation.isPending ? "Oluşturuluyor..." : "Paket talebi oluştur"}
+            </Button>
+          </>
         )}
         <Link
           href="/profile/payments"
