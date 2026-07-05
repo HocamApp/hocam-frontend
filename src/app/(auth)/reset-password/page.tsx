@@ -4,19 +4,11 @@ import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import axios from "axios";
+import { Eye, EyeOff } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { confirmPasswordReset } from "@/lib/authApi";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -25,7 +17,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+import { AuthSplitScreen, GlassInputWrapper } from "@/components/auth/AuthSplitScreen";
 
 const resetSchema = z
   .object({
@@ -46,6 +38,8 @@ function ResetPasswordContent() {
 
   const [success, setSuccess] = useState(false);
   const [generalError, setGeneralError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
 
   const form = useForm<ResetFormValues>({
     defaultValues: { new_password: "", password_confirm: "" },
@@ -54,27 +48,24 @@ function ResetPasswordContent() {
 
   if (!uid || !token) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-slate-50 px-4">
-        <Card className="w-full max-w-md shadow-md">
-          <CardHeader>
-            <CardTitle>Geçersiz Bağlantı</CardTitle>
-            <CardDescription>
-              Şifre sıfırlama bağlantısı eksik veya hatalı.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ErrorMessage message="Bu bağlantı geçerli değil. Lütfen yeni bir şifre sıfırlama isteği gönderin." />
-          </CardContent>
-          <CardFooter className="flex justify-center text-sm text-muted-foreground">
+      <AuthSplitScreen
+        title="Bağlantı geçersiz"
+        description="Şifre sıfırlama bağlantısı eksik veya hatalı."
+        footer={
+          <p className="animate-element animate-delay-400 text-center text-sm">
             <Link
               href="/forgot-password"
-              className="font-medium text-primary underline-offset-4 hover:underline"
+              className="text-neutral-300 transition-colors hover:text-white hover:underline"
             >
               Şifre sıfırlama isteği gönder
             </Link>
-          </CardFooter>
-        </Card>
-      </div>
+          </p>
+        }
+      >
+        <div className="animate-element animate-delay-300">
+          <ErrorMessage message="Bu bağlantı geçerli değil. Lütfen yeni bir şifre sıfırlama isteği gönderin." />
+        </div>
+      </AuthSplitScreen>
     );
   }
 
@@ -107,100 +98,139 @@ function ResetPasswordContent() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-slate-50 px-4">
-      <Card className="w-full max-w-md shadow-md">
-        <CardHeader>
-          <CardTitle>Yeni Şifre Belirle</CardTitle>
-          <CardDescription>
-            Hesabın için yeni bir şifre oluştur.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {success ? (
-            <p className="text-sm text-muted-foreground">
-              Şifren başarıyla sıfırlandı. Yeni şifrenle giriş yapabilirsin.
-            </p>
-          ) : (
-            <Form {...form}>
-              <form
-                onSubmit={form.handleSubmit(onSubmit)}
-                className="space-y-6"
-              >
-                {generalError && <ErrorMessage message={generalError} />}
-                <FormField
-                  control={form.control}
-                  name="new_password"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Yeni Şifre</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="password"
-                          autoComplete="new-password"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="password_confirm"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Şifre Tekrar</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="password"
-                          autoComplete="new-password"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <Button
-                  type="submit"
-                  className="w-full"
-                  disabled={form.formState.isSubmitting}
-                >
-                  {form.formState.isSubmitting ? (
-                    <span className="flex items-center justify-center gap-2">
-                      <span
-                        className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent"
-                        aria-hidden
-                      />
-                      Kaydediliyor...
-                    </span>
-                  ) : (
-                    "Şifremi Sıfırla"
-                  )}
-                </Button>
-              </form>
-            </Form>
-          )}
-        </CardContent>
-        <CardFooter className="flex justify-center text-sm text-muted-foreground">
+    <AuthSplitScreen
+      title="Yeni şifre belirle"
+      description="Hesabına tekrar güvenle dönebilmen için yeni şifreni oluştur."
+      footer={
+        <p className="animate-element animate-delay-600 text-center text-sm">
           {success ? (
             <Link
               href="/login"
-              className="font-medium text-primary underline-offset-4 hover:underline"
+              className="text-neutral-300 transition-colors hover:text-white hover:underline"
             >
               Giriş yap
             </Link>
           ) : (
             <Link
               href="/login"
-              className="font-medium text-primary underline-offset-4 hover:underline"
+              className="text-neutral-300 transition-colors hover:text-white hover:underline"
             >
               Girişe dön
             </Link>
           )}
-        </CardFooter>
-      </Card>
-    </div>
+        </p>
+      }
+    >
+      {success ? (
+        <p
+          role="status"
+          aria-live="polite"
+          className="animate-element animate-delay-300 text-sm text-neutral-400"
+        >
+          Şifren başarıyla sıfırlandı. Yeni şifrenle giriş yapabilirsin.
+        </p>
+      ) : (
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+            {generalError && <ErrorMessage message={generalError} />}
+
+            <FormField
+              control={form.control}
+              name="new_password"
+              render={({ field }) => (
+                <FormItem className="animate-element animate-delay-300 space-y-2">
+                  <FormLabel className="text-sm font-medium text-neutral-400">
+                    Yeni şifre
+                  </FormLabel>
+                  <FormControl>
+                    <GlassInputWrapper>
+                      <div className="relative">
+                        <input
+                          {...field}
+                          type={showPassword ? "text" : "password"}
+                          autoComplete="new-password"
+                          placeholder="Yeni şifreni gir"
+                          className="w-full rounded-2xl bg-transparent p-4 pr-12 text-sm text-white placeholder:text-neutral-500 focus:outline-none"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword((prev) => !prev)}
+                          className="absolute inset-y-0 right-3 flex items-center text-neutral-400 transition-colors hover:text-white"
+                          aria-label={showPassword ? "Şifreyi gizle" : "Şifreyi göster"}
+                        >
+                          {showPassword ? (
+                            <EyeOff className="h-5 w-5" aria-hidden="true" />
+                          ) : (
+                            <Eye className="h-5 w-5" aria-hidden="true" />
+                          )}
+                        </button>
+                      </div>
+                    </GlassInputWrapper>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="password_confirm"
+              render={({ field }) => (
+                <FormItem className="animate-element animate-delay-400 space-y-2">
+                  <FormLabel className="text-sm font-medium text-neutral-400">
+                    Şifre tekrar
+                  </FormLabel>
+                  <FormControl>
+                    <GlassInputWrapper>
+                      <div className="relative">
+                        <input
+                          {...field}
+                          type={showPasswordConfirm ? "text" : "password"}
+                          autoComplete="new-password"
+                          placeholder="Yeni şifreni tekrar gir"
+                          className="w-full rounded-2xl bg-transparent p-4 pr-12 text-sm text-white placeholder:text-neutral-500 focus:outline-none"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPasswordConfirm((prev) => !prev)}
+                          className="absolute inset-y-0 right-3 flex items-center text-neutral-400 transition-colors hover:text-white"
+                          aria-label={showPasswordConfirm ? "Şifreyi gizle" : "Şifreyi göster"}
+                        >
+                          {showPasswordConfirm ? (
+                            <EyeOff className="h-5 w-5" aria-hidden="true" />
+                          ) : (
+                            <Eye className="h-5 w-5" aria-hidden="true" />
+                          )}
+                        </button>
+                      </div>
+                    </GlassInputWrapper>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <button
+              type="submit"
+              disabled={form.formState.isSubmitting}
+              className="animate-element animate-delay-500 w-full rounded-2xl bg-white py-4 font-medium text-neutral-950 transition-colors hover:bg-white/90 disabled:opacity-70"
+            >
+              {form.formState.isSubmitting ? (
+                <span className="flex items-center justify-center gap-2">
+                  <span
+                    className="h-4 w-4 animate-spin rounded-full border-2 border-neutral-950 border-t-transparent"
+                    aria-hidden
+                  />
+                  Kaydediliyor...
+                </span>
+              ) : (
+                "Şifremi Sıfırla"
+              )}
+            </button>
+          </form>
+        </Form>
+      )}
+    </AuthSplitScreen>
   );
 }
 
