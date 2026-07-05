@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { RouteGuard } from "@/components/shared/RouteGuard";
 import { ProfileScreen } from "@/components/profile/ProfileScreen";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
@@ -164,15 +165,34 @@ function ReferralSection() {
 
   const handleCopy = async () => {
     try {
-      if (!navigator.clipboard?.writeText) {
-        throw new Error("Clipboard API unavailable");
+      let copied = false;
+      if (navigator.clipboard?.writeText) {
+        try {
+          await navigator.clipboard.writeText(data.referral_url);
+          copied = true;
+        } catch {
+          copied = false;
+        }
       }
-      await navigator.clipboard.writeText(data.referral_url);
+      if (!copied) {
+        const textarea = document.createElement("textarea");
+        textarea.value = data.referral_url;
+        textarea.setAttribute("readonly", "");
+        textarea.style.position = "fixed";
+        textarea.style.top = "-9999px";
+        document.body.appendChild(textarea);
+        textarea.select();
+        copied = document.execCommand("copy");
+        document.body.removeChild(textarea);
+        if (!copied) {
+          throw new Error("Clipboard fallback failed");
+        }
+      }
       setCopied(true);
       toast.success("Referans linki kopyalandı.");
       setTimeout(() => setCopied(false), 1600);
     } catch {
-      toast.error("Kopyalanamadı. Lütfen kodu elle kopyala.");
+      toast.error("Kopyalanamadı. Linki alandan elle kopyalayabilirsin.");
     }
   };
 
@@ -192,6 +212,12 @@ function ReferralSection() {
           {copied ? "Kopyalandı" : "Linki kopyala"}
         </Button>
       </div>
+      <Input
+        value={data.referral_url}
+        readOnly
+        aria-label="Referans linki"
+        className="mt-2 h-8 text-xs"
+      />
     </div>
   );
 }
