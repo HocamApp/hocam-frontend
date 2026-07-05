@@ -2,7 +2,16 @@
 
 import { useState, type ReactNode } from "react";
 import Link from "next/link";
-import { ArrowRight, BookOpen, CheckCircle2, Clock3, Target } from "lucide-react";
+import {
+  ArrowRight,
+  BookOpen,
+  Calendar,
+  CheckCircle2,
+  Clock3,
+  ListChecks,
+  Target,
+  TrendingUp,
+} from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { fetchLearningDashboard } from "@/lib/learningApi";
@@ -22,6 +31,7 @@ import { BookingCard } from "@/components/lessons/BookingCard";
 import { LessonRequestCard } from "@/components/lessons/LessonRequestCard";
 import { ReviewModal } from "@/components/lessons/ReviewModal";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -59,40 +69,56 @@ function formatHours(hours: number): string {
 }
 
 function StatCard({
+  icon,
   label,
   value,
   detail,
   isLoading,
 }: {
+  icon: ReactNode;
   label: string;
   value: string | number;
   detail: string;
   isLoading?: boolean;
 }) {
   return (
-    <div className="rounded-2xl border bg-card p-5 shadow-sm">
-      <p className="text-sm font-medium text-muted-foreground">{label}</p>
-      {isLoading ? (
-        <Skeleton className="mt-3 h-8 w-20" />
-      ) : (
-        <p className="mt-2 text-3xl font-bold tracking-normal">{value}</p>
-      )}
-      <p className="mt-2 text-xs text-muted-foreground">{detail}</p>
+    <div className="rounded-xl border bg-card p-4">
+      <div className="flex items-center gap-3">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+          {icon}
+        </div>
+        <div className="min-w-0">
+          <p className="truncate text-xs font-medium text-muted-foreground">{label}</p>
+          {isLoading ? (
+            <Skeleton className="mt-1 h-6 w-14" />
+          ) : (
+            <p className="text-xl font-semibold leading-tight">{value}</p>
+          )}
+        </div>
+      </div>
+      <p className="mt-2 truncate text-xs text-muted-foreground">{detail}</p>
     </div>
   );
 }
 
 function EmptyLearningCard({
+  icon,
   title,
   description,
 }: {
+  icon: ReactNode;
   title: string;
   description: string;
 }) {
   return (
-    <div className="rounded-2xl border border-dashed bg-card p-5 text-sm text-muted-foreground">
-      <p className="font-medium text-foreground">{title}</p>
-      <p className="mt-1">{description}</p>
+    <div className="flex items-start gap-3 rounded-xl border border-dashed bg-card/50 p-4 text-sm">
+      <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
+        {icon}
+      </div>
+      <div className="min-w-0">
+        <p className="font-medium text-foreground">{title}</p>
+        <p className="mt-1 text-muted-foreground">{description}</p>
+      </div>
     </div>
   );
 }
@@ -105,9 +131,9 @@ function LearningSection({
   children: ReactNode;
 }) {
   return (
-    <section className="space-y-4">
+    <section className="space-y-3">
       <div className="flex items-center justify-between gap-3">
-        <h2 className="text-xl font-semibold tracking-normal">{title}</h2>
+        <h2 className="text-base font-semibold tracking-tight">{title}</h2>
       </div>
       {children}
     </section>
@@ -211,60 +237,58 @@ function StudentDashboardContent() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      <div className="space-y-8">
-        <header className="overflow-hidden rounded-2xl border bg-card shadow-sm">
-          <div className="grid gap-6 p-6 md:grid-cols-[1fr_auto] md:p-8">
-            <div>
-              <div className="mb-4 flex w-fit items-center gap-2 rounded-full border bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
-                <BookOpen className="h-3.5 w-3.5" aria-hidden="true" />
-                Learning hub
-              </div>
-              <h1 className="text-3xl font-bold tracking-normal sm:text-4xl">
-                Öğrenci Panosu
-              </h1>
-              <p className="mt-3 max-w-2xl text-base text-muted-foreground sm:text-lg">
-                Hedeflerini takip et, sıradaki konunu seç ve derslerinden ilerleme kazan.
-              </p>
-              {user?.email && (
-                <p className="mt-4 text-sm text-muted-foreground">{user.email}</p>
-              )}
+      <div className="space-y-6">
+        <header className="flex flex-col gap-4 border-b pb-6 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <div className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
+              <BookOpen className="h-3.5 w-3.5" aria-hidden="true" />
+              Learning Hub
             </div>
-            <div className="grid min-w-[12rem] gap-3 rounded-2xl border bg-background p-4">
-              <div className="flex items-center gap-3">
-                <div className="rounded-full bg-primary/10 p-2 text-primary">
-                  <Target className="h-5 w-5" aria-hidden="true" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium">Sıradaki odak</p>
-                  <p className="text-xs text-muted-foreground">
-                    {nextMilestones[0]?.title ?? "Hedef seçmeye hazır"}
-                  </p>
-                </div>
-              </div>
+            <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+              Öğrenci Panosu
+            </h1>
+            <p className="mt-1.5 max-w-2xl text-sm text-muted-foreground">
+              Hedeflerini takip et, sıradaki konunu seç ve derslerinden ilerleme kazan.
+              {user?.email && <span className="ml-1">· {user.email}</span>}
+            </p>
+          </div>
+          <div className="flex items-center gap-3 rounded-lg border bg-card px-4 py-3">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+              <Target className="h-4 w-4" aria-hidden="true" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-medium text-muted-foreground">Sıradaki odak</p>
+              <p className="truncate text-sm font-medium">
+                {nextMilestones[0]?.title ?? "Hedef seçmeye hazır"}
+              </p>
             </div>
           </div>
         </header>
 
         <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <StatCard
+            icon={<Target className="h-4 w-4" aria-hidden="true" />}
             label="Aktif hedefler"
             value={stats?.active_goals_count ?? "-"}
             detail="Şu anda takip ettiğin hedefler"
             isLoading={learningLoading}
           />
           <StatCard
+            icon={<TrendingUp className="h-4 w-4" aria-hidden="true" />}
             label="Ortalama ilerleme"
             value={stats ? `%${Math.round(stats.average_progress)}` : "-"}
             detail="Aktif planların genel ritmi"
             isLoading={learningLoading}
           />
           <StatCard
+            icon={<ListChecks className="h-4 w-4" aria-hidden="true" />}
             label="Açık milestone"
             value={stats?.open_milestones_count ?? "-"}
             detail="Devam eden konu adımları"
             isLoading={learningLoading}
           />
           <StatCard
+            icon={<Clock3 className="h-4 w-4" aria-hidden="true" />}
             label="Tutor onayı bekleyen"
             value={stats?.pending_confirmations_count ?? "-"}
             detail="Ders sonrası ilerleme onayları"
@@ -290,10 +314,11 @@ function StudentDashboardContent() {
 
         {!learningLoading && !learningError && (
         <div className="grid gap-6 xl:grid-cols-[1.25fr_0.75fr]">
-          <div className="space-y-8">
+          <div className="space-y-6">
             <LearningSection title="Hazır Hedef Paketleri">
               {templates.length === 0 ? (
                 <EmptyLearningCard
+                  icon={<BookOpen className="h-4 w-4" aria-hidden="true" />}
                   title="Hazır paketler yakında burada"
                   description="Backend hazır olduğunda YKS hedef paketlerini buradan seçebileceksin."
                 />
@@ -313,6 +338,7 @@ function StudentDashboardContent() {
             <LearningSection title="Aktif Hedeflerim">
               {goals.length === 0 ? (
                 <EmptyLearningCard
+                  icon={<Target className="h-4 w-4" aria-hidden="true" />}
                   title="Henüz aktif hedefin yok"
                   description="Hazır paketlerden birini seçerek öğrenme planını başlatabileceksin."
                 />
@@ -328,24 +354,25 @@ function StudentDashboardContent() {
             <LearningSection title="Sıradaki Konular">
               {nextMilestones.length === 0 ? (
                 <EmptyLearningCard
+                  icon={<Clock3 className="h-4 w-4" aria-hidden="true" />}
                   title="Sıradaki konu bekleniyor"
                   description="Aktif hedeflerinde açık milestone oluştuğunda burada görünecek."
                 />
               ) : (
                 <div className="grid gap-4 md:grid-cols-2">
                   {nextMilestones.map((item) => (
-                    <article key={item.id} className="rounded-2xl border bg-card p-5 shadow-sm">
+                    <article key={item.id} className="rounded-xl border bg-card p-4">
                       <div className="flex items-start gap-3">
-                        <div className="rounded-full bg-primary/10 p-2 text-primary">
-                          <Clock3 className="h-5 w-5" aria-hidden="true" />
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+                          <Clock3 className="h-4 w-4" aria-hidden="true" />
                         </div>
-                        <div>
-                          <h3 className="font-semibold tracking-normal">{item.title}</h3>
-                          <p className="mt-1 text-sm text-muted-foreground">
+                        <div className="min-w-0">
+                          <h3 className="truncate font-semibold tracking-normal">{item.title}</h3>
+                          <p className="mt-1 truncate text-sm text-muted-foreground">
                             {item.goal_title}
                           </p>
                           {item.topic_title && (
-                            <p className="mt-1 text-xs text-muted-foreground">
+                            <p className="mt-1 truncate text-xs text-muted-foreground">
                               Konu: {item.topic_title}
                             </p>
                           )}
@@ -373,19 +400,19 @@ function StudentDashboardContent() {
 
           <aside className="space-y-6">
             <LearningSection title="Tutor Onayı Bekleyenler">
-              <div className="rounded-2xl border bg-card p-5 shadow-sm">
+              <div className="rounded-xl border bg-card p-4">
                 {pendingConfirmations.length === 0 ? (
                   <p className="text-sm text-muted-foreground">Onay bekleyen ilerleme yok.</p>
                 ) : (
-                  <div className="space-y-4">
+                  <div className="space-y-3">
                     {pendingConfirmations.map((item) => (
-                      <article key={item.id} className="rounded-xl border bg-background p-4">
+                      <article key={item.id} className="rounded-lg border bg-background p-3">
                         <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <p className="text-sm font-medium">
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-medium">
                               {item.milestone?.title ?? "Milestone"}
                             </p>
-                            <p className="mt-1 text-xs text-muted-foreground">
+                            <p className="mt-1 truncate text-xs text-muted-foreground">
                               {item.booking?.tutor
                                 ? `${item.booking.tutor.name} ${item.booking.tutor.surname}`
                                 : "Tutor bilgisi bekleniyor"}
@@ -394,9 +421,12 @@ function StudentDashboardContent() {
                               {formatDateTime(item.booking?.start_time)}
                             </p>
                           </div>
-                          <span className="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-medium text-amber-900 dark:bg-amber-950/60 dark:text-amber-100">
+                          <Badge
+                            variant="outline"
+                            className="shrink-0 border-amber-500 text-amber-700 dark:border-amber-400 dark:text-amber-300"
+                          >
                             {formatActivityStatus(item.status)}
-                          </span>
+                          </Badge>
                         </div>
                       </article>
                     ))}
@@ -406,24 +436,24 @@ function StudentDashboardContent() {
             </LearningSection>
 
             <LearningSection title="Notlarım">
-              <div className="rounded-2xl border bg-card p-5 shadow-sm">
+              <div className="rounded-xl border bg-card p-4">
                 {notes.length === 0 ? (
                   <p className="text-sm text-muted-foreground">Henüz not eklemedin.</p>
                 ) : (
-                  <div className="space-y-4">
+                  <div className="space-y-3">
                     {notes.slice(0, 4).map((note) => (
-                      <article key={note.id} className="rounded-xl border bg-background p-4">
+                      <article key={note.id} className="rounded-lg border bg-background p-3">
                         <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <p className="text-sm font-medium">{note.title}</p>
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-medium">{note.title}</p>
                             <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
                               {note.body}
                             </p>
                           </div>
                           {note.is_pinned && (
-                            <span className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
+                            <Badge className="shrink-0 bg-primary/10 text-primary hover:bg-primary/10">
                               Sabit
-                            </span>
+                            </Badge>
                           )}
                         </div>
                       </article>
@@ -434,18 +464,18 @@ function StudentDashboardContent() {
             </LearningSection>
 
             <LearningSection title="Son İlerleme">
-              <div className="rounded-2xl border bg-card p-5 shadow-sm">
+              <div className="rounded-xl border bg-card p-4">
                 {recentProgress.length === 0 ? (
                   <p className="text-sm text-muted-foreground">Henüz ilerleme kaydı yok.</p>
                 ) : (
-                  <div className="space-y-4">
+                  <div className="space-y-3">
                     {recentProgress.slice(0, 5).map((event) => (
-                      <article key={event.id} className="rounded-xl border bg-background p-4">
+                      <article key={event.id} className="rounded-lg border bg-background p-3">
                         <div className="flex items-start gap-3">
-                          <div className="rounded-full bg-primary/10 p-2 text-primary">
+                          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
                             <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
                           </div>
-                          <div>
+                          <div className="min-w-0">
                             <p className="text-sm font-semibold">+{event.progress_delta}%</p>
                             <p className="mt-1 text-xs text-muted-foreground">
                               {formatDateTime(event.created_at)}
@@ -467,22 +497,25 @@ function StudentDashboardContent() {
         </div>
         )}
 
-        <section className="space-y-4">
-          <h2 className="text-xl font-semibold tracking-normal">Ders Özeti</h2>
+        <section className="space-y-3">
+          <h2 className="text-base font-semibold tracking-tight">Ders Özeti</h2>
           <div className="grid gap-4 sm:grid-cols-3">
             <StatCard
+              icon={<CheckCircle2 className="h-4 w-4" aria-hidden="true" />}
               label="Tamamlanan ders"
               value={completedBookings.length}
               detail="Bugüne kadar aldığın dersler"
               isLoading={bookingsLoading}
             />
             <StatCard
+              icon={<Clock3 className="h-4 w-4" aria-hidden="true" />}
               label="Toplam ders saati"
               value={formatHours(completedHours)}
               detail="Tamamlanan derslerin toplam süresi"
               isLoading={bookingsLoading}
             />
             <StatCard
+              icon={<Calendar className="h-4 w-4" aria-hidden="true" />}
               label="Yaklaşan onaylı ders"
               value={upcomingConfirmed.length}
               detail="Onaylanmış, henüz gerçekleşmemiş dersler"
@@ -491,9 +524,9 @@ function StudentDashboardContent() {
           </div>
         </section>
 
-        <section className="rounded-2xl border bg-card p-5 shadow-sm sm:p-6">
-          <div className="mb-5">
-            <h2 className="text-xl font-semibold tracking-normal">Ders Yönetimi</h2>
+        <section className="rounded-xl border bg-card p-4 sm:p-5">
+          <div className="mb-4">
+            <h2 className="text-base font-semibold tracking-tight">Ders Yönetimi</h2>
             <p className="mt-1 text-sm text-muted-foreground">
               Ders taleplerin ve rezervasyonların eskisi gibi buradan yönetilir.
             </p>
@@ -501,8 +534,14 @@ function StudentDashboardContent() {
 
           <Tabs defaultValue="requests">
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="requests">Ders Taleplerim</TabsTrigger>
-              <TabsTrigger value="bookings">Rezervasyonlarım</TabsTrigger>
+              <TabsTrigger value="requests">
+                Ders Taleplerim
+                {activeLessonRequests.length > 0 && ` (${activeLessonRequests.length})`}
+              </TabsTrigger>
+              <TabsTrigger value="bookings">
+                Rezervasyonlarım
+                {bookings && bookings.length > 0 && ` (${bookings.length})`}
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="requests" className="mt-6">
@@ -550,7 +589,12 @@ function StudentDashboardContent() {
               {!bookingsLoading && (
                 <>
                   <section className="mb-8">
-                    <h3 className="mb-3 text-sm font-semibold">Yaklaşan Onaylı Dersler</h3>
+                    <div className="mb-3 flex items-center gap-2">
+                      <h3 className="text-sm font-semibold">Yaklaşan Onaylı Dersler</h3>
+                      <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                        {upcomingConfirmed.length}
+                      </span>
+                    </div>
                     {upcomingConfirmed.length === 0 ? (
                       <EmptyState
                         title="Yaklaşan onaylı dersiniz yok"
@@ -577,7 +621,12 @@ function StudentDashboardContent() {
                   </section>
 
                   <section className="mb-8">
-                    <h3 className="mb-3 text-sm font-semibold">Onay Bekleyen Rezervasyonlar</h3>
+                    <div className="mb-3 flex items-center gap-2">
+                      <h3 className="text-sm font-semibold">Onay Bekleyen Rezervasyonlar</h3>
+                      <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                        {pendingBookings.length}
+                      </span>
+                    </div>
                     {pendingBookings.length === 0 ? (
                       <p className="text-sm text-muted-foreground">Yok</p>
                     ) : (
@@ -596,7 +645,12 @@ function StudentDashboardContent() {
                   </section>
 
                   <section>
-                    <h3 className="mb-3 text-sm font-semibold">Geçmiş Dersler</h3>
+                    <div className="mb-3 flex items-center gap-2">
+                      <h3 className="text-sm font-semibold">Geçmiş Dersler</h3>
+                      <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                        {pastBookings.length}
+                      </span>
+                    </div>
                     {pastBookings.length === 0 ? (
                       <p className="text-sm text-muted-foreground">Yok</p>
                     ) : (

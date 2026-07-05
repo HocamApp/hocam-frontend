@@ -1,9 +1,10 @@
 "use client";
 
+import { Calendar, Clock3, User, Wallet } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import StatusBadge from "@/components/shared/StatusBadge";
-import { formatDate, formatPrice } from "@/lib/utils";
+import { cn, formatDate, formatPrice } from "@/lib/utils";
 import type { Booking, LearningActivityStatus } from "@/types";
 
 interface BookingCardProps {
@@ -69,40 +70,47 @@ export function BookingCard({
     currentUserRole === "tutor" &&
     isCompleted &&
     learningContext?.status === "confirmed";
+  const hasActions =
+    currentUserRole === "tutor"
+      ? isPending || isConfirmed || canConfirmLearningProgress || isLearningProgressConfirmed
+      : (isConfirmed && isFuture) || canCancel || (isCompleted && Boolean(onReviewClick));
+
+  const counterpartLabel =
+    currentUserRole === "student"
+      ? booking.tutor.name
+        ? `${booking.tutor.name} ${booking.tutor.surname}`
+        : "Eğitmen bilgisi bekleniyor"
+      : booking.student.email;
 
   return (
     <Card>
       <CardContent className="p-4">
-        <div className="flex items-start justify-between gap-2">
-          <span className="font-semibold">{booking.subject.name}</span>
-          <StatusBadge status={booking.status} type="booking" />
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="truncate font-semibold">{booking.subject.name}</p>
+            <p className="mt-0.5 flex items-center gap-1.5 truncate text-sm text-muted-foreground">
+              <User className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+              <span className="truncate">{counterpartLabel}</span>
+            </p>
+          </div>
+          <div className="shrink-0">
+            <StatusBadge status={booking.status} type="booking" />
+          </div>
         </div>
 
-        <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
-          {currentUserRole === "student" && (
-            <>
-              <span className="text-muted-foreground">Eğitmen:</span>
-              <span>
-                {booking.tutor.name
-                  ? `${booking.tutor.name} ${booking.tutor.surname}`
-                  : "—"}
-              </span>
-            </>
-          )}
-          {currentUserRole === "tutor" && (
-            <>
-              <span className="text-muted-foreground">Öğrenci:</span>
-              <span>{booking.student.email}</span>
-            </>
-          )}
-          <span className="text-muted-foreground">Tarih:</span>
-          <span>{formatDate(booking.start_time)}</span>
-          <span className="text-muted-foreground">Saat:</span>
-          <span>{formatTime(booking.start_time)}</span>
-          <span className="text-muted-foreground">Süre:</span>
-          <span>{booking.duration_minutes} dakika</span>
-          <span className="text-muted-foreground">Ücret:</span>
-          <span>{formatPrice(booking.price)}</span>
+        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-muted-foreground">
+          <span className="inline-flex items-center gap-1.5">
+            <Calendar className="h-3.5 w-3.5" aria-hidden="true" />
+            {formatDate(booking.start_time)}
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <Clock3 className="h-3.5 w-3.5" aria-hidden="true" />
+            {formatTime(booking.start_time)} · {booking.duration_minutes} dk
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <Wallet className="h-3.5 w-3.5" aria-hidden="true" />
+            {formatPrice(booking.price)}
+          </span>
         </div>
 
         {learningContext && (
@@ -134,7 +142,12 @@ export function BookingCard({
           </div>
         )}
 
-        <div className="mt-3 flex flex-wrap gap-2">
+        <div
+          className={cn(
+            "flex flex-wrap items-center gap-2",
+            hasActions ? "mt-4 border-t pt-3" : "mt-3"
+          )}
+        >
           {currentUserRole === "tutor" && (
             <>
               {isPending && (
