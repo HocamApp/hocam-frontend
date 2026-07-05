@@ -22,21 +22,28 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Response interceptor: if 401 is returned, clear the token cookie
-// and redirect to /login. Do not redirect if already on an auth page.
+// Event fired when an authenticated session gets a 401; SessionExpiredDialog
+// listens for it and takes over instead of a hard redirect.
+export const SESSION_EXPIRED_EVENT = "hocam:session-expired";
+
+// Response interceptor: if 401 is returned for a request that carried a
+// token, clear the cookie and announce the expired session. Anonymous 401s
+// (no token) don't trigger the dialog. Auth pages are excluded.
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
+      const hadToken = Boolean(Cookies.get("auth_token"));
       Cookies.remove("auth_token");
       if (
+        hadToken &&
         typeof window !== "undefined" &&
         !window.location.pathname.startsWith("/login") &&
         !window.location.pathname.startsWith("/register") &&
         !window.location.pathname.startsWith("/forgot-password") &&
         !window.location.pathname.startsWith("/reset-password")
       ) {
-        window.location.href = "/login";
+        window.dispatchEvent(new CustomEvent(SESSION_EXPIRED_EVENT));
       }
     }
     return Promise.reject(error);

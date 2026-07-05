@@ -30,6 +30,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useAuthContext } from "@/providers/AuthProvider";
 import { RouteGuard } from "@/components/shared/RouteGuard";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
+import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -54,16 +55,19 @@ function SecurityContent() {
   const { logout, user } = useAuth();
   const { clearAuth, setAuth } = useAuthContext();
   const [code, setCode] = useState("");
+  const [codeError, setCodeError] = useState<string | null>(null);
   const [requestingCode, setRequestingCode] = useState(false);
   const [confirmingCode, setConfirmingCode] = useState(false);
   const [loggingOutAll, setLoggingOutAll] = useState(false);
   const [codeSent, setCodeSent] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState("");
   const [deletingAccount, setDeletingAccount] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [showPasswordForm, setShowPasswordForm] = useState(false);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [newPasswordConfirm, setNewPasswordConfirm] = useState("");
+  const [passwordError, setPasswordError] = useState<string | null>(null);
   const [changingPassword, setChangingPassword] = useState(false);
 
   const accountEmail = user?.email ?? "";
@@ -79,6 +83,7 @@ function SecurityContent() {
   });
 
   const handleRequestCode = async () => {
+    setCodeError(null);
     setRequestingCode(true);
     try {
       await requestEmailVerificationCode();
@@ -86,9 +91,9 @@ function SecurityContent() {
       toast.success("Doğrulama kodu e-postanıza gönderildi.");
     } catch (err: any) {
       if (err?.response?.status === 429) {
-        toast.error("Yeni kod istemeden önce kısa bir süre bekleyin.");
+        setCodeError("Yeni kod istemeden önce kısa bir süre bekleyin.");
       } else {
-        toast.error("Kod gönderilemedi. Lütfen tekrar deneyin.");
+        setCodeError("Kod gönderilemedi. Lütfen tekrar deneyin.");
       }
     } finally {
       setRequestingCode(false);
@@ -97,9 +102,10 @@ function SecurityContent() {
 
   const handleConfirmCode = async () => {
     if (!/^\d{6}$/.test(code)) {
-      toast.error("6 haneli doğrulama kodunu girin.");
+      setCodeError("6 haneli doğrulama kodunu girin.");
       return;
     }
+    setCodeError(null);
     setConfirmingCode(true);
     try {
       await confirmEmailVerificationCode(code);
@@ -108,7 +114,7 @@ function SecurityContent() {
       await queryClient.invalidateQueries({ queryKey: ["security-settings"] });
       toast.success("E-posta adresiniz doğrulandı.");
     } catch {
-      toast.error("Kod doğrulanamadı. Kodu kontrol edip tekrar deneyin.");
+      setCodeError("Kod doğrulanamadı. Kodu kontrol edip tekrar deneyin.");
     } finally {
       setConfirmingCode(false);
     }
@@ -116,13 +122,14 @@ function SecurityContent() {
 
   const handleChangePassword = async () => {
     if (newPassword !== newPasswordConfirm) {
-      toast.error("Yeni şifreler eşleşmiyor.");
+      setPasswordError("Yeni şifreler eşleşmiyor.");
       return;
     }
     if (newPassword.length < 8) {
-      toast.error("Yeni şifre en az 8 karakter olmalı.");
+      setPasswordError("Yeni şifre en az 8 karakter olmalı.");
       return;
     }
+    setPasswordError(null);
     setChangingPassword(true);
     try {
       const { token, user: updatedUser } = await changePassword({
@@ -143,7 +150,7 @@ function SecurityContent() {
         data?.new_password?.[0] ||
         data?.password_confirm?.[0] ||
         "Şifre değiştirilemedi. Lütfen tekrar deneyin.";
-      toast.error(message);
+      setPasswordError(message);
     } finally {
       setChangingPassword(false);
     }
@@ -163,6 +170,7 @@ function SecurityContent() {
 
   const handleDeleteAccount = async () => {
     if (!canDeleteAccount || deletingAccount) return;
+    setDeleteError(null);
     setDeletingAccount(true);
     try {
       await deleteMyAccount();
@@ -171,7 +179,7 @@ function SecurityContent() {
       toast.success("Hesabınız kalıcı olarak silindi.");
       router.push("/register");
     } catch {
-      toast.error("Hesap silinemedi. Lütfen tekrar deneyin.");
+      setDeleteError("Hesap silinemedi. Lütfen tekrar deneyin.");
       setDeletingAccount(false);
     }
   };
@@ -265,9 +273,10 @@ function SecurityContent() {
                       <Input
                         id="verification-code"
                         value={code}
-                        onChange={(e) =>
-                          setCode(e.target.value.replace(/\D/g, "").slice(0, 6))
-                        }
+                        onChange={(e) => {
+                          setCode(e.target.value.replace(/\D/g, "").slice(0, 6));
+                          setCodeError(null);
+                        }}
                         inputMode="numeric"
                         autoComplete="one-time-code"
                         placeholder="000000"
@@ -282,6 +291,11 @@ function SecurityContent() {
                         {confirmingCode ? "Kontrol ediliyor" : "Doğrula"}
                       </Button>
                     </div>
+                    {codeError && (
+                      <p className="mt-1.5 text-sm text-destructive">
+                        {codeError}
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -336,7 +350,10 @@ function SecurityContent() {
                     id="current-password"
                     type="password"
                     value={currentPassword}
-                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    onChange={(e) => {
+                      setCurrentPassword(e.target.value);
+                      setPasswordError(null);
+                    }}
                     autoComplete="current-password"
                   />
                 </div>
@@ -346,7 +363,10 @@ function SecurityContent() {
                     id="new-password"
                     type="password"
                     value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
+                    onChange={(e) => {
+                      setNewPassword(e.target.value);
+                      setPasswordError(null);
+                    }}
                     autoComplete="new-password"
                   />
                 </div>
@@ -356,10 +376,14 @@ function SecurityContent() {
                     id="new-password-confirm"
                     type="password"
                     value={newPasswordConfirm}
-                    onChange={(e) => setNewPasswordConfirm(e.target.value)}
+                    onChange={(e) => {
+                      setNewPasswordConfirm(e.target.value);
+                      setPasswordError(null);
+                    }}
                     autoComplete="new-password"
                   />
                 </div>
+                {passwordError && <ErrorMessage message={passwordError} />}
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                   <Button
                     type="button"
@@ -431,6 +455,8 @@ function SecurityContent() {
                 className="max-w-xs"
               />
             </div>
+
+            {deleteError && <ErrorMessage message={deleteError} />}
 
             <Button
               type="button"

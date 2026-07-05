@@ -2,6 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { X } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/hooks/useAuth";
@@ -27,6 +28,17 @@ function getNotificationHref(n: Notification, role?: string): string | null {
   }
 
   return null;
+}
+
+// Privacy: message notifications must never surface the message content;
+// the sender is in the title, the body is replaced with a generic line.
+function isMessageNotification(n: Notification): boolean {
+  return n.type === "message" || n.related_object_type === "conversation";
+}
+
+function getNotificationBody(n: Notification): string | null {
+  if (isMessageNotification(n)) return "Sana yeni bir mesaj gönderdi.";
+  return n.body || null;
 }
 
 export function NotificationPopoverContent() {
@@ -88,6 +100,9 @@ export function NotificationPopoverContent() {
       await queryClient.cancelQueries({ queryKey: ["notifications"] });
       return updateNotificationCaches((old) => old.filter((n) => n.id !== id));
     },
+    onSuccess: () => {
+      toast.success("Bildirim silindi.");
+    },
     onError: (_error, _id, context) => {
       if (context?.previousNotifications) {
         queryClient.setQueryData(["notifications"], context.previousNotifications);
@@ -95,6 +110,7 @@ export function NotificationPopoverContent() {
       if (context?.previousSummary) {
         queryClient.setQueryData(["notification-summary"], context.previousSummary);
       }
+      toast.error("Bildirim silinemedi. Lütfen tekrar deneyin.");
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
@@ -156,9 +172,9 @@ export function NotificationPopoverContent() {
             >
               {n.title}
             </p>
-            {n.body && (
+            {getNotificationBody(n) && (
               <p className="mt-0.5 line-clamp-2 break-words text-xs text-muted-foreground [overflow-wrap:anywhere]">
-                {n.body}
+                {getNotificationBody(n)}
               </p>
             )}
             <p className="mt-1 text-xs text-muted-foreground">

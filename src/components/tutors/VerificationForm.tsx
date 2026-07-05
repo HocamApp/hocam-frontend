@@ -39,7 +39,6 @@ export function VerificationForm() {
       setSubmitError(
         "Başvuru gönderilemedi. Zaten bir başvurunuz varsa destek ile iletişime geçin."
       );
-      toast.error("Doğrulama başvurusu gönderilemedi.");
     },
   });
 

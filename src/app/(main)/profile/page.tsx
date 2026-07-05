@@ -111,8 +111,10 @@ function ProfileContent() {
   const [nameEdit, setNameEdit] = useState(false);
   const [editName, setEditName] = useState("");
   const [editSurname, setEditSurname] = useState("");
+  const [nameError, setNameError] = useState<string | null>(null);
   const [nameSaving, setNameSaving] = useState(false);
   const [photoUploading, setPhotoUploading] = useState(false);
+  const [photoError, setPhotoError] = useState<string | null>(null);
   const [avatarChoicePendingKey, setAvatarChoicePendingKey] =
     useState<StudentAvatarKey | null>(null);
   const [autoApproveOverride, setAutoApproveOverride] = useState<boolean | null>(null);
@@ -182,6 +184,7 @@ function ProfileContent() {
   const startNameEdit = () => {
     setEditName(name);
     setEditSurname(surname);
+    setNameError(null);
     setNameEdit(true);
   };
 
@@ -189,7 +192,7 @@ function ProfileContent() {
     const trimmedName = editName.trim();
     const trimmedSurname = editSurname.trim();
     if (!trimmedName || !trimmedSurname) {
-      toast.error("İsim ve soyisim boş olamaz.");
+      setNameError("İsim ve soyisim boş olamaz.");
       return;
     }
     setNameSaving(true);
@@ -199,7 +202,7 @@ function ProfileContent() {
       setNameEdit(false);
       toast.success("İsim güncellendi.");
     } catch {
-      toast.error("İsim güncellenemedi.");
+      setNameError("İsim güncellenemedi. Lütfen tekrar deneyin.");
     } finally {
       setNameSaving(false);
     }
@@ -209,9 +212,10 @@ function ProfileContent() {
     const file = e.target.files?.[0];
     if (!file) return;
     e.target.value = "";
+    setPhotoError(null);
     const validationError = validateProfilePhotoFile(file);
     if (validationError) {
-      toast.error(validationError);
+      setPhotoError(validationError);
       return;
     }
     setPhotoUploading(true);
@@ -233,7 +237,7 @@ function ProfileContent() {
       }
       toast.success("Profil fotoğrafı güncellendi.");
     } catch {
-      toast.error("Fotoğraf yüklenemedi. Lütfen tekrar deneyin.");
+      setPhotoError("Fotoğraf yüklenemedi. Lütfen tekrar deneyin.");
     } finally {
       setPhotoUploading(false);
     }
@@ -376,15 +380,24 @@ function ProfileContent() {
                     <div className="flex flex-col gap-2 sm:flex-row">
                       <Input
                         value={editName}
-                        onChange={(e) => setEditName(e.target.value)}
+                        onChange={(e) => {
+                          setEditName(e.target.value);
+                          setNameError(null);
+                        }}
                         placeholder="İsim"
                       />
                       <Input
                         value={editSurname}
-                        onChange={(e) => setEditSurname(e.target.value)}
+                        onChange={(e) => {
+                          setEditSurname(e.target.value);
+                          setNameError(null);
+                        }}
                         placeholder="Soyisim"
                       />
                     </div>
+                    {nameError && (
+                      <p className="text-sm text-destructive">{nameError}</p>
+                    )}
                     <div className="flex gap-2">
                       <Button size="sm" onClick={handleNameSave} disabled={nameSaving}>
                         Kaydet
@@ -419,6 +432,11 @@ function ProfileContent() {
                 </Badge>
               </div>
             </div>
+            {photoError && (
+              <p className="text-sm text-destructive" role="alert">
+                {photoError}
+              </p>
+            )}
             {tutor && (
               <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-100">
                 <p>{PROFILE_PHOTO_RULE_TEXT}</p>

@@ -31,6 +31,7 @@ export function MessageInput({
   onCancelReply,
 }: MessageInputProps) {
   const [text, setText] = useState("");
+  const [inputError, setInputError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isPreparingImage, setIsPreparingImage] = useState(false);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
@@ -41,6 +42,7 @@ export function MessageInput({
   const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    setInputError(null);
     setIsPreparingImage(true);
     try {
       const prepared = await prepareMessageImage(file);
@@ -55,7 +57,7 @@ export function MessageInput({
         );
       }
     } catch (err) {
-      toast.error(
+      setInputError(
         err instanceof Error
           ? err.message
           : "Görsel hazırlanamadı. Lütfen tekrar deneyin."
@@ -84,6 +86,7 @@ export function MessageInput({
     const trimmed = text.trim();
     if ((!trimmed && !selectedImage) || isSubmitting || isPreparingImage || disabled) return;
 
+    setInputError(null);
     setIsSubmitting(true);
     try {
       const newMessage = await sendMessage({
@@ -111,7 +114,7 @@ export function MessageInput({
       const nonFieldError = Array.isArray(data?.non_field_errors)
         ? (data?.non_field_errors[0] as string)
         : undefined;
-      toast.error(
+      setInputError(
         imageError ||
           messageTextError ||
           nonFieldError ||
@@ -195,6 +198,11 @@ export function MessageInput({
           Görsel gönderim için hazırlanıyor...
         </div>
       )}
+      {inputError && (
+        <div className="px-4 pt-3 text-xs text-destructive" role="alert">
+          {inputError}
+        </div>
+      )}
       <div className="flex min-w-0 items-end gap-2 p-3 sm:p-4">
         <input
           type="file"
@@ -225,7 +233,10 @@ export function MessageInput({
           ref={textareaRef}
           placeholder="Mesajınızı yazın..."
           value={text}
-          onChange={(e) => setText(e.target.value)}
+          onChange={(e) => {
+            setText(e.target.value);
+            setInputError(null);
+          }}
           onKeyDown={handleKeyDown}
           rows={1}
           disabled={isSubmitting || disabled}

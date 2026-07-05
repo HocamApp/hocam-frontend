@@ -363,7 +363,9 @@ function ProfileStudio({
   profileCompletion,
   introVideoInput,
   isSavingVideo,
+  videoError,
   isUploadingPhoto,
+  photoError,
   onIntroVideoChange,
   onSaveVideo,
   onClearVideo,
@@ -374,7 +376,9 @@ function ProfileStudio({
   profileCompletion: number;
   introVideoInput: string;
   isSavingVideo: boolean;
+  videoError: string | null;
   isUploadingPhoto: boolean;
+  photoError: string | null;
   onIntroVideoChange: (value: string) => void;
   onSaveVideo: () => void;
   onClearVideo: () => void;
@@ -432,6 +436,11 @@ function ProfileStudio({
                     {isUploadingPhoto ? "Yükleniyor" : "Fotoğraf Yükle"}
                   </label>
                 </Button>
+                {photoError && (
+                  <p className="text-sm text-destructive" role="alert">
+                    {photoError}
+                  </p>
+                )}
                 <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-100">
                   <p>{PROFILE_PHOTO_RULE_TEXT}</p>
                   <p className="mt-1">{TUTOR_REAL_PHOTO_RULE_TEXT}</p>
@@ -455,6 +464,11 @@ function ProfileStudio({
                   {isSavingVideo ? "Kaydediliyor" : "Kaydet"}
                 </Button>
               </div>
+              {videoError && (
+                <p className="text-sm text-destructive" role="alert">
+                  {videoError}
+                </p>
+              )}
               {profile.intro_video_url && (
                 <Button type="button" variant="ghost" size="sm" onClick={onClearVideo}>
                   Videoyu kaldır
@@ -555,7 +569,9 @@ function TutorDashboardContent() {
   const [updatingRequestId, setUpdatingRequestId] = useState<string | null>(null);
   const [introVideoInput, setIntroVideoInput] = useState("");
   const [isSavingVideo, setIsSavingVideo] = useState(false);
+  const [videoError, setVideoError] = useState<string | null>(null);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const [photoError, setPhotoError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("profile");
   const [confirmingBooking, setConfirmingBooking] = useState<Booking | null>(null);
   const [isConfirmingLearning, setIsConfirmingLearning] = useState(false);
@@ -708,9 +724,10 @@ function TutorDashboardContent() {
     const file = event.target.files?.[0];
     if (!file) return;
 
+    setPhotoError(null);
     const validationError = validateProfilePhotoFile(file);
     if (validationError) {
-      toast.error(validationError);
+      setPhotoError(validationError);
       event.target.value = "";
       return;
     }
@@ -726,7 +743,7 @@ function TutorDashboardContent() {
       await queryClient.invalidateQueries({ queryKey: ["tutors"] });
       toast.success("Profil fotoğrafı güncellendi.");
     } catch {
-      toast.error("Profil fotoğrafı yüklenemedi.");
+      setPhotoError("Profil fotoğrafı yüklenemedi. Lütfen tekrar deneyin.");
     } finally {
       setIsUploadingPhoto(false);
       event.target.value = "";
@@ -734,6 +751,7 @@ function TutorDashboardContent() {
   };
 
   const handleSaveVideo = async () => {
+    setVideoError(null);
     setIsSavingVideo(true);
     try {
       await updateMyTutorProfile({ intro_video_url: introVideoInput.trim() });
@@ -743,7 +761,7 @@ function TutorDashboardContent() {
       }
       toast.success("Tanıtım videosu güncellendi.");
     } catch {
-      toast.error("YouTube bağlantısı kaydedilemedi.");
+      setVideoError("YouTube bağlantısı kaydedilemedi. Bağlantıyı kontrol edip tekrar deneyin.");
     } finally {
       setIsSavingVideo(false);
     }
@@ -967,8 +985,13 @@ function TutorDashboardContent() {
             profileCompletion={profileCompletion}
             introVideoInput={introVideoInput}
             isSavingVideo={isSavingVideo}
+            videoError={videoError}
             isUploadingPhoto={isUploadingPhoto}
-            onIntroVideoChange={setIntroVideoInput}
+            photoError={photoError}
+            onIntroVideoChange={(value) => {
+              setIntroVideoInput(value);
+              setVideoError(null);
+            }}
             onSaveVideo={handleSaveVideo}
             onClearVideo={handleClearVideo}
             onPhotoSelected={handlePhotoSelected}

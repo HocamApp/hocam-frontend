@@ -147,10 +147,12 @@ export function ProfileMenu() {
   const [nameEdit, setNameEdit] = useState(false);
   const [editName, setEditName] = useState("");
   const [editSurname, setEditSurname] = useState("");
+  const [nameError, setNameError] = useState<string | null>(null);
   const [nameSaving, setNameSaving] = useState(false);
 
   // Profile photo upload (tutor only)
   const [photoUploading, setPhotoUploading] = useState(false);
+  const [photoError, setPhotoError] = useState<string | null>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
 
   // Optimistic override for auto_approve_bookings
@@ -279,7 +281,7 @@ export function ProfileMenu() {
     const trimmedName = editName.trim();
     const trimmedSurname = editSurname.trim();
     if (!trimmedName || !trimmedSurname) {
-      toast.error("İsim ve soyisim boş olamaz.");
+      setNameError("İsim ve soyisim boş olamaz.");
       return;
     }
     setNameSaving(true);
@@ -289,7 +291,7 @@ export function ProfileMenu() {
       setNameEdit(false);
       toast.success("İsim güncellendi.");
     } catch {
-      toast.error("İsim güncellenemedi.");
+      setNameError("İsim güncellenemedi. Lütfen tekrar deneyin.");
     } finally {
       setNameSaving(false);
     }
@@ -299,9 +301,10 @@ export function ProfileMenu() {
     const file = e.target.files?.[0];
     if (!file) return;
     e.target.value = "";
+    setPhotoError(null);
     const validationError = validateProfilePhotoFile(file);
     if (validationError) {
-      toast.error(validationError);
+      setPhotoError(validationError);
       return;
     }
     setPhotoUploading(true);
@@ -315,7 +318,7 @@ export function ProfileMenu() {
       await queryClient.invalidateQueries({ queryKey: ["tutors"] });
       toast.success("Profil fotoğrafı güncellendi.");
     } catch {
-      toast.error("Fotoğraf yüklenemedi. Lütfen tekrar deneyin.");
+      setPhotoError("Fotoğraf yüklenemedi. Lütfen tekrar deneyin.");
     } finally {
       setPhotoUploading(false);
     }
@@ -467,6 +470,12 @@ export function ProfileMenu() {
               </div>
             </div>
 
+            {photoError && (
+              <p className="text-xs text-destructive" role="alert">
+                {photoError}
+              </p>
+            )}
+
             {tutor && (
               <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-100">
                 <p>{PROFILE_PHOTO_RULE_TEXT}</p>
@@ -510,6 +519,7 @@ export function ProfileMenu() {
                 onClick={() => {
                   setEditName(name);
                   setEditSurname(surname);
+                  setNameError(null);
                   setNameEdit(true);
                 }}
               >
@@ -522,7 +532,10 @@ export function ProfileMenu() {
                   <Input
                     placeholder="İsim"
                     value={editName}
-                    onChange={(e) => setEditName(e.target.value)}
+                    onChange={(e) => {
+                      setEditName(e.target.value);
+                      setNameError(null);
+                    }}
                     className="h-8 text-sm"
                     disabled={nameSaving}
                     // eslint-disable-next-line jsx-a11y/no-autofocus
@@ -531,11 +544,17 @@ export function ProfileMenu() {
                   <Input
                     placeholder="Soyisim"
                     value={editSurname}
-                    onChange={(e) => setEditSurname(e.target.value)}
+                    onChange={(e) => {
+                      setEditSurname(e.target.value);
+                      setNameError(null);
+                    }}
                     className="h-8 text-sm"
                     disabled={nameSaving}
                   />
                 </div>
+                {nameError && (
+                  <p className="text-xs text-destructive">{nameError}</p>
+                )}
                 <div className="flex gap-2">
                   <Button
                     variant="outline"

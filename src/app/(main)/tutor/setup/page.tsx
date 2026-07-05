@@ -170,7 +170,6 @@ export default function TutorSetupPage() {
       } else {
         setGeneralError("Profil oluşturulamadı. Lütfen bilgileri kontrol et.");
       }
-      toast.error("Profil oluşturulamadı. Lütfen bilgileri kontrol et.");
     }
   };
 
