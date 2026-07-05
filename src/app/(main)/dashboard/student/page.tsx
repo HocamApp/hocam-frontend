@@ -3,9 +3,10 @@
 import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { ArrowRight, BookOpen, CheckCircle2, Clock3, Target } from "lucide-react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
-import { createStudentGoal, fetchLearningDashboard } from "@/lib/learningApi";
+import { fetchLearningDashboard } from "@/lib/learningApi";
+import { buildTutorSearchHref } from "@/lib/learning";
 import {
   fetchLessonRequests,
   fetchBookings,
@@ -14,6 +15,9 @@ import {
 } from "@/lib/lessonsApi";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { RouteGuard } from "@/components/shared/RouteGuard";
+import { ActiveGoalCard } from "@/components/learning/ActiveGoalCard";
+import { GoalPackageCard } from "@/components/learning/GoalPackageCard";
+import { ProgressBar } from "@/components/learning/ProgressBar";
 import { BookingCard } from "@/components/lessons/BookingCard";
 import { LessonRequestCard } from "@/components/lessons/LessonRequestCard";
 import { ReviewModal } from "@/components/lessons/ReviewModal";
@@ -21,48 +25,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import type {
-  Booking,
-  LearningActivityStatus,
-  LearningLevel,
-  NextLearningMilestone,
-  StudentGoalStatus,
-  StudentMilestoneStatus,
-} from "@/types";
+import type { Booking, LearningActivityStatus } from "@/types";
 import { toast } from "sonner";
-
-function formatLevel(level: LearningLevel) {
-  const labels: Record<LearningLevel, string> = {
-    beginner: "Başlangıç",
-    intermediate: "Orta",
-    advanced: "İleri",
-  };
-
-  return labels[level] ?? level;
-}
-
-function formatMilestoneStatus(status: StudentMilestoneStatus) {
-  const labels: Record<StudentMilestoneStatus, string> = {
-    not_started: "Başlamadı",
-    planned: "Planlandı",
-    in_progress: "Devam ediyor",
-    pending_confirmation: "Onay bekliyor",
-    completed: "Tamamlandı",
-  };
-
-  return labels[status] ?? status;
-}
-
-function formatGoalStatus(status: StudentGoalStatus) {
-  const labels: Record<StudentGoalStatus, string> = {
-    active: "Aktif",
-    completed: "Tamamlandı",
-    paused: "Duraklatıldı",
-    archived: "Arşivlendi",
-  };
-
-  return labels[status] ?? status;
-}
 
 function formatActivityStatus(status: LearningActivityStatus) {
   const labels: Record<LearningActivityStatus, string> = {
@@ -92,39 +56,6 @@ function formatDateTime(value?: string | null) {
 function formatHours(hours: number): string {
   if (!hours) return "0";
   return Number.isInteger(hours) ? String(hours) : hours.toFixed(1);
-}
-
-function buildTutorSearchHref(item: NextLearningMilestone) {
-  const params = new URLSearchParams({
-    learning_goal_id: item.cta.query.learning_goal_id,
-    learning_milestone_id: item.cta.query.learning_milestone_id,
-  });
-
-  if (item.cta.query.learning_topic_id) {
-    params.set("learning_topic_id", item.cta.query.learning_topic_id);
-  }
-
-  return `/tutors?${params.toString()}`;
-}
-
-function ProgressBar({ value }: { value: number }) {
-  const progress = Math.max(0, Math.min(100, value));
-
-  return (
-    <div
-      className="h-2 w-full overflow-hidden rounded-full bg-muted"
-      aria-label={`İlerleme yüzde ${progress}`}
-      aria-valuemax={100}
-      aria-valuemin={0}
-      aria-valuenow={progress}
-      role="progressbar"
-    >
-      <div
-        className="h-full rounded-full bg-primary transition-all"
-        style={{ width: `${progress}%` }}
-      />
-    </div>
-  );
 }
 
 function StatCard({
@@ -206,17 +137,6 @@ function StudentDashboardContent() {
     queryKey: ["lesson-requests"],
     queryFn: fetchLessonRequests,
     enabled: isAuthenticated,
-  });
-
-  const startGoalMutation = useMutation({
-    mutationFn: (templateId: string) => createStudentGoal({ template: templateId }),
-    onSuccess: async () => {
-      toast.success("Hedef başlatıldı.");
-      await queryClient.invalidateQueries({ queryKey: ["learning-dashboard"] });
-    },
-    onError: () => {
-      toast.error("Hedef başlatılamadı.");
-    },
   });
 
   const activeLessonRequests = lessonRequests.filter((lr) => {
@@ -378,53 +298,14 @@ function StudentDashboardContent() {
                   description="Backend hazır olduğunda YKS hedef paketlerini buradan seçebileceksin."
                 />
               ) : (
-                <div className="grid gap-4 md:grid-cols-2">
-                  {templates.map((template) => {
-                    const goalExists = goals.some((goal) => goal.template === template.id);
-                    const isStarting =
-                      startGoalMutation.isPending &&
-                      startGoalMutation.variables === template.id;
-
-                    return (
-                      <article
-                        key={template.id}
-                        className="flex min-h-64 flex-col rounded-2xl border bg-card p-5 shadow-sm"
-                      >
-                        <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-muted-foreground">
-                          <span className="rounded-full bg-muted px-2.5 py-1">
-                            {template.exam_type} / {template.subject_name}
-                          </span>
-                          <span className="rounded-full bg-primary/10 px-2.5 py-1 text-primary">
-                            {formatLevel(template.level)}
-                          </span>
-                        </div>
-                        <h3 className="mt-4 text-lg font-semibold tracking-normal">
-                          {template.title}
-                        </h3>
-                        <p className="mt-2 line-clamp-3 text-sm text-muted-foreground">
-                          {template.description}
-                        </p>
-                        <div className="mt-auto pt-5">
-                          <p className="mb-3 text-xs font-medium text-muted-foreground">
-                            {template.estimated_milestones} milestone
-                          </p>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            className="w-full"
-                            disabled={goalExists || startGoalMutation.isPending}
-                            onClick={() => startGoalMutation.mutate(template.id)}
-                          >
-                            {goalExists
-                              ? "Hedefe eklendi"
-                              : isStarting
-                                ? "Başlatılıyor..."
-                                : "Hedefe başla"}
-                          </Button>
-                        </div>
-                      </article>
-                    );
-                  })}
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {templates.map((template) => (
+                    <GoalPackageCard
+                      key={template.id}
+                      template={template}
+                      isAdded={goals.some((goal) => goal.template === template.id)}
+                    />
+                  ))}
                 </div>
               )}
             </LearningSection>
@@ -438,53 +319,7 @@ function StudentDashboardContent() {
               ) : (
                 <div className="grid gap-4">
                   {goals.map((goal) => (
-                    <article key={goal.id} className="rounded-2xl border bg-card p-5 shadow-sm">
-                      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                        <div>
-                          <h3 className="text-lg font-semibold tracking-normal">
-                            {goal.title}
-                          </h3>
-                          {goal.description && (
-                            <p className="mt-1 text-sm text-muted-foreground">
-                              {goal.description}
-                            </p>
-                          )}
-                        </div>
-                        <span className="w-fit rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
-                          {formatGoalStatus(goal.status)}
-                        </span>
-                      </div>
-                      <div className="mt-5 space-y-2">
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-muted-foreground">Genel ilerleme</span>
-                          <span className="font-medium">%{goal.progress}</span>
-                        </div>
-                        <ProgressBar value={goal.progress} />
-                      </div>
-                      <div className="mt-5 grid gap-3">
-                        {goal.milestones.slice(0, 4).map((milestone) => (
-                          <div
-                            key={milestone.id}
-                            className="rounded-xl border bg-background p-3"
-                          >
-                            <div className="flex items-start justify-between gap-3">
-                              <div>
-                                <p className="text-sm font-medium">{milestone.title}</p>
-                                <p className="mt-1 text-xs text-muted-foreground">
-                                  {formatMilestoneStatus(milestone.status)}
-                                </p>
-                              </div>
-                              <span className="text-sm font-semibold">
-                                %{milestone.progress}
-                              </span>
-                            </div>
-                            <div className="mt-3">
-                              <ProgressBar value={milestone.progress} />
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </article>
+                    <ActiveGoalCard key={goal.id} goal={goal} />
                   ))}
                 </div>
               )}
