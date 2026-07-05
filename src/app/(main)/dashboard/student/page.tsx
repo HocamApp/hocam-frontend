@@ -3,7 +3,6 @@
 import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import {
-  ArrowRight,
   BookOpen,
   Calendar,
   CheckCircle2,
@@ -15,7 +14,6 @@ import {
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { fetchLearningDashboard } from "@/lib/learningApi";
-import { buildTutorSearchHref } from "@/lib/learning";
 import {
   fetchLessonRequests,
   fetchBookings,
@@ -26,7 +24,6 @@ import { EmptyState } from "@/components/shared/EmptyState";
 import { RouteGuard } from "@/components/shared/RouteGuard";
 import { ActiveGoalCard } from "@/components/learning/ActiveGoalCard";
 import { GoalPackageCard } from "@/components/learning/GoalPackageCard";
-import { ProgressBar } from "@/components/learning/ProgressBar";
 import { BookingCard } from "@/components/lessons/BookingCard";
 import { LessonRequestCard } from "@/components/lessons/LessonRequestCard";
 import { ReviewModal } from "@/components/lessons/ReviewModal";
@@ -229,7 +226,6 @@ function StudentDashboardContent() {
 
   const templates = learningDashboard?.templates ?? [];
   const goals = learningDashboard?.goals ?? [];
-  const nextMilestones = learningDashboard?.next_milestones ?? [];
   const pendingConfirmations = learningDashboard?.pending_confirmations ?? [];
   const notes = learningDashboard?.notes ?? [];
   const recentProgress = learningDashboard?.recent_progress ?? [];
@@ -238,7 +234,7 @@ function StudentDashboardContent() {
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       <div className="space-y-6">
-        <header className="flex flex-col gap-4 border-b pb-6 sm:flex-row sm:items-end sm:justify-between">
+        <header className="flex flex-col gap-4 border-b pb-6">
           <div>
             <div className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
               <BookOpen className="h-3.5 w-3.5" aria-hidden="true" />
@@ -251,17 +247,6 @@ function StudentDashboardContent() {
               Hedeflerini takip et, sıradaki konunu seç ve derslerinden ilerleme kazan.
               {user?.email && <span className="ml-1">· {user.email}</span>}
             </p>
-          </div>
-          <div className="flex items-center gap-3 rounded-lg border bg-card px-4 py-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
-              <Target className="h-4 w-4" aria-hidden="true" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-xs font-medium text-muted-foreground">Sıradaki odak</p>
-              <p className="truncate text-sm font-medium">
-                {nextMilestones[0]?.title ?? "Hedef seçmeye hazır"}
-              </p>
-            </div>
           </div>
         </header>
 
@@ -346,52 +331,6 @@ function StudentDashboardContent() {
                 <div className="grid gap-4">
                   {goals.map((goal) => (
                     <ActiveGoalCard key={goal.id} goal={goal} />
-                  ))}
-                </div>
-              )}
-            </LearningSection>
-
-            <LearningSection title="Sıradaki Konular">
-              {nextMilestones.length === 0 ? (
-                <EmptyLearningCard
-                  icon={<Clock3 className="h-4 w-4" aria-hidden="true" />}
-                  title="Sıradaki konu bekleniyor"
-                  description="Aktif hedeflerinde açık milestone oluştuğunda burada görünecek."
-                />
-              ) : (
-                <div className="grid gap-4 md:grid-cols-2">
-                  {nextMilestones.map((item) => (
-                    <article key={item.id} className="rounded-xl border bg-card p-4">
-                      <div className="flex items-start gap-3">
-                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
-                          <Clock3 className="h-4 w-4" aria-hidden="true" />
-                        </div>
-                        <div className="min-w-0">
-                          <h3 className="truncate font-semibold tracking-normal">{item.title}</h3>
-                          <p className="mt-1 truncate text-sm text-muted-foreground">
-                            {item.goal_title}
-                          </p>
-                          {item.topic_title && (
-                            <p className="mt-1 truncate text-xs text-muted-foreground">
-                              Konu: {item.topic_title}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                      <div className="mt-5 space-y-2">
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-muted-foreground">İlerleme</span>
-                          <span className="font-medium">%{item.progress}</span>
-                        </div>
-                        <ProgressBar value={item.progress} />
-                      </div>
-                      <Button asChild className="mt-5 w-full">
-                        <Link href={buildTutorSearchHref(item)}>
-                          Bu konu için hoca bul
-                          <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
-                        </Link>
-                      </Button>
-                    </article>
                   ))}
                 </div>
               )}
