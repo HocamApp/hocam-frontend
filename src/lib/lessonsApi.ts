@@ -14,6 +14,7 @@ export interface CreateBookingPayload extends LearningContextPayload {
   duration_minutes: number;
   lesson_request?: string;
   is_trial?: boolean;
+  package_purchase_id?: string;
 }
 
 export async function createBooking(

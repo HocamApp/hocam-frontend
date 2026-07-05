@@ -317,6 +317,8 @@ export interface Booking {
   lesson_request: string | null;
   room_url?: string;
   daily_room_name?: string;
+  package_purchase?: string | null;
+  package_credit_units_used?: number;
   created_at: string;
   learning_context?: LearningContext | null;
 }
