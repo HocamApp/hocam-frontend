@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   BookOpen,
   CheckCircle2,
@@ -11,10 +11,18 @@ import {
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
-import { fetchLearningDashboard } from "@/lib/learningApi";
+import {
+  fetchLearningDashboard,
+  fetchLearningGoalTemplates,
+} from "@/lib/learningApi";
+import { buildCatalogSections } from "@/lib/learningCatalog";
 import { RouteGuard } from "@/components/shared/RouteGuard";
 import { StatCard } from "@/components/shared/StatCard";
 import { ActiveGoalCard } from "@/components/learning/ActiveGoalCard";
+import {
+  CategoryNavPills,
+  CategoryNavSidebar,
+} from "@/components/learning/CategoryNav";
 import { GoalPackageCard } from "@/components/learning/GoalPackageCard";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -99,12 +107,73 @@ function StudentLearningContent() {
     retry: false,
   });
 
-  const templates = learningDashboard?.templates ?? [];
+  // The dashboard payload caps templates at 6; the dedicated endpoint
+  // returns the full catalog. Fall back to the dashboard's list if it fails.
+  const { data: allTemplates } = useQuery({
+    queryKey: ["learning-goal-templates"],
+    queryFn: fetchLearningGoalTemplates,
+    enabled: isAuthenticated,
+    retry: false,
+  });
+
+  const templates = useMemo(
+    () => allTemplates ?? learningDashboard?.templates ?? [],
+    [allTemplates, learningDashboard]
+  );
   const goals = learningDashboard?.goals ?? [];
   const pendingConfirmations = learningDashboard?.pending_confirmations ?? [];
   const notes = learningDashboard?.notes ?? [];
   const recentProgress = learningDashboard?.recent_progress ?? [];
   const stats = learningDashboard?.stats;
+
+  const catalogSections = useMemo(
+    () => buildCatalogSections(templates),
+    [templates]
+  );
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
+    null
+  );
+  const activeCategoryId =
+    selectedCategoryId ?? catalogSections[0]?.category.id ?? null;
+
+  // Progressive enhancement: keep the nav in sync while scrolling. Clicking
+  // a category works without it.
+  useEffect(() => {
+    if (catalogSections.length === 0) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+        if (visible[0]) {
+          setSelectedCategoryId(visible[0].target.id);
+        }
+      },
+      { rootMargin: "-96px 0px -60% 0px" }
+    );
+
+    catalogSections.forEach(({ category }) => {
+      const element = document.getElementById(category.id);
+      if (element) observer.observe(element);
+    });
+
+    return () => observer.disconnect();
+  }, [catalogSections]);
+
+  const handleSelectCategory = (id: string) => {
+    setSelectedCategoryId(id);
+    document
+      .getElementById(id)
+      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  const navItems = catalogSections.map(({ category, templates: items }) => ({
+    id: category.id,
+    title: category.title,
+    icon: category.icon,
+    count: items.length,
+  }));
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -172,46 +241,104 @@ function StudentLearningContent() {
         )}
 
         {!learningLoading && !learningError && (
-          <div className="grid gap-6 xl:grid-cols-[1.25fr_0.75fr]">
-            <div className="space-y-6">
-              <LearningSection title="Hazır Hedef Paketleri">
-                {templates.length === 0 ? (
-                  <EmptyLearningCard
-                    icon={<BookOpen className="h-4 w-4" aria-hidden="true" />}
-                    title="Hazır paketler yakında burada"
-                    description="Backend hazır olduğunda YKS hedef paketlerini buradan seçebileceksin."
-                  />
-                ) : (
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    {templates.map((template) => (
-                      <GoalPackageCard
-                        key={template.id}
-                        template={template}
-                        isAdded={goals.some((goal) => goal.template === template.id)}
-                      />
-                    ))}
-                  </div>
-                )}
-              </LearningSection>
+          <div className="space-y-10">
+            <LearningSection title="Aktif Hedeflerim">
+              {goals.length === 0 ? (
+                <EmptyLearningCard
+                  icon={<Target className="h-4 w-4" aria-hidden="true" />}
+                  title="Henüz aktif hedefin yok"
+                  description="Aşağıdaki hazır paketlerden birini seçerek öğrenme planını başlatabilirsin."
+                />
+              ) : (
+                <div className="grid gap-4 md:grid-cols-2">
+                  {goals.map((goal) => (
+                    <ActiveGoalCard key={goal.id} goal={goal} />
+                  ))}
+                </div>
+              )}
+            </LearningSection>
 
-              <LearningSection title="Aktif Hedeflerim">
-                {goals.length === 0 ? (
-                  <EmptyLearningCard
-                    icon={<Target className="h-4 w-4" aria-hidden="true" />}
-                    title="Henüz aktif hedefin yok"
-                    description="Hazır paketlerden birini seçerek öğrenme planını başlatabileceksin."
-                  />
-                ) : (
-                  <div className="grid gap-4">
-                    {goals.map((goal) => (
-                      <ActiveGoalCard key={goal.id} goal={goal} />
-                    ))}
-                  </div>
-                )}
-              </LearningSection>
-            </div>
+            <section className="space-y-5">
+              <div>
+                <h2 className="text-xl font-semibold tracking-tight">
+                  Hazır Hedef Paketleri
+                </h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Sınavına ve seviyene uygun paketi seç, milestone yolunda ilerle.
+                </p>
+              </div>
 
-            <aside className="space-y-6">
+              {templates.length === 0 ? (
+                <EmptyLearningCard
+                  icon={<BookOpen className="h-4 w-4" aria-hidden="true" />}
+                  title="Hazır paketler yakında burada"
+                  description="Backend hazır olduğunda YKS hedef paketlerini buradan seçebileceksin."
+                />
+              ) : (
+                <>
+                  <div className="sticky top-16 z-20 -mx-4 bg-background/95 px-4 pt-2 backdrop-blur lg:hidden">
+                    <CategoryNavPills
+                      items={navItems}
+                      activeId={activeCategoryId}
+                      onSelect={handleSelectCategory}
+                    />
+                  </div>
+
+                  <div className="lg:grid lg:grid-cols-[220px_minmax(0,1fr)] lg:gap-8">
+                    <div className="hidden lg:block">
+                      <div className="sticky top-24">
+                        <CategoryNavSidebar
+                          items={navItems}
+                          activeId={activeCategoryId}
+                          onSelect={handleSelectCategory}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-12">
+                      {catalogSections.map(({ category, templates: items }) => (
+                        <section
+                          key={category.id}
+                          id={category.id}
+                          className="scroll-mt-36 space-y-4 lg:scroll-mt-24"
+                        >
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <category.icon
+                                className="h-5 w-5 text-primary"
+                                aria-hidden="true"
+                              />
+                              <h3 className="text-lg font-semibold tracking-tight">
+                                {category.title}
+                              </h3>
+                              <span className="text-sm text-muted-foreground">
+                                {items.length} paket
+                              </span>
+                            </div>
+                            <p className="mt-1 text-sm text-muted-foreground">
+                              {category.description}
+                            </p>
+                          </div>
+                          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                            {items.map((template) => (
+                              <GoalPackageCard
+                                key={`${category.id}-${template.id}`}
+                                template={template}
+                                isAdded={goals.some(
+                                  (goal) => goal.template === template.id
+                                )}
+                              />
+                            ))}
+                          </div>
+                        </section>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+            </section>
+
+            <div className="grid gap-6 md:grid-cols-3">
               <LearningSection title="Tutor Onayı Bekleyenler">
                 <div className="rounded-xl border bg-card p-4">
                   {pendingConfirmations.length === 0 ? (
@@ -306,7 +433,7 @@ function StudentLearningContent() {
                   )}
                 </div>
               </LearningSection>
-            </aside>
+            </div>
           </div>
         )}
       </div>

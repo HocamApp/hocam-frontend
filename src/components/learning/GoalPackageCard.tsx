@@ -32,6 +32,7 @@ export function GoalPackageCard({ template, isAdded }: GoalPackageCardProps) {
           <PackageCover
             examType={template.exam_type}
             subjectName={template.subject_name}
+            slug={template.slug}
             isFeatured={template.is_featured}
             className="h-36 w-full transition-transform duration-300 group-hover:scale-[1.03]"
           />
