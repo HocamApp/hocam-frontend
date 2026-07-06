@@ -5,6 +5,17 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+// Sanitize a post-login returnUrl: only same-origin absolute paths are
+// allowed. Rejects scheme-relative ("//evil.com"), backslash tricks and
+// absolute URLs ("https://evil.com") so login can never redirect off-site.
+export function safeReturnUrl(raw: string | null | undefined): string | null {
+  if (!raw || !raw.startsWith("/")) return null;
+  if (raw.startsWith("//") || raw.startsWith("/\\")) return null;
+  const beforeFirstSlash = raw.slice(1).split("/")[0] ?? "";
+  if (beforeFirstSlash.includes(":")) return null;
+  return raw;
+}
+
 // Format a price number as Turkish Lira
 export function formatPrice(price: number | string): string {
   return new Intl.NumberFormat("tr-TR", {

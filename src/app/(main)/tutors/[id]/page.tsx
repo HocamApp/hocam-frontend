@@ -325,7 +325,9 @@ export default function TutorProfilePage({
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
   const [requestSent, setRequestSent] = useState(false);
   const [requestConversationId, setRequestConversationId] = useState<string | null>(null);
-  const [bookingModalMode, setBookingModalMode] = useState<"normal" | "trial" | null>(null);
+  // Paid bookings now go through /tutors/[id]/checkout; this modal only
+  // handles the free trial path (which deliberately skips checkout).
+  const [bookingModalMode, setBookingModalMode] = useState<"trial" | null>(null);
   const [bookingComplete, setBookingComplete] = useState(false);
   const [reviewsExpanded, setReviewsExpanded] = useState(false);
   const [isSharePreviewOpen, setIsSharePreviewOpen] = useState(false);
@@ -390,6 +392,20 @@ export default function TutorProfilePage({
   const whatsappShareUrl = shareUrl
     ? `https://wa.me/?text=${encodeURIComponent(`${shareTitle}\n${shareUrl}`)}`
     : "";
+  // Paid checkout keeps the learning-goal association by carrying the same
+  // query params the profile page received.
+  const checkoutHref = (() => {
+    const qp = new URLSearchParams();
+    if (learningContext) {
+      qp.set("learning_goal_id", learningContext.learning_goal_id);
+      qp.set("learning_milestone_id", learningContext.learning_milestone_id);
+      if (learningContext.learning_topic_id) {
+        qp.set("learning_topic_id", learningContext.learning_topic_id);
+      }
+    }
+    const query = qp.toString();
+    return `/tutors/${id}/checkout${query ? `?${query}` : ""}`;
+  })();
 
   useEffect(() => {
     if (!shareCopied) return;
@@ -554,7 +570,14 @@ export default function TutorProfilePage({
 
               <div className="space-y-3 pt-1">
                 {!isAuthenticated && (
-                  <Button className="w-full" onClick={() => router.push("/login")}>
+                  <Button
+                    className="w-full"
+                    onClick={() =>
+                      router.push(
+                        `/login?returnUrl=${encodeURIComponent(`/tutors/${id}`)}`
+                      )
+                    }
+                  >
                     Ders ayırtmak için giriş yap
                   </Button>
                 )}
@@ -595,7 +618,7 @@ export default function TutorProfilePage({
                         ) : (
                           <Button
                             className="w-full"
-                            onClick={() => setBookingModalMode("normal")}
+                            onClick={() => router.push(checkoutHref)}
                           >
                             Ders Rezervasyonu Yap
                           </Button>
@@ -904,19 +927,14 @@ export default function TutorProfilePage({
       <BookingModal
         tutor={tutor}
         isOpen={bookingModalMode !== null}
-        isTrial={bookingModalMode === "trial"}
+        isTrial
         onClose={() => setBookingModalMode(null)}
         learningContext={learningContext}
-        onSuccess={(booking) => {
-          const wasTrial = bookingModalMode === "trial";
+        onSuccess={() => {
           setBookingComplete(true);
           setBookingModalMode(null);
           queryClient.invalidateQueries({ queryKey: ["tutor", id] });
-          toast.success(
-            wasTrial
-              ? "Ücretsiz deneme dersi isteğin gönderildi."
-              : "Ders rezervasyonu oluşturuldu."
-          );
+          toast.success("Ücretsiz deneme dersi isteğin gönderildi.");
         }}
       />
     </div>
