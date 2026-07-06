@@ -167,7 +167,7 @@ NEXT_PUBLIC_API_URL=http://localhost:8000/api   # local dev
 NEXT_PUBLIC_API_URL=https://your-app.railway.app/api
 ```
 
-Note: the committed `.env.local` currently points at the Railway production backend. Switch to `http://localhost:8000/api` for local development.
+Note: `.env.local` is git-ignored and never committed. For local development set `NEXT_PUBLIC_API_URL=http://localhost:8000/api` in it (when unset, `src/lib/api.ts` falls back to the Railway production API in production builds and localhost in dev).
 
 ## Development
 
