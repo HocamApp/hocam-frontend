@@ -87,7 +87,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const setAuth = (user: User, token: string) => {
-    Cookies.set("auth_token", token, { expires: 7 }); // 7 days
+    Cookies.set("auth_token", token, {
+      expires: 7, // days
+      // Not HttpOnly (js-cookie can't set that) — documented architectural
+      // limitation. These at least block plaintext transmission and
+      // cross-site sends of the cookie itself.
+      secure: window.location.protocol === "https:",
+      sameSite: "strict",
+    });
     localStorage.setItem("auth_user", JSON.stringify(user));
     setToken(token);
     setUser(user);
