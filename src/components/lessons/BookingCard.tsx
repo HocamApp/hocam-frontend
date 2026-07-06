@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import StatusBadge from "@/components/shared/StatusBadge";
 import { formatDate, formatPrice } from "@/lib/utils";
+import { Video } from "lucide-react";
 import type { Booking, LearningActivityStatus } from "@/types";
 
 interface BookingCardProps {
@@ -159,6 +160,14 @@ export function BookingCard({
               )}
               {isConfirmed && (
                 <>
+                  {booking.room_url && (
+                    <Button size="sm" variant="secondary" asChild>
+                      <a href={`/session/${booking.id}`}>
+                        <Video className="mr-2 h-4 w-4" />
+                        Derse Gir
+                      </a>
+                    </Button>
+                  )}
                   <Button
                     size="sm"
                     variant="default"
@@ -197,9 +206,17 @@ export function BookingCard({
 
           {currentUserRole === "student" && (
             <>
-              {isConfirmed && isFuture && (
+              {isConfirmed && isFuture && booking.room_url && (
+                <Button size="sm" variant="default" asChild>
+                  <a href={`/session/${booking.id}`}>
+                    <Video className="mr-2 h-4 w-4" />
+                    Derse Katıl
+                  </a>
+                </Button>
+              )}
+              {isConfirmed && isFuture && !booking.room_url && (
                 <Button size="sm" variant="outline" disabled>
-                  Derse Katıl
+                  Oda hazırlanıyor...
                 </Button>
               )}
               {canCancel && (
@@ -226,11 +243,6 @@ export function BookingCard({
           )}
         </div>
 
-        {currentUserRole === "student" && isConfirmed && isFuture && (
-          <p className="mt-2 text-xs text-muted-foreground">
-            Ders bağlantısı, dersten önce burada görünecek.
-          </p>
-        )}
       </CardContent>
     </Card>
   );

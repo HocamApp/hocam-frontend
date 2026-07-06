@@ -180,5 +180,13 @@ Conversations list polls every 30s, message thread polls every 5s. Not WebSocket
 ## What's Next
 
 - **Full frontend redesign** — current UI is functional but rough. A complete redesign with a design system targeting Gen Z aesthetics is planned before public launch
-- **Zoom join link display** — once backend stores `join_url` on Booking (after Zoom API integration), surface it in both student and tutor dashboards after booking is confirmed
 - **Tutor accept/decline UI** — backend already handles status updates on lesson requests; the frontend flow needs polish
+
+## Video Sessions (JaaS)
+
+`app/session/[bookingId]/page.tsx` embeds the lesson video call in-page via `@jitsi/react-sdk`'s `JitsiMeeting`, backed by JaaS (8x8 Jitsi-as-a-Service) rather than the public `meet.jit.si`.
+
+- The room only exists once `Booking.room_url` is set (on confirm — see backend `CLAUDE.md`).
+- The page calls `fetchSessionToken(bookingId)` (`lib/lessonsApi.ts`) to get a short-lived per-user JWT + room name + domain from `GET /api/bookings/{id}/session-token/`, then passes `jwt`, `roomName`, `domain` to `JitsiMeeting`. There is no client-side JaaS config (app ID, keys) — it all comes from that endpoint.
+- **Every** "join session" link across the app must point at `/session/{bookingId}` (in-app, embedded) — never link directly to `booking.room_url` with `target="_blank"`. That was a past bug (raw meet.jit.si link, unbranded, new tab) fixed across `BookingCard.tsx`, the tutor dashboard, `profile/lessons/upcoming`, and `profile/calendar`.
+- Actual visual branding (logo, colors) is configured in the JaaS console (per `JAAS_APP_ID` tenant), not in this code. The `interfaceConfigOverwrite` flags here (hiding watermarks, background color) only take effect because we're on JaaS with a valid JWT — they're silently ignored on the public `meet.jit.si` server.

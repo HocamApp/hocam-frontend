@@ -76,3 +76,18 @@ export async function updateBookingStatus(
   );
   return response.data;
 }
+
+export interface SessionToken {
+  token: string;
+  room: string;
+  domain: string;
+}
+
+export async function fetchSessionToken(
+  bookingId: string
+): Promise<SessionToken> {
+  const response = await api.get<SessionToken>(
+    `/bookings/${bookingId}/session-token/`
+  );
+  return response.data;
+}

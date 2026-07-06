@@ -864,7 +864,7 @@ function TutorDashboardContent() {
                 </div>
                 {nextBooking.room_url ? (
                   <Button asChild>
-                    <a href={nextBooking.room_url} target="_blank" rel="noreferrer">
+                    <a href={`/session/${nextBooking.id}`}>
                       <Video className="mr-2 h-4 w-4" />
                       Derse Katıl
                     </a>

@@ -117,7 +117,7 @@ function CalendarContent() {
                     actions={
                       event.room_url ? (
                         <Button asChild size="sm">
-                          <a href={event.room_url} target="_blank" rel="noreferrer">
+                          <a href={`/session/${event.id}`}>
                             <Video className="mr-2 h-4 w-4" />
                             Derse Katıl
                           </a>

@@ -48,7 +48,7 @@ function UpcomingLessonsContent() {
               actions={
                 lesson.can_join ? (
                   <Button asChild size="sm">
-                    <a href={lesson.room_url} target="_blank" rel="noreferrer">
+                    <a href={`/session/${lesson.id}`}>
                       <Video className="mr-2 h-4 w-4" />
                       Derse Katıl
                     </a>
