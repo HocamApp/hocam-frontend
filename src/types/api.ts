@@ -363,10 +363,43 @@ export interface Review {
   booking: string;
   student: string;
   tutor: string;
+  /** Computed average of the four criteria (e.g. 4.75); display with formatRating. */
   rating: number;
+  clarity_rating: number;
+  preparation_rating: number;
+  progress_rating: number;
+  confidence_rating: number;
   comment: string;
   created_at: string;
   subject?: Subject;
+}
+
+export type CriteriaRatingKey =
+  | "clarity"
+  | "preparation"
+  | "progress"
+  | "confidence";
+
+export interface CriteriaRatingSummary {
+  label: string;
+  average: number;
+  count: number;
+}
+
+export interface SubjectRatingSummary {
+  subject: Subject;
+  average: number;
+  count: number;
+  /** Share of this tutor's reviews that belong to this subject (0-100, 1 decimal). */
+  percentage_of_reviews: number;
+}
+
+// GET /api/tutors/{id}/review-summary/
+export interface TutorReviewSummary {
+  overall_rating: number;
+  review_count: number;
+  criteria_ratings: Record<CriteriaRatingKey, CriteriaRatingSummary>;
+  subject_ratings: SubjectRatingSummary[];
 }
 
 // GET /api/payments/package-plans/ — ledger-first package foundation (no

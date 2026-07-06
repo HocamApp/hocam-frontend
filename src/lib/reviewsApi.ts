@@ -1,10 +1,14 @@
 import api from "./api";
 import { Review } from "@/types";
 
+// The overall rating is computed server-side from the four criteria.
 export interface CreateReviewPayload {
   booking: string;
-  rating: number;
-  comment: string;
+  clarity_rating: number;
+  preparation_rating: number;
+  progress_rating: number;
+  confidence_rating: number;
+  comment?: string;
 }
 
 export async function createReview(

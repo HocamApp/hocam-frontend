@@ -18,11 +18,13 @@ import {
 } from "lucide-react";
 import { useFavorites } from "@/hooks/useFavorites";
 import { FavoriteButton } from "@/components/tutors/FavoriteButton";
-import { fetchTutorById, fetchTutorReviews, fetchTutorSubjectRatings } from "@/lib/tutorsApi";
+import { fetchTutorById, fetchTutorReviews, fetchTutorReviewSummary } from "@/lib/tutorsApi";
 import { fetchTutorAvailability } from "@/lib/dashboardApi";
 import { useAuth } from "@/hooks/useAuth";
 import { formatLessonCount, formatPrice, formatRating } from "@/lib/utils";
 import { ReviewCard } from "@/components/tutors/ReviewCard";
+import { ReviewSummary } from "@/components/tutors/ReviewSummary";
+import { SubjectRatingBreakdown } from "@/components/tutors/SubjectRatingBreakdown";
 import { TutorPresenceBadge } from "@/components/tutors/TutorPresenceBadge";
 import { MessageRequestModal } from "@/components/tutors/MessageRequestModal";
 import { PackageOfferPanel } from "@/components/tutors/PackageOfferPanel";
@@ -352,11 +354,12 @@ export default function TutorProfilePage({
     enabled: !!tutor,
   });
 
-  const { data: subjectRatings = [] } = useQuery({
-    queryKey: ["tutor-subject-ratings", id],
-    queryFn: () => fetchTutorSubjectRatings(id),
+  const { data: reviewSummary } = useQuery({
+    queryKey: ["tutor-review-summary", id],
+    queryFn: () => fetchTutorReviewSummary(id),
     enabled: !!tutor,
   });
+  const subjectRatings = reviewSummary?.subject_ratings ?? [];
 
   const { data: availability = [], isLoading: availabilityLoading } = useQuery({
     queryKey: ["tutor-availability", id],
@@ -855,15 +858,24 @@ export default function TutorProfilePage({
           )}
           {!reviewsLoading && Array.isArray(reviews) && reviews.length > 0 && (
             <>
-              <div className="mb-6 flex items-baseline gap-4">
-                <span className="text-4xl font-bold">{formatRating(tutor.rating)}</span>
-                <div>
-                  <Stars rating={tutor.rating} />
-                  <p className="text-sm text-muted-foreground">
-                    {reviews.length} değerlendirme
-                  </p>
+              {reviewSummary ? (
+                <div className="mb-6 space-y-6">
+                  <ReviewSummary summary={reviewSummary} />
+                  <SubjectRatingBreakdown
+                    subjectRatings={reviewSummary.subject_ratings}
+                  />
                 </div>
-              </div>
+              ) : (
+                <div className="mb-6 flex items-baseline gap-4">
+                  <span className="text-4xl font-bold">{formatRating(tutor.rating)}</span>
+                  <div>
+                    <Stars rating={tutor.rating} />
+                    <p className="text-sm text-muted-foreground">
+                      {reviews.length} değerlendirme
+                    </p>
+                  </div>
+                </div>
+              )}
               <div className="space-y-3">
                 {displayReviews.map((review) => (
                   <ReviewCard key={review.id} review={review} />
