@@ -2,11 +2,12 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useAuth } from "@/hooks/useAuth";
+import { safeReturnUrl } from "@/lib/utils";
 import { googleAuth, loginUser } from "@/lib/authApi";
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
@@ -36,6 +37,11 @@ interface LoginFormProps {
 
 export function LoginForm({ onCreateAccount }: LoginFormProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  // Same-origin path to return to after login (e.g. a checkout page that
+  // redirected here). Tutors without a profile still go to /tutor/setup —
+  // profile setup precedes everything else.
+  const returnUrl = safeReturnUrl(searchParams.get("returnUrl"));
   const { isAuthenticated, isLoading, setAuth, user } = useAuth();
   const [generalError, setGeneralError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
@@ -53,12 +59,16 @@ export function LoginForm({ onCreateAccount }: LoginFormProps) {
   useEffect(() => {
     if (!isLoading && isAuthenticated && user) {
       if (user.role === "tutor") {
-        router.replace(user.tutor_profile_id ? "/dashboard/tutor" : "/tutor/setup");
+        router.replace(
+          user.tutor_profile_id
+            ? returnUrl ?? "/dashboard/tutor"
+            : "/tutor/setup"
+        );
       } else {
-        router.replace("/dashboard/student");
+        router.replace(returnUrl ?? "/dashboard/student");
       }
     }
-  }, [isLoading, isAuthenticated, user, router]);
+  }, [isLoading, isAuthenticated, user, router, returnUrl]);
 
   const onSubmit = async (data: LoginFormValues) => {
     setGeneralError(null);
@@ -74,9 +84,13 @@ export function LoginForm({ onCreateAccount }: LoginFormProps) {
       const auth = await loginUser(parsed.data.email, parsed.data.password);
       setAuth(auth.user, auth.token);
       if (auth.user.role === "tutor") {
-        router.push(auth.user.tutor_profile_id ? "/dashboard/tutor" : "/tutor/setup");
+        router.push(
+          auth.user.tutor_profile_id
+            ? returnUrl ?? "/dashboard/tutor"
+            : "/tutor/setup"
+        );
       } else {
-        router.push("/dashboard/student");
+        router.push(returnUrl ?? "/dashboard/student");
       }
     } catch {
       setGeneralError("E-posta veya şifre hatalı.");
@@ -87,12 +101,16 @@ export function LoginForm({ onCreateAccount }: LoginFormProps) {
     (auth: AuthResponse) => {
       setAuth(auth.user, auth.token);
       if (auth.user.role === "tutor") {
-        router.push(auth.user.tutor_profile_id ? "/dashboard/tutor" : "/tutor/setup");
+        router.push(
+          auth.user.tutor_profile_id
+            ? returnUrl ?? "/dashboard/tutor"
+            : "/tutor/setup"
+        );
       } else {
-        router.push("/dashboard/student");
+        router.push(returnUrl ?? "/dashboard/student");
       }
     },
-    [router, setAuth]
+    [router, setAuth, returnUrl]
   );
 
   const handleGoogleCredential = useCallback(

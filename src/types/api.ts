@@ -374,8 +374,13 @@ export interface Review {
 export interface PackagePlan {
   id: string;
   name: string;
+  /** Stable machine key, e.g. "ten_pack", "weekly_3_1m". Null for ad-hoc plans. */
+  code: string | null;
   lesson_count: number;
   lesson_duration_minutes: number;
+  /** Weekly prepaid plans only; null for one-off bundles like the 10-pack. */
+  lessons_per_week: number | null;
+  term_months: number | null;
   discount_percent: number;
   is_active: boolean;
   created_at: string;
@@ -391,8 +396,11 @@ export interface PackagePurchase {
   plan: {
     id: string;
     name: string;
+    code: string | null;
     lesson_count: number;
     lesson_duration_minutes: number;
+    lessons_per_week: number | null;
+    term_months: number | null;
     discount_percent: number;
   };
   status: PackagePurchaseStatus;
