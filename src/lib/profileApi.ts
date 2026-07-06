@@ -1,5 +1,5 @@
 import api from "./api";
-import { ProfileMeResponse, UserPreferences } from "@/types";
+import { ProfileMeResponse, ProfileStudent, UserPreferences } from "@/types";
 
 export interface UpdateProfilePayload {
   preferences?: Partial<UserPreferences>;
@@ -15,6 +15,27 @@ export async function updateProfileMe(
   payload: UpdateProfilePayload
 ): Promise<ProfileMeResponse> {
   const response = await api.patch<ProfileMeResponse>("/profile/me/", payload);
+  return response.data;
+}
+
+export async function uploadStudentProfileAvatar(
+  file: File
+): Promise<ProfileStudent> {
+  const formData = new FormData();
+  formData.append("avatar", file);
+
+  const response = await api.post<ProfileStudent>("/profile/me/avatar/", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return response.data;
+}
+
+export async function selectStudentAnonymousAvatar(
+  avatarKey: string
+): Promise<ProfileStudent> {
+  const response = await api.patch<ProfileStudent>("/profile/me/avatar-choice/", {
+    avatar_key: avatarKey,
+  });
   return response.data;
 }
 

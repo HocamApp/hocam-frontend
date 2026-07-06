@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { AuthSplitScreen } from "@/components/auth/AuthSplitScreen";
 import { LoginForm } from "@/components/auth/LoginForm";
 import { RegisterForm } from "@/components/auth/RegisterForm";
@@ -29,7 +29,11 @@ export default function Home() {
       title="Tekrar hoş geldin"
       description="Hocam'a devam etmek için giriş yap."
     >
-      <LoginForm onCreateAccount={() => setMode("register")} />
+      {/* LoginForm reads returnUrl via useSearchParams, which requires a
+          Suspense boundary to build. */}
+      <Suspense fallback={null}>
+        <LoginForm onCreateAccount={() => setMode("register")} />
+      </Suspense>
     </AuthSplitScreen>
   );
 }

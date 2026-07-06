@@ -31,6 +31,12 @@ import {
 } from "@/lib/tutorsApi";
 import { fetchAvailability } from "@/lib/dashboardApi";
 import { confirmLearningActivity } from "@/lib/learningApi";
+import {
+  PROFILE_PHOTO_ACCEPT,
+  PROFILE_PHOTO_RULE_TEXT,
+  TUTOR_REAL_PHOTO_RULE_TEXT,
+  validateProfilePhotoFile,
+} from "@/lib/profilePhoto";
 import { formatDate, formatPrice, formatRating } from "@/lib/utils";
 import type {
   AvailabilityRule,
@@ -357,7 +363,9 @@ function ProfileStudio({
   profileCompletion,
   introVideoInput,
   isSavingVideo,
+  videoError,
   isUploadingPhoto,
+  photoError,
   onIntroVideoChange,
   onSaveVideo,
   onClearVideo,
@@ -368,7 +376,9 @@ function ProfileStudio({
   profileCompletion: number;
   introVideoInput: string;
   isSavingVideo: boolean;
+  videoError: string | null;
   isUploadingPhoto: boolean;
+  photoError: string | null;
   onIntroVideoChange: (value: string) => void;
   onSaveVideo: () => void;
   onClearVideo: () => void;
@@ -388,8 +398,8 @@ function ProfileStudio({
     <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
       <div className="space-y-6">
         <Card>
-          <CardHeader>
-            <CardTitle className="text-xl">Profil Stüdyosu</CardTitle>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Profil Stüdyosu</CardTitle>
           </CardHeader>
           <CardContent className="space-y-5">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
@@ -404,19 +414,19 @@ function ProfileStudio({
                   {getInitials(profile.name, profile.surname)}
                 </AvatarFallback>
               </Avatar>
-              <div className="space-y-3">
-                <div>
-                  <p className="text-lg font-semibold">
+              <div className="min-w-0 flex-1 space-y-3">
+                <div className="min-w-0">
+                  <p className="truncate text-lg font-semibold">
                     {profile.name} {profile.surname}
                   </p>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="truncate text-sm text-muted-foreground">
                     {profile.university} · {profile.department}
                   </p>
                 </div>
                 <input
                   id="profile-picture-input"
                   type="file"
-                  accept="image/jpeg,image/png,image/webp"
+                  accept={PROFILE_PHOTO_ACCEPT}
                   className="sr-only"
                   onChange={onPhotoSelected}
                 />
@@ -426,6 +436,15 @@ function ProfileStudio({
                     {isUploadingPhoto ? "Yükleniyor" : "Fotoğraf Yükle"}
                   </label>
                 </Button>
+                {photoError && (
+                  <p className="text-sm text-destructive" role="alert">
+                    {photoError}
+                  </p>
+                )}
+                <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-100">
+                  <p>{PROFILE_PHOTO_RULE_TEXT}</p>
+                  <p className="mt-1">{TUTOR_REAL_PHOTO_RULE_TEXT}</p>
+                </div>
               </div>
             </div>
 
@@ -445,6 +464,11 @@ function ProfileStudio({
                   {isSavingVideo ? "Kaydediliyor" : "Kaydet"}
                 </Button>
               </div>
+              {videoError && (
+                <p className="text-sm text-destructive" role="alert">
+                  {videoError}
+                </p>
+              )}
               {profile.intro_video_url && (
                 <Button type="button" variant="ghost" size="sm" onClick={onClearVideo}>
                   Videoyu kaldır
@@ -477,8 +501,8 @@ function ProfileStudio({
 
       <div className="space-y-6">
         <Card>
-          <CardHeader>
-            <CardTitle className="text-xl">Profil Gücü</CardTitle>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Profil Gücü</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
@@ -522,8 +546,8 @@ function ProfileStudio({
         </Card>
 
         <Card>
-          <CardHeader>
-            <CardTitle className="text-xl">Ders Alanları</CardTitle>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Ders Alanları</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-wrap gap-2">
             {profile.subjects.map((subject) => (
@@ -545,7 +569,9 @@ function TutorDashboardContent() {
   const [updatingRequestId, setUpdatingRequestId] = useState<string | null>(null);
   const [introVideoInput, setIntroVideoInput] = useState("");
   const [isSavingVideo, setIsSavingVideo] = useState(false);
+  const [videoError, setVideoError] = useState<string | null>(null);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const [photoError, setPhotoError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("profile");
   const [confirmingBooking, setConfirmingBooking] = useState<Booking | null>(null);
   const [isConfirmingLearning, setIsConfirmingLearning] = useState(false);
@@ -698,8 +724,10 @@ function TutorDashboardContent() {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("Fotoğraf 5 MB veya daha küçük olmalı.");
+    setPhotoError(null);
+    const validationError = validateProfilePhotoFile(file);
+    if (validationError) {
+      setPhotoError(validationError);
       event.target.value = "";
       return;
     }
@@ -708,12 +736,14 @@ function TutorDashboardContent() {
     try {
       await uploadTutorProfilePicture(file);
       await queryClient.invalidateQueries({ queryKey: ["tutor-me"] });
+      await queryClient.invalidateQueries({ queryKey: ["profile-me"] });
       if (profile?.id) {
         await queryClient.invalidateQueries({ queryKey: ["tutor", profile.id] });
       }
+      await queryClient.invalidateQueries({ queryKey: ["tutors"] });
       toast.success("Profil fotoğrafı güncellendi.");
     } catch {
-      toast.error("Profil fotoğrafı yüklenemedi.");
+      setPhotoError("Profil fotoğrafı yüklenemedi. Lütfen tekrar deneyin.");
     } finally {
       setIsUploadingPhoto(false);
       event.target.value = "";
@@ -721,6 +751,7 @@ function TutorDashboardContent() {
   };
 
   const handleSaveVideo = async () => {
+    setVideoError(null);
     setIsSavingVideo(true);
     try {
       await updateMyTutorProfile({ intro_video_url: introVideoInput.trim() });
@@ -730,7 +761,7 @@ function TutorDashboardContent() {
       }
       toast.success("Tanıtım videosu güncellendi.");
     } catch {
-      toast.error("YouTube bağlantısı kaydedilemedi.");
+      setVideoError("YouTube bağlantısı kaydedilemedi. Bağlantıyı kontrol edip tekrar deneyin.");
     } finally {
       setIsSavingVideo(false);
     }
@@ -779,24 +810,31 @@ function TutorDashboardContent() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
-      <header className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+      <header className="mb-6 flex flex-col gap-4 border-b pb-6 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-4">
-          <Avatar className="h-16 w-16">
+          <Avatar className="h-14 w-14">
             {profile.profile_picture ? (
               <AvatarImage
                 src={profile.profile_picture}
                 alt={`${profile.name} ${profile.surname}`}
               />
             ) : null}
-            <AvatarFallback className="bg-primary/10 text-xl font-semibold text-primary">
+            <AvatarFallback className="bg-primary/10 text-lg font-semibold text-primary">
               {getInitials(profile.name, profile.surname)}
             </AvatarFallback>
           </Avatar>
           <div>
-            <h1 className="text-3xl font-bold">Hoca Panosu</h1>
-            <p className="text-muted-foreground">
-              {profile.name} {profile.surname} · {user?.email}
-            </p>
+            <h1 className="text-2xl font-semibold tracking-tight">Hoca Panosu</h1>
+            <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
+              <span>
+                {profile.name} {profile.surname} · {user?.email}
+              </span>
+              {profile.is_verified && (
+                <Badge variant="outline" className="border-green-500 text-green-700 dark:border-green-400 dark:text-green-300">
+                  Doğrulanmış
+                </Badge>
+              )}
+            </div>
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -841,9 +879,9 @@ function TutorDashboardContent() {
 
       <div className="mb-6 grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-xl">
-              <Clock className="h-5 w-5 text-primary" />
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Clock className="h-4 w-4 text-primary" />
               Sıradaki Ders
             </CardTitle>
           </CardHeader>
@@ -880,8 +918,8 @@ function TutorDashboardContent() {
         </Card>
 
         <Card>
-          <CardHeader>
-            <CardTitle className="text-xl">Profil Durumu</CardTitle>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Profil Durumu</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="mb-3 flex items-center justify-between text-sm">
@@ -954,8 +992,13 @@ function TutorDashboardContent() {
             profileCompletion={profileCompletion}
             introVideoInput={introVideoInput}
             isSavingVideo={isSavingVideo}
+            videoError={videoError}
             isUploadingPhoto={isUploadingPhoto}
-            onIntroVideoChange={setIntroVideoInput}
+            photoError={photoError}
+            onIntroVideoChange={(value) => {
+              setIntroVideoInput(value);
+              setVideoError(null);
+            }}
             onSaveVideo={handleSaveVideo}
             onClearVideo={handleClearVideo}
             onPhotoSelected={handlePhotoSelected}
@@ -1018,7 +1061,12 @@ function TutorDashboardContent() {
           )}
           {!bookingsError && !bookingsLoading && (
             <>
-              <h3 className="mb-2 text-sm font-medium">Yaklaşan Dersler</h3>
+              <div className="mb-2 flex items-center gap-2">
+                <h3 className="text-sm font-semibold">Yaklaşan Dersler</h3>
+                <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                  {activeBookings.length}
+                </span>
+              </div>
               {activeBookings.length === 0 ? (
                 <EmptyState
                   title="Yaklaşan ders yok"
@@ -1048,7 +1096,12 @@ function TutorDashboardContent() {
                 </div>
               )}
 
-              <h3 className="mb-2 text-sm font-medium">Geçmiş Dersler</h3>
+              <div className="mb-2 mt-6 flex items-center gap-2">
+                <h3 className="text-sm font-semibold">Geçmiş Dersler</h3>
+                <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                  {pastBookings.length}
+                </span>
+              </div>
               {pastBookings.length === 0 ? (
                 <EmptyState
                   title="Geçmiş ders yok"

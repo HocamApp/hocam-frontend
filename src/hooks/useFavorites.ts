@@ -35,7 +35,6 @@ export function useFavorites() {
         return [favorite, ...current];
       });
       queryClient.invalidateQueries({ queryKey });
-      toast.success("Favorilere eklendi.");
     },
     onError: () => toast.error("Favori eklenemedi. Lütfen tekrar deneyin."),
     onSettled: () => {
@@ -53,7 +52,6 @@ export function useFavorites() {
         current.filter((item) => item.tutor.id !== tutorId)
       );
       queryClient.invalidateQueries({ queryKey });
-      toast.success("Favorilerden çıkarıldı.");
     },
     onError: () => toast.error("Favori kaldırılamadı. Lütfen tekrar deneyin."),
     onSettled: () => {

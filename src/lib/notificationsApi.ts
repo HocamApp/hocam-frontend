@@ -14,3 +14,7 @@ export async function fetchNotifications(): Promise<Notification[]> {
 export async function markNotificationRead(id: string): Promise<void> {
   await api.post(`/notifications/${id}/read/`);
 }
+
+export async function deleteNotification(id: string): Promise<void> {
+  await api.delete(`/notifications/${id}/`);
+}

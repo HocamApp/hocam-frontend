@@ -17,7 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Trash2 } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import { AvailabilityRule } from "@/types";
 import { toast } from "sonner";
 
@@ -30,6 +30,10 @@ const DAY_NAMES = [
   "Cumartesi",
   "Pazar",
 ];
+
+// Short, unambiguous forms for the weekly grid header — a plain 3-letter
+// slice of DAY_NAMES would collide (Pazartesi and Pazar both start "Paz").
+const DAY_ABBREVIATIONS = ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"];
 
 function formatTimeForInput(t: string): string {
   if (!t) return "";
@@ -73,6 +77,8 @@ export function AvailabilityEditor() {
     },
   });
 
+  const isMutating = createMutation.isPending || deleteMutation.isPending;
+
   const handleAdd = () => {
     setTimeError(null);
     if (!startTime || !endTime) {
@@ -92,13 +98,12 @@ export function AvailabilityEditor() {
     });
   };
 
-  const groupedByDay = rules.reduce<Record<number, AvailabilityRule[]>>(
-    (acc, rule) => {
-      if (!acc[rule.day_of_week]) acc[rule.day_of_week] = [];
-      acc[rule.day_of_week].push(rule);
-      return acc;
-    },
-    {}
+  // Monday(0)..Sunday(6), matching the backend's day_of_week convention;
+  // within each day, earlier start_time first.
+  const rulesByDay: AvailabilityRule[][] = DAY_NAMES.map((_, day) =>
+    rules
+      .filter((r) => r.day_of_week === day)
+      .sort((a, b) => a.start_time.localeCompare(b.start_time))
   );
 
   return (
@@ -108,55 +113,66 @@ export function AvailabilityEditor() {
       {isLoading ? (
         <p className="text-sm text-muted-foreground">Yükleniyor...</p>
       ) : (
-        <div className="space-y-2">
-          {rules.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              Henüz müsaitlik saati eklenmemiş
+        <>
+          {rules.length === 0 && (
+            <p className="rounded-md border border-dashed px-3 py-6 text-center text-sm text-muted-foreground">
+              Henüz müsaitlik saati eklenmemiş.
             </p>
-          ) : (
-            Object.keys(groupedByDay)
-              .map(Number)
-              .sort((a, b) => a - b)
-              .map((day) => (
-                <div key={day} className="space-y-1">
-                  {groupedByDay[day].map((rule) => (
-                    <div
-                      key={rule.id}
-                      className="flex items-center justify-between rounded-md border px-3 py-2 text-sm"
-                    >
-                      <span>
-                        {DAY_NAMES[rule.day_of_week]}{" "}
-                        {formatTimeForInput(rule.start_time)}–
-                        {formatTimeForInput(rule.end_time)}
-                      </span>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="ghost"
-                        className="text-destructive hover:text-destructive"
-                        onClick={() => deleteMutation.mutate(rule.id)}
-                        disabled={deleteMutation.isPending}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              ))
           )}
-        </div>
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-7">
+          {DAY_NAMES.map((name, day) => (
+            <div key={day} className="space-y-2">
+              <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                <span className="md:hidden">{name}</span>
+                <span className="hidden md:inline">{DAY_ABBREVIATIONS[day]}</span>
+              </div>
+              <div className="flex flex-row flex-wrap gap-2 md:flex-col">
+                {rulesByDay[day].length === 0 ? (
+                  <span className="text-xs text-muted-foreground/60">—</span>
+                ) : (
+                  rulesByDay[day].map((rule) => {
+                    const start = formatTimeForInput(rule.start_time);
+                    const end = formatTimeForInput(rule.end_time);
+                    return (
+                      <div
+                        key={rule.id}
+                        className="flex w-fit items-center gap-2 rounded-md border bg-muted/40 px-2 py-1.5 text-xs md:w-full"
+                      >
+                        <span className="font-medium leading-tight tabular-nums">
+                          <span className="block">{start}</span>
+                          <span className="block">–{end}</span>
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => deleteMutation.mutate(rule.id)}
+                          disabled={isMutating}
+                          aria-label={`${name} ${start}–${end} saatini sil`}
+                          className="ml-auto shrink-0 text-muted-foreground transition-colors hover:text-destructive disabled:pointer-events-none disabled:opacity-50"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+          ))}
+          </div>
+        </>
       )}
 
-      <div className="space-y-4">
+      <div className="space-y-3 border-t pt-4">
         <h3 className="text-sm font-medium">Yeni Saat Ekle</h3>
-        <div className="flex flex-wrap items-end gap-4">
-          <div className="space-y-2">
-            <Label>Gün</Label>
+        <div className="flex flex-wrap items-end gap-3">
+          <div className="space-y-1.5">
+            <Label className="text-xs">Gün</Label>
             <Select
               value={String(dayOfWeek)}
               onValueChange={(v) => setDayOfWeek(Number(v))}
+              disabled={isMutating}
             >
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-[150px]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -168,35 +184,32 @@ export function AvailabilityEditor() {
               </SelectContent>
             </Select>
           </div>
-          <div className="space-y-2">
-            <Label>Başlangıç</Label>
+          <div className="space-y-1.5">
+            <Label className="text-xs">Başlangıç</Label>
             <Input
               type="time"
               value={startTime}
               onChange={(e) => setStartTime(e.target.value)}
-              className="w-[140px]"
+              className="w-[130px]"
+              disabled={isMutating}
             />
           </div>
-          <div className="space-y-2">
-            <Label>Bitiş</Label>
+          <div className="space-y-1.5">
+            <Label className="text-xs">Bitiş</Label>
             <Input
               type="time"
               value={endTime}
               onChange={(e) => setEndTime(e.target.value)}
-              className="w-[140px]"
+              className="w-[130px]"
+              disabled={isMutating}
             />
           </div>
-          <Button
-            type="button"
-            onClick={handleAdd}
-            disabled={createMutation.isPending}
-          >
+          <Button type="button" onClick={handleAdd} disabled={isMutating}>
+            <Plus className="mr-1.5 h-4 w-4" />
             Ekle
           </Button>
         </div>
-        {timeError && (
-          <p className="text-sm text-destructive">{timeError}</p>
-        )}
+        {timeError && <p className="text-sm text-destructive">{timeError}</p>}
       </div>
     </div>
   );

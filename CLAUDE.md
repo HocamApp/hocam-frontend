@@ -110,6 +110,21 @@ Do not change messaging to WebSockets without an explicit plan. The polling is i
 - Enter to send, Shift+Enter for newline
 - Optimistic messages are merged with server messages and deduplicated by `id`
 
+## Feedback UX Rules
+
+Every user-facing feedback message uses exactly one of three tiers — pick by severity, proximity, and flow:
+
+1. **Toast (sonner)** — low-stakes, ephemeral, non-blocking feedback after user actions ("Profil bağlantısı kopyalandı.", "Ayarlar kaydedildi.", "Bildirim silindi."). Import `toast` from `"sonner"` directly; the `<Toaster richColors position="top-right" />` lives in `src/app/layout.tsx`. Toasts must NEVER be stored as notification-center items.
+2. **Inline error** — the default for everyday errors: form validation and field-specific problems, rendered next to the related field/button (react-hook-form + zod `FormMessage`, or `ErrorMessage` from `components/shared/` for general form errors). Never use a toast when the user must look back at a specific field, and never a modal for ordinary validation. Don't double-report (inline + toast) the same error.
+3. **Modal dialog** — only for blocking issues that prevent continuing (session expired, payment failure, access denied). Must offer a clear path forward (Retry / Giriş yap / Kapat). Session expiry: the 401 interceptor in `src/lib/api.ts` dispatches `SESSION_EXPIRED_EVENT`; `SessionExpiredDialog` (mounted in root layout) handles it.
+
+Notification center rules:
+- Reserved for real app notifications the user may return to later (new message, booking/lesson-request updates, reminders). System/action feedback never goes there.
+- The popover shows **unread only**; clicking marks read and routes via `related_object_type`.
+- **Privacy:** message notifications must never show message content — `NotificationPopoverContent` replaces the body of `type === "message"` notifications with a generic line. Keep it that way.
+
+All user-facing feedback text is Turkish.
+
 ## TypeScript Types
 
 All types live in `src/types/api.ts`. Always import from there — never define inline types for API data.

@@ -270,8 +270,12 @@ export interface TutorProfile {
   hourly_price: number;
   rating: number;
   total_reviews: number;
+  completed_lessons_count?: number | null;
   is_verified: boolean;
   is_online: boolean;
+  last_seen_at?: string | null;
+  trial_lesson_eligible?: boolean | null;
+  trial_lessons_remaining?: number | null;
   subjects: Subject[];
   created_at: string;
 }
@@ -288,6 +292,18 @@ export interface LessonRequest {
   learning_context?: LearningContext | null;
 }
 
+export interface MessageRequest {
+  id: string;
+  student: { id: string; email: string };
+  tutor: { id: string; name: string; surname: string };
+  message: string;
+  status: "pending" | "accepted" | "rejected" | "blocked";
+  conversation_id?: string | null;
+  created_at: string;
+  updated_at?: string;
+  responded_at?: string | null;
+}
+
 export interface Booking {
   id: string;
   student: { id: string; email: string };
@@ -297,9 +313,11 @@ export interface Booking {
   duration_minutes: number;
   price: number;
   status: "pending" | "confirmed" | "completed" | "cancelled";
+  is_trial?: boolean;
   lesson_request: string | null;
   room_url?: string;
-  daily_room_name?: string;
+  package_purchase?: string | null;
+  package_credit_units_used?: number;
   created_at: string;
   learning_context?: LearningContext | null;
 }
@@ -344,10 +362,112 @@ export interface Review {
   booking: string;
   student: string;
   tutor: string;
+  /** Computed average of the four criteria (e.g. 4.75); display with formatRating. */
   rating: number;
+  clarity_rating: number;
+  preparation_rating: number;
+  progress_rating: number;
+  confidence_rating: number;
   comment: string;
   created_at: string;
   subject?: Subject;
+}
+
+export type CriteriaRatingKey =
+  | "clarity"
+  | "preparation"
+  | "progress"
+  | "confidence";
+
+export interface CriteriaRatingSummary {
+  label: string;
+  average: number;
+  count: number;
+}
+
+export interface SubjectRatingSummary {
+  subject: Subject;
+  average: number;
+  count: number;
+  /** Share of this tutor's reviews that belong to this subject (0-100, 1 decimal). */
+  percentage_of_reviews: number;
+}
+
+// GET /api/tutors/{id}/review-summary/
+export interface TutorReviewSummary {
+  overall_rating: number;
+  review_count: number;
+  criteria_ratings: Record<CriteriaRatingKey, CriteriaRatingSummary>;
+  subject_ratings: SubjectRatingSummary[];
+}
+
+// GET /api/payments/package-plans/ — ledger-first package foundation (no
+// real payment provider yet; see apps.payments on the backend).
+export interface PackagePlan {
+  id: string;
+  name: string;
+  /** Stable machine key, e.g. "ten_pack", "weekly_3_1m". Null for ad-hoc plans. */
+  code: string | null;
+  lesson_count: number;
+  lesson_duration_minutes: number;
+  /** Weekly prepaid plans only; null for one-off bundles like the 10-pack. */
+  lessons_per_week: number | null;
+  term_months: number | null;
+  discount_percent: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export type PackagePurchaseStatus = "pending" | "paid" | "cancelled" | "refunded";
+
+export interface PackagePurchase {
+  id: string;
+  student: { id: string; name: string; surname: string };
+  tutor: { id: string; name: string; surname: string };
+  plan: {
+    id: string;
+    name: string;
+    code: string | null;
+    lesson_count: number;
+    lesson_duration_minutes: number;
+    lessons_per_week: number | null;
+    term_months: number | null;
+    discount_percent: number;
+  };
+  status: PackagePurchaseStatus;
+  total_credits: number;
+  remaining_credits: number;
+  unit_price: number;
+  subtotal_price: number;
+  discount_amount: number;
+  promo_discount_amount: number;
+  total_price: number;
+  created_at: string;
+  paid_at: string | null;
+  promotion_code: string | null;
+}
+
+export interface PaymentLedgerEntry {
+  id: string;
+  entry_type: string;
+  amount: number;
+  credit_delta: number;
+  description: string;
+  created_at: string;
+  package_purchase: string | null;
+  booking: string | null;
+}
+
+export interface CreatePackagePurchasePayload {
+  tutor: string;
+  plan: string;
+  promotion_code?: string;
+}
+
+export interface ReferralInfo {
+  referral_code: string;
+  referral_url: string;
 }
 
 export interface SubjectRating {
@@ -370,6 +490,13 @@ export interface AvailabilityRule {
   start_time: string;
   end_time: string;
   created_at: string;
+}
+
+// GET /api/bookings/busy/ — deliberately minimal: only enough to hide already
+// booked slots in the booking UI, never any other booking detail.
+export interface BusyInterval {
+  start_time: string;
+  end_time: string;
 }
 
 export interface TutorVerification {
@@ -448,6 +575,9 @@ export interface ProfileStudent {
   target_exam_type: string;
   target_rank: number | null;
   bio: string;
+  avatar_url?: string | null;
+  avatar_kind?: "uploaded" | "anonymous" | "" | null;
+  avatar_key?: string | null;
 }
 
 export interface ProfileMeResponse {

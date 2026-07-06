@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect, useMemo } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetchTutorAvailability } from "@/lib/dashboardApi";
-import { createBooking } from "@/lib/lessonsApi";
-import type { Booking, TutorProfile, AvailabilityRule } from "@/types";
+import { createBooking, fetchTutorBusyIntervals } from "@/lib/lessonsApi";
+import { fetchPackagePurchases } from "@/lib/paymentsApi";
+import type { Booking, TutorProfile, AvailabilityRule, BusyInterval } from "@/types";
 import { formatPrice } from "@/lib/utils";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import {
@@ -23,6 +24,9 @@ import { cn } from "@/lib/utils";
 // (apps/lessons/pricing.py).
 const LESSON_BASE_MINUTES = 40;
 const DURATION_OPTIONS = [40, 50, 60] as const;
+// Free trial lessons are always this length; the backend forces it
+// regardless of what's sent (apps/lessons/pricing.py TRIAL_DURATION_MINUTES).
+const TRIAL_DURATION_MINUTES = 20;
 
 // Backend: 0=Monday, 6=Sunday. JS getDay(): 0=Sunday, 6=Saturday.
 function jsDayToBackendDay(jsDay: number): number {
@@ -41,6 +45,25 @@ function getNext14Days(): Date[] {
   return out;
 }
 
+// Local (not UTC) YYYY-MM-DD — must not use toISOString(), which would
+// convert to UTC and shift the calendar date by a day for Turkey (UTC+3).
+function formatDateLocal(d: Date): string {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+// Busy interval timestamps follow the project's naive wall-clock convention
+// (see handleSubmit below): the YYYY-MM-DD/HH:mm digits ARE Turkey local time,
+// with no real timezone conversion applied by the backend. Parsing via
+// `new Date(iso)` would apply a spurious +3h shift on display; read the
+// digits directly instead, exactly like the rest of this file already does.
+function parseNaiveLocalDateTime(iso: string): { dateStr: string; minutes: number } {
+  const match = iso.match(/^(\d{4}-\d{2}-\d{2})T(\d{2}):(\d{2})/);
+  if (!match) return { dateStr: "", minutes: 0 };
+  const [, dateStr, hh, mm] = match;
+  return { dateStr, minutes: parseInt(hh, 10) * 60 + parseInt(mm, 10) };
+}
+
 // Parse "16:00" or "16:00:00" to minutes since midnight
 function parseTimeToMinutes(t: string): number {
   const parts = t.trim().split(":");
@@ -55,20 +78,42 @@ function minutesToTimeStr(minutes: number): string {
   return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
 }
 
-// Generate 30-min slots for a day from availability rules. Exclude slots where start + duration would exceed rule end.
+// Generate 30-min slots for a day from availability rules. Exclude slots where
+// start + duration would exceed rule end, or where the candidate interval
+// overlaps an existing busy (pending/confirmed) booking on that exact date.
 function getSlotsForDay(
   rules: AvailabilityRule[],
   backendDay: number,
-  durationMinutes: number
+  durationMinutes: number,
+  busyIntervals: BusyInterval[],
+  dateStr: string
 ): string[] {
   const dayRules = rules.filter((r) => r.day_of_week === backendDay);
   if (dayRules.length === 0) return [];
+
+  // Only this exact calendar date's busy intervals, as local minutes-since-
+  // midnight. Bookings never cross midnight (backend-enforced), so comparing
+  // the start date's string is sufficient to scope busy intervals to this day.
+  const busyForDay = busyIntervals
+    .map((b) => ({
+      start: parseNaiveLocalDateTime(b.start_time),
+      end: parseNaiveLocalDateTime(b.end_time),
+    }))
+    .filter((b) => b.start.dateStr === dateStr)
+    .map((b) => ({ startMin: b.start.minutes, endMin: b.end.minutes }));
+
   const slotSet = new Set<number>();
   for (const r of dayRules) {
     const startMin = parseTimeToMinutes(r.start_time);
     const endMin = parseTimeToMinutes(r.end_time);
     for (let m = startMin; m + durationMinutes <= endMin; m += 30) {
-      slotSet.add(m);
+      const candidateEnd = m + durationMinutes;
+      const overlapsBusy = busyForDay.some(
+        (b) => m < b.endMin && candidateEnd > b.startMin
+      );
+      if (!overlapsBusy) {
+        slotSet.add(m);
+      }
     }
   }
   return Array.from(slotSet)
@@ -85,6 +130,20 @@ function translateApiError(message: string): string {
     return "Gece yarısını geçen rezervasyon oluşturulamaz.";
   if (message.includes("at least 40 minutes"))
     return "Ders süresi en az 40 dakika olmalıdır.";
+  if (message.includes("already booked"))
+    return "Bu saat az önce doldu. Lütfen başka bir saat seçin.";
+  if (message.includes("does not belong to you"))
+    return "Bu paket sana ait değil.";
+  if (message.includes("not for this tutor"))
+    return "Bu paket bu hoca için geçerli değil.";
+  if (message.includes("no remaining lesson credits"))
+    return "Bu paketin kullanılabilir ders hakkı kalmamış.";
+  if (message.includes("cannot be used for trial lessons"))
+    return "Paket hakları deneme dersinde kullanılamaz.";
+  if (message.includes("must be exactly 40 minutes"))
+    return "Paket hakkı sadece 40 dakikalık derslerde kullanılabilir.";
+  if (message.includes("is not active"))
+    return "Bu paket henüz aktif değil.";
   return message;
 }
 
@@ -107,6 +166,7 @@ interface BookingModalProps {
   onSuccess: (booking: Booking) => void;
   lessonRequestId?: string;
   learningContext?: LearningContextQuery | null;
+  isTrial?: boolean;
 }
 
 export function BookingModal({
@@ -116,7 +176,9 @@ export function BookingModal({
   onSuccess,
   lessonRequestId,
   learningContext,
+  isTrial = false,
 }: BookingModalProps) {
+  const queryClient = useQueryClient();
   const [step, setStep] = useState(1);
   const [selectedSubjectId, setSelectedSubjectId] = useState<string>("");
   const [selectedDuration, setSelectedDuration] = useState<number>(LESSON_BASE_MINUTES);
@@ -125,6 +187,7 @@ export function BookingModal({
   const [apiError, setApiError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [step1Error, setStep1Error] = useState<string | null>(null);
+  const [paymentMode, setPaymentMode] = useState<"single" | "credit">("single");
 
   const { data: availabilityRules = [] } = useQuery({
     queryKey: ["tutor-availability", tutor.id],
@@ -132,26 +195,84 @@ export function BookingModal({
     enabled: isOpen,
   });
 
+  // Trial bookings never offer credit payment, so skip the fetch entirely
+  // when isTrial — in practice this query is almost always already warm
+  // from PackageOfferPanel on the same tutor detail page.
+  const { data: packagePurchases = [] } = useQuery({
+    queryKey: ["package-purchases"],
+    queryFn: fetchPackagePurchases,
+    enabled: isOpen && !isTrial,
+  });
+
+  // Same rolling 14-day window the date picker below already shows.
+  const next14Days = getNext14Days();
+  const busyRangeStart = formatDateLocal(next14Days[0]);
+  const busyRangeEnd = formatDateLocal(next14Days[next14Days.length - 1]);
+
+  const {
+    data: busyIntervals = [],
+    isLoading: busyIntervalsLoading,
+    isFetching: busyIntervalsFetching,
+    refetch: refetchBusyIntervals,
+  } = useQuery({
+    queryKey: ["tutor-busy-intervals", tutor.id, busyRangeStart, busyRangeEnd],
+    queryFn: () =>
+      fetchTutorBusyIntervals(String(tutor.id), busyRangeStart, busyRangeEnd),
+    enabled: isOpen && Boolean(tutor.id),
+  });
+
   useEffect(() => {
-    if (!isOpen) {
+    // Reset on open (not close): this modal instance is reused for both
+    // normal and trial bookings, so the fresh session must pick up whichever
+    // mode is being opened via `isTrial`.
+    if (isOpen) {
       setStep(1);
       setSelectedSubjectId("");
-      setSelectedDuration(LESSON_BASE_MINUTES);
+      setSelectedDuration(isTrial ? TRIAL_DURATION_MINUTES : LESSON_BASE_MINUTES);
       setSelectedDate(null);
       setSelectedTime("");
       setApiError(null);
       setIsSubmitting(false);
       setStep1Error(null);
+      setPaymentMode("single");
     }
-  }, [isOpen]);
+  }, [isOpen, isTrial]);
 
   useEffect(() => {
     setSelectedTime("");
   }, [selectedDate]);
 
+  const eligiblePackage = !isTrial
+    ? packagePurchases.find(
+        (p) =>
+          p.status === "paid" &&
+          p.remaining_credits > 0 &&
+          p.tutor.id === tutor.id &&
+          p.plan.lesson_duration_minutes === LESSON_BASE_MINUTES
+      )
+    : undefined;
+  const usingPackageCredit = paymentMode === "credit" && !!eligiblePackage;
+
+  // Forces duration to 40 minutes when credit mode is selected (so 50/60 min
+  // package bookings are structurally unreachable — slotsForSelectedDay
+  // below already depends on selectedDuration and recalculates on its own),
+  // and auto-reverts to single-lesson payment if the credit stops being
+  // eligible while selected (e.g. another tab/device spent the last credit).
+  const eligiblePackageId = eligiblePackage?.id;
+  useEffect(() => {
+    if (paymentMode !== "credit") return;
+    if (!eligiblePackageId) {
+      setPaymentMode("single");
+      return;
+    }
+    setSelectedDuration(LESSON_BASE_MINUTES);
+  }, [paymentMode, eligiblePackageId]);
+
   const calculatedPrice = Math.round(
     (tutor.hourly_price * selectedDuration) / LESSON_BASE_MINUTES
   );
+  // Trials are always free; never derive their price from the tutor's rate.
+  const displayPrice = isTrial ? 0 : calculatedPrice;
   const endTime = selectedTime
     ? (() => {
         const [h, m] = selectedTime.split(":").map(Number);
@@ -161,18 +282,38 @@ export function BookingModal({
       })()
     : "";
 
-  const next14Days = getNext14Days();
   const backendDayForDate = (d: Date) => jsDayToBackendDay(d.getDay());
   const hasAvailabilityOnDay = (d: Date) =>
     availabilityRules.some((r) => r.day_of_week === backendDayForDate(d));
-  const slotsForSelectedDay =
-    selectedDate && availabilityRules.length > 0
-      ? getSlotsForDay(
-          availabilityRules,
-          backendDayForDate(selectedDate),
-          selectedDuration
-        )
-      : [];
+  const slotsForSelectedDay = useMemo(
+    () =>
+      selectedDate && availabilityRules.length > 0 && !busyIntervalsLoading
+        ? getSlotsForDay(
+            availabilityRules,
+            backendDayForDate(selectedDate),
+            selectedDuration,
+            busyIntervals,
+            formatDateLocal(selectedDate)
+          )
+        : [],
+    [selectedDate, availabilityRules, busyIntervalsLoading, selectedDuration, busyIntervals]
+  );
+
+  useEffect(() => {
+    // Reconcile a previously-picked time against the current slot list:
+    // duration/availability/busy data can all change (or refetch) while the
+    // modal is open, so a selection that was valid a moment ago may no
+    // longer be. Skip while busy data isn't loaded yet — slotsForSelectedDay
+    // is empty during that window regardless, and would otherwise clear a
+    // perfectly valid selection just because data hasn't arrived yet.
+    if (!selectedTime || busyIntervalsLoading) return;
+    if (!slotsForSelectedDay.includes(selectedTime)) {
+      setSelectedTime("");
+      // If the user had already moved on to the confirmation step, send them
+      // back to Step 2 instead of leaving the summary on a stale/empty time.
+      setStep((s) => (s === 3 ? 2 : s));
+    }
+  }, [selectedTime, slotsForSelectedDay, busyIntervalsLoading]);
 
   const selectedSubject = tutor.subjects?.find((s) => String(s.id) === selectedSubjectId);
 
@@ -186,12 +327,12 @@ export function BookingModal({
   };
 
   const handleNextStep2 = () => {
-    if (!selectedDate || !selectedTime) return;
+    if (!selectedDate || !selectedTime || busyIntervalsFetching) return;
     setStep(3);
   };
 
   const handleSubmit = async () => {
-    if (!selectedDate || !selectedTime || !selectedSubjectId) return;
+    if (!selectedDate || !selectedTime || !selectedSubjectId || busyIntervalsFetching) return;
     setApiError(null);
     setIsSubmitting(true);
     const [hours, minutes] = selectedTime.split(":").map(Number);
@@ -206,7 +347,9 @@ export function BookingModal({
         subject: selectedSubjectId,
         start_time,
         duration_minutes: selectedDuration,
+        ...(isTrial ? { is_trial: true } : {}),
         ...(lessonRequestId ? { lesson_request: lessonRequestId } : {}),
+        ...(usingPackageCredit ? { package_purchase_id: eligiblePackage!.id } : {}),
         ...(learningContext
           ? {
               learning_goal_id: learningContext.learning_goal_id,
@@ -217,6 +360,10 @@ export function BookingModal({
             }
           : {}),
       });
+      if (usingPackageCredit) {
+        queryClient.invalidateQueries({ queryKey: ["package-purchases"] });
+        queryClient.invalidateQueries({ queryKey: ["payment-history"] });
+      }
       onSuccess(booking);
       onClose();
     } catch (err: unknown) {
@@ -232,7 +379,24 @@ export function BookingModal({
           const firstKey = Object.keys(d)[0];
           const val = firstKey ? d[firstKey] : null;
           if (Array.isArray(val) && val[0]) message = String(val[0]);
+          // Some backend validation paths (e.g. the post-lock package-credit
+          // recheck) raise a bare string value instead of an array — without
+          // this, that case silently fell through to the generic message.
+          else if (typeof val === "string" && val) message = val;
         }
+      }
+      if (message.includes("already booked")) {
+        // Someone else took this slot between opening the modal and
+        // submitting. Refresh busy data and drop the stale selection so the
+        // user picks a slot that's actually still free, instead of being
+        // able to resubmit the same one.
+        setSelectedTime("");
+        refetchBusyIntervals();
+      }
+      if (usingPackageCredit) {
+        // The failure may have been a lost race on the last credit — refresh
+        // so a stale "remaining credits" count doesn't linger in the UI.
+        queryClient.invalidateQueries({ queryKey: ["package-purchases"] });
       }
       setApiError(translateApiError(message));
       setStep(2);
@@ -243,7 +407,10 @@ export function BookingModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-lg" showClose>
+      <DialogContent
+        className="box-border w-[min(42rem,calc(100vw-2rem))] max-w-none overflow-hidden"
+        showClose
+      >
         <DialogHeader>
           <DialogTitle className="text-center">
             <span className="mr-2">
@@ -262,8 +429,13 @@ export function BookingModal({
             {step === 3 && "Rezervasyonu Onayla"}
           </DialogTitle>
         </DialogHeader>
+        {isTrial && (
+          <p className="-mt-2 text-center text-xs font-medium text-primary">
+            Ücretsiz Deneme Dersi
+          </p>
+        )}
 
-        <div className="space-y-6 py-2">
+        <div className="min-w-0 max-w-full space-y-6 py-2">
           {/* Step 1 */}
           {step === 1 && (
             <>
@@ -274,14 +446,14 @@ export function BookingModal({
               )}
               <div>
                 <label className="text-sm font-medium">Ders konusu</label>
-                <div className="mt-2 grid grid-cols-2 gap-2">
+                <div className="mt-2 grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-2">
                   {(tutor.subjects ?? []).map((s) => (
                     <button
                       key={s.id}
                       type="button"
                       onClick={() => setSelectedSubjectId(String(s.id))}
                       className={cn(
-                        "rounded-lg border p-3 text-left transition-colors",
+                        "min-w-0 rounded-lg border p-3 text-left transition-colors",
                         selectedSubjectId === String(s.id)
                           ? "border-primary bg-primary/5"
                           : "border-border"
@@ -298,26 +470,81 @@ export function BookingModal({
                   <p className="mt-2 text-sm text-destructive">{step1Error}</p>
                 )}
               </div>
-              <div>
-                <label className="text-sm font-medium">Ders süresi</label>
-                <div className="mt-2 flex gap-2">
-                  {DURATION_OPTIONS.map((dur) => (
-                    <Button
-                      key={dur}
+              {!isTrial && eligiblePackage && (
+                <div>
+                  <label className="text-sm font-medium">Ödeme yöntemi</label>
+                  <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                    <button
                       type="button"
-                      variant={selectedDuration === dur ? "default" : "outline"}
-                      onClick={() => setSelectedDuration(dur)}
+                      onClick={() => setPaymentMode("single")}
+                      className={cn(
+                        "rounded-lg border p-3 text-left transition-colors",
+                        paymentMode === "single"
+                          ? "border-primary bg-primary/5"
+                          : "border-border"
+                      )}
                     >
-                      {dur} dk
-                    </Button>
-                  ))}
+                      <span className="font-medium">Tek ders olarak ayırt</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPaymentMode("credit")}
+                      className={cn(
+                        "rounded-lg border p-3 text-left transition-colors",
+                        paymentMode === "credit"
+                          ? "border-primary bg-primary/5"
+                          : "border-border"
+                      )}
+                    >
+                      <span className="font-medium">Paket hakkımla ayırt</span>
+                      <span className="mt-0.5 block text-xs text-muted-foreground">
+                        Kullanılabilir {eligiblePackage.remaining_credits} /{" "}
+                        {eligiblePackage.total_credits} ders hakkı
+                      </span>
+                    </button>
+                  </div>
                 </div>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  Tahmini ücret: {formatPrice(calculatedPrice)}
-                </p>
-              </div>
+              )}
+              {isTrial ? (
+                <div>
+                  <label className="text-sm font-medium">Ders süresi</label>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <Badge variant="secondary">{TRIAL_DURATION_MINUTES} dk</Badge>
+                    <Badge variant="secondary">{formatPrice(displayPrice)}</Badge>
+                  </div>
+                </div>
+              ) : usingPackageCredit ? (
+                <div>
+                  <label className="text-sm font-medium">Ders süresi</label>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <Badge variant="secondary">{LESSON_BASE_MINUTES} dk</Badge>
+                    <Badge variant="secondary">1 paket hakkı kullanılacak</Badge>
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <label className="text-sm font-medium">Ders süresi</label>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {DURATION_OPTIONS.map((dur) => (
+                      <Button
+                        key={dur}
+                        type="button"
+                        variant={selectedDuration === dur ? "default" : "outline"}
+                        onClick={() => setSelectedDuration(dur)}
+                      >
+                        {dur} dk
+                      </Button>
+                    ))}
+                  </div>
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    Tahmini ücret: {formatPrice(displayPrice)}
+                  </p>
+                </div>
+              )}
               <div className="flex justify-end">
-                <Button onClick={handleNextStep1}>İleri →</Button>
+                <Button className="w-full sm:w-auto" onClick={handleNextStep1}>
+                  İleri →
+                </Button>
               </div>
             </>
           )}
@@ -328,9 +555,9 @@ export function BookingModal({
               {apiError && (
                 <ErrorMessage message={apiError} />
               )}
-              <div>
+              <div className="min-w-0 max-w-full">
                 <label className="text-sm font-medium">Tarih</label>
-                <div className="mt-2 flex gap-2 overflow-x-auto pb-2">
+                <div className="mt-2 flex max-w-full gap-2 overflow-x-auto overscroll-x-contain pb-2">
                   {next14Days.map((d) => {
                     const disabled = !hasAvailabilityOnDay(d);
                     const selected =
@@ -343,7 +570,7 @@ export function BookingModal({
                         disabled={disabled}
                         onClick={() => !disabled && setSelectedDate(d)}
                         className={cn(
-                          "shrink-0 rounded-lg border px-3 py-2 text-center text-sm transition-colors",
+                          "w-16 shrink-0 rounded-lg border px-3 py-2 text-center text-sm transition-colors",
                           disabled && "cursor-not-allowed opacity-50",
                           selected && "bg-primary text-primary-foreground border-primary",
                           !selected && !disabled && "border-border hover:bg-muted"
@@ -358,24 +585,29 @@ export function BookingModal({
                   })}
                 </div>
               </div>
-              <div>
+              <div className="min-w-0 max-w-full">
                 <label className="text-sm font-medium">Saat</label>
                 {!selectedDate ? (
                   <p className="mt-2 text-sm text-muted-foreground">
                     Önce bir tarih seçin
+                  </p>
+                ) : busyIntervalsLoading || busyIntervalsFetching ? (
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    Müsait saatler kontrol ediliyor...
                   </p>
                 ) : slotsForSelectedDay.length === 0 ? (
                   <p className="mt-2 text-sm text-muted-foreground">
                     Bu tarihte müsait saat yok
                   </p>
                 ) : (
-                  <div className="mt-2 grid grid-cols-4 gap-2">
+                  <div className="mt-2 grid min-w-0 grid-cols-[repeat(auto-fit,minmax(5.5rem,1fr))] gap-2">
                     {slotsForSelectedDay.map((slot) => (
                       <Button
                         key={slot}
                         type="button"
                         variant={selectedTime === slot ? "default" : "outline"}
                         size="sm"
+                        className="w-full min-w-0"
                         onClick={() => setSelectedTime(slot)}
                       >
                         {slot}
@@ -385,7 +617,7 @@ export function BookingModal({
                 )}
               </div>
               {selectedDate && selectedTime && (
-                <div className="rounded-lg bg-muted p-3 text-sm">
+                <div className="min-w-0 max-w-full rounded-lg bg-muted p-3 text-sm">
                   <p>
                     📅{" "}
                     {selectedDate.toLocaleDateString("tr-TR", {
@@ -395,19 +627,26 @@ export function BookingModal({
                     })}{" "}
                     {selectedTime} — {endTime}
                   </p>
-                  <p className="mt-1 text-muted-foreground">
+                  <p className="mt-1 break-words text-muted-foreground">
                     {selectedSubject?.name} · {selectedDuration} dakika ·{" "}
-                    {formatPrice(calculatedPrice)}
+                    {usingPackageCredit
+                      ? "1 paket hakkı kullanılacak"
+                      : formatPrice(displayPrice)}
                   </p>
                 </div>
               )}
-              <div className="flex justify-between">
-                <Button variant="ghost" onClick={() => setStep(1)}>
+              <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <Button
+                  className="w-full sm:w-auto"
+                  variant="ghost"
+                  onClick={() => setStep(1)}
+                >
                   ← Geri
                 </Button>
                 <Button
+                  className="w-full sm:w-auto"
                   onClick={handleNextStep2}
-                  disabled={!selectedDate || !selectedTime}
+                  disabled={!selectedDate || !selectedTime || busyIntervalsFetching}
                 >
                   İleri →
                 </Button>
@@ -423,7 +662,7 @@ export function BookingModal({
                   Bu rezervasyon öğrenme hedefinle ilişkilendirilecek.
                 </div>
               )}
-              <div className="flex items-center gap-3">
+              <div className="flex min-w-0 items-center gap-3">
                 <Avatar className="h-10 w-10">
                   <AvatarImage
                     src={tutor.profile_picture || '/images/demo-teacher.jpg'}
@@ -433,26 +672,26 @@ export function BookingModal({
                     {getInitials(tutor.name, tutor.surname)}
                   </AvatarFallback>
                 </Avatar>
-                <div>
-                  <p className="font-medium">
+                <div className="min-w-0">
+                  <p className="truncate font-medium">
                     {tutor.name} {tutor.surname}
                   </p>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="truncate text-sm text-muted-foreground">
                     {tutor.university}
                   </p>
                 </div>
               </div>
               <dl className="space-y-2 text-sm">
-                <div className="flex justify-between">
+                <div className="flex min-w-0 flex-wrap justify-between gap-x-4 gap-y-1">
                   <dt className="text-muted-foreground">Ders:</dt>
-                  <dd>
+                  <dd className="min-w-0 break-words text-right">
                     {selectedSubject.name}{" "}
                     <Badge variant="secondary" className="text-xs">
                       {selectedSubject.exam_type}
                     </Badge>
                   </dd>
                 </div>
-                <div className="flex justify-between">
+                <div className="flex flex-wrap justify-between gap-x-4 gap-y-1">
                   <dt className="text-muted-foreground">Tarih:</dt>
                   <dd>
                     {selectedDate?.toLocaleDateString("tr-TR", {
@@ -475,21 +714,35 @@ export function BookingModal({
                 <div className="flex justify-between">
                   <dt className="text-muted-foreground">Ücret:</dt>
                   <dd className="font-semibold">
-                    {formatPrice(calculatedPrice)}
+                    {usingPackageCredit
+                      ? "1 paket hakkı kullanılacak"
+                      : formatPrice(displayPrice)}
                   </dd>
                 </div>
               </dl>
               <p className="text-xs text-muted-foreground">
-                Ödeme ders sonrasında hoca ile mutabık kalınan yöntemle yapılır.
+                {usingPackageCredit
+                  ? "Bu ders paket hakkından karşılanacak, ek ödeme gerekmez."
+                  : "Ödeme ders sonrasında hoca ile mutabık kalınan yöntemle yapılır."}
               </p>
-              <div className="flex justify-between gap-2">
-                <Button variant="ghost" onClick={() => setStep(2)}>
+              <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <Button
+                  className="w-full sm:w-auto"
+                  variant="ghost"
+                  onClick={() => setStep(2)}
+                >
                   ← Geri
                 </Button>
                 <Button
-                  className="flex-1"
+                  className="w-full sm:flex-1"
                   onClick={handleSubmit}
-                  disabled={isSubmitting}
+                  disabled={
+                    !selectedDate ||
+                    !selectedTime ||
+                    !selectedSubjectId ||
+                    isSubmitting ||
+                    busyIntervalsFetching
+                  }
                 >
                   {isSubmitting ? "Gönderiliyor..." : "Rezervasyonu Tamamla"}
                 </Button>

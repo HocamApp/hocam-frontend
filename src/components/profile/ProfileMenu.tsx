@@ -22,6 +22,7 @@ import {
   Moon,
   Pencil,
   PlayCircle,
+  Receipt,
   ShieldCheck,
   Star,
   UserCog,
@@ -30,6 +31,12 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { fetchProfileMe, updateProfileMe } from "@/lib/profileApi";
 import { uploadTutorProfilePicture } from "@/lib/tutorsApi";
+import {
+  PROFILE_PHOTO_ACCEPT,
+  PROFILE_PHOTO_RULE_TEXT,
+  TUTOR_REAL_PHOTO_RULE_TEXT,
+  validateProfilePhotoFile,
+} from "@/lib/profilePhoto";
 import { formatPrice } from "@/lib/utils";
 import type { Theme } from "@/lib/theme";
 import type { ProfileStudent, ProfileTutor, UserPreferences } from "@/types";
@@ -140,10 +147,12 @@ export function ProfileMenu() {
   const [nameEdit, setNameEdit] = useState(false);
   const [editName, setEditName] = useState("");
   const [editSurname, setEditSurname] = useState("");
+  const [nameError, setNameError] = useState<string | null>(null);
   const [nameSaving, setNameSaving] = useState(false);
 
   // Profile photo upload (tutor only)
   const [photoUploading, setPhotoUploading] = useState(false);
+  const [photoError, setPhotoError] = useState<string | null>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
 
   // Optimistic override for auto_approve_bookings
@@ -165,7 +174,7 @@ export function ProfileMenu() {
   const surname = tutor?.surname ?? studentProfile?.surname ?? "";
   const fullName = `${name} ${surname}`.trim();
   const initials = getInitials(name, surname);
-  const avatarImage = tutor?.profile_picture || "";
+  const avatarImage = tutor?.profile_picture || studentProfile?.avatar_url || "";
   const showDemoPaymentMethods = isBurakYilmazTutor(name, surname, role);
 
   const stats = data?.stats;
@@ -272,7 +281,7 @@ export function ProfileMenu() {
     const trimmedName = editName.trim();
     const trimmedSurname = editSurname.trim();
     if (!trimmedName || !trimmedSurname) {
-      toast.error("İsim ve soyisim boş olamaz.");
+      setNameError("İsim ve soyisim boş olamaz.");
       return;
     }
     setNameSaving(true);
@@ -282,7 +291,7 @@ export function ProfileMenu() {
       setNameEdit(false);
       toast.success("İsim güncellendi.");
     } catch {
-      toast.error("İsim güncellenemedi.");
+      setNameError("İsim güncellenemedi. Lütfen tekrar deneyin.");
     } finally {
       setNameSaving(false);
     }
@@ -292,13 +301,10 @@ export function ProfileMenu() {
     const file = e.target.files?.[0];
     if (!file) return;
     e.target.value = "";
-    const allowed = ["image/jpeg", "image/png", "image/webp"];
-    if (!allowed.includes(file.type)) {
-      toast.error("Yalnızca JPEG, PNG veya WebP görseller yüklenebilir.");
-      return;
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("Görsel 5 MB'dan küçük olmalıdır.");
+    setPhotoError(null);
+    const validationError = validateProfilePhotoFile(file);
+    if (validationError) {
+      setPhotoError(validationError);
       return;
     }
     setPhotoUploading(true);
@@ -306,9 +312,13 @@ export function ProfileMenu() {
       await uploadTutorProfilePicture(file);
       await queryClient.invalidateQueries({ queryKey: ["profile-me"] });
       await queryClient.invalidateQueries({ queryKey: ["tutor-me"] });
+      if (tutor?.id) {
+        await queryClient.invalidateQueries({ queryKey: ["tutor", tutor.id] });
+      }
+      await queryClient.invalidateQueries({ queryKey: ["tutors"] });
       toast.success("Profil fotoğrafı güncellendi.");
     } catch {
-      toast.error("Fotoğraf yüklenemedi. Lütfen tekrar deneyin.");
+      setPhotoError("Fotoğraf yüklenemedi. Lütfen tekrar deneyin.");
     } finally {
       setPhotoUploading(false);
     }
@@ -413,7 +423,7 @@ export function ProfileMenu() {
                   <>
                     <input
                       type="file"
-                      accept="image/jpeg,image/png,image/webp"
+                      accept={PROFILE_PHOTO_ACCEPT}
                       hidden
                       ref={photoInputRef}
                       onChange={handlePhotoUpload}
@@ -460,11 +470,20 @@ export function ProfileMenu() {
               </div>
             </div>
 
-            {/* Photo label (tutor only) */}
-            {tutor && (
-              <p className="px-1 text-xs text-muted-foreground">
-                Profil fotoğrafı — JPEG, PNG veya WebP, en fazla 5 MB
+            {photoError && (
+              <p className="text-xs text-destructive" role="alert">
+                {photoError}
               </p>
+            )}
+
+            {tutor && (
+              <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-100">
+                <p>{PROFILE_PHOTO_RULE_TEXT}</p>
+                <p className="mt-1">{TUTOR_REAL_PHOTO_RULE_TEXT}</p>
+                <p className="mt-1 text-amber-800 dark:text-amber-200">
+                  JPEG, PNG veya WebP; en fazla 5 MB.
+                </p>
+              </div>
             )}
 
             {/* Email (read-only) */}
@@ -500,6 +519,7 @@ export function ProfileMenu() {
                 onClick={() => {
                   setEditName(name);
                   setEditSurname(surname);
+                  setNameError(null);
                   setNameEdit(true);
                 }}
               >
@@ -512,7 +532,10 @@ export function ProfileMenu() {
                   <Input
                     placeholder="İsim"
                     value={editName}
-                    onChange={(e) => setEditName(e.target.value)}
+                    onChange={(e) => {
+                      setEditName(e.target.value);
+                      setNameError(null);
+                    }}
                     className="h-8 text-sm"
                     disabled={nameSaving}
                     // eslint-disable-next-line jsx-a11y/no-autofocus
@@ -521,11 +544,17 @@ export function ProfileMenu() {
                   <Input
                     placeholder="Soyisim"
                     value={editSurname}
-                    onChange={(e) => setEditSurname(e.target.value)}
+                    onChange={(e) => {
+                      setEditSurname(e.target.value);
+                      setNameError(null);
+                    }}
                     className="h-8 text-sm"
                     disabled={nameSaving}
                   />
                 </div>
+                {nameError && (
+                  <p className="text-xs text-destructive">{nameError}</p>
+                )}
                 <div className="flex gap-2">
                   <Button
                     variant="outline"
@@ -634,9 +663,12 @@ export function ProfileMenu() {
               <p className="px-1 pb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 Ödeme geçmişi
               </p>
-              <p className="px-1 py-1.5 text-sm text-muted-foreground">
-                Henüz ödeme geçmişi yok.
-              </p>
+              <ProfileMenuRow
+                icon={<Receipt className="h-4 w-4" />}
+                label="Paketlerim ve ödeme geçmişim"
+                showChevron
+                onClick={() => go("/profile/payments")}
+              />
             </div>
           </ProfileAccordionSection>
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, Suspense } from "react";
+import { useState, useCallback, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -27,6 +27,7 @@ import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import SlidingPagination from "@/components/ui/sliding-pagination";
+import { getSubjectOptionsForExam, isSubjectValidForExam } from "@/lib/subjects";
 
 const PAGE_SIZE = 8;
 const LEARNING_CONTEXT_KEYS = [
@@ -64,6 +65,11 @@ const FILTER_WIDTHS = {
   subject: "w-full sm:w-[11.75rem]",
   minRating: "w-full sm:w-[9.75rem]",
   yksRank: "w-full sm:w-[8.75rem]",
+  price: "w-full sm:w-[220px]",
+  university: "w-full sm:w-[300px]",
+  availabilityDay: "w-full sm:w-[160px]",
+  availabilityTime: "w-full sm:w-[170px]",
+  availabilityStatus: "w-full sm:w-[170px]",
 } as const;
 
 const FILTER_CONTENT_WIDTHS = {
@@ -86,6 +92,7 @@ function filtersFromSearchParams(searchParams: URLSearchParams): TutorFiltersTyp
   const ordering = searchParams.get("ordering") || "rating";
   const availability_day = searchParams.get("availability_day");
   const availability_time = searchParams.get("availability_time");
+  const online = searchParams.get("online");
   return {
     ...(search != null && search !== "" && { search }),
     ...(subject != null && subject !== "" && { subject }),
@@ -97,6 +104,7 @@ function filtersFromSearchParams(searchParams: URLSearchParams): TutorFiltersTyp
     ...(yks_rank_max != null && yks_rank_max !== "" && { yks_rank_max }),
     ...(availability_day != null && availability_day !== "" && { availability_day }),
     ...(availability_time != null && availability_time !== "" && { availability_time }),
+    ...(online != null && online !== "" && { online }),
     ordering: ordering || "rating",
   };
 }
@@ -113,6 +121,7 @@ function searchParamsFromFilters(filters: TutorFiltersType): URLSearchParams {
   if (filters.yks_rank_max) p.set("yks_rank_max", filters.yks_rank_max);
   if (filters.availability_day) p.set("availability_day", filters.availability_day);
   if (filters.availability_time) p.set("availability_time", filters.availability_time);
+  if (filters.online) p.set("online", filters.online);
   if (filters.ordering && filters.ordering !== "rating") p.set("ordering", filters.ordering);
   return p;
 }
@@ -245,6 +254,13 @@ function TutorsPageContent() {
     queryFn: fetchSubjects,
     staleTime: Infinity,
   });
+  const subjectOptions = getSubjectOptionsForExam(subjects ?? [], filters.exam_type);
+
+  useEffect(() => {
+    if (!subjects || subjectsLoading) return;
+    if (isSubjectValidForExam(subjects, filters.subject, filters.exam_type)) return;
+    handleFiltersChange({ ...filters, subject: "" });
+  }, [subjects, subjectsLoading, filters, handleFiltersChange]);
 
   const {
     favorites,
@@ -267,6 +283,7 @@ function TutorsPageContent() {
     (filters.yks_rank_max ?? "") !== "" ||
     (filters.availability_day ?? "") !== "" ||
     (filters.availability_time ?? "") !== "" ||
+    (filters.online ?? "") !== "" ||
     (filters.ordering ?? "rating") !== "rating";
 
   const tutorList = showFavorites
@@ -304,14 +321,18 @@ function TutorsPageContent() {
       <div className="mx-auto max-w-7xl px-4 py-8 space-y-6">
         {!showFavorites && (
           <>
-            <div>
-              <h1 className="text-3xl font-bold text-black">Hocanı Bul</h1>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Türkiye&apos;nin en iyi YKS hocaları, seni bekliyor.
-              </p>
+            <div className="sm:flex sm:items-baseline sm:justify-between sm:gap-4">
+              <div>
+                <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+                  Hocanı Bul
+                </h1>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Doğrulanmış YKS hocaları arasından sana uygun olanı bul.
+                </p>
+              </div>
               {!isListLoading && tutors && (
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {tutors.count} hoca bulundu
+                <p className="mt-1 text-sm text-muted-foreground sm:mt-0 sm:shrink-0">
+                  <span className="font-semibold text-foreground">{tutors.count ?? 0}</span> hoca bulundu
                 </p>
               )}
             </div>
@@ -347,6 +368,23 @@ function TutorsPageContent() {
                 />
               </div>
 
+              <div className="mb-3 flex items-center justify-between">
+                <Label className="text-xs uppercase tracking-wide text-muted-foreground">
+                  Filtreler
+                </Label>
+                {hasActiveFilters && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleClearFilters}
+                    className="text-xs text-muted-foreground"
+                  >
+                    Filtreleri Temizle
+                  </Button>
+                )}
+              </div>
+
+              <div className="space-y-4">
               <div className="flex flex-wrap gap-4">
             {/* Sıralama */}
             <div className={`${FILTER_WIDTHS.sort} space-y-1`}>
@@ -377,9 +415,13 @@ function TutorsPageContent() {
             </Label>
             <Select
               value={(filters.exam_type ?? "") || "__all__"}
-              onValueChange={(v) =>
-                handleFiltersChange({ ...filters, exam_type: v === "__all__" ? "" : v })
-              }
+              onValueChange={(v) => {
+                const exam_type = v === "__all__" ? "" : v;
+                const subject = isSubjectValidForExam(subjects ?? [], filters.subject, exam_type)
+                  ? filters.subject
+                  : "";
+                handleFiltersChange({ ...filters, exam_type, subject });
+              }}
               disabled={subjectsLoading}
             >
               <SelectTrigger className="h-9 text-sm">
@@ -412,7 +454,7 @@ function TutorsPageContent() {
               </SelectTrigger>
               <SelectContent className={FILTER_CONTENT_WIDTHS.subject}>
                 <SelectItem value="__all__">Tüm dersler</SelectItem>
-                {Array.from(new Map((subjects ?? []).map((s) => [s.name, s])).values()).map((s) => (
+                {subjectOptions.map((s) => (
                   <SelectItem key={s.name} value={s.name}>
                     {s.name}
                   </SelectItem>
@@ -420,9 +462,11 @@ function TutorsPageContent() {
               </SelectContent>
             </Select>
           </div>
+          </div>
 
+          <div className="flex flex-wrap gap-4">
           {/* Fiyat */}
-          <div className="w-full space-y-1 sm:w-[220px]">
+          <div className={`${FILTER_WIDTHS.price} space-y-1`}>
             <Label className="text-xs uppercase tracking-wide text-muted-foreground">
               Fiyat
             </Label>
@@ -504,7 +548,7 @@ function TutorsPageContent() {
           </div>
 
           {/* Popüler Üniversiteler */}
-          <div className="w-full space-y-1 sm:w-[300px]">
+          <div className={`${FILTER_WIDTHS.university} space-y-1`}>
             <Label className="text-xs uppercase tracking-wide text-muted-foreground">
               Popüler Üniversiteler
             </Label>
@@ -531,9 +575,11 @@ function TutorsPageContent() {
               </SelectContent>
             </Select>
           </div>
+          </div>
 
+          <div className="flex flex-wrap gap-4">
           {/* Müsaitlik Günü */}
-          <div className="w-full space-y-1 sm:w-[160px]">
+          <div className={`${FILTER_WIDTHS.availabilityDay} space-y-1`}>
             <Label className="text-xs uppercase tracking-wide text-muted-foreground">
               Müsaitlik Günü
             </Label>
@@ -565,7 +611,7 @@ function TutorsPageContent() {
           </div>
 
           {/* Müsaitlik Saati */}
-          <div className="w-full space-y-1 sm:w-[170px]">
+          <div className={`${FILTER_WIDTHS.availabilityTime} space-y-1`}>
             <Label className="text-xs uppercase tracking-wide text-muted-foreground">
               Müsaitlik Saati
             </Label>
@@ -589,13 +635,28 @@ function TutorsPageContent() {
             </Select>
           </div>
 
-          {hasActiveFilters && (
-            <div className="w-full mt-3 flex justify-end sm:mt-0 sm:w-auto sm:self-end">
-              <Button variant="ghost" size="sm" onClick={handleClearFilters} className="text-xs text-muted-foreground">
-                Filtreleri Temizle
-              </Button>
-            </div>
-          )}
+          {/* Müsaitlik Durumu */}
+          <div className={`${FILTER_WIDTHS.availabilityStatus} space-y-1`}>
+            <Label className="text-xs uppercase tracking-wide text-muted-foreground">
+              Müsaitlik durumu
+            </Label>
+            <Select
+              value={(filters.online ?? "") || "__all__"}
+              onValueChange={(v) =>
+                handleFiltersChange({ ...filters, online: v === "__all__" ? "" : v })
+              }
+              disabled={isListLoading}
+            >
+              <SelectTrigger className="h-9 text-sm">
+                <SelectValue placeholder="Tümü" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__all__">Tümü</SelectItem>
+                <SelectItem value="true">Sadece çevrim içi</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
         </div>
         </div>
 

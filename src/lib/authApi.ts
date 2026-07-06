@@ -71,6 +71,25 @@ export async function fetchSecuritySettings(): Promise<SecuritySettings> {
   return response.data;
 }
 
+export interface ChangePasswordPayload {
+  current_password: string;
+  new_password: string;
+  password_confirm: string;
+}
+
+/**
+ * Change password for the already-authenticated user. The backend rotates the
+ * auth token (single-token DRF auth) — callers must adopt the returned token
+ * via AuthProvider's setAuth so the current session stays logged in while any
+ * other session using the old token is signed out.
+ */
+export async function changePassword(
+  data: ChangePasswordPayload
+): Promise<AuthResponse> {
+  const response = await api.post<AuthResponse>("/auth/change-password/", data);
+  return response.data;
+}
+
 export async function requestEmailVerificationCode(): Promise<{
   detail: string;
   expires_in_seconds?: number;

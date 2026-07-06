@@ -1,20 +1,33 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
-import { useQuery } from "@tanstack/react-query";
-import { Check, Copy, MessageCircle, MessageSquare, PlayCircle, Share2 } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  BadgeCheck,
+  Check,
+  ChevronDown,
+  ChevronUp,
+  Copy,
+  MessageCircle,
+  MessageSquare,
+  PlayCircle,
+  Share2,
+} from "lucide-react";
 import { useFavorites } from "@/hooks/useFavorites";
 import { FavoriteButton } from "@/components/tutors/FavoriteButton";
-import { fetchTutorById, fetchTutorReviews, fetchTutorSubjectRatings } from "@/lib/tutorsApi";
+import { fetchTutorById, fetchTutorReviews, fetchTutorReviewSummary } from "@/lib/tutorsApi";
 import { fetchTutorAvailability } from "@/lib/dashboardApi";
 import { useAuth } from "@/hooks/useAuth";
-import { formatPrice, formatRating } from "@/lib/utils";
+import { formatLessonCount, formatPrice, formatRating } from "@/lib/utils";
 import { ReviewCard } from "@/components/tutors/ReviewCard";
+import { ReviewSummary } from "@/components/tutors/ReviewSummary";
+import { SubjectRatingBreakdown } from "@/components/tutors/SubjectRatingBreakdown";
 import { TutorPresenceBadge } from "@/components/tutors/TutorPresenceBadge";
-import { LessonRequestModal } from "@/components/tutors/LessonRequestModal";
+import { MessageRequestModal } from "@/components/tutors/MessageRequestModal";
+import { PackageOfferPanel } from "@/components/tutors/PackageOfferPanel";
 import { BookingModal } from "@/components/lessons/BookingModal";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { Button } from "@/components/ui/button";
@@ -24,6 +37,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
+import type { SubjectRating } from "@/types";
 
 function getInitials(name: string, surname: string): string {
   const n = (name || "").trim()[0] || "";
@@ -36,6 +50,8 @@ type LearningContextQuery = {
   learning_milestone_id: string;
   learning_topic_id?: string | null;
 };
+
+const REVIEW_PREVIEW_COUNT = 3;
 
 function learningContextFromSearchParams(
   searchParams: URLSearchParams
@@ -66,6 +82,123 @@ function Stars({ rating }: { rating: number }) {
         )
       )}
     </span>
+  );
+}
+
+function RatingSummaryPopover({
+  rating,
+  totalReviews,
+  subjectRatings,
+}: {
+  rating: number;
+  totalReviews: number;
+  subjectRatings: SubjectRating[];
+}) {
+  const [open, setOpen] = useState(false);
+  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const openPopover = () => {
+    if (closeTimerRef.current) {
+      clearTimeout(closeTimerRef.current);
+      closeTimerRef.current = null;
+    }
+    setOpen(true);
+  };
+
+  const closePopover = () => {
+    if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
+    closeTimerRef.current = setTimeout(() => setOpen(false), 120);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
+    };
+  }, []);
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className="inline-flex items-center gap-1.5 rounded-md transition-colors hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          aria-label={`${formatRating(rating)} yıldız puan detayları`}
+          onFocus={openPopover}
+          onBlur={closePopover}
+          onMouseEnter={openPopover}
+          onMouseLeave={closePopover}
+        >
+          <Stars rating={rating} />
+          <span className="font-medium">{formatRating(rating)}</span>
+        </button>
+      </PopoverTrigger>
+      <PopoverContent
+        align="start"
+        side="top"
+        sideOffset={8}
+        collisionPadding={16}
+        className="w-[calc(100vw-2rem)] p-0 sm:w-80"
+        onFocus={openPopover}
+        onBlur={closePopover}
+        onMouseEnter={openPopover}
+        onMouseLeave={closePopover}
+      >
+        <div className="p-4 text-sm">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="text-xs font-medium uppercase text-muted-foreground">
+                Genel puan
+              </p>
+              <div className="mt-1 flex items-center gap-2">
+                <Stars rating={rating} />
+                <span className="text-lg font-semibold">{formatRating(rating)}</span>
+              </div>
+            </div>
+            <span className="rounded-full bg-muted px-2 py-1 text-xs text-muted-foreground">
+              {totalReviews} değerlendirme
+            </span>
+          </div>
+
+          <div className="mt-4 border-t pt-4">
+            <p className="mb-3 text-xs font-medium uppercase text-muted-foreground">
+              Derslere göre puan
+            </p>
+            {subjectRatings.length > 0 ? (
+              <div className="space-y-3">
+                {subjectRatings.map((sr) => (
+                  <div
+                    key={sr.subject.id}
+                    className="flex items-center justify-between gap-3"
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate font-medium">
+                        {sr.subject.name}
+                        <span className="ml-1 text-xs text-muted-foreground">
+                          {sr.subject.exam_type}
+                        </span>
+                      </p>
+                    </div>
+                    <div className="shrink-0 text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        <Stars rating={sr.average} />
+                        <span className="font-medium">{formatRating(sr.average)}</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        {sr.count} değerlendirme
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Ders bazlı puan henüz yok.
+              </p>
+            )}
+          </div>
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }
 
@@ -188,12 +321,15 @@ export default function TutorProfilePage({
   const id = params.id;
   const router = useRouter();
   const searchParams = useSearchParams();
+  const queryClient = useQueryClient();
   const { isAuthenticated, isStudent, user } = useAuth();
   const { favoriteIds, toggle, isFavoritePending } = useFavorites();
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
   const [requestSent, setRequestSent] = useState(false);
   const [requestConversationId, setRequestConversationId] = useState<string | null>(null);
-  const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
+  // Paid bookings now go through /tutors/[id]/checkout; this modal only
+  // handles the free trial path (which deliberately skips checkout).
+  const [bookingModalMode, setBookingModalMode] = useState<"trial" | null>(null);
   const [bookingComplete, setBookingComplete] = useState(false);
   const [reviewsExpanded, setReviewsExpanded] = useState(false);
   const [isSharePreviewOpen, setIsSharePreviewOpen] = useState(false);
@@ -218,11 +354,12 @@ export default function TutorProfilePage({
     enabled: !!tutor,
   });
 
-  const { data: subjectRatings = [] } = useQuery({
-    queryKey: ["tutor-subject-ratings", id],
-    queryFn: () => fetchTutorSubjectRatings(id),
+  const { data: reviewSummary } = useQuery({
+    queryKey: ["tutor-review-summary", id],
+    queryFn: () => fetchTutorReviewSummary(id),
     enabled: !!tutor,
   });
+  const subjectRatings = reviewSummary?.subject_ratings ?? [];
 
   const { data: availability = [], isLoading: availabilityLoading } = useQuery({
     queryKey: ["tutor-availability", id],
@@ -231,6 +368,13 @@ export default function TutorProfilePage({
   });
 
   const isOwnProfile = !!tutor && !!user && user.id === tutor.user;
+  const trialLessonsRemaining = tutor?.trial_lessons_remaining ?? 0;
+  const canBookFreeTrial =
+    isAuthenticated &&
+    isStudent &&
+    !isOwnProfile &&
+    tutor?.trial_lesson_eligible === true &&
+    trialLessonsRemaining > 0;
   const EXAM_ORDER = ["TYT", "AYT", "DGS", "KPSS"] as const;
   const subjectGroups = EXAM_ORDER.map((exam) => ({
     exam,
@@ -238,15 +382,33 @@ export default function TutorProfilePage({
   })).filter((group) => group.items.length > 0);
   const introVideoEmbedUrl = getYouTubeEmbedUrl(tutor?.intro_video_url);
   const displayReviews = Array.isArray(reviews)
-    ? reviewsExpanded ? reviews : reviews.slice(0, 5)
+    ? reviewsExpanded ? reviews : reviews.slice(0, REVIEW_PREVIEW_COUNT)
     : [];
-  const hasMoreReviews = Array.isArray(reviews) && reviews.length > 5 && !reviewsExpanded;
+  const hasMoreReviews = Array.isArray(reviews) && reviews.length > REVIEW_PREVIEW_COUNT;
+  const hiddenReviewsCount = Array.isArray(reviews)
+    ? Math.max(reviews.length - REVIEW_PREVIEW_COUNT, 0)
+    : 0;
+  const completedLessonsLabel = `${formatLessonCount(tutor?.completed_lessons_count ?? 0)} ders`;
   const shareTitle = tutor
     ? `${tutor.name} ${tutor.surname} · Hocam`
     : "Hocam";
   const whatsappShareUrl = shareUrl
     ? `https://wa.me/?text=${encodeURIComponent(`${shareTitle}\n${shareUrl}`)}`
     : "";
+  // Paid checkout keeps the learning-goal association by carrying the same
+  // query params the profile page received.
+  const checkoutHref = (() => {
+    const qp = new URLSearchParams();
+    if (learningContext) {
+      qp.set("learning_goal_id", learningContext.learning_goal_id);
+      qp.set("learning_milestone_id", learningContext.learning_milestone_id);
+      if (learningContext.learning_topic_id) {
+        qp.set("learning_topic_id", learningContext.learning_topic_id);
+      }
+    }
+    const query = qp.toString();
+    return `/tutors/${id}/checkout${query ? `?${query}` : ""}`;
+  })();
 
   useEffect(() => {
     if (!shareCopied) return;
@@ -303,22 +465,39 @@ export default function TutorProfilePage({
               </AvatarFallback>
             </Avatar>
             <div className="min-w-0 flex-1">
-              <h1 className="text-3xl font-bold leading-tight">
-                {tutor.name} {tutor.surname}
-              </h1>
+              <div className="flex flex-wrap items-center gap-1.5">
+                <h1 className="text-3xl font-bold leading-tight">
+                  {tutor.name} {tutor.surname}
+                </h1>
+                {tutor.is_verified && (
+                  <BadgeCheck
+                    className="h-6 w-6 shrink-0 text-primary"
+                    role="img"
+                    aria-label="Doğrulanmış hoca"
+                  />
+                )}
+              </div>
               <p className="mt-1 text-muted-foreground">
                 {tutor.university} · {tutor.department}
               </p>
               <div className="mt-2 flex flex-wrap items-center gap-2">
-                <TutorPresenceBadge isOnline={tutor.is_online} />
+                <TutorPresenceBadge
+                  isOnline={tutor.is_online}
+                  lastSeenAt={tutor.last_seen_at}
+                />
               </div>
               {tutor.total_reviews > 0 && (
-                <div className="mt-2 flex items-center gap-1.5 text-sm">
-                  <Stars rating={tutor.rating} />
-                  <span className="font-medium">{formatRating(tutor.rating)}</span>
+                <div className="mt-2 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-sm">
+                  <RatingSummaryPopover
+                    rating={tutor.rating}
+                    totalReviews={tutor.total_reviews}
+                    subjectRatings={subjectRatings}
+                  />
                   <span className="text-muted-foreground">
                     ({tutor.total_reviews} değerlendirme)
                   </span>
+                  <span className="text-muted-foreground">·</span>
+                  <span className="text-muted-foreground">{completedLessonsLabel}</span>
                 </div>
               )}
               {tutor.yks_rank > 0 && (
@@ -360,10 +539,11 @@ export default function TutorProfilePage({
               <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
                 {tutor.total_reviews > 0 ? (
                   <>
-                    <span className="flex items-center gap-1.5">
-                      <Stars rating={tutor.rating} />
-                      <span className="font-medium">{formatRating(tutor.rating)}</span>
-                    </span>
+                    <RatingSummaryPopover
+                      rating={tutor.rating}
+                      totalReviews={tutor.total_reviews}
+                      subjectRatings={subjectRatings}
+                    />
                     <span className="text-muted-foreground">
                       {tutor.total_reviews} değerlendirme
                     </span>
@@ -371,6 +551,8 @@ export default function TutorProfilePage({
                 ) : (
                   <span className="text-muted-foreground">Henüz değerlendirme yok</span>
                 )}
+                <span className="text-muted-foreground">·</span>
+                <span className="text-muted-foreground">{completedLessonsLabel}</span>
               </div>
 
               <div className="flex flex-wrap gap-1">
@@ -387,10 +569,18 @@ export default function TutorProfilePage({
                 </div>
               )}
 
-              {/* Primary CTA (book a lesson) */}
+              <Separator />
+
               <div className="space-y-3 pt-1">
                 {!isAuthenticated && (
-                  <Button className="w-full" onClick={() => router.push("/login")}>
+                  <Button
+                    className="w-full"
+                    onClick={() =>
+                      router.push(
+                        `/login?returnUrl=${encodeURIComponent(`/tutors/${id}`)}`
+                      )
+                    }
+                  >
                     Ders ayırtmak için giriş yap
                   </Button>
                 )}
@@ -412,42 +602,70 @@ export default function TutorProfilePage({
                         </Button>
                       </div>
                     ) : (
-                      <Button
-                        className="w-full"
-                        onClick={() => setIsBookingModalOpen(true)}
-                      >
-                        Deneme dersi ayırt
-                      </Button>
+                      <>
+                        {canBookFreeTrial ? (
+                          <div className="space-y-2">
+                            <Button
+                              className="w-full"
+                              onClick={() => setBookingModalMode("trial")}
+                            >
+                              Ücretsiz deneme dersi ayırt
+                            </Button>
+                            <div className="space-y-1 text-center text-xs text-muted-foreground">
+                              <p>Uygun değilse sorun yok.</p>
+                              <p>
+                                Bu ay {trialLessonsRemaining} ücretsiz deneme hakkın kaldı.
+                              </p>
+                            </div>
+                          </div>
+                        ) : (
+                          <Button
+                            className="w-full"
+                            onClick={() => router.push(checkoutHref)}
+                          >
+                            Ders Rezervasyonu Yap
+                          </Button>
+                        )}
+                      </>
                     )}
+                  </>
+                )}
+
+                {isAuthenticated && isStudent && !isOwnProfile && (
+                  <>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => setIsRequestModalOpen(true)}
+                    >
+                      <MessageSquare className="mr-2 h-4 w-4" />
+                      Hocaya Mesaj Gönder
+                    </Button>
                     {requestSent && !bookingComplete && (
                       <div className="rounded-lg border bg-muted/40 p-2 text-center text-sm">
-                        <p className="text-muted-foreground">Mesajın gönderildi.</p>
-                        <Link
-                          href={requestConversationId ? `/messages/${requestConversationId}` : "/messages"}
-                          className="font-medium text-primary hover:underline"
-                        >
-                          Mesajlara git
-                        </Link>
+                        <p className="text-muted-foreground">
+                          Mesaj isteğin gönderildi. Hoca kabul ederse konuşma başlayacak.
+                        </p>
+                        {requestConversationId && (
+                          <Link
+                            href={`/messages/${requestConversationId}`}
+                            className="font-medium text-primary hover:underline"
+                          >
+                            Mesajlara git
+                          </Link>
+                        )}
                       </div>
                     )}
                   </>
                 )}
 
-                {/* Secondary icon actions: message, favorite, share */}
+                {isAuthenticated && isStudent && !isOwnProfile && (
+                  <PackageOfferPanel tutor={tutor} />
+                )}
+
+                {/* Secondary icon actions: favorite, share */}
                 <div className="flex items-center justify-center gap-1">
-                  {isAuthenticated && isStudent && !isOwnProfile && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8"
-                      aria-label="Hocaya mesaj gönder"
-                      title="Hocaya mesaj gönder"
-                      onClick={() => setIsRequestModalOpen(true)}
-                    >
-                      <MessageSquare className="h-5 w-5" />
-                    </Button>
-                  )}
                   <FavoriteButton
                     tutorId={tutor.id}
                     isFavorite={favoriteIds.has(tutor.id)}
@@ -628,30 +846,6 @@ export default function TutorProfilePage({
         <h2 className="text-xl font-semibold">Değerlendirmeler</h2>
         <Separator className="mt-2" />
         <div className="mt-4 space-y-6">
-          {subjectRatings.length > 0 && (
-            <div>
-              <h3 className="mb-2 text-sm font-medium text-muted-foreground">
-                Derslere göre puan
-              </h3>
-              <div className="space-y-2">
-                {subjectRatings.map((sr) => (
-                  <div key={sr.subject.id} className="flex items-center gap-3 text-sm">
-                    <span className="w-40 shrink-0 truncate font-medium">
-                      {sr.subject.name}
-                      <span className="ml-1 text-xs text-muted-foreground">
-                        {sr.subject.exam_type}
-                      </span>
-                    </span>
-                    <Stars rating={sr.average} />
-                    <span className="text-muted-foreground">
-                      {formatRating(sr.average)} ({sr.count})
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
           {reviewsLoading && (
             <div className="space-y-3">
               <ReviewSkeletonCard />
@@ -664,27 +858,64 @@ export default function TutorProfilePage({
           )}
           {!reviewsLoading && Array.isArray(reviews) && reviews.length > 0 && (
             <>
-              <div className="mb-6 flex items-baseline gap-4">
-                <span className="text-4xl font-bold">{formatRating(tutor.rating)}</span>
-                <div>
-                  <Stars rating={tutor.rating} />
-                  <p className="text-sm text-muted-foreground">
-                    {reviews.length} değerlendirme
-                  </p>
+              {reviewSummary ? (
+                <div className="mb-6 space-y-6">
+                  <ReviewSummary summary={reviewSummary} />
+                  <SubjectRatingBreakdown
+                    subjectRatings={reviewSummary.subject_ratings}
+                  />
                 </div>
-              </div>
+              ) : (
+                <div className="mb-6 flex items-baseline gap-4">
+                  <span className="text-4xl font-bold">{formatRating(tutor.rating)}</span>
+                  <div>
+                    <Stars rating={tutor.rating} />
+                    <p className="text-sm text-muted-foreground">
+                      {reviews.length} değerlendirme
+                    </p>
+                  </div>
+                </div>
+              )}
               <div className="space-y-3">
                 {displayReviews.map((review) => (
                   <ReviewCard key={review.id} review={review} />
                 ))}
               </div>
-              {hasMoreReviews && (
+              {hasMoreReviews && !reviewsExpanded && (
+                <div className="rounded-lg border bg-card p-4">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex items-start gap-3">
+                      <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
+                        <MessageSquare className="h-4 w-4" />
+                      </span>
+                      <div>
+                        <p className="font-medium">
+                          {hiddenReviewsCount} yorum daha var
+                        </p>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          Öğrencilerin farklı ders deneyimlerini okumaya devam et.
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      variant="outline"
+                      className="shrink-0"
+                      onClick={() => setReviewsExpanded(true)}
+                    >
+                      Devamını gör
+                      <ChevronDown className="ml-2 h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+              {hasMoreReviews && reviewsExpanded && (
                 <Button
                   variant="ghost"
-                  className="mt-4"
-                  onClick={() => setReviewsExpanded(true)}
+                  className="mt-1"
+                  onClick={() => setReviewsExpanded(false)}
                 >
-                  Tüm değerlendirmeleri gör ({reviews.length})
+                  Daha az göster
+                  <ChevronUp className="ml-2 h-4 w-4" />
                 </Button>
               )}
             </>
@@ -692,27 +923,30 @@ export default function TutorProfilePage({
         </div>
       </section>
 
-      <LessonRequestModal
+      <MessageRequestModal
         tutor={tutor}
         isOpen={isRequestModalOpen}
         onClose={() => setIsRequestModalOpen(false)}
-        learningContext={learningContext}
-        onSuccess={(lessonRequest) => {
-          setRequestConversationId(lessonRequest.conversation_id ?? null);
+        onSuccess={(messageRequest) => {
+          setRequestConversationId(messageRequest.conversation_id ?? null);
           setRequestSent(true);
           setIsRequestModalOpen(false);
-          toast.success("Mesajın hocaya gönderildi.");
+          toast.success(
+            "Mesaj isteğin hocaya gönderildi. Hoca kabul ederse konuşma başlayacak."
+          );
         }}
       />
       <BookingModal
         tutor={tutor}
-        isOpen={isBookingModalOpen}
-        onClose={() => setIsBookingModalOpen(false)}
+        isOpen={bookingModalMode !== null}
+        isTrial
+        onClose={() => setBookingModalMode(null)}
         learningContext={learningContext}
-        onSuccess={(booking) => {
+        onSuccess={() => {
           setBookingComplete(true);
-          setIsBookingModalOpen(false);
-          toast.success("Ders rezervasyonu oluşturuldu.");
+          setBookingModalMode(null);
+          queryClient.invalidateQueries({ queryKey: ["tutor", id] });
+          toast.success("Ücretsiz deneme dersi isteğin gönderildi.");
         }}
       />
     </div>

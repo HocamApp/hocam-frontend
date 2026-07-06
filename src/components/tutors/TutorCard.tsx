@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { Award, BadgeCheck } from "lucide-react";
 import { TutorProfile } from "@/types";
-import { formatPrice, formatRating } from "@/lib/utils";
+import { formatLessonCount, formatPrice, formatRating } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -67,6 +68,7 @@ export function TutorCard({
   const visibleSubjects = orderedSubjects.slice(0, 4);
   const remainingCount = orderedSubjects.length - 4;
   const tutorHref = buildTutorHref(tutor.id, learningContext);
+  const completedLessonsLabel = `${formatLessonCount(tutor.completed_lessons_count ?? 0)} ders`;
 
   return (
     <Card className="h-full transition-shadow duration-200 hover:border-primary/30 hover:shadow-md">
@@ -83,16 +85,32 @@ export function TutorCard({
               </AvatarFallback>
             </Avatar>
             <div className="min-w-0 flex-1">
-              <p className="text-lg font-semibold">
-                {tutor.name} {tutor.surname}
-              </p>
-              <p className="text-sm text-muted-foreground">
+              <div className="flex min-w-0 items-center gap-1">
+                <p className="min-w-0 truncate text-lg font-semibold">
+                  {tutor.name} {tutor.surname}
+                </p>
+                {tutor.is_verified && (
+                  <BadgeCheck
+                    className="h-4 w-4 shrink-0 text-primary"
+                    role="img"
+                    aria-label="Doğrulanmış hoca"
+                  />
+                )}
+              </div>
+              <p className="truncate text-sm text-muted-foreground">
                 {tutor.university} · {tutor.department}
               </p>
-              <TutorPresenceBadge isOnline={tutor.is_online} className="mt-1" />
-              <p className="text-sm text-muted-foreground">
-                YKS Sıralaması: {formatYksRank(tutor.yks_rank)}
-              </p>
+              <TutorPresenceBadge
+                isOnline={tutor.is_online}
+                lastSeenAt={tutor.last_seen_at}
+                className="mt-1"
+              />
+              {tutor.yks_rank > 0 && (
+                <span className="mt-1 inline-flex w-fit items-center gap-1 rounded-full border bg-muted/40 px-2 py-0.5 text-xs text-muted-foreground">
+                  <Award className="h-3 w-3" />
+                  YKS Sıralaması: {formatYksRank(tutor.yks_rank)}
+                </span>
+              )}
             </div>
           </div>
 
@@ -110,23 +128,25 @@ export function TutorCard({
 
         <div className="flex items-center justify-between border-t px-4 py-3">
           <Link href={tutorHref} className="min-w-0 flex-1 cursor-pointer">
-            <div className="truncate">
+            <div className="flex min-w-0 flex-wrap items-center gap-x-1 text-sm">
               {tutor.total_reviews > 0 ? (
                 <>
                   <span className="font-medium">★ {formatRating(tutor.rating)}</span>
-                  <span className="ml-1 text-sm text-muted-foreground">
+                  <span className="text-muted-foreground">
                     ({tutor.total_reviews} değerlendirme)
                   </span>
                 </>
               ) : (
-                <span className="text-sm text-muted-foreground">Henüz değerlendirme yok</span>
+                <span className="text-muted-foreground">Henüz değerlendirme yok</span>
               )}
+              <span className="text-muted-foreground">·</span>
+              <span className="text-muted-foreground">{completedLessonsLabel}</span>
             </div>
           </Link>
           <div className="flex items-center gap-1">
             <Link href={tutorHref} className="cursor-pointer">
               <div className="text-right">
-                <span className="font-medium">{formatPrice(tutor.hourly_price)}</span>
+                <span className="text-lg font-semibold">{formatPrice(tutor.hourly_price)}</span>
                 <span className="ml-1 text-sm text-muted-foreground">/40 dk</span>
               </div>
             </Link>

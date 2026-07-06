@@ -1,32 +1,27 @@
 "use client";
 
 import { Review } from "@/types";
-import { formatDate, formatRelativeDate } from "@/lib/utils";
+import { formatDate, formatRating, formatRelativeDate } from "@/lib/utils";
+import { REVIEW_CRITERIA } from "@/lib/reviewCriteria";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-
-function Stars({ rating }: { rating: number }) {
-  return (
-    <span className="inline-flex gap-0.5" aria-label={`${rating} yıldız`}>
-      {[1, 2, 3, 4, 5].map((i) =>
-        i <= rating ? (
-          <span key={i} className="text-amber-500">
-            ★
-          </span>
-        ) : (
-          <span key={i} className="text-muted-foreground/60">☆</span>
-        )
-      )}
-    </span>
-  );
-}
+import { RatingStars } from "@/components/tutors/RatingStars";
 
 export function ReviewCard({ review }: { review: Review }) {
+  const hasCriteria = REVIEW_CRITERIA.every(
+    ({ field }) => typeof review[field] === "number" && review[field] >= 1
+  );
+
   return (
     <Card>
       <CardContent className="pt-4">
         <div className="mb-2 flex items-center justify-between">
-          <Stars rating={review.rating} />
+          <div className="flex items-center gap-1.5">
+            <RatingStars rating={review.rating} />
+            <span className="text-sm font-medium">
+              {formatRating(review.rating)}
+            </span>
+          </div>
           <span
             className="text-sm text-muted-foreground"
             title={formatDate(review.created_at)}
@@ -42,7 +37,15 @@ export function ReviewCard({ review }: { review: Review }) {
             </Badge>
           )}
         </div>
-        <p className="mt-1 text-sm">{review.comment}</p>
+        {review.comment && <p className="mt-1 text-sm">{review.comment}</p>}
+        {hasCriteria && (
+          <p className="mt-2 text-xs text-muted-foreground">
+            {REVIEW_CRITERIA.map(
+              ({ field, shortLabel }) =>
+                `${shortLabel} ${formatRating(review[field])}`
+            ).join(" · ")}
+          </p>
+        )}
       </CardContent>
     </Card>
   );

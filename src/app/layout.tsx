@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { Toaster } from "sonner";
+import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/providers/AuthProvider";
 import { QueryProvider } from "@/providers/QueryProvider";
+import { SessionExpiredDialog } from "@/components/shared/SessionExpiredDialog";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -27,9 +28,10 @@ export default function RootLayout({
         <AuthProvider>
           <QueryProvider>
             <div className="flex min-h-screen flex-1 flex-col">{children}</div>
+            <SessionExpiredDialog />
           </QueryProvider>
         </AuthProvider>
-        <Toaster richColors position="top-right" />
+        <Toaster />
       </body>
     </html>
   );

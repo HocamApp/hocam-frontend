@@ -7,15 +7,6 @@ import { z } from "zod";
 import { requestPasswordReset } from "@/lib/authApi";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import {
   Form,
   FormControl,
   FormField,
@@ -23,7 +14,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+import { AuthSplitScreen, GlassInputWrapper } from "@/components/auth/AuthSplitScreen";
 
 const forgotSchema = z.object({
   email: z.string().email("Geçerli bir e-posta adresi girin"),
@@ -57,75 +48,76 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-slate-50 px-4">
-      <Card className="w-full max-w-md shadow-md">
-        <CardHeader>
-          <CardTitle>Şifremi Unuttum</CardTitle>
-          <CardDescription>
-            E-posta adresinizi girin, şifre sıfırlama bağlantısı göndereceğiz.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {submitted ? (
-            <p className="text-sm text-muted-foreground">
-              Eğer bu email ile kayıtlı bir hesap varsa, şifre sıfırlama
-              bağlantısı gönderildi.
-            </p>
-          ) : (
-            <Form {...form}>
-              <form
-                onSubmit={form.handleSubmit(onSubmit)}
-                className="space-y-6"
-              >
-                {generalError && <ErrorMessage message={generalError} />}
-                <FormField
-                  control={form.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>E-posta</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="email"
-                          placeholder="ornek@email.com"
-                          autoComplete="email"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <Button
-                  type="submit"
-                  className="w-full"
-                  disabled={form.formState.isSubmitting}
-                >
-                  {form.formState.isSubmitting ? (
-                    <span className="flex items-center justify-center gap-2">
-                      <span
-                        className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent"
-                        aria-hidden
-                      />
-                      Gönderiliyor...
-                    </span>
-                  ) : (
-                    "Bağlantı Gönder"
-                  )}
-                </Button>
-              </form>
-            </Form>
-          )}
-        </CardContent>
-        <CardFooter className="flex justify-center text-sm text-muted-foreground">
+    <AuthSplitScreen
+      title="Şifreni sıfırla"
+      description="E-posta adresini gir, sana güvenli bir sıfırlama bağlantısı gönderelim."
+      footer={
+        <p className="animate-element animate-delay-500 text-center text-sm">
           <Link
             href="/login"
-            className="font-medium text-primary underline-offset-4 hover:underline"
+            className="text-neutral-300 transition-colors hover:text-white hover:underline"
           >
             Girişe dön
           </Link>
-        </CardFooter>
-      </Card>
-    </div>
+        </p>
+      }
+    >
+      {submitted ? (
+        <p
+          role="status"
+          aria-live="polite"
+          className="animate-element animate-delay-300 text-sm text-neutral-400"
+        >
+          Eğer bu email ile kayıtlı bir hesap varsa, şifre sıfırlama bağlantısı
+          gönderildi.
+        </p>
+      ) : (
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+            {generalError && <ErrorMessage message={generalError} />}
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem className="animate-element animate-delay-300 space-y-2">
+                  <FormLabel className="text-sm font-medium text-neutral-400">
+                    E-posta
+                  </FormLabel>
+                  <FormControl>
+                    <GlassInputWrapper>
+                      <input
+                        {...field}
+                        type="email"
+                        autoComplete="email"
+                        placeholder="E-posta adresini gir"
+                        className="w-full rounded-2xl bg-transparent p-4 text-sm text-white placeholder:text-neutral-500 focus:outline-none"
+                      />
+                    </GlassInputWrapper>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <button
+              type="submit"
+              disabled={form.formState.isSubmitting}
+              className="animate-element animate-delay-400 w-full rounded-2xl bg-white py-4 font-medium text-neutral-950 transition-colors hover:bg-white/90 disabled:opacity-70"
+            >
+              {form.formState.isSubmitting ? (
+                <span className="flex items-center justify-center gap-2">
+                  <span
+                    className="h-4 w-4 animate-spin rounded-full border-2 border-neutral-950 border-t-transparent"
+                    aria-hidden
+                  />
+                  Gönderiliyor...
+                </span>
+              ) : (
+                "Bağlantı Gönder"
+              )}
+            </button>
+          </form>
+        </Form>
+      )}
+    </AuthSplitScreen>
   );
 }

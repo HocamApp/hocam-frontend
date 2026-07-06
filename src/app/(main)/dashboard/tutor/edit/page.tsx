@@ -34,6 +34,9 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { cn } from "@/lib/utils";
+import { filterSelectedSubjectIds, groupSubjectsByExam } from "@/lib/subjects";
+
+const BIO_MAX_LENGTH = 1000;
 
 const editSchema = z.object({
   university: z.string().min(1, "Üniversite zorunludur"),
@@ -52,7 +55,7 @@ const editSchema = z.object({
       message: "Ücret pozitif olmalıdır",
     }),
   intro_video_url: z.string().optional(),
-  bio: z.string().optional(),
+  bio: z.string().max(BIO_MAX_LENGTH, "Hakkımda en fazla 1000 karakter olabilir").optional(),
 });
 
 type EditFormValues = z.infer<typeof editSchema>;
@@ -123,12 +126,17 @@ function TutorProfileEditContent() {
         yks_rank: profile.yks_rank != null ? String(profile.yks_rank) : "",
         hourly_price: profile.hourly_price != null ? String(profile.hourly_price) : "",
         intro_video_url: profile.intro_video_url ?? "",
-        bio: profile.bio ?? "",
+        bio: (profile.bio ?? "").slice(0, BIO_MAX_LENGTH),
       });
       setSelectedSubjectIds(profile.subjects.map((s) => s.id));
       setProfileLoaded(true);
     }
   }, [profile, profileLoaded, form]);
+
+  useEffect(() => {
+    if (subjects.length === 0) return;
+    setSelectedSubjectIds((prev) => filterSelectedSubjectIds(subjects, prev));
+  }, [subjects]);
 
   const bioValue = form.watch("bio") ?? "";
   const introVideoValue = form.watch("intro_video_url") ?? "";
@@ -155,7 +163,8 @@ function TutorProfileEditContent() {
         form.setError("hourly_price", { message: err.fieldErrors.hourly_price[0] });
       return;
     }
-    if (selectedSubjectIds.length === 0) {
+    const supportedSelectedSubjectIds = filterSelectedSubjectIds(subjects, selectedSubjectIds);
+    if (supportedSelectedSubjectIds.length === 0) {
       setSubjectError("En az bir ders seçin");
       return;
     }
@@ -169,7 +178,7 @@ function TutorProfileEditContent() {
         hourly_price: parsed.data.hourly_price,
         intro_video_url: parsed.data.intro_video_url ?? "",
         bio: parsed.data.bio ?? "",
-        subject_ids: selectedSubjectIds,
+        subject_ids: supportedSelectedSubjectIds,
       });
 
       await queryClient.invalidateQueries({ queryKey: ["tutor-me"] });
@@ -207,7 +216,6 @@ function TutorProfileEditContent() {
       } else {
         setGeneralError("Profil güncellenemedi. Lütfen bilgileri kontrol et.");
       }
-      toast.error("Profil güncellenemedi.");
     }
   };
 
@@ -227,11 +235,7 @@ function TutorProfileEditContent() {
     );
   }
 
-  const EXAM_ORDER = ["TYT", "AYT", "DGS", "KPSS"] as const;
-  const subjectGroups = EXAM_ORDER.map((exam) => ({
-    exam,
-    items: subjects.filter((s) => s.exam_type === exam),
-  })).filter((group) => group.items.length > 0);
+  const subjectGroups = groupSubjectsByExam(subjects);
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-10">
@@ -328,8 +332,12 @@ function TutorProfileEditContent() {
                     <FormControl>
                       <Textarea
                         rows={4}
+                        maxLength={BIO_MAX_LENGTH}
                         placeholder="Kendinden, eğitim tarzından ve öğrencilerine neler kazandırabileceğinden bahset..."
                         {...field}
+                        onChange={(event) => {
+                          field.onChange(event.target.value.slice(0, BIO_MAX_LENGTH));
+                        }}
                       />
                     </FormControl>
                     <FormMessage />
@@ -337,7 +345,7 @@ function TutorProfileEditContent() {
                       "mt-1 text-xs",
                       bioValue.length < 80 ? "text-destructive" : "text-muted-foreground"
                     )}>
-                      {bioValue.length} karakter{bioValue.length < 80 ? " (en az 80 önerilir)" : ""}
+                      {bioValue.length} / {BIO_MAX_LENGTH} karakter (en az 80 önerilir)
                     </p>
                   </FormItem>
                 )}
