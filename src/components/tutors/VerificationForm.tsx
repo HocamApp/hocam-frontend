@@ -164,7 +164,7 @@ function VerificationUploadForm({
             id="student_id_document"
             name="student_id_document"
             type="file"
-            accept="image/*,application/pdf"
+            accept="image/jpeg,image/png,image/webp,application/pdf"
             required
           />
           <p className="text-xs text-muted-foreground">
@@ -178,7 +178,7 @@ function VerificationUploadForm({
             id="yks_result_document"
             name="yks_result_document"
             type="file"
-            accept="image/*,application/pdf"
+            accept="image/jpeg,image/png,image/webp,application/pdf"
             required
           />
           <p className="text-xs text-muted-foreground">

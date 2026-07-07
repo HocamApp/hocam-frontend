@@ -206,7 +206,7 @@ export function MessageInput({
       <div className="flex min-w-0 items-end gap-2 p-3 sm:p-4">
         <input
           type="file"
-          accept="image/*"
+          accept="image/jpeg,image/png,image/gif,image/webp"
           hidden
           ref={fileInputRef}
           onChange={handleImageSelect}
