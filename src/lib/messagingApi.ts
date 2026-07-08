@@ -88,6 +88,30 @@ export async function fetchMessages(conversationId: string): Promise<Message[]> 
   return (response.data || []).map(normalizeMessage);
 }
 
+export interface TypingStatusResponse {
+  is_typing: boolean;
+}
+
+export async function fetchTypingStatus(
+  conversationId: string
+): Promise<TypingStatusResponse> {
+  const response = await api.get<TypingStatusResponse>(
+    `/conversations/${conversationId}/typing/`
+  );
+  return response.data;
+}
+
+export async function updateTypingStatus(
+  conversationId: string,
+  isTyping: boolean
+): Promise<TypingStatusResponse> {
+  const response = await api.post<TypingStatusResponse>(
+    `/conversations/${conversationId}/typing/`,
+    { is_typing: isTyping }
+  );
+  return response.data;
+}
+
 export interface SendMessagePayload {
   conversation_id: string;
   message_text?: string;

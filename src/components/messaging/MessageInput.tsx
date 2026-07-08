@@ -20,6 +20,7 @@ interface MessageInputProps {
   replyTo?: Message | null;
   replyToName?: string;
   onCancelReply?: () => void;
+  onTypingChange?: (isTyping: boolean) => void;
 }
 
 export function MessageInput({
@@ -29,6 +30,7 @@ export function MessageInput({
   replyTo = null,
   replyToName,
   onCancelReply,
+  onTypingChange,
 }: MessageInputProps) {
   const [text, setText] = useState("");
   const [inputError, setInputError] = useState<string | null>(null);
@@ -145,6 +147,14 @@ export function MessageInput({
     ta.style.height = "auto";
     ta.style.height = `${Math.min(ta.scrollHeight, 120)}px`;
   }, [text]);
+
+  useEffect(() => {
+    onTypingChange?.(text.trim().length > 0);
+  }, [onTypingChange, text]);
+
+  useEffect(() => {
+    return () => onTypingChange?.(false);
+  }, [onTypingChange]);
 
   return (
     <div className="border-t bg-background">

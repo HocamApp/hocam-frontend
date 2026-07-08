@@ -11,6 +11,8 @@ import {
   fetchMessages,
   fetchConversation,
   fetchConversations,
+  fetchTypingStatus,
+  updateTypingStatus,
   deleteMessage,
 } from "@/lib/messagingApi";
 import { MessageBubble } from "@/components/messaging/MessageBubble";
@@ -67,6 +69,8 @@ type ThreadItem =
 
 const CONVERSATIONS_REFETCH_INTERVAL_MS = 60_000;
 const MESSAGES_REFETCH_INTERVAL_MS = 15_000;
+const TYPING_REFETCH_INTERVAL_MS = 2_500;
+const TYPING_HEARTBEAT_INTERVAL_MS = 2_500;
 
 /** Build a flat render list with day separators and same-sender grouping. */
 function buildThreadItems(messages: Message[]): ThreadItem[] {
@@ -111,10 +115,7 @@ function ConversationContent({
   const [replyTo, setReplyTo] = useState<Message | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [pendingDelete, setPendingDelete] = useState<Message | null>(null);
-  // UI-ready typing indicator. Messaging is HTTP polling only, so there is no
-  // realtime presence signal yet — this stays false until a backend/realtime
-  // typing source exists (see TypingIndicator).
-  const [isOtherTyping] = useState(false);
+  const [isComposing, setIsComposing] = useState(false);
 
   const {
     data: conversations,
@@ -144,6 +145,15 @@ function ConversationContent({
     enabled: isAuthenticated && !!conversationId && isPageVisible,
   });
 
+  const { data: typingStatus } = useQuery({
+    queryKey: ["typing-status", conversationId],
+    queryFn: () => fetchTypingStatus(conversationId),
+    refetchInterval: isPageVisible ? TYPING_REFETCH_INTERVAL_MS : false,
+    enabled: isAuthenticated && !!conversationId && isPageVisible,
+  });
+
+  const isOtherTyping = typingStatus?.is_typing ?? false;
+
   useEffect(() => {
     if (!isAuthenticated || !conversationId || !isPageVisible) return;
     queryClient.invalidateQueries({ queryKey: ["conversations"] });
@@ -163,7 +173,23 @@ function ConversationContent({
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [allMessages]);
+  }, [allMessages, isOtherTyping]);
+
+  useEffect(() => {
+    if (!isAuthenticated || !conversationId || !isPageVisible) return;
+    if (!isComposing) {
+      updateTypingStatus(conversationId, false).catch(() => {});
+      return;
+    }
+    updateTypingStatus(conversationId, true).catch(() => {});
+    const intervalId = window.setInterval(() => {
+      updateTypingStatus(conversationId, true).catch(() => {});
+    }, TYPING_HEARTBEAT_INTERVAL_MS);
+    return () => {
+      window.clearInterval(intervalId);
+      updateTypingStatus(conversationId, false).catch(() => {});
+    };
+  }, [conversationId, isAuthenticated, isComposing, isPageVisible]);
 
   const handleMessageSent = (newMessage: Message) => {
     sentIdsRef.current.add(newMessage.id);
@@ -341,6 +367,7 @@ function ConversationContent({
                 : undefined
             }
             onCancelReply={() => setReplyTo(null)}
+            onTypingChange={setIsComposing}
           />
         </div>
 

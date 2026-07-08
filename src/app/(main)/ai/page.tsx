@@ -8,6 +8,7 @@ import { RouteGuard } from "@/components/shared/RouteGuard";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { TypingIndicator } from "@/components/messaging/TypingIndicator";
 import { cn } from "@/lib/utils";
 import { setTheme, type Theme } from "@/lib/theme";
 import {
@@ -199,11 +200,7 @@ function AIPageContent() {
               </div>
             ))}
             {isSending && (
-              <div className="flex justify-start">
-                <div className="rounded-lg border border-border bg-background px-4 py-3 text-sm text-muted-foreground">
-                  Yazıyor...
-                </div>
-              </div>
+              <TypingIndicator name="Hocam AI" className="px-1" />
             )}
           </div>
 
