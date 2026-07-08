@@ -4,6 +4,7 @@ import * as React from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   Bell,
+  Bot,
   GraduationCap,
   Heart,
   LayoutDashboard,
@@ -71,6 +72,7 @@ export function AnimatedNavbarLinks() {
 
   const descriptors: NavDescriptor[] = [
     { kind: "route", title: "Dersler", icon: GraduationCap, href: "/tutors" },
+    { kind: "route", title: "Asistan", icon: Bot, href: "/ai" },
     { kind: "route", title: "Mesajlar", icon: MessageCircle, href: "/messages" },
     { kind: "route", title: "Panom", icon: LayoutDashboard, href: panomHref },
     ...(!isTutor
