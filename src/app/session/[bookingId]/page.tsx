@@ -4,7 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { useParams, useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Clock3, Video } from "lucide-react";
+import { ArrowLeft, Clock3, Download, Video } from "lucide-react";
+import { toast } from "sonner";
 import { fetchBookings, fetchSessionToken } from "@/lib/lessonsApi";
 import { useAuth } from "@/hooks/useAuth";
 import { RouteGuard } from "@/components/shared/RouteGuard";
@@ -15,6 +16,9 @@ import { formatDate } from "@/lib/utils";
 import type { Booking } from "@/types";
 
 const EARLY_JOIN_MINUTES = 15;
+type JitsiApi = {
+  executeCommand?: (name: string, ...args: unknown[]) => void;
+};
 
 const JitsiMeeting = dynamic(
   () => import("@jitsi/react-sdk").then((mod) => mod.JitsiMeeting),
@@ -130,6 +134,7 @@ function SessionContent() {
   const router = useRouter();
   const { user } = useAuth();
   const [now, setNow] = useState(() => Date.now());
+  const [jitsiApi, setJitsiApi] = useState<JitsiApi | null>(null);
 
   const { data: bookings, isLoading: isLoadingBooking } = useQuery({
     queryKey: ["bookings"],
@@ -193,18 +198,43 @@ function SessionContent() {
 
   const displayName = user?.email?.split("@", 1)[0] ?? "Kullanıcı";
 
+  const handleWhiteboardDownload = () => {
+    if (!jitsiApi?.executeCommand) {
+      toast.info("Ders odası hazırlanıyor. Birkaç saniye sonra tekrar dene.");
+      return;
+    }
+
+    try {
+      jitsiApi.executeCommand("toggleWhiteboard");
+      toast.info(
+        "Whiteboard açıldı. Beyaz tahta menüsünden dışa aktar/indir seçeneğini kullanabilirsin."
+      );
+    } catch {
+      toast.error("Whiteboard şu anda açılamadı.");
+    }
+  };
+
   return (
     <div className="flex flex-1 flex-col">
-      <div className="flex items-center justify-between bg-gray-900 px-4 py-2 text-sm text-white">
-        <span className="font-medium">
+      <div className="flex items-center justify-between gap-3 bg-gray-900 px-4 py-2 text-sm text-white">
+        <span className="min-w-0 truncate font-medium">
           {booking ? `${booking.subject.name} — Canlı Ders` : "Canlı Ders"}
         </span>
-        <button
-          onClick={() => router.back()}
-          className="rounded border border-white/20 px-3 py-1 text-xs transition-colors hover:bg-white/10"
-        >
-          Çıkış
-        </button>
+        <div className="flex shrink-0 items-center gap-2">
+          <button
+            onClick={handleWhiteboardDownload}
+            className="inline-flex items-center gap-1.5 whitespace-nowrap rounded border border-white/20 px-3 py-1 text-xs transition-colors hover:bg-white/10"
+          >
+            <Download className="h-3.5 w-3.5" aria-hidden="true" />
+            Whiteboard indir
+          </button>
+          <button
+            onClick={() => router.back()}
+            className="rounded border border-white/20 px-3 py-1 text-xs transition-colors hover:bg-white/10"
+          >
+            Çıkış
+          </button>
+        </div>
       </div>
 
       <div className="flex-1">
@@ -244,6 +274,7 @@ function SessionContent() {
               "hangup",
             ],
           }}
+          onApiReady={(api) => setJitsiApi(api)}
           onReadyToClose={() => router.back()}
           getIFrameRef={(iframeRef) => {
             iframeRef.style.height = "100%";

@@ -320,6 +320,7 @@ export interface Booking {
     | "completed"
     | "disputed"
     | "cancelled";
+  completed_at?: string | null;
   is_trial?: boolean;
   lesson_request: string | null;
   room_url?: string;

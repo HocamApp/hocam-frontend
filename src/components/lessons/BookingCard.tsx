@@ -16,6 +16,7 @@ interface BookingCardProps {
     status: "confirmed" | "completed" | "cancelled"
   ) => void;
   onReviewClick?: (booking: Booking) => void;
+  reviewDisabledReason?: string;
   onMaterialsClick?: (booking: Booking) => void;
   onConfirmLearningProgress?: (booking: Booking) => void;
   isUpdating?: boolean;
@@ -45,6 +46,7 @@ export function BookingCard({
   currentUserRole,
   onStatusUpdate,
   onReviewClick,
+  reviewDisabledReason,
   onMaterialsClick,
   onConfirmLearningProgress,
   isUpdating = false,
@@ -80,7 +82,7 @@ export function BookingCard({
       : (isConfirmed && isFuture) ||
         canCancel ||
         ((isCompleted || isPast) && Boolean(onMaterialsClick)) ||
-        (isCompleted && Boolean(onReviewClick));
+        (isCompleted && (Boolean(onReviewClick) || Boolean(reviewDisabledReason)));
 
   const counterpartLabel =
     currentUserRole === "student"
@@ -268,6 +270,11 @@ export function BookingCard({
                 >
                   Değerlendirme Yaz
                 </Button>
+              )}
+              {isCompleted && !onReviewClick && reviewDisabledReason && (
+                <span className="inline-flex items-center rounded-md border px-2.5 py-1 text-xs font-medium text-muted-foreground">
+                  {reviewDisabledReason}
+                </span>
               )}
             </>
           )}

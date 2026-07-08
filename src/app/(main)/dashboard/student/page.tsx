@@ -3,29 +3,28 @@
 import { useState } from "react";
 import Link from "next/link";
 import {
-  BookOpenCheck,
   Calendar,
+  ChevronDown,
+  ChevronRight,
   CheckCircle2,
   Clock3,
   FileQuestion,
   FolderOpen,
   Layers3,
+  PanelRightOpen,
 } from "lucide-react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import {
   fetchBookingArtifacts,
   fetchBookingQuestions,
-  fetchLessonRequests,
   fetchBookings,
   updateBookingStatus,
-  withdrawLessonRequest,
 } from "@/lib/lessonsApi";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { RouteGuard } from "@/components/shared/RouteGuard";
 import { StatCard } from "@/components/shared/StatCard";
 import { BookingCard } from "@/components/lessons/BookingCard";
-import { LessonRequestCard } from "@/components/lessons/LessonRequestCard";
 import { ReviewModal } from "@/components/lessons/ReviewModal";
 import { Button } from "@/components/ui/button";
 import {
@@ -56,6 +55,22 @@ function sortByStartDesc(bookings: Booking[]) {
   return [...bookings].sort(
     (a, b) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime()
   );
+}
+
+function reviewDeadlineForBooking(booking: Booking) {
+  const completedAt = booking.completed_at
+    ? new Date(booking.completed_at)
+    : new Date(
+        new Date(booking.start_time).getTime() +
+          (booking.duration_minutes || 0) * 60 * 1000
+      );
+  return new Date(completedAt.getTime() + 24 * 60 * 60 * 1000);
+}
+
+function canReviewBooking(booking: Booking, reviewedBookingIds: Set<string>) {
+  if ((booking.status || "").toLowerCase() !== "completed") return false;
+  if (reviewedBookingIds.has(booking.id)) return false;
+  return Date.now() <= reviewDeadlineForBooking(booking).getTime();
 }
 
 function firstNameFromUser(user?: { email?: string } | null) {
@@ -189,25 +204,13 @@ function LessonMaterialsDialog({
 }
 
 function StudentDashboardContent() {
-  const queryClient = useQueryClient();
   const { user, isAuthenticated } = useAuth();
   const [updatingId, setUpdatingId] = useState<string | null>(null);
-  const [withdrawingRequestId, setWithdrawingRequestId] = useState<string | null>(null);
   const [reviewBooking, setReviewBooking] = useState<Booking | null>(null);
   const [materialsBooking, setMaterialsBooking] = useState<Booking | null>(null);
   const [reviewedBookingIds, setReviewedBookingIds] = useState<Set<string>>(new Set());
   const [visiblePastCount, setVisiblePastCount] = useState(PAST_BATCH_SIZE);
-
-  const { data: lessonRequests = [], isLoading: requestsLoading } = useQuery({
-    queryKey: ["lesson-requests"],
-    queryFn: fetchLessonRequests,
-    enabled: isAuthenticated,
-  });
-
-  const activeLessonRequests = lessonRequests.filter((lr) => {
-    const s = (lr.status || "").toLowerCase();
-    return s === "pending" || s === "accepted";
-  });
+  const [isPastOpen, setIsPastOpen] = useState(true);
 
   const {
     data: bookings,
@@ -231,18 +234,6 @@ function StudentDashboardContent() {
       toast.error("Rezervasyon güncellenemedi.");
     } finally {
       setUpdatingId(null);
-    }
-  };
-
-  const handleWithdrawRequest = async (lessonRequestId: string) => {
-    setWithdrawingRequestId(lessonRequestId);
-    try {
-      await withdrawLessonRequest(lessonRequestId);
-      await queryClient.invalidateQueries({ queryKey: ["lesson-requests"] });
-    } catch {
-      toast.error("Ders talebi geri alınamadı.");
-    } finally {
-      setWithdrawingRequestId(null);
     }
   };
 
@@ -287,7 +278,9 @@ function StudentDashboardContent() {
           </div>
         </header>
 
-        <section className="space-y-4">
+        <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_230px]">
+          <main className="space-y-8">
+        <section id="upcoming-lessons" className="space-y-4 scroll-mt-24">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <h2 className="text-lg font-semibold tracking-tight">Yaklaşan Derslerim</h2>
@@ -331,54 +324,43 @@ function StudentDashboardContent() {
           )}
         </section>
 
-        <section className="space-y-4">
-          <div className="flex items-center gap-2">
-            <BookOpenCheck className="h-4 w-4 text-muted-foreground" />
-            <h2 className="text-base font-semibold tracking-tight">Ders Taleplerim</h2>
-            {activeLessonRequests.length > 0 && (
-              <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
-                {activeLessonRequests.length}
+        <section id="past-lessons" className="space-y-4 scroll-mt-24">
+          <button
+            type="button"
+            onClick={() => setIsPastOpen((open) => !open)}
+            className="flex w-full items-center justify-between rounded-lg border bg-card px-4 py-3 text-left transition-colors hover:bg-muted/40"
+          >
+            <span className="flex min-w-0 items-center gap-2">
+              <Layers3 className="h-4 w-4 shrink-0 text-muted-foreground" />
+              <span className="min-w-0">
+                <span className="block text-base font-semibold tracking-tight">
+                  Geçmiş Dersler
+                </span>
+                <span className="block text-sm text-muted-foreground">
+                  Materyaller, değerlendirmeler ve ders geçmişin tek hatta.
+                </span>
               </span>
-            )}
-          </div>
-          {requestsLoading ? (
-            <div className="space-y-3">
-              {[1, 2].map((i) => (
-                <Skeleton key={i} className="h-32 w-full rounded-lg" />
-              ))}
-            </div>
-          ) : activeLessonRequests.length === 0 ? (
-            <div className="rounded-lg border border-dashed bg-muted/30 p-4 text-sm text-muted-foreground">
-              Açık ders talebin yok.
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {activeLessonRequests.map((lr) => (
-                <LessonRequestCard
-                  key={lr.id}
-                  lessonRequest={lr}
-                  currentUserRole="student"
-                  onWithdraw={handleWithdrawRequest}
-                  isWithdrawing={withdrawingRequestId === lr.id}
-                />
-              ))}
-            </div>
-          )}
-        </section>
-
-        <section className="space-y-4">
-          <div className="flex items-center gap-2">
-            <Layers3 className="h-4 w-4 text-muted-foreground" />
-            <h2 className="text-base font-semibold tracking-tight">Geçmiş Dersler</h2>
-            <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
-              {pastBookings.length}
             </span>
-          </div>
+            <span className="ml-3 flex shrink-0 items-center gap-2">
+              <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                {pastBookings.length}
+              </span>
+              {isPastOpen ? (
+                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+              ) : (
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              )}
+            </span>
+          </button>
           {bookingsLoading ? (
             <div className="space-y-3">
               {[1, 2, 3].map((i) => (
                 <Skeleton key={i} className="h-40 w-full rounded-lg" />
               ))}
+            </div>
+          ) : !isPastOpen ? (
+            <div className="rounded-lg border border-dashed bg-muted/30 p-4 text-sm text-muted-foreground">
+              Geçmiş dersler kapalı. Açmak için başlığa dokun.
             </div>
           ) : pastBookings.length === 0 ? (
             <div className="rounded-lg border border-dashed bg-muted/30 p-4 text-sm text-muted-foreground">
@@ -386,19 +368,32 @@ function StudentDashboardContent() {
             </div>
           ) : (
             <>
-              <div className="space-y-3">
+              <div className="relative space-y-4 pl-8">
+                <div className="absolute bottom-4 left-3 top-4 w-px bg-border" aria-hidden="true" />
                 {visiblePastBookings.map((b, index) => (
                   <div
                     key={b.id}
-                    className="animate-element"
+                    className="relative animate-element"
                     style={{ animationDelay: `${Math.min(index, 5) * 45}ms` }}
                   >
+                    <span className="absolute -left-[2.05rem] top-5 flex h-6 w-6 items-center justify-center rounded-full border bg-background shadow-sm">
+                      <CheckCircle2 className="h-3.5 w-3.5 text-primary" aria-hidden="true" />
+                    </span>
                     <BookingCard
                       booking={b}
                       currentUserRole="student"
                       onStatusUpdate={handleStatusUpdate}
                       onMaterialsClick={setMaterialsBooking}
-                      onReviewClick={reviewedBookingIds.has(b.id) ? undefined : setReviewBooking}
+                      onReviewClick={
+                        canReviewBooking(b, reviewedBookingIds) ? setReviewBooking : undefined
+                      }
+                      reviewDisabledReason={
+                        (b.status || "").toLowerCase() === "completed" &&
+                        !reviewedBookingIds.has(b.id) &&
+                        !canReviewBooking(b, reviewedBookingIds)
+                          ? "Değerlendirme süresi doldu"
+                          : undefined
+                      }
                       isUpdating={updatingId === b.id}
                     />
                   </div>
@@ -418,7 +413,7 @@ function StudentDashboardContent() {
           )}
         </section>
 
-        <section className="space-y-3">
+        <section id="lesson-summary" className="space-y-3 scroll-mt-24">
           <h2 className="text-base font-semibold tracking-tight">Ders Özeti</h2>
           <div className="grid gap-4 sm:grid-cols-3">
             <StatCard
@@ -444,6 +439,37 @@ function StudentDashboardContent() {
             />
           </div>
         </section>
+          </main>
+
+          <aside className="hidden lg:block">
+            <div className="sticky top-24 space-y-2 rounded-lg border bg-card p-3">
+              <div className="mb-2 flex items-center gap-2 text-sm font-medium">
+                <PanelRightOpen className="h-4 w-4 text-muted-foreground" />
+                Hızlı erişim
+              </div>
+              <Button asChild variant="ghost" size="sm" className="w-full justify-start">
+                <a href="#upcoming-lessons">Yaklaşan dersler</a>
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="w-full justify-start"
+                onClick={() => {
+                  setIsPastOpen(true);
+                  document
+                    .getElementById("past-lessons")
+                    ?.scrollIntoView({ behavior: "smooth", block: "start" });
+                }}
+              >
+                Geçmiş dersler
+              </Button>
+              <Button asChild variant="ghost" size="sm" className="w-full justify-start">
+                <a href="#lesson-summary">Ders özeti</a>
+              </Button>
+            </div>
+          </aside>
+        </div>
 
         {reviewBooking && (
           <ReviewModal
