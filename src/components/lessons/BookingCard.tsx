@@ -1,6 +1,6 @@
 "use client";
 
-import { Calendar, Clock3, User, Wallet } from "lucide-react";
+import { Calendar, Clock3, FolderOpen, User, Wallet } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import StatusBadge from "@/components/shared/StatusBadge";
@@ -16,6 +16,7 @@ interface BookingCardProps {
     status: "confirmed" | "completed" | "cancelled"
   ) => void;
   onReviewClick?: (booking: Booking) => void;
+  onMaterialsClick?: (booking: Booking) => void;
   onConfirmLearningProgress?: (booking: Booking) => void;
   isUpdating?: boolean;
   isConfirmingLearning?: boolean;
@@ -44,6 +45,7 @@ export function BookingCard({
   currentUserRole,
   onStatusUpdate,
   onReviewClick,
+  onMaterialsClick,
   onConfirmLearningProgress,
   isUpdating = false,
   isConfirmingLearning = false,
@@ -58,6 +60,7 @@ export function BookingCard({
   const isConfirmed = status === "confirmed";
   const isCompleted = status === "completed";
   const isCancelled = status === "cancelled";
+  const isPast = new Date(booking.start_time) <= new Date();
   const isFuture = new Date(booking.start_time) > new Date();
   const canCancel =
     currentUserRole === "student" && !isCompleted && !isCancelled;
@@ -74,14 +77,17 @@ export function BookingCard({
   const hasActions =
     currentUserRole === "tutor"
       ? isPending || isConfirmed || canConfirmLearningProgress || isLearningProgressConfirmed
-      : (isConfirmed && isFuture) || canCancel || (isCompleted && Boolean(onReviewClick));
+      : (isConfirmed && isFuture) ||
+        canCancel ||
+        ((isCompleted || isPast) && Boolean(onMaterialsClick)) ||
+        (isCompleted && Boolean(onReviewClick));
 
   const counterpartLabel =
     currentUserRole === "student"
       ? booking.tutor.name
         ? `${booking.tutor.name} ${booking.tutor.surname}`
         : "Eğitmen bilgisi bekleniyor"
-      : booking.student.email;
+      : booking.student.display_name || booking.student.email;
 
   return (
     <Card>
@@ -240,6 +246,17 @@ export function BookingCard({
                   disabled={isUpdating}
                 >
                   İptal Et
+                </Button>
+              )}
+              {(isCompleted || isPast) && onMaterialsClick && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => onMaterialsClick(booking)}
+                  disabled={isUpdating}
+                >
+                  <FolderOpen className="mr-2 h-4 w-4" />
+                  Ders Materyalleri
                 </Button>
               )}
               {isCompleted && onReviewClick && (

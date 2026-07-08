@@ -282,7 +282,7 @@ export interface TutorProfile {
 
 export interface LessonRequest {
   id: string;
-  student: { id: string; email: string };
+  student: { id: string; email: string; display_name?: string };
   tutor: { id: string; name: string; surname: string };
   subject: Subject;
   message: string;
@@ -306,13 +306,20 @@ export interface MessageRequest {
 
 export interface Booking {
   id: string;
-  student: { id: string; email: string };
+  student: { id: string; email: string; display_name?: string };
   tutor: { id: string; name: string; surname: string };
   subject: Subject;
   start_time: string;
   duration_minutes: number;
   price: number;
-  status: "pending" | "confirmed" | "completed" | "cancelled";
+  status:
+    | "pending"
+    | "confirmed"
+    | "in_progress"
+    | "awaiting_confirmation"
+    | "completed"
+    | "disputed"
+    | "cancelled";
   is_trial?: boolean;
   lesson_request: string | null;
   room_url?: string;
@@ -320,6 +327,43 @@ export interface Booking {
   package_credit_units_used?: number;
   created_at: string;
   learning_context?: LearningContext | null;
+}
+
+export type LessonArtifactKind = "whiteboard" | "solved_question" | "material";
+
+export interface LessonArtifact {
+  id: string;
+  booking: string;
+  kind: LessonArtifactKind;
+  title: string;
+  description: string;
+  file_url: string;
+  external_url: string;
+  created_by: string | null;
+  created_at: string;
+}
+
+export interface SolvableQuestion {
+  id: string;
+  subject: Subject | null;
+  topic: {
+    id: string;
+    title: string;
+    exam_type: string;
+    subject_name: string;
+  } | null;
+  prompt: string;
+  answer: string;
+  explanation: string;
+  difficulty: "easy" | "medium" | "hard";
+}
+
+export interface BookingQuestion {
+  id: string;
+  booking: string;
+  question: SolvableQuestion;
+  order: number;
+  created_at: string;
 }
 
 export interface Conversation {

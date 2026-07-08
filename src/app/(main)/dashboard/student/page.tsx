@@ -2,10 +2,20 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Calendar, CheckCircle2, Clock3 } from "lucide-react";
+import {
+  BookOpenCheck,
+  Calendar,
+  CheckCircle2,
+  Clock3,
+  FileQuestion,
+  FolderOpen,
+  Layers3,
+} from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import {
+  fetchBookingArtifacts,
+  fetchBookingQuestions,
   fetchLessonRequests,
   fetchBookings,
   updateBookingStatus,
@@ -17,15 +27,165 @@ import { StatCard } from "@/components/shared/StatCard";
 import { BookingCard } from "@/components/lessons/BookingCard";
 import { LessonRequestCard } from "@/components/lessons/LessonRequestCard";
 import { ReviewModal } from "@/components/lessons/ReviewModal";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { Booking } from "@/types";
+import type { Booking, LessonArtifactKind } from "@/types";
 import { toast } from "sonner";
+
+const PAST_BATCH_SIZE = 6;
 
 function formatHours(hours: number): string {
   if (!hours) return "0";
   return Number.isInteger(hours) ? String(hours) : hours.toFixed(1);
+}
+
+function sortByStartAsc(bookings: Booking[]) {
+  return [...bookings].sort(
+    (a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
+  );
+}
+
+function sortByStartDesc(bookings: Booking[]) {
+  return [...bookings].sort(
+    (a, b) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime()
+  );
+}
+
+function firstNameFromUser(user?: { email?: string } | null) {
+  if (!user?.email) return "Öğrenci";
+  return user.email.split("@", 1)[0].replace(/[._-]+/g, " ");
+}
+
+function artifactKindLabel(kind: LessonArtifactKind) {
+  const labels: Record<LessonArtifactKind, string> = {
+    whiteboard: "Whiteboard",
+    solved_question: "Çözülen soru",
+    material: "Materyal",
+  };
+  return labels[kind] ?? kind;
+}
+
+function LessonMaterialsDialog({
+  booking,
+  open,
+  onOpenChange,
+}: {
+  booking: Booking | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const bookingId = booking?.id;
+  const { data: artifacts = [], isLoading: artifactsLoading } = useQuery({
+    queryKey: ["booking-artifacts", bookingId],
+    queryFn: () => fetchBookingArtifacts(bookingId as string),
+    enabled: open && Boolean(bookingId),
+  });
+  const { data: questions = [], isLoading: questionsLoading } = useQuery({
+    queryKey: ["booking-questions", bookingId],
+    queryFn: () => fetchBookingQuestions(bookingId as string),
+    enabled: open && Boolean(bookingId),
+  });
+  const isLoading = artifactsLoading || questionsLoading;
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Ders Materyalleri</DialogTitle>
+          <DialogDescription>
+            {booking
+              ? `${booking.subject.name} dersinden kalan whiteboard, soru ve çalışma dosyaları.`
+              : "Ders materyalleri"}
+          </DialogDescription>
+        </DialogHeader>
+
+        {isLoading ? (
+          <div className="space-y-3">
+            {[1, 2, 3].map((item) => (
+              <Skeleton key={item} className="h-20 rounded-lg" />
+            ))}
+          </div>
+        ) : (
+          <div className="space-y-5">
+            <section className="space-y-3">
+              <div className="flex items-center gap-2">
+                <FolderOpen className="h-4 w-4 text-muted-foreground" />
+                <h3 className="text-sm font-semibold">Paylaşılan materyaller</h3>
+              </div>
+              {artifacts.length === 0 ? (
+                <div className="rounded-lg border border-dashed bg-muted/30 p-4 text-sm text-muted-foreground">
+                  Bu derse henüz materyal eklenmemiş. Whiteboard veya çözülen sorular
+                  eklendiğinde burada açılıp indirilebilecek.
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {artifacts.map((artifact) => {
+                    const href = artifact.file_url || artifact.external_url;
+                    return (
+                      <div
+                        key={artifact.id}
+                        className="flex flex-col gap-3 rounded-lg border bg-card p-4 sm:flex-row sm:items-center sm:justify-between"
+                      >
+                        <div className="min-w-0">
+                          <p className="font-medium">{artifact.title}</p>
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            {artifactKindLabel(artifact.kind)}
+                          </p>
+                          {artifact.description && (
+                            <p className="mt-2 text-sm text-muted-foreground">
+                              {artifact.description}
+                            </p>
+                          )}
+                        </div>
+                        {href && (
+                          <Button asChild size="sm" variant="outline">
+                            <a href={href} target="_blank" rel="noreferrer">
+                              Aç / İndir
+                            </a>
+                          </Button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
+
+            <section className="space-y-3">
+              <div className="flex items-center gap-2">
+                <FileQuestion className="h-4 w-4 text-muted-foreground" />
+                <h3 className="text-sm font-semibold">Soru altyapısı</h3>
+              </div>
+              {questions.length === 0 ? (
+                <div className="rounded-lg border bg-muted/30 p-4 text-sm text-muted-foreground">
+                  Çözülebilir soru altyapısı hazır. İleride bu derste çözülen sorular,
+                  yanlış havuzu ve tekrar çalışmaları buradan büyüyecek.
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {questions.map((item) => (
+                    <div key={item.id} className="rounded-lg border bg-card p-4">
+                      <p className="text-sm font-medium">{item.question.prompt}</p>
+                      <p className="mt-2 text-xs text-muted-foreground">
+                        Zorluk: {item.question.difficulty}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
 }
 
 function StudentDashboardContent() {
@@ -34,7 +194,9 @@ function StudentDashboardContent() {
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [withdrawingRequestId, setWithdrawingRequestId] = useState<string | null>(null);
   const [reviewBooking, setReviewBooking] = useState<Booking | null>(null);
+  const [materialsBooking, setMaterialsBooking] = useState<Booking | null>(null);
   const [reviewedBookingIds, setReviewedBookingIds] = useState<Set<string>>(new Set());
+  const [visiblePastCount, setVisiblePastCount] = useState(PAST_BATCH_SIZE);
 
   const { data: lessonRequests = [], isLoading: requestsLoading } = useQuery({
     queryKey: ["lesson-requests"],
@@ -85,20 +247,26 @@ function StudentDashboardContent() {
   };
 
   const now = new Date();
-  const upcomingConfirmed =
+  const upcomingConfirmed = sortByStartAsc(
     bookings?.filter((b) => {
       const s = (b.status || "").toLowerCase();
-      return s === "confirmed" && new Date(b.start_time) > now;
-    }) ?? [];
-  const pendingBookings =
-    bookings?.filter((b) => (b.status || "").toLowerCase() === "pending") ?? [];
-  const pastBookings =
+      return s === "in_progress" || (s === "confirmed" && new Date(b.start_time) > now);
+    }) ?? []
+  );
+  const pastBookings = sortByStartDesc(
     bookings?.filter((b) => {
       const s = (b.status || "").toLowerCase();
-      const isConfirmedPast =
-        s === "confirmed" && new Date(b.start_time) <= now;
-      return s === "completed" || s === "cancelled" || isConfirmedPast;
-    }) ?? [];
+      const isConfirmedPast = s === "confirmed" && new Date(b.start_time) <= now;
+      return (
+        s === "completed" ||
+        s === "cancelled" ||
+        s === "awaiting_confirmation" ||
+        s === "disputed" ||
+        isConfirmedPast
+      );
+    }) ?? []
+  );
+  const visiblePastBookings = pastBookings.slice(0, visiblePastCount);
   const completedBookings =
     bookings?.filter((b) => (b.status || "").toLowerCase() === "completed") ?? [];
   const completedHours =
@@ -106,22 +274,160 @@ function StudentDashboardContent() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      <div className="space-y-6">
+      <div className="space-y-8">
         <header className="flex flex-col gap-4 border-b pb-6">
           <div>
             <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
               Öğrenci Panosu
             </h1>
             <p className="mt-1.5 max-w-2xl text-sm text-muted-foreground">
-              Ders taleplerini, rezervasyonlarını ve geçmiş derslerini buradan yönet.
-              {user?.email && <span className="ml-1">· {user.email}</span>}
+              Merhaba {firstNameFromUser(user)}. Sıradaki derslerini takip et,
+              derse gir ve geçmiş çalışmalarına buradan dön.
             </p>
           </div>
         </header>
 
+        <section className="space-y-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <h2 className="text-lg font-semibold tracking-tight">Yaklaşan Derslerim</h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Panoya girdiğinde en hızlı ulaşman gereken dersler burada.
+              </p>
+            </div>
+            <Button asChild variant="outline" size="sm">
+              <Link href="/tutors">Hoca Bul</Link>
+            </Button>
+          </div>
+
+          {bookingsLoading ? (
+            <div className="space-y-3">
+              {[1, 2, 3].map((i) => (
+                <Skeleton key={i} className="h-40 w-full rounded-lg" />
+              ))}
+            </div>
+          ) : upcomingConfirmed.length === 0 ? (
+            <EmptyState
+              title="Yaklaşan onaylı dersin yok"
+              description="Bir hoca ile ders planlandığında ilk olarak burada görünecek."
+              action={
+                <Button asChild>
+                  <Link href="/tutors">Hoca Bul</Link>
+                </Button>
+              }
+            />
+          ) : (
+            <div className="space-y-3">
+              {upcomingConfirmed.map((b) => (
+                <BookingCard
+                  key={b.id}
+                  booking={b}
+                  currentUserRole="student"
+                  onStatusUpdate={handleStatusUpdate}
+                  isUpdating={updatingId === b.id}
+                />
+              ))}
+            </div>
+          )}
+        </section>
+
+        <section className="space-y-4">
+          <div className="flex items-center gap-2">
+            <BookOpenCheck className="h-4 w-4 text-muted-foreground" />
+            <h2 className="text-base font-semibold tracking-tight">Ders Taleplerim</h2>
+            {activeLessonRequests.length > 0 && (
+              <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                {activeLessonRequests.length}
+              </span>
+            )}
+          </div>
+          {requestsLoading ? (
+            <div className="space-y-3">
+              {[1, 2].map((i) => (
+                <Skeleton key={i} className="h-32 w-full rounded-lg" />
+              ))}
+            </div>
+          ) : activeLessonRequests.length === 0 ? (
+            <div className="rounded-lg border border-dashed bg-muted/30 p-4 text-sm text-muted-foreground">
+              Açık ders talebin yok.
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {activeLessonRequests.map((lr) => (
+                <LessonRequestCard
+                  key={lr.id}
+                  lessonRequest={lr}
+                  currentUserRole="student"
+                  onWithdraw={handleWithdrawRequest}
+                  isWithdrawing={withdrawingRequestId === lr.id}
+                />
+              ))}
+            </div>
+          )}
+        </section>
+
+        <section className="space-y-4">
+          <div className="flex items-center gap-2">
+            <Layers3 className="h-4 w-4 text-muted-foreground" />
+            <h2 className="text-base font-semibold tracking-tight">Geçmiş Dersler</h2>
+            <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+              {pastBookings.length}
+            </span>
+          </div>
+          {bookingsLoading ? (
+            <div className="space-y-3">
+              {[1, 2, 3].map((i) => (
+                <Skeleton key={i} className="h-40 w-full rounded-lg" />
+              ))}
+            </div>
+          ) : pastBookings.length === 0 ? (
+            <div className="rounded-lg border border-dashed bg-muted/30 p-4 text-sm text-muted-foreground">
+              Geçmiş derslerin burada birikecek.
+            </div>
+          ) : (
+            <>
+              <div className="space-y-3">
+                {visiblePastBookings.map((b, index) => (
+                  <div
+                    key={b.id}
+                    className="animate-element"
+                    style={{ animationDelay: `${Math.min(index, 5) * 45}ms` }}
+                  >
+                    <BookingCard
+                      booking={b}
+                      currentUserRole="student"
+                      onStatusUpdate={handleStatusUpdate}
+                      onMaterialsClick={setMaterialsBooking}
+                      onReviewClick={reviewedBookingIds.has(b.id) ? undefined : setReviewBooking}
+                      isUpdating={updatingId === b.id}
+                    />
+                  </div>
+                ))}
+              </div>
+              {visiblePastCount < pastBookings.length && (
+                <div className="flex justify-center pt-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => setVisiblePastCount((count) => count + PAST_BATCH_SIZE)}
+                  >
+                    Daha fazla göster
+                  </Button>
+                </div>
+              )}
+            </>
+          )}
+        </section>
+
         <section className="space-y-3">
           <h2 className="text-base font-semibold tracking-tight">Ders Özeti</h2>
           <div className="grid gap-4 sm:grid-cols-3">
+            <StatCard
+              icon={<Calendar className="h-4 w-4" aria-hidden="true" />}
+              label="Yaklaşan ders"
+              value={upcomingConfirmed.length}
+              detail="Sıradaki onaylı derslerin"
+              isLoading={bookingsLoading}
+            />
             <StatCard
               icon={<CheckCircle2 className="h-4 w-4" aria-hidden="true" />}
               label="Tamamlanan ders"
@@ -136,164 +442,7 @@ function StudentDashboardContent() {
               detail="Tamamlanan derslerin toplam süresi"
               isLoading={bookingsLoading}
             />
-            <StatCard
-              icon={<Calendar className="h-4 w-4" aria-hidden="true" />}
-              label="Yaklaşan onaylı ders"
-              value={upcomingConfirmed.length}
-              detail="Onaylanmış, henüz gerçekleşmemiş dersler"
-              isLoading={bookingsLoading}
-            />
           </div>
-        </section>
-
-        <section className="rounded-xl border bg-card p-4 sm:p-5">
-          <div className="mb-4">
-            <h2 className="text-base font-semibold tracking-tight">Ders Yönetimi</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Ders taleplerin ve rezervasyonların eskisi gibi buradan yönetilir.
-            </p>
-          </div>
-
-          <Tabs defaultValue="requests">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="requests">
-                Ders Taleplerim
-                {activeLessonRequests.length > 0 && ` (${activeLessonRequests.length})`}
-              </TabsTrigger>
-              <TabsTrigger value="bookings">
-                Rezervasyonlarım
-                {bookings && bookings.length > 0 && ` (${bookings.length})`}
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="requests" className="mt-6">
-              {requestsLoading && (
-                <div className="space-y-3">
-                  {[1, 2, 3].map((i) => (
-                    <Skeleton key={i} className="h-32 w-full rounded-lg" />
-                  ))}
-                </div>
-              )}
-              {!requestsLoading && activeLessonRequests.length === 0 && (
-                <EmptyState
-                  title="Henüz ders talebiniz yok"
-                  description="Bir hoca profili ziyaret ederek ders talebi gönderin"
-                  action={
-                    <Button asChild>
-                      <Link href="/tutors">Hoca Bul</Link>
-                    </Button>
-                  }
-                />
-              )}
-              {!requestsLoading && activeLessonRequests.length > 0 && (
-                <div className="space-y-3">
-                  {activeLessonRequests.map((lr) => (
-                    <LessonRequestCard
-                      key={lr.id}
-                      lessonRequest={lr}
-                      currentUserRole="student"
-                      onWithdraw={handleWithdrawRequest}
-                      isWithdrawing={withdrawingRequestId === lr.id}
-                    />
-                  ))}
-                </div>
-              )}
-            </TabsContent>
-
-            <TabsContent value="bookings" className="mt-6">
-              {bookingsLoading && (
-                <div className="space-y-3">
-                  {[1, 2, 3].map((i) => (
-                    <Skeleton key={i} className="h-40 w-full rounded-lg" />
-                  ))}
-                </div>
-              )}
-              {!bookingsLoading && (
-                <>
-                  <section className="mb-8">
-                    <div className="mb-3 flex items-center gap-2">
-                      <h3 className="text-sm font-semibold">Yaklaşan Onaylı Dersler</h3>
-                      <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
-                        {upcomingConfirmed.length}
-                      </span>
-                    </div>
-                    {upcomingConfirmed.length === 0 ? (
-                      <EmptyState
-                        title="Yaklaşan onaylı dersiniz yok"
-                        description="Hoca ile rezervasyon oluşturulduktan ve onaylandıktan sonra burada görünecek"
-                        action={
-                          <Button asChild variant="outline" size="sm">
-                            <Link href="/tutors">Hoca Bul</Link>
-                          </Button>
-                        }
-                      />
-                    ) : (
-                      <div className="space-y-3">
-                        {upcomingConfirmed.map((b) => (
-                          <BookingCard
-                            key={b.id}
-                            booking={b}
-                            currentUserRole="student"
-                            onStatusUpdate={handleStatusUpdate}
-                            isUpdating={updatingId === b.id}
-                          />
-                        ))}
-                      </div>
-                    )}
-                  </section>
-
-                  <section className="mb-8">
-                    <div className="mb-3 flex items-center gap-2">
-                      <h3 className="text-sm font-semibold">Onay Bekleyen Rezervasyonlar</h3>
-                      <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
-                        {pendingBookings.length}
-                      </span>
-                    </div>
-                    {pendingBookings.length === 0 ? (
-                      <p className="text-sm text-muted-foreground">Yok</p>
-                    ) : (
-                      <div className="space-y-3">
-                        {pendingBookings.map((b) => (
-                          <BookingCard
-                            key={b.id}
-                            booking={b}
-                            currentUserRole="student"
-                            onStatusUpdate={handleStatusUpdate}
-                            isUpdating={updatingId === b.id}
-                          />
-                        ))}
-                      </div>
-                    )}
-                  </section>
-
-                  <section>
-                    <div className="mb-3 flex items-center gap-2">
-                      <h3 className="text-sm font-semibold">Geçmiş Dersler</h3>
-                      <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
-                        {pastBookings.length}
-                      </span>
-                    </div>
-                    {pastBookings.length === 0 ? (
-                      <p className="text-sm text-muted-foreground">Yok</p>
-                    ) : (
-                      <div className="space-y-3">
-                        {pastBookings.map((b) => (
-                          <BookingCard
-                            key={b.id}
-                            booking={b}
-                            currentUserRole="student"
-                            onStatusUpdate={handleStatusUpdate}
-                            onReviewClick={reviewedBookingIds.has(b.id) ? undefined : setReviewBooking}
-                            isUpdating={updatingId === b.id}
-                          />
-                        ))}
-                      </div>
-                    )}
-                  </section>
-                </>
-              )}
-            </TabsContent>
-          </Tabs>
         </section>
 
         {reviewBooking && (
@@ -302,12 +451,22 @@ function StudentDashboardContent() {
             isOpen={!!reviewBooking}
             onClose={() => setReviewBooking(null)}
             onSuccess={() => {
-              if (reviewBooking) setReviewedBookingIds((prev) => new Set(prev).add(reviewBooking.id));
+              if (reviewBooking) {
+                setReviewedBookingIds((prev) => new Set(prev).add(reviewBooking.id));
+              }
               setReviewBooking(null);
               refetchBookings();
             }}
           />
         )}
+
+        <LessonMaterialsDialog
+          booking={materialsBooking}
+          open={!!materialsBooking}
+          onOpenChange={(open) => {
+            if (!open) setMaterialsBooking(null);
+          }}
+        />
       </div>
     </div>
   );

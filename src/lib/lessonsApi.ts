@@ -1,5 +1,11 @@
 import api from "./api";
-import { LessonRequest, Booking, BusyInterval } from "@/types";
+import {
+  LessonRequest,
+  Booking,
+  BookingQuestion,
+  BusyInterval,
+  LessonArtifact,
+} from "@/types";
 
 export interface LearningContextPayload {
   learning_goal_id?: string;
@@ -106,6 +112,24 @@ export async function fetchSessionToken(
 ): Promise<SessionToken> {
   const response = await api.get<SessionToken>(
     `/bookings/${bookingId}/session-token/`
+  );
+  return response.data;
+}
+
+export async function fetchBookingArtifacts(
+  bookingId: string
+): Promise<LessonArtifact[]> {
+  const response = await api.get<LessonArtifact[]>(
+    `/bookings/${bookingId}/artifacts/`
+  );
+  return response.data;
+}
+
+export async function fetchBookingQuestions(
+  bookingId: string
+): Promise<BookingQuestion[]> {
+  const response = await api.get<BookingQuestion[]>(
+    `/bookings/${bookingId}/questions/`
   );
   return response.data;
 }
