@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { setTheme, type Theme } from "@/lib/theme";
 import {
   AIChatResponse,
   AIIntent,
@@ -102,6 +103,7 @@ function AIPageContent() {
         message: text,
         conversation_id: conversationId,
       });
+      applyAssistantAction(response);
       setConversationId(response.conversation_id);
       setMessages((current) => [
         ...current,
@@ -123,6 +125,19 @@ function AIPageContent() {
     } finally {
       setIsSending(false);
       requestAnimationFrame(() => textareaRef.current?.focus());
+    }
+  };
+
+  const applyAssistantAction = (response: AIChatResponse) => {
+    const action = response.metadata?.action;
+    if (!action || typeof action !== "object") return;
+    const typedAction = action as { type?: string; status?: string; theme?: Theme };
+    if (
+      typedAction.type === "set_theme" &&
+      typedAction.status === "completed" &&
+      (typedAction.theme === "dark" || typedAction.theme === "light")
+    ) {
+      setTheme(typedAction.theme);
     }
   };
 
