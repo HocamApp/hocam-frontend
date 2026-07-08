@@ -110,6 +110,9 @@ function ConversationContent({
   const isPageVisible = usePageVisibility();
   const bottomRef = useRef<HTMLDivElement>(null);
   const sentIdsRef = useRef<Set<string>>(new Set());
+  const seenServerIdsRef = useRef<Set<string>>(new Set());
+  const arrivingIdsRef = useRef<Set<string>>(new Set());
+  const hasLoadedServerMessagesRef = useRef(false);
   const [localMessages, setLocalMessages] = useState<Message[]>([]);
   const [isBookingOpen, setIsBookingOpen] = useState(false);
   const [replyTo, setReplyTo] = useState<Message | null>(null);
@@ -159,6 +162,30 @@ function ConversationContent({
     queryClient.invalidateQueries({ queryKey: ["conversations"] });
     queryClient.invalidateQueries({ queryKey: ["messages", conversationId] });
   }, [conversationId, isAuthenticated, isPageVisible, queryClient]);
+
+  useEffect(() => {
+    seenServerIdsRef.current = new Set();
+    arrivingIdsRef.current = new Set();
+    hasLoadedServerMessagesRef.current = false;
+    sentIdsRef.current = new Set();
+    setLocalMessages([]);
+  }, [conversationId]);
+
+  useEffect(() => {
+    if (!messages) return;
+    const nextIds = new Set(messages.map((message) => message.id));
+    if (!hasLoadedServerMessagesRef.current) {
+      seenServerIdsRef.current = nextIds;
+      hasLoadedServerMessagesRef.current = true;
+      return;
+    }
+    for (const message of messages) {
+      if (!seenServerIdsRef.current.has(message.id)) {
+        arrivingIdsRef.current.add(message.id);
+      }
+    }
+    seenServerIdsRef.current = nextIds;
+  }, [messages]);
 
   const allMessages = useMemo(() => {
     const serverIds = new Set((messages || []).map((m) => m.id));
@@ -335,7 +362,10 @@ function ConversationContent({
                     key={item.message.id}
                     message={item.message}
                     isOwnMessage={item.message.sender === user?.id}
-                    isNew={sentIdsRef.current.has(item.message.id)}
+                    isNew={
+                      sentIdsRef.current.has(item.message.id) ||
+                      arrivingIdsRef.current.has(item.message.id)
+                    }
                     showTime={item.showTime}
                     groupedWithPrev={item.groupedWithPrev}
                     onReply={setReplyTo}

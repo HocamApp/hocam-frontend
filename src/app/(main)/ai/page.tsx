@@ -22,6 +22,7 @@ type ChatMessage = {
   role: "user" | "assistant";
   content: string;
   intent?: AIIntent;
+  isFresh?: boolean;
 };
 
 const suggestionGroups = [
@@ -93,6 +94,7 @@ function AIPageContent() {
       id: crypto.randomUUID(),
       role: "user",
       content: text,
+      isFresh: true,
     };
     setMessages((current) => [...current, userMessage]);
     setInput("");
@@ -113,6 +115,7 @@ function AIPageContent() {
           role: "assistant",
           content: response.message,
           intent: response.intent,
+          isFresh: true,
         },
       ]);
     } catch (err) {
@@ -187,7 +190,8 @@ function AIPageContent() {
                     "max-w-[86%] rounded-lg px-4 py-3 text-sm leading-6 shadow-sm sm:max-w-[76%]",
                     message.role === "user"
                       ? "bg-primary text-primary-foreground"
-                      : "border border-border bg-background text-foreground"
+                      : "border border-border bg-background text-foreground",
+                    message.isFresh && "motion-safe:animate-message-pop"
                   )}
                 >
                   {message.intent && message.role === "assistant" && (
