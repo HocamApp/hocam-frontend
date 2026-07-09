@@ -2,7 +2,16 @@
 
 import { FormEvent, useMemo, useRef, useState } from "react";
 import axios from "axios";
-import { Bot, CalendarClock, GraduationCap, LifeBuoy, Send, Sparkles } from "lucide-react";
+import {
+  Bot,
+  CalendarClock,
+  GraduationCap,
+  Info,
+  LifeBuoy,
+  PackageCheck,
+  Send,
+  Sparkles,
+} from "lucide-react";
 
 import { RouteGuard } from "@/components/shared/RouteGuard";
 import { Button } from "@/components/ui/button";
@@ -31,6 +40,7 @@ const suggestionGroups = [
     icon: CalendarClock,
     prompts: [
       "Yaklaşan derslerimi gösterir misin?",
+      "Dersime kaç dakika kaldı?",
       "Derse nereden katılacağım?",
     ],
   },
@@ -38,8 +48,27 @@ const suggestionGroups = [
     label: "Mentor",
     icon: GraduationCap,
     prompts: [
+      "Burak",
+      "Burak hoca",
+      "Hocalar hakkında bilgi verir misin?",
       "TYT matematik için uygun fiyatlı hoca arıyorum.",
-      "KPSS Türkçe için mentor önerir misin?",
+    ],
+  },
+  {
+    label: "Paket",
+    icon: PackageCheck,
+    prompts: [
+      "TYT için aralıklı interval paket önerir misin?",
+      "Aktif paketleri anlatır mısın?",
+    ],
+  },
+  {
+    label: "Hocam",
+    icon: Info,
+    prompts: [
+      "Hocam web sitesi nasıl çalışır?",
+      "Hocam co-founder kim?",
+      "Ben kimim, beni bulabilir misin?",
     ],
   },
   {
