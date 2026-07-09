@@ -628,6 +628,11 @@ function ProfileStudio({
                 </div>
               ))}
             </div>
+            {Boolean(profile.no_show_count) && (
+              <p className="text-xs text-muted-foreground">
+                Devamsızlık sayısı: {profile.no_show_count}
+              </p>
+            )}
             <Button asChild variant="outline" className="w-full">
               <Link href={`/tutors/${profile.id}`}>
                 <ExternalLink className="mr-2 h-4 w-4" />
@@ -736,7 +741,7 @@ function TutorDashboardContent() {
     () =>
       bookings?.filter((b) => {
         const s = (b.status || "").toLowerCase();
-        return s === "completed" || s === "cancelled";
+        return s === "completed" || s === "cancelled" || s === "disputed";
       }) ?? [],
     [bookings]
   );

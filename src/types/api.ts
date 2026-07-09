@@ -278,6 +278,8 @@ export interface TutorProfile {
   trial_lessons_remaining?: number | null;
   subjects: Subject[];
   created_at: string;
+  /** Only present on GET/PATCH /api/tutors/me/ — never the public list/detail response. */
+  no_show_count?: number;
 }
 
 export interface LessonRequest {
@@ -321,6 +323,8 @@ export interface Booking {
     | "disputed"
     | "cancelled";
   completed_at?: string | null;
+  dispute_category?: "" | "tutor_no_show" | "technical_issue" | "interrupted" | "conduct" | "other";
+  disputed_at?: string | null;
   is_trial?: boolean;
   lesson_request: string | null;
   room_url?: string;
