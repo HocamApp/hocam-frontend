@@ -48,8 +48,6 @@ const suggestionGroups = [
     label: "Mentor",
     icon: GraduationCap,
     prompts: [
-      "Burak",
-      "Burak hoca",
       "Hocalar hakkında bilgi verir misin?",
       "TYT matematik için uygun fiyatlı hoca arıyorum.",
     ],
@@ -67,7 +65,6 @@ const suggestionGroups = [
     icon: Info,
     prompts: [
       "Hocam web sitesi nasıl çalışır?",
-      "Hocam co-founder kim?",
       "Ben kimim, beni bulabilir misin?",
     ],
   },
