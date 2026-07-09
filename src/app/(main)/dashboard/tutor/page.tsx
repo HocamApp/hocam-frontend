@@ -10,7 +10,6 @@ import {
   CheckCircle2,
   Clock,
   ExternalLink,
-  MessageSquare,
   PlayCircle,
   Star,
   Video,
@@ -18,14 +17,11 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
-import {
-  fetchLessonRequests,
-  fetchBookings,
-  updateBookingStatus,
-  updateLessonRequestStatus,
-} from "@/lib/lessonsApi";
+import { fetchBookings, updateBookingStatus } from "@/lib/lessonsApi";
 import {
   fetchMyTutorProfile,
+  fetchTutorReviewSummary,
+  fetchTutorReviews,
   updateMyTutorProfile,
   uploadTutorProfilePicture,
 } from "@/lib/tutorsApi";
@@ -52,9 +48,11 @@ import { EmptyState } from "@/components/shared/EmptyState";
 import { RouteGuard } from "@/components/shared/RouteGuard";
 import { BookingCard } from "@/components/lessons/BookingCard";
 import { LessonMaterialsDialog } from "@/components/lessons/LessonMaterialsDialog";
-import { LessonRequestCard } from "@/components/lessons/LessonRequestCard";
 import { AvailabilityCalendar } from "@/components/tutors/AvailabilityCalendar";
 import { AvailabilityEditor } from "@/components/tutors/AvailabilityEditor";
+import { ReviewCard } from "@/components/tutors/ReviewCard";
+import { ReviewSummary } from "@/components/tutors/ReviewSummary";
+import { SubjectRatingBreakdown } from "@/components/tutors/SubjectRatingBreakdown";
 import { VerificationForm } from "@/components/tutors/VerificationForm";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { AnimatedTabs } from "@/components/ui/animated-tabs";
@@ -84,10 +82,10 @@ import {
 
 const TUTOR_TABS = [
   { value: "profile", label: "Profil" },
-  { value: "requests", label: "Mesaj İstekleri" },
   { value: "bookings", label: "Rezervasyonlar" },
   { value: "students", label: "Öğrencilerim" },
   { value: "earnings", label: "Kazançlar" },
+  { value: "reviews", label: "Değerlendirmeler" },
   { value: "availability", label: "Müsaitlik" },
   { value: "verification", label: "Doğrulama" },
 ];
@@ -249,7 +247,13 @@ function StatTile({
   );
 }
 
-function StudentRosterCard({ entry }: { entry: StudentRosterEntry }) {
+function StudentRosterCard({
+  entry,
+  onSelect,
+}: {
+  entry: StudentRosterEntry;
+  onSelect: (studentId: string) => void;
+}) {
   const {
     student,
     totalLessons,
@@ -262,7 +266,18 @@ function StudentRosterCard({ entry }: { entry: StudentRosterEntry }) {
   const [firstName, lastName] = name.trim().split(/\s+/);
 
   return (
-    <Card>
+    <Card
+      role="button"
+      tabIndex={0}
+      onClick={() => onSelect(student.id)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onSelect(student.id);
+        }
+      }}
+      className="cursor-pointer transition-colors hover:bg-muted/40"
+    >
       <CardContent className="flex items-start gap-3 p-4">
         <Avatar className="h-10 w-10 shrink-0">
           <AvatarFallback className="bg-primary/10 text-sm font-semibold text-primary">
@@ -693,11 +708,93 @@ function ProfileStudio({
   );
 }
 
+function StudentDetailDialog({
+  entry,
+  bookings,
+  open,
+  onOpenChange,
+  onStatusUpdate,
+  onConfirmLearningProgress,
+  onMaterialsClick,
+  updatingId,
+  confirmingBookingId,
+  isConfirmingLearning,
+}: {
+  entry: StudentRosterEntry | null;
+  bookings: Booking[];
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onStatusUpdate: (
+    bookingId: string,
+    status: "confirmed" | "completed" | "cancelled"
+  ) => void;
+  onConfirmLearningProgress: (booking: Booking) => void;
+  onMaterialsClick: (booking: Booking) => void;
+  updatingId: string | null;
+  confirmingBookingId: string | null;
+  isConfirmingLearning: boolean;
+}) {
+  if (!entry) return null;
+
+  const { student, remainingCredits, totalCredits } = entry;
+  const name = student.display_name || student.email;
+  const [firstName, lastName] = name.trim().split(/\s+/);
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
+        <DialogHeader>
+          <div className="flex items-center gap-3">
+            <Avatar className="h-10 w-10 shrink-0">
+              <AvatarFallback className="bg-primary/10 text-sm font-semibold text-primary">
+                {getInitials(firstName, lastName)}
+              </AvatarFallback>
+            </Avatar>
+            <div className="min-w-0">
+              <DialogTitle className="truncate">{name}</DialogTitle>
+              {student.display_name && (
+                <p className="truncate text-sm text-muted-foreground">{student.email}</p>
+              )}
+            </div>
+          </div>
+        </DialogHeader>
+
+        {totalCredits > 0 && (
+          <Badge variant="outline" className="w-fit">
+            {remainingCredits}/{totalCredits} paket hakkı
+          </Badge>
+        )}
+
+        <div className="space-y-3">
+          {bookings.length === 0 ? (
+            <EmptyState
+              title="Henüz ders yok"
+              description="Bu öğrenciyle henüz bir rezervasyon bulunmuyor."
+            />
+          ) : (
+            bookings.map((b) => (
+              <BookingCard
+                key={b.id}
+                booking={b}
+                currentUserRole="tutor"
+                onStatusUpdate={onStatusUpdate}
+                onConfirmLearningProgress={onConfirmLearningProgress}
+                onMaterialsClick={onMaterialsClick}
+                isUpdating={updatingId === b.id}
+                isConfirmingLearning={isConfirmingLearning && confirmingBookingId === b.id}
+              />
+            ))
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function TutorDashboardContent() {
   const queryClient = useQueryClient();
   const { user, isAuthenticated } = useAuth();
   const [updatingId, setUpdatingId] = useState<string | null>(null);
-  const [updatingRequestId, setUpdatingRequestId] = useState<string | null>(null);
   const [introVideoInput, setIntroVideoInput] = useState("");
   const [isSavingVideo, setIsSavingVideo] = useState(false);
   const [videoError, setVideoError] = useState<string | null>(null);
@@ -707,6 +804,7 @@ function TutorDashboardContent() {
   const [confirmingBooking, setConfirmingBooking] = useState<Booking | null>(null);
   const [isConfirmingLearning, setIsConfirmingLearning] = useState(false);
   const [materialsBooking, setMaterialsBooking] = useState<Booking | null>(null);
+  const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
 
   const {
     data: profile,
@@ -715,17 +813,6 @@ function TutorDashboardContent() {
   } = useQuery({
     queryKey: ["tutor-me"],
     queryFn: fetchMyTutorProfile,
-    enabled: isAuthenticated,
-  });
-
-  const {
-    data: lessonRequests = [],
-    isLoading: requestsLoading,
-    error: requestsError,
-    refetch: refetchRequests,
-  } = useQuery({
-    queryKey: ["lesson-requests"],
-    queryFn: fetchLessonRequests,
     enabled: isAuthenticated,
   });
 
@@ -763,6 +850,34 @@ function TutorDashboardContent() {
     enabled: isAuthenticated,
   });
 
+  // Public review endpoints require both is_verified and is_public — an
+  // unverified or currently-private tutor gets a 404 querying even their own
+  // id, so we never issue the request in that case (see reviews TabsContent
+  // for the corresponding empty-state copy).
+  const canViewOwnReviews = isAuthenticated && !!profile?.is_verified && !!profile?.is_public;
+
+  const {
+    data: tutorReviews = [],
+    isLoading: reviewsTabLoading,
+    error: reviewsTabError,
+    refetch: refetchTutorReviews,
+  } = useQuery({
+    queryKey: ["tutor-reviews", profile?.id],
+    queryFn: () => fetchTutorReviews(profile!.id),
+    enabled: canViewOwnReviews,
+  });
+
+  const {
+    data: tutorReviewSummary,
+    isLoading: reviewSummaryLoading,
+    error: reviewSummaryError,
+    refetch: refetchReviewSummary,
+  } = useQuery({
+    queryKey: ["tutor-review-summary", profile?.id],
+    queryFn: () => fetchTutorReviewSummary(profile!.id),
+    enabled: canViewOwnReviews,
+  });
+
   useEffect(() => {
     if (profile) {
       setIntroVideoInput(profile.intro_video_url ?? "");
@@ -792,7 +907,19 @@ function TutorDashboardContent() {
     [bookings, packagePurchases]
   );
 
-  const pendingRequests = lessonRequests.filter((lr) => lr.status === "pending");
+  const selectedStudentEntry = useMemo(
+    () => studentRoster.find((e) => e.student.id === selectedStudentId) ?? null,
+    [studentRoster, selectedStudentId]
+  );
+
+  const selectedStudentBookings = useMemo(
+    () =>
+      selectedStudentId
+        ? sortByStartTime((bookings ?? []).filter((b) => b.student.id === selectedStudentId))
+        : [],
+    [bookings, selectedStudentId]
+  );
+
   const confirmedBookings = activeBookings.filter((b) => b.status === "confirmed");
   const nextBooking = sortByStartTime(confirmedBookings)[0] ?? sortByStartTime(activeBookings)[0];
   const completedBookings = pastBookings.filter((b) => b.status === "completed");
@@ -843,34 +970,6 @@ function TutorDashboardContent() {
       toast.error(getApiErrorMessage(error, "İlerleme onaylanamadı."));
     } finally {
       setIsConfirmingLearning(false);
-    }
-  };
-
-  const handleAcceptRequest = async (lessonRequestId: string) => {
-    setUpdatingRequestId(lessonRequestId);
-    try {
-      const updated = await updateLessonRequestStatus(lessonRequestId, "accepted");
-      await queryClient.invalidateQueries({ queryKey: ["lesson-requests"] });
-      if (updated.conversation_id) {
-        window.location.href = `/messages/${updated.conversation_id}`;
-      }
-    } catch {
-      toast.error("Ders talebi güncellenemedi.");
-    } finally {
-      setUpdatingRequestId(null);
-    }
-  };
-
-  const handleDeclineRequest = async (lessonRequestId: string) => {
-    setUpdatingRequestId(lessonRequestId);
-    try {
-      await updateLessonRequestStatus(lessonRequestId, "declined");
-      await queryClient.invalidateQueries({ queryKey: ["lesson-requests"] });
-      toast.success("Ders talebi reddedildi.");
-    } catch {
-      toast.error("Ders talebi güncellenemedi.");
-    } finally {
-      setUpdatingRequestId(null);
     }
   };
 
@@ -1004,13 +1103,7 @@ function TutorDashboardContent() {
         </div>
       </header>
 
-      <div className="mb-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <StatTile
-          icon={<MessageSquare className="h-5 w-5" />}
-          label="Bekleyen İstek"
-          value={pendingRequests.length}
-          detail="Yanıt bekleyen mesaj talebi"
-        />
+      <div className="mb-6 grid gap-4 md:grid-cols-3">
         <StatTile
           icon={<Calendar className="h-5 w-5" />}
           label="Yaklaşan Ders"
@@ -1031,67 +1124,44 @@ function TutorDashboardContent() {
         />
       </div>
 
-      <div className="mb-6 grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Clock className="h-4 w-4 text-primary" />
-              Sıradaki Ders
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {nextBooking ? (
-              <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                <div>
-                  <p className="font-medium">
-                    {formatDate(nextBooking.start_time)} ·{" "}
-                    {new Date(nextBooking.start_time).toLocaleTimeString("tr-TR", {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    {nextBooking.duration_minutes} dakika · {formatPrice(nextBooking.price)}
-                  </p>
-                </div>
-                {nextBooking.room_url ? (
-                  <Button asChild>
-                    <a href={`/session/${nextBooking.id}`}>
-                      <Video className="mr-2 h-4 w-4" />
-                      Derse Katıl
-                    </a>
-                  </Button>
-                ) : (
-                  <Badge variant="outline">Oda onaydan sonra oluşur</Badge>
-                )}
+      <Card className="mb-6">
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Clock className="h-4 w-4 text-primary" />
+            Sıradaki Ders
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {nextBooking ? (
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div>
+                <p className="font-medium">
+                  {formatDate(nextBooking.start_time)} ·{" "}
+                  {new Date(nextBooking.start_time).toLocaleTimeString("tr-TR", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {nextBooking.duration_minutes} dakika · {formatPrice(nextBooking.price)}
+                </p>
               </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">Yaklaşan ders bulunmuyor.</p>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">Profil Durumu</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="mb-3 flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Tamamlanma</span>
-              <span className="font-medium">{profileCompletion}%</span>
+              {nextBooking.room_url ? (
+                <Button asChild>
+                  <a href={`/session/${nextBooking.id}`}>
+                    <Video className="mr-2 h-4 w-4" />
+                    Derse Katıl
+                  </a>
+                </Button>
+              ) : (
+                <Badge variant="outline">Oda onaydan sonra oluşur</Badge>
+              )}
             </div>
-            <div className="h-2 overflow-hidden rounded-full bg-muted">
-              <div
-                className="h-full rounded-full bg-primary transition-all"
-                style={{ width: `${profileCompletion}%` }}
-              />
-            </div>
-            <p className="mt-3 text-sm text-muted-foreground">
-              {availability.length} müsaitlik penceresi · {profile.subjects.length} ders
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">Yaklaşan ders bulunmuyor.</p>
+          )}
+        </CardContent>
+      </Card>
 
       <Card className="mb-6">
         <CardHeader className="pb-2">
@@ -1157,44 +1227,6 @@ function TutorDashboardContent() {
             onClearVideo={handleClearVideo}
             onPhotoSelected={handlePhotoSelected}
           />
-        </TabsContent>
-
-        <TabsContent value="requests" className="mt-6">
-          {requestsError && (
-            <div className="flex flex-col items-center gap-3 py-10 text-center">
-              <p className="text-sm text-muted-foreground">Ders talepleri yüklenemedi.</p>
-              <Button variant="outline" size="sm" onClick={() => refetchRequests()}>
-                Tekrar Dene
-              </Button>
-            </div>
-          )}
-          {!requestsError && requestsLoading && (
-            <div className="space-y-3">
-              {[1, 2, 3].map((i) => (
-                <Skeleton key={i} className="h-32 w-full rounded-lg" />
-              ))}
-            </div>
-          )}
-          {!requestsError && !requestsLoading && lessonRequests.length === 0 && (
-            <EmptyState
-              title="Henüz mesaj isteğiniz yok"
-              description="Öğrenciler profilinizi ziyaret ederek mesaj isteği gönderebilir"
-            />
-          )}
-          {!requestsError && !requestsLoading && lessonRequests.length > 0 && (
-            <div className="space-y-3">
-              {lessonRequests.map((lr) => (
-                <LessonRequestCard
-                  key={lr.id}
-                  lessonRequest={lr}
-                  currentUserRole="tutor"
-                  onAccept={handleAcceptRequest}
-                  onDecline={handleDeclineRequest}
-                  isUpdating={updatingRequestId === lr.id}
-                />
-              ))}
-            </div>
-          )}
         </TabsContent>
 
         <TabsContent value="bookings" className="mt-6">
@@ -1299,18 +1331,31 @@ function TutorDashboardContent() {
               ))}
             </div>
           )}
-          {!bookingsError && !bookingsLoading && studentRoster.length === 0 && (
-            <EmptyState
-              title="Henüz öğrenciniz yok"
-              description="Rezervasyonlar onaylandıkça öğrencileriniz burada listelenir."
-            />
-          )}
-          {!bookingsError && !bookingsLoading && studentRoster.length > 0 && (
-            <div className="space-y-3">
-              {studentRoster.map((entry) => (
-                <StudentRosterCard key={entry.student.id} entry={entry} />
-              ))}
-            </div>
+          {!bookingsError && !bookingsLoading && (
+            <>
+              <div className="mb-2 flex items-center gap-2">
+                <h3 className="text-sm font-semibold">Öğrencilerim</h3>
+                <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                  {studentRoster.length}
+                </span>
+              </div>
+              {studentRoster.length === 0 ? (
+                <EmptyState
+                  title="Henüz öğrenciniz yok"
+                  description="Rezervasyonlar onaylandıkça öğrencileriniz burada listelenir."
+                />
+              ) : (
+                <div className="space-y-3">
+                  {studentRoster.map((entry) => (
+                    <StudentRosterCard
+                      key={entry.student.id}
+                      entry={entry}
+                      onSelect={setSelectedStudentId}
+                    />
+                  ))}
+                </div>
+              )}
+            </>
           )}
         </TabsContent>
 
@@ -1361,6 +1406,58 @@ function TutorDashboardContent() {
           )}
         </TabsContent>
 
+        <TabsContent value="reviews" className="mt-6">
+          {!profile.is_verified ? (
+            <EmptyState
+              title="Henüz doğrulanmadın"
+              description="Profilin doğrulandıktan sonra değerlendirmelerin burada görünecek."
+            />
+          ) : !profile.is_public ? (
+            <EmptyState
+              title="Profilin şu anda gizli"
+              description="Profilini herkese açık yaptığında değerlendirmelerin burada görünecek."
+            />
+          ) : reviewsTabError || reviewSummaryError ? (
+            <div className="flex flex-col items-center gap-3 py-10 text-center">
+              <p className="text-sm text-muted-foreground">Değerlendirmeler yüklenemedi.</p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  refetchTutorReviews();
+                  refetchReviewSummary();
+                }}
+              >
+                Tekrar Dene
+              </Button>
+            </div>
+          ) : reviewsTabLoading || reviewSummaryLoading ? (
+            <div className="space-y-4">
+              <Skeleton className="h-32 w-full rounded-lg" />
+              <Skeleton className="h-40 w-full rounded-lg" />
+            </div>
+          ) : (
+            tutorReviewSummary && (
+              <div className="space-y-6">
+                <ReviewSummary summary={tutorReviewSummary} />
+                <SubjectRatingBreakdown subjectRatings={tutorReviewSummary.subject_ratings} />
+                {tutorReviews.length === 0 ? (
+                  <EmptyState
+                    title="Henüz değerlendirme yok"
+                    description="Tamamlanan derslerden gelen değerlendirmeler burada listelenir."
+                  />
+                ) : (
+                  <div className="space-y-3">
+                    {tutorReviews.map((review) => (
+                      <ReviewCard key={review.id} review={review} />
+                    ))}
+                  </div>
+                )}
+              </div>
+            )
+          )}
+        </TabsContent>
+
         <TabsContent value="availability" className="mt-6 space-y-6">
           <div>
             <h3 className="mb-2 text-sm font-semibold">Önümüzdeki 14 Gün</h3>
@@ -1401,6 +1498,21 @@ function TutorDashboardContent() {
         onOpenChange={(open) => {
           if (!open) setMaterialsBooking(null);
         }}
+      />
+
+      <StudentDetailDialog
+        entry={selectedStudentEntry}
+        bookings={selectedStudentBookings}
+        open={!!selectedStudentId}
+        onOpenChange={(open) => {
+          if (!open) setSelectedStudentId(null);
+        }}
+        onStatusUpdate={handleStatusUpdate}
+        onConfirmLearningProgress={setConfirmingBooking}
+        onMaterialsClick={setMaterialsBooking}
+        updatingId={updatingId}
+        confirmingBookingId={confirmingBooking?.id ?? null}
+        isConfirmingLearning={isConfirmingLearning}
       />
     </div>
   );

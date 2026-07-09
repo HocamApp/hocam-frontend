@@ -43,28 +43,12 @@ export async function createLessonRequest(
   return response.data;
 }
 
-export async function fetchLessonRequests(): Promise<LessonRequest[]> {
-  const response = await api.get<LessonRequest[]>("/lesson-requests/");
-  return response.data;
-}
-
 export async function withdrawLessonRequest(
   lessonRequestId: string
 ): Promise<LessonRequest> {
   const response = await api.patch<LessonRequest>(
     `/lesson-requests/${lessonRequestId}/status/`,
     { status: "declined" }
-  );
-  return response.data;
-}
-
-export async function updateLessonRequestStatus(
-  lessonRequestId: string,
-  status: "accepted" | "declined"
-): Promise<LessonRequest> {
-  const response = await api.patch<LessonRequest>(
-    `/lesson-requests/${lessonRequestId}/status/`,
-    { status }
   );
   return response.data;
 }

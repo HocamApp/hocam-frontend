@@ -8,7 +8,6 @@ import {
   deleteAvailabilityRule,
 } from "@/lib/dashboardApi";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -16,6 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { TimeSelect } from "@/components/ui/time-select";
 import { Label } from "@/components/ui/label";
 import { Plus, Trash2 } from "lucide-react";
 import { AvailabilityRule } from "@/types";
@@ -186,20 +186,18 @@ export function AvailabilityEditor() {
           </div>
           <div className="space-y-1.5">
             <Label className="text-xs">Başlangıç</Label>
-            <Input
-              type="time"
+            <TimeSelect
               value={startTime}
-              onChange={(e) => setStartTime(e.target.value)}
+              onChange={setStartTime}
               className="w-[130px]"
               disabled={isMutating}
             />
           </div>
           <div className="space-y-1.5">
             <Label className="text-xs">Bitiş</Label>
-            <Input
-              type="time"
+            <TimeSelect
               value={endTime}
-              onChange={(e) => setEndTime(e.target.value)}
+              onChange={setEndTime}
               className="w-[130px]"
               disabled={isMutating}
             />
