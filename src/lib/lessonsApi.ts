@@ -168,3 +168,20 @@ export async function disputeBooking(
   );
   return response.data;
 }
+
+/** Authenticated fallback attendance signal, sent every 60s while in-session. */
+export async function sendBookingHeartbeat(bookingId: string): Promise<void> {
+  await api.post(`/bookings/${bookingId}/heartbeat/`);
+}
+
+/**
+ * "Dersi bitir": one participant's request to end an in-progress lesson
+ * early. Booking only moves to awaiting_confirmation once both student and
+ * tutor have requested it (see student_end_requested_at/tutor_end_requested_at).
+ */
+export async function requestEarlyEnd(bookingId: string): Promise<Booking> {
+  const response = await api.post<Booking>(
+    `/bookings/${bookingId}/request-early-end/`
+  );
+  return response.data;
+}
