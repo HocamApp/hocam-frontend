@@ -60,6 +60,7 @@ export function BookingCard({
 
   const isPending = status === "pending";
   const isConfirmed = status === "confirmed";
+  const isAwaitingConfirmation = status === "awaiting_confirmation";
   const isCompleted = status === "completed";
   const isCancelled = status === "cancelled";
   const isPast = new Date(booking.start_time) <= new Date();
@@ -78,7 +79,7 @@ export function BookingCard({
     learningContext?.status === "confirmed";
   const hasActions =
     currentUserRole === "tutor"
-      ? isPending || isConfirmed || canConfirmLearningProgress || isLearningProgressConfirmed
+      ? isPending || isConfirmed || isAwaitingConfirmation || canConfirmLearningProgress || isLearningProgressConfirmed
       : (isConfirmed && isFuture) ||
         canCancel ||
         ((isCompleted || isPast) && Boolean(onMaterialsClick)) ||
@@ -191,14 +192,6 @@ export function BookingCard({
                   )}
                   <Button
                     size="sm"
-                    variant="default"
-                    onClick={() => onStatusUpdate(booking.id, "completed")}
-                    disabled={isUpdating}
-                  >
-                    Tamamlandı
-                  </Button>
-                  <Button
-                    size="sm"
                     variant="destructive"
                     onClick={() => onStatusUpdate(booking.id, "cancelled")}
                     disabled={isUpdating}
@@ -206,6 +199,11 @@ export function BookingCard({
                     İptal Et
                   </Button>
                 </>
+              )}
+              {isAwaitingConfirmation && (
+                <span className="inline-flex items-center rounded-md border px-2.5 py-1 text-xs font-medium text-muted-foreground">
+                  Onay bekliyor
+                </span>
               )}
               {canConfirmLearningProgress && (
                 <Button
