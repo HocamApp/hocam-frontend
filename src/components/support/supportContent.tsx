@@ -51,6 +51,8 @@ export interface HelpSection {
   icon: LucideIcon;
   title: string;
   items: string[];
+  /** Deep-link anchor; checkout links to #odeme-ve-iade for the refund policy. */
+  anchorId?: string;
 }
 
 /**
@@ -92,6 +94,7 @@ export const HELP_SECTIONS: HelpSection[] = [
   {
     icon: CreditCard,
     title: "Ödeme ve iade bilgilendirmesi",
+    anchorId: "odeme-ve-iade",
     items: [
       "Şu anda platform üzerinde otomatik ödeme veya iade işlemi bulunmamaktadır.",
       "Ödeme ile ilgili talepleriniz destek ekibi tarafından manuel olarak incelenir.",
