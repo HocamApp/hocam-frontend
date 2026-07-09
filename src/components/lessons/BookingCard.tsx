@@ -92,7 +92,13 @@ export function BookingCard({
     learningContext?.status === "confirmed";
   const hasActions =
     currentUserRole === "tutor"
-      ? isPending || isConfirmed || isAwaitingConfirmation || isDisputed || canConfirmLearningProgress || isLearningProgressConfirmed
+      ? isPending ||
+        isConfirmed ||
+        isAwaitingConfirmation ||
+        isDisputed ||
+        canConfirmLearningProgress ||
+        isLearningProgressConfirmed ||
+        ((isCompleted || isPast) && Boolean(onMaterialsClick))
       : (isConfirmed && isFuture) ||
         canCancel ||
         ((isCompleted || isPast) && Boolean(onMaterialsClick)) ||
@@ -246,6 +252,17 @@ export function BookingCard({
                 <span className="inline-flex items-center rounded-md border px-2.5 py-1 text-xs font-medium text-muted-foreground">
                   İlerleme onaylandı
                 </span>
+              )}
+              {(isCompleted || isPast) && onMaterialsClick && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => onMaterialsClick(booking)}
+                  disabled={isUpdating}
+                >
+                  <FolderOpen className="mr-2 h-4 w-4" />
+                  Ders Materyalleri
+                </Button>
               )}
             </>
           )}

@@ -51,6 +51,7 @@ import type {
 import { EmptyState } from "@/components/shared/EmptyState";
 import { RouteGuard } from "@/components/shared/RouteGuard";
 import { BookingCard } from "@/components/lessons/BookingCard";
+import { LessonMaterialsDialog } from "@/components/lessons/LessonMaterialsDialog";
 import { LessonRequestCard } from "@/components/lessons/LessonRequestCard";
 import { AvailabilityCalendar } from "@/components/tutors/AvailabilityCalendar";
 import { AvailabilityEditor } from "@/components/tutors/AvailabilityEditor";
@@ -705,6 +706,7 @@ function TutorDashboardContent() {
   const [activeTab, setActiveTab] = useState("profile");
   const [confirmingBooking, setConfirmingBooking] = useState<Booking | null>(null);
   const [isConfirmingLearning, setIsConfirmingLearning] = useState(false);
+  const [materialsBooking, setMaterialsBooking] = useState<Booking | null>(null);
 
   const {
     data: profile,
@@ -1268,6 +1270,7 @@ function TutorDashboardContent() {
                       currentUserRole="tutor"
                       onStatusUpdate={handleStatusUpdate}
                       onConfirmLearningProgress={setConfirmingBooking}
+                      onMaterialsClick={setMaterialsBooking}
                       isUpdating={updatingId === b.id}
                       isConfirmingLearning={
                         isConfirmingLearning && confirmingBooking?.id === b.id
@@ -1391,6 +1394,14 @@ function TutorDashboardContent() {
           onSubmit={handleConfirmLearningProgress}
         />
       )}
+
+      <LessonMaterialsDialog
+        booking={materialsBooking}
+        open={!!materialsBooking}
+        onOpenChange={(open) => {
+          if (!open) setMaterialsBooking(null);
+        }}
+      />
     </div>
   );
 }
