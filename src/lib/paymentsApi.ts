@@ -48,6 +48,11 @@ export async function fetchTutorEarnings(): Promise<TutorEarningsSummary> {
   return response.data;
 }
 
+export async function fetchTutorPackagePurchases(): Promise<PackagePurchase[]> {
+  const response = await api.get<PackagePurchase[]>("/payments/tutor/package-purchases/");
+  return response.data;
+}
+
 /** The classic one-off 10-lesson bundle, found by its stable backend code
  * (with a shape-based fallback for environments that predate the code
  * backfill migration). */

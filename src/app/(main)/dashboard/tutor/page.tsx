@@ -31,7 +31,7 @@ import {
 } from "@/lib/tutorsApi";
 import { fetchAvailability } from "@/lib/dashboardApi";
 import { confirmLearningActivity } from "@/lib/learningApi";
-import { fetchTutorEarnings } from "@/lib/paymentsApi";
+import { fetchTutorEarnings, fetchTutorPackagePurchases } from "@/lib/paymentsApi";
 import {
   PROFILE_PHOTO_ACCEPT,
   PROFILE_PHOTO_RULE_TEXT,
@@ -44,6 +44,7 @@ import type {
   Booking,
   ConfirmLearningActivityPayload,
   LearningLevel,
+  PackagePurchase,
   TutorProfile,
   TutorProgressResult,
 } from "@/types";
@@ -161,9 +162,14 @@ interface StudentRosterEntry {
   totalLessons: number;
   upcomingLessons: number;
   lastCompletedAt: string | null;
+  remainingCredits: number;
+  totalCredits: number;
 }
 
-function getStudentRoster(bookings: Booking[]): StudentRosterEntry[] {
+function getStudentRoster(
+  bookings: Booking[],
+  packagePurchases: PackagePurchase[] = []
+): StudentRosterEntry[] {
   const roster = new Map<string, StudentRosterEntry>();
 
   for (const booking of bookings) {
@@ -177,6 +183,8 @@ function getStudentRoster(bookings: Booking[]): StudentRosterEntry[] {
         totalLessons: 0,
         upcomingLessons: 0,
         lastCompletedAt: null,
+        remainingCredits: 0,
+        totalCredits: 0,
       } satisfies StudentRosterEntry);
 
     entry.totalLessons += 1;
@@ -192,6 +200,17 @@ function getStudentRoster(bookings: Booking[]): StudentRosterEntry[] {
     }
 
     roster.set(booking.student.id, entry);
+  }
+
+  // Only enriches students who already have a booking-derived roster entry —
+  // a student who bought a package but hasn't booked a lesson yet won't
+  // appear here, since the roster itself is seeded purely from bookings.
+  for (const purchase of packagePurchases) {
+    if (purchase.status !== "paid") continue;
+    const entry = roster.get(purchase.student.id);
+    if (!entry) continue;
+    entry.remainingCredits += purchase.remaining_credits;
+    entry.totalCredits += purchase.total_credits;
   }
 
   return Array.from(roster.values()).sort((a, b) => {
@@ -230,7 +249,14 @@ function StatTile({
 }
 
 function StudentRosterCard({ entry }: { entry: StudentRosterEntry }) {
-  const { student, totalLessons, upcomingLessons, lastCompletedAt } = entry;
+  const {
+    student,
+    totalLessons,
+    upcomingLessons,
+    lastCompletedAt,
+    remainingCredits,
+    totalCredits,
+  } = entry;
   const name = student.display_name || student.email;
   const [firstName, lastName] = name.trim().split(/\s+/);
 
@@ -250,11 +276,18 @@ function StudentRosterCard({ entry }: { entry: StudentRosterEntry }) {
                 <p className="truncate text-sm text-muted-foreground">{student.email}</p>
               )}
             </div>
-            {upcomingLessons > 0 && (
-              <Badge variant="secondary" className="shrink-0">
-                {upcomingLessons} yaklaşan
-              </Badge>
-            )}
+            <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
+              {totalCredits > 0 && (
+                <Badge variant="outline" className="shrink-0">
+                  {remainingCredits}/{totalCredits} paket hakkı
+                </Badge>
+              )}
+              {upcomingLessons > 0 && (
+                <Badge variant="secondary" className="shrink-0">
+                  {upcomingLessons} yaklaşan
+                </Badge>
+              )}
+            </div>
           </div>
           <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-muted-foreground">
             <span className="inline-flex items-center gap-1.5">
@@ -722,6 +755,12 @@ function TutorDashboardContent() {
     enabled: isAuthenticated,
   });
 
+  const { data: packagePurchases = [] } = useQuery({
+    queryKey: ["tutor-package-purchases"],
+    queryFn: fetchTutorPackagePurchases,
+    enabled: isAuthenticated,
+  });
+
   useEffect(() => {
     if (profile) {
       setIntroVideoInput(profile.intro_video_url ?? "");
@@ -746,7 +785,10 @@ function TutorDashboardContent() {
     [bookings]
   );
 
-  const studentRoster = useMemo(() => getStudentRoster(bookings ?? []), [bookings]);
+  const studentRoster = useMemo(
+    () => getStudentRoster(bookings ?? [], packagePurchases),
+    [bookings, packagePurchases]
+  );
 
   const pendingRequests = lessonRequests.filter((lr) => lr.status === "pending");
   const confirmedBookings = activeBookings.filter((b) => b.status === "confirmed");
