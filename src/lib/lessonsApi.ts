@@ -133,3 +133,38 @@ export async function fetchBookingQuestions(
   );
   return response.data;
 }
+
+/** Student approves an awaiting_confirmation lesson → completed (irreversible). */
+export async function confirmBooking(bookingId: string): Promise<Booking> {
+  const response = await api.post<Booking>(`/bookings/${bookingId}/confirm/`);
+  return response.data;
+}
+
+export type DisputeCategory =
+  | "tutor_no_show"
+  | "technical_issue"
+  | "interrupted"
+  | "conduct"
+  | "other";
+
+export interface DisputeBookingPayload {
+  category: DisputeCategory;
+  description: string;
+}
+
+/**
+ * Student reports a problem with a lesson, halting the 24h auto-confirm.
+ * Works from two states: awaiting_confirmation (normal flow), and completed
+ * with completion_source=tutor within the 24h post-completion window (a
+ * tutor-reported student absence the student wants to contest).
+ */
+export async function disputeBooking(
+  bookingId: string,
+  payload: DisputeBookingPayload
+): Promise<Booking> {
+  const response = await api.post<Booking>(
+    `/bookings/${bookingId}/dispute/`,
+    payload
+  );
+  return response.data;
+}

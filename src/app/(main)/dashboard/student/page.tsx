@@ -18,6 +18,7 @@ import { EmptyState } from "@/components/shared/EmptyState";
 import { RouteGuard } from "@/components/shared/RouteGuard";
 import { StatCard } from "@/components/shared/StatCard";
 import { BookingCard } from "@/components/lessons/BookingCard";
+import { LessonConfirmDisputeCard } from "@/components/lessons/LessonConfirmDisputeCard";
 import { LessonMaterialsDialog } from "@/components/lessons/LessonMaterialsDialog";
 import { ReviewModal } from "@/components/lessons/ReviewModal";
 import { Button } from "@/components/ui/button";
@@ -142,6 +143,11 @@ function StudentDashboardContent() {
 
         <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_230px]">
           <main className="space-y-8">
+        <LessonConfirmDisputeCard
+          bookings={bookings ?? []}
+          onChanged={refetchBookings}
+        />
+
         <section id="upcoming-lessons" className="space-y-4 scroll-mt-24">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>

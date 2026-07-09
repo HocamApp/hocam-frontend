@@ -323,7 +323,10 @@ export interface Booking {
     | "disputed"
     | "cancelled";
   completed_at?: string | null;
+  completion_source?: "" | "student" | "tutor" | "auto" | "admin";
+  awaiting_confirmation_at?: string | null;
   dispute_category?: "" | "tutor_no_show" | "technical_issue" | "interrupted" | "conduct" | "other";
+  dispute_description?: string;
   disputed_at?: string | null;
   is_trial?: boolean;
   lesson_request: string | null;
@@ -462,6 +465,10 @@ export interface PackagePlan {
   /** Weekly prepaid plans only; null for one-off bundles like the 10-pack. */
   lessons_per_week: number | null;
   term_months: number | null;
+  /** Weekly matrix plans only (apps.payments.models.PackagePlan.duration_days on
+   * the backend) — null for legacy one-off bundles like the 10-pack. Used to
+   * compute a purchase's term end date: paid_at + duration_days. */
+  duration_days: number | null;
   discount_percent: number;
   is_active: boolean;
   created_at: string;
@@ -482,6 +489,7 @@ export interface PackagePurchase {
     lesson_duration_minutes: number;
     lessons_per_week: number | null;
     term_months: number | null;
+    duration_days: number | null;
     discount_percent: number;
   };
   status: PackagePurchaseStatus;
