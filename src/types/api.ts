@@ -329,6 +329,8 @@ export interface Booking {
   dispute_category?: "" | "tutor_no_show" | "technical_issue" | "interrupted" | "conduct" | "other";
   dispute_description?: string;
   disputed_at?: string | null;
+  student_end_requested_at?: string | null;
+  tutor_end_requested_at?: string | null;
   is_trial?: boolean;
   lesson_request: string | null;
   room_url?: string;

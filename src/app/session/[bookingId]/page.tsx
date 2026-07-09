@@ -1,12 +1,17 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { useParams, useRouter } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Clock3, Download, Video } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { ArrowLeft, Clock3, Download, Video, WifiOff } from "lucide-react";
 import { toast } from "sonner";
-import { fetchBookings, fetchSessionToken } from "@/lib/lessonsApi";
+import {
+  fetchBookings,
+  fetchSessionToken,
+  requestEarlyEnd,
+  sendBookingHeartbeat,
+} from "@/lib/lessonsApi";
 import { useAuth } from "@/hooks/useAuth";
 import { RouteGuard } from "@/components/shared/RouteGuard";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
@@ -16,8 +21,19 @@ import { formatDate } from "@/lib/utils";
 import type { Booking } from "@/types";
 
 const EARLY_JOIN_MINUTES = 15;
+const HEARTBEAT_INTERVAL_MS = 60_000;
+const LOW_TIME_WARNING_MS = 5 * 60_000;
+const RECONNECT_ATTEMPT_DELAY_MS = 12_000;
+const ENDED_STATUSES = new Set([
+  "awaiting_confirmation",
+  "completed",
+  "disputed",
+  "cancelled",
+]);
+
 type JitsiApi = {
   executeCommand?: (name: string, ...args: unknown[]) => void;
+  addEventListener?: (event: string, handler: (...args: unknown[]) => void) => void;
 };
 
 const JitsiMeeting = dynamic(
@@ -30,6 +46,12 @@ function formatCountdown(ms: number) {
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = totalSeconds % 60;
   return `${minutes}:${String(seconds).padStart(2, "0")}`;
+}
+
+function scheduledEndTime(booking: Booking) {
+  return (
+    new Date(booking.start_time).getTime() + booking.duration_minutes * 60_000
+  );
 }
 
 function LessonWaitingRoom({
@@ -129,16 +151,51 @@ function LessonWaitingRoom({
   );
 }
 
+function LessonEndedScreen({
+  booking,
+  onGoToDashboard,
+}: {
+  booking: Booking;
+  onGoToDashboard: () => void;
+}) {
+  const isAwaitingConfirmation = booking.status === "awaiting_confirmation";
+  return (
+    <div className="flex flex-1 flex-col items-center justify-center gap-4 bg-slate-950 px-6 py-10 text-center text-white">
+      <div className="flex h-16 w-16 items-center justify-center rounded-full border border-white/10 bg-white/5">
+        <Video className="h-7 w-7 text-sky-200" aria-hidden="true" />
+      </div>
+      <h1 className="text-2xl font-semibold">Ders sona erdi</h1>
+      <p className="max-w-md text-sm text-slate-300">
+        {isAwaitingConfirmation
+          ? "Ders tamamlandı olarak işaretlendi. Panelindeki onay kartından dersi onaylayabilir veya bir sorun bildirebilirsin."
+          : "Bu ders artık aktif değil. Detayları panelinden görebilirsin."}
+      </p>
+      <Button onClick={onGoToDashboard}>Panelime dön</Button>
+    </div>
+  );
+}
+
 function SessionContent() {
   const { bookingId } = useParams<{ bookingId: string }>();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { user } = useAuth();
   const [now, setNow] = useState(() => Date.now());
   const [jitsiApi, setJitsiApi] = useState<JitsiApi | null>(null);
+  const [connectionStatus, setConnectionStatus] = useState<
+    "connected" | "interrupted"
+  >("connected");
+  const [jitsiKey, setJitsiKey] = useState(0);
+  const [isRequestingEnd, setIsRequestingEnd] = useState(false);
+  const reconnectTimeoutRef = useRef<number | null>(null);
 
   const { data: bookings, isLoading: isLoadingBooking } = useQuery({
     queryKey: ["bookings"],
     queryFn: fetchBookings,
+    refetchInterval: (query) => {
+      const current = query.state.data?.find((b) => b.id === bookingId);
+      return current?.status === "in_progress" ? 10_000 : false;
+    },
   });
 
   const booking = bookings?.find((b) => b.id === bookingId);
@@ -151,12 +208,6 @@ function SessionContent() {
     return now < joinAt;
   }, [booking, now, user?.role]);
 
-  useEffect(() => {
-    if (!studentTooEarly) return;
-    const interval = window.setInterval(() => setNow(Date.now()), 1000);
-    return () => window.clearInterval(interval);
-  }, [studentTooEarly]);
-
   const {
     data: sessionToken,
     isLoading: isLoadingToken,
@@ -168,6 +219,74 @@ function SessionContent() {
     enabled: Boolean(bookingId) && Boolean(booking) && !studentTooEarly,
   });
 
+  const sessionEnded = Boolean(booking && ENDED_STATUSES.has(booking.status));
+  const inSession =
+    Boolean(booking) &&
+    !studentTooEarly &&
+    Boolean(sessionToken) &&
+    !sessionEnded;
+
+  // Ticks once a second while a countdown is on screen (waiting room handles
+  // its own timer; this drives the in-session "kalan süre" bar).
+  useEffect(() => {
+    if (!inSession) return;
+    const interval = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(interval);
+  }, [inSession]);
+
+  // Attendance heartbeat: fires immediately on join, then every 60s. Paused
+  // while the tab is hidden and resumed (with an immediate ping) on return.
+  useEffect(() => {
+    if (!inSession || !bookingId) return;
+    let intervalId: number | null = null;
+
+    const ping = () => {
+      sendBookingHeartbeat(bookingId).catch(() => {});
+    };
+    const start = () => {
+      if (intervalId !== null) return;
+      ping();
+      intervalId = window.setInterval(ping, HEARTBEAT_INTERVAL_MS);
+    };
+    const stop = () => {
+      if (intervalId !== null) {
+        window.clearInterval(intervalId);
+        intervalId = null;
+      }
+    };
+
+    if (!document.hidden) start();
+
+    const onVisibility = () => {
+      if (document.hidden) stop();
+      else start();
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+
+    return () => {
+      stop();
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, [inSession, bookingId]);
+
+  useEffect(() => {
+    return () => {
+      if (reconnectTimeoutRef.current) {
+        window.clearTimeout(reconnectTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!sessionEnded) return;
+    try {
+      jitsiApi?.executeCommand?.("hangup");
+    } catch {
+      // Meeting may already be closed — nothing to clean up.
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionEnded]);
+
   if (isLoadingBooking) {
     return (
       <div className="flex flex-1 items-center justify-center">
@@ -178,6 +297,17 @@ function SessionContent() {
 
   if (booking && studentTooEarly) {
     return <LessonWaitingRoom booking={booking} onBack={() => router.back()} />;
+  }
+
+  if (booking && sessionEnded) {
+    return (
+      <LessonEndedScreen
+        booking={booking}
+        onGoToDashboard={() =>
+          router.push(user?.role === "tutor" ? "/dashboard/tutor" : "/dashboard/student")
+        }
+      />
+    );
   }
 
   if (isLoadingToken) {
@@ -214,19 +344,79 @@ function SessionContent() {
     }
   };
 
+  const earlyEndRequestedByMe = booking
+    ? user?.role === "tutor"
+      ? Boolean(booking.tutor_end_requested_at)
+      : Boolean(booking.student_end_requested_at)
+    : false;
+
+  const handleRequestEarlyEnd = async () => {
+    if (!booking) return;
+    setIsRequestingEnd(true);
+    try {
+      const updated = await requestEarlyEnd(booking.id);
+      queryClient.setQueryData<Booking[]>(["bookings"], (old) =>
+        old ? old.map((b) => (b.id === updated.id ? updated : b)) : old
+      );
+      if (updated.status === "awaiting_confirmation") {
+        toast.success("Ders sona erdi. Onay bekleniyor.");
+      } else {
+        toast.info("İstek gönderildi. Karşı tarafın onayı bekleniyor.");
+      }
+    } catch {
+      toast.error("İstek gönderilemedi. Lütfen tekrar dene.");
+    } finally {
+      setIsRequestingEnd(false);
+    }
+  };
+
+  const remainingMs = booking ? scheduledEndTime(booking) - now : null;
+  const isOvertime = remainingMs !== null && remainingMs <= 0;
+  const isLowTime =
+    remainingMs !== null && remainingMs > 0 && remainingMs <= LOW_TIME_WARNING_MS;
+
   return (
     <div className="flex flex-1 flex-col">
-      <div className="flex items-center justify-between gap-3 bg-gray-900 px-4 py-2 text-sm text-white">
+      {connectionStatus === "interrupted" && (
+        <div className="flex items-center justify-center gap-2 bg-red-600 px-4 py-1.5 text-center text-xs font-medium text-white">
+          <WifiOff className="h-3.5 w-3.5" aria-hidden="true" />
+          Bağlantı koptu. Yeniden bağlanmaya çalışılıyor...
+        </div>
+      )}
+
+      <div className="flex flex-wrap items-center justify-between gap-2 bg-gray-900 px-4 py-2 text-sm text-white">
         <span className="min-w-0 truncate font-medium">
           {booking ? `${booking.subject.name} — Canlı Ders` : "Canlı Ders"}
         </span>
-        <div className="flex shrink-0 items-center gap-2">
+
+        <div className="flex shrink-0 flex-wrap items-center gap-2">
+          {remainingMs !== null && (
+            <span
+              className={`inline-flex items-center gap-1.5 rounded border px-2 py-1 text-xs tabular-nums ${
+                isOvertime
+                  ? "border-red-500/50 bg-red-500/20 text-red-200"
+                  : isLowTime
+                    ? "border-amber-500/50 bg-amber-500/20 text-amber-200"
+                    : "border-white/20 bg-white/5 text-slate-200"
+              }`}
+            >
+              <Clock3 className="h-3.5 w-3.5" aria-hidden="true" />
+              {isOvertime ? "Süre doldu" : formatCountdown(remainingMs)}
+            </span>
+          )}
           <button
             onClick={handleWhiteboardDownload}
             className="inline-flex items-center gap-1.5 whitespace-nowrap rounded border border-white/20 px-3 py-1 text-xs transition-colors hover:bg-white/10"
           >
             <Download className="h-3.5 w-3.5" aria-hidden="true" />
             Whiteboard indir
+          </button>
+          <button
+            onClick={handleRequestEarlyEnd}
+            disabled={isRequestingEnd || earlyEndRequestedByMe}
+            className="inline-flex items-center gap-1.5 whitespace-nowrap rounded border border-white/20 px-3 py-1 text-xs transition-colors hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {earlyEndRequestedByMe ? "Onay bekleniyor..." : "Dersi bitir"}
           </button>
           <button
             onClick={() => router.back()}
@@ -239,6 +429,7 @@ function SessionContent() {
 
       <div className="flex-1">
         <JitsiMeeting
+          key={jitsiKey}
           domain={sessionToken.domain}
           roomName={sessionToken.room}
           jwt={sessionToken.token}
@@ -274,7 +465,23 @@ function SessionContent() {
               "hangup",
             ],
           }}
-          onApiReady={(api) => setJitsiApi(api)}
+          onApiReady={(api) => {
+            setJitsiApi(api);
+            setConnectionStatus("connected");
+            api.addEventListener?.("connectionInterrupted", () => {
+              setConnectionStatus("interrupted");
+              reconnectTimeoutRef.current = window.setTimeout(() => {
+                setJitsiKey((k) => k + 1);
+              }, RECONNECT_ATTEMPT_DELAY_MS);
+            });
+            api.addEventListener?.("connectionRestored", () => {
+              setConnectionStatus("connected");
+              if (reconnectTimeoutRef.current) {
+                window.clearTimeout(reconnectTimeoutRef.current);
+                reconnectTimeoutRef.current = null;
+              }
+            });
+          }}
           onReadyToClose={() => router.back()}
           getIFrameRef={(iframeRef) => {
             iframeRef.style.height = "100%";
