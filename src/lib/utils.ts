@@ -52,6 +52,30 @@ export function formatDate(dateString: string): string {
   });
 }
 
+// Backend: 0=Monday, 6=Sunday. JS getDay(): 0=Sunday, 6=Saturday.
+export function jsDayToBackendDay(jsDay: number): number {
+  return (jsDay + 6) % 7;
+}
+
+export function getNext14Days(): Date[] {
+  const out: Date[] = [];
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  for (let i = 0; i < 14; i++) {
+    const next = new Date(d);
+    next.setDate(d.getDate() + i);
+    out.push(next);
+  }
+  return out;
+}
+
+// Local (not UTC) YYYY-MM-DD — must not use toISOString(), which would
+// convert to UTC and shift the calendar date by a day for Turkey (UTC+3).
+export function formatDateLocal(d: Date): string {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
 // Format a date as a Turkish relative string ("2 gün önce", "1 hafta önce", etc.)
 // Falls back to formatDate for dates older than a year.
 export function formatRelativeDate(dateString: string): string {

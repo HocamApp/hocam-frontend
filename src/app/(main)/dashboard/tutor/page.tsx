@@ -50,6 +50,7 @@ import { EmptyState } from "@/components/shared/EmptyState";
 import { RouteGuard } from "@/components/shared/RouteGuard";
 import { BookingCard } from "@/components/lessons/BookingCard";
 import { LessonRequestCard } from "@/components/lessons/LessonRequestCard";
+import { AvailabilityCalendar } from "@/components/tutors/AvailabilityCalendar";
 import { AvailabilityEditor } from "@/components/tutors/AvailabilityEditor";
 import { VerificationForm } from "@/components/tutors/VerificationForm";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
@@ -1250,7 +1251,19 @@ function TutorDashboardContent() {
           )}
         </TabsContent>
 
-        <TabsContent value="availability" className="mt-6">
+        <TabsContent value="availability" className="mt-6 space-y-6">
+          <div>
+            <h3 className="mb-2 text-sm font-semibold">Önümüzdeki 14 Gün</h3>
+            {availabilityLoading || bookingsLoading ? (
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-7">
+                {Array.from({ length: 7 }).map((_, i) => (
+                  <Skeleton key={i} className="h-28 w-full rounded-lg" />
+                ))}
+              </div>
+            ) : (
+              <AvailabilityCalendar availability={availability} bookings={activeBookings} />
+            )}
+          </div>
           <AvailabilityEditor />
         </TabsContent>
 

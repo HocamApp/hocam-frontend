@@ -6,7 +6,13 @@ import { fetchTutorAvailability } from "@/lib/dashboardApi";
 import { createBooking, fetchTutorBusyIntervals } from "@/lib/lessonsApi";
 import { fetchPackagePurchases } from "@/lib/paymentsApi";
 import type { Booking, TutorProfile, AvailabilityRule, BusyInterval } from "@/types";
-import { formatPrice } from "@/lib/utils";
+import {
+  cn,
+  formatDateLocal,
+  formatPrice,
+  getNext14Days,
+  jsDayToBackendDay,
+} from "@/lib/utils";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import {
   Dialog,
@@ -17,7 +23,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { cn } from "@/lib/utils";
 
 // Tutor price is the price for the minimum (40-minute) lesson; longer lessons
 // scale proportionally from that base. Keep in sync with the backend
@@ -27,30 +32,6 @@ const DURATION_OPTIONS = [40, 50, 60] as const;
 // Free trial lessons are always this length; the backend forces it
 // regardless of what's sent (apps/lessons/pricing.py TRIAL_DURATION_MINUTES).
 const TRIAL_DURATION_MINUTES = 20;
-
-// Backend: 0=Monday, 6=Sunday. JS getDay(): 0=Sunday, 6=Saturday.
-function jsDayToBackendDay(jsDay: number): number {
-  return (jsDay + 6) % 7;
-}
-
-function getNext14Days(): Date[] {
-  const out: Date[] = [];
-  const d = new Date();
-  d.setHours(0, 0, 0, 0);
-  for (let i = 0; i < 14; i++) {
-    const next = new Date(d);
-    next.setDate(d.getDate() + i);
-    out.push(next);
-  }
-  return out;
-}
-
-// Local (not UTC) YYYY-MM-DD — must not use toISOString(), which would
-// convert to UTC and shift the calendar date by a day for Turkey (UTC+3).
-function formatDateLocal(d: Date): string {
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-}
 
 // Busy interval timestamps follow the project's naive wall-clock convention
 // (see handleSubmit below): the YYYY-MM-DD/HH:mm digits ARE Turkey local time,
