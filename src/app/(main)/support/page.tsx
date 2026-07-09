@@ -6,6 +6,7 @@ import { LifeBuoy, MessageSquareText } from "lucide-react";
 import { RouteGuard } from "@/components/shared/RouteGuard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { AISupportChatWidget } from "@/components/ai/AISupportChatWidget";
 import { SupportFAQ } from "@/components/support/SupportFAQ";
 import { SupportTicketForm } from "@/components/support/SupportTicketForm";
 import { SupportTicketList } from "@/components/support/SupportTicketList";
@@ -23,7 +24,8 @@ function SupportContent() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-5xl px-4 py-8 sm:py-10">
+    <>
+      <div className="mx-auto w-full max-w-5xl px-4 py-8 sm:py-10">
       {/* Header */}
       <div className="flex items-start gap-3">
         <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
@@ -135,7 +137,9 @@ function SupportContent() {
       </div>
 
       <SupportFAQ />
-    </div>
+      </div>
+      <AISupportChatWidget />
+    </>
   );
 }
 
