@@ -20,6 +20,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { fetchBookings, updateBookingStatus } from "@/lib/lessonsApi";
 import {
   fetchMyTutorProfile,
+  fetchTutorReviewSummary,
+  fetchTutorReviews,
   updateMyTutorProfile,
   uploadTutorProfilePicture,
 } from "@/lib/tutorsApi";
@@ -48,6 +50,9 @@ import { BookingCard } from "@/components/lessons/BookingCard";
 import { LessonMaterialsDialog } from "@/components/lessons/LessonMaterialsDialog";
 import { AvailabilityCalendar } from "@/components/tutors/AvailabilityCalendar";
 import { AvailabilityEditor } from "@/components/tutors/AvailabilityEditor";
+import { ReviewCard } from "@/components/tutors/ReviewCard";
+import { ReviewSummary } from "@/components/tutors/ReviewSummary";
+import { SubjectRatingBreakdown } from "@/components/tutors/SubjectRatingBreakdown";
 import { VerificationForm } from "@/components/tutors/VerificationForm";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { AnimatedTabs } from "@/components/ui/animated-tabs";
@@ -80,6 +85,7 @@ const TUTOR_TABS = [
   { value: "bookings", label: "Rezervasyonlar" },
   { value: "students", label: "Öğrencilerim" },
   { value: "earnings", label: "Kazançlar" },
+  { value: "reviews", label: "Değerlendirmeler" },
   { value: "availability", label: "Müsaitlik" },
   { value: "verification", label: "Doğrulama" },
 ];
@@ -844,6 +850,34 @@ function TutorDashboardContent() {
     enabled: isAuthenticated,
   });
 
+  // Public review endpoints require both is_verified and is_public — an
+  // unverified or currently-private tutor gets a 404 querying even their own
+  // id, so we never issue the request in that case (see reviews TabsContent
+  // for the corresponding empty-state copy).
+  const canViewOwnReviews = isAuthenticated && !!profile?.is_verified && !!profile?.is_public;
+
+  const {
+    data: tutorReviews = [],
+    isLoading: reviewsTabLoading,
+    error: reviewsTabError,
+    refetch: refetchTutorReviews,
+  } = useQuery({
+    queryKey: ["tutor-reviews", profile?.id],
+    queryFn: () => fetchTutorReviews(profile!.id),
+    enabled: canViewOwnReviews,
+  });
+
+  const {
+    data: tutorReviewSummary,
+    isLoading: reviewSummaryLoading,
+    error: reviewSummaryError,
+    refetch: refetchReviewSummary,
+  } = useQuery({
+    queryKey: ["tutor-review-summary", profile?.id],
+    queryFn: () => fetchTutorReviewSummary(profile!.id),
+    enabled: canViewOwnReviews,
+  });
+
   useEffect(() => {
     if (profile) {
       setIntroVideoInput(profile.intro_video_url ?? "");
@@ -1369,6 +1403,58 @@ function TutorDashboardContent() {
                 değildir.
               </div>
             </>
+          )}
+        </TabsContent>
+
+        <TabsContent value="reviews" className="mt-6">
+          {!profile.is_verified ? (
+            <EmptyState
+              title="Henüz doğrulanmadın"
+              description="Profilin doğrulandıktan sonra değerlendirmelerin burada görünecek."
+            />
+          ) : !profile.is_public ? (
+            <EmptyState
+              title="Profilin şu anda gizli"
+              description="Profilini herkese açık yaptığında değerlendirmelerin burada görünecek."
+            />
+          ) : reviewsTabError || reviewSummaryError ? (
+            <div className="flex flex-col items-center gap-3 py-10 text-center">
+              <p className="text-sm text-muted-foreground">Değerlendirmeler yüklenemedi.</p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  refetchTutorReviews();
+                  refetchReviewSummary();
+                }}
+              >
+                Tekrar Dene
+              </Button>
+            </div>
+          ) : reviewsTabLoading || reviewSummaryLoading ? (
+            <div className="space-y-4">
+              <Skeleton className="h-32 w-full rounded-lg" />
+              <Skeleton className="h-40 w-full rounded-lg" />
+            </div>
+          ) : (
+            tutorReviewSummary && (
+              <div className="space-y-6">
+                <ReviewSummary summary={tutorReviewSummary} />
+                <SubjectRatingBreakdown subjectRatings={tutorReviewSummary.subject_ratings} />
+                {tutorReviews.length === 0 ? (
+                  <EmptyState
+                    title="Henüz değerlendirme yok"
+                    description="Tamamlanan derslerden gelen değerlendirmeler burada listelenir."
+                  />
+                ) : (
+                  <div className="space-y-3">
+                    {tutorReviews.map((review) => (
+                      <ReviewCard key={review.id} review={review} />
+                    ))}
+                  </div>
+                )}
+              </div>
+            )
           )}
         </TabsContent>
 

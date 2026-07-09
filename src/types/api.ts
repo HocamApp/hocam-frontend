@@ -272,6 +272,7 @@ export interface TutorProfile {
   total_reviews: number;
   completed_lessons_count?: number | null;
   is_verified: boolean;
+  is_public: boolean;
   is_online: boolean;
   last_seen_at?: string | null;
   trial_lesson_eligible?: boolean | null;
