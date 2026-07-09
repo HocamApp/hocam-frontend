@@ -31,6 +31,7 @@ import {
 } from "@/lib/tutorsApi";
 import { fetchAvailability } from "@/lib/dashboardApi";
 import { confirmLearningActivity } from "@/lib/learningApi";
+import { fetchTutorEarnings } from "@/lib/paymentsApi";
 import {
   PROFILE_PHOTO_ACCEPT,
   PROFILE_PHOTO_RULE_TEXT,
@@ -84,6 +85,7 @@ const TUTOR_TABS = [
   { value: "requests", label: "Mesaj İstekleri" },
   { value: "bookings", label: "Rezervasyonlar" },
   { value: "students", label: "Öğrencilerim" },
+  { value: "earnings", label: "Kazançlar" },
   { value: "availability", label: "Müsaitlik" },
   { value: "verification", label: "Doğrulama" },
 ];
@@ -704,6 +706,17 @@ function TutorDashboardContent() {
     enabled: isAuthenticated,
   });
 
+  const {
+    data: earnings,
+    isLoading: earningsLoading,
+    error: earningsError,
+    refetch: refetchEarnings,
+  } = useQuery({
+    queryKey: ["tutor-earnings"],
+    queryFn: fetchTutorEarnings,
+    enabled: isAuthenticated,
+  });
+
   useEffect(() => {
     if (profile) {
       setIntroVideoInput(profile.intro_video_url ?? "");
@@ -1248,6 +1261,53 @@ function TutorDashboardContent() {
                 <StudentRosterCard key={entry.student.id} entry={entry} />
               ))}
             </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="earnings" className="mt-6">
+          {earningsError && (
+            <div className="flex flex-col items-center gap-3 py-10 text-center">
+              <p className="text-sm text-muted-foreground">Kazançlar yüklenemedi.</p>
+              <Button variant="outline" size="sm" onClick={() => refetchEarnings()}>
+                Tekrar Dene
+              </Button>
+            </div>
+          )}
+          {!earningsError && earningsLoading && (
+            <div className="grid gap-4 md:grid-cols-3">
+              {[1, 2, 3].map((i) => (
+                <Skeleton key={i} className="h-28 w-full rounded-lg" />
+              ))}
+            </div>
+          )}
+          {!earningsError && !earningsLoading && earnings && (
+            <>
+              <div className="grid gap-4 md:grid-cols-3">
+                <StatTile
+                  icon={<Wallet className="h-5 w-5" />}
+                  label="Son 7 Gün"
+                  value={formatPrice(earnings.last_7_days.total)}
+                  detail={`${earnings.last_7_days.lesson_count} ders`}
+                />
+                <StatTile
+                  icon={<Wallet className="h-5 w-5" />}
+                  label="Son 30 Gün"
+                  value={formatPrice(earnings.last_30_days.total)}
+                  detail={`${earnings.last_30_days.lesson_count} ders`}
+                />
+                <StatTile
+                  icon={<Wallet className="h-5 w-5" />}
+                  label="Toplam"
+                  value={formatPrice(earnings.lifetime.total)}
+                  detail={`${earnings.lifetime.lesson_count} ders`}
+                />
+              </div>
+              <div className="mt-4 rounded-lg border bg-muted/40 p-3 text-xs text-muted-foreground">
+                Bu tutarlar tamamlanan derslerden tahakkuk eden tahmini kazancını gösterir,
+                bir ödeme bakiyesi değildir. Platform şu anda bir ödeme sağlayıcısına bağlı
+                değildir.
+              </div>
+            </>
           )}
         </TabsContent>
 

@@ -504,6 +504,17 @@ export interface PaymentLedgerEntry {
   booking: string | null;
 }
 
+export interface TutorEarningsPeriod {
+  total: number;
+  lesson_count: number;
+}
+
+export interface TutorEarningsSummary {
+  last_7_days: TutorEarningsPeriod;
+  last_30_days: TutorEarningsPeriod;
+  lifetime: TutorEarningsPeriod;
+}
+
 export interface CreatePackagePurchasePayload {
   tutor: string;
   plan: string;

@@ -10,6 +10,7 @@ import {
   PackagePurchase,
   PaymentLedgerEntry,
   ReferralInfo,
+  TutorEarningsSummary,
 } from "@/types";
 
 export async function fetchPackagePlans(): Promise<PackagePlan[]> {
@@ -39,6 +40,11 @@ export async function fetchPaymentHistory(): Promise<PaymentLedgerEntry[]> {
 
 export async function fetchReferralInfo(): Promise<ReferralInfo> {
   const response = await api.get<ReferralInfo>("/payments/referral/");
+  return response.data;
+}
+
+export async function fetchTutorEarnings(): Promise<TutorEarningsSummary> {
+  const response = await api.get<TutorEarningsSummary>("/payments/tutor/earnings/");
   return response.data;
 }
 
