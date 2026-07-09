@@ -7,21 +7,19 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { formatPrice } from "@/lib/utils";
-import type { PackagePricing } from "@/lib/lessonPricing";
+import { formatPlanDuration, type PackagePricing } from "@/lib/lessonPricing";
 import type { TutorProfile } from "@/types";
-import type { CheckoutPackageType } from "./CheckoutProductPicker";
 
 interface CheckoutSummaryProps {
   tutor: TutorProfile;
-  packageType: CheckoutPackageType;
   lessonsPerWeek: number;
-  termMonths: number;
-  pricing: PackagePricing;
-  /** False when the selected weekly combo has no active backend plan. */
+  durationDays: number;
+  /** Null while the plan catalog loads or when the combo has no active plan. */
+  pricing: PackagePricing | null;
+  /** False when the selected combo has no active backend plan. */
   planAvailable: boolean;
   promoCode: string;
   onPromoCodeChange: (code: string) => void;
-  onSingleLessonCta: () => void;
   onPurchaseCta: () => void;
   purchasePending: boolean;
   /** Student already has a pending purchase for the selected plan. */
@@ -33,22 +31,14 @@ interface CheckoutSummaryProps {
   onUseCredits: () => void;
 }
 
-const PACKAGE_LABELS: Record<CheckoutPackageType, string> = {
-  single: "Tekli ders",
-  ten_pack: "10 derslik avantajlı paket",
-  weekly: "Haftalık ders paketi",
-};
-
 export function CheckoutSummary({
   tutor,
-  packageType,
   lessonsPerWeek,
-  termMonths,
+  durationDays,
   pricing,
   planAvailable,
   promoCode,
   onPromoCodeChange,
-  onSingleLessonCta,
   onPurchaseCta,
   purchasePending,
   pendingForSelectedPlan,
@@ -56,8 +46,7 @@ export function CheckoutSummary({
   paidRemainingCredits,
   onUseCredits,
 }: CheckoutSummaryProps) {
-  const isSingle = packageType === "single";
-  const hasDiscount = pricing.discountPercent > 0;
+  const hasDiscount = !!pricing && pricing.discountPercent > 0;
 
   return (
     <Card>
@@ -73,87 +62,62 @@ export function CheckoutSummary({
           </div>
           <div className="flex justify-between gap-4">
             <dt className="text-muted-foreground">Ders süresi</dt>
-            <dd>{isSingle ? "Rezervasyonda seçilir (40–60 dk)" : "40 dk"}</dd>
+            <dd>40 dk</dd>
           </div>
           <div className="flex justify-between gap-4">
-            <dt className="text-muted-foreground">Paket</dt>
-            <dd className="text-right">
-              {packageType === "weekly"
-                ? `Haftada ${lessonsPerWeek} ders`
-                : PACKAGE_LABELS[packageType]}
-            </dd>
+            <dt className="text-muted-foreground">Haftalık ders</dt>
+            <dd>Haftada {lessonsPerWeek} ders</dd>
           </div>
-          {packageType === "weekly" && (
-            <div className="flex justify-between gap-4">
-              <dt className="text-muted-foreground">Plan süresi</dt>
-              <dd>{termMonths} Ay</dd>
-            </div>
-          )}
-          {!isSingle && (
-            <div className="flex justify-between gap-4">
-              <dt className="text-muted-foreground">Toplam ders</dt>
-              <dd>{pricing.lessonCount} ders</dd>
-            </div>
-          )}
+          <div className="flex justify-between gap-4">
+            <dt className="text-muted-foreground">Paket süresi</dt>
+            <dd>{formatPlanDuration(durationDays)}</dd>
+          </div>
+          <div className="flex justify-between gap-4">
+            <dt className="text-muted-foreground">Toplam ders</dt>
+            <dd>{pricing ? `${pricing.lessonCount} ders` : "—"}</dd>
+          </div>
 
           <Separator className="!my-3" />
 
-          {isSingle ? (
-            <div className="flex justify-between gap-4 text-base font-semibold text-foreground">
-              <dt>Ders ücreti (40 dk)</dt>
-              <dd>{formatPrice(pricing.total)}</dd>
-            </div>
-          ) : (
-            <>
-              <div className="flex justify-between gap-4">
-                <dt className="text-muted-foreground">Ders başına</dt>
-                <dd>
-                  {hasDiscount && (
-                    <span className="mr-1.5 text-xs text-muted-foreground line-through">
-                      {formatPrice(pricing.basePerLesson)}
-                    </span>
-                  )}
-                  <span className="font-medium">
-                    {formatPrice(pricing.discountedPerLesson)}
-                  </span>
-                </dd>
-              </div>
-              <div className="flex justify-between gap-4">
-                <dt className="text-muted-foreground">
-                  Ara toplam ({pricing.lessonCount} ders)
-                </dt>
-                <dd>{formatPrice(pricing.subtotal)}</dd>
-              </div>
-              {hasDiscount && (
-                <div className="flex justify-between gap-4">
-                  <dt className="text-muted-foreground">
-                    İndirim (%{pricing.discountPercent})
-                  </dt>
-                  <dd className="text-green-700 dark:text-green-400">
-                    -{formatPrice(pricing.discountAmount)}
-                  </dd>
-                </div>
+          <div className="flex justify-between gap-4">
+            <dt className="text-muted-foreground">Ders başına</dt>
+            <dd>
+              {hasDiscount && pricing && (
+                <span className="mr-1.5 text-xs text-muted-foreground line-through">
+                  {formatPrice(pricing.basePerLesson)}
+                </span>
               )}
-              <div className="flex justify-between gap-4 text-base font-semibold text-foreground">
-                <dt>Paket toplamı</dt>
-                <dd>{formatPrice(pricing.total)}</dd>
-              </div>
-            </>
+              <span className="font-medium">
+                {pricing ? formatPrice(pricing.discountedPerLesson) : "—"}
+              </span>
+            </dd>
+          </div>
+          {pricing && (
+            <div className="flex justify-between gap-4">
+              <dt className="text-muted-foreground">
+                Ara toplam ({pricing.lessonCount} ders)
+              </dt>
+              <dd>{formatPrice(pricing.subtotal)}</dd>
+            </div>
           )}
+          {hasDiscount && pricing && (
+            <div className="flex justify-between gap-4">
+              <dt className="text-muted-foreground">
+                İndirim (%{pricing.discountPercent})
+              </dt>
+              <dd className="text-green-700 dark:text-green-400">
+                -{formatPrice(pricing.discountAmount)}
+              </dd>
+            </div>
+          )}
+          <div className="flex justify-between gap-4 text-base font-semibold text-foreground">
+            <dt>Paket toplamı</dt>
+            <dd>{pricing ? formatPrice(pricing.total) : "—"}</dd>
+          </div>
         </dl>
 
-        {isSingle && (
-          <p className="text-xs text-muted-foreground">
-            50–60 dk seçersen fiyat orantılı artar.
-          </p>
-        )}
-
         <div className="space-y-2 pt-1">
-          {isSingle ? (
-            <Button className="w-full" onClick={onSingleLessonCta}>
-              Ders saatini seç
-            </Button>
-          ) : pendingForSelectedPlan ? (
+          {pendingForSelectedPlan ? (
             <div className="space-y-2 rounded-lg bg-amber-500/10 p-3 text-center">
               <p className="flex items-center justify-center gap-1.5 text-sm font-medium text-amber-700 dark:text-amber-300">
                 <Clock className="h-4 w-4 shrink-0" />
@@ -219,15 +183,24 @@ export function CheckoutSummary({
             </div>
           )}
 
-          <p className="flex items-center justify-center gap-1.5 pt-1 text-center text-xs text-muted-foreground">
-            <ShieldCheck className="h-3.5 w-3.5 shrink-0" />
-            Güvenli ödeme. Paket otomatik yenilenmez.
-          </p>
-          {!isSingle && (
-            <p className="text-center text-xs text-muted-foreground">
-              Talep admin onayıyla aktifleşir; kartından anlık ödeme alınmaz.
+          <div className="space-y-1.5 rounded-lg bg-muted/40 p-3">
+            <p className="flex items-center gap-1.5 text-xs font-medium text-foreground">
+              <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-primary" />
+              Tek seferlik ödeme — otomatik yenilenmez.
             </p>
-          )}
+            <p className="text-xs text-muted-foreground">
+              Bu paket yalnızca {tutor.name} {tutor.surname} ile geçerlidir.
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Talep admin onayıyla aktifleşir; kartından anlık ödeme alınmaz.{" "}
+              <Link
+                href="/support#odeme-ve-iade"
+                className="underline underline-offset-2 hover:text-foreground"
+              >
+                İade politikası
+              </Link>
+            </p>
+          </div>
         </div>
       </CardContent>
     </Card>

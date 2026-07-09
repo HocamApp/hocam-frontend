@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Gift } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { fetchTutorById } from "@/lib/tutorsApi";
@@ -13,24 +13,17 @@ import {
   extractPackagePurchaseErrorMessage,
   fetchPackagePlans,
   fetchPackagePurchases,
-  findTenPackPlan,
+  filterMatrixPlans,
 } from "@/lib/paymentsApi";
 import {
+  MOST_POPULAR_DURATION_DAYS,
   WEEKLY_LESSON_OPTIONS,
-  WEEKLY_TERM_OPTIONS,
   calculatePackagePricing,
-  getSingleLessonPrice,
-  getTenLessonPackagePrice,
-  getWeeklyPackagePrice,
   type WeeklyLessonOption,
-  type WeeklyTermOption,
 } from "@/lib/lessonPricing";
 import { formatPrice } from "@/lib/utils";
 import { BookingModal } from "@/components/lessons/BookingModal";
-import {
-  CheckoutProductPicker,
-  type CheckoutPackageType,
-} from "@/components/checkout/CheckoutProductPicker";
+import { CheckoutProductPicker } from "@/components/checkout/CheckoutProductPicker";
 import { CheckoutSummary } from "@/components/checkout/CheckoutSummary";
 import {
   CheckoutBookingSuccess,
@@ -49,10 +42,6 @@ function getInitials(name: string, surname: string): string {
   return (n + s).toUpperCase() || "?";
 }
 
-function parsePackageType(raw: string | null): CheckoutPackageType {
-  return raw === "ten_pack" || raw === "weekly" ? raw : "single";
-}
-
 function parseLessonsPerWeek(raw: string | null): WeeklyLessonOption {
   const n = Number(raw);
   return (WEEKLY_LESSON_OPTIONS as readonly number[]).includes(n)
@@ -60,11 +49,9 @@ function parseLessonsPerWeek(raw: string | null): WeeklyLessonOption {
     : 2;
 }
 
-function parseTermMonths(raw: string | null): WeeklyTermOption {
+function parseDurationDays(raw: string | null): number {
   const n = Number(raw);
-  return (WEEKLY_TERM_OPTIONS as readonly number[]).includes(n)
-    ? (n as WeeklyTermOption)
-    : 1;
+  return Number.isInteger(n) && n > 0 ? n : MOST_POPULAR_DURATION_DAYS;
 }
 
 type LearningContextQuery = {
@@ -99,17 +86,18 @@ export default function TutorCheckoutPage({
   const queryClient = useQueryClient();
   const { isAuthenticated, isLoading: authLoading, isStudent, user } = useAuth();
 
-  const [packageType, setPackageType] = useState<CheckoutPackageType>(() =>
-    parsePackageType(searchParams.get("package"))
-  );
   const [lessonsPerWeek, setLessonsPerWeek] = useState<WeeklyLessonOption>(() =>
     parseLessonsPerWeek(searchParams.get("per_week"))
   );
-  const [termMonths, setTermMonths] = useState<WeeklyTermOption>(() =>
-    parseTermMonths(searchParams.get("term"))
+  const [durationDays, setDurationDays] = useState<number>(() =>
+    parseDurationDays(searchParams.get("duration"))
   );
   const [promoCode, setPromoCode] = useState("");
-  const [bookingModalOpen, setBookingModalOpen] = useState(false);
+  // "credits" books with existing package credits; "trial" is the free
+  // intro-lesson path — both reuse the BookingModal.
+  const [bookingModalMode, setBookingModalMode] = useState<
+    "credits" | "trial" | null
+  >(null);
   const [bookingComplete, setBookingComplete] = useState(false);
   const [createdPurchase, setCreatedPurchase] = useState<PackagePurchase | null>(null);
 
@@ -128,20 +116,18 @@ export default function TutorCheckoutPage({
   }, [authLoading, isAuthenticated, pathname, searchParams, router]);
 
   // Keep the selection shareable / login-round-trip-proof in the URL.
+  // Old links may still carry package/term params from the retired
+  // single-purchase model — drop them.
   useEffect(() => {
     const next = new URLSearchParams(searchParams.toString());
-    next.set("package", packageType);
-    if (packageType === "weekly") {
-      next.set("per_week", String(lessonsPerWeek));
-      next.set("term", String(termMonths));
-    } else {
-      next.delete("per_week");
-      next.delete("term");
-    }
+    next.set("per_week", String(lessonsPerWeek));
+    next.set("duration", String(durationDays));
+    next.delete("package");
+    next.delete("term");
     if (next.toString() !== searchParams.toString()) {
       router.replace(`${pathname}?${next.toString()}`, { scroll: false });
     }
-  }, [packageType, lessonsPerWeek, termMonths, pathname, router, searchParams]);
+  }, [lessonsPerWeek, durationDays, pathname, router, searchParams]);
 
   const {
     data: tutor,
@@ -165,41 +151,31 @@ export default function TutorCheckoutPage({
     enabled: isAuthenticated && isStudent,
   });
 
-  const tenPackPlan = useMemo(() => findTenPackPlan(plans), [plans]);
-  const weeklyPlans = useMemo(
+  const weeklyPlans = useMemo(() => filterMatrixPlans(plans), [plans]);
+  const selectedPlan = useMemo(
     () =>
-      (plans ?? []).filter(
-        (p) => p.lessons_per_week != null && p.term_months != null
-      ),
-    [plans]
+      weeklyPlans.find(
+        (p) =>
+          p.lessons_per_week === lessonsPerWeek &&
+          p.duration_days === durationDays
+      ) ?? null,
+    [weeklyPlans, lessonsPerWeek, durationDays]
   );
-  const selectedPlan = useMemo(() => {
-    if (packageType === "ten_pack") return tenPackPlan ?? null;
-    if (packageType === "weekly")
-      return (
-        weeklyPlans.find(
-          (p) =>
-            p.lessons_per_week === lessonsPerWeek && p.term_months === termMonths
-        ) ?? null
-      );
-    return null;
-  }, [packageType, tenPackPlan, weeklyPlans, lessonsPerWeek, termMonths]);
 
   const basePrice = tutor?.hourly_price ?? 0;
-  const pricing = useMemo(() => {
-    if (packageType === "single") return getSingleLessonPrice(basePrice);
-    // Prefer the actual catalog plan's numbers (server-authoritative); the
-    // helper constants are only the fallback while plans load.
-    if (selectedPlan)
-      return calculatePackagePricing(
-        basePrice,
-        selectedPlan.lesson_count,
-        selectedPlan.discount_percent
-      );
-    return packageType === "ten_pack"
-      ? getTenLessonPackagePrice(basePrice)
-      : getWeeklyPackagePrice(basePrice, lessonsPerWeek, termMonths);
-  }, [packageType, basePrice, selectedPlan, lessonsPerWeek, termMonths]);
+  // Server-authoritative numbers only: no client-side plan constants exist
+  // anymore, so there is nothing to price until the catalog answers.
+  const pricing = useMemo(
+    () =>
+      selectedPlan
+        ? calculatePackagePricing(
+            basePrice,
+            selectedPlan.lesson_count,
+            selectedPlan.discount_percent
+          )
+        : null,
+    [basePrice, selectedPlan]
+  );
 
   const tutorPurchases = useMemo(
     () => (purchases ?? []).filter((p) => p.tutor.id === tutorId),
@@ -232,6 +208,11 @@ export default function TutorCheckoutPage({
   });
 
   const isOwnProfile = !!tutor && !!user && user.id === tutor.user;
+  const trialLessonsRemaining = tutor?.trial_lessons_remaining ?? 0;
+  const canBookFreeTrial =
+    !isOwnProfile &&
+    tutor?.trial_lesson_eligible === true &&
+    trialLessonsRemaining > 0;
 
   if (authLoading || !isAuthenticated) {
     return (
@@ -310,7 +291,8 @@ export default function TutorCheckoutPage({
 
       <h1 className="mt-6 text-2xl font-bold">Ders paketini seç</h1>
       <p className="mt-1 text-sm text-muted-foreground">
-        Tek ders al veya peşin ders paketiyle ders başına avantaj kazan.
+        Haftalık ders sayısını ve paket süresini seç, ders başına avantaj
+        kazan.
       </p>
 
       {createdPurchase ? (
@@ -323,31 +305,50 @@ export default function TutorCheckoutPage({
         </div>
       ) : (
         <div className="mt-6 grid gap-6 lg:grid-cols-3">
-          <div className="lg:col-span-2">
+          <div className="space-y-4 lg:col-span-2">
+            {canBookFreeTrial && (
+              <div className="flex flex-wrap items-center gap-3 rounded-xl border border-dashed border-primary/50 bg-primary/5 p-4">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                  <Gift className="h-4 w-4" />
+                </span>
+                <div className="min-w-[14rem] flex-1">
+                  <p className="text-sm font-medium">
+                    Bu hocayı hiç denemediyseniz önce ücretsiz tanışma dersi
+                    alın
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Bu ay {trialLessonsRemaining} ücretsiz deneme hakkın kaldı.
+                  </p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="shrink-0"
+                  onClick={() => setBookingModalMode("trial")}
+                >
+                  Ücretsiz dersi ayarla
+                </Button>
+              </div>
+            )}
             <CheckoutProductPicker
               basePrice={basePrice}
-              tenPackPlan={tenPackPlan}
               weeklyPlans={weeklyPlans}
-              packageType={packageType}
               lessonsPerWeek={lessonsPerWeek}
-              termMonths={termMonths}
-              onPackageTypeChange={setPackageType}
+              durationDays={durationDays}
               onLessonsPerWeekChange={setLessonsPerWeek}
-              onTermMonthsChange={setTermMonths}
+              onDurationDaysChange={setDurationDays}
             />
           </div>
           <div>
             <div className="lg:sticky lg:top-24">
               <CheckoutSummary
                 tutor={tutor}
-                packageType={packageType}
                 lessonsPerWeek={lessonsPerWeek}
-                termMonths={termMonths}
+                durationDays={durationDays}
                 pricing={pricing}
-                planAvailable={packageType === "single" || !!selectedPlan}
+                planAvailable={!!selectedPlan}
                 promoCode={promoCode}
                 onPromoCodeChange={setPromoCode}
-                onSingleLessonCta={() => setBookingModalOpen(true)}
                 onPurchaseCta={() => {
                   if (!selectedPlan) return;
                   purchaseMutation.mutate({
@@ -362,7 +363,7 @@ export default function TutorCheckoutPage({
                 pendingForSelectedPlan={pendingForSelectedPlan}
                 otherPendingPlanName={otherPendingPlanName}
                 paidRemainingCredits={paidWithCredits?.remaining_credits ?? null}
-                onUseCredits={() => setBookingModalOpen(true)}
+                onUseCredits={() => setBookingModalMode("credits")}
               />
             </div>
           </div>
@@ -371,11 +372,12 @@ export default function TutorCheckoutPage({
 
       <BookingModal
         tutor={tutor}
-        isOpen={bookingModalOpen}
-        onClose={() => setBookingModalOpen(false)}
+        isOpen={bookingModalMode !== null}
+        isTrial={bookingModalMode === "trial"}
+        onClose={() => setBookingModalMode(null)}
         learningContext={learningContext}
         onSuccess={() => {
-          setBookingModalOpen(false);
+          setBookingModalMode(null);
           setBookingComplete(true);
           queryClient.invalidateQueries({ queryKey: ["tutor", tutorId] });
           queryClient.invalidateQueries({ queryKey: ["package-purchases"] });

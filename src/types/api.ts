@@ -461,16 +461,18 @@ export interface TutorReviewSummary {
 export interface PackagePlan {
   id: string;
   name: string;
-  /** Stable machine key, e.g. "ten_pack", "weekly_3_1m". Null for ad-hoc plans. */
+  /** Stable machine key, e.g. "weekly_3_90d". Null for ad-hoc plans. */
   code: string | null;
+  /** Total lesson credits, derived server-side from lessons_per_week ×
+   * the plan's fixed week count (14g=2, 30g=4, 90g=12, 180g=24). */
   lesson_count: number;
   lesson_duration_minutes: number;
-  /** Weekly prepaid plans only; null for one-off bundles like the 10-pack. */
+  /** Set on matrix plans; null only on retired legacy bundles that can
+   * still surface through old purchase history. */
   lessons_per_week: number | null;
-  term_months: number | null;
-  /** Weekly matrix plans only (apps.payments.models.PackagePlan.duration_days on
-   * the backend) — null for legacy one-off bundles like the 10-pack. Used to
-   * compute a purchase's term end date: paid_at + duration_days. */
+  /** Matrix plans only (apps.payments.models.PackagePlan.duration_days on
+   * the backend) — null for retired legacy bundles. Used to compute a
+   * purchase's term end date: paid_at + duration_days. */
   duration_days: number | null;
   discount_percent: number;
   is_active: boolean;
@@ -491,7 +493,6 @@ export interface PackagePurchase {
     lesson_count: number;
     lesson_duration_minutes: number;
     lessons_per_week: number | null;
-    term_months: number | null;
     duration_days: number | null;
     discount_percent: number;
   };

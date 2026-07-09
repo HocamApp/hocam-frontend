@@ -53,14 +53,12 @@ export async function fetchTutorPackagePurchases(): Promise<PackagePurchase[]> {
   return response.data;
 }
 
-/** The classic one-off 10-lesson bundle, found by its stable backend code
- * (with a shape-based fallback for environments that predate the code
- * backfill migration). */
-export function findTenPackPlan(plans: PackagePlan[] | undefined): PackagePlan | undefined {
-  if (!plans) return undefined;
-  return (
-    plans.find((p) => p.code === "ten_pack") ??
-    plans.find((p) => p.lesson_count === 10 && p.lessons_per_week == null)
+/** Purchasable matrix plans (lessons_per_week × duration_days). Retired
+ * legacy bundles are inactive server-side, but guard anyway so an ad-hoc
+ * row can never render as a broken card. */
+export function filterMatrixPlans(plans: PackagePlan[] | undefined): PackagePlan[] {
+  return (plans ?? []).filter(
+    (p) => p.lessons_per_week != null && p.duration_days != null
   );
 }
 

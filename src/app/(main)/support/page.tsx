@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { LifeBuoy, MessageSquareText } from "lucide-react";
 
 import { RouteGuard } from "@/components/shared/RouteGuard";
@@ -15,6 +15,17 @@ import { HELP_SECTIONS } from "@/components/support/supportContent";
 function SupportContent() {
   const formRef = useRef<HTMLDivElement>(null);
   const [feedbackPreset, setFeedbackPreset] = useState(0);
+
+  // The page renders behind RouteGuard's auth check, so the browser's
+  // native #hash scroll fires before the target exists — redo it on mount
+  // (checkout deep-links to #odeme-ve-iade for the refund policy).
+  useEffect(() => {
+    const hash = window.location.hash.slice(1);
+    if (!hash) return;
+    document
+      .getElementById(hash)
+      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, []);
 
   const startWebsiteFeedback = () => {
     setFeedbackPreset((value) => value + 1);
@@ -105,7 +116,11 @@ function SupportContent() {
           {HELP_SECTIONS.map((section) => {
             const Icon = section.icon;
             return (
-              <Card key={section.title}>
+              <Card
+                key={section.title}
+                id={section.anchorId}
+                className={section.anchorId ? "scroll-mt-24" : undefined}
+              >
                 <CardContent className="space-y-2 p-4">
                   <div className="flex items-center gap-2">
                     <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
