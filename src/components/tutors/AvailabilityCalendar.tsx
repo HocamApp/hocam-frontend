@@ -1,11 +1,23 @@
 "use client";
 
+import { useState } from "react";
+import { Pencil } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import StatusBadge from "@/components/shared/StatusBadge";
+import { DayAvailabilityDialog } from "@/components/tutors/DayAvailabilityDialog";
 import { cn, formatDateLocal, getNext14Days, jsDayToBackendDay } from "@/lib/utils";
 import type { AvailabilityRule, Booking } from "@/types";
 
 const DAY_ABBREVIATIONS = ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"];
+const DAY_NAMES = [
+  "Pazartesi",
+  "Salı",
+  "Çarşamba",
+  "Perşembe",
+  "Cuma",
+  "Cumartesi",
+  "Pazar",
+];
 
 function formatRuleTime(t: string): string {
   if (!t) return "";
@@ -27,6 +39,9 @@ interface AvailabilityCalendarProps {
 export function AvailabilityCalendar({ availability, bookings }: AvailabilityCalendarProps) {
   const days = getNext14Days();
   const todayStr = formatDateLocal(new Date());
+  const [editingDay, setEditingDay] = useState<{ dayOfWeek: number; label: string } | null>(
+    null
+  );
 
   return (
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-7">
@@ -52,11 +67,23 @@ export function AvailabilityCalendar({ availability, bookings }: AvailabilityCal
                 <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   {DAY_ABBREVIATIONS[backendDay]} {d.getDate()}
                 </span>
-                {isToday && (
-                  <span className="rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">
-                    Bugün
-                  </span>
-                )}
+                <div className="flex items-center gap-1">
+                  {isToday && (
+                    <span className="rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">
+                      Bugün
+                    </span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setEditingDay({ dayOfWeek: backendDay, label: DAY_NAMES[backendDay] })
+                    }
+                    aria-label={`${DAY_NAMES[backendDay]} müsaitliğini düzenle`}
+                    className="shrink-0 text-muted-foreground transition-colors hover:text-primary"
+                  >
+                    <Pencil className="h-3 w-3" />
+                  </button>
+                </div>
               </div>
 
               {dayRules.length === 0 ? (
@@ -91,6 +118,13 @@ export function AvailabilityCalendar({ availability, bookings }: AvailabilityCal
           </Card>
         );
       })}
+
+      <DayAvailabilityDialog
+        open={!!editingDay}
+        dayOfWeek={editingDay?.dayOfWeek ?? 0}
+        dayLabel={editingDay?.label ?? ""}
+        onOpenChange={(open) => !open && setEditingDay(null)}
+      />
     </div>
   );
 }
