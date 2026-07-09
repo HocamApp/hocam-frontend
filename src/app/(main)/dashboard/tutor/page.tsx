@@ -249,7 +249,13 @@ function StatTile({
   );
 }
 
-function StudentRosterCard({ entry }: { entry: StudentRosterEntry }) {
+function StudentRosterCard({
+  entry,
+  onSelect,
+}: {
+  entry: StudentRosterEntry;
+  onSelect: (studentId: string) => void;
+}) {
   const {
     student,
     totalLessons,
@@ -262,7 +268,18 @@ function StudentRosterCard({ entry }: { entry: StudentRosterEntry }) {
   const [firstName, lastName] = name.trim().split(/\s+/);
 
   return (
-    <Card>
+    <Card
+      role="button"
+      tabIndex={0}
+      onClick={() => onSelect(student.id)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onSelect(student.id);
+        }
+      }}
+      className="cursor-pointer transition-colors hover:bg-muted/40"
+    >
       <CardContent className="flex items-start gap-3 p-4">
         <Avatar className="h-10 w-10 shrink-0">
           <AvatarFallback className="bg-primary/10 text-sm font-semibold text-primary">
@@ -693,6 +710,89 @@ function ProfileStudio({
   );
 }
 
+function StudentDetailDialog({
+  entry,
+  bookings,
+  open,
+  onOpenChange,
+  onStatusUpdate,
+  onConfirmLearningProgress,
+  onMaterialsClick,
+  updatingId,
+  confirmingBookingId,
+  isConfirmingLearning,
+}: {
+  entry: StudentRosterEntry | null;
+  bookings: Booking[];
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onStatusUpdate: (
+    bookingId: string,
+    status: "confirmed" | "completed" | "cancelled"
+  ) => void;
+  onConfirmLearningProgress: (booking: Booking) => void;
+  onMaterialsClick: (booking: Booking) => void;
+  updatingId: string | null;
+  confirmingBookingId: string | null;
+  isConfirmingLearning: boolean;
+}) {
+  if (!entry) return null;
+
+  const { student, remainingCredits, totalCredits } = entry;
+  const name = student.display_name || student.email;
+  const [firstName, lastName] = name.trim().split(/\s+/);
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
+        <DialogHeader>
+          <div className="flex items-center gap-3">
+            <Avatar className="h-10 w-10 shrink-0">
+              <AvatarFallback className="bg-primary/10 text-sm font-semibold text-primary">
+                {getInitials(firstName, lastName)}
+              </AvatarFallback>
+            </Avatar>
+            <div className="min-w-0">
+              <DialogTitle className="truncate">{name}</DialogTitle>
+              {student.display_name && (
+                <p className="truncate text-sm text-muted-foreground">{student.email}</p>
+              )}
+            </div>
+          </div>
+        </DialogHeader>
+
+        {totalCredits > 0 && (
+          <Badge variant="outline" className="w-fit">
+            {remainingCredits}/{totalCredits} paket hakkı
+          </Badge>
+        )}
+
+        <div className="space-y-3">
+          {bookings.length === 0 ? (
+            <EmptyState
+              title="Henüz ders yok"
+              description="Bu öğrenciyle henüz bir rezervasyon bulunmuyor."
+            />
+          ) : (
+            bookings.map((b) => (
+              <BookingCard
+                key={b.id}
+                booking={b}
+                currentUserRole="tutor"
+                onStatusUpdate={onStatusUpdate}
+                onConfirmLearningProgress={onConfirmLearningProgress}
+                onMaterialsClick={onMaterialsClick}
+                isUpdating={updatingId === b.id}
+                isConfirmingLearning={isConfirmingLearning && confirmingBookingId === b.id}
+              />
+            ))
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function TutorDashboardContent() {
   const queryClient = useQueryClient();
   const { user, isAuthenticated } = useAuth();
@@ -707,6 +807,7 @@ function TutorDashboardContent() {
   const [confirmingBooking, setConfirmingBooking] = useState<Booking | null>(null);
   const [isConfirmingLearning, setIsConfirmingLearning] = useState(false);
   const [materialsBooking, setMaterialsBooking] = useState<Booking | null>(null);
+  const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
 
   const {
     data: profile,
@@ -790,6 +891,19 @@ function TutorDashboardContent() {
   const studentRoster = useMemo(
     () => getStudentRoster(bookings ?? [], packagePurchases),
     [bookings, packagePurchases]
+  );
+
+  const selectedStudentEntry = useMemo(
+    () => studentRoster.find((e) => e.student.id === selectedStudentId) ?? null,
+    [studentRoster, selectedStudentId]
+  );
+
+  const selectedStudentBookings = useMemo(
+    () =>
+      selectedStudentId
+        ? sortByStartTime((bookings ?? []).filter((b) => b.student.id === selectedStudentId))
+        : [],
+    [bookings, selectedStudentId]
   );
 
   const pendingRequests = lessonRequests.filter((lr) => lr.status === "pending");
@@ -1299,18 +1413,31 @@ function TutorDashboardContent() {
               ))}
             </div>
           )}
-          {!bookingsError && !bookingsLoading && studentRoster.length === 0 && (
-            <EmptyState
-              title="Henüz öğrenciniz yok"
-              description="Rezervasyonlar onaylandıkça öğrencileriniz burada listelenir."
-            />
-          )}
-          {!bookingsError && !bookingsLoading && studentRoster.length > 0 && (
-            <div className="space-y-3">
-              {studentRoster.map((entry) => (
-                <StudentRosterCard key={entry.student.id} entry={entry} />
-              ))}
-            </div>
+          {!bookingsError && !bookingsLoading && (
+            <>
+              <div className="mb-2 flex items-center gap-2">
+                <h3 className="text-sm font-semibold">Öğrencilerim</h3>
+                <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                  {studentRoster.length}
+                </span>
+              </div>
+              {studentRoster.length === 0 ? (
+                <EmptyState
+                  title="Henüz öğrenciniz yok"
+                  description="Rezervasyonlar onaylandıkça öğrencileriniz burada listelenir."
+                />
+              ) : (
+                <div className="space-y-3">
+                  {studentRoster.map((entry) => (
+                    <StudentRosterCard
+                      key={entry.student.id}
+                      entry={entry}
+                      onSelect={setSelectedStudentId}
+                    />
+                  ))}
+                </div>
+              )}
+            </>
           )}
         </TabsContent>
 
@@ -1401,6 +1528,21 @@ function TutorDashboardContent() {
         onOpenChange={(open) => {
           if (!open) setMaterialsBooking(null);
         }}
+      />
+
+      <StudentDetailDialog
+        entry={selectedStudentEntry}
+        bookings={selectedStudentBookings}
+        open={!!selectedStudentId}
+        onOpenChange={(open) => {
+          if (!open) setSelectedStudentId(null);
+        }}
+        onStatusUpdate={handleStatusUpdate}
+        onConfirmLearningProgress={setConfirmingBooking}
+        onMaterialsClick={setMaterialsBooking}
+        updatingId={updatingId}
+        confirmingBookingId={confirmingBooking?.id ?? null}
+        isConfirmingLearning={isConfirmingLearning}
       />
     </div>
   );
