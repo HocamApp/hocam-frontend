@@ -10,7 +10,6 @@ import {
   CheckCircle2,
   Clock,
   ExternalLink,
-  MessageSquare,
   PlayCircle,
   Star,
   Video,
@@ -18,12 +17,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
-import {
-  fetchLessonRequests,
-  fetchBookings,
-  updateBookingStatus,
-  updateLessonRequestStatus,
-} from "@/lib/lessonsApi";
+import { fetchBookings, updateBookingStatus } from "@/lib/lessonsApi";
 import {
   fetchMyTutorProfile,
   updateMyTutorProfile,
@@ -52,7 +46,6 @@ import { EmptyState } from "@/components/shared/EmptyState";
 import { RouteGuard } from "@/components/shared/RouteGuard";
 import { BookingCard } from "@/components/lessons/BookingCard";
 import { LessonMaterialsDialog } from "@/components/lessons/LessonMaterialsDialog";
-import { LessonRequestCard } from "@/components/lessons/LessonRequestCard";
 import { AvailabilityCalendar } from "@/components/tutors/AvailabilityCalendar";
 import { AvailabilityEditor } from "@/components/tutors/AvailabilityEditor";
 import { VerificationForm } from "@/components/tutors/VerificationForm";
@@ -84,7 +77,6 @@ import {
 
 const TUTOR_TABS = [
   { value: "profile", label: "Profil" },
-  { value: "requests", label: "Mesaj İstekleri" },
   { value: "bookings", label: "Rezervasyonlar" },
   { value: "students", label: "Öğrencilerim" },
   { value: "earnings", label: "Kazançlar" },
@@ -797,7 +789,6 @@ function TutorDashboardContent() {
   const queryClient = useQueryClient();
   const { user, isAuthenticated } = useAuth();
   const [updatingId, setUpdatingId] = useState<string | null>(null);
-  const [updatingRequestId, setUpdatingRequestId] = useState<string | null>(null);
   const [introVideoInput, setIntroVideoInput] = useState("");
   const [isSavingVideo, setIsSavingVideo] = useState(false);
   const [videoError, setVideoError] = useState<string | null>(null);
@@ -816,17 +807,6 @@ function TutorDashboardContent() {
   } = useQuery({
     queryKey: ["tutor-me"],
     queryFn: fetchMyTutorProfile,
-    enabled: isAuthenticated,
-  });
-
-  const {
-    data: lessonRequests = [],
-    isLoading: requestsLoading,
-    error: requestsError,
-    refetch: refetchRequests,
-  } = useQuery({
-    queryKey: ["lesson-requests"],
-    queryFn: fetchLessonRequests,
     enabled: isAuthenticated,
   });
 
@@ -906,7 +886,6 @@ function TutorDashboardContent() {
     [bookings, selectedStudentId]
   );
 
-  const pendingRequests = lessonRequests.filter((lr) => lr.status === "pending");
   const confirmedBookings = activeBookings.filter((b) => b.status === "confirmed");
   const nextBooking = sortByStartTime(confirmedBookings)[0] ?? sortByStartTime(activeBookings)[0];
   const completedBookings = pastBookings.filter((b) => b.status === "completed");
@@ -957,34 +936,6 @@ function TutorDashboardContent() {
       toast.error(getApiErrorMessage(error, "İlerleme onaylanamadı."));
     } finally {
       setIsConfirmingLearning(false);
-    }
-  };
-
-  const handleAcceptRequest = async (lessonRequestId: string) => {
-    setUpdatingRequestId(lessonRequestId);
-    try {
-      const updated = await updateLessonRequestStatus(lessonRequestId, "accepted");
-      await queryClient.invalidateQueries({ queryKey: ["lesson-requests"] });
-      if (updated.conversation_id) {
-        window.location.href = `/messages/${updated.conversation_id}`;
-      }
-    } catch {
-      toast.error("Ders talebi güncellenemedi.");
-    } finally {
-      setUpdatingRequestId(null);
-    }
-  };
-
-  const handleDeclineRequest = async (lessonRequestId: string) => {
-    setUpdatingRequestId(lessonRequestId);
-    try {
-      await updateLessonRequestStatus(lessonRequestId, "declined");
-      await queryClient.invalidateQueries({ queryKey: ["lesson-requests"] });
-      toast.success("Ders talebi reddedildi.");
-    } catch {
-      toast.error("Ders talebi güncellenemedi.");
-    } finally {
-      setUpdatingRequestId(null);
     }
   };
 
@@ -1118,13 +1069,7 @@ function TutorDashboardContent() {
         </div>
       </header>
 
-      <div className="mb-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <StatTile
-          icon={<MessageSquare className="h-5 w-5" />}
-          label="Bekleyen İstek"
-          value={pendingRequests.length}
-          detail="Yanıt bekleyen mesaj talebi"
-        />
+      <div className="mb-6 grid gap-4 md:grid-cols-3">
         <StatTile
           icon={<Calendar className="h-5 w-5" />}
           label="Yaklaşan Ders"
@@ -1145,67 +1090,44 @@ function TutorDashboardContent() {
         />
       </div>
 
-      <div className="mb-6 grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Clock className="h-4 w-4 text-primary" />
-              Sıradaki Ders
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {nextBooking ? (
-              <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                <div>
-                  <p className="font-medium">
-                    {formatDate(nextBooking.start_time)} ·{" "}
-                    {new Date(nextBooking.start_time).toLocaleTimeString("tr-TR", {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    {nextBooking.duration_minutes} dakika · {formatPrice(nextBooking.price)}
-                  </p>
-                </div>
-                {nextBooking.room_url ? (
-                  <Button asChild>
-                    <a href={`/session/${nextBooking.id}`}>
-                      <Video className="mr-2 h-4 w-4" />
-                      Derse Katıl
-                    </a>
-                  </Button>
-                ) : (
-                  <Badge variant="outline">Oda onaydan sonra oluşur</Badge>
-                )}
+      <Card className="mb-6">
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Clock className="h-4 w-4 text-primary" />
+            Sıradaki Ders
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {nextBooking ? (
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div>
+                <p className="font-medium">
+                  {formatDate(nextBooking.start_time)} ·{" "}
+                  {new Date(nextBooking.start_time).toLocaleTimeString("tr-TR", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {nextBooking.duration_minutes} dakika · {formatPrice(nextBooking.price)}
+                </p>
               </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">Yaklaşan ders bulunmuyor.</p>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">Profil Durumu</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="mb-3 flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Tamamlanma</span>
-              <span className="font-medium">{profileCompletion}%</span>
+              {nextBooking.room_url ? (
+                <Button asChild>
+                  <a href={`/session/${nextBooking.id}`}>
+                    <Video className="mr-2 h-4 w-4" />
+                    Derse Katıl
+                  </a>
+                </Button>
+              ) : (
+                <Badge variant="outline">Oda onaydan sonra oluşur</Badge>
+              )}
             </div>
-            <div className="h-2 overflow-hidden rounded-full bg-muted">
-              <div
-                className="h-full rounded-full bg-primary transition-all"
-                style={{ width: `${profileCompletion}%` }}
-              />
-            </div>
-            <p className="mt-3 text-sm text-muted-foreground">
-              {availability.length} müsaitlik penceresi · {profile.subjects.length} ders
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">Yaklaşan ders bulunmuyor.</p>
+          )}
+        </CardContent>
+      </Card>
 
       <Card className="mb-6">
         <CardHeader className="pb-2">
@@ -1271,44 +1193,6 @@ function TutorDashboardContent() {
             onClearVideo={handleClearVideo}
             onPhotoSelected={handlePhotoSelected}
           />
-        </TabsContent>
-
-        <TabsContent value="requests" className="mt-6">
-          {requestsError && (
-            <div className="flex flex-col items-center gap-3 py-10 text-center">
-              <p className="text-sm text-muted-foreground">Ders talepleri yüklenemedi.</p>
-              <Button variant="outline" size="sm" onClick={() => refetchRequests()}>
-                Tekrar Dene
-              </Button>
-            </div>
-          )}
-          {!requestsError && requestsLoading && (
-            <div className="space-y-3">
-              {[1, 2, 3].map((i) => (
-                <Skeleton key={i} className="h-32 w-full rounded-lg" />
-              ))}
-            </div>
-          )}
-          {!requestsError && !requestsLoading && lessonRequests.length === 0 && (
-            <EmptyState
-              title="Henüz mesaj isteğiniz yok"
-              description="Öğrenciler profilinizi ziyaret ederek mesaj isteği gönderebilir"
-            />
-          )}
-          {!requestsError && !requestsLoading && lessonRequests.length > 0 && (
-            <div className="space-y-3">
-              {lessonRequests.map((lr) => (
-                <LessonRequestCard
-                  key={lr.id}
-                  lessonRequest={lr}
-                  currentUserRole="tutor"
-                  onAccept={handleAcceptRequest}
-                  onDecline={handleDeclineRequest}
-                  isUpdating={updatingRequestId === lr.id}
-                />
-              ))}
-            </div>
-          )}
         </TabsContent>
 
         <TabsContent value="bookings" className="mt-6">
