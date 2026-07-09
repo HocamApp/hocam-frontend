@@ -76,6 +76,18 @@ export function formatDateLocal(d: Date): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
+const DISPUTE_CATEGORY_LABELS: Record<string, string> = {
+  tutor_no_show: "Hocanın derse katılmaması",
+  technical_issue: "Teknik sorun",
+  interrupted: "Ders yarıda kesildi",
+  conduct: "Davranış şikayeti",
+  other: "Diğer",
+};
+
+export function formatDisputeCategory(category: string): string {
+  return DISPUTE_CATEGORY_LABELS[category] ?? category;
+}
+
 // Format a date as a Turkish relative string ("2 gün önce", "1 hafta önce", etc.)
 // Falls back to formatDate for dates older than a year.
 export function formatRelativeDate(dateString: string): string {

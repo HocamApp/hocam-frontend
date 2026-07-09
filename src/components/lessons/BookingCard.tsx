@@ -4,7 +4,7 @@ import { Calendar, Clock3, FolderOpen, User, Wallet } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import StatusBadge from "@/components/shared/StatusBadge";
-import { cn, formatDate, formatPrice } from "@/lib/utils";
+import { cn, formatDate, formatDisputeCategory, formatPrice } from "@/lib/utils";
 import { Video } from "lucide-react";
 import type { Booking, LearningActivityStatus } from "@/types";
 
@@ -41,18 +41,6 @@ function formatLearningActivityStatus(status: LearningActivityStatus): string {
   return labels[status] ?? status;
 }
 
-function formatDisputeCategory(category: string): string {
-  const labels: Record<string, string> = {
-    tutor_no_show: "Hocanın derse katılmaması",
-    technical_issue: "Teknik sorun",
-    interrupted: "Ders yarıda kesildi",
-    conduct: "Davranış şikayeti",
-    other: "Diğer",
-  };
-
-  return labels[category] ?? category;
-}
-
 export function BookingCard({
   booking,
   currentUserRole,
@@ -79,7 +67,11 @@ export function BookingCard({
   const isPast = new Date(booking.start_time) <= new Date();
   const isFuture = new Date(booking.start_time) > new Date();
   const canCancel =
-    currentUserRole === "student" && !isCompleted && !isCancelled;
+    currentUserRole === "student" &&
+    !isCompleted &&
+    !isCancelled &&
+    !isAwaitingConfirmation &&
+    !isDisputed;
   const learningContext = booking.learning_context;
   const canConfirmLearningProgress =
     currentUserRole === "tutor" &&
@@ -101,6 +93,8 @@ export function BookingCard({
         ((isCompleted || isPast) && Boolean(onMaterialsClick))
       : (isConfirmed && isFuture) ||
         canCancel ||
+        isAwaitingConfirmation ||
+        isDisputed ||
         ((isCompleted || isPast) && Boolean(onMaterialsClick)) ||
         (isCompleted && (Boolean(onReviewClick) || Boolean(reviewDisabledReason)));
 
@@ -269,6 +263,25 @@ export function BookingCard({
 
           {currentUserRole === "student" && (
             <>
+              {isAwaitingConfirmation && (
+                <span className="inline-flex items-center rounded-md border px-2.5 py-1 text-xs font-medium text-muted-foreground">
+                  Onayın bekleniyor
+                </span>
+              )}
+              {isDisputed && (
+                <div className="w-full rounded-md border border-orange-200 bg-orange-50 px-2.5 py-1.5 text-xs text-orange-900 dark:border-orange-900/60 dark:bg-orange-950/30 dark:text-orange-100">
+                  <p className="font-medium">
+                    İtirazın inceleniyor
+                    {booking.dispute_category
+                      ? ` · ${formatDisputeCategory(booking.dispute_category)}`
+                      : ""}
+                  </p>
+                  <p className="mt-0.5">
+                    Bildirdiğin sorun admin tarafından değerlendiriliyor. Sonuç
+                    belli olduğunda bilgilendirileceksin.
+                  </p>
+                </div>
+              )}
               {isConfirmed && isFuture && booking.room_url && (
                 <Button size="sm" variant="default" asChild>
                   <a href={`/session/${booking.id}`}>
