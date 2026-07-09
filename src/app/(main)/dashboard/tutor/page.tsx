@@ -82,6 +82,7 @@ const TUTOR_TABS = [
   { value: "profile", label: "Profil" },
   { value: "requests", label: "Mesaj İstekleri" },
   { value: "bookings", label: "Rezervasyonlar" },
+  { value: "students", label: "Öğrencilerim" },
   { value: "availability", label: "Müsaitlik" },
   { value: "verification", label: "Doğrulama" },
 ];
@@ -152,6 +153,52 @@ function sortByStartTime(bookings: Booking[]) {
   );
 }
 
+interface StudentRosterEntry {
+  student: Booking["student"];
+  totalLessons: number;
+  upcomingLessons: number;
+  lastCompletedAt: string | null;
+}
+
+function getStudentRoster(bookings: Booking[]): StudentRosterEntry[] {
+  const roster = new Map<string, StudentRosterEntry>();
+
+  for (const booking of bookings) {
+    const status = (booking.status || "").toLowerCase();
+    if (status === "cancelled") continue;
+
+    const entry =
+      roster.get(booking.student.id) ??
+      ({
+        student: booking.student,
+        totalLessons: 0,
+        upcomingLessons: 0,
+        lastCompletedAt: null,
+      } satisfies StudentRosterEntry);
+
+    entry.totalLessons += 1;
+    if (status === "pending" || status === "confirmed") {
+      entry.upcomingLessons += 1;
+    }
+    if (
+      status === "completed" &&
+      (!entry.lastCompletedAt ||
+        new Date(booking.start_time) > new Date(entry.lastCompletedAt))
+    ) {
+      entry.lastCompletedAt = booking.start_time;
+    }
+
+    roster.set(booking.student.id, entry);
+  }
+
+  return Array.from(roster.values()).sort((a, b) => {
+    if (b.upcomingLessons !== a.upcomingLessons) {
+      return b.upcomingLessons - a.upcomingLessons;
+    }
+    return b.totalLessons - a.totalLessons;
+  });
+}
+
 function StatTile({
   icon,
   label,
@@ -173,6 +220,48 @@ function StatTile({
           <p className="text-sm text-muted-foreground">{label}</p>
           <p className="text-2xl font-semibold leading-tight">{value}</p>
           <p className="truncate text-xs text-muted-foreground">{detail}</p>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function StudentRosterCard({ entry }: { entry: StudentRosterEntry }) {
+  const { student, totalLessons, upcomingLessons, lastCompletedAt } = entry;
+  const name = student.display_name || student.email;
+  const [firstName, lastName] = name.trim().split(/\s+/);
+
+  return (
+    <Card>
+      <CardContent className="flex items-start gap-3 p-4">
+        <Avatar className="h-10 w-10 shrink-0">
+          <AvatarFallback className="bg-primary/10 text-sm font-semibold text-primary">
+            {getInitials(firstName, lastName)}
+          </AvatarFallback>
+        </Avatar>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="truncate font-semibold">{name}</p>
+              {student.display_name && (
+                <p className="truncate text-sm text-muted-foreground">{student.email}</p>
+              )}
+            </div>
+            {upcomingLessons > 0 && (
+              <Badge variant="secondary" className="shrink-0">
+                {upcomingLessons} yaklaşan
+              </Badge>
+            )}
+          </div>
+          <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-muted-foreground">
+            <span className="inline-flex items-center gap-1.5">
+              <Calendar className="h-3.5 w-3.5" aria-hidden="true" />
+              {lastCompletedAt
+                ? `Son ders: ${formatDate(lastCompletedAt)}`
+                : "Henüz ders tamamlanmadı"}
+            </span>
+            <span>{totalLessons} ders</span>
+          </div>
         </div>
       </CardContent>
     </Card>
@@ -637,6 +726,8 @@ function TutorDashboardContent() {
       }) ?? [],
     [bookings]
   );
+
+  const studentRoster = useMemo(() => getStudentRoster(bookings ?? []), [bookings]);
 
   const pendingRequests = lessonRequests.filter((lr) => lr.status === "pending");
   const confirmedBookings = activeBookings.filter((b) => b.status === "confirmed");
@@ -1125,6 +1216,37 @@ function TutorDashboardContent() {
                 </div>
               )}
             </>
+          )}
+        </TabsContent>
+
+        <TabsContent value="students" className="mt-6">
+          {bookingsError && (
+            <div className="flex flex-col items-center gap-3 py-10 text-center">
+              <p className="text-sm text-muted-foreground">Öğrenciler yüklenemedi.</p>
+              <Button variant="outline" size="sm" onClick={() => refetchBookings()}>
+                Tekrar Dene
+              </Button>
+            </div>
+          )}
+          {!bookingsError && bookingsLoading && (
+            <div className="space-y-3">
+              {[1, 2, 3].map((i) => (
+                <Skeleton key={i} className="h-20 w-full rounded-lg" />
+              ))}
+            </div>
+          )}
+          {!bookingsError && !bookingsLoading && studentRoster.length === 0 && (
+            <EmptyState
+              title="Henüz öğrenciniz yok"
+              description="Rezervasyonlar onaylandıkça öğrencileriniz burada listelenir."
+            />
+          )}
+          {!bookingsError && !bookingsLoading && studentRoster.length > 0 && (
+            <div className="space-y-3">
+              {studentRoster.map((entry) => (
+                <StudentRosterCard key={entry.student.id} entry={entry} />
+              ))}
+            </div>
           )}
         </TabsContent>
 
