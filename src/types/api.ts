@@ -310,7 +310,7 @@ export interface MessageRequest {
 export interface Booking {
   id: string;
   student: { id: string; email: string; display_name?: string };
-  tutor: { id: string; name: string; surname: string };
+  tutor: { id: string; name: string; surname: string; profile_picture?: string };
   subject: Subject;
   start_time: string;
   duration_minutes: number;
