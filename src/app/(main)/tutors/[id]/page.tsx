@@ -325,8 +325,6 @@ export default function TutorProfilePage({
   const { isAuthenticated, isStudent, user } = useAuth();
   const { favoriteIds, toggle, isFavoritePending } = useFavorites();
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
-  const [requestSent, setRequestSent] = useState(false);
-  const [requestConversationId, setRequestConversationId] = useState<string | null>(null);
   // Paid bookings now go through /tutors/[id]/checkout; this modal only
   // handles the free trial path (which deliberately skips checkout).
   const [bookingModalMode, setBookingModalMode] = useState<"trial" | null>(null);
@@ -632,32 +630,15 @@ export default function TutorProfilePage({
                 )}
 
                 {isAuthenticated && isStudent && !isOwnProfile && (
-                  <>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="w-full"
-                      onClick={() => setIsRequestModalOpen(true)}
-                    >
-                      <MessageSquare className="mr-2 h-4 w-4" />
-                      Hocaya Mesaj Gönder
-                    </Button>
-                    {requestSent && !bookingComplete && (
-                      <div className="rounded-lg border bg-muted/40 p-2 text-center text-sm">
-                        <p className="text-muted-foreground">
-                          Mesaj isteğin gönderildi. Hoca kabul ederse konuşma başlayacak.
-                        </p>
-                        {requestConversationId && (
-                          <Link
-                            href={`/messages/${requestConversationId}`}
-                            className="font-medium text-primary hover:underline"
-                          >
-                            Mesajlara git
-                          </Link>
-                        )}
-                      </div>
-                    )}
-                  </>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => setIsRequestModalOpen(true)}
+                  >
+                    <MessageSquare className="mr-2 h-4 w-4" />
+                    Hocaya Mesaj Gönder
+                  </Button>
                 )}
 
                 {isAuthenticated && isStudent && !isOwnProfile && (
@@ -928,12 +909,11 @@ export default function TutorProfilePage({
         isOpen={isRequestModalOpen}
         onClose={() => setIsRequestModalOpen(false)}
         onSuccess={(messageRequest) => {
-          setRequestConversationId(messageRequest.conversation_id ?? null);
-          setRequestSent(true);
           setIsRequestModalOpen(false);
-          toast.success(
-            "Mesaj isteğin hocaya gönderildi. Hoca kabul ederse konuşma başlayacak."
-          );
+          toast.success("Mesajın gönderildi.");
+          if (messageRequest.conversation_id) {
+            router.push(`/messages/${messageRequest.conversation_id}`);
+          }
         }}
       />
       <BookingModal

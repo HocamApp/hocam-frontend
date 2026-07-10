@@ -6,17 +6,15 @@ import { useAuth } from "@/hooks/useAuth";
 import { usePageVisibility } from "@/hooks/usePageVisibility";
 import { fetchConversations } from "@/lib/messagingApi";
 import { ConversationList } from "@/components/messaging/ConversationList";
-import { MessageRequestList } from "@/components/messaging/MessageRequestList";
 import { RouteGuard } from "@/components/shared/RouteGuard";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MessageCircle } from "lucide-react";
 
 const CONVERSATIONS_REFETCH_INTERVAL_MS = 60_000;
 
 function MessagesContent() {
   const router = useRouter();
-  const { isAuthenticated, user, isTutor } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const isPageVisible = usePageVisibility();
 
   const {
@@ -55,24 +53,7 @@ function MessagesContent() {
         <header className="shrink-0 border-b p-4">
           <h1 className="text-xl font-semibold">Mesajlar</h1>
         </header>
-        {isTutor ? (
-          <Tabs defaultValue="conversations" className="flex min-h-0 flex-1 flex-col">
-            <div className="shrink-0 border-b p-2">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="conversations">Sohbetler</TabsTrigger>
-                <TabsTrigger value="message-requests">Mesaj İstekleri</TabsTrigger>
-              </TabsList>
-            </div>
-            <TabsContent value="conversations" className="mt-0">
-              {conversationsPanel}
-            </TabsContent>
-            <TabsContent value="message-requests" className="mt-0">
-              <MessageRequestList />
-            </TabsContent>
-          </Tabs>
-        ) : (
-          conversationsPanel
-        )}
+        {conversationsPanel}
       </div>
 
       {/* Right panel - empty state when no conversation selected */}

@@ -391,6 +391,7 @@ export interface Conversation {
   };
   unread_count?: number;
   tutor_profile?: TutorProfile | null;
+  is_blocked: boolean;
 }
 
 export interface MessageReplyPreview {
