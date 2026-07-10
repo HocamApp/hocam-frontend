@@ -4,26 +4,10 @@ import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronRight, Gift } from "lucide-react";
 import { fetchPackagePlans, fetchPackagePurchases, filterMatrixPlans } from "@/lib/paymentsApi";
-import { formatPrice } from "@/lib/utils";
 import type { TutorProfile } from "@/types";
 
 interface PackageOfferPanelProps {
   tutor: TutorProfile;
-}
-
-// Dative suffix ("-e/-a varan") follows the vowel of the number's final
-// spoken word: 29 → "dokuza" → 'a, 25 → "beşe" → 'e.
-const DATIVE_BY_LAST_DIGIT = ["", "'e", "'ye", "'e", "'e", "'e", "'ya", "'ye", "'e", "'a"];
-const DATIVE_BY_TENS = ["", "'a", "'ye", "'a", "'a", "'ye", "'a", "'e", "'e", "'a"];
-
-function withDativeSuffix(n: number): string {
-  const suffix =
-    n % 10 !== 0
-      ? DATIVE_BY_LAST_DIGIT[n % 10]
-      : n % 100 !== 0
-        ? DATIVE_BY_TENS[Math.floor(n / 10) % 10]
-        : "'e"; // yüze
-  return `${n}${suffix}`;
 }
 
 /**
@@ -45,23 +29,19 @@ export function PackageOfferPanel({ tutor }: PackageOfferPanelProps) {
   const weeklyPlans = filterMatrixPlans(plans);
   if (weeklyPlans.length === 0) return null;
 
-  // Any plan counts here — a paid package or a pending request both matter
-  // more to the student than the generic price teaser. Paid credits win
-  // over a pending request.
+  // Without a paid or pending package, this panel would just duplicate the
+  // main "Ders Rezervasyonu Yap" CTA below it, so render nothing.
   const tutorPurchases = (purchases ?? []).filter((p) => p.tutor.id === tutor.id);
   const paidWithCredits = tutorPurchases.find(
     (p) => p.status === "paid" && p.remaining_credits > 0
   );
   const pending = tutorPurchases.find((p) => p.status === "pending");
 
-  const maxDiscount = Math.max(...weeklyPlans.map((p) => p.discount_percent));
+  if (!paidWithCredits && !pending) return null;
+
   const subtitle = paidWithCredits
     ? `Kullanılabilir ${paidWithCredits.remaining_credits} ders hakkı`
-    : pending
-      ? "Admin onayı bekleniyor"
-      : maxDiscount > 0
-        ? `${formatPrice(tutor.hourly_price)} / ders · %${withDativeSuffix(maxDiscount)} varan avantaj`
-        : `${formatPrice(tutor.hourly_price)} / ders`;
+    : "Admin onayı bekleniyor";
 
   return (
     <Link
