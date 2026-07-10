@@ -3,25 +3,39 @@
 import { useState } from "react";
 import Link from "next/link";
 import {
+  AlertCircle,
   Calendar,
+  CalendarPlus,
   ChevronDown,
   ChevronRight,
   CheckCircle2,
   Clock3,
+  Heart,
   Layers3,
+  MessageCircle,
   PanelRightOpen,
+  Video,
+  Wallet,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { fetchBookings, updateBookingStatus } from "@/lib/lessonsApi";
+import { fetchPackagePurchases } from "@/lib/paymentsApi";
+import { formatDate } from "@/lib/utils";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { RouteGuard } from "@/components/shared/RouteGuard";
 import { StatCard } from "@/components/shared/StatCard";
-import { BookingCard } from "@/components/lessons/BookingCard";
-import { LessonConfirmDisputeCard } from "@/components/lessons/LessonConfirmDisputeCard";
+import StatusBadge from "@/components/shared/StatusBadge";
+import { BookingCard, paymentLabel } from "@/components/lessons/BookingCard";
+import {
+  LessonConfirmDisputeCard,
+  actionableConfirmDisputeBookings,
+} from "@/components/lessons/LessonConfirmDisputeCard";
 import { LessonMaterialsDialog } from "@/components/lessons/LessonMaterialsDialog";
 import { ReviewModal } from "@/components/lessons/ReviewModal";
+import { ParticipantAvatar } from "@/components/messaging/ParticipantAvatar";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Booking } from "@/types";
 import { toast } from "sonner";
@@ -31,6 +45,13 @@ const PAST_BATCH_SIZE = 6;
 function formatHours(hours: number): string {
   if (!hours) return "0";
   return Number.isInteger(hours) ? String(hours) : hours.toFixed(1);
+}
+
+function formatTime(isoString: string): string {
+  return new Date(isoString).toLocaleTimeString("tr-TR", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 function sortByStartAsc(bookings: Booking[]) {
@@ -45,6 +66,32 @@ function sortByStartDesc(bookings: Booking[]) {
   );
 }
 
+// "Bugün"/"Yarın" must follow calendar-day boundaries in the user's local
+// timezone (the app treats booking start_time as local, never UTC — see
+// CLAUDE.md), not a raw 24h/48h cutoff, so a late-night lesson still reads
+// as "Bugün" instead of misclassifying across midnight.
+function startOfDay(date: Date): Date {
+  const clone = new Date(date);
+  clone.setHours(0, 0, 0, 0);
+  return clone;
+}
+
+function formatLessonCountdown(startTime: string): string {
+  const diffDays = Math.round(
+    (startOfDay(new Date(startTime)).getTime() - startOfDay(new Date()).getTime()) /
+      (24 * 60 * 60 * 1000)
+  );
+  if (diffDays < 0) return "";
+  if (diffDays === 0) return "Bugün";
+  if (diffDays === 1) return "Yarın";
+  return `Derse ${diffDays} gün kaldı`;
+}
+
+// Keep in sync with Booking.REVIEW_WINDOW_DAYS on the backend (single
+// source of truth there — this only mirrors it for instant UI feedback;
+// the server has the final say via ReviewCreateView).
+const REVIEW_WINDOW_DAYS = 3;
+
 function reviewDeadlineForBooking(booking: Booking) {
   const completedAt = booking.completed_at
     ? new Date(booking.completed_at)
@@ -52,7 +99,7 @@ function reviewDeadlineForBooking(booking: Booking) {
         new Date(booking.start_time).getTime() +
           (booking.duration_minutes || 0) * 60 * 1000
       );
-  return new Date(completedAt.getTime() + 24 * 60 * 60 * 1000);
+  return new Date(completedAt.getTime() + REVIEW_WINDOW_DAYS * 24 * 60 * 60 * 1000);
 }
 
 function canReviewBooking(booking: Booking, reviewedBookingIds: Set<string>) {
@@ -82,6 +129,12 @@ function StudentDashboardContent() {
   } = useQuery({
     queryKey: ["bookings"],
     queryFn: fetchBookings,
+    enabled: isAuthenticated,
+  });
+
+  const { data: packagePurchases, isLoading: packagePurchasesLoading } = useQuery({
+    queryKey: ["package-purchases"],
+    queryFn: fetchPackagePurchases,
     enabled: isAuthenticated,
   });
 
@@ -126,20 +179,83 @@ function StudentDashboardContent() {
   const completedHours =
     completedBookings.reduce((sum, b) => sum + (b.duration_minutes || 0), 0) / 60;
 
+  const nextLesson = upcomingConfirmed[0] ?? null;
+  const restUpcoming = upcomingConfirmed.slice(1);
+  const nextTutorName =
+    nextLesson && nextLesson.tutor.name
+      ? `${nextLesson.tutor.name} ${nextLesson.tutor.surname}`
+      : "Eğitmen bilgisi bekleniyor";
+  const nextLessonCountdown = nextLesson ? formatLessonCountdown(nextLesson.start_time) : "";
+
+  const activePackagePurchases = (packagePurchases ?? []).filter(
+    (p) => p.status === "paid" && p.remaining_credits > 0
+  );
+  const remainingCredits = activePackagePurchases.reduce(
+    (sum, p) => sum + p.remaining_credits,
+    0
+  );
+
+  const pendingActionBookings = actionableConfirmDisputeBookings(bookings ?? []);
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       <div className="space-y-8">
-        <header className="flex flex-col gap-4 border-b pb-6">
+        <header className="flex flex-col gap-4 border-b pb-6 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
-              Öğrenci Panosu
+              Merhaba {firstNameFromUser(user)} 👋
             </h1>
             <p className="mt-1.5 max-w-2xl text-sm text-muted-foreground">
-              Merhaba {firstNameFromUser(user)}. Sıradaki derslerini takip et,
-              derse gir ve geçmiş çalışmalarına buradan dön.
+              Bugün ders durumun burada. Yaklaşan derslerini takip edebilir, kalan
+              haklarını görebilir ve yeni ders planlayabilirsin.
             </p>
           </div>
+          <Button asChild size="lg" className="shrink-0">
+            <Link href="/tutors">
+              <CalendarPlus className="mr-2 h-4 w-4" />
+              Yeni Ders Planla
+            </Link>
+          </Button>
         </header>
+
+        <section className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          <StatCard
+            icon={<Calendar className="h-4 w-4" aria-hidden="true" />}
+            label="Yaklaşan ders"
+            value={upcomingConfirmed.length}
+            detail={nextLesson ? formatDate(nextLesson.start_time) : "Planlanmış ders yok"}
+            isLoading={bookingsLoading}
+          />
+          <StatCard
+            icon={<Wallet className="h-4 w-4" aria-hidden="true" />}
+            label="Kalan ders hakkı"
+            value={remainingCredits}
+            detail={
+              activePackagePurchases.length > 0
+                ? `${activePackagePurchases.length} aktif paket`
+                : "Aktif paketin yok"
+            }
+            isLoading={packagePurchasesLoading}
+          />
+          <StatCard
+            icon={<AlertCircle className="h-4 w-4" aria-hidden="true" />}
+            label="Bekleyen işlem"
+            value={pendingActionBookings.length}
+            detail={
+              pendingActionBookings.length > 0
+                ? "Onayını bekleyen ders var"
+                : "Bekleyen işlem yok"
+            }
+            isLoading={bookingsLoading}
+          />
+          <StatCard
+            icon={<CheckCircle2 className="h-4 w-4" aria-hidden="true" />}
+            label="Geçmiş ders"
+            value={completedBookings.length}
+            detail={`${formatHours(completedHours)} saat toplam`}
+            isLoading={bookingsLoading}
+          />
+        </section>
 
         <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_230px]">
           <main className="space-y-8">
@@ -149,45 +265,115 @@ function StudentDashboardContent() {
         />
 
         <section id="upcoming-lessons" className="space-y-4 scroll-mt-24">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <h2 className="text-lg font-semibold tracking-tight">Yaklaşan Derslerim</h2>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Panoya girdiğinde en hızlı ulaşman gereken dersler burada.
-              </p>
-            </div>
-            <Button asChild variant="outline" size="sm">
-              <Link href="/tutors">Hoca Bul</Link>
-            </Button>
-          </div>
+          <h2 className="text-lg font-semibold tracking-tight">Yaklaşan Derslerim</h2>
 
           {bookingsLoading ? (
-            <div className="space-y-3">
-              {[1, 2, 3].map((i) => (
-                <Skeleton key={i} className="h-40 w-full rounded-lg" />
-              ))}
-            </div>
-          ) : upcomingConfirmed.length === 0 ? (
+            <Skeleton className="h-56 w-full rounded-xl" />
+          ) : nextLesson ? (
+            <Card className="overflow-hidden border-primary/30 bg-gradient-to-br from-primary/5 via-card to-card">
+              <CardContent className="p-5 sm:p-6">
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <ParticipantAvatar name={nextTutorName} className="h-12 w-12 shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-xs font-medium uppercase tracking-wide text-primary">
+                        Sıradaki dersin
+                      </p>
+                      <p className="truncate text-lg font-semibold">
+                        {nextLesson.subject.name}
+                      </p>
+                      <p className="truncate text-sm text-muted-foreground">
+                        {nextTutorName}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex shrink-0 flex-col items-end gap-1.5">
+                    <StatusBadge status={nextLesson.status} type="booking" />
+                    {nextLessonCountdown && (
+                      <span className="text-xs font-medium text-primary">
+                        {nextLessonCountdown}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-1.5 text-sm text-muted-foreground">
+                  <span className="inline-flex items-center gap-1.5">
+                    <Calendar className="h-4 w-4" aria-hidden="true" />
+                    {formatDate(nextLesson.start_time)}
+                  </span>
+                  <span className="inline-flex items-center gap-1.5">
+                    <Clock3 className="h-4 w-4" aria-hidden="true" />
+                    {formatTime(nextLesson.start_time)} · {nextLesson.duration_minutes} dk
+                  </span>
+                  <span className="inline-flex items-center gap-1.5">
+                    <Wallet className="h-4 w-4" aria-hidden="true" />
+                    {paymentLabel(nextLesson)}
+                  </span>
+                </div>
+
+                <div className="mt-5 flex flex-wrap items-center gap-2 border-t pt-4">
+                  {nextLesson.room_url ? (
+                    <Button asChild size="lg">
+                      <a href={`/session/${nextLesson.id}`}>
+                        <Video className="mr-2 h-4 w-4" />
+                        Derse Katıl
+                      </a>
+                    </Button>
+                  ) : (
+                    <Button size="lg" variant="outline" disabled>
+                      Oda hazırlanıyor...
+                    </Button>
+                  )}
+                  <Button asChild variant="outline">
+                    <Link href="/messages">
+                      <MessageCircle className="mr-2 h-4 w-4" />
+                      Mesaj Gönder
+                    </Link>
+                  </Button>
+                  {/* nextLesson is always "confirmed" or "in_progress" per
+                      upcomingConfirmed's filter, so cancel is always
+                      available here — mirrors BookingCard's canCancel for
+                      the same two states. */}
+                  <Button
+                    variant="outline"
+                    className="ml-auto border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                    onClick={() => handleStatusUpdate(nextLesson.id, "cancelled")}
+                    disabled={updatingId === nextLesson.id}
+                  >
+                    İptal Et
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
             <EmptyState
-              title="Yaklaşan onaylı dersin yok"
-              description="Bir hoca ile ders planlandığında ilk olarak burada görünecek."
+              title="Henüz planlanmış dersin yok."
+              description="Hedef sınavına uygun doğrulanmış mentorları keşfederek ilk dersini planlayabilirsin."
               action={
                 <Button asChild>
                   <Link href="/tutors">Hoca Bul</Link>
                 </Button>
               }
             />
-          ) : (
-            <div className="space-y-3">
-              {upcomingConfirmed.map((b) => (
-                <BookingCard
-                  key={b.id}
-                  booking={b}
-                  currentUserRole="student"
-                  onStatusUpdate={handleStatusUpdate}
-                  isUpdating={updatingId === b.id}
-                />
-              ))}
+          )}
+
+          {restUpcoming.length > 0 && (
+            <div className="space-y-3 pt-2">
+              <h3 className="text-sm font-medium text-muted-foreground">
+                Diğer yaklaşan derslerin
+              </h3>
+              <div className="space-y-3">
+                {restUpcoming.map((b) => (
+                  <BookingCard
+                    key={b.id}
+                    booking={b}
+                    currentUserRole="student"
+                    onStatusUpdate={handleStatusUpdate}
+                    isUpdating={updatingId === b.id}
+                  />
+                ))}
+              </div>
             </div>
           )}
         </section>
@@ -231,22 +417,19 @@ function StudentDashboardContent() {
               Geçmiş dersler kapalı. Açmak için başlığa dokun.
             </div>
           ) : pastBookings.length === 0 ? (
-            <div className="rounded-lg border border-dashed bg-muted/30 p-4 text-sm text-muted-foreground">
-              Geçmiş derslerin burada birikecek.
-            </div>
+            <EmptyState
+              title="Henüz geçmiş dersin yok"
+              description="Tamamladığın dersler burada birikecek."
+            />
           ) : (
             <>
-              <div className="relative space-y-4 pl-8">
-                <div className="absolute bottom-4 left-3 top-4 w-px bg-border" aria-hidden="true" />
+              <div className="space-y-3">
                 {visiblePastBookings.map((b, index) => (
                   <div
                     key={b.id}
-                    className="relative animate-element"
+                    className="animate-element"
                     style={{ animationDelay: `${Math.min(index, 5) * 45}ms` }}
                   >
-                    <span className="absolute -left-[2.05rem] top-5 flex h-6 w-6 items-center justify-center rounded-full border bg-background shadow-sm">
-                      <CheckCircle2 className="h-3.5 w-3.5 text-primary" aria-hidden="true" />
-                    </span>
                     <BookingCard
                       booking={b}
                       currentUserRole="student"
@@ -280,33 +463,6 @@ function StudentDashboardContent() {
             </>
           )}
         </section>
-
-        <section id="lesson-summary" className="space-y-3 scroll-mt-24">
-          <h2 className="text-base font-semibold tracking-tight">Ders Özeti</h2>
-          <div className="grid gap-4 sm:grid-cols-3">
-            <StatCard
-              icon={<Calendar className="h-4 w-4" aria-hidden="true" />}
-              label="Yaklaşan ders"
-              value={upcomingConfirmed.length}
-              detail="Sıradaki onaylı derslerin"
-              isLoading={bookingsLoading}
-            />
-            <StatCard
-              icon={<CheckCircle2 className="h-4 w-4" aria-hidden="true" />}
-              label="Tamamlanan ders"
-              value={completedBookings.length}
-              detail="Bugüne kadar aldığın dersler"
-              isLoading={bookingsLoading}
-            />
-            <StatCard
-              icon={<Clock3 className="h-4 w-4" aria-hidden="true" />}
-              label="Toplam ders saati"
-              value={formatHours(completedHours)}
-              detail="Tamamlanan derslerin toplam süresi"
-              isLoading={bookingsLoading}
-            />
-          </div>
-        </section>
           </main>
 
           <aside className="hidden lg:block">
@@ -315,8 +471,29 @@ function StudentDashboardContent() {
                 <PanelRightOpen className="h-4 w-4 text-muted-foreground" />
                 Hızlı erişim
               </div>
+              <Button asChild variant="outline" size="sm" className="w-full justify-start">
+                <Link href="/tutors">
+                  <CalendarPlus className="mr-2 h-4 w-4" />
+                  Yeni Ders Planla
+                </Link>
+              </Button>
               <Button asChild variant="ghost" size="sm" className="w-full justify-start">
-                <a href="#upcoming-lessons">Yaklaşan dersler</a>
+                <Link href="/tutors?favorites=1">
+                  <Heart className="mr-2 h-4 w-4" />
+                  Hocalarım
+                </Link>
+              </Button>
+              <Button asChild variant="ghost" size="sm" className="w-full justify-start">
+                <Link href="/messages">
+                  <MessageCircle className="mr-2 h-4 w-4" />
+                  Mesajlar
+                </Link>
+              </Button>
+              <Button asChild variant="ghost" size="sm" className="w-full justify-start">
+                <Link href="/profile/payments">
+                  <Wallet className="mr-2 h-4 w-4" />
+                  Paketlerim
+                </Link>
               </Button>
               <Button
                 type="button"
@@ -330,10 +507,8 @@ function StudentDashboardContent() {
                     ?.scrollIntoView({ behavior: "smooth", block: "start" });
                 }}
               >
+                <Layers3 className="mr-2 h-4 w-4" />
                 Geçmiş dersler
-              </Button>
-              <Button asChild variant="ghost" size="sm" className="w-full justify-start">
-                <a href="#lesson-summary">Ders özeti</a>
               </Button>
             </div>
           </aside>

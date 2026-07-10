@@ -128,7 +128,7 @@ export function MessageRequestModal({
           <DialogTitle>Hocaya Mesaj Gönder</DialogTitle>
           <DialogDescription>
             Hocaya kendini tanıt, hedefini ve nasıl destek almak istediğini kısaca
-            anlat. Hoca mesajını kabul ederse konuşma başlayacak.
+            anlat. Mesajını gönderdiğinde konuşma hemen başlar.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -175,7 +175,7 @@ export function MessageRequestModal({
                     Gönderiliyor
                   </span>
                 ) : (
-                  "Mesaj İsteği Gönder"
+                  "Mesaj Gönder"
                 )}
               </Button>
             </DialogFooter>

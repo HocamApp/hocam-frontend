@@ -391,6 +391,7 @@ export interface Conversation {
   };
   unread_count?: number;
   tutor_profile?: TutorProfile | null;
+  is_blocked: boolean;
 }
 
 export interface MessageReplyPreview {
@@ -559,6 +560,7 @@ export interface AvailabilityRule {
   id: string;
   tutor: string;
   day_of_week: number;
+  specific_date?: string | null;
   start_time: string;
   end_time: string;
   created_at: string;

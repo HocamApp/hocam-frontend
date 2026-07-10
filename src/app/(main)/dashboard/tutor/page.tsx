@@ -2,12 +2,12 @@
 
 import { ChangeEvent, ReactNode, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import axios from "axios";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Calendar,
   Camera,
-  CheckCircle2,
   Clock,
   ExternalLink,
   PlayCircle,
@@ -49,11 +49,9 @@ import { RouteGuard } from "@/components/shared/RouteGuard";
 import { BookingCard } from "@/components/lessons/BookingCard";
 import { LessonMaterialsDialog } from "@/components/lessons/LessonMaterialsDialog";
 import { AvailabilityCalendar } from "@/components/tutors/AvailabilityCalendar";
-import { AvailabilityEditor } from "@/components/tutors/AvailabilityEditor";
 import { ReviewCard } from "@/components/tutors/ReviewCard";
 import { ReviewSummary } from "@/components/tutors/ReviewSummary";
 import { SubjectRatingBreakdown } from "@/components/tutors/SubjectRatingBreakdown";
-import { VerificationForm } from "@/components/tutors/VerificationForm";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { AnimatedTabs } from "@/components/ui/animated-tabs";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -87,7 +85,6 @@ const TUTOR_TABS = [
   { value: "earnings", label: "Kazançlar" },
   { value: "reviews", label: "Değerlendirmeler" },
   { value: "availability", label: "Müsaitlik" },
-  { value: "verification", label: "Doğrulama" },
 ];
 
 const DAY_NAMES = [
@@ -99,6 +96,8 @@ const DAY_NAMES = [
   "Cumartesi",
   "Pazar",
 ];
+
+const DASHBOARD_LIST_PREVIEW_COUNT = 3;
 
 function getInitials(name?: string, surname?: string): string {
   const n = (name || "").trim()[0] || "";
@@ -133,21 +132,6 @@ function getYouTubeEmbedUrl(url?: string): string | null {
   } catch {
     return null;
   }
-}
-
-function getProfileCompletion(profile: TutorProfile | undefined, availabilityCount: number) {
-  if (!profile) return 0;
-
-  const checks = [
-    Boolean(profile.profile_picture),
-    Boolean(profile.bio && profile.bio.trim().length >= 80),
-    Boolean(profile.intro_video_url),
-    Boolean(profile.subjects.length > 0),
-    availabilityCount > 0,
-    profile.is_verified,
-  ];
-
-  return Math.round((checks.filter(Boolean).length / checks.length) * 100);
 }
 
 function sortByStartTime(bookings: Booking[]) {
@@ -500,8 +484,6 @@ function LearningProgressConfirmModal({
 
 function ProfileStudio({
   profile,
-  availability,
-  profileCompletion,
   introVideoInput,
   isSavingVideo,
   videoError,
@@ -513,8 +495,6 @@ function ProfileStudio({
   onPhotoSelected,
 }: {
   profile: TutorProfile;
-  availability: AvailabilityRule[];
-  profileCompletion: number;
   introVideoInput: string;
   isSavingVideo: boolean;
   videoError: string | null;
@@ -526,15 +506,6 @@ function ProfileStudio({
   onPhotoSelected: (event: ChangeEvent<HTMLInputElement>) => void;
 }) {
   const embedUrl = getYouTubeEmbedUrl(introVideoInput || profile.intro_video_url);
-  const completedItems = [
-    Boolean(profile.profile_picture),
-    Boolean(profile.bio && profile.bio.trim().length >= 80),
-    Boolean(profile.intro_video_url),
-    profile.subjects.length > 0,
-    availability.length > 0,
-    profile.is_verified,
-  ].filter(Boolean).length;
-
   return (
     <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
       <div className="space-y-6">
@@ -643,45 +614,20 @@ function ProfileStudio({
       <div className="space-y-6">
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">Profil Gücü</CardTitle>
+            <CardTitle className="text-base">Profil Bilgileri</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div>
-              <div className="mb-2 flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">{completedItems}/6 tamamlandı</span>
-                <span className="font-medium">{profileCompletion}%</span>
-              </div>
-              <div className="h-2 overflow-hidden rounded-full bg-muted">
-                <div
-                  className="h-full rounded-full bg-primary transition-all"
-                  style={{ width: `${profileCompletion}%` }}
-                />
-              </div>
-            </div>
-            <div className="space-y-2 text-sm">
-              {[
-                ["Fotoğraf", Boolean(profile.profile_picture)],
-                ["Hakkımda", Boolean(profile.bio && profile.bio.trim().length >= 80)],
-                ["Video", Boolean(profile.intro_video_url)],
-                ["Dersler", profile.subjects.length > 0],
-                ["Müsaitlik", availability.length > 0],
-                ["Doğrulama", profile.is_verified],
-              ].map(([label, done]) => (
-                <div key={String(label)} className="flex items-center justify-between">
-                  <span>{label}</span>
-                  {done ? (
-                    <CheckCircle2 className="h-4 w-4 text-green-600" />
-                  ) : (
-                    <Clock className="h-4 w-4 text-muted-foreground" />
-                  )}
-                </div>
-              ))}
-            </div>
+            <p className="text-sm text-muted-foreground">
+              Genel profil bilgilerini, ders alanlarını ve ücretini tek yerden yönet.
+            </p>
             {Boolean(profile.no_show_count) && (
               <p className="text-xs text-muted-foreground">
                 Devamsızlık sayısı: {profile.no_show_count}
               </p>
             )}
+            <Button asChild className="w-full">
+              <Link href="/dashboard/tutor/edit">Profili Düzenle</Link>
+            </Button>
             <Button asChild variant="outline" className="w-full">
               <Link href={`/tutors/${profile.id}`}>
                 <ExternalLink className="mr-2 h-4 w-4" />
@@ -792,6 +738,8 @@ function StudentDetailDialog({
 }
 
 function TutorDashboardContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const queryClient = useQueryClient();
   const { user, isAuthenticated } = useAuth();
   const [updatingId, setUpdatingId] = useState<string | null>(null);
@@ -800,11 +748,18 @@ function TutorDashboardContent() {
   const [videoError, setVideoError] = useState<string | null>(null);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [photoError, setPhotoError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState("profile");
+  const [activeTab, setActiveTab] = useState(() =>
+    TUTOR_TABS.some((tab) => tab.value === searchParams.get("tab"))
+      ? searchParams.get("tab")!
+      : "profile"
+  );
   const [confirmingBooking, setConfirmingBooking] = useState<Booking | null>(null);
   const [isConfirmingLearning, setIsConfirmingLearning] = useState(false);
   const [materialsBooking, setMaterialsBooking] = useState<Booking | null>(null);
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
+  const [showAllUpcomingBookings, setShowAllUpcomingBookings] = useState(false);
+  const [showAllPastBookings, setShowAllPastBookings] = useState(false);
+  const [showAllReviews, setShowAllReviews] = useState(false);
 
   const {
     data: profile,
@@ -884,6 +839,12 @@ function TutorDashboardContent() {
     }
   }, [profile]);
 
+  useEffect(() => {
+    if (profile && !profile.is_verified) {
+      router.replace("/tutor/onboarding");
+    }
+  }, [profile, router]);
+
   const activeBookings = useMemo(
     () =>
       bookings?.filter((b) => {
@@ -923,16 +884,22 @@ function TutorDashboardContent() {
   const confirmedBookings = activeBookings.filter((b) => b.status === "confirmed");
   const nextBooking = sortByStartTime(confirmedBookings)[0] ?? sortByStartTime(activeBookings)[0];
   const completedBookings = pastBookings.filter((b) => b.status === "completed");
-  const estimatedCompletedRevenue = completedBookings.reduce(
-    (sum, booking) => sum + Number(booking.price || 0),
-    0
-  );
-  const profileCompletion = getProfileCompletion(profile, availability.length);
 
   const availabilityDays = useMemo(
     () => Array.from(new Set(availability.map((r) => r.day_of_week))).sort((a, b) => a - b),
     [availability]
   );
+  const sortedUpcomingBookings = useMemo(() => sortByStartTime(activeBookings), [activeBookings]);
+  const sortedPastBookings = useMemo(() => sortByStartTime(pastBookings), [pastBookings]);
+  const visibleUpcomingBookings = showAllUpcomingBookings
+    ? sortedUpcomingBookings
+    : sortedUpcomingBookings.slice(0, DASHBOARD_LIST_PREVIEW_COUNT);
+  const visiblePastBookings = showAllPastBookings
+    ? sortedPastBookings
+    : sortedPastBookings.slice(0, DASHBOARD_LIST_PREVIEW_COUNT);
+  const visibleReviews = showAllReviews
+    ? tutorReviews
+    : tutorReviews.slice(0, DASHBOARD_LIST_PREVIEW_COUNT);
 
   const handleStatusUpdate = async (
     bookingId: string,
@@ -1053,12 +1020,16 @@ function TutorDashboardContent() {
           description="Panosunu kullanmak için önce hoca profilini oluştur."
           action={
             <Button asChild>
-              <Link href="/tutor/setup">Profil Oluştur</Link>
+              <Link href="/tutor/onboarding">Kuruluma Başla</Link>
             </Button>
           }
         />
       </div>
     );
+  }
+
+  if (!profile.is_verified) {
+    return <div className="mx-auto max-w-3xl px-4 py-10"><Skeleton className="h-80 w-full" /></div>;
   }
 
   return (
@@ -1119,8 +1090,8 @@ function TutorDashboardContent() {
         <StatTile
           icon={<Wallet className="h-5 w-5" />}
           label="Tamamlanan Gelir"
-          value={formatPrice(estimatedCompletedRevenue)}
-          detail={`${completedBookings.length} tamamlanan ders`}
+          value={earnings ? formatPrice(earnings.lifetime.total) : "—"}
+          detail={earnings ? `${earnings.lifetime.lesson_count} tamamlanan ders` : "Kazançlar yükleniyor"}
         />
       </div>
 
@@ -1212,8 +1183,6 @@ function TutorDashboardContent() {
         <TabsContent value="profile" className="mt-6">
           <ProfileStudio
             profile={profile}
-            availability={availability}
-            profileCompletion={profileCompletion}
             introVideoInput={introVideoInput}
             isSavingVideo={isSavingVideo}
             videoError={videoError}
@@ -1269,8 +1238,8 @@ function TutorDashboardContent() {
                   }
                 />
               ) : (
-                <div className="mb-6 space-y-3">
-                  {sortByStartTime(activeBookings).map((b) => (
+                <div className="mb-6 space-y-3 motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-2">
+                  {visibleUpcomingBookings.map((b) => (
                     <BookingCard
                       key={b.id}
                       booking={b}
@@ -1279,6 +1248,18 @@ function TutorDashboardContent() {
                       isUpdating={updatingId === b.id}
                     />
                   ))}
+                  {activeBookings.length > DASHBOARD_LIST_PREVIEW_COUNT && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => setShowAllUpcomingBookings((value) => !value)}
+                    >
+                      {showAllUpcomingBookings
+                        ? "Daha az göster"
+                        : `${activeBookings.length - DASHBOARD_LIST_PREVIEW_COUNT} rezervasyon daha göster`}
+                    </Button>
+                  )}
                 </div>
               )}
 
@@ -1294,8 +1275,8 @@ function TutorDashboardContent() {
                   description="Tamamlanan ve iptal edilen rezervasyonların burada arşivlenir."
                 />
               ) : (
-                <div className="space-y-3">
-                  {sortByStartTime(pastBookings).map((b) => (
+                <div className="space-y-3 motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-2">
+                  {visiblePastBookings.map((b) => (
                     <BookingCard
                       key={b.id}
                       booking={b}
@@ -1309,6 +1290,18 @@ function TutorDashboardContent() {
                       }
                     />
                   ))}
+                  {pastBookings.length > DASHBOARD_LIST_PREVIEW_COUNT && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => setShowAllPastBookings((value) => !value)}
+                    >
+                      {showAllPastBookings
+                        ? "Daha az göster"
+                        : `${pastBookings.length - DASHBOARD_LIST_PREVIEW_COUNT} geçmiş rezervasyon daha göster`}
+                    </Button>
+                  )}
                 </div>
               )}
             </>
@@ -1447,10 +1440,22 @@ function TutorDashboardContent() {
                     description="Tamamlanan derslerden gelen değerlendirmeler burada listelenir."
                   />
                 ) : (
-                  <div className="space-y-3">
-                    {tutorReviews.map((review) => (
+                  <div className="space-y-3 motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-2">
+                    {visibleReviews.map((review) => (
                       <ReviewCard key={review.id} review={review} />
                     ))}
+                    {tutorReviews.length > DASHBOARD_LIST_PREVIEW_COUNT && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="w-full"
+                        onClick={() => setShowAllReviews((value) => !value)}
+                      >
+                        {showAllReviews
+                          ? "Daha az göster"
+                          : `${tutorReviews.length - DASHBOARD_LIST_PREVIEW_COUNT} değerlendirme daha göster`}
+                      </Button>
+                    )}
                   </div>
                 )}
               </div>
@@ -1471,11 +1476,6 @@ function TutorDashboardContent() {
               <AvailabilityCalendar availability={availability} bookings={activeBookings} />
             )}
           </div>
-          <AvailabilityEditor />
-        </TabsContent>
-
-        <TabsContent value="verification" className="mt-6">
-          <VerificationForm />
         </TabsContent>
       </Tabs>
 

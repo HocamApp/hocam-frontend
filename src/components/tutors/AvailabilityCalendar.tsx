@@ -33,13 +33,20 @@ function formatBookingTime(isoString: string): string {
 
 interface AvailabilityCalendarProps {
   availability: AvailabilityRule[];
-  bookings: Booking[];
+  bookings?: Booking[];
+  editable?: boolean;
+  showBookings?: boolean;
 }
 
-export function AvailabilityCalendar({ availability, bookings }: AvailabilityCalendarProps) {
+export function AvailabilityCalendar({
+  availability,
+  bookings = [],
+  editable = true,
+  showBookings = true,
+}: AvailabilityCalendarProps) {
   const days = getNext14Days();
   const todayStr = formatDateLocal(new Date());
-  const [editingDay, setEditingDay] = useState<{ dayOfWeek: number; label: string } | null>(
+  const [editingDay, setEditingDay] = useState<{ dayOfWeek: number; date: string; label: string } | null>(
     null
   );
 
@@ -50,8 +57,10 @@ export function AvailabilityCalendar({ availability, bookings }: AvailabilityCal
         const dateStr = formatDateLocal(d);
         const isToday = dateStr === todayStr;
 
-        const dayRules = availability
-          .filter((r) => r.day_of_week === backendDay)
+        const datedRules = availability.filter((r) => r.specific_date === dateStr);
+        const dayRules = (datedRules.length > 0
+          ? datedRules
+          : availability.filter((r) => !r.specific_date && r.day_of_week === backendDay))
           .sort((a, b) => a.start_time.localeCompare(b.start_time));
 
         const dayBookings = bookings
@@ -73,16 +82,18 @@ export function AvailabilityCalendar({ availability, bookings }: AvailabilityCal
                       Bugün
                     </span>
                   )}
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setEditingDay({ dayOfWeek: backendDay, label: DAY_NAMES[backendDay] })
-                    }
-                    aria-label={`${DAY_NAMES[backendDay]} müsaitliğini düzenle`}
-                    className="shrink-0 text-muted-foreground transition-colors hover:text-primary"
-                  >
-                    <Pencil className="h-3 w-3" />
-                  </button>
+                  {editable && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setEditingDay({ dayOfWeek: backendDay, date: dateStr, label: DAY_NAMES[backendDay] })
+                      }
+                      aria-label={`${DAY_NAMES[backendDay]} müsaitliğini düzenle`}
+                      className="shrink-0 text-muted-foreground transition-colors hover:text-primary"
+                    >
+                      <Pencil className="h-3 w-3" />
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -101,7 +112,7 @@ export function AvailabilityCalendar({ availability, bookings }: AvailabilityCal
                 </div>
               )}
 
-              {dayBookings.length > 0 && (
+              {showBookings && dayBookings.length > 0 && (
                 <div className="space-y-1.5 border-t pt-2">
                   {dayBookings.map((b) => (
                     <div key={b.id} className="space-y-1">
@@ -119,12 +130,15 @@ export function AvailabilityCalendar({ availability, bookings }: AvailabilityCal
         );
       })}
 
-      <DayAvailabilityDialog
-        open={!!editingDay}
-        dayOfWeek={editingDay?.dayOfWeek ?? 0}
-        dayLabel={editingDay?.label ?? ""}
-        onOpenChange={(open) => !open && setEditingDay(null)}
-      />
+      {editable && (
+        <DayAvailabilityDialog
+          open={!!editingDay}
+          dayOfWeek={editingDay?.dayOfWeek ?? 0}
+          date={editingDay?.date ?? ""}
+          dayLabel={editingDay?.label ?? ""}
+          onOpenChange={(open) => !open && setEditingDay(null)}
+        />
+      )}
     </div>
   );
 }
