@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { usePageVisibility } from "@/hooks/usePageVisibility";
@@ -14,6 +14,7 @@ import {
   fetchTypingStatus,
   updateTypingStatus,
   deleteMessage,
+  blockConversationParticipant,
 } from "@/lib/messagingApi";
 import { MessageBubble } from "@/components/messaging/MessageBubble";
 import { MessageInput } from "@/components/messaging/MessageInput";
@@ -106,7 +107,7 @@ function ConversationContent({
 }) {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, isTutor, user } = useAuth();
   const isPageVisible = usePageVisibility();
   const bottomRef = useRef<HTMLDivElement>(null);
   const sentIdsRef = useRef<Set<string>>(new Set());
@@ -119,6 +120,7 @@ function ConversationContent({
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [pendingDelete, setPendingDelete] = useState<Message | null>(null);
   const [isComposing, setIsComposing] = useState(false);
+  const [isBlockConfirmOpen, setIsBlockConfirmOpen] = useState(false);
 
   const {
     data: conversations,
@@ -135,6 +137,19 @@ function ConversationContent({
     queryKey: ["conversation", conversationId],
     queryFn: () => fetchConversation(conversationId),
     enabled: isAuthenticated && !!conversationId,
+  });
+
+  const blockMutation = useMutation({
+    mutationFn: () => blockConversationParticipant(conversationId),
+    onSuccess: () => {
+      toast.success("Öğrenci engellendi.");
+      setIsBlockConfirmOpen(false);
+      queryClient.invalidateQueries({ queryKey: ["conversation", conversationId] });
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
+    },
+    onError: () => {
+      toast.error("İşlem gerçekleştirilemedi. Lütfen tekrar deneyin.");
+    },
   });
 
   const {
@@ -312,15 +327,31 @@ function ConversationContent({
               </>
             )}
           </div>
-          {showBookingButton && (
-            <button
-              type="button"
-              className="shrink-0 text-sm font-medium text-primary hover:underline"
-              onClick={() => setIsBookingOpen(true)}
-            >
-              Ders rezervasyonu yap
-            </button>
-          )}
+          <div className="flex shrink-0 items-center gap-3">
+            {conversation?.is_blocked && (
+              <span className="rounded-full bg-destructive/10 px-2.5 py-1 text-xs font-medium text-destructive">
+                Bu konuşma engellendi
+              </span>
+            )}
+            {!conversation?.is_blocked && showBookingButton && (
+              <button
+                type="button"
+                className="text-sm font-medium text-primary hover:underline"
+                onClick={() => setIsBookingOpen(true)}
+              >
+                Ders rezervasyonu yap
+              </button>
+            )}
+            {isTutor && conversation && !conversation.is_blocked && (
+              <button
+                type="button"
+                className="text-sm font-medium text-destructive hover:underline"
+                onClick={() => setIsBlockConfirmOpen(true)}
+              >
+                Öğrenciyi engelle
+              </button>
+            )}
+          </div>
         </header>
 
         {/* Messages area — mostly-white with a subtle dot texture for depth */}
@@ -387,7 +418,7 @@ function ConversationContent({
           <MessageInput
             conversationId={conversationId}
             onMessageSent={handleMessageSent}
-            disabled={!!messagesError}
+            disabled={!!messagesError || !!conversation?.is_blocked}
             replyTo={replyTo}
             replyToName={
               replyTo
@@ -430,6 +461,40 @@ function ConversationContent({
             </Button>
             <Button variant="destructive" onClick={confirmDeleteMessage}>
               Sil
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={isBlockConfirmOpen}
+        onOpenChange={(open) => {
+          if (!open) setIsBlockConfirmOpen(false);
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Öğrenciyi engelle</DialogTitle>
+            <DialogDescription>
+              {headerTitle} bir daha sana mesaj gönderemeyecek. Bu işlem geri alınamaz.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsBlockConfirmOpen(false)}
+              disabled={blockMutation.isPending}
+            >
+              İptal
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              disabled={blockMutation.isPending}
+              onClick={() => blockMutation.mutate()}
+            >
+              Engelle
             </Button>
           </DialogFooter>
         </DialogContent>
