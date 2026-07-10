@@ -41,6 +41,12 @@ function formatLearningActivityStatus(status: LearningActivityStatus): string {
   return labels[status] ?? status;
 }
 
+export function paymentLabel(booking: Booking): string {
+  if (booking.is_trial) return "Ücretsiz deneme";
+  if (booking.package_purchase) return "Paket hakkı kullanıldı";
+  return `Ücret: ${formatPrice(booking.price)}`;
+}
+
 export function BookingCard({
   booking,
   currentUserRole,
@@ -132,7 +138,7 @@ export function BookingCard({
           </span>
           <span className="inline-flex items-center gap-1.5">
             <Wallet className="h-3.5 w-3.5" aria-hidden="true" />
-            {formatPrice(booking.price)}
+            {paymentLabel(booking)}
           </span>
         </div>
 
@@ -298,7 +304,8 @@ export function BookingCard({
               {canCancel && (
                 <Button
                   size="sm"
-                  variant="destructive"
+                  variant="outline"
+                  className="border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
                   onClick={() => onStatusUpdate(booking.id, "cancelled")}
                   disabled={isUpdating}
                 >
