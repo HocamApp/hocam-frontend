@@ -45,6 +45,11 @@ function sortByStartDesc(bookings: Booking[]) {
   );
 }
 
+// Keep in sync with Booking.REVIEW_WINDOW_DAYS on the backend (single
+// source of truth there — this only mirrors it for instant UI feedback;
+// the server has the final say via ReviewCreateView).
+const REVIEW_WINDOW_DAYS = 3;
+
 function reviewDeadlineForBooking(booking: Booking) {
   const completedAt = booking.completed_at
     ? new Date(booking.completed_at)
@@ -52,7 +57,7 @@ function reviewDeadlineForBooking(booking: Booking) {
         new Date(booking.start_time).getTime() +
           (booking.duration_minutes || 0) * 60 * 1000
       );
-  return new Date(completedAt.getTime() + 24 * 60 * 60 * 1000);
+  return new Date(completedAt.getTime() + REVIEW_WINDOW_DAYS * 24 * 60 * 60 * 1000);
 }
 
 function canReviewBooking(booking: Booking, reviewedBookingIds: Set<string>) {
