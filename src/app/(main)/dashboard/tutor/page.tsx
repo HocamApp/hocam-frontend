@@ -6,10 +6,14 @@ import { useRouter, useSearchParams } from "next/navigation";
 import axios from "axios";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  AlertCircle,
   Calendar,
   Camera,
-  Clock,
+  CheckCircle2,
+  Circle,
+  Clock3,
   ExternalLink,
+  MessageCircle,
   PlayCircle,
   Star,
   Video,
@@ -46,8 +50,10 @@ import type {
 } from "@/types";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { RouteGuard } from "@/components/shared/RouteGuard";
-import { BookingCard } from "@/components/lessons/BookingCard";
+import StatusBadge from "@/components/shared/StatusBadge";
+import { BookingCard, paymentLabel } from "@/components/lessons/BookingCard";
 import { LessonMaterialsDialog } from "@/components/lessons/LessonMaterialsDialog";
+import { ParticipantAvatar } from "@/components/messaging/ParticipantAvatar";
 import { AvailabilityCalendar } from "@/components/tutors/AvailabilityCalendar";
 import { ReviewCard } from "@/components/tutors/ReviewCard";
 import { ReviewSummary } from "@/components/tutors/ReviewSummary";
@@ -140,6 +146,26 @@ function sortByStartTime(bookings: Booking[]) {
   );
 }
 
+// "Bugün"/"Yarın" must follow calendar-day boundaries in the user's local
+// timezone (booking start_time is treated as local, never UTC), not a raw
+// 24h/48h cutoff, so a late-night lesson still reads as "Bugün".
+function startOfDay(date: Date): Date {
+  const clone = new Date(date);
+  clone.setHours(0, 0, 0, 0);
+  return clone;
+}
+
+function formatLessonCountdown(startTime: string): string {
+  const diffDays = Math.round(
+    (startOfDay(new Date(startTime)).getTime() - startOfDay(new Date()).getTime()) /
+      (24 * 60 * 60 * 1000)
+  );
+  if (diffDays < 0) return "";
+  if (diffDays === 0) return "Bugün";
+  if (diffDays === 1) return "Yarın";
+  return `Derse ${diffDays} gün kaldı`;
+}
+
 interface StudentRosterEntry {
   student: Booking["student"];
   totalLessons: number;
@@ -209,11 +235,13 @@ function StatTile({
   label,
   value,
   detail,
+  isLoading,
 }: {
   icon: ReactNode;
   label: string;
   value: string | number;
   detail: string;
+  isLoading?: boolean;
 }) {
   return (
     <Card>
@@ -223,7 +251,11 @@ function StatTile({
         </div>
         <div className="min-w-0">
           <p className="text-sm text-muted-foreground">{label}</p>
-          <p className="text-2xl font-semibold leading-tight">{value}</p>
+          {isLoading ? (
+            <Skeleton className="mt-1 h-7 w-14" />
+          ) : (
+            <p className="text-2xl font-semibold leading-tight">{value}</p>
+          )}
           <p className="truncate text-xs text-muted-foreground">{detail}</p>
         </div>
       </CardContent>
@@ -511,7 +543,7 @@ function ProfileStudio({
       <div className="space-y-6">
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">Profil Stüdyosu</CardTitle>
+            <CardTitle className="text-base">Hoca Profilin</CardTitle>
           </CardHeader>
           <CardContent className="space-y-5">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
@@ -553,7 +585,7 @@ function ProfileStudio({
                     {photoError}
                   </p>
                 )}
-                <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-100">
+                <div className="rounded-md border px-3 py-2 text-xs text-muted-foreground">
                   <p>{PROFILE_PHOTO_RULE_TEXT}</p>
                   <p className="mt-1">{TUTOR_REAL_PHOTO_RULE_TEXT}</p>
                 </div>
@@ -614,26 +646,36 @@ function ProfileStudio({
       <div className="space-y-6">
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">Profil Bilgileri</CardTitle>
+            <CardTitle className="text-base">Profil Tamamlanma</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-3">
             <p className="text-sm text-muted-foreground">
-              Genel profil bilgilerini, ders alanlarını ve ücretini tek yerden yönet.
+              Profilinin görünürlüğünü ve tamamlanma durumunu buradan takip edebilirsin.
             </p>
+            <ul className="space-y-2">
+              {[
+                { label: "Profil fotoğrafı", done: Boolean(profile.profile_picture) },
+                { label: "Tanıtım videosu", done: Boolean(profile.intro_video_url) },
+                { label: "Biyografi", done: profile.bio.trim().length > 0 },
+                { label: "Ders alanları", done: profile.subjects.length > 0 },
+                { label: "Ders ücreti", done: profile.hourly_price > 0 },
+                { label: "Herkese açık profil", done: profile.is_public },
+              ].map((item) => (
+                <li key={item.label} className="flex items-center gap-2 text-sm">
+                  {item.done ? (
+                    <CheckCircle2 className="h-4 w-4 shrink-0 text-green-600 dark:text-green-400" />
+                  ) : (
+                    <Circle className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  )}
+                  <span className={item.done ? "" : "text-muted-foreground"}>{item.label}</span>
+                </li>
+              ))}
+            </ul>
             {Boolean(profile.no_show_count) && (
               <p className="text-xs text-muted-foreground">
                 Devamsızlık sayısı: {profile.no_show_count}
               </p>
             )}
-            <Button asChild className="w-full">
-              <Link href="/dashboard/tutor/edit">Profili Düzenle</Link>
-            </Button>
-            <Button asChild variant="outline" className="w-full">
-              <Link href={`/tutors/${profile.id}`}>
-                <ExternalLink className="mr-2 h-4 w-4" />
-                Public Profili Gör
-              </Link>
-            </Button>
           </CardContent>
         </Card>
 
@@ -751,7 +793,7 @@ function TutorDashboardContent() {
   const [activeTab, setActiveTab] = useState(() =>
     TUTOR_TABS.some((tab) => tab.value === searchParams.get("tab"))
       ? searchParams.get("tab")!
-      : "profile"
+      : "bookings"
   );
   const [confirmingBooking, setConfirmingBooking] = useState<Booking | null>(null);
   const [isConfirmingLearning, setIsConfirmingLearning] = useState(false);
@@ -881,8 +923,35 @@ function TutorDashboardContent() {
     [bookings, selectedStudentId]
   );
 
-  const confirmedBookings = activeBookings.filter((b) => b.status === "confirmed");
-  const nextBooking = sortByStartTime(confirmedBookings)[0] ?? sortByStartTime(activeBookings)[0];
+  const upcomingBookings = useMemo(() => {
+    const now = new Date();
+    return sortByStartTime(
+      (bookings ?? []).filter((b) => {
+        const s = (b.status || "").toLowerCase();
+        return s === "in_progress" || (s === "confirmed" && new Date(b.start_time) > now);
+      })
+    );
+  }, [bookings]);
+  const nextBooking = upcomingBookings[0] ?? null;
+  const nextBookingStudentName = nextBooking
+    ? nextBooking.student.display_name || nextBooking.student.email
+    : "";
+  const nextBookingCountdown = nextBooking ? formatLessonCountdown(nextBooking.start_time) : "";
+
+  const pendingActionBookings = useMemo(
+    () =>
+      (bookings ?? []).filter((b) => {
+        const s = (b.status || "").toLowerCase();
+        if (s === "pending" || s === "disputed" || s === "awaiting_confirmation") return true;
+        return (
+          s === "completed" &&
+          Boolean(b.learning_context?.activity_id) &&
+          b.learning_context?.status === "pending_confirmation"
+        );
+      }),
+    [bookings]
+  );
+
   const completedBookings = pastBookings.filter((b) => b.status === "completed");
 
   const availabilityDays = useMemo(
@@ -1048,7 +1117,11 @@ function TutorDashboardContent() {
             </AvatarFallback>
           </Avatar>
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight">Hoca Panosu</h1>
+            <h1 className="text-2xl font-semibold tracking-tight">Merhaba {profile.name} 👋</h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Bugünkü derslerini, öğrencilerini, müsaitliğini ve kazançlarını buradan
+              yönetebilirsin.
+            </p>
             <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
               <span>
                 {profile.name} {profile.surname} · {user?.email}
@@ -1074,12 +1147,24 @@ function TutorDashboardContent() {
         </div>
       </header>
 
-      <div className="mb-6 grid gap-4 md:grid-cols-3">
+      <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
         <StatTile
           icon={<Calendar className="h-5 w-5" />}
-          label="Yaklaşan Ders"
-          value={activeBookings.length}
-          detail={nextBooking ? formatDate(nextBooking.start_time) : "Takvim boş"}
+          label="Yaklaşan Dersler"
+          value={`${upcomingBookings.length} ders`}
+          detail={nextBooking ? `Sıradaki: ${formatDate(nextBooking.start_time)}` : "Takvim boş"}
+          isLoading={bookingsLoading}
+        />
+        <StatTile
+          icon={<AlertCircle className="h-5 w-5" />}
+          label="Bekleyen İşlem"
+          value={pendingActionBookings.length}
+          detail={
+            pendingActionBookings.length > 0
+              ? "Onay/işlem bekleyen ders var"
+              : "Bekleyen işlem yok"
+          }
+          isLoading={bookingsLoading}
         />
         <StatTile
           icon={<Star className="h-5 w-5" />}
@@ -1089,36 +1174,61 @@ function TutorDashboardContent() {
         />
         <StatTile
           icon={<Wallet className="h-5 w-5" />}
-          label="Tamamlanan Gelir"
+          label="Toplam Kazanç"
           value={earnings ? formatPrice(earnings.lifetime.total) : "—"}
           detail={earnings ? `${earnings.lifetime.lesson_count} tamamlanan ders` : "Kazançlar yükleniyor"}
+          isLoading={earningsLoading}
         />
       </div>
 
-      <Card className="mb-6">
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Clock className="h-4 w-4 text-primary" />
-            Sıradaki Ders
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {nextBooking ? (
-            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-              <div>
-                <p className="font-medium">
-                  {formatDate(nextBooking.start_time)} ·{" "}
-                  {new Date(nextBooking.start_time).toLocaleTimeString("tr-TR", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  {nextBooking.duration_minutes} dakika · {formatPrice(nextBooking.price)}
-                </p>
+      {nextBooking ? (
+        <Card className="mb-6 overflow-hidden border-primary/30 bg-gradient-to-br from-primary/5 via-card to-card">
+          <CardContent className="p-5 sm:p-6">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div className="flex min-w-0 items-center gap-3">
+                <ParticipantAvatar name={nextBookingStudentName} className="h-12 w-12 shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-xs font-medium uppercase tracking-wide text-primary">
+                    Sıradaki dersin
+                  </p>
+                  <p className="truncate text-lg font-semibold">{nextBooking.subject.name}</p>
+                  <p className="truncate text-sm text-muted-foreground">
+                    {nextBookingStudentName}
+                  </p>
+                </div>
               </div>
+              <div className="flex shrink-0 flex-col items-end gap-1.5">
+                <StatusBadge status={nextBooking.status} type="booking" />
+                {nextBookingCountdown && (
+                  <span className="text-xs font-medium text-primary">
+                    {nextBookingCountdown}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-1.5 text-sm text-muted-foreground">
+              <span className="inline-flex items-center gap-1.5">
+                <Calendar className="h-4 w-4" aria-hidden="true" />
+                {formatDate(nextBooking.start_time)}
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <Clock3 className="h-4 w-4" aria-hidden="true" />
+                {new Date(nextBooking.start_time).toLocaleTimeString("tr-TR", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}{" "}
+                · {nextBooking.duration_minutes} dk
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <Wallet className="h-4 w-4" aria-hidden="true" />
+                {paymentLabel(nextBooking)}
+              </span>
+            </div>
+
+            <div className="mt-5 flex flex-wrap items-center gap-2 border-t pt-4">
               {nextBooking.room_url ? (
-                <Button asChild>
+                <Button asChild size="lg">
                   <a href={`/session/${nextBooking.id}`}>
                     <Video className="mr-2 h-4 w-4" />
                     Derse Katıl
@@ -1127,15 +1237,29 @@ function TutorDashboardContent() {
               ) : (
                 <Badge variant="outline">Oda onaydan sonra oluşur</Badge>
               )}
+              <Button asChild variant="outline">
+                <Link href="/messages">
+                  <MessageCircle className="mr-2 h-4 w-4" />
+                  Öğrenciye Mesaj
+                </Link>
+              </Button>
             </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">Yaklaşan ders bulunmuyor.</p>
-          )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="mb-6">
+          <EmptyState
+            title="Planlanmış yaklaşan dersin yok."
+            description="Müsaitlik takvimini güncel tutarak öğrencilerin sana uygun saatlerden rezervasyon oluşturmasını sağlayabilirsin."
+            action={
+              <Button onClick={() => setActiveTab("availability")}>Müsaitliği Düzenle</Button>
+            }
+          />
+        </div>
+      )}
 
       <Card className="mb-6">
-        <CardHeader className="pb-2">
+        <CardHeader className="p-4 pb-2">
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2 text-base">
               <Calendar className="h-4 w-4 text-primary" />
@@ -1150,7 +1274,7 @@ function TutorDashboardContent() {
             </Button>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-4 pt-0">
           {availabilityLoading ? (
             <Skeleton className="h-6 w-48" />
           ) : availability.length === 0 ? (
@@ -1177,10 +1301,15 @@ function TutorDashboardContent() {
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <div className="overflow-x-auto pb-1">
-          <AnimatedTabs tabs={TUTOR_TABS} value={activeTab} onValueChange={setActiveTab} />
+          <AnimatedTabs
+            tabs={TUTOR_TABS}
+            value={activeTab}
+            onValueChange={setActiveTab}
+            idPrefix="tutor"
+          />
         </div>
 
-        <TabsContent value="profile" className="mt-6">
+        <TabsContent value="profile" id="tutor-tabpanel-profile" aria-labelledby="tutor-tab-profile" className="mt-6">
           <ProfileStudio
             profile={profile}
             introVideoInput={introVideoInput}
@@ -1198,7 +1327,7 @@ function TutorDashboardContent() {
           />
         </TabsContent>
 
-        <TabsContent value="bookings" className="mt-6">
+        <TabsContent value="bookings" id="tutor-tabpanel-bookings" aria-labelledby="tutor-tab-bookings" className="mt-6">
           {bookingsError && (
             <div className="flex flex-col items-center gap-3 py-10 text-center">
               <p className="text-sm text-muted-foreground">Rezervasyonlar yüklenemedi.</p>
@@ -1308,7 +1437,7 @@ function TutorDashboardContent() {
           )}
         </TabsContent>
 
-        <TabsContent value="students" className="mt-6">
+        <TabsContent value="students" id="tutor-tabpanel-students" aria-labelledby="tutor-tab-students" className="mt-6">
           {bookingsError && (
             <div className="flex flex-col items-center gap-3 py-10 text-center">
               <p className="text-sm text-muted-foreground">Öğrenciler yüklenemedi.</p>
@@ -1352,7 +1481,7 @@ function TutorDashboardContent() {
           )}
         </TabsContent>
 
-        <TabsContent value="earnings" className="mt-6">
+        <TabsContent value="earnings" id="tutor-tabpanel-earnings" aria-labelledby="tutor-tab-earnings" className="mt-6">
           {earningsError && (
             <div className="flex flex-col items-center gap-3 py-10 text-center">
               <p className="text-sm text-muted-foreground">Kazançlar yüklenemedi.</p>
@@ -1399,7 +1528,7 @@ function TutorDashboardContent() {
           )}
         </TabsContent>
 
-        <TabsContent value="reviews" className="mt-6">
+        <TabsContent value="reviews" id="tutor-tabpanel-reviews" aria-labelledby="tutor-tab-reviews" className="mt-6">
           {!profile.is_verified ? (
             <EmptyState
               title="Henüz doğrulanmadın"
@@ -1463,7 +1592,7 @@ function TutorDashboardContent() {
           )}
         </TabsContent>
 
-        <TabsContent value="availability" className="mt-6 space-y-6">
+        <TabsContent value="availability" id="tutor-tabpanel-availability" aria-labelledby="tutor-tab-availability" className="mt-6 space-y-6">
           <div>
             <h3 className="mb-2 text-sm font-semibold">Önümüzdeki 14 Gün</h3>
             {availabilityLoading || bookingsLoading ? (

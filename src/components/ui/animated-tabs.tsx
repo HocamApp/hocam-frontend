@@ -12,17 +12,19 @@ export interface AnimatedTabsProps {
   tabs: AnimatedTabItem[];
   value: string;
   onValueChange: (value: string) => void;
+  idPrefix?: string;
 }
 
-export function AnimatedTabs({ tabs, value, onValueChange }: AnimatedTabsProps) {
+export function AnimatedTabs({ tabs, value, onValueChange, idPrefix }: AnimatedTabsProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const activeTabRef = useRef<HTMLButtonElement>(null);
+  const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
   useEffect(() => {
     const container = containerRef.current;
 
     if (container && value) {
-      const activeTabElement = activeTabRef.current;
+      const activeIndex = tabs.findIndex((tab) => tab.value === value);
+      const activeTabElement = activeIndex >= 0 ? tabRefs.current[activeIndex] : null;
 
       if (activeTabElement) {
         const { offsetLeft, offsetWidth } = activeTabElement;
@@ -37,12 +39,25 @@ export function AnimatedTabs({ tabs, value, onValueChange }: AnimatedTabsProps) 
         ).toFixed()}% round 17px)`;
       }
     }
-  }, [value]);
+  }, [value, tabs]);
+
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>, index: number) => {
+    if (event.key !== "ArrowRight" && event.key !== "ArrowLeft") return;
+    event.preventDefault();
+    const delta = event.key === "ArrowRight" ? 1 : -1;
+    const nextIndex = (index + delta + tabs.length) % tabs.length;
+    onValueChange(tabs[nextIndex].value);
+    tabRefs.current[nextIndex]?.focus();
+  };
 
   return (
-    <div className="relative bg-secondary/50 border border-primary/10 mx-auto flex w-fit flex-col items-center rounded-full py-2 px-4">
+    <div
+      role="tablist"
+      className="relative bg-secondary/50 border border-primary/10 mx-auto flex w-fit flex-col items-center rounded-full py-2 px-4"
+    >
       <div
         ref={containerRef}
+        aria-hidden="true"
         className="absolute z-10 w-full overflow-hidden [clip-path:inset(0px_75%_0px_0%_round_17px)] [transition:clip-path_0.25s_ease]"
       >
         <div className="relative flex w-full justify-center bg-primary">
@@ -66,8 +81,16 @@ export function AnimatedTabs({ tabs, value, onValueChange }: AnimatedTabsProps) 
           return (
             <button
               key={index}
-              ref={isActive ? activeTabRef : null}
+              ref={(el) => {
+                tabRefs.current[index] = el;
+              }}
+              role="tab"
+              id={idPrefix ? `${idPrefix}-tab-${tab.value}` : undefined}
+              aria-controls={idPrefix ? `${idPrefix}-tabpanel-${tab.value}` : undefined}
+              aria-selected={isActive}
+              tabIndex={isActive ? 0 : -1}
               onClick={() => onValueChange(tab.value)}
+              onKeyDown={(event) => handleKeyDown(event, index)}
               className="flex h-10 items-center cursor-pointer rounded-full px-4 text-sm font-medium text-muted-foreground"
             >
               {tab.label}
