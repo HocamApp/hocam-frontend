@@ -560,6 +560,7 @@ export interface AvailabilityRule {
   id: string;
   tutor: string;
   day_of_week: number;
+  specific_date?: string | null;
   start_time: string;
   end_time: string;
   created_at: string;

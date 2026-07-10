@@ -21,6 +21,7 @@ export async function fetchTutorAvailability(
 
 export interface CreateAvailabilityPayload {
   day_of_week: number;
+  specific_date?: string;
   start_time: string;
   end_time: string;
 }

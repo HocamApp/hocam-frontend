@@ -26,6 +26,7 @@ import { ReviewCard } from "@/components/tutors/ReviewCard";
 import { ReviewSummary } from "@/components/tutors/ReviewSummary";
 import { SubjectRatingBreakdown } from "@/components/tutors/SubjectRatingBreakdown";
 import { TutorPresenceBadge } from "@/components/tutors/TutorPresenceBadge";
+import { AvailabilityCalendar } from "@/components/tutors/AvailabilityCalendar";
 import { MessageRequestModal } from "@/components/tutors/MessageRequestModal";
 import { PackageOfferPanel } from "@/components/tutors/PackageOfferPanel";
 import { BookingModal } from "@/components/lessons/BookingModal";
@@ -582,7 +583,18 @@ export default function TutorProfilePage({
                     Ders ayırtmak için giriş yap
                   </Button>
                 )}
-                {isAuthenticated && (isOwnProfile || !isStudent) && (
+                {isAuthenticated && isOwnProfile && (
+                  <>
+                    <p className="text-sm text-muted-foreground">
+                      Bu kendi herkese açık profilin. Değerlendirmeler dışındaki bilgilerini
+                      buradan güncelleyebilirsin.
+                    </p>
+                    <Button className="w-full" asChild>
+                      <Link href="/dashboard/tutor/edit">Profili Düzenle</Link>
+                    </Button>
+                  </>
+                )}
+                {isAuthenticated && !isOwnProfile && !isStudent && (
                   <p className="text-sm text-muted-foreground">
                     Ders ayırtmak için öğrenci hesabı gereklidir.
                   </p>
@@ -802,20 +814,11 @@ export default function TutorProfilePage({
           ) : (
             <Card>
               <CardContent className="py-4">
-                <ul className="space-y-2">
-                  {[...availability]
-                    .sort((a, b) => a.day_of_week - b.day_of_week)
-                    .map((rule) => (
-                      <li key={rule.id} className="flex gap-2 text-sm">
-                        <span className="w-24 font-medium">
-                          {["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar"][rule.day_of_week]}:
-                        </span>
-                        <span className="text-muted-foreground">
-                          {rule.start_time.slice(0, 5)} – {rule.end_time.slice(0, 5)}
-                        </span>
-                      </li>
-                    ))}
-                </ul>
+                <AvailabilityCalendar
+                  availability={availability}
+                  editable={false}
+                  showBookings={false}
+                />
               </CardContent>
             </Card>
           )}

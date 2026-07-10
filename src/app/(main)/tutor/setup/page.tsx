@@ -74,7 +74,7 @@ export default function TutorSetupPage() {
       return;
     }
     if (user?.tutor_profile_id) {
-      router.replace("/dashboard/tutor");
+      router.replace("/tutor/onboarding");
     }
   }, [isLoading, isAuthenticated, isTutor, user, router]);
 
@@ -137,8 +137,8 @@ export default function TutorSetupPage() {
 
       const updatedUser = await fetchMe();
       setAuth(updatedUser, token!);
-      toast.success("Profilin oluşturuldu.");
-      router.replace("/dashboard/tutor");
+      toast.success("Profil bilgilerin kaydedildi.");
+      router.replace("/tutor/onboarding");
     } catch (err: unknown) {
       const axErr = err as { response?: { data?: unknown } };
       const data = axErr.response?.data;

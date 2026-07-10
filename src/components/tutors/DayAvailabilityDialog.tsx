@@ -30,6 +30,7 @@ interface DayAvailabilityDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   dayOfWeek: number;
+  date: string;
   dayLabel: string;
 }
 
@@ -37,6 +38,7 @@ export function DayAvailabilityDialog({
   open,
   onOpenChange,
   dayOfWeek,
+  date,
   dayLabel,
 }: DayAvailabilityDialogProps) {
   const queryClient = useQueryClient();
@@ -50,8 +52,10 @@ export function DayAvailabilityDialog({
     enabled: open,
   });
 
-  const dayRules = rules
-    .filter((r) => r.day_of_week === dayOfWeek)
+  const dateRules = rules.filter((r) => r.specific_date === date);
+  const dayRules = (dateRules.length > 0
+    ? dateRules
+    : rules.filter((r) => !r.specific_date && r.day_of_week === dayOfWeek))
     .sort((a, b) => a.start_time.localeCompare(b.start_time));
 
   const createMutation = useMutation({
@@ -93,6 +97,7 @@ export function DayAvailabilityDialog({
     }
     createMutation.mutate({
       day_of_week: dayOfWeek,
+      specific_date: date,
       start_time: startTime.length === 5 ? startTime : startTime + ":00",
       end_time: endTime.length === 5 ? endTime : endTime + ":00",
     });
@@ -104,8 +109,8 @@ export function DayAvailabilityDialog({
         <DialogHeader>
           <DialogTitle>{dayLabel} Müsaitliği</DialogTitle>
           <DialogDescription>
-            Buradaki değişiklikler her {dayLabel} için geçerli olur, sadece seçtiğin
-            tarih için değil.
+            Değişiklikler yalnızca seçtiğin tarih için geçerlidir; diğer haftaların
+            düzenli müsaitliğini değiştirmez.
           </DialogDescription>
         </DialogHeader>
 
