@@ -2,10 +2,11 @@
 
 import { Suspense, useState } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import axios from "axios";
 import { Eye, EyeOff } from "lucide-react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { z } from "zod";
 import { confirmPasswordReset } from "@/lib/authApi";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
@@ -32,11 +33,11 @@ const resetSchema = z
 type ResetFormValues = z.infer<typeof resetSchema>;
 
 function ResetPasswordContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const uid = searchParams.get("uid");
   const token = searchParams.get("token");
 
-  const [success, setSuccess] = useState(false);
   const [generalError, setGeneralError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
@@ -85,7 +86,8 @@ function ResetPasswordContent() {
         new_password: parsed.data.new_password,
         password_confirm: parsed.data.password_confirm,
       });
-      setSuccess(true);
+      toast.success("Şifren başarıyla sıfırlandı. Yeni şifrenle giriş yapabilirsin.");
+      router.push("/login");
     } catch (err) {
       if (axios.isAxiosError(err) && err.response && err.response.status >= 400 && err.response.status < 500) {
         setGeneralError(
@@ -103,34 +105,16 @@ function ResetPasswordContent() {
       description="Hesabına tekrar güvenle dönebilmen için yeni şifreni oluştur."
       footer={
         <p className="animate-element animate-delay-600 text-center text-sm">
-          {success ? (
-            <Link
-              href="/login"
-              className="text-neutral-300 transition-colors hover:text-white hover:underline"
-            >
-              Giriş yap
-            </Link>
-          ) : (
-            <Link
-              href="/login"
-              className="text-neutral-300 transition-colors hover:text-white hover:underline"
-            >
-              Girişe dön
-            </Link>
-          )}
+          <Link
+            href="/login"
+            className="text-neutral-300 transition-colors hover:text-white hover:underline"
+          >
+            Girişe dön
+          </Link>
         </p>
       }
     >
-      {success ? (
-        <p
-          role="status"
-          aria-live="polite"
-          className="animate-element animate-delay-300 text-sm text-neutral-400"
-        >
-          Şifren başarıyla sıfırlandı. Yeni şifrenle giriş yapabilirsin.
-        </p>
-      ) : (
-        <Form {...form}>
+      <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
             {generalError && <ErrorMessage message={generalError} />}
 
@@ -228,8 +212,7 @@ function ResetPasswordContent() {
               )}
             </button>
           </form>
-        </Form>
-      )}
+      </Form>
     </AuthSplitScreen>
   );
 }

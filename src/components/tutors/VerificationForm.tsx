@@ -35,10 +35,23 @@ export function VerificationForm() {
       setSubmitError(null);
       toast.success("Doğrulama başvurun gönderildi.");
     },
-    onError: () => {
-      setSubmitError(
-        "Başvuru gönderilemedi. Zaten bir başvurunuz varsa destek ile iletişime geçin."
-      );
+    onError: (error: unknown) => {
+      const data = (error as { response?: { data?: unknown } }).response?.data;
+      if (data && typeof data === "object") {
+        const body = data as Record<string, unknown>;
+        const firstFieldError = Object.values(body).find(
+          (value) => Array.isArray(value) && value[0]
+        );
+        if (Array.isArray(firstFieldError) && firstFieldError[0]) {
+          setSubmitError(String(firstFieldError[0]));
+          return;
+        }
+        if (typeof body.detail === "string") {
+          setSubmitError(body.detail);
+          return;
+        }
+      }
+      setSubmitError("Başvuru gönderilemedi. Lütfen bilgileri kontrol edip tekrar deneyin.");
     },
   });
 
