@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
+import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { fetchTutors, fetchSubjects, type TutorFilters as TutorFiltersType } from "@/lib/tutorsApi";
 import { AnimatedSearchBar } from "@/components/tutors/AnimatedSearchBar";
 import { TutorCard } from "@/components/tutors/TutorCard";
@@ -16,6 +17,7 @@ import SlidingPagination from "@/components/ui/sliding-pagination";
 import { isSubjectValidForExam } from "@/lib/subjects";
 
 const PAGE_SIZE = 8;
+const FILTER_PANEL_PREFERENCE_KEY = "hocam:tutor-filters-open";
 const LEARNING_CONTEXT_KEYS = [
   "learning_goal_id",
   "learning_milestone_id",
@@ -168,6 +170,7 @@ function TutorsPageContent() {
   });
   const [searchLocal, setSearchLocal] = useState(filters.search ?? "");
   const [page, setPage] = useState(1);
+  const [desktopFiltersOpen, setDesktopFiltersOpen] = useState(false);
 
   // Favorites toggle is URL-synced but not a backend filter (client-side only).
   const showFavorites = searchParams.get("favorites") === "1";
@@ -219,6 +222,18 @@ function TutorsPageContent() {
     setFiltersState(fromUrl);
     setSearchLocal(fromUrl.search ?? "");
   }, [searchParams]);
+
+  useEffect(() => {
+    setDesktopFiltersOpen(window.localStorage.getItem(FILTER_PANEL_PREFERENCE_KEY) === "true");
+  }, []);
+
+  const toggleDesktopFilters = () => {
+    setDesktopFiltersOpen((current) => {
+      const next = !current;
+      window.localStorage.setItem(FILTER_PANEL_PREFERENCE_KEY, String(next));
+      return next;
+    });
+  };
 
   const {
     data: tutors,
@@ -338,6 +353,18 @@ function TutorsPageContent() {
 
             <div className="space-y-3">
               <div className="flex gap-2 overflow-x-auto pb-1">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="hidden shrink-0 rounded-full lg:inline-flex"
+                  aria-expanded={desktopFiltersOpen}
+                  aria-controls="tutor-filter-panel"
+                  onClick={toggleDesktopFilters}
+                >
+                  {desktopFiltersOpen ? <PanelLeftClose className="mr-1.5 h-4 w-4" /> : <PanelLeftOpen className="mr-1.5 h-4 w-4" />}
+                  {desktopFiltersOpen ? "Filtreleri gizle" : "Filtreleri göster"}
+                </Button>
                 {[
                   { label: "★ En yüksek puan", active: (filters.ordering ?? "rating") === "rating", next: { ordering: "rating" } },
                   { label: "₺ En uygun fiyat", active: filters.ordering === "price", next: { ordering: "price" } },
@@ -378,9 +405,22 @@ function TutorsPageContent() {
           </>
         )}
 
-        <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
+        <div
+          className={`flex flex-col gap-6 lg:grid lg:items-start lg:transition-[grid-template-columns,gap] lg:duration-300 lg:ease-out ${
+            desktopFiltersOpen
+              ? "lg:grid-cols-[16rem_minmax(0,1fr)] lg:gap-6"
+              : "lg:grid-cols-[0_minmax(0,1fr)] lg:gap-0"
+          }`}
+        >
           {!showFavorites && (
-            <aside className="lg:sticky lg:top-24">
+            <aside
+              id="tutor-filter-panel"
+              className={`min-w-0 overflow-hidden lg:sticky lg:top-24 lg:transition-[opacity,transform,visibility] lg:duration-300 lg:ease-out ${
+                desktopFiltersOpen
+                  ? "lg:visible lg:translate-x-0 lg:opacity-100"
+                  : "lg:invisible lg:pointer-events-none lg:-translate-x-3 lg:opacity-0"
+              }`}
+            >
               <TutorFilters
                 filters={filters}
                 subjects={subjects ?? []}
@@ -402,7 +442,7 @@ function TutorsPageContent() {
             )}
 
             {isListLoading && (
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div className={`grid grid-cols-1 gap-4 md:grid-cols-2 ${desktopFiltersOpen ? "" : "xl:grid-cols-3"}`}>
               {Array.from({ length: PAGE_SIZE }).map((_, i) => (
                 <TutorCardSkeleton key={i} />
               ))}
@@ -432,7 +472,7 @@ function TutorsPageContent() {
 
           {!isListLoading && !listError && !showEmptyState && filteredTutors.length > 0 && (
             <>
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div className={`grid grid-cols-1 gap-4 md:grid-cols-2 ${desktopFiltersOpen ? "" : "xl:grid-cols-3"}`}>
                 {pageTutors.map((tutor) => (
                   <TutorCard
                     key={tutor.id}
