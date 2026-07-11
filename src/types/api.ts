@@ -541,7 +541,14 @@ export type PackagePurchaseStatus = "pending" | "paid" | "cancelled" | "refunded
 export interface PackagePurchase {
   id: string;
   student: { id: string; name: string; surname: string };
-  tutor: { id: string; name: string; surname: string };
+  tutor: {
+    id: string;
+    name: string;
+    surname: string;
+    profile_picture?: string;
+    bio?: string;
+    subjects?: Subject[];
+  };
   plan: {
     id: string;
     name: string;

@@ -10,6 +10,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { ParticipantAvatar } from "@/components/messaging/ParticipantAvatar";
 import type { Booking, PackagePurchase } from "@/types";
 
 // Mirrors backend apps/payments/services.py PACKAGE_GRACE_PERIOD_DAYS — a
@@ -249,13 +250,49 @@ export function PackageLearningDetailsSheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-xl">
         <SheetHeader>
-          <SheetTitle>{purchase.plan.name}</SheetTitle>
-          <SheetDescription>
-            {purchase.tutor.name} {purchase.tutor.surname} ile düzenli ders planın.
-          </SheetDescription>
+          <div className="flex items-center gap-3">
+            <ParticipantAvatar
+              name={`${purchase.tutor.name} ${purchase.tutor.surname}`}
+              avatarUrl={purchase.tutor.profile_picture}
+              className="h-14 w-14"
+            />
+            <div className="min-w-0">
+              <SheetTitle>{purchase.tutor.name} {purchase.tutor.surname}</SheetTitle>
+              <SheetDescription className="mt-1">
+                {purchase.tutor.subjects?.map((subject) => subject.name).join(" · ") || "Özel ders öğretmeni"}
+              </SheetDescription>
+            </div>
+          </div>
         </SheetHeader>
 
         <div className="mt-6 space-y-6">
+          <section className="space-y-2">
+            <h3 className="text-sm font-semibold">Hoca hakkında</h3>
+            <p className="text-sm leading-6 text-muted-foreground">
+              {purchase.tutor.bio?.trim() || "Bu hoca, hedeflerine uygun ders planını ilk görüşmede seninle birlikte oluşturacak."}
+            </p>
+            <Button asChild variant="link" className="h-auto px-0 text-sm">
+              <Link href={`/tutors/${purchase.tutor.id}`}>Hoca profilini görüntüle</Link>
+            </Button>
+          </section>
+
+          <section className="space-y-3 rounded-xl border p-4">
+            <div>
+              <h3 className="font-semibold">Bu paketin içeriği</h3>
+              <p className="mt-1 text-sm text-muted-foreground">{purchase.plan.name}</p>
+            </div>
+            <ul className="space-y-2 text-sm text-muted-foreground">
+              <li><span className="font-medium text-foreground">{purchase.total_credits} canlı ders</span> · ders başına {purchase.plan.lesson_duration_minutes} dakika</li>
+              {purchase.plan.lessons_per_week && (
+                <li><span className="font-medium text-foreground">Haftada {purchase.plan.lessons_per_week} ders</span> ile düzenli çalışma ritmi</li>
+              )}
+              {purchase.plan.duration_days && (
+                <li><span className="font-medium text-foreground">{Math.ceil(purchase.plan.duration_days / 7)} haftalık</span> hedef odaklı program</li>
+              )}
+              <li>İlk derste hedeflerin, eksik konuların ve ders akışın hocanla netleştirilir.</li>
+            </ul>
+          </section>
+
           <div className="rounded-xl border bg-primary/5 p-4">
             <div className="flex items-start gap-3">
               <Target className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
