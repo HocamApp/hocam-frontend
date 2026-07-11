@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { Heart, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { fetchTutors, fetchSubjects, type TutorFilters as TutorFiltersType } from "@/lib/tutorsApi";
 import { AnimatedSearchBar } from "@/components/tutors/AnimatedSearchBar";
 import { TutorCard } from "@/components/tutors/TutorCard";
@@ -249,6 +249,7 @@ function TutorsPageContent() {
   const { data: subjects, isLoading: subjectsLoading } = useQuery({
     queryKey: ["subjects"],
     queryFn: fetchSubjects,
+    enabled: !showFavorites,
     staleTime: Infinity,
   });
   useEffect(() => {
@@ -285,6 +286,7 @@ function TutorsPageContent() {
     ? favorites.map((favorite) => favorite.tutor)
     : tutors?.results ?? [];
   const filteredTutors = tutorList;
+  const filtersPanelVisible = !showFavorites && desktopFiltersOpen;
 
   // showEmptyState: user applied filters/favorites and got 0 results.
   const apiEmpty = !showFavorites && tutors?.count === 0;
@@ -405,9 +407,28 @@ function TutorsPageContent() {
           </>
         )}
 
+        {showFavorites && (
+          <div className="flex flex-col gap-4 rounded-2xl border bg-card px-5 py-6 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:px-7">
+            <div className="flex items-start gap-3">
+              <span className="mt-0.5 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-500/10 text-red-500">
+                <Heart className="h-5 w-5 fill-current" />
+              </span>
+              <div>
+                <h1 className="text-2xl font-semibold tracking-tight">Favori Hocalarım</h1>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {isListLoading ? "Favorilerin yükleniyor…" : `${filteredTutors.length} kayıtlı hoca`}
+                </p>
+              </div>
+            </div>
+            <Button type="button" variant="outline" onClick={() => router.push("/tutors")}>
+              Tüm hocaları keşfet
+            </Button>
+          </div>
+        )}
+
         <div
           className={`flex flex-col gap-6 lg:grid lg:items-start lg:transition-[grid-template-columns,gap] lg:duration-300 lg:ease-out ${
-            desktopFiltersOpen
+            filtersPanelVisible
               ? "lg:grid-cols-[16rem_minmax(0,1fr)] lg:gap-6"
               : "lg:grid-cols-[0_minmax(0,1fr)] lg:gap-0"
           }`}
@@ -416,7 +437,7 @@ function TutorsPageContent() {
             <aside
               id="tutor-filter-panel"
               className={`min-w-0 overflow-hidden lg:sticky lg:top-24 lg:transition-[opacity,transform,visibility] lg:duration-300 lg:ease-out ${
-                desktopFiltersOpen
+                filtersPanelVisible
                   ? "lg:visible lg:translate-x-0 lg:opacity-100"
                   : "lg:invisible lg:pointer-events-none lg:-translate-x-3 lg:opacity-0"
               }`}
@@ -442,7 +463,7 @@ function TutorsPageContent() {
             )}
 
             {isListLoading && (
-            <div className={`grid grid-cols-1 gap-4 md:grid-cols-2 ${desktopFiltersOpen ? "" : "xl:grid-cols-3"}`}>
+            <div className={`grid grid-cols-1 gap-4 md:grid-cols-2 ${filtersPanelVisible ? "" : "xl:grid-cols-3"}`}>
               {Array.from({ length: PAGE_SIZE }).map((_, i) => (
                 <TutorCardSkeleton key={i} />
               ))}
@@ -453,6 +474,11 @@ function TutorsPageContent() {
             <EmptyState
               title="Henüz favori hocan yok."
               description="Hoca profillerindeki kalp ikonuna tıklayarak favorilerine ekleyebilirsin."
+              action={
+                <Button variant="outline" onClick={() => router.push("/tutors")}>
+                  Hocaları keşfet
+                </Button>
+              }
             />
           ) : showEmptyState ? (
             <EmptyState
@@ -472,7 +498,7 @@ function TutorsPageContent() {
 
           {!isListLoading && !listError && !showEmptyState && filteredTutors.length > 0 && (
             <>
-              <div className={`grid grid-cols-1 gap-4 md:grid-cols-2 ${desktopFiltersOpen ? "" : "xl:grid-cols-3"}`}>
+              <div className={`grid grid-cols-1 gap-4 md:grid-cols-2 ${filtersPanelVisible ? "" : "xl:grid-cols-3"}`}>
                 {pageTutors.map((tutor) => (
                   <TutorCard
                     key={tutor.id}
