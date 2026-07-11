@@ -1,48 +1,21 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import {
-  Bell,
-  BookOpen,
-  Camera,
-  CalendarClock,
-  Download,
-  Eye,
-  GraduationCap,
-  LifeBuoy,
-  LogOut,
-  Mail,
-  Monitor,
-  Pencil,
-  ShieldCheck,
-  Star,
-  UserCog,
-} from "lucide-react";
+import Link from "next/link";
 
 import { useAuth } from "@/hooks/useAuth";
 import {
   fetchProfileMe,
   updateProfileMe,
-  exportMyData,
   uploadStudentProfileAvatar,
   selectStudentAnonymousAvatar,
 } from "@/lib/profileApi";
-import { logoutAllSessions } from "@/lib/authApi";
-import { uploadTutorProfilePicture } from "@/lib/tutorsApi";
-import {
-  STUDENT_AVATAR_PRESETS,
-  type StudentAvatarKey,
-} from "@/lib/studentAvatars";
-import {
-  PROFILE_PHOTO_ACCEPT,
-  PROFILE_PHOTO_RULE_TEXT,
-  TUTOR_REAL_PHOTO_RULE_TEXT,
-  validateProfilePhotoFile,
-} from "@/lib/profilePhoto";
-import { cn, formatPrice } from "@/lib/utils";
+import { updateMyTutorProfile, uploadTutorProfilePicture } from "@/lib/tutorsApi";
+import { validateProfilePhotoFile } from "@/lib/profilePhoto";
+import type { StudentAvatarKey } from "@/lib/studentAvatars";
+import { formatPrice } from "@/lib/utils";
 import type { Theme } from "@/lib/theme";
 import type {
   ProfileMeResponse,
@@ -53,23 +26,16 @@ import type {
 
 import { RouteGuard } from "@/components/shared/RouteGuard";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { ProfileMenuRow, ProfileToggleRow } from "@/components/profile/ProfileMenuRow";
-import { AnimatedThemeToggler } from "@/components/theme/AnimatedThemeToggler";
-import Link from "next/link";
+import { ProfileToggleRow } from "@/components/profile/ProfileMenuRow";
+import { ProfileSummary } from "@/components/profile/ProfileSummary";
+import { AvatarEditor } from "@/components/profile/AvatarEditor";
+import { AccountPreferences } from "@/components/profile/AccountPreferences";
+import { SecurityPrivacySection } from "@/components/profile/SecurityPrivacySection";
+import { StudentActivitySummary } from "@/components/profile/StudentActivitySummary";
+import { TutorVideoSection } from "@/components/profile/TutorVideoSection";
 
 type BoolPrefKey = keyof Omit<UserPreferences, "language">;
 
@@ -81,13 +47,6 @@ const DEFAULT_PREFS: UserPreferences = {
   notify_email: false,
   language: "tr",
 };
-
-const NOTIFICATION_ROWS: { key: BoolPrefKey; label: string }[] = [
-  { key: "notify_messages", label: "Yeni mesaj bildirimleri" },
-  { key: "notify_lesson_requests", label: "Ders talebi bildirimleri" },
-  { key: "notify_booking_reminders", label: "Rezervasyon hatırlatmaları" },
-  { key: "notify_email", label: "E-posta bildirimleri" },
-];
 
 function getInitials(name: string, surname: string): string {
   return ((name.trim()[0] || "") + (surname.trim()[0] || "")).toUpperCase();
@@ -101,18 +60,10 @@ function isTutorProfile(
 }
 
 function ProfileContent() {
-  const router = useRouter();
   const queryClient = useQueryClient();
   const { user, logout } = useAuth();
   const [prefOverrides, setPrefOverrides] = useState<Partial<UserPreferences>>({});
   const [isPublicOverride, setIsPublicOverride] = useState<boolean | null>(null);
-  const [loggingOutAll, setLoggingOutAll] = useState(false);
-  const [exporting, setExporting] = useState(false);
-  const [nameEdit, setNameEdit] = useState(false);
-  const [editName, setEditName] = useState("");
-  const [editSurname, setEditSurname] = useState("");
-  const [nameError, setNameError] = useState<string | null>(null);
-  const [nameSaving, setNameSaving] = useState(false);
   const [photoUploading, setPhotoUploading] = useState(false);
   const [photoError, setPhotoError] = useState<string | null>(null);
   const [avatarChoicePendingKey, setAvatarChoicePendingKey] =
@@ -181,31 +132,10 @@ function ProfileContent() {
     );
   };
 
-  const startNameEdit = () => {
-    setEditName(name);
-    setEditSurname(surname);
-    setNameError(null);
-    setNameEdit(true);
-  };
-
-  const handleNameSave = async () => {
-    const trimmedName = editName.trim();
-    const trimmedSurname = editSurname.trim();
-    if (!trimmedName || !trimmedSurname) {
-      setNameError("İsim ve soyisim boş olamaz.");
-      return;
-    }
-    setNameSaving(true);
-    try {
-      await updateProfileMe({ profile: { name: trimmedName, surname: trimmedSurname } });
-      await queryClient.invalidateQueries({ queryKey: ["profile-me"] });
-      setNameEdit(false);
-      toast.success("İsim güncellendi.");
-    } catch {
-      setNameError("İsim güncellenemedi. Lütfen tekrar deneyin.");
-    } finally {
-      setNameSaving(false);
-    }
+  const handleSaveName = async (newName: string, newSurname: string) => {
+    await updateProfileMe({ profile: { name: newName, surname: newSurname } });
+    await queryClient.invalidateQueries({ queryKey: ["profile-me"] });
+    toast.success("İsim güncellendi.");
   };
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -270,6 +200,17 @@ function ProfileContent() {
     }
   };
 
+  const handleSaveIntroVideo = async (url: string) => {
+    await updateMyTutorProfile({ intro_video_url: url });
+    await queryClient.invalidateQueries({ queryKey: ["profile-me"] });
+    await queryClient.invalidateQueries({ queryKey: ["tutor-me"] });
+    if (tutor?.id) {
+      await queryClient.invalidateQueries({ queryKey: ["tutor", tutor.id] });
+    }
+    await queryClient.invalidateQueries({ queryKey: ["tutors"] });
+    toast.success(url ? "Tanıtım videosu güncellendi." : "Tanıtım videosu kaldırıldı.");
+  };
+
   const handleVisibilityToggle = async (next: boolean) => {
     const prev = currentIsPublic;
     setIsPublicOverride(next);
@@ -285,41 +226,6 @@ function ProfileContent() {
     }
   };
 
-  const handleLogoutAll = async () => {
-    setLoggingOutAll(true);
-    try {
-      await logoutAllSessions();
-      toast.success("Tüm oturumlardan çıkış yapıldı.");
-      logout();
-    } catch {
-      toast.error("Oturumlar kapatılamadı. Lütfen tekrar deneyin.");
-      setLoggingOutAll(false);
-    }
-  };
-
-  const handleExportData = async () => {
-    setExporting(true);
-    try {
-      const data = await exportMyData();
-      const blob = new Blob([JSON.stringify(data, null, 2)], {
-        type: "application/json",
-      });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `hocam-verilerim-${new Date().toISOString().slice(0, 10)}.json`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-      toast.success("Verileriniz indirildi.");
-    } catch {
-      toast.error("Veriler indirilemedi. Lütfen tekrar deneyin.");
-    } finally {
-      setExporting(false);
-    }
-  };
-
   if (isLoading) {
     return (
       <div className="flex justify-center py-20">
@@ -329,439 +235,131 @@ function ProfileContent() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-3xl px-4 py-8 sm:py-10">
+    <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:py-10">
       <div className="mb-8">
         <h1 className="text-2xl font-bold tracking-tight text-foreground">Profilim</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Hesap kimliğinizi ve tercihlerinizi buradan yönetin. Ders ve ilerleme
-          takibi için panonuzu kullanabilirsiniz.
+          Hesap bilgilerini, tercihlerini ve güvenlik ayarlarını buradan yönet.
         </p>
       </div>
 
-      <div className="space-y-6">
-        {/* ---- Profil Detayları ---- */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Profil Detayları</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-5">
-            <div className="flex items-start gap-4">
-              <div className="relative shrink-0">
-                <Avatar className="h-16 w-16 border border-border">
-                  {avatarImage ? <AvatarImage src={avatarImage} alt={fullName} /> : null}
-                  <AvatarFallback className="bg-primary/10 text-lg font-semibold text-primary">
-                    {initials || <UserCog className="h-5 w-5" />}
-                  </AvatarFallback>
-                </Avatar>
-                {(tutor || studentProfile) && (
-                  <>
-                    <input
-                      type="file"
-                      accept={PROFILE_PHOTO_ACCEPT}
-                      hidden
-                      ref={photoInputRef}
-                      onChange={handlePhotoUpload}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => photoInputRef.current?.click()}
-                      disabled={photoUploading || Boolean(avatarChoicePendingKey)}
-                      aria-label="Profil fotoğrafını değiştir"
-                      className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-primary text-primary-foreground shadow transition-opacity disabled:opacity-60"
-                    >
-                      <Camera className="h-3.5 w-3.5" />
-                    </button>
-                  </>
-                )}
-              </div>
-              <div className="min-w-0 flex-1">
-                {nameEdit ? (
-                  <div className="space-y-2">
-                    <div className="flex flex-col gap-2 sm:flex-row">
-                      <Input
-                        value={editName}
-                        onChange={(e) => {
-                          setEditName(e.target.value);
-                          setNameError(null);
-                        }}
-                        placeholder="İsim"
-                      />
-                      <Input
-                        value={editSurname}
-                        onChange={(e) => {
-                          setEditSurname(e.target.value);
-                          setNameError(null);
-                        }}
-                        placeholder="Soyisim"
-                      />
-                    </div>
-                    {nameError && (
-                      <p className="text-sm text-destructive">{nameError}</p>
-                    )}
-                    <div className="flex gap-2">
-                      <Button size="sm" onClick={handleNameSave} disabled={nameSaving}>
-                        Kaydet
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => setNameEdit(false)}
-                        disabled={nameSaving}
-                      >
-                        Vazgeç
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <p className="truncate text-lg font-semibold text-foreground">
-                      {fullName || "İsimsiz kullanıcı"}
-                    </p>
-                    <button
-                      type="button"
-                      onClick={startNameEdit}
-                      aria-label="İsmi düzenle"
-                      className="text-muted-foreground hover:text-foreground"
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </button>
-                  </div>
-                )}
-                <Badge variant="secondary" className="mt-2">
-                  {role === "tutor" ? "Eğitmen" : "Öğrenci"}
-                </Badge>
-              </div>
-            </div>
-            {photoError && (
-              <p className="text-sm text-destructive" role="alert">
-                {photoError}
-              </p>
-            )}
-            {tutor && (
-              <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-100">
-                <p>{PROFILE_PHOTO_RULE_TEXT}</p>
-                <p className="mt-1">{TUTOR_REAL_PHOTO_RULE_TEXT}</p>
-              </div>
-            )}
-            {studentProfile && (
-              <div className="space-y-4 rounded-md border border-border bg-muted/20 p-3">
-                <div className="space-y-1">
-                  <p className="text-sm font-medium text-foreground">Profil fotoğrafı</p>
-                  <p className="text-sm text-muted-foreground">
-                    Kendi fotoğrafını yükleyebilir veya hazır anonim avatarlardan
-                    birini seçebilirsin.
-                  </p>
-                </div>
-                <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-100">
-                  {PROFILE_PHOTO_RULE_TEXT}
-                </div>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  onClick={() => photoInputRef.current?.click()}
-                  disabled={photoUploading || Boolean(avatarChoicePendingKey)}
-                >
-                  {photoUploading ? (
-                    <span
-                      className="mr-2 h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent"
-                      aria-hidden
-                    />
-                  ) : (
-                    <Camera className="mr-2 h-4 w-4" />
-                  )}
-                  {photoUploading ? "Yükleniyor" : "Fotoğraf yükle"}
-                </Button>
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-foreground">
-                    Hazır avatar seç
-                  </p>
-                  <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
-                    {STUDENT_AVATAR_PRESETS.map((preset) => {
-                      const selected =
-                        studentProfile.avatar_kind === "anonymous" &&
-                        studentProfile.avatar_key === preset.key;
-                      const pending = avatarChoicePendingKey === preset.key;
-
-                      return (
-                        <button
-                          key={preset.key}
-                          type="button"
-                          aria-pressed={selected}
-                          onClick={() => handleStudentAvatarChoice(preset.key)}
-                          disabled={photoUploading || Boolean(avatarChoicePendingKey)}
-                          className={cn(
-                            "flex min-h-[92px] flex-col items-center justify-center gap-2 rounded-md border bg-background px-2 py-2 text-xs font-medium text-foreground transition hover:border-primary/60 hover:bg-primary/5 disabled:cursor-not-allowed disabled:opacity-60",
-                            selected && "border-primary bg-primary/10 text-primary"
-                          )}
-                        >
-                          <Avatar className="h-12 w-12 border border-border bg-muted">
-                            <AvatarImage src={preset.url} alt={preset.label} />
-                            <AvatarFallback>{preset.label.slice(0, 1)}</AvatarFallback>
-                          </Avatar>
-                          <span className="leading-none">
-                            {pending ? "Seçiliyor" : preset.label}
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            <Separator />
-
-            <div className="space-y-3 text-sm">
-              <div className="flex items-center gap-3">
-                <Mail className="h-4 w-4 shrink-0 text-muted-foreground" />
-                <span className="flex-1 text-muted-foreground">E-posta</span>
-                <span className="truncate font-medium text-foreground">
-                  {user?.email}
-                </span>
-              </div>
-              <div className="flex items-center gap-3">
-                <UserCog className="h-4 w-4 shrink-0 text-muted-foreground" />
-                <span className="flex-1 text-muted-foreground">Rol</span>
-                <span className="font-medium text-foreground">
-                  {role === "tutor" ? "Eğitmen" : "Öğrenci"}
-                </span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* ---- Hesap Ayarları ---- */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Hesap Ayarları</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-1">
-            <div className="flex items-center gap-3 px-2 py-1.5 text-sm">
-              <span className="flex-1 text-foreground">Dil</span>
-              <Select value={prefs.language} onValueChange={handleLanguageChange}>
-                <SelectTrigger className="w-32">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="tr">Türkçe</SelectItem>
-                  <SelectItem value="en">İngilizce</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex items-center gap-3 px-2 py-1.5 text-sm">
-              <span className="flex-1 text-foreground">Tema</span>
-              <AnimatedThemeToggler onThemeChange={handleThemeChange} />
-            </div>
-
-            <Separator className="my-2" />
-            <p className="flex items-center gap-2 px-2 pb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              <Bell className="h-3.5 w-3.5" /> Bildirim tercihleri
-            </p>
-            {NOTIFICATION_ROWS.map((row) => (
-              <ProfileToggleRow
-                key={row.key}
-                label={row.label}
-                checked={prefs[row.key]}
-                onChange={(next) => handleNotificationToggle(row.key, next)}
-              />
-            ))}
-          </CardContent>
-        </Card>
-
-        {/* ---- Hoca Bilgileri (tutor only) ---- */}
-        {tutor && (
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:items-start lg:gap-8">
+        {/* Main column */}
+        <div className="space-y-6 lg:col-span-2">
           <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Hoca Bilgileri</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <ProfileToggleRow
-                label="Rezervasyonları otomatik onayla"
-                checked={currentAutoApprove}
-                onChange={handleAutoApproveToggle}
+            <CardContent className="pt-6">
+              <ProfileSummary
+                fullName={fullName}
+                name={name}
+                surname={surname}
+                role={role}
+                email={user?.email}
+                avatarImage={avatarImage}
+                initials={initials}
+                studentMeta={
+                  studentProfile
+                    ? {
+                        targetExamType: studentProfile.target_exam_type,
+                        school: studentProfile.school,
+                        grade: studentProfile.grade,
+                      }
+                    : undefined
+                }
+                onSave={handleSaveName}
+                avatarEditor={
+                  <AvatarEditor
+                    avatarImage={avatarImage}
+                    initials={initials}
+                    fullName={fullName}
+                    isStudent={Boolean(studentProfile)}
+                    isTutor={Boolean(tutor)}
+                    photoUploading={photoUploading}
+                    photoError={photoError}
+                    fileInputRef={photoInputRef}
+                    onPickFile={() => photoInputRef.current?.click()}
+                    onFileChange={handlePhotoUpload}
+                    studentAvatar={
+                      studentProfile
+                        ? {
+                            avatarKind: studentProfile.avatar_kind,
+                            avatarKey: studentProfile.avatar_key,
+                          }
+                        : undefined
+                    }
+                    avatarChoicePendingKey={avatarChoicePendingKey}
+                    onChooseStudentAvatar={handleStudentAvatarChoice}
+                  />
+                }
               />
-              <Separator />
-              <dl className="space-y-2 text-sm">
-                <div className="flex justify-between gap-3">
-                  <dt className="text-muted-foreground">Üniversite</dt>
-                  <dd className="text-right font-medium text-foreground">
-                    {tutor.university || "—"}
-                  </dd>
-                </div>
-                <div className="flex justify-between gap-3">
-                  <dt className="text-muted-foreground">Bölüm</dt>
-                  <dd className="text-right font-medium text-foreground">
-                    {tutor.department || "—"}
-                  </dd>
-                </div>
-                <div className="flex justify-between gap-3">
-                  <dt className="text-muted-foreground">40 dk ders ücreti</dt>
-                  <dd className="text-right font-medium text-foreground">
-                    {tutor.hourly_price ? formatPrice(tutor.hourly_price) : "—"}
-                  </dd>
-                </div>
-              </dl>
-              <Button asChild variant="outline" size="sm">
-                <Link href="/dashboard/tutor/edit">Eğitmen profilini düzenle</Link>
-              </Button>
             </CardContent>
           </Card>
-        )}
 
-        {/* ---- Hesap görünürlüğü ---- */}
-        <Card id="account-visibility" className="scroll-mt-24">
-          <CardHeader>
-            <CardTitle className="text-lg">Hesap görünürlüğü</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {tutor ? (
-              <>
+          {tutor ? (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Hoca Bilgileri</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
                 <ProfileToggleRow
-                  label="Profilim herkese açık olsun"
-                  checked={currentIsPublic}
-                  onChange={handleVisibilityToggle}
-                  icon={<Eye className="h-4 w-4" />}
+                  label="Rezervasyonları otomatik onayla"
+                  checked={currentAutoApprove}
+                  onChange={handleAutoApproveToggle}
                 />
-                <p className="px-2 text-xs text-muted-foreground">
-                  {currentIsPublic
-                    ? "Profiliniz hoca listesinde görünür ve öğrenciler tarafından bulunabilir."
-                    : "Profiliniz şu anda gizli; hoca listesinde ve aramalarda görünmez. Mevcut konuşmalarınız ve panonuz etkilenmez."}
-                </p>
-              </>
-            ) : (
-              <div className="flex gap-3 px-2 text-sm text-muted-foreground">
-                <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" />
-                <p>
-                  Öğrenci profilleri herkese açık değildir. Bilgileriniz yalnızca
-                  ders aldığınız hocalarla ve platform politikası gereği gerekli
-                  durumlarda paylaşılır.
-                </p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* ---- Oturumları yönet ---- */}
-        <Card id="data-export" className="scroll-mt-24">
-          <CardHeader>
-            <CardTitle className="text-lg">Oturumları yönet</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-sm text-muted-foreground">
-              Hesabınıza giriş bir oturum anahtarı (token) ile sağlanır. Şu anda
-              cihazlar ayrı ayrı listelenmez; tüm oturumlardan çıkış, oturum
-              anahtarınızı sıfırlayarak giriş yapılmış tüm cihazları kapatır.
-            </p>
-            <div className="flex flex-col gap-2 sm:flex-row">
-              <Button variant="outline" onClick={logout}>
-                <Monitor className="mr-2 h-4 w-4" />
-                Bu cihazdan çıkış yap
-              </Button>
-              <Button
-                variant="destructive"
-                onClick={handleLogoutAll}
-                disabled={loggingOutAll}
-              >
-                {loggingOutAll ? (
-                  <span
-                    className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"
-                    aria-hidden
-                  />
-                ) : (
-                  <LogOut className="mr-2 h-4 w-4" />
-                )}
-                Tüm oturumlardan çıkış yap
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* ---- Verilerimi indir ---- */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Verilerimi indir</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <p className="text-sm text-muted-foreground">
-              Hesabınıza ait verileri (profil, tercihler, destek talepleri, ders
-              talepleri ve rezervasyonlar) JSON dosyası olarak indirebilirsiniz.
-              Yalnızca size ait veriler dışa aktarılır.
-            </p>
-            <Button variant="outline" onClick={handleExportData} disabled={exporting}>
-              {exporting ? (
-                <span
-                  className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"
-                  aria-hidden
+                <Separator />
+                <dl className="space-y-2 text-sm">
+                  <div className="flex justify-between gap-3">
+                    <dt className="text-muted-foreground">Üniversite</dt>
+                    <dd className="text-right font-medium text-foreground">
+                      {tutor.university || "—"}
+                    </dd>
+                  </div>
+                  <div className="flex justify-between gap-3">
+                    <dt className="text-muted-foreground">Bölüm</dt>
+                    <dd className="text-right font-medium text-foreground">
+                      {tutor.department || "—"}
+                    </dd>
+                  </div>
+                  <div className="flex justify-between gap-3">
+                    <dt className="text-muted-foreground">40 dk ders ücreti</dt>
+                    <dd className="text-right font-medium text-foreground">
+                      {tutor.hourly_price ? formatPrice(tutor.hourly_price) : "—"}
+                    </dd>
+                  </div>
+                </dl>
+                <Separator />
+                <TutorVideoSection
+                  introVideoUrl={tutor.intro_video_url}
+                  fullName={fullName}
+                  onSave={handleSaveIntroVideo}
                 />
-              ) : (
-                <Download className="mr-2 h-4 w-4" />
-              )}
-              Verilerimi indir (.json)
-            </Button>
-          </CardContent>
-        </Card>
+                <Button asChild variant="outline" size="sm">
+                  <Link href="/dashboard/tutor/edit">Eğitmen profilini düzenle</Link>
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            <StudentActivitySummary
+              pendingReviewsCount={data?.stats.pending_reviews_count ?? 0}
+              pendingBookingsCount={data?.stats.pending_bookings_count ?? 0}
+            />
+          )}
+        </div>
 
-        {/* ---- Hızlı Erişim ---- */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Hızlı Erişim</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-1">
-            <ProfileMenuRow
-              icon={<CalendarClock className="h-4 w-4" />}
-              label="Yaklaşan dersler"
-              showChevron
-              onClick={() => router.push("/profile/lessons/upcoming")}
-            />
-            <ProfileMenuRow
-              icon={<BookOpen className="h-4 w-4" />}
-              label="Ders geçmişi"
-              showChevron
-              onClick={() => router.push("/profile/lessons/history")}
-            />
-            {role === "student" && (
-              <ProfileMenuRow
-                icon={<Star className="h-4 w-4" />}
-                label="Bekleyen değerlendirmeler"
-                showChevron
-                onClick={() => router.push("/profile/reviews/pending")}
-              />
-            )}
-            <ProfileMenuRow
-              icon={<Eye className="h-4 w-4" />}
-              label="Hesap görünürlüğü"
-              showChevron
-              onClick={() => router.push("/profile#account-visibility")}
-            />
-            <ProfileMenuRow
-              icon={<ShieldCheck className="h-4 w-4" />}
-              label="Güvenlik ayarları"
-              showChevron
-              onClick={() => router.push("/profile/security")}
-            />
-            <ProfileMenuRow
-              icon={<Download className="h-4 w-4" />}
-              label="Verilerimi indir"
-              showChevron
-              onClick={() => router.push("/profile#data-export")}
-            />
-            <ProfileMenuRow
-              icon={<LifeBuoy className="h-4 w-4" />}
-              label="Destek"
-              showChevron
-              onClick={() => router.push("/support")}
-            />
-            <ProfileMenuRow
-              icon={<GraduationCap className="h-4 w-4" />}
-              label="Panoma git"
-              showChevron
-              onClick={() =>
-                router.push(role === "tutor" ? "/dashboard/tutor" : "/dashboard/student")
-              }
-            />
-          </CardContent>
-        </Card>
+        {/* Secondary column */}
+        <div className="space-y-6">
+          <AccountPreferences
+            preferences={prefs}
+            onLanguageChange={handleLanguageChange}
+            onThemeChange={handleThemeChange}
+            onNotificationToggle={handleNotificationToggle}
+          />
+          <SecurityPrivacySection
+            isTutor={Boolean(tutor)}
+            isPublic={currentIsPublic}
+            onVisibilityToggle={handleVisibilityToggle}
+            onLogout={logout}
+          />
+        </div>
       </div>
     </div>
   );
