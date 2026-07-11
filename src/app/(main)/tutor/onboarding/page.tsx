@@ -1,16 +1,25 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { CheckCircle2, Circle, Clock } from "lucide-react";
+import { CheckCircle2, Circle, Clock, PartyPopper } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { fetchMyTutorProfile } from "@/lib/tutorsApi";
 import { fetchAvailability, fetchVerification } from "@/lib/dashboardApi";
 import { VerificationForm } from "@/components/tutors/VerificationForm";
+import { AvailabilityCalendar } from "@/components/tutors/AvailabilityCalendar";
 import { RouteGuard } from "@/components/shared/RouteGuard";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 type OnboardingStep = {
   title: string;
@@ -21,6 +30,7 @@ type OnboardingStep = {
 
 function TutorOnboardingContent() {
   const { isAuthenticated } = useAuth();
+  const [showWelcome, setShowWelcome] = useState(false);
   const { data: profile, isLoading: profileLoading } = useQuery({
     queryKey: ["tutor-me"],
     queryFn: fetchMyTutorProfile,
@@ -47,13 +57,28 @@ function TutorOnboardingContent() {
     retry: false,
   });
 
+  const profileComplete = Boolean(profile);
+  const verificationApproved = profile?.is_verified === true || verification?.status === "approved";
+  const setupComplete = verificationApproved && (profile?.subjects.length ?? 0) > 0 && availability.length > 0;
+  const welcomeStorageKey = profile ? `hocam:tutor-onboarding-welcome:${profile.id}` : null;
+
+  useEffect(() => {
+    if (setupComplete && welcomeStorageKey && !window.localStorage.getItem(welcomeStorageKey)) {
+      setShowWelcome(true);
+    }
+  }, [setupComplete, welcomeStorageKey]);
+
+  const handleWelcomeChange = (open: boolean) => {
+    setShowWelcome(open);
+    if (!open && welcomeStorageKey) {
+      window.localStorage.setItem(welcomeStorageKey, "true");
+    }
+  };
+
   if (profileLoading) {
     return <div className="mx-auto max-w-3xl px-4 py-10"><Skeleton className="h-96 w-full" /></div>;
   }
 
-  const profileComplete = Boolean(profile);
-  const verificationApproved = profile?.is_verified === true || verification?.status === "approved";
-  const setupComplete = verificationApproved && (profile?.subjects.length ?? 0) > 0 && availability.length > 0;
   const steps: OnboardingStep[] = [
     {
       title: "E-posta ile kayıt",
@@ -128,16 +153,43 @@ function TutorOnboardingContent() {
           {verificationApproved && !setupComplete && (
             <div className="space-y-3 rounded-lg border p-4">
               <p className="font-medium">Son adım: dersler ve müsaitlik</p>
-              <p className="text-sm text-muted-foreground">Profilinden ders alanlarını ekle, ardından 14 günlük takvimden uygun saatlerini belirle.</p>
-              <div className="flex flex-wrap gap-2">
-                <Button asChild><Link href="/dashboard/tutor/edit">Dersleri düzenle</Link></Button>
-                <Button variant="outline" asChild><Link href="/dashboard/tutor?tab=availability">Müsaitliği düzenle</Link></Button>
-              </div>
+              <p className="text-sm text-muted-foreground">
+                Aşağıdaki takvimden bir gün seçip Düzenle ile uygun saatlerini ekle.
+                Bu işlem tamamlandığında hesabın burada, aynı sayfada aktifleşecek.
+              </p>
+              <AvailabilityCalendar availability={availability} bookings={[]} />
             </div>
           )}
-          {setupComplete && <Button asChild className="w-full"><Link href="/dashboard/tutor">Hoca panosuna git</Link></Button>}
+          {setupComplete && (
+            <div className="rounded-lg border border-green-200 bg-green-50 p-5 text-center dark:border-green-900/60 dark:bg-green-950/30">
+              <PartyPopper className="mx-auto mb-2 h-8 w-8 text-green-600" />
+              <p className="font-semibold">Hoca hesabın tamamlandı</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Artık öğrenciler seni görebilir ve ders ayırtabilir.
+              </p>
+            </div>
+          )}
         </CardContent>
       </Card>
+
+      <Dialog open={showWelcome} onOpenChange={handleWelcomeChange}>
+        <DialogContent className="overflow-hidden text-center sm:max-w-lg">
+          <div className="absolute inset-x-0 top-0 h-2 bg-gradient-to-r from-primary via-violet-500 to-pink-500" />
+          <DialogHeader className="items-center pt-5">
+            <div className="mb-3 flex h-20 w-20 items-center justify-center rounded-full bg-primary/10 text-primary motion-safe:animate-message-pop">
+              <PartyPopper className="h-10 w-10" />
+            </div>
+            <DialogTitle className="text-3xl">Ailemize hoş geldin!</DialogTitle>
+            <DialogDescription className="max-w-sm text-center text-base leading-7">
+              Hoca profilin tamamlandı. Öğrenciler artık seni keşfedebilir, sana
+              ulaşabilir ve ders ayırtabilir.
+            </DialogDescription>
+          </DialogHeader>
+          <Button onClick={() => handleWelcomeChange(false)} className="mt-3 w-full">
+            Harika, devam et
+          </Button>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
