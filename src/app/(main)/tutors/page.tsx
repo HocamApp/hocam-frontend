@@ -16,7 +16,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import SlidingPagination from "@/components/ui/sliding-pagination";
 import { isSubjectValidForExam } from "@/lib/subjects";
 
-const PAGE_SIZE = 8;
+const PAGE_SIZE = 12;
 const FILTER_PANEL_PREFERENCE_KEY = "hocam:tutor-filters-open";
 const LEARNING_CONTEXT_KEYS = [
   "learning_goal_id",
