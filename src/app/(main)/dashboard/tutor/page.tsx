@@ -587,11 +587,11 @@ function ProfileStudio({
                 />
                 <Accordion type="single" collapsible>
                   <AccordionItem value="photo-editor" className="border-none">
-                    <AccordionTrigger className="justify-start gap-2 rounded-md py-1 text-sm font-medium text-foreground hover:no-underline">
+                    <AccordionTrigger className="w-fit gap-2 rounded-md border border-input bg-background px-3 py-1.5 text-sm font-medium text-foreground hover:bg-accent hover:text-accent-foreground hover:no-underline">
                       Fotoğrafı değiştir
                     </AccordionTrigger>
                     <AccordionContent>
-                      <div className="space-y-3">
+                      <div className="space-y-3 pt-1">
                         <Button asChild variant="outline" disabled={isUploadingPhoto}>
                           <label htmlFor="profile-picture-input" className="cursor-pointer">
                             <Camera className="mr-2 h-4 w-4" />
