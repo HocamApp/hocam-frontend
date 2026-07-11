@@ -60,6 +60,12 @@ import { ReviewCard } from "@/components/tutors/ReviewCard";
 import { ReviewSummary } from "@/components/tutors/ReviewSummary";
 import { SubjectRatingBreakdown } from "@/components/tutors/SubjectRatingBreakdown";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { AnimatedTabs } from "@/components/ui/animated-tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -579,21 +585,32 @@ function ProfileStudio({
                   className="sr-only"
                   onChange={onPhotoSelected}
                 />
-                <Button asChild variant="outline" disabled={isUploadingPhoto}>
-                  <label htmlFor="profile-picture-input" className="cursor-pointer">
-                    <Camera className="mr-2 h-4 w-4" />
-                    {isUploadingPhoto ? "Yükleniyor" : "Fotoğraf Yükle"}
-                  </label>
-                </Button>
-                {photoError && (
-                  <p className="text-sm text-destructive" role="alert">
-                    {photoError}
-                  </p>
-                )}
-                <div className="rounded-md border px-3 py-2 text-xs text-muted-foreground">
-                  <p>{PROFILE_PHOTO_RULE_TEXT}</p>
-                  <p className="mt-1">{TUTOR_REAL_PHOTO_RULE_TEXT}</p>
-                </div>
+                <Accordion type="single" collapsible>
+                  <AccordionItem value="photo-editor" className="border-none">
+                    <AccordionTrigger className="justify-start gap-2 rounded-md py-1 text-sm font-medium text-foreground hover:no-underline">
+                      Fotoğrafı değiştir
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <div className="space-y-3">
+                        <Button asChild variant="outline" disabled={isUploadingPhoto}>
+                          <label htmlFor="profile-picture-input" className="cursor-pointer">
+                            <Camera className="mr-2 h-4 w-4" />
+                            {isUploadingPhoto ? "Yükleniyor" : "Fotoğraf Yükle"}
+                          </label>
+                        </Button>
+                        {photoError && (
+                          <p className="text-sm text-destructive" role="alert">
+                            {photoError}
+                          </p>
+                        )}
+                        <div className="rounded-md border px-3 py-2 text-xs text-muted-foreground">
+                          <p>{PROFILE_PHOTO_RULE_TEXT}</p>
+                          <p className="mt-1">{TUTOR_REAL_PHOTO_RULE_TEXT}</p>
+                        </div>
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
               </div>
             </div>
 
