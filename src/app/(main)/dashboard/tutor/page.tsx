@@ -1089,9 +1089,9 @@ function TutorDashboardContent() {
         />
         <StatTile
           icon={<Wallet className="h-5 w-5" />}
-          label="Tamamlanan Gelir"
-          value={earnings ? formatPrice(earnings.lifetime.total) : "—"}
-          detail={earnings ? `${earnings.lifetime.lesson_count} tamamlanan ders` : "Kazançlar yükleniyor"}
+          label="Tamamlanan Ders"
+          value={earnings ? earnings.lifetime.lesson_count : "—"}
+          detail={earnings ? "Kazanç takibi yakında" : "Kazançlar yükleniyor"}
         />
       </div>
 
@@ -1374,26 +1374,26 @@ function TutorDashboardContent() {
                 <StatTile
                   icon={<Wallet className="h-5 w-5" />}
                   label="Son 7 Gün"
-                  value={formatPrice(earnings.last_7_days.total)}
-                  detail={`${earnings.last_7_days.lesson_count} ders`}
+                  value={earnings.last_7_days.lesson_count}
+                  detail="tamamlanan ders"
                 />
                 <StatTile
                   icon={<Wallet className="h-5 w-5" />}
                   label="Son 30 Gün"
-                  value={formatPrice(earnings.last_30_days.total)}
-                  detail={`${earnings.last_30_days.lesson_count} ders`}
+                  value={earnings.last_30_days.lesson_count}
+                  detail="tamamlanan ders"
                 />
                 <StatTile
                   icon={<Wallet className="h-5 w-5" />}
                   label="Toplam"
-                  value={formatPrice(earnings.lifetime.total)}
-                  detail={`${earnings.lifetime.lesson_count} ders`}
+                  value={earnings.lifetime.lesson_count}
+                  detail="tamamlanan ders"
                 />
               </div>
               <div className="mt-4 rounded-lg border bg-muted/40 p-3 text-xs text-muted-foreground">
-                Bu tutarlar tamamlanan derslerden tahakkuk eden tahmini kazancını gösterir,
-                bir ödeme bakiyesi değildir. Platform şu anda bir ödeme sağlayıcısına bağlı
-                değildir.
+                Bu sekme yalnızca tamamladığın ders sayısını gösterir. Platform henüz bir ödeme
+                sağlayıcısına bağlı olmadığı için burada gerçek bir kazanç/ödeme bakiyesi
+                görüntülenmiyor.
               </div>
             </>
           )}
