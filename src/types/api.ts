@@ -338,6 +338,7 @@ export interface Booking {
   package_credit_units_used?: number;
   created_at: string;
   learning_context?: LearningContext | null;
+  conversation_id?: string | null;
 }
 
 export type LessonArtifactKind = "whiteboard" | "solved_question" | "material";
@@ -623,6 +624,7 @@ export interface AvailabilityRule {
   tutor: string;
   day_of_week: number;
   specific_date?: string | null;
+  is_unavailable?: boolean;
   start_time: string;
   end_time: string;
   created_at: string;
@@ -697,9 +699,11 @@ export interface ProfileTutor {
   is_public: boolean;
   subjects: Subject[];
   availability: Array<{
-    day_of_week: number;
-    start_time: string;
-    end_time: string;
+  day_of_week: number;
+  specific_date?: string | null;
+  is_unavailable?: boolean;
+  start_time: string | null;
+  end_time: string | null;
   }>;
 }
 

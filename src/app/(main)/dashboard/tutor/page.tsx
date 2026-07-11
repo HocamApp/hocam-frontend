@@ -4,7 +4,7 @@ import { ChangeEvent, ReactNode, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import axios from "axios";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AlertCircle,
   Calendar,
@@ -30,6 +30,7 @@ import {
   uploadTutorProfilePicture,
 } from "@/lib/tutorsApi";
 import { fetchAvailability } from "@/lib/dashboardApi";
+import { completeTutorReminder, createTutorReminder, deleteTutorReminder, fetchTutorReminders } from "@/lib/notificationsApi";
 import { confirmLearningActivity } from "@/lib/learningApi";
 import { fetchTutorEarnings, fetchTutorPackagePurchases } from "@/lib/paymentsApi";
 import {
@@ -164,6 +165,10 @@ function formatLessonCountdown(startTime: string): string {
   if (diffDays === 0) return "Bugün";
   if (diffDays === 1) return "Yarın";
   return `Derse ${diffDays} gün kaldı`;
+}
+
+function canJoinLesson(startTime: string): boolean {
+  return Date.now() >= new Date(startTime).getTime() - 15 * 60 * 1000;
 }
 
 interface StudentRosterEntry {
@@ -753,6 +758,8 @@ function StudentDetailDialog({
           </Badge>
         )}
 
+        <TutorReminderForm studentId={student.id} studentName={name} />
+
         <div className="space-y-3">
           {bookings.length === 0 ? (
             <EmptyState
@@ -776,6 +783,40 @@ function StudentDetailDialog({
         </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function TutorReminderForm({ studentId, studentName }: { studentId: string; studentName: string }) {
+  const queryClient = useQueryClient();
+  const [note, setNote] = useState("");
+  const [dueAt, setDueAt] = useState("");
+  const reminderMutation = useMutation({
+    mutationFn: createTutorReminder,
+    onSuccess: () => {
+      setNote("");
+      setDueAt("");
+      queryClient.invalidateQueries({ queryKey: ["tutor-reminders"] });
+      toast.success(`${studentName} için hatırlatıcı eklendi.`);
+    },
+    onError: () => toast.error("Hatırlatıcı eklenemedi."),
+  });
+
+  return (
+    <div className="space-y-3 rounded-lg border bg-muted/20 p-3">
+      <p className="text-sm font-semibold">Kendine hatırlatıcı koy</p>
+      <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
+        <Input value={note} onChange={(event) => setNote(event.target.value)} maxLength={500} placeholder="Örn. Deneme sonuçlarını sor" />
+        <Input type="datetime-local" value={dueAt} onChange={(event) => setDueAt(event.target.value)} />
+      </div>
+      <Button
+        type="button"
+        size="sm"
+        disabled={!note.trim() || !dueAt || reminderMutation.isPending}
+        onClick={() => reminderMutation.mutate({ student: studentId, note: note.trim(), due_at: new Date(dueAt).toISOString() })}
+      >
+        Hatırlatıcı ekle
+      </Button>
+    </div>
   );
 }
 
@@ -844,6 +885,11 @@ function TutorDashboardContent() {
   const { data: packagePurchases = [] } = useQuery({
     queryKey: ["tutor-package-purchases"],
     queryFn: fetchTutorPackagePurchases,
+    enabled: isAuthenticated,
+  });
+  const { data: tutorReminders = [] } = useQuery({
+    queryKey: ["tutor-reminders"],
+    queryFn: fetchTutorReminders,
     enabled: isAuthenticated,
   });
 
@@ -1147,40 +1193,6 @@ function TutorDashboardContent() {
         </div>
       </header>
 
-      <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <StatTile
-          icon={<Calendar className="h-5 w-5" />}
-          label="Yaklaşan Dersler"
-          value={`${upcomingBookings.length} ders`}
-          detail={nextBooking ? `Sıradaki: ${formatDate(nextBooking.start_time)}` : "Takvim boş"}
-          isLoading={bookingsLoading}
-        />
-        <StatTile
-          icon={<AlertCircle className="h-5 w-5" />}
-          label="Bekleyen İşlem"
-          value={pendingActionBookings.length}
-          detail={
-            pendingActionBookings.length > 0
-              ? "Onay/işlem bekleyen ders var"
-              : "Bekleyen işlem yok"
-          }
-          isLoading={bookingsLoading}
-        />
-        <StatTile
-          icon={<Star className="h-5 w-5" />}
-          label="Puan"
-          value={profile.total_reviews > 0 ? formatRating(profile.rating) : "-"}
-          detail={`${profile.total_reviews} değerlendirme`}
-        />
-        <StatTile
-          icon={<Wallet className="h-5 w-5" />}
-          label="Tamamlanan Ders"
-          value={earnings ? earnings.lifetime.lesson_count : "—"}
-          detail={earnings ? "Kazanç takibi yakında" : "Kazançlar yükleniyor"}
-          isLoading={earningsLoading}
-        />
-      </div>
-
       {nextBooking ? (
         <Card className="mb-6 overflow-hidden border-primary/30 bg-gradient-to-br from-primary/5 via-card to-card">
           <CardContent className="p-5 sm:p-6">
@@ -1227,18 +1239,22 @@ function TutorDashboardContent() {
             </div>
 
             <div className="mt-5 flex flex-wrap items-center gap-2 border-t pt-4">
-              {nextBooking.room_url ? (
+              {nextBooking.room_url && canJoinLesson(nextBooking.start_time) ? (
                 <Button asChild size="lg">
                   <a href={`/session/${nextBooking.id}`}>
                     <Video className="mr-2 h-4 w-4" />
                     Derse Katıl
                   </a>
                 </Button>
+              ) : nextBooking.room_url ? (
+                <Button size="lg" variant="outline" disabled>
+                  Derse katılım başlangıçtan 15 dakika önce açılır
+                </Button>
               ) : (
                 <Badge variant="outline">Oda onaydan sonra oluşur</Badge>
               )}
               <Button asChild variant="outline">
-                <Link href="/messages">
+                <Link href={nextBooking.conversation_id ? `/messages/${nextBooking.conversation_id}` : "/messages"}>
                   <MessageCircle className="mr-2 h-4 w-4" />
                   Öğrenciye Mesaj
                 </Link>
@@ -1256,6 +1272,20 @@ function TutorDashboardContent() {
             }
           />
         </div>
+      )}
+
+      {tutorReminders.length > 0 && (
+        <Card className="mb-6">
+          <CardHeader className="p-4 pb-2"><CardTitle className="text-base">Yaklaşan hatırlatıcılar</CardTitle></CardHeader>
+          <CardContent className="space-y-2 p-4 pt-0">
+            {tutorReminders.slice(0, 5).map((reminder) => (
+              <div key={reminder.id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border p-3">
+                <div><p className="text-sm font-medium">{reminder.student_summary.name} {reminder.student_summary.surname}</p><p className="text-sm text-muted-foreground">{reminder.note} · {formatDate(reminder.due_at)}</p></div>
+                <div className="flex gap-2"><Button size="sm" variant="outline" onClick={async () => { await completeTutorReminder(reminder.id); queryClient.invalidateQueries({ queryKey: ["tutor-reminders"] }); }}>Tamamla</Button><Button size="sm" variant="ghost" onClick={async () => { await deleteTutorReminder(reminder.id); queryClient.invalidateQueries({ queryKey: ["tutor-reminders"] }); }}>Sil</Button></div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
       )}
 
       <Card className="mb-6">
