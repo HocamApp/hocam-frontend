@@ -6,7 +6,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  BadgeCheck,
   Check,
   ChevronDown,
   ChevronUp,
@@ -26,6 +25,7 @@ import { ReviewCard } from "@/components/tutors/ReviewCard";
 import { ReviewSummary } from "@/components/tutors/ReviewSummary";
 import { SubjectRatingBreakdown } from "@/components/tutors/SubjectRatingBreakdown";
 import { TutorPresenceBadge } from "@/components/tutors/TutorPresenceBadge";
+import { VerifiedTutorMark } from "@/components/tutors/VerifiedTutorMark";
 import { AvailabilityCalendar } from "@/components/tutors/AvailabilityCalendar";
 import { MessageRequestModal } from "@/components/tutors/MessageRequestModal";
 import { PackageOfferPanel } from "@/components/tutors/PackageOfferPanel";
@@ -468,13 +468,7 @@ export default function TutorProfilePage({
                 <h1 className="text-3xl font-bold leading-tight">
                   {tutor.name} {tutor.surname}
                 </h1>
-                {tutor.is_verified && (
-                  <BadgeCheck
-                    className="h-6 w-6 shrink-0 text-primary"
-                    role="img"
-                    aria-label="Doğrulanmış hoca"
-                  />
-                )}
+                <VerifiedTutorMark verified={tutor.is_verified} className="h-7 w-7" />
               </div>
               <p className="mt-1 text-muted-foreground">
                 {tutor.university} · {tutor.department}

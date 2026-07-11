@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Trash2 } from "lucide-react";
@@ -45,6 +45,11 @@ export function DayAvailabilityDialog({
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
   const [timeError, setTimeError] = useState<string | null>(null);
+  const [mode, setMode] = useState<"date" | "weekly">("date");
+
+  useEffect(() => {
+    if (open) setMode("date");
+  }, [open, date]);
 
   const { data: rules = [] } = useQuery({
     queryKey: ["availability"],
@@ -53,10 +58,9 @@ export function DayAvailabilityDialog({
   });
 
   const dateRules = rules.filter((r) => r.specific_date === date);
-  const isClosed = dateRules.some((rule) => rule.is_unavailable);
-  const dayRules = (dateRules.length > 0
-    ? dateRules
-    : rules.filter((r) => !r.specific_date && r.day_of_week === dayOfWeek))
+  const weeklyRules = rules.filter((r) => !r.specific_date && r.day_of_week === dayOfWeek);
+  const isClosed = mode === "date" && dateRules.some((rule) => rule.is_unavailable);
+  const dayRules = (mode === "date" ? dateRules : weeklyRules)
     .filter((rule) => !rule.is_unavailable)
     .sort((a, b) => (a.start_time || "").localeCompare(b.start_time || ""));
 
@@ -99,7 +103,7 @@ export function DayAvailabilityDialog({
     }
     createMutation.mutate({
       day_of_week: dayOfWeek,
-      specific_date: date,
+      ...(mode === "date" ? { specific_date: date } : {}),
       start_time: startTime.length === 5 ? startTime : startTime + ":00",
       end_time: endTime.length === 5 ? endTime : endTime + ":00",
     });
@@ -115,12 +119,16 @@ export function DayAvailabilityDialog({
         <DialogHeader>
           <DialogTitle>{dayLabel} Müsaitliği</DialogTitle>
           <DialogDescription>
-            Değişiklikler yalnızca seçtiğin tarih için geçerlidir; diğer haftaların
-            düzenli müsaitliğini değiştirmez.
+            Tek tarih için istisna oluşturabilir veya bu hafta gününü her hafta tekrarlayabilirsin.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
+          <div className="grid grid-cols-2 rounded-lg bg-muted p-1">
+            <Button type="button" size="sm" variant={mode === "date" ? "default" : "ghost"} onClick={() => setMode("date")}>Yalnızca bu tarih</Button>
+            <Button type="button" size="sm" variant={mode === "weekly" ? "default" : "ghost"} onClick={() => setMode("weekly")}>Her hafta tekrarla</Button>
+          </div>
+          <p className="text-xs text-muted-foreground">{mode === "date" ? "Bu tarihteki kurallar haftalık düzenin yerini alır." : `${dayLabel.split(" ")[0]} günleri için tekrar eden düzen.`}</p>
           {isClosed && <p className="rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive">Bu gün kapalı.</p>}
           {dayRules.length === 0 ? (
             <p className="rounded-md border border-dashed px-3 py-6 text-center text-sm text-muted-foreground">
@@ -180,7 +188,7 @@ export function DayAvailabilityDialog({
               </Button>
             </div>
             {timeError && <p className="text-sm text-destructive">{timeError}</p>}
-            {!isClosed && <Button type="button" variant="outline" className="border-destructive/40 text-destructive" onClick={handleCloseDay} disabled={isMutating}>Bu günü kapat</Button>}
+            {mode === "date" && !isClosed && <Button type="button" variant="outline" className="border-destructive/40 text-destructive" onClick={handleCloseDay} disabled={isMutating}>Bu günü kapat</Button>}
           </div>
         </div>
 

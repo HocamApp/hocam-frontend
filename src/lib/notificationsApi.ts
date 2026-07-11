@@ -19,32 +19,30 @@ export async function deleteNotification(id: string): Promise<void> {
   await api.delete(`/notifications/${id}/`);
 }
 
-export interface TutorStudentReminder {
+export interface TutorStudentNote {
   id: string;
   student: string;
   student_summary: { id: string; name: string; surname: string };
-  note: string;
-  due_at: string;
-  notified_at: string | null;
-  completed_at: string | null;
+  content: string;
   created_at: string;
+  updated_at: string;
 }
 
-export async function fetchTutorReminders(): Promise<TutorStudentReminder[]> {
-  const { data } = await api.get<TutorStudentReminder[]>("/notifications/reminders/");
+export async function fetchTutorStudentNotes(studentId: string): Promise<TutorStudentNote[]> {
+  const { data } = await api.get<TutorStudentNote[]>(`/notifications/tutor-student-notes/?student=${studentId}`);
   return data;
 }
 
-export async function createTutorReminder(payload: Pick<TutorStudentReminder, "student" | "note" | "due_at">): Promise<TutorStudentReminder> {
-  const { data } = await api.post<TutorStudentReminder>("/notifications/reminders/", payload);
+export async function createTutorStudentNote(payload: { student: string; content: string }): Promise<TutorStudentNote> {
+  const { data } = await api.post<TutorStudentNote>("/notifications/tutor-student-notes/", payload);
   return data;
 }
 
-export async function completeTutorReminder(id: string): Promise<TutorStudentReminder> {
-  const { data } = await api.post<TutorStudentReminder>(`/notifications/reminders/${id}/complete/`);
+export async function updateTutorStudentNote(id: string, content: string): Promise<TutorStudentNote> {
+  const { data } = await api.patch<TutorStudentNote>(`/notifications/tutor-student-notes/${id}/`, { content });
   return data;
 }
 
-export async function deleteTutorReminder(id: string): Promise<void> {
-  await api.delete(`/notifications/reminders/${id}/`);
+export async function deleteTutorStudentNote(id: string): Promise<void> {
+  await api.delete(`/notifications/tutor-student-notes/${id}/`);
 }
