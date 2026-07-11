@@ -374,7 +374,7 @@ export default function TutorProfilePage({
     !isOwnProfile &&
     tutor?.trial_lesson_eligible === true &&
     trialLessonsRemaining > 0;
-  const EXAM_ORDER = ["TYT", "AYT", "DGS", "KPSS"] as const;
+  const EXAM_ORDER = ["TYT", "AYT", "YDT", "DGS", "KPSS"] as const;
   const subjectGroups = EXAM_ORDER.map((exam) => ({
     exam,
     items: (tutor?.subjects ?? []).filter((s) => s.exam_type === exam),

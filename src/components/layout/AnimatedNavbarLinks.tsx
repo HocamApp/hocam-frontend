@@ -5,6 +5,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   Bell,
   GraduationCap,
+  FileQuestion,
   Heart,
   LayoutDashboard,
   LucideIcon,
@@ -84,6 +85,12 @@ export function AnimatedNavbarLinks() {
           },
         ]
       : []),
+    {
+      kind: "route",
+      title: "Çıkmış Sorular",
+      icon: FileQuestion,
+      href: "/cikmis-sorular",
+    },
     { kind: "separator" },
     {
       kind: "popover",

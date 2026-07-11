@@ -1,6 +1,6 @@
 import type { ExamType, Subject } from "@/types";
 
-export const EXAM_ORDER = ["TYT", "AYT", "DGS", "KPSS"] as const satisfies readonly ExamType[];
+export const EXAM_ORDER = ["TYT", "AYT", "YDT", "DGS", "KPSS"] as const satisfies readonly ExamType[];
 
 const UNSUPPORTED_SUBJECT_NAMES = new Set(["arapça", "arabic"]);
 
