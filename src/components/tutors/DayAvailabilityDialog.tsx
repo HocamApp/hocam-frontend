@@ -21,7 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { TimeSelect } from "@/components/ui/time-select";
 
-function formatRuleTime(t: string): string {
+function formatRuleTime(t: string | null): string {
   if (!t) return "";
   return t.slice(0, 5);
 }
@@ -53,10 +53,12 @@ export function DayAvailabilityDialog({
   });
 
   const dateRules = rules.filter((r) => r.specific_date === date);
+  const isClosed = dateRules.some((rule) => rule.is_unavailable);
   const dayRules = (dateRules.length > 0
     ? dateRules
     : rules.filter((r) => !r.specific_date && r.day_of_week === dayOfWeek))
-    .sort((a, b) => a.start_time.localeCompare(b.start_time));
+    .filter((rule) => !rule.is_unavailable)
+    .sort((a, b) => (a.start_time || "").localeCompare(b.start_time || ""));
 
   const createMutation = useMutation({
     mutationFn: createAvailabilityRule,
@@ -103,6 +105,10 @@ export function DayAvailabilityDialog({
     });
   };
 
+  const handleCloseDay = () => {
+    createMutation.mutate({ day_of_week: dayOfWeek, specific_date: date, is_unavailable: true });
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
@@ -115,6 +121,7 @@ export function DayAvailabilityDialog({
         </DialogHeader>
 
         <div className="space-y-4">
+          {isClosed && <p className="rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive">Bu gün kapalı.</p>}
           {dayRules.length === 0 ? (
             <p className="rounded-md border border-dashed px-3 py-6 text-center text-sm text-muted-foreground">
               Bu gün için henüz müsaitlik saati eklenmemiş.
@@ -173,6 +180,7 @@ export function DayAvailabilityDialog({
               </Button>
             </div>
             {timeError && <p className="text-sm text-destructive">{timeError}</p>}
+            {!isClosed && <Button type="button" variant="outline" className="border-destructive/40 text-destructive" onClick={handleCloseDay} disabled={isMutating}>Bu günü kapat</Button>}
           </div>
         </div>
 

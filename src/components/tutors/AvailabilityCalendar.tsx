@@ -1,144 +1,96 @@
 "use client";
 
-import { useState } from "react";
-import { Pencil } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Calendar as CalendarIcon, Pencil } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import StatusBadge from "@/components/shared/StatusBadge";
 import { DayAvailabilityDialog } from "@/components/tutors/DayAvailabilityDialog";
-import { cn, formatDateLocal, getNext14Days, jsDayToBackendDay } from "@/lib/utils";
+import { formatDateLocal, jsDayToBackendDay } from "@/lib/utils";
 import type { AvailabilityRule, Booking } from "@/types";
 
-const DAY_ABBREVIATIONS = ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"];
-const DAY_NAMES = [
-  "Pazartesi",
-  "Salı",
-  "Çarşamba",
-  "Perşembe",
-  "Cuma",
-  "Cumartesi",
-  "Pazar",
-];
+const DAY_NAMES = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar"];
 
-function formatRuleTime(t: string): string {
-  if (!t) return "";
-  return t.slice(0, 5);
+function dayRulesForDate(availability: AvailabilityRule[], date: Date) {
+  const dateString = formatDateLocal(date);
+  const dated = availability.filter((rule) => rule.specific_date === dateString);
+  if (dated.length > 0) return dated;
+  return availability.filter(
+    (rule) => !rule.specific_date && rule.day_of_week === jsDayToBackendDay(date.getDay())
+  );
 }
 
-function formatBookingTime(isoString: string): string {
-  return new Date(isoString).toLocaleTimeString("tr-TR", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
-interface AvailabilityCalendarProps {
+export function AvailabilityCalendar({ availability, bookings = [], editable = true, showBookings = true }: {
   availability: AvailabilityRule[];
   bookings?: Booking[];
   editable?: boolean;
   showBookings?: boolean;
-}
-
-export function AvailabilityCalendar({
-  availability,
-  bookings = [],
-  editable = true,
-  showBookings = true,
-}: AvailabilityCalendarProps) {
-  const days = getNext14Days();
-  const todayStr = formatDateLocal(new Date());
-  const [editingDay, setEditingDay] = useState<{ dayOfWeek: number; date: string; label: string } | null>(
-    null
+}) {
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [isEditing, setIsEditing] = useState(false);
+  const selectedRules = dayRulesForDate(availability, selectedDate);
+  const selectedBookings = bookings.filter(
+    (booking) => new Date(booking.start_time).toDateString() === selectedDate.toDateString()
   );
+  const availableDates = useMemo(() => {
+    const dates: Date[] = [];
+    for (let offset = 0; offset < 180; offset += 1) {
+      const date = new Date();
+      date.setHours(0, 0, 0, 0);
+      date.setDate(date.getDate() + offset);
+      const rules = dayRulesForDate(availability, date);
+      if (rules.some((rule) => !rule.is_unavailable)) dates.push(date);
+    }
+    return dates;
+  }, [availability]);
+  const closedDates = useMemo(
+    () => availability.filter((rule) => rule.is_unavailable && rule.specific_date).map((rule) => new Date(`${rule.specific_date}T00:00:00`)),
+    [availability]
+  );
+  const bookedDates = useMemo(() => bookings.map((booking) => new Date(booking.start_time)), [bookings]);
+  const label = `${DAY_NAMES[jsDayToBackendDay(selectedDate.getDay())]} ${selectedDate.toLocaleDateString("tr-TR", { day: "numeric", month: "long" })}`;
 
   return (
-    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-7">
-      {days.map((d) => {
-        const backendDay = jsDayToBackendDay(d.getDay());
-        const dateStr = formatDateLocal(d);
-        const isToday = dateStr === todayStr;
-
-        const datedRules = availability.filter((r) => r.specific_date === dateStr);
-        const dayRules = (datedRules.length > 0
-          ? datedRules
-          : availability.filter((r) => !r.specific_date && r.day_of_week === backendDay))
-          .sort((a, b) => a.start_time.localeCompare(b.start_time));
-
-        const dayBookings = bookings
-          .filter((b) => new Date(b.start_time).toDateString() === d.toDateString())
-          .sort(
-            (a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
-          );
-
-        return (
-          <Card key={dateStr} className={cn(isToday && "border-primary")}>
-            <CardContent className="space-y-2 p-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  {DAY_ABBREVIATIONS[backendDay]} {d.getDate()}
-                </span>
-                <div className="flex items-center gap-1">
-                  {isToday && (
-                    <span className="rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">
-                      Bugün
-                    </span>
-                  )}
-                  {editable && (
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setEditingDay({ dayOfWeek: backendDay, date: dateStr, label: DAY_NAMES[backendDay] })
-                      }
-                      aria-label={`${DAY_NAMES[backendDay]} müsaitliğini düzenle`}
-                      className="shrink-0 text-muted-foreground transition-colors hover:text-primary"
-                    >
-                      <Pencil className="h-3 w-3" />
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              {dayRules.length === 0 ? (
-                <p className="text-xs text-muted-foreground/60">Müsait değil</p>
-              ) : (
-                <div className="flex flex-wrap gap-1">
-                  {dayRules.map((r) => (
-                    <span
-                      key={r.id}
-                      className="rounded-md border bg-muted/40 px-1.5 py-0.5 text-[11px] tabular-nums text-muted-foreground"
-                    >
-                      {formatRuleTime(r.start_time)}–{formatRuleTime(r.end_time)}
-                    </span>
-                  ))}
-                </div>
-              )}
-
-              {showBookings && dayBookings.length > 0 && (
-                <div className="space-y-1.5 border-t pt-2">
-                  {dayBookings.map((b) => (
-                    <div key={b.id} className="space-y-1">
-                      <p className="truncate text-[11px] font-medium">
-                        {formatBookingTime(b.start_time)} ·{" "}
-                        {b.student.display_name || b.student.email}
-                      </p>
-                      <StatusBadge status={b.status} type="booking" />
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        );
-      })}
-
-      {editable && (
-        <DayAvailabilityDialog
-          open={!!editingDay}
-          dayOfWeek={editingDay?.dayOfWeek ?? 0}
-          date={editingDay?.date ?? ""}
-          dayLabel={editingDay?.label ?? ""}
-          onOpenChange={(open) => !open && setEditingDay(null)}
-        />
-      )}
+    <div className="grid gap-6 lg:grid-cols-[auto_minmax(0,1fr)]">
+      <Card className="w-fit">
+        <CardContent className="p-3">
+          <Calendar
+            mode="single"
+            selected={selectedDate}
+            onSelect={(date) => date && setSelectedDate(date)}
+            modifiers={{ available: availableDates, closed: closedDates, booked: bookedDates }}
+            modifiersClassNames={{
+              available: "[&>button]:bg-emerald-50 [&>button]:text-emerald-800 dark:[&>button]:bg-emerald-950/40 dark:[&>button]:text-emerald-200",
+              closed: "[&>button]:bg-destructive/10 [&>button]:text-destructive",
+              booked: "[&>button]:after:absolute [&>button]:after:bottom-1 [&>button]:after:size-1 [&>button]:after:rounded-full [&>button]:after:bg-primary",
+            }}
+          />
+        </CardContent>
+      </Card>
+      <Card>
+        <CardContent className="space-y-4 p-4">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="flex items-center gap-2 font-semibold"><CalendarIcon className="h-4 w-4 text-primary" /> {label}</p>
+              <p className="mt-1 text-sm text-muted-foreground">Bu tarih için müsaitlik ve derslerin.</p>
+            </div>
+            {editable && <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}><Pencil className="mr-2 h-3.5 w-3.5" /> Düzenle</Button>}
+          </div>
+          {selectedRules.some((rule) => rule.is_unavailable) ? (
+            <p className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">Bu gün kapalı olarak işaretlenmiş.</p>
+          ) : selectedRules.length === 0 ? (
+            <p className="rounded-lg border border-dashed p-3 text-sm text-muted-foreground">Bu gün için müsaitlik tanımlanmamış.</p>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {selectedRules.map((rule) => <span key={rule.id} className="rounded-md border bg-muted/40 px-2 py-1 text-sm tabular-nums">{rule.start_time?.slice(0, 5)}–{rule.end_time?.slice(0, 5)}</span>)}
+            </div>
+          )}
+          {showBookings && selectedBookings.length > 0 && <div className="space-y-2 border-t pt-4"><p className="text-sm font-semibold">Dersler</p>{selectedBookings.map((booking) => <div key={booking.id} className="flex items-center justify-between gap-3 rounded-lg border p-3"><span className="text-sm font-medium">{new Date(booking.start_time).toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })} · {booking.student.display_name || booking.student.email}</span><StatusBadge status={booking.status} type="booking" /></div>)}</div>}
+          {editable && <p className="text-xs text-muted-foreground"><Pencil className="mr-1 inline h-3 w-3" /> Takvimde bir gün seçerek o güne özel saat veya kapalı gün tanımlayabilirsin.</p>}
+        </CardContent>
+      </Card>
+      {editable && <DayAvailabilityDialog open={isEditing} onOpenChange={setIsEditing} dayOfWeek={jsDayToBackendDay(selectedDate.getDay())} date={formatDateLocal(selectedDate)} dayLabel={label} />}
     </div>
   );
 }

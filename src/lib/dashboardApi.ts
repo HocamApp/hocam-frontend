@@ -22,8 +22,9 @@ export async function fetchTutorAvailability(
 export interface CreateAvailabilityPayload {
   day_of_week: number;
   specific_date?: string;
-  start_time: string;
-  end_time: string;
+  is_unavailable?: boolean;
+  start_time?: string | null;
+  end_time?: string | null;
 }
 
 export async function createAvailabilityRule(
