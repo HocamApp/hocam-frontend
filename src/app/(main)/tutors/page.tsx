@@ -428,7 +428,9 @@ function TutorsPageContent() {
 
         <div
           className={`flex flex-col gap-6 lg:grid lg:items-start lg:transition-[grid-template-columns,gap] lg:duration-300 lg:ease-out ${
-            filtersPanelVisible
+            showFavorites
+              ? "lg:grid-cols-1 lg:gap-0"
+              : filtersPanelVisible
               ? "lg:grid-cols-[16rem_minmax(0,1fr)] lg:gap-6"
               : "lg:grid-cols-[0_minmax(0,1fr)] lg:gap-0"
           }`}
