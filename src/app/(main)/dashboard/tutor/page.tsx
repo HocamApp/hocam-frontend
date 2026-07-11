@@ -1,6 +1,6 @@
 "use client";
 
-import { ChangeEvent, ReactNode, useEffect, useMemo, useState } from "react";
+import { ChangeEvent, ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import axios from "axios";
@@ -30,7 +30,6 @@ import {
   uploadTutorProfilePicture,
 } from "@/lib/tutorsApi";
 import { fetchAvailability } from "@/lib/dashboardApi";
-import { completeTutorReminder, createTutorReminder, deleteTutorReminder, fetchTutorReminders } from "@/lib/notificationsApi";
 import { confirmLearningActivity } from "@/lib/learningApi";
 import { fetchTutorEarnings, fetchTutorPackagePurchases } from "@/lib/paymentsApi";
 import {
@@ -56,6 +55,9 @@ import { BookingCard, paymentLabel } from "@/components/lessons/BookingCard";
 import { LessonMaterialsDialog } from "@/components/lessons/LessonMaterialsDialog";
 import { ParticipantAvatar } from "@/components/messaging/ParticipantAvatar";
 import { AvailabilityCalendar } from "@/components/tutors/AvailabilityCalendar";
+import { TutorStudentNotes } from "@/components/tutors/TutorStudentNotes";
+import { TutorWeeklySchedule } from "@/components/tutors/TutorWeeklySchedule";
+import { VerifiedTutorMark } from "@/components/tutors/VerifiedTutorMark";
 import { ReviewCard } from "@/components/tutors/ReviewCard";
 import { ReviewSummary } from "@/components/tutors/ReviewSummary";
 import { SubjectRatingBreakdown } from "@/components/tutors/SubjectRatingBreakdown";
@@ -111,6 +113,7 @@ const DAY_NAMES = [
 ];
 
 const DASHBOARD_LIST_PREVIEW_COUNT = 3;
+const PAST_BATCH_SIZE = 5;
 
 function getInitials(name?: string, surname?: string): string {
   const n = (name || "").trim()[0] || "";
@@ -775,7 +778,7 @@ function StudentDetailDialog({
           </Badge>
         )}
 
-        <TutorReminderForm studentId={student.id} studentName={name} />
+        <TutorStudentNotes studentId={student.id} />
 
         <div className="space-y-3">
           {bookings.length === 0 ? (
@@ -803,40 +806,6 @@ function StudentDetailDialog({
   );
 }
 
-function TutorReminderForm({ studentId, studentName }: { studentId: string; studentName: string }) {
-  const queryClient = useQueryClient();
-  const [note, setNote] = useState("");
-  const [dueAt, setDueAt] = useState("");
-  const reminderMutation = useMutation({
-    mutationFn: createTutorReminder,
-    onSuccess: () => {
-      setNote("");
-      setDueAt("");
-      queryClient.invalidateQueries({ queryKey: ["tutor-reminders"] });
-      toast.success(`${studentName} için hatırlatıcı eklendi.`);
-    },
-    onError: () => toast.error("Hatırlatıcı eklenemedi."),
-  });
-
-  return (
-    <div className="space-y-3 rounded-lg border bg-muted/20 p-3">
-      <p className="text-sm font-semibold">Kendine hatırlatıcı koy</p>
-      <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
-        <Input value={note} onChange={(event) => setNote(event.target.value)} maxLength={500} placeholder="Örn. Deneme sonuçlarını sor" />
-        <Input type="datetime-local" value={dueAt} onChange={(event) => setDueAt(event.target.value)} />
-      </div>
-      <Button
-        type="button"
-        size="sm"
-        disabled={!note.trim() || !dueAt || reminderMutation.isPending}
-        onClick={() => reminderMutation.mutate({ student: studentId, note: note.trim(), due_at: new Date(dueAt).toISOString() })}
-      >
-        Hatırlatıcı ekle
-      </Button>
-    </div>
-  );
-}
-
 function TutorDashboardContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -858,7 +827,8 @@ function TutorDashboardContent() {
   const [materialsBooking, setMaterialsBooking] = useState<Booking | null>(null);
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
   const [showAllUpcomingBookings, setShowAllUpcomingBookings] = useState(false);
-  const [showAllPastBookings, setShowAllPastBookings] = useState(false);
+  const [visiblePastCount, setVisiblePastCount] = useState(PAST_BATCH_SIZE);
+  const pastLoadMoreRef = useRef<HTMLDivElement | null>(null);
   const [showAllReviews, setShowAllReviews] = useState(false);
 
   const {
@@ -902,11 +872,6 @@ function TutorDashboardContent() {
   const { data: packagePurchases = [] } = useQuery({
     queryKey: ["tutor-package-purchases"],
     queryFn: fetchTutorPackagePurchases,
-    enabled: isAuthenticated,
-  });
-  const { data: tutorReminders = [] } = useQuery({
-    queryKey: ["tutor-reminders"],
-    queryFn: fetchTutorReminders,
     enabled: isAuthenticated,
   });
 
@@ -1022,16 +987,27 @@ function TutorDashboardContent() {
     [availability]
   );
   const sortedUpcomingBookings = useMemo(() => sortByStartTime(activeBookings), [activeBookings]);
-  const sortedPastBookings = useMemo(() => sortByStartTime(pastBookings), [pastBookings]);
+  const sortedPastBookings = useMemo(
+    () => [...pastBookings].sort((a, b) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime()),
+    [pastBookings]
+  );
   const visibleUpcomingBookings = showAllUpcomingBookings
     ? sortedUpcomingBookings
     : sortedUpcomingBookings.slice(0, DASHBOARD_LIST_PREVIEW_COUNT);
-  const visiblePastBookings = showAllPastBookings
-    ? sortedPastBookings
-    : sortedPastBookings.slice(0, DASHBOARD_LIST_PREVIEW_COUNT);
+  const visiblePastBookings = sortedPastBookings.slice(0, visiblePastCount);
   const visibleReviews = showAllReviews
     ? tutorReviews
     : tutorReviews.slice(0, DASHBOARD_LIST_PREVIEW_COUNT);
+
+  useEffect(() => {
+    const target = pastLoadMoreRef.current;
+    if (!target || visiblePastCount >= sortedPastBookings.length) return;
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) setVisiblePastCount((count) => Math.min(count + PAST_BATCH_SIZE, sortedPastBookings.length));
+    }, { rootMargin: "240px 0px" });
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, [visiblePastCount, sortedPastBookings.length]);
 
   const handleStatusUpdate = async (
     bookingId: string,
@@ -1189,11 +1165,7 @@ function TutorDashboardContent() {
               <span>
                 {profile.name} {profile.surname} · {user?.email}
               </span>
-              {profile.is_verified && (
-                <Badge variant="outline" className="border-green-500 text-green-700 dark:border-green-400 dark:text-green-300">
-                  Doğrulanmış
-                </Badge>
-              )}
+              <VerifiedTutorMark verified={profile.is_verified} />
             </div>
           </div>
         </div>
@@ -1291,19 +1263,10 @@ function TutorDashboardContent() {
         </div>
       )}
 
-      {tutorReminders.length > 0 && (
-        <Card className="mb-6">
-          <CardHeader className="p-4 pb-2"><CardTitle className="text-base">Yaklaşan hatırlatıcılar</CardTitle></CardHeader>
-          <CardContent className="space-y-2 p-4 pt-0">
-            {tutorReminders.slice(0, 5).map((reminder) => (
-              <div key={reminder.id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border p-3">
-                <div><p className="text-sm font-medium">{reminder.student_summary.name} {reminder.student_summary.surname}</p><p className="text-sm text-muted-foreground">{reminder.note} · {formatDate(reminder.due_at)}</p></div>
-                <div className="flex gap-2"><Button size="sm" variant="outline" onClick={async () => { await completeTutorReminder(reminder.id); queryClient.invalidateQueries({ queryKey: ["tutor-reminders"] }); }}>Tamamla</Button><Button size="sm" variant="ghost" onClick={async () => { await deleteTutorReminder(reminder.id); queryClient.invalidateQueries({ queryKey: ["tutor-reminders"] }); }}>Sil</Button></div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      )}
+      <TutorWeeklySchedule
+        bookings={bookings ?? []}
+        onEdit={() => setActiveTab("availability")}
+      />
 
       <Card className="mb-6">
         <CardHeader className="p-4 pb-2">
@@ -1452,31 +1415,27 @@ function TutorDashboardContent() {
                 />
               ) : (
                 <div className="space-y-3 motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-2">
-                  {visiblePastBookings.map((b) => (
-                    <BookingCard
+                  {visiblePastBookings.map((b, index) => (
+                    <div
                       key={b.id}
-                      booking={b}
-                      currentUserRole="tutor"
-                      onStatusUpdate={handleStatusUpdate}
-                      onConfirmLearningProgress={setConfirmingBooking}
-                      onMaterialsClick={setMaterialsBooking}
-                      isUpdating={updatingId === b.id}
-                      isConfirmingLearning={
-                        isConfirmingLearning && confirmingBooking?.id === b.id
-                      }
-                    />
-                  ))}
-                  {pastBookings.length > DASHBOARD_LIST_PREVIEW_COUNT && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="w-full"
-                      onClick={() => setShowAllPastBookings((value) => !value)}
+                      className="motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-2"
+                      style={{ animationDelay: `${Math.min(index % PAST_BATCH_SIZE, 4) * 45}ms` }}
                     >
-                      {showAllPastBookings
-                        ? "Daha az göster"
-                        : `${pastBookings.length - DASHBOARD_LIST_PREVIEW_COUNT} geçmiş rezervasyon daha göster`}
-                    </Button>
+                      <BookingCard
+                        booking={b}
+                        currentUserRole="tutor"
+                        onStatusUpdate={handleStatusUpdate}
+                        onConfirmLearningProgress={setConfirmingBooking}
+                        onMaterialsClick={setMaterialsBooking}
+                        isUpdating={updatingId === b.id}
+                        isConfirmingLearning={
+                          isConfirmingLearning && confirmingBooking?.id === b.id
+                        }
+                      />
+                    </div>
+                  ))}
+                  {visiblePastCount < sortedPastBookings.length && (
+                    <div ref={pastLoadMoreRef} className="h-1" aria-label="Daha fazla geçmiş ders yükleniyor" />
                   )}
                 </div>
               )}

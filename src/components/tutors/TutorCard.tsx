@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Award, BadgeCheck } from "lucide-react";
+import { Award } from "lucide-react";
 import { TutorProfile } from "@/types";
 import { formatLessonCount, formatPrice, formatRating } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
@@ -9,6 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { TutorPresenceBadge } from "@/components/tutors/TutorPresenceBadge";
 import { FavoriteButton } from "@/components/tutors/FavoriteButton";
+import { VerifiedTutorMark } from "@/components/tutors/VerifiedTutorMark";
 
 function getInitials(name: string, surname: string): string {
   const n = (name || "").trim()[0] || "";
@@ -89,13 +90,7 @@ export function TutorCard({
                 <p className="min-w-0 truncate text-lg font-semibold">
                   {tutor.name} {tutor.surname}
                 </p>
-                {tutor.is_verified && (
-                  <BadgeCheck
-                    className="h-4 w-4 shrink-0 text-primary"
-                    role="img"
-                    aria-label="Doğrulanmış hoca"
-                  />
-                )}
+                <VerifiedTutorMark verified={tutor.is_verified} />
               </div>
               <p className="truncate text-sm text-muted-foreground">
                 {tutor.university} · {tutor.department}

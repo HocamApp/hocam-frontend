@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { useParams, useRouter } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Clock3, Download, FileQuestion, Video, WifiOff } from "lucide-react";
+import { ArrowLeft, Clock3, Download, FileQuestion, StickyNote, Video, WifiOff, X } from "lucide-react";
 import { toast } from "sonner";
 import {
   fetchBookings,
@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { formatDate } from "@/lib/utils";
 import type { Booking } from "@/types";
 import { LessonQuestionPanel } from "@/components/questions/LessonQuestionPanel";
+import { TutorStudentNotes } from "@/components/tutors/TutorStudentNotes";
 
 const EARLY_JOIN_MINUTES = 15;
 const HEARTBEAT_INTERVAL_MS = 60_000;
@@ -189,6 +190,7 @@ function SessionContent() {
   const [jitsiKey, setJitsiKey] = useState(0);
   const [isRequestingEnd, setIsRequestingEnd] = useState(false);
   const [questionPanelOpen, setQuestionPanelOpen] = useState(true);
+  const [notesPanelOpen, setNotesPanelOpen] = useState(false);
   const reconnectTimeoutRef = useRef<number | null>(null);
 
   const { data: bookings, isLoading: isLoadingBooking } = useQuery({
@@ -413,6 +415,16 @@ function SessionContent() {
             <FileQuestion className="h-3.5 w-3.5" aria-hidden="true" />
             Canlı soru
           </button>
+          {user?.role === "tutor" && booking && (
+            <button
+              onClick={() => setNotesPanelOpen((open) => !open)}
+              className="inline-flex items-center gap-1.5 whitespace-nowrap rounded border border-white/20 px-3 py-1 text-xs transition-colors hover:bg-white/10"
+              aria-expanded={notesPanelOpen}
+            >
+              <StickyNote className="h-3.5 w-3.5" aria-hidden="true" />
+              Öğrenci notları
+            </button>
+          )}
           <button
             onClick={handleWhiteboardDownload}
             className="inline-flex items-center gap-1.5 whitespace-nowrap rounded border border-white/20 px-3 py-1 text-xs transition-colors hover:bg-white/10"
@@ -504,6 +516,17 @@ function SessionContent() {
             booking={booking}
             onClose={() => setQuestionPanelOpen(false)}
           />
+        )}
+        {booking && user?.role === "tutor" && notesPanelOpen && (
+          <aside className="absolute inset-y-3 right-3 z-20 w-[min(24rem,calc(100%-1.5rem))] overflow-y-auto rounded-xl border bg-background p-3 shadow-2xl">
+            <div className="mb-2 flex items-center justify-between gap-2 px-1">
+              <p className="text-sm font-medium">{booking.student.display_name || booking.student.email}</p>
+              <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setNotesPanelOpen(false)} aria-label="Not panelini kapat">
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            <TutorStudentNotes studentId={booking.student.id} compact />
+          </aside>
         )}
       </div>
     </div>
