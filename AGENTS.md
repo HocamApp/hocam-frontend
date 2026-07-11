@@ -1,5 +1,10 @@
 # Hocam — Frontend
 
+> ⚠️ **AI ajanları: Herhangi bir değişiklik yapmadan önce bu repodaki `AI_AGENT_RULES.md`
+> dosyasını oku.** Ödeme/checkout kuralları ve "bu bir bug değil, kasıtlı" listesi orada — bu
+> dosyadaki genel mimari özetinden daha güncel ve daha bağlayıcı. Çelişki varsa
+> `AI_AGENT_RULES.md` kazanır.
+
 Next.js 14 frontend for Hocam, a peer-to-peer tutoring marketplace for Turkish students preparing for the YKS university entrance exam. Talks to a Django REST API hosted on Railway.
 
 ## Stack
