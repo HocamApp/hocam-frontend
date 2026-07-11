@@ -18,8 +18,15 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { fetchBookings, updateBookingStatus } from "@/lib/lessonsApi";
+import { fetchPackagePurchases } from "@/lib/paymentsApi";
 import { formatDate } from "@/lib/utils";
+import {
+  computePackageExpiry,
+  isPastPackage,
+  PackagePurchaseCard,
+} from "@/components/payments/PackagePurchaseCard";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { RouteGuard } from "@/components/shared/RouteGuard";
 import StatusBadge from "@/components/shared/StatusBadge";
 import { BookingCard, paymentLabel } from "@/components/lessons/BookingCard";
@@ -142,6 +149,16 @@ function StudentDashboardContent() {
     enabled: isAuthenticated,
   });
 
+  const {
+    data: packagePurchases,
+    isLoading: packagePurchasesLoading,
+    isError: packagePurchasesError,
+  } = useQuery({
+    queryKey: ["package-purchases"],
+    queryFn: fetchPackagePurchases,
+    enabled: isAuthenticated,
+  });
+
   const handleStatusUpdate = async (
     bookingId: string,
     status: "confirmed" | "completed" | "cancelled"
@@ -250,6 +267,10 @@ function StudentDashboardContent() {
       ? `${nextLesson.tutor.name} ${nextLesson.tutor.surname}`
       : "Eğitmen bilgisi bekleniyor";
   const nextLessonCountdown = nextLesson ? formatLessonCountdown(nextLesson.start_time) : "";
+  const currentPackagePurchases = (packagePurchases ?? []).filter((purchase) => {
+    const expiry = computePackageExpiry(purchase);
+    return purchase.status === "pending" || !isPastPackage(purchase, expiry);
+  });
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -397,6 +418,41 @@ function StudentDashboardContent() {
           )}
         </section>
 
+        <section id="my-packages" className="space-y-4 scroll-mt-24">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-semibold tracking-tight">Paketlerim</h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Güncel paketlerini ve kalan ders haklarını buradan takip edebilirsin.
+              </p>
+            </div>
+          </div>
+
+          {packagePurchasesLoading ? (
+            <div className="space-y-3">
+              {[1, 2].map((index) => <Skeleton key={index} className="h-40 w-full rounded-lg" />)}
+            </div>
+          ) : packagePurchasesError ? (
+            <ErrorMessage message="Paketlerin yüklenemedi. Lütfen tekrar deneyin." />
+          ) : currentPackagePurchases.length === 0 ? (
+            <EmptyState
+              title="Güncel paketin yok"
+              description="Bir hocanın profilinden avantajlı ders paketi talebinde bulunabilirsin."
+              action={<Button asChild><Link href="/tutors">Hoca Bul</Link></Button>}
+            />
+          ) : (
+            <div className="space-y-3">
+              {currentPackagePurchases.map((purchase) => (
+                <PackagePurchaseCard key={purchase.id} purchase={purchase} />
+              ))}
+            </div>
+          )}
+
+          <Button asChild variant="outline" size="sm">
+            <Link href="/profile/payments">Tüm ödeme geçmişini gör</Link>
+          </Button>
+        </section>
+
         <section id="past-lessons" className="space-y-4 scroll-mt-24">
           <div className="flex w-full items-center justify-between gap-3 rounded-lg border bg-card px-4 py-3">
             <span className="flex min-w-0 items-center gap-2">
@@ -528,11 +584,19 @@ function StudentDashboardContent() {
                   Hocalarım
                 </Link>
               </Button>
-              <Button asChild variant="ghost" size="sm" className="w-full justify-start">
-                <Link href="/profile/payments">
-                  <Wallet className="mr-2 h-4 w-4" />
-                  Paketlerim
-                </Link>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="w-full justify-start"
+                onClick={() => {
+                  document
+                    .getElementById("my-packages")
+                    ?.scrollIntoView({ behavior: "smooth", block: "start" });
+                }}
+              >
+                <Wallet className="mr-2 h-4 w-4" />
+                Paketlerim
               </Button>
               <Button
                 type="button"
