@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { useParams, useRouter } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Clock3, Download, Video, WifiOff } from "lucide-react";
+import { ArrowLeft, Clock3, Download, FileQuestion, Video, WifiOff } from "lucide-react";
 import { toast } from "sonner";
 import {
   fetchBookings,
@@ -19,6 +19,7 @@ import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { Button } from "@/components/ui/button";
 import { formatDate } from "@/lib/utils";
 import type { Booking } from "@/types";
+import { LessonQuestionPanel } from "@/components/questions/LessonQuestionPanel";
 
 const EARLY_JOIN_MINUTES = 15;
 const HEARTBEAT_INTERVAL_MS = 60_000;
@@ -187,6 +188,7 @@ function SessionContent() {
   >("connected");
   const [jitsiKey, setJitsiKey] = useState(0);
   const [isRequestingEnd, setIsRequestingEnd] = useState(false);
+  const [questionPanelOpen, setQuestionPanelOpen] = useState(true);
   const reconnectTimeoutRef = useRef<number | null>(null);
 
   const { data: bookings, isLoading: isLoadingBooking } = useQuery({
@@ -405,6 +407,13 @@ function SessionContent() {
             </span>
           )}
           <button
+            onClick={() => setQuestionPanelOpen((open) => !open)}
+            className="inline-flex items-center gap-1.5 whitespace-nowrap rounded border border-white/20 px-3 py-1 text-xs transition-colors hover:bg-white/10"
+          >
+            <FileQuestion className="h-3.5 w-3.5" aria-hidden="true" />
+            Canlı soru
+          </button>
+          <button
             onClick={handleWhiteboardDownload}
             className="inline-flex items-center gap-1.5 whitespace-nowrap rounded border border-white/20 px-3 py-1 text-xs transition-colors hover:bg-white/10"
           >
@@ -427,8 +436,9 @@ function SessionContent() {
         </div>
       </div>
 
-      <div className="flex-1">
-        <JitsiMeeting
+      <div className="relative flex min-h-0 flex-1">
+        <div className="min-w-0 flex-1">
+          <JitsiMeeting
           key={jitsiKey}
           domain={sessionToken.domain}
           roomName={sessionToken.room}
@@ -487,7 +497,14 @@ function SessionContent() {
             iframeRef.style.height = "100%";
             iframeRef.style.width = "100%";
           }}
-        />
+          />
+        </div>
+        {booking && questionPanelOpen && (
+          <LessonQuestionPanel
+            booking={booking}
+            onClose={() => setQuestionPanelOpen(false)}
+          />
+        )}
       </div>
     </div>
   );

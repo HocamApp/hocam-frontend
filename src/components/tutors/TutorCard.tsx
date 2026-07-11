@@ -61,7 +61,7 @@ export function TutorCard({
   favoritePending,
   learningContext,
 }: TutorCardProps) {
-  const examOrder = ["TYT", "AYT", "DGS", "KPSS"] as const;
+  const examOrder = ["TYT", "AYT", "YDT", "DGS", "KPSS"] as const;
   const orderedSubjects = examOrder.flatMap((exam) =>
     tutor.subjects.filter((s) => s.exam_type === exam)
   );

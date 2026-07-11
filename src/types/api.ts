@@ -34,7 +34,7 @@ export interface RegisterConfirmRequest {
   code: string;
 }
 
-export type ExamType = "TYT" | "AYT" | "DGS" | "KPSS";
+export type ExamType = "TYT" | "AYT" | "YDT" | "DGS" | "KPSS";
 
 export interface Subject {
   id: string;
@@ -356,6 +356,8 @@ export interface LessonArtifact {
 
 export interface SolvableQuestion {
   id: string;
+  exam_type: "TYT" | "AYT" | "YDT";
+  exam_year: number;
   subject: Subject | null;
   topic: {
     id: string;
@@ -363,10 +365,63 @@ export interface SolvableQuestion {
     exam_type: string;
     subject_name: string;
   } | null;
+  source_book: string;
+  original_question_number: string;
   prompt: string;
-  answer: string;
-  explanation: string;
+  choices: Array<{ key: string; text?: string; image_url?: string }>;
+  question_image_url: string;
   difficulty: "easy" | "medium" | "hard";
+  attribution: string;
+  source_url: string;
+}
+
+export interface QuestionAttemptResult {
+  attempt_id: string;
+  selected_choice: string;
+  is_correct: boolean | null;
+  correct_choice: string;
+  answer: string;
+  solution_url: string;
+  needs_review: boolean;
+}
+
+export interface QuestionMetadata {
+  enabled: boolean;
+  mebi_enabled: boolean;
+  exam_types: Array<"TYT" | "AYT" | "YDT">;
+  years: number[];
+  difficulties: Array<{ value: "easy" | "medium" | "hard"; label: string }>;
+  subjects: Subject[];
+  topics: Array<{
+    id: string;
+    title: string;
+    exam_type: string;
+    subject_name: string;
+  }>;
+}
+
+export interface LessonQuestionState {
+  active_question: SolvableQuestion | null;
+  solution_revealed: boolean;
+  correct_choice: string;
+  solution_url: string;
+  version: number;
+  updated_at: string | null;
+}
+
+export interface QuestionFilters {
+  exam_type?: string;
+  year?: string;
+  subject?: string;
+  topic?: string;
+  difficulty?: string;
+  page?: number;
+  page_size?: number;
+}
+
+export interface LessonQuestionStateUpdate {
+  question_id?: string | null;
+  solution_revealed?: boolean;
 }
 
 export interface BookingQuestion {
@@ -604,6 +659,7 @@ export interface SecuritySettings {
   email: string;
   is_email_verified: boolean;
   last_seen_at: string | null;
+  has_usable_password: boolean;
 }
 
 export interface UserPreferences {

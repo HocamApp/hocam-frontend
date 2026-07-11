@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
+import Link from "next/link";
 import {
   BookOpen,
   CheckCircle2,
@@ -8,6 +9,7 @@ import {
   ListChecks,
   Target,
   TrendingUp,
+  FileQuestion,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
@@ -27,6 +29,7 @@ import { GoalPackageCard } from "@/components/learning/GoalPackageCard";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
 import type { LearningActivityStatus } from "@/types";
 
 function formatActivityStatus(status: LearningActivityStatus) {
@@ -222,6 +225,23 @@ function StudentLearningContent() {
             detail="Ders sonrası ilerleme onayları"
             isLoading={learningLoading}
           />
+        </section>
+
+        <section className="flex flex-col gap-4 rounded-2xl border bg-primary/5 p-5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-3">
+            <div className="rounded-xl bg-primary/10 p-2 text-primary">
+              <FileQuestion className="h-5 w-5" />
+            </div>
+            <div>
+              <h2 className="font-semibold">Yanlış Sorularım</h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Yanlış cevapladığın çıkmış soruları tekrar çöz ve havuzunu temizle.
+              </p>
+            </div>
+          </div>
+          <Button asChild variant="outline">
+            <Link href="/dashboard/student/learning/yanlis-sorular">Tekrar havuzunu aç</Link>
+          </Button>
         </section>
 
         {learningLoading && (
