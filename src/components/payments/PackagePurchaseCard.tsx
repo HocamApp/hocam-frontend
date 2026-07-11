@@ -1,6 +1,16 @@
+import Link from "next/link";
+import { Calendar, ChevronRight, Clock3, Target } from "lucide-react";
 import { formatDate, formatPrice } from "@/lib/utils";
 import StatusBadge from "@/components/shared/StatusBadge";
-import type { PackagePurchase } from "@/types";
+import { Button } from "@/components/ui/button";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import type { Booking, PackagePurchase } from "@/types";
 
 // Mirrors backend apps/payments/services.py PACKAGE_GRACE_PERIOD_DAYS — a
 // package stays bookable until paid_at + plan.duration_days + this grace
@@ -90,5 +100,203 @@ export function PackagePurchaseCard({ purchase }: { purchase: PackagePurchase })
         </p>
       )}
     </div>
+  );
+}
+
+function formatTime(isoString: string) {
+  return new Date(isoString).toLocaleTimeString("tr-TR", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function sortByStart(bookings: Booking[], direction: "asc" | "desc" = "asc") {
+  return [...bookings].sort((a, b) => {
+    const difference = new Date(a.start_time).getTime() - new Date(b.start_time).getTime();
+    return direction === "asc" ? difference : -difference;
+  });
+}
+
+function LessonTimeline({ title, bookings, emptyMessage }: {
+  title: string;
+  bookings: Booking[];
+  emptyMessage: string;
+}) {
+  return (
+    <section className="space-y-3">
+      <h3 className="text-sm font-semibold">{title}</h3>
+      {bookings.length === 0 ? (
+        <p className="rounded-lg border border-dashed bg-muted/30 p-3 text-sm text-muted-foreground">
+          {emptyMessage}
+        </p>
+      ) : (
+        <div className="space-y-2">
+          {bookings.map((booking) => (
+            <div key={booking.id} className="rounded-lg border p-3">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="font-medium">{booking.subject.name}</p>
+                  <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
+                    <span className="inline-flex items-center gap-1">
+                      <Calendar className="h-3.5 w-3.5" /> {formatDate(booking.start_time)}
+                    </span>
+                    <span className="inline-flex items-center gap-1">
+                      <Clock3 className="h-3.5 w-3.5" /> {formatTime(booking.start_time)} · {booking.duration_minutes} dk
+                    </span>
+                  </p>
+                </div>
+                <StatusBadge status={booking.status} type="booking" />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+export function PackageLearningCard({
+  purchase,
+  completedLessonCount,
+  scheduledLessonCount,
+  onClick,
+}: {
+  purchase: PackagePurchase;
+  completedLessonCount: number;
+  scheduledLessonCount: number;
+  onClick: () => void;
+}) {
+  const expiry = computePackageExpiry(purchase);
+  const progress = purchase.total_credits
+    ? Math.round(((purchase.total_credits - purchase.remaining_credits) / purchase.total_credits) * 100)
+    : 0;
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="group w-full rounded-xl border bg-card p-4 text-left transition-colors hover:border-primary/40 hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+    >
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="font-semibold">{purchase.plan.name}</p>
+          <p className="mt-0.5 text-sm text-muted-foreground">
+            {purchase.tutor.name} {purchase.tutor.surname} ile hedefe yönelik çalışma planın
+          </p>
+        </div>
+        <span className="flex items-center gap-2">
+          <StatusBadge status={purchase.status} type="packagePurchase" />
+          <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+        </span>
+      </div>
+
+      <div className="mt-4 grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+        <div>
+          <div className="mb-1.5 flex items-center justify-between gap-3 text-sm">
+            <span className="font-medium">{purchase.remaining_credits} ders hakkın kaldı</span>
+            <span className="text-muted-foreground">{completedLessonCount} ders tamamlandı</span>
+          </div>
+          <div className="h-2 overflow-hidden rounded-full bg-muted">
+            <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${progress}%` }} />
+          </div>
+        </div>
+        <p className="text-sm text-muted-foreground">
+          {scheduledLessonCount > 0
+            ? `${scheduledLessonCount} dersin planlandı`
+            : purchase.status === "pending"
+              ? "Onaydan sonra derslerini planlayabilirsin"
+              : "İlk dersini planlayarak başla"}
+        </p>
+      </div>
+
+      {expiry?.isInGrace && (
+        <p className="mt-3 text-sm text-amber-700 dark:text-amber-300">
+          Kullanım süresinin bitmesine {expiry.graceDaysLeft} gün kaldı.
+        </p>
+      )}
+    </button>
+  );
+}
+
+export function PackageLearningDetailsSheet({
+  purchase,
+  bookings,
+  open,
+  onOpenChange,
+}: {
+  purchase: PackagePurchase | null;
+  bookings: Booking[];
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  if (!purchase) return null;
+
+  const now = new Date();
+  const packageBookings = bookings.filter((booking) => booking.package_purchase === purchase.id);
+  const upcomingBookings = sortByStart(
+    packageBookings.filter(
+      (booking) => new Date(booking.start_time) > now && booking.status !== "cancelled"
+    )
+  );
+  const pastBookings = sortByStart(
+    packageBookings.filter(
+      (booking) => new Date(booking.start_time) <= now && booking.status !== "cancelled"
+    ),
+    "desc"
+  );
+
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-xl">
+        <SheetHeader>
+          <SheetTitle>{purchase.plan.name}</SheetTitle>
+          <SheetDescription>
+            {purchase.tutor.name} {purchase.tutor.surname} ile düzenli ders planın.
+          </SheetDescription>
+        </SheetHeader>
+
+        <div className="mt-6 space-y-6">
+          <div className="rounded-xl border bg-primary/5 p-4">
+            <div className="flex items-start gap-3">
+              <Target className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+              <div>
+                <p className="font-medium">Hedefine düzenli adımlarla yaklaş</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Her ders, eksiklerini kapatıp sınav performansını geliştirmek için planlanır.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 rounded-xl border p-4 text-sm">
+            <div>
+              <p className="text-muted-foreground">Kalan ders hakkı</p>
+              <p className="mt-1 text-lg font-semibold">{purchase.remaining_credits} / {purchase.total_credits}</p>
+            </div>
+            <div>
+              <p className="text-muted-foreground">Planlanan ders</p>
+              <p className="mt-1 text-lg font-semibold">{upcomingBookings.length}</p>
+            </div>
+          </div>
+
+          <LessonTimeline
+            title="Sıradaki derslerin"
+            bookings={upcomingBookings}
+            emptyMessage={purchase.status === "pending" ? "Paketin onaylandığında derslerini planlayabileceksin." : "Henüz planlanmış dersin yok."}
+          />
+          <LessonTimeline
+            title="Ders geçmişin"
+            bookings={pastBookings}
+            emptyMessage="Bu paketten henüz tamamlanmış veya geçmiş bir dersin yok."
+          />
+
+          {purchase.status !== "pending" && (
+            <Button asChild className="w-full">
+              <Link href={`/tutors/${purchase.tutor.id}`}>Sonraki dersini planla</Link>
+            </Button>
+          )}
+        </div>
+      </SheetContent>
+    </Sheet>
   );
 }

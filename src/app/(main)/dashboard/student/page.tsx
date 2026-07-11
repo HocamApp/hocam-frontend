@@ -23,7 +23,8 @@ import { formatDate } from "@/lib/utils";
 import {
   computePackageExpiry,
   isPastPackage,
-  PackagePurchaseCard,
+  PackageLearningCard,
+  PackageLearningDetailsSheet,
 } from "@/components/payments/PackagePurchaseCard";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
@@ -48,7 +49,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { Booking } from "@/types";
+import type { Booking, PackagePurchase } from "@/types";
 import { toast } from "sonner";
 
 const PAST_BATCH_SIZE = 5;
@@ -137,6 +138,7 @@ function StudentDashboardContent() {
   const [pastTutorFilter, setPastTutorFilter] = useState(ALL_FILTER_VALUE);
   const [pastStartDate, setPastStartDate] = useState("");
   const [pastEndDate, setPastEndDate] = useState("");
+  const [selectedPackage, setSelectedPackage] = useState<PackagePurchase | null>(null);
   const pastLoadMoreRef = useRef<HTMLDivElement | null>(null);
 
   const {
@@ -443,7 +445,25 @@ function StudentDashboardContent() {
           ) : (
             <div className="space-y-3">
               {currentPackagePurchases.map((purchase) => (
-                <PackagePurchaseCard key={purchase.id} purchase={purchase} />
+                <PackageLearningCard
+                  key={purchase.id}
+                  purchase={purchase}
+                  completedLessonCount={
+                    (bookings ?? []).filter(
+                      (booking) =>
+                        booking.package_purchase === purchase.id && booking.status === "completed"
+                    ).length
+                  }
+                  scheduledLessonCount={
+                    (bookings ?? []).filter(
+                      (booking) =>
+                        booking.package_purchase === purchase.id &&
+                        new Date(booking.start_time) > new Date() &&
+                        booking.status !== "cancelled"
+                    ).length
+                  }
+                  onClick={() => setSelectedPackage(purchase)}
+                />
               ))}
             </div>
           )}
@@ -636,6 +656,15 @@ function StudentDashboardContent() {
           open={!!materialsBooking}
           onOpenChange={(open) => {
             if (!open) setMaterialsBooking(null);
+          }}
+        />
+
+        <PackageLearningDetailsSheet
+          purchase={selectedPackage}
+          bookings={bookings ?? []}
+          open={!!selectedPackage}
+          onOpenChange={(open) => {
+            if (!open) setSelectedPackage(null);
           }}
         />
       </div>
