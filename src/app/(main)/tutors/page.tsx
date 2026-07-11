@@ -3,31 +3,17 @@
 import { useState, useCallback, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
 import { fetchTutors, fetchSubjects, type TutorFilters as TutorFiltersType } from "@/lib/tutorsApi";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import {
-  PriceRangeSlider,
-  priceRangeLabel,
-  priceTupleToFilters,
-  filtersToPriceTuple,
-} from "@/components/tutors/PriceRangeSlider";
 import { AnimatedSearchBar } from "@/components/tutors/AnimatedSearchBar";
 import { TutorCard } from "@/components/tutors/TutorCard";
+import { TutorFilters } from "@/components/tutors/TutorFilters";
 import { useFavorites } from "@/hooks/useFavorites";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import SlidingPagination from "@/components/ui/sliding-pagination";
-import { getSubjectOptionsForExam, isSubjectValidForExam } from "@/lib/subjects";
+import { isSubjectValidForExam } from "@/lib/subjects";
 
 const PAGE_SIZE = 8;
 const LEARNING_CONTEXT_KEYS = [
@@ -36,49 +22,18 @@ const LEARNING_CONTEXT_KEYS = [
   "learning_topic_id",
 ] as const;
 
+const DAY_LABELS = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar"];
+const ORDERING_LABELS: Record<string, string> = {
+  price: "En uygun fiyat",
+  yks_rank: "En iyi YKS sıralaması",
+  newest: "En yeni hocalar",
+};
+
 type LearningContextQuery = {
   learning_goal_id: string;
   learning_milestone_id: string;
   learning_topic_id?: string | null;
 };
-
-// Curated quick-filter suggestions only — NOT the full university database and
-// NOT a ranking. Selecting one applies the existing `university` filter.
-const POPULAR_UNIVERSITIES = [
-  "Yıldız Teknik Üniversitesi",
-  "Orta Doğu Teknik Üniversitesi",
-  "İstanbul Teknik Üniversitesi",
-  "Boğaziçi Üniversitesi",
-  "Koç Üniversitesi",
-  "Sabancı Üniversitesi",
-  "Hacettepe Üniversitesi",
-  "Bilkent Üniversitesi",
-  "İstanbul Üniversitesi",
-  "Ankara Üniversitesi",
-  "Ege Üniversitesi",
-  "Gebze Teknik Üniversitesi",
-];
-
-const FILTER_WIDTHS = {
-  sort: "w-full sm:w-[13.5rem]",
-  exam: "w-full sm:w-[8.75rem]",
-  subject: "w-full sm:w-[11.75rem]",
-  minRating: "w-full sm:w-[9.75rem]",
-  yksRank: "w-full sm:w-[8.75rem]",
-  price: "w-full sm:w-[220px]",
-  university: "w-full sm:w-[300px]",
-  availabilityDay: "w-full sm:w-[160px]",
-  availabilityTime: "w-full sm:w-[170px]",
-  availabilityStatus: "w-full sm:w-[170px]",
-} as const;
-
-const FILTER_CONTENT_WIDTHS = {
-  sort: "sm:w-[13.5rem]",
-  exam: "sm:w-[8.75rem]",
-  subject: "sm:w-[11.75rem]",
-  minRating: "sm:w-[9.75rem]",
-  yksRank: "sm:w-[8.75rem]",
-} as const;
 
 function filtersFromSearchParams(searchParams: URLSearchParams): TutorFiltersType {
   const search = searchParams.get("search");
@@ -157,6 +112,27 @@ function appendLearningContextParams(
   }
 
   return params;
+}
+
+function FilterPill({ label, onRemove }: { label: string; onRemove: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onRemove}
+      className="inline-flex items-center gap-1 rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary transition-colors hover:bg-primary/15"
+      aria-label={`${label} filtresini kaldır`}
+    >
+      {label}<span aria-hidden="true">×</span>
+    </button>
+  );
+}
+
+function formatPriceFilter(minPrice?: string, maxPrice?: string) {
+  const min = minPrice ? `${Number(minPrice).toLocaleString("tr-TR")} TL` : null;
+  const max = maxPrice ? `${Number(maxPrice).toLocaleString("tr-TR")} TL` : null;
+  if (min && max) return `${min}–${max}`;
+  if (min) return `${min} ve üzeri`;
+  return `${max} ve altı`;
 }
 
 function TutorCardSkeleton() {
@@ -238,6 +214,12 @@ function TutorsPageContent() {
     router.replace(query ? `/tutors?${query}` : "/tutors", { scroll: false });
   }, [router, searchParams]);
 
+  useEffect(() => {
+    const fromUrl = filtersFromSearchParams(new URLSearchParams(searchParams.toString()));
+    setFiltersState(fromUrl);
+    setSearchLocal(fromUrl.search ?? "");
+  }, [searchParams]);
+
   const {
     data: tutors,
     isLoading: tutorsLoading,
@@ -254,8 +236,6 @@ function TutorsPageContent() {
     queryFn: fetchSubjects,
     staleTime: Infinity,
   });
-  const subjectOptions = getSubjectOptionsForExam(subjects ?? [], filters.exam_type);
-
   useEffect(() => {
     if (!subjects || subjectsLoading) return;
     if (isSubjectValidForExam(subjects, filters.subject, filters.exam_type)) return;
@@ -302,13 +282,6 @@ function TutorsPageContent() {
     filteredTutors.length === 0 &&
     hasActiveFilters;
 
-  // Keep an active out-of-list university visible in the curated dropdown.
-  const activeUniversity = filters.university ?? "";
-  const universityOptions =
-    activeUniversity && !POPULAR_UNIVERSITIES.includes(activeUniversity)
-      ? [activeUniversity, ...POPULAR_UNIVERSITIES]
-      : POPULAR_UNIVERSITIES;
-
   const totalItems = showFavorites ? filteredTutors.length : tutors?.count ?? 0;
   const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages); // clamp if list shrank
@@ -321,20 +294,29 @@ function TutorsPageContent() {
       <div className="mx-auto max-w-7xl px-4 py-8 space-y-6">
         {!showFavorites && (
           <>
-            <div className="sm:flex sm:items-baseline sm:justify-between sm:gap-4">
-              <div>
-                <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
-                  Hocanı Bul
+            <div className="overflow-hidden rounded-2xl border bg-gradient-to-br from-primary/15 via-background to-violet-500/10 px-5 py-7 shadow-sm sm:px-8 sm:py-9">
+              <div className="mx-auto max-w-3xl text-center">
+                <p className="text-sm font-semibold text-primary">DOĞRULANMIŞ YKS HOCALARI</p>
+                <h1 className="mt-2 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+                  Sana uygun hocayı bul
                 </h1>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Doğrulanmış YKS hocaları arasından sana uygun olanı bul.
+                <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">
+                  Dersine, hedeflerine ve uygun saatlerine göre hoca ara; profilleri karşılaştırıp güvenle rezervasyon yap.
                 </p>
+                <div className="mt-6 text-left">
+                  <AnimatedSearchBar
+                    value={searchLocal}
+                    onChange={setSearchLocal}
+                    onCommit={(search) => handleFiltersChange({ ...filters, search })}
+                    disabled={isListLoading}
+                  />
+                </div>
+                {!isListLoading && tutors && (
+                  <p className="mt-3 text-sm text-muted-foreground">
+                    <span className="font-semibold text-foreground">{tutors.count ?? 0}</span> doğrulanmış hoca bulundu
+                  </p>
+                )}
               </div>
-              {!isListLoading && tutors && (
-                <p className="mt-1 text-sm text-muted-foreground sm:mt-0 sm:shrink-0">
-                  <span className="font-semibold text-foreground">{tutors.count ?? 0}</span> hoca bulundu
-                </p>
-              )}
             </div>
 
             {learningContext && (
@@ -354,341 +336,78 @@ function TutorsPageContent() {
               </div>
             )}
 
-            {/* Horizontal filter bar */}
-            <div className="rounded-lg border bg-card px-4 py-3">
-              <div className="mb-5 space-y-2">
-                <Label className="text-xs uppercase tracking-wide text-muted-foreground">
-                  Arama
-                </Label>
-                <AnimatedSearchBar
-                  value={searchLocal}
-                  onChange={setSearchLocal}
-                  onCommit={(search) => handleFiltersChange({ ...filters, search })}
-                  disabled={isListLoading}
-                />
-              </div>
-
-              <div className="mb-3 flex items-center justify-between">
-                <Label className="text-xs uppercase tracking-wide text-muted-foreground">
-                  Filtreler
-                </Label>
-                {hasActiveFilters && (
+            <div className="space-y-3">
+              <div className="flex gap-2 overflow-x-auto pb-1">
+                {[
+                  { label: "★ En yüksek puan", active: (filters.ordering ?? "rating") === "rating", next: { ordering: "rating" } },
+                  { label: "₺ En uygun fiyat", active: filters.ordering === "price", next: { ordering: "price" } },
+                  { label: "🏆 En iyi YKS sıralaması", active: filters.ordering === "yks_rank", next: { ordering: "yks_rank" } },
+                  { label: "● Çevrim içi", active: filters.online === "true", next: { online: filters.online === "true" ? "" : "true" } },
+                ].map((chip) => (
                   <Button
-                    variant="ghost"
+                    key={chip.label}
+                    type="button"
                     size="sm"
-                    onClick={handleClearFilters}
-                    className="text-xs text-muted-foreground"
+                    variant={chip.active ? "default" : "outline"}
+                    className="shrink-0 rounded-full"
+                    onClick={() => handleFiltersChange({ ...filters, ...chip.next })}
                   >
-                    Filtreleri Temizle
+                    {chip.label}
                   </Button>
-                )}
+                ))}
               </div>
 
-              <div className="space-y-4">
-              <div className="flex flex-wrap gap-4">
-            {/* Sıralama */}
-            <div className={`${FILTER_WIDTHS.sort} space-y-1`}>
-              <Label className="text-xs uppercase tracking-wide text-muted-foreground">
-                Sıralama
-              </Label>
-              <Select
-                value={filters.ordering ?? "rating"}
-                onValueChange={(v) => handleFiltersChange({ ...filters, ordering: v || "rating" })}
-                disabled={subjectsLoading || isListLoading}
-              >
-                <SelectTrigger className="h-9 text-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className={FILTER_CONTENT_WIDTHS.sort}>
-                  <SelectItem value="rating">En yüksek puan</SelectItem>
-                  <SelectItem value="price">En uygun fiyat</SelectItem>
-                  <SelectItem value="yks_rank">En iyi YKS sıralaması</SelectItem>
-                  <SelectItem value="newest">En yeni</SelectItem>
-                </SelectContent>
-              </Select>
+              {hasActiveFilters && (
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-xs font-medium text-muted-foreground">Aktif filtreler:</span>
+                  {filters.search && <FilterPill label={`Arama: ${filters.search}`} onRemove={() => { setSearchLocal(""); handleFiltersChange({ ...filters, search: "" }); }} />}
+                  {filters.subject && <FilterPill label={filters.subject} onRemove={() => handleFiltersChange({ ...filters, subject: "" })} />}
+                  {filters.exam_type && <FilterPill label={filters.exam_type} onRemove={() => handleFiltersChange({ ...filters, exam_type: "", subject: "" })} />}
+                  {filters.min_price || filters.max_price ? <FilterPill label={formatPriceFilter(filters.min_price, filters.max_price)} onRemove={() => handleFiltersChange({ ...filters, min_price: "", max_price: "" })} /> : null}
+                  {filters.min_rating && <FilterPill label={`${filters.min_rating}+ puan`} onRemove={() => handleFiltersChange({ ...filters, min_rating: "" })} />}
+                  {filters.yks_rank_max && <FilterPill label={`İlk ${Number(filters.yks_rank_max).toLocaleString("tr-TR")}`} onRemove={() => handleFiltersChange({ ...filters, yks_rank_max: "" })} />}
+                  {filters.university && <FilterPill label={filters.university} onRemove={() => handleFiltersChange({ ...filters, university: "" })} />}
+                  {filters.availability_day && <FilterPill label={DAY_LABELS[Number(filters.availability_day)] ?? "Uygunluk günü"} onRemove={() => handleFiltersChange({ ...filters, availability_day: "", availability_time: "" })} />}
+                  {filters.availability_time && <FilterPill label={`${filters.availability_time} uygunluğu`} onRemove={() => handleFiltersChange({ ...filters, availability_time: "" })} />}
+                  {filters.online === "true" && <FilterPill label="Çevrim içi" onRemove={() => handleFiltersChange({ ...filters, online: "" })} />}
+                  {(filters.ordering ?? "rating") !== "rating" && <FilterPill label={ORDERING_LABELS[filters.ordering ?? ""] ?? "Sıralama"} onRemove={() => handleFiltersChange({ ...filters, ordering: "rating" })} />}
+                  <Button type="button" variant="ghost" size="sm" onClick={handleClearFilters}>Temizle</Button>
+                </div>
+              )}
             </div>
-
-          {/* Sınav */}
-          <div className={`${FILTER_WIDTHS.exam} space-y-1`}>
-            <Label className="text-xs uppercase tracking-wide text-muted-foreground">
-              Sınav
-            </Label>
-            <Select
-              value={(filters.exam_type ?? "") || "__all__"}
-              onValueChange={(v) => {
-                const exam_type = v === "__all__" ? "" : v;
-                const subject = isSubjectValidForExam(subjects ?? [], filters.subject, exam_type)
-                  ? filters.subject
-                  : "";
-                handleFiltersChange({ ...filters, exam_type, subject });
-              }}
-              disabled={subjectsLoading}
-            >
-              <SelectTrigger className="h-9 text-sm">
-                <SelectValue placeholder="Tüm sınavlar" />
-              </SelectTrigger>
-              <SelectContent className={FILTER_CONTENT_WIDTHS.exam}>
-                <SelectItem value="__all__">Tüm sınavlar</SelectItem>
-                <SelectItem value="TYT">TYT</SelectItem>
-                <SelectItem value="AYT">AYT</SelectItem>
-                <SelectItem value="DGS">DGS</SelectItem>
-                <SelectItem value="KPSS">KPSS</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Ders */}
-          <div className={`${FILTER_WIDTHS.subject} space-y-1`}>
-            <Label className="text-xs uppercase tracking-wide text-muted-foreground">
-              Ders
-            </Label>
-            <Select
-              value={(filters.subject ?? "") || "__all__"}
-              onValueChange={(v) =>
-                handleFiltersChange({ ...filters, subject: v === "__all__" ? "" : v })
-              }
-              disabled={subjectsLoading}
-            >
-              <SelectTrigger className="h-9 text-sm">
-                <SelectValue placeholder="Tüm dersler" />
-              </SelectTrigger>
-              <SelectContent className={FILTER_CONTENT_WIDTHS.subject}>
-                <SelectItem value="__all__">Tüm dersler</SelectItem>
-                {subjectOptions.map((s) => (
-                  <SelectItem key={s.name} value={s.name}>
-                    {s.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          </div>
-
-          <div className="flex flex-wrap gap-4">
-          {/* Fiyat */}
-          <div className={`${FILTER_WIDTHS.price} space-y-1`}>
-            <Label className="text-xs uppercase tracking-wide text-muted-foreground">
-              Fiyat
-            </Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className="h-9 w-full justify-start text-sm font-normal"
-                  disabled={subjectsLoading || isListLoading}
-                >
-                  {priceRangeLabel(
-                    filtersToPriceTuple(filters.min_price, filters.max_price),
-                  )}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent
-                className="w-[var(--radix-popover-trigger-width)] p-4"
-                align="start"
-              >
-                <PriceRangeSlider
-                  value={filtersToPriceTuple(filters.min_price, filters.max_price)}
-                  onValueCommit={(t) =>
-                    handleFiltersChange({ ...filters, ...priceTupleToFilters(t) })
-                  }
-                  disabled={isListLoading}
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
-
-          {/* Minimum yıldız */}
-          <div className={`${FILTER_WIDTHS.minRating} space-y-1`}>
-            <Label className="text-xs uppercase tracking-wide text-muted-foreground">
-              Min. Yıldız
-            </Label>
-            <Select
-              value={(filters.min_rating ?? "") || "__all__"}
-              onValueChange={(v) =>
-                handleFiltersChange({ ...filters, min_rating: v === "__all__" ? "" : v })
-              }
-              disabled={isListLoading}
-            >
-              <SelectTrigger className="h-9 text-sm">
-                <SelectValue placeholder="Tümü" />
-              </SelectTrigger>
-              <SelectContent className={FILTER_CONTENT_WIDTHS.minRating}>
-                <SelectItem value="__all__">Tümü</SelectItem>
-                <SelectItem value="3.5">3.5+ yıldız</SelectItem>
-                <SelectItem value="4">4+ yıldız</SelectItem>
-                <SelectItem value="4.5">4.5+ yıldız</SelectItem>
-                <SelectItem value="5">5 yıldız</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* YKS Sıralaması */}
-          <div className={`${FILTER_WIDTHS.yksRank} space-y-1`}>
-            <Label className="text-xs uppercase tracking-wide text-muted-foreground">
-              YKS Sıralaması
-            </Label>
-            <Select
-              value={(filters.yks_rank_max ?? "") || "__all__"}
-              onValueChange={(v) =>
-                handleFiltersChange({ ...filters, yks_rank_max: v === "__all__" ? "" : v })
-              }
-              disabled={isListLoading}
-            >
-              <SelectTrigger className="h-9 text-sm">
-                <SelectValue placeholder="Tümü" />
-              </SelectTrigger>
-              <SelectContent className={FILTER_CONTENT_WIDTHS.yksRank}>
-                <SelectItem value="__all__">Tümü</SelectItem>
-                <SelectItem value="1000">İlk 1.000</SelectItem>
-                <SelectItem value="5000">İlk 5.000</SelectItem>
-                <SelectItem value="10000">İlk 10.000</SelectItem>
-                <SelectItem value="15000">İlk 15.000</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Popüler Üniversiteler */}
-          <div className={`${FILTER_WIDTHS.university} space-y-1`}>
-            <Label className="text-xs uppercase tracking-wide text-muted-foreground">
-              Popüler Üniversiteler
-            </Label>
-            <Select
-              value={(filters.university ?? "") || "__all__"}
-              onValueChange={(v) =>
-                handleFiltersChange({
-                  ...filters,
-                  university: v === "__all__" ? undefined : v,
-                })
-              }
-              disabled={isListLoading}
-            >
-              <SelectTrigger className="h-9 text-sm">
-                <SelectValue placeholder="Popülerden seç" />
-              </SelectTrigger>
-              <SelectContent side="bottom" align="start" sideOffset={4} avoidCollisions={false}>
-                <SelectItem value="__all__">Popülerden seç</SelectItem>
-                {universityOptions.map((u) => (
-                  <SelectItem key={u} value={u}>
-                    {u}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          </div>
-
-          <div className="flex flex-wrap gap-4">
-          {/* Müsaitlik Günü */}
-          <div className={`${FILTER_WIDTHS.availabilityDay} space-y-1`}>
-            <Label className="text-xs uppercase tracking-wide text-muted-foreground">
-              Müsaitlik Günü
-            </Label>
-            <Select
-              value={(filters.availability_day ?? "") || "__all__"}
-              onValueChange={(v) =>
-                handleFiltersChange({
-                  ...filters,
-                  availability_day: v === "__all__" ? "" : v,
-                  availability_time: v === "__all__" ? "" : filters.availability_time,
-                })
-              }
-              disabled={isListLoading}
-            >
-              <SelectTrigger className="h-9 text-sm">
-                <SelectValue placeholder="Herhangi bir gün" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__all__">Herhangi bir gün</SelectItem>
-                <SelectItem value="0">Pazartesi</SelectItem>
-                <SelectItem value="1">Salı</SelectItem>
-                <SelectItem value="2">Çarşamba</SelectItem>
-                <SelectItem value="3">Perşembe</SelectItem>
-                <SelectItem value="4">Cuma</SelectItem>
-                <SelectItem value="5">Cumartesi</SelectItem>
-                <SelectItem value="6">Pazar</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Müsaitlik Saati */}
-          <div className={`${FILTER_WIDTHS.availabilityTime} space-y-1`}>
-            <Label className="text-xs uppercase tracking-wide text-muted-foreground">
-              Müsaitlik Saati
-            </Label>
-            <Select
-              value={(filters.availability_time ?? "") || "__all__"}
-              onValueChange={(v) =>
-                handleFiltersChange({ ...filters, availability_time: v === "__all__" ? "" : v })
-              }
-              disabled={isListLoading || !filters.availability_day}
-            >
-              <SelectTrigger className="h-9 text-sm">
-                <SelectValue placeholder="Herhangi bir saat" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__all__">Herhangi bir saat</SelectItem>
-                {["08:00","09:00","10:00","11:00","12:00","13:00","14:00",
-                  "15:00","16:00","17:00","18:00","19:00","20:00","21:00","22:00"].map((t) => (
-                  <SelectItem key={t} value={t}>{t}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Müsaitlik Durumu */}
-          <div className={`${FILTER_WIDTHS.availabilityStatus} space-y-1`}>
-            <Label className="text-xs uppercase tracking-wide text-muted-foreground">
-              Müsaitlik durumu
-            </Label>
-            <Select
-              value={(filters.online ?? "") || "__all__"}
-              onValueChange={(v) =>
-                handleFiltersChange({ ...filters, online: v === "__all__" ? "" : v })
-              }
-              disabled={isListLoading}
-            >
-              <SelectTrigger className="h-9 text-sm">
-                <SelectValue placeholder="Tümü" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__all__">Tümü</SelectItem>
-                <SelectItem value="true">Sadece çevrim içi</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-        </div>
-        </div>
-
-            {/* Active search chip */}
-            {filters.search && (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <span>Arama:</span>
-                <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
-                  &quot;{filters.search}&quot;
-                </span>
-              </div>
-            )}
           </>
         )}
 
-        {/* Tutor grid and states */}
-        <div className="min-w-0 flex-1">
-          {listError && (
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
+          {!showFavorites && (
+            <aside className="lg:sticky lg:top-24">
+              <TutorFilters
+                filters={filters}
+                subjects={subjects ?? []}
+                onFiltersChange={handleFiltersChange}
+                onClear={handleClearFilters}
+                isLoading={subjectsLoading || isListLoading}
+              />
+            </aside>
+          )}
+
+          {/* Tutor grid and states */}
+          <div className="min-w-0 flex-1">
+            {listError && (
             <ErrorMessage
               message={
                 listError instanceof Error ? listError.message : "Hocalar yüklenirken bir hata oluştu."
               }
             />
-          )}
+            )}
 
-          {isListLoading && (
+            {isListLoading && (
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               {Array.from({ length: PAGE_SIZE }).map((_, i) => (
                 <TutorCardSkeleton key={i} />
               ))}
             </div>
-          )}
+            )}
 
           {showFavoritesEmptyState ? (
             <EmptyState
@@ -746,6 +465,7 @@ function TutorsPageContent() {
               description="Yakında burada hocalar listelenecek."
             />
           )}
+          </div>
         </div>
       </div>
     </>

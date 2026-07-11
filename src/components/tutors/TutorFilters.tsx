@@ -16,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import type { TutorFilters as TutorFiltersType } from "@/lib/tutorsApi";
 import type { Subject } from "@/types";
 import { getSubjectOptionsForExam, isSubjectValidForExam } from "@/lib/subjects";
@@ -25,39 +25,53 @@ interface TutorFiltersProps {
   filters: TutorFiltersType;
   subjects: Subject[];
   onFiltersChange: (filters: TutorFiltersType) => void;
+  onClear: () => void;
   isLoading: boolean;
 }
+
+const POPULAR_UNIVERSITIES = [
+  "Yıldız Teknik Üniversitesi", "Orta Doğu Teknik Üniversitesi", "İstanbul Teknik Üniversitesi",
+  "Boğaziçi Üniversitesi", "Koç Üniversitesi", "Sabancı Üniversitesi", "Hacettepe Üniversitesi",
+  "Bilkent Üniversitesi", "İstanbul Üniversitesi", "Ankara Üniversitesi", "Ege Üniversitesi",
+  "Gebze Teknik Üniversitesi",
+];
 
 function FilterPanelContent({
   filters,
   subjects,
   onFiltersChange,
+  onClear,
   priceValue,
   onPriceCommit,
-  isMobile,
   isLoading,
 }: {
   filters: TutorFiltersType;
   subjects: Subject[];
   onFiltersChange: (filters: TutorFiltersType) => void;
+  onClear: () => void;
   priceValue: [number, number];
   onPriceCommit: (value: [number, number]) => void;
-  isMobile: boolean;
   isLoading: boolean;
 }) {
   const subjectOptions = getSubjectOptionsForExam(subjects, filters.exam_type);
+  const universityOptions = filters.university && !POPULAR_UNIVERSITIES.includes(filters.university)
+    ? [filters.university, ...POPULAR_UNIVERSITIES]
+    : POPULAR_UNIVERSITIES;
   const hasActiveFilters =
     (filters.subject ?? "") !== "" ||
     (filters.exam_type ?? "") !== "" ||
     (filters.min_rating ?? "") !== "" ||
     (filters.min_price ?? "") !== "" ||
     (filters.max_price ?? "") !== "" ||
-    (filters.is_verified ?? "") !== "" ||
+    (filters.university ?? "") !== "" ||
+    (filters.yks_rank_max ?? "") !== "" ||
+    (filters.availability_day ?? "") !== "" ||
+    (filters.availability_time ?? "") !== "" ||
     (filters.online ?? "") !== "" ||
     (filters.ordering ?? "rating") !== "rating";
 
   const handleClear = () => {
-    onFiltersChange({});
+    onClear();
   };
 
   return (
@@ -134,24 +148,75 @@ function FilterPanelContent({
       />
 
       <div className="space-y-2">
-        <Label>Sadece onaylı hocalar</Label>
+        <Label>YKS sıralaması</Label>
         <Select
-          value={(filters.is_verified ?? "") || "__all__"}
-          onValueChange={(v) => onFiltersChange({ ...filters, is_verified: v === "__all__" ? "" : v })}
+          value={(filters.yks_rank_max ?? "") || "__all__"}
+          onValueChange={(v) => onFiltersChange({ ...filters, yks_rank_max: v === "__all__" ? "" : v })}
+          disabled={isLoading}
+        >
+          <SelectTrigger><SelectValue placeholder="Tümü" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__all__">Tümü</SelectItem>
+            <SelectItem value="1000">İlk 1.000</SelectItem>
+            <SelectItem value="5000">İlk 5.000</SelectItem>
+            <SelectItem value="10000">İlk 10.000</SelectItem>
+            <SelectItem value="15000">İlk 15.000</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="space-y-2">
+        <Label>Üniversite</Label>
+        <Select
+          value={(filters.university ?? "") || "__all__"}
+          onValueChange={(v) => onFiltersChange({ ...filters, university: v === "__all__" ? "" : v })}
+          disabled={isLoading}
+        >
+          <SelectTrigger><SelectValue placeholder="Popülerden seç" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__all__">Popülerden seç</SelectItem>
+            {universityOptions.map((university) => <SelectItem key={university} value={university}>{university}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="space-y-2">
+        <Label>Uygunluk günü</Label>
+        <Select
+          value={(filters.availability_day ?? "") || "__all__"}
+          onValueChange={(v) => onFiltersChange({ ...filters, availability_day: v === "__all__" ? "" : v, availability_time: v === "__all__" ? "" : filters.availability_time })}
           disabled={isLoading}
         >
           <SelectTrigger>
             <SelectValue placeholder="Tümü" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="__all__">Tümü</SelectItem>
-            <SelectItem value="true">Sadece onaylı</SelectItem>
+            <SelectItem value="__all__">Herhangi bir gün</SelectItem>
+            <SelectItem value="0">Pazartesi</SelectItem><SelectItem value="1">Salı</SelectItem>
+            <SelectItem value="2">Çarşamba</SelectItem><SelectItem value="3">Perşembe</SelectItem>
+            <SelectItem value="4">Cuma</SelectItem><SelectItem value="5">Cumartesi</SelectItem>
+            <SelectItem value="6">Pazar</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
       <div className="space-y-2">
-        <Label>Müsaitlik durumu</Label>
+        <Label>Uygunluk saati</Label>
+        <Select
+          value={(filters.availability_time ?? "") || "__all__"}
+          onValueChange={(v) => onFiltersChange({ ...filters, availability_time: v === "__all__" ? "" : v })}
+          disabled={isLoading || !filters.availability_day}
+        >
+          <SelectTrigger><SelectValue placeholder="Önce gün seç" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__all__">Herhangi bir saat</SelectItem>
+            {["08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00", "22:00"].map((time) => <SelectItem key={time} value={time}>{time}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="space-y-2">
+        <Label>Platform durumu</Label>
         <Select
           value={(filters.online ?? "") || "__all__"}
           onValueChange={(v) => onFiltersChange({ ...filters, online: v === "__all__" ? "" : v })}
@@ -199,6 +264,7 @@ export function TutorFilters({
   filters,
   subjects,
   onFiltersChange,
+  onClear,
   isLoading,
 }: TutorFiltersProps) {
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -223,20 +289,20 @@ export function TutorFilters({
   return (
     <>
       {/* Desktop sidebar */}
-      <div className="hidden w-64 shrink-0 md:block">
+      <div className="hidden w-64 shrink-0 lg:block">
         <FilterPanelContent
           filters={filters}
           subjects={subjects}
           onFiltersChange={handleFiltersChange}
+          onClear={onClear}
           priceValue={priceValue}
           onPriceCommit={onPriceCommit}
-          isMobile={false}
           isLoading={isLoading}
         />
       </div>
 
       {/* Mobile: Sheet trigger */}
-      <div className="md:hidden">
+      <div className="lg:hidden">
         <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
           <SheetTrigger asChild>
             <Button variant="outline" size="sm" className="gap-2">
@@ -244,24 +310,26 @@ export function TutorFilters({
               Filtrele
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="w-[280px] overflow-y-auto">
-            <SheetHeader>
+          <SheetContent side="left" className="flex w-[min(90vw,340px)] flex-col p-0">
+            <SheetHeader className="border-b p-6">
               <SheetTitle>Filtreler</SheetTitle>
             </SheetHeader>
-            <div className="mt-6">
+            <div className="flex-1 overflow-y-auto px-6 py-5">
               <FilterPanelContent
                 filters={filters}
                 subjects={subjects}
-                onFiltersChange={(f) => {
-                  handleFiltersChange(f);
-                  setSheetOpen(false);
-                }}
+                onFiltersChange={handleFiltersChange}
+                onClear={onClear}
                 priceValue={priceValue}
                 onPriceCommit={onPriceCommit}
-                isMobile={true}
                 isLoading={isLoading}
               />
             </div>
+            <SheetFooter className="border-t p-4">
+              <Button type="button" className="w-full" onClick={() => setSheetOpen(false)}>
+                Sonuçları gör
+              </Button>
+            </SheetFooter>
           </SheetContent>
         </Sheet>
       </div>
