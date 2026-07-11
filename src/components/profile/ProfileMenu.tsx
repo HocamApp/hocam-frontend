@@ -30,7 +30,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { fetchProfileMe, updateProfileMe } from "@/lib/profileApi";
-import { uploadTutorProfilePicture } from "@/lib/tutorsApi";
+import { fetchMyTutorProfile, uploadTutorProfilePicture } from "@/lib/tutorsApi";
 import {
   PROFILE_PHOTO_ACCEPT,
   PROFILE_PHOTO_RULE_TEXT,
@@ -166,15 +166,31 @@ export function ProfileMenu() {
   });
 
   const role = data?.user.role ?? user?.role;
+  const isTutor = role === "tutor";
   const profile = data?.profile ?? null;
   const tutor = isTutorProfile(profile, role) ? profile : null;
   const studentProfile = !tutor && profile ? (profile as ProfileStudent) : null;
 
-  const name = tutor?.name ?? studentProfile?.name ?? "";
-  const surname = tutor?.surname ?? studentProfile?.surname ?? "";
+  const { data: tutorMeData } = useQuery({
+    queryKey: ["tutor-me"],
+    queryFn: fetchMyTutorProfile,
+    enabled: isAuthenticated && isTutor,
+    staleTime: 60_000,
+  });
+
+  const tutorId = tutorMeData?.id ?? tutor?.id;
+  const name = tutorMeData?.name ?? tutor?.name ?? studentProfile?.name ?? "";
+  const surname = tutorMeData?.surname ?? tutor?.surname ?? studentProfile?.surname ?? "";
   const fullName = `${name} ${surname}`.trim();
   const initials = getInitials(name, surname);
-  const avatarImage = tutor?.profile_picture || studentProfile?.avatar_url || "";
+  const avatarImage =
+    tutorMeData?.profile_picture || tutor?.profile_picture || studentProfile?.avatar_url || "";
+  const tutorUniversity = tutorMeData?.university ?? tutor?.university ?? "";
+  const tutorDepartment = tutorMeData?.department ?? tutor?.department ?? "";
+  const tutorHourlyPrice = tutorMeData?.hourly_price ?? tutor?.hourly_price ?? 0;
+  const tutorIntroVideoUrl = tutorMeData?.intro_video_url ?? tutor?.intro_video_url ?? "";
+  const tutorSubjects = tutorMeData?.subjects ?? tutor?.subjects ?? [];
+  const tutorAvailability = tutor?.availability ?? [];
   const showDemoPaymentMethods = isBurakYilmazTutor(name, surname, role);
 
   const stats = data?.stats;
@@ -288,6 +304,7 @@ export function ProfileMenu() {
     try {
       await updateProfileMe({ profile: { name: trimmedName, surname: trimmedSurname } });
       await queryClient.invalidateQueries({ queryKey: ["profile-me"] });
+      await queryClient.invalidateQueries({ queryKey: ["tutor-me"] });
       setNameEdit(false);
       toast.success("İsim güncellendi.");
     } catch {
@@ -312,8 +329,8 @@ export function ProfileMenu() {
       await uploadTutorProfilePicture(file);
       await queryClient.invalidateQueries({ queryKey: ["profile-me"] });
       await queryClient.invalidateQueries({ queryKey: ["tutor-me"] });
-      if (tutor?.id) {
-        await queryClient.invalidateQueries({ queryKey: ["tutor", tutor.id] });
+      if (tutorId) {
+        await queryClient.invalidateQueries({ queryKey: ["tutor", tutorId] });
       }
       await queryClient.invalidateQueries({ queryKey: ["tutors"] });
       toast.success("Profil fotoğrafı güncellendi.");
@@ -344,10 +361,10 @@ export function ProfileMenu() {
       "payment",
       "security",
       "notifications",
-      ...(tutor ? ["tutor"] : []),
+      ...(isTutor ? ["tutor"] : []),
       "advanced",
     ],
-    [tutor]
+    [isTutor]
   );
   const activeIndex = sectionKeys.indexOf(activeSection ?? "");
 
@@ -419,7 +436,7 @@ export function ProfileMenu() {
                     {initials || <UserCog className="h-5 w-5" />}
                   </AvatarFallback>
                 </Avatar>
-                {tutor && (
+                {isTutor && (
                   <>
                     <input
                       type="file"
@@ -455,9 +472,9 @@ export function ProfileMenu() {
                     {fullName || (role === "tutor" ? "Hoca" : "Öğrenci")}
                   </p>
                 )}
-                {tutor && (tutor.university || tutor.department) && (
+                {isTutor && (tutorUniversity || tutorDepartment) && (
                   <p className="truncate text-sm text-muted-foreground">
-                    {[tutor.university, tutor.department].filter(Boolean).join(" · ")}
+                    {[tutorUniversity, tutorDepartment].filter(Boolean).join(" · ")}
                   </p>
                 )}
                 {studentProfile && (studentProfile.school || studentProfile.grade) && (
@@ -476,7 +493,7 @@ export function ProfileMenu() {
               </p>
             )}
 
-            {tutor && (
+            {isTutor && (
               <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-100">
                 <p>{PROFILE_PHOTO_RULE_TEXT}</p>
                 <p className="mt-1">{TUTOR_REAL_PHOTO_RULE_TEXT}</p>
@@ -595,7 +612,7 @@ export function ProfileMenu() {
             title="Dersler ve Rezervasyonlar"
             {...sectionProps("lessons")}
           >
-            {tutor && (
+            {isTutor && (
               <ProfileToggleRow
                 label="Otomatik onay"
                 checked={currentAutoApprove}
@@ -740,15 +757,15 @@ export function ProfileMenu() {
           </ProfileAccordionSection>
 
           {/* ---- Eğitmen Profili (tutor only) ---- */}
-          {tutor && (
+          {isTutor && (
             <ProfileAccordionSection
               icon={<GraduationCap className="h-4 w-4" />}
               title="Eğitmen Profili"
               {...sectionProps("tutor")}
             >
-              {tutor.subjects.length > 0 && (
+              {tutorSubjects.length > 0 && (
                 <div className="flex flex-wrap gap-1.5">
-                  {tutor.subjects.map((s) => (
+                  {tutorSubjects.map((s) => (
                     <Badge key={s.id} variant="secondary">
                       {s.name}
                     </Badge>
@@ -758,16 +775,16 @@ export function ProfileMenu() {
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">40 dk ders ücreti</span>
                 <span className="font-medium text-foreground">
-                  {formatPrice(tutor.hourly_price)}
+                  {formatPrice(tutorHourlyPrice)}
                 </span>
               </div>
               <div className="space-y-1 text-sm">
                 <span className="text-muted-foreground">Müsaitlik saatleri</span>
-                {tutor.availability.length === 0 ? (
+                {tutorAvailability.length === 0 ? (
                   <p className="text-foreground">Henüz eklenmedi</p>
                 ) : (
                   <ul className="space-y-0.5">
-                    {tutor.availability.slice(0, 5).map((a, i) => (
+                    {tutorAvailability.slice(0, 5).map((a, i) => (
                       <li key={`${a.day_of_week}-${i}`} className="flex justify-between">
                         <span className="text-foreground">{DAY_NAMES[a.day_of_week]}</span>
                         <span className="text-muted-foreground">
@@ -778,14 +795,14 @@ export function ProfileMenu() {
                   </ul>
                 )}
               </div>
-              {tutor.intro_video_url ? (
+              {tutorIntroVideoUrl ? (
                 <ProfileMenuRow
                   icon={<PlayCircle className="h-4 w-4" />}
                   label="Tanıtım videosu: Videoyu izle"
                   showChevron
                   onClick={() => {
                     setOpen(false);
-                    window.open(tutor.intro_video_url, "_blank", "noopener,noreferrer");
+                    window.open(tutorIntroVideoUrl, "_blank", "noopener,noreferrer");
                   }}
                 />
               ) : (
@@ -799,7 +816,8 @@ export function ProfileMenu() {
               <Button
                 variant="outline"
                 className="w-full"
-                onClick={() => go(`/tutors/${tutor.id}`)}
+                disabled={!tutorId}
+                onClick={() => tutorId && go(`/tutors/${tutorId}`)}
               >
                 Public Profili Gör
               </Button>

@@ -12,7 +12,11 @@ import {
   uploadStudentProfileAvatar,
   selectStudentAnonymousAvatar,
 } from "@/lib/profileApi";
-import { updateMyTutorProfile, uploadTutorProfilePicture } from "@/lib/tutorsApi";
+import {
+  fetchMyTutorProfile,
+  updateMyTutorProfile,
+  uploadTutorProfilePicture,
+} from "@/lib/tutorsApi";
 import { validateProfilePhotoFile } from "@/lib/profilePhoto";
 import type { StudentAvatarKey } from "@/lib/studentAvatars";
 import { formatPrice } from "@/lib/utils";
@@ -78,15 +82,29 @@ function ProfileContent() {
   });
 
   const role = data?.user.role ?? user?.role;
+  const isTutor = role === "tutor";
   const profile = data?.profile ?? null;
   const tutor = isTutorProfile(profile, role) ? profile : null;
   const studentProfile = !tutor && profile ? (profile as ProfileStudent) : null;
 
-  const name = tutor?.name ?? studentProfile?.name ?? "";
-  const surname = tutor?.surname ?? studentProfile?.surname ?? "";
+  const { data: tutorMeData, isLoading: tutorMeLoading } = useQuery({
+    queryKey: ["tutor-me"],
+    queryFn: fetchMyTutorProfile,
+    enabled: isTutor,
+    staleTime: 60_000,
+  });
+
+  const tutorId = tutorMeData?.id ?? tutor?.id;
+  const name = tutorMeData?.name ?? tutor?.name ?? studentProfile?.name ?? "";
+  const surname = tutorMeData?.surname ?? tutor?.surname ?? studentProfile?.surname ?? "";
   const fullName = `${name} ${surname}`.trim();
   const initials = getInitials(name, surname);
-  const avatarImage = tutor?.profile_picture || studentProfile?.avatar_url || "";
+  const avatarImage =
+    tutorMeData?.profile_picture || tutor?.profile_picture || studentProfile?.avatar_url || "";
+  const tutorUniversity = tutorMeData?.university ?? tutor?.university ?? "";
+  const tutorDepartment = tutorMeData?.department ?? tutor?.department ?? "";
+  const tutorHourlyPrice = tutorMeData?.hourly_price ?? tutor?.hourly_price ?? 0;
+  const tutorIntroVideoUrl = tutorMeData?.intro_video_url ?? tutor?.intro_video_url ?? "";
 
   const prefs: UserPreferences = {
     ...DEFAULT_PREFS,
@@ -95,7 +113,8 @@ function ProfileContent() {
   };
   const currentAutoApprove =
     autoApproveOverride ?? tutor?.auto_approve_bookings ?? false;
-  const currentIsPublic = isPublicOverride ?? tutor?.is_public ?? true;
+  const currentIsPublic =
+    isPublicOverride ?? tutorMeData?.is_public ?? tutor?.is_public ?? true;
 
   const handleNotificationToggle = async (key: BoolPrefKey, next: boolean) => {
     setPrefOverrides((prev) => ({ ...prev, [key]: next }));
@@ -135,6 +154,7 @@ function ProfileContent() {
   const handleSaveName = async (newName: string, newSurname: string) => {
     await updateProfileMe({ profile: { name: newName, surname: newSurname } });
     await queryClient.invalidateQueries({ queryKey: ["profile-me"] });
+    await queryClient.invalidateQueries({ queryKey: ["tutor-me"] });
     toast.success("İsim güncellendi.");
   };
 
@@ -154,12 +174,12 @@ function ProfileContent() {
         const updatedProfile = await uploadStudentProfileAvatar(file);
         updateStudentProfileCache(updatedProfile);
         await queryClient.invalidateQueries({ queryKey: ["profile-me"] });
-      } else if (tutor) {
+      } else if (isTutor) {
         await uploadTutorProfilePicture(file);
         await queryClient.invalidateQueries({ queryKey: ["profile-me"] });
         await queryClient.invalidateQueries({ queryKey: ["tutor-me"] });
-        if (tutor.id) {
-          await queryClient.invalidateQueries({ queryKey: ["tutor", tutor.id] });
+        if (tutorId) {
+          await queryClient.invalidateQueries({ queryKey: ["tutor", tutorId] });
         }
         await queryClient.invalidateQueries({ queryKey: ["tutors"] });
       } else {
@@ -204,8 +224,8 @@ function ProfileContent() {
     await updateMyTutorProfile({ intro_video_url: url });
     await queryClient.invalidateQueries({ queryKey: ["profile-me"] });
     await queryClient.invalidateQueries({ queryKey: ["tutor-me"] });
-    if (tutor?.id) {
-      await queryClient.invalidateQueries({ queryKey: ["tutor", tutor.id] });
+    if (tutorId) {
+      await queryClient.invalidateQueries({ queryKey: ["tutor", tutorId] });
     }
     await queryClient.invalidateQueries({ queryKey: ["tutors"] });
     toast.success(url ? "Tanıtım videosu güncellendi." : "Tanıtım videosu kaldırıldı.");
@@ -226,7 +246,7 @@ function ProfileContent() {
     }
   };
 
-  if (isLoading) {
+  if (isLoading || (isTutor && tutorMeLoading)) {
     return (
       <div className="flex justify-center py-20">
         <LoadingSpinner />
@@ -272,7 +292,7 @@ function ProfileContent() {
                     initials={initials}
                     fullName={fullName}
                     isStudent={Boolean(studentProfile)}
-                    isTutor={Boolean(tutor)}
+                    isTutor={isTutor}
                     photoUploading={photoUploading}
                     photoError={photoError}
                     fileInputRef={photoInputRef}
@@ -294,7 +314,7 @@ function ProfileContent() {
             </CardContent>
           </Card>
 
-          {tutor ? (
+          {isTutor ? (
             <Card>
               <CardHeader>
                 <CardTitle className="text-base">Hoca Bilgileri</CardTitle>
@@ -310,25 +330,25 @@ function ProfileContent() {
                   <div className="flex justify-between gap-3">
                     <dt className="text-muted-foreground">Üniversite</dt>
                     <dd className="text-right font-medium text-foreground">
-                      {tutor.university || "—"}
+                      {tutorUniversity || "—"}
                     </dd>
                   </div>
                   <div className="flex justify-between gap-3">
                     <dt className="text-muted-foreground">Bölüm</dt>
                     <dd className="text-right font-medium text-foreground">
-                      {tutor.department || "—"}
+                      {tutorDepartment || "—"}
                     </dd>
                   </div>
                   <div className="flex justify-between gap-3">
                     <dt className="text-muted-foreground">40 dk ders ücreti</dt>
                     <dd className="text-right font-medium text-foreground">
-                      {tutor.hourly_price ? formatPrice(tutor.hourly_price) : "—"}
+                      {tutorHourlyPrice ? formatPrice(tutorHourlyPrice) : "—"}
                     </dd>
                   </div>
                 </dl>
                 <Separator />
                 <TutorVideoSection
-                  introVideoUrl={tutor.intro_video_url}
+                  introVideoUrl={tutorIntroVideoUrl}
                   fullName={fullName}
                   onSave={handleSaveIntroVideo}
                 />
@@ -354,7 +374,7 @@ function ProfileContent() {
             onNotificationToggle={handleNotificationToggle}
           />
           <SecurityPrivacySection
-            isTutor={Boolean(tutor)}
+            isTutor={isTutor}
             isPublic={currentIsPublic}
             onVisibilityToggle={handleVisibilityToggle}
             onLogout={logout}
