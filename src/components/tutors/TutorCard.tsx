@@ -95,17 +95,18 @@ export function TutorCard({
               <p className="truncate text-sm text-muted-foreground">
                 {tutor.university} · {tutor.department}
               </p>
-              <TutorPresenceBadge
-                isOnline={tutor.is_online}
-                lastSeenAt={tutor.last_seen_at}
-                className="mt-1"
-              />
-              {tutor.yks_rank > 0 && (
-                <span className="mt-1 inline-flex w-fit items-center gap-1 rounded-full border bg-muted/40 px-2 py-0.5 text-xs text-muted-foreground">
-                  <Award className="h-3 w-3" />
-                  YKS Sıralaması: {formatYksRank(tutor.yks_rank)}
-                </span>
-              )}
+              <div className="mt-1 flex flex-wrap items-center gap-2">
+                <TutorPresenceBadge
+                  isOnline={tutor.is_online}
+                  lastSeenAt={tutor.last_seen_at}
+                />
+                {tutor.yks_rank > 0 && (
+                  <span className="inline-flex w-fit items-center gap-1 rounded-full border bg-muted/40 px-2 py-0.5 text-xs text-muted-foreground">
+                    <Award className="h-3 w-3" />
+                    YKS Sıralaması: {formatYksRank(tutor.yks_rank)}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
 
