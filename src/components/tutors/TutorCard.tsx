@@ -79,7 +79,7 @@ export function TutorCard({
   const completedLessonsLabel = `${formatLessonCount(tutor.completed_lessons_count ?? 0)} ders`;
 
   return (
-    <Card className="h-full overflow-hidden border-t-2 border-t-transparent transition-all duration-200 hover:-translate-y-0.5 hover:border-t-primary hover:shadow-lg">
+    <Card className="relative h-full overflow-visible border-t-2 border-t-transparent transition-all duration-200 hover:z-10 hover:-translate-y-0.5 hover:border-t-primary hover:shadow-lg">
       <CardContent className="p-0">
         <Link href={tutorHref} className="block cursor-pointer">
           <div className="flex gap-4 p-4">
