@@ -318,13 +318,15 @@ function SecurityContent() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex flex-col gap-3 sm:flex-row">
-              <Button
-                variant="outline"
-                onClick={() => setShowPasswordForm((v) => !v)}
-              >
-                <KeyRound className="mr-2 h-4 w-4" />
-                Şifre değiştir
-              </Button>
+              {data?.has_usable_password !== false && (
+                <Button
+                  variant="outline"
+                  onClick={() => setShowPasswordForm((v) => !v)}
+                >
+                  <KeyRound className="mr-2 h-4 w-4" />
+                  Şifre değiştir
+                </Button>
+              )}
               <Button
                 variant="outline"
                 onClick={handleLogoutAll}
@@ -342,7 +344,14 @@ function SecurityContent() {
               </Button>
             </div>
 
-            {showPasswordForm && (
+            {data?.has_usable_password === false && (
+              <p className="text-sm text-muted-foreground">
+                Bu hesap Google ile giriş yapıyor, bu yüzden ayrı bir şifren yok.
+                Giriş yapmaya devam etmek için Google ile giriş yap seçeneğini kullan.
+              </p>
+            )}
+
+            {showPasswordForm && data?.has_usable_password !== false && (
               <div className="space-y-3 rounded-lg border bg-muted/30 p-4">
                 <div className="space-y-1.5">
                   <Label htmlFor="current-password">Mevcut şifre</Label>
