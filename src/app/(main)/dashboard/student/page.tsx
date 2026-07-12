@@ -1,25 +1,29 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import {
+  ArrowRight,
+  BookOpen,
   Calendar,
   CalendarPlus,
   Clock3,
-  Filter,
   Heart,
   Layers3,
   MessageCircle,
   PanelRightOpen,
+  Target,
   Video,
   Wallet,
-  X,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { fetchBookings, updateBookingStatus } from "@/lib/lessonsApi";
 import { fetchPackagePurchases } from "@/lib/paymentsApi";
+import { fetchLearningDashboard } from "@/lib/learningApi";
+import { goalPackageHref } from "@/lib/learning";
 import { formatDate } from "@/lib/utils";
+import { useCountdownLabel } from "@/hooks/useCountdown";
 import {
   computePackageExpiry,
   isPastPackage,
@@ -39,21 +43,11 @@ import { ReviewModal } from "@/components/lessons/ReviewModal";
 import { ParticipantAvatar } from "@/components/messaging/ParticipantAvatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Booking, PackagePurchase } from "@/types";
 import { toast } from "sonner";
 
-const PAST_BATCH_SIZE = 5;
-const ALL_FILTER_VALUE = "__all__";
+const RECENT_LESSON_COUNT = 5;
 
 function formatTime(isoString: string): string {
   return new Date(isoString).toLocaleTimeString("tr-TR", {
@@ -121,25 +115,13 @@ function firstNameFromUser(user?: { email?: string } | null) {
   return user.email.split("@", 1)[0].replace(/[._-]+/g, " ");
 }
 
-function localDateValue(isoString: string) {
-  const date = new Date(isoString);
-  const offset = date.getTimezoneOffset() * 60_000;
-  return new Date(date.getTime() - offset).toISOString().slice(0, 10);
-}
-
 function StudentDashboardContent() {
   const { user, isAuthenticated } = useAuth();
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [reviewBooking, setReviewBooking] = useState<Booking | null>(null);
   const [materialsBooking, setMaterialsBooking] = useState<Booking | null>(null);
   const [reviewedBookingIds, setReviewedBookingIds] = useState<Set<string>>(new Set());
-  const [visiblePastCount, setVisiblePastCount] = useState(PAST_BATCH_SIZE);
-  const [pastSubjectFilter, setPastSubjectFilter] = useState(ALL_FILTER_VALUE);
-  const [pastTutorFilter, setPastTutorFilter] = useState(ALL_FILTER_VALUE);
-  const [pastStartDate, setPastStartDate] = useState("");
-  const [pastEndDate, setPastEndDate] = useState("");
   const [selectedPackage, setSelectedPackage] = useState<PackagePurchase | null>(null);
-  const pastLoadMoreRef = useRef<HTMLDivElement | null>(null);
 
   const {
     data: bookings,
@@ -149,6 +131,13 @@ function StudentDashboardContent() {
     queryKey: ["bookings"],
     queryFn: fetchBookings,
     enabled: isAuthenticated,
+  });
+
+  const { data: learningDashboard, isLoading: learningLoading } = useQuery({
+    queryKey: ["learning-dashboard"],
+    queryFn: fetchLearningDashboard,
+    enabled: isAuthenticated,
+    retry: false,
   });
 
   const {
@@ -196,72 +185,7 @@ function StudentDashboardContent() {
       );
     }) ?? []
   );
-  const pastSubjects = useMemo(
-    () =>
-      Array.from(new Map(pastBookings.map((booking) => [booking.subject.id, booking.subject])).values()).sort(
-        (a, b) => a.name.localeCompare(b.name, "tr")
-      ),
-    [pastBookings]
-  );
-  const pastTutors = useMemo(
-    () =>
-      Array.from(new Map(
-        pastBookings.map((booking) => [
-          booking.tutor.id,
-          `${booking.tutor.name} ${booking.tutor.surname}`.trim() || "Eğitmen bilgisi bekleniyor",
-        ])
-      ).entries()).sort(([, a], [, b]) => a.localeCompare(b, "tr")),
-    [pastBookings]
-  );
-  const filteredPastBookings = useMemo(
-    () =>
-      pastBookings.filter((booking) => {
-        const bookingDate = localDateValue(booking.start_time);
-        return (
-          (pastSubjectFilter === ALL_FILTER_VALUE || booking.subject.id === pastSubjectFilter) &&
-          (pastTutorFilter === ALL_FILTER_VALUE || booking.tutor.id === pastTutorFilter) &&
-          (!pastStartDate || bookingDate >= pastStartDate) &&
-          (!pastEndDate || bookingDate <= pastEndDate)
-        );
-      }),
-    [pastBookings, pastSubjectFilter, pastTutorFilter, pastStartDate, pastEndDate]
-  );
-  const visiblePastBookings = filteredPastBookings.slice(0, visiblePastCount);
-  const activePastFilterCount = [
-    pastSubjectFilter !== ALL_FILTER_VALUE,
-    pastTutorFilter !== ALL_FILTER_VALUE,
-    Boolean(pastStartDate),
-    Boolean(pastEndDate),
-  ].filter(Boolean).length;
-
-  useEffect(() => {
-    setVisiblePastCount(PAST_BATCH_SIZE);
-  }, [pastSubjectFilter, pastTutorFilter, pastStartDate, pastEndDate]);
-
-  useEffect(() => {
-    const target = pastLoadMoreRef.current;
-    if (!target || visiblePastCount >= filteredPastBookings.length) return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setVisiblePastCount((count) =>
-            Math.min(count + PAST_BATCH_SIZE, filteredPastBookings.length)
-          );
-        }
-      },
-      { rootMargin: "240px 0px" }
-    );
-    observer.observe(target);
-    return () => observer.disconnect();
-  }, [visiblePastCount, filteredPastBookings.length]);
-
-  const clearPastFilters = () => {
-    setPastSubjectFilter(ALL_FILTER_VALUE);
-    setPastTutorFilter(ALL_FILTER_VALUE);
-    setPastStartDate("");
-    setPastEndDate("");
-  };
+  const recentPastBookings = pastBookings.slice(0, RECENT_LESSON_COUNT);
   const nextLesson = upcomingConfirmed[0] ?? null;
   const restUpcoming = upcomingConfirmed.slice(1);
   const nextTutorName =
@@ -269,10 +193,42 @@ function StudentDashboardContent() {
       ? `${nextLesson.tutor.name} ${nextLesson.tutor.surname}`
       : "Eğitmen bilgisi bekleniyor";
   const nextLessonCountdown = nextLesson ? formatLessonCountdown(nextLesson.start_time) : "";
+  const liveCountdown = useCountdownLabel(nextLesson ? new Date(nextLesson.start_time) : null);
+  const isNextLessonWithinDay = nextLesson
+    ? new Date(nextLesson.start_time).getTime() - Date.now() <= 24 * 60 * 60 * 1000
+    : false;
   const currentPackagePurchases = (packagePurchases ?? []).filter((purchase) => {
     const expiry = computePackageExpiry(purchase);
     return purchase.status === "pending" || !isPastPackage(purchase, expiry);
   });
+  const activePackage = currentPackagePurchases.find(
+    (purchase) => purchase.status === "paid" && purchase.remaining_credits > 0
+  );
+  const pendingPackage = currentPackagePurchases.find(
+    (purchase) => purchase.status === "pending"
+  );
+  const activeGoal = learningDashboard?.goals.find((goal) => goal.status === "active") ?? null;
+  const learningHref = activeGoal
+    ? goalPackageHref(activeGoal.id)
+    : "/dashboard/student/learning";
+
+  const headerMessage = nextLesson
+    ? `${formatDate(nextLesson.start_time)} saat ${formatTime(nextLesson.start_time)} için ${nextLesson.subject.name} dersin planlandı.`
+    : activePackage
+      ? `${activePackage.remaining_credits} ders hakkın hazır. Sonraki dersini planlayarak devam edebilirsin.`
+      : pendingPackage
+        ? "Paket talebin inceleniyor. Bu sırada doğrulanmış hocaları keşfedebilirsin."
+        : "Doğrulanmış bir hoca bularak ilk dersini planlayabilirsin.";
+  const headerAction = nextLesson?.room_url
+    ? { href: `/session/${nextLesson.id}`, label: "Derse Katıl", icon: Video }
+    : activePackage
+      ? {
+          href: `/tutors/${activePackage.tutor.id}`,
+          label: "Sonraki Dersi Planla",
+          icon: CalendarPlus,
+        }
+      : { href: "/tutors", label: "Hoca Bul", icon: CalendarPlus };
+  const HeaderActionIcon = headerAction.icon;
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -283,14 +239,13 @@ function StudentDashboardContent() {
               Merhaba {firstNameFromUser(user)} 👋
             </h1>
             <p className="mt-1.5 max-w-2xl text-sm text-muted-foreground">
-              Bugün ders durumun burada. Yaklaşan derslerini takip edebilir, kalan
-              haklarını görebilir ve yeni ders planlayabilirsin.
+              {headerMessage}
             </p>
           </div>
           <Button asChild size="lg" className="shrink-0">
-            <Link href="/tutors">
-              <CalendarPlus className="mr-2 h-4 w-4" />
-              Yeni Ders Planla
+            <Link href={headerAction.href}>
+              <HeaderActionIcon className="mr-2 h-4 w-4" />
+              {headerAction.label}
             </Link>
           </Button>
         </header>
@@ -331,9 +286,11 @@ function StudentDashboardContent() {
                   </div>
                   <div className="flex shrink-0 flex-col items-end gap-1.5">
                     <StatusBadge status={nextLesson.status} type="booking" />
-                    {nextLessonCountdown && (
+                    {(isNextLessonWithinDay ? liveCountdown : nextLessonCountdown) && (
                       <span className="text-xs font-medium text-primary">
-                        {nextLessonCountdown}
+                        {isNextLessonWithinDay && liveCountdown
+                          ? `Dersine ${liveCountdown} kaldı`
+                          : nextLessonCountdown}
                       </span>
                     )}
                   </div>
@@ -473,70 +430,63 @@ function StudentDashboardContent() {
           </Button>
         </section>
 
+        <section className="rounded-2xl border bg-primary/5 p-5">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex min-w-0 items-start gap-3">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                {activeGoal ? <Target className="h-5 w-5" /> : <BookOpen className="h-5 w-5" />}
+              </span>
+              <div className="min-w-0">
+                <p className="text-xs font-medium uppercase tracking-wide text-primary">
+                  Öğrenmeye devam et
+                </p>
+                {learningLoading ? (
+                  <Skeleton className="mt-2 h-5 w-56" />
+                ) : activeGoal ? (
+                  <>
+                    <h2 className="mt-1 truncate font-semibold">{activeGoal.title}</h2>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Hedefinin %{activeGoal.progress} kadarı tamamlandı. Sıradaki adıma geçebilirsin.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <h2 className="mt-1 font-semibold">Kendine bir öğrenme hedefi seç</h2>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Hazır hedef paketleriyle çalışmalarını adım adım takip et.
+                    </p>
+                  </>
+                )}
+              </div>
+            </div>
+            <Button asChild variant="outline" className="shrink-0 bg-background">
+              <Link href={learningHref}>
+                {activeGoal ? "Hedefe devam et" : "Hedefleri keşfet"}
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
+          </div>
+        </section>
+
         <section id="past-lessons" className="space-y-4 scroll-mt-24">
           <div className="flex w-full items-center justify-between gap-3 rounded-lg border bg-card px-4 py-3">
             <span className="flex min-w-0 items-center gap-2">
               <Layers3 className="h-4 w-4 shrink-0 text-muted-foreground" />
               <span className="min-w-0">
                 <span className="block text-base font-semibold tracking-tight">
-                  Geçmiş Dersler
+                  Son Derslerin
                 </span>
                 <span className="block text-sm text-muted-foreground">
-                  Materyaller, değerlendirmeler ve ders geçmişin tek hatta.
+                  Materyallere ulaş, dersini değerlendir veya aynı hocayla devam et.
                 </span>
               </span>
             </span>
-            <span className="ml-3 flex shrink-0 items-center gap-2">
-              <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
-                {filteredPastBookings.length}
-              </span>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Geçmiş dersleri filtrele">
-                    <Filter className="h-4 w-4" />
-                    {activePastFilterCount > 0 && (
-                      <span className="absolute -right-1 -top-1 rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-semibold leading-none text-primary-foreground">
-                        {activePastFilterCount}
-                      </span>
-                    )}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent align="end" className="w-80 space-y-4 p-4">
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="font-medium">Geçmiş dersleri filtrele</p>
-                    {activePastFilterCount > 0 && (
-                      <Button variant="ghost" size="sm" className="h-8 px-2" onClick={clearPastFilters}>
-                        <X className="mr-1 h-3.5 w-3.5" /> Temizle
-                      </Button>
-                    )}
-                  </div>
-                  <label className="grid gap-1.5 text-sm font-medium">
-                    Ders
-                    <Select value={pastSubjectFilter} onValueChange={setPastSubjectFilter}>
-                      <SelectTrigger><SelectValue placeholder="Tüm dersler" /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value={ALL_FILTER_VALUE}>Tüm dersler</SelectItem>
-                        {pastSubjects.map((subject) => <SelectItem key={subject.id} value={subject.id}>{subject.name}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </label>
-                  <label className="grid gap-1.5 text-sm font-medium">
-                    Hoca
-                    <Select value={pastTutorFilter} onValueChange={setPastTutorFilter}>
-                      <SelectTrigger><SelectValue placeholder="Tüm hocalar" /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value={ALL_FILTER_VALUE}>Tüm hocalar</SelectItem>
-                        {pastTutors.map(([id, name]) => <SelectItem key={id} value={id}>{name}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </label>
-                  <div className="grid grid-cols-2 gap-3">
-                    <label className="grid gap-1.5 text-sm font-medium">Başlangıç tarihi<Input type="date" value={pastStartDate} onChange={(event) => setPastStartDate(event.target.value)} /></label>
-                    <label className="grid gap-1.5 text-sm font-medium">Bitiş tarihi<Input type="date" value={pastEndDate} min={pastStartDate || undefined} onChange={(event) => setPastEndDate(event.target.value)} /></label>
-                  </div>
-                </PopoverContent>
-              </Popover>
-            </span>
+            <Button asChild variant="ghost" size="sm" className="shrink-0">
+              <Link href="/profile/lessons/history">
+                Tümünü gör
+                <ArrowRight className="ml-1.5 h-4 w-4" />
+              </Link>
+            </Button>
           </div>
           {bookingsLoading ? (
             <div className="space-y-3">
@@ -549,45 +499,41 @@ function StudentDashboardContent() {
               title="Henüz geçmiş dersin yok"
               description="Tamamladığın dersler burada birikecek."
             />
-          ) : filteredPastBookings.length === 0 ? (
-            <EmptyState
-              title="Filtrelerle eşleşen ders yok"
-              description="Başka ders, hoca veya tarih aralığı deneyebilirsin."
-              action={<Button variant="outline" onClick={clearPastFilters}>Filtreleri temizle</Button>}
-            />
           ) : (
-            <>
-              <div className="space-y-3">
-                {visiblePastBookings.map((b, index) => (
-                  <div
-                    key={b.id}
-                    className="animate-element"
-                    style={{ animationDelay: `${Math.min(index, 5) * 45}ms` }}
-                  >
-                    <BookingCard
-                      booking={b}
-                      currentUserRole="student"
-                      onStatusUpdate={handleStatusUpdate}
-                      onMaterialsClick={setMaterialsBooking}
-                      onReviewClick={
-                        canReviewBooking(b, reviewedBookingIds) ? setReviewBooking : undefined
-                      }
-                      reviewDisabledReason={
-                        (b.status || "").toLowerCase() === "completed" &&
-                        !reviewedBookingIds.has(b.id) &&
-                        !canReviewBooking(b, reviewedBookingIds)
-                          ? "Değerlendirme süresi doldu"
-                          : undefined
-                      }
-                      isUpdating={updatingId === b.id}
-                    />
-                  </div>
-                ))}
-              </div>
-              {visiblePastCount < filteredPastBookings.length && (
-                <div ref={pastLoadMoreRef} className="h-1" aria-label="Daha fazla geçmiş ders yükleniyor" />
+            <div className="space-y-3">
+              {recentPastBookings.map((b, index) => (
+                <div
+                  key={b.id}
+                  className="animate-element"
+                  style={{ animationDelay: `${Math.min(index, 5) * 45}ms` }}
+                >
+                  <BookingCard
+                    booking={b}
+                    currentUserRole="student"
+                    onStatusUpdate={handleStatusUpdate}
+                    onMaterialsClick={setMaterialsBooking}
+                    onReviewClick={
+                      canReviewBooking(b, reviewedBookingIds) ? setReviewBooking : undefined
+                    }
+                    reviewDisabledReason={
+                      (b.status || "").toLowerCase() === "completed" &&
+                      !reviewedBookingIds.has(b.id) &&
+                      !canReviewBooking(b, reviewedBookingIds)
+                        ? "Değerlendirme süresi doldu"
+                        : undefined
+                    }
+                    isUpdating={updatingId === b.id}
+                  />
+                </div>
+              ))}
+              {pastBookings.length > RECENT_LESSON_COUNT && (
+                <Button asChild variant="outline" className="w-full">
+                  <Link href="/profile/lessons/history">
+                    {pastBookings.length - RECENT_LESSON_COUNT} dersi daha görüntüle
+                  </Link>
+                </Button>
               )}
-            </>
+            </div>
           )}
         </section>
           </main>

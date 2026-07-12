@@ -18,7 +18,7 @@ const LESSON_REQUEST_LABELS: Record<string, string> = {
 };
 
 const PACKAGE_PURCHASE_LABELS: Record<string, string> = {
-  pending: "Admin onayı bekleniyor",
+  pending: "İnceleme bekliyor",
   paid: "Aktif",
   cancelled: "İptal edildi",
   refunded: "İade edildi",

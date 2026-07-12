@@ -172,50 +172,94 @@ export function PackageLearningCard({
     ? Math.round(((purchase.total_credits - purchase.remaining_credits) / purchase.total_credits) * 100)
     : 0;
 
+  if (purchase.status === "pending") {
+    return (
+      <article className="overflow-hidden rounded-xl border border-amber-200 bg-amber-50/60 dark:border-amber-900/60 dark:bg-amber-950/20">
+        <button
+          type="button"
+          onClick={onClick}
+          className="group w-full p-4 text-left transition-colors hover:bg-amber-100/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring dark:hover:bg-amber-950/30"
+        >
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="font-semibold">{purchase.plan.name}</p>
+              <p className="mt-0.5 text-sm text-muted-foreground">
+                {purchase.tutor.name} {purchase.tutor.surname} ile paket talebin
+              </p>
+            </div>
+            <span className="flex items-center gap-2">
+              <StatusBadge status={purchase.status} type="packagePurchase" />
+              <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+            </span>
+          </div>
+
+          <div className="mt-4 flex items-start gap-3 rounded-lg border border-amber-200/80 bg-background/70 p-3 dark:border-amber-900/60 dark:bg-background/30">
+            <Clock3 className="mt-0.5 h-4 w-4 shrink-0 text-amber-700 dark:text-amber-300" />
+            <div>
+              <p className="text-sm font-medium">Paket talebin alındı</p>
+              <p className="mt-1 text-sm leading-5 text-muted-foreground">
+                Talebin incelendikten sonra ders hakların kullanıma açılacak. Şu anda senden ek bir işlem beklenmiyor.
+              </p>
+            </div>
+          </div>
+        </button>
+      </article>
+    );
+  }
+
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="group w-full rounded-xl border bg-card p-4 text-left transition-colors hover:border-primary/40 hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-    >
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="font-semibold">{purchase.plan.name}</p>
-          <p className="mt-0.5 text-sm text-muted-foreground">
-            {purchase.tutor.name} {purchase.tutor.surname} ile hedefe yönelik çalışma planın
+    <article className="rounded-xl border bg-card transition-colors hover:border-primary/40">
+      <button
+        type="button"
+        onClick={onClick}
+        className="group w-full p-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+      >
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="font-semibold">{purchase.plan.name}</p>
+            <p className="mt-0.5 text-sm text-muted-foreground">
+              {purchase.tutor.name} {purchase.tutor.surname} ile hedefe yönelik çalışma planın
+            </p>
+          </div>
+          <span className="flex items-center gap-2">
+            <StatusBadge status={purchase.status} type="packagePurchase" />
+            <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+          </span>
+        </div>
+
+        <div className="mt-4 grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+          <div>
+            <div className="mb-1.5 flex items-center justify-between gap-3 text-sm">
+              <span className="font-medium">{purchase.remaining_credits} ders hakkın kaldı</span>
+              <span className="text-muted-foreground">{completedLessonCount} ders tamamlandı</span>
+            </div>
+            <div className="h-2 overflow-hidden rounded-full bg-muted">
+              <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${progress}%` }} />
+            </div>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            {scheduledLessonCount > 0
+              ? `${scheduledLessonCount} dersin planlandı`
+              : "Sıradaki dersini planlayarak devam et"}
           </p>
         </div>
-        <span className="flex items-center gap-2">
-          <StatusBadge status={purchase.status} type="packagePurchase" />
-          <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
-        </span>
-      </div>
 
-      <div className="mt-4 grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
-        <div>
-          <div className="mb-1.5 flex items-center justify-between gap-3 text-sm">
-            <span className="font-medium">{purchase.remaining_credits} ders hakkın kaldı</span>
-            <span className="text-muted-foreground">{completedLessonCount} ders tamamlandı</span>
-          </div>
-          <div className="h-2 overflow-hidden rounded-full bg-muted">
-            <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${progress}%` }} />
-          </div>
-        </div>
-        <p className="text-sm text-muted-foreground">
-          {scheduledLessonCount > 0
-            ? `${scheduledLessonCount} dersin planlandı`
-            : purchase.status === "pending"
-              ? "Onaydan sonra derslerini planlayabilirsin"
-              : "İlk dersini planlayarak başla"}
-        </p>
-      </div>
+        {expiry?.isInGrace && (
+          <p className="mt-3 text-sm text-amber-700 dark:text-amber-300">
+            Kullanım süresinin bitmesine {expiry.graceDaysLeft} gün kaldı.
+          </p>
+        )}
+      </button>
 
-      {expiry?.isInGrace && (
-        <p className="mt-3 text-sm text-amber-700 dark:text-amber-300">
-          Kullanım süresinin bitmesine {expiry.graceDaysLeft} gün kaldı.
-        </p>
-      )}
-    </button>
+      <div className="flex flex-wrap items-center gap-2 border-t px-4 py-3">
+        <Button asChild size="sm">
+          <Link href={`/tutors/${purchase.tutor.id}`}>Sonraki dersi planla</Link>
+        </Button>
+        <Button type="button" variant="ghost" size="sm" onClick={onClick}>
+          Paket detayları
+        </Button>
+      </div>
+    </article>
   );
 }
 
