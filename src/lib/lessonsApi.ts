@@ -79,6 +79,11 @@ export async function updateBookingStatus(
   bookingId: string,
   status: "confirmed" | "completed" | "cancelled"
 ): Promise<Booking> {
+  if (status === "cancelled") {
+    const response = await api.post<Booking>(`/bookings/${bookingId}/cancel/`);
+    return response.data;
+  }
+
   const response = await api.patch<Booking>(
     `/bookings/${bookingId}/status/`,
     { status }
