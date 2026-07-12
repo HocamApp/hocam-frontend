@@ -92,6 +92,16 @@ export function BookingCard({
   const isLateCancellation =
     isFuture &&
     new Date(booking.start_time).getTime() - Date.now() < 12 * 60 * 60 * 1000;
+  const requiresCancellationConfirmation =
+    isLateCancellation &&
+    (currentUserRole === "tutor" || Boolean(booking.package_purchase));
+  const handleCancelClick = () => {
+    if (requiresCancellationConfirmation) {
+      setCancelOpen(true);
+      return;
+    }
+    onStatusUpdate(booking.id, "cancelled");
+  };
   const learningContext = booking.learning_context;
   const canConfirmLearningProgress =
     currentUserRole === "tutor" &&
@@ -207,7 +217,7 @@ export function BookingCard({
                   <Button
                     size="sm"
                     variant="destructive"
-                    onClick={() => setCancelOpen(true)}
+                    onClick={handleCancelClick}
                     disabled={isUpdating}
                   >
                     İptal Et
@@ -228,7 +238,7 @@ export function BookingCard({
                     <Button
                       size="sm"
                       variant="destructive"
-                      onClick={() => setCancelOpen(true)}
+                      onClick={handleCancelClick}
                       disabled={isUpdating}
                     >
                       İptal Et
@@ -323,7 +333,7 @@ export function BookingCard({
                   size="sm"
                   variant="outline"
                   className="border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
-                  onClick={() => setCancelOpen(true)}
+                  onClick={handleCancelClick}
                   disabled={isUpdating}
                 >
                   İptal Et
