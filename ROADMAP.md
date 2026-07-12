@@ -1,5 +1,10 @@
 # HOCAM Technical Analysis & Development Roadmap - M1 Revised Update
 
+> **Historical document — superseded as operational guidance on 12 July 2026.**
+> This M1 record is retained for history only. For active work, read
+> [`docs/current-product-and-technical-state.md`](docs/current-product-and-technical-state.md)
+> and `AI_AGENT_RULES.md`.
+
 This Markdown accompanies the PDF `Hocam_Technical_Roadmap_v2_M1_REVISED.pdf`. It keeps the original v2 roadmap structure while updating only the sections affected by Milestone 1.
 
 ## Current Status

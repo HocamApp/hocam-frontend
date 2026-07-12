@@ -1,5 +1,9 @@
 # Hocam — Frontend
 
+> **Active direction:** Before selecting or planning work, read
+> [`docs/current-product-and-technical-state.md`](docs/current-product-and-technical-state.md).
+> This architecture overview is not the source of current priorities or product-policy decisions.
+
 > ⚠️ **AI ajanları: Herhangi bir değişiklik yapmadan önce bu repodaki `AI_AGENT_RULES.md`
 > dosyasını oku.** Ödeme/checkout kuralları ve "bu bir bug değil, kasıtlı" listesi orada — bu
 > dosyadaki genel mimari özetinden daha güncel ve daha bağlayıcı. Çelişki varsa
@@ -28,7 +32,7 @@ frontend/src/
       register/page.tsx
     (main)/
       layout.tsx          — root layout with Navbar + Footer
-      page.tsx            — redirects to /tutors
+      page.tsx            — integrated login/register entry screen
       tutors/page.tsx
       tutors/[id]/page.tsx
       dashboard/student/page.tsx
@@ -97,7 +101,7 @@ Do not change messaging to WebSockets without an explicit plan. The polling is i
 
 `BookingModal` in `components/lessons/`:
 
-**Step 1** — Select subject (from tutor's subjects) and duration (45 / 60 / 90 min)
+**Step 1** — Select subject. Standard package lessons use the fixed 40-minute credit duration; free trials are 20 minutes.
 
 **Step 2** — Select date from the next 14 days (days without availability rules are disabled), then pick a time slot generated from availability rules minus the booking duration
 
@@ -197,10 +201,11 @@ Conversations list polls every 30s, message thread polls every 5s. Not WebSocket
 ### AUTH TOKEN IS NOT HTTPONLY
 `auth_token` cookie is set via js-cookie and is accessible to JavaScript. An XSS vulnerability would expose it. Acceptable for early stage but should be replaced with HttpOnly cookie + refresh token before scaling.
 
-## What's Next
+## Work selection
 
-- **Full frontend redesign** — current UI is functional but rough. A complete redesign with a design system targeting Gen Z aesthetics is planned before public launch
-- **Tutor accept/decline UI** — backend already handles status updates on lesson requests; the frontend flow needs polish
+Do not choose new frontend work from this architecture overview. Follow
+`docs/current-product-and-technical-state.md` and `AI_AGENT_RULES.md`; current video uses
+JaaS through `/session/[bookingId]`, not Zoom or Daily.co.
 
 ## Video Sessions (JaaS)
 
