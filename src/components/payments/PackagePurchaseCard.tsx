@@ -174,11 +174,11 @@ export function PackageLearningCard({
 
   if (purchase.status === "pending") {
     return (
-      <article className="overflow-hidden rounded-xl border border-amber-200 bg-amber-50/60 dark:border-amber-900/60 dark:bg-amber-950/20">
+      <article className="overflow-hidden rounded-xl border bg-card transition-colors hover:border-primary/30">
         <button
           type="button"
           onClick={onClick}
-          className="group w-full p-4 text-left transition-colors hover:bg-amber-100/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring dark:hover:bg-amber-950/30"
+          className="group w-full p-4 text-left transition-colors hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
         >
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="min-w-0">
@@ -193,7 +193,7 @@ export function PackageLearningCard({
             </span>
           </div>
 
-          <div className="mt-4 flex items-start gap-3 rounded-lg border border-amber-200/80 bg-background/70 p-3 dark:border-amber-900/60 dark:bg-background/30">
+          <div className="mt-4 flex items-start gap-3 rounded-lg border bg-muted/20 p-3">
             <Clock3 className="mt-0.5 h-4 w-4 shrink-0 text-amber-700 dark:text-amber-300" />
             <div>
               <p className="text-sm font-medium">Paket talebin alındı</p>
