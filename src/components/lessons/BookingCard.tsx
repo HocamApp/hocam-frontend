@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Calendar, Clock3, FolderOpen, User, Wallet } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,6 +8,14 @@ import StatusBadge from "@/components/shared/StatusBadge";
 import { cn, formatDate, formatDisputeCategory, formatPrice } from "@/lib/utils";
 import { Video } from "lucide-react";
 import type { Booking, LearningActivityStatus } from "@/types";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface BookingCardProps {
   booking: Booking;
@@ -21,6 +30,8 @@ interface BookingCardProps {
   onConfirmLearningProgress?: (booking: Booking) => void;
   isUpdating?: boolean;
   isConfirmingLearning?: boolean;
+  id?: string;
+  className?: string;
 }
 
 function formatTime(isoString: string): string {
@@ -57,7 +68,10 @@ export function BookingCard({
   onConfirmLearningProgress,
   isUpdating = false,
   isConfirmingLearning = false,
+  id,
+  className,
 }: BookingCardProps) {
+  const [cancelOpen, setCancelOpen] = useState(false);
   const rawStatus = booking.status;
   const status =
     typeof rawStatus === "string"
@@ -68,16 +82,16 @@ export function BookingCard({
   const isConfirmed = status === "confirmed";
   const isAwaitingConfirmation = status === "awaiting_confirmation";
   const isCompleted = status === "completed";
-  const isCancelled = status === "cancelled";
   const isDisputed = status === "disputed";
   const isPast = new Date(booking.start_time) <= new Date();
   const isFuture = new Date(booking.start_time) > new Date();
   const canCancel =
     currentUserRole === "student" &&
-    !isCompleted &&
-    !isCancelled &&
-    !isAwaitingConfirmation &&
-    !isDisputed;
+    (isPending || isConfirmed) &&
+    isFuture;
+  const isLateCancellation =
+    isFuture &&
+    new Date(booking.start_time).getTime() - Date.now() < 12 * 60 * 60 * 1000;
   const learningContext = booking.learning_context;
   const canConfirmLearningProgress =
     currentUserRole === "tutor" &&
@@ -90,8 +104,8 @@ export function BookingCard({
     learningContext?.status === "confirmed";
   const hasActions =
     currentUserRole === "tutor"
-      ? isPending ||
-        isConfirmed ||
+      ? (isPending && isFuture) ||
+        (isConfirmed && (Boolean(booking.room_url) || isFuture)) ||
         isAwaitingConfirmation ||
         isDisputed ||
         canConfirmLearningProgress ||
@@ -112,7 +126,8 @@ export function BookingCard({
       : booking.student.display_name || booking.student.email;
 
   return (
-    <Card>
+    <>
+    <Card id={id} className={className}>
       <CardContent className="p-4">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
@@ -179,7 +194,7 @@ export function BookingCard({
         >
           {currentUserRole === "tutor" && (
             <>
-              {isPending && (
+              {isPending && isFuture && (
                 <>
                   <Button
                     size="sm"
@@ -192,7 +207,7 @@ export function BookingCard({
                   <Button
                     size="sm"
                     variant="destructive"
-                    onClick={() => onStatusUpdate(booking.id, "cancelled")}
+                    onClick={() => setCancelOpen(true)}
                     disabled={isUpdating}
                   >
                     İptal Et
@@ -209,14 +224,16 @@ export function BookingCard({
                       </a>
                     </Button>
                   )}
-                  <Button
-                    size="sm"
-                    variant="destructive"
-                    onClick={() => onStatusUpdate(booking.id, "cancelled")}
-                    disabled={isUpdating}
-                  >
-                    İptal Et
-                  </Button>
+                  {isFuture && (
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={() => setCancelOpen(true)}
+                      disabled={isUpdating}
+                    >
+                      İptal Et
+                    </Button>
+                  )}
                 </>
               )}
               {isAwaitingConfirmation && (
@@ -306,7 +323,7 @@ export function BookingCard({
                   size="sm"
                   variant="outline"
                   className="border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
-                  onClick={() => onStatusUpdate(booking.id, "cancelled")}
+                  onClick={() => setCancelOpen(true)}
                   disabled={isUpdating}
                 >
                   İptal Et
@@ -344,5 +361,35 @@ export function BookingCard({
 
       </CardContent>
     </Card>
+    <Dialog open={cancelOpen} onOpenChange={setCancelOpen}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Rezervasyonu iptal et</DialogTitle>
+          <DialogDescription>
+            {currentUserRole === "student" && booking.package_purchase && isLateCancellation
+              ? "Derse 12 saatten az kaldığı için kullandığın paket hakkı iade edilmeyecek. Devam etmek istiyor musun?"
+              : currentUserRole === "tutor" && isLateCancellation
+                ? "Derse 12 saatten az kaldığı için bu iptal profil ceza puanını etkileyebilir. Devam etmek istiyor musun?"
+                : "Bu rezervasyonu iptal etmek istediğine emin misin?"}
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setCancelOpen(false)}>
+            Vazgeç
+          </Button>
+          <Button
+            variant="destructive"
+            disabled={isUpdating}
+            onClick={() => {
+              setCancelOpen(false);
+              onStatusUpdate(booking.id, "cancelled");
+            }}
+          >
+            Rezervasyonu İptal Et
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }

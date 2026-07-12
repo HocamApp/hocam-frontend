@@ -1,3 +1,4 @@
+import axios from "axios";
 import api from "./api";
 import {
   LessonRequest,
@@ -83,6 +84,22 @@ export async function updateBookingStatus(
     { status }
   );
   return response.data;
+}
+
+export function getBookingErrorMessage(error: unknown, fallback: string): string {
+  if (!axios.isAxiosError(error)) return fallback;
+  const detail = error.response?.data?.detail;
+  if (typeof detail !== "string" || !detail.trim()) return fallback;
+  if (detail.includes("Past bookings cannot be confirmed")) {
+    return "Ders saati geçmiş bir rezervasyon onaylanamaz.";
+  }
+  if (detail.includes("cannot be cancelled after the lesson starts")) {
+    return "Ders başladıktan sonra rezervasyon iptal edilemez.";
+  }
+  if (detail.includes("Only pending or confirmed bookings can be cancelled")) {
+    return "Bu rezervasyon artık iptal edilemez.";
+  }
+  return detail;
 }
 
 export interface SessionToken {

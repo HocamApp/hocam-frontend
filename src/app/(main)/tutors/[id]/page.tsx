@@ -4,11 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Check,
-  ChevronDown,
-  ChevronUp,
   Copy,
   MessageCircle,
   MessageSquare,
@@ -17,7 +15,7 @@ import {
 } from "lucide-react";
 import { useFavorites } from "@/hooks/useFavorites";
 import { FavoriteButton } from "@/components/tutors/FavoriteButton";
-import { fetchTutorById, fetchTutorReviews, fetchTutorReviewSummary } from "@/lib/tutorsApi";
+import { fetchTutorById, fetchTutorReviewSummary, fetchTutorReviewsPage } from "@/lib/tutorsApi";
 import { fetchTutorAvailability } from "@/lib/dashboardApi";
 import { useAuth } from "@/hooks/useAuth";
 import { formatLessonCount, formatPrice, formatRating } from "@/lib/utils";
@@ -28,7 +26,6 @@ import { TutorPresenceBadge } from "@/components/tutors/TutorPresenceBadge";
 import { VerifiedTutorMark } from "@/components/tutors/VerifiedTutorMark";
 import { AvailabilityCalendar } from "@/components/tutors/AvailabilityCalendar";
 import { MessageRequestModal } from "@/components/tutors/MessageRequestModal";
-import { PackageOfferPanel } from "@/components/tutors/PackageOfferPanel";
 import { BookingModal } from "@/components/lessons/BookingModal";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { Button } from "@/components/ui/button";
@@ -51,8 +48,6 @@ type LearningContextQuery = {
   learning_milestone_id: string;
   learning_topic_id?: string | null;
 };
-
-const REVIEW_PREVIEW_COUNT = 3;
 
 function learningContextFromSearchParams(
   searchParams: URLSearchParams
@@ -330,7 +325,6 @@ export default function TutorProfilePage({
   // handles the free trial path (which deliberately skips checkout).
   const [bookingModalMode, setBookingModalMode] = useState<"trial" | null>(null);
   const [bookingComplete, setBookingComplete] = useState(false);
-  const [reviewsExpanded, setReviewsExpanded] = useState(false);
   const [isSharePreviewOpen, setIsSharePreviewOpen] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
   const [shareUrl, setShareUrl] = useState("");
@@ -347,11 +341,40 @@ export default function TutorProfilePage({
     queryFn: () => fetchTutorById(id),
   });
 
-  const { data: reviews, isLoading: reviewsLoading } = useQuery({
-    queryKey: ["tutor-reviews", id],
-    queryFn: () => fetchTutorReviews(id),
+  const {
+    data: reviewPages,
+    isLoading: reviewsLoading,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+  } = useInfiniteQuery({
+    // Distinct from the tutor dashboard's ["tutor-reviews", id] plain-array
+    // cache for the same tutor id (e.g. viewing your own public profile) —
+    // this query's cache shape is InfiniteData<PaginatedResponse<Review>>.
+    queryKey: ["tutor-reviews-infinite", id],
+    queryFn: ({ pageParam }) => fetchTutorReviewsPage(id, pageParam),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage, allPages) =>
+      lastPage.next ? allPages.length + 1 : undefined,
     enabled: !!tutor,
   });
+  const reviews = reviewPages?.pages.flatMap((page) => page.results) ?? [];
+  const reviewsLoadMoreRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const target = reviewsLoadMoreRef.current;
+    if (!target || !hasNextPage) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && hasNextPage && !isFetchingNextPage) {
+          fetchNextPage();
+        }
+      },
+      { rootMargin: "240px 0px" }
+    );
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const { data: reviewSummary } = useQuery({
     queryKey: ["tutor-review-summary", id],
@@ -380,13 +403,6 @@ export default function TutorProfilePage({
     items: (tutor?.subjects ?? []).filter((s) => s.exam_type === exam),
   })).filter((group) => group.items.length > 0);
   const introVideoEmbedUrl = getYouTubeEmbedUrl(tutor?.intro_video_url);
-  const displayReviews = Array.isArray(reviews)
-    ? reviewsExpanded ? reviews : reviews.slice(0, REVIEW_PREVIEW_COUNT)
-    : [];
-  const hasMoreReviews = Array.isArray(reviews) && reviews.length > REVIEW_PREVIEW_COUNT;
-  const hiddenReviewsCount = Array.isArray(reviews)
-    ? Math.max(reviews.length - REVIEW_PREVIEW_COUNT, 0)
-    : 0;
   const completedLessonsLabel = `${formatLessonCount(tutor?.completed_lessons_count ?? 0)} ders`;
   const shareTitle = tutor
     ? `${tutor.name} ${tutor.surname} · Hocam`
@@ -647,10 +663,6 @@ export default function TutorProfilePage({
                   </Button>
                 )}
 
-                {isAuthenticated && isStudent && !isOwnProfile && (
-                  <PackageOfferPanel tutor={tutor} />
-                )}
-
                 {/* Secondary icon actions: favorite, share */}
                 <div className="flex items-center justify-center gap-1">
                   <FavoriteButton
@@ -831,10 +843,10 @@ export default function TutorProfilePage({
               <ReviewSkeletonCard />
             </div>
           )}
-          {!reviewsLoading && Array.isArray(reviews) && reviews.length === 0 && (
+          {!reviewsLoading && reviews.length === 0 && (
             <p className="text-muted-foreground">Henüz değerlendirme yok</p>
           )}
-          {!reviewsLoading && Array.isArray(reviews) && reviews.length > 0 && (
+          {!reviewsLoading && reviews.length > 0 && (
             <>
               {reviewSummary ? (
                 <div className="mb-6 space-y-6">
@@ -849,52 +861,27 @@ export default function TutorProfilePage({
                   <div>
                     <Stars rating={tutor.rating} />
                     <p className="text-sm text-muted-foreground">
-                      {reviews.length} değerlendirme
+                      {tutor.total_reviews} değerlendirme
                     </p>
                   </div>
                 </div>
               )}
               <div className="space-y-3">
-                {displayReviews.map((review) => (
+                {reviews.map((review) => (
                   <ReviewCard key={review.id} review={review} />
                 ))}
               </div>
-              {hasMoreReviews && !reviewsExpanded && (
-                <div className="rounded-lg border bg-card p-4">
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="flex items-start gap-3">
-                      <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
-                        <MessageSquare className="h-4 w-4" />
-                      </span>
-                      <div>
-                        <p className="font-medium">
-                          {hiddenReviewsCount} yorum daha var
-                        </p>
-                        <p className="mt-1 text-sm text-muted-foreground">
-                          Öğrencilerin farklı ders deneyimlerini okumaya devam et.
-                        </p>
-                      </div>
-                    </div>
-                    <Button
-                      variant="outline"
-                      className="shrink-0"
-                      onClick={() => setReviewsExpanded(true)}
-                    >
-                      Devamını gör
-                      <ChevronDown className="ml-2 h-4 w-4" />
-                    </Button>
-                  </div>
+              {isFetchingNextPage && (
+                <div className="space-y-3">
+                  <ReviewSkeletonCard />
                 </div>
               )}
-              {hasMoreReviews && reviewsExpanded && (
-                <Button
-                  variant="ghost"
-                  className="mt-1"
-                  onClick={() => setReviewsExpanded(false)}
-                >
-                  Daha az göster
-                  <ChevronUp className="ml-2 h-4 w-4" />
-                </Button>
+              {hasNextPage && (
+                <div
+                  ref={reviewsLoadMoreRef}
+                  className="h-1"
+                  aria-hidden="true"
+                />
               )}
             </>
           )}

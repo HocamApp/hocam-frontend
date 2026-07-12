@@ -95,7 +95,7 @@ interface BookingSuccessProps {
   tutorId: string;
 }
 
-/** Shown after a single-lesson booking is created via the BookingModal. */
+/** Shown after a trial or package-credit booking is created via BookingModal. */
 export function CheckoutBookingSuccess({ tutorId }: BookingSuccessProps) {
   return (
     <Card className="mx-auto max-w-lg">

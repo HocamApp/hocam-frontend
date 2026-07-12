@@ -19,11 +19,16 @@ function getNotificationHref(n: Notification, role?: string): string | null {
     return `/messages/${n.related_object_id}`;
   }
 
-  if (n.related_object_type === "lesson_request") {
+  if (n.related_object_type === "booking") {
+    if (n.related_object_id) {
+      return role === "tutor"
+        ? `/dashboard/tutor?tab=bookings&highlightBooking=${n.related_object_id}`
+        : `/dashboard/student?highlightBooking=${n.related_object_id}`;
+    }
     return role === "tutor" ? "/dashboard/tutor" : "/dashboard/student";
   }
 
-  if (n.related_object_type === "booking") {
+  if (n.related_object_type === "lesson_request") {
     return role === "tutor" ? "/dashboard/tutor" : "/dashboard/student";
   }
 

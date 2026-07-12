@@ -21,7 +21,11 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
-import { fetchBookings, updateBookingStatus } from "@/lib/lessonsApi";
+import {
+  fetchBookings,
+  getBookingErrorMessage,
+  updateBookingStatus,
+} from "@/lib/lessonsApi";
 import {
   fetchMyTutorProfile,
   fetchTutorReviewSummary,
@@ -38,7 +42,8 @@ import {
   TUTOR_REAL_PHOTO_RULE_TEXT,
   validateProfilePhotoFile,
 } from "@/lib/profilePhoto";
-import { formatDate, formatPrice, formatRating } from "@/lib/utils";
+import { cn, formatDate, formatPrice, formatRating } from "@/lib/utils";
+import { useHighlightTarget, HIGHLIGHT_CLASSNAME, HIGHLIGHT_PARAM } from "@/hooks/useHighlightTarget";
 import type {
   AvailabilityRule,
   Booking,
@@ -211,7 +216,10 @@ function getStudentRoster(
       } satisfies StudentRosterEntry);
 
     entry.totalLessons += 1;
-    if (status === "pending" || status === "confirmed") {
+    if (
+      (status === "pending" || status === "confirmed") &&
+      new Date(booking.start_time) > new Date()
+    ) {
       entry.upcomingLessons += 1;
     }
     if (
@@ -822,6 +830,18 @@ function TutorDashboardContent() {
       ? searchParams.get("tab")!
       : "bookings"
   );
+  // The useState initializer above only runs on mount, so it can't react to
+  // a same-session soft navigation that changes just the `tab` query param
+  // (e.g. clicking a booking notification while already on this page, on a
+  // different tab). This effect keeps activeTab synced to the URL whenever
+  // `tab` is present and valid; it never writes to the URL itself, so manual
+  // tab clicks (which don't touch the query string) can't create a loop.
+  const tabParam = searchParams.get("tab");
+  useEffect(() => {
+    if (tabParam && tabParam !== activeTab && TUTOR_TABS.some((tab) => tab.value === tabParam)) {
+      setActiveTab(tabParam);
+    }
+  }, [tabParam, activeTab]);
   const [confirmingBooking, setConfirmingBooking] = useState<Booking | null>(null);
   const [isConfirmingLearning, setIsConfirmingLearning] = useState(false);
   const [materialsBooking, setMaterialsBooking] = useState<Booking | null>(null);
@@ -851,6 +871,18 @@ function TutorDashboardContent() {
     queryFn: fetchBookings,
     enabled: isAuthenticated,
   });
+  const highlightedBookingId = useHighlightTarget(
+    !bookingsLoading && !!bookings && activeTab === "bookings"
+  );
+  // /api/bookings/ already returns the tutor's entire booking history
+  // unfiltered (see BookingListCreateView.get_queryset) — no separate
+  // by-id fetch is needed to reach a booking outside the preview slices,
+  // it's already sitting in `bookings`; the sections below just need to
+  // splice it in if the notification target isn't in the default slice.
+  const highlightBookingId = searchParams.get(HIGHLIGHT_PARAM);
+  const highlightTargetBooking = highlightBookingId
+    ? bookings?.find((b) => b.id === highlightBookingId)
+    : undefined;
 
   const { data: availability = [], isLoading: availabilityLoading } = useQuery({
     queryKey: ["availability"],
@@ -919,7 +951,13 @@ function TutorDashboardContent() {
     () =>
       bookings?.filter((b) => {
         const s = (b.status || "").toLowerCase();
-        return s === "pending" || s === "confirmed";
+        const isFuture = new Date(b.start_time) > new Date();
+        return (
+          (s === "pending" && isFuture) ||
+          s === "confirmed" ||
+          s === "in_progress" ||
+          s === "awaiting_confirmation"
+        );
       }) ?? [],
     [bookings]
   );
@@ -928,7 +966,14 @@ function TutorDashboardContent() {
     () =>
       bookings?.filter((b) => {
         const s = (b.status || "").toLowerCase();
-        return s === "completed" || s === "cancelled" || s === "disputed";
+        const isPastPending = s === "pending" && new Date(b.start_time) <= new Date();
+        return (
+          isPastPending ||
+          s === "completed" ||
+          s === "cancelled" ||
+          s === "disputed" ||
+          s === "expired"
+        );
       }) ?? [],
     [bookings]
   );
@@ -970,7 +1015,11 @@ function TutorDashboardContent() {
     () =>
       (bookings ?? []).filter((b) => {
         const s = (b.status || "").toLowerCase();
-        if (s === "pending" || s === "disputed" || s === "awaiting_confirmation") return true;
+        if (
+          (s === "pending" && new Date(b.start_time) > new Date()) ||
+          s === "disputed" ||
+          s === "awaiting_confirmation"
+        ) return true;
         return (
           s === "completed" &&
           Boolean(b.learning_context?.activity_id) &&
@@ -991,10 +1040,31 @@ function TutorDashboardContent() {
     () => [...pastBookings].sort((a, b) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime()),
     [pastBookings]
   );
-  const visibleUpcomingBookings = showAllUpcomingBookings
+  const baseVisibleUpcomingBookings = showAllUpcomingBookings
     ? sortedUpcomingBookings
     : sortedUpcomingBookings.slice(0, DASHBOARD_LIST_PREVIEW_COUNT);
-  const visiblePastBookings = sortedPastBookings.slice(0, visiblePastCount);
+  // If the notification's target booking belongs to this bucket but fell
+  // outside the default preview slice, splice it back in (keeping its
+  // natural chronological position) so useHighlightTarget can find and
+  // flash it — without touching the slice when there's no highlight param.
+  const visibleUpcomingBookings =
+    highlightTargetBooking &&
+    sortedUpcomingBookings.some((b) => b.id === highlightTargetBooking.id) &&
+    !baseVisibleUpcomingBookings.some((b) => b.id === highlightTargetBooking.id)
+      ? sortedUpcomingBookings.filter(
+          (b, index) => index < baseVisibleUpcomingBookings.length || b.id === highlightTargetBooking.id
+        )
+      : baseVisibleUpcomingBookings;
+
+  const basePastVisibleBookings = sortedPastBookings.slice(0, visiblePastCount);
+  const visiblePastBookings =
+    highlightTargetBooking &&
+    sortedPastBookings.some((b) => b.id === highlightTargetBooking.id) &&
+    !basePastVisibleBookings.some((b) => b.id === highlightTargetBooking.id)
+      ? sortedPastBookings.filter(
+          (b, index) => index < basePastVisibleBookings.length || b.id === highlightTargetBooking.id
+        )
+      : basePastVisibleBookings;
   const visibleReviews = showAllReviews
     ? tutorReviews
     : tutorReviews.slice(0, DASHBOARD_LIST_PREVIEW_COUNT);
@@ -1018,8 +1088,8 @@ function TutorDashboardContent() {
       await updateBookingStatus(bookingId, status);
       refetchBookings();
       toast.success("Rezervasyon güncellendi.");
-    } catch {
-      toast.error("Rezervasyon güncellenemedi.");
+    } catch (error) {
+      toast.error(getBookingErrorMessage(error, "Rezervasyon güncellenemedi."));
     } finally {
       setUpdatingId(null);
     }
@@ -1356,7 +1426,7 @@ function TutorDashboardContent() {
           {!bookingsError && !bookingsLoading && (
             <>
               <div className="mb-2 flex items-center gap-2">
-                <h3 className="text-sm font-semibold">Yaklaşan Dersler</h3>
+                <h3 className="text-sm font-semibold">Aktif Rezervasyonlar</h3>
                 <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
                   {activeBookings.length}
                 </span>
@@ -1381,13 +1451,15 @@ function TutorDashboardContent() {
                   {visibleUpcomingBookings.map((b) => (
                     <BookingCard
                       key={b.id}
+                      id={`booking-${b.id}`}
+                      className={highlightedBookingId === b.id ? HIGHLIGHT_CLASSNAME : undefined}
                       booking={b}
                       currentUserRole="tutor"
                       onStatusUpdate={handleStatusUpdate}
                       isUpdating={updatingId === b.id}
                     />
                   ))}
-                  {activeBookings.length > DASHBOARD_LIST_PREVIEW_COUNT && (
+                  {activeBookings.length > visibleUpcomingBookings.length && (
                     <Button
                       type="button"
                       variant="outline"
@@ -1396,7 +1468,7 @@ function TutorDashboardContent() {
                     >
                       {showAllUpcomingBookings
                         ? "Daha az göster"
-                        : `${activeBookings.length - DASHBOARD_LIST_PREVIEW_COUNT} rezervasyon daha göster`}
+                        : `${activeBookings.length - visibleUpcomingBookings.length} rezervasyon daha göster`}
                     </Button>
                   )}
                 </div>
@@ -1418,7 +1490,11 @@ function TutorDashboardContent() {
                   {visiblePastBookings.map((b, index) => (
                     <div
                       key={b.id}
-                      className="motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-2"
+                      id={`booking-${b.id}`}
+                      className={cn(
+                        "motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-2",
+                        highlightedBookingId === b.id && HIGHLIGHT_CLASSNAME
+                      )}
                       style={{ animationDelay: `${Math.min(index % PAST_BATCH_SIZE, 4) * 45}ms` }}
                     >
                       <BookingCard
