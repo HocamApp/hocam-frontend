@@ -76,7 +76,19 @@ export async function fetchTutorById(id: string): Promise<TutorProfile> {
 }
 
 export async function fetchTutorReviews(tutorId: string): Promise<Review[]> {
-  const response = await api.get<Review[]>(`/tutors/${tutorId}/reviews/`);
+  const response = await api.get<PaginatedResponse<Review>>(
+    `/tutors/${tutorId}/reviews/?page_size=100`
+  );
+  return response.data.results;
+}
+
+export async function fetchTutorReviewsPage(
+  tutorId: string,
+  page: number
+): Promise<PaginatedResponse<Review>> {
+  const response = await api.get<PaginatedResponse<Review>>(
+    `/tutors/${tutorId}/reviews/?page=${page}`
+  );
   return response.data;
 }
 

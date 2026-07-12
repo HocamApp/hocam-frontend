@@ -322,7 +322,8 @@ export interface Booking {
     | "awaiting_confirmation"
     | "completed"
     | "disputed"
-    | "cancelled";
+    | "cancelled"
+    | "expired";
   completed_at?: string | null;
   completion_source?: "" | "student" | "tutor" | "auto" | "admin";
   awaiting_confirmation_at?: string | null;

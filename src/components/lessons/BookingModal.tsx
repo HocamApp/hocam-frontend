@@ -24,11 +24,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-// Tutor price is the price for the minimum (40-minute) lesson; longer lessons
-// scale proportionally from that base. Keep in sync with the backend
-// (apps/lessons/pricing.py).
+// Package credits always reserve one standard 40-minute lesson. Keep in sync
+// with apps/payments/services.py::PACKAGE_CREDIT_LESSON_MINUTES.
 const LESSON_BASE_MINUTES = 40;
-const DURATION_OPTIONS = [40, 50, 60] as const;
 // Free trial lessons are always this length; the backend forces it
 // regardless of what's sent (apps/lessons/pricing.py TRIAL_DURATION_MINUTES).
 const TRIAL_DURATION_MINUTES = 20;
@@ -168,7 +166,6 @@ export function BookingModal({
   const [apiError, setApiError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [step1Error, setStep1Error] = useState<string | null>(null);
-  const [paymentMode, setPaymentMode] = useState<"single" | "credit">("single");
 
   const { data: availabilityRules = [] } = useQuery({
     queryKey: ["tutor-availability", tutor.id],
@@ -215,7 +212,6 @@ export function BookingModal({
       setApiError(null);
       setIsSubmitting(false);
       setStep1Error(null);
-      setPaymentMode("single");
     }
   }, [isOpen, isTrial]);
 
@@ -232,28 +228,8 @@ export function BookingModal({
           p.plan.lesson_duration_minutes === LESSON_BASE_MINUTES
       )
     : undefined;
-  const usingPackageCredit = paymentMode === "credit" && !!eligiblePackage;
-
-  // Forces duration to 40 minutes when credit mode is selected (so 50/60 min
-  // package bookings are structurally unreachable — slotsForSelectedDay
-  // below already depends on selectedDuration and recalculates on its own),
-  // and auto-reverts to single-lesson payment if the credit stops being
-  // eligible while selected (e.g. another tab/device spent the last credit).
-  const eligiblePackageId = eligiblePackage?.id;
-  useEffect(() => {
-    if (paymentMode !== "credit") return;
-    if (!eligiblePackageId) {
-      setPaymentMode("single");
-      return;
-    }
-    setSelectedDuration(LESSON_BASE_MINUTES);
-  }, [paymentMode, eligiblePackageId]);
-
-  const calculatedPrice = Math.round(
-    (tutor.hourly_price * selectedDuration) / LESSON_BASE_MINUTES
-  );
-  // Trials are always free; never derive their price from the tutor's rate.
-  const displayPrice = isTrial ? 0 : calculatedPrice;
+  const usingPackageCredit = !isTrial && !!eligiblePackage;
+  const displayPrice = 0;
   const endTime = selectedTime
     ? (() => {
         const [h, m] = selectedTime.split(":").map(Number);
@@ -303,6 +279,12 @@ export function BookingModal({
       setStep1Error("Lütfen bir ders konusu seçin.");
       return;
     }
+    if (!isTrial && !eligiblePackage) {
+      setStep1Error(
+        "Bu hocayla ders ayırtmak için kullanılabilir aktif bir paketin olmalı."
+      );
+      return;
+    }
     setStep1Error(null);
     setStep(2);
   };
@@ -314,6 +296,11 @@ export function BookingModal({
 
   const handleSubmit = async () => {
     if (!selectedDate || !selectedTime || !selectedSubjectId || busyIntervalsFetching) return;
+    if (!isTrial && !eligiblePackage) {
+      setApiError("Bu hocayla ders ayırtmak için kullanılabilir aktif bir paketin olmalı.");
+      setStep(1);
+      return;
+    }
     setApiError(null);
     setIsSubmitting(true);
     const [hours, minutes] = selectedTime.split(":").map(Number);
@@ -330,7 +317,7 @@ export function BookingModal({
         duration_minutes: selectedDuration,
         ...(isTrial ? { is_trial: true } : {}),
         ...(lessonRequestId ? { lesson_request: lessonRequestId } : {}),
-        ...(usingPackageCredit ? { package_purchase_id: eligiblePackage!.id } : {}),
+        ...(!isTrial ? { package_purchase_id: eligiblePackage!.id } : {}),
         ...(learningContext
           ? {
               learning_goal_id: learningContext.learning_goal_id,
@@ -452,39 +439,16 @@ export function BookingModal({
                 )}
               </div>
               {!isTrial && eligiblePackage && (
-                <div>
-                  <label className="text-sm font-medium">Ödeme yöntemi</label>
-                  <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
-                    <button
-                      type="button"
-                      onClick={() => setPaymentMode("single")}
-                      className={cn(
-                        "rounded-lg border p-3 text-left transition-colors",
-                        paymentMode === "single"
-                          ? "border-primary bg-primary/5"
-                          : "border-border"
-                      )}
-                    >
-                      <span className="font-medium">Tek ders olarak ayırt</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setPaymentMode("credit")}
-                      className={cn(
-                        "rounded-lg border p-3 text-left transition-colors",
-                        paymentMode === "credit"
-                          ? "border-primary bg-primary/5"
-                          : "border-border"
-                      )}
-                    >
-                      <span className="font-medium">Paket hakkımla ayırt</span>
-                      <span className="mt-0.5 block text-xs text-muted-foreground">
-                        Kullanılabilir {eligiblePackage.remaining_credits} /{" "}
-                        {eligiblePackage.total_credits} ders hakkı
-                      </span>
-                    </button>
-                  </div>
+                <div className="rounded-lg border bg-muted/30 p-3 text-sm">
+                  <p className="font-medium">Paket hakkın kullanılacak</p>
+                  <p className="mt-1 text-muted-foreground">
+                    {eligiblePackage.plan.name} · Kullanılabilir {eligiblePackage.remaining_credits} /{" "}
+                    {eligiblePackage.total_credits} ders hakkı
+                  </p>
                 </div>
+              )}
+              {!isTrial && !eligiblePackage && (
+                <ErrorMessage message="Bu hocayla ders ayırtmak için kullanılabilir aktif bir paketin olmalı." />
               )}
               {isTrial ? (
                 <div>
@@ -494,7 +458,7 @@ export function BookingModal({
                     <Badge variant="secondary">{formatPrice(displayPrice)}</Badge>
                   </div>
                 </div>
-              ) : usingPackageCredit ? (
+              ) : (
                 <div>
                   <label className="text-sm font-medium">Ders süresi</label>
                   <div className="mt-2 flex flex-wrap gap-2">
@@ -502,28 +466,13 @@ export function BookingModal({
                     <Badge variant="secondary">1 paket hakkı kullanılacak</Badge>
                   </div>
                 </div>
-              ) : (
-                <div>
-                  <label className="text-sm font-medium">Ders süresi</label>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {DURATION_OPTIONS.map((dur) => (
-                      <Button
-                        key={dur}
-                        type="button"
-                        variant={selectedDuration === dur ? "default" : "outline"}
-                        onClick={() => setSelectedDuration(dur)}
-                      >
-                        {dur} dk
-                      </Button>
-                    ))}
-                  </div>
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    Tahmini ücret: {formatPrice(displayPrice)}
-                  </p>
-                </div>
               )}
               <div className="flex justify-end">
-                <Button className="w-full sm:w-auto" onClick={handleNextStep1}>
+                <Button
+                  className="w-full sm:w-auto"
+                  onClick={handleNextStep1}
+                  disabled={!isTrial && !eligiblePackage}
+                >
                   İleri →
                 </Button>
               </div>
@@ -610,9 +559,7 @@ export function BookingModal({
                   </p>
                   <p className="mt-1 break-words text-muted-foreground">
                     {selectedSubject?.name} · {selectedDuration} dakika ·{" "}
-                    {usingPackageCredit
-                      ? "1 paket hakkı kullanılacak"
-                      : formatPrice(displayPrice)}
+                    {isTrial ? formatPrice(displayPrice) : "1 paket hakkı kullanılacak"}
                   </p>
                 </div>
               )}
@@ -695,16 +642,14 @@ export function BookingModal({
                 <div className="flex justify-between">
                   <dt className="text-muted-foreground">Ücret:</dt>
                   <dd className="font-semibold">
-                    {usingPackageCredit
-                      ? "1 paket hakkı kullanılacak"
-                      : formatPrice(displayPrice)}
+                    {isTrial ? formatPrice(displayPrice) : "1 paket hakkı kullanılacak"}
                   </dd>
                 </div>
               </dl>
               <p className="text-xs text-muted-foreground">
-                {usingPackageCredit
-                  ? "Bu ders paket hakkından karşılanacak, ek ödeme gerekmez."
-                  : "Ödeme ders sonrasında hoca ile mutabık kalınan yöntemle yapılır."}
+                {isTrial
+                  ? "Bu ücretsiz deneme dersi için ödeme veya paket hakkı gerekmez."
+                  : "Bu ders paket hakkından karşılanacak, ek ödeme gerekmez."}
               </p>
               <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <Button

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import {
   ArrowRight,
   BookOpen,
@@ -18,12 +19,17 @@ import {
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
-import { fetchBookings, updateBookingStatus } from "@/lib/lessonsApi";
+import {
+  fetchBookings,
+  getBookingErrorMessage,
+  updateBookingStatus,
+} from "@/lib/lessonsApi";
 import { fetchPackagePurchases } from "@/lib/paymentsApi";
 import { fetchLearningDashboard } from "@/lib/learningApi";
 import { goalPackageHref } from "@/lib/learning";
-import { formatDate } from "@/lib/utils";
+import { cn, formatDate } from "@/lib/utils";
 import { useCountdownLabel } from "@/hooks/useCountdown";
+import { useHighlightTarget, HIGHLIGHT_CLASSNAME, HIGHLIGHT_PARAM } from "@/hooks/useHighlightTarget";
 import {
   computePackageExpiry,
   isPastPackage,
@@ -44,6 +50,14 @@ import { ParticipantAvatar } from "@/components/messaging/ParticipantAvatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import type { Booking, PackagePurchase } from "@/types";
 import { toast } from "sonner";
 
@@ -122,6 +136,7 @@ function StudentDashboardContent() {
   const [materialsBooking, setMaterialsBooking] = useState<Booking | null>(null);
   const [reviewedBookingIds, setReviewedBookingIds] = useState<Set<string>>(new Set());
   const [selectedPackage, setSelectedPackage] = useState<PackagePurchase | null>(null);
+  const [cancelBooking, setCancelBooking] = useState<Booking | null>(null);
 
   const {
     data: bookings,
@@ -132,6 +147,15 @@ function StudentDashboardContent() {
     queryFn: fetchBookings,
     enabled: isAuthenticated,
   });
+  const highlightedBookingId = useHighlightTarget(!bookingsLoading && !!bookings);
+  // /api/bookings/ already returns the student's entire booking history
+  // unfiltered — no separate by-id fetch needed to reach a booking outside
+  // the past-lessons preview slice, it's already sitting in `bookings`.
+  const searchParams = useSearchParams();
+  const highlightBookingId = searchParams.get(HIGHLIGHT_PARAM);
+  const highlightTargetBooking = highlightBookingId
+    ? bookings?.find((b) => b.id === highlightBookingId)
+    : undefined;
 
   const { data: learningDashboard, isLoading: learningLoading } = useQuery({
     queryKey: ["learning-dashboard"],
@@ -158,8 +182,8 @@ function StudentDashboardContent() {
     try {
       await updateBookingStatus(bookingId, status);
       refetchBookings();
-    } catch {
-      toast.error("Rezervasyon güncellenemedi.");
+    } catch (error) {
+      toast.error(getBookingErrorMessage(error, "Rezervasyon güncellenemedi."));
     } finally {
       setUpdatingId(null);
     }
@@ -172,11 +196,20 @@ function StudentDashboardContent() {
       return s === "in_progress" || (s === "confirmed" && new Date(b.start_time) > now);
     }) ?? []
   );
+  const pendingBookings = sortByStartAsc(
+    bookings?.filter(
+      (b) =>
+        (b.status || "").toLowerCase() === "pending" &&
+        new Date(b.start_time) > now
+    ) ?? []
+  );
   const pastBookings = sortByStartDesc(
     bookings?.filter((b) => {
       const s = (b.status || "").toLowerCase();
       const isConfirmedPast = s === "confirmed" && new Date(b.start_time) <= now;
       return (
+        s === "expired" ||
+        (s === "pending" && new Date(b.start_time) <= now) ||
         s === "completed" ||
         s === "cancelled" ||
         s === "awaiting_confirmation" ||
@@ -185,7 +218,20 @@ function StudentDashboardContent() {
       );
     }) ?? []
   );
-  const recentPastBookings = pastBookings.slice(0, RECENT_LESSON_COUNT);
+  const baseRecentPastBookings = pastBookings.slice(0, RECENT_LESSON_COUNT);
+  // If the notification's target booking is an older past lesson that fell
+  // outside this preview slice, splice it back in (keeping its natural
+  // chronological position) so useHighlightTarget can find and flash it —
+  // without touching the slice when there's no highlight param. Upcoming
+  // and pending sections render every booking already, so no cap to bypass.
+  const recentPastBookings =
+    highlightTargetBooking &&
+    pastBookings.some((b) => b.id === highlightTargetBooking.id) &&
+    !baseRecentPastBookings.some((b) => b.id === highlightTargetBooking.id)
+      ? pastBookings.filter(
+          (b, index) => index < baseRecentPastBookings.length || b.id === highlightTargetBooking.id
+        )
+      : baseRecentPastBookings;
   const nextLesson = upcomingConfirmed[0] ?? null;
   const restUpcoming = upcomingConfirmed.slice(1);
   const nextTutorName =
@@ -257,13 +303,47 @@ function StudentDashboardContent() {
           onChanged={refetchBookings}
         />
 
+        {pendingBookings.length > 0 && (
+          <section className="space-y-3">
+            <div>
+              <h2 className="text-lg font-semibold tracking-tight">
+                Onay Bekleyen Rezervasyonlar
+              </h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Hoca onayladığında dersin yaklaşan derslerine taşınacak.
+              </p>
+            </div>
+            <div className="space-y-3">
+              {pendingBookings.map((booking) => (
+                <BookingCard
+                  key={booking.id}
+                  id={`booking-${booking.id}`}
+                  className={
+                    highlightedBookingId === booking.id ? HIGHLIGHT_CLASSNAME : undefined
+                  }
+                  booking={booking}
+                  currentUserRole="student"
+                  onStatusUpdate={handleStatusUpdate}
+                  isUpdating={updatingId === booking.id}
+                />
+              ))}
+            </div>
+          </section>
+        )}
+
         <section id="upcoming-lessons" className="space-y-4 scroll-mt-24">
           <h2 className="text-lg font-semibold tracking-tight">Yaklaşan Derslerim</h2>
 
           {bookingsLoading ? (
             <Skeleton className="h-56 w-full rounded-xl" />
           ) : nextLesson ? (
-            <Card className="overflow-hidden border-primary/30 bg-gradient-to-br from-primary/5 via-card to-card">
+            <Card
+              id={`booking-${nextLesson.id}`}
+              className={cn(
+                "overflow-hidden border-primary/30 bg-gradient-to-br from-primary/5 via-card to-card",
+                highlightedBookingId === nextLesson.id && HIGHLIGHT_CLASSNAME
+              )}
+            >
               <CardContent className="p-5 sm:p-6">
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <div className="flex min-w-0 items-center gap-3">
@@ -337,7 +417,7 @@ function StudentDashboardContent() {
                   <Button
                     variant="outline"
                     className="ml-auto border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
-                    onClick={() => handleStatusUpdate(nextLesson.id, "cancelled")}
+                    onClick={() => setCancelBooking(nextLesson)}
                     disabled={updatingId === nextLesson.id}
                   >
                     İptal Et
@@ -366,6 +446,8 @@ function StudentDashboardContent() {
                 {restUpcoming.map((b) => (
                   <BookingCard
                     key={b.id}
+                    id={`booking-${b.id}`}
+                    className={highlightedBookingId === b.id ? HIGHLIGHT_CLASSNAME : undefined}
                     booking={b}
                     currentUserRole="student"
                     onStatusUpdate={handleStatusUpdate}
@@ -504,7 +586,11 @@ function StudentDashboardContent() {
               {recentPastBookings.map((b, index) => (
                 <div
                   key={b.id}
-                  className="animate-element"
+                  id={`booking-${b.id}`}
+                  className={cn(
+                    "animate-element",
+                    highlightedBookingId === b.id && HIGHLIGHT_CLASSNAME
+                  )}
                   style={{ animationDelay: `${Math.min(index, 5) * 45}ms` }}
                 >
                   <BookingCard
@@ -526,10 +612,10 @@ function StudentDashboardContent() {
                   />
                 </div>
               ))}
-              {pastBookings.length > RECENT_LESSON_COUNT && (
+              {pastBookings.length > recentPastBookings.length && (
                 <Button asChild variant="outline" className="w-full">
                   <Link href="/profile/lessons/history">
-                    {pastBookings.length - RECENT_LESSON_COUNT} dersi daha görüntüle
+                    {pastBookings.length - recentPastBookings.length} dersi daha görüntüle
                   </Link>
                 </Button>
               )}
@@ -613,6 +699,43 @@ function StudentDashboardContent() {
             if (!open) setSelectedPackage(null);
           }}
         />
+
+        <Dialog
+          open={!!cancelBooking}
+          onOpenChange={(open) => {
+            if (!open) setCancelBooking(null);
+          }}
+        >
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Rezervasyonu iptal et</DialogTitle>
+              <DialogDescription>
+                {cancelBooking?.package_purchase &&
+                new Date(cancelBooking.start_time).getTime() - Date.now() <
+                  12 * 60 * 60 * 1000
+                  ? "Derse 12 saatten az kaldığı için kullandığın paket hakkı iade edilmeyecek. Devam etmek istiyor musun?"
+                  : "Bu rezervasyonu iptal etmek istediğine emin misin?"}
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setCancelBooking(null)}>
+                Vazgeç
+              </Button>
+              <Button
+                variant="destructive"
+                disabled={!!cancelBooking && updatingId === cancelBooking.id}
+                onClick={() => {
+                  if (!cancelBooking) return;
+                  const bookingId = cancelBooking.id;
+                  setCancelBooking(null);
+                  void handleStatusUpdate(bookingId, "cancelled");
+                }}
+              >
+                Rezervasyonu İptal Et
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

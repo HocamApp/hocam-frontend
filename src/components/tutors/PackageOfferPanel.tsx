@@ -41,7 +41,7 @@ export function PackageOfferPanel({ tutor }: PackageOfferPanelProps) {
 
   const subtitle = paidWithCredits
     ? `Kullanılabilir ${paidWithCredits.remaining_credits} ders hakkı`
-    : "Admin onayı bekleniyor";
+    : "İnceleme bekliyor";
 
   return (
     <Link
