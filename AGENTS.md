@@ -76,7 +76,8 @@ frontend/src/
 2. User object stored in localStorage as `auth_user` (backup/sync)
 3. On app mount: `AuthProvider` calls `/api/auth/me/` to get fresh user from server
 4. On 401 response: axios interceptor clears the cookie and redirects to `/login`
-5. After login/register: `fetchMe()` called immediately → `setAuth(user, token)` → redirect to role dashboard
+5. After login/register: the auth response is stored with `setAuth(user, token)` → redirect to the role dashboard
+6. Email-code verification is temporarily disabled server-side; registration currently returns the auth response immediately. The form still understands the legacy `requires_verification` response so the backend flag can be restored safely.
 
 Note: `auth_token` is set with js-cookie (not HttpOnly). This means it's accessible to JavaScript. Known security limitation — acceptable for now.
 

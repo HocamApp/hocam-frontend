@@ -210,7 +210,7 @@ function SecurityContent() {
               Güvenlik Ayarları
             </h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              E-posta doğrulaması, şifre ve oturum kontrollerinizi yönetin.
+              Hesap e-postanızı, şifrenizi ve oturum kontrollerinizi yönetin.
             </p>
           </div>
         </div>
@@ -227,7 +227,11 @@ function SecurityContent() {
                 </CardDescription>
               </div>
               <Badge variant={data?.is_email_verified ? "default" : "secondary"}>
-                {data?.is_email_verified ? "Doğrulandı" : "Doğrulanmadı"}
+                {data?.is_email_verified
+                  ? "Doğrulandı"
+                  : data?.email_verification_enabled === false
+                    ? "Geçici olarak kapalı"
+                    : "Doğrulanmadı"}
               </Badge>
             </div>
           </CardHeader>
@@ -238,6 +242,15 @@ function SecurityContent() {
                 <AlertTitle>E-posta adresiniz doğrulanmış.</AlertTitle>
                 <AlertDescription>
                   Bu hesap, güvenli bildirimler ve ileride açılacak hassas işlemler için hazır.
+                </AlertDescription>
+              </Alert>
+            ) : data?.email_verification_enabled === false ? (
+              <Alert>
+                <MailCheck className="h-4 w-4" />
+                <AlertTitle>E-posta doğrulaması geçici olarak kapalı.</AlertTitle>
+                <AlertDescription>
+                  Hesabınızı e-posta ve şifrenizle kullanabilirsiniz. Doğrulama yeniden
+                  açıldığında bu ekrandan tamamlayabileceksiniz.
                 </AlertDescription>
               </Alert>
             ) : (
