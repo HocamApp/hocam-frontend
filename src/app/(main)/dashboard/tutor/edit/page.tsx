@@ -81,14 +81,9 @@ type SaveState = "idle" | "success" | "error";
 function getFormValues(profile: TutorProfile): EditFormValues {
   const pending = profile.pending_profile_change;
   return {
-    university: pending?.university ?? profile.university ?? "",
-    department: pending?.department ?? profile.department ?? "",
-    yks_rank:
-      pending?.yks_rank != null
-        ? String(pending.yks_rank)
-        : profile.yks_rank != null
-          ? String(profile.yks_rank)
-          : "",
+    university: profile.university ?? "",
+    department: profile.department ?? "",
+    yks_rank: profile.yks_rank != null ? String(profile.yks_rank) : "",
     hourly_price: profile.hourly_price != null ? String(profile.hourly_price) : "",
     intro_video_url: pending?.intro_video_url ?? profile.intro_video_url ?? "",
     bio: (profile.bio ?? "").slice(0, BIO_MAX_LENGTH),
@@ -245,9 +240,6 @@ function TutorProfileEditContent() {
     setSaveState("idle");
     try {
       const updatedProfile = await updateMyTutorProfile({
-        university: parsed.data.university,
-        department: parsed.data.department,
-        yks_rank: Number(parsed.data.yks_rank),
         hourly_price: parsed.data.hourly_price,
         intro_video_url: parsed.data.intro_video_url ?? "",
         bio: parsed.data.bio ?? "",
@@ -270,9 +262,6 @@ function TutorProfileEditContent() {
       if (responseData && typeof responseData === "object") {
         const dataRecord = responseData as Record<string, unknown>;
         const fieldMap: Record<string, keyof EditFormValues> = {
-          university: "university",
-          department: "department",
-          yks_rank: "yks_rank",
           hourly_price: "hourly_price",
           intro_video_url: "intro_video_url",
           bio: "bio",

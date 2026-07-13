@@ -126,9 +126,6 @@ export interface UpdateTutorProfilePayload {
   bio?: string;
   hourly_price?: string;
   intro_video_url?: string;
-  university?: string;
-  department?: string;
-  yks_rank?: number;
   subject_ids?: string[];
 }
 

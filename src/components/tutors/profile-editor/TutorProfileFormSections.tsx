@@ -2,7 +2,7 @@
 
 import type { ChangeEvent, ReactNode, RefObject } from "react";
 import type { UseFormReturn } from "react-hook-form";
-import { ShieldCheck } from "lucide-react";
+import { LockKeyhole, ShieldCheck } from "lucide-react";
 
 import type { Subject, TutorProfile } from "@/types";
 import { AvatarEditor } from "@/components/profile/AvatarEditor";
@@ -182,13 +182,18 @@ export function ProfileBasicsSection({
   );
 }
 
-export function EducationSection({ form, profile }: SharedSectionProps) {
-  const pendingChange = profile.pending_profile_change;
+export function EducationSection({ profile }: SharedSectionProps) {
+  const educationValues = [
+    { label: "Üniversite", value: profile.university },
+    { label: "Bölüm", value: profile.department },
+    { label: "YKS sıralaması", value: profile.yks_rank.toLocaleString("tr-TR") },
+  ];
+
   return (
     <EditorSection
       id="education"
       title="Eğitim ve Doğrulama"
-      description="Eğitim bilgilerin öğrencilere güven verir. Doğrulanmış alanlardaki değişiklikler yayınlanmadan önce incelenir."
+      description="Kayıt sırasında verdiğin eğitim bilgileri profil güvenliğini korumak için daha sonra değiştirilemez."
     >
       <div className="mb-6 rounded-lg border bg-muted/30 p-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -199,107 +204,37 @@ export function EducationSection({ form, profile }: SharedSectionProps) {
           <Badge
             variant="outline"
             className={
-              pendingChange
-                ? "border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-100"
-                : profile.is_verified
-                  ? "border-emerald-300 bg-emerald-50 text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-100"
-                  : undefined
+              profile.is_verified
+                ? "border-emerald-300 bg-emerald-50 text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-100"
+                : undefined
             }
           >
-            {pendingChange ? "Değişiklik incelemede" : profile.is_verified ? "Doğrulandı" : "Doğrulanmadı"}
+            {profile.is_verified ? "Doğrulandı" : "Doğrulanmadı"}
           </Badge>
         </div>
-        {profile.is_verified && (
-          <div className="mt-4 grid gap-3 text-sm sm:grid-cols-3">
-            <div>
-              <p className="text-muted-foreground">Yayındaki üniversite</p>
-              <p className="mt-1 font-medium">{profile.university}</p>
+        <div className="mt-4 grid gap-3 text-sm sm:grid-cols-3">
+          {educationValues.map((item) => (
+            <div key={item.label}>
+              <p className="text-muted-foreground">{item.label}</p>
+              <p className="mt-1 font-medium">{item.value}</p>
             </div>
-            <div>
-              <p className="text-muted-foreground">Yayındaki bölüm</p>
-              <p className="mt-1 font-medium">{profile.department}</p>
-            </div>
-            <div>
-              <p className="text-muted-foreground">Yayındaki sıralama</p>
-              <p className="mt-1 font-medium">{profile.yks_rank.toLocaleString("tr-TR")}</p>
-            </div>
-          </div>
-        )}
+          ))}
+        </div>
         <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-          {pendingChange
-            ? "Aşağıdaki önerdiğin değerler incelemede. Onaylanana kadar yukarıdaki doğrulanmış bilgiler yayında kalır."
-            : profile.is_verified
-              ? "Yeni değerler kaydedildiğinde incelemeye gönderilir. Onaylanana kadar mevcut doğrulanmış bilgiler yayında kalır."
-              : "Bu alanlar henüz doğrulanmış değil; kaydettiğin değerler profilinde kullanılır."}
+          {profile.is_verified
+            ? "Bu bilgiler doğrulanmıştır ve tutor hesabından değiştirilemez."
+            : "Bu bilgiler kayıt sırasında kaydedilmiştir ve tutor hesabından değiştirilemez."}
         </p>
       </div>
 
-      <div className="grid gap-5 sm:grid-cols-2">
-        <FormField
-          control={form.control}
-          name="university"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{profile.is_verified ? "Önerilen üniversite" : "Üniversite"}</FormLabel>
-              <FormControl>
-                <Input
-                  placeholder="Örn: İstanbul Teknik Üniversitesi"
-                  {...field}
-                  onChange={(event) => {
-                    field.onChange(event);
-                    form.clearErrors("university");
-                  }}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="department"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{profile.is_verified ? "Önerilen bölüm" : "Bölüm"}</FormLabel>
-              <FormControl>
-                <Input
-                  placeholder="Örn: Bilgisayar Mühendisliği"
-                  {...field}
-                  onChange={(event) => {
-                    field.onChange(event);
-                    form.clearErrors("department");
-                  }}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="yks_rank"
-          render={({ field }) => (
-            <FormItem className="sm:col-span-2 sm:max-w-sm">
-              <FormLabel>{profile.is_verified ? "Önerilen YKS sıralaması" : "YKS sıralaması"}</FormLabel>
-              <FormControl>
-                <Input
-                  type="number"
-                  inputMode="numeric"
-                  min={1}
-                  max={4_000_000}
-                  placeholder="Örn: 5000"
-                  {...field}
-                  onChange={(event) => {
-                    field.onChange(event);
-                    form.clearErrors("yks_rank");
-                  }}
-                />
-              </FormControl>
-              <FormDescription>1 ile 4.000.000 arasında bir sıralama gir.</FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+      <div className="flex items-start gap-3 rounded-lg border border-dashed bg-muted/20 p-4 text-sm">
+        <LockKeyhole className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" aria-hidden />
+        <div>
+          <p className="font-medium">Eğitim bilgileri kilitli</p>
+          <p className="mt-1 leading-relaxed text-muted-foreground">
+            Bilgilerinden biri hatalıysa güvenli bir düzeltme için destek ekibiyle iletişime geç.
+          </p>
+        </div>
       </div>
     </EditorSection>
   );
