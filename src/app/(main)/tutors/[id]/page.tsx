@@ -933,7 +933,7 @@ export default function TutorProfilePage({
       <Dialog open={isPhotoPreviewOpen} onOpenChange={setIsPhotoPreviewOpen}>
         <DialogContent
           showClose={false}
-          className="relative z-[60] w-[calc(100vw-2rem)] max-w-2xl overflow-hidden border-0 bg-transparent p-0 shadow-none"
+          className="fixed z-[60] w-[calc(100vw-2rem)] max-w-2xl overflow-hidden border-0 bg-transparent p-0 shadow-none"
         >
           <DialogTitle className="sr-only">
             {tutor.name} {tutor.surname} profil fotoğrafı
