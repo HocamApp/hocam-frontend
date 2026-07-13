@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -8,34 +8,43 @@ import {
   Bell,
   BookOpen,
   CalendarClock,
+  Camera,
+  ChevronDown,
   CreditCard,
   Download,
   Eye,
   Globe,
   GraduationCap,
+  KeyRound,
+  LifeBuoy,
+  LogOut,
+  Mail,
+  Moon,
+  Pencil,
   PlayCircle,
   Receipt,
   ShieldCheck,
   Star,
   UserCog,
   Video,
-  Wallet,
-  X,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { exportMyData, fetchProfileMe, updateProfileMe } from "@/lib/profileApi";
-import { fetchMyTutorProfile } from "@/lib/tutorsApi";
+import { fetchProfileMe, updateProfileMe } from "@/lib/profileApi";
+import { fetchMyTutorProfile, uploadTutorProfilePicture } from "@/lib/tutorsApi";
+import {
+  PROFILE_PHOTO_ACCEPT,
+  PROFILE_PHOTO_RULE_TEXT,
+  TUTOR_REAL_PHOTO_RULE_TEXT,
+  validateProfilePhotoFile,
+} from "@/lib/profilePhoto";
 import { formatPrice } from "@/lib/utils";
 import type { Theme } from "@/lib/theme";
 import type { ProfileStudent, ProfileTutor, UserPreferences } from "@/types";
 import {
-  Sheet,
-  SheetClose,
-  SheetContent,
-  SheetDescription,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -46,13 +55,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
+import { AnimatedThemeToggler } from "@/components/theme/AnimatedThemeToggler";
 import {
   ProfileAccordionSection,
 } from "@/components/profile/ProfileAccordionSection";
@@ -64,9 +69,16 @@ import {
   PaymentMethodSelector,
   type PaymentMethod,
 } from "@/components/profile/PaymentMethodSelector";
-import { AccountSummary } from "@/components/profile/AccountSummary";
-import { ThemeSegmentedControl } from "@/components/profile/ThemeSegmentedControl";
-import { AccountDrawerFooter } from "@/components/profile/AccountDrawerFooter";
+
+const DAY_NAMES = [
+  "Pazartesi",
+  "Salı",
+  "Çarşamba",
+  "Perşembe",
+  "Cuma",
+  "Cumartesi",
+  "Pazar",
+];
 
 // Boolean-valued preference keys — excludes string fields like `language`
 type BoolPrefKey = keyof Omit<UserPreferences, "language">;
@@ -89,7 +101,7 @@ function normalizeProfileName(value: string): string {
     .trim()
     .toLocaleLowerCase("tr-TR")
     .normalize("NFD")
-    .replace(new RegExp("[\\u0300-\\u036f]", "g"), "")
+    .replace(/[\u0300-\u036f]/g, "")
     .replace(/ı/g, "i")
     .replace(/\s+/g, " ");
 }
@@ -128,18 +140,23 @@ export function ProfileMenu() {
   const [open, setOpen] = useState(false);
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const [prefOverrides, setPrefOverrides] = useState<Partial<UserPreferences>>({});
-  const [notifSaving, setNotifSaving] = useState<Partial<Record<BoolPrefKey, boolean>>>({});
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
   const [paymentNotice, setPaymentNotice] = useState("");
 
-  // Optimistic overrides for profile-level toggles
-  const [autoApproveOverride, setAutoApproveOverride] = useState<boolean | null>(null);
-  const [autoApproveSaving, setAutoApproveSaving] = useState(false);
-  const [isPublicOverride, setIsPublicOverride] = useState<boolean | null>(null);
-  const [visibilitySaving, setVisibilitySaving] = useState(false);
+  // Inline name/surname editing
+  const [nameEdit, setNameEdit] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [editSurname, setEditSurname] = useState("");
+  const [nameError, setNameError] = useState<string | null>(null);
+  const [nameSaving, setNameSaving] = useState(false);
 
-  const [exporting, setExporting] = useState(false);
-  const [loggingOut, setLoggingOut] = useState(false);
+  // Profile photo upload (tutor only)
+  const [photoUploading, setPhotoUploading] = useState(false);
+  const [photoError, setPhotoError] = useState<string | null>(null);
+  const photoInputRef = useRef<HTMLInputElement>(null);
+
+  // Optimistic override for auto_approve_bookings
+  const [autoApproveOverride, setAutoApproveOverride] = useState<boolean | null>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ["profile-me"],
@@ -176,17 +193,6 @@ export function ProfileMenu() {
   const tutorAvailability = tutor?.availability ?? [];
   const showDemoPaymentMethods = isBurakYilmazTutor(name, surname, role);
 
-  const metaLine = isTutor
-    ? [tutorUniversity, tutorDepartment].filter(Boolean).join(" · ")
-    : [studentProfile?.school, studentProfile?.grade].filter(Boolean).join(" · ");
-
-  const visibleSubjects = tutorSubjects.slice(0, 3);
-  const extraSubjectsCount = Math.max(0, tutorSubjects.length - visibleSubjects.length);
-  const definedAvailabilityDays = new Set(
-    tutorAvailability.filter((a) => !a.is_unavailable).map((a) => a.day_of_week)
-  ).size;
-  const hasIntroVideo = Boolean(tutorIntroVideoUrl);
-
   const stats = data?.stats;
   const prefs: UserPreferences = useMemo(
     () => ({
@@ -207,20 +213,21 @@ export function ProfileMenu() {
     router.push(href);
   };
 
-  const editHref = role === "tutor" ? "/dashboard/tutor/edit" : "/profile";
+  const comingSoon = () => {
+    setOpen(false);
+    toast.info("Bu özellik yakında eklenecek.");
+  };
+
+  const editHref = role === "tutor" ? "/dashboard/tutor/edit" : "/dashboard/student";
 
   const handleNotificationToggle = async (key: BoolPrefKey, next: boolean) => {
-    if (notifSaving[key]) return;
     setPrefOverrides((prev) => ({ ...prev, [key]: next } as Partial<UserPreferences>));
-    setNotifSaving((prev) => ({ ...prev, [key]: true }));
     try {
       await updateProfileMe({ preferences: { [key]: next } });
       queryClient.invalidateQueries({ queryKey: ["profile-me"] });
     } catch {
       setPrefOverrides((prev) => ({ ...prev, [key]: !next } as Partial<UserPreferences>));
       toast.error("Tercih kaydedilemedi.");
-    } finally {
-      setNotifSaving((prev) => ({ ...prev, [key]: false }));
     }
   };
 
@@ -286,82 +293,76 @@ export function ProfileMenu() {
     }
   };
 
+  const handleNameSave = async () => {
+    const trimmedName = editName.trim();
+    const trimmedSurname = editSurname.trim();
+    if (!trimmedName || !trimmedSurname) {
+      setNameError("İsim ve soyisim boş olamaz.");
+      return;
+    }
+    setNameSaving(true);
+    try {
+      await updateProfileMe({ profile: { name: trimmedName, surname: trimmedSurname } });
+      await queryClient.invalidateQueries({ queryKey: ["profile-me"] });
+      await queryClient.invalidateQueries({ queryKey: ["tutor-me"] });
+      setNameEdit(false);
+      toast.success("İsim güncellendi.");
+    } catch {
+      setNameError("İsim güncellenemedi. Lütfen tekrar deneyin.");
+    } finally {
+      setNameSaving(false);
+    }
+  };
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = "";
+    setPhotoError(null);
+    const validationError = validateProfilePhotoFile(file);
+    if (validationError) {
+      setPhotoError(validationError);
+      return;
+    }
+    setPhotoUploading(true);
+    try {
+      await uploadTutorProfilePicture(file);
+      await queryClient.invalidateQueries({ queryKey: ["profile-me"] });
+      await queryClient.invalidateQueries({ queryKey: ["tutor-me"] });
+      if (tutorId) {
+        await queryClient.invalidateQueries({ queryKey: ["tutor", tutorId] });
+      }
+      await queryClient.invalidateQueries({ queryKey: ["tutors"] });
+      toast.success("Profil fotoğrafı güncellendi.");
+    } catch {
+      setPhotoError("Fotoğraf yüklenemedi. Lütfen tekrar deneyin.");
+    } finally {
+      setPhotoUploading(false);
+    }
+  };
+
   const handleAutoApproveToggle = async (next: boolean) => {
-    if (autoApproveSaving) return;
     const prev = autoApproveOverride ?? tutor?.auto_approve_bookings ?? false;
     setAutoApproveOverride(next);
-    setAutoApproveSaving(true);
     try {
       await updateProfileMe({ profile: { auto_approve_bookings: next } });
       queryClient.invalidateQueries({ queryKey: ["profile-me"] });
     } catch {
       setAutoApproveOverride(prev);
       toast.error("Tercih kaydedilemedi.");
-    } finally {
-      setAutoApproveSaving(false);
     }
-  };
-
-  const currentIsPublic =
-    isPublicOverride ?? tutorMeData?.is_public ?? tutor?.is_public ?? true;
-
-  const handleVisibilityToggle = async (next: boolean) => {
-    if (visibilitySaving) return;
-    const prev = currentIsPublic;
-    setIsPublicOverride(next);
-    setVisibilitySaving(true);
-    try {
-      await updateProfileMe({ profile: { is_public: next } });
-      queryClient.invalidateQueries({ queryKey: ["profile-me"] });
-      toast.success(next ? "Profiliniz artık herkese açık." : "Profiliniz artık gizli.");
-    } catch {
-      setIsPublicOverride(prev);
-      toast.error("Görünürlük ayarı kaydedilemedi.");
-    } finally {
-      setVisibilitySaving(false);
-    }
-  };
-
-  const handleExportData = async () => {
-    if (exporting) return;
-    setExporting(true);
-    try {
-      const exported = await exportMyData();
-      const blob = new Blob([JSON.stringify(exported, null, 2)], {
-        type: "application/json",
-      });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `hocam-verilerim-${new Date().toISOString().slice(0, 10)}.json`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-      toast.success("Verileriniz indirildi.");
-    } catch {
-      toast.error("Veriler indirilemedi. Lütfen tekrar deneyin.");
-    } finally {
-      setExporting(false);
-    }
-  };
-
-  const handleLogout = () => {
-    if (loggingOut) return;
-    setLoggingOut(true);
-    setOpen(false);
-    logout();
   };
 
   // Single-open connected accordion: one active section key (null = all collapsed).
   const sectionKeys = useMemo(
     () => [
-      ...(isTutor ? ["profile"] : []),
+      "profile",
       "lessons",
       "payment",
-      "notifications",
       "security",
-      "preferences",
+      "notifications",
+      ...(isTutor ? ["tutor"] : []),
+      "advanced",
     ],
     [isTutor]
   );
@@ -384,6 +385,9 @@ export function ProfileMenu() {
   useEffect(() => {
     if (!open) {
       setActiveSection(null);
+      setNameEdit(false);
+      setEditName("");
+      setEditSurname("");
     }
   }, [open]);
 
@@ -393,12 +397,12 @@ export function ProfileMenu() {
 
   return (
     <>
-    <Sheet open={open} onOpenChange={setOpen}>
-      <SheetTrigger asChild>
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
         <button
           type="button"
-          aria-label="Hesap menüsünü aç"
-          className="flex items-center justify-center rounded-full outline-none ring-offset-background transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          aria-label="Profil menüsü"
+          className="flex items-center gap-1.5 rounded-full outline-none ring-offset-background transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         >
           <Avatar className="h-9 w-9 border border-border">
             {avatarImage ? <AvatarImage src={avatarImage} alt={fullName} /> : null}
@@ -406,98 +410,201 @@ export function ProfileMenu() {
               {initials || <UserCog className="h-4 w-4" />}
             </AvatarFallback>
           </Avatar>
+          <ChevronDown className="h-4 w-4 text-muted-foreground" />
         </button>
-      </SheetTrigger>
+      </PopoverTrigger>
 
-      <SheetContent
-        side="right"
-        className="flex w-full flex-col gap-0 border-l border-border p-0 sm:max-w-[420px]"
+      <PopoverContent
+        align="end"
+        sideOffset={10}
+        className="w-[calc(100vw-2rem)] border-none bg-transparent p-0 shadow-none sm:w-[440px]"
       >
-        <div className="flex shrink-0 items-center justify-between border-b border-border px-5 py-4">
-          <SheetTitle className="text-base">Hesabım</SheetTitle>
-          <SheetDescription className="sr-only">
-            Hesap özetin, hızlı erişim bağlantıların ve ayarların.
-          </SheetDescription>
-          <SheetClose asChild>
-            <button
-              type="button"
-              aria-label="Kapat"
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </SheetClose>
-        </div>
+        <div className="scrollbar-none max-h-[min(80vh,640px)] overflow-y-auto rounded-[32px] bg-background/[0.08] p-3 backdrop-blur-lg">
 
-        <div className="flex-1 overflow-y-auto overscroll-contain px-5 py-4">
-          <AccountSummary
-            isLoading={isLoading && !data}
-            fullName={fullName}
-            role={role}
-            email={user?.email}
-            avatarImage={avatarImage}
-            initials={initials}
-            metaLine={metaLine}
-            isVerified={isTutor ? tutorMeData?.is_verified : undefined}
-            onEditIdentity={isTutor ? () => go("/profile") : undefined}
-            onEditProfile={() => go(editHref)}
-            onViewPublicProfile={isTutor && tutorId ? () => go(`/tutors/${tutorId}`) : undefined}
-          />
-
-          {/* ---- Profil (tutor-only compact summary) ---- */}
-          {isTutor && (
-            <ProfileAccordionSection
-              icon={<GraduationCap className="h-4 w-4" />}
-              title="Profil"
-              {...sectionProps("profile")}
-            >
-              {tutorSubjects.length > 0 && (
-                <div className="flex flex-wrap gap-1.5">
-                  {visibleSubjects.map((s) => (
-                    <Badge key={s.id} variant="secondary" className="text-xs">
-                      {s.name} · {s.exam_type}
-                    </Badge>
-                  ))}
-                  {extraSubjectsCount > 0 && (
-                    <Badge variant="outline" className="text-xs">
-                      +{extraSubjectsCount} ders
-                    </Badge>
-                  )}
-                </div>
-              )}
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">40 dk ders ücreti</span>
-                <span className="font-medium text-foreground">
-                  {formatPrice(tutorHourlyPrice)}
-                </span>
+          {/* ---- Profil Detayları ---- */}
+          <ProfileAccordionSection
+            icon={<UserCog className="h-4 w-4" />}
+            title="Profil Detayları"
+            {...sectionProps("profile")}
+          >
+            {/* Avatar row with photo upload for tutors */}
+            <div className="flex items-start gap-3">
+              <div className="relative shrink-0">
+                <Avatar className="h-14 w-14 border border-border">
+                  {avatarImage ? <AvatarImage src={avatarImage} alt={fullName} /> : null}
+                  <AvatarFallback className="bg-primary/10 text-lg font-semibold text-primary">
+                    {initials || <UserCog className="h-5 w-5" />}
+                  </AvatarFallback>
+                </Avatar>
+                {isTutor && (
+                  <>
+                    <input
+                      type="file"
+                      accept={PROFILE_PHOTO_ACCEPT}
+                      hidden
+                      ref={photoInputRef}
+                      onChange={handlePhotoUpload}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => photoInputRef.current?.click()}
+                      disabled={photoUploading}
+                      className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground shadow transition-opacity disabled:opacity-60"
+                      aria-label="Profil fotoğrafı değiştir"
+                    >
+                      {photoUploading ? (
+                        <span
+                          className="h-3 w-3 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent"
+                          aria-hidden
+                        />
+                      ) : (
+                        <Camera className="h-3 w-3" />
+                      )}
+                    </button>
+                  </>
+                )}
               </div>
-              <ProfileMenuRow
-                icon={<CalendarClock className="h-4 w-4" />}
-                label="Müsaitlik"
-                trailingText={
-                  definedAvailabilityDays > 0
-                    ? `${definedAvailabilityDays} gün tanımlı`
-                    : "Henüz eklenmedi"
-                }
-                showChevron
-                onClick={() => go("/dashboard/tutor?tab=availability")}
-              />
-              <ProfileMenuRow
-                icon={hasIntroVideo ? <PlayCircle className="h-4 w-4" /> : <Video className="h-4 w-4" />}
-                label="Tanıtım videosu"
-                trailingText={hasIntroVideo ? "Eklendi" : "Eklenmedi"}
-                showChevron
+              <div className="min-w-0 flex-1">
+                {isLoading && !data ? (
+                  <Skeleton className="h-5 w-32" />
+                ) : (
+                  <p className="truncate text-base font-semibold text-foreground">
+                    {fullName || (role === "tutor" ? "Hoca" : "Öğrenci")}
+                  </p>
+                )}
+                {isTutor && (tutorUniversity || tutorDepartment) && (
+                  <p className="truncate text-sm text-muted-foreground">
+                    {[tutorUniversity, tutorDepartment].filter(Boolean).join(" · ")}
+                  </p>
+                )}
+                {studentProfile && (studentProfile.school || studentProfile.grade) && (
+                  <p className="truncate text-sm text-muted-foreground">
+                    {[studentProfile.school, studentProfile.grade]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {photoError && (
+              <p className="text-xs text-destructive" role="alert">
+                {photoError}
+              </p>
+            )}
+
+            {isTutor && (
+              <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-100">
+                <p>{PROFILE_PHOTO_RULE_TEXT}</p>
+                <p className="mt-1">{TUTOR_REAL_PHOTO_RULE_TEXT}</p>
+                <p className="mt-1 text-amber-800 dark:text-amber-200">
+                  JPEG, PNG veya WebP; en fazla 5 MB.
+                </p>
+              </div>
+            )}
+
+            {/* Email (read-only) */}
+            <div className="flex items-center gap-3 rounded-lg px-2 py-1.5 text-sm">
+              <Mail className="h-4 w-4 shrink-0 text-muted-foreground" />
+              <span className="flex-1 truncate text-foreground">{user?.email}</span>
+              <span className="shrink-0 text-xs text-muted-foreground">E-posta</span>
+            </div>
+
+            {/* Role (read-only) */}
+            <div className="flex items-center gap-3 rounded-lg px-2 py-1.5 text-sm">
+              <UserCog className="h-4 w-4 shrink-0 text-muted-foreground" />
+              <span className="flex-1 text-foreground">Rol</span>
+              <Badge variant="secondary" className="shrink-0">
+                {role === "tutor" ? "Hoca" : "Öğrenci"}
+              </Badge>
+            </div>
+
+            {/* Full profile page */}
+            <ProfileMenuRow
+              icon={<UserCog className="h-4 w-4" />}
+              label="Profil sayfasına git"
+              showChevron
+              onClick={() => go("/profile")}
+            />
+
+            {/* Inline name / surname edit */}
+            {!nameEdit ? (
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full"
                 onClick={() => {
-                  if (hasIntroVideo) {
-                    setOpen(false);
-                    window.open(tutorIntroVideoUrl, "_blank", "noopener,noreferrer");
-                  } else {
-                    go(editHref);
-                  }
+                  setEditName(name);
+                  setEditSurname(surname);
+                  setNameError(null);
+                  setNameEdit(true);
                 }}
-              />
-            </ProfileAccordionSection>
-          )}
+              >
+                <Pencil className="mr-1.5 h-3 w-3" />
+                İsim ve soyismi düzenle
+              </Button>
+            ) : (
+              <div className="space-y-2">
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="İsim"
+                    value={editName}
+                    onChange={(e) => {
+                      setEditName(e.target.value);
+                      setNameError(null);
+                    }}
+                    className="h-8 text-sm"
+                    disabled={nameSaving}
+                    // eslint-disable-next-line jsx-a11y/no-autofocus
+                    autoFocus
+                  />
+                  <Input
+                    placeholder="Soyisim"
+                    value={editSurname}
+                    onChange={(e) => {
+                      setEditSurname(e.target.value);
+                      setNameError(null);
+                    }}
+                    className="h-8 text-sm"
+                    disabled={nameSaving}
+                  />
+                </div>
+                {nameError && (
+                  <p className="text-xs text-destructive">{nameError}</p>
+                )}
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1"
+                    onClick={() => setNameEdit(false)}
+                    disabled={nameSaving}
+                  >
+                    İptal
+                  </Button>
+                  <Button
+                    size="sm"
+                    className="flex-1"
+                    onClick={handleNameSave}
+                    disabled={nameSaving}
+                  >
+                    {nameSaving ? (
+                      <span
+                        className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent"
+                        aria-hidden
+                      />
+                    ) : (
+                      "Kaydet"
+                    )}
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            <Button variant="outline" className="w-full" onClick={() => go(editHref)}>
+              Profili Düzenle
+            </Button>
+          </ProfileAccordionSection>
 
           {/* ---- Dersler ve Rezervasyonlar ---- */}
           <ProfileAccordionSection
@@ -508,10 +615,8 @@ export function ProfileMenu() {
             {isTutor && (
               <ProfileToggleRow
                 label="Otomatik onay"
-                description="Açıkken uygun saatlere gelen ders talepleri otomatik onaylanır; kapalıyken talepleri elle onaylarsın."
                 checked={currentAutoApprove}
                 onChange={handleAutoApproveToggle}
-                loading={autoApproveSaving}
               />
             )}
             <ProfileMenuRow
@@ -546,80 +651,81 @@ export function ProfileMenu() {
             </Button>
           </ProfileAccordionSection>
 
-          {/* ---- Ödemeler (role-aware) ---- */}
+          {/* ---- Ödeme ve Faturalandırma ---- */}
           <ProfileAccordionSection
             icon={<CreditCard className="h-4 w-4" />}
-            title="Ödemeler"
+            title="Ödeme ve Faturalandırma"
             {...sectionProps("payment")}
           >
-            {isTutor ? (
-              <>
-                <div>
-                  <p className="px-1 pb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    Kazançlar
-                  </p>
-                  <p className="px-1 pb-2 text-sm text-muted-foreground">
-                    Son 7 gün, son 30 gün ve toplam tamamladığın ders sayını gösterir.
-                  </p>
-                  <ProfileMenuRow
-                    icon={<Wallet className="h-4 w-4" />}
-                    label="Kazanç özetini gör"
-                    showChevron
-                    onClick={() => go("/dashboard/tutor?tab=earnings")}
-                  />
-                </div>
-                {showDemoPaymentMethods && (
-                  <div>
-                    <p className="px-1 pb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                      Ödeme yöntemleri
-                    </p>
-                    <p className="px-1 py-1.5 text-sm text-muted-foreground">
-                      2 demo ödeme yöntemi kayıtlı.
-                    </p>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="ml-1 mt-1 h-8"
-                      onClick={openPaymentDialog}
-                    >
-                      <CreditCard className="mr-1.5 h-3.5 w-3.5" />
-                      Ödeme yöntemi ekle
-                    </Button>
-                  </div>
-                )}
-              </>
-            ) : (
-              <>
-                <div>
-                  <p className="px-1 pb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    Ödeme yöntemleri
-                  </p>
-                  <p className="px-1 py-1.5 text-sm text-muted-foreground">
-                    Henüz kayıtlı ödeme yöntemi yok.
-                  </p>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="ml-1 mt-1 h-8"
-                    onClick={openPaymentDialog}
-                  >
-                    <CreditCard className="mr-1.5 h-3.5 w-3.5" />
-                    Ödeme yöntemi ekle
-                  </Button>
-                </div>
-                <div>
-                  <p className="px-1 pb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    Ödeme geçmişi
-                  </p>
-                  <ProfileMenuRow
-                    icon={<Receipt className="h-4 w-4" />}
-                    label="Paketlerim ve ödeme geçmişim"
-                    showChevron
-                    onClick={() => go("/profile/payments")}
-                  />
-                </div>
-              </>
-            )}
+            <div>
+              <p className="px-1 pb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Ödeme yöntemleri
+              </p>
+              <p className="px-1 py-1.5 text-sm text-muted-foreground">
+                {showDemoPaymentMethods
+                  ? "2 demo ödeme yöntemi kayıtlı."
+                  : "Henüz kayıtlı ödeme yöntemi yok."}
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                className="ml-1 mt-2 h-8"
+                onClick={openPaymentDialog}
+              >
+                <CreditCard className="mr-1.5 h-3.5 w-3.5" />
+                Ödeme yöntemi ekle
+              </Button>
+            </div>
+            <div>
+              <p className="px-1 pb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Ödeme geçmişi
+              </p>
+              <ProfileMenuRow
+                icon={<Receipt className="h-4 w-4" />}
+                label="Paketlerim ve ödeme geçmişim"
+                showChevron
+                onClick={() => go("/profile/payments")}
+              />
+            </div>
+          </ProfileAccordionSection>
+
+          {/* ---- Güvenlik ve Gizlilik ---- */}
+          <ProfileAccordionSection
+            icon={<ShieldCheck className="h-4 w-4" />}
+            title="Güvenlik ve Gizlilik"
+            {...sectionProps("security")}
+          >
+            <ProfileMenuRow
+              icon={<KeyRound className="h-4 w-4" />}
+              label="Şifre değiştir"
+              showChevron
+              onClick={() => go("/forgot-password")}
+            />
+            <ProfileMenuRow
+              icon={<ShieldCheck className="h-4 w-4" />}
+              label="Oturumları yönet"
+              showChevron
+              onClick={() => go("/profile/security")}
+            />
+            <ProfileMenuRow
+              icon={<Eye className="h-4 w-4" />}
+              label="Hesap görünürlüğü"
+              showChevron
+              onClick={() => go("/profile#account-visibility")}
+            />
+            <ProfileMenuRow
+              icon={<Download className="h-4 w-4" />}
+              label="Verilerimi indir"
+              showChevron
+              onClick={() => go("/profile#data-export")}
+            />
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => go("/profile/security")}
+            >
+              Güvenlik Ayarları
+            </Button>
           </ProfileAccordionSection>
 
           {/* ---- Bildirimler ---- */}
@@ -632,99 +738,147 @@ export function ProfileMenu() {
               label="Yeni mesajlar"
               checked={prefs.notify_messages}
               onChange={(v) => handleNotificationToggle("notify_messages", v)}
-              loading={notifSaving.notify_messages}
             />
             <ProfileToggleRow
               label="Ders talebi bildirimleri"
               checked={prefs.notify_lesson_requests}
               onChange={(v) => handleNotificationToggle("notify_lesson_requests", v)}
-              loading={notifSaving.notify_lesson_requests}
             />
             <ProfileToggleRow
               label="Rezervasyon hatırlatmaları"
               checked={prefs.notify_booking_reminders}
               onChange={(v) => handleNotificationToggle("notify_booking_reminders", v)}
-              loading={notifSaving.notify_booking_reminders}
             />
             <ProfileToggleRow
               label="E-posta bildirimleri"
               checked={prefs.notify_email}
               onChange={(v) => handleNotificationToggle("notify_email", v)}
-              loading={notifSaving.notify_email}
             />
           </ProfileAccordionSection>
 
-          {/* ---- Güvenlik ve Gizlilik ---- */}
-          <ProfileAccordionSection
-            icon={<ShieldCheck className="h-4 w-4" />}
-            title="Güvenlik ve Gizlilik"
-            {...sectionProps("security")}
-          >
-            <ProfileMenuRow
-              icon={<ShieldCheck className="h-4 w-4" />}
-              label="Güvenlik Ayarları"
-              trailingText="Şifre, oturumlar"
-              showChevron
-              onClick={() => go("/profile/security")}
-            />
-            {isTutor && (
-              <ProfileToggleRow
-                icon={<Eye className="h-4 w-4" />}
-                label="Profilim herkese açık"
-                description={
-                  currentIsPublic
-                    ? "Hoca listesinde ve aramalarda görünürsün."
-                    : "Profilin gizli; hoca listesinde görünmezsin."
-                }
-                checked={currentIsPublic}
-                onChange={handleVisibilityToggle}
-                loading={visibilitySaving}
-              />
-            )}
-            <ProfileMenuRow
-              icon={<Download className="h-4 w-4" />}
-              label="Verilerimi indir"
-              trailingText={exporting ? "İndiriliyor…" : undefined}
-              disabled={exporting}
-              onClick={handleExportData}
-            />
-          </ProfileAccordionSection>
+          {/* ---- Eğitmen Profili (tutor only) ---- */}
+          {isTutor && (
+            <ProfileAccordionSection
+              icon={<GraduationCap className="h-4 w-4" />}
+              title="Eğitmen Profili"
+              {...sectionProps("tutor")}
+            >
+              {tutorSubjects.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {tutorSubjects.map((s) => (
+                    <Badge key={s.id} variant="secondary">
+                      {s.name}
+                    </Badge>
+                  ))}
+                </div>
+              )}
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">40 dk ders ücreti</span>
+                <span className="font-medium text-foreground">
+                  {formatPrice(tutorHourlyPrice)}
+                </span>
+              </div>
+              <div className="space-y-1 text-sm">
+                <span className="text-muted-foreground">Müsaitlik saatleri</span>
+                {tutorAvailability.length === 0 ? (
+                  <p className="text-foreground">Henüz eklenmedi</p>
+                ) : (
+                  <ul className="space-y-0.5">
+                    {tutorAvailability.slice(0, 5).map((a, i) => (
+                      <li key={`${a.day_of_week}-${i}`} className="flex justify-between">
+                        <span className="text-foreground">{DAY_NAMES[a.day_of_week]}</span>
+                        <span className="text-muted-foreground">
+                          {a.start_time} – {a.end_time}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+              {tutorIntroVideoUrl ? (
+                <ProfileMenuRow
+                  icon={<PlayCircle className="h-4 w-4" />}
+                  label="Tanıtım videosu: Videoyu izle"
+                  showChevron
+                  onClick={() => {
+                    setOpen(false);
+                    window.open(tutorIntroVideoUrl, "_blank", "noopener,noreferrer");
+                  }}
+                />
+              ) : (
+                <ProfileMenuRow
+                  icon={<Video className="h-4 w-4" />}
+                  label="Tanıtım videosu ekle"
+                  showChevron
+                  onClick={() => go(editHref)}
+                />
+              )}
+              <Button
+                variant="outline"
+                className="w-full"
+                disabled={!tutorId}
+                onClick={() => tutorId && go(`/tutors/${tutorId}`)}
+              >
+                Public Profili Gör
+              </Button>
+            </ProfileAccordionSection>
+          )}
 
-          {/* ---- Tercihler ---- */}
+          {/* ---- Gelişmiş Ayarlar ---- */}
           <ProfileAccordionSection
-            icon={<Globe className="h-4 w-4" />}
-            title="Tercihler"
-            {...sectionProps("preferences")}
+            icon={<UserCog className="h-4 w-4" />}
+            title="Gelişmiş Ayarlar"
+            {...sectionProps("advanced")}
           >
             <div className="flex items-center gap-3 px-2 py-1.5 text-sm">
-              <Globe className="h-4 w-4 shrink-0 text-muted-foreground" />
+              <span className="shrink-0 text-muted-foreground">
+                <Globe className="h-4 w-4" />
+              </span>
               <span className="flex-1 text-foreground">Dil</span>
-              <Select value={prefs.language} onValueChange={handleLanguageChange}>
-                <SelectTrigger className="h-8 w-28 text-xs">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="tr">Türkçe</SelectItem>
-                  <SelectItem value="en">İngilizce</SelectItem>
-                </SelectContent>
-              </Select>
+              <select
+                value={prefs.language}
+                onChange={(e) => handleLanguageChange(e.target.value)}
+                className="rounded-md border border-input bg-background px-2 py-0.5 text-xs text-foreground"
+              >
+                <option value="tr">Türkçe</option>
+                <option value="en">İngilizce</option>
+              </select>
             </div>
             <div className="flex items-center gap-3 px-2 py-1.5 text-sm">
+              <span className="shrink-0 text-muted-foreground">
+                <Moon className="h-4 w-4" />
+              </span>
               <span className="flex-1 text-foreground">Tema</span>
-              <ThemeSegmentedControl onThemeChange={handleThemeChange} />
+              <AnimatedThemeToggler
+                className="shrink-0"
+                onThemeChange={handleThemeChange}
+              />
+            </div>
+            <ProfileMenuRow
+              icon={<LifeBuoy className="h-4 w-4" />}
+              label="Destek ile iletişime geç"
+              showChevron
+              onClick={() => go("/support")}
+            />
+            <ProfileMenuRow
+              icon={<LogOut className="h-4 w-4" />}
+              label="Çıkış yap"
+              onClick={() => {
+                setOpen(false);
+                logout();
+              }}
+            />
+            <div className="pt-1">
+              <p className="px-2 pb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Tehlikeli Alan
+              </p>
+              <ProfileMenuRow label="Hesabı dondur" danger onClick={comingSoon} />
+              <ProfileMenuRow label="Hesabı sil" danger onClick={comingSoon} />
             </div>
           </ProfileAccordionSection>
         </div>
-
-        <div className="shrink-0 border-t-0 px-5 pb-[max(env(safe-area-inset-bottom),0.75rem)] pt-1">
-          <AccountDrawerFooter
-            onSupport={() => go("/support")}
-            onLogout={handleLogout}
-            loggingOut={loggingOut}
-          />
-        </div>
-      </SheetContent>
-    </Sheet>
+      </PopoverContent>
+    </Popover>
     <Dialog open={paymentDialogOpen} onOpenChange={handlePaymentDialogChange}>
       <DialogContent className="w-[calc(100vw-2rem)] sm:max-w-xl">
         <DialogHeader>
