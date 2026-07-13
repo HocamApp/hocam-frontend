@@ -114,8 +114,12 @@ export function RegisterForm({
         ...parsed.data,
         role: parsed.data.role as "student" | "tutor",
       });
-      setPendingEmail(res.email);
-      setVerificationCode("");
+      if ("requires_verification" in res) {
+        setPendingEmail(res.email);
+        setVerificationCode("");
+      } else {
+        completeAuth(res);
+      }
     } catch (err) {
       if (axios.isAxiosError(err) && err.response?.status === 400 && err.response?.data) {
         const body = err.response.data as ApiError;
@@ -128,9 +132,9 @@ export function RegisterForm({
           setGeneralError(otherKeys.map((k) => (body as Record<string, string[]>)[k].join(" ")).join(" "));
         }
       } else if (axios.isAxiosError(err) && err.response?.status === 429) {
-        setGeneralError("Yeni kod istemeden önce kısa bir süre bekleyin.");
+        setGeneralError("Çok fazla kayıt denemesi yapıldı. Lütfen biraz sonra tekrar deneyin.");
       } else if (axios.isAxiosError(err) && err.response?.status === 503) {
-        setGeneralError("Doğrulama e-postası gönderilemedi. Lütfen biraz sonra tekrar deneyin.");
+        setGeneralError("Kayıt şu anda tamamlanamadı. Lütfen biraz sonra tekrar deneyin.");
       } else if (axios.isAxiosError(err) && err.response) {
         setGeneralError(`Sunucu hatası (${err.response.status}). Lütfen tekrar deneyin.`);
       } else {

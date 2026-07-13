@@ -82,7 +82,7 @@ function TutorOnboardingContent() {
   const steps: OnboardingStep[] = [
     {
       title: "E-posta ile kayıt",
-      description: "Hesabın e-posta kodu ile doğrulandı.",
+      description: "Hesabın e-posta ve şifrenle oluşturuldu.",
       complete: true,
       active: false,
     },

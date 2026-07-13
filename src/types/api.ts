@@ -681,6 +681,7 @@ export interface PasswordResetConfirmRequest {
 export interface SecuritySettings {
   email: string;
   is_email_verified: boolean;
+  email_verification_enabled: boolean;
   last_seen_at: string | null;
   has_usable_password: boolean;
 }

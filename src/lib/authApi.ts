@@ -25,8 +25,11 @@ export async function googleAuth(
 
 export async function registerUser(
   data: RegisterRequest
-): Promise<RegisterStartResponse> {
-  const response = await api.post<RegisterStartResponse>("/auth/register/", data);
+): Promise<AuthResponse | RegisterStartResponse> {
+  const response = await api.post<AuthResponse | RegisterStartResponse>(
+    "/auth/register/",
+    data
+  );
   return response.data;
 }
 
