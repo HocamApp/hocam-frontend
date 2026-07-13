@@ -26,13 +26,13 @@ Next.js 14 frontend for Hocam, a peer-to-peer tutoring marketplace for Turkish s
 ```
 frontend/src/
   app/
+    page.tsx              — integrated login/register entry screen
     (auth)/
       layout.tsx          — standalone layout, no navbar
       login/page.tsx
       register/page.tsx
     (main)/
       layout.tsx          — root layout with Navbar + Footer
-      page.tsx            — integrated login/register entry screen
       tutors/page.tsx
       tutors/[id]/page.tsx
       dashboard/student/page.tsx
@@ -147,8 +147,9 @@ Subject { id, name, exam_type: "TYT" | "AYT" }
 LessonRequest { id, student, tutor, subject, message,
                 status: "pending"|"accepted"|"declined", created_at }
 Booking { id, student, tutor, subject, start_time, duration_minutes, price,
-          status: "pending"|"confirmed"|"completed"|"cancelled",
-          lesson_request, created_at }
+          status: "pending"|"confirmed"|"in_progress"|"awaiting_confirmation"|
+                  "completed"|"disputed"|"cancelled"|"expired",
+          lesson_request, room_url?, package_purchase?, created_at }
 Conversation { id, lesson_request, student, tutor, created_at }
 Message { id, conversation, sender, message_text, created_at }
 Review { id, booking, student, tutor, rating, comment, created_at }

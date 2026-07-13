@@ -10,11 +10,12 @@ const nextConfig = {
           { key: "X-Frame-Options", value: "DENY" },
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-          // Daily.co lessons open in a new tab on daily.co's own origin, so
-          // denying camera/mic here does not affect video calls.
+          // JaaS video is embedded from 8x8.vc. Delegate camera and microphone
+          // only to that trusted iframe origin; keep them disabled elsewhere.
           {
             key: "Permissions-Policy",
-            value: "camera=(), microphone=(), geolocation=()",
+            value:
+              'camera=(self "https://8x8.vc"), microphone=(self "https://8x8.vc"), geolocation=()',
           },
         ],
       },
