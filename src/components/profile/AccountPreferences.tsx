@@ -2,7 +2,8 @@
 
 import { Bell } from "lucide-react";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { SectionCardTitle } from "@/components/profile/SectionCardTitle";
 import {
   Select,
   SelectContent,
@@ -41,7 +42,7 @@ export function AccountPreferences({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Hesap tercihleri</CardTitle>
+        <SectionCardTitle className="text-base">Hesap tercihleri</SectionCardTitle>
       </CardHeader>
       <CardContent className="space-y-1">
         <div className="flex items-center gap-3 px-2 py-1.5 text-sm">
@@ -58,6 +59,9 @@ export function AccountPreferences({
         </div>
         <div className="flex items-center gap-3 px-2 py-1.5 text-sm">
           <span className="flex-1 text-foreground">Tema</span>
+          <span className="text-sm text-muted-foreground">
+            {preferences.dark_mode ? "Koyu" : "Açık"}
+          </span>
           <AnimatedThemeToggler onThemeChange={onThemeChange} />
         </div>
 
