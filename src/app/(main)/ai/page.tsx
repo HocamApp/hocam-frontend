@@ -85,6 +85,9 @@ const intentLabels: Record<AIIntent, string> = {
   platform_faq: "Hocam bilgisi",
   support_escalation: "Destek",
   general_smalltalk: "Sohbet",
+  tutor_profile_feedback: "Profil yorumu",
+  tutor_pricing_guidance: "Fiyat rehberi",
+  tutor_bio_draft: "Hakkımda taslağı",
   unknown: "Netleştirme",
 };
 

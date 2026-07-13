@@ -13,6 +13,7 @@ import { useAuth } from "@/hooks/useAuth";
 import {
   fetchMyTutorProfile,
   fetchSubjects,
+  fetchTutorPriceInsight,
   updateMyTutorProfile,
   uploadTutorProfilePicture,
 } from "@/lib/tutorsApi";
@@ -21,6 +22,7 @@ import { filterSelectedSubjectIds } from "@/lib/subjects";
 import type { TutorProfile } from "@/types";
 
 import { RouteGuard } from "@/components/shared/RouteGuard";
+import { AISupportChatWidget } from "@/components/ai/AISupportChatWidget";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -149,6 +151,16 @@ function TutorProfileEditContent() {
     queryKey: ["subjects"],
     queryFn: fetchSubjects,
     enabled: isAuthenticated,
+  });
+  const {
+    data: priceInsight,
+    isLoading: priceInsightLoading,
+    isError: priceInsightError,
+  } = useQuery({
+    queryKey: ["tutor-price-insight", [...selectedSubjectIds].sort()],
+    queryFn: () => fetchTutorPriceInsight(selectedSubjectIds),
+    enabled: isAuthenticated && Boolean(profile) && selectedSubjectIds.length > 0,
+    staleTime: 5 * 60 * 1000,
   });
 
   const form = useForm<EditFormValues>({
@@ -318,6 +330,29 @@ function TutorProfileEditContent() {
     else router.push("/dashboard/tutor");
   };
 
+  const applyRecommendedPrice = (recommendedPrice: number) => {
+    form.setValue("hourly_price", String(recommendedPrice), {
+      shouldDirty: true,
+      shouldTouch: true,
+      shouldValidate: true,
+    });
+    setSaveState("idle");
+    toast.success("Önerilen fiyat forma eklendi.");
+  };
+
+  const applyAIBio = (value: string) => {
+    form.setValue("bio", value.slice(0, BIO_MAX_LENGTH), {
+      shouldDirty: true,
+      shouldTouch: true,
+      shouldValidate: true,
+    });
+    setSaveState("idle");
+    document
+      .getElementById("profile-basics")
+      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    toast.success("AI taslağı Hakkımda alanına eklendi. Kaydetmeden önce gözden geçir.");
+  };
+
   if (profileLoading) return <ProfileEditorSkeleton />;
   if (profileError || !profile) {
     return (
@@ -442,7 +477,14 @@ function TutorProfileEditContent() {
                   error={subjectError}
                   onToggle={toggleSubject}
                 />
-                <PricingSection form={form} sixtyMinutePrice={sixtyMinutePrice} />
+                <PricingSection
+                  form={form}
+                  sixtyMinutePrice={sixtyMinutePrice}
+                  priceInsight={priceInsight}
+                  priceInsightLoading={priceInsightLoading}
+                  priceInsightError={priceInsightError}
+                  onApplyRecommendedPrice={applyRecommendedPrice}
+                />
                 <IntroVideoSection
                   form={form}
                   profile={profile}
@@ -503,6 +545,33 @@ function TutorProfileEditContent() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AISupportChatWidget
+        title="Hocam AI Profil Yardımcısı"
+        welcomeMessage="Merhaba! Profilini güçlendirmek, fiyatını değerlendirmek ve sana uygun bir Hakkımda yazısı hazırlamak için buradayım."
+        starterPrompts={[
+          "Profilimi değerlendir.",
+          "Hakkımda yazımı hazırla.",
+          "Fiyatımı nasıl belirlemeliyim?",
+          "Bu fiyatla elime ne kadar geçer?",
+        ]}
+        getRequestContext={() => ({
+          surface: "tutor_profile_edit",
+          draft_profile: {
+            bio: bioValue,
+            hourly_price:
+              Number(watchedValues.hourly_price) > 0
+                ? Number(watchedValues.hourly_price)
+                : profile.hourly_price,
+            subject_ids: selectedSubjectIds,
+          },
+        })}
+        onApplyProfileBio={applyAIBio}
+        attentionMessage="Yardımcı olmamı ister misin?"
+        attentionStorageKey="hocam:tutor-profile-ai-nudge-shown"
+        positionClassName="bottom-24 sm:bottom-24 lg:bottom-6"
+        panelClassName="h-[min(640px,calc(100vh-176px))] lg:h-[min(680px,calc(100vh-112px))]"
+      />
     </div>
   );
 }

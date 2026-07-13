@@ -2,12 +2,14 @@
 
 import type { ChangeEvent, ReactNode, RefObject } from "react";
 import type { UseFormReturn } from "react-hook-form";
-import { LockKeyhole, ShieldCheck } from "lucide-react";
+import { Info, LockKeyhole, ShieldCheck, Sparkles, TrendingUp, WalletCards } from "lucide-react";
 
 import type { Subject, TutorProfile } from "@/types";
+import type { TutorPriceInsight } from "@/lib/tutorsApi";
 import { AvatarEditor } from "@/components/profile/AvatarEditor";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   FormControl,
@@ -269,50 +271,157 @@ export function SubjectsSection(props: SubjectsSectionProps) {
 interface PricingSectionProps {
   form: UseFormReturn<TutorProfileEditValues>;
   sixtyMinutePrice: number | null;
+  priceInsight?: TutorPriceInsight;
+  priceInsightLoading: boolean;
+  priceInsightError: boolean;
+  onApplyRecommendedPrice: (price: number) => void;
 }
 
-export function PricingSection({ form, sixtyMinutePrice }: PricingSectionProps) {
+const priceInsightLabels: Record<TutorPriceInsight["basis"], string> = {
+  same_subjects_similar_rank: "Aynı dersler ve yakın YKS sıralaması",
+  same_subjects: "Aynı dersleri veren tutorlar",
+  same_exam_nearest_rank: "Aynı sınav türü ve en yakın YKS sıralamaları",
+  insufficient_data: "Yetersiz karşılaştırma verisi",
+};
+
+export function PricingSection({
+  form,
+  sixtyMinutePrice,
+  priceInsight,
+  priceInsightLoading,
+  priceInsightError,
+  onApplyRecommendedPrice,
+}: PricingSectionProps) {
+  const numericPrice = Number(form.watch("hourly_price"));
+  const commissionRate = (priceInsight?.commission_rate_bps ?? 0) / 10_000;
+  const estimatedCommission =
+    Number.isFinite(numericPrice) && numericPrice > 0 && commissionRate > 0
+      ? numericPrice * commissionRate
+      : null;
+  const estimatedNet =
+    estimatedCommission != null ? numericPrice - estimatedCommission : null;
+
   return (
     <EditorSection
       id="pricing"
       title="Ücretlendirme"
       description="Ders ücreti 40 dakikalık standart ders süresi için kaydedilir."
     >
-      <FormField
-        control={form.control}
-        name="hourly_price"
-        render={({ field }) => (
-          <FormItem className="max-w-md">
-            <FormLabel>40 dakikalık ders ücreti</FormLabel>
-            <div className="relative">
-              <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 font-medium text-muted-foreground">₺</span>
-              <FormControl>
-                <Input
-                  type="number"
-                  inputMode="numeric"
-                  min={1}
-                  placeholder="400"
-                  className="pl-8"
-                  {...field}
-                  onChange={(event) => {
-                    field.onChange(event);
-                    form.clearErrors("hourly_price");
-                  }}
-                />
-              </FormControl>
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(280px,0.9fr)] lg:items-start">
+        <FormField
+          control={form.control}
+          name="hourly_price"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>40 dakikalık ders ücreti</FormLabel>
+              <div className="relative">
+                <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 font-medium text-muted-foreground">₺</span>
+                <FormControl>
+                  <Input
+                    type="number"
+                    inputMode="numeric"
+                    min={1}
+                    placeholder="400"
+                    className="pl-8"
+                    {...field}
+                    onChange={(event) => {
+                      field.onChange(event);
+                      form.clearErrors("hourly_price");
+                    }}
+                  />
+                </FormControl>
+              </div>
+              <FormDescription>
+                Daha uzun dersler bu ücretten orantılı hesaplanır.
+                {sixtyMinutePrice != null && (
+                  <span className="mt-2 block rounded-md bg-muted px-3 py-2 font-medium text-foreground">
+                    60 dakikalık ders örneği: {sixtyMinutePrice.toLocaleString("tr-TR", { maximumFractionDigits: 2 })} ₺
+                  </span>
+                )}
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <div className="rounded-xl border bg-muted/20 p-4" aria-live="polite">
+          <div className="flex items-center gap-2">
+            <TrendingUp className="h-4 w-4 text-primary" aria-hidden />
+            <p className="text-sm font-semibold">Veriye dayalı fiyat rehberi</p>
+          </div>
+          {priceInsightLoading ? (
+            <div className="mt-4 space-y-2" aria-label="Fiyat önerisi yükleniyor">
+              <div className="h-7 w-28 animate-pulse rounded bg-muted" />
+              <div className="h-4 w-full animate-pulse rounded bg-muted" />
             </div>
-            <FormDescription>
-              Daha uzun dersler bu ücretten orantılı hesaplanır.
-              {sixtyMinutePrice != null && (
-                <span className="mt-2 block rounded-md bg-muted px-3 py-2 font-medium text-foreground">
-                  60 dakikalık ders örneği: {sixtyMinutePrice.toLocaleString("tr-TR", { maximumFractionDigits: 2 })} ₺
-                </span>
-              )}
-            </FormDescription>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
+          ) : priceInsightError ? (
+            <p className="mt-3 text-sm text-muted-foreground">
+              Fiyat önerisi şu anda alınamıyor. Seçtiğin fiyatı yine kaydedebilirsin.
+            </p>
+          ) : priceInsight?.recommended_price != null ? (
+            <div className="mt-3">
+              <div className="flex flex-wrap items-end justify-between gap-3">
+                <div>
+                  <p className="text-xs text-muted-foreground">Önerilen fiyat</p>
+                  <p className="text-2xl font-semibold">
+                    {priceInsight.recommended_price.toLocaleString("tr-TR")} ₺
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onApplyRecommendedPrice(priceInsight.recommended_price!)}
+                >
+                  <Sparkles className="mr-1.5 h-3.5 w-3.5" aria-hidden />
+                  Öneriyi kullan
+                </Button>
+              </div>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Piyasa aralığı: {priceInsight.market_range.low?.toLocaleString("tr-TR")}–{priceInsight.market_range.high?.toLocaleString("tr-TR")} ₺
+              </p>
+              <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                {priceInsightLabels[priceInsight.basis]} · {priceInsight.sample_size} tutor karşılaştırıldı
+              </p>
+            </div>
+          ) : (
+            <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+              Güvenilir bir öneri için henüz en az 3 benzer tutor verisi bulunmuyor.
+            </p>
+          )}
+        </div>
+      </div>
+
+      {estimatedNet != null && estimatedCommission != null && (
+        <div className="mt-5 rounded-xl border bg-background p-4">
+          <div className="flex items-center gap-2">
+            <WalletCards className="h-4 w-4 text-primary" aria-hidden />
+            <p className="text-sm font-semibold">Tahmini ders gelirin</p>
+          </div>
+          <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-3">
+            <div>
+              <dt className="text-muted-foreground">Ders fiyatı</dt>
+              <dd className="mt-1 font-semibold">{numericPrice.toLocaleString("tr-TR")} ₺</dd>
+            </div>
+            <div>
+              <dt className="text-muted-foreground">Hocam komisyonu (%15)</dt>
+              <dd className="mt-1 font-semibold text-rose-700 dark:text-rose-300">
+                −{estimatedCommission.toLocaleString("tr-TR", { maximumFractionDigits: 2 })} ₺
+              </dd>
+            </div>
+            <div className="rounded-lg bg-emerald-50 px-3 py-2 dark:bg-emerald-950/30">
+              <dt className="text-emerald-800 dark:text-emerald-200">Sana kalan tahmini tutar</dt>
+              <dd className="mt-1 text-lg font-semibold text-emerald-900 dark:text-emerald-100">
+                {estimatedNet.toLocaleString("tr-TR", { maximumFractionDigits: 2 })} ₺
+              </dd>
+            </div>
+          </dl>
+          <p className="mt-3 flex items-start gap-2 text-xs leading-relaxed text-muted-foreground">
+            <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
+            Bu yalnızca 40 dakikalık standart fiyat üzerinden tahmindir. Paket indirimi, vergi, ödeme sağlayıcı masrafı ve kesin hak ediş dahil değildir.
+          </p>
+        </div>
+      )}
     </EditorSection>
   );
 }

@@ -115,6 +115,30 @@ export async function fetchMyTutorProfile(): Promise<TutorProfile> {
   return response.data;
 }
 
+export interface TutorPriceInsight {
+  recommended_price: number | null;
+  market_range: { low: number | null; high: number | null };
+  sample_size: number;
+  basis:
+    | "same_subjects_similar_rank"
+    | "same_subjects"
+    | "same_exam_nearest_rank"
+    | "insufficient_data";
+  commission_rate_bps: number;
+}
+
+export async function fetchTutorPriceInsight(
+  subjectIds: string[]
+): Promise<TutorPriceInsight> {
+  const params = new URLSearchParams();
+  subjectIds.forEach((subjectId) => params.append("subject_ids", subjectId));
+  const query = params.toString();
+  const response = await api.get<TutorPriceInsight>(
+    `/tutors/me/price-insight/${query ? `?${query}` : ""}`
+  );
+  return response.data;
+}
+
 export async function createTutorProfile(
   payload: CreateTutorProfilePayload
 ): Promise<TutorProfile> {
