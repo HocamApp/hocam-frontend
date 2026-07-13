@@ -1,6 +1,7 @@
 "use client";
 
-import { AlertCircle, Award, CheckCircle2, Circle, Lightbulb } from "lucide-react";
+import { AlertCircle, Award, Check, Circle, Lightbulb, Sparkles } from "lucide-react";
+import { motion, useReducedMotion } from "framer-motion";
 
 import type { Subject, TutorProfile } from "@/types";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -47,6 +48,64 @@ function ActionList({ items }: { items: ProfileActionItem[] }) {
   );
 }
 
+function CompletionRing({ value }: { value: number }) {
+  const reduceMotion = useReducedMotion();
+  const complete = value === 100;
+  return (
+    <div
+      className="relative h-24 w-24 shrink-0"
+      role="progressbar"
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-valuenow={value}
+      aria-label={`Profil tamamlanma oranı yüzde ${value}`}
+    >
+      <svg viewBox="0 0 100 100" className="h-full w-full -rotate-90" aria-hidden>
+        <circle cx="50" cy="50" r="42" fill="none" stroke="currentColor" strokeWidth="8" className="text-muted" />
+        <motion.circle
+          cx="50"
+          cy="50"
+          r="42"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="8"
+          strokeLinecap="round"
+          className={complete ? "text-emerald-500" : "text-primary"}
+          pathLength={1}
+          initial={reduceMotion ? { pathLength: value / 100 } : { pathLength: 0 }}
+          animate={{ pathLength: value / 100 }}
+          transition={{ duration: reduceMotion ? 0 : 0.8, ease: "easeOut" }}
+        />
+      </svg>
+      <div className="absolute inset-0 flex items-center justify-center">
+        {complete ? (
+          <motion.span
+            initial={reduceMotion ? false : { scale: 0.7, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ delay: reduceMotion ? 0 : 0.55 }}
+            className="flex h-11 w-11 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-200"
+          >
+            <Check className="h-6 w-6" strokeWidth={2.5} aria-hidden />
+          </motion.span>
+        ) : (
+          <span className="text-lg font-semibold">%{value}</span>
+        )}
+      </div>
+      {complete && (
+        <motion.span
+          initial={reduceMotion ? false : { scale: 0, opacity: 0, rotate: -20 }}
+          animate={{ scale: 1, opacity: 1, rotate: 0 }}
+          transition={{ delay: reduceMotion ? 0 : 0.8, duration: 0.3 }}
+          className="absolute -right-1 -top-1 text-amber-500"
+          aria-hidden
+        >
+          <Sparkles className="h-5 w-5" />
+        </motion.span>
+      )}
+    </div>
+  );
+}
+
 export function TutorProfileEditSidebar({
   profile,
   university,
@@ -75,34 +134,30 @@ export function TutorProfileEditSidebar({
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div>
-            <div className="flex items-center justify-between text-sm">
-              <span className="font-medium">Zorunlu bilgiler</span>
-              <span className="text-muted-foreground">
-                {completedRequired}/{requiredTotal}
-              </span>
-            </div>
-            <div
-              className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted"
-              role="progressbar"
-              aria-valuemin={0}
-              aria-valuemax={100}
-              aria-valuenow={completionPercent}
-              aria-label={`Profil tamamlanma oranı yüzde ${completionPercent}`}
-            >
-              <div className="h-full rounded-full bg-primary" style={{ width: `${completionPercent}%` }} />
+          <div className="flex items-center gap-4 rounded-xl bg-muted/30 p-3">
+            <CompletionRing value={completionPercent} />
+            <div className="min-w-0">
+              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                {completedRequired}/{requiredTotal} zorunlu bilgi
+              </p>
+              {missingRequirements.length === 0 ? (
+                <>
+                  <p className="mt-1 font-semibold text-emerald-800 dark:text-emerald-200">
+                    Harika, profilin hazır!
+                  </p>
+                  <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                    Artık bilgini paylaşarak öğrencilerine ulaşmaya ve kazanmaya hazırsın.
+                  </p>
+                </>
+              ) : (
+                <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                  Birkaç adımı daha tamamlayarak profilini öğrenciler için hazır hale getir.
+                </p>
+              )}
             </div>
           </div>
 
-          {missingRequirements.length === 0 ? (
-            <div className="flex gap-2 rounded-md bg-emerald-50 p-3 text-sm text-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-100">
-              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
-              <div>
-                <p className="font-medium">Profilin hazır</p>
-                <p className="mt-0.5 opacity-80">Tüm zorunlu bilgiler tamamlandı.</p>
-              </div>
-            </div>
-          ) : (
+          {missingRequirements.length > 0 && (
             <div>
               <p className="flex items-center gap-2 text-sm font-medium">
                 <AlertCircle className="h-4 w-4 text-amber-600" aria-hidden />
