@@ -12,6 +12,7 @@ import {
   MessageSquare,
   PlayCircle,
   Share2,
+  X,
 } from "lucide-react";
 import { useFavorites } from "@/hooks/useFavorites";
 import { FavoriteButton } from "@/components/tutors/FavoriteButton";
@@ -32,6 +33,13 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -325,6 +333,7 @@ export default function TutorProfilePage({
   // handles the free trial path (which deliberately skips checkout).
   const [bookingModalMode, setBookingModalMode] = useState<"trial" | null>(null);
   const [bookingComplete, setBookingComplete] = useState(false);
+  const [isPhotoPreviewOpen, setIsPhotoPreviewOpen] = useState(false);
   const [isSharePreviewOpen, setIsSharePreviewOpen] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
   const [shareUrl, setShareUrl] = useState("");
@@ -403,6 +412,7 @@ export default function TutorProfilePage({
     items: (tutor?.subjects ?? []).filter((s) => s.exam_type === exam),
   })).filter((group) => group.items.length > 0);
   const introVideoEmbedUrl = getYouTubeEmbedUrl(tutor?.intro_video_url);
+  const tutorPhotoUrl = tutor?.profile_picture || "/images/demo-teacher.jpg";
   const completedLessonsLabel = `${formatLessonCount(tutor?.completed_lessons_count ?? 0)} ders`;
   const shareTitle = tutor
     ? `${tutor.name} ${tutor.surname} · Hocam`
@@ -470,15 +480,22 @@ export default function TutorProfilePage({
       <div className="lg:grid lg:grid-cols-3 lg:gap-8">
         <div className="lg:col-span-2 space-y-4">
           <div className="flex gap-4">
-            <Avatar className="h-24 w-24 shrink-0">
-              <AvatarImage
-                src={tutor.profile_picture || '/images/demo-teacher.jpg'}
-                alt={`${tutor.name} ${tutor.surname}`}
-              />
-              <AvatarFallback className="bg-primary/10 text-primary text-2xl font-medium">
-                {getInitials(tutor.name, tutor.surname)}
-              </AvatarFallback>
-            </Avatar>
+            <button
+              type="button"
+              onClick={() => setIsPhotoPreviewOpen(true)}
+              className="shrink-0 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              aria-label={`${tutor.name} ${tutor.surname} profil fotoğrafını büyüt`}
+            >
+              <Avatar className="h-24 w-24 cursor-zoom-in">
+                <AvatarImage
+                  src={tutorPhotoUrl}
+                  alt={`${tutor.name} ${tutor.surname}`}
+                />
+                <AvatarFallback className="bg-primary/10 text-primary text-2xl font-medium">
+                  {getInitials(tutor.name, tutor.surname)}
+                </AvatarFallback>
+              </Avatar>
+            </button>
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-1.5">
                 <h1 className="text-3xl font-bold leading-tight">
@@ -913,6 +930,33 @@ export default function TutorProfilePage({
           toast.success("Ücretsiz deneme dersi isteğin gönderildi.");
         }}
       />
+      <Dialog open={isPhotoPreviewOpen} onOpenChange={setIsPhotoPreviewOpen}>
+        <DialogContent
+          showClose={false}
+          className="relative w-[calc(100vw-2rem)] max-w-2xl overflow-hidden border-0 bg-transparent p-0 shadow-none"
+        >
+          <DialogTitle className="sr-only">
+            {tutor.name} {tutor.surname} profil fotoğrafı
+          </DialogTitle>
+          <DialogDescription className="sr-only">
+            Hoca profil fotoğrafının büyük önizlemesi.
+          </DialogDescription>
+          <DialogClose asChild>
+            <button
+              type="button"
+              className="absolute right-3 top-3 z-10 rounded-full bg-background/90 p-2 text-foreground shadow-sm transition-colors hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              aria-label="Fotoğraf önizlemesini kapat"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </DialogClose>
+          <img
+            src={tutorPhotoUrl}
+            alt={`${tutor.name} ${tutor.surname}`}
+            className="max-h-[80vh] w-full rounded-xl bg-muted object-contain"
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
