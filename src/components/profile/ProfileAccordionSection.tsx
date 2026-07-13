@@ -106,10 +106,10 @@ export function ProfileAccordionSection({
         data-state={open ? "open" : "closed"}
         initial={false}
         animate={{
-          borderTopLeftRadius: startsGroup ? 28 : 0,
-          borderTopRightRadius: startsGroup ? 28 : 0,
-          borderBottomLeftRadius: endsGroup ? 28 : 0,
-          borderBottomRightRadius: endsGroup ? 28 : 0,
+          borderTopLeftRadius: startsGroup ? 18 : 0,
+          borderTopRightRadius: startsGroup ? 18 : 0,
+          borderBottomLeftRadius: endsGroup ? 18 : 0,
+          borderBottomRightRadius: endsGroup ? 18 : 0,
         }}
         transition={reduce ? { duration: 0 } : ROW_TRANSITION}
         className="overflow-hidden border border-border bg-background text-foreground shadow-sm"
@@ -120,7 +120,7 @@ export function ProfileAccordionSection({
           onClick={onToggle}
           aria-expanded={open}
           aria-controls={contentId}
-          className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/60"
+          className="flex min-h-[52px] w-full items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-muted/60"
         >
           <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-foreground/70">
             {icon}
