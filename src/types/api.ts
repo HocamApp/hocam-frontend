@@ -281,6 +281,19 @@ export interface TutorProfile {
   created_at: string;
   /** Only present on GET/PATCH /api/tutors/me/ — never the public list/detail response. */
   no_show_count?: number;
+  /** Present only on GET/PATCH /api/tutors/me/. */
+  intro_video_status?: "none" | "pending" | "approved" | "rejected";
+  intro_video_rejection_reason?: string;
+  /** A verified tutor's credential/video edits awaiting review. Private to that tutor. */
+  pending_profile_change?: {
+    university: string | null;
+    department: string | null;
+    yks_rank: number | null;
+    intro_video_url: string | null;
+    status: "pending";
+    rejection_reason: string;
+    submitted_at: string;
+  } | null;
 }
 
 export interface LessonRequest {

@@ -45,8 +45,8 @@ const editSchema = z.object({
     .string()
     .min(1, "YKS sıralaması zorunludur")
     .refine(
-      (v) => !isNaN(Number(v)) && Number(v) >= 1 && Number(v) <= 15000,
-      { message: "Sıralama 1-15000 arasında olmalıdır" }
+      (v) => !isNaN(Number(v)) && Number(v) >= 1 && Number(v) <= 4_000_000,
+      { message: "Sıralama 1-4.000.000 arasında olmalıdır" }
     ),
   hourly_price: z
     .string()
@@ -120,12 +120,18 @@ function TutorProfileEditContent() {
 
   useEffect(() => {
     if (profile && !profileLoaded) {
+      const pendingChange = profile.pending_profile_change;
       form.reset({
-        university: profile.university ?? "",
-        department: profile.department ?? "",
-        yks_rank: profile.yks_rank != null ? String(profile.yks_rank) : "",
+        university: pendingChange?.university ?? profile.university ?? "",
+        department: pendingChange?.department ?? profile.department ?? "",
+        yks_rank:
+          pendingChange?.yks_rank != null
+            ? String(pendingChange.yks_rank)
+            : profile.yks_rank != null
+              ? String(profile.yks_rank)
+              : "",
         hourly_price: profile.hourly_price != null ? String(profile.hourly_price) : "",
-        intro_video_url: profile.intro_video_url ?? "",
+        intro_video_url: pendingChange?.intro_video_url ?? profile.intro_video_url ?? "",
         bio: (profile.bio ?? "").slice(0, BIO_MAX_LENGTH),
       });
       setSelectedSubjectIds(profile.subjects.map((s) => s.id));
@@ -171,7 +177,7 @@ function TutorProfileEditContent() {
 
     setGeneralError(null);
     try {
-      await updateMyTutorProfile({
+      const updatedProfile = await updateMyTutorProfile({
         university: parsed.data.university,
         department: parsed.data.department,
         yks_rank: Number(parsed.data.yks_rank),
@@ -181,9 +187,13 @@ function TutorProfileEditContent() {
         subject_ids: supportedSelectedSubjectIds,
       });
 
-      await queryClient.invalidateQueries({ queryKey: ["tutor-me"] });
-      toast.success("Profil güncellendi.");
-      router.push("/dashboard/tutor");
+      queryClient.setQueryData(["tutor-me"], updatedProfile);
+      setProfileLoaded(false);
+      toast.success(
+        updatedProfile.is_verified
+          ? "Profil güncellendi. Doğrulanmış bilgiler incelemeye gönderildi."
+          : "Profil güncellendi. Tanıtım videosu yayınlanmadan önce incelenecek."
+      );
     } catch (err: unknown) {
       const axErr = err as { response?: { data?: unknown } };
       const respData = axErr.response?.data;
@@ -236,6 +246,18 @@ function TutorProfileEditContent() {
   }
 
   const subjectGroups = groupSubjectsByExam(subjects);
+  const pendingChange = profile.pending_profile_change;
+  const profileStrengthItems = [
+    { label: "Kimlik ve eğitim doğrulaması", complete: profile.is_verified },
+    { label: "Profil fotoğrafı", complete: Boolean(profile.profile_picture) },
+    { label: "En az 80 karakterlik tanıtım", complete: (profile.bio ?? "").length >= 80 },
+    { label: "En az bir ders", complete: profile.subjects.length > 0 },
+    {
+      label: "Onaylı tanıtım videosu",
+      complete: profile.intro_video_status === "approved",
+    },
+  ];
+  const completedProfileItems = profileStrengthItems.filter((item) => item.complete).length;
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-10">
@@ -247,6 +269,44 @@ function TutorProfileEditContent() {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          <div className="mb-6 rounded-lg border bg-muted/40 p-4 text-sm">
+            <p className="font-medium">Profil görünürlüğü: {completedProfileItems}/5 tamamlandı</p>
+            <ul className="mt-2 grid gap-1 text-muted-foreground sm:grid-cols-2">
+              {profileStrengthItems.map((item) => (
+                <li key={item.label} className={item.complete ? "text-foreground" : undefined}>
+                  {item.complete ? "✓" : "○"} {item.label}
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {pendingChange && (
+            <div className="mb-6 rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-100">
+              <p className="font-medium">Doğrulanmış bilgi değişikliği incelemede</p>
+              <p className="mt-1">
+                Üniversite, bölüm, YKS sıralaması ve tanıtım videosundaki değişiklikler
+                onaylanana kadar öğrenciler mevcut doğrulanmış bilgilerini görür.
+              </p>
+            </div>
+          )}
+
+          {profile.intro_video_status === "pending" && !pendingChange && (
+            <div className="mb-6 rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-100">
+              Tanıtım videon inceleniyor. Onaylanana kadar öğrencilere gösterilmez.
+            </div>
+          )}
+
+          {profile.intro_video_status === "rejected" && (
+            <div className="mb-6 rounded-lg border border-destructive/40 bg-destructive/10 p-4 text-sm">
+              <p className="font-medium">Tanıtım videosu yayınlanmadı</p>
+              {profile.intro_video_rejection_reason && (
+                <p className="mt-1 text-muted-foreground">
+                  {profile.intro_video_rejection_reason}
+                </p>
+              )}
+            </div>
+          )}
+
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               {generalError && <ErrorMessage message={generalError} />}
@@ -256,11 +316,16 @@ function TutorProfileEditContent() {
                 name="university"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Üniversite</FormLabel>
+                    <FormLabel>Üniversite {profile.is_verified ? "(doğrulanmış)" : ""}</FormLabel>
                     <FormControl>
                       <Input placeholder="Örn: İstanbul Teknik Üniversitesi" {...field} />
                     </FormControl>
                     <FormMessage />
+                    {profile.is_verified && (
+                      <p className="text-xs text-muted-foreground">
+                        Bu bilgideki değişiklik, kanıtınla birlikte incelenir.
+                      </p>
+                    )}
                   </FormItem>
                 )}
               />
@@ -270,7 +335,7 @@ function TutorProfileEditContent() {
                 name="department"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Bölüm</FormLabel>
+                    <FormLabel>Bölüm {profile.is_verified ? "(doğrulanmış)" : ""}</FormLabel>
                     <FormControl>
                       <Input placeholder="Örn: Bilgisayar Mühendisliği" {...field} />
                     </FormControl>
@@ -290,12 +355,17 @@ function TutorProfileEditContent() {
                         <Input
                           type="number"
                           min={1}
-                          max={15000}
+                          max={4_000_000}
                           placeholder="Örn: 5000"
                           {...field}
                         />
                       </FormControl>
                       <FormMessage />
+                      {profile.is_verified && (
+                        <p className="text-xs text-muted-foreground">
+                          Sıralama değişikliği, doğrulama ekibinin onayından sonra yayınlanır.
+                        </p>
+                      )}
                     </FormItem>
                   )}
                 />
@@ -364,6 +434,9 @@ function TutorProfileEditContent() {
                       />
                     </FormControl>
                     <FormMessage />
+                    <p className="text-xs text-muted-foreground">
+                      Yalnızca YouTube bağlantıları kabul edilir. Video yayınlanmadan önce incelenir.
+                    </p>
                     {introEmbedUrl && (
                       <div className="mt-2 aspect-video overflow-hidden rounded-md border bg-muted">
                         <iframe
@@ -394,6 +467,7 @@ function TutorProfileEditContent() {
                               key={s.id}
                               type="button"
                               onClick={() => toggleSubject(s.id)}
+                              aria-pressed={selectedSubjectIds.includes(s.id)}
                               className={cn(
                                 "rounded-full border px-3 py-1 text-sm transition-colors",
                                 selectedSubjectIds.includes(s.id)
