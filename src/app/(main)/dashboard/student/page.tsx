@@ -5,15 +5,11 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import {
   ArrowRight,
-  BookOpen,
   Calendar,
   CalendarPlus,
   Clock3,
-  Heart,
   Layers3,
   MessageCircle,
-  PanelRightOpen,
-  Target,
   Video,
   Wallet,
 } from "lucide-react";
@@ -47,6 +43,8 @@ import {
 import { LessonMaterialsDialog } from "@/components/lessons/LessonMaterialsDialog";
 import { ReviewModal } from "@/components/lessons/ReviewModal";
 import { ParticipantAvatar } from "@/components/messaging/ParticipantAvatar";
+import { LearningMomentumCard } from "@/components/dashboard/student/LearningMomentumCard";
+import { StudentQuickActions } from "@/components/dashboard/student/StudentQuickActions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -257,6 +255,11 @@ function StudentDashboardContent() {
   const learningHref = activeGoal
     ? goalPackageHref(activeGoal.id)
     : "/dashboard/student/learning";
+  // Mirrors the headerAction fallback condition — when there's truly nothing
+  // actionable yet (no upcoming lesson, no usable/pending package), "Yeni
+  // ders ara" is the only real next step, so quick actions can afford to
+  // give it slightly more visual weight than the other shortcuts.
+  const hasNoNextAction = !nextLesson && !activePackage && !pendingPackage;
 
   const headerMessage = nextLesson
     ? `${formatDate(nextLesson.start_time)} saat ${formatTime(nextLesson.start_time)} için ${nextLesson.subject.name} dersin planlandı.`
@@ -273,7 +276,9 @@ function StudentDashboardContent() {
           label: "Sonraki Dersi Planla",
           icon: CalendarPlus,
         }
-      : { href: "/tutors", label: "Hoca Bul", icon: CalendarPlus };
+      : pendingPackage
+        ? { href: "#my-packages", label: "Paketini İncele", icon: Wallet }
+        : { href: "/tutors", label: "Hoca Bul", icon: CalendarPlus };
   const HeaderActionIcon = headerAction.icon;
 
   return (
@@ -459,6 +464,14 @@ function StudentDashboardContent() {
           )}
         </section>
 
+        <LearningMomentumCard
+          activeGoal={activeGoal}
+          learningLoading={learningLoading}
+          bookings={bookings ?? []}
+          activePackage={activePackage}
+          learningHref={learningHref}
+        />
+
         <section id="my-packages" className="space-y-4 scroll-mt-24">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
@@ -512,52 +525,14 @@ function StudentDashboardContent() {
           </Button>
         </section>
 
-        <section className="rounded-2xl border bg-primary/5 p-5">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex min-w-0 items-start gap-3">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                {activeGoal ? <Target className="h-5 w-5" /> : <BookOpen className="h-5 w-5" />}
-              </span>
-              <div className="min-w-0">
-                <p className="text-xs font-medium uppercase tracking-wide text-primary">
-                  Öğrenmeye devam et
-                </p>
-                {learningLoading ? (
-                  <Skeleton className="mt-2 h-5 w-56" />
-                ) : activeGoal ? (
-                  <>
-                    <h2 className="mt-1 truncate font-semibold">{activeGoal.title}</h2>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      Hedefinin %{activeGoal.progress} kadarı tamamlandı. Sıradaki adıma geçebilirsin.
-                    </p>
-                  </>
-                ) : (
-                  <>
-                    <h2 className="mt-1 font-semibold">Kendine bir öğrenme hedefi seç</h2>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      Hazır hedef paketleriyle çalışmalarını adım adım takip et.
-                    </p>
-                  </>
-                )}
-              </div>
-            </div>
-            <Button asChild variant="outline" className="shrink-0 bg-background">
-              <Link href={learningHref}>
-                {activeGoal ? "Hedefe devam et" : "Hedefleri keşfet"}
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
-          </div>
-        </section>
-
         <section id="past-lessons" className="space-y-4 scroll-mt-24">
           <div className="flex w-full items-center justify-between gap-3 rounded-lg border bg-card px-4 py-3">
             <span className="flex min-w-0 items-center gap-2">
               <Layers3 className="h-4 w-4 shrink-0 text-muted-foreground" />
               <span className="min-w-0">
-                <span className="block text-base font-semibold tracking-tight">
+                <h2 className="text-base font-semibold tracking-tight">
                   Son Derslerin
-                </span>
+                </h2>
                 <span className="block text-sm text-muted-foreground">
                   Materyallere ulaş, dersini değerlendir veya aynı hocayla devam et.
                 </span>
@@ -622,48 +597,18 @@ function StudentDashboardContent() {
             </div>
           )}
         </section>
+
+        {/* Secondary shortcuts still need a mobile entry point — the sidebar
+            below is desktop-only (hidden < lg), so this stacks them at the
+            end of the main content flow instead of hiding them entirely. */}
+        <div className="lg:hidden">
+          <StudentQuickActions emphasizeFindTutor={hasNoNextAction} />
+        </div>
           </main>
 
           <aside className="hidden lg:block">
-            <div className="sticky top-24 space-y-2 rounded-lg border bg-card p-3">
-              <div className="mb-2 flex items-center gap-2 text-sm font-medium">
-                <PanelRightOpen className="h-4 w-4 text-muted-foreground" />
-                Hızlı erişim
-              </div>
-              <Button asChild variant="ghost" size="sm" className="w-full justify-start">
-                <Link href="/tutors?favorites=1">
-                  <Heart className="mr-2 h-4 w-4" />
-                  Hocalarım
-                </Link>
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="w-full justify-start"
-                onClick={() => {
-                  document
-                    .getElementById("my-packages")
-                    ?.scrollIntoView({ behavior: "smooth", block: "start" });
-                }}
-              >
-                <Wallet className="mr-2 h-4 w-4" />
-                Paketlerim
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="w-full justify-start"
-                onClick={() => {
-                  document
-                    .getElementById("past-lessons")
-                    ?.scrollIntoView({ behavior: "smooth", block: "start" });
-                }}
-              >
-                <Layers3 className="mr-2 h-4 w-4" />
-                Geçmiş dersler
-              </Button>
+            <div className="sticky top-24">
+              <StudentQuickActions emphasizeFindTutor={hasNoNextAction} />
             </div>
           </aside>
         </div>

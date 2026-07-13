@@ -31,14 +31,15 @@ import type {
 import { RouteGuard } from "@/components/shared/RouteGuard";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { SectionCardTitle } from "@/components/profile/SectionCardTitle";
 import { Separator } from "@/components/ui/separator";
 import { ProfileToggleRow } from "@/components/profile/ProfileMenuRow";
 import { ProfileSummary } from "@/components/profile/ProfileSummary";
 import { AvatarEditor } from "@/components/profile/AvatarEditor";
 import { AccountPreferences } from "@/components/profile/AccountPreferences";
 import { SecurityPrivacySection } from "@/components/profile/SecurityPrivacySection";
-import { StudentActivitySummary } from "@/components/profile/StudentActivitySummary";
+import { StudentLearningSummary } from "@/components/profile/StudentLearningSummary";
 import { TutorVideoSection } from "@/components/profile/TutorVideoSection";
 
 type BoolPrefKey = keyof Omit<UserPreferences, "language">;
@@ -140,6 +141,7 @@ function ProfileContent() {
   };
 
   const handleThemeChange = (nextTheme: Theme) => {
+    setPrefOverrides((prev) => ({ ...prev, dark_mode: nextTheme === "dark" }));
     updateProfileMe({ preferences: { dark_mode: nextTheme === "dark" } }).catch(
       () => undefined
     );
@@ -317,7 +319,7 @@ function ProfileContent() {
           {isTutor ? (
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Hoca Bilgileri</CardTitle>
+                <SectionCardTitle className="text-base">Hoca Bilgileri</SectionCardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <ProfileToggleRow
@@ -358,7 +360,7 @@ function ProfileContent() {
               </CardContent>
             </Card>
           ) : (
-            <StudentActivitySummary
+            <StudentLearningSummary
               pendingReviewsCount={data?.stats.pending_reviews_count ?? 0}
               pendingBookingsCount={data?.stats.pending_bookings_count ?? 0}
             />
