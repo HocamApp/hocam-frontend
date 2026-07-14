@@ -39,7 +39,7 @@ import { ProfileSummary } from "@/components/profile/ProfileSummary";
 import { AvatarEditor } from "@/components/profile/AvatarEditor";
 import { AccountPreferences } from "@/components/profile/AccountPreferences";
 import { SecurityPrivacySection } from "@/components/profile/SecurityPrivacySection";
-import { StudentLearningSummary } from "@/components/profile/StudentLearningSummary";
+import { StudentLearningProfile } from "@/components/profile/StudentLearningProfile";
 import { TutorVideoSection } from "@/components/profile/TutorVideoSection";
 
 type BoolPrefKey = keyof Omit<UserPreferences, "language">;
@@ -256,67 +256,89 @@ function ProfileContent() {
     );
   }
 
+  const identitySummary = (
+    <Card>
+      <CardContent className="pt-6">
+        <ProfileSummary
+          fullName={fullName}
+          name={name}
+          surname={surname}
+          role={role}
+          email={user?.email}
+          avatarImage={avatarImage}
+          initials={initials}
+          studentMeta={
+            studentProfile
+              ? {
+                  targetExamType: studentProfile.target_exam_type,
+                  school: studentProfile.school,
+                  grade: studentProfile.grade,
+                }
+              : undefined
+          }
+          onSave={handleSaveName}
+          avatarEditor={
+            <AvatarEditor
+              avatarImage={avatarImage}
+              initials={initials}
+              fullName={fullName}
+              isStudent={Boolean(studentProfile)}
+              isTutor={isTutor}
+              photoUploading={photoUploading}
+              photoError={photoError}
+              fileInputRef={photoInputRef}
+              onPickFile={() => photoInputRef.current?.click()}
+              onFileChange={handlePhotoUpload}
+              studentAvatar={
+                studentProfile
+                  ? {
+                      avatarKind: studentProfile.avatar_kind,
+                      avatarKey: studentProfile.avatar_key,
+                    }
+                  : undefined
+              }
+              avatarChoicePendingKey={avatarChoicePendingKey}
+              onChooseStudentAvatar={handleStudentAvatarChoice}
+            />
+          }
+        />
+      </CardContent>
+    </Card>
+  );
+
+  const preferences = (
+    <AccountPreferences
+      preferences={prefs}
+      onLanguageChange={handleLanguageChange}
+      onThemeChange={handleThemeChange}
+      onNotificationToggle={handleNotificationToggle}
+    />
+  );
+
+  const security = (
+    <SecurityPrivacySection
+      isTutor={isTutor}
+      isPublic={currentIsPublic}
+      onVisibilityToggle={handleVisibilityToggle}
+      onLogout={logout}
+    />
+  );
+
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:py-10">
       <div className="mb-8">
         <h1 className="text-2xl font-bold tracking-tight text-foreground">Profilim</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Hesap bilgilerini, tercihlerini ve güvenlik ayarlarını buradan yönet.
+          {isTutor
+            ? "Hesap bilgilerini, tercihlerini ve güvenlik ayarlarını buradan yönet."
+            : "Öğrenme geçmişini, ilişkilerini ve hesap tercihlerini bir arada gör."}
         </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:items-start lg:gap-8">
-        {/* Main column */}
-        <div className="space-y-6 lg:col-span-2">
-          <Card>
-            <CardContent className="pt-6">
-              <ProfileSummary
-                fullName={fullName}
-                name={name}
-                surname={surname}
-                role={role}
-                email={user?.email}
-                avatarImage={avatarImage}
-                initials={initials}
-                studentMeta={
-                  studentProfile
-                    ? {
-                        targetExamType: studentProfile.target_exam_type,
-                        school: studentProfile.school,
-                        grade: studentProfile.grade,
-                      }
-                    : undefined
-                }
-                onSave={handleSaveName}
-                avatarEditor={
-                  <AvatarEditor
-                    avatarImage={avatarImage}
-                    initials={initials}
-                    fullName={fullName}
-                    isStudent={Boolean(studentProfile)}
-                    isTutor={isTutor}
-                    photoUploading={photoUploading}
-                    photoError={photoError}
-                    fileInputRef={photoInputRef}
-                    onPickFile={() => photoInputRef.current?.click()}
-                    onFileChange={handlePhotoUpload}
-                    studentAvatar={
-                      studentProfile
-                        ? {
-                            avatarKind: studentProfile.avatar_kind,
-                            avatarKey: studentProfile.avatar_key,
-                          }
-                        : undefined
-                    }
-                    avatarChoicePendingKey={avatarChoicePendingKey}
-                    onChooseStudentAvatar={handleStudentAvatarChoice}
-                  />
-                }
-              />
-            </CardContent>
-          </Card>
-
-          {isTutor ? (
+      {isTutor ? (
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:items-start lg:gap-8">
+          <div className="space-y-6 lg:col-span-2">
+            {identitySummary}
             <Card>
               <CardHeader>
                 <SectionCardTitle className="text-base">Hoca Bilgileri</SectionCardTitle>
@@ -359,30 +381,22 @@ function ProfileContent() {
                 </Button>
               </CardContent>
             </Card>
-          ) : (
-            <StudentLearningSummary
-              pendingReviewsCount={data?.stats.pending_reviews_count ?? 0}
-              pendingBookingsCount={data?.stats.pending_bookings_count ?? 0}
-            />
-          )}
+          </div>
+          <div className="space-y-6">
+            {preferences}
+            {security}
+          </div>
         </div>
-
-        {/* Secondary column */}
-        <div className="space-y-6">
-          <AccountPreferences
-            preferences={prefs}
-            onLanguageChange={handleLanguageChange}
-            onThemeChange={handleThemeChange}
-            onNotificationToggle={handleNotificationToggle}
-          />
-          <SecurityPrivacySection
-            isTutor={isTutor}
-            isPublic={currentIsPublic}
-            onVisibilityToggle={handleVisibilityToggle}
-            onLogout={logout}
-          />
+      ) : (
+        <div className="space-y-6 lg:space-y-8">
+          {identitySummary}
+          <StudentLearningProfile />
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:gap-8">
+            {preferences}
+            {security}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

@@ -1,5 +1,11 @@
 import api from "./api";
-import { ProfileMeResponse, ProfileStudent, UserPreferences } from "@/types";
+import {
+  ProfileMeResponse,
+  ProfileStudent,
+  StudentLearningProfileSummary,
+  StudentQuestionPerformance,
+  UserPreferences,
+} from "@/types";
 
 export interface UpdateProfilePayload {
   preferences?: Partial<UserPreferences>;
@@ -8,6 +14,20 @@ export interface UpdateProfilePayload {
 
 export async function fetchProfileMe(): Promise<ProfileMeResponse> {
   const response = await api.get<ProfileMeResponse>("/profile/me/");
+  return response.data;
+}
+
+export async function fetchStudentLearningProfile(): Promise<StudentLearningProfileSummary> {
+  const response = await api.get<StudentLearningProfileSummary>(
+    "/profile/learning-summary/"
+  );
+  return response.data;
+}
+
+export async function fetchStudentQuestionPerformance(): Promise<StudentQuestionPerformance> {
+  const response = await api.get<StudentQuestionPerformance>(
+    "/profile/question-performance/"
+  );
   return response.data;
 }
 

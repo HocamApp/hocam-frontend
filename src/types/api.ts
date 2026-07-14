@@ -743,6 +743,47 @@ export interface ProfileMeResponse {
   stats: ProfileStats;
 }
 
+export interface LearningProfileSubject {
+  id: string;
+  name: string;
+  exam_type: string;
+  completed_lessons: number;
+}
+
+export interface MostStudiedTutor {
+  id: string;
+  name: string;
+  surname: string;
+  profile_picture: string;
+  completed_lessons: number;
+  last_lesson_at: string;
+  primary_subject: LearningProfileSubject | null;
+  is_bookable: boolean;
+}
+
+export interface StudentLearningProfileSummary {
+  completed_lessons: number;
+  active_packages: number;
+  most_studied_tutor: MostStudiedTutor | null;
+  top_subjects: LearningProfileSubject[];
+}
+
+export interface QuestionPerformanceSubject {
+  id: string;
+  name: string;
+  exam_type: string;
+  attempt_count: number;
+  accuracy_percent: number;
+}
+
+export interface StudentQuestionPerformance {
+  total_attempts: number;
+  correct_attempts: number;
+  incorrect_attempts: number;
+  accuracy_percent: number | null;
+  top_subject: QuestionPerformanceSubject | null;
+}
+
 export type ParticipantRole = "tutor" | "student";
 
 export interface UpcomingLesson {
