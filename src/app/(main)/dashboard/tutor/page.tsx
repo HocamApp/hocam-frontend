@@ -54,6 +54,8 @@ import type {
   TutorProgressResult,
 } from "@/types";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { AISupportChatWidget } from "@/components/ai/AISupportChatWidget";
+import { TUTOR_DASHBOARD_ASSISTANT } from "@/components/ai/pageAssistantContent";
 import { RouteGuard } from "@/components/shared/RouteGuard";
 import StatusBadge from "@/components/shared/StatusBadge";
 import { BookingCard, paymentLabel } from "@/components/lessons/BookingCard";
@@ -1732,7 +1734,15 @@ function TutorDashboardContent() {
 export default function TutorDashboardPage() {
   return (
     <RouteGuard requireAuth requireRole="tutor">
-      <TutorDashboardContent />
+      <>
+        <TutorDashboardContent />
+        <AISupportChatWidget
+          title={TUTOR_DASHBOARD_ASSISTANT.title}
+          welcomeMessage={TUTOR_DASHBOARD_ASSISTANT.welcomeMessage}
+          attentionMessages={TUTOR_DASHBOARD_ASSISTANT.attentionMessages}
+          starterPrompts={TUTOR_DASHBOARD_ASSISTANT.starterPrompts}
+        />
+      </>
     </RouteGuard>
   );
 }

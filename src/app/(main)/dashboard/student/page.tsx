@@ -37,6 +37,8 @@ import {
 } from "@/components/lessons/LessonConfirmDisputeCard";
 import { ParticipantAvatar } from "@/components/messaging/ParticipantAvatar";
 import { LearningMomentumCard } from "@/components/dashboard/student/LearningMomentumCard";
+import { AISupportChatWidget } from "@/components/ai/AISupportChatWidget";
+import { STUDENT_DASHBOARD_ASSISTANT } from "@/components/ai/pageAssistantContent";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { RouteGuard } from "@/components/shared/RouteGuard";
@@ -669,7 +671,15 @@ function StudentDashboardContent() {
 export default function StudentDashboardPage() {
   return (
     <RouteGuard requireAuth requireRole="student">
-      <StudentDashboardContent />
+      <>
+        <StudentDashboardContent />
+        <AISupportChatWidget
+          title={STUDENT_DASHBOARD_ASSISTANT.title}
+          welcomeMessage={STUDENT_DASHBOARD_ASSISTANT.welcomeMessage}
+          attentionMessages={STUDENT_DASHBOARD_ASSISTANT.attentionMessages}
+          starterPrompts={STUDENT_DASHBOARD_ASSISTANT.starterPrompts}
+        />
+      </>
     </RouteGuard>
   );
 }
