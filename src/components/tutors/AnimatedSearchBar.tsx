@@ -63,8 +63,8 @@ export function AnimatedSearchBar({
         value={value}
         onValueChange={onChange}
         disabled={disabled}
-        collapsedWidth={148}
-        expandedWidth={300}
+        collapsedWidth={200}
+        expandedWidth={360}
         expandedOffset={50}
         classNames={{
           trigger:
