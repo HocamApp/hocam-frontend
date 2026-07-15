@@ -7,6 +7,7 @@ import { RouteGuard } from "@/components/shared/RouteGuard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { AISupportChatWidget } from "@/components/ai/AISupportChatWidget";
+import { SUPPORT_PAGE_ASSISTANT } from "@/components/ai/pageAssistantContent";
 import { SupportFAQ } from "@/components/support/SupportFAQ";
 import { SupportTicketForm } from "@/components/support/SupportTicketForm";
 import { SupportTicketList } from "@/components/support/SupportTicketList";
@@ -153,7 +154,12 @@ function SupportContent() {
 
       <SupportFAQ />
       </div>
-      <AISupportChatWidget />
+      <AISupportChatWidget
+        title={SUPPORT_PAGE_ASSISTANT.title}
+        welcomeMessage={SUPPORT_PAGE_ASSISTANT.welcomeMessage}
+        attentionMessages={SUPPORT_PAGE_ASSISTANT.attentionMessages}
+        starterPrompts={SUPPORT_PAGE_ASSISTANT.starterPrompts}
+      />
     </>
   );
 }

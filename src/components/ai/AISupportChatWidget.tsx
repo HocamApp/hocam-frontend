@@ -42,10 +42,11 @@ const intentLabels: Record<AIIntent, string> = {
 interface AISupportChatWidgetProps {
   title?: string;
   welcomeMessage?: string;
-  starterPrompts?: string[];
+  starterPrompts?: readonly string[];
   getRequestContext?: () => Pick<AIChatRequest, "surface" | "draft_profile">;
   onApplyProfileBio?: (value: string) => void;
   attentionMessage?: string;
+  attentionMessages?: readonly string[];
   attentionStorageKey?: string;
   positionClassName?: string;
   panelClassName?: string;
@@ -58,6 +59,7 @@ export function AISupportChatWidget({
   getRequestContext,
   onApplyProfileBio,
   attentionMessage,
+  attentionMessages,
   attentionStorageKey,
   positionClassName,
   panelClassName,
@@ -76,25 +78,41 @@ export function AISupportChatWidget({
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState("");
   const [showAttention, setShowAttention] = useState(false);
+  const [activeAttentionMessage, setActiveAttentionMessage] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const canSend = input.trim().length > 0 && !isSending;
 
   useEffect(() => {
-    if (!attentionMessage || !attentionStorageKey) return;
-    try {
-      if (sessionStorage.getItem(attentionStorageKey)) return;
-      sessionStorage.setItem(attentionStorageKey, "shown");
-      setShowAttention(true);
-      const timeout = window.setTimeout(() => setShowAttention(false), 6000);
-      return () => window.clearTimeout(timeout);
-    } catch {
-      setShowAttention(true);
-      const timeout = window.setTimeout(() => setShowAttention(false), 6000);
-      return () => window.clearTimeout(timeout);
+    const options = (attentionMessages?.length
+      ? attentionMessages
+      : attentionMessage
+        ? [attentionMessage]
+        : []
+    ).filter(Boolean);
+    if (options.length === 0) return;
+
+    if (attentionStorageKey) {
+      try {
+        if (sessionStorage.getItem(attentionStorageKey)) return;
+        sessionStorage.setItem(attentionStorageKey, "shown");
+      } catch {
+        // Storage can be unavailable in privacy modes. The nudge is still safe
+        // to show for the current page visit.
+      }
     }
-  }, [attentionMessage, attentionStorageKey]);
+
+    const selectedMessage = options[Math.floor(Math.random() * options.length)];
+    setActiveAttentionMessage(selectedMessage);
+
+    const showTimeout = window.setTimeout(() => setShowAttention(true), 500);
+    const hideTimeout = window.setTimeout(() => setShowAttention(false), 7000);
+    return () => {
+      window.clearTimeout(showTimeout);
+      window.clearTimeout(hideTimeout);
+    };
+  }, [attentionMessage, attentionMessages, attentionStorageKey]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -300,7 +318,7 @@ export function AISupportChatWidget({
         </section>
       )}
 
-      {!isOpen && showAttention && attentionMessage && (
+      {!isOpen && showAttention && activeAttentionMessage && (
         <div role="status" aria-live="polite">
           <button
             type="button"
@@ -312,7 +330,7 @@ export function AISupportChatWidget({
           >
             <span className="flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-primary" aria-hidden />
-              {attentionMessage}
+              {activeAttentionMessage}
             </span>
           </button>
         </div>
@@ -322,7 +340,10 @@ export function AISupportChatWidget({
         type="button"
         size="icon"
         className="h-14 w-14 rounded-full shadow-xl motion-safe:animate-message-pop"
-        onClick={() => setIsOpen((value) => !value)}
+        onClick={() => {
+          setShowAttention(false);
+          setIsOpen((value) => !value);
+        }}
         aria-label={isOpen ? "AI destek penceresini kapat" : "AI destek penceresini aç"}
       >
         {isOpen ? <X className="h-5 w-5" /> : <MessageCircle className="h-5 w-5" />}
