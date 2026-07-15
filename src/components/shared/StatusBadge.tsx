@@ -2,14 +2,14 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 const BOOKING_LABELS: Record<string, string> = {
-  pending: "Beklemede",
-  confirmed: "Onaylandı",
-  in_progress: "Devam ediyor",
-  awaiting_confirmation: "Onay bekliyor",
-  completed: "Tamamlandı",
-  disputed: "İtirazlı",
-  cancelled: "İptal Edildi",
-  expired: "Süresi Doldu",
+  pending: "Hoca onayı bekleniyor",
+  confirmed: "Ders kesinleşti",
+  in_progress: "Ders başladı",
+  awaiting_confirmation: "Ders onayınızı bekliyor",
+  completed: "Ders tamamlandı",
+  disputed: "İnceleme devam ediyor",
+  cancelled: "Ders iptal edildi",
+  expired: "Rezervasyonun süresi doldu",
 };
 
 const LESSON_REQUEST_LABELS: Record<string, string> = {
