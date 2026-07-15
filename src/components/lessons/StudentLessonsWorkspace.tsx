@@ -36,7 +36,7 @@ import type { Booking, PendingReviewItem } from "@/types";
 type LessonTab = "upcoming" | "actions" | "history" | "issues";
 type LessonView = "list" | "calendar";
 
-const PAGE_SIZE = 12;
+const PAGE_SIZE = 5;
 
 const TAB_LABELS: Record<LessonTab, string> = {
   upcoming: "Yaklaşan",
@@ -108,7 +108,7 @@ export function StudentLessonsWorkspace() {
   );
   const [query, setQuery] = useState("");
   const [subject, setSubject] = useState("all");
-  const [visibleHistory, setVisibleHistory] = useState(PAGE_SIZE);
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const [selectedReview, setSelectedReview] = useState<PendingReviewItem | null>(null);
   const [selectedDispute, setSelectedDispute] = useState<Booking | null>(null);
@@ -202,10 +202,12 @@ export function StudentLessonsWorkspace() {
       !selectedDate ||
       startOfDay(new Date(item.start_time)) === startOfDay(selectedDate)
   );
-  const visible = activeTab === "history" ? filtered.slice(0, visibleHistory) : filtered;
+  const visible = filtered.slice(0, visibleCount);
+  const remainingCount = Math.max(0, filtered.length - visibleCount);
+  const nextBatchCount = Math.min(PAGE_SIZE, remainingCount);
 
   const setTab = (value: string) => {
-    setVisibleHistory(PAGE_SIZE);
+    setVisibleCount(PAGE_SIZE);
     setSelectedDate(undefined);
     router.replace(`/profile/lessons?tab=${value}`, { scroll: false });
   };
@@ -261,18 +263,18 @@ export function StudentLessonsWorkspace() {
             </TabsList>
           </Tabs>
           <div className="flex rounded-lg border bg-muted/40 p-1" aria-label="Görünüm seçimi">
-            <Button size="sm" variant={view === "list" ? "secondary" : "ghost"} onClick={() => setView("list")}><LayoutList className="mr-1.5 h-4 w-4" />Liste</Button>
-            <Button size="sm" variant={view === "calendar" ? "secondary" : "ghost"} onClick={() => setView("calendar")}><CalendarDays className="mr-1.5 h-4 w-4" />Takvim</Button>
+            <Button size="sm" variant={view === "list" ? "secondary" : "ghost"} onClick={() => { setView("list"); setVisibleCount(PAGE_SIZE); }}><LayoutList className="mr-1.5 h-4 w-4" />Liste</Button>
+            <Button size="sm" variant={view === "calendar" ? "secondary" : "ghost"} onClick={() => { setView("calendar"); setVisibleCount(PAGE_SIZE); }}><CalendarDays className="mr-1.5 h-4 w-4" />Takvim</Button>
           </div>
         </div>
 
         <div className="mt-5 grid gap-3 sm:grid-cols-[minmax(0,1fr)_220px]">
-          <div className="relative"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Ders veya hoca ara" className="pl-9" /></div>
-          <Select value={subject} onValueChange={setSubject}><SelectTrigger><SelectValue placeholder="Tüm dersler" /></SelectTrigger><SelectContent><SelectItem value="all">Tüm dersler</SelectItem>{subjects.map((item) => <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>)}</SelectContent></Select>
+          <div className="relative"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><Input value={query} onChange={(event) => { setQuery(event.target.value); setVisibleCount(PAGE_SIZE); }} placeholder="Ders veya hoca ara" className="pl-9" /></div>
+          <Select value={subject} onValueChange={(value) => { setSubject(value); setVisibleCount(PAGE_SIZE); }}><SelectTrigger><SelectValue placeholder="Tüm dersler" /></SelectTrigger><SelectContent><SelectItem value="all">Tüm dersler</SelectItem>{subjects.map((item) => <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>)}</SelectContent></Select>
         </div>
 
         <div className={cn("mt-6 grid gap-6", view === "calendar" && "lg:grid-cols-[320px_minmax(0,1fr)]")}>
-          {view === "calendar" && <div className="h-fit rounded-2xl border bg-card p-3 shadow-sm"><Calendar mode="single" selected={selectedDate} onSelect={setSelectedDate} modifiers={{ hasLesson: lessonDates }} modifiersClassNames={{ hasLesson: "[&>button]:font-semibold [&>button]:text-primary [&>button]:after:absolute [&>button]:after:bottom-1 [&>button]:after:h-1 [&>button]:after:w-1 [&>button]:after:rounded-full [&>button]:after:bg-primary" }} className="mx-auto" /><Button variant="ghost" className="mt-2 w-full" disabled={!selectedDate} onClick={() => setSelectedDate(undefined)}>{selectedDate ? "Tüm tarihleri göster" : `${calendarBookings.length} dersi gösteriyor`}</Button></div>}
+          {view === "calendar" && <div className="h-fit rounded-2xl border bg-card p-3 shadow-sm"><Calendar mode="single" selected={selectedDate} onSelect={(date) => { setSelectedDate(date); setVisibleCount(PAGE_SIZE); }} modifiers={{ hasLesson: lessonDates }} modifiersClassNames={{ hasLesson: "[&>button]:font-semibold [&>button]:text-primary [&>button]:after:absolute [&>button]:after:bottom-1 [&>button]:after:h-1 [&>button]:after:w-1 [&>button]:after:rounded-full [&>button]:after:bg-primary" }} className="mx-auto" /><Button variant="ghost" className="mt-2 w-full" disabled={!selectedDate} onClick={() => { setSelectedDate(undefined); setVisibleCount(PAGE_SIZE); }}>{selectedDate ? "Tüm tarihleri göster" : `${calendarBookings.length} dersi gösteriyor`}</Button></div>}
           <div>
             {visible.length === 0 ? (
               <div className="rounded-2xl border border-dashed px-6 py-14 text-center"><History className="mx-auto h-9 w-9 text-muted-foreground/60" /><h2 className="mt-4 font-semibold">Bu görünümde ders yok</h2><p className="mt-1 text-sm text-muted-foreground">Arama veya filtreleri temizleyebilir, yeni bir ders planlayabilirsin.</p><Button asChild variant="outline" className="mt-5"><Link href="/tutors">Hoca bul<ArrowRight className="ml-2 h-4 w-4" /></Link></Button></div>
@@ -286,7 +288,7 @@ export function StudentLessonsWorkspace() {
                 })}
               </div>
             )}
-            {activeTab === "history" && visibleHistory < filtered.length && <Button variant="outline" className="mt-6 w-full" onClick={() => setVisibleHistory((value) => value + PAGE_SIZE)}>Daha fazla ders göster</Button>}
+            {remainingCount > 0 && <Button variant="outline" className="mt-6 w-full" onClick={() => setVisibleCount((value) => value + PAGE_SIZE)}>{nextBatchCount} ders daha göster</Button>}
           </div>
         </div>
       </section>
