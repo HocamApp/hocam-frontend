@@ -320,7 +320,7 @@ function TutorsPageContent() {
                 <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">
                   Dersine, hedeflerine ve uygun saatlerine göre hoca ara; profilleri karşılaştırıp güvenle rezervasyon yap.
                 </p>
-                <div className="mt-6 text-left">
+                <div className="mt-6 flex justify-center">
                   <AnimatedSearchBar
                     value={searchLocal}
                     onChange={setSearchLocal}
