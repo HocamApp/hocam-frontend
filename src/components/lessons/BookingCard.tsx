@@ -4,9 +4,9 @@ import { useState } from "react";
 import { Calendar, Clock3, FolderOpen, User, Wallet } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { LessonJoinButton } from "@/components/lessons/LessonJoinButton";
 import StatusBadge from "@/components/shared/StatusBadge";
 import { cn, formatDate, formatDisputeCategory, formatPrice } from "@/lib/utils";
-import { Video } from "lucide-react";
 import type { Booking, LearningActivityStatus } from "@/types";
 import {
   Dialog,
@@ -227,12 +227,14 @@ export function BookingCard({
               {isConfirmed && (
                 <>
                   {booking.room_url && (
-                    <Button size="sm" variant="secondary" asChild>
-                      <a href={`/session/${booking.id}`}>
-                        <Video className="mr-2 h-4 w-4" />
-                        Derse Gir
-                      </a>
-                    </Button>
+                    <LessonJoinButton
+                      bookingId={booking.id}
+                      startTime={booking.start_time}
+                      roomUrl={booking.room_url}
+                      label="Derse gir"
+                      size="sm"
+                      variant="secondary"
+                    />
                   )}
                   {isFuture && (
                     <Button
@@ -316,12 +318,13 @@ export function BookingCard({
                 </div>
               )}
               {isConfirmed && isFuture && booking.room_url && (
-                <Button size="sm" variant="default" asChild>
-                  <a href={`/session/${booking.id}`}>
-                    <Video className="mr-2 h-4 w-4" />
-                    Derse Katıl
-                  </a>
-                </Button>
+                <LessonJoinButton
+                  bookingId={booking.id}
+                  startTime={booking.start_time}
+                  roomUrl={booking.room_url}
+                  label="Derse katıl"
+                  size="sm"
+                />
               )}
               {isConfirmed && isFuture && !booking.room_url && (
                 <Button size="sm" variant="outline" disabled>

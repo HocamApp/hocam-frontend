@@ -12,12 +12,13 @@ import {
   History,
   LayoutList,
   Search,
-  Video,
 } from "lucide-react";
 import { toast } from "sonner";
 import { BookingCard } from "@/components/lessons/BookingCard";
 import { DisputeDialog } from "@/components/lessons/DisputeDialog";
 import { actionableConfirmDisputeBookings } from "@/components/lessons/LessonConfirmDisputeCard";
+import { LessonMaterialsDialog } from "@/components/lessons/LessonMaterialsDialog";
+import { LessonJoinButton } from "@/components/lessons/LessonJoinButton";
 import { ReviewModal } from "@/components/lessons/ReviewModal";
 import { ParticipantAvatar } from "@/components/messaging/ParticipantAvatar";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
@@ -108,9 +109,10 @@ export function StudentLessonsWorkspace() {
   const [query, setQuery] = useState("");
   const [subject, setSubject] = useState("all");
   const [visibleHistory, setVisibleHistory] = useState(PAGE_SIZE);
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const [selectedReview, setSelectedReview] = useState<PendingReviewItem | null>(null);
   const [selectedDispute, setSelectedDispute] = useState<Booking | null>(null);
+  const [materialsBooking, setMaterialsBooking] = useState<Booking | null>(null);
 
   const bookingsQuery = useQuery({ queryKey: ["bookings"], queryFn: fetchBookings });
   const reviewsQuery = useQuery({ queryKey: ["profile-pending-reviews"], queryFn: fetchPendingReviews });
@@ -181,16 +183,30 @@ export function StudentLessonsWorkspace() {
   const subjects = Array.from(new Map(allBookings.map((item) => [item.subject.id, item.subject])).values());
   const source = groups[activeTab];
   const normalizedQuery = query.trim().toLocaleLowerCase("tr-TR");
-  const filtered = source.filter((item) => {
+  const calendarBookings = source.filter((item) => {
     const matchesSubject = subject === "all" || item.subject.id === subject;
     const haystack = `${item.subject.name} ${tutorName(item)}`.toLocaleLowerCase("tr-TR");
-    const matchesDate = view === "list" || !selectedDate || startOfDay(new Date(item.start_time)) === startOfDay(selectedDate);
-    return matchesSubject && (!normalizedQuery || haystack.includes(normalizedQuery)) && matchesDate;
+    return matchesSubject && (!normalizedQuery || haystack.includes(normalizedQuery));
   });
+  const lessonDates = Array.from(
+    new Map(
+      calendarBookings.map((item) => {
+        const date = new Date(item.start_time);
+        return [startOfDay(date), date];
+      })
+    ).values()
+  );
+  const filtered = calendarBookings.filter(
+    (item) =>
+      view === "list" ||
+      !selectedDate ||
+      startOfDay(new Date(item.start_time)) === startOfDay(selectedDate)
+  );
   const visible = activeTab === "history" ? filtered.slice(0, visibleHistory) : filtered;
 
   const setTab = (value: string) => {
     setVisibleHistory(PAGE_SIZE);
+    setSelectedDate(undefined);
     router.replace(`/profile/lessons?tab=${value}`, { scroll: false });
   };
 
@@ -231,7 +247,7 @@ export function StudentLessonsWorkspace() {
             </div>
             <div className="grid gap-3 sm:grid-cols-[auto_auto] sm:items-center">
               <div className="rounded-2xl bg-white/10 px-4 py-3 text-sm backdrop-blur"><p className="font-medium">{formatDate(nextLesson.start_time)}</p><p className="mt-1 text-slate-300">{formatTime(nextLesson.start_time)} · {nextLesson.duration_minutes} dakika</p></div>
-              {nextLesson.room_url ? <Button asChild variant="secondary"><Link href={`/session/${nextLesson.id}`}><Video className="mr-2 h-4 w-4" />Derse katıl</Link></Button> : <Button variant="secondary" disabled>Oda hazırlanıyor</Button>}
+              <LessonJoinButton bookingId={nextLesson.id} startTime={nextLesson.start_time} roomUrl={nextLesson.room_url} variant="secondary" />
             </div>
           </div>
         </section>
@@ -256,7 +272,7 @@ export function StudentLessonsWorkspace() {
         </div>
 
         <div className={cn("mt-6 grid gap-6", view === "calendar" && "lg:grid-cols-[320px_minmax(0,1fr)]")}>
-          {view === "calendar" && <div className="h-fit rounded-2xl border bg-card p-3 shadow-sm"><Calendar mode="single" selected={selectedDate} onSelect={setSelectedDate} className="mx-auto" /><Button variant="ghost" className="mt-2 w-full" onClick={() => setSelectedDate(undefined)}>Tüm tarihleri göster</Button></div>}
+          {view === "calendar" && <div className="h-fit rounded-2xl border bg-card p-3 shadow-sm"><Calendar mode="single" selected={selectedDate} onSelect={setSelectedDate} modifiers={{ hasLesson: lessonDates }} modifiersClassNames={{ hasLesson: "[&>button]:font-semibold [&>button]:text-primary [&>button]:after:absolute [&>button]:after:bottom-1 [&>button]:after:h-1 [&>button]:after:w-1 [&>button]:after:rounded-full [&>button]:after:bg-primary" }} className="mx-auto" /><Button variant="ghost" className="mt-2 w-full" disabled={!selectedDate} onClick={() => setSelectedDate(undefined)}>{selectedDate ? "Tüm tarihleri göster" : `${calendarBookings.length} dersi gösteriyor`}</Button></div>}
           <div>
             {visible.length === 0 ? (
               <div className="rounded-2xl border border-dashed px-6 py-14 text-center"><History className="mx-auto h-9 w-9 text-muted-foreground/60" /><h2 className="mt-4 font-semibold">Bu görünümde ders yok</h2><p className="mt-1 text-sm text-muted-foreground">Arama veya filtreleri temizleyebilir, yeni bir ders planlayabilirsin.</p><Button asChild variant="outline" className="mt-5"><Link href="/tutors">Hoca bul<ArrowRight className="ml-2 h-4 w-4" /></Link></Button></div>
@@ -266,7 +282,7 @@ export function StudentLessonsWorkspace() {
                   const previous = visible[index - 1];
                   const showMonth = activeTab === "history" && (!previous || monthLabel(previous.start_time) !== monthLabel(booking.start_time));
                   const reviewItem = reviewByBooking.get(booking.id);
-                  return <div key={booking.id}>{showMonth && <h2 className="mb-3 text-sm font-semibold capitalize text-muted-foreground">{monthLabel(booking.start_time)}</h2>}<BookingCard booking={booking} currentUserRole="student" onStatusUpdate={(id, status) => { if (status === "cancelled") statusMutation.mutate({ id, status }); }} onReviewClick={reviewItem ? () => setSelectedReview(reviewItem) : undefined} reviewDisabledReason={booking.status === "completed" && !reviewItem ? "Değerlendirildi" : undefined} isUpdating={statusMutation.isPending || confirmMutation.isPending} /><div className="-mt-1 flex flex-wrap items-center gap-2 rounded-b-xl border border-t-0 bg-muted/30 px-4 py-2 text-xs text-muted-foreground"><span>{statusExplanation(booking.status)}</span>{booking.status === "awaiting_confirmation" && <Button size="sm" className="h-7" onClick={() => confirmMutation.mutate(booking.id)}>Dersi onayla</Button>}{actionableIds.has(booking.id) && <Button size="sm" variant="ghost" className="h-7" onClick={() => setSelectedDispute(booking)}>Sorun bildir</Button>}</div></div>;
+                  return <div key={booking.id}>{showMonth && <h2 className="mb-3 text-sm font-semibold capitalize text-muted-foreground">{monthLabel(booking.start_time)}</h2>}<BookingCard booking={booking} currentUserRole="student" onStatusUpdate={(id, status) => { if (status === "cancelled") statusMutation.mutate({ id, status }); }} onReviewClick={reviewItem ? () => setSelectedReview(reviewItem) : undefined} reviewDisabledReason={booking.status === "completed" && !reviewItem ? "Değerlendirildi" : undefined} onMaterialsClick={booking.status === "completed" ? setMaterialsBooking : undefined} isUpdating={statusMutation.isPending || confirmMutation.isPending} /><div className="-mt-1 flex flex-wrap items-center gap-2 rounded-b-xl border border-t-0 bg-muted/30 px-4 py-2 text-xs text-muted-foreground"><span>{statusExplanation(booking.status)}</span>{booking.status === "awaiting_confirmation" && <Button size="sm" className="h-7" onClick={() => confirmMutation.mutate(booking.id)}>Dersi onayla</Button>}{actionableIds.has(booking.id) && <Button size="sm" variant="ghost" className="h-7" onClick={() => setSelectedDispute(booking)}>Sorun bildir</Button>}</div></div>;
                 })}
               </div>
             )}
@@ -277,6 +293,7 @@ export function StudentLessonsWorkspace() {
 
       {selectedReview && <ReviewModal booking={selectedReview} isOpen onClose={() => setSelectedReview(null)} onSuccess={() => { toast.success("Değerlendirmen gönderildi."); setSelectedReview(null); void refresh(); }} />}
       {selectedDispute && <DisputeDialog booking={selectedDispute} isOpen onClose={() => setSelectedDispute(null)} onSuccess={() => { toast.success("İtirazın alındı. Ekibimiz inceleyecek."); setSelectedDispute(null); void refresh(); }} />}
+      <LessonMaterialsDialog booking={materialsBooking} open={Boolean(materialsBooking)} onOpenChange={(open) => { if (!open) setMaterialsBooking(null); }} />
     </div>
   );
 }
