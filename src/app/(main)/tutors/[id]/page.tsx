@@ -19,6 +19,7 @@ import { FavoriteButton } from "@/components/tutors/FavoriteButton";
 import { fetchTutorById, fetchTutorReviewSummary, fetchTutorReviewsPage } from "@/lib/tutorsApi";
 import { fetchTutorAvailability } from "@/lib/dashboardApi";
 import { useAuth } from "@/hooks/useAuth";
+import { resolveProfileImageUrl } from "@/lib/profileImages";
 import { formatLessonCount, formatPrice, formatRating } from "@/lib/utils";
 import { ReviewCard } from "@/components/tutors/ReviewCard";
 import { ReviewSummary } from "@/components/tutors/ReviewSummary";
@@ -412,7 +413,8 @@ export default function TutorProfilePage({
     items: (tutor?.subjects ?? []).filter((s) => s.exam_type === exam),
   })).filter((group) => group.items.length > 0);
   const introVideoEmbedUrl = getYouTubeEmbedUrl(tutor?.intro_video_url);
-  const tutorPhotoUrl = tutor?.profile_picture || "/images/demo-teacher.jpg";
+  const tutorPhotoUrl =
+    resolveProfileImageUrl(tutor?.profile_picture) || "/images/demo-teacher.jpg";
   const completedLessonsLabel = `${formatLessonCount(tutor?.completed_lessons_count ?? 0)} ders`;
   const shareTitle = tutor
     ? `${tutor.name} ${tutor.surname} · Hocam`
