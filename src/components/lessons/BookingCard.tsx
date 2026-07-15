@@ -5,6 +5,7 @@ import { Calendar, Clock3, FolderOpen, User, Wallet } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { LessonJoinButton } from "@/components/lessons/LessonJoinButton";
+import { ParticipantAvatar } from "@/components/messaging/ParticipantAvatar";
 import StatusBadge from "@/components/shared/StatusBadge";
 import { cn, formatDate, formatDisputeCategory, formatPrice } from "@/lib/utils";
 import type { Booking, LearningActivityStatus } from "@/types";
@@ -140,12 +141,21 @@ export function BookingCard({
     <Card id={id} className={className}>
       <CardContent className="p-4">
         <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <p className="truncate font-semibold">{booking.subject.name}</p>
-            <p className="mt-0.5 flex items-center gap-1.5 truncate text-sm text-muted-foreground">
-              <User className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-              <span className="truncate">{counterpartLabel}</span>
-            </p>
+          <div className="flex min-w-0 items-center gap-3">
+            {currentUserRole === "student" && (
+              <ParticipantAvatar
+                name={counterpartLabel}
+                avatarUrl={booking.tutor.profile_picture}
+                className="h-11 w-11 shrink-0"
+              />
+            )}
+            <div className="min-w-0">
+              <p className="truncate font-semibold">{booking.subject.name}</p>
+              <p className="mt-0.5 flex items-center gap-1.5 truncate text-sm text-muted-foreground">
+                <User className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                <span className="truncate">{counterpartLabel}</span>
+              </p>
+            </div>
           </div>
           <div className="shrink-0">
             <StatusBadge status={booking.status} type="booking" />

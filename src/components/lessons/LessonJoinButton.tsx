@@ -45,7 +45,12 @@ export function LessonJoinButton({
 
   if (!roomUrl) {
     return (
-      <Button size={size} variant="outline" className={className} disabled>
+      <Button
+        size={size}
+        variant="outline"
+        className={cn("text-foreground", className)}
+        disabled
+      >
         Oda hazırlanıyor
       </Button>
     );
@@ -68,7 +73,10 @@ export function LessonJoinButton({
       size={size}
       variant="outline"
       aria-disabled="true"
-      className={cn("cursor-not-allowed opacity-60", className)}
+      className={cn(
+        "cursor-not-allowed text-foreground opacity-60 hover:text-foreground",
+        className
+      )}
       onClick={() =>
         toast.info("Henüz derse katılamazsın", {
           description: `Derse katılma butonu ders başlangıcından ${EARLY_JOIN_MINUTES} dakika önce aktifleşir.`,
