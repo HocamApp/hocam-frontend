@@ -10,7 +10,6 @@ import {
   CheckCircle2,
   Clock3,
   MessageCircle,
-  Video,
   Wallet,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
@@ -36,6 +35,7 @@ import {
   LessonConfirmDisputeCard,
 } from "@/components/lessons/LessonConfirmDisputeCard";
 import { ParticipantAvatar } from "@/components/messaging/ParticipantAvatar";
+import { LessonJoinButton } from "@/components/lessons/LessonJoinButton";
 import { LearningMomentumCard } from "@/components/dashboard/student/LearningMomentumCard";
 import { AISupportChatWidget } from "@/components/ai/AISupportChatWidget";
 import { STUDENT_DASHBOARD_ASSISTANT } from "@/components/ai/pageAssistantContent";
@@ -400,18 +400,12 @@ function StudentDashboardContent() {
                   </div>
 
                   <div className="mt-auto flex flex-col gap-2 pt-6 sm:flex-row">
-                    {nextLesson.room_url ? (
-                      <Button asChild size="lg">
-                        <Link href={`/session/${nextLesson.id}`}>
-                          <Video className="mr-2 h-4 w-4" />
-                          Derse katıl
-                        </Link>
-                      </Button>
-                    ) : (
-                      <Button size="lg" disabled>
-                        Oda henüz hazır değil
-                      </Button>
-                    )}
+                    <LessonJoinButton
+                      bookingId={nextLesson.id}
+                      startTime={nextLesson.start_time}
+                      roomUrl={nextLesson.room_url}
+                      size="lg"
+                    />
                     <Button asChild variant="outline" size="lg">
                       <Link href="/messages">
                         <MessageCircle className="mr-2 h-4 w-4" />
