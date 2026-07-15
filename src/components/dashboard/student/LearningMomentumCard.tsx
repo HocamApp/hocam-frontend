@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, BookOpen, Target } from "lucide-react";
+import { ArrowRight, BookOpen, CheckCircle2, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Booking, PackagePurchase, StudentGoal } from "@/types";
@@ -84,21 +84,51 @@ export function LearningMomentumCard({
   const momentum = activeGoal
     ? null
     : deriveMomentumSummary(bookings, activePackage, activePackageCompletedCount);
+  const now = Date.now();
+  const completedThisWeek = bookings.filter(
+    (booking) =>
+      booking.status === "completed" &&
+      now - new Date(booking.start_time).getTime() <= SEVEN_DAYS_MS
+  ).length;
 
   return (
-    <section className="rounded-xl border bg-card p-4 sm:p-5">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex min-w-0 items-start gap-3">
+    <section className="h-full rounded-2xl border bg-card p-5 sm:p-6">
+      <div className="flex h-full flex-col gap-5">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+              Bu haftaki ilerlemen
+            </p>
+            <h2 className="mt-1 text-lg font-semibold tracking-tight">Öğrenme ritmin</h2>
+          </div>
+          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+            <Target className="h-5 w-5" aria-hidden="true" />
+          </span>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div className="rounded-xl bg-muted/50 p-3">
+            <p className="text-2xl font-semibold tabular-nums">{completedThisWeek}</p>
+            <p className="mt-1 text-xs text-muted-foreground">Son 7 günde ders</p>
+          </div>
+          <div className="rounded-xl bg-muted/50 p-3">
+            <p className="text-2xl font-semibold tabular-nums">
+              {activeGoal ? `%${activeGoal.progress}` : activePackageCompletedCount}
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {activeGoal ? "Aktif hedef ilerlemesi" : "Pakette tamamlanan"}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex min-w-0 flex-1 items-start gap-3">
           <span
             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary"
             aria-hidden="true"
           >
-            {activeGoal || momentum ? <Target className="h-4 w-4" /> : <BookOpen className="h-4 w-4" />}
+            {activeGoal || momentum ? <CheckCircle2 className="h-4 w-4" /> : <BookOpen className="h-4 w-4" />}
           </span>
           <div className="min-w-0">
-            <p className="text-xs font-medium uppercase tracking-wide text-primary">
-              Öğrenmeye devam et
-            </p>
             {learningLoading ? (
               <Skeleton className="mt-2 h-5 w-56" />
             ) : activeGoal ? (
@@ -123,7 +153,7 @@ export function LearningMomentumCard({
             )}
           </div>
         </div>
-        <Button asChild variant="outline" className="shrink-0 bg-background">
+        <Button asChild variant="outline" className="mt-auto w-full bg-background sm:w-fit">
           <Link href={learningHref}>
             {activeGoal ? "Hedefe devam et" : "Hedefleri keşfet"}
             <ArrowRight className="ml-2 h-4 w-4" />
