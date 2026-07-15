@@ -621,31 +621,37 @@ export function ProfileMenu() {
             )}
             <ProfileMenuRow
               icon={<CalendarClock className="h-4 w-4" />}
-              label="Yaklaşan dersler"
+              label={isTutor ? "Yaklaşan dersler" : "Derslerim"}
               badgeCount={stats?.upcoming_lessons_count}
               showChevron
-              onClick={() => go("/profile/lessons/upcoming")}
+              onClick={() => go(isTutor ? "/profile/lessons/upcoming" : "/profile/lessons")}
             />
-            <ProfileMenuRow
-              icon={<BookOpen className="h-4 w-4" />}
-              label="Onay bekleyen rezervasyonlar"
-              badgeCount={stats?.pending_bookings_count}
-              showChevron
-              onClick={() => go("/profile/reservations/pending")}
-            />
-            <ProfileMenuRow
-              icon={<CalendarClock className="h-4 w-4" />}
-              label="Geçmiş dersler"
-              showChevron
-              onClick={() => go("/profile/lessons/history")}
-            />
-            <ProfileMenuRow
-              icon={<Star className="h-4 w-4" />}
-              label="Değerlendirme bekleyenler"
-              badgeCount={stats?.pending_reviews_count}
-              showChevron
-              onClick={() => go("/profile/reviews/pending")}
-            />
+            {isTutor && (
+              <ProfileMenuRow
+                icon={<BookOpen className="h-4 w-4" />}
+                label="Onay bekleyen rezervasyonlar"
+                badgeCount={stats?.pending_bookings_count}
+                showChevron
+                onClick={() => go("/profile/reservations/pending")}
+              />
+            )}
+            {isTutor && (
+              <ProfileMenuRow
+                icon={<CalendarClock className="h-4 w-4" />}
+                label="Geçmiş dersler"
+                showChevron
+                onClick={() => go("/profile/lessons/history")}
+              />
+            )}
+            {isTutor && (
+              <ProfileMenuRow
+                icon={<Star className="h-4 w-4" />}
+                label="Değerlendirme bekleyenler"
+                badgeCount={stats?.pending_reviews_count}
+                showChevron
+                onClick={() => go("/profile/reviews/pending")}
+              />
+            )}
             <Button className="w-full" onClick={() => go("/profile/calendar")}>
               Ders Takvimine Git
             </Button>
