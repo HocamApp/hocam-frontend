@@ -9,7 +9,9 @@ const BOOKING_LABELS: Record<string, string> = {
   completed: "Ders tamamlandı",
   disputed: "İnceleme devam ediyor",
   cancelled: "Ders iptal edildi",
-  expired: "Rezervasyonun süresi doldu",
+  // Legacy backend records used "expired" for unanswered bookings. New
+  // records are "cancelled", but keep the old value understandable in UI.
+  expired: "Otomatik iptal edildi",
 };
 
 const LESSON_REQUEST_LABELS: Record<string, string> = {
@@ -33,7 +35,7 @@ const BOOKING_STYLES: Record<string, string> = {
   completed: "border-green-500 text-green-700 dark:border-green-400 dark:text-green-300",
   disputed: "border-orange-500 text-orange-700 dark:border-orange-400 dark:text-orange-300",
   cancelled: "border-red-500 text-red-700 dark:border-red-400 dark:text-red-300",
-  expired: "border-slate-400 text-slate-600 dark:border-slate-500 dark:text-slate-300",
+  expired: "border-red-500 text-red-700 dark:border-red-400 dark:text-red-300",
 };
 
 const LESSON_REQUEST_STYLES: Record<string, string> = {
