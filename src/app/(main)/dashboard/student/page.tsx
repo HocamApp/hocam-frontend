@@ -50,6 +50,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Booking, PackagePurchase } from "@/types";
 
 const DASHBOARD_PREVIEW_COUNT = 3;
+const LESSON_COUNTDOWN_WINDOW_MS = 60 * 60 * 1000;
 
 function formatTime(isoString: string): string {
   return new Date(isoString).toLocaleTimeString("tr-TR", {
@@ -290,6 +291,11 @@ function StudentDashboardContent() {
   const lessonCountdown = useCountdownLabel(
     nextLesson ? new Date(nextLesson.start_time) : null
   );
+  const shouldShowLessonCountdown = Boolean(
+    nextLesson &&
+      new Date(nextLesson.start_time).getTime() - Date.now() <=
+        LESSON_COUNTDOWN_WINDOW_MS
+  );
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
@@ -385,7 +391,9 @@ function StudentDashboardContent() {
                         <p className="text-xs text-muted-foreground">Saat</p>
                         <p className="font-medium">
                           {formatTime(nextLesson.start_time)}
-                          {lessonCountdown ? ` · ${lessonCountdown} kaldı` : ""}
+                          {shouldShowLessonCountdown && lessonCountdown
+                            ? ` · ${lessonCountdown} kaldı`
+                            : ""}
                         </p>
                       </div>
                     </div>
