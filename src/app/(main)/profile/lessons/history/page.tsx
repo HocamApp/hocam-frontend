@@ -1,6 +1,8 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { CheckCircle2, Star } from "lucide-react";
 import { RouteGuard } from "@/components/shared/RouteGuard";
@@ -11,12 +13,26 @@ import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { Button } from "@/components/ui/button";
 import { fetchPastLessons } from "@/lib/profileLessonsApi";
+import { useAuth } from "@/hooks/useAuth";
 
 function PastLessonsContent() {
+  const router = useRouter();
+  const { user } = useAuth();
   const { data, isLoading, isError } = useQuery({
     queryKey: ["profile-past-lessons"],
     queryFn: fetchPastLessons,
+    enabled: user?.role !== "student",
   });
+
+  useEffect(() => {
+    if (user?.role === "student") {
+      router.replace("/profile/lessons?tab=history");
+    }
+  }, [router, user?.role]);
+
+  if (user?.role === "student") {
+    return <div className="py-12"><LoadingSpinner /></div>;
+  }
 
   return (
     <ProfileScreen title="Geçmiş dersler" description="Tamamlanan ve geçmiş derslerin.">

@@ -312,7 +312,7 @@ function StudentDashboardContent() {
           </div>
           <div className="flex flex-col gap-2 sm:flex-row">
             <Button asChild variant="outline" size="lg">
-              <Link href="/profile/lessons/upcoming">
+              <Link href="/profile/lessons?view=calendar">
                 <Calendar className="mr-2 h-4 w-4" />
                 Takvimim
               </Link>
@@ -476,7 +476,7 @@ function StudentDashboardContent() {
                         Taleplerin hocalara gönderildi. Şu anda senden bir işlem beklenmiyor.
                       </p>
                       <Button asChild variant="link" size="sm" className="mt-1 h-auto px-0">
-                        <Link href="/profile/reservations/pending">Rezervasyonları gör</Link>
+                        <Link href="/profile/lessons?tab=upcoming">Rezervasyonları gör</Link>
                       </Button>
                     </div>
                   </div>
@@ -620,7 +620,7 @@ function StudentDashboardContent() {
                   highlightedId={highlightedBookingId}
                   emptyTitle="Yaklaşan dersin yok"
                   emptyDescription="Yeni bir ders planladığında burada görünecek."
-                  href="/profile/lessons/upcoming"
+                  href="/profile/lessons?tab=upcoming"
                   linkLabel="Tüm yaklaşan dersleri gör"
                 />
               </TabsContent>
@@ -630,7 +630,7 @@ function StudentDashboardContent() {
                   highlightedId={highlightedBookingId}
                   emptyTitle="Onay bekleyen rezervasyonun yok"
                   emptyDescription="Hoca onayı bekleyen talepler burada görünür."
-                  href="/profile/reservations/pending"
+                  href="/profile/lessons?tab=upcoming"
                   linkLabel="Tüm rezervasyonları gör"
                 />
               </TabsContent>
@@ -640,7 +640,7 @@ function StudentDashboardContent() {
                   highlightedId={highlightedBookingId}
                   emptyTitle="Henüz geçmiş dersin yok"
                   emptyDescription="Tamamladığın dersler burada birikecek."
-                  href="/profile/lessons/history"
+                  href="/profile/lessons?tab=history"
                   linkLabel="Tüm ders geçmişini gör"
                 />
               </TabsContent>
