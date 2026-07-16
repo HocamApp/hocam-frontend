@@ -79,7 +79,7 @@ export function TutorCard({
   const completedLessonsLabel = `${formatLessonCount(tutor.completed_lessons_count ?? 0)} ders`;
 
   return (
-    <Card className="relative h-full overflow-visible border-t-2 border-t-transparent transition-all duration-200 hover:z-10 hover:-translate-y-0.5 hover:border-t-primary hover:shadow-lg">
+    <Card className="relative h-full min-w-0 overflow-visible border-t-2 border-t-transparent transition-all duration-200 hover:z-10 hover:-translate-y-0.5 hover:border-t-primary hover:shadow-lg">
       <CardContent className="p-0">
         <Link href={tutorHref} className="block cursor-pointer">
           <div className="flex gap-4 p-4">
@@ -149,13 +149,13 @@ export function TutorCard({
               <span className="text-muted-foreground">{completedLessonsLabel}</span>
             </div>
           </Link>
-          <div className="mt-3 flex items-center justify-between gap-3">
-            <Link href={tutorHref} className="shrink-0">
+          <div className="mt-3 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <Link href={tutorHref} className="min-w-0 sm:shrink-0">
               <span className="text-lg font-semibold">{formatPrice(tutor.hourly_price)}</span>
               <span className="ml-1 text-sm text-muted-foreground">/40 dk</span>
             </Link>
-            <div className="flex shrink-0 items-center gap-1">
-              <Link href={tutorHref} className="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90">
+            <div className="flex w-full shrink-0 items-center gap-1 sm:w-auto">
+              <Link href={tutorHref} className="flex-1 rounded-md bg-primary px-3 py-2 text-center text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 sm:flex-none">
                 Profili Gör <ArrowRight className="ml-1 inline h-3.5 w-3.5" />
               </Link>
               {onToggleFavorite && (

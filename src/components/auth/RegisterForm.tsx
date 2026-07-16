@@ -92,7 +92,7 @@ export function RegisterForm({
       if (user.role === "tutor") {
         router.replace(user.tutor_profile_id ? "/dashboard/tutor" : "/tutor/setup");
       } else {
-        router.replace("/dashboard/student");
+        router.replace("/home");
       }
     }
   }, [isLoading, isAuthenticated, user, router]);
@@ -148,7 +148,7 @@ export function RegisterForm({
     if (res.user.role === "tutor") {
       router.push(res.user.tutor_profile_id ? "/dashboard/tutor" : "/tutor/setup");
     } else {
-      router.push("/dashboard/student");
+      router.push("/home");
     }
   };
 
@@ -199,7 +199,7 @@ export function RegisterForm({
         if (resp.user.role === "tutor") {
           router.push(resp.user.tutor_profile_id ? "/dashboard/tutor" : "/tutor/setup");
         } else {
-          router.push("/dashboard/student");
+          router.push("/home");
         }
       } catch {
         setGeneralError("Google ile kayıt başarısız oldu. Lütfen tekrar deneyin.");
