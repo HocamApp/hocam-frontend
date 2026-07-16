@@ -402,7 +402,7 @@ export function ProfileMenu() {
         <button
           type="button"
           aria-label="Profil menüsü"
-          className="flex items-center gap-1.5 rounded-full outline-none ring-offset-background transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          className="flex min-h-11 items-center gap-1.5 rounded-full outline-none ring-offset-background transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 lg:min-h-0"
         >
           <Avatar className="h-9 w-9 border border-border">
             {avatarImage ? <AvatarImage src={avatarImage} alt={fullName} /> : null}
