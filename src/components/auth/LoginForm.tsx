@@ -65,7 +65,7 @@ export function LoginForm({ onCreateAccount }: LoginFormProps) {
             : "/tutor/setup"
         );
       } else {
-        router.replace(returnUrl ?? "/dashboard/student");
+        router.replace(returnUrl ?? "/home");
       }
     }
   }, [isLoading, isAuthenticated, user, router, returnUrl]);
@@ -90,7 +90,7 @@ export function LoginForm({ onCreateAccount }: LoginFormProps) {
             : "/tutor/setup"
         );
       } else {
-        router.push(returnUrl ?? "/dashboard/student");
+        router.push(returnUrl ?? "/home");
       }
     } catch {
       setGeneralError("E-posta veya şifre hatalı.");
@@ -107,7 +107,7 @@ export function LoginForm({ onCreateAccount }: LoginFormProps) {
             : "/tutor/setup"
         );
       } else {
-        router.push(returnUrl ?? "/dashboard/student");
+        router.push(returnUrl ?? "/home");
       }
     },
     [router, setAuth, returnUrl]

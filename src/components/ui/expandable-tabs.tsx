@@ -9,6 +9,8 @@ interface Tab {
   title: string;
   icon: LucideIcon;
   type?: never;
+  /** Keeps the label visible even while this tab is not selected. */
+  alwaysShowLabel?: boolean;
   // Optional wrapper around the rendered button (e.g. to nest it inside a
   // Popover trigger). Receives the motion button node and must return it.
   wrapper?: (node: React.ReactNode) => React.ReactNode;
@@ -19,6 +21,7 @@ interface Separator {
   title?: never;
   icon?: never;
   wrapper?: never;
+  alwaysShowLabel?: never;
 }
 
 type TabItem = Tab | Separator;
@@ -89,14 +92,16 @@ export function ExpandableTabs({
         }
 
         const Icon = tab.icon;
+        const showLabel = selected === index || tab.alwaysShowLabel === true;
         const button = (
           <motion.button
             key={tab.title}
             variants={buttonVariants}
             initial={false}
             animate="animate"
-            custom={selected === index}
+            custom={showLabel}
             onClick={() => handleSelect(index)}
+            aria-label={tab.title}
             transition={transition}
             className={cn(
               "relative flex items-center rounded-xl px-4 py-2 text-sm font-medium transition-colors duration-300",
@@ -107,14 +112,17 @@ export function ExpandableTabs({
           >
             <Icon size={20} />
             <AnimatePresence initial={false}>
-              {selected === index && (
+              {showLabel && (
                 <motion.span
                   variants={spanVariants}
                   initial="initial"
                   animate="animate"
                   exit="exit"
                   transition={transition}
-                  className="overflow-hidden"
+                  className={cn(
+                    "overflow-hidden",
+                    tab.alwaysShowLabel && selected !== index && "md:hidden lg:block"
+                  )}
                 >
                   {tab.title}
                 </motion.span>

@@ -7,6 +7,7 @@ import {
   GraduationCap,
   FileQuestion,
   Heart,
+  Home,
   LayoutDashboard,
   LucideIcon,
   MessageCircle,
@@ -70,38 +71,52 @@ export function AnimatedNavbarLinks() {
   const isFavoritesView =
     pathname === "/tutors" && searchParams.get("favorites") === "1";
 
-  const descriptors: NavDescriptor[] = [
-    { kind: "route", title: "Dersler", icon: GraduationCap, href: "/tutors" },
-    { kind: "route", title: "Mesajlar", icon: MessageCircle, href: "/messages" },
-    { kind: "route", title: "Panom", icon: LayoutDashboard, href: panomHref },
-    ...(!isTutor
-      ? [
-          {
-            kind: "route" as const,
-            title: "Öğrenme",
-            icon: Route,
-            href: "/dashboard/student/learning",
-            activePrefixes: ["/dashboard/student/hedefler"],
-          },
-        ]
-      : []),
-    {
-      kind: "route",
-      title: "Çıkmış Sorular",
-      icon: FileQuestion,
-      href: "/cikmis-sorular",
-    },
-    { kind: "separator" },
-    {
-      kind: "popover",
-      title: "Bildirimler",
-      icon: Bell,
-      contentNode: <NotificationPopoverContent />,
-    },
-    ...(!isTutor
-      ? [{ kind: "route" as const, title: "Favoriler", icon: Heart, href: "/tutors?favorites=1" }]
-      : []),
-  ];
+  const descriptors: NavDescriptor[] = isTutor
+    ? [
+        { kind: "route", title: "Dersler", icon: GraduationCap, href: "/tutors" },
+        { kind: "route", title: "Mesajlar", icon: MessageCircle, href: "/messages" },
+        { kind: "route", title: "Panom", icon: LayoutDashboard, href: panomHref },
+        {
+          kind: "route",
+          title: "Çıkmış Sorular",
+          icon: FileQuestion,
+          href: "/cikmis-sorular",
+        },
+        { kind: "separator" },
+        {
+          kind: "popover",
+          title: "Bildirimler",
+          icon: Bell,
+          contentNode: <NotificationPopoverContent />,
+        },
+      ]
+    : [
+        { kind: "route", title: "Ana Sayfa", icon: Home, href: "/home" },
+        { kind: "route", title: "Hocalar", icon: GraduationCap, href: "/tutors" },
+        {
+          kind: "route",
+          title: "Öğrenme",
+          icon: Route,
+          href: "/dashboard/student/learning",
+          activePrefixes: ["/dashboard/student/hedefler"],
+        },
+        {
+          kind: "route",
+          title: "Çıkmış Sorular",
+          icon: FileQuestion,
+          href: "/cikmis-sorular",
+        },
+        { kind: "route", title: "Panelim", icon: LayoutDashboard, href: panomHref },
+        { kind: "separator" },
+        { kind: "route", title: "Mesajlar", icon: MessageCircle, href: "/messages" },
+        {
+          kind: "popover",
+          title: "Bildirimler",
+          icon: Bell,
+          contentNode: <NotificationPopoverContent />,
+        },
+        { kind: "route", title: "Favoriler", icon: Heart, href: "/tutors?favorites=1" },
+      ];
 
   // Returns the length of the most specific matched path for a route, or -1 if
   // it isn't active. Longer match wins so nested routes (e.g. the learning hub)
@@ -163,12 +178,17 @@ export function AnimatedNavbarLinks() {
     );
   };
 
-  const tabs = descriptors.map((d) => {
+  const separatorIndex = descriptors.findIndex((descriptor) => descriptor.kind === "separator");
+  const tabs = descriptors.map((d, index) => {
     if (d.kind === "separator") return { type: "separator" as const };
     if (d.kind === "popover") {
       return { title: d.title, icon: d.icon, wrapper: makePopoverWrapper(d) };
     }
-    return { title: d.title, icon: d.icon };
+    return {
+      title: d.title,
+      icon: d.icon,
+      alwaysShowLabel: !isTutor && separatorIndex >= 0 && index < separatorIndex,
+    };
   });
 
   const handleChange = (index: number | null) => {
@@ -185,6 +205,7 @@ export function AnimatedNavbarLinks() {
       tabs={tabs}
       selected={activeIndex >= 0 ? activeIndex : null}
       onChange={handleChange}
+      className="w-max flex-nowrap rounded-xl sm:w-auto"
     />
   );
 }
