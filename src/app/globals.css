@@ -125,3 +125,34 @@
     animation: none;
   }
 }
+
+/* Mobile safe-area + dvh fallback utilities (additive, does not alter existing rules) */
+@layer utilities {
+  .pt-safe {
+    padding-top: env(safe-area-inset-top);
+  }
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .pl-safe {
+    padding-left: env(safe-area-inset-left);
+  }
+  .pr-safe {
+    padding-right: env(safe-area-inset-right);
+  }
+  .mt-safe {
+    margin-top: env(safe-area-inset-top);
+  }
+  .mb-safe {
+    margin-bottom: env(safe-area-inset-bottom);
+  }
+
+  .min-h-dvh-safe {
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+  .h-dvh-safe {
+    height: 100vh;
+    height: 100dvh;
+  }
+}
