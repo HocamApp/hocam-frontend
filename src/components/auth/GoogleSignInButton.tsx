@@ -28,6 +28,10 @@ declare global {
 }
 
 const GIS_SRC = "https://accounts.google.com/gsi/client";
+const LEGACY_GOOGLE_CLIENT_ID =
+  "778217883133-d9ifohhgl5b9rk4nqndn4blh0tccd2tr.apps.googleusercontent.com";
+const HOCAM_GOOGLE_CLIENT_ID =
+  "527118401129-b6pmos468s2hb40tdp2fu868ctu0o47k.apps.googleusercontent.com";
 
 function loadGisScript(): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -67,7 +71,14 @@ export function GoogleSignInButton({
 }: GoogleSignInButtonProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [loadFailed, setLoadFailed] = useState(false);
-  const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+  const configuredClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+  // The custom-domain Vercel project still injects the retired public client
+  // ID. Translate only that known legacy value while preserving normal env
+  // overrides everywhere else.
+  const clientId =
+    configuredClientId === LEGACY_GOOGLE_CLIENT_ID
+      ? HOCAM_GOOGLE_CLIENT_ID
+      : configuredClientId;
 
   useEffect(() => {
     if (!clientId || !containerRef.current) return;
