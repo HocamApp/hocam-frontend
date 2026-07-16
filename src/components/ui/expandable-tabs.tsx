@@ -30,6 +30,8 @@ interface ExpandableTabsProps {
   tabs: TabItem[];
   className?: string;
   activeColor?: string;
+  /** Hides every label at tablet widths while preserving lg+ behavior. */
+  tabletCompact?: boolean;
   // When provided, the component is controlled and the active tab is derived
   // from this index instead of internal click state.
   selected?: number | null;
@@ -61,6 +63,7 @@ export function ExpandableTabs({
   tabs,
   className,
   activeColor = "text-primary",
+  tabletCompact = false,
   selected: controlledSelected,
   onChange,
 }: ExpandableTabsProps) {
@@ -105,6 +108,8 @@ export function ExpandableTabs({
             transition={transition}
             className={cn(
               "relative flex items-center rounded-xl px-4 py-2 text-sm font-medium transition-colors duration-300",
+              tabletCompact &&
+                "md:min-h-11 md:min-w-11 md:justify-center lg:min-h-0 lg:min-w-0",
               selected === index
                 ? cn("bg-muted", activeColor)
                 : "text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -121,7 +126,12 @@ export function ExpandableTabs({
                   transition={transition}
                   className={cn(
                     "overflow-hidden",
-                    tab.alwaysShowLabel && selected !== index && "md:hidden lg:block"
+                    tab.alwaysShowLabel &&
+                      selected !== index &&
+                      "md:hidden lg:block",
+                    tabletCompact &&
+                      !(tab.alwaysShowLabel && selected !== index) &&
+                      "md:hidden lg:inline"
                   )}
                 >
                   {tab.title}
