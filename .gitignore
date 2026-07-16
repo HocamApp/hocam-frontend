@@ -9,3 +9,4 @@ out/
 .next/
 tsconfig.tsbuildinfo
 .claude/
+.vercel
