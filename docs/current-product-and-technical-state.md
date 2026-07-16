@@ -9,7 +9,7 @@ This is the active product and technical direction for Hocam. It supersedes earl
 - The sole paid-learning model is a package-credit model: weekly lessons (1–5) × a 14/30/90/180-day duration. One-off paid lessons and ten-lesson packages are retired.
 - A package, credit, or ledger record is not proof of a live payment. No payment provider is connected.
 - `MANUAL_PAYMENT_ACTIVATION_ENABLED` remains disabled until written founder approval after G0/G1 reconciliation and the payment-provider plan are complete.
-- Email-code verification is temporarily disabled. Email/password registration receives an auth token immediately; the account remains honestly marked unverified until verification is restored.
+- Production email/password registration requires the 6-digit verification code. Resend sends from the verified `hocamozelders.com` domain, password-reset links use `www.hocamozelders.com`, and Google sign-in is configured in production using Google's verified-email signal.
 - Package lesson counts are not settled tutor earnings. Do not display them as currency; a processed refund record is not proof of a real-world refund.
 
 ## Technical baseline
