@@ -300,7 +300,11 @@ export function ProfileMenu() {
   };
 
   const handleLanguageChange = async (nextLang: string) => {
-    if (!isInterfaceLanguage(nextLang) || nextLang === prefs.language) return;
+    if (!isInterfaceLanguage(nextLang)) return;
+    if (nextLang === prefs.language) {
+      applyInterfaceLanguage(nextLang);
+      return;
+    }
     const prevLang = prefs.language;
     setPrefOverrides((prev) => ({ ...prev, language: nextLang }));
     try {

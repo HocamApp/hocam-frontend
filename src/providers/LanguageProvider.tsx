@@ -1,9 +1,11 @@
 "use client";
 
 import Script from "next/script";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
   getStoredInterfaceLanguage,
+  INTERFACE_CONTENT_READY_EVENT,
   type InterfaceLanguage,
 } from "@/lib/interfaceLanguage";
 
@@ -31,14 +33,31 @@ type TranslatorWindow = Window & {
 };
 
 const ELEMENT_ID = "hocam-google-translate";
+const REFRESH_DELAY = 700;
+
+function refreshEnglishTranslation() {
+  const selector = document.querySelector<HTMLSelectElement>(".goog-te-combo");
+  if (!selector) return;
+
+  selector.value = "en";
+  selector.dispatchEvent(new Event("change"));
+}
 
 function initializeTranslator() {
   const TranslateElement = (window as TranslatorWindow).google?.translate
     ?.TranslateElement;
   const container = document.getElementById(ELEMENT_ID);
 
-  if (!TranslateElement || !container || container.childElementCount > 0) return;
+  if (
+    !TranslateElement ||
+    !container ||
+    container.dataset.translatorInitialized === "true" ||
+    container.childElementCount > 0
+  ) {
+    return;
+  }
 
+  container.dataset.translatorInitialized = "true";
   new TranslateElement(
     {
       pageLanguage: "tr",
@@ -50,6 +69,7 @@ function initializeTranslator() {
 }
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
   const [language, setLanguage] = useState<InterfaceLanguage>("tr");
 
   useEffect(() => {
@@ -64,6 +84,28 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
       delete window.hocamGoogleTranslateInit;
     };
   }, []);
+
+  useEffect(() => {
+    if (language !== "en") return;
+
+    let refreshTimer = window.setTimeout(
+      refreshEnglishTranslation,
+      REFRESH_DELAY
+    );
+    const scheduleRefresh = () => {
+      window.clearTimeout(refreshTimer);
+      refreshTimer = window.setTimeout(
+        refreshEnglishTranslation,
+        REFRESH_DELAY
+      );
+    };
+
+    window.addEventListener(INTERFACE_CONTENT_READY_EVENT, scheduleRefresh);
+    return () => {
+      window.clearTimeout(refreshTimer);
+      window.removeEventListener(INTERFACE_CONTENT_READY_EVENT, scheduleRefresh);
+    };
+  }, [language, pathname]);
 
   return (
     <>

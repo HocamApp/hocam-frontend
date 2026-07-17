@@ -2,6 +2,7 @@ export type InterfaceLanguage = "tr" | "en";
 
 const STORAGE_KEY = "hocam-interface-language";
 const GOOGLE_TRANSLATE_COOKIE = "googtrans";
+export const INTERFACE_CONTENT_READY_EVENT = "hocam:interface-content-ready";
 
 export function isInterfaceLanguage(value: string): value is InterfaceLanguage {
   return value === "tr" || value === "en";
@@ -37,3 +38,8 @@ export function applyInterfaceLanguage(language: InterfaceLanguage) {
   window.location.reload();
 }
 
+/** Notify the translator when a route replaces its loading state with real UI. */
+export function announceInterfaceContentReady() {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new Event(INTERFACE_CONTENT_READY_EVENT));
+}

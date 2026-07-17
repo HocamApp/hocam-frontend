@@ -35,11 +35,11 @@ export function BrandMark({
         )}
       >
         <Image
-          src="/brand/hocam-logo.jpeg"
+          src="/brand/hocam-logo.png"
           alt=""
           aria-hidden="true"
-          width={1600}
-          height={1200}
+          width={1536}
+          height={1024}
           priority={priority}
           sizes={size === "hero" ? "160px" : "48px"}
           className="absolute left-1/2 top-0 h-full w-auto max-w-none -translate-x-1/2"
@@ -53,4 +53,3 @@ export function BrandMark({
     </span>
   );
 }
-

@@ -49,19 +49,6 @@
   }
 }
 
-/* Homepage-only brand palette derived from the uploaded coral logo. */
-.brand-home {
-  --primary: 352 72% 42%;
-  --primary-foreground: 0 0% 100%;
-  --ring: 352 72% 42%;
-}
-
-.dark .brand-home {
-  --primary: 354 100% 72%;
-  --primary-foreground: 222 47% 11%;
-  --ring: 354 100% 72%;
-}
-
 @layer base {
   * {
     @apply border-border;

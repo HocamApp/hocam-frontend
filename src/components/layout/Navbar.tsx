@@ -23,7 +23,7 @@ export function Navbar() {
     <Link
       href={isAuthenticated ? "/home" : "/tutors"}
       aria-label="Hocam ana sayfa"
-      className="inline-flex min-h-11 items-center text-foreground transition-colors hover:text-[#cf3048] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 lg:inline lg:min-h-0"
+      className="inline-flex min-h-11 items-center text-foreground transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 lg:inline lg:min-h-0"
     >
       <BrandMark priority />
     </Link>
