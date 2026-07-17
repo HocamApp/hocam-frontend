@@ -90,7 +90,7 @@ export function RegisterForm({
   useEffect(() => {
     if (!isLoading && isAuthenticated && user) {
       if (user.role === "tutor") {
-        router.replace(user.tutor_profile_id ? "/dashboard/tutor" : "/tutor/setup");
+        router.replace(user.tutor_profile_id ? "/home" : "/tutor/setup");
       } else {
         router.replace("/home");
       }
@@ -146,7 +146,7 @@ export function RegisterForm({
   const completeAuth = (res: AuthResponse) => {
     setAuth(res.user, res.token);
     if (res.user.role === "tutor") {
-      router.push(res.user.tutor_profile_id ? "/dashboard/tutor" : "/tutor/setup");
+      router.push(res.user.tutor_profile_id ? "/home" : "/tutor/setup");
     } else {
       router.push("/home");
     }
@@ -197,7 +197,7 @@ export function RegisterForm({
         }
         setAuth(resp.user, resp.token);
         if (resp.user.role === "tutor") {
-          router.push(resp.user.tutor_profile_id ? "/dashboard/tutor" : "/tutor/setup");
+          router.push(resp.user.tutor_profile_id ? "/home" : "/tutor/setup");
         } else {
           router.push("/home");
         }
