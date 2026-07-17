@@ -69,7 +69,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (cachedUser) {
         setToken(storedToken);
         setUser(cachedUser);
-        setIsLoading(false);
+        // Do not mount account-specific queries with an unverified, short-lived
+        // impersonation token after refresh. fetchMe either restores the target
+        // or safely falls back to the administrator first.
+        if (!cachedUser.impersonation) {
+          setIsLoading(false);
+        }
       }
 
       try {
@@ -81,14 +86,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(freshUser);
         localStorage.setItem("auth_user", JSON.stringify(freshUser));
       } catch {
-        Cookies.remove("auth_token");
-        localStorage.removeItem("auth_user");
-        setToken(null);
-        setUser(null);
-      } finally {
-        if (!cachedUser) {
-          setIsLoading(false);
+        // The API interceptor owns confirmed 401 session expiry. A temporary
+        // network or server failure during refresh must not destroy a valid
+        // seven-day browser session.
+        const tokenStillAvailable = Cookies.get("auth_token");
+        if (!tokenStillAvailable) {
+          localStorage.removeItem("auth_user");
+          setToken(null);
+          setUser(null);
+        } else {
+          setToken(tokenStillAvailable);
+          setUser(cachedUser);
         }
+      } finally {
+        setIsLoading(false);
       }
     };
 

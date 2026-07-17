@@ -56,18 +56,34 @@ export const IMPERSONATION_ENDED_EVENT = "hocam:impersonation-ended";
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
-      const hadImpersonation = Boolean(Cookies.get("admin_impersonation_token"));
-      if (hadImpersonation) {
-        Cookies.remove("admin_impersonation_token");
-        if (typeof window !== "undefined") {
-          window.dispatchEvent(new CustomEvent(IMPERSONATION_ENDED_EVENT));
-        }
-        if (error.config?.headers) {
-          delete error.config.headers["X-Hocam-Impersonation-Token"];
-        }
-        return api.request(error.config);
+    const status = error.response?.status;
+    const detail = error.response?.data?.detail;
+    const failedWithImpersonation = Boolean(
+      error.config?.headers?.get?.("X-Hocam-Impersonation-Token") ??
+        error.config?.headers?.["X-Hocam-Impersonation-Token"]
+    );
+    const isImpersonationAuthFailure =
+      status === 401 ||
+      (status === 403 &&
+        typeof detail === "string" &&
+        detail.toLowerCase().includes("impersonation session"));
+
+    // Inspect the failed request itself instead of the current cookie. Several
+    // dashboard requests can fail together when an impersonation expires; the
+    // first one removes the cookie, but every failed request still needs to be
+    // retried as the administrator without deleting the primary admin token.
+    if (failedWithImpersonation && isImpersonationAuthFailure) {
+      Cookies.remove("admin_impersonation_token");
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent(IMPERSONATION_ENDED_EVENT));
       }
+      if (error.config?.headers) {
+        delete error.config.headers["X-Hocam-Impersonation-Token"];
+      }
+      return api.request(error.config);
+    }
+
+    if (status === 401) {
       const hadToken = Boolean(Cookies.get("auth_token"));
       Cookies.remove("auth_token");
       if (
