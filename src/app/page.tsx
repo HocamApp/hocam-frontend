@@ -4,6 +4,7 @@ import { Suspense, useState } from "react";
 import { AuthSplitScreen } from "@/components/auth/AuthSplitScreen";
 import { LoginForm } from "@/components/auth/LoginForm";
 import { RegisterForm } from "@/components/auth/RegisterForm";
+import { LoginBrandAnimation } from "@/components/brand/LoginBrandAnimation";
 
 export default function Home() {
   const [mode, setMode] = useState<"login" | "register">("login");
@@ -28,6 +29,7 @@ export default function Home() {
     <AuthSplitScreen
       title="Tekrar hoş geldin"
       description="Hocam'a devam etmek için giriş yap."
+      rightPanel={<LoginBrandAnimation />}
     >
       {/* LoginForm reads returnUrl via useSearchParams, which requires a
           Suspense boundary to build. */}
