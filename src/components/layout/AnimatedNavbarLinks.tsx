@@ -25,25 +25,23 @@ import {
 import { NotificationMark } from "@/components/shared/NotificationMark";
 import { NotificationPopoverContent } from "@/components/shared/NotificationPopoverContent";
 import { fetchNotificationSummary } from "@/lib/notificationsApi";
+import {
+  getActiveNavIndex,
+  getNavDescriptors,
+  type NavIconName,
+  type NavPopoverDescriptor,
+} from "@/components/layout/navItems";
 
-type NavDescriptor =
-  | {
-      kind: "route";
-      title: string;
-      icon: LucideIcon;
-      href: string;
-      /** Extra path prefixes that should also mark this item active. */
-      activePrefixes?: string[];
-    }
-  | { kind: "separator" }
-  | {
-      kind: "popover";
-      title: string;
-      icon: LucideIcon;
-      content?: { title: string; body: string };
-      contentNode?: React.ReactNode;
-      badge?: boolean;
-    };
+const iconByName = {
+  Bell,
+  FileQuestion,
+  GraduationCap,
+  Heart,
+  Home,
+  LayoutDashboard,
+  MessageCircle,
+  Route,
+} satisfies Record<NavIconName, LucideIcon>;
 
 /**
  * Animated icon navigation for authenticated users. Active item is derived from
@@ -67,113 +65,22 @@ export function AnimatedNavbarLinks() {
 
   if (isLoading || !isAuthenticated) return null;
 
-  const panomHref = isTutor ? "/dashboard/tutor" : "/dashboard/student";
-  const isFavoritesView =
-    pathname === "/tutors" && searchParams.get("favorites") === "1";
+  const descriptors = getNavDescriptors(isTutor ? "tutor" : "student");
+  const activeIndex = getActiveNavIndex(descriptors, pathname, searchParams);
 
-  const descriptors: NavDescriptor[] = isTutor
-    ? [
-        { kind: "route", title: "Ana Sayfa", icon: Home, href: "/home" },
-        { kind: "route", title: "Dersler", icon: GraduationCap, href: "/tutors" },
-        { kind: "route", title: "Mesajlar", icon: MessageCircle, href: "/messages" },
-        { kind: "route", title: "Panom", icon: LayoutDashboard, href: panomHref },
-        {
-          kind: "route",
-          title: "Çıkmış Sorular",
-          icon: FileQuestion,
-          href: "/cikmis-sorular",
-        },
-        { kind: "separator" },
-        {
-          kind: "popover",
-          title: "Bildirimler",
-          icon: Bell,
-          contentNode: <NotificationPopoverContent />,
-        },
-      ]
-    : [
-        { kind: "route", title: "Ana Sayfa", icon: Home, href: "/home" },
-        { kind: "route", title: "Hocalar", icon: GraduationCap, href: "/tutors" },
-        {
-          kind: "route",
-          title: "Öğrenme",
-          icon: Route,
-          href: "/dashboard/student/learning",
-          activePrefixes: ["/dashboard/student/hedefler"],
-        },
-        {
-          kind: "route",
-          title: "Çıkmış Sorular",
-          icon: FileQuestion,
-          href: "/cikmis-sorular",
-        },
-        { kind: "route", title: "Panelim", icon: LayoutDashboard, href: panomHref },
-        { kind: "separator" },
-        { kind: "route", title: "Mesajlar", icon: MessageCircle, href: "/messages" },
-        {
-          kind: "popover",
-          title: "Bildirimler",
-          icon: Bell,
-          contentNode: <NotificationPopoverContent />,
-        },
-        { kind: "route", title: "Favoriler", icon: Heart, href: "/tutors?favorites=1" },
-      ];
-
-  // Returns the length of the most specific matched path for a route, or -1 if
-  // it isn't active. Longer match wins so nested routes (e.g. the learning hub)
-  // don't get shadowed by a shorter prefix like Panom's /dashboard/student.
-  const routeMatchLength = (descriptor: NavDescriptor): number => {
-    if (descriptor.kind !== "route") return -1;
-    const { href, activePrefixes } = descriptor;
-
-    if (href === "/tutors?favorites=1") return isFavoritesView ? href.length : -1;
-    if (href === "/tutors" && isFavoritesView) return -1;
-
-    const [hrefPathname] = href.split("?");
-    const candidates = [hrefPathname, ...(activePrefixes ?? [])];
-    let best = -1;
-    for (const candidate of candidates) {
-      if (pathname === candidate || pathname.startsWith(`${candidate}/`)) {
-        best = Math.max(best, candidate.length);
-      }
-    }
-    return best;
-  };
-
-  let activeIndex = -1;
-  let bestMatch = -1;
-  descriptors.forEach((descriptor, index) => {
-    const length = routeMatchLength(descriptor);
-    if (length > bestMatch) {
-      bestMatch = length;
-      activeIndex = index;
-    }
-  });
-
-  const makePopoverWrapper = (descriptor: NavDescriptor & { kind: "popover" }) => {
-    const showBadge = descriptor.contentNode != null ? hasUnread : (descriptor.badge ?? false);
+  const makePopoverWrapper = (descriptor: NavPopoverDescriptor) => {
     // eslint-disable-next-line react/display-name -- render fn, not a component
     return (node: React.ReactNode) => (
       <Popover>
         <span className="relative inline-flex">
           <PopoverTrigger asChild>{node}</PopoverTrigger>
-          {showBadge && (
-            <NotificationMark hasUnread={showBadge} className="absolute right-0.5 top-0.5" />
-          )}
+          <NotificationMark
+            hasUnread={hasUnread}
+            className="absolute right-0.5 top-0.5"
+          />
         </span>
         <PopoverContent align="end" className="w-80 p-0">
-          {descriptor.contentNode != null ? (
-            descriptor.contentNode
-          ) : (
-            <div className="p-4">
-              <p className="text-sm font-semibold text-foreground">
-                {descriptor.content?.title}
-              </p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {descriptor.content?.body}
-              </p>
-            </div>
-          )}
+          {descriptor.id === "notifications" && <NotificationPopoverContent />}
         </PopoverContent>
       </Popover>
     );
@@ -183,11 +90,15 @@ export function AnimatedNavbarLinks() {
   const tabs = descriptors.map((d, index) => {
     if (d.kind === "separator") return { type: "separator" as const };
     if (d.kind === "popover") {
-      return { title: d.title, icon: d.icon, wrapper: makePopoverWrapper(d) };
+      return {
+        title: d.title,
+        icon: iconByName[d.icon],
+        wrapper: makePopoverWrapper(d),
+      };
     }
     return {
       title: d.title,
-      icon: d.icon,
+      icon: iconByName[d.icon],
       alwaysShowLabel: separatorIndex >= 0 && index < separatorIndex,
     };
   });
@@ -206,6 +117,7 @@ export function AnimatedNavbarLinks() {
       tabs={tabs}
       selected={activeIndex >= 0 ? activeIndex : null}
       onChange={handleChange}
+      tabletCompact
       className="w-max flex-nowrap rounded-xl sm:w-auto"
     />
   );

@@ -279,7 +279,7 @@ function ConversationContent({
   const profileHref = tutorForBooking ? `/tutors/${tutorForBooking.id}` : null;
 
   return (
-    <div className="flex h-[calc(100vh-64px)] w-full min-w-0 overflow-hidden">
+    <div className="flex h-[calc(100dvh_-_3.5rem_-_4rem_-_env(safe-area-inset-bottom))] w-full min-w-0 overflow-hidden md:h-[calc(100vh-64px)]">
       <aside className="hidden w-80 shrink-0 flex-col overflow-y-auto border-r md:flex">
         <header className="shrink-0 border-b p-4">
           <h1 className="text-xl font-semibold">Mesajlar</h1>

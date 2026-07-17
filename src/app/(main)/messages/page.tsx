@@ -47,7 +47,7 @@ function MessagesContent() {
   );
 
   return (
-    <div className="flex h-[calc(100vh-64px)] w-full min-w-0 overflow-hidden">
+    <div className="flex h-[calc(100dvh_-_3.5rem_-_4rem_-_env(safe-area-inset-bottom))] w-full min-w-0 overflow-hidden md:h-[calc(100vh-64px)]">
       {/* Left panel */}
       <div className="flex w-full min-w-0 shrink-0 flex-col overflow-x-hidden overflow-y-auto border-r md:w-80">
         <header className="shrink-0 border-b p-4">
