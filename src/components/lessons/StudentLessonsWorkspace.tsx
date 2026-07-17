@@ -249,7 +249,14 @@ export function StudentLessonsWorkspace() {
             </div>
             <div className="grid gap-3 sm:grid-cols-[auto_auto] sm:items-center">
               <div className="rounded-2xl bg-white/10 px-4 py-3 text-sm backdrop-blur"><p className="font-medium">{formatDate(nextLesson.start_time)}</p><p className="mt-1 text-slate-300">{formatTime(nextLesson.start_time)} · {nextLesson.duration_minutes} dakika</p></div>
-              <LessonJoinButton bookingId={nextLesson.id} startTime={nextLesson.start_time} roomUrl={nextLesson.room_url} variant="secondary" />
+              <LessonJoinButton
+                bookingId={nextLesson.id}
+                startTime={nextLesson.start_time}
+                durationMinutes={nextLesson.duration_minutes}
+                status={nextLesson.status}
+                roomUrl={nextLesson.room_url}
+                variant="secondary"
+              />
             </div>
           </div>
         </section>

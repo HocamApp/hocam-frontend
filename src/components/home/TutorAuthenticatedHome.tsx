@@ -31,6 +31,7 @@ import { trackHomeEvent } from "@/lib/homeAnalytics";
 import { HIGHLIGHT_PARAM } from "@/hooks/useHighlightTarget";
 import type { Booking } from "@/types";
 import { ParticipantAvatar } from "@/components/messaging/ParticipantAvatar";
+import { canJoinLesson as isLessonJoinable } from "@/components/lessons/LessonJoinButton";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import StatusBadge from "@/components/shared/StatusBadge";
 import { Button } from "@/components/ui/button";
@@ -68,8 +69,11 @@ function isSameLocalDay(first: Date, second: Date) {
 function canJoinLesson(booking: Booking) {
   return (
     Boolean(booking.room_url) &&
-    (booking.status === "in_progress" ||
-      Date.now() >= new Date(booking.start_time).getTime() - 15 * 60 * 1000)
+    isLessonJoinable(
+      booking.start_time,
+      booking.duration_minutes,
+      booking.status
+    )
   );
 }
 

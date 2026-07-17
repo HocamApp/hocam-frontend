@@ -211,6 +211,9 @@ function SessionContent() {
       new Date(booking.start_time).getTime() - EARLY_JOIN_MINUTES * 60 * 1000;
     return now < joinAt;
   }, [booking, now, user?.role]);
+  const lessonWindowEnded = Boolean(
+    booking && now >= scheduledEndTime(booking)
+  );
 
   const {
     data: sessionToken,
@@ -220,10 +223,16 @@ function SessionContent() {
     queryKey: ["session-token", bookingId],
     queryFn: () => fetchSessionToken(bookingId),
     retry: false,
-    enabled: Boolean(bookingId) && Boolean(booking) && !studentTooEarly,
+    enabled:
+      Boolean(bookingId) &&
+      Boolean(booking) &&
+      !studentTooEarly &&
+      !lessonWindowEnded,
   });
 
-  const sessionEnded = Boolean(booking && ENDED_STATUSES.has(booking.status));
+  const sessionEnded = Boolean(
+    booking && (ENDED_STATUSES.has(booking.status) || lessonWindowEnded)
+  );
   const inSession =
     Boolean(booking) &&
     !studentTooEarly &&
