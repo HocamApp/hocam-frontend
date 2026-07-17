@@ -21,8 +21,11 @@ export async function startAdminImpersonation(targetUserId: string): Promise<Use
 }
 
 export async function endAdminImpersonation(): Promise<User> {
-  const { data } = await api.delete<{ user: User }>("/admin-control/impersonations/");
+  // Drop the short-lived target credential before asking the server to end
+  // actor-owned sessions. This keeps a stale impersonation from cascading
+  // into removal of the administrator's primary auth token.
   Cookies.remove("admin_impersonation_token");
+  const { data } = await api.delete<{ user: User }>("/admin-control/impersonations/");
   return data.user;
 }
 
