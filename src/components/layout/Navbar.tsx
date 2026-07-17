@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 
 export function Navbar() {
   const pathname = usePathname();
-  const { isAuthenticated, isLoading, isStudent } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
 
   const linkClass = (path: string) =>
     cn(
@@ -19,7 +19,7 @@ export function Navbar() {
     );
 
   const leftBrand = (
-    <Link href={isStudent ? "/home" : "/tutors"} className="font-bold text-xl text-foreground hover:text-primary transition-colors">
+    <Link href={isAuthenticated ? "/home" : "/tutors"} className="font-bold text-xl text-foreground hover:text-primary transition-colors">
       Hocam
     </Link>
   );

@@ -73,6 +73,7 @@ export function AnimatedNavbarLinks() {
 
   const descriptors: NavDescriptor[] = isTutor
     ? [
+        { kind: "route", title: "Ana Sayfa", icon: Home, href: "/home" },
         { kind: "route", title: "Dersler", icon: GraduationCap, href: "/tutors" },
         { kind: "route", title: "Mesajlar", icon: MessageCircle, href: "/messages" },
         { kind: "route", title: "Panom", icon: LayoutDashboard, href: panomHref },
@@ -187,7 +188,7 @@ export function AnimatedNavbarLinks() {
     return {
       title: d.title,
       icon: d.icon,
-      alwaysShowLabel: !isTutor && separatorIndex >= 0 && index < separatorIndex,
+      alwaysShowLabel: separatorIndex >= 0 && index < separatorIndex,
     };
   });
 
