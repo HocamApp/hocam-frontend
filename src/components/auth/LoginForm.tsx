@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import axios from "axios";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
@@ -100,8 +101,22 @@ export function LoginForm({ onCreateAccount }: LoginFormProps) {
       } else {
         router.push(returnUrl ?? "/home");
       }
-    } catch {
-      setGeneralError("E-posta veya şifre hatalı.");
+    } catch (error) {
+      if (!axios.isAxiosError(error) || !error.response) {
+        setGeneralError(
+          "Giriş servisine ulaşılamıyor. İnternet bağlantınızı kontrol edip tekrar deneyin."
+        );
+      } else if (error.response.status === 429) {
+        setGeneralError(
+          "Çok fazla giriş denemesi yapıldı. Lütfen 1 dakika bekleyip tekrar deneyin."
+        );
+      } else if (error.response.status >= 500) {
+        setGeneralError(
+          "Giriş servisi geçici olarak kullanılamıyor. Lütfen kısa süre sonra tekrar deneyin."
+        );
+      } else {
+        setGeneralError("E-posta veya şifre hatalı.");
+      }
     }
   };
 
@@ -201,6 +216,10 @@ export function LoginForm({ onCreateAccount }: LoginFormProps) {
                   <GlassInputWrapper>
                     <input
                       {...field}
+                      onChange={(event) => {
+                        field.onChange(event);
+                        if (generalError) setGeneralError(null);
+                      }}
                       type="email"
                       autoComplete="email"
                       placeholder="E-posta adresini gir"
@@ -226,6 +245,10 @@ export function LoginForm({ onCreateAccount }: LoginFormProps) {
                     <div className="relative">
                       <input
                         {...field}
+                        onChange={(event) => {
+                          field.onChange(event);
+                          if (generalError) setGeneralError(null);
+                        }}
                         type={showPassword ? "text" : "password"}
                         autoComplete="current-password"
                         placeholder="Şifreni gir"
