@@ -65,7 +65,7 @@ export function Navbar() {
     return (
       <header className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur">
         <nav className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-wrap items-center justify-between gap-x-3">
+          <div className="flex flex-nowrap items-center justify-between gap-x-1 min-[1039px]:gap-x-3">
             <div className="flex h-14 items-center md:h-16">{leftBrand}</div>
             <div className="hidden md:block">
               <AnimatedNavbarLinks />
