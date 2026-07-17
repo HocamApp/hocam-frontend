@@ -134,6 +134,11 @@ function ProfileContent() {
     try {
       await updateProfileMe({ preferences: { language: nextLang } });
       queryClient.invalidateQueries({ queryKey: ["profile-me"] });
+      // No English translation layer exists yet — say so explicitly instead
+      // of silently no-oping, which read as a broken button (PR-27 QA report).
+      if (nextLang === "en") {
+        toast.info("İngilizce arayüz yakında geliyor. Şu an uygulama Türkçe gösteriliyor.");
+      }
     } catch {
       setPrefOverrides((prev) => ({ ...prev, language: prevLang }));
       toast.error("Dil ayarı kaydedilemedi.");

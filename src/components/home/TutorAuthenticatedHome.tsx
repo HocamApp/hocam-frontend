@@ -28,6 +28,7 @@ import { fetchConversations } from "@/lib/messagingApi";
 import { fetchTutorEarnings } from "@/lib/paymentsApi";
 import { fetchMyTutorProfile } from "@/lib/tutorsApi";
 import { trackHomeEvent } from "@/lib/homeAnalytics";
+import { parseBookingDate } from "@/lib/utils";
 import { HIGHLIGHT_PARAM } from "@/hooks/useHighlightTarget";
 import type { Booking } from "@/types";
 import { ParticipantAvatar } from "@/components/messaging/ParticipantAvatar";
@@ -48,7 +49,7 @@ const DAY_NAMES = [
 ];
 
 function formatLessonDateTime(startTime: string) {
-  return new Date(startTime).toLocaleString("tr-TR", {
+  return parseBookingDate(startTime).toLocaleString("tr-TR", {
     day: "numeric",
     month: "long",
     weekday: "long",
@@ -69,7 +70,7 @@ function canJoinLesson(booking: Booking) {
   return (
     Boolean(booking.room_url) &&
     (booking.status === "in_progress" ||
-      Date.now() >= new Date(booking.start_time).getTime() - 15 * 60 * 1000)
+      Date.now() >= parseBookingDate(booking.start_time).getTime() - 15 * 60 * 1000)
   );
 }
 
@@ -397,7 +398,7 @@ function summarizeStudents(bookings: Booking[]): StudentSummary[] {
     current.totalLessons += 1;
     if (
       ["pending", "confirmed", "in_progress"].includes(booking.status) &&
-      new Date(booking.start_time).getTime() >= Date.now()
+      parseBookingDate(booking.start_time).getTime() >= Date.now()
     ) {
       current.upcomingLessons += 1;
     }
@@ -487,7 +488,7 @@ export function TutorAuthenticatedHome() {
     () =>
       [...bookings]
         .filter((booking) => {
-          const start = new Date(booking.start_time).getTime();
+          const start = parseBookingDate(booking.start_time).getTime();
           return (
             booking.status === "in_progress" ||
             (booking.status === "confirmed" && start > Date.now())
@@ -495,7 +496,8 @@ export function TutorAuthenticatedHome() {
         })
         .sort(
           (first, second) =>
-            new Date(first.start_time).getTime() - new Date(second.start_time).getTime()
+            parseBookingDate(first.start_time).getTime() -
+            parseBookingDate(second.start_time).getTime()
         ),
     [bookings]
   );
@@ -505,7 +507,7 @@ export function TutorAuthenticatedHome() {
       bookings.filter((booking) => {
         if (
           booking.status === "pending" &&
-          new Date(booking.start_time).getTime() > Date.now()
+          parseBookingDate(booking.start_time).getTime() > Date.now()
         ) {
           return true;
         }
@@ -534,7 +536,7 @@ export function TutorAuthenticatedHome() {
     [availability]
   );
   const todayLessonCount = upcomingBookings.filter((booking) =>
-    isSameLocalDay(new Date(booking.start_time), new Date())
+    isSameLocalDay(parseBookingDate(booking.start_time), new Date())
   ).length;
   const studentSummaries = useMemo(() => summarizeStudents(bookings), [bookings]);
 

@@ -5,6 +5,7 @@ import axios from "axios";
 import { Bot, MessageCircle, Send, Sparkles, X } from "lucide-react";
 
 import { TypingIndicator } from "@/components/messaging/TypingIndicator";
+import { AIMessageContent } from "@/components/ai/AIMessageContent";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { AIChatRequest, AIChatResponse, AIIntent, sendAIChatMessage } from "@/lib/aiAssistantApi";
@@ -253,7 +254,11 @@ export function AISupportChatWidget({
                       {intentLabels[message.intent]}
                     </div>
                   )}
-                  <p className="whitespace-pre-wrap">{message.content}</p>
+                  {message.role === "assistant" ? (
+                    <AIMessageContent content={message.content} />
+                  ) : (
+                    <p className="whitespace-pre-wrap">{message.content}</p>
+                  )}
                   {message.action?.type === "apply_profile_bio" && message.action.value && onApplyProfileBio && (
                     <Button
                       type="button"

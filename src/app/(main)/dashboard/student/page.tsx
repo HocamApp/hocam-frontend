@@ -23,7 +23,12 @@ import { fetchBookings } from "@/lib/lessonsApi";
 import { fetchPackagePurchases } from "@/lib/paymentsApi";
 import { fetchLearningDashboard } from "@/lib/learningApi";
 import { goalPackageHref } from "@/lib/learning";
-import { cn, formatDate } from "@/lib/utils";
+import {
+  cn,
+  formatBookingDate,
+  formatBookingTime,
+  parseBookingDate,
+} from "@/lib/utils";
 import {
   computePackageExpiry,
   isPastPackage,
@@ -53,16 +58,14 @@ const DASHBOARD_PREVIEW_COUNT = 3;
 const LESSON_COUNTDOWN_WINDOW_MS = 60 * 60 * 1000;
 
 function formatTime(isoString: string): string {
-  return new Date(isoString).toLocaleTimeString("tr-TR", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  return formatBookingTime(isoString);
 }
 
 function sortByStart(bookings: Booking[], direction: "asc" | "desc" = "asc") {
   return [...bookings].sort((a, b) => {
     const difference =
-      new Date(a.start_time).getTime() - new Date(b.start_time).getTime();
+      parseBookingDate(a.start_time).getTime() -
+      parseBookingDate(b.start_time).getTime();
     return direction === "asc" ? difference : -difference;
   });
 }
@@ -75,12 +78,13 @@ function startOfDay(date: Date): Date {
 
 function formatLessonDay(startTime: string): string {
   const diffDays = Math.round(
-    (startOfDay(new Date(startTime)).getTime() - startOfDay(new Date()).getTime()) /
+    (startOfDay(parseBookingDate(startTime)).getTime() -
+      startOfDay(new Date()).getTime()) /
       86_400_000
   );
   if (diffDays === 0) return "Bugün";
   if (diffDays === 1) return "Yarın";
-  return formatDate(startTime);
+  return formatBookingDate(startTime);
 }
 
 function greeting(): string {
@@ -138,7 +142,7 @@ function CompactBookingRow({
           <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
             <span className="inline-flex items-center gap-1">
               <Calendar className="h-3.5 w-3.5" aria-hidden="true" />
-              {formatDate(booking.start_time)}
+              {formatBookingDate(booking.start_time)}
             </span>
             <span className="inline-flex items-center gap-1">
               <Clock3 className="h-3.5 w-3.5" aria-hidden="true" />
@@ -241,14 +245,15 @@ function StudentDashboardContent() {
       const status = booking.status.toLowerCase();
       return (
         status === "in_progress" ||
-        (status === "confirmed" && new Date(booking.start_time) > now)
+        (status === "confirmed" && parseBookingDate(booking.start_time) > now)
       );
     })
   );
   const pendingBookings = sortByStart(
     allBookings.filter(
       (booking) =>
-        booking.status === "pending" && new Date(booking.start_time) > now
+        booking.status === "pending" &&
+        parseBookingDate(booking.start_time) > now
     )
   );
   const pastBookings = sortByStart(
@@ -260,7 +265,7 @@ function StudentDashboardContent() {
         status === "expired" ||
         status === "disputed" ||
         status === "awaiting_confirmation" ||
-        (new Date(booking.start_time) <= now && status !== "in_progress")
+        (parseBookingDate(booking.start_time) <= now && status !== "in_progress")
       );
     }),
     "desc"
@@ -289,11 +294,11 @@ function StudentDashboardContent() {
     ? `${nextLesson.tutor.name} ${nextLesson.tutor.surname}`
     : "Eğitmen bilgisi bekleniyor";
   const lessonCountdown = useCountdownLabel(
-    nextLesson ? new Date(nextLesson.start_time) : null
+    nextLesson ? parseBookingDate(nextLesson.start_time) : null
   );
   const shouldShowLessonCountdown = Boolean(
     nextLesson &&
-      new Date(nextLesson.start_time).getTime() - Date.now() <=
+      parseBookingDate(nextLesson.start_time).getTime() - Date.now() <=
         LESSON_COUNTDOWN_WINDOW_MS
   );
 
@@ -547,7 +552,7 @@ function StudentDashboardContent() {
                     scheduledLessonCount={allBookings.filter(
                       (booking) =>
                         booking.package_purchase === featuredPackage.id &&
-                        new Date(booking.start_time) > now &&
+                        parseBookingDate(booking.start_time) > now &&
                         booking.status !== "cancelled"
                     ).length}
                     onClick={() => setSelectedPackage(featuredPackage)}

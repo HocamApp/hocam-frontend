@@ -76,6 +76,59 @@ export function formatDateLocal(d: Date): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
+// Booking.start_time (and related lesson-scheduling timestamps) follow this
+// project's naive wall-clock convention: the YYYY-MM-DDTHH:mm:ss digits ARE
+// Turkey local time, sent to the backend with no offset and stored/returned
+// tagged as UTC with no real timezone conversion applied (see the longer
+// explanation in BookingModal.tsx, which established this pattern first).
+//
+// Passing these strings through `new Date(iso)` parses the UTC tag literally
+// and then any `.toLocaleTimeString()`/`.toLocaleString()` call converts
+// UTC -> the viewer's local zone again, double-shifting the displayed time by
+// +3h for Turkey users (e.g. a 06:30 booking renders as 09:30). It also
+// silently corrupts is-future/is-past comparisons within a ~3h window around
+// each lesson's start.
+//
+// Use this instead of `new Date(startTimeIso)` for any Booking start_time (or
+// its derived end_time) — it reads the wall-clock digits directly and builds
+// a Date in the *browser's own* local time, which is correct for this
+// product's Turkey-only audience and keeps `Date.now()`/`new Date()`
+// comparisons meaningful.
+export function parseBookingDate(iso: string): Date {
+  const match = iso.match(
+    /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})/
+  );
+  if (!match) return new Date(iso);
+  const [, y, mo, d, h, mi, s] = match;
+  return new Date(
+    Number(y),
+    Number(mo) - 1,
+    Number(d),
+    Number(h),
+    Number(mi),
+    Number(s)
+  );
+}
+
+// Calendar-date display for a Booking start_time — like formatDate(), but
+// routed through parseBookingDate() so it doesn't double-shift. Use this
+// instead of formatDate() for booking/lesson timestamps specifically.
+export function formatBookingDate(iso: string): string {
+  return parseBookingDate(iso).toLocaleDateString("tr-TR", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+}
+
+// Clock-time display ("18:30") for a Booking start_time.
+export function formatBookingTime(iso: string): string {
+  return parseBookingDate(iso).toLocaleTimeString("tr-TR", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 const DISPUTE_CATEGORY_LABELS: Record<string, string> = {
   tutor_no_show: "Hocanın derse katılmaması",
   technical_issue: "Teknik sorun",

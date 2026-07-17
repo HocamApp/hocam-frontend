@@ -7,7 +7,14 @@ import { Button } from "@/components/ui/button";
 import { LessonJoinButton } from "@/components/lessons/LessonJoinButton";
 import { ParticipantAvatar } from "@/components/messaging/ParticipantAvatar";
 import StatusBadge from "@/components/shared/StatusBadge";
-import { cn, formatDate, formatDisputeCategory, formatPrice } from "@/lib/utils";
+import {
+  cn,
+  formatDisputeCategory,
+  formatPrice,
+  formatBookingDate,
+  formatBookingTime,
+  parseBookingDate,
+} from "@/lib/utils";
 import type { Booking, LearningActivityStatus } from "@/types";
 import {
   Dialog,
@@ -36,10 +43,7 @@ interface BookingCardProps {
 }
 
 function formatTime(isoString: string): string {
-  return new Date(isoString).toLocaleTimeString("tr-TR", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  return formatBookingTime(isoString);
 }
 
 function formatLearningActivityStatus(status: LearningActivityStatus): string {
@@ -84,15 +88,15 @@ export function BookingCard({
   const isAwaitingConfirmation = status === "awaiting_confirmation";
   const isCompleted = status === "completed";
   const isDisputed = status === "disputed";
-  const isPast = new Date(booking.start_time) <= new Date();
-  const isFuture = new Date(booking.start_time) > new Date();
+  const isPast = parseBookingDate(booking.start_time) <= new Date();
+  const isFuture = parseBookingDate(booking.start_time) > new Date();
   const canCancel =
     currentUserRole === "student" &&
     (isPending || isConfirmed) &&
     isFuture;
   const isLateCancellation =
     isFuture &&
-    new Date(booking.start_time).getTime() - Date.now() < 12 * 60 * 60 * 1000;
+    parseBookingDate(booking.start_time).getTime() - Date.now() < 12 * 60 * 60 * 1000;
   const requiresCancellationConfirmation =
     isLateCancellation &&
     (currentUserRole === "tutor" || Boolean(booking.package_purchase));
@@ -165,7 +169,7 @@ export function BookingCard({
         <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-muted-foreground">
           <span className="inline-flex items-center gap-1.5">
             <Calendar className="h-3.5 w-3.5" aria-hidden="true" />
-            {formatDate(booking.start_time)}
+            {formatBookingDate(booking.start_time)}
           </span>
           <span className="inline-flex items-center gap-1.5">
             <Clock3 className="h-3.5 w-3.5" aria-hidden="true" />

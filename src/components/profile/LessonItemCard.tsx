@@ -5,14 +5,11 @@ import { CalendarDays, Clock, User } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import StatusBadge from "@/components/shared/StatusBadge";
-import { formatDate, formatPrice } from "@/lib/utils";
+import { formatPrice, formatBookingDate, formatBookingTime } from "@/lib/utils";
 import type { ParticipantRole, Subject } from "@/types";
 
 function formatTime(iso: string): string {
-  return new Date(iso).toLocaleTimeString("tr-TR", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  return formatBookingTime(iso);
 }
 
 interface LessonItemCardProps {
@@ -57,7 +54,7 @@ export function LessonItemCard({
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
             <span className="flex items-center gap-1.5">
               <CalendarDays className="h-3.5 w-3.5 shrink-0" />
-              {formatDate(startTime)}
+              {formatBookingDate(startTime)}
             </span>
             <span className="flex items-center gap-1.5">
               <Clock className="h-3.5 w-3.5 shrink-0" />

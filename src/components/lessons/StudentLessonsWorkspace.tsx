@@ -30,7 +30,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { confirmBooking, fetchBookings, getBookingErrorMessage, updateBookingStatus } from "@/lib/lessonsApi";
 import { fetchPendingReviews } from "@/lib/profileLessonsApi";
-import { cn, formatDate } from "@/lib/utils";
+import { cn, formatBookingDate, parseBookingDate } from "@/lib/utils";
 import type { Booking, PendingReviewItem } from "@/types";
 
 type LessonTab = "upcoming" | "actions" | "history" | "issues";
@@ -56,7 +56,7 @@ function tutorName(booking: Booking): string {
 }
 
 function formatTime(value: string): string {
-  return new Date(value).toLocaleTimeString("tr-TR", {
+  return parseBookingDate(value).toLocaleTimeString("tr-TR", {
     hour: "2-digit",
     minute: "2-digit",
   });
@@ -156,11 +156,13 @@ export function StudentLessonsWorkspace() {
   const now = Date.now();
 
   const groups = useMemo(() => {
-    const asc = (a: Booking, b: Booking) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime();
+    const asc = (a: Booking, b: Booking) =>
+      parseBookingDate(a.start_time).getTime() -
+      parseBookingDate(b.start_time).getTime();
     const desc = (a: Booking, b: Booking) => -asc(a, b);
     return {
       upcoming: allBookings
-        .filter((item) => ["pending", "confirmed", "in_progress"].includes(item.status) && new Date(item.start_time).getTime() > now - 60 * 60 * 1000)
+        .filter((item) => ["pending", "confirmed", "in_progress"].includes(item.status) && parseBookingDate(item.start_time).getTime() > now - 60 * 60 * 1000)
         .sort(asc),
       actions: allBookings
         .filter((item) => actionableIds.has(item.id) || reviewByBooking.has(item.id))
@@ -177,7 +179,7 @@ export function StudentLessonsWorkspace() {
   const nextLesson = groups.upcoming.find((item) => ["confirmed", "in_progress"].includes(item.status)) ?? null;
   const monthNow = new Date();
   const completedThisMonth = groups.history.filter((item) => {
-    const date = new Date(item.start_time);
+    const date = parseBookingDate(item.start_time);
     return date.getMonth() === monthNow.getMonth() && date.getFullYear() === monthNow.getFullYear();
   }).length;
   const subjects = Array.from(new Map(allBookings.map((item) => [item.subject.id, item.subject])).values());
@@ -191,7 +193,7 @@ export function StudentLessonsWorkspace() {
   const lessonDates = Array.from(
     new Map(
       calendarBookings.map((item) => {
-        const date = new Date(item.start_time);
+        const date = parseBookingDate(item.start_time);
         return [startOfDay(date), date];
       })
     ).values()
@@ -200,7 +202,7 @@ export function StudentLessonsWorkspace() {
     (item) =>
       view === "list" ||
       !selectedDate ||
-      startOfDay(new Date(item.start_time)) === startOfDay(selectedDate)
+      startOfDay(parseBookingDate(item.start_time)) === startOfDay(selectedDate)
   );
   const visible = filtered.slice(0, visibleCount);
   const remainingCount = Math.max(0, filtered.length - visibleCount);
@@ -248,7 +250,7 @@ export function StudentLessonsWorkspace() {
               </div>
             </div>
             <div className="grid gap-3 sm:grid-cols-[auto_auto] sm:items-center">
-              <div className="rounded-2xl bg-white/10 px-4 py-3 text-sm backdrop-blur"><p className="font-medium">{formatDate(nextLesson.start_time)}</p><p className="mt-1 text-slate-300">{formatTime(nextLesson.start_time)} · {nextLesson.duration_minutes} dakika</p></div>
+              <div className="rounded-2xl bg-white/10 px-4 py-3 text-sm backdrop-blur"><p className="font-medium">{formatBookingDate(nextLesson.start_time)}</p><p className="mt-1 text-slate-300">{formatTime(nextLesson.start_time)} · {nextLesson.duration_minutes} dakika</p></div>
               <LessonJoinButton bookingId={nextLesson.id} startTime={nextLesson.start_time} roomUrl={nextLesson.room_url} variant="secondary" />
             </div>
           </div>

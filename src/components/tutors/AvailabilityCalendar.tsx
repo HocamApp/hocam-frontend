@@ -7,7 +7,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import StatusBadge from "@/components/shared/StatusBadge";
 import { DayAvailabilityDialog } from "@/components/tutors/DayAvailabilityDialog";
-import { formatDateLocal, jsDayToBackendDay } from "@/lib/utils";
+import {
+  formatDateLocal,
+  jsDayToBackendDay,
+  formatBookingTime,
+  parseBookingDate,
+} from "@/lib/utils";
 import type { AvailabilityRule, Booking } from "@/types";
 
 const DAY_NAMES = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar"];
@@ -31,7 +36,9 @@ export function AvailabilityCalendar({ availability, bookings = [], editable = t
   const [isEditing, setIsEditing] = useState(false);
   const selectedRules = dayRulesForDate(availability, selectedDate);
   const selectedBookings = bookings.filter(
-    (booking) => new Date(booking.start_time).toDateString() === selectedDate.toDateString()
+    (booking) =>
+      parseBookingDate(booking.start_time).toDateString() ===
+      selectedDate.toDateString()
   );
   const availableDates = useMemo(() => {
     const dates: Date[] = [];
@@ -48,7 +55,7 @@ export function AvailabilityCalendar({ availability, bookings = [], editable = t
     () => availability.filter((rule) => rule.is_unavailable && rule.specific_date).map((rule) => new Date(`${rule.specific_date}T00:00:00`)),
     [availability]
   );
-  const bookedDates = useMemo(() => bookings.map((booking) => new Date(booking.start_time)), [bookings]);
+  const bookedDates = useMemo(() => bookings.map((booking) => parseBookingDate(booking.start_time)), [bookings]);
   const label = `${DAY_NAMES[jsDayToBackendDay(selectedDate.getDay())]} ${selectedDate.toLocaleDateString("tr-TR", { day: "numeric", month: "long" })}`;
 
   return (
@@ -86,7 +93,7 @@ export function AvailabilityCalendar({ availability, bookings = [], editable = t
               {selectedRules.map((rule) => <span key={rule.id} className="rounded-md border bg-muted/40 px-2 py-1 text-sm tabular-nums">{rule.start_time?.slice(0, 5)}–{rule.end_time?.slice(0, 5)}</span>)}
             </div>
           )}
-          {showBookings && selectedBookings.length > 0 && <div className="space-y-2 border-t pt-4"><p className="text-sm font-semibold">Dersler</p>{selectedBookings.map((booking) => <div key={booking.id} className="flex items-center justify-between gap-3 rounded-lg border p-3"><span className="text-sm font-medium">{new Date(booking.start_time).toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })} · {booking.student.display_name || booking.student.email}</span><StatusBadge status={booking.status} type="booking" /></div>)}</div>}
+          {showBookings && selectedBookings.length > 0 && <div className="space-y-2 border-t pt-4"><p className="text-sm font-semibold">Dersler</p>{selectedBookings.map((booking) => <div key={booking.id} className="flex items-center justify-between gap-3 rounded-lg border p-3"><span className="text-sm font-medium">{formatBookingTime(booking.start_time)} · {booking.student.display_name || booking.student.email}</span><StatusBadge status={booking.status} type="booking" /></div>)}</div>}
           {editable && <p className="text-xs text-muted-foreground"><Pencil className="mr-1 inline h-3 w-3" /> Takvimde bir gün seçerek o güne özel saat veya kapalı gün tanımlayabilirsin.</p>}
         </CardContent>
       </Card>

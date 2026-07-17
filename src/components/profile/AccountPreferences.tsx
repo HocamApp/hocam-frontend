@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell } from "lucide-react";
+import { Bell, Globe } from "lucide-react";
 
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { SectionCardTitle } from "@/components/profile/SectionCardTitle";
@@ -46,6 +46,9 @@ export function AccountPreferences({
       </CardHeader>
       <CardContent className="space-y-1">
         <div className="flex items-center gap-3 px-2 py-1.5 text-sm">
+          <span className="shrink-0 text-muted-foreground">
+            <Globe className="h-4 w-4" />
+          </span>
           <span className="flex-1 text-foreground">Dil</span>
           <Select value={preferences.language} onValueChange={onLanguageChange}>
             <SelectTrigger className="w-32">

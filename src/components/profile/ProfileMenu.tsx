@@ -23,6 +23,7 @@ import {
   Pencil,
   PlayCircle,
   Receipt,
+  Settings,
   ShieldCheck,
   Star,
   UserCog,
@@ -287,6 +288,12 @@ export function ProfileMenu() {
     try {
       await updateProfileMe({ preferences: { language: nextLang } });
       queryClient.invalidateQueries({ queryKey: ["profile-me"] });
+      // The app's UI text is Turkish-only for now — there is no English
+      // translation layer yet. Saying so explicitly beats silently doing
+      // nothing, which reads as broken (see PR-27 QA report).
+      if (nextLang === "en") {
+        toast.info("İngilizce arayüz yakında geliyor. Şu an uygulama Türkçe gösteriliyor.");
+      }
     } catch {
       setPrefOverrides((prev) => ({ ...prev, language: prevLang }));
       toast.error("Dil ayarı kaydedilemedi.");
@@ -832,7 +839,7 @@ export function ProfileMenu() {
 
           {/* ---- Gelişmiş Ayarlar ---- */}
           <ProfileAccordionSection
-            icon={<UserCog className="h-4 w-4" />}
+            icon={<Settings className="h-4 w-4" />}
             title="Gelişmiş Ayarlar"
             {...sectionProps("advanced")}
           >

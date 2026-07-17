@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Video } from "lucide-react";
 import { toast } from "sonner";
 import { Button, type ButtonProps } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { cn, parseBookingDate } from "@/lib/utils";
 
 export const EARLY_JOIN_MINUTES = 15;
 
@@ -20,7 +20,7 @@ interface LessonJoinButtonProps {
 }
 
 export function canJoinLesson(startTime: string, now = Date.now()): boolean {
-  return now >= new Date(startTime).getTime() - EARLY_JOIN_MINUTES * 60_000;
+  return now >= parseBookingDate(startTime).getTime() - EARLY_JOIN_MINUTES * 60_000;
 }
 
 export function LessonJoinButton({
@@ -33,7 +33,7 @@ export function LessonJoinButton({
   className,
 }: LessonJoinButtonProps) {
   const [now, setNow] = useState(() => Date.now());
-  const joinAt = new Date(startTime).getTime() - EARLY_JOIN_MINUTES * 60_000;
+  const joinAt = parseBookingDate(startTime).getTime() - EARLY_JOIN_MINUTES * 60_000;
   const canJoin = Boolean(roomUrl) && now >= joinAt;
 
   useEffect(() => {

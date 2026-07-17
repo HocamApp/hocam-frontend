@@ -11,14 +11,11 @@ import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { Button } from "@/components/ui/button";
 import { fetchCalendar } from "@/lib/profileLessonsApi";
-import { formatDate } from "@/lib/utils";
+import { formatBookingDate, formatBookingTime, parseBookingDate } from "@/lib/utils";
 import type { CalendarEvent } from "@/types";
 
 function formatTime(iso: string): string {
-  return new Date(iso).toLocaleTimeString("tr-TR", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  return formatBookingTime(iso);
 }
 
 function CalendarContent() {
@@ -30,7 +27,8 @@ function CalendarContent() {
   const sortedEvents = useMemo(
     () =>
       [...(data ?? [])].sort(
-        (a, b) => new Date(a.start).getTime() - new Date(b.start).getTime()
+        (a, b) =>
+          parseBookingDate(a.start).getTime() - parseBookingDate(b.start).getTime()
       ),
     [data]
   );
@@ -38,7 +36,7 @@ function CalendarContent() {
   const groups = useMemo(() => {
     const map = new Map<string, CalendarEvent[]>();
     for (const event of sortedEvents) {
-      const key = formatDate(event.start);
+      const key = formatBookingDate(event.start);
       const list = map.get(key) ?? [];
       list.push(event);
       map.set(key, list);
@@ -88,7 +86,7 @@ function CalendarContent() {
               </p>
               <p className="mt-1 truncate text-sm font-medium">
                 {nextEvent
-                  ? `${formatDate(nextEvent.start)} · ${formatTime(nextEvent.start)}`
+                  ? `${formatBookingDate(nextEvent.start)} · ${formatTime(nextEvent.start)}`
                   : "-"}
               </p>
             </div>

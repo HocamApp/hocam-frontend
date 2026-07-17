@@ -17,7 +17,7 @@ import { RouteGuard } from "@/components/shared/RouteGuard";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { Button } from "@/components/ui/button";
-import { formatDate } from "@/lib/utils";
+import { formatBookingDate, parseBookingDate } from "@/lib/utils";
 import type { Booking } from "@/types";
 import { LessonQuestionPanel } from "@/components/questions/LessonQuestionPanel";
 import { TutorStudentNotes } from "@/components/tutors/TutorStudentNotes";
@@ -52,7 +52,8 @@ function formatCountdown(ms: number) {
 
 function scheduledEndTime(booking: Booking) {
   return (
-    new Date(booking.start_time).getTime() + booking.duration_minutes * 60_000
+    parseBookingDate(booking.start_time).getTime() +
+    booking.duration_minutes * 60_000
   );
 }
 
@@ -64,7 +65,7 @@ function LessonWaitingRoom({
   onBack: () => void;
 }) {
   const [now, setNow] = useState(() => Date.now());
-  const startAt = new Date(booking.start_time).getTime();
+  const startAt = parseBookingDate(booking.start_time).getTime();
   const joinAt = startAt - EARLY_JOIN_MINUTES * 60 * 1000;
   const timeToJoin = joinAt - now;
   const tutorName = `${booking.tutor.name} ${booking.tutor.surname}`.trim();
@@ -93,7 +94,7 @@ function LessonWaitingRoom({
         </h1>
         <p className="mt-4 max-w-2xl text-sm leading-6 text-slate-300 sm:text-base">
           {booking.subject.name} dersi {tutorName ? `${tutorName} ile ` : ""}
-          {formatDate(booking.start_time)} tarihinde başlayacak. Oda açılana kadar
+          {formatBookingDate(booking.start_time)} tarihinde başlayacak. Oda açılana kadar
           burada sakin bir bekleme ekranı gösteriyoruz.
         </p>
 
@@ -208,7 +209,8 @@ function SessionContent() {
     const status = (booking.status || "").toLowerCase();
     if (status !== "confirmed") return false;
     const joinAt =
-      new Date(booking.start_time).getTime() - EARLY_JOIN_MINUTES * 60 * 1000;
+      parseBookingDate(booking.start_time).getTime() -
+      EARLY_JOIN_MINUTES * 60 * 1000;
     return now < joinAt;
   }, [booking, now, user?.role]);
 

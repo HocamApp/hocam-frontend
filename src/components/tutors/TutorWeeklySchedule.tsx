@@ -1,7 +1,7 @@
 "use client";
 
 import { CalendarDays, Pencil } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, formatBookingTime, parseBookingDate } from "@/lib/utils";
 import type { Booking } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -37,9 +37,9 @@ export function TutorWeeklySchedule({ bookings, onEdit }: { bookings: Booking[];
       <CardContent className="overflow-x-auto p-4 pt-0">
         <div className="grid min-w-[760px] grid-cols-7 gap-2">
           {days.map((date, index) => {
-            const dayBookings = visibleBookings.filter((booking) => new Date(booking.start_time).toDateString() === date.toDateString()).sort((a, b) => +new Date(a.start_time) - +new Date(b.start_time));
+            const dayBookings = visibleBookings.filter((booking) => parseBookingDate(booking.start_time).toDateString() === date.toDateString()).sort((a, b) => +parseBookingDate(a.start_time) - +parseBookingDate(b.start_time));
             const isToday = date.toDateString() === today;
-            return <div key={date.toISOString()} className={cn("min-h-28 rounded-xl border p-2", isToday && "border-primary/50 bg-primary/5")}><div className="mb-2 flex items-center justify-between"><span className="text-xs font-semibold">{DAY_NAMES[index]}</span><span className={cn("flex h-6 w-6 items-center justify-center rounded-full text-xs", isToday && "bg-primary text-primary-foreground")}>{date.getDate()}</span></div>{dayBookings.length === 0 ? <p className="pt-3 text-center text-[11px] text-muted-foreground/70">Ders yok</p> : <div className="space-y-1.5">{dayBookings.map((booking) => <div key={booking.id} className="rounded-lg bg-muted/60 p-2"><p className="text-[11px] font-semibold tabular-nums">{new Date(booking.start_time).toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })}</p><p className="truncate text-[11px]">{booking.student.display_name || booking.student.email}</p><p className="truncate text-[10px] text-muted-foreground">{booking.subject.name}</p></div>)}</div>}</div>;
+            return <div key={date.toISOString()} className={cn("min-h-28 rounded-xl border p-2", isToday && "border-primary/50 bg-primary/5")}><div className="mb-2 flex items-center justify-between"><span className="text-xs font-semibold">{DAY_NAMES[index]}</span><span className={cn("flex h-6 w-6 items-center justify-center rounded-full text-xs", isToday && "bg-primary text-primary-foreground")}>{date.getDate()}</span></div>{dayBookings.length === 0 ? <p className="pt-3 text-center text-[11px] text-muted-foreground/70">Ders yok</p> : <div className="space-y-1.5">{dayBookings.map((booking) => <div key={booking.id} className="rounded-lg bg-muted/60 p-2"><p className="text-[11px] font-semibold tabular-nums">{formatBookingTime(booking.start_time)}</p><p className="truncate text-[11px]">{booking.student.display_name || booking.student.email}</p><p className="truncate text-[10px] text-muted-foreground">{booking.subject.name}</p></div>)}</div>}</div>;
           })}
         </div>
       </CardContent>

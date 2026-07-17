@@ -914,9 +914,18 @@ export default function TutorProfilePage({
         onSuccess={(messageRequest) => {
           setIsRequestModalOpen(false);
           toast.success("Mesajın gönderildi.");
-          if (messageRequest.conversation_id) {
-            router.push(`/messages/${messageRequest.conversation_id}`);
-          }
+          // The conversations list has a 5-minute staleTime (see queryClient.ts).
+          // Without this, navigating straight to /messages after creating the
+          // first conversation can show a stale/empty list for up to 5 minutes.
+          queryClient.invalidateQueries({ queryKey: ["conversations"] });
+          // Always land the student on /messages even if conversation_id is
+          // unexpectedly missing from the response — better than stranding
+          // them on the tutor profile with only a toast.
+          router.push(
+            messageRequest.conversation_id
+              ? `/messages/${messageRequest.conversation_id}`
+              : "/messages"
+          );
         }}
       />
       <BookingModal

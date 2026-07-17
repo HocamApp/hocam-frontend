@@ -34,7 +34,7 @@ import {
   isPastPackage,
 } from "@/components/payments/PackagePurchaseCard";
 import { trackHomeEvent } from "@/lib/homeAnalytics";
-import { formatDate } from "@/lib/utils";
+import { formatDate, parseBookingDate } from "@/lib/utils";
 import type {
   Booking,
   LearningGoalTemplate,
@@ -186,7 +186,7 @@ function ContinueCard({
 }
 
 function formatLessonDateTime(booking: Booking) {
-  const date = new Date(booking.start_time);
+  const date = parseBookingDate(booking.start_time);
   return date.toLocaleString("tr-TR", {
     day: "numeric",
     month: "long",
@@ -202,12 +202,14 @@ function firstUpcomingBooking(bookings: Booking[]) {
       const status = booking.status.toLowerCase();
       return (
         status === "in_progress" ||
-        (status === "confirmed" && new Date(booking.start_time).getTime() > now)
+        (status === "confirmed" &&
+          parseBookingDate(booking.start_time).getTime() > now)
       );
     })
     .sort(
       (a, b) =>
-        new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
+        parseBookingDate(a.start_time).getTime() -
+        parseBookingDate(b.start_time).getTime()
     )[0];
 }
 

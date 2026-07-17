@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { confirmBooking } from "@/lib/lessonsApi";
 import { useCountdownLabel } from "@/hooks/useCountdown";
 import { DisputeDialog } from "./DisputeDialog";
-import { formatDate } from "@/lib/utils";
+import { formatBookingDate } from "@/lib/utils";
 import type { Booking } from "@/types";
 
 // Mirrors backend apps/lessons/models.py AUTO_CONFIRM_HOURS and
@@ -84,7 +84,7 @@ function LessonConfirmDisputeRow({
               {booking.subject.name} · {tutorLabel}
             </p>
             <p className="mt-0.5 text-sm text-muted-foreground">
-              {formatDate(booking.start_time)}
+              {formatBookingDate(booking.start_time)}
             </p>
 
             {isAwaitingConfirmation ? (

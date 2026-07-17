@@ -31,6 +31,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import type { LearningActivityStatus } from "@/types";
+import { parseBookingDate } from "@/lib/utils";
 
 function formatActivityStatus(status: LearningActivityStatus) {
   const labels: Record<LearningActivityStatus, string> = {
@@ -47,6 +48,23 @@ function formatDateTime(value?: string | null) {
   if (!value) return "Tarih bekleniyor";
 
   const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Tarih bekleniyor";
+
+  return date.toLocaleString("tr-TR", {
+    day: "2-digit",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+// Booking.start_time uses the naive-wall-clock-labeled-as-UTC convention
+// (see lib/utils.ts parseBookingDate) — unlike event.created_at below, which
+// is a real server UTC instant. Keep these two formatters separate.
+function formatBookingDateTime(value?: string | null) {
+  if (!value) return "Tarih bekleniyor";
+
+  const date = parseBookingDate(value);
   if (Number.isNaN(date.getTime())) return "Tarih bekleniyor";
 
   return date.toLocaleString("tr-TR", {
@@ -378,7 +396,7 @@ function StudentLearningContent() {
                                   : "Tutor bilgisi bekleniyor"}
                               </p>
                               <p className="mt-1 text-xs text-muted-foreground">
-                                {formatDateTime(item.booking?.start_time)}
+                                {formatBookingDateTime(item.booking?.start_time)}
                               </p>
                             </div>
                             <Badge

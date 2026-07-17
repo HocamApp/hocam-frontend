@@ -1,6 +1,12 @@
 import Link from "next/link";
 import { Calendar, ChevronRight, Clock3, Target } from "lucide-react";
-import { formatDate, formatPrice } from "@/lib/utils";
+import {
+  formatDate,
+  formatPrice,
+  formatBookingDate,
+  formatBookingTime,
+  parseBookingDate,
+} from "@/lib/utils";
 import StatusBadge from "@/components/shared/StatusBadge";
 import { Button } from "@/components/ui/button";
 import {
@@ -105,15 +111,14 @@ export function PackagePurchaseCard({ purchase }: { purchase: PackagePurchase })
 }
 
 function formatTime(isoString: string) {
-  return new Date(isoString).toLocaleTimeString("tr-TR", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  return formatBookingTime(isoString);
 }
 
 function sortByStart(bookings: Booking[], direction: "asc" | "desc" = "asc") {
   return [...bookings].sort((a, b) => {
-    const difference = new Date(a.start_time).getTime() - new Date(b.start_time).getTime();
+    const difference =
+      parseBookingDate(a.start_time).getTime() -
+      parseBookingDate(b.start_time).getTime();
     return direction === "asc" ? difference : -difference;
   });
 }
@@ -139,7 +144,7 @@ function LessonTimeline({ title, bookings, emptyMessage }: {
                   <p className="font-medium">{booking.subject.name}</p>
                   <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
                     <span className="inline-flex items-center gap-1">
-                      <Calendar className="h-3.5 w-3.5" /> {formatDate(booking.start_time)}
+                      <Calendar className="h-3.5 w-3.5" /> {formatBookingDate(booking.start_time)}
                     </span>
                     <span className="inline-flex items-center gap-1">
                       <Clock3 className="h-3.5 w-3.5" /> {formatTime(booking.start_time)} · {booking.duration_minutes} dk
@@ -280,12 +285,14 @@ export function PackageLearningDetailsSheet({
   const packageBookings = bookings.filter((booking) => booking.package_purchase === purchase.id);
   const upcomingBookings = sortByStart(
     packageBookings.filter(
-      (booking) => new Date(booking.start_time) > now && booking.status !== "cancelled"
+      (booking) =>
+        parseBookingDate(booking.start_time) > now && booking.status !== "cancelled"
     )
   );
   const pastBookings = sortByStart(
     packageBookings.filter(
-      (booking) => new Date(booking.start_time) <= now && booking.status !== "cancelled"
+      (booking) =>
+        parseBookingDate(booking.start_time) <= now && booking.status !== "cancelled"
     ),
     "desc"
   );

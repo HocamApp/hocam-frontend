@@ -3,6 +3,7 @@ import { ArrowRight, BookOpen, CheckCircle2, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Booking, PackagePurchase, StudentGoal } from "@/types";
+import { parseBookingDate } from "@/lib/utils";
 
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -33,7 +34,7 @@ function deriveMomentumSummary(
   );
   const now = Date.now();
   const recentCompleted = completedBookings.filter(
-    (b) => now - new Date(b.start_time).getTime() <= SEVEN_DAYS_MS
+    (b) => now - parseBookingDate(b.start_time).getTime() <= SEVEN_DAYS_MS
   );
 
   if (recentCompleted.length > 0) {
@@ -50,7 +51,9 @@ function deriveMomentumSummary(
 
   if (completedBookings.length > 0) {
     const mostRecent = [...completedBookings].sort(
-      (a, b) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime()
+      (a, b) =>
+        parseBookingDate(b.start_time).getTime() -
+        parseBookingDate(a.start_time).getTime()
     )[0];
     return {
       title: "Son çalıştığın konu",
@@ -88,7 +91,7 @@ export function LearningMomentumCard({
   const completedThisWeek = bookings.filter(
     (booking) =>
       booking.status === "completed" &&
-      now - new Date(booking.start_time).getTime() <= SEVEN_DAYS_MS
+      now - parseBookingDate(booking.start_time).getTime() <= SEVEN_DAYS_MS
   ).length;
 
   return (

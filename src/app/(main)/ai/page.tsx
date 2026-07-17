@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { TypingIndicator } from "@/components/messaging/TypingIndicator";
+import { AIMessageContent } from "@/components/ai/AIMessageContent";
 import { cn } from "@/lib/utils";
 import { setTheme, type Theme } from "@/lib/theme";
 import {
@@ -228,7 +229,11 @@ function AIPageContent() {
                       {intentLabels[message.intent]}
                     </div>
                   )}
-                  <p className="whitespace-pre-wrap">{message.content}</p>
+                  {message.role === "assistant" ? (
+                    <AIMessageContent content={message.content} />
+                  ) : (
+                    <p className="whitespace-pre-wrap">{message.content}</p>
+                  )}
                 </div>
               </div>
             ))}

@@ -42,7 +42,14 @@ import {
   TUTOR_REAL_PHOTO_RULE_TEXT,
   validateProfilePhotoFile,
 } from "@/lib/profilePhoto";
-import { cn, formatDate, formatPrice, formatRating } from "@/lib/utils";
+import {
+  cn,
+  formatPrice,
+  formatRating,
+  formatBookingDate,
+  formatBookingTime,
+  parseBookingDate,
+} from "@/lib/utils";
 import { useHighlightTarget, HIGHLIGHT_CLASSNAME, HIGHLIGHT_PARAM } from "@/hooks/useHighlightTarget";
 import type {
   AvailabilityRule,
@@ -159,7 +166,9 @@ function getYouTubeEmbedUrl(url?: string): string | null {
 
 function sortByStartTime(bookings: Booking[]) {
   return [...bookings].sort(
-    (a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
+    (a, b) =>
+      parseBookingDate(a.start_time).getTime() -
+      parseBookingDate(b.start_time).getTime()
   );
 }
 
@@ -174,7 +183,8 @@ function startOfDay(date: Date): Date {
 
 function formatLessonCountdown(startTime: string): string {
   const diffDays = Math.round(
-    (startOfDay(new Date(startTime)).getTime() - startOfDay(new Date()).getTime()) /
+    (startOfDay(parseBookingDate(startTime)).getTime() -
+      startOfDay(new Date()).getTime()) /
       (24 * 60 * 60 * 1000)
   );
   if (diffDays < 0) return "";
@@ -184,7 +194,7 @@ function formatLessonCountdown(startTime: string): string {
 }
 
 function canJoinLesson(startTime: string): boolean {
-  return Date.now() >= new Date(startTime).getTime() - 15 * 60 * 1000;
+  return Date.now() >= parseBookingDate(startTime).getTime() - 15 * 60 * 1000;
 }
 
 interface StudentRosterEntry {
@@ -220,14 +230,15 @@ function getStudentRoster(
     entry.totalLessons += 1;
     if (
       (status === "pending" || status === "confirmed") &&
-      new Date(booking.start_time) > new Date()
+      parseBookingDate(booking.start_time) > new Date()
     ) {
       entry.upcomingLessons += 1;
     }
     if (
       status === "completed" &&
       (!entry.lastCompletedAt ||
-        new Date(booking.start_time) > new Date(entry.lastCompletedAt))
+        parseBookingDate(booking.start_time) >
+          parseBookingDate(entry.lastCompletedAt))
     ) {
       entry.lastCompletedAt = booking.start_time;
     }
@@ -349,7 +360,7 @@ function StudentRosterCard({
             <span className="inline-flex items-center gap-1.5">
               <Calendar className="h-3.5 w-3.5" aria-hidden="true" />
               {lastCompletedAt
-                ? `Son ders: ${formatDate(lastCompletedAt)}`
+                ? `Son ders: ${formatBookingDate(lastCompletedAt)}`
                 : "Henüz ders tamamlanmadı"}
             </span>
             <span>{totalLessons} ders</span>
@@ -953,7 +964,7 @@ function TutorDashboardContent() {
     () =>
       bookings?.filter((b) => {
         const s = (b.status || "").toLowerCase();
-        const isFuture = new Date(b.start_time) > new Date();
+        const isFuture = parseBookingDate(b.start_time) > new Date();
         return (
           (s === "pending" && isFuture) ||
           s === "confirmed" ||
@@ -968,7 +979,8 @@ function TutorDashboardContent() {
     () =>
       bookings?.filter((b) => {
         const s = (b.status || "").toLowerCase();
-        const isPastPending = s === "pending" && new Date(b.start_time) <= new Date();
+        const isPastPending =
+          s === "pending" && parseBookingDate(b.start_time) <= new Date();
         return (
           isPastPending ||
           s === "completed" ||
@@ -1003,7 +1015,10 @@ function TutorDashboardContent() {
     return sortByStartTime(
       (bookings ?? []).filter((b) => {
         const s = (b.status || "").toLowerCase();
-        return s === "in_progress" || (s === "confirmed" && new Date(b.start_time) > now);
+        return (
+          s === "in_progress" ||
+          (s === "confirmed" && parseBookingDate(b.start_time) > now)
+        );
       })
     );
   }, [bookings]);
@@ -1018,7 +1033,7 @@ function TutorDashboardContent() {
       (bookings ?? []).filter((b) => {
         const s = (b.status || "").toLowerCase();
         if (
-          (s === "pending" && new Date(b.start_time) > new Date()) ||
+          (s === "pending" && parseBookingDate(b.start_time) > new Date()) ||
           s === "disputed" ||
           s === "awaiting_confirmation"
         ) return true;
@@ -1039,7 +1054,12 @@ function TutorDashboardContent() {
   );
   const sortedUpcomingBookings = useMemo(() => sortByStartTime(activeBookings), [activeBookings]);
   const sortedPastBookings = useMemo(
-    () => [...pastBookings].sort((a, b) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime()),
+    () =>
+      [...pastBookings].sort(
+        (a, b) =>
+          parseBookingDate(b.start_time).getTime() -
+          parseBookingDate(a.start_time).getTime()
+      ),
     [pastBookings]
   );
   const baseVisibleUpcomingBookings = showAllUpcomingBookings
@@ -1283,14 +1303,11 @@ function TutorDashboardContent() {
             <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-1.5 text-sm text-muted-foreground">
               <span className="inline-flex items-center gap-1.5">
                 <Calendar className="h-4 w-4" aria-hidden="true" />
-                {formatDate(nextBooking.start_time)}
+                {formatBookingDate(nextBooking.start_time)}
               </span>
               <span className="inline-flex items-center gap-1.5">
                 <Clock3 className="h-4 w-4" aria-hidden="true" />
-                {new Date(nextBooking.start_time).toLocaleTimeString("tr-TR", {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}{" "}
+                {formatBookingTime(nextBooking.start_time)}{" "}
                 · {nextBooking.duration_minutes} dk
               </span>
               <span className="inline-flex items-center gap-1.5">

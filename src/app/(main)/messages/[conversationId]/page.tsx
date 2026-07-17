@@ -236,6 +236,10 @@ function ConversationContent({
   const handleMessageSent = (newMessage: Message) => {
     sentIdsRef.current.add(newMessage.id);
     setLocalMessages((prev) => [...prev, newMessage]);
+    // Refresh the sidebar's last-message preview/ordering — the conversations
+    // query has a 5-minute staleTime, so without this it can lag well behind
+    // what the user just sent.
+    queryClient.invalidateQueries({ queryKey: ["conversations"] });
   };
 
   const handleSelectConversation = (selectedConversationId: string) => {
