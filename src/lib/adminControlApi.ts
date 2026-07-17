@@ -13,7 +13,7 @@ export async function startAdminImpersonation(targetUserId: string): Promise<Use
     { target_user_id: targetUserId }
   );
   Cookies.set("admin_impersonation_token", data.impersonation_token, {
-    expires: 1 / 48,
+    expires: new Date(data.expires_at),
     secure: window.location.protocol === "https:",
     sameSite: "strict",
   });
