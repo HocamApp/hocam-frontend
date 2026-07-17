@@ -1,9 +1,11 @@
 "use client";
 
 import Script from "next/script";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
   getStoredInterfaceLanguage,
+  INTERFACE_CONTENT_READY_EVENT,
   type InterfaceLanguage,
 } from "@/lib/interfaceLanguage";
 
@@ -31,6 +33,21 @@ type TranslatorWindow = Window & {
 };
 
 const ELEMENT_ID = "hocam-google-translate";
+const REFRESH_DELAYS = [0, 400, 1200] as const;
+
+function refreshEnglishTranslation() {
+  const selector = document.querySelector<HTMLSelectElement>(".goog-te-combo");
+  if (!selector) return;
+
+  selector.value = "en";
+  selector.dispatchEvent(new Event("change"));
+}
+
+function scheduleTranslationRefresh() {
+  return REFRESH_DELAYS.map((delay) =>
+    window.setTimeout(refreshEnglishTranslation, delay)
+  );
+}
 
 function initializeTranslator() {
   const TranslateElement = (window as TranslatorWindow).google?.translate
@@ -47,9 +64,12 @@ function initializeTranslator() {
     },
     ELEMENT_ID
   );
+
+  scheduleTranslationRefresh();
 }
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
   const [language, setLanguage] = useState<InterfaceLanguage>("tr");
 
   useEffect(() => {
@@ -64,6 +84,22 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
       delete window.hocamGoogleTranslateInit;
     };
   }, []);
+
+  useEffect(() => {
+    if (language !== "en") return;
+
+    let timers = scheduleTranslationRefresh();
+    const handleContentReady = () => {
+      timers.forEach(window.clearTimeout);
+      timers = scheduleTranslationRefresh();
+    };
+
+    window.addEventListener(INTERFACE_CONTENT_READY_EVENT, handleContentReady);
+    return () => {
+      timers.forEach(window.clearTimeout);
+      window.removeEventListener(INTERFACE_CONTENT_READY_EVENT, handleContentReady);
+    };
+  }, [language, pathname]);
 
   return (
     <>

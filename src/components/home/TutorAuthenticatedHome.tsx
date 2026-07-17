@@ -28,6 +28,7 @@ import { fetchConversations } from "@/lib/messagingApi";
 import { fetchTutorEarnings } from "@/lib/paymentsApi";
 import { fetchMyTutorProfile } from "@/lib/tutorsApi";
 import { trackHomeEvent } from "@/lib/homeAnalytics";
+import { announceInterfaceContentReady } from "@/lib/interfaceLanguage";
 import { HIGHLIGHT_PARAM } from "@/hooks/useHighlightTarget";
 import type { Booking } from "@/types";
 import { ParticipantAvatar } from "@/components/messaging/ParticipantAvatar";
@@ -486,6 +487,24 @@ export function TutorAuthenticatedHome() {
   useEffect(() => {
     if (profile && !profile.is_verified) router.replace("/tutor/onboarding");
   }, [profile, router]);
+
+  useEffect(() => {
+    if (
+      profile?.is_verified &&
+      !profileQuery.isLoading &&
+      !bookingsQuery.isLoading &&
+      !availabilityQuery.isLoading &&
+      !conversationsQuery.isLoading
+    ) {
+      announceInterfaceContentReady();
+    }
+  }, [
+    availabilityQuery.isLoading,
+    bookingsQuery.isLoading,
+    conversationsQuery.isLoading,
+    profile?.is_verified,
+    profileQuery.isLoading,
+  ]);
 
   const upcomingBookings = useMemo(
     () =>
