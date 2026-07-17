@@ -204,7 +204,7 @@ export function LoginForm({ onCreateAccount }: LoginFormProps) {
                       type="email"
                       autoComplete="email"
                       placeholder="E-posta adresini gir"
-                      className="w-full rounded-2xl bg-transparent p-4 text-sm text-white placeholder:text-neutral-500 focus:outline-none"
+                      className="w-full rounded-2xl bg-transparent p-4 text-base text-white placeholder:text-neutral-500 focus:outline-none lg:text-sm"
                     />
                   </GlassInputWrapper>
                 </FormControl>
@@ -229,12 +229,12 @@ export function LoginForm({ onCreateAccount }: LoginFormProps) {
                         type={showPassword ? "text" : "password"}
                         autoComplete="current-password"
                         placeholder="Şifreni gir"
-                        className="w-full rounded-2xl bg-transparent p-4 pr-12 text-sm text-white placeholder:text-neutral-500 focus:outline-none"
+                        className="w-full rounded-2xl bg-transparent p-4 pr-12 text-base text-white placeholder:text-neutral-500 focus:outline-none lg:text-sm"
                       />
                       <button
                         type="button"
                         onClick={() => setShowPassword((prev) => !prev)}
-                        className="absolute inset-y-0 right-3 flex items-center text-neutral-400 transition-colors hover:text-white"
+                        className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-neutral-400 transition-colors hover:text-white"
                         aria-label={showPassword ? "Şifreyi gizle" : "Şifreyi göster"}
                       >
                         {showPassword ? (
@@ -251,8 +251,8 @@ export function LoginForm({ onCreateAccount }: LoginFormProps) {
             )}
           />
 
-          <div className="animate-element animate-delay-500 flex items-center justify-between text-sm">
-            <label className="flex cursor-pointer items-center gap-3">
+          <div className="animate-element animate-delay-500 flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-sm">
+            <label className="flex cursor-pointer items-center gap-3 py-3">
               <input
                 type="checkbox"
                 name="rememberMe"
@@ -262,7 +262,7 @@ export function LoginForm({ onCreateAccount }: LoginFormProps) {
             </label>
             <Link
               href="/forgot-password"
-              className="text-neutral-300 transition-colors hover:text-white hover:underline"
+              className="py-3 text-neutral-300 transition-colors hover:text-white hover:underline"
             >
               Şifremi sıfırla
             </Link>

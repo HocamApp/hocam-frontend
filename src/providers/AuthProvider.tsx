@@ -11,6 +11,7 @@ import Cookies from "js-cookie";
 import { User } from "@/types";
 import { fetchMe } from "@/lib/authApi";
 import { IMPERSONATION_ENDED_EVENT } from "@/lib/api";
+import { queryClient } from "@/lib/queryClient";
 
 interface AuthContextType {
   user: User | null;
@@ -73,6 +74,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       try {
         const freshUser = await fetchMe();
+        if (cachedUser && cachedUser.id !== freshUser.id) {
+          queryClient.clear();
+        }
         setToken(storedToken);
         setUser(freshUser);
         localStorage.setItem("auth_user", JSON.stringify(freshUser));
@@ -95,6 +99,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const restoreAdmin = () => {
       fetchMe()
         .then((freshUser) => {
+          queryClient.clear();
           localStorage.setItem("auth_user", JSON.stringify(freshUser));
           setUser(freshUser);
         })
@@ -104,9 +109,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener(IMPERSONATION_ENDED_EVENT, restoreAdmin);
   }, []);
 
-  const setAuth = (user: User, token: string) => {
+  const setAuth = (nextUser: User, nextToken: string) => {
+    const identityChanged = user?.id !== nextUser.id || token !== nextToken;
+
     Cookies.remove("admin_impersonation_token");
-    Cookies.set("auth_token", token, {
+    Cookies.set("auth_token", nextToken, {
       expires: 7, // days
       // Not HttpOnly (js-cookie can't set that) — documented architectural
       // limitation. These at least block plaintext transmission and
@@ -114,15 +121,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       secure: window.location.protocol === "https:",
       sameSite: "strict",
     });
-    localStorage.setItem("auth_user", JSON.stringify(user));
-    setToken(token);
-    setUser(user);
+    localStorage.setItem("auth_user", JSON.stringify(nextUser));
+
+    // React Query is shared across the app and caches account-specific data for
+    // several minutes. Remove the previous account's queries before the new
+    // authenticated screens mount so profile, lesson and message data can never
+    // flash from another user after an account switch.
+    if (identityChanged) {
+      queryClient.clear();
+    }
+
+    setToken(nextToken);
+    setUser(nextUser);
   };
 
   const clearAuth = () => {
     Cookies.remove("auth_token");
     Cookies.remove("admin_impersonation_token");
     localStorage.removeItem("auth_user");
+    queryClient.clear();
     setToken(null);
     setUser(null);
   };
