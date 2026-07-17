@@ -83,7 +83,31 @@ export function GoogleSignInButton({
   useEffect(() => {
     if (!clientId || !containerRef.current) return;
     let cancelled = false;
+    let resizeTimer: number | undefined;
     setLoadFailed(false);
+
+    // Google's button width is a fixed pixel value (max 400), not a percentage,
+    // so it's measured from the container and re-rendered on resize to stay
+    // full-width on narrow screens.
+    const renderButton = () => {
+      if (!containerRef.current || !window.google) return;
+      const width = Math.min(containerRef.current.clientWidth || 320, 400);
+      containerRef.current.innerHTML = "";
+      window.google.accounts.id.renderButton(containerRef.current, {
+        type: "standard",
+        theme: "filled_black",
+        size: "large",
+        text,
+        shape: "pill",
+        width,
+        logo_alignment: "center",
+      });
+    };
+
+    const handleResize = () => {
+      window.clearTimeout(resizeTimer);
+      resizeTimer = window.setTimeout(renderButton, 150);
+    };
 
     loadGisScript()
       .then(() => {
@@ -94,16 +118,8 @@ export function GoogleSignInButton({
             if (response.credential) onCredential(response.credential);
           },
         });
-        containerRef.current.innerHTML = "";
-        window.google.accounts.id.renderButton(containerRef.current, {
-          type: "standard",
-          theme: "filled_black",
-          size: "large",
-          text,
-          shape: "pill",
-          width: 320,
-          logo_alignment: "center",
-        });
+        renderButton();
+        window.addEventListener("resize", handleResize);
       })
       .catch(() => {
         if (!cancelled) setLoadFailed(true);
@@ -111,6 +127,8 @@ export function GoogleSignInButton({
 
     return () => {
       cancelled = true;
+      window.clearTimeout(resizeTimer);
+      window.removeEventListener("resize", handleResize);
     };
   }, [clientId, onCredential, text]);
 

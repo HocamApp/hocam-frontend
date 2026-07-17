@@ -90,7 +90,7 @@ export default function ForgotPasswordPage() {
                         type="email"
                         autoComplete="email"
                         placeholder="E-posta adresini gir"
-                        className="w-full rounded-2xl bg-transparent p-4 text-sm text-white placeholder:text-neutral-500 focus:outline-none"
+                        className="w-full rounded-2xl bg-transparent p-4 text-base text-white placeholder:text-neutral-500 focus:outline-none lg:text-sm"
                       />
                     </GlassInputWrapper>
                   </FormControl>

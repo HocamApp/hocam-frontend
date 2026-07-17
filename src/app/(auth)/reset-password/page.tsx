@@ -134,12 +134,12 @@ function ResetPasswordContent() {
                           type={showPassword ? "text" : "password"}
                           autoComplete="new-password"
                           placeholder="Yeni şifreni gir"
-                          className="w-full rounded-2xl bg-transparent p-4 pr-12 text-sm text-white placeholder:text-neutral-500 focus:outline-none"
+                          className="w-full rounded-2xl bg-transparent p-4 pr-12 text-base text-white placeholder:text-neutral-500 focus:outline-none lg:text-sm"
                         />
                         <button
                           type="button"
                           onClick={() => setShowPassword((prev) => !prev)}
-                          className="absolute inset-y-0 right-3 flex items-center text-neutral-400 transition-colors hover:text-white"
+                          className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-neutral-400 transition-colors hover:text-white"
                           aria-label={showPassword ? "Şifreyi gizle" : "Şifreyi göster"}
                         >
                           {showPassword ? (
@@ -172,12 +172,12 @@ function ResetPasswordContent() {
                           type={showPasswordConfirm ? "text" : "password"}
                           autoComplete="new-password"
                           placeholder="Yeni şifreni tekrar gir"
-                          className="w-full rounded-2xl bg-transparent p-4 pr-12 text-sm text-white placeholder:text-neutral-500 focus:outline-none"
+                          className="w-full rounded-2xl bg-transparent p-4 pr-12 text-base text-white placeholder:text-neutral-500 focus:outline-none lg:text-sm"
                         />
                         <button
                           type="button"
                           onClick={() => setShowPasswordConfirm((prev) => !prev)}
-                          className="absolute inset-y-0 right-3 flex items-center text-neutral-400 transition-colors hover:text-white"
+                          className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-neutral-400 transition-colors hover:text-white"
                           aria-label={showPasswordConfirm ? "Şifreyi gizle" : "Şifreyi göster"}
                         >
                           {showPasswordConfirm ? (
