@@ -513,10 +513,11 @@ function TutorsPageContent() {
                 ))}
               </div>
               {totalPages > 1 && (
-                <div className="mt-8 flex justify-center">
+                <div className="mt-8 flex justify-center overflow-x-auto">
                   <SlidingPagination
                     totalPages={totalPages}
                     currentPage={currentPage}
+                    maxVisiblePages={5}
                     onPageChange={(p) => {
                       setPage(p);
                       window.scrollTo({ top: 0, behavior: "smooth" });
