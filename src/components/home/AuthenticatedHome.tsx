@@ -5,7 +5,6 @@ import Link from "next/link";
 import {
   ArrowRight,
   BookOpen,
-  Calendar,
   CalendarCheck2,
   CheckCircle2,
   Clock3,
@@ -286,34 +285,6 @@ function PracticeCard({
   );
 }
 
-function StatusItem({
-  icon,
-  label,
-  value,
-  href,
-}: {
-  icon: ReactNode;
-  label: string;
-  value: string;
-  href: string;
-}) {
-  return (
-    <Link
-      href={href}
-      className="group flex min-w-0 items-center gap-3 rounded-xl px-3 py-3 transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-    >
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-        {icon}
-      </div>
-      <div className="min-w-0">
-        <p className="text-xs text-muted-foreground">{label}</p>
-        <p className="truncate text-sm font-semibold">{value}</p>
-      </div>
-      <ArrowRight className="ml-auto h-4 w-4 shrink-0 text-muted-foreground transition group-hover:translate-x-0.5 group-hover:text-foreground" aria-hidden="true" />
-    </Link>
-  );
-}
-
 export function AuthenticatedHome() {
   const { isAuthenticated } = useAuth();
   const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
@@ -457,55 +428,6 @@ export function AuthenticatedHome() {
         action="Paketi görüntüle"
         contentType="package"
         contentId={activePackage.id}
-      />
-    );
-  }
-
-  const statusItems: ReactNode[] = [];
-  if (upcomingBooking) {
-    statusItems.push(
-      <StatusItem
-        key="next-lesson"
-        icon={<Calendar className="h-4 w-4" aria-hidden="true" />}
-        label="Sıradaki ders"
-        value={formatLessonDateTime(upcomingBooking)}
-        href="/profile/lessons/upcoming"
-      />
-    );
-  }
-  if (activeGoal) {
-    statusItems.push(
-      <StatusItem
-        key="active-goal"
-        icon={<Target className="h-4 w-4" aria-hidden="true" />}
-        label="Aktif hedef"
-        value={`${activeGoal.title} · %${Math.round(activeGoal.progress)}`}
-        href={goalPackageHref(activeGoal.id)}
-      />
-    );
-  }
-  if (activePackage) {
-    statusItems.push(
-      <StatusItem
-        key="credits"
-        icon={<WalletCards className="h-4 w-4" aria-hidden="true" />}
-        label="Kalan ders kredisi"
-        value={`${activePackage.remaining_credits} ders`}
-        href="/dashboard/student"
-      />
-    );
-  }
-  const pendingCount =
-    (profileQuery.data?.stats.pending_bookings_count ?? 0) +
-    (profileQuery.data?.stats.pending_reviews_count ?? 0);
-  if (pendingCount > 0) {
-    statusItems.push(
-      <StatusItem
-        key="pending"
-        icon={<Clock3 className="h-4 w-4" aria-hidden="true" />}
-        label="Bekleyen işlem"
-        value={`${pendingCount} işlem`}
-        href="/dashboard/student"
       />
     );
   }
@@ -745,14 +667,6 @@ export function AuthenticatedHome() {
                 />
               </div>
             )}
-          </section>
-        )}
-
-        {statusItems.length > 0 && (
-          <section aria-label="Öğrenci durum özeti" className="rounded-2xl border bg-muted/20 p-2">
-            <div className="grid gap-1 sm:grid-cols-2 xl:grid-cols-4">
-              {statusItems.slice(0, 4)}
-            </div>
           </section>
         )}
 
