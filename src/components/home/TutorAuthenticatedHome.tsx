@@ -547,6 +547,7 @@ export function TutorAuthenticatedHome() {
     { label: "Detaylı biyografi", ready: Boolean(profile?.bio?.trim()) },
     { label: "Tanıtım videosu", ready: Boolean(profile?.intro_video_url?.trim()) },
     { label: "Haftalık müsaitlik", ready: activeAvailabilityDays.length > 0 },
+    { label: "Profil doğrulaması", ready: Boolean(profile?.is_verified) },
   ];
   const readyItemCount = readinessItems.filter((item) => item.ready).length;
 
