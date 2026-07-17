@@ -20,6 +20,7 @@ interface AuthSplitScreenProps {
   description: ReactNode;
   children: ReactNode;
   footer?: ReactNode;
+  rightPanel?: ReactNode;
 }
 
 /**
@@ -30,6 +31,7 @@ export function AuthSplitScreen({
   description,
   children,
   footer,
+  rightPanel,
 }: AuthSplitScreenProps) {
   return (
     <div className="flex min-h-[100dvh] w-full flex-col md:flex-row">
@@ -57,7 +59,11 @@ export function AuthSplitScreen({
         >
           <div className="absolute -right-28 -top-28 h-80 w-80 rounded-full bg-[#ff5968]/12 blur-3xl" aria-hidden />
           <div className="absolute -bottom-24 -left-20 h-72 w-72 rounded-full bg-[#ff8a71]/10 blur-3xl" aria-hidden />
-          <BrandMark size="hero" className="relative z-10 text-neutral-950" />
+          {rightPanel ? (
+            <div className="relative z-10 h-full w-full">{rightPanel}</div>
+          ) : (
+            <BrandMark size="hero" className="relative z-10 text-neutral-950" />
+          )}
         </div>
       </section>
     </div>
