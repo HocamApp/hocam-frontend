@@ -7,5 +7,9 @@ import { TutorAuthenticatedHome } from "@/components/home/TutorAuthenticatedHome
 export function RoleAwareHome() {
   const { isTutor } = useAuth();
 
-  return isTutor ? <TutorAuthenticatedHome /> : <AuthenticatedHome />;
+  return (
+    <div className="brand-home">
+      {isTutor ? <TutorAuthenticatedHome /> : <AuthenticatedHome />}
+    </div>
+  );
 }

@@ -209,7 +209,7 @@ function NextLessonPreview({
   return (
     <Card className="overflow-hidden rounded-3xl border-primary/15 bg-card/95 shadow-xl shadow-primary/5">
       <CardContent className="p-0">
-        <div className="border-b bg-gradient-to-br from-primary/[0.09] via-card to-violet-500/[0.08] p-6 sm:p-7">
+        <div className="border-b bg-gradient-to-br from-primary/[0.09] via-card to-rose-400/[0.10] p-6 sm:p-7">
           <div className="flex items-center justify-between gap-3">
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">
               Sıradaki dersin
@@ -578,7 +578,7 @@ export function TutorAuthenticatedHome() {
   if (profileQuery.isError) {
     return (
       <div className="overflow-hidden">
-        <section className="border-b bg-gradient-to-br from-muted/60 via-background to-violet-500/[0.08]">
+        <section className="border-b bg-gradient-to-br from-muted/60 via-background to-rose-400/[0.12]">
           <div className="mx-auto max-w-4xl px-4 py-20 text-center sm:px-6 lg:px-8">
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
               <RefreshCw className="h-6 w-6" aria-hidden="true" />
@@ -602,7 +602,7 @@ export function TutorAuthenticatedHome() {
   if (!profileQuery.isLoading && !profile) {
     return (
       <div className="overflow-hidden">
-        <section className="border-b bg-gradient-to-br from-muted/60 via-background to-violet-500/[0.08]">
+        <section className="border-b bg-gradient-to-br from-muted/60 via-background to-rose-400/[0.12]">
           <div className="mx-auto max-w-4xl px-4 py-20 text-center sm:px-6 lg:px-8">
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
               <GraduationCap className="h-6 w-6" aria-hidden="true" />
@@ -643,7 +643,7 @@ export function TutorAuthenticatedHome() {
 
   return (
     <div className="overflow-hidden">
-      <section className="relative border-b bg-gradient-to-br from-muted/60 via-background to-violet-500/[0.08]">
+      <section className="relative border-b bg-gradient-to-br from-muted/60 via-background to-rose-400/[0.12]">
         <div className="pointer-events-none absolute left-1/2 top-16 h-80 w-80 rounded-full bg-primary/[0.04] blur-3xl" aria-hidden="true" />
         <div className="relative z-10 mx-auto grid max-w-7xl items-center gap-14 px-4 py-14 sm:px-6 sm:py-16 min-[880px]:grid-cols-[minmax(0,1.1fr)_minmax(340px,0.9fr)] min-[880px]:gap-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(360px,0.9fr)] lg:gap-16 lg:px-8 lg:py-[72px]">
           <div className="max-w-2xl">

@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { ProfileMenu } from "@/components/profile/ProfileMenu";
 import { AnimatedNavbarLinks } from "@/components/layout/AnimatedNavbarLinks";
+import { BrandMark } from "@/components/brand/BrandMark";
 import { cn } from "@/lib/utils";
 
 export function Navbar() {
@@ -19,8 +20,12 @@ export function Navbar() {
     );
 
   const leftBrand = (
-    <Link href={isAuthenticated ? "/home" : "/tutors"} className="font-bold text-xl text-foreground hover:text-primary transition-colors">
-      Hocam
+    <Link
+      href={isAuthenticated ? "/home" : "/tutors"}
+      aria-label="Hocam ana sayfa"
+      className="text-foreground transition-colors hover:text-[#cf3048] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+    >
+      <BrandMark priority />
     </Link>
   );
 

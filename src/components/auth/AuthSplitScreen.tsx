@@ -1,6 +1,7 @@
 "use client";
 
 import { ReactNode } from "react";
+import { BrandMark } from "@/components/brand/BrandMark";
 
 /**
  * Dark-variant input shell adapted from the 21st.dev reference. Neutral, not violet —
@@ -22,8 +23,7 @@ interface AuthSplitScreenProps {
 }
 
 /**
- * Full-screen split layout: dark neutral form column on the left, an intentionally blank
- * white panel on the right (reserved for future design — no testimonials/imagery).
+ * Full-screen split layout with a dark form column and a restrained brand panel.
  */
 export function AuthSplitScreen({
   title,
@@ -37,6 +37,7 @@ export function AuthSplitScreen({
       <section className="flex min-h-[100dvh] flex-1 items-center justify-center overflow-y-auto bg-neutral-950 p-6 py-10 text-white sm:p-8">
         <div className="w-full max-w-md">
           <div className="flex flex-col gap-6">
+            <BrandMark size="md" priority className="mb-2 text-white" />
             <h1 className="animate-element animate-delay-100 text-4xl font-semibold leading-tight tracking-tight md:text-5xl">
               {title}
             </h1>
@@ -49,12 +50,15 @@ export function AuthSplitScreen({
         </div>
       </section>
 
-      {/* Right column: intentionally blank, reserved for future design */}
-      <section className="hidden flex-1 bg-white p-4 md:block">
+      {/* Right column: logo-led brand surface */}
+      <section className="hidden flex-1 bg-[#f5f3ee] p-4 md:block">
         <div
-          className="animate-slide-right animate-delay-300 h-full w-full rounded-3xl border border-neutral-200 shadow-sm"
-          aria-hidden
-        />
+          className="animate-slide-right animate-delay-300 relative flex h-full w-full items-center justify-center overflow-hidden rounded-3xl border border-[#ff5968]/20 bg-[#fbfaf7] shadow-sm"
+        >
+          <div className="absolute -right-28 -top-28 h-80 w-80 rounded-full bg-[#ff5968]/12 blur-3xl" aria-hidden />
+          <div className="absolute -bottom-24 -left-20 h-72 w-72 rounded-full bg-[#ff8a71]/10 blur-3xl" aria-hidden />
+          <BrandMark size="hero" className="relative z-10 text-neutral-950" />
+        </div>
       </section>
     </div>
   );
