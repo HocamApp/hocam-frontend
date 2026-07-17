@@ -1,6 +1,6 @@
 import Cookies from "js-cookie";
 import api from "./api";
-import type { AdminMonitorResponse, AdminMonitoredBooking, User } from "@/types";
+import type { AdminMonitorResponse, AdminMonitoredBooking, AdminMonitoredPackage, User } from "@/types";
 
 export async function fetchAdminMonitor(): Promise<AdminMonitorResponse> {
   const { data } = await api.get<AdminMonitorResponse>("/admin-control/monitor/");
@@ -28,6 +28,30 @@ export async function endAdminImpersonation(): Promise<User> {
 
 export async function approveAdminTestBooking(id: string): Promise<AdminMonitoredBooking> {
   const { data } = await api.post<AdminMonitoredBooking>(`/admin-control/bookings/${id}/approve/`);
+  return data;
+}
+
+export async function createAdminPackage(payload: {
+  student_id: string;
+  tutor_id: string;
+  plan_id: string;
+}): Promise<AdminMonitoredPackage> {
+  const { data } = await api.post<AdminMonitoredPackage>("/admin-control/package-purchases/", payload);
+  return data;
+}
+
+export async function activateAdminPackage(id: string): Promise<AdminMonitoredPackage> {
+  const { data } = await api.post<AdminMonitoredPackage>(`/admin-control/package-purchases/${id}/activate/`);
+  return data;
+}
+
+export async function createAdminBooking(payload: {
+  student_id: string;
+  tutor_id: string;
+  subject_id: string;
+  start_time: string;
+}): Promise<AdminMonitoredBooking> {
+  const { data } = await api.post<AdminMonitoredBooking>("/admin-control/bookings/", payload);
   return data;
 }
 
