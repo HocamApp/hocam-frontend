@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -483,7 +484,7 @@ export function AuthenticatedHome() {
               </Link>
             </div>
 
-            <ul className="mt-7 grid gap-3 text-sm text-muted-foreground sm:grid-cols-3">
+            <ul className="mt-7 grid grid-cols-1 gap-3 text-sm text-muted-foreground md:grid-cols-2 lg:grid-cols-3">
               <li className="flex items-center gap-2">
                 <ShieldCheck className="h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
                 <span>
@@ -570,7 +571,7 @@ export function AuthenticatedHome() {
             <h2 id="home-continue-title" className="text-2xl font-semibold tracking-tight sm:text-3xl">
               Kaldığın yerden devam et
             </h2>
-            <div className="grid gap-5 lg:grid-cols-2">{continuationCards}</div>
+            <div className="grid gap-5 md:grid-cols-2">{continuationCards}</div>
           </section>
         )}
 
@@ -672,12 +673,14 @@ export function AuthenticatedHome() {
 
         <section className="relative isolate overflow-hidden rounded-3xl bg-primary px-6 py-9 text-primary-foreground sm:px-9 sm:py-10">
           <div className="absolute inset-y-0 right-0 -z-10 hidden w-[48%] lg:block" aria-hidden="true">
-            <div
-              className="absolute inset-0 bg-cover opacity-45 grayscale"
-              style={{
-                backgroundImage: 'url("/images/home/blackboard.jpg")',
-                backgroundPosition: "38% center",
-              }}
+            <Image
+              src="/images/home/blackboard.jpg"
+              alt=""
+              fill
+              quality={60}
+              sizes="(min-width: 1280px) 614px, 48vw"
+              className="object-cover opacity-45 grayscale"
+              style={{ objectPosition: "38% center" }}
             />
             <div className="absolute inset-0 bg-gradient-to-r from-primary via-primary/80 to-primary/30" />
           </div>

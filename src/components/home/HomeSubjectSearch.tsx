@@ -201,13 +201,13 @@ export function HomeSubjectSearch({
                     ? "Dersler yükleniyor..."
                     : "Ders veya sınav seç"
               }
-              className="h-[52px] w-full rounded-xl border bg-background py-3 pl-12 pr-11 text-base shadow-sm outline-none transition focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70"
+              className="min-h-[52px] w-full rounded-xl border bg-background py-3 pl-12 pr-11 text-base shadow-sm outline-none transition focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70"
             />
             <button
               type="button"
               onClick={() => (isOpen ? setIsOpen(false) : openList())}
               disabled={disabled}
-              className="absolute right-1.5 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-lg text-muted-foreground transition hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none"
+              className="absolute right-1 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-lg text-muted-foreground transition hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none"
               aria-label={isOpen ? "Ders listesini kapat" : "Ders listesini aç"}
             >
               <ChevronDown
@@ -244,7 +244,7 @@ export function HomeSubjectSearch({
                         onMouseDown={(event) => event.preventDefault()}
                         onClick={() => selectSubject(subject)}
                         className={cn(
-                          "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm outline-none",
+                          "flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left text-sm outline-none",
                           activeIndex === index && "bg-muted",
                           selectedSubject?.id === subject.id && "font-semibold text-primary"
                         )}
@@ -272,7 +272,7 @@ export function HomeSubjectSearch({
           )}
         </div>
 
-        <Button type="submit" size="lg" className="h-[52px] rounded-xl px-6 sm:min-w-44">
+        <Button type="submit" size="lg" className="min-h-[52px] rounded-xl px-6 sm:min-w-44">
           Hocaları göster
           <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
         </Button>
