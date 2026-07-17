@@ -4,9 +4,9 @@ import { cn } from "@/lib/utils";
 type BrandMarkSize = "sm" | "md" | "hero";
 
 const markSizes: Record<BrandMarkSize, string> = {
-  sm: "h-9 w-8 rounded-lg",
-  md: "h-12 w-10 rounded-xl",
-  hero: "h-48 w-40 rounded-[2rem]",
+  sm: "h-9 w-8",
+  md: "h-12 w-10",
+  hero: "h-48 w-40",
 };
 
 const nameSizes: Record<BrandMarkSize, string> = {
@@ -30,7 +30,7 @@ export function BrandMark({
     <span className={cn("inline-flex items-center gap-2.5", className)}>
       <span
         className={cn(
-          "relative block shrink-0 overflow-hidden border border-[#ff5968]/15 bg-[#f5f3ee] shadow-sm",
+          "relative block shrink-0 overflow-hidden",
           markSizes[size]
         )}
       >
