@@ -33,7 +33,7 @@ type TranslatorWindow = Window & {
 };
 
 const ELEMENT_ID = "hocam-google-translate";
-const REFRESH_DELAYS = [0, 400, 1200] as const;
+const REFRESH_DELAY = 700;
 
 function refreshEnglishTranslation() {
   const selector = document.querySelector<HTMLSelectElement>(".goog-te-combo");
@@ -43,19 +43,21 @@ function refreshEnglishTranslation() {
   selector.dispatchEvent(new Event("change"));
 }
 
-function scheduleTranslationRefresh() {
-  return REFRESH_DELAYS.map((delay) =>
-    window.setTimeout(refreshEnglishTranslation, delay)
-  );
-}
-
 function initializeTranslator() {
   const TranslateElement = (window as TranslatorWindow).google?.translate
     ?.TranslateElement;
   const container = document.getElementById(ELEMENT_ID);
 
-  if (!TranslateElement || !container || container.childElementCount > 0) return;
+  if (
+    !TranslateElement ||
+    !container ||
+    container.dataset.translatorInitialized === "true" ||
+    container.childElementCount > 0
+  ) {
+    return;
+  }
 
+  container.dataset.translatorInitialized = "true";
   new TranslateElement(
     {
       pageLanguage: "tr",
@@ -64,8 +66,6 @@ function initializeTranslator() {
     },
     ELEMENT_ID
   );
-
-  scheduleTranslationRefresh();
 }
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
@@ -88,16 +88,22 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (language !== "en") return;
 
-    let timers = scheduleTranslationRefresh();
-    const handleContentReady = () => {
-      timers.forEach(window.clearTimeout);
-      timers = scheduleTranslationRefresh();
+    let refreshTimer = window.setTimeout(
+      refreshEnglishTranslation,
+      REFRESH_DELAY
+    );
+    const scheduleRefresh = () => {
+      window.clearTimeout(refreshTimer);
+      refreshTimer = window.setTimeout(
+        refreshEnglishTranslation,
+        REFRESH_DELAY
+      );
     };
 
-    window.addEventListener(INTERFACE_CONTENT_READY_EVENT, handleContentReady);
+    window.addEventListener(INTERFACE_CONTENT_READY_EVENT, scheduleRefresh);
     return () => {
-      timers.forEach(window.clearTimeout);
-      window.removeEventListener(INTERFACE_CONTENT_READY_EVENT, handleContentReady);
+      window.clearTimeout(refreshTimer);
+      window.removeEventListener(INTERFACE_CONTENT_READY_EVENT, scheduleRefresh);
     };
   }, [language, pathname]);
 
