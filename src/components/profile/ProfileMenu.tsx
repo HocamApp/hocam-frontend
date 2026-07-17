@@ -23,6 +23,7 @@ import {
   Pencil,
   PlayCircle,
   Receipt,
+  Settings,
   ShieldCheck,
   Star,
   UserCog,
@@ -38,6 +39,12 @@ import {
   validateProfilePhotoFile,
 } from "@/lib/profilePhoto";
 import { formatPrice } from "@/lib/utils";
+import {
+  applyInterfaceLanguage,
+  getStoredInterfaceLanguage,
+  hasStoredInterfaceLanguage,
+  isInterfaceLanguage,
+} from "@/lib/interfaceLanguage";
 import type { Theme } from "@/lib/theme";
 import type { ProfileStudent, ProfileTutor, UserPreferences } from "@/types";
 import {
@@ -208,6 +215,17 @@ export function ProfileMenu() {
     [data?.preferences, prefOverrides]
   );
 
+  useEffect(() => {
+    const accountLanguage = data?.preferences?.language;
+    if (
+      accountLanguage &&
+      isInterfaceLanguage(accountLanguage) &&
+      (!hasStoredInterfaceLanguage() || getStoredInterfaceLanguage() !== accountLanguage)
+    ) {
+      applyInterfaceLanguage(accountLanguage);
+    }
+  }, [data?.preferences?.language]);
+
   const go = (href: string) => {
     setOpen(false);
     router.push(href);
@@ -282,11 +300,13 @@ export function ProfileMenu() {
   };
 
   const handleLanguageChange = async (nextLang: string) => {
+    if (!isInterfaceLanguage(nextLang) || nextLang === prefs.language) return;
     const prevLang = prefs.language;
     setPrefOverrides((prev) => ({ ...prev, language: nextLang }));
     try {
       await updateProfileMe({ preferences: { language: nextLang } });
-      queryClient.invalidateQueries({ queryKey: ["profile-me"] });
+      await queryClient.invalidateQueries({ queryKey: ["profile-me"] });
+      applyInterfaceLanguage(nextLang);
     } catch {
       setPrefOverrides((prev) => ({ ...prev, language: prevLang }));
       toast.error("Dil ayarı kaydedilemedi.");
@@ -832,7 +852,7 @@ export function ProfileMenu() {
 
           {/* ---- Gelişmiş Ayarlar ---- */}
           <ProfileAccordionSection
-            icon={<UserCog className="h-4 w-4" />}
+            icon={<Settings className="h-6 w-6" />}
             title="Gelişmiş Ayarlar"
             {...sectionProps("advanced")}
           >

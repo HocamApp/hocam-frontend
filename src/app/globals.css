@@ -126,6 +126,20 @@
   }
 }
 
+/* The language preference uses Google Website Translator as a hidden engine. */
+#hocam-google-translate,
+.goog-te-banner-frame,
+.goog-te-balloon-frame,
+.goog-te-gadget,
+iframe.skiptranslate {
+  display: none !important;
+}
+
+html,
+body {
+  top: 0 !important;
+}
+
 /* Mobile safe-area + dvh fallback utilities (additive, does not alter existing rules) */
 @layer utilities {
   .pt-safe {

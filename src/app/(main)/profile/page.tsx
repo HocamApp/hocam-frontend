@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import Link from "next/link";
@@ -20,6 +20,12 @@ import {
 import { validateProfilePhotoFile } from "@/lib/profilePhoto";
 import type { StudentAvatarKey } from "@/lib/studentAvatars";
 import { formatPrice } from "@/lib/utils";
+import {
+  applyInterfaceLanguage,
+  getStoredInterfaceLanguage,
+  hasStoredInterfaceLanguage,
+  isInterfaceLanguage,
+} from "@/lib/interfaceLanguage";
 import type { Theme } from "@/lib/theme";
 import type {
   ProfileMeResponse,
@@ -129,16 +135,29 @@ function ProfileContent() {
   };
 
   const handleLanguageChange = async (nextLang: string) => {
+    if (!isInterfaceLanguage(nextLang) || nextLang === prefs.language) return;
     const prevLang = prefs.language;
     setPrefOverrides((prev) => ({ ...prev, language: nextLang }));
     try {
       await updateProfileMe({ preferences: { language: nextLang } });
-      queryClient.invalidateQueries({ queryKey: ["profile-me"] });
+      await queryClient.invalidateQueries({ queryKey: ["profile-me"] });
+      applyInterfaceLanguage(nextLang);
     } catch {
       setPrefOverrides((prev) => ({ ...prev, language: prevLang }));
       toast.error("Dil ayarı kaydedilemedi.");
     }
   };
+
+  useEffect(() => {
+    const accountLanguage = data?.preferences?.language;
+    if (
+      accountLanguage &&
+      isInterfaceLanguage(accountLanguage) &&
+      (!hasStoredInterfaceLanguage() || getStoredInterfaceLanguage() !== accountLanguage)
+    ) {
+      applyInterfaceLanguage(accountLanguage);
+    }
+  }, [data?.preferences?.language]);
 
   const handleThemeChange = (nextTheme: Theme) => {
     setPrefOverrides((prev) => ({ ...prev, dark_mode: nextTheme === "dark" }));

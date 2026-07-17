@@ -4,6 +4,7 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/providers/AuthProvider";
 import { QueryProvider } from "@/providers/QueryProvider";
+import { LanguageProvider } from "@/providers/LanguageProvider";
 import { SessionExpiredDialog } from "@/components/shared/SessionExpiredDialog";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
 
@@ -33,8 +34,10 @@ export default function RootLayout({
       <body className={`${inter.className} min-h-screen flex flex-col antialiased`}>
         <AuthProvider>
           <QueryProvider>
-            <div className="flex min-h-screen flex-1 flex-col">{children}</div>
-            <SessionExpiredDialog />
+            <LanguageProvider>
+              <div className="flex min-h-screen flex-1 flex-col">{children}</div>
+              <SessionExpiredDialog />
+            </LanguageProvider>
           </QueryProvider>
         </AuthProvider>
         <Toaster />
