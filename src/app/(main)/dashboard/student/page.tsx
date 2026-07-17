@@ -403,6 +403,8 @@ function StudentDashboardContent() {
                     <LessonJoinButton
                       bookingId={nextLesson.id}
                       startTime={nextLesson.start_time}
+                      durationMinutes={nextLesson.duration_minutes}
+                      status={nextLesson.status}
                       roomUrl={nextLesson.room_url}
                       size="lg"
                     />

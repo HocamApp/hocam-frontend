@@ -156,10 +156,7 @@ export function MobileTabBar() {
     <div className="fixed bottom-0 left-0 right-0 z-50 border-t bg-background/95 backdrop-blur pb-[env(safe-area-inset-bottom)] md:hidden">
       <nav
         aria-label="Mobil ana menü"
-        className={cn(
-          "grid h-16 items-center px-1",
-          isTutor ? "grid-cols-5" : "grid-cols-6"
-        )}
+        className="grid h-16 grid-cols-6 items-center px-1"
       >
         {primaryDescriptors.map((descriptor) =>
           descriptor.kind === "route"
@@ -167,7 +164,7 @@ export function MobileTabBar() {
             : renderNotificationButton(descriptor)
         )}
 
-        {!isTutor && (
+        {overflowDescriptors.length > 0 && (
           <Popover open={isMoreOpen} onOpenChange={setIsMoreOpen}>
             <PopoverTrigger asChild>
               <button

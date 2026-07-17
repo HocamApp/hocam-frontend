@@ -50,6 +50,7 @@ interface AISupportChatWidgetProps {
   attentionStorageKey?: string;
   positionClassName?: string;
   panelClassName?: string;
+  onStarterPrompt?: (prompt: string) => boolean;
 }
 
 export function AISupportChatWidget({
@@ -63,6 +64,7 @@ export function AISupportChatWidget({
   attentionStorageKey,
   positionClassName,
   panelClassName,
+  onStarterPrompt,
 }: AISupportChatWidgetProps = {}) {
   const [isOpen, setIsOpen] = useState(false);
   const [conversationId, setConversationId] = useState<string>();
@@ -275,7 +277,13 @@ export function AISupportChatWidget({
                   <button
                     key={prompt}
                     type="button"
-                    onClick={() => void submitMessage(prompt)}
+                    onClick={() => {
+                      if (onStarterPrompt?.(prompt)) {
+                        setIsOpen(false);
+                        return;
+                      }
+                      void submitMessage(prompt);
+                    }}
                     disabled={isSending}
                     className="rounded-md border border-border px-3 py-2 text-left text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-60"
                   >

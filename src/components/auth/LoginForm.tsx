@@ -61,7 +61,7 @@ export function LoginForm({ onCreateAccount }: LoginFormProps) {
       if (user.role === "tutor") {
         router.replace(
           user.tutor_profile_id
-            ? returnUrl ?? "/dashboard/tutor"
+            ? returnUrl ?? "/home"
             : "/tutor/setup"
         );
       } else {
@@ -86,7 +86,7 @@ export function LoginForm({ onCreateAccount }: LoginFormProps) {
       if (auth.user.role === "tutor") {
         router.push(
           auth.user.tutor_profile_id
-            ? returnUrl ?? "/dashboard/tutor"
+            ? returnUrl ?? "/home"
             : "/tutor/setup"
         );
       } else {
@@ -103,7 +103,7 @@ export function LoginForm({ onCreateAccount }: LoginFormProps) {
       if (auth.user.role === "tutor") {
         router.push(
           auth.user.tutor_profile_id
-            ? returnUrl ?? "/dashboard/tutor"
+            ? returnUrl ?? "/home"
             : "/tutor/setup"
         );
       } else {

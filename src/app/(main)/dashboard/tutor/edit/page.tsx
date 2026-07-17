@@ -23,6 +23,7 @@ import type { TutorProfile } from "@/types";
 
 import { RouteGuard } from "@/components/shared/RouteGuard";
 import { AISupportChatWidget } from "@/components/ai/AISupportChatWidget";
+import { TutorBioWizardDialog } from "@/components/ai/TutorBioWizardDialog";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -136,6 +137,7 @@ function TutorProfileEditContent() {
   const [discardDialogOpen, setDiscardDialogOpen] = useState(false);
   const [videoPreviewFailed, setVideoPreviewFailed] = useState(false);
   const [saveState, setSaveState] = useState<SaveState>("idle");
+  const [bioWizardOpen, setBioWizardOpen] = useState(false);
 
   const {
     data: profile,
@@ -567,10 +569,31 @@ function TutorProfileEditContent() {
           },
         })}
         onApplyProfileBio={applyAIBio}
+        onStarterPrompt={(prompt) => {
+          if (prompt !== "Hakkımda yazımı hazırla.") return false;
+          setBioWizardOpen(true);
+          return true;
+        }}
         attentionMessage="Yardımcı olmamı ister misin?"
         attentionStorageKey="hocam:tutor-profile-ai-nudge-shown"
         positionClassName="bottom-24 sm:bottom-24 lg:bottom-6"
         panelClassName="h-[min(640px,calc(100vh-176px))] lg:h-[min(680px,calc(100vh-112px))]"
+      />
+      <TutorBioWizardDialog
+        open={bioWizardOpen}
+        onOpenChange={setBioWizardOpen}
+        getRequestContext={() => ({
+          surface: "tutor_profile_edit",
+          draft_profile: {
+            bio: bioValue,
+            hourly_price:
+              Number(watchedValues.hourly_price) > 0
+                ? Number(watchedValues.hourly_price)
+                : profile.hourly_price,
+            subject_ids: selectedSubjectIds,
+          },
+        })}
+        onApplyProfileBio={applyAIBio}
       />
     </div>
   );

@@ -240,6 +240,8 @@ export function BookingCard({
                     <LessonJoinButton
                       bookingId={booking.id}
                       startTime={booking.start_time}
+                      durationMinutes={booking.duration_minutes}
+                      status={booking.status}
                       roomUrl={booking.room_url}
                       label="Derse gir"
                       size="sm"
@@ -331,6 +333,8 @@ export function BookingCard({
                 <LessonJoinButton
                   bookingId={booking.id}
                   startTime={booking.start_time}
+                  durationMinutes={booking.duration_minutes}
+                  status={booking.status}
                   roomUrl={booking.room_url}
                   label="Derse katıl"
                   size="sm"

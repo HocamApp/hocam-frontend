@@ -12,6 +12,8 @@ export const EARLY_JOIN_MINUTES = 15;
 interface LessonJoinButtonProps {
   bookingId: string;
   startTime: string;
+  durationMinutes: number;
+  status: string;
   roomUrl?: string | null;
   label?: string;
   size?: ButtonProps["size"];
@@ -19,13 +21,26 @@ interface LessonJoinButtonProps {
   className?: string;
 }
 
-export function canJoinLesson(startTime: string, now = Date.now()): boolean {
-  return now >= new Date(startTime).getTime() - EARLY_JOIN_MINUTES * 60_000;
+export function canJoinLesson(
+  startTime: string,
+  durationMinutes: number,
+  status: string,
+  now = Date.now()
+): boolean {
+  const startAt = new Date(startTime).getTime();
+  const endAt = startAt + durationMinutes * 60_000;
+  return (
+    (status === "confirmed" || status === "in_progress") &&
+    now >= startAt - EARLY_JOIN_MINUTES * 60_000 &&
+    now < endAt
+  );
 }
 
 export function LessonJoinButton({
   bookingId,
   startTime,
+  durationMinutes,
+  status,
   roomUrl,
   label = "Derse katıl",
   size,
@@ -34,14 +49,46 @@ export function LessonJoinButton({
 }: LessonJoinButtonProps) {
   const [now, setNow] = useState(() => Date.now());
   const joinAt = new Date(startTime).getTime() - EARLY_JOIN_MINUTES * 60_000;
-  const canJoin = Boolean(roomUrl) && now >= joinAt;
+  const endAt = new Date(startTime).getTime() + durationMinutes * 60_000;
+  const isActive = status === "confirmed" || status === "in_progress";
+  const canJoin =
+    Boolean(roomUrl) &&
+    canJoinLesson(startTime, durationMinutes, status, now);
+  const hasEnded = now >= endAt;
 
   useEffect(() => {
-    if (now >= joinAt) return;
-    const delay = Math.min(Math.max(joinAt - Date.now() + 100, 100), 60_000);
+    if (now >= endAt) return;
+    const nextBoundary = now < joinAt ? joinAt : endAt;
+    const delay = Math.min(Math.max(nextBoundary - Date.now() + 100, 100), 60_000);
     const timeout = window.setTimeout(() => setNow(Date.now()), delay);
     return () => window.clearTimeout(timeout);
-  }, [joinAt, now]);
+  }, [endAt, joinAt, now]);
+
+  if (hasEnded) {
+    return (
+      <Button
+        size={size}
+        variant="outline"
+        className={cn("text-foreground", className)}
+        disabled
+      >
+        Ders sona erdi
+      </Button>
+    );
+  }
+
+  if (!isActive) {
+    return (
+      <Button
+        size={size}
+        variant="outline"
+        className={cn("text-foreground", className)}
+        disabled
+      >
+        Ders aktif değil
+      </Button>
+    );
+  }
 
   if (!roomUrl) {
     return (

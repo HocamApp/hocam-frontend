@@ -99,7 +99,7 @@ export function AnimatedNavbarLinks() {
     return {
       title: d.title,
       icon: iconByName[d.icon],
-      alwaysShowLabel: !isTutor && separatorIndex >= 0 && index < separatorIndex,
+      alwaysShowLabel: separatorIndex >= 0 && index < separatorIndex,
     };
   });
 

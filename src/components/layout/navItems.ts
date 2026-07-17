@@ -106,6 +106,13 @@ const studentDescriptors: NavDescriptor[] = [
 const tutorDescriptors: NavDescriptor[] = [
   {
     kind: "route",
+    title: "Ana Sayfa",
+    icon: "Home",
+    href: "/home",
+    mobilePlacement: "primary",
+  },
+  {
+    kind: "route",
     title: "Dersler",
     icon: "GraduationCap",
     href: "/tutors",
@@ -130,7 +137,7 @@ const tutorDescriptors: NavDescriptor[] = [
     title: "Çıkmış Sorular",
     icon: "FileQuestion",
     href: "/cikmis-sorular",
-    mobilePlacement: "primary",
+    mobilePlacement: "overflow",
   },
   { kind: "separator", mobilePlacement: "hidden" },
   {

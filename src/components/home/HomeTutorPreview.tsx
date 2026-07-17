@@ -89,7 +89,7 @@ export function HomeTutorPreview({
 
   return (
     <div className="relative mx-auto w-full max-w-md">
-      <div className="absolute -inset-5 -z-10 rounded-[2.25rem] bg-gradient-to-br from-primary/[0.08] via-violet-500/[0.08] to-transparent" aria-hidden="true" />
+      <div className="absolute -inset-5 -z-10 rounded-[2.25rem] bg-gradient-to-br from-primary/[0.08] via-rose-400/[0.10] to-transparent" aria-hidden="true" />
       <div className="absolute -right-3 -top-4 z-10 inline-flex items-center gap-2 rounded-full border bg-background px-3 py-2 text-xs font-semibold shadow-md">
         {matched ? (
           <>

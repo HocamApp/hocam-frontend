@@ -9,7 +9,10 @@ export type HomeAnalyticsEvent =
   | "home_all_tutors_clicked"
   | "home_package_opened"
   | "home_continue_clicked"
-  | "home_practice_opened";
+  | "home_practice_opened"
+  | "tutor_home_viewed"
+  | "tutor_home_action_clicked"
+  | "tutor_home_lesson_opened";
 
 export type HomeAnalyticsProperties = Record<
   string,

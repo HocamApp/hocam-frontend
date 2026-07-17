@@ -515,7 +515,7 @@ export function AuthenticatedHome() {
 
   return (
     <div className="overflow-hidden">
-      <section className="relative border-b bg-gradient-to-br from-muted/60 via-background to-violet-500/[0.08]">
+      <section className="relative border-b bg-gradient-to-br from-muted/60 via-background to-rose-400/[0.12]">
         <div className="pointer-events-none absolute left-1/2 top-16 -z-0 h-80 w-80 rounded-full bg-primary/[0.04] blur-3xl" aria-hidden="true" />
         <div className="relative z-10 mx-auto grid max-w-7xl items-center gap-14 px-4 py-14 sm:px-6 sm:py-16 min-[880px]:grid-cols-[minmax(0,1.1fr)_minmax(340px,0.9fr)] min-[880px]:gap-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(360px,0.9fr)] lg:gap-16 lg:px-8 lg:py-[72px]">
           <div className="max-w-2xl">

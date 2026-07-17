@@ -92,6 +92,13 @@ describe("getNavDescriptors", () => {
     assert.deepEqual(navItems.getNavDescriptors?.("tutor"), [
       {
         kind: "route",
+        title: "Ana Sayfa",
+        icon: "Home",
+        href: "/home",
+        mobilePlacement: "primary",
+      },
+      {
+        kind: "route",
         title: "Dersler",
         icon: "GraduationCap",
         href: "/tutors",
@@ -116,7 +123,7 @@ describe("getNavDescriptors", () => {
         title: "Çıkmış Sorular",
         icon: "FileQuestion",
         href: "/cikmis-sorular",
-        mobilePlacement: "primary",
+        mobilePlacement: "overflow",
       },
       { kind: "separator", mobilePlacement: "hidden" },
       {

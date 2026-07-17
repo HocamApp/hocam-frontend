@@ -59,6 +59,7 @@ import { TUTOR_DASHBOARD_ASSISTANT } from "@/components/ai/pageAssistantContent"
 import { RouteGuard } from "@/components/shared/RouteGuard";
 import StatusBadge from "@/components/shared/StatusBadge";
 import { BookingCard, paymentLabel } from "@/components/lessons/BookingCard";
+import { canJoinLesson } from "@/components/lessons/LessonJoinButton";
 import { LessonMaterialsDialog } from "@/components/lessons/LessonMaterialsDialog";
 import { ParticipantAvatar } from "@/components/messaging/ParticipantAvatar";
 import { AvailabilityCalendar } from "@/components/tutors/AvailabilityCalendar";
@@ -181,10 +182,6 @@ function formatLessonCountdown(startTime: string): string {
   if (diffDays === 0) return "Bugün";
   if (diffDays === 1) return "Yarın";
   return `Derse ${diffDays} gün kaldı`;
-}
-
-function canJoinLesson(startTime: string): boolean {
-  return Date.now() >= new Date(startTime).getTime() - 15 * 60 * 1000;
 }
 
 interface StudentRosterEntry {
@@ -1300,7 +1297,12 @@ function TutorDashboardContent() {
             </div>
 
             <div className="mt-5 flex flex-wrap items-center gap-2 border-t pt-4">
-              {nextBooking.room_url && canJoinLesson(nextBooking.start_time) ? (
+              {nextBooking.room_url &&
+              canJoinLesson(
+                nextBooking.start_time,
+                nextBooking.duration_minutes,
+                nextBooking.status
+              ) ? (
                 <Button asChild size="lg">
                   <a href={`/session/${nextBooking.id}`}>
                     <Video className="mr-2 h-4 w-4" />
