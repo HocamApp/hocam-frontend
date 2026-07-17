@@ -7,6 +7,7 @@ import { QueryProvider } from "@/providers/QueryProvider";
 import { LanguageProvider } from "@/providers/LanguageProvider";
 import { SessionExpiredDialog } from "@/components/shared/SessionExpiredDialog";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
+import { ImpersonationBanner } from "@/components/admin/ImpersonationBanner";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -35,6 +36,7 @@ export default function RootLayout({
         <AuthProvider>
           <QueryProvider>
             <LanguageProvider>
+              <ImpersonationBanner />
               <div className="flex min-h-screen flex-1 flex-col">{children}</div>
               <SessionExpiredDialog />
             </LanguageProvider>

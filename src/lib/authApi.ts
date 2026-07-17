@@ -1,4 +1,5 @@
 import api from "./api";
+import Cookies from "js-cookie";
 import {
   AuthResponse,
   GoogleAuthResponse,
@@ -44,6 +45,12 @@ export async function loginUser(
   email: string,
   password: string
 ): Promise<AuthResponse> {
+  // An explicit login starts a fresh session. Clearing these before the
+  // request prevents stale normal or impersonation credentials from
+  // interfering with the public token endpoint.
+  Cookies.remove("admin_impersonation_token");
+  Cookies.remove("auth_token");
+
   const response = await api.post<AuthResponse>("/auth/token/", {
     username: email,
     password,

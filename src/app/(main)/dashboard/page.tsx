@@ -6,7 +6,7 @@ import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { isAuthenticated, isLoading, isStudent, isTutor } = useAuth();
+  const { isAuthenticated, isLoading, isStudent, isTutor, isAdmin, isImpersonating } = useAuth();
 
   if (isLoading) {
     return (
@@ -18,6 +18,11 @@ export default function DashboardPage() {
 
   if (!isAuthenticated) {
     router.push("/login");
+    return null;
+  }
+
+  if (isAdmin && !isImpersonating) {
+    router.replace("/admin-control");
     return null;
   }
 
