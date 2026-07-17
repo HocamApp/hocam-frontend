@@ -16,6 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import type { TutorFilters as TutorFiltersType } from "@/lib/tutorsApi";
 import type { Subject } from "@/types";
@@ -36,6 +37,24 @@ const POPULAR_UNIVERSITIES = [
   "Gebze Teknik Üniversitesi",
 ];
 
+// Number of non-default filters currently set. Ordering counts only when it
+// differs from the "rating" default. Mirrors the page-level active-filter set.
+function countActiveFilters(filters: TutorFiltersType): number {
+  return [
+    (filters.subject ?? "") !== "",
+    (filters.exam_type ?? "") !== "",
+    (filters.min_rating ?? "") !== "",
+    (filters.min_price ?? "") !== "",
+    (filters.max_price ?? "") !== "",
+    (filters.university ?? "") !== "",
+    (filters.yks_rank_max ?? "") !== "",
+    (filters.availability_day ?? "") !== "",
+    (filters.availability_time ?? "") !== "",
+    (filters.online ?? "") !== "",
+    (filters.ordering ?? "rating") !== "rating",
+  ].filter(Boolean).length;
+}
+
 function FilterPanelContent({
   filters,
   subjects,
@@ -44,6 +63,7 @@ function FilterPanelContent({
   priceValue,
   onPriceCommit,
   isLoading,
+  showClearButton = true,
 }: {
   filters: TutorFiltersType;
   subjects: Subject[];
@@ -52,23 +72,13 @@ function FilterPanelContent({
   priceValue: [number, number];
   onPriceCommit: (value: [number, number]) => void;
   isLoading: boolean;
+  showClearButton?: boolean;
 }) {
   const subjectOptions = getSubjectOptionsForExam(subjects, filters.exam_type);
   const universityOptions = filters.university && !POPULAR_UNIVERSITIES.includes(filters.university)
     ? [filters.university, ...POPULAR_UNIVERSITIES]
     : POPULAR_UNIVERSITIES;
-  const hasActiveFilters =
-    (filters.subject ?? "") !== "" ||
-    (filters.exam_type ?? "") !== "" ||
-    (filters.min_rating ?? "") !== "" ||
-    (filters.min_price ?? "") !== "" ||
-    (filters.max_price ?? "") !== "" ||
-    (filters.university ?? "") !== "" ||
-    (filters.yks_rank_max ?? "") !== "" ||
-    (filters.availability_day ?? "") !== "" ||
-    (filters.availability_time ?? "") !== "" ||
-    (filters.online ?? "") !== "" ||
-    (filters.ordering ?? "rating") !== "rating";
+  const hasActiveFilters = countActiveFilters(filters) > 0;
 
   const handleClear = () => {
     onClear();
@@ -251,7 +261,7 @@ function FilterPanelContent({
         </Select>
       </div>
 
-      {hasActiveFilters && (
+      {showClearButton && hasActiveFilters && (
         <Button variant="ghost" className="w-full" onClick={handleClear}>
           Filtreleri Temizle
         </Button>
@@ -269,6 +279,7 @@ export function TutorFilters({
 }: TutorFiltersProps) {
   const [sheetOpen, setSheetOpen] = useState(false);
 
+  const activeCount = countActiveFilters(filters);
   const priceValue = filtersToPriceTuple(filters.min_price, filters.max_price);
 
   const handleFiltersChange = useCallback(
@@ -301,16 +312,24 @@ export function TutorFilters({
         />
       </div>
 
-      {/* Mobile: Sheet trigger */}
+      {/* Mobile/tablet: bottom-sheet trigger */}
       <div className="lg:hidden">
         <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
           <SheetTrigger asChild>
             <Button variant="outline" size="sm" className="gap-2">
               <Filter className="h-4 w-4" />
               Filtrele
+              {activeCount > 0 && (
+                <Badge
+                  variant="secondary"
+                  className="ml-0.5 h-5 min-w-5 justify-center rounded-full px-1.5 tabular-nums"
+                >
+                  {activeCount}
+                </Badge>
+              )}
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="flex w-[min(90vw,340px)] flex-col p-0">
+          <SheetContent side="bottom" className="flex max-h-[85vh] flex-col rounded-t-2xl p-0">
             <SheetHeader className="border-b p-6">
               <SheetTitle>Filtreler</SheetTitle>
             </SheetHeader>
@@ -323,11 +342,21 @@ export function TutorFilters({
                 priceValue={priceValue}
                 onPriceCommit={onPriceCommit}
                 isLoading={isLoading}
+                showClearButton={false}
               />
             </div>
-            <SheetFooter className="border-t p-4">
-              <Button type="button" className="w-full" onClick={() => setSheetOpen(false)}>
-                Sonuçları gör
+            <SheetFooter className="flex-row gap-3 border-t p-4">
+              <Button
+                type="button"
+                variant="outline"
+                className="flex-1"
+                disabled={activeCount === 0}
+                onClick={onClear}
+              >
+                Temizle
+              </Button>
+              <Button type="button" className="flex-1" onClick={() => setSheetOpen(false)}>
+                Uygula
               </Button>
             </SheetFooter>
           </SheetContent>
