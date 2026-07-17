@@ -21,7 +21,7 @@ export function RouteGuard({
   children,
 }: RouteGuardProps) {
   const router = useRouter();
-  const { isAuthenticated, isLoading, isStudent, isTutor, isAdmin } = useAuth();
+  const { isAuthenticated, isLoading, isStudent, isTutor, isAdmin, isImpersonating } = useAuth();
 
   useEffect(() => {
     if (isLoading) return;
@@ -36,6 +36,11 @@ export function RouteGuard({
       return;
     }
 
+    if (requireRole && isAdmin && !isImpersonating) {
+      router.push("/admin-control");
+      return;
+    }
+
     if (requireRole === "student" && isTutor) {
       router.push("/dashboard/tutor");
       return;
@@ -45,7 +50,7 @@ export function RouteGuard({
       router.push("/dashboard/student");
       return;
     }
-  }, [isLoading, isAuthenticated, isStudent, isTutor, isAdmin, requireAuth, requireRole, requireAdmin, redirectTo, router]);
+  }, [isLoading, isAuthenticated, isStudent, isTutor, isAdmin, isImpersonating, requireAuth, requireRole, requireAdmin, redirectTo, router]);
 
   if (isLoading) {
     return (
@@ -60,6 +65,10 @@ export function RouteGuard({
   }
 
   if (requireAdmin && !isAdmin) {
+    return null;
+  }
+
+  if (requireRole && isAdmin && !isImpersonating) {
     return null;
   }
 

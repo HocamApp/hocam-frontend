@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 
 export function Navbar() {
   const pathname = usePathname();
-  const { isAuthenticated, isLoading, isAdmin } = useAuth();
+  const { isAuthenticated, isLoading, isAdmin, isImpersonating } = useAuth();
 
   const linkClass = (path: string) =>
     cn(
@@ -21,7 +21,7 @@ export function Navbar() {
 
   const leftBrand = (
     <Link
-      href={isAuthenticated ? "/home" : "/tutors"}
+      href={isAdmin && !isImpersonating ? "/admin-control" : isAuthenticated ? "/home" : "/tutors"}
       aria-label="Hocam ana sayfa"
       className="inline-flex min-h-11 items-center text-foreground transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 lg:inline lg:min-h-0"
     >
@@ -69,12 +69,10 @@ export function Navbar() {
         <nav className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex flex-nowrap items-center justify-between gap-x-1 min-[1039px]:gap-x-3">
             <div className="flex h-14 items-center md:h-16">{leftBrand}</div>
-            <div className="hidden md:block">
-              <AnimatedNavbarLinks />
-            </div>
+            {(!isAdmin || isImpersonating) && <div className="hidden md:block"><AnimatedNavbarLinks /></div>}
             {isAdmin && (
               <Button variant="outline" size="sm" asChild>
-                <Link href="/admin-control">QA Admin</Link>
+                <Link href="/admin-control">Admin Merkezi</Link>
               </Button>
             )}
             <ProfileMenu />

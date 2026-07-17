@@ -28,6 +28,7 @@ export interface AdminTestAccount {
     is_verified?: boolean;
     is_public?: boolean;
     auto_approve_bookings?: boolean;
+    subjects?: { id: string; name: string }[];
   } | null;
 }
 
@@ -41,6 +42,20 @@ export interface AdminMonitoredBooking {
   status: string;
   room_url: string;
   uses_test_credit: boolean;
+  package_purchase_id: string | null;
+}
+
+export interface AdminMonitoredPackage {
+  id: string;
+  student: AdminTestAccount;
+  tutor: AdminTestAccount;
+  plan: { id: string; name: string; lesson_duration_minutes: number };
+  status: PackagePurchaseStatus;
+  total_credits: number;
+  remaining_credits: number;
+  total_price: number;
+  created_at: string;
+  paid_at: string | null;
 }
 
 export interface AdminTestCreditGrant {
@@ -67,6 +82,14 @@ export interface AdminAction {
 export interface AdminMonitorResponse {
   accounts: AdminTestAccount[];
   bookings: AdminMonitoredBooking[];
+  package_purchases: AdminMonitoredPackage[];
+  package_plans: Array<{
+    id: string;
+    name: string;
+    lesson_count: number;
+    lesson_duration_minutes: number;
+  }>;
+  manual_package_activation_enabled: boolean;
   test_credit_grants: AdminTestCreditGrant[];
   actions: AdminAction[];
   server_time: string;
