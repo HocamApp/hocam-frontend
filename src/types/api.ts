@@ -4,6 +4,72 @@ export interface User {
   role: "student" | "tutor";
   tutor_profile_id: string | null;
   is_email_verified: boolean;
+  is_admin: boolean;
+  is_test_account: boolean;
+  impersonation: {
+    actor_id: string;
+    actor_email: string;
+    target_id: string;
+    target_email: string;
+  } | null;
+}
+
+export interface AdminTestAccount {
+  id: string;
+  email: string;
+  role: "student" | "tutor";
+  is_active: boolean;
+  is_test_account: boolean;
+  last_seen_at: string | null;
+  profile: {
+    id: string;
+    name: string;
+    surname: string;
+    is_verified?: boolean;
+    is_public?: boolean;
+    auto_approve_bookings?: boolean;
+  } | null;
+}
+
+export interface AdminMonitoredBooking {
+  id: string;
+  student: AdminTestAccount;
+  tutor: AdminTestAccount;
+  subject: { id: string; name: string };
+  start_time: string;
+  duration_minutes: number;
+  status: string;
+  room_url: string;
+  uses_test_credit: boolean;
+}
+
+export interface AdminTestCreditGrant {
+  id: string;
+  student_id: string;
+  student_email: string;
+  tutor_id: string;
+  tutor_email: string;
+  total_credits: number;
+  remaining_credits: number;
+  expires_at: string;
+}
+
+export interface AdminAction {
+  id: string;
+  action: string;
+  actor_email: string;
+  target_email: string | null;
+  booking_id: string | null;
+  metadata: Record<string, unknown>;
+  created_at: string;
+}
+
+export interface AdminMonitorResponse {
+  accounts: AdminTestAccount[];
+  bookings: AdminMonitoredBooking[];
+  test_credit_grants: AdminTestCreditGrant[];
+  actions: AdminAction[];
+  server_time: string;
 }
 
 export interface AuthResponse {

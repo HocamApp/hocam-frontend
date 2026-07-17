@@ -10,12 +10,14 @@ import {
 import Cookies from "js-cookie";
 import { User } from "@/types";
 import { fetchMe } from "@/lib/authApi";
+import { IMPERSONATION_ENDED_EVENT } from "@/lib/api";
 
 interface AuthContextType {
   user: User | null;
   token: string | null;
   setAuth: (user: User, token: string) => void;
   clearAuth: () => void;
+  updateUser: (user: User) => void;
   isLoading: boolean;
 }
 
@@ -37,6 +39,9 @@ function readCachedUser(): User | null {
         role: parsed.role,
         tutor_profile_id: parsed.tutor_profile_id ?? null,
         is_email_verified: Boolean(parsed.is_email_verified),
+        is_admin: Boolean(parsed.is_admin),
+        is_test_account: Boolean(parsed.is_test_account),
+        impersonation: parsed.impersonation ?? null,
       };
     }
   } catch {
@@ -86,7 +91,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     rehydrate();
   }, []);
 
+  useEffect(() => {
+    const restoreAdmin = () => {
+      fetchMe()
+        .then((freshUser) => {
+          localStorage.setItem("auth_user", JSON.stringify(freshUser));
+          setUser(freshUser);
+        })
+        .catch(() => {});
+    };
+    window.addEventListener(IMPERSONATION_ENDED_EVENT, restoreAdmin);
+    return () => window.removeEventListener(IMPERSONATION_ENDED_EVENT, restoreAdmin);
+  }, []);
+
   const setAuth = (user: User, token: string) => {
+    Cookies.remove("admin_impersonation_token");
     Cookies.set("auth_token", token, {
       expires: 7, // days
       // Not HttpOnly (js-cookie can't set that) — documented architectural
@@ -102,13 +121,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const clearAuth = () => {
     Cookies.remove("auth_token");
+    Cookies.remove("admin_impersonation_token");
     localStorage.removeItem("auth_user");
     setToken(null);
     setUser(null);
   };
 
+  const updateUser = (nextUser: User) => {
+    localStorage.setItem("auth_user", JSON.stringify(nextUser));
+    setUser(nextUser);
+  };
+
   return (
-    <AuthContext.Provider value={{ user, token, setAuth, clearAuth, isLoading }}>
+    <AuthContext.Provider value={{ user, token, setAuth, clearAuth, updateUser, isLoading }}>
       {children}
     </AuthContext.Provider>
   );

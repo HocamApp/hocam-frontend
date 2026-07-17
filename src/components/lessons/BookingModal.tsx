@@ -146,6 +146,7 @@ interface BookingModalProps {
   lessonRequestId?: string;
   learningContext?: LearningContextQuery | null;
   isTrial?: boolean;
+  allowTestCredit?: boolean;
 }
 
 export function BookingModal({
@@ -156,6 +157,7 @@ export function BookingModal({
   lessonRequestId,
   learningContext,
   isTrial = false,
+  allowTestCredit = false,
 }: BookingModalProps) {
   const queryClient = useQueryClient();
   const [step, setStep] = useState(1);
@@ -229,6 +231,7 @@ export function BookingModal({
       )
     : undefined;
   const usingPackageCredit = !isTrial && !!eligiblePackage;
+  const usingTestCredit = !isTrial && allowTestCredit && !eligiblePackage;
   const displayPrice = 0;
   const endTime = selectedTime
     ? (() => {
@@ -279,7 +282,7 @@ export function BookingModal({
       setStep1Error("Lütfen bir ders konusu seçin.");
       return;
     }
-    if (!isTrial && !eligiblePackage) {
+    if (!isTrial && !eligiblePackage && !usingTestCredit) {
       setStep1Error(
         "Bu hocayla ders ayırtmak için kullanılabilir aktif bir paketin olmalı."
       );
@@ -296,7 +299,7 @@ export function BookingModal({
 
   const handleSubmit = async () => {
     if (!selectedDate || !selectedTime || !selectedSubjectId || busyIntervalsFetching) return;
-    if (!isTrial && !eligiblePackage) {
+    if (!isTrial && !eligiblePackage && !usingTestCredit) {
       setApiError("Bu hocayla ders ayırtmak için kullanılabilir aktif bir paketin olmalı.");
       setStep(1);
       return;
@@ -317,7 +320,7 @@ export function BookingModal({
         duration_minutes: selectedDuration,
         ...(isTrial ? { is_trial: true } : {}),
         ...(lessonRequestId ? { lesson_request: lessonRequestId } : {}),
-        ...(!isTrial ? { package_purchase_id: eligiblePackage!.id } : {}),
+        ...(!isTrial && eligiblePackage ? { package_purchase_id: eligiblePackage.id } : {}),
         ...(learningContext
           ? {
               learning_goal_id: learningContext.learning_goal_id,
@@ -448,7 +451,13 @@ export function BookingModal({
                 </div>
               )}
               {!isTrial && !eligiblePackage && (
-                <ErrorMessage message="Bu hocayla ders ayırtmak için kullanılabilir aktif bir paketin olmalı." />
+                usingTestCredit ? (
+                  <div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950">
+                    QA test kredisi kullanılacak. Gerçek ödeme veya paket satın alımı oluşturulmaz.
+                  </div>
+                ) : (
+                  <ErrorMessage message="Bu hocayla ders ayırtmak için kullanılabilir aktif bir paketin olmalı." />
+                )
               )}
               {isTrial ? (
                 <div>
@@ -463,7 +472,7 @@ export function BookingModal({
                   <label className="text-sm font-medium">Ders süresi</label>
                   <div className="mt-2 flex flex-wrap gap-2">
                     <Badge variant="secondary">{LESSON_BASE_MINUTES} dk</Badge>
-                    <Badge variant="secondary">1 paket hakkı kullanılacak</Badge>
+                    <Badge variant="secondary">{usingTestCredit ? "1 test kredisi kullanılacak" : "1 paket hakkı kullanılacak"}</Badge>
                   </div>
                 </div>
               )}
@@ -471,7 +480,7 @@ export function BookingModal({
                 <Button
                   className="w-full sm:w-auto"
                   onClick={handleNextStep1}
-                  disabled={!isTrial && !eligiblePackage}
+                  disabled={!isTrial && !eligiblePackage && !usingTestCredit}
                 >
                   İleri →
                 </Button>
@@ -559,7 +568,7 @@ export function BookingModal({
                   </p>
                   <p className="mt-1 break-words text-muted-foreground">
                     {selectedSubject?.name} · {selectedDuration} dakika ·{" "}
-                    {isTrial ? formatPrice(displayPrice) : "1 paket hakkı kullanılacak"}
+                    {isTrial ? formatPrice(displayPrice) : usingTestCredit ? "1 test kredisi kullanılacak" : "1 paket hakkı kullanılacak"}
                   </p>
                 </div>
               )}
@@ -642,14 +651,16 @@ export function BookingModal({
                 <div className="flex justify-between">
                   <dt className="text-muted-foreground">Ücret:</dt>
                   <dd className="font-semibold">
-                    {isTrial ? formatPrice(displayPrice) : "1 paket hakkı kullanılacak"}
+                    {isTrial ? formatPrice(displayPrice) : usingTestCredit ? "1 test kredisi kullanılacak" : "1 paket hakkı kullanılacak"}
                   </dd>
                 </div>
               </dl>
               <p className="text-xs text-muted-foreground">
                 {isTrial
                   ? "Bu ücretsiz deneme dersi için ödeme veya paket hakkı gerekmez."
-                  : "Bu ders paket hakkından karşılanacak, ek ödeme gerekmez."}
+                  : usingTestCredit
+                    ? "Bu QA dersi test kredisinden karşılanır; ödeme veya kazanç kaydı oluşturmaz."
+                    : "Bu ders paket hakkından karşılanacak, ek ödeme gerekmez."}
               </p>
               <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <Button

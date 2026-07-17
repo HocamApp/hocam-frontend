@@ -19,6 +19,10 @@
 - Fiyat hesaplamaları backend'in Python `round()` davranışını (banker's rounding,
   round-half-to-even) birebir yansıtmalı — düz `Math.round` **kullanma**, `roundHalfToEven`
   helper'ını kullan (`src/lib/lessonPricing.ts`).
+- `/admin-control` QA ekranındaki test kredisi gerçek ödeme/paket değildir. UI bunu daima
+  "TEST CREDIT / ödeme alınmadı" olarak etiketler. Bu akışı checkout'a, ödeme geçmişine veya
+  hoca kazanç göstergesine bağlama; yalnız server'ın `is_test_account` olarak işaretlediği
+  hesaplarda kullanılır.
 
 ## 2. Kazanç/earnings gösterimi — asla ₺ olarak gösterme
 

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import api from "@/lib/api";
 
 export function useAuth() {
-  const { user, token, setAuth, clearAuth, isLoading } = useAuthContext();
+  const { user, token, setAuth, clearAuth, updateUser, isLoading } = useAuthContext();
   const router = useRouter();
 
   const logout = () => {
@@ -30,6 +30,8 @@ export function useAuth() {
   const isAuthenticated = !!token;
   const isStudent = user?.role === "student";
   const isTutor = user?.role === "tutor";
+  const isAdmin = Boolean(user?.is_admin);
+  const isImpersonating = Boolean(user?.impersonation);
 
   return {
     user,
@@ -39,6 +41,9 @@ export function useAuth() {
     isAuthenticated,
     isStudent,
     isTutor,
+    isAdmin,
+    isImpersonating,
+    updateUser,
     isLoading,
   };
 }

@@ -20,6 +20,9 @@ This is the active product and technical direction for Hocam. It supersedes earl
 - Tutor approval requests that pass their lesson start time are automatically cancelled by the backend; legacy `expired` records are displayed as automatically cancelled.
 - Video uses JaaS / 8x8. A confirmed booking has a `room_url`, and users join via `/session/[bookingId]`. Do not implement the obsolete Daily.co plan or `/lesson/[bookingId]`.
 - Messaging polling is intentional; do not add WebSockets without a separate architecture decision.
+- Staff users have a guarded `/admin-control` QA center for marked test accounts. Account
+  switching uses a short-lived impersonation session with a persistent warning banner;
+  test credits are displayed as non-payment QA entitlements and never as purchases/earnings.
 
 ## Precedence and maintenance
 
