@@ -13,8 +13,27 @@ const api = axios.create({
   },
 });
 
-// Request interceptor: attach token from cookie if present
+const PUBLIC_AUTH_PATHS = new Set([
+  "/auth/token/",
+  "/auth/google/",
+  "/auth/register/",
+  "/auth/register/confirm/",
+  "/auth/password-reset/",
+  "/auth/password-reset-confirm/",
+]);
+
+// Public authentication requests must never inherit a stale user or admin
+// impersonation session. Some authentication backends reject the request as
+// soon as an invalid Authorization header is encountered, before checking the
+// credentials in the request body.
 api.interceptors.request.use((config) => {
+  const requestPath = config.url?.split("?")[0];
+  if (requestPath && PUBLIC_AUTH_PATHS.has(requestPath)) {
+    delete config.headers.Authorization;
+    delete config.headers["X-Hocam-Impersonation-Token"];
+    return config;
+  }
+
   const token = Cookies.get("auth_token");
   const impersonationToken = Cookies.get("admin_impersonation_token");
   if (token) {
