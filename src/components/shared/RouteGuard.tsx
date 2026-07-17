@@ -8,6 +8,7 @@ import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 interface RouteGuardProps {
   requireAuth?: boolean;
   requireRole?: "student" | "tutor";
+  requireAdmin?: boolean;
   redirectTo?: string;
   children: React.ReactNode;
 }
@@ -15,17 +16,23 @@ interface RouteGuardProps {
 export function RouteGuard({
   requireAuth = true,
   requireRole,
+  requireAdmin = false,
   redirectTo = "/login",
   children,
 }: RouteGuardProps) {
   const router = useRouter();
-  const { isAuthenticated, isLoading, isStudent, isTutor } = useAuth();
+  const { isAuthenticated, isLoading, isStudent, isTutor, isAdmin } = useAuth();
 
   useEffect(() => {
     if (isLoading) return;
 
     if (requireAuth && !isAuthenticated) {
       router.push(redirectTo);
+      return;
+    }
+
+    if (requireAdmin && !isAdmin) {
+      router.push("/home");
       return;
     }
 
@@ -38,7 +45,7 @@ export function RouteGuard({
       router.push("/dashboard/student");
       return;
     }
-  }, [isLoading, isAuthenticated, isStudent, isTutor, requireAuth, requireRole, redirectTo, router]);
+  }, [isLoading, isAuthenticated, isStudent, isTutor, isAdmin, requireAuth, requireRole, requireAdmin, redirectTo, router]);
 
   if (isLoading) {
     return (
@@ -49,6 +56,10 @@ export function RouteGuard({
   }
 
   if (requireAuth && !isAuthenticated) {
+    return null;
+  }
+
+  if (requireAdmin && !isAdmin) {
     return null;
   }
 

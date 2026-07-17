@@ -58,6 +58,10 @@ export function LoginForm({ onCreateAccount }: LoginFormProps) {
 
   useEffect(() => {
     if (!isLoading && isAuthenticated && user) {
+      if (user.is_admin) {
+        router.replace("/admin-control");
+        return;
+      }
       if (user.role === "tutor") {
         router.replace(
           user.tutor_profile_id
@@ -83,6 +87,10 @@ export function LoginForm({ onCreateAccount }: LoginFormProps) {
     try {
       const auth = await loginUser(parsed.data.email, parsed.data.password);
       setAuth(auth.user, auth.token);
+      if (auth.user.is_admin) {
+        router.push("/admin-control");
+        return;
+      }
       if (auth.user.role === "tutor") {
         router.push(
           auth.user.tutor_profile_id
@@ -100,6 +108,10 @@ export function LoginForm({ onCreateAccount }: LoginFormProps) {
   const finishGoogleSuccess = useCallback(
     (auth: AuthResponse) => {
       setAuth(auth.user, auth.token);
+      if (auth.user.is_admin) {
+        router.push("/admin-control");
+        return;
+      }
       if (auth.user.role === "tutor") {
         router.push(
           auth.user.tutor_profile_id

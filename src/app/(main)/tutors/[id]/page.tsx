@@ -332,7 +332,7 @@ export default function TutorProfilePage({
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
   // Paid bookings now go through /tutors/[id]/checkout; this modal only
   // handles the free trial path (which deliberately skips checkout).
-  const [bookingModalMode, setBookingModalMode] = useState<"trial" | null>(null);
+  const [bookingModalMode, setBookingModalMode] = useState<"trial" | "test" | null>(null);
   const [bookingComplete, setBookingComplete] = useState(false);
   const [isPhotoPreviewOpen, setIsPhotoPreviewOpen] = useState(false);
   const [isSharePreviewOpen, setIsSharePreviewOpen] = useState(false);
@@ -656,13 +656,22 @@ export default function TutorProfilePage({
                                 Bu ay {trialLessonsRemaining} ücretsiz deneme hakkın kaldı.
                               </p>
                             </div>
+                            {user?.is_test_account && (
+                              <Button
+                                variant="outline"
+                                className="w-full"
+                                onClick={() => setBookingModalMode("test")}
+                              >
+                                Test kredisiyle 40 dk ders ayırt
+                              </Button>
+                            )}
                           </div>
                         ) : (
                           <Button
                             className="w-full"
-                            onClick={() => router.push(checkoutHref)}
+                            onClick={() => user?.is_test_account ? setBookingModalMode("test") : router.push(checkoutHref)}
                           >
-                            Ders Rezervasyonu Yap
+                            {user?.is_test_account ? "Test kredisiyle rezervasyon" : "Ders Rezervasyonu Yap"}
                           </Button>
                         )}
                       </>
@@ -922,7 +931,8 @@ export default function TutorProfilePage({
       <BookingModal
         tutor={tutor}
         isOpen={bookingModalMode !== null}
-        isTrial
+        isTrial={bookingModalMode === "trial"}
+        allowTestCredit={bookingModalMode === "test" && user?.is_test_account === true}
         onClose={() => setBookingModalMode(null)}
         learningContext={learningContext}
         onSuccess={() => {

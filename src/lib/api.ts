@@ -16,8 +16,12 @@ const api = axios.create({
 // Request interceptor: attach token from cookie if present
 api.interceptors.request.use((config) => {
   const token = Cookies.get("auth_token");
+  const impersonationToken = Cookies.get("admin_impersonation_token");
   if (token) {
     config.headers.Authorization = `Token ${token}`;
+  }
+  if (impersonationToken) {
+    config.headers["X-Hocam-Impersonation-Token"] = impersonationToken;
   }
   return config;
 });
@@ -25,6 +29,7 @@ api.interceptors.request.use((config) => {
 // Event fired when an authenticated session gets a 401; SessionExpiredDialog
 // listens for it and takes over instead of a hard redirect.
 export const SESSION_EXPIRED_EVENT = "hocam:session-expired";
+export const IMPERSONATION_ENDED_EVENT = "hocam:impersonation-ended";
 
 // Response interceptor: if 401 is returned for a request that carried a
 // token, clear the cookie and announce the expired session. Anonymous 401s
@@ -33,6 +38,17 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
+      const hadImpersonation = Boolean(Cookies.get("admin_impersonation_token"));
+      if (hadImpersonation) {
+        Cookies.remove("admin_impersonation_token");
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new CustomEvent(IMPERSONATION_ENDED_EVENT));
+        }
+        if (error.config?.headers) {
+          delete error.config.headers["X-Hocam-Impersonation-Token"];
+        }
+        return api.request(error.config);
+      }
       const hadToken = Boolean(Cookies.get("auth_token"));
       Cookies.remove("auth_token");
       if (

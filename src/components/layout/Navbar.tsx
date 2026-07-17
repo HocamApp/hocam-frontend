@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 
 export function Navbar() {
   const pathname = usePathname();
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, isAdmin } = useAuth();
 
   const linkClass = (path: string) =>
     cn(
@@ -72,6 +72,11 @@ export function Navbar() {
             <div className="hidden md:block">
               <AnimatedNavbarLinks />
             </div>
+            {isAdmin && (
+              <Button variant="outline" size="sm" asChild>
+                <Link href="/admin-control">QA Admin</Link>
+              </Button>
+            )}
             <ProfileMenu />
           </div>
         </nav>
