@@ -120,7 +120,7 @@ export function ProfileAccordionSection({
           onClick={onToggle}
           aria-expanded={open}
           aria-controls={contentId}
-          className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/60"
+          className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/60 active:bg-muted/80"
         >
           <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-foreground/70">
             {icon}

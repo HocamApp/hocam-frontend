@@ -170,3 +170,14 @@ body {
     height: 100dvh;
   }
 }
+
+/* Touch / coarse-pointer reveal: content that is otherwise gated behind hover
+   (e.g. `opacity-0 group-hover:opacity-100` action bars) has no hover state to
+   trigger it on touch devices, leaving it unreachable. On `(hover: none)` we
+   keep it visible so the action stays usable. Pointer-fine devices (desktop
+   mouse) are unaffected — the hover-reveal behavior is preserved there. */
+@media (hover: none) {
+  .touch-visible {
+    opacity: 1 !important;
+  }
+}
