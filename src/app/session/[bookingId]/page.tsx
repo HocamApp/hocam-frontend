@@ -75,7 +75,7 @@ function LessonWaitingRoom({
   }, []);
 
   return (
-    <div className="relative flex min-h-screen overflow-hidden bg-slate-950 text-white">
+    <div className="relative flex flex-1 overflow-hidden bg-slate-950 text-white">
       <div className="absolute inset-0 opacity-40 [background-image:linear-gradient(rgba(255,255,255,.08)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.08)_1px,transparent_1px)] [background-size:44px_44px]" />
       <div className="relative mx-auto flex w-full max-w-4xl flex-1 flex-col items-center justify-center px-6 py-10 text-center">
         <div className="mb-8 flex h-44 w-44 items-center justify-center rounded-full border border-white/10 bg-white/5">
@@ -397,15 +397,15 @@ function SessionContent() {
         </div>
       )}
 
-      <div className="flex flex-wrap items-center justify-between gap-2 bg-gray-900 px-4 py-2 text-sm text-white">
-        <span className="min-w-0 truncate font-medium">
+      <div className="flex items-center gap-2 bg-gray-900 px-4 py-2 text-sm text-white">
+        <span className="min-w-0 flex-1 truncate font-medium">
           {booking ? `${booking.subject.name} — Canlı Ders` : "Canlı Ders"}
         </span>
 
-        <div className="flex shrink-0 flex-wrap items-center gap-2">
+        <div className="flex min-w-0 items-center gap-2 overflow-x-auto scrollbar-none">
           {remainingMs !== null && (
             <span
-              className={`inline-flex items-center gap-1.5 rounded border px-2 py-1 text-xs tabular-nums ${
+              className={`inline-flex shrink-0 items-center gap-1.5 rounded border px-2 py-1 text-xs tabular-nums ${
                 isOvertime
                   ? "border-red-500/50 bg-red-500/20 text-red-200"
                   : isLowTime
@@ -419,7 +419,7 @@ function SessionContent() {
           )}
           <button
             onClick={() => setQuestionPanelOpen((open) => !open)}
-            className="inline-flex items-center gap-1.5 whitespace-nowrap rounded border border-white/20 px-3 py-1 text-xs transition-colors hover:bg-white/10"
+            className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded border border-white/20 px-3 py-1 text-xs transition-colors hover:bg-white/10"
           >
             <FileQuestion className="h-3.5 w-3.5" aria-hidden="true" />
             Canlı soru
@@ -427,7 +427,7 @@ function SessionContent() {
           {user?.role === "tutor" && booking && (
             <button
               onClick={() => setNotesPanelOpen((open) => !open)}
-              className="inline-flex items-center gap-1.5 whitespace-nowrap rounded border border-white/20 px-3 py-1 text-xs transition-colors hover:bg-white/10"
+              className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded border border-white/20 px-3 py-1 text-xs transition-colors hover:bg-white/10"
               aria-expanded={notesPanelOpen}
             >
               <StickyNote className="h-3.5 w-3.5" aria-hidden="true" />
@@ -436,7 +436,7 @@ function SessionContent() {
           )}
           <button
             onClick={handleWhiteboardDownload}
-            className="inline-flex items-center gap-1.5 whitespace-nowrap rounded border border-white/20 px-3 py-1 text-xs transition-colors hover:bg-white/10"
+            className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded border border-white/20 px-3 py-1 text-xs transition-colors hover:bg-white/10"
           >
             <Download className="h-3.5 w-3.5" aria-hidden="true" />
             Whiteboard indir
@@ -444,13 +444,13 @@ function SessionContent() {
           <button
             onClick={handleRequestEarlyEnd}
             disabled={isRequestingEnd || earlyEndRequestedByMe}
-            className="inline-flex items-center gap-1.5 whitespace-nowrap rounded border border-white/20 px-3 py-1 text-xs transition-colors hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded border border-white/20 px-3 py-1 text-xs transition-colors hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {earlyEndRequestedByMe ? "Onay bekleniyor..." : "Dersi bitir"}
           </button>
           <button
             onClick={() => router.back()}
-            className="rounded border border-white/20 px-3 py-1 text-xs transition-colors hover:bg-white/10"
+            className="shrink-0 rounded border border-white/20 px-3 py-1 text-xs transition-colors hover:bg-white/10"
           >
             Çıkış
           </button>
