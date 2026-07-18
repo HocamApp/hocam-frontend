@@ -108,7 +108,7 @@ export const AnimatedThemeToggler = ({
       onClick={onToggle}
       aria-label={darkMode ? "Açık temaya geç" : "Koyu temaya geç"}
       className={cn(
-        "flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 p-2 text-slate-800 shadow-sm ring-1 ring-slate-200/80 ring-offset-background outline-none transition-colors hover:bg-slate-200 focus:outline-none active:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 dark:bg-slate-800 dark:text-slate-100 dark:ring-slate-700/80 dark:hover:bg-slate-700 cursor-pointer",
+        "flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 p-2 text-slate-800 shadow-sm ring-1 ring-slate-200/80 ring-offset-background outline-none transition-colors hover:bg-slate-200 active:bg-slate-300 focus:outline-none active:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 dark:bg-slate-800 dark:text-slate-100 dark:ring-slate-700/80 dark:hover:bg-slate-700 dark:active:bg-slate-600 cursor-pointer",
         className
       )}
       type="button"

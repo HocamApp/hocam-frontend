@@ -4,6 +4,7 @@ import * as React from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Plus } from "lucide-react";
 
+import { useIsMobile } from "@/hooks/useMediaQuery";
 import { cn } from "@/lib/utils";
 
 export type PaymentMethod = {
@@ -33,6 +34,7 @@ export function PaymentMethodSelector({
   className,
 }: PaymentMethodSelectorProps) {
   const reduceMotion = useReducedMotion();
+  const isMobile = useIsMobile() === true;
   const [selectedId, setSelectedId] = React.useState<string | number | null>(
     defaultSelectedId ?? (methods.length > 0 ? methods[0].id : null)
   );
@@ -49,16 +51,18 @@ export function PaymentMethodSelector({
     onSelectionChange?.(id);
   };
 
+  // Mobile: tighter stagger + shorter travel so the list settles fast on
+  // low-power devices. Desktop values unchanged.
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
-      transition: { staggerChildren: 0.08 },
+      transition: { staggerChildren: isMobile ? 0.05 : 0.08 },
     },
   };
 
   const itemVariants = {
-    hidden: { opacity: 0, y: 16 },
+    hidden: { opacity: 0, y: isMobile ? 8 : 16 },
     visible: { opacity: 1, y: 0 },
   };
 
@@ -105,7 +109,7 @@ export function PaymentMethodSelector({
                 }
               }}
               className={cn(
-                "flex cursor-pointer items-center rounded-lg border p-4 transition-all duration-300 hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                "flex cursor-pointer items-center rounded-lg border p-4 transition-all duration-300 hover:bg-muted/50 active:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
                 isSelected
                   ? "border-primary shadow-[0_0_0_2px_hsl(var(--primary))]"
                   : "border-border"

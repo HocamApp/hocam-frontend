@@ -210,7 +210,7 @@ export function AISupportChatWidget({
     )}>
       {isOpen && (
         <section className={cn(
-          "fixed inset-0 flex h-dvh w-full flex-col overflow-hidden bg-card motion-safe:animate-message-pop sm:static sm:h-[min(680px,calc(100vh-112px))] sm:w-[380px] sm:rounded-lg sm:border sm:border-border sm:shadow-2xl",
+          "fixed inset-0 flex h-dvh-safe w-full flex-col overflow-hidden bg-card motion-safe:animate-message-pop sm:static sm:h-[min(680px,calc(100vh-112px))] sm:w-[380px] sm:rounded-lg sm:border sm:border-border sm:shadow-2xl",
           panelClassName
         )}>
           <header className="flex items-center justify-between border-b border-border px-4 pb-3 pt-[calc(0.75rem+env(safe-area-inset-top))] sm:pt-3">

@@ -9,7 +9,8 @@ import {
   useCallback,
   type ChangeEvent,
 } from "react";
-import { motion } from "motion/react";
+import { motion, useReducedMotion, type Transition } from "motion/react";
+import { useIsMobile } from "@/hooks/useMediaQuery";
 import { cn } from "@/lib/utils";
 
 function GooeyFilter({
@@ -37,10 +38,17 @@ function GooeyFilter({
   );
 }
 
-function SearchIcon({ layoutId }: { layoutId: string }) {
+function SearchIcon({
+  layoutId,
+  transition,
+}: {
+  layoutId: string;
+  transition: Transition;
+}) {
   return (
     <motion.svg
       layoutId={layoutId}
+      transition={transition}
       xmlns="http://www.w3.org/2000/svg"
       viewBox="0 0 24 24"
       fill="none"
@@ -55,12 +63,6 @@ function SearchIcon({ layoutId }: { layoutId: string }) {
     </motion.svg>
   );
 }
-
-const transition = {
-  duration: 0.4,
-  type: "spring" as const,
-  bounce: 0.25,
-};
 
 const iconBubbleVariants = {
   collapsed: { scale: 0, opacity: 0, y: "-50%" },
@@ -117,6 +119,22 @@ export function GooeyInput({
   const filterId = `gooey-filter-${safeId}`;
   const iconLayoutId = `gooey-input-icon-${safeId}`;
   const inputLayoutId = `gooey-input-field-${safeId}`;
+
+  const reduceMotion = useReducedMotion();
+  const isMobile = useIsMobile() === true;
+  // Mobile: shorter, calmer spring for the icon/input layoutId morph; reduced
+  // motion collapses it to an instant swap. Desktop values unchanged.
+  const transition = useMemo<Transition>(
+    () =>
+      reduceMotion
+        ? { duration: 0 }
+        : {
+            duration: isMobile ? 0.25 : 0.4,
+            type: "spring",
+            bounce: isMobile ? 0.15 : 0.25,
+          },
+    [reduceMotion, isMobile],
+  );
 
   const inputRef = useRef<HTMLInputElement>(null);
   const prevExpandedRef = useRef(false);
@@ -214,10 +232,11 @@ export function GooeyInput({
             )}
           >
             {!isExpanded ? (
-              <SearchIcon layoutId={iconLayoutId} />
+              <SearchIcon layoutId={iconLayoutId} transition={transition} />
             ) : null}
             <motion.input
               layoutId={inputLayoutId}
+              transition={transition}
               ref={inputRef}
               type="search"
               enterKeyHint="search"
@@ -255,7 +274,7 @@ export function GooeyInput({
               classNames?.bubbleSurface,
             )}
           >
-            <SearchIcon layoutId={iconLayoutId} />
+            <SearchIcon layoutId={iconLayoutId} transition={transition} />
           </div>
         </motion.div>
       </div>

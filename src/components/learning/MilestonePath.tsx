@@ -1,6 +1,7 @@
 "use client";
 
 import { motion, useReducedMotion } from "framer-motion";
+import { useIsMobile } from "@/hooks/useMediaQuery";
 import { MilestoneNode } from "@/components/learning/MilestoneNode";
 import {
   splitPathIntoSections,
@@ -83,6 +84,11 @@ export function MilestonePath({
   isActivating = false,
 }: MilestonePathProps) {
   const prefersReducedMotion = useReducedMotion();
+  const isMobile = useIsMobile() === true;
+  // Mobile: gentler pop (0.85 vs 0.6) and a tighter stagger so a long path
+  // resolves quickly on low-power devices. Desktop values unchanged.
+  const entranceScale = isMobile ? 0.85 : 0.6;
+  const staggerStep = isMobile ? 0.03 : 0.05;
   const sections = splitPathIntoSections(nodes);
 
   let globalIndex = 0;
@@ -131,14 +137,14 @@ export function MilestonePath({
                     initial={
                       prefersReducedMotion
                         ? false
-                        : { opacity: 0, scale: 0.6 }
+                        : { opacity: 0, scale: entranceScale }
                     }
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{
                       type: "spring",
-                      stiffness: 260,
-                      damping: 20,
-                      delay: prefersReducedMotion ? 0 : nodeIndex * 0.05,
+                      stiffness: isMobile ? 300 : 260,
+                      damping: isMobile ? 24 : 20,
+                      delay: prefersReducedMotion ? 0 : nodeIndex * staggerStep,
                     }}
                   >
                     <MilestoneNode
