@@ -66,26 +66,26 @@ export function PackagePurchaseCard({ purchase }: { purchase: PackagePurchase })
         </div>
         <StatusBadge status={purchase.status} type="packagePurchase" />
       </div>
-      <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1.5 text-sm sm:grid-cols-4">
-        <div>
+      <div className="mt-3 grid min-w-0 grid-cols-2 gap-x-4 gap-y-1.5 text-sm sm:grid-cols-4">
+        <div className="min-w-0">
           <p className="text-xs text-muted-foreground">Ders hakkı</p>
-          <p className="font-medium">
+          <p className="font-medium tabular-nums">
             {purchase.remaining_credits} / {purchase.total_credits}
           </p>
         </div>
-        <div>
+        <div className="min-w-0">
           <p className="text-xs text-muted-foreground">Toplam tutar</p>
-          <p className="font-medium">{formatPrice(purchase.total_price)}</p>
+          <p className="break-words font-medium">{formatPrice(purchase.total_price)}</p>
         </div>
-        <div>
+        <div className="min-w-0">
           <p className="text-xs text-muted-foreground">Talep tarihi</p>
-          <p className="font-medium">{formatDate(purchase.created_at)}</p>
+          <p className="break-words font-medium">{formatDate(purchase.created_at)}</p>
         </div>
-        <div>
+        <div className="min-w-0">
           <p className="text-xs text-muted-foreground">
             {expiry ? "Süre sonu" : "Onay tarihi"}
           </p>
-          <p className="font-medium">
+          <p className="break-words font-medium">
             {expiry
               ? formatDate(expiry.termEndDate.toISOString())
               : purchase.paid_at
