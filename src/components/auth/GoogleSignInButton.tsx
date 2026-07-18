@@ -134,7 +134,7 @@ export function GoogleSignInButton({
 
   if (!clientId) {
     return (
-      <p className="text-center text-xs text-neutral-500">
+      <p className="text-center text-xs text-neutral-400">
         Google ile giriş şu anda kullanılamıyor.
       </p>
     );
@@ -142,7 +142,7 @@ export function GoogleSignInButton({
 
   if (loadFailed) {
     return (
-      <p className="text-center text-xs text-neutral-500">
+      <p className="text-center text-xs text-neutral-400">
         Google ile giriş yüklenemedi. Lütfen daha sonra tekrar deneyin.
       </p>
     );

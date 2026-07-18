@@ -46,7 +46,9 @@ export function FavoriteButton({
         aria-label={actionLabel}
         disabled={isPending}
         onClick={handleClick}
-        className="peer h-8 w-8 shrink-0"
+        // Visual size stays 32px; the ::after expands the tap target to 44px
+        // for touch (WCAG 2.5.5) without altering card layout.
+        className="peer relative h-8 w-8 shrink-0 after:absolute after:-inset-1.5 after:content-['']"
       >
         <Heart
           className={cn(
