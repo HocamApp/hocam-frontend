@@ -441,9 +441,9 @@ export function ProfileMenu() {
       <PopoverContent
         align="end"
         sideOffset={10}
-        className="w-[calc(100vw-2rem)] border-none bg-transparent p-0 shadow-none sm:w-[440px]"
+        className="w-[calc(100dvw-1rem)] max-w-[440px] border-none bg-transparent p-0 shadow-none sm:w-[440px]"
       >
-        <div className="scrollbar-none max-h-[min(80vh,640px)] overflow-y-auto rounded-[32px] bg-background/[0.08] p-3 backdrop-blur-lg">
+        <div className="scrollbar-none max-h-[min(80dvh,640px)] min-w-0 overscroll-contain overflow-y-auto rounded-[24px] bg-background/[0.08] p-2 backdrop-blur-lg sm:rounded-[32px] sm:p-3">
 
           {/* ---- Profil Detayları ---- */}
           <ProfileAccordionSection
@@ -569,7 +569,7 @@ export function ProfileMenu() {
               </Button>
             ) : (
               <div className="space-y-2">
-                <div className="flex gap-2">
+                <div className="flex flex-col gap-2 sm:flex-row">
                   <Input
                     placeholder="İsim"
                     value={editName}
@@ -815,7 +815,7 @@ export function ProfileMenu() {
                 ) : (
                   <ul className="space-y-0.5">
                     {tutorAvailability.slice(0, 5).map((a, i) => (
-                      <li key={`${a.day_of_week}-${i}`} className="flex justify-between">
+                      <li key={`${a.day_of_week}-${i}`} className="flex flex-wrap justify-between gap-x-3 gap-y-0.5">
                         <span className="text-foreground">{DAY_NAMES[a.day_of_week]}</span>
                         <span className="text-muted-foreground">
                           {a.start_time} – {a.end_time}
@@ -910,7 +910,7 @@ export function ProfileMenu() {
       </PopoverContent>
     </Popover>
     <Dialog open={paymentDialogOpen} onOpenChange={handlePaymentDialogChange}>
-      <DialogContent className="w-[calc(100vw-2rem)] sm:max-w-xl">
+      <DialogContent className="w-[calc(100dvw-1rem)] max-w-[calc(100dvw-1rem)] sm:max-w-xl">
         <DialogHeader>
           <DialogTitle>Ödeme Yöntemleri</DialogTitle>
           <DialogDescription>

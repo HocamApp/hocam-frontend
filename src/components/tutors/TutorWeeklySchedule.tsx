@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import type { Booking } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { HorizontalDayPicker } from "@/components/shared/HorizontalDayPicker";
 
 const DAY_NAMES = ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"];
 
@@ -60,36 +61,14 @@ export function TutorWeeklySchedule({ bookings, onEdit }: { bookings: Booking[];
         <Button variant="ghost" size="sm" onClick={onEdit}><Pencil className="mr-2 h-3.5 w-3.5" />Değiştir</Button>
       </CardHeader>
 
-      {/* Mobile (< md): horizontal scroll-snap day picker + selected day's slots */}
+      {/* Mobile (< md): shared horizontal day picker + selected day's slots */}
       <CardContent className="p-4 pt-0 md:hidden">
-        {/* grid minmax(0,1fr) cell caps the scroller to available width so its
-            content can't expand ancestors (robust regardless of parent width) */}
-        <div className="grid grid-cols-[minmax(0,1fr)]">
-        <div className="-mx-1 flex min-w-0 snap-x snap-mandatory gap-2 overflow-x-auto overscroll-x-contain px-1 pb-2">
-          {days.map((date, index) => {
-            const count = bookingsForDay(date).length;
-            const isToday = date.toDateString() === today;
-            const isSelected = index === selectedDayIndex;
-            return (
-              <button
-                key={date.toISOString()}
-                type="button"
-                onClick={() => setSelectedDayIndex(index)}
-                aria-pressed={isSelected}
-                className={cn(
-                  "flex w-14 shrink-0 snap-start flex-col items-center gap-1 rounded-xl border p-2 transition-colors",
-                  isSelected ? "border-primary bg-primary/5" : "border-border",
-                  !isSelected && isToday && "border-primary/40"
-                )}
-              >
-                <span className="text-xs font-semibold">{DAY_NAMES[index]}</span>
-                <span className={cn("flex h-6 w-6 items-center justify-center rounded-full text-xs", isToday && "bg-primary text-primary-foreground")}>{date.getDate()}</span>
-                <span className={cn("h-1.5 w-1.5 rounded-full", count > 0 ? "bg-primary" : "bg-transparent")} aria-hidden />
-              </button>
-            );
-          })}
-        </div>
-        </div>
+        <HorizontalDayPicker
+          dates={days}
+          selectedIndex={selectedDayIndex}
+          onSelect={setSelectedDayIndex}
+          getCount={(date) => bookingsForDay(date).length}
+        />
         <div className="mt-3">
           <p className="mb-2 text-xs font-medium text-muted-foreground">
             {selectedDate.toLocaleDateString("tr-TR", { weekday: "long", day: "numeric", month: "long" })}

@@ -7,6 +7,7 @@ import type { Subject, TutorProfile } from "@/types";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatPrice } from "@/lib/utils";
 
 export interface ProfileActionItem {
@@ -106,6 +107,195 @@ function CompletionRing({ value }: { value: number }) {
   );
 }
 
+interface StatusCardProps {
+  profile: TutorProfile;
+  completionPercent: number;
+  completedRequired: number;
+  requiredTotal: number;
+  missingRequirements: ProfileActionItem[];
+}
+
+function StatusCard({
+  profile,
+  completionPercent,
+  completedRequired,
+  requiredTotal,
+  missingRequirements,
+}: StatusCardProps) {
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between gap-3">
+          <CardTitle className="text-base">Profil Durumu</CardTitle>
+          <Badge variant={profile.is_public ? "secondary" : "outline"}>
+            {profile.is_public ? "Yayında" : "Yayında değil"}
+          </Badge>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="flex flex-col gap-4 rounded-xl bg-muted/30 p-3 min-[400px]:flex-row min-[400px]:items-center">
+          <CompletionRing value={completionPercent} />
+          <div className="min-w-0">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              {completedRequired}/{requiredTotal} zorunlu bilgi
+            </p>
+            {missingRequirements.length === 0 ? (
+              <>
+                <p className="mt-1 font-semibold text-emerald-800 dark:text-emerald-200">
+                  Harika, profilin hazır!
+                </p>
+                <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                  Artık bilgini paylaşarak öğrencilerine ulaşmaya ve kazanmaya hazırsın.
+                </p>
+              </>
+            ) : (
+              <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                Birkaç adımı daha tamamlayarak profilini öğrenciler için hazır hale getir.
+              </p>
+            )}
+          </div>
+        </div>
+
+        {missingRequirements.length > 0 && (
+          <div>
+            <p className="flex items-center gap-2 text-sm font-medium">
+              <AlertCircle className="h-4 w-4 text-amber-600" aria-hidden />
+              Tamamlanması gerekenler
+            </p>
+            <ActionList items={missingRequirements} />
+          </div>
+        )}
+
+        <div className="border-t pt-3 text-sm">
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-muted-foreground">Doğrulama</span>
+            <span className="font-medium">
+              {profile.is_verified ? "Doğrulandı" : "Doğrulanmadı"}
+            </span>
+          </div>
+          {profile.pending_profile_change && (
+            <p className="mt-2 rounded-md bg-amber-50 px-3 py-2 text-amber-900 dark:bg-amber-950/30 dark:text-amber-100">
+              Profil değişikliği incelemede
+            </p>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+interface PreviewCardProps {
+  profile: TutorProfile;
+  university: string;
+  department: string;
+  yksRank: string;
+  hourlyPrice: string;
+  bio: string;
+  selectedSubjects: Subject[];
+}
+
+function PreviewCard({
+  profile,
+  university,
+  department,
+  yksRank,
+  hourlyPrice,
+  bio,
+  selectedSubjects,
+}: PreviewCardProps) {
+  const numericPrice = Number(hourlyPrice);
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base">Öğrencilerin Göreceği Profil</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="flex items-start gap-3">
+          <Avatar className="h-14 w-14 shrink-0">
+            {profile.profile_picture && (
+              <AvatarImage
+                src={profile.profile_picture}
+                alt={`${profile.name} ${profile.surname}`}
+                className="object-cover"
+              />
+            )}
+            <AvatarFallback className="bg-primary/10 font-semibold text-primary">
+              {getInitials(profile.name, profile.surname)}
+            </AvatarFallback>
+          </Avatar>
+          <div className="min-w-0">
+            <p className="truncate font-semibold">{profile.name} {profile.surname}</p>
+            <p className="mt-0.5 line-clamp-2 text-sm text-muted-foreground">
+              {university || "Üniversite"} · {department || "Bölüm"}
+            </p>
+          </div>
+        </div>
+
+        {Number(yksRank) > 0 && (
+          <div className="mt-3 inline-flex items-center gap-1 rounded-full border border-amber-500/20 bg-amber-500/10 px-2.5 py-1 text-xs font-medium text-amber-800 dark:text-amber-200">
+            <Award className="h-3.5 w-3.5" aria-hidden />
+            YKS: {Number(yksRank).toLocaleString("tr-TR")}
+          </div>
+        )}
+
+        <div className="mt-4 flex flex-wrap gap-1.5">
+          {selectedSubjects.slice(0, 5).map((subject) => (
+            <Badge key={subject.id} variant="outline" className="font-normal">
+              {subject.name} · {subject.exam_type}
+            </Badge>
+          ))}
+          {selectedSubjects.length > 5 && (
+            <span className="self-center text-xs text-muted-foreground">
+              +{selectedSubjects.length - 5} ders
+            </span>
+          )}
+        </div>
+
+        {bio && (
+          <p className="mt-4 line-clamp-3 text-sm leading-relaxed text-muted-foreground">
+            {bio}
+          </p>
+        )}
+
+        <div className="mt-4 border-t pt-4">
+          <span className="text-lg font-semibold">
+            {Number.isFinite(numericPrice) && numericPrice > 0
+              ? formatPrice(numericPrice)
+              : "—"}
+          </span>
+          <span className="ml-1 text-sm text-muted-foreground">/40 dk</span>
+        </div>
+        <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+          Bu önizleme kaydetmeden önce girdiğin değerleri gösterir. İnceleme bekleyen doğrulanmış
+          bilgiler onaylanana kadar herkese açık profilde değişmez.
+        </p>
+      </CardContent>
+    </Card>
+  );
+}
+
+function SuggestionsCard({ suggestions }: { suggestions: ProfileActionItem[] }) {
+  if (suggestions.length === 0) return null;
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center gap-2 text-base">
+          <Lightbulb className="h-4 w-4" aria-hidden />
+          Profili güçlendir
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <ActionList items={suggestions} />
+        <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+          Bunlar öneridir; profilini kaydetmene engel olmaz.
+        </p>
+      </CardContent>
+    </Card>
+  );
+}
+
 export function TutorProfileEditSidebar({
   profile,
   university,
@@ -120,152 +310,72 @@ export function TutorProfileEditSidebar({
   const requiredTotal = 5;
   const completedRequired = requiredTotal - missingRequirements.length;
   const completionPercent = Math.round((completedRequired / requiredTotal) * 100);
-  const numericPrice = Number(hourlyPrice);
+  const reduceMotion = useReducedMotion();
+  const statusCardProps = {
+    profile,
+    completionPercent,
+    completedRequired,
+    requiredTotal,
+    missingRequirements,
+  };
+  const previewCardProps = {
+    profile,
+    university,
+    department,
+    yksRank,
+    hourlyPrice,
+    bio,
+    selectedSubjects,
+  };
 
   return (
-    <aside className="space-y-5 lg:sticky lg:top-56 lg:self-start">
-      <Card>
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between gap-3">
-            <CardTitle className="text-base">Profil Durumu</CardTitle>
-            <Badge variant={profile.is_public ? "secondary" : "outline"}>
-              {profile.is_public ? "Yayında" : "Yayında değil"}
-            </Badge>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center gap-4 rounded-xl bg-muted/30 p-3">
-            <CompletionRing value={completionPercent} />
-            <div className="min-w-0">
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                {completedRequired}/{requiredTotal} zorunlu bilgi
-              </p>
-              {missingRequirements.length === 0 ? (
-                <>
-                  <p className="mt-1 font-semibold text-emerald-800 dark:text-emerald-200">
-                    Harika, profilin hazır!
-                  </p>
-                  <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-                    Artık bilgini paylaşarak öğrencilerine ulaşmaya ve kazanmaya hazırsın.
-                  </p>
-                </>
-              ) : (
-                <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-                  Birkaç adımı daha tamamlayarak profilini öğrenciler için hazır hale getir.
-                </p>
-              )}
-            </div>
-          </div>
-
-          {missingRequirements.length > 0 && (
-            <div>
-              <p className="flex items-center gap-2 text-sm font-medium">
-                <AlertCircle className="h-4 w-4 text-amber-600" aria-hidden />
-                Tamamlanması gerekenler
-              </p>
-              <ActionList items={missingRequirements} />
-            </div>
-          )}
-
-          <div className="border-t pt-3 text-sm">
-            <div className="flex items-center justify-between gap-3">
-              <span className="text-muted-foreground">Doğrulama</span>
-              <span className="font-medium">
-                {profile.is_verified ? "Doğrulandı" : "Doğrulanmadı"}
-              </span>
-            </div>
-            {profile.pending_profile_change && (
-              <p className="mt-2 rounded-md bg-amber-50 px-3 py-2 text-amber-900 dark:bg-amber-950/30 dark:text-amber-100">
-                Profil değişikliği incelemede
-              </p>
+    <aside className="min-w-0 lg:sticky lg:top-56 lg:self-start">
+      <Tabs defaultValue="status" className="min-w-0 lg:hidden">
+        <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <TabsList className="h-auto w-max min-w-full justify-start">
+            <TabsTrigger value="status" className="flex-1">Durum</TabsTrigger>
+            <TabsTrigger value="preview" className="flex-1">Önizleme</TabsTrigger>
+            {suggestions.length > 0 && (
+              <TabsTrigger value="suggestions" className="flex-1">İpuçları</TabsTrigger>
             )}
-          </div>
-        </CardContent>
-      </Card>
+          </TabsList>
+        </div>
+        <TabsContent value="status" className="mt-3">
+          <motion.div
+            initial={reduceMotion ? false : { opacity: 0, x: 16 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: reduceMotion ? 0 : 0.2 }}
+          >
+            <StatusCard {...statusCardProps} />
+          </motion.div>
+        </TabsContent>
+        <TabsContent value="preview" className="mt-3">
+          <motion.div
+            initial={reduceMotion ? false : { opacity: 0, x: 16 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: reduceMotion ? 0 : 0.2 }}
+          >
+            <PreviewCard {...previewCardProps} />
+          </motion.div>
+        </TabsContent>
+        {suggestions.length > 0 && (
+          <TabsContent value="suggestions" className="mt-3">
+            <motion.div
+              initial={reduceMotion ? false : { opacity: 0, x: 16 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: reduceMotion ? 0 : 0.2 }}
+            >
+              <SuggestionsCard suggestions={suggestions} />
+            </motion.div>
+          </TabsContent>
+        )}
+      </Tabs>
 
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">Öğrencilerin Göreceği Profil</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-start gap-3">
-            <Avatar className="h-14 w-14 shrink-0">
-              {profile.profile_picture && (
-                <AvatarImage
-                  src={profile.profile_picture}
-                  alt={`${profile.name} ${profile.surname}`}
-                  className="object-cover"
-                />
-              )}
-              <AvatarFallback className="bg-primary/10 font-semibold text-primary">
-                {getInitials(profile.name, profile.surname)}
-              </AvatarFallback>
-            </Avatar>
-            <div className="min-w-0">
-              <p className="truncate font-semibold">{profile.name} {profile.surname}</p>
-              <p className="mt-0.5 line-clamp-2 text-sm text-muted-foreground">
-                {university || "Üniversite"} · {department || "Bölüm"}
-              </p>
-            </div>
-          </div>
-
-          {Number(yksRank) > 0 && (
-            <div className="mt-3 inline-flex items-center gap-1 rounded-full border border-amber-500/20 bg-amber-500/10 px-2.5 py-1 text-xs font-medium text-amber-800 dark:text-amber-200">
-              <Award className="h-3.5 w-3.5" aria-hidden />
-              YKS: {Number(yksRank).toLocaleString("tr-TR")}
-            </div>
-          )}
-
-          <div className="mt-4 flex flex-wrap gap-1.5">
-            {selectedSubjects.slice(0, 5).map((subject) => (
-              <Badge key={subject.id} variant="outline" className="font-normal">
-                {subject.name} · {subject.exam_type}
-              </Badge>
-            ))}
-            {selectedSubjects.length > 5 && (
-              <span className="self-center text-xs text-muted-foreground">
-                +{selectedSubjects.length - 5} ders
-              </span>
-            )}
-          </div>
-
-          {bio && (
-            <p className="mt-4 line-clamp-3 text-sm leading-relaxed text-muted-foreground">
-              {bio}
-            </p>
-          )}
-
-          <div className="mt-4 border-t pt-4">
-            <span className="text-lg font-semibold">
-              {Number.isFinite(numericPrice) && numericPrice > 0
-                ? formatPrice(numericPrice)
-                : "—"}
-            </span>
-            <span className="ml-1 text-sm text-muted-foreground">/40 dk</span>
-          </div>
-          <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-            Bu önizleme kaydetmeden önce girdiğin değerleri gösterir. İnceleme bekleyen doğrulanmış
-            bilgiler onaylanana kadar herkese açık profilde değişmez.
-          </p>
-        </CardContent>
-      </Card>
-
-      {suggestions.length > 0 && (
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Lightbulb className="h-4 w-4" aria-hidden />
-              Profili güçlendir
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ActionList items={suggestions} />
-            <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-              Bunlar öneridir; profilini kaydetmene engel olmaz.
-            </p>
-          </CardContent>
-        </Card>
-      )}
+      <div className="hidden space-y-5 lg:block">
+        <StatusCard {...statusCardProps} />
+        <PreviewCard {...previewCardProps} />
+        <SuggestionsCard suggestions={suggestions} />
+      </div>
     </aside>
   );
 }

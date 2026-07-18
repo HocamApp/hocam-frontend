@@ -193,7 +193,7 @@ function SecurityContent() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-3xl px-4 py-8 sm:py-10">
+    <div className="mx-auto w-full min-w-0 max-w-3xl overflow-x-clip px-4 py-8 sm:py-10">
       <div className="mb-8">
         <Button variant="ghost" size="sm" asChild className="-ml-3 mb-3">
           <Link href="/profile">
@@ -201,11 +201,11 @@ function SecurityContent() {
             Profile dön
           </Link>
         </Button>
-        <div className="flex items-center gap-3">
+        <div className="flex min-w-0 items-start gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
             <ShieldCheck className="h-5 w-5" />
           </div>
-          <div>
+          <div className="min-w-0">
             <h1 className="text-2xl font-bold tracking-tight text-foreground">
               Güvenlik Ayarları
             </h1>
@@ -282,7 +282,7 @@ function SecurityContent() {
                   </Button>
                   <div className="flex-1">
                     <Label htmlFor="verification-code">Doğrulama kodu</Label>
-                    <div className="mt-1 flex gap-2">
+                    <div className="mt-1 flex flex-col gap-2 min-[420px]:flex-row">
                       <Input
                         id="verification-code"
                         value={code}
@@ -293,11 +293,12 @@ function SecurityContent() {
                         inputMode="numeric"
                         autoComplete="one-time-code"
                         placeholder="000000"
-                        className="max-w-[12rem]"
+                        className="w-full min-[420px]:max-w-[12rem]"
                       />
                       <Button
                         type="button"
                         variant="outline"
+                        className="w-full min-[420px]:w-auto"
                         onClick={handleConfirmCode}
                         disabled={confirmingCode || code.length !== 6}
                       >
@@ -483,6 +484,7 @@ function SecurityContent() {
             <Button
               type="button"
               variant="destructive"
+              className="h-auto max-w-full whitespace-normal text-center"
               onClick={handleDeleteAccount}
               disabled={!canDeleteAccount || deletingAccount}
             >

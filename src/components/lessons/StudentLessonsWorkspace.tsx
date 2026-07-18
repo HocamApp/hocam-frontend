@@ -221,7 +221,7 @@ export function StudentLessonsWorkspace() {
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    <div className="mx-auto w-full min-w-0 max-w-7xl overflow-x-clip px-4 py-8 sm:px-6 lg:px-8">
       <header className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-sm font-medium text-primary">Ders yönetimi</p>
@@ -264,8 +264,8 @@ export function StudentLessonsWorkspace() {
 
       <section className="mt-8">
         <div className="flex flex-col gap-4 border-b pb-4 lg:flex-row lg:items-center lg:justify-between">
-          <Tabs value={activeTab} onValueChange={setTab} className="overflow-x-auto">
-            <TabsList className="h-auto w-max justify-start">
+          <Tabs value={activeTab} onValueChange={setTab} className="grid min-w-0 grid-cols-[minmax(0,1fr)] overflow-x-auto">
+            <TabsList className="h-auto w-max min-w-full justify-start lg:min-w-0">
               {(Object.keys(TAB_LABELS) as LessonTab[]).map((tab) => <TabsTrigger key={tab} value={tab}>{TAB_LABELS[tab]} <span className="ml-1.5 rounded-full bg-background/70 px-1.5 text-xs">{groups[tab].length}</span></TabsTrigger>)}
             </TabsList>
           </Tabs>

@@ -103,13 +103,14 @@ export function MilestonePath({
               <span className="h-px flex-1 bg-border" aria-hidden="true" />
             </div>
 
-            <div
-              className="relative mx-auto mt-8"
-              style={{
-                width: COLUMN_WIDTH,
-                height: section.nodes.length * NODE_SPACING,
-              }}
-            >
+            <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] overflow-x-auto overscroll-x-contain pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:overflow-visible">
+              <div
+                className="relative mx-auto mt-8 shrink-0"
+                style={{
+                  width: COLUMN_WIDTH,
+                  height: section.nodes.length * NODE_SPACING,
+                }}
+              >
               <SectionConnectors
                 nodes={section.nodes}
                 startIndex={sectionStartIndex}
@@ -149,6 +150,7 @@ export function MilestonePath({
                   </motion.div>
                 );
               })}
+              </div>
             </div>
           </section>
         );

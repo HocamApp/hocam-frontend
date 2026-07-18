@@ -361,7 +361,7 @@ function DashboardSkeleton() {
   return (
     <div className="space-y-6">
       <Skeleton className="h-40 w-full rounded-lg" />
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
         {[1, 2, 3, 4].map((i) => (
           <Skeleton key={i} className="h-28 w-full rounded-lg" />
         ))}
@@ -560,7 +560,7 @@ function ProfileStudio({
 }) {
   const embedUrl = getYouTubeEmbedUrl(introVideoInput || profile.intro_video_url);
   return (
-    <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+    <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-[1.2fr_0.8fr]">
       <div className="space-y-6">
         <Card>
           <CardHeader className="pb-3">
@@ -1210,7 +1210,7 @@ function TutorDashboardContent() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8">
+    <div className="mx-auto w-full min-w-0 max-w-6xl overflow-x-clip px-4 py-8">
       <header className="mb-6 flex flex-col gap-4 border-b pb-6 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-4">
           <Avatar className="h-14 w-14">
@@ -1310,7 +1310,7 @@ function TutorDashboardContent() {
                   </a>
                 </Button>
               ) : nextBooking.room_url ? (
-                <Button size="lg" variant="outline" disabled>
+                <Button size="lg" variant="outline" className="h-auto max-w-full whitespace-normal text-center" disabled>
                   Derse katılım başlangıçtan 15 dakika önce açılır
                 </Button>
               ) : (
@@ -1384,7 +1384,7 @@ function TutorDashboardContent() {
       </Card>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <div className="overflow-x-auto pb-1">
+        <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] overflow-x-auto pb-1">
           <AnimatedTabs
             tabs={TUTOR_TABS}
             value={activeTab}
@@ -1577,7 +1577,7 @@ function TutorDashboardContent() {
             </div>
           )}
           {!earningsError && earningsLoading && (
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
               {[1, 2, 3].map((i) => (
                 <Skeleton key={i} className="h-28 w-full rounded-lg" />
               ))}
@@ -1585,7 +1585,7 @@ function TutorDashboardContent() {
           )}
           {!earningsError && !earningsLoading && earnings && (
             <>
-              <div className="grid gap-4 md:grid-cols-3">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
                 <StatTile
                   icon={<Wallet className="h-5 w-5" />}
                   label="Son 7 Gün"
@@ -1682,7 +1682,7 @@ function TutorDashboardContent() {
           <div>
             <h3 className="mb-2 text-sm font-semibold">Önümüzdeki 14 Gün</h3>
             {availabilityLoading || bookingsLoading ? (
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-7">
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-7">
                 {Array.from({ length: 7 }).map((_, i) => (
                   <Skeleton key={i} className="h-28 w-full rounded-lg" />
                 ))}
