@@ -4,6 +4,6 @@ export default function SessionLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex h-screen flex-col bg-black">{children}</div>
+    <div className="flex h-dvh flex-col bg-black">{children}</div>
   );
 }

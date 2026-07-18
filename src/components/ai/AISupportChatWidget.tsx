@@ -197,15 +197,23 @@ export function AISupportChatWidget({
 
   return (
     <div className={cn(
-      "fixed right-4 z-50 flex flex-col items-end gap-3 sm:right-6",
-      positionClassName ?? "bottom-4 sm:bottom-6"
+      "fixed right-4 flex flex-col items-end gap-3 sm:right-6",
+      isOpen ? "z-[60]" : "z-50",
+      positionClassName ??
+        // Below `sm` the open panel is a fullscreen sheet that already covers the
+        // mobile tab bar, so the launcher only needs its normal thumb-corner offset;
+        // clearing the tab bar only matters while it's actually visible underneath
+        // (closed, or the floating card from `sm` up to the tab bar's own `md` cutoff).
+        (isOpen
+          ? "bottom-4 sm:bottom-[calc(4rem+env(safe-area-inset-bottom)+1rem)] md:bottom-6"
+          : "bottom-[calc(4rem+env(safe-area-inset-bottom)+1rem)] md:bottom-6")
     )}>
       {isOpen && (
         <section className={cn(
-          "flex h-[min(680px,calc(100vh-112px))] w-[calc(100vw-32px)] flex-col overflow-hidden rounded-lg border border-border bg-card shadow-2xl motion-safe:animate-message-pop sm:w-[380px]",
+          "fixed inset-0 flex h-dvh w-full flex-col overflow-hidden bg-card motion-safe:animate-message-pop sm:static sm:h-[min(680px,calc(100vh-112px))] sm:w-[380px] sm:rounded-lg sm:border sm:border-border sm:shadow-2xl",
           panelClassName
         )}>
-          <header className="flex items-center justify-between border-b border-border px-4 py-3">
+          <header className="flex items-center justify-between border-b border-border px-4 pb-3 pt-[calc(0.75rem+env(safe-area-inset-top))] sm:pt-3">
             <div className="flex min-w-0 items-center gap-3">
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
                 <Bot className="h-5 w-5" />
@@ -297,7 +305,10 @@ export function AISupportChatWidget({
             <div ref={messagesEndRef} />
           </div>
 
-          <form onSubmit={handleSubmit} className="border-t border-border p-3">
+          <form
+            onSubmit={handleSubmit}
+            className="border-t border-border p-3 pb-[calc(4.5rem+env(safe-area-inset-bottom))] sm:pb-3"
+          >
             {error && (
               <p className="mb-3 rounded-md border border-destructive/25 bg-destructive/10 px-3 py-2 text-sm text-destructive">
                 {error}
@@ -347,7 +358,7 @@ export function AISupportChatWidget({
       <Button
         type="button"
         size="icon"
-        className="h-14 w-14 rounded-full shadow-xl motion-safe:animate-message-pop"
+        className="relative z-10 h-14 w-14 rounded-full shadow-xl motion-safe:animate-message-pop"
         onClick={() => {
           setShowAttention(false);
           setIsOpen((value) => !value);
