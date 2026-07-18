@@ -36,7 +36,7 @@ export function AuthSplitScreen({
   return (
     <div className="flex min-h-dvh-safe w-full flex-col overflow-x-hidden md:flex-row">
       {/* Left column: form */}
-      <section className="flex min-h-dvh-safe flex-1 items-center justify-center overflow-y-auto bg-neutral-950 p-6 py-10 text-white sm:p-8 md:flex-[3] lg:flex-1">
+      <main className="flex min-h-dvh-safe flex-1 items-center justify-center overflow-y-auto bg-neutral-950 p-6 py-10 text-white sm:p-8 md:flex-[3] lg:flex-1">
         <div className="w-full max-w-md">
           <div className="flex flex-col gap-6">
             <BrandMark size="md" priority className="mb-2 text-white" />
@@ -50,7 +50,7 @@ export function AuthSplitScreen({
             {footer}
           </div>
         </div>
-      </section>
+      </main>
 
       {/* Right column: logo-led brand surface */}
       <section className="hidden flex-1 bg-[#f5f3ee] p-4 md:block md:flex-[2] lg:flex-1">

@@ -86,7 +86,7 @@ export default function SlidingPagination({
             }}
             onClick={() => onPageChange(pageNum)}
             className={cn(
-              "relative px-4 py-2 text-sm",
+              "relative min-h-11 min-w-11 px-4 py-2 text-sm",
               pageNum === currentPage ? "font-semibold" : ""
             )}
           >

@@ -308,7 +308,7 @@ function TutorsPageContent() {
 
   const content = (
     <>
-      <div className="mx-auto max-w-7xl px-4 py-8 space-y-6">
+      <div className="mx-auto max-w-7xl overflow-x-clip px-4 py-8 space-y-6">
         {!showFavorites && (
           <>
             <div className="overflow-hidden rounded-2xl border bg-gradient-to-br from-primary/15 via-background to-violet-500/10 px-5 py-7 shadow-sm sm:px-8 sm:py-9">
