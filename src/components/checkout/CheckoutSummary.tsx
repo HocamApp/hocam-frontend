@@ -110,13 +110,19 @@ export function CheckoutSummary({
               </dd>
             </div>
           )}
-          <div className="flex justify-between gap-4 text-base font-semibold text-foreground">
-            <dt>Paket toplamı</dt>
-            <dd>{pricing ? formatPrice(pricing.total) : "—"}</dd>
-          </div>
         </dl>
 
-        <div className="space-y-2 pt-1">
+        <div className="sticky bottom-[calc(4rem+env(safe-area-inset-bottom))] z-10 -mx-6 space-y-2 border-t bg-card/95 px-6 pt-2 backdrop-blur md:static md:bottom-auto md:z-auto md:mx-0 md:border-t-0 md:bg-transparent md:px-0 md:pt-1 md:backdrop-blur-none">
+          {/* Total sits directly above the CTA; below md (where MobileTabBar
+              is visible — see components/layout/MobileTabBar.tsx's own
+              md:hidden) this whole block is sticky so total + CTA stay
+              reachable while detail rows scroll. Reset at md, not lg: the
+              page's lg:grid-cols-3 column layout is a separate, unrelated
+              breakpoint from the tab bar's. */}
+          <div className="flex items-center justify-between gap-4 text-base font-semibold text-foreground">
+            <span>Paket toplamı</span>
+            <span>{pricing ? formatPrice(pricing.total) : "—"}</span>
+          </div>
           {pendingForSelectedPlan ? (
             <div className="space-y-2 rounded-lg bg-amber-500/10 p-3 text-center">
               <p className="flex items-center justify-center gap-1.5 text-sm font-medium text-amber-700 dark:text-amber-300">

@@ -379,9 +379,14 @@ export function BookingModal({
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent
-        className="box-border w-[min(42rem,calc(100vw-2rem))] max-w-none overflow-hidden"
+        className={cn(
+          "box-border flex max-h-[90dvh] flex-col gap-0 overflow-hidden p-0",
+          "inset-x-0 bottom-0 top-auto w-full max-w-none translate-x-0 translate-y-0 rounded-t-2xl rounded-b-none",
+          "sm:inset-x-auto sm:bottom-auto sm:left-[50%] sm:top-[50%] sm:max-h-[calc(100dvh-4rem)] sm:w-[min(42rem,calc(100vw-2rem))] sm:max-w-none sm:translate-x-[-50%] sm:translate-y-[-50%] sm:rounded-2xl"
+        )}
         showClose
       >
+        <div className="shrink-0 px-6 pt-6">
         <DialogHeader>
           <DialogTitle className="text-center">
             <span className="mr-2">
@@ -401,12 +406,13 @@ export function BookingModal({
           </DialogTitle>
         </DialogHeader>
         {isTrial && (
-          <p className="-mt-2 text-center text-xs font-medium text-primary">
+          <p className="mt-1 text-center text-xs font-medium text-primary">
             Ücretsiz Deneme Dersi
           </p>
         )}
+        </div>
 
-        <div className="min-w-0 max-w-full space-y-6 py-2">
+        <div className="min-h-0 min-w-0 max-w-full flex-1 space-y-6 overflow-y-auto px-6 py-4">
           {/* Step 1 */}
           {step === 1 && (
             <>
@@ -476,15 +482,6 @@ export function BookingModal({
                   </div>
                 </div>
               )}
-              <div className="flex justify-end">
-                <Button
-                  className="w-full sm:w-auto"
-                  onClick={handleNextStep1}
-                  disabled={!isTrial && !eligiblePackage && !usingTestCredit}
-                >
-                  İleri →
-                </Button>
-              </div>
             </>
           )}
 
@@ -572,22 +569,6 @@ export function BookingModal({
                   </p>
                 </div>
               )}
-              <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between">
-                <Button
-                  className="w-full sm:w-auto"
-                  variant="ghost"
-                  onClick={() => setStep(1)}
-                >
-                  ← Geri
-                </Button>
-                <Button
-                  className="w-full sm:w-auto"
-                  onClick={handleNextStep2}
-                  disabled={!selectedDate || !selectedTime || busyIntervalsFetching}
-                >
-                  İleri →
-                </Button>
-              </div>
             </>
           )}
 
@@ -662,29 +643,63 @@ export function BookingModal({
                     ? "Bu QA dersi test kredisinden karşılanır; ödeme veya kazanç kaydı oluşturmaz."
                     : "Bu ders paket hakkından karşılanacak, ek ödeme gerekmez."}
               </p>
-              <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between">
-                <Button
-                  className="w-full sm:w-auto"
-                  variant="ghost"
-                  onClick={() => setStep(2)}
-                >
-                  ← Geri
-                </Button>
-                <Button
-                  className="w-full sm:flex-1"
-                  onClick={handleSubmit}
-                  disabled={
-                    !selectedDate ||
-                    !selectedTime ||
-                    !selectedSubjectId ||
-                    isSubmitting ||
-                    busyIntervalsFetching
-                  }
-                >
-                  {isSubmitting ? "Gönderiliyor..." : "Rezervasyonu Tamamla"}
-                </Button>
-              </div>
             </>
+          )}
+        </div>
+
+        <div className="shrink-0 border-t bg-background px-6 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))] sm:border-t-0 sm:pb-6">
+          {step === 1 && (
+            <div className="flex justify-end">
+              <Button
+                className="w-full sm:w-auto"
+                onClick={handleNextStep1}
+                disabled={!isTrial && !eligiblePackage && !usingTestCredit}
+              >
+                İleri →
+              </Button>
+            </div>
+          )}
+          {step === 2 && (
+            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <Button
+                className="w-full sm:w-auto"
+                variant="ghost"
+                onClick={() => setStep(1)}
+              >
+                ← Geri
+              </Button>
+              <Button
+                className="w-full sm:w-auto"
+                onClick={handleNextStep2}
+                disabled={!selectedDate || !selectedTime || busyIntervalsFetching}
+              >
+                İleri →
+              </Button>
+            </div>
+          )}
+          {step === 3 && selectedSubject && (
+            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <Button
+                className="w-full sm:w-auto"
+                variant="ghost"
+                onClick={() => setStep(2)}
+              >
+                ← Geri
+              </Button>
+              <Button
+                className="w-full sm:flex-1"
+                onClick={handleSubmit}
+                disabled={
+                  !selectedDate ||
+                  !selectedTime ||
+                  !selectedSubjectId ||
+                  isSubmitting ||
+                  busyIntervalsFetching
+                }
+              >
+                {isSubmitting ? "Gönderiliyor..." : "Rezervasyonu Tamamla"}
+              </Button>
+            </div>
           )}
         </div>
       </DialogContent>
