@@ -16,7 +16,7 @@ export function ProfileScreen({ title, description, children }: ProfileScreenPro
   const router = useRouter();
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-8">
+    <div className="mx-auto w-full min-w-0 max-w-3xl overflow-x-clip px-4 py-8">
       <Button
         variant="ghost"
         size="sm"

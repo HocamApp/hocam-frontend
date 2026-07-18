@@ -41,7 +41,7 @@ export function LessonItemCard({
 }: LessonItemCardProps) {
   return (
     <Card>
-      <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+      <CardContent className="flex min-w-0 flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0 space-y-1.5">
           <div className="flex flex-wrap items-center gap-2">
             <span className="font-medium text-foreground">{subject.name}</span>
@@ -71,7 +71,9 @@ export function LessonItemCard({
           {meta}
         </div>
         {actions && (
-          <div className="flex shrink-0 flex-wrap gap-2 sm:justify-end">{actions}</div>
+          <div className="flex w-full min-w-0 flex-col gap-2 [&>*]:w-full sm:w-auto sm:shrink-0 sm:flex-row sm:flex-wrap sm:justify-end sm:[&>*]:w-auto">
+            {actions}
+          </div>
         )}
       </CardContent>
     </Card>

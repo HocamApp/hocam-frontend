@@ -125,13 +125,13 @@ function PaymentHistorySection() {
       {data.map((entry) => (
         <div
           key={entry.id}
-          className="flex flex-wrap items-center justify-between gap-2 rounded-lg border px-3 py-2"
+          className="flex flex-col items-start gap-2 rounded-lg border px-3 py-3 md:flex-row md:items-center md:justify-between md:py-2"
         >
           <div className="min-w-0">
             <p className="text-sm font-medium">{entryLabel(entry)}</p>
             <p className="text-xs text-muted-foreground">{formatDate(entry.created_at)}</p>
           </div>
-          <div className="text-right text-sm">
+          <div className="text-left text-sm md:text-right">
             <p className="font-medium">{formatPrice(entry.amount)}</p>
             {entry.credit_delta !== 0 && (
               <p className="text-xs text-muted-foreground">

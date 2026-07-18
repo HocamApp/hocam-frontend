@@ -298,7 +298,7 @@ function StudentDashboardContent() {
   );
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+    <div className="mx-auto w-full min-w-0 max-w-7xl overflow-x-clip px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
       <div className="space-y-8">
         <header className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
           <div>
@@ -338,7 +338,7 @@ function StudentDashboardContent() {
           </div>
         )}
 
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1.55fr)_minmax(320px,0.85fr)]">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-[minmax(0,1.55fr)_minmax(320px,0.85fr)]">
           <section aria-labelledby="next-lesson-title">
             {bookingsLoading ? (
               <Skeleton className="h-[330px] w-full rounded-2xl" />
@@ -507,7 +507,7 @@ function StudentDashboardContent() {
           </section>
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-2">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-2">
           <LearningMomentumCard
             activeGoal={activeGoal}
             learningLoading={learningLoading}

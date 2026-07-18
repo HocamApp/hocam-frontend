@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { CalendarDays, Clock, Video } from "lucide-react";
 import { RouteGuard } from "@/components/shared/RouteGuard";
@@ -10,6 +10,7 @@ import { EmptyState } from "@/components/shared/EmptyState";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { Button } from "@/components/ui/button";
+import { HorizontalDayPicker } from "@/components/shared/HorizontalDayPicker";
 import { fetchCalendar } from "@/lib/profileLessonsApi";
 import { formatDate } from "@/lib/utils";
 import type { CalendarEvent } from "@/types";
@@ -22,6 +23,7 @@ function formatTime(iso: string): string {
 }
 
 function CalendarContent() {
+  const [selectedDayIndex, setSelectedDayIndex] = useState(0);
   const { data, isLoading, isError } = useQuery({
     queryKey: ["profile-calendar"],
     queryFn: fetchCalendar,
@@ -47,6 +49,9 @@ function CalendarContent() {
   }, [sortedEvents]);
 
   const nextEvent = sortedEvents[0];
+  const safeSelectedDayIndex = Math.min(selectedDayIndex, Math.max(groups.length - 1, 0));
+  const groupDates = groups.map(([, events]) => new Date(events[0].start));
+  const selectedGroup = groups[safeSelectedDayIndex];
 
   return (
     <ProfileScreen
@@ -66,7 +71,7 @@ function CalendarContent() {
         />
       ) : (
         <div className="space-y-6">
-          <div className="grid gap-3 sm:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
             <div className="rounded-lg border bg-card p-4">
               <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
                 <Video className="h-4 w-4" />
@@ -94,18 +99,27 @@ function CalendarContent() {
             </div>
           </div>
 
-          {groups.map(([date, events]) => (
-            <div key={date}>
+          <div className="md:hidden">
+            <HorizontalDayPicker
+              dates={groupDates}
+              selectedIndex={safeSelectedDayIndex}
+              onSelect={setSelectedDayIndex}
+              getCount={(_, index) => groups[index]?.[1].length ?? 0}
+            />
+          </div>
+
+          {selectedGroup && (
+            <div className="md:hidden">
               <div className="mb-2 flex items-center justify-between gap-3">
                 <h2 className="text-sm font-semibold text-muted-foreground">
-                  {date}
+                  {selectedGroup[0]}
                 </h2>
                 <span className="text-xs text-muted-foreground">
-                  {events.length} ders
+                  {selectedGroup[1].length} ders
                 </span>
               </div>
               <div className="space-y-3">
-                {events.map((event) => (
+                {selectedGroup[1].map((event) => (
                   <LessonItemCard
                     key={event.id}
                     subject={event.subject}
@@ -128,7 +142,41 @@ function CalendarContent() {
                 ))}
               </div>
             </div>
-          ))}
+          )}
+
+          <div className="hidden space-y-6 md:block">
+            {groups.map(([date, events]) => (
+              <div key={date}>
+                <div className="mb-2 flex items-center justify-between gap-3">
+                  <h2 className="text-sm font-semibold text-muted-foreground">{date}</h2>
+                  <span className="text-xs text-muted-foreground">{events.length} ders</span>
+                </div>
+                <div className="space-y-3">
+                  {events.map((event) => (
+                    <LessonItemCard
+                      key={event.id}
+                      subject={event.subject}
+                      participantName={event.participant_name}
+                      participantRole={event.participant_role}
+                      startTime={event.start}
+                      endTime={event.end}
+                      status={event.status}
+                      actions={
+                        event.room_url ? (
+                          <Button asChild size="sm">
+                            <a href={`/session/${event.id}`}>
+                              <Video className="mr-2 h-4 w-4" />
+                              Derse Katıl
+                            </a>
+                          </Button>
+                        ) : undefined
+                      }
+                    />
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </ProfileScreen>

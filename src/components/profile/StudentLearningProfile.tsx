@@ -105,8 +105,8 @@ export function StudentLearningProfile() {
   const hasStableDistribution = (questions?.total_attempts ?? 0) >= 10;
 
   return (
-    <div className="grid grid-cols-1 gap-6 lg:grid-cols-5 lg:items-stretch lg:gap-8">
-      <Card className="order-1 lg:col-span-3">
+    <div className="grid min-w-0 grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-5 lg:items-stretch lg:gap-8">
+      <Card className="order-1 min-w-0 lg:col-span-3">
         <CardHeader>
           <SectionCardTitle className="text-base">Öğrenme özetin</SectionCardTitle>
           <p className="text-sm text-muted-foreground">
@@ -114,7 +114,7 @@ export function StudentLearningProfile() {
           </p>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 gap-3 min-[360px]:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
             <Metric
               icon={<BookOpenCheck className="h-4 w-4" aria-hidden="true" />}
               label="Tamamlanan ders"
@@ -165,13 +165,13 @@ export function StudentLearningProfile() {
         </CardContent>
       </Card>
 
-      <Card className="order-3 lg:order-2 lg:col-span-2">
+      <Card className="order-3 min-w-0 lg:order-2 lg:col-span-2">
         <CardHeader>
           <SectionCardTitle className="text-base">
             {tutor?.completed_lessons === 1 ? "Son çalıştığın hoca" : "En çok çalıştığın hoca"}
           </SectionCardTitle>
         </CardHeader>
-        <CardContent className="flex h-[calc(100%-5rem)] flex-col">
+        <CardContent className="flex flex-col lg:h-[calc(100%-5rem)]">
           {learningQuery.isLoading ? (
             <div className="space-y-4">
               <div className="flex items-center gap-3">
@@ -246,7 +246,7 @@ export function StudentLearningProfile() {
         </CardContent>
       </Card>
 
-      <Card className="order-2 lg:order-3 lg:col-span-3">
+      <Card className="order-2 min-w-0 lg:order-3 lg:col-span-3">
         <CardHeader>
           <SectionCardTitle className="text-base">Soru performansın</SectionCardTitle>
           <p className="text-sm text-muted-foreground">
@@ -298,7 +298,7 @@ export function StudentLearningProfile() {
                     <span className="bg-emerald-500" style={{ width: `${correctPercent}%` }} />
                     <span className="bg-rose-500" style={{ width: `${100 - correctPercent}%` }} />
                   </div>
-                  <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div className="grid grid-cols-1 gap-3 text-sm md:grid-cols-2">
                     <div className="flex items-center gap-2 rounded-md border p-3">
                       <CheckCircle2 className="h-4 w-4 text-emerald-600" aria-hidden="true" />
                       <span><strong>{questions.correct_attempts}</strong> doğru</span>
@@ -344,7 +344,7 @@ export function StudentLearningProfile() {
         </CardContent>
       </Card>
 
-      <Card className="order-4 lg:col-span-2">
+      <Card className="order-4 min-w-0 lg:col-span-2">
         <CardHeader>
           <SectionCardTitle className="text-base">En çok çalıştığın dersler</SectionCardTitle>
           <p className="text-sm text-muted-foreground">Tamamlanan derslerine göre.</p>

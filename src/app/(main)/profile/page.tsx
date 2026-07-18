@@ -348,7 +348,7 @@ function ProfileContent() {
   );
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:py-10">
+    <div className="mx-auto w-full min-w-0 max-w-6xl overflow-x-clip px-4 py-8 sm:py-10">
       <div className="mb-8">
         <h1 className="text-2xl font-bold tracking-tight text-foreground">Profilim</h1>
         <p className="mt-1 text-sm text-muted-foreground">
