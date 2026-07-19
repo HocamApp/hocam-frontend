@@ -19,6 +19,11 @@ export interface CreateTutorProfilePayload {
   subject_ids: string[];
 }
 
+export interface TutorEducationOption {
+  university: string;
+  departments: string[];
+}
+
 export interface TutorFilters {
   search?: string;
   subject?: string;
@@ -67,6 +72,13 @@ export async function fetchTutors(
 
 export async function fetchSubjects(): Promise<Subject[]> {
   const response = await api.get<Subject[]>("/subjects/");
+  return response.data;
+}
+
+export async function fetchTutorEducationOptions(): Promise<TutorEducationOption[]> {
+  const response = await api.get<TutorEducationOption[]>(
+    "/tutors/education-options/"
+  );
   return response.data;
 }
 

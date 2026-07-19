@@ -13,6 +13,7 @@ import {
   sendBookingHeartbeat,
 } from "@/lib/lessonsApi";
 import { useAuth } from "@/hooks/useAuth";
+import { fetchMyTutorProfile } from "@/lib/tutorsApi";
 import { RouteGuard } from "@/components/shared/RouteGuard";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
@@ -182,6 +183,18 @@ function SessionContent() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const tutorProfileQuery = useQuery({
+    queryKey: ["tutor-me"],
+    queryFn: fetchMyTutorProfile,
+    enabled: user?.role === "tutor",
+    retry: false,
+  });
+
+  useEffect(() => {
+    if (user?.role === "tutor" && tutorProfileQuery.data && !tutorProfileQuery.data.is_verified) {
+      router.replace("/tutor/onboarding");
+    }
+  }, [router, tutorProfileQuery.data, user?.role]);
   const [now, setNow] = useState(() => Date.now());
   const [jitsiApi, setJitsiApi] = useState<JitsiApi | null>(null);
   const [connectionStatus, setConnectionStatus] = useState<

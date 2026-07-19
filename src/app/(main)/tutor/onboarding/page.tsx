@@ -1,25 +1,22 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { CheckCircle2, Circle, Clock, PartyPopper } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Camera, CheckCircle2, Circle, Clock, PartyPopper } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { fetchMyTutorProfile } from "@/lib/tutorsApi";
+import { fetchMyTutorProfile, uploadTutorProfilePicture } from "@/lib/tutorsApi";
 import { fetchAvailability, fetchVerification } from "@/lib/dashboardApi";
 import { VerificationForm } from "@/components/tutors/VerificationForm";
 import { AvailabilityCalendar } from "@/components/tutors/AvailabilityCalendar";
 import { RouteGuard } from "@/components/shared/RouteGuard";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { validateProfilePhotoFile, PROFILE_PHOTO_ACCEPT } from "@/lib/profilePhoto";
 
 type OnboardingStep = {
   title: string;
@@ -30,12 +27,16 @@ type OnboardingStep = {
 
 function TutorOnboardingContent() {
   const { isAuthenticated } = useAuth();
-  const [showWelcome, setShowWelcome] = useState(false);
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  const photoInputRef = useRef<HTMLInputElement>(null);
+  const [photoError, setPhotoError] = useState<string | null>(null);
   const { data: profile, isLoading: profileLoading } = useQuery({
     queryKey: ["tutor-me"],
     queryFn: fetchMyTutorProfile,
     enabled: isAuthenticated,
     retry: false,
+    refetchInterval: 15_000,
   });
   const { data: availability = [] } = useQuery({
     queryKey: ["availability"],
@@ -55,24 +56,39 @@ function TutorOnboardingContent() {
     },
     enabled: isAuthenticated && !!profile,
     retry: false,
+    refetchInterval: 15_000,
   });
 
   const profileComplete = Boolean(profile);
+  const photoComplete = Boolean(profile?.profile_picture);
   const verificationApproved = profile?.is_verified === true || verification?.status === "approved";
-  const setupComplete = verificationApproved && (profile?.subjects.length ?? 0) > 0 && availability.length > 0;
-  const welcomeStorageKey = profile ? `hocam:tutor-onboarding-welcome:${profile.id}` : null;
+  const setupComplete = verificationApproved && photoComplete && (profile?.subjects.length ?? 0) > 0 && availability.length > 0;
+
+  const photoMutation = useMutation({
+    mutationFn: uploadTutorProfilePicture,
+    onSuccess: (updatedProfile) => {
+      queryClient.setQueryData(["tutor-me"], updatedProfile);
+      setPhotoError(null);
+    },
+    onError: () => setPhotoError("Fotoğraf yüklenemedi. Lütfen tekrar deneyin."),
+  });
 
   useEffect(() => {
-    if (setupComplete && welcomeStorageKey && !window.localStorage.getItem(welcomeStorageKey)) {
-      setShowWelcome(true);
-    }
-  }, [setupComplete, welcomeStorageKey]);
+    if (!setupComplete) return;
+    const timeout = window.setTimeout(() => router.replace("/home"), 1200);
+    return () => window.clearTimeout(timeout);
+  }, [router, setupComplete]);
 
-  const handleWelcomeChange = (open: boolean) => {
-    setShowWelcome(open);
-    if (!open && welcomeStorageKey) {
-      window.localStorage.setItem(welcomeStorageKey, "true");
+  const handlePhotoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    const validationError = validateProfilePhotoFile(file);
+    if (validationError) {
+      setPhotoError(validationError);
+      return;
     }
+    photoMutation.mutate(file);
   };
 
   if (profileLoading) {
@@ -93,20 +109,26 @@ function TutorOnboardingContent() {
       active: !profileComplete,
     },
     {
+      title: "Profil fotoğrafı",
+      description: "Öğrencilerin seni tanıyabilmesi için gerçek bir fotoğraf ekle.",
+      complete: photoComplete,
+      active: profileComplete && !photoComplete,
+    },
+    {
       title: "Belge doğrulaması",
       description: "Öğrenci kimliği ve YKS sonuç belgesi incelenir.",
       complete: verificationApproved,
-      active: profileComplete && !verificationApproved,
+      active: profileComplete && photoComplete && !verificationApproved,
     },
     {
       title: "Dersler ve müsaitlik",
       description: "Verdiğin dersleri ve uygun saatlerini ayarla.",
       complete: setupComplete,
-      active: verificationApproved && !setupComplete,
+      active: verificationApproved && photoComplete && !setupComplete,
     },
   ];
   const completeCount = steps.filter((step) => step.complete).length;
-  const progress = completeCount * 25;
+  const progress = Math.round((completeCount / steps.length) * 100);
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">
@@ -149,13 +171,34 @@ function TutorOnboardingContent() {
           {!profileComplete && (
             <Button asChild className="w-full"><Link href="/tutor/setup">Profil bilgilerini ekle</Link></Button>
           )}
-          {profileComplete && !verificationApproved && <VerificationForm />}
+          {profileComplete && !photoComplete && (
+            <div className="space-y-4 rounded-lg border p-5">
+              <div className="flex items-center gap-4">
+                <Avatar className="h-16 w-16">
+                  <AvatarFallback className="bg-primary/10 text-lg font-semibold text-primary">
+                    {`${profile?.name?.[0] ?? ""}${profile?.surname?.[0] ?? ""}`.toUpperCase() || "?"}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <p className="font-medium">Profil fotoğrafını ekle</p>
+                  <p className="mt-1 text-sm text-muted-foreground">Yüzünün net göründüğü, yalnızca sana ait bir JPG, PNG veya WebP fotoğraf yükle. En fazla 5 MB.</p>
+                </div>
+              </div>
+              <Input className="hidden" ref={photoInputRef} type="file" accept={PROFILE_PHOTO_ACCEPT} onChange={handlePhotoChange} disabled={photoMutation.isPending} />
+              {photoError && <p className="text-sm text-destructive">{photoError}</p>}
+              <Button type="button" variant="outline" onClick={() => photoInputRef.current?.click()} disabled={photoMutation.isPending}>
+                <Camera className="mr-2 h-4 w-4" />
+                {photoMutation.isPending ? "Fotoğraf yükleniyor..." : "Fotoğraf seç"}
+              </Button>
+            </div>
+          )}
+          {profileComplete && photoComplete && !verificationApproved && <VerificationForm />}
           {verificationApproved && !setupComplete && (
             <div className="space-y-3 rounded-lg border p-4">
               <p className="font-medium">Son adım: dersler ve müsaitlik</p>
               <p className="text-sm text-muted-foreground">
                 Aşağıdaki takvimden bir gün seçip Düzenle ile uygun saatlerini ekle.
-                Bu işlem tamamlandığında hesabın burada, aynı sayfada aktifleşecek.
+                Bu işlem tamamlandığında hoca ana sayfana otomatik yönlendirileceksin.
               </p>
               <AvailabilityCalendar availability={availability} bookings={[]} />
             </div>
@@ -171,25 +214,6 @@ function TutorOnboardingContent() {
           )}
         </CardContent>
       </Card>
-
-      <Dialog open={showWelcome} onOpenChange={handleWelcomeChange}>
-        <DialogContent className="overflow-hidden text-center sm:max-w-lg">
-          <div className="absolute inset-x-0 top-0 h-2 bg-gradient-to-r from-primary via-violet-500 to-pink-500" />
-          <DialogHeader className="items-center pt-5">
-            <div className="mb-3 flex h-20 w-20 items-center justify-center rounded-full bg-primary/10 text-primary motion-safe:animate-message-pop">
-              <PartyPopper className="h-10 w-10" />
-            </div>
-            <DialogTitle className="text-3xl">Ailemize hoş geldin!</DialogTitle>
-            <DialogDescription className="max-w-sm text-center text-base leading-7">
-              Hoca profilin tamamlandı. Öğrenciler artık seni keşfedebilir, sana
-              ulaşabilir ve ders ayırtabilir.
-            </DialogDescription>
-          </DialogHeader>
-          <Button onClick={() => handleWelcomeChange(false)} className="mt-3 w-full">
-            Harika, devam et
-          </Button>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

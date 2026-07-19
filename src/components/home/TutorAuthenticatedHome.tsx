@@ -219,7 +219,7 @@ function NextLessonPreview({
           </div>
 
           <div className="mt-7 flex items-center gap-4">
-            <ParticipantAvatar name={studentName} className="h-14 w-14 shrink-0" />
+            <ParticipantAvatar name={studentName} avatarUrl={booking.student.avatar_url} className="h-14 w-14 shrink-0" />
             <div className="min-w-0">
               <h2 className="truncate text-xl font-semibold tracking-tight">
                 {booking.subject.name}
@@ -344,7 +344,7 @@ function UpcomingLessonCard({ booking }: { booking: Booking }) {
     <Card className="min-w-0 rounded-2xl">
       <CardContent className="flex h-full flex-col p-5 sm:p-6">
         <div className="flex items-start justify-between gap-3">
-          <ParticipantAvatar name={studentName} className="h-11 w-11 shrink-0" />
+          <ParticipantAvatar name={studentName} avatarUrl={booking.student.avatar_url} className="h-11 w-11 shrink-0" />
           <StatusBadge status={booking.status} type="booking" />
         </div>
         <h3 className="mt-5 truncate text-lg font-semibold">{booking.subject.name}</h3>
@@ -382,6 +382,7 @@ function UpcomingLessonCard({ booking }: { booking: Booking }) {
 interface StudentSummary {
   id: string;
   name: string;
+  avatarUrl?: string | null;
   totalLessons: number;
   upcomingLessons: number;
   conversationId?: string;
@@ -395,6 +396,7 @@ function summarizeStudents(bookings: Booking[]): StudentSummary[] {
     const current = students.get(booking.student.id) ?? {
       id: booking.student.id,
       name: booking.student.display_name || booking.student.email,
+      avatarUrl: booking.student.avatar_url,
       totalLessons: 0,
       upcomingLessons: 0,
       conversationId: undefined,
@@ -419,7 +421,7 @@ function StudentSummaryCard({ student }: { student: StudentSummary }) {
   return (
     <Card className="min-w-0 rounded-2xl">
       <CardContent className="flex h-full flex-col p-5 sm:p-6">
-        <ParticipantAvatar name={student.name} className="h-12 w-12" />
+        <ParticipantAvatar name={student.name} avatarUrl={student.avatarUrl} className="h-12 w-12" />
         <h3 className="mt-4 truncate text-lg font-semibold">{student.name}</h3>
         <div className="mt-4 grid grid-cols-2 gap-3 rounded-xl bg-muted/50 p-3 text-sm">
           <div>
