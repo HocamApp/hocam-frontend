@@ -24,6 +24,19 @@ export interface TutorEducationOption {
   departments: string[];
 }
 
+export type TutorReportReason =
+  | "inappropriate_conduct"
+  | "harassment"
+  | "misleading_profile"
+  | "other";
+
+export async function createTutorReport(
+  tutorId: string,
+  payload: { reason: TutorReportReason; description?: string }
+): Promise<void> {
+  await api.post(`/tutors/${tutorId}/report/`, payload);
+}
+
 export interface TutorFilters {
   search?: string;
   subject?: string;

@@ -59,14 +59,6 @@ const studentDescriptors: NavDescriptor[] = [
   },
   {
     kind: "route",
-    title: "Öğrenme",
-    icon: "Route",
-    href: "/dashboard/student/learning",
-    activePrefixes: ["/dashboard/student/hedefler"],
-    mobilePlacement: "primary",
-  },
-  {
-    kind: "route",
     title: "Çıkmış Sorular",
     icon: "FileQuestion",
     href: "/cikmis-sorular",
