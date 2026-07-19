@@ -339,7 +339,7 @@ export default function TutorProfilePage({
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
   // Paid bookings now go through /tutors/[id]/checkout; this modal only
   // handles the free trial path (which deliberately skips checkout).
-  const [bookingModalMode, setBookingModalMode] = useState<"trial" | "test" | null>(null);
+  const [bookingModalMode, setBookingModalMode] = useState<"trial" | null>(null);
   const [bookingComplete, setBookingComplete] = useState(false);
   const [isPhotoPreviewOpen, setIsPhotoPreviewOpen] = useState(false);
   const [isSharePreviewOpen, setIsSharePreviewOpen] = useState(false);
@@ -689,22 +689,13 @@ export default function TutorProfilePage({
                                 Bu ay {trialLessonsRemaining} ücretsiz deneme hakkın kaldı.
                               </p>
                             </div>
-                            {user?.is_test_account && (
-                              <Button
-                                variant="outline"
-                                className="w-full"
-                                onClick={() => setBookingModalMode("test")}
-                              >
-                                Test kredisiyle 40 dk ders ayırt
-                              </Button>
-                            )}
                           </div>
                         ) : (
                           <Button
                             className="w-full"
-                            onClick={() => user?.is_test_account ? setBookingModalMode("test") : router.push(checkoutHref)}
+                            onClick={() => router.push(checkoutHref)}
                           >
-                            {user?.is_test_account ? "Test kredisiyle rezervasyon" : "Ders Rezervasyonu Yap"}
+                            Ders Rezervasyonu Yap
                           </Button>
                         )}
                       </>
@@ -724,19 +715,7 @@ export default function TutorProfilePage({
                   </Button>
                 )}
 
-                {isAuthenticated && isStudent && !isOwnProfile && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    className="w-full text-muted-foreground hover:text-destructive"
-                    onClick={() => setIsReportOpen(true)}
-                  >
-                    <Flag className="mr-2 h-4 w-4" />
-                    Hocayı şikâyet et
-                  </Button>
-                )}
-
-                {/* Secondary icon actions: favorite, share */}
+                {/* Secondary icon actions: favorite, report, share */}
                 <div className="flex items-center justify-center gap-1">
                   <FavoriteButton
                     tutorId={tutor.id}
@@ -744,6 +723,19 @@ export default function TutorProfilePage({
                     isPending={isFavoritePending(tutor.id)}
                     onToggle={toggle}
                   />
+                  {isAuthenticated && isStudent && !isOwnProfile && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                      aria-label="Hocayı şikâyet et"
+                      title="Hocayı şikâyet et"
+                      onClick={() => setIsReportOpen(true)}
+                    >
+                      <Flag className="h-5 w-5" />
+                    </Button>
+                  )}
                   <Popover open={isSharePreviewOpen} onOpenChange={setIsSharePreviewOpen}>
                     <PopoverTrigger asChild>
                       <Button
@@ -977,7 +969,6 @@ export default function TutorProfilePage({
         tutor={tutor}
         isOpen={bookingModalMode !== null}
         isTrial={bookingModalMode === "trial"}
-        allowTestCredit={bookingModalMode === "test" && user?.is_test_account === true}
         onClose={() => setBookingModalMode(null)}
         learningContext={learningContext}
         onSuccess={() => {
