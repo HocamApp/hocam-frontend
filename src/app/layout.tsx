@@ -14,6 +14,9 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "Hocam",
   description: "YKS hazırlık için özel ders",
+  icons: {
+    icon: [{ url: "/brand/hocam-logo.png", type: "image/png" }],
+  },
 };
 
 export const viewport: Viewport = {
