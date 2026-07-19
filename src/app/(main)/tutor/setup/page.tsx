@@ -8,12 +8,23 @@ import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { fetchMe } from "@/lib/authApi";
-import { fetchSubjects, createTutorProfile } from "@/lib/tutorsApi";
+import {
+  fetchSubjects,
+  createTutorProfile,
+  fetchTutorEducationOptions,
+} from "@/lib/tutorsApi";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Card,
   CardContent,
@@ -81,6 +92,11 @@ export default function TutorSetupPage() {
   const { data: subjects = [], isLoading: subjectsLoading } = useQuery({
     queryKey: ["subjects"],
     queryFn: fetchSubjects,
+    enabled: isAuthenticated && isTutor,
+  });
+  const { data: educationOptions = [], isLoading: educationOptionsLoading } = useQuery({
+    queryKey: ["tutor-education-options"],
+    queryFn: fetchTutorEducationOptions,
     enabled: isAuthenticated && isTutor,
   });
 
@@ -182,6 +198,10 @@ export default function TutorSetupPage() {
   }
 
   const subjectGroups = groupSubjectsByExam(subjects);
+  const selectedUniversity = form.watch("university");
+  const availableDepartments =
+    educationOptions.find((option) => option.university === selectedUniversity)
+      ?.departments ?? [];
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-10">
@@ -234,9 +254,38 @@ export default function TutorSetupPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Üniversite</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Örn: İstanbul Teknik Üniversitesi" {...field} />
-                    </FormControl>
+                    <Select
+                      disabled={educationOptionsLoading || educationOptions.length === 0}
+                      onValueChange={(value) => {
+                        field.onChange(value);
+                        form.setValue("department", "", { shouldValidate: true });
+                      }}
+                      value={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue
+                            placeholder={
+                              educationOptionsLoading
+                                ? "Üniversiteler yükleniyor..."
+                                : "Kayıtlı üniversiteni seç"
+                            }
+                          />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {educationOptions.map((option) => (
+                          <SelectItem key={option.university} value={option.university}>
+                            {option.university}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {!educationOptionsLoading && educationOptions.length === 0 && (
+                      <p className="text-xs text-muted-foreground">
+                        Kayıtlı üniversite seçenekleri henüz bulunamadı.
+                      </p>
+                    )}
                     <FormMessage />
                   </FormItem>
                 )}
@@ -247,9 +296,30 @@ export default function TutorSetupPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Bölüm</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Örn: Bilgisayar Mühendisliği" {...field} />
-                    </FormControl>
+                    <Select
+                      disabled={!selectedUniversity || educationOptionsLoading}
+                      onValueChange={field.onChange}
+                      value={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue
+                            placeholder={
+                              selectedUniversity
+                                ? "Bölümünü seç"
+                                : "Önce üniversiteni seç"
+                            }
+                          />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {availableDepartments.map((department) => (
+                          <SelectItem key={department} value={department}>
+                            {department}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -292,7 +362,8 @@ export default function TutorSetupPage() {
                       </FormControl>
                       <p className="mt-1 text-xs text-muted-foreground">
                         40 dakikalık ders ücreti. Daha uzun dersler bu ücretten
-                        orantılı hesaplanır.
+                        orantılı hesaplanır. Ücretini profil ayarlarından daha sonra
+                        değiştirebilirsin.
                       </p>
                       <FormMessage />
                     </FormItem>

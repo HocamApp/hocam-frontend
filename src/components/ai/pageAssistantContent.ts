@@ -40,6 +40,7 @@ export const TUTOR_DASHBOARD_ASSISTANT: PageAssistantContent = {
     "Bugünkü derslerimi özetle.",
     "Bekleyen rezervasyonları nasıl yönetirim?",
     "Müsaitlik saatlerimi nasıl düzenlerim?",
+    "Bu ayın 20'sinde dolu muyum?",
     "Profilimi daha güçlü hale nasıl getiririm?",
     "Öğrenci ilerlemesini nasıl onaylarım?",
   ],

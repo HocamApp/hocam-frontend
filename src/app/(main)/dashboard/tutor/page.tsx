@@ -1256,7 +1256,11 @@ function TutorDashboardContent() {
           <CardContent className="p-5 sm:p-6">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div className="flex min-w-0 items-center gap-3">
-                <ParticipantAvatar name={nextBookingStudentName} className="h-12 w-12 shrink-0" />
+                <ParticipantAvatar
+                  name={nextBookingStudentName}
+                  avatarUrl={nextBooking.student.avatar_url}
+                  className="h-12 w-12 shrink-0"
+                />
                 <div className="min-w-0">
                   <p className="text-xs font-medium uppercase tracking-wide text-primary">
                     Sıradaki dersin

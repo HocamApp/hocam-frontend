@@ -20,6 +20,7 @@ import { Label } from "@/components/ui/label";
 import { Plus, Trash2 } from "lucide-react";
 import { AvailabilityRule } from "@/types";
 import { toast } from "sonner";
+import { availabilityRulesOverlap } from "@/lib/availability";
 
 const DAY_NAMES = [
   "Pazartesi",
@@ -89,6 +90,10 @@ export function AvailabilityEditor() {
     const end = endTime.trim();
     if (start >= end) {
       setTimeError("Başlangıç saati bitiş saatinden önce olmalıdır");
+      return;
+    }
+    if (availabilityRulesOverlap(rules, { dayOfWeek, startTime: start, endTime: end })) {
+      setTimeError("Bu saat aralığı mevcut müsaitlik saatiyle çakışıyor");
       return;
     }
     createMutation.mutate({

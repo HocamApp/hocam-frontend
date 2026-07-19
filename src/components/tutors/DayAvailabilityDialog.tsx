@@ -20,6 +20,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { TimeSelect } from "@/components/ui/time-select";
+import { availabilityRulesOverlap } from "@/lib/availability";
 
 function formatRuleTime(t: string | null): string {
   if (!t) return "";
@@ -99,6 +100,15 @@ export function DayAvailabilityDialog({
     }
     if (startTime >= endTime) {
       setTimeError("Başlangıç saati bitiş saatinden önce olmalıdır");
+      return;
+    }
+    if (availabilityRulesOverlap(rules, {
+      dayOfWeek,
+      ...(mode === "date" ? { specificDate: date } : {}),
+      startTime,
+      endTime,
+    })) {
+      setTimeError("Bu saat aralığı mevcut müsaitlik saatiyle çakışıyor");
       return;
     }
     createMutation.mutate({

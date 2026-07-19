@@ -387,7 +387,7 @@ export interface TutorProfile {
 
 export interface LessonRequest {
   id: string;
-  student: { id: string; email: string; display_name?: string };
+  student: { id: string; email: string; display_name?: string; avatar_url?: string | null };
   tutor: { id: string; name: string; surname: string };
   subject: Subject;
   message: string;
@@ -411,7 +411,7 @@ export interface MessageRequest {
 
 export interface Booking {
   id: string;
-  student: { id: string; email: string; display_name?: string };
+  student: { id: string; email: string; display_name?: string; avatar_url?: string | null };
   tutor: { id: string; name: string; surname: string; profile_picture?: string };
   subject: Subject;
   start_time: string;
