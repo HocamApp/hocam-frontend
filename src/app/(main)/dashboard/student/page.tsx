@@ -283,7 +283,7 @@ function StudentDashboardContent() {
     learningDashboard?.goals.find((goal) => goal.status === "active") ?? null;
   const learningHref = activeGoal
     ? goalPackageHref(activeGoal.id)
-    : "/dashboard/student/learning";
+    : "/dashboard/student";
 
   const nextTutorName = nextLesson?.tutor.name
     ? `${nextLesson.tutor.name} ${nextLesson.tutor.surname}`

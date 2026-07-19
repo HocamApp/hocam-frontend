@@ -8,6 +8,7 @@ import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-quer
 import {
   Check,
   Copy,
+  Flag,
   MessageCircle,
   MessageSquare,
   PlayCircle,
@@ -16,7 +17,13 @@ import {
 } from "lucide-react";
 import { useFavorites } from "@/hooks/useFavorites";
 import { FavoriteButton } from "@/components/tutors/FavoriteButton";
-import { fetchTutorById, fetchTutorReviewSummary, fetchTutorReviewsPage } from "@/lib/tutorsApi";
+import {
+  createTutorReport,
+  fetchTutorById,
+  fetchTutorReviewSummary,
+  fetchTutorReviewsPage,
+  type TutorReportReason,
+} from "@/lib/tutorsApi";
 import { fetchTutorAvailability } from "@/lib/dashboardApi";
 import { useAuth } from "@/hooks/useAuth";
 import { resolveProfileImageUrl } from "@/lib/profileImages";
@@ -338,6 +345,11 @@ export default function TutorProfilePage({
   const [isSharePreviewOpen, setIsSharePreviewOpen] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
   const [shareUrl, setShareUrl] = useState("");
+  const [isReportOpen, setIsReportOpen] = useState(false);
+  const [reportReason, setReportReason] = useState<TutorReportReason>("inappropriate_conduct");
+  const [reportDescription, setReportDescription] = useState("");
+  const [reportError, setReportError] = useState("");
+  const [isSubmittingReport, setIsSubmittingReport] = useState(false);
   const learningContext = learningContextFromSearchParams(
     new URLSearchParams(searchParams.toString())
   );
@@ -436,6 +448,27 @@ export default function TutorProfilePage({
     const query = qp.toString();
     return `/tutors/${id}/checkout${query ? `?${query}` : ""}`;
   })();
+
+  const submitTutorReport = async () => {
+    if (!tutor) return;
+    setIsSubmittingReport(true);
+    setReportError("");
+    try {
+      await createTutorReport(tutor.id, {
+        reason: reportReason,
+        description: reportDescription.trim(),
+      });
+      setIsReportOpen(false);
+      setReportDescription("");
+      toast.success("Şikâyetin incelenmek üzere iletildi.");
+    } catch (error: unknown) {
+      const detail = (error as { response?: { data?: { detail?: string } } })
+        .response?.data?.detail;
+      setReportError(detail || "Şikâyet gönderilemedi. Lütfen tekrar dene.");
+    } finally {
+      setIsSubmittingReport(false);
+    }
+  };
 
   useEffect(() => {
     if (!shareCopied) return;
@@ -691,6 +724,18 @@ export default function TutorProfilePage({
                   </Button>
                 )}
 
+                {isAuthenticated && isStudent && !isOwnProfile && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="w-full text-muted-foreground hover:text-destructive"
+                    onClick={() => setIsReportOpen(true)}
+                  >
+                    <Flag className="mr-2 h-4 w-4" />
+                    Hocayı şikâyet et
+                  </Button>
+                )}
+
                 {/* Secondary icon actions: favorite, share */}
                 <div className="flex items-center justify-center gap-1">
                   <FavoriteButton
@@ -942,6 +987,50 @@ export default function TutorProfilePage({
           toast.success("Ücretsiz deneme dersi isteğin gönderildi.");
         }}
       />
+      <Dialog open={isReportOpen} onOpenChange={setIsReportOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogTitle>Hocayı şikâyet et</DialogTitle>
+          <DialogDescription>
+            Şikâyetin yalnızca inceleme ekibimiz tarafından görülür. Küfür veya aşağılayıcı ifade kullanma.
+          </DialogDescription>
+          <div className="space-y-4 pt-2">
+            <label className="block text-sm font-medium" htmlFor="tutor-report-reason">
+              Şikâyet nedeni
+            </label>
+            <select
+              id="tutor-report-reason"
+              value={reportReason}
+              onChange={(event) => setReportReason(event.target.value as TutorReportReason)}
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            >
+              <option value="inappropriate_conduct">Uygunsuz davranış</option>
+              <option value="harassment">Taciz veya zorbalık</option>
+              <option value="misleading_profile">Yanıltıcı profil bilgisi</option>
+              <option value="other">Diğer</option>
+            </select>
+            <label className="block text-sm font-medium" htmlFor="tutor-report-description">
+              Açıklama <span className="font-normal text-muted-foreground">(isteğe bağlı)</span>
+            </label>
+            <textarea
+              id="tutor-report-description"
+              value={reportDescription}
+              onChange={(event) => setReportDescription(event.target.value)}
+              maxLength={2000}
+              placeholder="İncelememize yardımcı olacak bilgileri paylaş."
+              className="min-h-28 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            />
+            {reportError && <p className="text-sm text-destructive">{reportError}</p>}
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="outline" onClick={() => setIsReportOpen(false)}>
+                Vazgeç
+              </Button>
+              <Button type="button" variant="destructive" onClick={submitTutorReport} disabled={isSubmittingReport}>
+                {isSubmittingReport ? "Gönderiliyor..." : "Şikâyeti gönder"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
       <Dialog open={isPhotoPreviewOpen} onOpenChange={setIsPhotoPreviewOpen}>
         <DialogContent
           showClose={false}

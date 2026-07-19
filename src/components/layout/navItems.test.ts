@@ -41,14 +41,6 @@ describe("getNavDescriptors", () => {
       },
       {
         kind: "route",
-        title: "Öğrenme",
-        icon: "Route",
-        href: "/dashboard/student/learning",
-        activePrefixes: ["/dashboard/student/hedefler"],
-        mobilePlacement: "primary",
-      },
-      {
-        kind: "route",
         title: "Çıkmış Sorular",
         icon: "FileQuestion",
         href: "/cikmis-sorular",
@@ -149,7 +141,7 @@ describe("active navigation matching", () => {
       new URLSearchParams()
     );
 
-    assert.equal(activeIndex, 2);
+    assert.equal(activeIndex, 3);
   });
 
   it("matches the student panel when no more specific dashboard prefix applies", () => {
@@ -163,7 +155,7 @@ describe("active navigation matching", () => {
       new URLSearchParams()
     );
 
-    assert.equal(activeIndex, 4);
+    assert.equal(activeIndex, 3);
   });
 
   it("activates only Favoriler for the exact favorites query special case", () => {
@@ -179,7 +171,7 @@ describe("active navigation matching", () => {
       searchParams
     );
 
-    assert.equal(activeIndex, 8);
+    assert.equal(activeIndex, 7);
     assert.equal(
       navItems.isNavRouteActive?.(
         descriptors[1],
@@ -191,7 +183,7 @@ describe("active navigation matching", () => {
     );
     assert.equal(
       navItems.isNavRouteActive?.(
-        descriptors[8],
+        descriptors[7],
         descriptors,
         "/tutors",
         searchParams

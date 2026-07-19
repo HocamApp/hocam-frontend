@@ -468,14 +468,6 @@ export function AuthenticatedHome() {
 
             <div className="mt-4 flex flex-col gap-2 text-sm sm:flex-row sm:items-center sm:gap-5">
               <Link
-                href="/dashboard/student/learning"
-                onClick={() => trackHomeEvent("home_learning_link_clicked", { placement: "hero" })}
-                className="inline-flex min-h-11 items-center font-semibold text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              >
-                Hedef paketlerini keşfet
-                <ArrowRight className="ml-1.5 h-4 w-4" aria-hidden="true" />
-              </Link>
-              <Link
                 href="/cikmis-sorular"
                 onClick={() => trackHomeEvent("home_question_link_clicked", { placement: "hero" })}
                 className="inline-flex min-h-11 items-center text-muted-foreground hover:text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -580,9 +572,8 @@ export function AuthenticatedHome() {
             headingId="home-packages-title"
             title="Hedefine göre çalışma paketleri"
             description="Sınavına ve seviyene uygun hazır yol haritalarını keşfet."
-            href="/dashboard/student/learning"
-            action="Tümünü gör"
-            onAction={() => trackHomeEvent("home_learning_link_clicked", { placement: "package_section" })}
+            href="/dashboard/student"
+            action="Panelime git"
           />
 
           {(templatesQuery.isLoading && learningQuery.isLoading) ? (
@@ -593,7 +584,7 @@ export function AuthenticatedHome() {
             <div className="space-y-3">
               <ErrorMessage message="Çalışma paketleri şu anda yüklenemedi." />
               <Button asChild variant="outline">
-                <Link href="/dashboard/student/learning">Öğrenme merkezine git</Link>
+                <Link href="/dashboard/student">Panelime git</Link>
               </Button>
             </div>
           ) : packageTemplates.length > 0 ? (
@@ -631,7 +622,7 @@ export function AuthenticatedHome() {
             <div className="rounded-2xl border border-dashed p-8 text-center">
               <BookOpen className="mx-auto h-6 w-6 text-muted-foreground" aria-hidden="true" />
               <p className="mt-3 font-medium">Hazır paketler yakında burada</p>
-              <p className="mt-1 text-sm text-muted-foreground">Öğrenme merkezindeki içerikleri takip edebilirsin.</p>
+              <p className="mt-1 text-sm text-muted-foreground">Yeni içerikler yakında burada olacak.</p>
             </div>
           )}
         </section>
