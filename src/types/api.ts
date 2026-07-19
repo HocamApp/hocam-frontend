@@ -362,6 +362,7 @@ export interface TutorProfile {
   completed_lessons_count?: number | null;
   is_verified: boolean;
   is_public: boolean;
+  teaching_styles: TutorTeachingStyle[];
   is_online: boolean;
   last_seen_at?: string | null;
   trial_lesson_eligible?: boolean | null;
@@ -383,6 +384,102 @@ export interface TutorProfile {
     rejection_reason: string;
     submitted_at: string;
   } | null;
+}
+
+export type MatchGoal = "YKS" | "DGS" | "KPSS" | "UNDECIDED";
+export type MatchChallenge =
+  | "foundations"
+  | "question_solving"
+  | "speed_accuracy"
+  | "consistency"
+  | "where_to_start"
+  | "advanced_questions";
+export type TutorTeachingStyle =
+  | "foundations_patient"
+  | "question_speed"
+  | "planning_accountability"
+  | "motivating_communication"
+  | "high_target";
+export type MatchAvailabilityWindow =
+  | "weekday_day"
+  | "weekday_evening"
+  | "weekend_day"
+  | "weekend_evening"
+  | "flexible";
+export type MatchBudgetSegment = "economical" | "balanced" | "premium" | "flexible";
+
+export interface MatchingAnswers {
+  goal: MatchGoal;
+  stage: string;
+  subject_keys: string[];
+  challenges: MatchChallenge[];
+  teaching_styles: TutorTeachingStyle[];
+  availability_windows: MatchAvailabilityWindow[];
+  budget_segment: MatchBudgetSegment;
+  schema_version: 1;
+}
+
+export interface MatchOption {
+  value: string;
+  label: string;
+}
+
+export interface MatchSubjectOption {
+  key: string;
+  label: string;
+  subject_ids: string[];
+  exam_types: string[];
+  tutor_count: number;
+}
+
+export interface MatchBudgetRange {
+  id: MatchBudgetSegment;
+  label: string;
+  min: number | null;
+  max: number | null;
+}
+
+export interface MatchingOptions {
+  goals: Array<{ value: MatchGoal; label: string }>;
+  stages: Record<MatchGoal, MatchOption[]>;
+  subjects: MatchSubjectOption[];
+  budget_ranges: MatchBudgetRange[];
+}
+
+export interface TutorMatchResult {
+  tutor: Pick<
+    TutorProfile,
+    | "id"
+    | "name"
+    | "surname"
+    | "profile_picture"
+    | "university"
+    | "department"
+    | "hourly_price"
+    | "rating"
+    | "total_reviews"
+    | "completed_lessons_count"
+    | "is_verified"
+    | "subjects"
+  >;
+  score: number;
+  match_level: "strong" | "budget_relaxed" | "schedule_relaxed";
+  reason_codes: Array<
+    "subject_match" | "availability_match" | "teaching_style_match" | "budget_match"
+  >;
+  caveat_codes: Array<"budget_relaxed" | "schedule_relaxed">;
+  matched_subjects: string[];
+  matched_styles: TutorTeachingStyle[];
+  nearest_available_at: string | null;
+}
+
+export interface MatchingPreview {
+  matches: TutorMatchResult[];
+  candidate_count: number;
+}
+
+export interface SavedMatchingPreference extends MatchingAnswers {
+  updated_at: string;
 }
 
 export interface LessonRequest {

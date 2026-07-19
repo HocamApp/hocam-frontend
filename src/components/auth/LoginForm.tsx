@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import axios from "axios";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -34,20 +34,30 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 interface LoginFormProps {
   /** When provided, the "Hesap oluştur" footer switches mode in place instead of navigating. */
   onCreateAccount?: () => void;
+  lockedRole?: "student" | "tutor";
+  returnUrlOverride?: string | null;
+  onAuthenticated?: (auth: AuthResponse) => void | Promise<void>;
 }
 
-export function LoginForm({ onCreateAccount }: LoginFormProps) {
+export function LoginForm({
+  onCreateAccount,
+  lockedRole,
+  returnUrlOverride,
+  onAuthenticated,
+}: LoginFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   // Same-origin path to return to after login (e.g. a checkout page that
   // redirected here). Tutors without a profile still go to /tutor/setup —
   // profile setup precedes everything else.
-  const returnUrl = safeReturnUrl(searchParams.get("returnUrl"));
+  const returnUrl = returnUrlOverride ?? safeReturnUrl(searchParams.get("returnUrl"));
+  const forcedGoogleRole = lockedRole ?? (searchParams.get("role") === "student" ? "student" : null);
   const { isAuthenticated, isLoading, setAuth, user } = useAuth();
   const [generalError, setGeneralError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [pendingCredential, setPendingCredential] = useState<string | null>(null);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const authHandledByFormRef = useRef(false);
 
   const form = useForm<LoginFormValues>({
     defaultValues: {
@@ -58,7 +68,7 @@ export function LoginForm({ onCreateAccount }: LoginFormProps) {
   });
 
   useEffect(() => {
-    if (!isLoading && isAuthenticated && user) {
+    if (!isLoading && isAuthenticated && user && !authHandledByFormRef.current) {
       if (user.is_admin) {
         router.replace("/admin-control");
         return;
@@ -87,20 +97,7 @@ export function LoginForm({ onCreateAccount }: LoginFormProps) {
 
     try {
       const auth = await loginUser(parsed.data.email, parsed.data.password);
-      setAuth(auth.user, auth.token);
-      if (auth.user.is_admin) {
-        router.push("/admin-control");
-        return;
-      }
-      if (auth.user.role === "tutor") {
-        router.push(
-          auth.user.tutor_profile_id
-            ? returnUrl ?? "/home"
-            : "/tutor/setup"
-        );
-      } else {
-        router.push(returnUrl ?? "/home");
-      }
+      await finishAuthSuccess(auth);
     } catch (error) {
       if (!axios.isAxiosError(error) || !error.response) {
         setGeneralError(
@@ -120,9 +117,11 @@ export function LoginForm({ onCreateAccount }: LoginFormProps) {
     }
   };
 
-  const finishGoogleSuccess = useCallback(
-    (auth: AuthResponse) => {
+  const finishAuthSuccess = useCallback(
+    async (auth: AuthResponse) => {
+      authHandledByFormRef.current = true;
       setAuth(auth.user, auth.token);
+      await onAuthenticated?.(auth);
       if (auth.user.is_admin) {
         router.push("/admin-control");
         return;
@@ -137,7 +136,7 @@ export function LoginForm({ onCreateAccount }: LoginFormProps) {
         router.push(returnUrl ?? "/home");
       }
     },
-    [router, setAuth, returnUrl]
+    [onAuthenticated, router, setAuth, returnUrl]
   );
 
   const handleGoogleCredential = useCallback(
@@ -146,11 +145,18 @@ export function LoginForm({ onCreateAccount }: LoginFormProps) {
       setGoogleLoading(true);
       try {
         const resp = await googleAuth({ credential });
-        if ("needs_role" in resp) {
+        if ("needs_role" in resp && forcedGoogleRole) {
+          const completed = await googleAuth({ credential, role: forcedGoogleRole });
+          if ("needs_role" in completed) {
+            setGeneralError("Google hesabı oluşturulamadı. Lütfen tekrar deneyin.");
+          } else {
+            await finishAuthSuccess(completed);
+          }
+        } else if ("needs_role" in resp) {
           // New user — collect a role, then retry with the same credential.
           setPendingCredential(credential);
         } else {
-          finishGoogleSuccess(resp);
+          await finishAuthSuccess(resp);
         }
       } catch {
         setGeneralError("Google ile giriş başarısız oldu. Lütfen tekrar deneyin.");
@@ -158,7 +164,7 @@ export function LoginForm({ onCreateAccount }: LoginFormProps) {
         setGoogleLoading(false);
       }
     },
-    [finishGoogleSuccess]
+    [finishAuthSuccess, forcedGoogleRole]
   );
 
   const handleGoogleRoleChoice = useCallback(
@@ -173,7 +179,7 @@ export function LoginForm({ onCreateAccount }: LoginFormProps) {
           setPendingCredential(null);
           return;
         }
-        finishGoogleSuccess(resp);
+        await finishAuthSuccess(resp);
       } catch {
         setGeneralError(
           "Google ile giriş başarısız oldu. Bağlantının süresi dolmuş olabilir, tekrar deneyin."
@@ -183,7 +189,7 @@ export function LoginForm({ onCreateAccount }: LoginFormProps) {
         setGoogleLoading(false);
       }
     },
-    [pendingCredential, finishGoogleSuccess]
+    [pendingCredential, finishAuthSuccess]
   );
 
   if (isLoading) {

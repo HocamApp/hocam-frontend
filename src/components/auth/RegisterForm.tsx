@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Eye, EyeOff, MailCheck } from "lucide-react";
@@ -53,12 +53,21 @@ interface RegisterFormProps {
   onSignIn?: () => void;
   /** Reports the currently selected role so the parent can drive the heading description. */
   onRoleChange?: (role: "student" | "tutor") => void;
+  /** Hides role selection and forces registrations from a role-specific flow. */
+  lockedRole?: "student" | "tutor";
+  /** Same-origin route used after a successful registration. */
+  returnUrl?: string | null;
+  /** Optional hook for embedded flows; runs after auth is stored and before navigation. */
+  onAuthenticated?: (auth: AuthResponse) => void | Promise<void>;
 }
 
 export function RegisterForm({
   initialRole = "student",
   onSignIn,
   onRoleChange,
+  lockedRole,
+  returnUrl,
+  onAuthenticated,
 }: RegisterFormProps) {
   const router = useRouter();
   const { setAuth, isAuthenticated, isLoading, user } = useAuth();
@@ -68,13 +77,14 @@ export function RegisterForm({
   const [pendingEmail, setPendingEmail] = useState<string | null>(null);
   const [verificationCode, setVerificationCode] = useState("");
   const [isConfirming, setIsConfirming] = useState(false);
+  const authHandledByFormRef = useRef(false);
 
   const form = useForm<RegisterFormValues>({
     defaultValues: {
       email: "",
       password: "",
       password_confirm: "",
-      role: initialRole,
+      role: lockedRole ?? initialRole,
     },
     mode: "onSubmit",
   });
@@ -88,14 +98,14 @@ export function RegisterForm({
   }, [role, onRoleChange]);
 
   useEffect(() => {
-    if (!isLoading && isAuthenticated && user) {
+    if (!isLoading && isAuthenticated && user && !authHandledByFormRef.current) {
       if (user.role === "tutor") {
-        router.replace(user.tutor_profile_id ? "/home" : "/tutor/setup");
+        router.replace(user.tutor_profile_id ? returnUrl ?? "/home" : "/tutor/setup");
       } else {
-        router.replace("/home");
+        router.replace(returnUrl ?? "/home");
       }
     }
-  }, [isLoading, isAuthenticated, user, router]);
+  }, [isLoading, isAuthenticated, user, router, returnUrl]);
 
   const onSubmit = async (data: RegisterFormValues) => {
     setGeneralError(null);
@@ -143,14 +153,16 @@ export function RegisterForm({
     }
   };
 
-  const completeAuth = (res: AuthResponse) => {
+  const completeAuth = useCallback(async (res: AuthResponse) => {
+    authHandledByFormRef.current = true;
     setAuth(res.user, res.token);
+    await onAuthenticated?.(res);
     if (res.user.role === "tutor") {
-      router.push(res.user.tutor_profile_id ? "/home" : "/tutor/setup");
+      router.push(res.user.tutor_profile_id ? returnUrl ?? "/home" : "/tutor/setup");
     } else {
-      router.push("/home");
+      router.push(returnUrl ?? "/home");
     }
-  };
+  }, [onAuthenticated, returnUrl, router, setAuth]);
 
   const handleConfirmRegistration = async () => {
     if (!pendingEmail) return;
@@ -187,25 +199,21 @@ export function RegisterForm({
   const handleGoogleCredential = useCallback(
     async (credential: string) => {
       setGeneralError(null);
-      const selectedRole =
-        form.getValues("role") === "tutor" ? "tutor" : "student";
+      const selectedRole = lockedRole ?? (
+        form.getValues("role") === "tutor" ? "tutor" : "student"
+      );
       try {
         const resp = await googleAuth({ credential, role: selectedRole });
         if ("needs_role" in resp) {
           setGeneralError("Kayıt tamamlanamadı. Lütfen tekrar deneyin.");
           return;
         }
-        setAuth(resp.user, resp.token);
-        if (resp.user.role === "tutor") {
-          router.push(resp.user.tutor_profile_id ? "/home" : "/tutor/setup");
-        } else {
-          router.push("/home");
-        }
+        await completeAuth(resp);
       } catch {
         setGeneralError("Google ile kayıt başarısız oldu. Lütfen tekrar deneyin.");
       }
     },
-    [form, router, setAuth]
+    [completeAuth, form, lockedRole]
   );
 
   if (isLoading) {
@@ -329,7 +337,7 @@ export function RegisterForm({
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
           {generalError && <ErrorMessage message={generalError} />}
 
-          <div className="animate-element animate-delay-300 flex gap-3">
+          {!lockedRole && <div className="animate-element animate-delay-300 flex gap-3">
             <button
               type="button"
               onClick={() => form.setValue("role", "student")}
@@ -344,7 +352,7 @@ export function RegisterForm({
             >
               Hoca
             </button>
-          </div>
+          </div>}
 
           <FormField
             control={form.control}

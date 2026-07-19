@@ -10,6 +10,7 @@ import {
   CheckCircle2,
   Clock3,
   MessageCircle,
+  Sparkles,
   Wallet,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
@@ -311,13 +312,19 @@ function StudentDashboardContent() {
             </p>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row">
+            <Button asChild size="lg">
+              <Link href="/match">
+                <Sparkles className="mr-2 h-4 w-4" />
+                Sana uygun hocayı bulalım
+              </Link>
+            </Button>
             <Button asChild variant="outline" size="lg">
               <Link href="/profile/lessons?view=calendar">
                 <Calendar className="mr-2 h-4 w-4" />
                 Takvimim
               </Link>
             </Button>
-            <Button asChild size="lg">
+            <Button asChild variant="outline" size="lg">
               <Link href="/tutors">
                 <CalendarPlus className="mr-2 h-4 w-4" />
                 Yeni ders bul

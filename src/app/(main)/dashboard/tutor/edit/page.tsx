@@ -19,7 +19,7 @@ import {
 } from "@/lib/tutorsApi";
 import { validateProfilePhotoFile } from "@/lib/profilePhoto";
 import { filterSelectedSubjectIds } from "@/lib/subjects";
-import type { TutorProfile } from "@/types";
+import type { TutorProfile, TutorTeachingStyle } from "@/types";
 
 import { RouteGuard } from "@/components/shared/RouteGuard";
 import { AISupportChatWidget } from "@/components/ai/AISupportChatWidget";
@@ -52,6 +52,7 @@ import {
   TutorProfileEditSidebar,
   type ProfileActionItem,
 } from "@/components/tutors/profile-editor/TutorProfileEditSidebar";
+import { TeachingStyleSelector } from "@/components/tutors/TeachingStyleSelector";
 
 const editSchema = z.object({
   university: z.string().min(1, "Üniversite zorunludur"),
@@ -131,6 +132,9 @@ function TutorProfileEditContent() {
   const [selectedSubjectIds, setSelectedSubjectIds] = useState<string[]>([]);
   const [initialSubjectIds, setInitialSubjectIds] = useState<string[]>([]);
   const [subjectError, setSubjectError] = useState<string | null>(null);
+  const [selectedTeachingStyles, setSelectedTeachingStyles] = useState<TutorTeachingStyle[]>([]);
+  const [initialTeachingStyles, setInitialTeachingStyles] = useState<TutorTeachingStyle[]>([]);
+  const [teachingStyleError, setTeachingStyleError] = useState<string | null>(null);
   const [generalError, setGeneralError] = useState<string | null>(null);
   const [photoError, setPhotoError] = useState<string | null>(null);
   const [photoUploading, setPhotoUploading] = useState(false);
@@ -183,6 +187,8 @@ function TutorProfileEditContent() {
     const profileSubjectIds = profile.subjects.map((subject) => subject.id);
     setSelectedSubjectIds(profileSubjectIds);
     setInitialSubjectIds(profileSubjectIds);
+    setSelectedTeachingStyles(profile.teaching_styles ?? []);
+    setInitialTeachingStyles(profile.teaching_styles ?? []);
     initializedProfileId.current = profile.id;
   }, [form, profile]);
 
@@ -201,9 +207,10 @@ function TutorProfileEditContent() {
     [selectedSubjectIds, subjects]
   );
   const subjectsAreDirty = !sameIds(selectedSubjectIds, initialSubjectIds);
-  const isDirty = form.formState.isDirty || subjectsAreDirty;
+  const teachingStylesAreDirty = !sameIds(selectedTeachingStyles, initialTeachingStyles);
+  const isDirty = form.formState.isDirty || subjectsAreDirty || teachingStylesAreDirty;
   const canSave =
-    isDirty && editSchema.safeParse(watchedValues).success && selectedSubjectIds.length > 0;
+    isDirty && editSchema.safeParse(watchedValues).success && selectedSubjectIds.length > 0 && selectedTeachingStyles.length > 0;
 
   useEffect(() => {
     if (isDirty && saveState === "success") setSaveState("idle");
@@ -249,6 +256,10 @@ function TutorProfileEditContent() {
       document.getElementById("subjects")?.scrollIntoView({ behavior: "smooth", block: "start" });
       return;
     }
+    if (selectedTeachingStyles.length === 0) {
+      setTeachingStyleError("En az bir ders anlatım yaklaşımı seç.");
+      return;
+    }
 
     setGeneralError(null);
     setSaveState("idle");
@@ -258,12 +269,15 @@ function TutorProfileEditContent() {
         intro_video_url: parsed.data.intro_video_url ?? "",
         bio: parsed.data.bio ?? "",
         subject_ids: supportedIds,
+        teaching_styles: selectedTeachingStyles,
       });
       queryClient.setQueryData(["tutor-me"], updatedProfile);
       form.reset(getFormValues(updatedProfile));
       const savedIds = updatedProfile.subjects.map((subject) => subject.id);
       setSelectedSubjectIds(savedIds);
       setInitialSubjectIds(savedIds);
+      setSelectedTeachingStyles(updatedProfile.teaching_styles ?? []);
+      setInitialTeachingStyles(updatedProfile.teaching_styles ?? []);
       setSaveState("success");
       toast.success(
         updatedProfile.is_verified
@@ -478,6 +492,15 @@ function TutorProfileEditContent() {
                   loading={subjectsLoading}
                   error={subjectError}
                   onToggle={toggleSubject}
+                />
+                <TeachingStyleSelector
+                  value={selectedTeachingStyles}
+                  error={teachingStyleError}
+                  onChange={(next) => {
+                    setSelectedTeachingStyles(next);
+                    setTeachingStyleError(null);
+                    setSaveState("idle");
+                  }}
                 />
                 <PricingSection
                   form={form}

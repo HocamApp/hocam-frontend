@@ -6,6 +6,7 @@ import {
   SubjectRating,
   TutorReviewSummary,
   PaginatedResponse,
+  TutorTeachingStyle,
 } from "@/types";
 
 export interface CreateTutorProfilePayload {
@@ -17,6 +18,7 @@ export interface CreateTutorProfilePayload {
   hourly_price: string;
   bio: string;
   subject_ids: string[];
+  teaching_styles: TutorTeachingStyle[];
 }
 
 export interface TutorEducationOption {
@@ -176,6 +178,7 @@ export interface UpdateTutorProfilePayload {
   hourly_price?: string;
   intro_video_url?: string;
   subject_ids?: string[];
+  teaching_styles?: TutorTeachingStyle[];
 }
 
 export async function updateMyTutorProfile(

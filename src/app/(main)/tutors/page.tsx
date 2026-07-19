@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect, Suspense } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { Heart, PanelLeftClose, PanelLeftOpen } from "lucide-react";
@@ -9,6 +10,7 @@ import { AnimatedSearchBar } from "@/components/tutors/AnimatedSearchBar";
 import { TutorCard } from "@/components/tutors/TutorCard";
 import { TutorFilters } from "@/components/tutors/TutorFilters";
 import { useFavorites } from "@/hooks/useFavorites";
+import { useAuth } from "@/hooks/useAuth";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { Button } from "@/components/ui/button";
@@ -162,6 +164,7 @@ function TutorCardSkeleton() {
 }
 
 function TutorsPageContent() {
+  const { isStudent } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [filters, setFiltersState] = useState<TutorFiltersType>(() => {
@@ -320,13 +323,18 @@ function TutorsPageContent() {
                 <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">
                   Dersine, hedeflerine ve uygun saatlerine göre hoca ara; profilleri karşılaştırıp güvenle rezervasyon yap.
                 </p>
-                <div className="mt-6 flex justify-center">
+                <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
                   <AnimatedSearchBar
                     value={searchLocal}
                     onChange={setSearchLocal}
                     onCommit={(search) => handleFiltersChange({ ...filters, search })}
                     disabled={isListLoading}
                   />
+                  {isStudent && (
+                    <Button asChild className="shrink-0 rounded-xl">
+                      <Link href="/match">7 soruda eşleş</Link>
+                    </Button>
+                  )}
                 </div>
                 {!isListLoading && tutors && (
                   <p className="mt-3 text-sm text-muted-foreground">
