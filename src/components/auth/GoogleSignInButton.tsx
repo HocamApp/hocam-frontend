@@ -148,5 +148,5 @@ export function GoogleSignInButton({
     );
   }
 
-  return <div ref={containerRef} className="flex min-h-10 justify-center" />;
+  return <div ref={containerRef} className="flex min-h-11 justify-center" />;
 }
