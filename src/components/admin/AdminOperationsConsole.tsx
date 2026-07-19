@@ -36,10 +36,12 @@ import { useAuth } from "@/hooks/useAuth";
 import {
   activateAdminPackage,
   approveAdminTestBooking,
+  cancelAdminPackage,
   createAdminBooking,
   createAdminPackage,
   fetchAdminMonitor,
   grantAdminTestCredits,
+  markAllAccountsAsTest,
   startAdminImpersonation,
   updateAdminTutorTestSettings,
 } from "@/lib/adminControlApi";
@@ -76,7 +78,10 @@ const actionLabels: Record<string, string> = {
   booking_created: "Özel ders oluşturuldu",
   package_created: "Paket talebi oluşturuldu",
   package_activated: "Paket aktive edildi",
+  package_cancelled: "Paket talebi reddedildi",
   test_credit_granted: "Test kredisi verildi",
+  test_accounts_marked: "Hesaplar TEST olarak işaretlendi",
+  qa_video_session_created: "Anında test konferansı açıldı",
   tutor_test_settings_updated: "Hoca test ayarı değiştirildi",
 };
 
@@ -319,6 +324,19 @@ export function AdminOperationsConsole() {
     onSuccess: () => { toast.success("Paket aktive edildi."); refresh(); },
     onError: (error) => toast.error(apiError(error, "Paket aktivasyonu başarısız.")),
   });
+  const cancelPackage = useMutation({
+    mutationFn: cancelAdminPackage,
+    onSuccess: () => { toast.success("Paket talebi reddedildi; ödeme veya kredi oluşturulmadı."); refresh(); },
+    onError: (error) => toast.error(apiError(error, "Paket talebi reddedilemedi.")),
+  });
+  const markAllTestAccounts = useMutation({
+    mutationFn: markAllAccountsAsTest,
+    onSuccess: ({ marked_count }) => {
+      toast.success(`${marked_count} hesap TEST olarak işaretlendi.`);
+      refresh();
+    },
+    onError: (error) => toast.error(apiError(error, "Hesaplar TEST olarak işaretlenemedi.")),
+  });
   const addBooking = useMutation({
     mutationFn: createAdminBooking,
     onSuccess: () => {
@@ -411,6 +429,23 @@ export function AdminOperationsConsole() {
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6 pt-4">
+          <Alert className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <AlertTitle>QA / test modu</AlertTitle>
+              <AlertDescription>Tüm aktif katılımcı hesaplarını TEST olarak işaretleyin. Ardından anında ders açma işlemi tek kullanımlık, ödeme alınmayan QA kredisiyle konferansı doğrudan başlatır.</AlertDescription>
+            </div>
+            <Button
+              variant="outline"
+              disabled={markAllTestAccounts.isPending}
+              onClick={() => {
+                if (window.confirm("Tüm aktif öğrenci ve hoca hesapları TEST olarak işaretlensin mi? Bu işlem yalnız QA ortamı içindir.")) {
+                  markAllTestAccounts.mutate();
+                }
+              }}
+            >
+              {markAllTestAccounts.isPending ? "İşaretleniyor…" : "Tümünü TEST yap"}
+            </Button>
+          </Alert>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <MetricCard icon={Users} label="Tüm hesaplar" value={accounts.length} hint="Ara ve hesap görünümüne geç" onClick={() => setActiveTab("accounts")} />
             <MetricCard icon={GraduationCap} label="Hocalar" value={tutors.length} hint="Profil ve test ayarlarını yönet" onClick={() => { setAccountRole("tutor"); setActiveTab("accounts"); }} />
@@ -445,7 +480,7 @@ export function AdminOperationsConsole() {
             </Card>
 
             <Card>
-              <CardHeader><CardTitle className="flex items-center gap-2 text-lg"><CalendarPlus className="h-5 w-5" />Anında özel ders aç</CardTitle><CardDescription>Aktif paket/test kredisinden 1 hak düşer ve ders onaylanır.</CardDescription></CardHeader>
+              <CardHeader><CardTitle className="flex items-center gap-2 text-lg"><CalendarPlus className="h-5 w-5" />Anında konferans aç</CardTitle><CardDescription>TEST hesaplarında ödeme alınmadan tek kullanımlık QA kredisiyle ders onaylanır ve video odası hazırlanır.</CardDescription></CardHeader>
               <CardContent className="space-y-3">
                 <AccountPicker accounts={students} value={bookingStudentId} onChange={setBookingStudentId} placeholder="Öğrenci ara" />
                 <AccountPicker accounts={tutors} value={bookingTutorId} onChange={(value) => { setBookingTutorId(value); setSubjectId(""); }} placeholder="Hoca ara" />
@@ -455,7 +490,7 @@ export function AdminOperationsConsole() {
                 </select>
                 <Input type="datetime-local" value={startTime} min={minimumLocalLessonTime()} onChange={(event) => setStartTime(event.target.value)} />
                 <Button className="w-full" disabled={!bookingStudentId || !selectedBookingTutor?.profile || !subjectId || !startTime || addBooking.isPending} onClick={() => selectedBookingTutor?.profile && addBooking.mutate({ student_id: bookingStudentId, tutor_id: selectedBookingTutor.profile.id, subject_id: subjectId, start_time: new Date(startTime).toISOString() })}>
-                  {addBooking.isPending ? "Ders açılıyor…" : "Dersi oluştur ve onayla"}
+                  {addBooking.isPending ? "Konferans açılıyor…" : "Konferansı oluştur ve aç"}
                 </Button>
               </CardContent>
             </Card>
@@ -555,7 +590,23 @@ export function AdminOperationsConsole() {
                       <p className="mt-1 text-sm text-muted-foreground">{purchase.plan.name} · {purchase.remaining_credits}/{purchase.total_credits} kredi · {formatPrice(purchase.total_price)}</p>
                       <p className="mt-1 text-xs text-muted-foreground">Oluşturulma: {new Date(purchase.created_at).toLocaleString("tr-TR")}</p>
                     </div>
-                    {purchase.status === "pending" && <Button size="sm" disabled={!monitor.data.manual_package_activation_enabled || activatePackage.isPending} onClick={() => activatePackage.mutate(purchase.id)}>Ödemeyi doğrula ve aktive et</Button>}
+                    {purchase.status === "pending" && (
+                      <div className="flex flex-wrap gap-2">
+                        <Button size="sm" disabled={!monitor.data.manual_package_activation_enabled || activatePackage.isPending} onClick={() => activatePackage.mutate(purchase.id)}>Ödemeyi doğrula ve aktive et</Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          disabled={cancelPackage.isPending}
+                          onClick={() => {
+                            if (window.confirm("Bu bekleyen paket talebi reddedilsin mi? Ödeme veya kredi oluşturulmaz.")) {
+                              cancelPackage.mutate(purchase.id);
+                            }
+                          }}
+                        >
+                          Talebi reddet
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>

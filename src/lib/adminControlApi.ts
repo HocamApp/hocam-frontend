@@ -48,6 +48,16 @@ export async function activateAdminPackage(id: string): Promise<AdminMonitoredPa
   return data;
 }
 
+export async function cancelAdminPackage(id: string): Promise<AdminMonitoredPackage> {
+  const { data } = await api.delete<AdminMonitoredPackage>(`/admin-control/package-purchases/${id}/`);
+  return data;
+}
+
+export async function markAllAccountsAsTest(): Promise<{ marked_count: number }> {
+  const { data } = await api.post<{ marked_count: number }>("/admin-control/test-accounts/mark-all/");
+  return data;
+}
+
 export async function createAdminBooking(payload: {
   student_id: string;
   tutor_id: string;
