@@ -42,6 +42,8 @@ import {
 } from "@/components/ui/form";
 import { cn } from "@/lib/utils";
 import { filterSelectedSubjectIds, groupSubjectsByExam } from "@/lib/subjects";
+import { TeachingStyleSelector } from "@/components/tutors/TeachingStyleSelector";
+import type { TutorTeachingStyle } from "@/types";
 
 const setupSchema = z.object({
   name: z.string().min(1, "Ad zorunludur"),
@@ -72,6 +74,8 @@ export default function TutorSetupPage() {
     useAuth();
   const [selectedSubjectIds, setSelectedSubjectIds] = useState<string[]>([]);
   const [subjectError, setSubjectError] = useState<string | null>(null);
+  const [selectedTeachingStyles, setSelectedTeachingStyles] = useState<TutorTeachingStyle[]>([]);
+  const [teachingStyleError, setTeachingStyleError] = useState<string | null>(null);
   const [generalError, setGeneralError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -137,6 +141,10 @@ export default function TutorSetupPage() {
       setSubjectError("En az bir ders seçin");
       return;
     }
+    if (selectedTeachingStyles.length === 0) {
+      setTeachingStyleError("En az bir ders anlatım yaklaşımı seçin");
+      return;
+    }
 
     setGeneralError(null);
     try {
@@ -149,6 +157,7 @@ export default function TutorSetupPage() {
         hourly_price: parsed.data.hourly_price,
         bio: parsed.data.bio ?? "",
         subject_ids: supportedSelectedSubjectIds,
+        teaching_styles: selectedTeachingStyles,
       });
 
       const updatedUser = await fetchMe();
@@ -430,6 +439,15 @@ export default function TutorSetupPage() {
                   <p className="mt-1 text-sm text-destructive">{subjectError}</p>
                 )}
               </div>
+
+              <TeachingStyleSelector
+                value={selectedTeachingStyles}
+                error={teachingStyleError}
+                onChange={(next) => {
+                  setSelectedTeachingStyles(next);
+                  setTeachingStyleError(null);
+                }}
+              />
 
               <Button
                 type="submit"

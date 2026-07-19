@@ -4,7 +4,7 @@ import path from "node:path";
 
 const BASE_URL = process.env.RESPONSIVE_CHECK_BASE_URL ?? "http://localhost:3000";
 
-const PAGES = ["/", "/tutors", "/home", "/dashboard/student", "/profile"];
+const PAGES = ["/", "/match", "/tutors", "/home", "/dashboard/student", "/profile"];
 
 const VIEWPORTS = [
   { name: "mobile", width: 375, height: 812 },

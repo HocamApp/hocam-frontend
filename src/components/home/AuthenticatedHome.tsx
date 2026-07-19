@@ -13,6 +13,7 @@ import {
   GraduationCap,
   RefreshCw,
   ShieldCheck,
+  Sparkles,
   Star,
   Target,
   WalletCards,
@@ -466,11 +467,20 @@ export function AuthenticatedHome() {
               />
             </div>
 
-            <div className="mt-4 flex flex-col gap-2 text-sm sm:flex-row sm:items-center sm:gap-5">
+            <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center">
+              <Button asChild size="lg" className="rounded-xl">
+                <Link
+                  href="/match"
+                  onClick={() => trackHomeEvent("home_matching_started", { placement: "hero" })}
+                >
+                  <Sparkles className="mr-2 h-4 w-4" aria-hidden="true" />
+                  Sana uygun hocayı bulalım
+                </Link>
+              </Button>
               <Link
                 href="/cikmis-sorular"
                 onClick={() => trackHomeEvent("home_question_link_clicked", { placement: "hero" })}
-                className="inline-flex min-h-11 items-center text-muted-foreground hover:text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="inline-flex min-h-11 items-center px-1 text-sm text-muted-foreground hover:text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 Çıkmış sorulara göz at
               </Link>
