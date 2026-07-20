@@ -1,23 +1,48 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import {
+  AnimatePresence,
+  LayoutGroup,
+  motion,
+  MotionConfig,
+  useReducedMotion,
+} from "framer-motion";
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import {
   ArrowLeft,
   ArrowRight,
-  BookOpen,
-  CalendarDays,
   Check,
   Clock3,
   GraduationCap,
-  ShieldCheck,
+  LoaderCircle,
   Sparkles,
   Target,
-  Users,
 } from "lucide-react";
+
+import { MatchResultCard } from "@/components/matching/MatchResultCard";
+import { MatchingScene } from "@/components/matching/MatchingScene";
+import { MATCH_EASING, MATCH_MOTION } from "@/components/matching/motion";
+import { QuestionTransition } from "@/components/matching/QuestionTransition";
+import { SelectionCard, SelectionCount } from "@/components/matching/SelectionCard";
+import { RouteGuard } from "@/components/shared/RouteGuard";
 import { useAuth } from "@/hooks/useAuth";
+import { announceInterfaceContentReady } from "@/lib/interfaceLanguage";
+import {
+  answersForGoal,
+  deriveMatchingSceneState,
+  hasAnswerForStep,
+  selectAvailabilityWindow,
+  toggleLimited,
+  type MatchPhase,
+  type MotionDirection,
+} from "@/lib/matchingFlow";
 import {
   fetchMatchingOptions,
   previewTutorMatches,
@@ -36,11 +61,8 @@ import type {
   MatchChallenge,
   MatchGoal,
   MatchingAnswers,
-  TutorMatchResult,
   TutorTeachingStyle,
 } from "@/types";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { RouteGuard } from "@/components/shared/RouteGuard";
 
 const CHALLENGE_OPTIONS: Array<{ value: MatchChallenge; label: string }> = [
   { value: "foundations", label: "Konu temellerimde eksikler var" },
@@ -51,7 +73,11 @@ const CHALLENGE_OPTIONS: Array<{ value: MatchChallenge; label: string }> = [
   { value: "advanced_questions", label: "Daha ileri seviye sorular çözmek istiyorum" },
 ];
 
-const STYLE_OPTIONS: Array<{ value: TutorTeachingStyle; label: string; detail: string }> = [
+const STYLE_OPTIONS: Array<{
+  value: TutorTeachingStyle;
+  label: string;
+  detail: string;
+}> = [
   { value: "foundations_patient", label: "Sabırla temelden anlatan", detail: "Konuyu adım adım kurar." },
   { value: "question_speed", label: "Bol soru çözen ve hız kazandıran", detail: "Pratik ve sınav temposuna odaklanır." },
   { value: "planning_accountability", label: "Program hazırlayan ve takip eden", detail: "İlerlemeni düzenli takip eder." },
@@ -59,7 +85,10 @@ const STYLE_OPTIONS: Array<{ value: TutorTeachingStyle; label: string; detail: s
   { value: "high_target", label: "Zorlayıcı ve yüksek hedef odaklı", detail: "Potansiyelini ileri taşımaya odaklanır." },
 ];
 
-const AVAILABILITY_OPTIONS: Array<{ value: MatchAvailabilityWindow; label: string }> = [
+const AVAILABILITY_OPTIONS: Array<{
+  value: MatchAvailabilityWindow;
+  label: string;
+}> = [
   { value: "weekday_day", label: "Hafta içi gündüz" },
   { value: "weekday_evening", label: "Hafta içi akşam" },
   { value: "weekend_day", label: "Hafta sonu gündüz" },
@@ -75,144 +104,33 @@ const STEP_TITLES = [
   "Nasıl bir hoca sana daha iyi gelir?",
   "Dersleri genellikle ne zaman yapabilirsin?",
   "Ders başına hangi bütçe aralığı sana uygun?",
-];
-
-const STYLE_LABELS = Object.fromEntries(STYLE_OPTIONS.map((item) => [item.value, item.label]));
-
-function toggleLimited<T extends string>(values: T[], value: T, maximum: number): T[] {
-  if (values.includes(value)) return values.filter((item) => item !== value);
-  if (values.length >= maximum) return values;
-  return [...values, value];
-}
-
-function SelectionCard({
-  selected,
-  label,
-  detail,
-  onClick,
-}: {
-  selected: boolean;
-  label: string;
-  detail?: string;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      aria-pressed={selected}
-      onClick={onClick}
-      className={`group flex min-h-14 w-full items-start gap-3 rounded-2xl border px-4 py-3 text-left transition duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff5968] focus-visible:ring-offset-2 ${
-        selected
-          ? "border-[#ff5968] bg-[#fff1f2] text-neutral-950"
-          : "border-neutral-200 bg-white text-neutral-800 hover:border-neutral-400"
-      }`}
-    >
-      <span
-        className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${
-          selected ? "border-[#ff5968] bg-[#ff5968] text-white" : "border-neutral-300"
-        }`}
-      >
-        {selected && <Check className="h-3.5 w-3.5" aria-hidden />}
-      </span>
-      <span>
-        <span className="block text-sm font-semibold sm:text-base">{label}</span>
-        {detail && <span className="mt-0.5 block text-sm text-neutral-500">{detail}</span>}
-      </span>
-    </button>
-  );
-}
-
-function GoalMap({ step, answers }: { step: number; answers: Partial<MatchingAnswers> }) {
-  return (
-    <div className="relative mx-auto flex h-full min-h-[9rem] w-full max-w-lg items-center justify-center overflow-hidden rounded-[2rem] bg-[#fff8f3] p-5 sm:p-8 lg:min-h-[32rem]">
-      <div className="absolute inset-x-10 top-1/2 h-px bg-gradient-to-r from-transparent via-[#ff8a71]/50 to-transparent" />
-      <motion.div layout className="relative grid grid-cols-3 items-center gap-4 sm:gap-7">
-        <motion.div layout className="flex h-16 w-16 items-center justify-center rounded-2xl border border-[#ff8a71]/30 bg-white shadow-sm sm:h-20 sm:w-20">
-          <Users className="h-7 w-7 text-[#ff5968]" />
-        </motion.div>
-        <div className="flex items-center gap-1" aria-hidden>
-          {[0, 1, 2].map((item) => (
-            <motion.span
-              key={item}
-              initial={{ scaleX: 0 }}
-              animate={{ scaleX: 1 }}
-              transition={{ delay: item * 0.06, duration: 0.25 }}
-              className="h-1 w-5 origin-left rounded-full bg-[#ff8a71]/50 sm:w-8"
-            />
-          ))}
-        </div>
-        <motion.div layout className="flex h-16 w-16 items-center justify-center rounded-full bg-neutral-950 text-white shadow-lg sm:h-20 sm:w-20">
-          {step >= 5 ? <CalendarDays className="h-8 w-8" /> : <Target className="h-8 w-8" />}
-        </motion.div>
-      </motion.div>
-      <div className="absolute bottom-4 left-5 right-5 flex flex-wrap justify-center gap-2 sm:bottom-8">
-        {answers.goal && <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold shadow-sm">{answers.goal === "UNDECIDED" ? "Hedefini keşfediyor" : answers.goal}</span>}
-        {(answers.subject_keys ?? []).slice(0, 3).map((subject) => (
-          <span key={subject} className="inline-flex items-center gap-1 rounded-full bg-white px-3 py-1 text-xs font-semibold shadow-sm"><BookOpen className="h-3 w-3" /> {subject.replaceAll("_", " ")}</span>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function reasonText(match: TutorMatchResult) {
-  const reasons: string[] = [];
-  if (match.matched_subjects.length) reasons.push(`${match.matched_subjects.join(", ")} ders uyumu`);
-  if (match.reason_codes.includes("availability_match")) reasons.push("seçtiğin zamanlarda müsaitlik");
-  if (match.matched_styles.length) reasons.push(match.matched_styles.map((style) => STYLE_LABELS[style]).join(", ").toLocaleLowerCase("tr-TR"));
-  if (match.reason_codes.includes("budget_match")) reasons.push("bütçe uyumu");
-  return reasons.join(" · ");
-}
-
-function MatchCard({ match }: { match: TutorMatchResult }) {
-  const fullName = `${match.tutor.name} ${match.tutor.surname}`;
-  const initials = `${match.tutor.name[0] ?? ""}${match.tutor.surname[0] ?? ""}`.toUpperCase();
-  const nearest = match.nearest_available_at
-    ? new Intl.DateTimeFormat("tr-TR", { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" }).format(new Date(match.nearest_available_at))
-    : null;
-  return (
-    <article className="flex h-full flex-col rounded-3xl border border-neutral-200 bg-white p-5 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
-      <div className="flex items-start gap-4">
-        <Avatar className="h-16 w-16 shrink-0">
-          <AvatarImage src={match.tutor.profile_picture} alt={fullName} />
-          <AvatarFallback className="text-lg font-bold">{initials}</AvatarFallback>
-        </Avatar>
-        <div className="min-w-0 flex-1">
-          <h3 className="flex items-center gap-1.5 truncate text-lg font-bold">{fullName}<ShieldCheck className="h-4 w-4 shrink-0 text-blue-600" aria-label="Doğrulanmış hoca" /></h3>
-          <p className="truncate text-sm text-neutral-500">{match.tutor.university} · {match.tutor.department}</p>
-          <p className="mt-1 text-sm font-medium">{match.tutor.total_reviews ? `★ ${match.tutor.rating.toFixed(1)} · ${match.tutor.total_reviews} değerlendirme` : "Yeni hoca"}</p>
-        </div>
-      </div>
-      <div className="mt-4 rounded-2xl bg-[#fff8f3] p-3">
-        <p className="text-xs font-bold uppercase tracking-wide text-[#d94758]">Neden eşleştiniz?</p>
-        <p className="mt-1 text-sm leading-6 text-neutral-700">{reasonText(match)}</p>
-      </div>
-      {nearest && <p className="mt-4 flex items-center gap-2 text-sm text-neutral-600"><Clock3 className="h-4 w-4 text-emerald-600" /> En yakın uygun zaman: {nearest}</p>}
-      {match.caveat_codes.length > 0 && <p className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">{match.caveat_codes.includes("budget_relaxed") ? "Bu öneri seçtiğin bütçe aralığının dışında." : "Seçtiğin zamanlarda yakın bir boşluk bulunamadı; diğer uyumlara göre önerildi."}</p>}
-      <div className="mt-auto flex items-end justify-between gap-3 pt-5">
-        <p><span className="text-xl font-bold">{formatPrice(match.tutor.hourly_price)}</span><span className="text-sm text-neutral-500"> /40 dk</span></p>
-        <Link href={`/tutors/${match.tutor.id}`} className="rounded-xl bg-neutral-950 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-neutral-800">Profili incele</Link>
-      </div>
-    </article>
-  );
-}
+] as const;
 
 function MatchingExperience() {
   const reducedMotion = useReducedMotion();
+  const queryClient = useQueryClient();
   const { user, isStudent } = useAuth();
-  const [phase, setPhase] = useState<"intro" | "questions" | "results">("intro");
+  const [phase, setPhase] = useState<MatchPhase>("intro");
   const [step, setStep] = useState(0);
+  const [direction, setDirection] = useState<MotionDirection>(1);
   const [answers, setAnswers] = useState<Partial<MatchingAnswers>>({ schema_version: 1 });
   const [draftLoaded, setDraftLoaded] = useState(false);
   const [validationMessage, setValidationMessage] = useState<string | null>(null);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [isPreparingOptions, setIsPreparingOptions] = useState(false);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const draftKey = user?.id ? `${MATCHING_DRAFT_KEY}:${user.id}` : null;
 
   const goal = answers.goal ?? "UNDECIDED";
-  const subjectKeys = answers.subject_keys ?? [];
+  const subjectKeys = useMemo(() => answers.subject_keys ?? [], [answers.subject_keys]);
+  const matchingOptionsKey = useMemo(
+    () => ["matching-options", goal, subjectKeys] as const,
+    [goal, subjectKeys]
+  );
   const optionsQuery = useQuery({
-    queryKey: ["matching-options", goal, subjectKeys],
+    queryKey: matchingOptionsKey,
     queryFn: () => fetchMatchingOptions(goal, subjectKeys),
+    placeholderData: keepPreviousData,
     staleTime: 60_000,
   });
   const saveMutation = useMutation({ mutationFn: saveMatchingPreferences });
@@ -220,8 +138,6 @@ function MatchingExperience() {
 
   useEffect(() => {
     if (!draftKey) return;
-    // The matching flow is account-only now. Discard drafts created by the
-    // former anonymous flow and keep new drafts isolated per student account.
     window.localStorage.removeItem(MATCHING_DRAFT_KEY);
     const draft = parseMatchingDraft(window.localStorage.getItem(draftKey));
     if (draft) {
@@ -242,118 +158,576 @@ function MatchingExperience() {
     );
   }, [answers, draftKey, draftLoaded, phase, step]);
 
-  useEffect(() => {
-    if (phase === "questions") headingRef.current?.focus();
-  }, [phase, step]);
+  const options = optionsQuery.data;
+  const sceneLabels = useMemo(() => {
+    const subjectLabels = Object.fromEntries(
+      (options?.subjects ?? []).map((subject) => [subject.key, subject.label])
+    );
+    return {
+      goal: options?.goals.find((item) => item.value === answers.goal)?.label,
+      stage: options?.stages[goal]?.find((item) => item.value === answers.stage)?.label,
+      subjects: subjectLabels,
+      budget: options?.budget_ranges.find((item) => item.id === answers.budget_segment)?.label,
+    };
+  }, [answers.budget_segment, answers.goal, answers.stage, goal, options]);
+  const sceneState = useMemo(
+    () =>
+      deriveMatchingSceneState(
+        answers,
+        phase === "intro" ? -1 : step,
+        sceneLabels,
+        phase === "matching" || phase === "results"
+      ),
+    [answers, phase, sceneLabels, step]
+  );
 
-  const setSingle = <K extends keyof MatchingAnswers>(key: K, value: MatchingAnswers[K]) => {
+  const setSingle = <K extends keyof MatchingAnswers>(
+    key: K,
+    value: MatchingAnswers[K]
+  ) => {
     setAnswers((current) => ({ ...current, [key]: value }));
     setValidationMessage(null);
   };
 
-  const canContinue = useMemo(() => {
-    if (step === 0) return Boolean(answers.goal);
-    if (step === 1) return Boolean(answers.stage);
-    if (step === 2) return Boolean(answers.subject_keys?.length);
-    if (step === 3) return Boolean(answers.challenges?.length);
-    if (step === 4) return Boolean(answers.teaching_styles?.length);
-    if (step === 5) return Boolean(answers.availability_windows?.length);
-    return Boolean(answers.budget_segment);
-  }, [answers, step]);
+  const canContinue = hasAnswerForStep(answers, step);
 
-  const continueFlow = () => {
-    if (!canContinue) {
-      setValidationMessage("Devam etmek için en az bir seçenek seç.");
-      return;
-    }
-    if (step < 6) {
-      setStep((current) => current + 1);
-      return;
-    }
-    if (!isCompleteMatchingAnswers(answers)) return;
-    previewMutation.mutate(answers, {
+  const finishQuestionTransition = useCallback(() => {
+    setIsTransitioning(false);
+    headingRef.current?.focus({ preventScroll: true });
+    announceInterfaceContentReady();
+  }, []);
+
+  const prefetchOptions = useCallback(
+    (nextGoal: MatchGoal, nextSubjects: string[]) =>
+      queryClient.prefetchQuery({
+        queryKey: ["matching-options", nextGoal, nextSubjects],
+        queryFn: () => fetchMatchingOptions(nextGoal, nextSubjects),
+        staleTime: 60_000,
+      }),
+    [queryClient]
+  );
+
+  const selectGoal = (nextGoal: MatchGoal) => {
+    setAnswers(answersForGoal(nextGoal));
+    setValidationMessage(null);
+    void prefetchOptions(nextGoal, []);
+  };
+
+  const completeMatching = (completeAnswers: MatchingAnswers) => {
+    setDirection(1);
+    setPhase("matching");
+    setValidationMessage(null);
+    previewMutation.mutate(completeAnswers, {
       onSuccess: () => {
         setPhase("results");
         if (isStudent) {
-          saveMutation.mutate(answers, {
+          saveMutation.mutate(completeAnswers, {
             onSuccess: () => {
               if (draftKey) window.localStorage.removeItem(draftKey);
             },
           });
         }
       },
+      onError: () => {
+        setDirection(-1);
+        setPhase("questions");
+        setStep(6);
+        setValidationMessage("Eşleşmeler hazırlanamadı. Yanıtların korundu; tekrar deneyebilirsin.");
+      },
     });
   };
 
-  const selectGoal = (nextGoal: MatchGoal) => {
-    setAnswers({ goal: nextGoal, schema_version: 1 });
+  const continueFlow = async () => {
+    if (isTransitioning || isPreparingOptions || previewMutation.isPending) return;
+    if (!canContinue) {
+      setValidationMessage("Devam etmek için en az bir seçenek seç.");
+      return;
+    }
+
+    if (step < 6) {
+      if (step === 0 && answers.goal) {
+        setIsPreparingOptions(true);
+        try {
+          await queryClient.ensureQueryData({
+            queryKey: ["matching-options", answers.goal, []],
+            queryFn: () => fetchMatchingOptions(answers.goal, []),
+            staleTime: 60_000,
+          });
+        } catch {
+          setValidationMessage("Sonraki seçenekler hazırlanamadı. Lütfen tekrar dene.");
+          setIsPreparingOptions(false);
+          return;
+        }
+        setIsPreparingOptions(false);
+      }
+      setDirection(1);
+      setIsTransitioning(true);
+      setStep((current) => current + 1);
+      setValidationMessage(null);
+      return;
+    }
+
+    if (isCompleteMatchingAnswers(answers)) completeMatching(answers);
+  };
+
+  const goBack = () => {
+    if (isTransitioning || isPreparingOptions || previewMutation.isPending) return;
+    setDirection(-1);
     setValidationMessage(null);
+    if (step === 0) {
+      setPhase("intro");
+      return;
+    }
+    setIsTransitioning(true);
+    setStep((current) => current - 1);
+  };
+
+  const selectSubjects = (value: string) => {
+    const next = toggleLimited(subjectKeys, value, 3);
+    if (next === subjectKeys) {
+      setValidationMessage("En fazla üç ders seçebilirsin.");
+      return;
+    }
+    setSingle("subject_keys", next);
+    void prefetchOptions(goal, next);
+  };
+
+  const selectChallenges = (value: MatchChallenge) => {
+    const current = answers.challenges ?? [];
+    const next = toggleLimited(current, value, 2);
+    if (next === current) {
+      setValidationMessage("En fazla iki zorluk alanı seçebilirsin.");
+      return;
+    }
+    setSingle("challenges", next);
+  };
+
+  const selectStyles = (value: TutorTeachingStyle) => {
+    const current = answers.teaching_styles ?? [];
+    const next = toggleLimited(current, value, 2);
+    if (next === current) {
+      setValidationMessage("En fazla iki hoca yaklaşımı seçebilirsin.");
+      return;
+    }
+    setSingle("teaching_styles", next);
   };
 
   const renderAnswers = () => {
-    const options = optionsQuery.data;
-    if (optionsQuery.isLoading) return <div className="h-48 animate-pulse rounded-3xl bg-neutral-100" />;
-    if (optionsQuery.isError || !options) return <p className="rounded-2xl bg-red-50 p-4 text-sm text-red-700">Seçenekler şu anda yüklenemedi. Lütfen tekrar dene.</p>;
-    if (step === 0) return <div className="grid gap-3 sm:grid-cols-2">{options.goals.map((item) => <SelectionCard key={item.value} label={item.label} selected={answers.goal === item.value} onClick={() => selectGoal(item.value)} />)}</div>;
-    if (step === 1) return <div className="grid gap-3 sm:grid-cols-2">{options.stages[goal].map((item) => <SelectionCard key={item.value} label={item.label} selected={answers.stage === item.value} onClick={() => setSingle("stage", item.value)} />)}</div>;
-    if (step === 2) return <div><p className="mb-3 text-sm text-neutral-500">En fazla 3 ders seçebilirsin.</p><div className="grid gap-3 sm:grid-cols-2">{options.subjects.map((item) => <SelectionCard key={item.key} label={item.label} detail={`${item.tutor_count} uygun hoca`} selected={subjectKeys.includes(item.key)} onClick={() => setSingle("subject_keys", toggleLimited(subjectKeys, item.key, 3))} />)}</div></div>;
-    if (step === 3) return <div><p className="mb-3 text-sm text-neutral-500">En fazla 2 seçenek.</p><div className="grid gap-3">{CHALLENGE_OPTIONS.map((item) => <SelectionCard key={item.value} label={item.label} selected={(answers.challenges ?? []).includes(item.value)} onClick={() => setSingle("challenges", toggleLimited(answers.challenges ?? [], item.value, 2))} />)}</div></div>;
-    if (step === 4) return <div><p className="mb-3 text-sm text-neutral-500">En fazla 2 yaklaşım seç.</p><div className="grid gap-3">{STYLE_OPTIONS.map((item) => <SelectionCard key={item.value} label={item.label} detail={item.detail} selected={(answers.teaching_styles ?? []).includes(item.value)} onClick={() => setSingle("teaching_styles", toggleLimited(answers.teaching_styles ?? [], item.value, 2))} />)}</div></div>;
-    if (step === 5) return <div className="grid gap-3 sm:grid-cols-2">{AVAILABILITY_OPTIONS.map((item) => <SelectionCard key={item.value} label={item.label} selected={(answers.availability_windows ?? []).includes(item.value)} onClick={() => { const current = answers.availability_windows ?? []; const next = item.value === "flexible" ? ["flexible" as const] : toggleLimited(current.filter((value) => value !== "flexible"), item.value, 4); setSingle("availability_windows", next); }} />)}</div>;
-    return <div className="grid gap-3">{options.budget_ranges.map((item) => <SelectionCard key={item.id} label={item.label} detail={item.min != null && item.max != null ? `${formatPrice(item.min)} – ${formatPrice(item.max)} / 40 dk` : "Tüm fiyat aralıklarını değerlendir"} selected={answers.budget_segment === item.id} onClick={() => setSingle("budget_segment", item.id as MatchBudgetSegment)} />)}</div>;
+    if (!options) {
+      if (optionsQuery.isError) {
+        return (
+          <div className="rounded-2xl bg-red-50 p-4 text-sm text-red-700">
+            <p>Seçenekler şu anda yüklenemedi.</p>
+            <button
+              type="button"
+              onClick={() => void optionsQuery.refetch()}
+              className="mt-3 rounded-xl bg-white px-3 py-2 font-semibold text-red-700 shadow-sm"
+            >
+              Tekrar dene
+            </button>
+          </div>
+        );
+      }
+      return (
+        <div className="flex min-h-40 items-center justify-center rounded-3xl border border-neutral-200 bg-white">
+          <span className="inline-flex items-center gap-2 text-sm font-medium text-neutral-500">
+            <LoaderCircle className="h-4 w-4 animate-spin" /> Seçenekler hazırlanıyor…
+          </span>
+        </div>
+      );
+    }
+
+    if (step === 0) {
+      return (
+        <div className="grid gap-3 sm:grid-cols-2">
+          {options.goals.map((item) => (
+            <SelectionCard
+              key={item.value}
+              label={item.label}
+              selected={answers.goal === item.value}
+              onClick={() => selectGoal(item.value)}
+            />
+          ))}
+        </div>
+      );
+    }
+
+    if (step === 1) {
+      return (
+        <div className="grid gap-3 sm:grid-cols-2">
+          {(options.stages[goal] ?? []).map((item) => (
+            <SelectionCard
+              key={item.value}
+              label={item.label}
+              selected={answers.stage === item.value}
+              onClick={() => setSingle("stage", item.value)}
+            />
+          ))}
+        </div>
+      );
+    }
+
+    if (step === 2) {
+      return (
+        <div>
+          <SelectionCount selected={subjectKeys.length} maximum={3} noun="ders" />
+          <div className="grid gap-3 sm:grid-cols-2">
+            {options.subjects.map((item) => (
+              <SelectionCard
+                key={item.key}
+                label={item.label}
+                detail={`${item.tutor_count} uygun hoca`}
+                selected={subjectKeys.includes(item.key)}
+                onClick={() => selectSubjects(item.key)}
+              />
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    if (step === 3) {
+      return (
+        <div>
+          <SelectionCount selected={answers.challenges?.length ?? 0} maximum={2} noun="alan" />
+          <div className="grid gap-3">
+            {CHALLENGE_OPTIONS.map((item) => (
+              <SelectionCard
+                key={item.value}
+                label={item.label}
+                selected={(answers.challenges ?? []).includes(item.value)}
+                onClick={() => selectChallenges(item.value)}
+              />
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    if (step === 4) {
+      return (
+        <div>
+          <SelectionCount selected={answers.teaching_styles?.length ?? 0} maximum={2} noun="yaklaşım" />
+          <div className="grid gap-3">
+            {STYLE_OPTIONS.map((item) => (
+              <SelectionCard
+                key={item.value}
+                label={item.label}
+                detail={item.detail}
+                selected={(answers.teaching_styles ?? []).includes(item.value)}
+                onClick={() => selectStyles(item.value)}
+              />
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    if (step === 5) {
+      return (
+        <div className="grid gap-3 sm:grid-cols-2">
+          {AVAILABILITY_OPTIONS.map((item) => (
+            <SelectionCard
+              key={item.value}
+              label={item.label}
+              selected={(answers.availability_windows ?? []).includes(item.value)}
+              onClick={() =>
+                setSingle(
+                  "availability_windows",
+                  selectAvailabilityWindow(answers.availability_windows ?? [], item.value)
+                )
+              }
+            />
+          ))}
+        </div>
+      );
+    }
+
+    return (
+      <div className="grid gap-3">
+        {options.budget_ranges.map((item) => (
+          <SelectionCard
+            key={item.id}
+            label={item.label}
+            detail={
+              item.min != null && item.max != null
+                ? `${formatPrice(item.min)} – ${formatPrice(item.max)} / 40 dk`
+                : "Tüm fiyat aralıklarını değerlendir"
+            }
+            selected={answers.budget_segment === item.id}
+            onClick={() => setSingle("budget_segment", item.id as MatchBudgetSegment)}
+          />
+        ))}
+      </div>
+    );
   };
 
-  if (!draftLoaded) return <main className="flex min-h-dvh items-center justify-center bg-[#fbfaf7]"><div className="h-10 w-10 animate-spin rounded-full border-2 border-neutral-200 border-t-[#ff5968]" /></main>;
-
-  if (phase === "intro") {
+  if (!draftLoaded) {
     return (
-      <main className="grid min-h-dvh bg-[#fbfaf7] lg:grid-cols-[42%_58%]">
-        <div className="p-4 sm:p-6 lg:p-8"><GoalMap step={0} answers={answers} /></div>
-        <section className="flex items-center px-6 py-10 sm:px-10 lg:px-16"><div className="mx-auto w-full max-w-xl">
-          <span className="inline-flex items-center gap-2 rounded-full bg-[#fff1f2] px-3 py-1 text-sm font-semibold text-[#d94758]"><Sparkles className="h-4 w-4" /> Sana uygun hocayı bul</span>
-          <h1 className="mt-6 text-4xl font-bold tracking-tight text-neutral-950 sm:text-5xl">Sana uygun hocayı birlikte bulalım</h1>
-          <p className="mt-5 text-lg leading-8 text-neutral-600">Hedefini, ihtiyaçlarını ve programını anlamamız için sana 7 kısa soru soracağız.</p>
-          <ul className="mt-7 space-y-3 text-sm text-neutral-700"><li className="flex gap-2"><Clock3 className="h-5 w-5 text-[#ff5968]" /> 7 soruda kişisel eşleşme</li><li className="flex gap-2"><Check className="h-5 w-5 text-[#ff5968]" /> Yanıtlarını daha sonra değiştirebilirsin</li><li className="flex gap-2"><GraduationCap className="h-5 w-5 text-[#ff5968]" /> Neden önerildiğini görebileceğin hocalar</li></ul>
-          <button type="button" onClick={() => setPhase("questions")} className="mt-9 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-neutral-950 px-6 py-4 font-semibold text-white transition hover:bg-neutral-800 sm:w-auto">Başlayalım <ArrowRight className="h-4 w-4" /></button>
-          <Link href="/home" className="mt-5 block text-sm font-medium text-neutral-500 hover:text-neutral-950 sm:ml-5 sm:inline-block">Öğrenci ana sayfasına dön</Link>
-        </div></section>
+      <main className="flex min-h-dvh items-center justify-center bg-[#fbfaf7]">
+        <LoaderCircle className="h-9 w-9 animate-spin text-[#ff5968]" aria-label="Eşleştirme akışı yükleniyor" />
       </main>
     );
   }
 
-  if (phase === "results") {
+  let content: React.ReactNode;
+
+  if (phase === "intro") {
+    content = (
+      <main className="grid min-h-dvh bg-[#fbfaf7] lg:grid-cols-[42%_58%]">
+        <div className="h-44 p-4 sm:h-52 sm:p-6 lg:h-dvh lg:p-8">
+          <MatchingScene state={sceneState} />
+        </div>
+        <section className="flex items-center px-6 py-8 sm:px-10 lg:px-16 lg:py-10">
+          <motion.div
+            initial={reducedMotion ? false : { opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: reducedMotion ? 0.12 : 0.42, ease: MATCH_EASING.enter }}
+            className="mx-auto w-full max-w-xl"
+          >
+            <span className="inline-flex items-center gap-2 rounded-full bg-[#fff1f2] px-3 py-1 text-sm font-semibold text-[#d94758]">
+              <Sparkles className="h-4 w-4" /> Sana uygun hocayı bul
+            </span>
+            <h1 className="mt-6 text-4xl font-bold tracking-tight text-neutral-950 sm:text-5xl">
+              Sana uygun hocayı birlikte bulalım
+            </h1>
+            <p className="mt-5 text-lg leading-8 text-neutral-600">
+              Hedefini, ihtiyaçlarını ve programını anlamamız için sana 7 kısa soru soracağız.
+            </p>
+            <ul className="mt-7 space-y-3 text-sm text-neutral-700">
+              <li className="flex gap-2"><Clock3 className="h-5 w-5 text-[#ff5968]" /> 7 soruda kişisel eşleşme</li>
+              <li className="flex gap-2"><Check className="h-5 w-5 text-[#ff5968]" /> Yanıtlarını daha sonra değiştirebilirsin</li>
+              <li className="flex gap-2"><GraduationCap className="h-5 w-5 text-[#ff5968]" /> Neden önerildiğini görebileceğin hocalar</li>
+            </ul>
+            <motion.button
+              type="button"
+              disabled={!options && !optionsQuery.isError}
+              whileHover={reducedMotion ? undefined : { y: -1 }}
+              whileTap={reducedMotion ? undefined : { scale: 0.99, y: 0 }}
+              onClick={() => {
+                if (!options && optionsQuery.isError) {
+                  void optionsQuery.refetch();
+                  return;
+                }
+                setDirection(1);
+                setIsTransitioning(true);
+                setPhase("questions");
+              }}
+              className="mt-9 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-neutral-950 px-6 py-4 font-semibold text-white transition hover:bg-neutral-800 disabled:cursor-wait disabled:opacity-50 sm:w-auto"
+            >
+              {!options
+                ? optionsQuery.isError
+                  ? "Tekrar dene"
+                  : "Sorular hazırlanıyor…"
+                : "Başlayalım"}
+              {options || optionsQuery.isError
+                ? <ArrowRight className="h-4 w-4" />
+                : <LoaderCircle className="h-4 w-4 animate-spin" />}
+            </motion.button>
+            <Link href="/home" className="mt-5 block text-sm font-medium text-neutral-500 hover:text-neutral-950 sm:ml-5 sm:inline-block">
+              Öğrenci ana sayfasına dön
+            </Link>
+          </motion.div>
+        </section>
+      </main>
+    );
+  } else if (phase === "matching") {
+    content = (
+      <main className="grid min-h-dvh bg-[#fbfaf7] lg:grid-cols-[42%_58%]">
+        <div className="h-56 p-4 sm:h-64 sm:p-6 lg:h-dvh lg:p-8">
+          <MatchingScene state={sceneState} matching />
+        </div>
+        <section className="flex items-center px-6 py-12 sm:px-10 lg:px-16">
+          <motion.div
+            initial={reducedMotion ? false : { opacity: 0, x: 16 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: reducedMotion ? 0.12 : MATCH_MOTION.reveal, ease: MATCH_EASING.enter }}
+            className="mx-auto w-full max-w-xl"
+            role="status"
+            aria-live="polite"
+          >
+            <span className="flex h-12 w-12 items-center justify-center rounded-full bg-[#fff1f2] text-[#ff5968]">
+              <LoaderCircle className="h-6 w-6 animate-spin" />
+            </span>
+            <h1 className="mt-6 text-3xl font-bold tracking-tight text-neutral-950 sm:text-4xl">
+              Sana uygun hocaları karşılaştırıyoruz
+            </h1>
+            <p className="mt-4 max-w-lg leading-7 text-neutral-600">
+              Yanıtlarını doğrulanmış hocaların gerçek ders, fiyat ve müsaitlik bilgileriyle karşılaştırıyoruz.
+            </p>
+          </motion.div>
+        </section>
+      </main>
+    );
+  } else if (phase === "results") {
     const matches = previewMutation.data?.matches ?? [];
-    return (
+    content = (
       <main className="min-h-dvh bg-[#fbfaf7] px-4 py-8 sm:px-8 sm:py-12">
         <div className="mx-auto max-w-7xl">
-          <button type="button" onClick={() => { setPhase("questions"); setStep(6); }} className="inline-flex items-center gap-2 text-sm font-semibold text-neutral-600 hover:text-neutral-950"><ArrowLeft className="h-4 w-4" /> Tercihleri düzenle</button>
-          <div className="mt-6 max-w-2xl"><span className="text-sm font-bold uppercase tracking-wider text-[#d94758]">Eşleşmen hazır</span><h1 className="mt-2 text-4xl font-bold tracking-tight sm:text-5xl">Sana uygun hocalar</h1><p className="mt-4 text-neutral-600">Öneriler yalnızca verdiğin yanıtlar ve hocaların gerçek profil, fiyat ve müsaitlik bilgileriyle hazırlandı.</p></div>
-          {matches.length ? <motion.div initial={reducedMotion ? false : { opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: reducedMotion ? 0 : 0.55 }} className="mt-8 grid gap-5 lg:grid-cols-3">{matches.map((match) => <MatchCard key={match.tutor.id} match={match} />)}</motion.div> : <div className="mt-8 rounded-3xl border bg-white p-10 text-center"><Target className="mx-auto h-10 w-10 text-neutral-400" /><h2 className="mt-4 text-xl font-bold">Şu an tam eşleşme bulamadık</h2><p className="mt-2 text-neutral-600">Tercihlerini genişletebilir veya tüm hocaları inceleyebilirsin.</p><Link href="/tutors" className="mt-5 inline-flex rounded-xl bg-neutral-950 px-5 py-3 font-semibold text-white">Tüm hocaları gör</Link></div>}
-          {isStudent && <p className="mt-8 flex items-center gap-2 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800"><Check className="h-4 w-4" /> {saveMutation.isPending ? "Tercihlerin kaydediliyor…" : saveMutation.isError ? "Tercihler kaydedilemedi; yeniden denemek için sonuçları yenile." : "Tercihlerin hesabına kaydedildi."}</p>}
+          <button
+            type="button"
+            onClick={() => {
+              setDirection(-1);
+              setStep(6);
+              setIsTransitioning(true);
+              setPhase("questions");
+            }}
+            className="inline-flex items-center gap-2 text-sm font-semibold text-neutral-600 hover:text-neutral-950"
+          >
+            <ArrowLeft className="h-4 w-4" /> Tercihleri düzenle
+          </button>
+
+          <motion.div
+            initial={reducedMotion ? { opacity: 0 } : { opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: reducedMotion ? 0.12 : MATCH_MOTION.reveal, ease: MATCH_EASING.enter }}
+            className="mt-6 grid items-end gap-6 lg:grid-cols-[1fr_auto]"
+          >
+            <div className="max-w-2xl">
+              <span className="text-sm font-bold uppercase tracking-wider text-[#d94758]">Eşleşmen hazır</span>
+              <h1 className="mt-2 text-4xl font-bold tracking-tight sm:text-5xl">Sana uygun hocalar</h1>
+              <p className="mt-4 text-neutral-600">
+                Öneriler yalnızca verdiğin yanıtlar ve hocaların gerçek profil, fiyat ve müsaitlik bilgileriyle hazırlandı.
+              </p>
+            </div>
+            <div
+              className="notranslate flex flex-wrap gap-2 rounded-2xl border border-[#ffdcd2] bg-white px-4 py-3 text-xs font-semibold text-neutral-700 shadow-sm"
+              translate="no"
+            >
+              {sceneState.goal ? <span>{sceneState.goal}</span> : null}
+              {sceneState.subjects.map((subject) => <span key={subject}>· {subject}</span>)}
+              <span className="text-[#d94758]">· 7 / 7 tamamlandı</span>
+            </div>
+          </motion.div>
+
+          {matches.length ? (
+            <div className="mt-8 grid gap-5 lg:grid-cols-3">
+              {matches.map((match, index) => (
+                <MatchResultCard key={match.tutor.id} match={match} index={index} />
+              ))}
+            </div>
+          ) : (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="mt-8 rounded-3xl border bg-white p-10 text-center"
+            >
+              <Target className="mx-auto h-10 w-10 text-neutral-400" />
+              <h2 className="mt-4 text-xl font-bold">Şu an tam eşleşme bulamadık</h2>
+              <p className="mt-2 text-neutral-600">Tercihlerini genişletebilir veya tüm hocaları inceleyebilirsin.</p>
+              <Link href="/tutors" className="mt-5 inline-flex rounded-xl bg-neutral-950 px-5 py-3 font-semibold text-white">
+                Tüm hocaları gör
+              </Link>
+            </motion.div>
+          )}
+
+          {isStudent ? (
+            <p className="mt-8 flex items-center gap-2 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">
+              <Check className="h-4 w-4" />
+              {saveMutation.isPending
+                ? "Tercihlerin kaydediliyor…"
+                : saveMutation.isError
+                  ? "Tercihler kaydedilemedi; daha sonra yeniden deneyebilirsin."
+                  : "Tercihlerin hesabına kaydedildi."}
+            </p>
+          ) : null}
         </div>
+      </main>
+    );
+  } else {
+    const buttonLabel = isPreparingOptions
+      ? "Sonraki soru hazırlanıyor…"
+      : step === 6
+        ? "Eşleşmelerimi gör"
+        : "Devam et";
+
+    content = (
+      <main className="min-h-dvh bg-[#fbfaf7] lg:grid lg:grid-cols-[42%_58%]">
+        <aside className="h-40 p-3 sm:h-48 sm:p-4 lg:sticky lg:top-0 lg:h-dvh lg:p-8">
+          <MatchingScene state={sceneState} />
+        </aside>
+        <section className="flex min-h-[calc(100dvh-10rem)] flex-col px-5 pb-28 pt-4 sm:px-10 lg:min-h-dvh lg:px-16 lg:pb-10 lg:pt-8">
+          <div className="mx-auto w-full max-w-xl">
+            <header className="sticky top-0 z-50 -mx-2 bg-[#fbfaf7]/95 px-2 pb-4 pt-2 backdrop-blur lg:static lg:mx-0 lg:bg-transparent lg:px-0">
+              <div className="flex items-center justify-between">
+                <button
+                  type="button"
+                  disabled={isTransitioning || isPreparingOptions}
+                  onClick={goBack}
+                  className="inline-flex h-10 items-center gap-2 rounded-xl px-2 text-sm font-semibold text-neutral-600 hover:bg-neutral-100 disabled:opacity-50"
+                >
+                  <ArrowLeft className="h-4 w-4" /> Geri
+                </button>
+                <span className="text-sm font-semibold text-neutral-500" aria-live="polite">
+                  <span className="notranslate tabular-nums" translate="no">{step + 1} / 7</span>
+                </span>
+              </div>
+              <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-neutral-200">
+                <motion.div
+                  className="h-full origin-left rounded-full bg-[#ff5968]"
+                  initial={false}
+                  animate={{ scaleX: (step + 1) / 7 }}
+                  transition={{ duration: reducedMotion ? 0 : MATCH_MOTION.progress, ease: MATCH_EASING.enter }}
+                />
+              </div>
+            </header>
+
+            <QuestionTransition
+              step={step}
+              direction={direction}
+              onEntered={finishQuestionTransition}
+            >
+              <p className="mt-5 text-sm font-semibold text-[#d94758]">Sana uygun hocayı buluyoruz</p>
+              <h1
+                ref={headingRef}
+                tabIndex={-1}
+                className="mt-2 text-3xl font-bold tracking-tight text-neutral-950 outline-none sm:text-4xl"
+              >
+                {STEP_TITLES[step]}
+              </h1>
+              <div className="mt-7">{renderAnswers()}</div>
+              <AnimatePresence initial={false}>
+                {validationMessage ? (
+                  <motion.p
+                    role="alert"
+                    initial={reducedMotion ? false : { opacity: 0, y: -4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={reducedMotion ? undefined : { opacity: 0, y: -4 }}
+                    transition={{ duration: reducedMotion ? 0.12 : MATCH_MOTION.message }}
+                    className="mt-3 text-sm font-medium text-red-600"
+                  >
+                    {validationMessage}
+                  </motion.p>
+                ) : null}
+              </AnimatePresence>
+            </QuestionTransition>
+          </div>
+
+          <div className="fixed inset-x-0 bottom-0 z-50 border-t bg-white/95 p-4 backdrop-blur lg:static lg:mt-auto lg:border-0 lg:bg-transparent lg:p-0 lg:pt-8">
+            <div className="mx-auto flex max-w-xl justify-end">
+              <motion.button
+                type="button"
+                disabled={!canContinue || isTransitioning || isPreparingOptions || previewMutation.isPending}
+                onClick={continueFlow}
+                whileTap={reducedMotion ? undefined : { scale: 0.99 }}
+                layout
+                transition={{ duration: MATCH_MOTION.select, ease: MATCH_EASING.interaction }}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-neutral-950 px-6 py-4 font-semibold text-white transition-colors hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto"
+              >
+                {buttonLabel}
+                {isPreparingOptions ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
+              </motion.button>
+            </div>
+          </div>
+        </section>
       </main>
     );
   }
 
   return (
-    <main className="min-h-dvh bg-[#fbfaf7] lg:grid lg:grid-cols-[42%_58%]">
-      <aside className="h-40 p-3 sm:h-48 sm:p-4 lg:sticky lg:top-0 lg:h-dvh lg:p-8"><GoalMap step={step} answers={answers} /></aside>
-      <section className="flex min-h-[calc(100dvh-10rem)] flex-col px-5 pb-28 pt-4 sm:px-10 lg:min-h-dvh lg:px-16 lg:pb-10 lg:pt-8">
-        <div className="mx-auto w-full max-w-xl">
-          <header className="sticky top-0 z-10 -mx-2 bg-[#fbfaf7]/95 px-2 pb-4 pt-2 backdrop-blur lg:static lg:mx-0 lg:bg-transparent lg:px-0">
-            <div className="flex items-center justify-between"><button type="button" onClick={() => step === 0 ? setPhase("intro") : setStep((current) => current - 1)} className="inline-flex h-10 items-center gap-2 rounded-xl px-2 text-sm font-semibold text-neutral-600 hover:bg-neutral-100"><ArrowLeft className="h-4 w-4" /> Geri</button><span className="text-sm font-semibold text-neutral-500">{step + 1} / 7</span></div>
-            <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-neutral-200"><motion.div className="h-full rounded-full bg-[#ff5968]" animate={{ width: `${((step + 1) / 7) * 100}%` }} transition={{ duration: reducedMotion ? 0 : 0.25 }} /></div>
-          </header>
-          <AnimatePresence mode="wait" initial={false}><motion.div key={step} initial={reducedMotion ? false : { opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={reducedMotion ? undefined : { opacity: 0, x: -8 }} transition={{ duration: reducedMotion ? 0 : 0.24 }}>
-            <p className="mt-5 text-sm font-semibold text-[#d94758]">Sana uygun hocayı buluyoruz</p>
-            <h1 ref={headingRef} tabIndex={-1} className="mt-2 text-3xl font-bold tracking-tight text-neutral-950 outline-none sm:text-4xl">{STEP_TITLES[step]}</h1>
-            <div className="mt-7">{renderAnswers()}</div>
-            {validationMessage && <p role="alert" className="mt-3 text-sm font-medium text-red-600">{validationMessage}</p>}
-          </motion.div></AnimatePresence>
-        </div>
-        <div className="fixed inset-x-0 bottom-0 z-20 border-t bg-white/95 p-4 backdrop-blur lg:static lg:mt-auto lg:border-0 lg:bg-transparent lg:p-0 lg:pt-8"><div className="mx-auto flex max-w-xl justify-end"><button type="button" disabled={!canContinue || previewMutation.isPending} onClick={continueFlow} className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-neutral-950 px-6 py-4 font-semibold text-white transition hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto">{previewMutation.isPending ? "Hocalar karşılaştırılıyor…" : step === 6 ? "Eşleşmelerimi gör" : "Devam et"}<ArrowRight className="h-4 w-4" /></button></div>{previewMutation.isError && <p role="alert" className="mx-auto mt-2 max-w-xl text-sm text-red-600">Eşleşmeler hazırlanamadı. Lütfen tekrar dene.</p>}</div>
-      </section>
-    </main>
+    <MotionConfig reducedMotion="user">
+      <LayoutGroup id="matching-flow">{content}</LayoutGroup>
+    </MotionConfig>
   );
 }
 
@@ -364,7 +738,9 @@ export default function MatchPage() {
       requireRole="student"
       redirectTo="/login?role=student&returnUrl=%2Fmatch"
     >
-      <Suspense fallback={null}><MatchingExperience /></Suspense>
+      <Suspense fallback={null}>
+        <MatchingExperience />
+      </Suspense>
     </RouteGuard>
   );
 }
