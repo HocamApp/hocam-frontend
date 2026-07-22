@@ -511,6 +511,9 @@ function SessionContent() {
             startWithVideoMuted: false,
             prejoinPageEnabled: true,
             disableAddingBackgroundImages: false,
+            disablePolls: true,
+            transcription: { enabled: false },
+            fileSharing: { enabled: false },
             toolbarButtons: jitsiToolbarButtons,
           }}
           interfaceConfigOverwrite={{
@@ -518,7 +521,6 @@ function SessionContent() {
             SHOW_BRAND_WATERMARK: false,
             SHOW_POWERED_BY: false,
             DEFAULT_BACKGROUND: "#111827",
-            TOOLBAR_BUTTONS: jitsiToolbarButtons,
           }}
           onApiReady={(api) => {
             setJitsiApi(api);
