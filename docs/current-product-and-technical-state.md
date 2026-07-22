@@ -1,6 +1,6 @@
 # HOCAM — Current Product & Technical State
 
-**Status date:** 12 July 2026  
+**Status date:** 22 July 2026
 This is the active product and technical direction for Hocam. It supersedes earlier roadmaps and M3 handoffs when they conflict; those documents are historical context only.
 
 ## Direction
@@ -19,6 +19,10 @@ This is the active product and technical direction for Hocam. It supersedes earl
 - Booking lifecycle transitions are centralized in `apps/lessons/services.py::transition_booking`. Tutors cannot directly complete lessons.
 - Tutor approval requests that pass their lesson start time are automatically cancelled by the backend; legacy `expired` records are displayed as automatically cancelled.
 - Video uses JaaS / 8x8. A confirmed booking has a `room_url`, and users join via `/session/[bookingId]`. Do not implement the obsolete Daily.co plan or `/lesson/[bookingId]`.
+- The live lesson JaaS UI keeps the room identity intact while hiding its technical
+  conference subject and omitting only the tileview toolbar control. Tutor Whiteboard
+  and screen sharing remain enabled.
+- Tutors have a private, persistent “Materyaller” workspace per student beneath “Özel Notlarım”; students never query or see these files.
 - Messaging polling is intentional; do not add WebSockets without a separate architecture decision.
 - Staff users have a guarded `/admin-control` QA center for marked test accounts. Account
   switching uses a short-lived impersonation session with a persistent warning banner;

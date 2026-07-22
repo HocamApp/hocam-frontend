@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
+  getLessonJitsiConfigOverwrite,
   getLessonJitsiToolbarButtons,
   getScreenShareButtonLabel,
   screenSharingStateFromEvent,
@@ -9,10 +10,20 @@ import {
 describe("lesson Jitsi screen-sharing controls", () => {
   it("shows desktop sharing only in the tutor toolbar", () => {
     assert.deepEqual(getLessonJitsiToolbarButtons("tutor"), [
-      "microphone", "camera", "chat", "whiteboard", "desktop", "tileview", "hangup",
+      "microphone", "camera", "chat", "whiteboard", "desktop", "hangup",
     ]);
     assert.deepEqual(getLessonJitsiToolbarButtons("student"), [
-      "microphone", "camera", "chat", "tileview", "hangup",
+      "microphone", "camera", "chat", "hangup",
+    ]);
+  });
+
+  it("hides the conference subject without disabling Jitsi layout behavior", () => {
+    const config = getLessonJitsiConfigOverwrite("tutor");
+
+    assert.equal(config.hideConferenceSubject, true);
+    assert.equal("disableTileView" in config, false);
+    assert.deepEqual(config.toolbarButtons, [
+      "microphone", "camera", "chat", "whiteboard", "desktop", "hangup",
     ]);
   });
 

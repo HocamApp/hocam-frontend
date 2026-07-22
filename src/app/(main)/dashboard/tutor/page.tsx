@@ -63,7 +63,7 @@ import { canJoinLesson } from "@/components/lessons/LessonJoinButton";
 import { LessonMaterialsDialog } from "@/components/lessons/LessonMaterialsDialog";
 import { ParticipantAvatar } from "@/components/messaging/ParticipantAvatar";
 import { AvailabilityCalendar } from "@/components/tutors/AvailabilityCalendar";
-import { TutorStudentNotes } from "@/components/tutors/TutorStudentNotes";
+import { TutorStudentPrivateWorkspace } from "@/components/tutors/TutorStudentPrivateWorkspace";
 import { TutorWeeklySchedule } from "@/components/tutors/TutorWeeklySchedule";
 import { VerifiedTutorMark } from "@/components/tutors/VerifiedTutorMark";
 import { ReviewCard } from "@/components/tutors/ReviewCard";
@@ -785,7 +785,7 @@ function StudentDetailDialog({
           </Badge>
         )}
 
-        <TutorStudentNotes studentId={student.id} />
+        <TutorStudentPrivateWorkspace studentId={student.id} />
 
         <div className="space-y-3">
           {bookings.length === 0 ? (

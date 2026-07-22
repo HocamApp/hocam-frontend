@@ -1057,6 +1057,34 @@ export interface NotificationSummary {
   unread_count: number;
 }
 
+export interface TutorStudentNote {
+  id: string;
+  student: string;
+  student_summary: { id: string; name: string; surname: string };
+  content: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TutorStudentMaterial {
+  id: string;
+  student: string;
+  original_name: string;
+  mime_type: string;
+  file_extension: string;
+  size_bytes: number;
+  created_at: string;
+}
+
+export interface TutorStudentMaterialAccess {
+  url: string;
+  expires_at: string;
+}
+
+export interface TutorStudentMaterialDeleteResult {
+  status: "deleted" | "delete_pending";
+}
+
 export type SupportTicketCategory =
   | "account"
   | "booking"

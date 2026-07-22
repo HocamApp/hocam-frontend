@@ -20,7 +20,7 @@ import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { Button } from "@/components/ui/button";
 import { formatDate } from "@/lib/utils";
 import {
-  getLessonJitsiToolbarButtons,
+  getLessonJitsiConfigOverwrite,
   getScreenShareButtonLabel,
   screenSharingStateFromEvent,
 } from "@/lib/jitsiSessionControls";
@@ -28,7 +28,7 @@ import type { Booking } from "@/types";
 import { LessonQuestionPanel } from "@/components/questions/LessonQuestionPanel";
 import { LessonQuestionInvitationDialog } from "@/components/questions/LessonQuestionInvitationDialog";
 import { useLessonQuestionSession } from "@/components/questions/useLessonQuestionSession";
-import { TutorStudentNotes } from "@/components/tutors/TutorStudentNotes";
+import { TutorStudentPrivateWorkspace } from "@/components/tutors/TutorStudentPrivateWorkspace";
 
 const EARLY_JOIN_MINUTES = 15;
 const HEARTBEAT_INTERVAL_MS = 60_000;
@@ -424,7 +424,7 @@ function SessionContent() {
   const isOvertime = remainingMs !== null && remainingMs <= 0;
   const isLowTime =
     remainingMs !== null && remainingMs > 0 && remainingMs <= LOW_TIME_WARNING_MS;
-  const jitsiToolbarButtons = getLessonJitsiToolbarButtons(user?.role);
+  const jitsiConfigOverwrite = getLessonJitsiConfigOverwrite(user?.role);
 
   return (
     <div className="flex flex-1 flex-col">
@@ -527,16 +527,7 @@ function SessionContent() {
             displayName,
             email: user?.email ?? "",
           }}
-          configOverwrite={{
-            startWithAudioMuted: false,
-            startWithVideoMuted: false,
-            prejoinPageEnabled: true,
-            disableAddingBackgroundImages: false,
-            disablePolls: true,
-            transcription: { enabled: false },
-            fileSharing: { enabled: false },
-            toolbarButtons: jitsiToolbarButtons,
-          }}
+          configOverwrite={jitsiConfigOverwrite}
           interfaceConfigOverwrite={{
             SHOW_JITSI_WATERMARK: false,
             SHOW_BRAND_WATERMARK: false,
@@ -587,7 +578,7 @@ function SessionContent() {
                 <X className="h-4 w-4" />
               </Button>
             </div>
-            <TutorStudentNotes studentId={booking.student.id} compact />
+            <TutorStudentPrivateWorkspace studentId={booking.student.id} compact />
           </aside>
         )}
       </div>

@@ -6,9 +6,22 @@ export function getLessonJitsiToolbarButtons(role: LessonParticipantRole) {
     "camera",
     "chat",
     ...(role === "tutor" ? ["whiteboard", "desktop"] : []),
-    "tileview",
     "hangup",
   ];
+}
+
+export function getLessonJitsiConfigOverwrite(role: LessonParticipantRole) {
+  return {
+    startWithAudioMuted: false,
+    startWithVideoMuted: false,
+    prejoinPageEnabled: true,
+    disableAddingBackgroundImages: false,
+    disablePolls: true,
+    transcription: { enabled: false },
+    fileSharing: { enabled: false },
+    hideConferenceSubject: true,
+    toolbarButtons: getLessonJitsiToolbarButtons(role),
+  };
 }
 
 export function screenSharingStateFromEvent(event: unknown): boolean | null {
