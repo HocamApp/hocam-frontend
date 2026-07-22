@@ -9,6 +9,26 @@ import type {
   SolvableQuestion,
 } from "@/types";
 
+export function getQuestionSessionErrorMessage(
+  error: unknown,
+  fallback: string
+): string {
+  if (!error || typeof error !== "object") return fallback;
+  const response = (
+    error as { response?: { status?: number } }
+  ).response;
+  if (response?.status === 403) {
+    return "Bu derste soru paylaşma yetkin yok.";
+  }
+  if (response?.status === 404) {
+    return "Ders veya paylaşılacak soru bulunamadı.";
+  }
+  if (response?.status === 409) {
+    return "Bu ders artık aktif olmadığı için soru paylaşılamaz.";
+  }
+  return fallback;
+}
+
 export async function fetchQuestions(
   filters: QuestionFilters = {},
   wrongOnly = false

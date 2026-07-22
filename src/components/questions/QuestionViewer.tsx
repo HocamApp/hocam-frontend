@@ -14,11 +14,13 @@ import type { QuestionAttemptResult, SolvableQuestion } from "@/types";
 export function QuestionViewer({
   question,
   compact = false,
+  answerControl = "self",
   revealedCorrectChoice = "",
   revealedSolutionUrl = "",
 }: {
   question: SolvableQuestion;
   compact?: boolean;
+  answerControl?: "self" | "tutor-controlled";
   revealedCorrectChoice?: string;
   revealedSolutionUrl?: string;
 }) {
@@ -49,6 +51,7 @@ export function QuestionViewer({
   const correctChoice = result?.correct_choice || revealedCorrectChoice;
   const solutionUrl = result?.solution_url || revealedSolutionUrl;
   const isRevealed = Boolean(correctChoice);
+  const isTutorControlled = answerControl === "tutor-controlled";
 
   return (
     <article className={cn("space-y-5", compact ? "text-sm" : "rounded-2xl border bg-card p-5 sm:p-7")}>
@@ -111,7 +114,7 @@ export function QuestionViewer({
       </div>
 
       <div className="flex flex-wrap gap-2">
-        {user?.role === "student" && !isRevealed && (
+        {user?.role === "student" && !isRevealed && !isTutorControlled && (
           <Button
             onClick={() => mutation.mutate("submit")}
             disabled={!selectedChoice || mutation.isPending}
@@ -119,7 +122,7 @@ export function QuestionViewer({
             Yanıtı kontrol et
           </Button>
         )}
-        {!isRevealed && (
+        {!isRevealed && !isTutorControlled && (
           <Button
             variant="outline"
             onClick={() => mutation.mutate("reveal")}
@@ -128,7 +131,7 @@ export function QuestionViewer({
             Çözümü göster
           </Button>
         )}
-        {isRevealed && (
+        {isRevealed && !isTutorControlled && (
           <Button
             variant="ghost"
             onClick={() => {

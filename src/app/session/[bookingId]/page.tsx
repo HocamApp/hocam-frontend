@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { useParams, useRouter } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Clock3, Download, FileQuestion, StickyNote, Video, WifiOff, X } from "lucide-react";
+import { ArrowLeft, Clock3, FileQuestion, PencilRuler, StickyNote, Video, WifiOff, X } from "lucide-react";
 import { toast } from "sonner";
 import {
   fetchBookings,
@@ -21,6 +21,8 @@ import { Button } from "@/components/ui/button";
 import { formatDate } from "@/lib/utils";
 import type { Booking } from "@/types";
 import { LessonQuestionPanel } from "@/components/questions/LessonQuestionPanel";
+import { LessonQuestionInvitationDialog } from "@/components/questions/LessonQuestionInvitationDialog";
+import { useLessonQuestionSession } from "@/components/questions/useLessonQuestionSession";
 import { TutorStudentNotes } from "@/components/tutors/TutorStudentNotes";
 
 const EARLY_JOIN_MINUTES = 15;
@@ -202,9 +204,9 @@ function SessionContent() {
   >("connected");
   const [jitsiKey, setJitsiKey] = useState(0);
   const [isRequestingEnd, setIsRequestingEnd] = useState(false);
-  const [questionPanelOpen, setQuestionPanelOpen] = useState(true);
   const [notesPanelOpen, setNotesPanelOpen] = useState(false);
   const reconnectTimeoutRef = useRef<number | null>(null);
+  const questionButtonRef = useRef<HTMLButtonElement>(null);
 
   const { data: bookings, isLoading: isLoadingBooking } = useQuery({
     queryKey: ["bookings"],
@@ -251,6 +253,11 @@ function SessionContent() {
     !studentTooEarly &&
     Boolean(sessionToken) &&
     !sessionEnded;
+  const questionSession = useLessonQuestionSession({
+    bookingId,
+    enabled: inSession,
+    isStudent: user?.role === "student",
+  });
 
   // Ticks once a second while a countdown is on screen (waiting room handles
   // its own timer; this drives the in-session "kalan süre" bar).
@@ -354,7 +361,7 @@ function SessionContent() {
 
   const displayName = user?.email?.split("@", 1)[0] ?? "Kullanıcı";
 
-  const handleWhiteboardDownload = () => {
+  const handleToggleWhiteboard = () => {
     if (!jitsiApi?.executeCommand) {
       toast.info("Ders odası hazırlanıyor. Birkaç saniye sonra tekrar dene.");
       return;
@@ -362,9 +369,7 @@ function SessionContent() {
 
     try {
       jitsiApi.executeCommand("toggleWhiteboard");
-      toast.info(
-        "Whiteboard açıldı. Beyaz tahta menüsünden dışa aktar/indir seçeneğini kullanabilirsin."
-      );
+      toast.info("Whiteboard görünümü değiştirildi.");
     } catch {
       toast.error("Whiteboard şu anda açılamadı.");
     }
@@ -400,6 +405,14 @@ function SessionContent() {
   const isOvertime = remainingMs !== null && remainingMs <= 0;
   const isLowTime =
     remainingMs !== null && remainingMs > 0 && remainingMs <= LOW_TIME_WARNING_MS;
+  const jitsiToolbarButtons = [
+    "microphone",
+    "camera",
+    "chat",
+    ...(user?.role === "tutor" ? ["whiteboard"] : []),
+    "tileview",
+    "hangup",
+  ];
 
   return (
     <div className="flex flex-1 flex-col">
@@ -431,11 +444,21 @@ function SessionContent() {
             </span>
           )}
           <button
-            onClick={() => setQuestionPanelOpen((open) => !open)}
+            ref={questionButtonRef}
+            onClick={() =>
+              questionSession.panelOpen
+                ? questionSession.closePanel()
+                : questionSession.openPanel()
+            }
             className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded border border-white/20 px-3 py-1 text-xs transition-colors hover:bg-white/10"
+            aria-expanded={questionSession.panelOpen}
+            aria-controls="lesson-question-panel"
           >
             <FileQuestion className="h-3.5 w-3.5" aria-hidden="true" />
             Canlı soru
+            {questionSession.state?.active_question && (
+              <span className="h-1.5 w-1.5 rounded-full bg-sky-300" aria-label="Aktif soru var" />
+            )}
           </button>
           {user?.role === "tutor" && booking && (
             <button
@@ -447,13 +470,15 @@ function SessionContent() {
               Öğrenci notları
             </button>
           )}
-          <button
-            onClick={handleWhiteboardDownload}
-            className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded border border-white/20 px-3 py-1 text-xs transition-colors hover:bg-white/10"
-          >
-            <Download className="h-3.5 w-3.5" aria-hidden="true" />
-            Whiteboard indir
-          </button>
+          {user?.role === "tutor" && (
+            <button
+              onClick={handleToggleWhiteboard}
+              className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded border border-white/20 px-3 py-1 text-xs transition-colors hover:bg-white/10"
+            >
+              <PencilRuler className="h-3.5 w-3.5" aria-hidden="true" />
+              Whiteboard&apos;u aç/kapat
+            </button>
+          )}
           <button
             onClick={handleRequestEarlyEnd}
             disabled={isRequestingEnd || earlyEndRequestedByMe}
@@ -486,28 +511,14 @@ function SessionContent() {
             startWithVideoMuted: false,
             prejoinPageEnabled: true,
             disableAddingBackgroundImages: false,
-            toolbarButtons: [
-              "microphone",
-              "camera",
-              "chat",
-              "whiteboard",
-              "tileview",
-              "hangup",
-            ],
+            toolbarButtons: jitsiToolbarButtons,
           }}
           interfaceConfigOverwrite={{
             SHOW_JITSI_WATERMARK: false,
             SHOW_BRAND_WATERMARK: false,
             SHOW_POWERED_BY: false,
             DEFAULT_BACKGROUND: "#111827",
-            TOOLBAR_BUTTONS: [
-              "microphone",
-              "camera",
-              "chat",
-              "whiteboard",
-              "tileview",
-              "hangup",
-            ],
+            TOOLBAR_BUTTONS: jitsiToolbarButtons,
           }}
           onApiReady={(api) => {
             setJitsiApi(api);
@@ -533,10 +544,11 @@ function SessionContent() {
           }}
           />
         </div>
-        {booking && questionPanelOpen && (
+        {booking && questionSession.panelOpen && (
           <LessonQuestionPanel
             booking={booking}
-            onClose={() => setQuestionPanelOpen(false)}
+            session={questionSession}
+            onClose={questionSession.closePanel}
           />
         )}
         {booking && user?.role === "tutor" && notesPanelOpen && (
@@ -551,6 +563,13 @@ function SessionContent() {
           </aside>
         )}
       </div>
+      <LessonQuestionInvitationDialog
+        open={questionSession.invitationOpen}
+        question={questionSession.state?.active_question ?? null}
+        returnFocusRef={questionButtonRef}
+        onAccept={questionSession.acceptInvitation}
+        onDismiss={questionSession.dismissInvitation}
+      />
     </div>
   );
 }

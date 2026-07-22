@@ -1,59 +1,38 @@
 "use client";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Eye, FileQuestion, X } from "lucide-react";
-import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
-import {
-  clearLessonQuestionState,
-  fetchLessonQuestionState,
-  fetchQuestions,
-  updateLessonQuestionState,
-} from "@/lib/questionsApi";
+import { fetchQuestions } from "@/lib/questionsApi";
 import { QuestionViewer } from "@/components/questions/QuestionViewer";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { Booking, LessonQuestionStateUpdate } from "@/types";
+import type { Booking } from "@/types";
+import type { LessonQuestionSessionController } from "./useLessonQuestionSession";
 
 export function LessonQuestionPanel({
   booking,
+  session,
   onClose,
 }: {
   booking: Booking;
+  session: LessonQuestionSessionController;
   onClose: () => void;
 }) {
   const { user } = useAuth();
-  const queryClient = useQueryClient();
   const isTutor = user?.role === "tutor";
-  const state = useQuery({
-    queryKey: ["lesson-question-state", booking.id],
-    queryFn: () => fetchLessonQuestionState(booking.id),
-    refetchInterval: 2_000,
-  });
   const available = useQuery({
     queryKey: ["lesson-question-options", booking.subject.id],
     queryFn: () => fetchQuestions({ subject: booking.subject.id, page_size: 24 }),
     enabled: isTutor,
   });
-  const update = useMutation({
-    mutationFn: (payload: LessonQuestionStateUpdate) =>
-      updateLessonQuestionState(booking.id, payload),
-    onSuccess: (data) => {
-      queryClient.setQueryData(["lesson-question-state", booking.id], data);
-    },
-    onError: () => toast.error("Soru paylaşımı güncellenemedi."),
-  });
-  const clear = useMutation({
-    mutationFn: () => clearLessonQuestionState(booking.id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["lesson-question-state", booking.id] });
-    },
-    onError: () => toast.error("Paylaşım kapatılamadı."),
-  });
-  const active = state.data?.active_question;
+  const active = session.state?.active_question;
 
   return (
-    <aside className="absolute inset-0 z-20 flex min-h-0 flex-col border-l bg-background text-foreground md:static md:w-[420px] md:shrink-0">
+    <aside
+      id="lesson-question-panel"
+      className="absolute inset-0 z-20 flex min-h-0 flex-col border-l bg-background text-foreground md:static md:w-[420px] md:shrink-0"
+    >
       <header className="flex items-center justify-between border-b px-4 py-3">
         <div className="flex items-center gap-2 font-semibold">
           <FileQuestion className="h-4 w-4 text-primary" /> Canlı soru
@@ -64,26 +43,41 @@ export function LessonQuestionPanel({
       </header>
 
       <div className="flex-1 space-y-5 overflow-y-auto p-4">
-        {state.isLoading && <Skeleton className="h-72 rounded-xl" />}
-        {active ? (
+        {session.stateIsLoading && <Skeleton className="h-72 rounded-xl" />}
+        {session.stateIsError && !session.state ? (
+          <div className="space-y-3 rounded-xl border border-destructive/40 bg-destructive/5 p-4 text-sm">
+            <p>Canlı soru durumu yüklenemedi.</p>
+            <Button size="sm" variant="outline" onClick={session.refetchState}>
+              Yeniden dene
+            </Button>
+          </div>
+        ) : active ? (
           <>
             <QuestionViewer
-              key={`${active.id}-${state.data?.version}`}
+              key={`${active.id}-${session.state?.version}`}
               question={active}
               compact
-              revealedCorrectChoice={state.data?.correct_choice}
-              revealedSolutionUrl={state.data?.solution_url}
+              answerControl="tutor-controlled"
+              revealedCorrectChoice={session.state?.correct_choice}
+              revealedSolutionUrl={session.state?.solution_url}
             />
             {isTutor && (
               <div className="flex flex-wrap gap-2 border-t pt-4">
                 <Button
                   size="sm"
-                  onClick={() => update.mutate({ solution_revealed: true })}
-                  disabled={Boolean(state.data?.solution_revealed) || update.isPending}
+                  onClick={() => session.updateState({ solution_revealed: true })}
+                  disabled={
+                    Boolean(session.state?.solution_revealed) || session.updatePending
+                  }
                 >
                   <Eye className="mr-2 h-4 w-4" /> Cevabı öğrenciye göster
                 </Button>
-                <Button size="sm" variant="outline" onClick={() => clear.mutate()} disabled={clear.isPending}>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={session.clearState}
+                  disabled={session.clearPending}
+                >
                   Paylaşımı kapat
                 </Button>
               </div>
@@ -105,8 +99,8 @@ export function LessonQuestionPanel({
               <button
                 key={question.id}
                 type="button"
-                onClick={() => update.mutate({ question_id: question.id })}
-                disabled={update.isPending}
+                onClick={() => session.updateState({ question_id: question.id })}
+                disabled={session.updatePending}
                 className="w-full rounded-xl border p-3 text-left text-sm transition-colors hover:border-primary hover:bg-primary/5 disabled:opacity-50"
               >
                 <span className="line-clamp-3 whitespace-pre-wrap">{question.prompt}</span>
