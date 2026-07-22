@@ -608,6 +608,7 @@ export interface LessonQuestionState {
   solution_url: string;
   version: number;
   updated_at: string | null;
+  student_attempt: { selected_choice: string; is_correct: boolean | null } | null;
 }
 
 export interface QuestionFilters {

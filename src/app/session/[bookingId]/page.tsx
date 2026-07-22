@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { useParams, useRouter } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Clock3, Download, FileQuestion, StickyNote, Video, WifiOff, X } from "lucide-react";
+import { ArrowLeft, Clock3, FileQuestion, PenSquare, StickyNote, Video, WifiOff, X } from "lucide-react";
 import { toast } from "sonner";
 import {
   fetchBookings,
@@ -18,6 +18,14 @@ import { RouteGuard } from "@/components/shared/RouteGuard";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { formatDate } from "@/lib/utils";
 import type { Booking } from "@/types";
 import { LessonQuestionPanel } from "@/components/questions/LessonQuestionPanel";
@@ -204,18 +212,71 @@ function SessionContent() {
   const [isRequestingEnd, setIsRequestingEnd] = useState(false);
   const [questionPanelOpen, setQuestionPanelOpen] = useState(true);
   const [notesPanelOpen, setNotesPanelOpen] = useState(false);
+  const [leaveConfirmOpen, setLeaveConfirmOpen] = useState(false);
   const reconnectTimeoutRef = useRef<number | null>(null);
+  const participantNamesRef = useRef<Map<string, string>>(new Map());
 
   const { data: bookings, isLoading: isLoadingBooking } = useQuery({
     queryKey: ["bookings"],
     queryFn: fetchBookings,
     refetchInterval: (query) => {
       const current = query.state.data?.find((b) => b.id === bookingId);
-      return current?.status === "in_progress" ? 10_000 : false;
+      return current?.status === "in_progress" ? 4_000 : false;
     },
   });
 
   const booking = bookings?.find((b) => b.id === bookingId);
+
+  const earlyEndRequestedByMe = booking
+    ? user?.role === "tutor"
+      ? Boolean(booking.tutor_end_requested_at)
+      : Boolean(booking.student_end_requested_at)
+    : false;
+
+  const handleRequestEarlyEnd = async () => {
+    if (!booking) return;
+    setIsRequestingEnd(true);
+    try {
+      const updated = await requestEarlyEnd(booking.id);
+      queryClient.setQueryData<Booking[]>(["bookings"], (old) =>
+        old ? old.map((b) => (b.id === updated.id ? updated : b)) : old
+      );
+      if (updated.status === "awaiting_confirmation") {
+        toast.success("Ders sona erdi. Onay bekleniyor.");
+      } else {
+        toast.info("İstek gönderildi. Karşı tarafın onayı bekleniyor.");
+      }
+    } catch {
+      toast.error("İstek gönderilemedi. Lütfen tekrar dene.");
+    } finally {
+      setIsRequestingEnd(false);
+    }
+  };
+
+  // Notifies the counterpart when the other side requests an early end, so
+  // they don't have to notice the "Dersi bitir" button state changing on its own.
+  const counterpartEndRequestedAtRef = useRef<string | null | undefined>(undefined);
+  useEffect(() => {
+    if (!booking || !user?.role) return;
+    const counterpartRequestedAt =
+      user.role === "tutor" ? booking.student_end_requested_at : booking.tutor_end_requested_at;
+    const previous = counterpartEndRequestedAtRef.current;
+    if (previous === undefined) {
+      counterpartEndRequestedAtRef.current = counterpartRequestedAt ?? null;
+      return;
+    }
+    if (!previous && counterpartRequestedAt) {
+      const label = user.role === "tutor" ? "Öğrenci" : "Hocan";
+      toast(`${label} dersi bitirmek istiyor. Onaylıyor musun?`, {
+        action: {
+          label: "Onayla",
+          onClick: () => handleRequestEarlyEnd(),
+        },
+      });
+    }
+    counterpartEndRequestedAtRef.current = counterpartRequestedAt ?? null;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [booking?.student_end_requested_at, booking?.tutor_end_requested_at, user?.role]);
   const studentTooEarly = useMemo(() => {
     if (!booking || user?.role !== "student") return false;
     const status = (booking.status || "").toLowerCase();
@@ -352,9 +413,13 @@ function SessionContent() {
     );
   }
 
-  const displayName = user?.email?.split("@", 1)[0] ?? "Kullanıcı";
+  const displayName = booking
+    ? user?.role === "tutor"
+      ? `${booking.tutor.name} ${booking.tutor.surname}`.trim()
+      : booking.student.display_name || booking.student.email
+    : (user?.email?.split("@", 1)[0] ?? "Kullanıcı");
 
-  const handleWhiteboardDownload = () => {
+  const handleWhiteboardOpen = () => {
     if (!jitsiApi?.executeCommand) {
       toast.info("Ders odası hazırlanıyor. Birkaç saniye sonra tekrar dene.");
       return;
@@ -363,37 +428,21 @@ function SessionContent() {
     try {
       jitsiApi.executeCommand("toggleWhiteboard");
       toast.info(
-        "Whiteboard açıldı. Beyaz tahta menüsünden dışa aktar/indir seçeneğini kullanabilirsin."
+        "Whiteboard açıldı. Sağ üstteki menüden PNG/SVG olarak dışa aktarabilirsin."
       );
     } catch {
       toast.error("Whiteboard şu anda açılamadı.");
     }
   };
 
-  const earlyEndRequestedByMe = booking
-    ? user?.role === "tutor"
-      ? Boolean(booking.tutor_end_requested_at)
-      : Boolean(booking.student_end_requested_at)
-    : false;
-
-  const handleRequestEarlyEnd = async () => {
-    if (!booking) return;
-    setIsRequestingEnd(true);
+  const handleConfirmLeave = () => {
+    setLeaveConfirmOpen(false);
     try {
-      const updated = await requestEarlyEnd(booking.id);
-      queryClient.setQueryData<Booking[]>(["bookings"], (old) =>
-        old ? old.map((b) => (b.id === updated.id ? updated : b)) : old
-      );
-      if (updated.status === "awaiting_confirmation") {
-        toast.success("Ders sona erdi. Onay bekleniyor.");
-      } else {
-        toast.info("İstek gönderildi. Karşı tarafın onayı bekleniyor.");
-      }
+      jitsiApi?.executeCommand?.("hangup");
     } catch {
-      toast.error("İstek gönderilemedi. Lütfen tekrar dene.");
-    } finally {
-      setIsRequestingEnd(false);
+      // Meeting may already be closed — nothing to clean up.
     }
+    router.back();
   };
 
   const remainingMs = booking ? scheduledEndTime(booking) - now : null;
@@ -448,11 +497,11 @@ function SessionContent() {
             </button>
           )}
           <button
-            onClick={handleWhiteboardDownload}
+            onClick={handleWhiteboardOpen}
             className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded border border-white/20 px-3 py-1 text-xs transition-colors hover:bg-white/10"
           >
-            <Download className="h-3.5 w-3.5" aria-hidden="true" />
-            Whiteboard indir
+            <PenSquare className="h-3.5 w-3.5" aria-hidden="true" />
+            Whiteboard&apos;ı aç
           </button>
           <button
             onClick={handleRequestEarlyEnd}
@@ -462,7 +511,7 @@ function SessionContent() {
             {earlyEndRequestedByMe ? "Onay bekleniyor..." : "Dersi bitir"}
           </button>
           <button
-            onClick={() => router.back()}
+            onClick={() => setLeaveConfirmOpen(true)}
             className="shrink-0 rounded border border-white/20 px-3 py-1 text-xs transition-colors hover:bg-white/10"
           >
             Çıkış
@@ -492,7 +541,6 @@ function SessionContent() {
               "chat",
               "whiteboard",
               "tileview",
-              "hangup",
             ],
           }}
           interfaceConfigOverwrite={{
@@ -500,13 +548,13 @@ function SessionContent() {
             SHOW_BRAND_WATERMARK: false,
             SHOW_POWERED_BY: false,
             DEFAULT_BACKGROUND: "#111827",
+            CONNECTION_INDICATOR_DISABLED: true,
             TOOLBAR_BUTTONS: [
               "microphone",
               "camera",
               "chat",
               "whiteboard",
               "tileview",
-              "hangup",
             ],
           }}
           onApiReady={(api) => {
@@ -525,6 +573,27 @@ function SessionContent() {
                 reconnectTimeoutRef.current = null;
               }
             });
+            // The SDK's addEventListener type declares handlers as `() => void`,
+            // but Jitsi actually invokes participant events with a payload.
+            api.addEventListener?.(
+              "participantJoined",
+              ((event: { id?: string; displayName?: string }) => {
+                if (event?.id && event?.displayName) {
+                  participantNamesRef.current.set(event.id, event.displayName);
+                }
+                if (event?.displayName) toast.info(`${event.displayName} derse katıldı`);
+              }) as unknown as () => void
+            );
+            api.addEventListener?.(
+              "participantLeft",
+              ((event: { id?: string; displayName?: string }) => {
+                const name =
+                  event?.displayName ||
+                  (event?.id ? participantNamesRef.current.get(event.id) : undefined);
+                if (name) toast.info(`${name} dersten ayrıldı`);
+                if (event?.id) participantNamesRef.current.delete(event.id);
+              }) as unknown as () => void
+            );
           }}
           onReadyToClose={() => router.back()}
           getIFrameRef={(iframeRef) => {
@@ -551,6 +620,24 @@ function SessionContent() {
           </aside>
         )}
       </div>
+      <Dialog open={leaveConfirmOpen} onOpenChange={setLeaveConfirmOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Dersten ayrıl</DialogTitle>
+            <DialogDescription>
+              Dersten ayrılmak istediğine emin misin?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setLeaveConfirmOpen(false)}>
+              Vazgeç
+            </Button>
+            <Button variant="destructive" onClick={handleConfirmLeave}>
+              Dersten Ayrıl
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
