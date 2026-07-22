@@ -531,6 +531,10 @@ export interface Booking {
   disputed_at?: string | null;
   student_end_requested_at?: string | null;
   tutor_end_requested_at?: string | null;
+  early_end_request_status?: EarlyEndRequestStatus;
+  early_end_request_version?: number;
+  early_end_request_resolved_at?: string | null;
+  early_end_retry_available_at?: string | null;
   is_trial?: boolean;
   lesson_request: string | null;
   room_url?: string;
@@ -539,6 +543,32 @@ export interface Booking {
   created_at: string;
   learning_context?: LearningContext | null;
   conversation_id?: string | null;
+}
+
+export type EarlyEndRequestStatus =
+  | "idle"
+  | "pending"
+  | "declined"
+  | "cancelled"
+  | "accepted";
+
+/** Tutor-initiated early-end request, flattened, as returned by session-state. */
+export interface EarlyEndRequestState {
+  status: EarlyEndRequestStatus;
+  version: number;
+  requested_at: string | null;
+  resolved_at: string | null;
+  retry_available_at: string | null;
+}
+
+/** Compact, server-synced live-session state (GET /bookings/{id}/session-state/). */
+export interface LessonSessionState {
+  booking_id: string;
+  status: Booking["status"];
+  start_time: string;
+  scheduled_end: string;
+  server_time: string;
+  early_end_request: EarlyEndRequestState;
 }
 
 export type LessonArtifactKind = "whiteboard" | "solved_question" | "material";

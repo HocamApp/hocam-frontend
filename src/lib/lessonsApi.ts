@@ -6,6 +6,7 @@ import {
   BookingQuestion,
   BusyInterval,
   LessonArtifact,
+  LessonSessionState,
 } from "@/types";
 
 export interface LearningContextPayload {
@@ -111,6 +112,7 @@ export interface SessionToken {
   token: string;
   room: string;
   domain: string;
+  server_time?: string;
 }
 
 export async function fetchSessionToken(
@@ -118,6 +120,58 @@ export async function fetchSessionToken(
 ): Promise<SessionToken> {
   const response = await api.get<SessionToken>(
     `/bookings/${bookingId}/session-token/`
+  );
+  return response.data;
+}
+
+/**
+ * Compact live-session state plus the local wall-clock times bracketing the
+ * request, so the caller can estimate the server clock offset from the midpoint
+ * (see computeServerOffsetMs in lessonSessionState).
+ */
+export interface LessonSessionStateResult {
+  state: LessonSessionState;
+  localRequestStartMs: number;
+  localRequestEndMs: number;
+}
+
+export async function fetchLessonSessionState(
+  bookingId: string
+): Promise<LessonSessionStateResult> {
+  const localRequestStartMs = Date.now();
+  const response = await api.get<LessonSessionState>(
+    `/bookings/${bookingId}/session-state/`
+  );
+  return {
+    state: response.data,
+    localRequestStartMs,
+    localRequestEndMs: Date.now(),
+  };
+}
+
+export type EarlyEndDecision = "accept" | "continue";
+
+/** Student answers a pending tutor early-end request. */
+export async function respondToEarlyEnd(
+  bookingId: string,
+  decision: EarlyEndDecision,
+  version: number
+): Promise<Booking> {
+  const response = await api.post<Booking>(
+    `/bookings/${bookingId}/respond-early-end/`,
+    { decision, version }
+  );
+  return response.data;
+}
+
+/** Tutor withdraws a pending early-end request. */
+export async function cancelEarlyEndRequest(
+  bookingId: string,
+  version: number
+): Promise<Booking> {
+  const response = await api.post<Booking>(
+    `/bookings/${bookingId}/cancel-early-end/`,
+    { version }
   );
   return response.data;
 }
@@ -181,9 +235,9 @@ export async function sendBookingHeartbeat(bookingId: string): Promise<void> {
 }
 
 /**
- * "Dersi bitir": one participant's request to end an in-progress lesson
- * early. Booking only moves to awaiting_confirmation once both student and
- * tutor have requested it (see student_end_requested_at/tutor_end_requested_at).
+ * "Dersi bitir": the tutor opens a request to end an in-progress lesson early.
+ * The booking stays in_progress and the student is prompted to accept
+ * (→ awaiting_confirmation) or continue (→ declined). Tutor-only.
  */
 export async function requestEarlyEnd(bookingId: string): Promise<Booking> {
   const response = await api.post<Booking>(
