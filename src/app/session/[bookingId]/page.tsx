@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { useParams, useRouter } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Clock3, FileQuestion, PencilRuler, StickyNote, Video, WifiOff, X } from "lucide-react";
+import { ArrowLeft, Clock3, FileQuestion, MonitorUp, PencilRuler, StickyNote, Video, WifiOff, X } from "lucide-react";
 import { toast } from "sonner";
 import {
   fetchBookings,
@@ -19,6 +19,11 @@ import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { Button } from "@/components/ui/button";
 import { formatDate } from "@/lib/utils";
+import {
+  getLessonJitsiToolbarButtons,
+  getScreenShareButtonLabel,
+  screenSharingStateFromEvent,
+} from "@/lib/jitsiSessionControls";
 import type { Booking } from "@/types";
 import { LessonQuestionPanel } from "@/components/questions/LessonQuestionPanel";
 import { LessonQuestionInvitationDialog } from "@/components/questions/LessonQuestionInvitationDialog";
@@ -205,6 +210,7 @@ function SessionContent() {
   const [jitsiKey, setJitsiKey] = useState(0);
   const [isRequestingEnd, setIsRequestingEnd] = useState(false);
   const [notesPanelOpen, setNotesPanelOpen] = useState(false);
+  const [isScreenSharing, setIsScreenSharing] = useState(false);
   const reconnectTimeoutRef = useRef<number | null>(null);
   const questionButtonRef = useRef<HTMLButtonElement>(null);
 
@@ -375,6 +381,19 @@ function SessionContent() {
     }
   };
 
+  const handleToggleScreenShare = () => {
+    if (!jitsiApi?.executeCommand) {
+      toast.info("Ders odası hazırlanıyor. Birkaç saniye sonra tekrar dene.");
+      return;
+    }
+
+    try {
+      jitsiApi.executeCommand("toggleShareScreen");
+    } catch {
+      toast.error("Ekran paylaşımı şu anda açılamadı.");
+    }
+  };
+
   const earlyEndRequestedByMe = booking
     ? user?.role === "tutor"
       ? Boolean(booking.tutor_end_requested_at)
@@ -405,14 +424,7 @@ function SessionContent() {
   const isOvertime = remainingMs !== null && remainingMs <= 0;
   const isLowTime =
     remainingMs !== null && remainingMs > 0 && remainingMs <= LOW_TIME_WARNING_MS;
-  const jitsiToolbarButtons = [
-    "microphone",
-    "camera",
-    "chat",
-    ...(user?.role === "tutor" ? ["whiteboard"] : []),
-    "tileview",
-    "hangup",
-  ];
+  const jitsiToolbarButtons = getLessonJitsiToolbarButtons(user?.role);
 
   return (
     <div className="flex flex-1 flex-col">
@@ -472,6 +484,15 @@ function SessionContent() {
           )}
           {user?.role === "tutor" && (
             <button
+              onClick={handleToggleScreenShare}
+              className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded border border-white/20 px-3 py-1 text-xs transition-colors hover:bg-white/10"
+            >
+              <MonitorUp className="h-3.5 w-3.5" aria-hidden="true" />
+              {getScreenShareButtonLabel(isScreenSharing)}
+            </button>
+          )}
+          {user?.role === "tutor" && (
+            <button
               onClick={handleToggleWhiteboard}
               className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded border border-white/20 px-3 py-1 text-xs transition-colors hover:bg-white/10"
             >
@@ -524,6 +545,10 @@ function SessionContent() {
           }}
           onApiReady={(api) => {
             setJitsiApi(api);
+            api.addEventListener?.("screenSharingStatusChanged", (event?: unknown) => {
+              const sharing = screenSharingStateFromEvent(event);
+              if (sharing !== null) setIsScreenSharing(sharing);
+            });
             setConnectionStatus("connected");
             api.addEventListener?.("connectionInterrupted", () => {
               setConnectionStatus("interrupted");
