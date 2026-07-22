@@ -28,12 +28,9 @@ export function QuestionViewer({
   const [result, setResult] = useState<QuestionAttemptResult | null>(null);
 
   const mutation = useMutation({
-    mutationFn: async (mode: "submit" | "reveal") => {
+    mutationFn: async () => {
       if (user?.role === "student") {
-        return submitQuestionAttempt(
-          question.id,
-          mode === "submit" ? selectedChoice : undefined
-        );
+        return submitQuestionAttempt(question.id, selectedChoice);
       }
       return revealQuestion(question.id);
     },
@@ -113,16 +110,16 @@ export function QuestionViewer({
       <div className="flex flex-wrap gap-2">
         {user?.role === "student" && !isRevealed && (
           <Button
-            onClick={() => mutation.mutate("submit")}
+            onClick={() => mutation.mutate()}
             disabled={!selectedChoice || mutation.isPending}
           >
             Yanıtı kontrol et
           </Button>
         )}
-        {!isRevealed && (
+        {user?.role !== "student" && !isRevealed && (
           <Button
             variant="outline"
-            onClick={() => mutation.mutate("reveal")}
+            onClick={() => mutation.mutate()}
             disabled={mutation.isPending}
           >
             Çözümü göster

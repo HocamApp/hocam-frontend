@@ -67,6 +67,11 @@ export function LessonQuestionPanel({
         {state.isLoading && <Skeleton className="h-72 rounded-xl" />}
         {active ? (
           <>
+            {isTutor && !state.data?.solution_revealed && (
+              <p className="rounded-lg bg-amber-500/10 px-3 py-2 text-xs text-amber-700 dark:text-amber-400">
+                Doğru cevap sadece sende görünüyor — öğrenci &quot;Cevabı öğrenciye göster&quot;e basana kadar bunu göremez.
+              </p>
+            )}
             <QuestionViewer
               key={`${active.id}-${state.data?.version}`}
               question={active}
@@ -74,6 +79,16 @@ export function LessonQuestionPanel({
               revealedCorrectChoice={state.data?.correct_choice}
               revealedSolutionUrl={state.data?.solution_url}
             />
+            {isTutor && state.data?.student_attempt && (
+              <p className="text-sm text-muted-foreground">
+                Öğrenci cevabı:{" "}
+                <span className="font-medium text-foreground">
+                  {state.data.student_attempt.selected_choice || "—"}
+                </span>
+                {state.data.student_attempt.is_correct === true && " (doğru)"}
+                {state.data.student_attempt.is_correct === false && " (yanlış)"}
+              </p>
+            )}
             {isTutor && (
               <div className="flex flex-wrap gap-2 border-t pt-4">
                 <Button
