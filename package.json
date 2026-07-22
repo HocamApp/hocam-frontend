@@ -9,7 +9,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test:unit": "tsx --test src/lib/matchingDraft.test.ts src/lib/matchingFlow.test.ts src/lib/questionsApi.test.ts src/components/layout/navItems.test.ts src/components/questions/lessonQuestionInvitation.test.ts",
+    "test:unit": "tsx --test src/lib/matchingDraft.test.ts src/lib/matchingFlow.test.ts src/lib/questionsApi.test.ts src/lib/jitsiSessionControls.test.ts src/components/layout/navItems.test.ts src/components/questions/lessonQuestionInvitation.test.ts",
     "motion:check": "tsx scripts/matching-motion-check.ts",
     "responsive:check": "tsx scripts/responsive-check.ts"
   },
