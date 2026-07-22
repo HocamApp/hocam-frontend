@@ -545,6 +545,7 @@ function SessionContent() {
           }}
           onApiReady={(api) => {
             setJitsiApi(api);
+            setIsScreenSharing(false);
             api.addEventListener?.("screenSharingStatusChanged", (event?: unknown) => {
               const sharing = screenSharingStateFromEvent(event);
               if (sharing !== null) setIsScreenSharing(sharing);
