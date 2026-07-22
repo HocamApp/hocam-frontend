@@ -1,12 +1,14 @@
 export type LessonParticipantRole = "student" | "tutor" | undefined;
 
 export function getLessonJitsiToolbarButtons(role: LessonParticipantRole) {
+  // No native "hangup": leaving goes through the host "Görüşmeden ayrıl" control
+  // + confirmation modal (see LeaveConfirmDialog), which then calls the official
+  // executeCommand("hangup"). A native red button would bypass the confirmation.
   return [
     "microphone",
     "camera",
     "chat",
     ...(role === "tutor" ? ["whiteboard", "desktop"] : []),
-    "hangup",
   ];
 }
 

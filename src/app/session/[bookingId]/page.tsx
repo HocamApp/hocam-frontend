@@ -40,9 +40,18 @@ import {
   teacherVideoStorageKey,
   videoQualityStorageKey,
 } from "@/lib/lessonSessionState";
+import {
+  createPresenceTracker,
+  handleJoin,
+  handleLeave,
+  parseParticipantJoined,
+  parseParticipantLeft,
+  setLocalParticipant,
+} from "@/lib/lessonPresence";
 import { LessonTimerControl } from "@/components/lessons/LessonTimerControl";
 import { VideoQualityDialog } from "@/components/lessons/VideoQualityDialog";
 import { EarlyEndRequestDialog } from "@/components/lessons/EarlyEndRequestDialog";
+import { LeaveConfirmDialog } from "@/components/lessons/LeaveConfirmDialog";
 import { TeacherVideoControl } from "@/components/lessons/TeacherVideoControl";
 import type { Booking } from "@/types";
 import { LessonQuestionPanel } from "@/components/questions/LessonQuestionPanel";
@@ -54,6 +63,10 @@ const EARLY_JOIN_MINUTES = 15;
 const HEARTBEAT_INTERVAL_MS = 60_000;
 const RECONNECT_ATTEMPT_DELAY_MS = 12_000;
 const QUALITY_CONFIRM_TIMEOUT_MS = 3_000;
+// Join/leave toasts stay silent for this long after (re)connect, so the initial
+// participant roster and reconnect bursts don't spam.
+const PRESENCE_SETTLE_MS = 1_500;
+const PRESENCE_TOAST_MS = 4_000;
 const ENDED_STATUSES = new Set([
   "awaiting_confirmation",
   "completed",
@@ -261,10 +274,24 @@ function SessionContent() {
   const [storedTeacherPrefHidden, setStoredTeacherPrefHidden] = useState(false);
   const teacherPrefAppliedRef = useRef(false);
 
+  // Leave-confirmation flow (distinct from the "Dersi bitir" early-end flow).
+  const [leaveDialogOpen, setLeaveDialogOpen] = useState(false);
+  const [isLeaving, setIsLeaving] = useState(false);
+  const leaveInFlightRef = useRef(false);
+
+  // Join/leave toasts: presence tracker persists across iframe remounts so a
+  // reconnect does not re-toast already-present peers. announceRef gates the
+  // toasts off during the initial roster burst and during a reconnect settle
+  // window, while the tracker keeps recording so later leaves resolve correctly.
+  const presenceRef = useRef(createPresenceTracker());
+  const announceRef = useRef(false);
+  const announceTimeoutRef = useRef<number | null>(null);
+
   const reconnectTimeoutRef = useRef<number | null>(null);
   const questionButtonRef = useRef<HTMLButtonElement>(null);
   const qualityButtonRef = useRef<HTMLButtonElement>(null);
   const endButtonRef = useRef<HTMLButtonElement>(null);
+  const leaveButtonRef = useRef<HTMLButtonElement>(null);
 
   const { data: bookings, isLoading: isLoadingBooking } = useQuery({
     queryKey: ["bookings"],
@@ -373,6 +400,7 @@ function SessionContent() {
     return () => {
       if (reconnectTimeoutRef.current) window.clearTimeout(reconnectTimeoutRef.current);
       if (qualityTimeoutRef.current) window.clearTimeout(qualityTimeoutRef.current);
+      if (announceTimeoutRef.current) window.clearTimeout(announceTimeoutRef.current);
     };
   }, []);
 
@@ -609,6 +637,28 @@ function SessionContent() {
     session.respond.mutate("continue");
   };
 
+  // Leaving the conference: confirm first, then the official hangup. Guarded so
+  // a double click / double submit can only fire hangup once.
+  const handleConfirmLeave = () => {
+    if (leaveInFlightRef.current) return;
+    leaveInFlightRef.current = true;
+    setIsLeaving(true);
+    try {
+      jitsiApi?.executeCommand?.("hangup");
+    } catch {
+      // Meeting may already be gone — fall through to navigation.
+    }
+    // onReadyToClose handles navigation; navigate as a fallback if the event
+    // does not arrive (e.g. api not ready).
+    if (!jitsiApi?.executeCommand) {
+      router.back();
+    }
+  };
+  const handleCancelLeave = () => {
+    if (leaveInFlightRef.current) return;
+    setLeaveDialogOpen(false);
+  };
+
   const selectedQuality = pendingQuality ?? confirmedQuality;
 
   return (
@@ -720,10 +770,11 @@ function SessionContent() {
             </>
           )}
           <button
-            onClick={() => router.back()}
-            className="shrink-0 rounded border border-white/20 px-3 py-1 text-xs transition-colors hover:bg-white/10"
+            ref={leaveButtonRef}
+            onClick={() => setLeaveDialogOpen(true)}
+            className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded border border-red-500/50 bg-red-500/20 px-3 py-1 text-xs font-medium text-red-100 transition-colors hover:bg-red-500/30"
           >
-            Çıkış
+            Görüşmeden ayrıl
           </button>
         </div>
       </div>
@@ -790,8 +841,47 @@ function SessionContent() {
               const visible = filmstripVisibleFromEvent(event);
               if (visible !== null) setFilmstripVisible(visible);
             });
+
+            // --- Join/leave toasts -----------------------------------------
+            api.addEventListener?.("videoConferenceJoined", (event?: unknown) => {
+              const id =
+                event && typeof event === "object"
+                  ? (event as { id?: unknown }).id
+                  : null;
+              setLocalParticipant(
+                presenceRef.current,
+                typeof id === "string" ? id : null
+              );
+              // Silence the initial roster burst / reconnect settle, then start
+              // announcing genuinely new joins and leaves.
+              announceRef.current = false;
+              if (announceTimeoutRef.current) {
+                window.clearTimeout(announceTimeoutRef.current);
+              }
+              announceTimeoutRef.current = window.setTimeout(() => {
+                announceRef.current = true;
+              }, PRESENCE_SETTLE_MS);
+            });
+            api.addEventListener?.("participantJoined", (event?: unknown) => {
+              const p = parseParticipantJoined(event);
+              if (!p) return;
+              const message = handleJoin(presenceRef.current, p.id, p.displayName);
+              if (message && announceRef.current) {
+                toast(message, { duration: PRESENCE_TOAST_MS });
+              }
+            });
+            api.addEventListener?.("participantLeft", (event?: unknown) => {
+              const p = parseParticipantLeft(event);
+              if (!p) return;
+              const message = handleLeave(presenceRef.current, p.id);
+              if (message && announceRef.current) {
+                toast(message, { duration: PRESENCE_TOAST_MS });
+              }
+            });
+
             api.addEventListener?.("connectionInterrupted", () => {
               setConnectionStatus("interrupted");
+              announceRef.current = false; // no join/leave toasts during a blip
               reconnectTimeoutRef.current = window.setTimeout(() => {
                 setJitsiKey((k) => k + 1);
               }, RECONNECT_ATTEMPT_DELAY_MS);
@@ -840,6 +930,14 @@ function SessionContent() {
         roomReady={Boolean(jitsiApi) && capabilities.videoQuality}
         onSelectLevel={applyQuality}
         triggerRef={qualityButtonRef}
+      />
+
+      <LeaveConfirmDialog
+        open={leaveDialogOpen}
+        onConfirm={handleConfirmLeave}
+        onCancel={handleCancelLeave}
+        isLeaving={isLeaving}
+        returnFocusRef={leaveButtonRef}
       />
 
       {isStudent && (

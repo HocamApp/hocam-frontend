@@ -19,11 +19,16 @@ import {
 describe("lesson Jitsi screen-sharing controls", () => {
   it("shows desktop sharing only in the tutor toolbar", () => {
     assert.deepEqual(getLessonJitsiToolbarButtons("tutor"), [
-      "microphone", "camera", "chat", "whiteboard", "desktop", "hangup",
+      "microphone", "camera", "chat", "whiteboard", "desktop",
     ]);
     assert.deepEqual(getLessonJitsiToolbarButtons("student"), [
-      "microphone", "camera", "chat", "hangup",
+      "microphone", "camera", "chat",
     ]);
+  });
+
+  it("omits the native hangup so leaving must go through the confirm modal", () => {
+    assert.equal(getLessonJitsiToolbarButtons("tutor").includes("hangup"), false);
+    assert.equal(getLessonJitsiToolbarButtons("student").includes("hangup"), false);
   });
 
   it("hides the conference subject without disabling Jitsi layout behavior", () => {
@@ -32,7 +37,7 @@ describe("lesson Jitsi screen-sharing controls", () => {
     assert.equal(config.hideConferenceSubject, true);
     assert.equal("disableTileView" in config, false);
     assert.deepEqual(config.toolbarButtons, [
-      "microphone", "camera", "chat", "whiteboard", "desktop", "hangup",
+      "microphone", "camera", "chat", "whiteboard", "desktop",
     ]);
   });
 
