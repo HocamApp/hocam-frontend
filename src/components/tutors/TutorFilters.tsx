@@ -87,27 +87,6 @@ function FilterPanelContent({
   return (
     <div className="flex flex-col gap-4">
       <div className="space-y-2">
-        <Label>Ders</Label>
-        <Select
-          value={(filters.subject ?? "") || "__all__"}
-          onValueChange={(v) => onFiltersChange({ ...filters, subject: v === "__all__" ? "" : v })}
-          disabled={isLoading}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Tüm dersler" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="__all__">Tüm dersler</SelectItem>
-            {subjectOptions.map((s) => (
-              <SelectItem key={s.id} value={s.name}>
-                {s.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="space-y-2">
         <Label>Sınav</Label>
         <Select
           value={(filters.exam_type ?? "") || "__all__"}
@@ -129,6 +108,27 @@ function FilterPanelContent({
             <SelectItem value="AYT">AYT</SelectItem>
             <SelectItem value="DGS">DGS</SelectItem>
             <SelectItem value="KPSS">KPSS</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="space-y-2">
+        <Label>Ders</Label>
+        <Select
+          value={(filters.subject ?? "") || "__all__"}
+          onValueChange={(v) => onFiltersChange({ ...filters, subject: v === "__all__" ? "" : v })}
+          disabled={isLoading}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Tüm dersler" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__all__">Tüm dersler</SelectItem>
+            {subjectOptions.map((s) => (
+              <SelectItem key={s.id} value={s.name}>
+                {s.name}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>
