@@ -346,7 +346,7 @@ export default function TutorProfilePage({
   const [shareCopied, setShareCopied] = useState(false);
   const [shareUrl, setShareUrl] = useState("");
   const [isReportOpen, setIsReportOpen] = useState(false);
-  const [reportReason, setReportReason] = useState<TutorReportReason>("inappropriate_conduct");
+  const [reportReason, setReportReason] = useState<TutorReportReason>("inappropriate_photo");
   const [reportDescription, setReportDescription] = useState("");
   const [reportError, setReportError] = useState("");
   const [isSubmittingReport, setIsSubmittingReport] = useState(false);
@@ -413,6 +413,7 @@ export default function TutorProfilePage({
 
   const isOwnProfile = !!tutor && !!user && user.id === tutor.user;
   const trialLessonsRemaining = tutor?.trial_lessons_remaining ?? 0;
+  const hasTakenLesson = tutor?.has_taken_lesson === true;
   const canBookFreeTrial =
     isAuthenticated &&
     isStudent &&
@@ -994,10 +995,20 @@ export default function TutorProfilePage({
               onChange={(event) => setReportReason(event.target.value as TutorReportReason)}
               className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
             >
-              <option value="inappropriate_conduct">Uygunsuz davranış</option>
-              <option value="harassment">Taciz veya zorbalık</option>
-              <option value="misleading_profile">Yanıltıcı profil bilgisi</option>
-              <option value="other">Diğer</option>
+              <optgroup label="Profil hakkında">
+                <option value="inappropriate_photo">Uygunsuz profil fotoğrafı</option>
+                <option value="inappropriate_profile_text">Profilinde uygunsuz/küfürlü ifade</option>
+                <option value="misleading_profile">Yanıltıcı profil bilgisi</option>
+                <option value="excessive_price">Fahiş fiyat</option>
+                <option value="other">Diğer</option>
+              </optgroup>
+              {hasTakenLesson && (
+                <optgroup label="Ders hakkında">
+                  <option value="inappropriate_conduct">Derste uygunsuz davranış</option>
+                  <option value="harassment">Taciz veya zorbalık</option>
+                  <option value="lesson_not_delivered">Dersi işlemedi / derse gelmedi</option>
+                </optgroup>
+              )}
             </select>
             <label className="block text-sm font-medium" htmlFor="tutor-report-description">
               Açıklama <span className="font-normal text-muted-foreground">(isteğe bağlı)</span>

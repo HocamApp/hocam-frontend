@@ -364,6 +364,7 @@ export interface TutorProfile {
   rating: number;
   total_reviews: number;
   completed_lessons_count?: number | null;
+  has_taken_lesson?: boolean | null;
   is_verified: boolean;
   is_public: boolean;
   teaching_styles: TutorTeachingStyle[];
