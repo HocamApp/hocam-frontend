@@ -42,6 +42,11 @@ function readCachedUser(): User | null {
         is_email_verified: Boolean(parsed.is_email_verified),
         is_admin: Boolean(parsed.is_admin),
         is_test_account: Boolean(parsed.is_test_account),
+        // Default true for caches written before this field existed, so an
+        // active tutor is never flash-redirected to onboarding on refresh;
+        // fetchMe replaces it with the backend truth moments later.
+        jitsi_tutorial_completed: parsed.jitsi_tutorial_completed ?? true,
+        jitsi_tutorial_grandfathered: Boolean(parsed.jitsi_tutorial_grandfathered),
         impersonation: parsed.impersonation ?? null,
       };
     }

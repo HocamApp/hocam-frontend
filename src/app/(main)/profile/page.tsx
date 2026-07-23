@@ -399,6 +399,18 @@ function ProfileContent() {
                   fullName={fullName}
                   onSave={handleSaveIntroVideo}
                 />
+                <Separator />
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-medium text-foreground">Canlı Ders Eğitimi</p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      Ders ekranı rehberini istediğin zaman tekrar izle — aktivasyonunu etkilemez.
+                    </p>
+                  </div>
+                  <Button asChild variant="outline" size="sm" className="shrink-0">
+                    <Link href="/tutor/tutorial?replay=1">Tekrar izle</Link>
+                  </Button>
+                </div>
                 <Button asChild variant="outline" size="sm">
                   <Link href="/dashboard/tutor/edit">Eğitmen profilini düzenle</Link>
                 </Button>

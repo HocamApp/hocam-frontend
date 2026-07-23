@@ -234,10 +234,17 @@ function SessionContent() {
   });
 
   useEffect(() => {
+    // Unverified OR tutorial-incomplete tutors can't run lessons — the backend
+    // also refuses their session token (403 tutorial_required), this redirect
+    // just lands them on the fix instead of an error screen.
     if (isTutor && tutorProfileQuery.data && !tutorProfileQuery.data.is_verified) {
       router.replace("/tutor/onboarding");
+      return;
     }
-  }, [router, tutorProfileQuery.data, isTutor]);
+    if (isTutor && user && !user.jitsi_tutorial_completed) {
+      router.replace("/tutor/onboarding");
+    }
+  }, [router, tutorProfileQuery.data, isTutor, user]);
 
   const [now, setNow] = useState(() => Date.now());
   const [jitsiApi, setJitsiApi] = useState<JitsiApi | null>(null);
@@ -670,6 +677,10 @@ function SessionContent() {
         </div>
       )}
 
+      {/* KEEP IN SYNC: the tutor tutorial replicates this control bar in
+          src/components/tutorial/MockLessonScreen.tsx — mirror any control
+          added/renamed/restyled here so the tutorial keeps teaching the real
+          interface. */}
       <div className="flex items-center gap-2 bg-gray-900 px-4 py-2 text-sm text-white">
         <span className="min-w-0 flex-1 truncate font-medium">
           {booking ? `${booking.subject.name} — Canlı Ders` : "Canlı Ders"}

@@ -6,6 +6,10 @@ export interface User {
   is_email_verified: boolean;
   is_admin: boolean;
   is_test_account: boolean;
+  /** Backend-truth tutorial gate; always true for students. */
+  jitsi_tutorial_completed: boolean;
+  /** Pre-existing verified tutor auto-completed by migration (nudge target). */
+  jitsi_tutorial_grandfathered: boolean;
   impersonation: {
     actor_id: string;
     actor_email: string;

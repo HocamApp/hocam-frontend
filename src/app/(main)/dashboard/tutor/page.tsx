@@ -57,6 +57,7 @@ import { EmptyState } from "@/components/shared/EmptyState";
 import { AISupportChatWidget } from "@/components/ai/AISupportChatWidget";
 import { TUTOR_DASHBOARD_ASSISTANT } from "@/components/ai/pageAssistantContent";
 import { RouteGuard } from "@/components/shared/RouteGuard";
+import { TutorialNudgeBanner } from "@/components/shared/TutorialNudgeBanner";
 import StatusBadge from "@/components/shared/StatusBadge";
 import { BookingCard, paymentLabel } from "@/components/lessons/BookingCard";
 import { canJoinLesson } from "@/components/lessons/LessonJoinButton";
@@ -1211,6 +1212,7 @@ function TutorDashboardContent() {
 
   return (
     <div className="mx-auto w-full min-w-0 max-w-6xl overflow-x-clip px-4 py-8">
+      <TutorialNudgeBanner />
       <header className="mb-6 flex flex-col gap-4 border-b pb-6 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-4">
           <Avatar className="h-14 w-14">

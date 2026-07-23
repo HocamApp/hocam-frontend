@@ -142,6 +142,44 @@ export async function fetchMyTutorProfile(): Promise<TutorProfile> {
   return response.data;
 }
 
+// ---------------------------------------------------------------------------
+// Live-lesson (Jitsi) tutorial — backend is the source of truth for completion
+// ---------------------------------------------------------------------------
+
+export interface TutorTutorialProgress {
+  required_version: number;
+  completed_at: string | null;
+  completed_version: number;
+  is_required: boolean;
+  current_step: string | null;
+  completed_steps: string[];
+  total_steps: number;
+}
+
+export async function fetchTutorialProgress(): Promise<TutorTutorialProgress> {
+  const response = await api.get<TutorTutorialProgress>("/tutors/me/tutorial/");
+  return response.data;
+}
+
+export async function updateTutorialProgress(payload: {
+  current_step?: string;
+  completed_steps: string[];
+}): Promise<TutorTutorialProgress> {
+  const response = await api.patch<TutorTutorialProgress>(
+    "/tutors/me/tutorial/",
+    payload
+  );
+  return response.data;
+}
+
+/** Idempotent: safe to retry on network errors. */
+export async function completeTutorial(): Promise<TutorTutorialProgress> {
+  const response = await api.post<TutorTutorialProgress>(
+    "/tutors/me/tutorial/complete/"
+  );
+  return response.data;
+}
+
 export interface TutorPriceInsight {
   recommended_price: number | null;
   market_range: { low: number | null; high: number | null };

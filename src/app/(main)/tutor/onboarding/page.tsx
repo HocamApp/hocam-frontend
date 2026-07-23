@@ -26,7 +26,7 @@ type OnboardingStep = {
 };
 
 function TutorOnboardingContent() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const router = useRouter();
   const queryClient = useQueryClient();
   const photoInputRef = useRef<HTMLInputElement>(null);
@@ -62,7 +62,11 @@ function TutorOnboardingContent() {
   const profileComplete = Boolean(profile);
   const photoComplete = Boolean(profile?.profile_picture);
   const verificationApproved = profile?.is_verified === true || verification?.status === "approved";
-  const setupComplete = verificationApproved && photoComplete && (profile?.subjects.length ?? 0) > 0 && availability.length > 0;
+  // Independent axis: the tutorial can be completed while documents are still
+  // under review. Backend truth arrives via /auth/me/.
+  const tutorialComplete = Boolean(user?.jitsi_tutorial_completed);
+  const lessonsReady = verificationApproved && photoComplete && (profile?.subjects.length ?? 0) > 0 && availability.length > 0;
+  const setupComplete = lessonsReady && tutorialComplete;
 
   const photoMutation = useMutation({
     mutationFn: uploadTutorProfilePicture,
@@ -121,10 +125,16 @@ function TutorOnboardingContent() {
       active: profileComplete && photoComplete && !verificationApproved,
     },
     {
+      title: "Canlı ders eğitimi",
+      description: "Ders ekranını 5 dakikada öğren — belge incelemesini beklemeden tamamlayabilirsin.",
+      complete: tutorialComplete,
+      active: profileComplete && photoComplete && !tutorialComplete,
+    },
+    {
       title: "Dersler ve müsaitlik",
       description: "Verdiğin dersleri ve uygun saatlerini ayarla.",
-      complete: setupComplete,
-      active: verificationApproved && photoComplete && !setupComplete,
+      complete: lessonsReady,
+      active: verificationApproved && photoComplete && !lessonsReady,
     },
   ];
   const completeCount = steps.filter((step) => step.complete).length;
@@ -192,8 +202,22 @@ function TutorOnboardingContent() {
               </Button>
             </div>
           )}
+          {profileComplete && photoComplete && !tutorialComplete && (
+            <div className="flex flex-col gap-3 rounded-lg border p-5 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="font-medium">Canlı ders eğitimini tamamla</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Ders ekranındaki araçları (kamera, tahta, canlı soru, ders bitirme)
+                  kısa ve interaktif bir rehberle öğren. Bitirmeden hesabın öğrencilere açılmaz.
+                </p>
+              </div>
+              <Button asChild className="shrink-0">
+                <Link href="/tutor/tutorial">Eğitime başla</Link>
+              </Button>
+            </div>
+          )}
           {profileComplete && photoComplete && !verificationApproved && <VerificationForm />}
-          {verificationApproved && !setupComplete && (
+          {verificationApproved && !lessonsReady && (
             <div className="space-y-3 rounded-lg border p-4">
               <p className="font-medium">Son adım: dersler ve müsaitlik</p>
               <p className="text-sm text-muted-foreground">
