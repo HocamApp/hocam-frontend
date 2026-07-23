@@ -1,6 +1,5 @@
 import api from "./api";
 import {
-  CalendarEvent,
   PastLesson,
   PendingReservation,
   PendingReviewItem,
@@ -26,10 +25,5 @@ export async function fetchPastLessons(): Promise<PastLesson[]> {
 
 export async function fetchPendingReviews(): Promise<PendingReviewItem[]> {
   const response = await api.get<PendingReviewItem[]>("/profile/reviews/pending/");
-  return response.data;
-}
-
-export async function fetchCalendar(): Promise<CalendarEvent[]> {
-  const response = await api.get<CalendarEvent[]>("/profile/calendar/");
   return response.data;
 }

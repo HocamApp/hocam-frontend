@@ -26,13 +26,7 @@ import {
   hasStoredInterfaceLanguage,
   isInterfaceLanguage,
 } from "@/lib/interfaceLanguage";
-import type { Theme } from "@/lib/theme";
-import type {
-  ProfileMeResponse,
-  ProfileStudent,
-  ProfileTutor,
-  UserPreferences,
-} from "@/types";
+import type { ProfileMeResponse, ProfileStudent, ProfileTutor } from "@/types";
 
 import { RouteGuard } from "@/components/shared/RouteGuard";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
@@ -43,21 +37,8 @@ import { Separator } from "@/components/ui/separator";
 import { ProfileToggleRow } from "@/components/profile/ProfileMenuRow";
 import { ProfileSummary } from "@/components/profile/ProfileSummary";
 import { AvatarEditor } from "@/components/profile/AvatarEditor";
-import { AccountPreferences } from "@/components/profile/AccountPreferences";
-import { SecurityPrivacySection } from "@/components/profile/SecurityPrivacySection";
 import { StudentLearningProfile } from "@/components/profile/StudentLearningProfile";
 import { TutorVideoSection } from "@/components/profile/TutorVideoSection";
-
-type BoolPrefKey = keyof Omit<UserPreferences, "language">;
-
-const DEFAULT_PREFS: UserPreferences = {
-  dark_mode: false,
-  notify_messages: true,
-  notify_lesson_requests: true,
-  notify_booking_reminders: true,
-  notify_email: false,
-  language: "tr",
-};
 
 function getInitials(name: string, surname: string): string {
   return ((name.trim()[0] || "") + (surname.trim()[0] || "")).toUpperCase();
@@ -72,9 +53,7 @@ function isTutorProfile(
 
 function ProfileContent() {
   const queryClient = useQueryClient();
-  const { user, logout } = useAuth();
-  const [prefOverrides, setPrefOverrides] = useState<Partial<UserPreferences>>({});
-  const [isPublicOverride, setIsPublicOverride] = useState<boolean | null>(null);
+  const { user } = useAuth();
   const [photoUploading, setPhotoUploading] = useState(false);
   const [photoError, setPhotoError] = useState<string | null>(null);
   const [avatarChoicePendingKey, setAvatarChoicePendingKey] =
@@ -113,44 +92,8 @@ function ProfileContent() {
   const tutorHourlyPrice = tutorMeData?.hourly_price ?? tutor?.hourly_price ?? 0;
   const tutorIntroVideoUrl = tutorMeData?.intro_video_url ?? tutor?.intro_video_url ?? "";
 
-  const prefs: UserPreferences = {
-    ...DEFAULT_PREFS,
-    ...(data?.preferences ?? {}),
-    ...prefOverrides,
-  };
   const currentAutoApprove =
     autoApproveOverride ?? tutor?.auto_approve_bookings ?? false;
-  const currentIsPublic =
-    isPublicOverride ?? tutorMeData?.is_public ?? tutor?.is_public ?? true;
-
-  const handleNotificationToggle = async (key: BoolPrefKey, next: boolean) => {
-    setPrefOverrides((prev) => ({ ...prev, [key]: next }));
-    try {
-      await updateProfileMe({ preferences: { [key]: next } });
-      queryClient.invalidateQueries({ queryKey: ["profile-me"] });
-    } catch {
-      setPrefOverrides((prev) => ({ ...prev, [key]: !next }));
-      toast.error("Tercih kaydedilemedi.");
-    }
-  };
-
-  const handleLanguageChange = async (nextLang: string) => {
-    if (!isInterfaceLanguage(nextLang)) return;
-    if (nextLang === prefs.language) {
-      applyInterfaceLanguage(nextLang);
-      return;
-    }
-    const prevLang = prefs.language;
-    setPrefOverrides((prev) => ({ ...prev, language: nextLang }));
-    try {
-      await updateProfileMe({ preferences: { language: nextLang } });
-      await queryClient.invalidateQueries({ queryKey: ["profile-me"] });
-      applyInterfaceLanguage(nextLang);
-    } catch {
-      setPrefOverrides((prev) => ({ ...prev, language: prevLang }));
-      toast.error("Dil ayarı kaydedilemedi.");
-    }
-  };
 
   useEffect(() => {
     const accountLanguage = data?.preferences?.language;
@@ -162,13 +105,6 @@ function ProfileContent() {
       applyInterfaceLanguage(accountLanguage);
     }
   }, [data?.preferences?.language]);
-
-  const handleThemeChange = (nextTheme: Theme) => {
-    setPrefOverrides((prev) => ({ ...prev, dark_mode: nextTheme === "dark" }));
-    updateProfileMe({ preferences: { dark_mode: nextTheme === "dark" } }).catch(
-      () => undefined
-    );
-  };
 
   const updateStudentProfileCache = (nextProfile: ProfileStudent) => {
     queryClient.setQueryData<ProfileMeResponse>(["profile-me"], (current) =>
@@ -256,21 +192,6 @@ function ProfileContent() {
     toast.success(url ? "Tanıtım videosu güncellendi." : "Tanıtım videosu kaldırıldı.");
   };
 
-  const handleVisibilityToggle = async (next: boolean) => {
-    const prev = currentIsPublic;
-    setIsPublicOverride(next);
-    try {
-      await updateProfileMe({ profile: { is_public: next } });
-      queryClient.invalidateQueries({ queryKey: ["profile-me"] });
-      toast.success(
-        next ? "Profiliniz artık herkese açık." : "Profiliniz artık gizli."
-      );
-    } catch {
-      setIsPublicOverride(prev);
-      toast.error("Görünürlük ayarı kaydedilemedi.");
-    }
-  };
-
   if (isLoading || (isTutor && tutorMeLoading)) {
     return (
       <div className="flex justify-center py-20">
@@ -329,107 +250,79 @@ function ProfileContent() {
     </Card>
   );
 
-  const preferences = (
-    <AccountPreferences
-      preferences={prefs}
-      onLanguageChange={handleLanguageChange}
-      onThemeChange={handleThemeChange}
-      onNotificationToggle={handleNotificationToggle}
-    />
-  );
-
-  const security = (
-    <SecurityPrivacySection
-      isTutor={isTutor}
-      isPublic={currentIsPublic}
-      onVisibilityToggle={handleVisibilityToggle}
-      onLogout={logout}
-    />
-  );
-
   return (
     <div className="mx-auto w-full min-w-0 max-w-6xl overflow-x-clip px-4 py-8 sm:py-10">
       <div className="mb-8">
         <h1 className="text-2xl font-bold tracking-tight text-foreground">Profilim</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           {isTutor
-            ? "Hesap bilgilerini, tercihlerini ve güvenlik ayarlarını buradan yönet."
-            : "Öğrenme geçmişini, ilişkilerini ve hesap tercihlerini bir arada gör."}
+            ? "Hesap bilgilerini ve hoca ayarlarını buradan yönet."
+            : "Öğrenme geçmişini ve hesap bilgilerini bir arada gör."}
         </p>
       </div>
 
       {isTutor ? (
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:items-start lg:gap-8">
-          <div className="space-y-6 lg:col-span-2">
-            {identitySummary}
-            <Card>
-              <CardHeader>
-                <SectionCardTitle className="text-base">Hoca Bilgileri</SectionCardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <ProfileToggleRow
-                  label="Rezervasyonları otomatik onayla"
-                  checked={currentAutoApprove}
-                  onChange={handleAutoApproveToggle}
-                />
-                <Separator />
-                <dl className="space-y-2 text-sm">
-                  <div className="flex justify-between gap-3">
-                    <dt className="text-muted-foreground">Üniversite</dt>
-                    <dd className="text-right font-medium text-foreground">
-                      {tutorUniversity || "—"}
-                    </dd>
-                  </div>
-                  <div className="flex justify-between gap-3">
-                    <dt className="text-muted-foreground">Bölüm</dt>
-                    <dd className="text-right font-medium text-foreground">
-                      {tutorDepartment || "—"}
-                    </dd>
-                  </div>
-                  <div className="flex justify-between gap-3">
-                    <dt className="text-muted-foreground">40 dk ders ücreti</dt>
-                    <dd className="text-right font-medium text-foreground">
-                      {tutorHourlyPrice ? formatPrice(tutorHourlyPrice) : "—"}
-                    </dd>
-                  </div>
-                </dl>
-                <Separator />
-                <TutorVideoSection
-                  introVideoUrl={tutorIntroVideoUrl}
-                  fullName={fullName}
-                  onSave={handleSaveIntroVideo}
-                />
-                <Separator />
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className="text-sm font-medium text-foreground">Canlı Ders Eğitimi</p>
-                    <p className="mt-0.5 text-xs text-muted-foreground">
-                      Ders ekranı rehberini istediğin zaman tekrar izle — aktivasyonunu etkilemez.
-                    </p>
-                  </div>
-                  <Button asChild variant="outline" size="sm" className="shrink-0">
-                    <Link href="/tutor/tutorial?replay=1">Tekrar izle</Link>
-                  </Button>
+        <div className="space-y-6 lg:space-y-8">
+          {identitySummary}
+          <Card>
+            <CardHeader>
+              <SectionCardTitle className="text-base">Hoca Bilgileri</SectionCardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <ProfileToggleRow
+                label="Rezervasyonları otomatik onayla"
+                checked={currentAutoApprove}
+                onChange={handleAutoApproveToggle}
+              />
+              <Separator />
+              <dl className="space-y-2 text-sm">
+                <div className="flex justify-between gap-3">
+                  <dt className="text-muted-foreground">Üniversite</dt>
+                  <dd className="text-right font-medium text-foreground">
+                    {tutorUniversity || "—"}
+                  </dd>
                 </div>
-                <Button asChild variant="outline" size="sm">
-                  <Link href="/dashboard/tutor/edit">Eğitmen profilini düzenle</Link>
+                <div className="flex justify-between gap-3">
+                  <dt className="text-muted-foreground">Bölüm</dt>
+                  <dd className="text-right font-medium text-foreground">
+                    {tutorDepartment || "—"}
+                  </dd>
+                </div>
+                <div className="flex justify-between gap-3">
+                  <dt className="text-muted-foreground">40 dk ders ücreti</dt>
+                  <dd className="text-right font-medium text-foreground">
+                    {tutorHourlyPrice ? formatPrice(tutorHourlyPrice) : "—"}
+                  </dd>
+                </div>
+              </dl>
+              <Separator />
+              <TutorVideoSection
+                introVideoUrl={tutorIntroVideoUrl}
+                fullName={fullName}
+                onSave={handleSaveIntroVideo}
+              />
+              <Separator />
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-medium text-foreground">Canlı Ders Eğitimi</p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    Ders ekranı rehberini istediğin zaman tekrar izle — aktivasyonunu etkilemez.
+                  </p>
+                </div>
+                <Button asChild variant="outline" size="sm" className="shrink-0">
+                  <Link href="/tutor/tutorial?replay=1">Tekrar izle</Link>
                 </Button>
-              </CardContent>
-            </Card>
-          </div>
-          <div className="space-y-6">
-            {preferences}
-            {security}
-          </div>
+              </div>
+              <Button asChild variant="outline" size="sm">
+                <Link href="/dashboard/tutor/edit">Eğitmen profilini düzenle</Link>
+              </Button>
+            </CardContent>
+          </Card>
         </div>
       ) : (
         <div className="space-y-6 lg:space-y-8">
           {identitySummary}
           <StudentLearningProfile />
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:gap-8">
-            {preferences}
-            {security}
-          </div>
         </div>
       )}
     </div>

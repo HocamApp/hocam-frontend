@@ -676,9 +676,6 @@ export function ProfileMenu() {
                 onClick={() => go("/profile/reviews/pending")}
               />
             )}
-            <Button className="w-full" onClick={() => go("/profile/calendar")}>
-              Ders Takvimine Git
-            </Button>
           </ProfileAccordionSection>
 
           {/* ---- Ödeme ve Faturalandırma ---- */}
@@ -898,13 +895,6 @@ export function ProfileMenu() {
                 logout();
               }}
             />
-            <div className="pt-1">
-              <p className="px-2 pb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Tehlikeli Alan
-              </p>
-              <ProfileMenuRow label="Hesabı dondur" danger onClick={comingSoon} />
-              <ProfileMenuRow label="Hesabı sil" danger onClick={comingSoon} />
-            </div>
           </ProfileAccordionSection>
         </div>
       </PopoverContent>
