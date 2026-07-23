@@ -318,6 +318,9 @@ function StudentRosterCard({
     >
       <CardContent className="flex items-start gap-3 p-4">
         <Avatar className="h-10 w-10 shrink-0">
+          {student.avatar_url ? (
+            <AvatarImage src={student.avatar_url} alt={name} />
+          ) : null}
           <AvatarFallback className="bg-primary/10 text-sm font-semibold text-primary">
             {getInitials(firstName, lastName)}
           </AvatarFallback>
