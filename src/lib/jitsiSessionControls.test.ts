@@ -59,7 +59,13 @@ describe("lesson Jitsi screen-sharing controls", () => {
     // the legacy hideConferenceTimer key must not be used.
     assert.deepEqual(config.timeTimer, { enabled: false });
     assert.equal("hideConferenceTimer" in config, false);
-    assert.deepEqual(config.connectionIndicators, { disabled: true });
+    assert.deepEqual(config.connectionIndicators, {
+      disabled: true,
+      autoHide: true,
+      autoHideTimeout: 0,
+      inactiveDisabled: true,
+      disableDetails: true,
+    });
     assert.equal(config.disable1On1Mode, true);
   });
 });
