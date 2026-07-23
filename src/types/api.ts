@@ -633,11 +633,23 @@ export interface QuestionMetadata {
 
 export interface LessonQuestionState {
   active_question: SolvableQuestion | null;
+  /** Whether the student may see the correct choice (not the detailed solution). */
+  answer_revealed_to_student: boolean;
+  /** @deprecated Backend alias that mirrors `answer_revealed_to_student`. */
   solution_revealed: boolean;
+  /** Correct choice — only populated for the student once revealed. */
   correct_choice: string;
-  solution_url: string;
+  /** Last answer the student consciously submitted for the active question. */
+  student_answer: string;
+  student_answer_at: string | null;
   version: number;
   updated_at: string | null;
+  // Teacher-only fields — present exclusively in the tutor's payload, absent
+  // from the student's response entirely (see backend role-based serializer).
+  teacher_correct_choice?: string;
+  teacher_answer?: string;
+  teacher_explanation?: string;
+  teacher_solution_url?: string;
 }
 
 export interface QuestionFilters {
@@ -652,7 +664,15 @@ export interface QuestionFilters {
 
 export interface LessonQuestionStateUpdate {
   question_id?: string | null;
+  answer_revealed_to_student?: boolean;
+  /** @deprecated Alias of `answer_revealed_to_student`. */
   solution_revealed?: boolean;
+}
+
+export interface LessonQuestionAnswerInput {
+  selected_choice: string;
+  question_id: string;
+  version: number;
 }
 
 export interface BookingQuestion {

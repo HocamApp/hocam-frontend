@@ -7,6 +7,7 @@ import {
   clearLessonQuestionState,
   fetchLessonQuestionState,
   getQuestionSessionErrorMessage,
+  submitLessonQuestionAnswer,
   updateLessonQuestionState,
 } from "@/lib/questionsApi";
 import type { LessonQuestionState, LessonQuestionStateUpdate } from "@/types";
@@ -31,10 +32,12 @@ export interface LessonQuestionSessionController {
   stateIsError: boolean;
   updatePending: boolean;
   clearPending: boolean;
+  submitPending: boolean;
   panelOpen: boolean;
   invitationOpen: boolean;
   refetchState: () => void;
   updateState: (payload: LessonQuestionStateUpdate) => void;
+  submitAnswer: (selectedChoice: string) => void;
   clearState: () => void;
   openPanel: () => void;
   closePanel: () => void;
@@ -115,9 +118,11 @@ export function useLessonQuestionSession({
             ? {
                 ...current,
                 active_question: null,
+                answer_revealed_to_student: false,
                 solution_revealed: false,
                 correct_choice: "",
-                solution_url: "",
+                student_answer: "",
+                student_answer_at: null,
                 version: current.version + 1,
                 updated_at: new Date().toISOString(),
               }
@@ -130,6 +135,41 @@ export function useLessonQuestionSession({
         getQuestionSessionErrorMessage(
           error,
           "Paylaşım kapatılamadı. Bağlantını kontrol edip tekrar dene."
+        )
+      );
+    },
+  });
+  const submit = useMutation({
+    mutationFn: (selectedChoice: string) => {
+      const current = stateQuery.data;
+      const questionId = current?.active_question?.id;
+      const version = current?.version;
+      if (!questionId || version === undefined) {
+        return Promise.reject(new Error("no-active-question"));
+      }
+      return submitLessonQuestionAnswer(bookingId, {
+        selected_choice: selectedChoice,
+        question_id: questionId,
+        version,
+      });
+    },
+    onSuccess: (data) => {
+      queryClient.setQueryData(queryKey, data);
+      toast.success("Cevabın gönderildi.");
+    },
+    onError: (error) => {
+      const status = (error as { response?: { status?: number } })?.response
+        ?.status;
+      if (status === 409) {
+        // The tutor moved on to another question/version; resync and inform.
+        void stateQuery.refetch();
+        toast.info("Soru değişti. Güncel soruya bak.");
+        return;
+      }
+      toast.error(
+        getQuestionSessionErrorMessage(
+          error,
+          "Cevabın gönderilemedi. Lütfen tekrar dene."
         )
       );
     },
@@ -207,6 +247,7 @@ export function useLessonQuestionSession({
     stateIsError: stateQuery.isError,
     updatePending: update.isPending,
     clearPending: clear.isPending,
+    submitPending: submit.isPending,
     panelOpen: uiState.panelOpen,
     invitationOpen:
       isStudent &&
@@ -216,6 +257,7 @@ export function useLessonQuestionSession({
       void stateQuery.refetch();
     },
     updateState: (payload) => update.mutate(payload),
+    submitAnswer: (selectedChoice) => submit.mutate(selectedChoice),
     clearState: () => clear.mutate(),
     openPanel,
     closePanel,

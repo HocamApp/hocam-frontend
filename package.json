@@ -9,7 +9,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test:unit": "node --import tsx --test src/lib/matchingDraft.test.ts src/lib/matchingFlow.test.ts src/lib/questionsApi.test.ts src/lib/jitsiSessionControls.test.ts src/lib/lessonSessionState.test.ts src/lib/lessonPresence.test.ts src/components/layout/navItems.test.ts src/components/questions/lessonQuestionInvitation.test.ts src/components/tutors/TutorStudentMaterials.test.tsx",
+    "test:unit": "node --experimental-test-module-mocks --test-force-exit --import tsx --test src/lib/matchingDraft.test.ts src/lib/matchingFlow.test.ts src/lib/questionsApi.test.ts src/lib/questionsApi.session.test.ts src/lib/jitsiSessionControls.test.ts src/lib/lessonSessionState.test.ts src/lib/lessonPresence.test.ts src/components/layout/navItems.test.ts src/components/questions/lessonQuestionInvitation.test.ts src/components/questions/QuestionViewer.test.tsx src/components/questions/LessonQuestionPanel.test.tsx src/components/tutors/TutorStudentMaterials.test.tsx",
     "motion:check": "tsx scripts/matching-motion-check.ts",
     "responsive:check": "tsx scripts/responsive-check.ts"
   },

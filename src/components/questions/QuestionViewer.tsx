@@ -16,13 +16,18 @@ export function QuestionViewer({
   compact = false,
   answerControl = "self",
   revealedCorrectChoice = "",
-  revealedSolutionUrl = "",
+  onSubmitAnswer,
+  submittedChoice = "",
+  submitPending = false,
 }: {
   question: SolvableQuestion;
   compact?: boolean;
   answerControl?: "self" | "tutor-controlled";
   revealedCorrectChoice?: string;
-  revealedSolutionUrl?: string;
+  /** Live-lesson only: student submits their answer to the tutor (no reveal). */
+  onSubmitAnswer?: (selectedChoice: string) => void;
+  submittedChoice?: string;
+  submitPending?: boolean;
 }) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -49,9 +54,13 @@ export function QuestionViewer({
   });
 
   const correctChoice = result?.correct_choice || revealedCorrectChoice;
-  const solutionUrl = result?.solution_url || revealedSolutionUrl;
+  const solutionUrl = result?.solution_url || "";
   const isRevealed = Boolean(correctChoice);
   const isTutorControlled = answerControl === "tutor-controlled";
+  // Live-lesson student answering: only when a submit handler is wired in and
+  // the viewer is in the tutor-controlled panel. Never reveals the solution.
+  const canSubmitAnswer =
+    isTutorControlled && user?.role === "student" && Boolean(onSubmitAnswer);
 
   return (
     <article className={cn("space-y-5", compact ? "text-sm" : "rounded-2xl border bg-card p-5 sm:p-7")}>
@@ -122,6 +131,14 @@ export function QuestionViewer({
             Yanıtı kontrol et
           </Button>
         )}
+        {canSubmitAnswer && !isRevealed && (
+          <Button
+            onClick={() => onSubmitAnswer?.(selectedChoice)}
+            disabled={!selectedChoice || submitPending}
+          >
+            {submittedChoice ? "Cevabımı güncelle" : "Cevabımı gönder"}
+          </Button>
+        )}
         {!isRevealed && !isTutorControlled && (
           <Button
             variant="outline"
@@ -151,6 +168,13 @@ export function QuestionViewer({
         )}
       </div>
 
+      {canSubmitAnswer && submittedChoice && (
+        <p className="text-sm text-muted-foreground">
+          <span className="font-medium text-foreground">Gönderdiğin cevap:</span>{" "}
+          {submittedChoice}
+          {isRevealed ? "" : " — hocan doğru cevabı açtığında görebilirsin."}
+        </p>
+      )}
       {isRevealed && result?.answer && (
         <div className="rounded-xl bg-muted p-4 text-sm">
           <span className="font-medium">Doğru cevap:</span> {result.answer}

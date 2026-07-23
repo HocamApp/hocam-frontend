@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { Eye, FileQuestion, X } from "lucide-react";
+import { ExternalLink, Eye, EyeOff, FileQuestion, X } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { fetchQuestions } from "@/lib/questionsApi";
 import { QuestionViewer } from "@/components/questions/QuestionViewer";
@@ -9,6 +9,18 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Booking } from "@/types";
 import type { LessonQuestionSessionController } from "./useLessonQuestionSession";
+
+function formatAnswerTime(iso: string | null | undefined): string {
+  if (!iso) return "";
+  try {
+    return new Date(iso).toLocaleTimeString("tr-TR", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  } catch {
+    return "";
+  }
+}
 
 export function LessonQuestionPanel({
   booking,
@@ -26,7 +38,12 @@ export function LessonQuestionPanel({
     queryFn: () => fetchQuestions({ subject: booking.subject.id, page_size: 24 }),
     enabled: isTutor,
   });
-  const active = session.state?.active_question;
+  const state = session.state;
+  const active = state?.active_question;
+  const answerRevealed = Boolean(state?.answer_revealed_to_student);
+  const studentAnswerText = active?.choices.find(
+    (choice) => choice.key === state?.student_answer
+  )?.text;
 
   return (
     <aside
@@ -54,32 +71,96 @@ export function LessonQuestionPanel({
         ) : active ? (
           <>
             <QuestionViewer
-              key={`${active.id}-${session.state?.version}`}
+              key={`${active.id}-${state?.version}`}
               question={active}
               compact
               answerControl="tutor-controlled"
-              revealedCorrectChoice={session.state?.correct_choice}
-              revealedSolutionUrl={session.state?.solution_url}
+              revealedCorrectChoice={state?.correct_choice}
+              onSubmitAnswer={isTutor ? undefined : session.submitAnswer}
+              submittedChoice={isTutor ? "" : state?.student_answer}
+              submitPending={session.submitPending}
             />
             {isTutor && (
-              <div className="flex flex-wrap gap-2 border-t pt-4">
-                <Button
-                  size="sm"
-                  onClick={() => session.updateState({ solution_revealed: true })}
-                  disabled={
-                    Boolean(session.state?.solution_revealed) || session.updatePending
-                  }
-                >
-                  <Eye className="mr-2 h-4 w-4" /> Cevabı öğrenciye göster
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={session.clearState}
-                  disabled={session.clearPending}
-                >
-                  Paylaşımı kapat
-                </Button>
+              <div className="space-y-4 border-t pt-4">
+                {/* 1 — student's latest submitted answer */}
+                <div className="rounded-xl border bg-muted/40 p-3 text-sm">
+                  {state?.student_answer ? (
+                    <>
+                      <p>
+                        <span className="font-semibold">Öğrencinin cevabı:</span>{" "}
+                        {state.student_answer}
+                        {studentAnswerText ? ` — ${studentAnswerText}` : ""}
+                      </p>
+                      {state.student_answer_at && (
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          Son güncelleme: {formatAnswerTime(state.student_answer_at)}
+                        </p>
+                      )}
+                    </>
+                  ) : (
+                    <p className="text-muted-foreground">
+                      Öğrenci henüz cevap göndermedi.
+                    </p>
+                  )}
+                </div>
+
+                {/* 2 + 3 — correct answer and detailed solution (teacher only) */}
+                <div className="space-y-2 rounded-xl border border-amber-500/40 bg-amber-500/5 p-3 text-sm">
+                  <p className="text-xs font-medium uppercase tracking-wide text-amber-700 dark:text-amber-400">
+                    Yalnızca öğretmen görünümü
+                  </p>
+                  <p>
+                    <span className="font-semibold">Doğru cevap:</span>{" "}
+                    {state?.teacher_correct_choice || "—"}
+                    {state?.teacher_answer ? ` (${state.teacher_answer})` : ""}
+                  </p>
+                  {state?.teacher_explanation && (
+                    <p className="whitespace-pre-wrap text-muted-foreground">
+                      {state.teacher_explanation}
+                    </p>
+                  )}
+                  {state?.teacher_solution_url && (
+                    <a
+                      href={state.teacher_solution_url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1 text-primary underline"
+                    >
+                      Çözümü aç <ExternalLink className="h-3.5 w-3.5" />
+                    </a>
+                  )}
+                </div>
+
+                {/* 4 — single reveal toggle + remove share */}
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    size="sm"
+                    onClick={() =>
+                      session.updateState({
+                        answer_revealed_to_student: !answerRevealed,
+                      })
+                    }
+                    disabled={session.updatePending}
+                  >
+                    {answerRevealed ? (
+                      <>
+                        <EyeOff className="mr-2 h-4 w-4" /> Cevabı öğrenciden gizle
+                      </>
+                    ) : (
+                      <>
+                        <Eye className="mr-2 h-4 w-4" /> Cevabı öğrenciye göster
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={session.clearState}
+                    disabled={session.clearPending}
+                  >
+                    Soruyu kaldır
+                  </Button>
+                </div>
               </div>
             )}
           </>

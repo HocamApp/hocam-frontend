@@ -1,5 +1,6 @@
 import api from "./api";
 import type {
+  LessonQuestionAnswerInput,
   LessonQuestionState,
   LessonQuestionStateUpdate,
   PaginatedResponse,
@@ -88,4 +89,15 @@ export async function updateLessonQuestionState(
 
 export async function clearLessonQuestionState(bookingId: string): Promise<void> {
   await api.delete(`/bookings/${bookingId}/question-session/`);
+}
+
+export async function submitLessonQuestionAnswer(
+  bookingId: string,
+  payload: LessonQuestionAnswerInput
+): Promise<LessonQuestionState> {
+  const response = await api.post<LessonQuestionState>(
+    `/bookings/${bookingId}/question-session/answer/`,
+    payload
+  );
+  return response.data;
 }
