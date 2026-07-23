@@ -21,6 +21,43 @@ export function isAllowedPath(pathname: string) {
   );
 }
 
+export interface TutorActivationGateInput {
+  isLoading: boolean;
+  isTutor: boolean;
+  isAdmin: boolean;
+  isImpersonating: boolean;
+  tutorialCompleted: boolean;
+  pathname: string;
+}
+
+/**
+ * Pure redirect decision, exported for regression tests (same pattern as
+ * isAllowedPath above).
+ *
+ * Staff exemption: admins may carry a tutor role in Django, but their primary
+ * account belongs in the admin center — only gate them while they are viewing
+ * a tutor account through the explicit impersonation flow. This mirrors
+ * MainLayoutShell's (!isAdmin || isImpersonating) rule; a missing exemption
+ * here once ping-ponged admins between /admin-control (this gate) and
+ * /tutor/onboarding (RouteGuard's admin bounce), flickering the screen.
+ */
+export function shouldRedirectToOnboarding({
+  isLoading,
+  isTutor,
+  isAdmin,
+  isImpersonating,
+  tutorialCompleted,
+  pathname,
+}: TutorActivationGateInput) {
+  return (
+    !isLoading &&
+    isTutor &&
+    (!isAdmin || isImpersonating) &&
+    !tutorialCompleted &&
+    !isAllowedPath(pathname)
+  );
+}
+
 /**
  * Hard frontend gate for tutors who have not completed the mandatory
  * live-lesson tutorial. UX only — the real enforcement lives in the backend
@@ -34,15 +71,17 @@ export function isAllowedPath(pathname: string) {
 export function TutorActivationGate() {
   const router = useRouter();
   const pathname = usePathname();
-  const { user, isTutor, isLoading, isImpersonating } = useAuth();
+  const { user, isTutor, isAdmin, isLoading, isImpersonating } = useAuth();
 
-  const mustRedirect =
-    !isLoading &&
-    isTutor &&
-    !isImpersonating &&
-    user !== null &&
-    !user.jitsi_tutorial_completed &&
-    !isAllowedPath(pathname);
+  const mustRedirect = shouldRedirectToOnboarding({
+    isLoading,
+    isTutor,
+    isAdmin,
+    isImpersonating,
+    // A null user means auth has not resolved anyone to gate yet.
+    tutorialCompleted: user?.jitsi_tutorial_completed ?? true,
+    pathname,
+  });
 
   useEffect(() => {
     if (mustRedirect) router.replace("/tutor/onboarding");
