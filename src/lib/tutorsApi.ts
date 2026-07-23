@@ -26,11 +26,18 @@ export interface TutorEducationOption {
   departments: string[];
 }
 
+// Profile-related reasons: visible to any user who can view the tutor.
+// Lesson-related reasons: only available to students who have taken a lesson
+// or purchased a package with the tutor (server enforces this).
 export type TutorReportReason =
+  | "inappropriate_photo"
+  | "inappropriate_profile_text"
+  | "misleading_profile"
+  | "excessive_price"
+  | "other"
   | "inappropriate_conduct"
   | "harassment"
-  | "misleading_profile"
-  | "other";
+  | "lesson_not_delivered";
 
 export async function createTutorReport(
   tutorId: string,
