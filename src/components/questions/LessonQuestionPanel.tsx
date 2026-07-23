@@ -70,6 +70,11 @@ export function LessonQuestionPanel({
           </div>
         ) : active ? (
           <>
+            {isTutor && !answerRevealed && (
+              <p className="rounded-lg bg-amber-500/10 px-3 py-2 text-xs text-amber-700 dark:text-amber-400">
+                Doğru cevap yalnızca öğretmende görünüyor — öğrenci &quot;Cevabı öğrenciye göster&quot;e basılana kadar bunu göremez.
+              </p>
+            )}
             <QuestionViewer
               key={`${active.id}-${state?.version}`}
               question={active}

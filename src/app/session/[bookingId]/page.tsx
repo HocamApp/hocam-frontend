@@ -593,7 +593,11 @@ function SessionContent() {
     );
   }
 
-  const displayName = user?.email?.split("@", 1)[0] ?? "Kullanıcı";
+  const displayName = booking
+    ? user?.role === "tutor"
+      ? `${booking.tutor.name} ${booking.tutor.surname}`.trim()
+      : booking.student.display_name || booking.student.email
+    : user?.email?.split("@", 1)[0] ?? "Kullanıcı";
 
   const handleToggleWhiteboard = () => {
     if (!jitsiApi?.executeCommand) {
