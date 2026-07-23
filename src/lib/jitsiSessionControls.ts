@@ -17,8 +17,19 @@ export function getLessonJitsiConfigOverwrite(role: LessonParticipantRole) {
     startWithAudioMuted: false,
     startWithVideoMuted: false,
     prejoinPageEnabled: true,
+    prejoinConfig: {
+      enabled: true,
+      // Hide the name field in prejoin: the name is already set authoritatively
+      // by the JaaS JWT context.user.name.
+      hideDisplayName: true,
+      hideExtraJoinButtons: ["no-audio", "by-phone"],
+    },
+    // Lock the display name everywhere (prejoin + in-meeting profile). Must be
+    // used together with a JWT name so the user cannot override it.
+    readOnlyName: true,
     disableAddingBackgroundImages: false,
     disablePolls: true,
+    disableSelfDemote: true,
     transcription: { enabled: false },
     fileSharing: { enabled: false },
     hideConferenceSubject: true,
@@ -26,11 +37,46 @@ export function getLessonJitsiConfigOverwrite(role: LessonParticipantRole) {
     // timer (official current key is timeTimer.enabled) and connection quality
     // indicators so there is exactly one clock on screen.
     timeTimer: { enabled: false },
-    connectionIndicators: { disabled: true },
+    // Defensive, multi-layer suppression of the connection-quality popup
+    // (signal icon on participant tiles). JaaS rolling releases may ignore
+    // individual keys, so we set all of them.
+    connectionIndicators: {
+      disabled: true,
+      autoHide: true,
+      autoHideTimeout: 0,
+      inactiveDisabled: true,
+      disableDetails: true,
+    },
+    disableShowMoreStats: true,
     // Keep the remote tile in the filmstrip (so the whiteboard-side "teacher
     // video" area behaves predictably) instead of the 1:1 stage swap.
     disable1On1Mode: true,
     toolbarButtons: getLessonJitsiToolbarButtons(role),
+    // Prune the remote participant context menu: no kick, no private message,
+    // no grant moderator. Falls back to click interception if JaaS ignores the
+    // hide flags. The single "Mute" action is intentionally NOT listed here so
+    // it remains available.
+    remoteVideoMenu: {
+      disableKick: true,
+      disableGrantModerator: true,
+      disablePrivateChat: true,
+      disableDemote: true,
+    },
+    participantMenuButtonsWithNotifyClick: [
+      "kick",
+      "grant-moderator",
+      "privateMessage",
+      "mute-others",
+      "mute-others-video",
+      "send-participant-to-room",
+    ],
+    // Participants-pane defense in depth: hide the moderator bulk-action
+    // buttons that duplicate the same dangerous operations.
+    participantsPane: {
+      hideModeratorSettingsTab: true,
+      hideMoreActionsButton: true,
+      hideMuteAllButton: true,
+    },
   };
 }
 

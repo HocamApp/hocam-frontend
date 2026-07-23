@@ -812,6 +812,10 @@ function SessionContent() {
             SHOW_BRAND_WATERMARK: false,
             SHOW_POWERED_BY: false,
             DEFAULT_BACKGROUND: "#111827",
+            // Legacy fallback for connection-quality tile icon suppression.
+            // Modern JaaS releases read configOverwrite.connectionIndicators,
+            // but older tenants still honor this interface_config key.
+            CONNECTION_INDICATOR_DISABLED: true,
           }}
           onApiReady={(api: JitsiApi) => {
             setJitsiApi(api);
