@@ -89,12 +89,7 @@ function SupportContent() {
             </CardContent>
           </Card>
 
-          <section>
-            <h2 className="mb-3 text-lg font-semibold text-foreground">
-              Destek taleplerim
-            </h2>
-            <SupportTicketList />
-          </section>
+          <SupportTicketList />
         </div>
 
         {/* Help / rulebook */}

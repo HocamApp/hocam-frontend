@@ -1,43 +1,30 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   Bell,
-  BookOpen,
   CalendarClock,
-  Camera,
   ChevronDown,
   CreditCard,
   Download,
   Eye,
   Globe,
-  GraduationCap,
   KeyRound,
   LifeBuoy,
   LogOut,
   Mail,
   Moon,
-  PlayCircle,
   Receipt,
   Settings,
   ShieldCheck,
-  Star,
   UserCog,
-  Video,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { fetchProfileMe, updateProfileMe } from "@/lib/profileApi";
-import { fetchMyTutorProfile, uploadTutorProfilePicture } from "@/lib/tutorsApi";
-import {
-  PROFILE_PHOTO_ACCEPT,
-  PROFILE_PHOTO_RULE_TEXT,
-  TUTOR_REAL_PHOTO_RULE_TEXT,
-  validateProfilePhotoFile,
-} from "@/lib/profilePhoto";
-import { formatPrice } from "@/lib/utils";
+import { fetchMyTutorProfile } from "@/lib/tutorsApi";
 import type { Theme } from "@/lib/theme";
 import type { ProfileStudent, ProfileTutor, UserPreferences } from "@/types";
 import {
@@ -68,16 +55,6 @@ import {
   PaymentMethodSelector,
   type PaymentMethod,
 } from "@/components/profile/PaymentMethodSelector";
-
-const DAY_NAMES = [
-  "Pazartesi",
-  "Salı",
-  "Çarşamba",
-  "Perşembe",
-  "Cuma",
-  "Cumartesi",
-  "Pazar",
-];
 
 // Boolean-valued preference keys — excludes string fields like `language`
 type BoolPrefKey = keyof Omit<UserPreferences, "language">;
@@ -142,14 +119,6 @@ export function ProfileMenu() {
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
   const [paymentNotice, setPaymentNotice] = useState("");
 
-  // Profile photo upload (tutor only)
-  const [photoUploading, setPhotoUploading] = useState(false);
-  const [photoError, setPhotoError] = useState<string | null>(null);
-  const photoInputRef = useRef<HTMLInputElement>(null);
-
-  // Optimistic override for auto_approve_bookings
-  const [autoApproveOverride, setAutoApproveOverride] = useState<boolean | null>(null);
-
   const { data, isLoading } = useQuery({
     queryKey: ["profile-me"],
     queryFn: fetchProfileMe,
@@ -170,7 +139,6 @@ export function ProfileMenu() {
     staleTime: 60_000,
   });
 
-  const tutorId = tutorMeData?.id ?? tutor?.id;
   const name = tutorMeData?.name ?? tutor?.name ?? studentProfile?.name ?? "";
   const surname = tutorMeData?.surname ?? tutor?.surname ?? studentProfile?.surname ?? "";
   const fullName = `${name} ${surname}`.trim();
@@ -179,10 +147,6 @@ export function ProfileMenu() {
     tutorMeData?.profile_picture || tutor?.profile_picture || studentProfile?.avatar_url || "";
   const tutorUniversity = tutorMeData?.university ?? tutor?.university ?? "";
   const tutorDepartment = tutorMeData?.department ?? tutor?.department ?? "";
-  const tutorHourlyPrice = tutorMeData?.hourly_price ?? tutor?.hourly_price ?? 0;
-  const tutorIntroVideoUrl = tutorMeData?.intro_video_url ?? tutor?.intro_video_url ?? "";
-  const tutorSubjects = tutorMeData?.subjects ?? tutor?.subjects ?? [];
-  const tutorAvailability = tutor?.availability ?? [];
   const showDemoPaymentMethods = isBurakYilmazTutor(name, surname, role);
 
   const stats = data?.stats;
@@ -273,57 +237,10 @@ export function ProfileMenu() {
     }
   };
 
-  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    e.target.value = "";
-    setPhotoError(null);
-    const validationError = validateProfilePhotoFile(file);
-    if (validationError) {
-      setPhotoError(validationError);
-      return;
-    }
-    setPhotoUploading(true);
-    try {
-      await uploadTutorProfilePicture(file);
-      await queryClient.invalidateQueries({ queryKey: ["profile-me"] });
-      await queryClient.invalidateQueries({ queryKey: ["tutor-me"] });
-      if (tutorId) {
-        await queryClient.invalidateQueries({ queryKey: ["tutor", tutorId] });
-      }
-      await queryClient.invalidateQueries({ queryKey: ["tutors"] });
-      toast.success("Profil fotoğrafı güncellendi.");
-    } catch {
-      setPhotoError("Fotoğraf yüklenemedi. Lütfen tekrar deneyin.");
-    } finally {
-      setPhotoUploading(false);
-    }
-  };
-
-  const handleAutoApproveToggle = async (next: boolean) => {
-    const prev = autoApproveOverride ?? tutor?.auto_approve_bookings ?? false;
-    setAutoApproveOverride(next);
-    try {
-      await updateProfileMe({ profile: { auto_approve_bookings: next } });
-      queryClient.invalidateQueries({ queryKey: ["profile-me"] });
-    } catch {
-      setAutoApproveOverride(prev);
-      toast.error("Tercih kaydedilemedi.");
-    }
-  };
-
   // Single-open connected accordion: one active section key (null = all collapsed).
   const sectionKeys = useMemo(
-    () => [
-      "profile",
-      "lessons",
-      "payment",
-      "security",
-      "notifications",
-      ...(isTutor ? ["tutor"] : []),
-      "advanced",
-    ],
-    [isTutor]
+    () => ["profile", "lessons", "payment", "security", "notifications", "advanced"],
+    []
   );
   const activeIndex = sectionKeys.indexOf(activeSection ?? "");
 
@@ -348,8 +265,6 @@ export function ProfileMenu() {
   }, [open]);
 
   if (!isAuthenticated) return null;
-
-  const currentAutoApprove = autoApproveOverride ?? tutor?.auto_approve_bookings ?? false;
 
   return (
     <>
@@ -383,7 +298,7 @@ export function ProfileMenu() {
             title="Profil Detayları"
             {...sectionProps("profile")}
           >
-            {/* Avatar row with photo upload for tutors */}
+            {/* Avatar row */}
             <div className="flex items-start gap-3">
               <div className="relative shrink-0">
                 <Avatar className="h-14 w-14 border border-border">
@@ -392,33 +307,6 @@ export function ProfileMenu() {
                     {initials || <UserCog className="h-5 w-5" />}
                   </AvatarFallback>
                 </Avatar>
-                {isTutor && (
-                  <>
-                    <input
-                      type="file"
-                      accept={PROFILE_PHOTO_ACCEPT}
-                      hidden
-                      ref={photoInputRef}
-                      onChange={handlePhotoUpload}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => photoInputRef.current?.click()}
-                      disabled={photoUploading}
-                      className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground shadow transition-opacity disabled:opacity-60"
-                      aria-label="Profil fotoğrafı değiştir"
-                    >
-                      {photoUploading ? (
-                        <span
-                          className="h-3 w-3 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent"
-                          aria-hidden
-                        />
-                      ) : (
-                        <Camera className="h-3 w-3" />
-                      )}
-                    </button>
-                  </>
-                )}
               </div>
               <div className="min-w-0 flex-1">
                 {isLoading && !data ? (
@@ -442,22 +330,6 @@ export function ProfileMenu() {
                 )}
               </div>
             </div>
-
-            {photoError && (
-              <p className="text-xs text-destructive" role="alert">
-                {photoError}
-              </p>
-            )}
-
-            {isTutor && (
-              <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-100">
-                <p>{PROFILE_PHOTO_RULE_TEXT}</p>
-                <p className="mt-1">{TUTOR_REAL_PHOTO_RULE_TEXT}</p>
-                <p className="mt-1 text-amber-800 dark:text-amber-200">
-                  JPEG, PNG veya WebP; en fazla 5 MB.
-                </p>
-              </div>
-            )}
 
             {/* Email (read-only) */}
             <div className="flex items-center gap-3 rounded-lg px-2 py-1.5 text-sm">
@@ -490,46 +362,13 @@ export function ProfileMenu() {
             title="Dersler ve Rezervasyonlar"
             {...sectionProps("lessons")}
           >
-            {isTutor && (
-              <ProfileToggleRow
-                label="Otomatik onay"
-                checked={currentAutoApprove}
-                onChange={handleAutoApproveToggle}
-              />
-            )}
             <ProfileMenuRow
               icon={<CalendarClock className="h-4 w-4" />}
-              label={isTutor ? "Yaklaşan dersler" : "Derslerim"}
+              label="Derslerim"
               badgeCount={stats?.upcoming_lessons_count}
               showChevron
               onClick={() => go(isTutor ? "/profile/lessons/upcoming" : "/profile/lessons")}
             />
-            {isTutor && (
-              <ProfileMenuRow
-                icon={<BookOpen className="h-4 w-4" />}
-                label="Onay bekleyen rezervasyonlar"
-                badgeCount={stats?.pending_bookings_count}
-                showChevron
-                onClick={() => go("/profile/reservations/pending")}
-              />
-            )}
-            {isTutor && (
-              <ProfileMenuRow
-                icon={<CalendarClock className="h-4 w-4" />}
-                label="Geçmiş dersler"
-                showChevron
-                onClick={() => go("/profile/lessons/history")}
-              />
-            )}
-            {isTutor && (
-              <ProfileMenuRow
-                icon={<Star className="h-4 w-4" />}
-                label="Değerlendirme bekleyenler"
-                badgeCount={stats?.pending_reviews_count}
-                showChevron
-                onClick={() => go("/profile/reviews/pending")}
-              />
-            )}
           </ProfileAccordionSection>
 
           {/* ---- Ödeme ve Faturalandırma ---- */}
@@ -638,74 +477,6 @@ export function ProfileMenu() {
               onChange={(v) => handleNotificationToggle("notify_email", v)}
             />
           </ProfileAccordionSection>
-
-          {/* ---- Eğitmen Profili (tutor only) ---- */}
-          {isTutor && (
-            <ProfileAccordionSection
-              icon={<GraduationCap className="h-4 w-4" />}
-              title="Eğitmen Profili"
-              {...sectionProps("tutor")}
-            >
-              {tutorSubjects.length > 0 && (
-                <div className="flex flex-wrap gap-1.5">
-                  {tutorSubjects.map((s) => (
-                    <Badge key={s.id} variant="secondary">
-                      {s.name}
-                    </Badge>
-                  ))}
-                </div>
-              )}
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">40 dk ders ücreti</span>
-                <span className="font-medium text-foreground">
-                  {formatPrice(tutorHourlyPrice)}
-                </span>
-              </div>
-              <div className="space-y-1 text-sm">
-                <span className="text-muted-foreground">Müsaitlik saatleri</span>
-                {tutorAvailability.length === 0 ? (
-                  <p className="text-foreground">Henüz eklenmedi</p>
-                ) : (
-                  <ul className="space-y-0.5">
-                    {tutorAvailability.slice(0, 5).map((a, i) => (
-                      <li key={`${a.day_of_week}-${i}`} className="flex flex-wrap justify-between gap-x-3 gap-y-0.5">
-                        <span className="text-foreground">{DAY_NAMES[a.day_of_week]}</span>
-                        <span className="text-muted-foreground">
-                          {a.start_time} – {a.end_time}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-              {tutorIntroVideoUrl ? (
-                <ProfileMenuRow
-                  icon={<PlayCircle className="h-4 w-4" />}
-                  label="Tanıtım videosu: Videoyu izle"
-                  showChevron
-                  onClick={() => {
-                    setOpen(false);
-                    window.open(tutorIntroVideoUrl, "_blank", "noopener,noreferrer");
-                  }}
-                />
-              ) : (
-                <ProfileMenuRow
-                  icon={<Video className="h-4 w-4" />}
-                  label="Tanıtım videosu ekle"
-                  showChevron
-                  onClick={() => go(editHref)}
-                />
-              )}
-              <Button
-                variant="outline"
-                className="w-full"
-                disabled={!tutorId}
-                onClick={() => tutorId && go(`/tutors/${tutorId}`)}
-              >
-                Public Profili Gör
-              </Button>
-            </ProfileAccordionSection>
-          )}
 
           {/* ---- Gelişmiş Ayarlar ---- */}
           <ProfileAccordionSection
