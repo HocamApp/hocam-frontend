@@ -4,7 +4,7 @@ export type MobileNavPlacement = "primary" | "overflow" | "hidden";
 
 export type NavIconName =
   | "Bell"
-  | "FileQuestion"
+  | "CircleHelp"
   | "GraduationCap"
   | "Heart"
   | "Home"
@@ -59,8 +59,8 @@ const studentDescriptors: NavDescriptor[] = [
   },
   {
     kind: "route",
-    title: "Çıkmış Sorular",
-    icon: "FileQuestion",
+    title: "Sorular",
+    icon: "CircleHelp",
     href: "/cikmis-sorular",
     mobilePlacement: "overflow",
   },
@@ -126,8 +126,8 @@ const tutorDescriptors: NavDescriptor[] = [
   },
   {
     kind: "route",
-    title: "Çıkmış Sorular",
-    icon: "FileQuestion",
+    title: "Sorular",
+    icon: "CircleHelp",
     href: "/cikmis-sorular",
     mobilePlacement: "overflow",
   },
