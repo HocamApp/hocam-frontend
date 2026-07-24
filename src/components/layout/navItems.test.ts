@@ -41,8 +41,8 @@ describe("getNavDescriptors", () => {
       },
       {
         kind: "route",
-        title: "Çıkmış Sorular",
-        icon: "FileQuestion",
+        title: "Sorular",
+        icon: "CircleHelp",
         href: "/cikmis-sorular",
         mobilePlacement: "overflow",
       },
@@ -112,8 +112,8 @@ describe("getNavDescriptors", () => {
       },
       {
         kind: "route",
-        title: "Çıkmış Sorular",
-        icon: "FileQuestion",
+        title: "Sorular",
+        icon: "CircleHelp",
         href: "/cikmis-sorular",
         mobilePlacement: "overflow",
       },

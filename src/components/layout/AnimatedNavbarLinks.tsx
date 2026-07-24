@@ -4,8 +4,8 @@ import * as React from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   Bell,
+  CircleHelp,
   GraduationCap,
-  FileQuestion,
   Heart,
   Home,
   LayoutDashboard,
@@ -34,7 +34,7 @@ import {
 
 const iconByName = {
   Bell,
-  FileQuestion,
+  CircleHelp,
   GraduationCap,
   Heart,
   Home,
