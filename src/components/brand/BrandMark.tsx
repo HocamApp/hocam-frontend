@@ -4,9 +4,9 @@ import { cn } from "@/lib/utils";
 type BrandMarkSize = "sm" | "md" | "hero";
 
 const markSizes: Record<BrandMarkSize, string> = {
-  sm: "h-9 w-8",
-  md: "h-12 w-10",
-  hero: "h-48 w-40",
+  sm: "size-9",
+  md: "size-12",
+  hero: "size-48",
 };
 
 const nameSizes: Record<BrandMarkSize, string> = {
@@ -38,11 +38,11 @@ export function BrandMark({
           src="/brand/hocam-logo.png"
           alt=""
           aria-hidden="true"
-          width={1536}
+          width={1024}
           height={1024}
           priority={priority}
-          sizes={size === "hero" ? "160px" : "48px"}
-          className="absolute left-1/2 top-0 h-full w-auto max-w-none -translate-x-1/2"
+          sizes={size === "hero" ? "192px" : "48px"}
+          className="size-full scale-[1.45] object-contain"
         />
       </span>
       {showName ? (
