@@ -24,6 +24,7 @@ import { fetchBookings } from "@/lib/lessonsApi";
 import { fetchPackagePurchases } from "@/lib/paymentsApi";
 import { fetchLearningDashboard } from "@/lib/learningApi";
 import { goalPackageHref } from "@/lib/learning";
+import { MATCHING_FEATURE_ENABLED } from "@/lib/featureFlags";
 import { cn, formatDate } from "@/lib/utils";
 import {
   computePackageExpiry,
@@ -312,12 +313,14 @@ function StudentDashboardContent() {
             </p>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row">
-            <Button asChild size="lg">
-              <Link href="/match">
-                <Sparkles className="mr-2 h-4 w-4" />
-                Sana uygun hocayı bulalım
-              </Link>
-            </Button>
+            {MATCHING_FEATURE_ENABLED && (
+              <Button asChild size="lg">
+                <Link href="/match">
+                  <Sparkles className="mr-2 h-4 w-4" />
+                  Sana uygun hocayı bulalım
+                </Link>
+              </Button>
+            )}
             <Button asChild variant="outline" size="lg">
               <Link href="/profile/lessons?view=calendar">
                 <Calendar className="mr-2 h-4 w-4" />

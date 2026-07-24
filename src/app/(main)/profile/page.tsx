@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import Link from "next/link";
@@ -20,12 +20,6 @@ import {
 import { validateProfilePhotoFile } from "@/lib/profilePhoto";
 import type { StudentAvatarKey } from "@/lib/studentAvatars";
 import { formatPrice } from "@/lib/utils";
-import {
-  applyInterfaceLanguage,
-  getStoredInterfaceLanguage,
-  hasStoredInterfaceLanguage,
-  isInterfaceLanguage,
-} from "@/lib/interfaceLanguage";
 import type { ProfileMeResponse, ProfileStudent, ProfileTutor } from "@/types";
 
 import { RouteGuard } from "@/components/shared/RouteGuard";
@@ -94,17 +88,6 @@ function ProfileContent() {
 
   const currentAutoApprove =
     autoApproveOverride ?? tutor?.auto_approve_bookings ?? false;
-
-  useEffect(() => {
-    const accountLanguage = data?.preferences?.language;
-    if (
-      accountLanguage &&
-      isInterfaceLanguage(accountLanguage) &&
-      (!hasStoredInterfaceLanguage() || getStoredInterfaceLanguage() !== accountLanguage)
-    ) {
-      applyInterfaceLanguage(accountLanguage);
-    }
-  }, [data?.preferences?.language]);
 
   const updateStudentProfileCache = (nextProfile: ProfileStudent) => {
     queryClient.setQueryData<ProfileMeResponse>(["profile-me"], (current) =>

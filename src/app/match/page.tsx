@@ -33,7 +33,6 @@ import { QuestionTransition } from "@/components/matching/QuestionTransition";
 import { SelectionCard, SelectionCount } from "@/components/matching/SelectionCard";
 import { RouteGuard } from "@/components/shared/RouteGuard";
 import { useAuth } from "@/hooks/useAuth";
-import { announceInterfaceContentReady } from "@/lib/interfaceLanguage";
 import {
   answersForGoal,
   deriveMatchingSceneState,
@@ -194,7 +193,6 @@ function MatchingExperience() {
   const finishQuestionTransition = useCallback(() => {
     setIsTransitioning(false);
     headingRef.current?.focus({ preventScroll: true });
-    announceInterfaceContentReady();
   }, []);
 
   const prefetchOptions = useCallback(

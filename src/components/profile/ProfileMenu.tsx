@@ -20,7 +20,6 @@ import {
   LogOut,
   Mail,
   Moon,
-  Pencil,
   PlayCircle,
   Receipt,
   Settings,
@@ -39,12 +38,6 @@ import {
   validateProfilePhotoFile,
 } from "@/lib/profilePhoto";
 import { formatPrice } from "@/lib/utils";
-import {
-  applyInterfaceLanguage,
-  getStoredInterfaceLanguage,
-  hasStoredInterfaceLanguage,
-  isInterfaceLanguage,
-} from "@/lib/interfaceLanguage";
 import type { Theme } from "@/lib/theme";
 import type { ProfileStudent, ProfileTutor, UserPreferences } from "@/types";
 import {
@@ -62,7 +55,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AnimatedThemeToggler } from "@/components/theme/AnimatedThemeToggler";
 import {
@@ -150,13 +142,6 @@ export function ProfileMenu() {
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
   const [paymentNotice, setPaymentNotice] = useState("");
 
-  // Inline name/surname editing
-  const [nameEdit, setNameEdit] = useState(false);
-  const [editName, setEditName] = useState("");
-  const [editSurname, setEditSurname] = useState("");
-  const [nameError, setNameError] = useState<string | null>(null);
-  const [nameSaving, setNameSaving] = useState(false);
-
   // Profile photo upload (tutor only)
   const [photoUploading, setPhotoUploading] = useState(false);
   const [photoError, setPhotoError] = useState<string | null>(null);
@@ -214,17 +199,6 @@ export function ProfileMenu() {
     }),
     [data?.preferences, prefOverrides]
   );
-
-  useEffect(() => {
-    const accountLanguage = data?.preferences?.language;
-    if (
-      accountLanguage &&
-      isInterfaceLanguage(accountLanguage) &&
-      (!hasStoredInterfaceLanguage() || getStoredInterfaceLanguage() !== accountLanguage)
-    ) {
-      applyInterfaceLanguage(accountLanguage);
-    }
-  }, [data?.preferences?.language]);
 
   const go = (href: string) => {
     setOpen(false);
@@ -299,45 +273,6 @@ export function ProfileMenu() {
     }
   };
 
-  const handleLanguageChange = async (nextLang: string) => {
-    if (!isInterfaceLanguage(nextLang)) return;
-    if (nextLang === prefs.language) {
-      applyInterfaceLanguage(nextLang);
-      return;
-    }
-    const prevLang = prefs.language;
-    setPrefOverrides((prev) => ({ ...prev, language: nextLang }));
-    try {
-      await updateProfileMe({ preferences: { language: nextLang } });
-      await queryClient.invalidateQueries({ queryKey: ["profile-me"] });
-      applyInterfaceLanguage(nextLang);
-    } catch {
-      setPrefOverrides((prev) => ({ ...prev, language: prevLang }));
-      toast.error("Dil ayarı kaydedilemedi.");
-    }
-  };
-
-  const handleNameSave = async () => {
-    const trimmedName = editName.trim();
-    const trimmedSurname = editSurname.trim();
-    if (!trimmedName || !trimmedSurname) {
-      setNameError("İsim ve soyisim boş olamaz.");
-      return;
-    }
-    setNameSaving(true);
-    try {
-      await updateProfileMe({ profile: { name: trimmedName, surname: trimmedSurname } });
-      await queryClient.invalidateQueries({ queryKey: ["profile-me"] });
-      await queryClient.invalidateQueries({ queryKey: ["tutor-me"] });
-      setNameEdit(false);
-      toast.success("İsim güncellendi.");
-    } catch {
-      setNameError("İsim güncellenemedi. Lütfen tekrar deneyin.");
-    } finally {
-      setNameSaving(false);
-    }
-  };
-
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -409,9 +344,6 @@ export function ProfileMenu() {
   useEffect(() => {
     if (!open) {
       setActiveSection(null);
-      setNameEdit(false);
-      setEditName("");
-      setEditSurname("");
     }
   }, [open]);
 
@@ -550,84 +482,6 @@ export function ProfileMenu() {
               showChevron
               onClick={() => go("/profile")}
             />
-
-            {/* Inline name / surname edit */}
-            {!nameEdit ? (
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full"
-                onClick={() => {
-                  setEditName(name);
-                  setEditSurname(surname);
-                  setNameError(null);
-                  setNameEdit(true);
-                }}
-              >
-                <Pencil className="mr-1.5 h-3 w-3" />
-                İsim ve soyismi düzenle
-              </Button>
-            ) : (
-              <div className="space-y-2">
-                <div className="flex flex-col gap-2 sm:flex-row">
-                  <Input
-                    placeholder="İsim"
-                    value={editName}
-                    onChange={(e) => {
-                      setEditName(e.target.value);
-                      setNameError(null);
-                    }}
-                    className="h-8 text-sm"
-                    disabled={nameSaving}
-                    // eslint-disable-next-line jsx-a11y/no-autofocus
-                    autoFocus
-                  />
-                  <Input
-                    placeholder="Soyisim"
-                    value={editSurname}
-                    onChange={(e) => {
-                      setEditSurname(e.target.value);
-                      setNameError(null);
-                    }}
-                    className="h-8 text-sm"
-                    disabled={nameSaving}
-                  />
-                </div>
-                {nameError && (
-                  <p className="text-xs text-destructive">{nameError}</p>
-                )}
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="flex-1"
-                    onClick={() => setNameEdit(false)}
-                    disabled={nameSaving}
-                  >
-                    İptal
-                  </Button>
-                  <Button
-                    size="sm"
-                    className="flex-1"
-                    onClick={handleNameSave}
-                    disabled={nameSaving}
-                  >
-                    {nameSaving ? (
-                      <span
-                        className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent"
-                        aria-hidden
-                      />
-                    ) : (
-                      "Kaydet"
-                    )}
-                  </Button>
-                </div>
-              </div>
-            )}
-
-            <Button variant="outline" className="w-full" onClick={() => go(editHref)}>
-              Profili Düzenle
-            </Button>
           </ProfileAccordionSection>
 
           {/* ---- Dersler ve Rezervasyonlar ---- */}
@@ -734,12 +588,14 @@ export function ProfileMenu() {
               showChevron
               onClick={() => go("/profile/security")}
             />
-            <ProfileMenuRow
-              icon={<Eye className="h-4 w-4" />}
-              label="Hesap görünürlüğü"
-              showChevron
-              onClick={() => go("/profile#account-visibility")}
-            />
+            {isTutor && (
+              <ProfileMenuRow
+                icon={<Eye className="h-4 w-4" />}
+                label="Hesap görünürlüğü"
+                showChevron
+                onClick={() => go("/profile#account-visibility")}
+              />
+            )}
             <ProfileMenuRow
               icon={<Download className="h-4 w-4" />}
               label="Verilerimi indir"
@@ -863,12 +719,15 @@ export function ProfileMenu() {
               </span>
               <span className="flex-1 text-foreground">Dil</span>
               <select
-                value={prefs.language}
-                onChange={(e) => handleLanguageChange(e.target.value)}
+                value="tr"
+                onChange={() => undefined}
+                aria-label="Arayüz dili"
                 className="rounded-md border border-input bg-background px-2 py-0.5 text-xs text-foreground"
               >
                 <option value="tr">Türkçe</option>
-                <option value="en">İngilizce</option>
+                <option value="en" disabled>
+                  İngilizce (yakında)
+                </option>
               </select>
             </div>
             <div className="flex items-center gap-3 px-2 py-1.5 text-sm">
