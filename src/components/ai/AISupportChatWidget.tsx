@@ -30,6 +30,7 @@ const intentLabels: Record<AIIntent, string> = {
   reservation_help: "Rezervasyon",
   tutor_recommendation: "Mentor önerisi",
   study_guidance: "Çalışma planı",
+  academic_help: "Ders desteği",
   platform_faq: "Hocam bilgisi",
   support_escalation: "Destek",
   general_smalltalk: "Sohbet",
@@ -55,7 +56,7 @@ interface AISupportChatWidgetProps {
 
 export function AISupportChatWidget({
   title = "Hocam AI Destek",
-  welcomeMessage = "Merhaba, ben Hocam AI Asistan. Destek, rezervasyon ve mentor konularında hızlıca yardımcı olabilirim.",
+  welcomeMessage = "Merhaba, ben Hocam AI Asistan. Ders soruları, çalışma planı, rezervasyon ve hoca seçimi konusunda yardımcı olabilirim.",
   starterPrompts = defaultStarterPrompts,
   getRequestContext,
   onApplyProfileBio,
