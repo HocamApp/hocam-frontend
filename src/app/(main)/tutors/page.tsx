@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import SlidingPagination from "@/components/ui/sliding-pagination";
 import { isSubjectValidForExam } from "@/lib/subjects";
+import { MATCHING_FEATURE_ENABLED } from "@/lib/featureFlags";
 
 const PAGE_SIZE = 12;
 const FILTER_PANEL_PREFERENCE_KEY = "hocam:tutor-filters-open";
@@ -330,7 +331,7 @@ function TutorsPageContent() {
                     onCommit={(search) => handleFiltersChange({ ...filters, search })}
                     disabled={isListLoading}
                   />
-                  {isStudent && (
+                  {MATCHING_FEATURE_ENABLED && isStudent && (
                     <Button asChild className="shrink-0 rounded-xl">
                       <Link href="/match">7 soruda eşleş</Link>
                     </Button>

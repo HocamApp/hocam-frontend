@@ -35,6 +35,7 @@ import {
   isPastPackage,
 } from "@/components/payments/PackagePurchaseCard";
 import { trackHomeEvent } from "@/lib/homeAnalytics";
+import { MATCHING_FEATURE_ENABLED } from "@/lib/featureFlags";
 import { formatDate } from "@/lib/utils";
 import type {
   Booking,
@@ -468,15 +469,17 @@ export function AuthenticatedHome() {
             </div>
 
             <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center">
-              <Button asChild size="lg" className="rounded-xl">
-                <Link
-                  href="/match"
-                  onClick={() => trackHomeEvent("home_matching_started", { placement: "hero" })}
-                >
-                  <Sparkles className="mr-2 h-4 w-4" aria-hidden="true" />
-                  Sana uygun hocayı bulalım
-                </Link>
-              </Button>
+              {MATCHING_FEATURE_ENABLED && (
+                <Button asChild size="lg" className="rounded-xl">
+                  <Link
+                    href="/match"
+                    onClick={() => trackHomeEvent("home_matching_started", { placement: "hero" })}
+                  >
+                    <Sparkles className="mr-2 h-4 w-4" aria-hidden="true" />
+                    Sana uygun hocayı bulalım
+                  </Link>
+                </Button>
+              )}
               <Link
                 href="/cikmis-sorular"
                 onClick={() => trackHomeEvent("home_question_link_clicked", { placement: "hero" })}
