@@ -480,7 +480,7 @@ export function ProfileMenu() {
               icon={<UserCog className="h-4 w-4" />}
               label="Profil sayfasına git"
               showChevron
-              onClick={() => go("/profile")}
+              onClick={() => go(isTutor ? editHref : "/profile")}
             />
           </ProfileAccordionSection>
 
