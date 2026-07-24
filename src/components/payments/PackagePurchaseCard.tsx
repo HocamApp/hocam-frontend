@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { Calendar, ChevronRight, Clock3, Target } from "lucide-react";
 import { formatDate, formatPrice } from "@/lib/utils";
 import StatusBadge from "@/components/shared/StatusBadge";
@@ -52,11 +53,21 @@ export function isPastPackage(purchase: PackagePurchase, expiry: PackageExpiry |
   return false;
 }
 
-export function PackagePurchaseCard({ purchase }: { purchase: PackagePurchase }) {
+export function PackagePurchaseCard({
+  purchase,
+  isExpanded = false,
+  onToggle,
+  details,
+}: {
+  purchase: PackagePurchase;
+  isExpanded?: boolean;
+  onToggle?: () => void;
+  details?: ReactNode;
+}) {
   const expiry = computePackageExpiry(purchase);
 
-  return (
-    <div className="rounded-lg border p-3">
+  const summary = (
+    <>
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="min-w-0">
           <p className="font-medium">
@@ -64,7 +75,17 @@ export function PackagePurchaseCard({ purchase }: { purchase: PackagePurchase })
           </p>
           <p className="text-sm text-muted-foreground">{purchase.plan.name}</p>
         </div>
-        <StatusBadge status={purchase.status} type="packagePurchase" />
+        <span className="flex items-center gap-2">
+          <StatusBadge status={purchase.status} type="packagePurchase" />
+          {onToggle && (
+            <ChevronRight
+              className={`h-4 w-4 text-muted-foreground transition-transform ${
+                isExpanded ? "rotate-90" : ""
+              }`}
+              aria-hidden="true"
+            />
+          )}
+        </span>
       </div>
       <div className="mt-3 grid min-w-0 grid-cols-2 gap-x-4 gap-y-1.5 text-sm sm:grid-cols-4">
         <div className="min-w-0">
@@ -99,6 +120,26 @@ export function PackagePurchaseCard({ purchase }: { purchase: PackagePurchase })
           Paket süren doldu. Kalan derslerini kullanmak için son{" "}
           <span className="font-medium">{expiry.graceDaysLeft} gün</span>.
         </p>
+      )}
+    </>
+  );
+
+  return (
+    <div className="overflow-hidden rounded-lg border">
+      {onToggle ? (
+        <button
+          type="button"
+          className="w-full p-3 text-left transition-colors hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+          aria-expanded={isExpanded}
+          onClick={onToggle}
+        >
+          {summary}
+        </button>
+      ) : (
+        <div className="p-3">{summary}</div>
+      )}
+      {onToggle && isExpanded && details && (
+        <div className="border-t bg-muted/20 p-3">{details}</div>
       )}
     </div>
   );
