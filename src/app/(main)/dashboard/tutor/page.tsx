@@ -38,7 +38,14 @@ import {
   fetchTutorPackageOffers,
   fetchTutorPackagePurchases,
 } from "@/lib/paymentsApi";
-import { calculatePackagePricing, formatPlanDuration } from "@/lib/lessonPricing";
+import {
+  calculatePackagePricing,
+  formatPlanDuration,
+  MOST_POPULAR_DURATION_DAYS,
+  PLAN_DURATION_DAYS,
+  WEEKLY_LESSON_OPTIONS,
+  type WeeklyLessonOption,
+} from "@/lib/lessonPricing";
 import { cn, formatDate, formatPrice, formatRating } from "@/lib/utils";
 import { useHighlightTarget, HIGHLIGHT_CLASSNAME, HIGHLIGHT_PARAM } from "@/hooks/useHighlightTarget";
 import type {
@@ -688,13 +695,28 @@ function TutorDashboardContent() {
     queryFn: () => fetchTutorPriceInsight((profile?.subjects ?? []).map((s) => s.id)),
     enabled: isAuthenticated && Boolean(profile),
   });
+  const [selectedPackageFrequency, setSelectedPackageFrequency] =
+    useState<WeeklyLessonOption>(1);
   const packageCommissionRate = (priceInsight?.commission_rate_bps ?? 0) / 10_000;
-  // Only the plans a student would actually see — absence of a
-  // TutorPackageOffer row means "offered at catalog discount" (handled
-  // server-side by effective_discount_percent), never assume all 20 rows exist.
-  const offeredPackagePlans = (packageOffers ?? [])
-    .filter((plan) => plan.is_offered)
-    .sort((a, b) => a.lessons_per_week - b.lessons_per_week || a.duration_days - b.duration_days);
+  // Grouped by frequency, NOT filtered to is_offered — the picker below
+  // renders every catalog plan and dims the ones this tutor has turned
+  // off, rather than silently omitting them (that's the whole point of
+  // this tab: showing what a student sees AND what you've turned off).
+  // Absence of a TutorPackageOffer row still means "offered at catalog
+  // discount" — effective_discount_percent already resolves that
+  // server-side, never assume all 20 rows exist.
+  const packagesByFrequency = useMemo(() => {
+    const map = new Map<number, TutorPackageOffer[]>();
+    for (const plan of packageOffers ?? []) {
+      const list = map.get(plan.lessons_per_week) ?? [];
+      list.push(plan);
+      map.set(plan.lessons_per_week, list);
+    }
+    for (const list of Array.from(map.values())) {
+      list.sort((a, b) => a.duration_days - b.duration_days);
+    }
+    return map;
+  }, [packageOffers]);
 
   const { data: packagePurchases = [] } = useQuery({
     queryKey: ["tutor-package-purchases"],
@@ -1441,63 +1463,124 @@ function TutorDashboardContent() {
             </div>
           )}
           {!packageOffersError && packageOffersLoading && (
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-              {[1, 2, 3, 4].map((i) => (
-                <Skeleton key={i} className="h-32 w-full rounded-lg" />
-              ))}
+            <div className="space-y-4">
+              <Skeleton className="h-9 w-full max-w-md rounded-full" />
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-4">
+                {[1, 2, 3, 4].map((i) => (
+                  <Skeleton key={i} className="h-32 w-full rounded-lg" />
+                ))}
+              </div>
             </div>
           )}
           {!packageOffersError && !packageOffersLoading && packageOffers && (
-            offeredPackagePlans.length === 0 ? (
-              <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
-                <p>Şu an hiçbir paket sunmuyorsun — öğrenciler paket satın alamaz.</p>
-                <Button variant="link" size="sm" asChild>
-                  <Link href="/dashboard/tutor/packages">Paketlerini düzenle</Link>
-                </Button>
+            <section className="rounded-xl border bg-card p-4 shadow-sm sm:p-5">
+              <div>
+                <p className="text-sm font-medium">Haftada ders sayısı</p>
+                <div
+                  className="mt-2 flex flex-wrap gap-2"
+                  role="group"
+                  aria-label="Haftada ders sayısı"
+                >
+                  {WEEKLY_LESSON_OPTIONS.map((count) => (
+                    <button
+                      key={count}
+                      type="button"
+                      aria-pressed={selectedPackageFrequency === count}
+                      onClick={() => setSelectedPackageFrequency(count)}
+                      className={cn(
+                        "rounded-full border px-4 py-1.5 text-sm font-medium transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                        selectedPackageFrequency === count &&
+                          "border-primary bg-primary text-primary-foreground hover:bg-primary"
+                      )}
+                    >
+                      {count} ders
+                    </button>
+                  ))}
+                </div>
               </div>
-            ) : (
-              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                {offeredPackagePlans.map((plan) => {
-                  const pricing = calculatePackagePricing(
-                    profile.hourly_price,
-                    plan.lesson_count,
-                    plan.effective_discount_percent
-                  );
-                  const commission = Math.round(pricing.total * packageCommissionRate);
-                  const net = pricing.total - commission;
-                  return (
-                    <Card key={plan.plan_id}>
-                      <CardContent className="space-y-3 p-4">
-                        <p className="font-medium">
-                          Haftada {plan.lessons_per_week} · {formatPlanDuration(plan.duration_days)}
-                        </p>
-                        <dl className="space-y-1.5 text-sm">
-                          <div className="flex justify-between gap-4">
-                            <dt className="text-muted-foreground">Öğrenci fiyatı</dt>
-                            <dd className="font-medium">{formatPrice(pricing.total)}</dd>
-                          </div>
-                          <div className="flex justify-between gap-4">
-                            <dt className="text-muted-foreground">
-                              Tahmini Hocam komisyonu (%{packageCommissionRate * 100})
-                            </dt>
-                            <dd className="font-medium text-rose-700 dark:text-rose-300">
-                              -{formatPrice(commission)}
-                            </dd>
-                          </div>
-                          <Separator className="!my-2" />
-                          <div className="flex justify-between gap-4 font-semibold">
-                            <dt>Tahmini net kazancın</dt>
-                            <dd className="text-emerald-700 dark:text-emerald-300">
-                              {formatPrice(net)}
-                            </dd>
-                          </div>
-                        </dl>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
+
+              <div className="mt-5">
+                <p className="text-sm font-medium">Paket süresi</p>
+                <div
+                  className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-4"
+                  role="group"
+                  aria-label="Paket süresi"
+                >
+                  {PLAN_DURATION_DAYS.map((days) => {
+                    const plan = (packagesByFrequency.get(selectedPackageFrequency) ?? []).find(
+                      (p) => p.duration_days === days
+                    );
+                    const notOffered = !plan || !plan.is_offered;
+                    const pricing = plan
+                      ? calculatePackagePricing(
+                          profile.hourly_price,
+                          plan.lesson_count,
+                          plan.effective_discount_percent
+                        )
+                      : null;
+                    const commission = pricing
+                      ? Math.round(pricing.total * packageCommissionRate)
+                      : 0;
+                    const net = pricing ? pricing.total - commission : 0;
+                    return (
+                      <div
+                        key={days}
+                        className={cn(
+                          "relative rounded-lg border p-3 pt-4 text-left",
+                          notOffered && "opacity-50"
+                        )}
+                      >
+                        {days === MOST_POPULAR_DURATION_DAYS && !notOffered && (
+                          <Badge className="absolute -top-2.5 right-3">En popüler</Badge>
+                        )}
+                        <p className="font-medium">{formatPlanDuration(days)}</p>
+                        {notOffered ? (
+                          <p className="mt-2 text-xs text-muted-foreground">
+                            Bu paketi sunmuyorsun.
+                          </p>
+                        ) : (
+                          <>
+                            {pricing!.discountPercent > 0 && (
+                              <Badge variant="secondary" className="mt-1">
+                                %{pricing!.discountPercent} avantaj
+                              </Badge>
+                            )}
+                            <p className="mt-2 text-sm font-semibold">
+                              {formatPrice(pricing!.discountedPerLesson)}
+                              <span className="font-normal text-muted-foreground"> / ders</span>
+                              {pricing!.discountPercent > 0 && (
+                                <span className="ml-1.5 text-xs font-normal text-muted-foreground line-through">
+                                  {formatPrice(pricing!.basePerLesson)}
+                                </span>
+                              )}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {pricing!.lessonCount} ders
+                            </p>
+                            <dl className="mt-3 space-y-1 border-t pt-2 text-xs">
+                              <div className="flex justify-between gap-3">
+                                <dt className="text-muted-foreground">
+                                  Tahmini komisyon (%{packageCommissionRate * 100})
+                                </dt>
+                                <dd className="text-rose-700 dark:text-rose-300">
+                                  -{formatPrice(commission)}
+                                </dd>
+                              </div>
+                              <div className="flex justify-between gap-3 font-semibold">
+                                <dt>Tahmini net kazancın</dt>
+                                <dd className="text-emerald-700 dark:text-emerald-300">
+                                  {formatPrice(net)}
+                                </dd>
+                              </div>
+                            </dl>
+                          </>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-            )
+            </section>
           )}
         </TabsContent>
       </Tabs>
