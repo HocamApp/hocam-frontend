@@ -1,6 +1,6 @@
 "use client";
 
-import { RefObject } from "react";
+import { useRef, useState } from "react";
 import { Camera } from "lucide-react";
 
 import {
@@ -13,10 +13,13 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
+  checkProfilePhotoMinResolution,
   PROFILE_PHOTO_ACCEPT,
   PROFILE_PHOTO_RULE_TEXT,
   TUTOR_REAL_PHOTO_RULE_TEXT,
+  validateProfilePhotoSourceFile,
 } from "@/lib/profilePhoto";
+import { ProfilePhotoCropper } from "@/components/profile/ProfilePhotoCropper";
 import { STUDENT_AVATAR_PRESETS, type StudentAvatarKey } from "@/lib/studentAvatars";
 
 interface AvatarEditorProps {
@@ -27,9 +30,10 @@ interface AvatarEditorProps {
   isTutor: boolean;
   photoUploading: boolean;
   photoError: string | null;
-  fileInputRef: RefObject<HTMLInputElement>;
-  onPickFile: () => void;
-  onFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  /** Called once the user has picked a file, passed the source checks, and
+   * cropped it — the file is already square and within size limits, ready
+   * to hand straight to uploadTutorProfilePicture/uploadStudentProfileAvatar. */
+  onFileReady: (file: File) => void;
   studentAvatar?: {
     avatarKind?: string | null;
     avatarKey?: string | null;
@@ -46,19 +50,59 @@ export function AvatarEditor({
   isTutor,
   photoUploading,
   photoError,
-  fileInputRef,
-  onPickFile,
-  onFileChange,
+  onFileReady,
   studentAvatar,
   avatarChoicePendingKey,
   onChooseStudentAvatar,
 }: AvatarEditorProps) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [sourceError, setSourceError] = useState<string | null>(null);
+  const [pendingCrop, setPendingCrop] = useState<{ src: string; maxZoom: number } | null>(
+    null
+  );
+
   if (!isStudent && !isTutor) return null;
 
   const busy = photoUploading || Boolean(avatarChoicePendingKey);
   const noticeText = isTutor
     ? [PROFILE_PHOTO_RULE_TEXT, TUTOR_REAL_PHOTO_RULE_TEXT]
     : [PROFILE_PHOTO_RULE_TEXT];
+  // Freshest error wins: a new pick clears sourceError immediately, but the
+  // parent's photoError (an upload failure from a *previous* file) only
+  // clears once onFileReady actually fires for the new one.
+  const displayedError = sourceError ?? photoError;
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = "";
+    setSourceError(null);
+
+    const typeOrSizeError = validateProfilePhotoSourceFile(file);
+    if (typeOrSizeError) {
+      setSourceError(typeOrSizeError);
+      return;
+    }
+
+    const resolutionCheck = await checkProfilePhotoMinResolution(file);
+    if (!resolutionCheck.ok) {
+      setSourceError(resolutionCheck.error);
+      return;
+    }
+
+    setPendingCrop({ src: resolutionCheck.objectUrl, maxZoom: resolutionCheck.maxZoom });
+  };
+
+  const handleCropCancel = () => {
+    if (pendingCrop) URL.revokeObjectURL(pendingCrop.src);
+    setPendingCrop(null);
+  };
+
+  const handleCropped = (file: File) => {
+    if (pendingCrop) URL.revokeObjectURL(pendingCrop.src);
+    setPendingCrop(null);
+    onFileReady(file);
+  };
 
   return (
     <div>
@@ -67,8 +111,17 @@ export function AvatarEditor({
         accept={PROFILE_PHOTO_ACCEPT}
         hidden
         ref={fileInputRef}
-        onChange={onFileChange}
+        onChange={handleFileChange}
       />
+      {pendingCrop && (
+        <ProfilePhotoCropper
+          open
+          imageSrc={pendingCrop.src}
+          maxZoom={pendingCrop.maxZoom}
+          onCancel={handleCropCancel}
+          onCropped={handleCropped}
+        />
+      )}
       <Accordion type="single" collapsible>
         <AccordionItem value="avatar-editor" className="border-none">
           <AccordionTrigger className="gap-2 rounded-md py-2 text-sm font-medium text-foreground hover:no-underline">
@@ -87,7 +140,7 @@ export function AvatarEditor({
               <div
                 className={cn(
                   "rounded-md border px-3 py-2 text-xs transition-colors",
-                  photoError
+                  displayedError
                     ? "border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-100"
                     : "border-border bg-transparent text-muted-foreground"
                 )}
@@ -98,16 +151,16 @@ export function AvatarEditor({
                   </p>
                 ))}
               </div>
-              {photoError && (
+              {displayedError && (
                 <p className="text-sm text-destructive" role="alert">
-                  {photoError}
+                  {displayedError}
                 </p>
               )}
               <Button
                 type="button"
                 size="sm"
                 variant="outline"
-                onClick={onPickFile}
+                onClick={() => fileInputRef.current?.click()}
                 disabled={busy}
               >
                 {photoUploading ? (

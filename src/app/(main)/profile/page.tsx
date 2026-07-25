@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import Link from "next/link";
@@ -17,7 +17,6 @@ import {
   updateMyTutorProfile,
   uploadTutorProfilePicture,
 } from "@/lib/tutorsApi";
-import { validateProfilePhotoFile } from "@/lib/profilePhoto";
 import type { StudentAvatarKey } from "@/lib/studentAvatars";
 import { formatPrice } from "@/lib/utils";
 import type { ProfileMeResponse, ProfileStudent, ProfileTutor } from "@/types";
@@ -53,7 +52,6 @@ function ProfileContent() {
   const [avatarChoicePendingKey, setAvatarChoicePendingKey] =
     useState<StudentAvatarKey | null>(null);
   const [autoApproveOverride, setAutoApproveOverride] = useState<boolean | null>(null);
-  const photoInputRef = useRef<HTMLInputElement>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ["profile-me"],
@@ -102,16 +100,8 @@ function ProfileContent() {
     toast.success("İsim güncellendi.");
   };
 
-  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    e.target.value = "";
+  const handlePhotoUpload = async (file: File) => {
     setPhotoError(null);
-    const validationError = validateProfilePhotoFile(file);
-    if (validationError) {
-      setPhotoError(validationError);
-      return;
-    }
     setPhotoUploading(true);
     try {
       if (studentProfile) {
@@ -213,9 +203,7 @@ function ProfileContent() {
               isTutor={isTutor}
               photoUploading={photoUploading}
               photoError={photoError}
-              fileInputRef={photoInputRef}
-              onPickFile={() => photoInputRef.current?.click()}
-              onFileChange={handlePhotoUpload}
+              onFileReady={handlePhotoUpload}
               studentAvatar={
                 studentProfile
                   ? {
