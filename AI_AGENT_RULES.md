@@ -61,6 +61,34 @@
   `dashboard/tutor/page.tsx` ve `dashboard/student/page.tsx` gibi paylaşılan büyük dosyalarda
   gerçek çakışmaya yol açtı).
 
+## 6. Git / PR akışı (Claude Code, Codex, vb. — yerel `git`/`gh` erişimi olan ajanlar)
+
+Bu makinede zaten oturum açmış `git`/`gh` var — token istemeyin, yazdırmayın, `gh auth token`
+çalıştırmayın. Cowork gibi yerel `git`/`gh` erişimi olmayan bir Claude oturumu bu işi
+planlayıp görev tanımını yazabilir, ama push/merge'i burada, yerel ajan yapar; Cowork
+sonrasında GitHub üzerinden bağımsızca (merge commit'i çekerek) doğrular — rapor edilen
+sonuca körü körüne güvenmez, siz de öyle davranın.
+
+Her değişiklik için:
+
+1. `which gh && gh auth status && git remote -v` ile önce yerel ortamı doğrulayın.
+2. `git fetch origin --prune`, ardından `origin/main`'den `agent/<kısa-açıklama>-<tarih>`
+   branch'i açın. **Asla doğrudan `main`'e commit/push etmeyin.**
+3. Yalnız istenen değişikliği yapın.
+4. Commit'ten önce `npm run lint`, `npx tsc --noEmit`, ve dokunulan alan için varsa
+   `npm run build`/ilgili test komutunu çalıştırın. Bir şey kırılıyorsa **durun ve rapor
+   edin** — bozuk/doğrulanmamış kodu commit etmeyin.
+5. `git add <dosyalar>` (asla körü körüne `git add -A`/`.` — önce `git status`/`git diff`
+   bakın), açıklayıcı commit mesajı.
+6. `git push -u origin agent/<kısa-açıklama>-<tarih>`.
+7. `gh pr create --base main --head agent/<kısa-açıklama>-<tarih> --title "..." --body "..."`.
+8. `gh pr checks --watch` — kırmızı check varken merge etmeyin.
+9. Checkler yeşilse `gh pr merge --merge --delete-branch` (merge commit, squash/rebase değil).
+10. `git fetch origin main && git log origin/main -1` ile merge'in gerçekten indiğini
+    doğrulayın.
+11. Rapor: PR URL'i, merge commit SHA'sı, ne değişti (kısa), çalıştırılan lint/test
+    sonucu, deploy durumu (Vercel).
+
 ---
-Son güncelleme: 11 Temmuz 2026. Bu dosyayı güncel tutmak Arda ve Emin'in ortak sorumluluğu —
-büyük bir karar/kısıt değiştiğinde buraya da eklenmeli.
+Son güncelleme: 24 Temmuz 2026 — Git/PR akışı (§6) eklendi. Bu dosyayı güncel tutmak Arda ve
+Emin'in ortak sorumluluğu — büyük bir karar/kısıt değiştiğinde buraya da eklenmeli.
