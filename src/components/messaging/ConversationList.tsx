@@ -53,6 +53,7 @@ function ConversationRow({
             <ParticipantAvatar
               name={displayName}
               avatarUrl={conversation.other_participant?.avatar_url}
+              shape="circle"
             />
           </Link>
         ) : (
