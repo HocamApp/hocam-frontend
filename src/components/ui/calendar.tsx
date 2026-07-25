@@ -6,9 +6,26 @@ import type * as React from "react";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-export type CalendarProps = React.ComponentProps<typeof DayPicker>;
+export type CalendarProps = React.ComponentProps<typeof DayPicker> & {
+  /** "default" (size-9 cells, ~36px) is used everywhere. "lg" (size-14,
+   * ~56px) is for a single-month calendar that has the horizontal space
+   * two size-9 months used to occupy — currently only AvailabilityCalendar.
+   * Shared with other, width-constrained calendars (e.g. the sidebar
+   * calendar in StudentLessonsWorkspace), so this is a variant rather than
+   * a global size bump. */
+  size?: "default" | "lg";
+};
 
-export function Calendar({ className, classNames, showOutsideDays = true, ...props }: CalendarProps) {
+export function Calendar({
+  className,
+  classNames,
+  showOutsideDays = true,
+  size = "default",
+  ...props
+}: CalendarProps) {
+  const cell = size === "lg" ? "size-14" : "size-9";
+  const dayTextSize = size === "lg" ? "text-base" : "text-sm";
+  const weekdayTextSize = size === "lg" ? "text-sm" : "text-xs";
   return (
     <DayPicker
       showOutsideDays={showOutsideDays}
@@ -21,9 +38,12 @@ export function Calendar({ className, classNames, showOutsideDays = true, ...pro
         nav: "absolute top-0 flex w-full justify-between",
         button_previous: cn(buttonVariants({ variant: "ghost" }), "size-9 p-0 text-muted-foreground hover:text-foreground"),
         button_next: cn(buttonVariants({ variant: "ghost" }), "size-9 p-0 text-muted-foreground hover:text-foreground"),
-        weekday: "size-9 p-0 text-xs font-medium text-muted-foreground",
-        day: "size-9 p-0 text-sm",
-        day_button: "relative flex size-9 items-center justify-center rounded-lg p-0 hover:bg-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring data-[selected=true]:bg-primary data-[selected=true]:text-primary-foreground",
+        weekday: cn(cell, weekdayTextSize, "p-0 font-medium text-muted-foreground"),
+        day: cn(cell, dayTextSize, "p-0"),
+        day_button: cn(
+          cell,
+          "relative flex items-center justify-center rounded-lg p-0 hover:bg-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring data-[selected=true]:bg-primary data-[selected=true]:text-primary-foreground"
+        ),
         today: "font-semibold text-primary",
         outside: "text-muted-foreground/40",
         disabled: "text-muted-foreground/30 line-through",
