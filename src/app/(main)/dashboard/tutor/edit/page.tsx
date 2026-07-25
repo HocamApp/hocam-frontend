@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -17,7 +17,6 @@ import {
   updateMyTutorProfile,
   uploadTutorProfilePicture,
 } from "@/lib/tutorsApi";
-import { validateProfilePhotoFile } from "@/lib/profilePhoto";
 import { filterSelectedSubjectIds } from "@/lib/subjects";
 import type { TutorProfile, TutorTeachingStyle } from "@/types";
 
@@ -128,7 +127,6 @@ function TutorProfileEditContent() {
   const queryClient = useQueryClient();
   const { isAuthenticated } = useAuth();
   const initializedProfileId = useRef<string | null>(null);
-  const photoInputRef = useRef<HTMLInputElement>(null);
   const [selectedSubjectIds, setSelectedSubjectIds] = useState<string[]>([]);
   const [initialSubjectIds, setInitialSubjectIds] = useState<string[]>([]);
   const [subjectError, setSubjectError] = useState<string | null>(null);
@@ -314,16 +312,8 @@ function TutorProfileEditContent() {
     }
   };
 
-  const handlePhotoUpload = async (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    event.target.value = "";
+  const handlePhotoUpload = async (file: File) => {
     setPhotoError(null);
-    const validationError = validateProfilePhotoFile(file);
-    if (validationError) {
-      setPhotoError(validationError);
-      return;
-    }
     setPhotoUploading(true);
     try {
       const updatedProfile = await uploadTutorProfilePicture(file);
@@ -477,7 +467,6 @@ function TutorProfileEditContent() {
                   form={form}
                   profile={profile}
                   bioValue={bioValue}
-                  photoInputRef={photoInputRef}
                   photoUploading={photoUploading}
                   photoError={photoError}
                   onPhotoUpload={handlePhotoUpload}
