@@ -270,7 +270,7 @@ function ProfileSkeleton() {
       <div className="flex gap-8">
         <div className="flex-1 space-y-4">
           <div className="flex gap-4">
-            <Skeleton className="h-24 w-24 rounded-full" />
+            <Skeleton className="h-24 w-24 rounded-lg" />
             <div className="flex-1 space-y-2">
               <Skeleton className="h-9 w-48" />
               <Skeleton className="h-5 w-64" />
@@ -519,7 +519,7 @@ export default function TutorProfilePage({
             <button
               type="button"
               onClick={() => setIsPhotoPreviewOpen(true)}
-              className="shrink-0 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              className="shrink-0 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               aria-label={`${tutor.name} ${tutor.surname} profil fotoğrafını büyüt`}
             >
               <Avatar className="h-24 w-24 cursor-zoom-in">

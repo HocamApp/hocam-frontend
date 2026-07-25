@@ -7,6 +7,12 @@ interface ParticipantAvatarProps {
   name: string;
   avatarUrl?: string | null;
   className?: string;
+  /** "square" (default) matches every other profile photo in the app.
+   * Pass "circle" only for actual messaging surfaces (conversation list,
+   * chat header) — this component is reused well beyond chat (booking
+   * cards, dashboard summaries, purchase sheets), so the default here
+   * must not assume a chat context. */
+  shape?: "square" | "circle";
 }
 
 function getInitials(name: string): string {
@@ -17,16 +23,18 @@ function getInitials(name: string): string {
 }
 
 /**
- * Avatar for the person the current user is talking to.
- * Shows their profile photo when available, otherwise polished initials.
+ * Avatar for another person — the tutor/student on a booking, purchase, or
+ * conversation. Shows their profile photo when available, otherwise
+ * polished initials.
  */
 export function ParticipantAvatar({
   name,
   avatarUrl,
   className,
+  shape = "square",
 }: ParticipantAvatarProps) {
   return (
-    <Avatar className={cn("h-10 w-10", className)}>
+    <Avatar shape={shape} className={cn("h-10 w-10", className)}>
       {avatarUrl ? (
         <AvatarImage src={avatarUrl} alt={name} className="object-cover" />
       ) : null}

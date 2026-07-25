@@ -93,7 +93,7 @@ function TutorCardSkeleton() {
   return (
     <div className="rounded-xl border bg-card p-4">
       <div className="flex gap-4">
-        <Skeleton className="h-16 w-16 shrink-0 rounded-full" />
+        <Skeleton className="h-16 w-16 shrink-0 rounded-lg" />
         <div className="flex-1 space-y-2">
           <Skeleton className="h-5 w-3/4" />
           <Skeleton className="h-4 w-full" />
