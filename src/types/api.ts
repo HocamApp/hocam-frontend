@@ -850,6 +850,32 @@ export interface TutorEarningsSummary {
   lifetime: TutorEarningsPeriod;
 }
 
+/** One catalog plan from the requesting tutor's own point of view — GET/PATCH
+ * /api/payments/tutor/package-offers/. Storage is sparse server-side (a row
+ * only exists once a tutor customizes a plan), but every active plan is
+ * always represented here, at its default state if uncustomized. */
+export interface TutorPackageOffer {
+  plan_id: string;
+  plan_name: string;
+  plan_code: string | null;
+  lesson_count: number;
+  lesson_duration_minutes: number;
+  lessons_per_week: number;
+  duration_days: number;
+  catalog_discount_percent: number;
+  is_offered: boolean;
+  /** null = no override, falling back to catalog_discount_percent. */
+  discount_percent: number | null;
+  effective_discount_percent: number;
+  max_discount_percent: number;
+}
+
+export interface UpdateTutorPackageOfferPayload {
+  plan_id: string;
+  is_offered: boolean;
+  discount_percent: number | null;
+}
+
 export interface CreatePackagePurchasePayload {
   tutor: string;
   plan: string;

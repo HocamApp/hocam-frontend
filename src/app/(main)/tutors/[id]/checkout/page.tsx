@@ -11,8 +11,8 @@ import { fetchTutorById } from "@/lib/tutorsApi";
 import {
   createPackagePurchase,
   extractPackagePurchaseErrorMessage,
-  fetchPackagePlans,
   fetchPackagePurchases,
+  fetchTutorOfferedPlans,
   filterMatrixPlans,
 } from "@/lib/paymentsApi";
 import {
@@ -140,8 +140,8 @@ export default function TutorCheckoutPage({
   });
 
   const { data: plans } = useQuery({
-    queryKey: ["package-plans"],
-    queryFn: fetchPackagePlans,
+    queryKey: ["tutor-offered-plans", tutorId],
+    queryFn: () => fetchTutorOfferedPlans(tutorId),
     enabled: isAuthenticated,
   });
 

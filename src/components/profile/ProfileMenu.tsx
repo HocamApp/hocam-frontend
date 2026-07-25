@@ -11,6 +11,7 @@ import {
   CreditCard,
   Download,
   Eye,
+  Gift,
   Globe,
   KeyRound,
   LifeBuoy,
@@ -55,6 +56,7 @@ import {
   PaymentMethodSelector,
   type PaymentMethod,
 } from "@/components/profile/PaymentMethodSelector";
+import { TutorPackageOffersDialog } from "@/components/profile/TutorPackageOffersDialog";
 
 // Boolean-valued preference keys — excludes string fields like `language`
 type BoolPrefKey = keyof Omit<UserPreferences, "language">;
@@ -118,6 +120,7 @@ export function ProfileMenu() {
   const [prefOverrides, setPrefOverrides] = useState<Partial<UserPreferences>>({});
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
   const [paymentNotice, setPaymentNotice] = useState("");
+  const [packageOffersDialogOpen, setPackageOffersDialogOpen] = useState(false);
 
   const { data, isLoading } = useQuery({
     queryKey: ["profile-me"],
@@ -369,6 +372,17 @@ export function ProfileMenu() {
               showChevron
               onClick={() => go(isTutor ? "/profile/lessons/upcoming" : "/profile/lessons")}
             />
+            {isTutor && (
+              <ProfileMenuRow
+                icon={<Gift className="h-4 w-4" />}
+                label="Paketlerim"
+                showChevron
+                onClick={() => {
+                  setOpen(false);
+                  setPackageOffersDialogOpen(true);
+                }}
+              />
+            )}
           </ProfileAccordionSection>
 
           {/* ---- Ödeme ve Faturalandırma ---- */}
@@ -560,6 +574,13 @@ export function ProfileMenu() {
         </div>
       </DialogContent>
     </Dialog>
+    {isTutor ? (
+      <TutorPackageOffersDialog
+        open={packageOffersDialogOpen}
+        onOpenChange={setPackageOffersDialogOpen}
+        tutorHourlyPrice={tutorMeData?.hourly_price ?? tutor?.hourly_price ?? 0}
+      />
+    ) : null}
     </>
   );
 }
