@@ -1,6 +1,6 @@
 "use client";
 
-import { ChangeEvent, ReactNode, useEffect, useMemo, useRef, useState } from "react";
+import { ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import axios from "axios";
@@ -8,13 +8,11 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AlertCircle,
   Calendar,
-  Camera,
-  CheckCircle2,
-  Circle,
   Clock3,
   ExternalLink,
+  Info,
   MessageCircle,
-  PlayCircle,
+  Pencil,
   Star,
   Video,
   Wallet,
@@ -28,20 +26,19 @@ import {
 } from "@/lib/lessonsApi";
 import {
   fetchMyTutorProfile,
+  fetchTutorPriceInsight,
   fetchTutorReviewSummary,
   fetchTutorReviews,
   updateMyTutorProfile,
-  uploadTutorProfilePicture,
 } from "@/lib/tutorsApi";
 import { fetchAvailability } from "@/lib/dashboardApi";
 import { confirmLearningActivity } from "@/lib/learningApi";
-import { fetchTutorEarnings, fetchTutorPackagePurchases } from "@/lib/paymentsApi";
 import {
-  PROFILE_PHOTO_ACCEPT,
-  PROFILE_PHOTO_RULE_TEXT,
-  TUTOR_REAL_PHOTO_RULE_TEXT,
-  validateProfilePhotoFile,
-} from "@/lib/profilePhoto";
+  fetchTutorEarnings,
+  fetchTutorPackageOffers,
+  fetchTutorPackagePurchases,
+} from "@/lib/paymentsApi";
+import { calculatePackagePricing, formatPlanDuration } from "@/lib/lessonPricing";
 import { cn, formatDate, formatPrice, formatRating } from "@/lib/utils";
 import { useHighlightTarget, HIGHLIGHT_CLASSNAME, HIGHLIGHT_PARAM } from "@/hooks/useHighlightTarget";
 import type {
@@ -50,6 +47,7 @@ import type {
   ConfirmLearningActivityPayload,
   LearningLevel,
   PackagePurchase,
+  TutorPackageOffer,
   TutorProfile,
   TutorProgressResult,
 } from "@/types";
@@ -71,12 +69,6 @@ import { ReviewCard } from "@/components/tutors/ReviewCard";
 import { ReviewSummary } from "@/components/tutors/ReviewSummary";
 import { SubjectRatingBreakdown } from "@/components/tutors/SubjectRatingBreakdown";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
 import { AnimatedTabs } from "@/components/ui/animated-tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -103,12 +95,12 @@ import {
 } from "@/components/ui/select";
 
 const TUTOR_TABS = [
-  { value: "profile", label: "Profil" },
   { value: "bookings", label: "Rezervasyonlar" },
   { value: "students", label: "Öğrencilerim" },
   { value: "earnings", label: "Kazançlar" },
   { value: "reviews", label: "Değerlendirmeler" },
   { value: "availability", label: "Müsaitlik" },
+  { value: "packages", label: "Paketlerim" },
 ];
 
 const DAY_NAMES = [
@@ -128,35 +120,6 @@ function getInitials(name?: string, surname?: string): string {
   const n = (name || "").trim()[0] || "";
   const s = (surname || "").trim()[0] || "";
   return (n + s).toUpperCase() || "?";
-}
-
-function getYouTubeEmbedUrl(url?: string): string | null {
-  if (!url) return null;
-
-  try {
-    const parsed = new URL(url);
-    const host = parsed.hostname.replace(/^www\./, "");
-    let videoId = "";
-
-    if (host === "youtu.be") {
-      videoId = parsed.pathname.split("/").filter(Boolean)[0] || "";
-    }
-
-    if (host === "youtube.com" || host === "m.youtube.com") {
-      if (parsed.pathname === "/watch") {
-        videoId = parsed.searchParams.get("v") || "";
-      } else {
-        const parts = parsed.pathname.split("/").filter(Boolean);
-        if (["embed", "shorts", "live"].includes(parts[0] || "")) {
-          videoId = parts[1] || "";
-        }
-      }
-    }
-
-    return videoId ? `https://www.youtube-nocookie.com/embed/${videoId}` : null;
-  } catch {
-    return null;
-  }
 }
 
 function sortByStartTime(bookings: Booking[]) {
@@ -539,199 +502,6 @@ function LearningProgressConfirmModal({
   );
 }
 
-function ProfileStudio({
-  profile,
-  introVideoInput,
-  isSavingVideo,
-  videoError,
-  isUploadingPhoto,
-  photoError,
-  onIntroVideoChange,
-  onSaveVideo,
-  onClearVideo,
-  onPhotoSelected,
-}: {
-  profile: TutorProfile;
-  introVideoInput: string;
-  isSavingVideo: boolean;
-  videoError: string | null;
-  isUploadingPhoto: boolean;
-  photoError: string | null;
-  onIntroVideoChange: (value: string) => void;
-  onSaveVideo: () => void;
-  onClearVideo: () => void;
-  onPhotoSelected: (event: ChangeEvent<HTMLInputElement>) => void;
-}) {
-  const embedUrl = getYouTubeEmbedUrl(introVideoInput || profile.intro_video_url);
-  return (
-    <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-[1.2fr_0.8fr]">
-      <div className="space-y-6">
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">Hoca Profilin</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-5">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-              <Avatar className="h-24 w-24 shrink-0">
-                {profile.profile_picture ? (
-                  <AvatarImage
-                    src={profile.profile_picture}
-                    alt={`${profile.name} ${profile.surname}`}
-                  />
-                ) : null}
-                <AvatarFallback className="bg-primary/10 text-2xl font-semibold text-primary">
-                  {getInitials(profile.name, profile.surname)}
-                </AvatarFallback>
-              </Avatar>
-              <div className="min-w-0 flex-1 space-y-3">
-                <div className="min-w-0">
-                  <p className="truncate text-lg font-semibold">
-                    {profile.name} {profile.surname}
-                  </p>
-                  <p className="truncate text-sm text-muted-foreground">
-                    {profile.university} · {profile.department}
-                  </p>
-                </div>
-                <input
-                  id="profile-picture-input"
-                  type="file"
-                  accept={PROFILE_PHOTO_ACCEPT}
-                  className="sr-only"
-                  onChange={onPhotoSelected}
-                />
-                <Accordion type="single" collapsible>
-                  <AccordionItem value="photo-editor" className="border-none">
-                    <AccordionTrigger className="w-fit gap-2 rounded-md border border-input bg-background px-3 py-1.5 text-sm font-medium text-foreground hover:bg-accent hover:text-accent-foreground hover:no-underline">
-                      Fotoğrafı değiştir
-                    </AccordionTrigger>
-                    <AccordionContent>
-                      <div className="space-y-3 pt-1">
-                        <Button asChild variant="outline" disabled={isUploadingPhoto}>
-                          <label htmlFor="profile-picture-input" className="cursor-pointer">
-                            <Camera className="mr-2 h-4 w-4" />
-                            {isUploadingPhoto ? "Yükleniyor" : "Fotoğraf Yükle"}
-                          </label>
-                        </Button>
-                        {photoError && (
-                          <p className="text-sm text-destructive" role="alert">
-                            {photoError}
-                          </p>
-                        )}
-                        <div className="rounded-md border px-3 py-2 text-xs text-muted-foreground">
-                          <p>{PROFILE_PHOTO_RULE_TEXT}</p>
-                          <p className="mt-1">{TUTOR_REAL_PHOTO_RULE_TEXT}</p>
-                        </div>
-                      </div>
-                    </AccordionContent>
-                  </AccordionItem>
-                </Accordion>
-              </div>
-            </div>
-
-            <Separator />
-
-            <div className="space-y-3">
-              <Label htmlFor="intro-video-url">YouTube Tanıtım Videosu</Label>
-              <div className="flex flex-col gap-2 sm:flex-row">
-                <Input
-                  id="intro-video-url"
-                  value={introVideoInput}
-                  onChange={(event) => onIntroVideoChange(event.target.value)}
-                  placeholder="https://www.youtube.com/watch?v=..."
-                />
-                <Button onClick={onSaveVideo} disabled={isSavingVideo}>
-                  <Video className="mr-2 h-4 w-4" />
-                  {isSavingVideo ? "Kaydediliyor" : "Kaydet"}
-                </Button>
-              </div>
-              {videoError && (
-                <p className="text-sm text-destructive" role="alert">
-                  {videoError}
-                </p>
-              )}
-              {profile.intro_video_url && (
-                <Button type="button" variant="ghost" size="sm" onClick={onClearVideo}>
-                  Videoyu kaldır
-                </Button>
-              )}
-            </div>
-
-            {embedUrl ? (
-              <div className="aspect-video overflow-hidden rounded-lg border bg-muted">
-                <iframe
-                  className="h-full w-full"
-                  src={embedUrl}
-                  title="Tutor intro video"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                  allowFullScreen
-                />
-              </div>
-            ) : (
-              <div className="flex min-h-40 flex-col items-center justify-center rounded-lg border border-dashed bg-muted/30 p-6 text-center">
-                <PlayCircle className="mb-2 h-8 w-8 text-muted-foreground" />
-                <p className="text-sm font-medium">Tanıtım videosu eklenmedi</p>
-                <p className="text-sm text-muted-foreground">
-                  YouTube bağlantısı kaydedildiğinde burada önizleme görünür.
-                </p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="space-y-6">
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">Profil Tamamlanma</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <p className="text-sm text-muted-foreground">
-              Profilinin görünürlüğünü ve tamamlanma durumunu buradan takip edebilirsin.
-            </p>
-            <ul className="space-y-2">
-              {[
-                { label: "Profil fotoğrafı", done: Boolean(profile.profile_picture) },
-                { label: "Tanıtım videosu", done: Boolean(profile.intro_video_url) },
-                { label: "Biyografi", done: profile.bio.trim().length > 0 },
-                { label: "Ders alanları", done: profile.subjects.length > 0 },
-                { label: "Ders ücreti", done: profile.hourly_price > 0 },
-                { label: "Herkese açık profil", done: profile.is_public },
-              ].map((item) => (
-                <li key={item.label} className="flex items-center gap-2 text-sm">
-                  {item.done ? (
-                    <CheckCircle2 className="h-4 w-4 shrink-0 text-green-600 dark:text-green-400" />
-                  ) : (
-                    <Circle className="h-4 w-4 shrink-0 text-muted-foreground" />
-                  )}
-                  <span className={item.done ? "" : "text-muted-foreground"}>{item.label}</span>
-                </li>
-              ))}
-            </ul>
-            {Boolean(profile.no_show_count) && (
-              <p className="text-xs text-muted-foreground">
-                Devamsızlık sayısı: {profile.no_show_count}
-              </p>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">Ders Alanları</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-wrap gap-2">
-            {profile.subjects.map((subject) => (
-              <Badge key={subject.id} variant="secondary">
-                {subject.exam_type} {subject.name}
-              </Badge>
-            ))}
-          </CardContent>
-        </Card>
-      </div>
-    </div>
-  );
-}
-
 function StudentDetailDialog({
   entry,
   bookings,
@@ -823,11 +593,6 @@ function TutorDashboardContent() {
   const queryClient = useQueryClient();
   const { user, isAuthenticated } = useAuth();
   const [updatingId, setUpdatingId] = useState<string | null>(null);
-  const [introVideoInput, setIntroVideoInput] = useState("");
-  const [isSavingVideo, setIsSavingVideo] = useState(false);
-  const [videoError, setVideoError] = useState<string | null>(null);
-  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
-  const [photoError, setPhotoError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState(() =>
     TUTOR_TABS.some((tab) => tab.value === searchParams.get("tab"))
       ? searchParams.get("tab")!
@@ -904,6 +669,33 @@ function TutorDashboardContent() {
     enabled: isAuthenticated,
   });
 
+  const {
+    data: packageOffers,
+    isLoading: packageOffersLoading,
+    error: packageOffersError,
+    refetch: refetchPackageOffers,
+  } = useQuery({
+    queryKey: ["tutor-package-offers"],
+    queryFn: fetchTutorPackageOffers,
+    enabled: isAuthenticated,
+  });
+
+  // Reuses the same price-insight endpoint /dashboard/tutor/edit's pricing
+  // section already calls — commission_rate_bps is single-sourced from the
+  // backend's TUTOR_ESTIMATED_COMMISSION_BPS, never hardcoded here.
+  const { data: priceInsight } = useQuery({
+    queryKey: ["tutor-price-insight", (profile?.subjects ?? []).map((s) => s.id).sort()],
+    queryFn: () => fetchTutorPriceInsight((profile?.subjects ?? []).map((s) => s.id)),
+    enabled: isAuthenticated && Boolean(profile),
+  });
+  const packageCommissionRate = (priceInsight?.commission_rate_bps ?? 0) / 10_000;
+  // Only the plans a student would actually see — absence of a
+  // TutorPackageOffer row means "offered at catalog discount" (handled
+  // server-side by effective_discount_percent), never assume all 20 rows exist.
+  const offeredPackagePlans = (packageOffers ?? [])
+    .filter((plan) => plan.is_offered)
+    .sort((a, b) => a.lessons_per_week - b.lessons_per_week || a.duration_days - b.duration_days);
+
   const { data: packagePurchases = [] } = useQuery({
     queryKey: ["tutor-package-purchases"],
     queryFn: fetchTutorPackagePurchases,
@@ -937,12 +729,6 @@ function TutorDashboardContent() {
     queryFn: () => fetchTutorReviewSummary(profile!.id),
     enabled: canViewOwnReviews,
   });
-
-  useEffect(() => {
-    if (profile) {
-      setIntroVideoInput(profile.intro_video_url ?? "");
-    }
-  }, [profile]);
 
   useEffect(() => {
     if (profile && !profile.is_verified) {
@@ -1118,70 +904,6 @@ function TutorDashboardContent() {
       toast.error(getApiErrorMessage(error, "İlerleme onaylanamadı."));
     } finally {
       setIsConfirmingLearning(false);
-    }
-  };
-
-  const handlePhotoSelected = async (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    setPhotoError(null);
-    const validationError = validateProfilePhotoFile(file);
-    if (validationError) {
-      setPhotoError(validationError);
-      event.target.value = "";
-      return;
-    }
-
-    setIsUploadingPhoto(true);
-    try {
-      await uploadTutorProfilePicture(file);
-      await queryClient.invalidateQueries({ queryKey: ["tutor-me"] });
-      await queryClient.invalidateQueries({ queryKey: ["profile-me"] });
-      if (profile?.id) {
-        await queryClient.invalidateQueries({ queryKey: ["tutor", profile.id] });
-      }
-      await queryClient.invalidateQueries({ queryKey: ["tutors"] });
-      toast.success("Profil fotoğrafı güncellendi.");
-    } catch {
-      setPhotoError("Profil fotoğrafı yüklenemedi. Lütfen tekrar deneyin.");
-    } finally {
-      setIsUploadingPhoto(false);
-      event.target.value = "";
-    }
-  };
-
-  const handleSaveVideo = async () => {
-    setVideoError(null);
-    setIsSavingVideo(true);
-    try {
-      await updateMyTutorProfile({ intro_video_url: introVideoInput.trim() });
-      await queryClient.invalidateQueries({ queryKey: ["tutor-me"] });
-      if (profile?.id) {
-        await queryClient.invalidateQueries({ queryKey: ["tutor", profile.id] });
-      }
-      toast.success("Tanıtım videosu güncellendi.");
-    } catch {
-      setVideoError("YouTube bağlantısı kaydedilemedi. Bağlantıyı kontrol edip tekrar deneyin.");
-    } finally {
-      setIsSavingVideo(false);
-    }
-  };
-
-  const handleClearVideo = async () => {
-    setIntroVideoInput("");
-    setIsSavingVideo(true);
-    try {
-      await updateMyTutorProfile({ intro_video_url: "" });
-      await queryClient.invalidateQueries({ queryKey: ["tutor-me"] });
-      if (profile?.id) {
-        await queryClient.invalidateQueries({ queryKey: ["tutor", profile.id] });
-      }
-      toast.success("Tanıtım videosu kaldırıldı.");
-    } catch {
-      toast.error("Video kaldırılırken hata oluştu.");
-    } finally {
-      setIsSavingVideo(false);
     }
   };
 
@@ -1401,24 +1123,6 @@ function TutorDashboardContent() {
             idPrefix="tutor"
           />
         </div>
-
-        <TabsContent value="profile" id="tutor-tabpanel-profile" aria-labelledby="tutor-tab-profile" className="mt-6">
-          <ProfileStudio
-            profile={profile}
-            introVideoInput={introVideoInput}
-            isSavingVideo={isSavingVideo}
-            videoError={videoError}
-            isUploadingPhoto={isUploadingPhoto}
-            photoError={photoError}
-            onIntroVideoChange={(value) => {
-              setIntroVideoInput(value);
-              setVideoError(null);
-            }}
-            onSaveVideo={handleSaveVideo}
-            onClearVideo={handleClearVideo}
-            onPhotoSelected={handlePhotoSelected}
-          />
-        </TabsContent>
 
         <TabsContent value="bookings" id="tutor-tabpanel-bookings" aria-labelledby="tutor-tab-bookings" className="mt-6">
           {bookingsError && (
@@ -1700,6 +1404,101 @@ function TutorDashboardContent() {
               <AvailabilityCalendar availability={availability} bookings={activeBookings} />
             )}
           </div>
+        </TabsContent>
+
+        <TabsContent value="packages" id="tutor-tabpanel-packages" aria-labelledby="tutor-tab-packages" className="mt-6 space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h3 className="text-sm font-semibold">Sunduğun Paketler</h3>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Öğrencilerin gördüğü paketler ve tahmini net kazancın. Düzenlemek için
+                paket editörünü kullan.
+              </p>
+            </div>
+            <Button variant="outline" size="sm" asChild>
+              <Link href="/dashboard/tutor/packages">
+                <Pencil className="mr-2 h-3.5 w-3.5" />
+                Paketleri düzenle
+              </Link>
+            </Button>
+          </div>
+
+          <div className="flex items-start gap-2 rounded-lg border bg-muted/40 p-3 text-xs text-muted-foreground">
+            <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
+            <p>
+              Buradaki komisyon ve net kazanç rakamları tahminidir. Hocam şu anda hiçbir
+              ödemeden komisyon kesmiyor — gösterilen tutarlar gerçek bir ödeme taahhüdü ya
+              da kesin hak ediş değildir.
+            </p>
+          </div>
+
+          {packageOffersError && (
+            <div className="flex flex-col items-center gap-3 py-10 text-center">
+              <p className="text-sm text-muted-foreground">Paketler yüklenemedi.</p>
+              <Button variant="outline" size="sm" onClick={() => refetchPackageOffers()}>
+                Tekrar Dene
+              </Button>
+            </div>
+          )}
+          {!packageOffersError && packageOffersLoading && (
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+              {[1, 2, 3, 4].map((i) => (
+                <Skeleton key={i} className="h-32 w-full rounded-lg" />
+              ))}
+            </div>
+          )}
+          {!packageOffersError && !packageOffersLoading && packageOffers && (
+            offeredPackagePlans.length === 0 ? (
+              <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
+                <p>Şu an hiçbir paket sunmuyorsun — öğrenciler paket satın alamaz.</p>
+                <Button variant="link" size="sm" asChild>
+                  <Link href="/dashboard/tutor/packages">Paketlerini düzenle</Link>
+                </Button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                {offeredPackagePlans.map((plan) => {
+                  const pricing = calculatePackagePricing(
+                    profile.hourly_price,
+                    plan.lesson_count,
+                    plan.effective_discount_percent
+                  );
+                  const commission = Math.round(pricing.total * packageCommissionRate);
+                  const net = pricing.total - commission;
+                  return (
+                    <Card key={plan.plan_id}>
+                      <CardContent className="space-y-3 p-4">
+                        <p className="font-medium">
+                          Haftada {plan.lessons_per_week} · {formatPlanDuration(plan.duration_days)}
+                        </p>
+                        <dl className="space-y-1.5 text-sm">
+                          <div className="flex justify-between gap-4">
+                            <dt className="text-muted-foreground">Öğrenci fiyatı</dt>
+                            <dd className="font-medium">{formatPrice(pricing.total)}</dd>
+                          </div>
+                          <div className="flex justify-between gap-4">
+                            <dt className="text-muted-foreground">
+                              Tahmini Hocam komisyonu (%{packageCommissionRate * 100})
+                            </dt>
+                            <dd className="font-medium text-rose-700 dark:text-rose-300">
+                              -{formatPrice(commission)}
+                            </dd>
+                          </div>
+                          <Separator className="!my-2" />
+                          <div className="flex justify-between gap-4 font-semibold">
+                            <dt>Tahmini net kazancın</dt>
+                            <dd className="text-emerald-700 dark:text-emerald-300">
+                              {formatPrice(net)}
+                            </dd>
+                          </div>
+                        </dl>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            )
+          )}
         </TabsContent>
       </Tabs>
 
