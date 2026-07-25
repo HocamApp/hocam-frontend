@@ -9,7 +9,6 @@ import StatusBadge from "@/components/shared/StatusBadge";
 import { DayAvailabilityDialog } from "@/components/tutors/DayAvailabilityDialog";
 import { formatDateLocal, jsDayToBackendDay } from "@/lib/utils";
 import type { AvailabilityRule, Booking } from "@/types";
-import { useMediaQuery } from "@/hooks/useMediaQuery";
 
 const DAY_NAMES = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar"];
 
@@ -30,7 +29,6 @@ export function AvailabilityCalendar({ availability, bookings = [], editable = t
 }) {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [isEditing, setIsEditing] = useState(false);
-  const isDesktop = useMediaQuery("(min-width: 1024px)");
   const today = useMemo(() => {
     const value = new Date();
     value.setHours(0, 0, 0, 0);
@@ -69,13 +67,14 @@ export function AvailabilityCalendar({ availability, bookings = [], editable = t
         <CardContent className="p-3">
           <Calendar
             mode="single"
+            size="lg"
             selected={selectedDate}
             onSelect={(date) => date && setSelectedDate(date)}
             defaultMonth={today}
             fromDate={today}
             toDate={planningEnd}
             disabled={{ before: today, after: planningEnd }}
-            numberOfMonths={isDesktop ? 2 : 1}
+            numberOfMonths={1}
             modifiers={{ available: availableDates, closed: closedDates, booked: bookedDates }}
             modifiersClassNames={{
               available: "[&>button]:bg-emerald-50 [&>button]:text-emerald-800 dark:[&>button]:bg-emerald-950/40 dark:[&>button]:text-emerald-200",
