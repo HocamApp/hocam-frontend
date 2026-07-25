@@ -6,7 +6,6 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
-import { EmptyState } from "@/components/shared/EmptyState";
 import { fetchSupportTickets } from "@/lib/supportApi";
 import { formatDate } from "@/lib/utils";
 import {
@@ -14,6 +13,14 @@ import {
   STATUS_LABELS,
   STATUS_VARIANTS,
 } from "./supportContent";
+
+function SectionHeading() {
+  return (
+    <h2 className="mb-3 text-lg font-semibold text-foreground">
+      Destek taleplerim
+    </h2>
+  );
+}
 
 export function SupportTicketList() {
   const { data, isLoading, error } = useQuery({
@@ -23,27 +30,34 @@ export function SupportTicketList() {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center py-10">
-        <LoadingSpinner />
-      </div>
+      <section>
+        <SectionHeading />
+        <div className="flex justify-center py-10">
+          <LoadingSpinner />
+        </div>
+      </section>
     );
   }
 
   if (error) {
-    return <ErrorMessage message="Destek talepleriniz yüklenemedi." />;
-  }
-
-  if (!data || data.length === 0) {
     return (
-      <EmptyState
-        title="Henüz destek talebiniz yok"
-        description="Bir sorunla karşılaşırsanız yukarıdaki formdan talep oluşturabilirsiniz."
-      />
+      <section>
+        <SectionHeading />
+        <ErrorMessage message="Destek talepleriniz yüklenemedi." />
+      </section>
     );
   }
 
+  // No tickets submitted yet — don't show an empty-state card, just omit
+  // the whole section until there's something to display.
+  if (!data || data.length === 0) {
+    return null;
+  }
+
   return (
-    <div className="space-y-3">
+    <section>
+      <SectionHeading />
+      <div className="space-y-3">
       {data.map((ticket) => (
         <Card key={ticket.id}>
           <CardContent className="space-y-2 p-4">
@@ -74,6 +88,7 @@ export function SupportTicketList() {
           </CardContent>
         </Card>
       ))}
-    </div>
+      </div>
+    </section>
   );
 }
