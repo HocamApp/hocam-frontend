@@ -39,15 +39,26 @@ function ConversationRow({
   return (
     <div
       className={cn(
-        "flex w-full cursor-pointer items-center gap-3 border-b p-4 text-left transition-colors hover:bg-muted/60",
+        "relative flex w-full cursor-pointer items-center gap-3 border-b p-4 transition-colors hover:bg-muted/60",
         isSelected ? "bg-muted" : "bg-transparent"
       )}
     >
+      {/* Row-sized click/tap target. Sits behind the avatar link (which
+          gets its own relative z-10) so both stay independently reachable
+          without nesting interactive elements. Ringed with ring-inset so
+          the focus ring shows against the row's own bounds instead of
+          being clipped by neighboring rows. */}
+      <button
+        type="button"
+        onClick={() => onSelect(conversation.id)}
+        aria-label={`${displayName} ile sohbeti aç`}
+        className="absolute inset-0 rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+      />
       <div className="relative shrink-0">
         {profileHref ? (
           <Link
             href={profileHref}
-            className="block rounded-full focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+            className="relative z-10 block rounded-full focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
             title={`${displayName} profilini aç`}
           >
             <ParticipantAvatar
@@ -71,14 +82,10 @@ function ConversationRow({
           </span>
         )}
       </div>
-      <button
-        type="button"
-        onClick={() => onSelect(conversation.id)}
-        className="min-w-0 flex-1 text-left"
-      >
+      <div className="pointer-events-none min-w-0 flex-1 text-left">
         <p className="truncate text-sm font-medium">{displayName}</p>
         <p className="text-xs text-muted-foreground">{created}</p>
-      </button>
+      </div>
     </div>
   );
 }
