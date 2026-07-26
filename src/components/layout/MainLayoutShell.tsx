@@ -54,9 +54,9 @@ export function MainLayoutShell({ children }: MainLayoutShellProps) {
         {children}
       </div>
       <EarlySupporterWelcome
+        role={user?.role}
         enabled={
           isAuthenticated &&
-          isTutor &&
           !isAdmin &&
           !isImpersonating &&
           !pendingVerification
