@@ -546,12 +546,16 @@ export default function TutorProfilePage({
               </Avatar>
             </button>
             <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-1.5">
-                <h1 className="text-3xl font-bold leading-tight">
-                  {tutor.name} {tutor.surname}
-                </h1>
-                <VerifiedTutorMark verified={tutor.is_verified} className="h-7 w-7" />
-              </div>
+              {/* The mark sits inside the h1 so it trails the last word of the
+                  name. As a sibling flex item it dropped onto a line of its
+                  own whenever a long name wrapped. */}
+              <h1 className="text-3xl font-bold leading-tight break-words">
+                {tutor.name} {tutor.surname}
+                <VerifiedTutorMark
+                  verified={tutor.is_verified}
+                  className="ml-1.5 inline-flex h-7 w-7 align-middle"
+                />
+              </h1>
               <p className="mt-1 text-muted-foreground">
                 {tutor.university} · {tutor.department}
               </p>
