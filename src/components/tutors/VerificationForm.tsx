@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { fetchVerification, submitVerification } from "@/lib/dashboardApi";
 import { toast } from "sonner";
@@ -8,8 +8,29 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
-import { formatDate } from "@/lib/utils";
+import { cn, formatDate } from "@/lib/utils";
 import { Clock, CheckCircle, XCircle } from "lucide-react";
+
+const ACCEPTED_DOCUMENT_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "application/pdf",
+];
+const MAX_DOCUMENT_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB
+
+// Shared by both the click-to-browse <input onChange> and the drag-and-drop
+// handler so there is exactly one place a file can be rejected, with one
+// message, regardless of how it arrived.
+function validateDocumentFile(file: File): string | null {
+  if (!ACCEPTED_DOCUMENT_TYPES.includes(file.type)) {
+    return "Desteklenmeyen dosya türü. JPEG, PNG, WEBP veya PDF yükleyin.";
+  }
+  if (file.size > MAX_DOCUMENT_SIZE_BYTES) {
+    return "Dosya çok büyük. En fazla 10 MB yükleyebilirsiniz.";
+  }
+  return null;
+}
 
 export function VerificationForm() {
   const queryClient = useQueryClient();
@@ -171,33 +192,19 @@ function VerificationUploadForm({
       </div>
 
       <form onSubmit={onSubmit} className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="student_id_document">Öğrenci Kimliği</Label>
-          <Input
-            id="student_id_document"
-            name="student_id_document"
-            type="file"
-            accept="image/jpeg,image/png,image/webp,application/pdf"
-            required
-          />
-          <p className="text-xs text-muted-foreground">
-            Öğrenci kimlik kartınızın fotoğrafı veya taraması
-          </p>
-        </div>
+        <FileDropInput
+          id="student_id_document"
+          name="student_id_document"
+          label="Öğrenci Kimliği"
+          helperText="Öğrenci kimlik kartınızın fotoğrafı veya taraması"
+        />
 
-        <div className="space-y-2">
-          <Label htmlFor="yks_result_document">YKS Sonuç Belgesi</Label>
-          <Input
-            id="yks_result_document"
-            name="yks_result_document"
-            type="file"
-            accept="image/jpeg,image/png,image/webp,application/pdf"
-            required
-          />
-          <p className="text-xs text-muted-foreground">
-            YKS sonuç belgenizin ekran görüntüsü veya PDF&apos;i
-          </p>
-        </div>
+        <FileDropInput
+          id="yks_result_document"
+          name="yks_result_document"
+          label="YKS Sonuç Belgesi"
+          helperText="YKS sonuç belgenizin ekran görüntüsü veya PDF'i"
+        />
 
         <div className="space-y-2">
           <Label htmlFor="university_email">Üniversite E-postası</Label>
@@ -223,6 +230,101 @@ function VerificationUploadForm({
           {submitMutation.isPending ? "Gönderiliyor..." : "Doğrulama Başvurusu Yap"}
         </Button>
       </form>
+    </div>
+  );
+}
+
+function FileDropInput({
+  id,
+  name,
+  label,
+  helperText,
+}: {
+  id: string;
+  name: string;
+  label: string;
+  helperText: string;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [isDragActive, setIsDragActive] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [fileName, setFileName] = useState<string | null>(null);
+
+  const applyFile = (file: File | undefined) => {
+    if (!file) {
+      setError(null);
+      setFileName(null);
+      return;
+    }
+    const validationError = validateDocumentFile(file);
+    if (validationError) {
+      setError(validationError);
+      setFileName(null);
+      if (inputRef.current) inputRef.current.value = "";
+      return;
+    }
+    setError(null);
+    setFileName(file.name);
+  };
+
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    applyFile(event.target.files?.[0]);
+  };
+
+  const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDragActive(false);
+    const file = event.dataTransfer.files?.[0];
+    if (!file || !inputRef.current) return;
+    // Programmatically assigning to the underlying <input>'s FileList is
+    // what keeps the existing FormData(form) submit path working unchanged
+    // for dropped files, and what satisfies its native `required` check.
+    const dataTransfer = new DataTransfer();
+    dataTransfer.items.add(file);
+    inputRef.current.files = dataTransfer.files;
+    applyFile(file);
+  };
+
+  return (
+    <div className="space-y-2">
+      <Label htmlFor={id}>{label}</Label>
+      <div
+        onDragEnter={(event) => {
+          event.preventDefault();
+          setIsDragActive(true);
+        }}
+        onDragOver={(event) => {
+          event.preventDefault();
+          setIsDragActive(true);
+        }}
+        onDragLeave={(event) => {
+          event.preventDefault();
+          setIsDragActive(false);
+        }}
+        onDrop={handleDrop}
+        className={cn(
+          "rounded-md border border-dashed p-3 transition-colors",
+          isDragActive ? "border-primary bg-primary/5" : "border-input"
+        )}
+      >
+        <Input
+          ref={inputRef}
+          id={id}
+          name={name}
+          type="file"
+          accept="image/jpeg,image/png,image/webp,application/pdf"
+          required
+          onChange={handleChange}
+        />
+        {fileName && (
+          <p className="mt-1 truncate text-xs text-muted-foreground">{fileName}</p>
+        )}
+      </div>
+      {error ? (
+        <p className="text-xs text-destructive">{error}</p>
+      ) : (
+        <p className="text-xs text-muted-foreground">{helperText}</p>
+      )}
     </div>
   );
 }
