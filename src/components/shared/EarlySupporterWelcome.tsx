@@ -27,15 +27,17 @@ import type { Notification, NotificationSummary } from "@/types/api";
 
 interface EarlySupporterWelcomeProps {
   enabled: boolean;
+  role: "student" | "tutor" | undefined;
 }
 
 interface EarlySupporterWelcomeDialogProps {
   welcome: Notification;
+  role: "student" | "tutor";
   isPending: boolean;
   onAcknowledge: () => void;
 }
 
-const highlights = [
+const tutorHighlights = [
   {
     icon: Heart,
     title: "Erken destekçi ayrıcalığı",
@@ -53,8 +55,27 @@ const highlights = [
   },
 ] as const;
 
+const studentHighlights = [
+  {
+    icon: Heart,
+    title: "Erken destekçi ayrıcalığı",
+    body: "İlk öğrencilerimiz için hazırladığımız lansman avantajlarını sana öncelikli olarak duyuracağız.",
+  },
+  {
+    icon: Percent,
+    title: "Lansman avantajları",
+    body: "Erken dönem öğrencilerimize özel ders ve paket fırsatlarının koşullarını netleştiğinde seninle paylaşacağız.",
+  },
+  {
+    icon: BookOpen,
+    title: "Birlikte şekillendiriyoruz",
+    body: "Deneyimin ve geri bildirimlerin, Hocam'ı öğrenciler ve hocalar için daha iyi hâle getirecek.",
+  },
+] as const;
+
 export function EarlySupporterWelcome({
   enabled,
+  role,
 }: EarlySupporterWelcomeProps) {
   const queryClient = useQueryClient();
   const notificationsQuery = useQuery({
@@ -97,11 +118,12 @@ export function EarlySupporterWelcome({
     },
   });
 
-  if (!welcome) return null;
+  if (!welcome || !role) return null;
 
   return (
     <EarlySupporterWelcomeDialog
       welcome={welcome}
+      role={role}
       isPending={acknowledgeMutation.isPending}
       onAcknowledge={() => acknowledgeMutation.mutate(welcome.id)}
     />
@@ -110,9 +132,13 @@ export function EarlySupporterWelcome({
 
 export function EarlySupporterWelcomeDialog({
   welcome,
+  role,
   isPending,
   onAcknowledge,
 }: EarlySupporterWelcomeDialogProps) {
+  const isTutor = role === "tutor";
+  const highlights = isTutor ? tutorHighlights : studentHighlights;
+
   return (
     <Dialog open>
       <DialogContent
@@ -163,7 +189,7 @@ export function EarlySupporterWelcomeDialog({
             <div className="mt-8 max-w-xl">
               <div className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em]">
                 <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
-                Hocam&apos;ın ilk hocalarından
+                Hocam&apos;ın ilk {isTutor ? "hocalarından" : "öğrencilerinden"}
               </div>
               <DialogTitle className="mt-4 text-3xl font-bold leading-tight tracking-[-0.03em] text-white sm:text-4xl">
                 {welcome.title}
@@ -197,9 +223,8 @@ export function EarlySupporterWelcomeDialog({
 
           <div className="mt-6 flex flex-col gap-4 border-t border-border pt-5 sm:flex-row sm:items-center sm:justify-between">
             <p className="max-w-md text-xs leading-5 text-muted-foreground">
-              Bu özel teşekkür notu yalnızca ilk dönem hocalarımız için
-              hazırlandı. Avantajların kapsamı ve koşulları ayrıca
-              duyurulacaktır.
+              Bu özel teşekkür notu ilk dönem topluluğumuz için hazırlandı.
+              Avantajların kapsamı ve koşulları ayrıca duyurulacaktır.
             </p>
             <Button
               type="button"
