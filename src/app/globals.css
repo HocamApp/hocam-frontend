@@ -18,12 +18,20 @@
     --muted-foreground: 215.4 16.3% 46.9%;
     --accent: 210 40% 96.1%;
     --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
+    /* Deepened from 60.2% lightness so error states stay visually distinct
+       from --brand (352 99% 62%) — same red family, ~8deg hue apart, was
+       nearly indistinguishable at matching lightness. */
+    --destructive: 0 72% 51%;
     --destructive-foreground: 210 40% 98%;
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
     --ring: 222.2 84% 4.9%;
     --radius: 0.5rem;
+    /* Logo color (#FE4059). Reserved for brand-identity surfaces only —
+       not CTAs, focus rings, form borders, rating stars, links, or
+       success/error semantics (--primary and --destructive own those). */
+    --brand: 352 99% 62%;
+    --brand-foreground: 0 0% 100%;
   }
 
   .dark {
@@ -46,6 +54,11 @@
     --border: 216 26% 27%;
     --input: 216 26% 27%;
     --ring: 213 94% 68%;
+    /* Same hue/lightness as light mode — contrast against the dark
+       background (5.14:1) and card (4.74:1) is already solid, no
+       adjustment needed to avoid vibrating against the dark surface. */
+    --brand: 352 99% 62%;
+    --brand-foreground: 0 0% 100%;
   }
 }
 
