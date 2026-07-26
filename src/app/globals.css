@@ -12,19 +12,25 @@
     --popover-foreground: 222.2 84% 4.9%;
     --primary: 222.2 47.4% 11.2%;
     --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
+    /* Neutrals warmed from cool blue (hue 210-222) toward the brand hue
+       (352) at very low saturation, so the brand ramp above can blend
+       into surfaces instead of only sitting on top of them. --background,
+       --card, and --primary are deliberately untouched — pure white stays
+       pure white, and --primary at 11% lightness has an imperceptible hue
+       either way, so no CTA on the site moves. */
+    --secondary: 350 20% 97%;
     --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
+    --muted: 350 20% 97%;
+    --muted-foreground: 350 8% 46%;
+    --accent: 350 20% 97%;
     --accent-foreground: 222.2 47.4% 11.2%;
     /* Deepened from 60.2% lightness so error states stay visually distinct
-       from --brand (352 99% 62%) — same red family, ~8deg hue apart, was
-       nearly indistinguishable at matching lightness. */
+       from the brand ramp — same red family, ~8deg hue apart, was nearly
+       indistinguishable at matching lightness. */
     --destructive: 0 72% 51%;
     --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
+    --border: 350 15% 91%;
+    --input: 350 15% 91%;
     --ring: 222.2 84% 4.9%;
     --radius: 0.5rem;
     /* Brand ramp (logo color #FE4059 = brand-500, exact). A palette scale,
@@ -57,16 +63,22 @@
     --popover-foreground: 214 32% 91%;
     --primary: 213 94% 68%;
     --primary-foreground: 222 47% 11%;
-    --secondary: 217 33% 22%;
+    /* Same warming as light mode, same low-saturation discipline, applied
+       to the existing dark lightness bands (hue rotated to 352, saturation
+       brought down to roughly the same 20%/8%/15% bands light mode uses —
+       lightness is untouched so the surfaces stay exactly as dark).
+       --background, --card, --popover, and --primary stay untouched, same
+       reasoning as light mode. */
+    --secondary: 350 20% 22%;
     --secondary-foreground: 214 32% 91%;
-    --muted: 217 33% 20%;
-    --muted-foreground: 215 20% 65%;
-    --accent: 216 30% 24%;
+    --muted: 350 20% 20%;
+    --muted-foreground: 350 8% 65%;
+    --accent: 350 20% 24%;
     --accent-foreground: 214 32% 91%;
     --destructive: 0 63% 45%;
     --destructive-foreground: 210 40% 96%;
-    --border: 216 26% 27%;
-    --input: 216 26% 27%;
+    --border: 350 15% 27%;
+    --input: 350 15% 27%;
     --ring: 213 94% 68%;
   }
 }
