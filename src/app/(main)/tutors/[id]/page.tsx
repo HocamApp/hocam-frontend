@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type FocusEvent } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
@@ -108,6 +108,11 @@ function RatingSummaryPopover({
 }) {
   const [open, setOpen] = useState(false);
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  // Escape manually refocuses the trigger (onCloseAutoFocus below is
+  // suppressed), and that focus() call must not itself reopen the popover
+  // it just dismissed.
+  const suppressNextFocusOpenRef = useRef(false);
 
   const openPopover = () => {
     if (closeTimerRef.current) {
@@ -122,6 +127,17 @@ function RatingSummaryPopover({
     closeTimerRef.current = setTimeout(() => setOpen(false), 120);
   };
 
+  // Radix returns focus to the trigger when the popover closes, which fires
+  // this same onFocus handler — without the :focus-visible check, that
+  // programmatic focus-return reopens the popover it just closed.
+  const openPopoverOnKeyboardFocus = (event: FocusEvent<HTMLButtonElement>) => {
+    if (suppressNextFocusOpenRef.current) {
+      suppressNextFocusOpenRef.current = false;
+      return;
+    }
+    if (event.target.matches(":focus-visible")) openPopover();
+  };
+
   useEffect(() => {
     return () => {
       if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
@@ -132,10 +148,11 @@ function RatingSummaryPopover({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <button
+          ref={triggerRef}
           type="button"
           className="inline-flex items-center gap-1.5 rounded-md transition-colors hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           aria-label={`${formatRating(rating)} yıldız puan detayları`}
-          onFocus={openPopover}
+          onFocus={openPopoverOnKeyboardFocus}
           onBlur={closePopover}
           onMouseEnter={openPopover}
           onMouseLeave={closePopover}
@@ -150,6 +167,12 @@ function RatingSummaryPopover({
         sideOffset={8}
         collisionPadding={16}
         className="w-[calc(100vw-2rem)] p-0 sm:w-80"
+        onOpenAutoFocus={(event) => event.preventDefault()}
+        onCloseAutoFocus={(event) => event.preventDefault()}
+        onEscapeKeyDown={() => {
+          suppressNextFocusOpenRef.current = true;
+          triggerRef.current?.focus();
+        }}
         onFocus={openPopover}
         onBlur={closePopover}
         onMouseEnter={openPopover}
