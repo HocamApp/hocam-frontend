@@ -62,6 +62,15 @@ function TutorOnboardingContent() {
   const profileComplete = Boolean(profile);
   const photoComplete = Boolean(profile?.profile_picture);
   const verificationApproved = profile?.is_verified === true || verification?.status === "approved";
+  // Verification and the tutorial are two distinct stages of the flow, not
+  // adjacent checklist items: the tutorial isn't presented until documents
+  // have been submitted. "Submitted" (pending or approved) is deliberately
+  // NOT the same gate as verificationApproved — a rejected/never-submitted
+  // tutor stays on the verification stage, but once submitted the tutorial
+  // stage opens regardless of admin review outcome. tutorialComplete itself
+  // never reads verification state, so the two axes stay independent —
+  // completing the tutorial never requires verification to be approved.
+  const verificationSubmitted = verificationApproved || verification?.status === "pending";
   // Independent axis: the tutorial can be completed while documents are still
   // under review. Backend truth arrives via /auth/me/.
   const tutorialComplete = Boolean(user?.jitsi_tutorial_completed);
@@ -122,13 +131,19 @@ function TutorOnboardingContent() {
       title: "Belge doğrulaması",
       description: "Öğrenci kimliği ve YKS sonuç belgesi incelenir.",
       complete: verificationApproved,
-      active: profileComplete && photoComplete && !verificationApproved,
+      // Nothing left to do once submitted (pending review) — active hands
+      // off to the tutorial stage rather than staying lit while approval
+      // is out of the tutor's hands.
+      active: profileComplete && photoComplete && !verificationSubmitted,
     },
     {
       title: "Canlı ders eğitimi",
       description: "Ders ekranını 5 dakikada öğren — belge incelemesini beklemeden tamamlayabilirsin.",
       complete: tutorialComplete,
-      active: profileComplete && photoComplete && !tutorialComplete,
+      // Gated on verificationSubmitted (not verificationApproved) — this is
+      // sequencing, not a dependency. tutorialComplete above is computed
+      // without any reference to verification state.
+      active: profileComplete && photoComplete && verificationSubmitted && !tutorialComplete,
     },
     {
       title: "Dersler ve müsaitlik",
@@ -162,17 +177,33 @@ function TutorOnboardingContent() {
 
           <ol className="space-y-4">
             {steps.map((step, index) => (
-              <li key={step.title} className="flex gap-3">
-                {step.complete ? (
-                  <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-green-600" />
-                ) : step.active ? (
-                  <Clock className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
-                ) : (
-                  <Circle className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" />
+              <li key={step.title}>
+                {/* Verification and the tutorial read as two distinct stages
+                    rather than adjacent checklist items — a small stage
+                    label plus a divider ahead of each, instead of a
+                    structural rewrite of the steps array. */}
+                {step.title === "Belge doğrulaması" && (
+                  <p className="mb-2 border-t pt-4 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    Aşama 1 · Hesap doğrulama
+                  </p>
                 )}
-                <div>
-                  <p className="font-medium">{index + 1}. {step.title}</p>
-                  <p className="text-sm text-muted-foreground">{step.description}</p>
+                {step.title === "Canlı ders eğitimi" && (
+                  <p className="mb-2 border-t pt-4 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    Aşama 2 · Derse hazırlık
+                  </p>
+                )}
+                <div className="flex gap-3">
+                  {step.complete ? (
+                    <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-green-600" />
+                  ) : step.active ? (
+                    <Clock className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                  ) : (
+                    <Circle className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" />
+                  )}
+                  <div>
+                    <p className="font-medium">{index + 1}. {step.title}</p>
+                    <p className="text-sm text-muted-foreground">{step.description}</p>
+                  </div>
                 </div>
               </li>
             ))}
@@ -202,7 +233,16 @@ function TutorOnboardingContent() {
               </Button>
             </div>
           )}
-          {profileComplete && photoComplete && !tutorialComplete && (
+          {/* Stage 1: document verification. VerificationForm handles its
+              own not-submitted/pending/approved/rejected states internally,
+              so it stays mounted for the whole stage (through pending
+              review) — only the tutorial CTA below is gated on submission. */}
+          {profileComplete && photoComplete && !verificationApproved && <VerificationForm />}
+          {/* Stage 2: only presented once verification has been submitted —
+              sequencing, not a completion dependency. verificationApproved
+              is never checked here, so an approval still pending doesn't
+              block the tutorial. */}
+          {profileComplete && photoComplete && verificationSubmitted && !tutorialComplete && (
             <div className="flex flex-col gap-3 rounded-lg border p-5 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="font-medium">Canlı ders eğitimini tamamla</p>
@@ -216,7 +256,6 @@ function TutorOnboardingContent() {
               </Button>
             </div>
           )}
-          {profileComplete && photoComplete && !verificationApproved && <VerificationForm />}
           {verificationApproved && !lessonsReady && (
             <div className="space-y-3 rounded-lg border p-4">
               <p className="font-medium">Son adım: dersler ve müsaitlik</p>
