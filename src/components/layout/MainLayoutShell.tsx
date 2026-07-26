@@ -5,6 +5,7 @@ import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { MobileTabBar } from "@/components/layout/MobileTabBar";
+import { EarlySupporterWelcome } from "@/components/shared/EarlySupporterWelcome";
 import { useAuth } from "@/hooks/useAuth";
 import { fetchMyTutorProfile } from "@/lib/tutorsApi";
 import { cn } from "@/lib/utils";
@@ -52,6 +53,15 @@ export function MainLayoutShell({ children }: MainLayoutShellProps) {
       >
         {children}
       </div>
+      <EarlySupporterWelcome
+        enabled={
+          isAuthenticated &&
+          isTutor &&
+          !isAdmin &&
+          !isImpersonating &&
+          !pendingVerification
+        }
+      />
       {showMobileNavigation && <MobileTabBar />}
     </>
   );
