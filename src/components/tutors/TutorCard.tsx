@@ -86,7 +86,7 @@ export function TutorCard({
             <div className="relative h-16 w-16 shrink-0">
               <Avatar className="h-16 w-16">
                 <AvatarImage
-                  src={tutor.profile_picture || '/images/demo-teacher.jpg'}
+                  src={tutor.profile_picture || undefined}
                   alt={`${tutor.name} ${tutor.surname}`}
                 />
                 <AvatarFallback className="bg-primary/10 text-primary text-lg font-medium">

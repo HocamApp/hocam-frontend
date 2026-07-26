@@ -30,6 +30,7 @@ interface ExpandableTabsProps {
   tabs: TabItem[];
   className?: string;
   activeColor?: string;
+  activeBackground?: string;
   /** Hides every label at tablet widths while preserving lg+ behavior. */
   tabletCompact?: boolean;
   // When provided, the component is controlled and the active tab is derived
@@ -63,6 +64,7 @@ export function ExpandableTabs({
   tabs,
   className,
   activeColor = "text-primary",
+  activeBackground = "bg-muted",
   tabletCompact = false,
   selected: controlledSelected,
   onChange,
@@ -111,7 +113,7 @@ export function ExpandableTabs({
               tabletCompact &&
                 "md:min-h-11 md:min-w-11 md:justify-center lg:min-h-0 lg:min-w-0",
               selected === index
-                ? cn("bg-muted", activeColor)
+                ? cn(activeBackground, activeColor)
                 : "text-muted-foreground hover:bg-muted hover:text-foreground"
             )}
           >
