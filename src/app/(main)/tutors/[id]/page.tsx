@@ -526,12 +526,15 @@ export default function TutorProfilePage({
           {/* Photo in column 1; info stack in column 2 with the bio beneath it
               so the text fills the widened container instead of leaving a
               gutter. The bio spans both columns below md, where sitting beside
-              a 112px photo would squeeze it too narrow. */}
+              a 112px photo would squeeze it too narrow. At md+ the photo spans
+              both rows so row 1's height is set by the info stack, not the
+              photo — otherwise the bio (row 2) starts below the photo's
+              bottom edge instead of right after the subject badges. */}
           <div className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-4 md:gap-x-6">
             <button
               type="button"
               onClick={() => setIsPhotoPreviewOpen(true)}
-              className="shrink-0 self-start rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              className="shrink-0 self-start rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 md:row-span-2"
               aria-label={`${tutor.name} ${tutor.surname} profil fotoğrafını büyüt`}
             >
               <Avatar className="h-28 w-28 cursor-zoom-in sm:h-36 sm:w-36 md:h-44 md:w-44 lg:h-56 lg:w-56 xl:h-64 xl:w-64">
