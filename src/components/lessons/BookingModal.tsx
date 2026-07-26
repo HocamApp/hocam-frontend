@@ -583,7 +583,7 @@ export function BookingModal({
               <div className="flex min-w-0 items-center gap-3">
                 <Avatar className="h-10 w-10">
                   <AvatarImage
-                    src={tutor.profile_picture || '/images/demo-teacher.jpg'}
+                    src={tutor.profile_picture || undefined}
                     alt={`${tutor.name} ${tutor.surname}`}
                   />
                   <AvatarFallback className="bg-primary/10 text-primary">

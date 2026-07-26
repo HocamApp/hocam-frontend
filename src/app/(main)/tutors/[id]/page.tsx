@@ -449,8 +449,7 @@ export default function TutorProfilePage({
     items: (tutor?.subjects ?? []).filter((s) => s.exam_type === exam),
   })).filter((group) => group.items.length > 0);
   const introVideoEmbedUrl = getYouTubeEmbedUrl(tutor?.intro_video_url);
-  const tutorPhotoUrl =
-    resolveProfileImageUrl(tutor?.profile_picture) || "/images/demo-teacher.jpg";
+  const tutorPhotoUrl = resolveProfileImageUrl(tutor?.profile_picture);
   const completedLessonsLabel = `${formatLessonCount(tutor?.completed_lessons_count ?? 0)} ders`;
   const shareTitle = tutor
     ? `${tutor.name} ${tutor.surname} · Hocam`
@@ -554,23 +553,35 @@ export default function TutorProfilePage({
               photo — otherwise the bio (row 2) starts below the photo's
               bottom edge instead of right after the subject badges. */}
           <div className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-4 md:gap-x-6">
-            <button
-              type="button"
-              onClick={() => setIsPhotoPreviewOpen(true)}
-              className="shrink-0 self-start rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 md:row-span-2"
-              aria-label={`${tutor.name} ${tutor.surname} profil fotoğrafını büyüt`}
-            >
-              <Avatar className="h-28 w-28 cursor-zoom-in sm:h-36 sm:w-36 md:h-44 md:w-44 lg:h-56 lg:w-56 xl:h-64 xl:w-64">
-                <AvatarImage
-                  src={tutorPhotoUrl}
-                  alt={`${tutor.name} ${tutor.surname}`}
-                  className="object-cover object-center"
-                />
-                <AvatarFallback className="bg-primary/10 text-primary text-2xl font-medium md:text-4xl lg:text-5xl">
-                  {getInitials(tutor.name, tutor.surname)}
-                </AvatarFallback>
-              </Avatar>
-            </button>
+            {tutorPhotoUrl ? (
+              <button
+                type="button"
+                onClick={() => setIsPhotoPreviewOpen(true)}
+                className="shrink-0 self-start rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 md:row-span-2"
+                aria-label={`${tutor.name} ${tutor.surname} profil fotoğrafını büyüt`}
+              >
+                <Avatar className="h-28 w-28 cursor-zoom-in sm:h-36 sm:w-36 md:h-44 md:w-44 lg:h-56 lg:w-56 xl:h-64 xl:w-64">
+                  <AvatarImage
+                    src={tutorPhotoUrl}
+                    alt={`${tutor.name} ${tutor.surname}`}
+                    className="object-cover object-center"
+                  />
+                  <AvatarFallback className="bg-primary/10 text-primary text-2xl font-medium md:text-4xl lg:text-5xl">
+                    {getInitials(tutor.name, tutor.surname)}
+                  </AvatarFallback>
+                </Avatar>
+              </button>
+            ) : (
+              // No photo to zoom into — a plain, non-interactive wrapper so
+              // there's no focusable control that opens an empty dialog.
+              <div className="shrink-0 self-start rounded-lg md:row-span-2">
+                <Avatar className="h-28 w-28 sm:h-36 sm:w-36 md:h-44 md:w-44 lg:h-56 lg:w-56 xl:h-64 xl:w-64">
+                  <AvatarFallback className="bg-primary/10 text-primary text-2xl font-medium md:text-4xl lg:text-5xl">
+                    {getInitials(tutor.name, tutor.surname)}
+                  </AvatarFallback>
+                </Avatar>
+              </div>
+            )}
             <div className="min-w-0">
               {/* The mark sits inside the h1 so it trails the last word of the
                   name. As a sibling flex item it dropped onto a line of its
