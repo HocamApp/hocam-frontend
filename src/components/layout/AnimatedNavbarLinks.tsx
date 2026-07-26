@@ -118,8 +118,8 @@ export function AnimatedNavbarLinks() {
       selected={activeIndex >= 0 ? activeIndex : null}
       onChange={handleChange}
       tabletCompact
-      activeColor="text-brand-strong"
-      activeBackground="bg-brand-strong/[3%] dark:bg-brand-strong/10"
+      activeColor="text-brand-700 dark:text-brand-200"
+      activeBackground="bg-brand-50 dark:bg-brand-900"
       className="w-max flex-nowrap rounded-xl sm:w-auto"
     />
   );
