@@ -269,8 +269,8 @@ function ProfileSkeleton() {
     <div className="space-y-8">
       <div className="flex gap-8">
         <div className="flex-1 space-y-4">
-          <div className="flex gap-4">
-            <Skeleton className="h-24 w-24 rounded-lg" />
+          <div className="flex gap-4 md:gap-6">
+            <Skeleton className="h-28 w-28 shrink-0 rounded-lg sm:h-36 sm:w-36 md:h-44 md:w-44 lg:h-56 lg:w-56 xl:h-64 xl:w-64" />
             <div className="flex-1 space-y-2">
               <Skeleton className="h-9 w-48" />
               <Skeleton className="h-5 w-64" />
@@ -281,7 +281,7 @@ function ProfileSkeleton() {
           <Skeleton className="h-4 w-full" />
           <Skeleton className="h-4 w-3/4" />
         </div>
-        <div className="hidden w-72 shrink-0 lg:block">
+        <div className="hidden w-[300px] shrink-0 lg:block xl:w-[360px]">
           <Skeleton className="h-48 w-full rounded-lg" />
         </div>
       </div>
@@ -493,7 +493,7 @@ export default function TutorProfilePage({
 
   if (isLoading) {
     return (
-      <div className="mx-auto max-w-4xl px-4 py-8">
+      <div className="mx-auto max-w-7xl px-4 py-8">
         <ProfileSkeleton />
       </div>
     );
@@ -501,7 +501,7 @@ export default function TutorProfilePage({
 
   if (error || !tutor) {
     return (
-      <div className="mx-auto max-w-4xl px-4 py-8">
+      <div className="mx-auto max-w-7xl px-4 py-8">
         <ErrorMessage message="Hoca profili yüklenemedi." />
         <Button variant="outline" className="mt-4" asChild>
           <Link href="/tutors">Geri Dön</Link>
@@ -511,28 +511,41 @@ export default function TutorProfilePage({
   }
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-8">
-      {/* Section 1 — Profile header */}
-      <div className="lg:grid lg:grid-cols-3 lg:gap-8">
-        <div className="lg:col-span-2 space-y-4">
-          <div className="flex gap-4">
+    <div className="mx-auto max-w-7xl px-4 py-8">
+      {/* Two-column body: all sections on the left, reservation rail on the
+          right. Children are placed explicitly, so placement is NOT automatic:
+          the rail deliberately spans both rows (`lg:row-start-1 lg:row-end-3`)
+          to give its sticky card a full-height containing block, and row 2 of
+          column 1 is a single wrapper holding every section after the header.
+          Add new left-column sections INSIDE that row-2 wrapper — a new direct
+          child of this grid without `lg:col-start-1 lg:row-start-2` gets
+          auto-placed into the wrong cell (or on top of the rail) silently. */}
+      <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_300px] lg:gap-x-8 xl:grid-cols-[minmax(0,1fr)_360px]">
+        {/* Section 1 — Profile header */}
+        <div className="space-y-4 lg:col-start-1 lg:row-start-1">
+          {/* Photo in column 1; info stack in column 2 with the bio beneath it
+              so the text fills the widened container instead of leaving a
+              gutter. The bio spans both columns below md, where sitting beside
+              a 112px photo would squeeze it too narrow. */}
+          <div className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-4 md:gap-x-6">
             <button
               type="button"
               onClick={() => setIsPhotoPreviewOpen(true)}
-              className="shrink-0 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              className="shrink-0 self-start rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               aria-label={`${tutor.name} ${tutor.surname} profil fotoğrafını büyüt`}
             >
-              <Avatar className="h-24 w-24 cursor-zoom-in">
+              <Avatar className="h-28 w-28 cursor-zoom-in sm:h-36 sm:w-36 md:h-44 md:w-44 lg:h-56 lg:w-56 xl:h-64 xl:w-64">
                 <AvatarImage
                   src={tutorPhotoUrl}
                   alt={`${tutor.name} ${tutor.surname}`}
+                  className="object-cover object-center"
                 />
-                <AvatarFallback className="bg-primary/10 text-primary text-2xl font-medium">
+                <AvatarFallback className="bg-primary/10 text-primary text-2xl font-medium md:text-4xl lg:text-5xl">
                   {getInitials(tutor.name, tutor.surname)}
                 </AvatarFallback>
               </Avatar>
             </button>
-            <div className="min-w-0 flex-1">
+            <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-1.5">
                 <h1 className="text-3xl font-bold leading-tight">
                   {tutor.name} {tutor.surname}
@@ -577,12 +590,18 @@ export default function TutorProfilePage({
                 </div>
               )}
             </div>
+            {tutor.bio && (
+              <p className="col-span-2 max-w-prose text-base md:col-span-1 md:col-start-2">
+                {tutor.bio}
+              </p>
+            )}
           </div>
-          {tutor.bio && <p className="mt-4 text-base">{tutor.bio}</p>}
         </div>
 
-        <div className="lg:col-span-1">
-          <Card className="sticky top-24">
+        {/* Reservation rail — spans row 1 and row 2 so the card can stick
+            for the full length of the left column. Contains only the card. */}
+        <div className="mt-8 lg:col-start-2 lg:row-start-1 lg:row-end-3 lg:mt-0">
+          <Card className="lg:sticky lg:top-24">
             <CardContent className="pt-6 space-y-4">
               {/* Price + lesson duration */}
               <div>
@@ -817,142 +836,145 @@ export default function TutorProfilePage({
             </CardContent>
           </Card>
         </div>
-      </div>
 
-      {introVideoEmbedUrl && (
-        <section className="mt-10">
-          <h2 className="flex items-center gap-2 text-xl font-semibold">
-            <PlayCircle className="h-5 w-5 text-primary" />
-            Tanıtım Videosu
-          </h2>
-          <Separator className="mt-2" />
-          <div className="mt-4 aspect-video overflow-hidden rounded-lg border bg-muted">
-            <iframe
-              className="h-full w-full"
-              src={introVideoEmbedUrl}
-              title={`${tutor.name} ${tutor.surname} tanıtım videosu`}
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-              allowFullScreen
-            />
-          </div>
-        </section>
-      )}
-
-      {/* Section 2 — Subjects */}
-      <section className="mt-10">
-        <h2 className="text-xl font-semibold">Verdiği Dersler</h2>
-        <Separator className="mt-2" />
-        {tutor.subjects.length === 0 ? (
-          <p className="mt-4 text-muted-foreground">Henüz ders eklenmemiş</p>
-        ) : (
-          <div className="mt-4 space-y-4">
-            {subjectGroups.map((group) => (
-              <div key={group.exam}>
-                <h3 className="text-sm font-medium text-muted-foreground">
-                  {group.exam} Dersleri
-                </h3>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {group.items.map((s) => (
-                    <Badge key={s.id} variant="secondary" className="py-1.5 px-3">
-                      {s.name}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
-
-      {/* Section 3 — Availability */}
-      <section className="mt-10">
-        <h2 className="text-xl font-semibold">Müsaitlik</h2>
-        <Separator className="mt-2" />
-        <div className="mt-4">
-          {availabilityLoading ? (
-            <Card>
-              <CardContent className="py-4 space-y-2">
-                <Skeleton className="h-5 w-48" />
-                <Skeleton className="h-5 w-40" />
-                <Skeleton className="h-5 w-44" />
-              </CardContent>
-            </Card>
-          ) : availability.length === 0 ? (
-            <Card>
-              <CardContent className="py-6 text-center text-muted-foreground">
-                Müsaitlik bilgisi henüz eklenmemiş
-              </CardContent>
-            </Card>
-          ) : (
-            <Card>
-              <CardContent className="py-4">
-                <AvailabilityCalendar
-                  availability={availability}
-                  editable={false}
-                  showBookings={false}
+        {/* Sections 2-4 — left column, row 2 */}
+        <div className="lg:col-start-1 lg:row-start-2">
+          {introVideoEmbedUrl && (
+            <section className="mt-10">
+              <h2 className="flex items-center gap-2 text-xl font-semibold">
+                <PlayCircle className="h-5 w-5 text-primary" />
+                Tanıtım Videosu
+              </h2>
+              <Separator className="mt-2" />
+              <div className="mt-4 aspect-video overflow-hidden rounded-lg border bg-muted">
+                <iframe
+                  className="h-full w-full"
+                  src={introVideoEmbedUrl}
+                  title={`${tutor.name} ${tutor.surname} tanıtım videosu`}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowFullScreen
                 />
-              </CardContent>
-            </Card>
+              </div>
+            </section>
           )}
-        </div>
-      </section>
 
-      {/* Section 4 — Reviews */}
-      <section className="mt-10">
-        <h2 className="text-xl font-semibold">Değerlendirmeler</h2>
-        <Separator className="mt-2" />
-        <div className="mt-4 space-y-6">
-          {reviewsLoading && (
-            <div className="space-y-3">
-              <ReviewSkeletonCard />
-              <ReviewSkeletonCard />
-              <ReviewSkeletonCard />
-            </div>
-          )}
-          {!reviewsLoading && reviews.length === 0 && (
-            <p className="text-muted-foreground">Henüz değerlendirme yok</p>
-          )}
-          {!reviewsLoading && reviews.length > 0 && (
-            <>
-              {reviewSummary ? (
-                <div className="mb-6 space-y-6">
-                  <ReviewSummary summary={reviewSummary} />
-                  <SubjectRatingBreakdown
-                    subjectRatings={reviewSummary.subject_ratings}
-                  />
-                </div>
-              ) : (
-                <div className="mb-6 flex items-baseline gap-4">
-                  <span className="text-4xl font-bold">{formatRating(tutor.rating)}</span>
-                  <div>
-                    <Stars rating={tutor.rating} />
-                    <p className="text-sm text-muted-foreground">
-                      {tutor.total_reviews} değerlendirme
-                    </p>
+          {/* Section 2 — Subjects */}
+          <section className="mt-10">
+            <h2 className="text-xl font-semibold">Verdiği Dersler</h2>
+            <Separator className="mt-2" />
+            {tutor.subjects.length === 0 ? (
+              <p className="mt-4 text-muted-foreground">Henüz ders eklenmemiş</p>
+            ) : (
+              <div className="mt-4 space-y-4">
+                {subjectGroups.map((group) => (
+                  <div key={group.exam}>
+                    <h3 className="text-sm font-medium text-muted-foreground">
+                      {group.exam} Dersleri
+                    </h3>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {group.items.map((s) => (
+                        <Badge key={s.id} variant="secondary" className="py-1.5 px-3">
+                          {s.name}
+                        </Badge>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
-              <div className="space-y-3">
-                {reviews.map((review) => (
-                  <ReviewCard key={review.id} review={review} />
                 ))}
               </div>
-              {isFetchingNextPage && (
+            )}
+          </section>
+
+          {/* Section 3 — Availability */}
+          <section className="mt-10">
+            <h2 className="text-xl font-semibold">Müsaitlik</h2>
+            <Separator className="mt-2" />
+            <div className="mt-4">
+              {availabilityLoading ? (
+                <Card>
+                  <CardContent className="py-4 space-y-2">
+                    <Skeleton className="h-5 w-48" />
+                    <Skeleton className="h-5 w-40" />
+                    <Skeleton className="h-5 w-44" />
+                  </CardContent>
+                </Card>
+              ) : availability.length === 0 ? (
+                <Card>
+                  <CardContent className="py-6 text-center text-muted-foreground">
+                    Müsaitlik bilgisi henüz eklenmemiş
+                  </CardContent>
+                </Card>
+              ) : (
+                <Card>
+                  <CardContent className="py-4">
+                    <AvailabilityCalendar
+                      availability={availability}
+                      editable={false}
+                      showBookings={false}
+                    />
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          </section>
+
+          {/* Section 4 — Reviews */}
+          <section className="mt-10">
+            <h2 className="text-xl font-semibold">Değerlendirmeler</h2>
+            <Separator className="mt-2" />
+            <div className="mt-4 space-y-6">
+              {reviewsLoading && (
                 <div className="space-y-3">
+                  <ReviewSkeletonCard />
+                  <ReviewSkeletonCard />
                   <ReviewSkeletonCard />
                 </div>
               )}
-              {hasNextPage && (
-                <div
-                  ref={reviewsLoadMoreRef}
-                  className="h-1"
-                  aria-hidden="true"
-                />
+              {!reviewsLoading && reviews.length === 0 && (
+                <p className="text-muted-foreground">Henüz değerlendirme yok</p>
               )}
-            </>
-          )}
+              {!reviewsLoading && reviews.length > 0 && (
+                <>
+                  {reviewSummary ? (
+                    <div className="mb-6 space-y-6">
+                      <ReviewSummary summary={reviewSummary} />
+                      <SubjectRatingBreakdown
+                        subjectRatings={reviewSummary.subject_ratings}
+                      />
+                    </div>
+                  ) : (
+                    <div className="mb-6 flex items-baseline gap-4">
+                      <span className="text-4xl font-bold">{formatRating(tutor.rating)}</span>
+                      <div>
+                        <Stars rating={tutor.rating} />
+                        <p className="text-sm text-muted-foreground">
+                          {tutor.total_reviews} değerlendirme
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                  <div className="space-y-3">
+                    {reviews.map((review) => (
+                      <ReviewCard key={review.id} review={review} />
+                    ))}
+                  </div>
+                  {isFetchingNextPage && (
+                    <div className="space-y-3">
+                      <ReviewSkeletonCard />
+                    </div>
+                  )}
+                  {hasNextPage && (
+                    <div
+                      ref={reviewsLoadMoreRef}
+                      className="h-1"
+                      aria-hidden="true"
+                    />
+                  )}
+                </>
+              )}
+            </div>
+          </section>
         </div>
-      </section>
+      </div>
 
       <MessageRequestModal
         tutor={tutor}
