@@ -45,6 +45,10 @@ const config: Config = {
           DEFAULT: "hsl(var(--brand))",
           foreground: "hsl(var(--brand-foreground))",
         },
+        "brand-strong": {
+          DEFAULT: "hsl(var(--brand-strong))",
+          foreground: "hsl(var(--brand-strong-foreground))",
+        },
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",

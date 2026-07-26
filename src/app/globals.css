@@ -32,6 +32,14 @@
        success/error semantics (--primary and --destructive own those). */
     --brand: 352 99% 62%;
     --brand-foreground: 0 0% 100%;
+    /* Text-bearing companion to --brand. Base brand on white text is only
+       3.47:1 — below AA for small text (the unread badge). Same hue,
+       deepened to 48% lightness: 4.82:1 against white. Reserve for
+       surfaces where brand carries text; the favorite heart (a non-text
+       icon, 3.47:1 already clears the 3:1 non-text threshold) stays on
+       the true logo color, --brand. */
+    --brand-strong: 352 85% 48%;
+    --brand-strong-foreground: 0 0% 100%;
   }
 
   .dark {
@@ -59,6 +67,17 @@
        adjustment needed to avoid vibrating against the dark surface. */
     --brand: 352 99% 62%;
     --brand-foreground: 0 0% 100%;
+    /* Deepening (the light-mode fix) would only widen the gap the wrong
+       way here — base brand vs white text is already 3.47:1 in dark mode
+       too, since the badge fill itself doesn't change with theme. Instead
+       pair it with a dark foreground, the same light-chip/dark-text
+       pattern --primary already uses in dark mode: --brand at 62%
+       lightness against this dark navy is 5.14:1, comfortably over AA,
+       and still 5.14:1/4.74:1 against --background/--card so the badge
+       stays visually distinct from the page. Equal to base --brand, not
+       a new value — no darkening needed here. */
+    --brand-strong: 352 99% 62%;
+    --brand-strong-foreground: 222 47% 11%;
   }
 }
 
