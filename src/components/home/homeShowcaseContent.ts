@@ -5,19 +5,23 @@
  * full editorial rhythm (hero slider, discovery rails, goal storytelling)
  * before the backend has endpoints for any of it. Every `href` here points at
  * a route that really exists, so the composition is navigable even though the
- * copy and the counts are placeholders.
+ * copy is editorial placeholder copy.
  *
  * Replace section by section as real endpoints land.
+ *
+ * Imagery: the explore and goal cards use local photography from
+ * `public/images/home-v3/`. Sources, creators and license notes for every
+ * file are documented in `docs/design/product-home/image-sources.md`.
  */
 
 import type { HomeVisualTone } from "@/components/home/HomeVisual";
 import type { HomeHeroScene } from "@/components/home/HomeHeroArt";
-import type { HomeScene } from "@/components/home/HomeSceneArt";
 
-/** Illustrated artwork pairing used by the discovery and goal cards. */
-export interface HomeArtwork {
-  scene: HomeScene;
-  tone: HomeVisualTone;
+/** Local editorial photography used by the discovery and goal cards. */
+export interface HomeCardImage {
+  /** Path under `public/`, e.g. `/images/home-v3/explore/tyt-matematik.jpg`. */
+  src: string;
+  alt: string;
 }
 
 export interface HomeHeroSlideContent {
@@ -81,67 +85,82 @@ export const HOME_HERO_SLIDES: HomeHeroSlideContent[] = [
 export interface HomeExploreCardContent {
   id: string;
   title: string;
-  description: string;
   href: string;
-  artwork: HomeArtwork;
+  image: HomeCardImage;
 }
 
 export const HOME_EXPLORE_CARDS: HomeExploreCardContent[] = [
   {
     id: "tyt-matematik",
     title: "TYT Matematik",
-    description: "Temelden kurulan problem çözme alışkanlığı.",
     href: "/tutors?exam_type=TYT&subject=Matematik",
-    artwork: { scene: "worksheet", tone: "brand" },
+    image: {
+      src: "/images/home-v3/explore/tyt-matematik.jpg",
+      alt: "Defterine matematik problemi çözen bir öğrenci",
+    },
   },
   {
     id: "ayt-matematik",
     title: "AYT Matematik",
-    description: "Limit, türev ve integralde hız kazan.",
     href: "/tutors?exam_type=AYT&subject=Matematik",
-    artwork: { scene: "graphing", tone: "sky" },
+    image: {
+      src: "/images/home-v3/explore/ayt-matematik.jpg",
+      alt: "Türev ve integral formülleriyle dolu bir çalışma sayfası",
+    },
   },
   {
     id: "geometri",
     title: "Geometri",
-    description: "Şekil okuma ve açı kurma pratiği.",
     href: "/tutors?subject=Geometri",
-    artwork: { scene: "drafting", tone: "violet" },
+    image: {
+      src: "/images/home-v3/explore/geometri.jpg",
+      alt: "Pergel ve cetvelle çizilen geometrik şekiller",
+    },
   },
   {
     id: "paragraf",
     title: "Paragraf / Türkçe",
-    description: "Hız ve doğruluğu birlikte artır.",
     href: "/tutors?exam_type=TYT&subject=Türkçe",
-    artwork: { scene: "reading", tone: "cream" },
+    image: {
+      src: "/images/home-v3/explore/paragraf.jpg",
+      alt: "Masada açık bir kitap okuyan öğrenci",
+    },
   },
   {
     id: "fizik",
     title: "Fizik",
-    description: "Formül ezberi yerine kavram kurulumu.",
     href: "/tutors?subject=Fizik",
-    artwork: { scene: "physics", tone: "slate" },
+    image: {
+      src: "/images/home-v3/explore/fizik.jpg",
+      alt: "Tahtada fizik formülleri",
+    },
   },
   {
     id: "kpss-matematik",
     title: "KPSS Matematik",
-    description: "Sınav formatına göre soru tipi çalışması.",
     href: "/tutors?exam_type=KPSS",
-    artwork: { scene: "answerSheet", tone: "brand" },
+    image: {
+      src: "/images/home-v3/explore/kpss-matematik.jpg",
+      alt: "Optik cevap formu üzerinde çalışan aday",
+    },
   },
   {
     id: "dgs-sayisal",
     title: "DGS Sayısal",
-    description: "Sayısal mantıkta düzenli tempo kur.",
     href: "/tutors?exam_type=DGS",
-    artwork: { scene: "logic", tone: "sky" },
+    image: {
+      src: "/images/home-v3/explore/dgs-sayisal.jpg",
+      alt: "Hesap makinesi ve notlarla sayısal soru çözen öğrenci",
+    },
   },
   {
     id: "cikmis-sorular",
     title: "Çıkmış sorular",
-    description: "Geçmiş yılların sorularıyla ölç.",
     href: "/cikmis-sorular",
-    artwork: { scene: "archive", tone: "violet" },
+    image: {
+      src: "/images/home-v3/explore/cikmis-sorular.jpg",
+      alt: "Geçmiş yılların sınav kağıtlarından oluşan bir arşiv",
+    },
   },
 ];
 
@@ -253,7 +272,7 @@ export interface HomeGoalCardContent {
   description: string;
   chips: string[];
   href: string;
-  artwork: HomeArtwork;
+  image: HomeCardImage;
 }
 
 export const HOME_GOAL_CARDS: HomeGoalCardContent[] = [
@@ -264,7 +283,10 @@ export const HOME_GOAL_CARDS: HomeGoalCardContent[] = [
       "Sayısal netlerini yüksek tutmak için biyoloji, kimya ve matematikte düzenli tempo.",
     chips: ["AYT Biyoloji", "AYT Kimya", "AYT Matematik"],
     href: "/tutors?exam_type=AYT",
-    artwork: { scene: "medicine", tone: "brand" },
+    image: {
+      src: "/images/home-v3/goals/tip.jpg",
+      alt: "Kitapları ve steteskopuyla çalışan bir tıp öğrencisi",
+    },
   },
   {
     id: "muhendislik",
@@ -273,7 +295,10 @@ export const HOME_GOAL_CARDS: HomeGoalCardContent[] = [
       "Matematik ve fizikte soru tipi hakimiyeti, deneme sonrası hata analizi.",
     chips: ["AYT Matematik", "AYT Fizik", "Geometri"],
     href: "/tutors?exam_type=AYT&subject=Fizik",
-    artwork: { scene: "engineering", tone: "sky" },
+    image: {
+      src: "/images/home-v3/goals/muhendislik.jpg",
+      alt: "Teknik çizim üzerinde çalışan bir mühendislik öğrencisi",
+    },
   },
   {
     id: "hukuk",
@@ -282,7 +307,10 @@ export const HOME_GOAL_CARDS: HomeGoalCardContent[] = [
       "Paragraf hızını ve sözel netlerini birlikte yukarı taşıyan bir çalışma düzeni.",
     chips: ["TYT Türkçe", "AYT Edebiyat", "Tarih"],
     href: "/tutors?exam_type=AYT&subject=Edebiyat",
-    artwork: { scene: "law", tone: "cream" },
+    image: {
+      src: "/images/home-v3/goals/hukuk.jpg",
+      alt: "Hukuk kitapları ve adalet terazisi",
+    },
   },
   {
     id: "ogretmenlik",
@@ -291,15 +319,16 @@ export const HOME_GOAL_CARDS: HomeGoalCardContent[] = [
       "Alan bilgisi ve KPSS hazırlığını aynı planda ilerletmek isteyenler için.",
     chips: ["KPSS Genel Yetenek", "Alan bilgisi"],
     href: "/tutors?exam_type=KPSS",
-    artwork: { scene: "teaching", tone: "violet" },
+    image: {
+      src: "/images/home-v3/goals/ogretmenlik.jpg",
+      alt: "Kara tahta başında ders anlatan bir öğretmen",
+    },
   },
 ];
 
 export interface HomeTopicLinkContent {
   label: string;
   href: string;
-  /** Placeholder popularity figure — not a real metric. */
-  learners: string;
 }
 
 export interface HomeTopicColumnContent {
@@ -313,38 +342,38 @@ export const HOME_TOPIC_COLUMNS: HomeTopicColumnContent[] = [
     id: "sayisal",
     heading: "Sayısal",
     links: [
-      { label: "TYT Matematik", href: "/tutors?exam_type=TYT&subject=Matematik", learners: "12.400 öğrenci" },
-      { label: "Problemler", href: "/tutors?subject=Matematik", learners: "9.150 öğrenci" },
-      { label: "Geometri", href: "/tutors?subject=Geometri", learners: "7.820 öğrenci" },
-      { label: "AYT Fizik", href: "/tutors?exam_type=AYT&subject=Fizik", learners: "5.640 öğrenci" },
+      { label: "TYT Matematik", href: "/tutors?exam_type=TYT&subject=Matematik" },
+      { label: "Problemler", href: "/tutors?subject=Matematik" },
+      { label: "Geometri", href: "/tutors?subject=Geometri" },
+      { label: "AYT Fizik", href: "/tutors?exam_type=AYT&subject=Fizik" },
     ],
   },
   {
     id: "sozel",
     heading: "Sözel",
     links: [
-      { label: "Paragraf", href: "/tutors?exam_type=TYT&subject=Türkçe", learners: "11.300 öğrenci" },
-      { label: "AYT Edebiyat", href: "/tutors?exam_type=AYT&subject=Edebiyat", learners: "4.980 öğrenci" },
-      { label: "Tarih", href: "/tutors?subject=Tarih", learners: "3.470 öğrenci" },
-      { label: "Coğrafya", href: "/tutors?subject=Coğrafya", learners: "2.910 öğrenci" },
+      { label: "Paragraf", href: "/tutors?exam_type=TYT&subject=Türkçe" },
+      { label: "AYT Edebiyat", href: "/tutors?exam_type=AYT&subject=Edebiyat" },
+      { label: "Tarih", href: "/tutors?subject=Tarih" },
+      { label: "Coğrafya", href: "/tutors?subject=Coğrafya" },
     ],
   },
   {
     id: "diger-sinavlar",
     heading: "Diğer sınavlar",
     links: [
-      { label: "KPSS Genel Yetenek", href: "/tutors?exam_type=KPSS", learners: "6.220 öğrenci" },
-      { label: "DGS Sayısal Mantık", href: "/tutors?exam_type=DGS", learners: "3.860 öğrenci" },
-      { label: "YDT İngilizce", href: "/tutors?exam_type=YDT", learners: "2.140 öğrenci" },
-      { label: "Organik Kimya", href: "/tutors?subject=Kimya", learners: "1.980 öğrenci" },
+      { label: "KPSS Genel Yetenek", href: "/tutors?exam_type=KPSS" },
+      { label: "DGS Sayısal Mantık", href: "/tutors?exam_type=DGS" },
+      { label: "YDT İngilizce", href: "/tutors?exam_type=YDT" },
+      { label: "Organik Kimya", href: "/tutors?subject=Kimya" },
     ],
   },
 ];
 
 export const HOME_TOPIC_FEATURED = {
-  title: "Paragraf bu dönem en çok çalışılan konu",
+  title: "Paragraf netlerini düzenli pratikle güçlendir",
   description:
-    "Süre yönetimi ve doğru okuma tekniğiyle netlerini en hızlı artırabileceğin alan.",
+    "Süre yönetimi ve doğru okuma tekniği, paragraf netlerini artırmanın temel adımları.",
   ctaLabel: "Paragraf hocalarına bak",
   ctaHref: "/tutors?exam_type=TYT&subject=Türkçe",
 } as const;
@@ -352,7 +381,7 @@ export const HOME_TOPIC_FEATURED = {
 export const HOME_PROMO_STRIP = {
   title: "Doğru hocayla hedefini netleştir",
   description:
-    "Yüzlerce doğrulanmış hoca, çıkmış sorular ve hazır çalışma planları tek platformda.",
+    "Doğrulanmış hocalar, çıkmış sorular ve çalışma planları tek platformda.",
   ctaLabel: "Hocaları keşfet",
   ctaHref: "/tutors",
 } as const;

@@ -43,7 +43,7 @@ export function HomeTeacherRail({ tutors, isLoading, isError, onRetry }: HomeTea
       <HomeSectionHeader
         headingId="home-teachers-title"
         title="Öne çıkan hocalar"
-        description="Bu hafta en çok incelenen doğrulanmış hocalar."
+        description="Yüksek puanlı doğrulanmış hocalar."
         href="/tutors"
         action="Tüm hocaları gör"
         onAction={() =>

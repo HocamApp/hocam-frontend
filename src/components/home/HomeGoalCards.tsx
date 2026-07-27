@@ -1,17 +1,19 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { trackHomeEvent } from "@/lib/homeAnalytics";
 import { HomeRail } from "@/components/home/HomeRail";
 import { HomeSectionHeader } from "@/components/home/HomeSectionHeader";
-import { HomeSceneArt } from "@/components/home/HomeSceneArt";
 import { HOME_GOAL_CARDS } from "@/components/home/homeShowcaseContent";
 import { Card } from "@/components/ui/card";
 
 /**
- * Goal-led storytelling row. Placeholder content; each card links into a real
- * pre-filtered tutor search.
+ * Goal-led storytelling row. Cards use the same photography system as the
+ * explore rail; each card links into a real pre-filtered tutor search.
+ * Card sizing mirrors the explore rail: three large cards on desktop, one
+ * card plus a next-card peek on mobile.
  */
 export function HomeGoalCards() {
   return (
@@ -33,15 +35,19 @@ export function HomeGoalCards() {
             key={goal.id}
             href={goal.href}
             onClick={() => trackHomeEvent("home_goal_card_clicked", { goal_id: goal.id })}
-            className="w-[82vw] shrink-0 snap-start rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:w-[330px]"
+            className="w-[82vw] shrink-0 snap-start rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:w-[calc((100%-2rem)/3)]"
           >
             <Card className="group flex h-full flex-col overflow-hidden transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-lg">
-              <HomeSceneArt
-                scene={goal.artwork.scene}
-                tone={goal.artwork.tone}
-                className="h-44 w-full shrink-0"
-              />
-              <div className="flex flex-1 flex-col p-5">
+              <div className="relative aspect-[4/3] w-full shrink-0 overflow-hidden bg-muted">
+                <Image
+                  src={goal.image.src}
+                  alt={goal.image.alt}
+                  fill
+                  sizes="(min-width: 1280px) 395px, (min-width: 640px) 31vw, 82vw"
+                  className="object-cover"
+                />
+              </div>
+              <div className="flex flex-1 flex-col bg-card p-5">
                 <h3 className="text-lg font-semibold tracking-tight">{goal.title}</h3>
                 <p className="mt-2 text-sm leading-6 text-muted-foreground">
                   {goal.description}

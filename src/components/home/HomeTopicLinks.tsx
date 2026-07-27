@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 
 /**
  * Long-tail discovery block: one featured highlight beside columns of topic
- * links. Copy and the "öğrenci" counts are placeholders; the links are real.
+ * links. The links are real pre-filtered searches; the ordering is editorial.
  *
  * Deliberately stays a text-link block. The featured item is raised onto a
  * card so it outranks the columns, while the counts sit below each link in a
@@ -22,10 +22,10 @@ export function HomeTopicLinks() {
     <section aria-labelledby="home-topics-title" className="space-y-7">
       <div>
         <h2 id="home-topics-title" className="text-2xl font-semibold tracking-tight sm:text-3xl">
-          Popüler konular
+          Konu başlıkları
         </h2>
         <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">
-          Bu dönem en çok çalışılan başlıklar ve o başlıklara bakan hocalar.
+          İlgilendiğin başlığı seç; o başlıkta çalışan hocalara doğrudan ulaş.
         </p>
       </div>
 
@@ -74,7 +74,6 @@ export function HomeTopicLinks() {
                         aria-hidden="true"
                       />
                     </Link>
-                    <p className="text-xs text-muted-foreground/80">{link.learners}</p>
                   </li>
                 ))}
               </ul>

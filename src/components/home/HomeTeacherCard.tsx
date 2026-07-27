@@ -124,19 +124,6 @@ export function HomeTeacherCard({
               isPlaceholder && "from-muted to-muted/60 text-muted-foreground"
             )}
           >
-            {/* A quiet ring motif keeps the photo-less block from reading as a
-                flat swatch, without competing with the initials. */}
-            <svg
-              viewBox="0 0 100 80"
-              aria-hidden="true"
-              className="absolute inset-0 h-full w-full"
-              fill="none"
-              stroke="currentColor"
-            >
-              <circle cx={78} cy={16} r={26} strokeWidth={1.4} opacity={0.22} />
-              <circle cx={78} cy={16} r={16} strokeWidth={1.4} opacity={0.16} />
-              <circle cx={16} cy={68} r={22} strokeWidth={1.4} opacity={0.18} />
-            </svg>
             {isPlaceholder ? (
               <GraduationCap className="relative h-12 w-12 opacity-60" aria-hidden="true" />
             ) : (
