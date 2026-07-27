@@ -11,6 +11,13 @@ export type HomeAnalyticsEvent =
   | "home_package_opened"
   | "home_continue_clicked"
   | "home_practice_opened"
+  | "home_hero_slide_changed"
+  | "home_hero_cta_clicked"
+  | "home_explore_card_clicked"
+  | "home_teacher_rail_scrolled"
+  | "home_discovery_tab_changed"
+  | "home_goal_card_clicked"
+  | "home_topic_link_clicked"
   | "tutor_home_viewed"
   | "tutor_home_action_clicked"
   | "tutor_home_lesson_opened";
