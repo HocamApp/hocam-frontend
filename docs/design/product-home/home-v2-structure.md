@@ -62,8 +62,13 @@ see the seeding workflow used for the V2 review (local SQLite only).
 
 ## Reference rules
 
-Structure and interaction were taken from the Udemy captures under
-`references/desktop-source/`; colour, type, imagery and copy were not. See
-`references/desktop-source/REFERENCE_RULES.md`. The
-`refero-udemy-style-extended.md` token dump in that folder must not be
-installed — it would overwrite Hocam's own theme layer.
+Structure and interaction were informed by Udemy homepage captures; colour,
+type, imagery and copy were not. The original visual references were local
+research materials and are intentionally not tracked in Git —
+`docs/design/product-home/references/` is gitignored so raw reference dumps
+stay out of the repository.
+
+The usage rules that governed the redesign still apply: borrow hierarchy,
+section ordering, card anatomy and carousel behaviour only — never Udemy
+colours, fonts, imagery, copy, CSS variables or Tailwind tokens. Installing a
+third-party token dump would overwrite Hocam's own theme layer.
