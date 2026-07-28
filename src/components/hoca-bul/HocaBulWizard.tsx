@@ -16,16 +16,29 @@ import {
   touchDraft,
   writeDraft,
 } from "@/lib/hocaBulDraft";
-import { pruneAnswersAgainstOptions } from "@/lib/hocaBulFlow";
-import { toGoalOptions } from "@/lib/hocaBulOptions";
+import {
+  isStepValid,
+  MAX_EXAM_AREAS,
+  pruneAnswersAgainstOptions,
+  toggleExamArea,
+} from "@/lib/hocaBulFlow";
+import {
+  toExamAreaOptions,
+  toGoalOptions,
+  toStageOptions,
+} from "@/lib/hocaBulOptions";
 import { getLocalStorage } from "@/lib/safeStorage";
-import type { HocaBulDraft, HocaBulGoal } from "@/types/hocaBul";
+import type {
+  HocaBulDraft,
+  HocaBulExamArea,
+  HocaBulGoal,
+} from "@/types/hocaBul";
 
-import { DevStepPlaceholder } from "./DevStepPlaceholder";
 import { DraftResumeDialog } from "./DraftResumeDialog";
 import { ExitFlowDialog } from "./ExitFlowDialog";
 import { IllustrationPanel } from "./IllustrationPanel";
 import { MobileIllustrationBand } from "./MobileIllustrationBand";
+import { MultiSelectGroup, SingleSelectGroup } from "./SelectionGroups";
 import { STEP_COPY, STEP_SHORT_LABEL } from "./stepCopy";
 import { WizardFooter } from "./WizardFooter";
 import { WizardHeader } from "./WizardHeader";
@@ -261,6 +274,21 @@ export function HocaBulWizard() {
     dispatch({ type: "answer", change: { field: "goal", value: nextGoal } });
   }, []);
 
+  const handleSelectStage = useCallback((stage: string) => {
+    dispatch({ type: "answer", change: { field: "stage", value: stage } });
+  }, []);
+
+  const handleSelectExamAreas = useCallback(
+    (areas: HocaBulExamArea[]) => {
+      dispatch({
+        type: "answer",
+        change: { field: "yks_alan", value: areas },
+        subjects: optionsQuery.data?.subjects,
+      });
+    },
+    [optionsQuery.data?.subjects]
+  );
+
   if (authLoading || state.phase === "hydrating") {
     return <WizardBootSkeleton />;
   }
@@ -276,6 +304,47 @@ export function HocaBulWizard() {
     : null;
 
   const reviewNoteId = "hoca-bul-review-note";
+  const helperId = `hoca-bul-${step.id}-helper`;
+  const currentStepIsValid = isStepValid(step.id, state.answers, state.client);
+
+  const question = optionsQuery.data
+    ? step.id === "hedef"
+      ? (
+          <SingleSelectGroup
+            label={copy.title}
+            options={toGoalOptions(optionsQuery.data)}
+            value={state.answers.goal}
+            onValueChange={handleSelectGoal}
+            describedBy={helperId}
+          />
+        )
+      : step.id === "asama"
+        ? (
+            <SingleSelectGroup
+              label={copy.title}
+              options={toStageOptions(optionsQuery.data, state.answers.goal)}
+              value={state.answers.stage}
+              onValueChange={handleSelectStage}
+              describedBy={helperId}
+            />
+          )
+        : step.id === "yks_alan" && state.answers.goal === "YKS"
+          ? (
+              <MultiSelectGroup
+                label={copy.title}
+                options={toExamAreaOptions(optionsQuery.data.subjects)}
+                values={state.client.yks_alan ?? []}
+                onValuesChange={handleSelectExamAreas}
+                maximum={MAX_EXAM_AREAS}
+                describedBy={helperId}
+                limitMessage="En fazla 3 alan seçebilirsin."
+                onToggle={(value, values) =>
+                  toggleExamArea([...values], value).values
+                }
+              />
+            )
+          : null
+    : null;
 
   return (
     <MotionConfig reducedMotion="user">
@@ -304,7 +373,7 @@ export function HocaBulWizard() {
         footer={
           <WizardFooter
             label={step.isReview ? "Eşleşmelerimi gör" : "Devam et"}
-            disabled={step.isReview}
+            disabled={step.isReview || !currentStepIsValid}
             describedById={step.isReview ? reviewNoteId : undefined}
             onPrimary={handleNext}
           />
@@ -316,8 +385,6 @@ export function HocaBulWizard() {
           helper={copy.helper}
           direction={state.direction}
           noticeMessage={noticeMessage}
-          // Validation copy is wired through the panel but has nothing to
-          // report until the choice components exist.
           validationMessage={null}
         >
           {optionsStatus === "error" ? (
@@ -329,17 +396,7 @@ export function HocaBulWizard() {
             <WizardOptionsSkeleton />
           ) : (
             <>
-              <DevStepPlaceholder
-                stepId={step.id}
-                humanIndex={step.humanIndex}
-                total={step.total}
-                optionsStatus={optionsStatus}
-                goalOptions={
-                  optionsQuery.data ? toGoalOptions(optionsQuery.data) : []
-                }
-                selectedGoal={state.answers.goal}
-                onSelectGoal={handleSelectGoal}
-              />
+              {question}
               {step.isReview ? (
                 <p id={reviewNoteId} className="mt-4 text-sm text-muted-foreground">
                   Eşleşme gönderimi sonraki aşamada eklenecek.

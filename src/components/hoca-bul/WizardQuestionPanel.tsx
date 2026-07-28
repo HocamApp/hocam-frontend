@@ -38,6 +38,8 @@ export function WizardQuestionPanel({
   }, [stepId]);
 
   const variants = stepPanelVariants(direction, Boolean(reducedMotion));
+  const helperId = `hoca-bul-${stepId}-helper`;
+  const validationId = `hoca-bul-${stepId}-validation`;
 
   return (
     // Keyed rather than wrapped in AnimatePresence: the outgoing question
@@ -57,7 +59,9 @@ export function WizardQuestionPanel({
       >
         {title}
       </h1>
-      <p className="mt-3 text-base leading-7 text-muted-foreground">{helper}</p>
+      <p id={helperId} className="mt-3 text-base leading-7 text-muted-foreground">
+        {helper}
+      </p>
 
       {noticeMessage ? (
         <p className="mt-5 rounded-xl border border-border bg-muted/50 px-4 py-3 text-sm text-foreground">
@@ -68,7 +72,11 @@ export function WizardQuestionPanel({
       <div className="mt-7">{children}</div>
 
       {validationMessage ? (
-        <p role="alert" className="mt-4 text-sm font-medium text-destructive">
+        <p
+          id={validationId}
+          role="alert"
+          className="mt-4 text-sm font-medium text-destructive"
+        >
           {validationMessage}
         </p>
       ) : null}

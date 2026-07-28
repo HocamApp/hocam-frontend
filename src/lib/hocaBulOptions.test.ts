@@ -45,6 +45,19 @@ describe("option adapters keep server values verbatim", () => {
     assert.deepEqual(toStageOptions(options, undefined), []);
   });
 
+  it("uses the approved KPSS wording without changing its API value", () => {
+    const withKpssStage: MatchingOptions = {
+      ...options,
+      stages: {
+        ...options.stages,
+        KPSS: [{ value: "ongoing", label: "Düzenli hazırlanıyorum" }],
+      },
+    };
+    assert.deepEqual(toStageOptions(withKpssStage, "KPSS"), [
+      { value: "ongoing", label: "Bir süredir hazırlanıyorum" },
+    ]);
+  });
+
   it("uses the subject key as the submitted value and shows the real tutor count", () => {
     const adapted = toSubjectOptions(options);
     assert.deepEqual(
@@ -72,9 +85,13 @@ describe("option adapters keep server values verbatim", () => {
     );
   });
 
-  it("only offers exam areas that have supported subjects", () => {
-    const areas = toExamAreaOptions(subjects).map((option) => option.value);
-    assert.deepEqual(areas, ["TYT", "AYT", "unsure"]);
+  it("offers the exact P3A exam-area choices and details", () => {
+    assert.deepEqual(toExamAreaOptions(subjects), [
+      { value: "TYT", label: "TYT", detail: "Temel Yeterlilik" },
+      { value: "AYT", label: "AYT", detail: "Alan Yeterlilik" },
+      { value: "YDT", label: "YDT", detail: "Yabancı Dil" },
+      { value: "unsure", label: "Emin değilim" },
+    ]);
   });
 
   it("uses the server's budget ids and renders the flexible band without a price", () => {

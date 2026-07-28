@@ -22,8 +22,8 @@ import type {
  * The labels are frontend wording and can be rewritten freely.
  */
 
-export interface HocaBulOption {
-  value: string;
+export interface HocaBulOption<Value extends string = string> {
+  value: Value;
   label: string;
   detail?: string;
 }
@@ -93,18 +93,19 @@ export const EXAM_AREA_LABELS: Record<HocaBulExamArea, string> = {
   unsure: "Emin değilim",
 };
 
-export const EXAM_AREA_DETAILS: Record<HocaBulExamArea, string> = {
+export const EXAM_AREA_DETAILS: Partial<Record<HocaBulExamArea, string>> = {
   TYT: "Temel Yeterlilik",
   AYT: "Alan Yeterlilik",
   YDT: "Yabancı Dil",
-  unsure: "Tüm dersleri göster",
 };
 
 const CONCRETE_EXAM_AREAS: HocaBulExamArea[] = ["TYT", "AYT", "YDT"];
 
 // --- Option adapters ----------------------------------------------------------
 
-export function toGoalOptions(options: MatchingOptions): HocaBulOption[] {
+export function toGoalOptions(
+  options: MatchingOptions
+): HocaBulOption<HocaBulGoal>[] {
   return options.goals.map((goal) => ({ value: goal.value, label: goal.label }));
 }
 
@@ -115,24 +116,27 @@ export function toStageOptions(
   if (!goal) return [];
   return (options.stages[goal] ?? []).map((stage) => ({
     value: stage.value,
-    label: stage.label,
+    label:
+      goal === "KPSS" && stage.value === "ongoing"
+        ? "Bir süredir hazırlanıyorum"
+        : stage.label,
   }));
 }
 
-/**
- * Only exam areas that actually have supported subjects are offered — a branch
- * with no live tutors would be a dead end.
- */
 export function toExamAreaOptions(
   subjects: MatchSubjectOption[]
-): HocaBulOption[] {
-  const present = new Set(subjects.flatMap((subject) => subject.exam_types));
-  const areas = CONCRETE_EXAM_AREAS.filter((area) => present.has(area));
-  return [...areas, "unsure" as HocaBulExamArea].map((area) => ({
-    value: area,
-    label: EXAM_AREA_LABELS[area],
-    detail: EXAM_AREA_DETAILS[area],
-  }));
+): HocaBulOption<HocaBulExamArea>[] {
+  // P3A deliberately keeps all three official YKS areas visible. Subject
+  // availability is applied on the next screen, not by changing this choice set.
+  void subjects;
+  return [...CONCRETE_EXAM_AREAS, "unsure" as HocaBulExamArea].map((area) => {
+    const detail = EXAM_AREA_DETAILS[area];
+    return {
+      value: area,
+      label: EXAM_AREA_LABELS[area],
+      ...(detail ? { detail } : {}),
+    };
+  });
 }
 
 export function filterSubjectsByAreas(

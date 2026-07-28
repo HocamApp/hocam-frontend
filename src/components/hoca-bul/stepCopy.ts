@@ -19,7 +19,7 @@ export const STEP_COPY: Record<HocaBulStepId, StepCopy> = {
     helper: "Hoca, sana nereden başlayacağını buna göre planlar.",
   },
   yks_alan: {
-    title: "YKS'de neye ağırlık vereceksin?",
+    title: "YKS’de neye ağırlık vereceksin?",
     helper: "Birden fazla seçebilirsin.",
   },
   dersler: {
