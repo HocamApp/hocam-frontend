@@ -43,7 +43,12 @@ export interface WizardState {
 }
 
 export type WizardAction =
-  | { type: "hydrate"; draft: HocaBulDraft | null; urlStepId: string | null }
+  | {
+      type: "hydrate";
+      draft: HocaBulDraft | null;
+      urlStepId: string | null;
+      skipResume?: boolean;
+    }
   | { type: "resume" }
   | { type: "restart" }
   | {
@@ -108,7 +113,7 @@ export function wizardReducer(
 ): WizardState {
   switch (action.type) {
     case "hydrate": {
-      if (draftIsResumable(action.draft)) {
+      if (draftIsResumable(action.draft) && !action.skipResume) {
         // Ask before restoring; the answers stay untouched until the student decides.
         return {
           ...state,

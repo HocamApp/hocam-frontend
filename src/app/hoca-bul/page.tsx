@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 
-import { HocaBulWizard } from "@/components/hoca-bul/HocaBulWizard";
+import { HocaBulSubmissionController } from "@/components/hoca-bul/HocaBulSubmissionController";
 import { WizardBootSkeleton } from "@/components/hoca-bul/WizardOptionsSkeleton";
 import { RouteGuard } from "@/components/shared/RouteGuard";
 
@@ -17,7 +17,7 @@ export default function HocaBulPage() {
     >
       {/* useSearchParams needs a Suspense boundary to keep the route static. */}
       <Suspense fallback={<WizardBootSkeleton />}>
-        <HocaBulWizard />
+        <HocaBulSubmissionController />
       </Suspense>
     </RouteGuard>
   );

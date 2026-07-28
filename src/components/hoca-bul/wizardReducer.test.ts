@@ -62,6 +62,23 @@ describe("hydration", () => {
     assert.deepEqual(state.answers, {});
   });
 
+  it("restores an explicit result-edit draft without interrupting for resume", () => {
+    const state = wizardReducer(initialWizardState, {
+      type: "hydrate",
+      draft: draft({
+        answers: completeAnswers,
+        client: { yks_alan: ["TYT"] },
+        stepId: "kontrol",
+      }),
+      urlStepId: "butce",
+      skipResume: true,
+    });
+
+    assert.equal(state.pendingResume, null);
+    assert.equal(state.stepId, "butce");
+    assert.deepEqual(state.answers, completeAnswers);
+  });
+
   it("does not interrupt for a draft that never got past the first step", () => {
     const untouched = draft({ stepId: "hedef", answers: {}, client: {} });
     assert.equal(draftIsResumable(untouched), false);

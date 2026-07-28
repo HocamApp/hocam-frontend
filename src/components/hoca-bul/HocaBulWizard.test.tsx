@@ -495,6 +495,18 @@ describe("draft resume", () => {
 
     assert.equal(window.localStorage.getItem(LEGACY_KEY), before);
   });
+
+  it("opens a requested result-edit step without showing the resume dialog", async () => {
+    seedCompleteDraft();
+    searchParams = new URLSearchParams("adim=butce&kaynak=sonuclar");
+
+    renderWizard();
+
+    assert.ok(
+      await screen.findByRole("heading", { name: "Ders başına bütçen ne kadar?" })
+    );
+    assert.equal(screen.queryByText("Kaldığın yerden devam et"), null);
+  });
 });
 
 describe("P3B question screens", () => {
