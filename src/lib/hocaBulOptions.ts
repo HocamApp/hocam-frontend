@@ -1,6 +1,7 @@
 import { formatPrice } from "@/lib/utils";
 import type {
   MatchAvailabilityWindow,
+  MatchBudgetSegment,
   MatchChallenge,
   MatchSubjectOption,
   MatchingOptions,
@@ -159,9 +160,12 @@ export function filterSubjectsByAreas(
 export function toSubjectOptions(
   options: MatchingOptions,
   areas?: HocaBulExamArea[]
-): HocaBulOption[] {
+): HocaBulOption<string>[] {
   return filterSubjectsByAreas(options.subjects, areas)
-    .filter((subject) => subject.tutor_count > 0)
+    .filter(
+      (subject) =>
+        Number.isFinite(subject.tutor_count) && subject.tutor_count > 0
+    )
     .map((subject) => ({
       value: subject.key,
       label: subject.label,
@@ -169,14 +173,14 @@ export function toSubjectOptions(
     }));
 }
 
-export function toChallengeOptions(): HocaBulOption[] {
+export function toChallengeOptions(): HocaBulOption<MatchChallenge>[] {
   return CHALLENGE_ORDER.map((value) => ({
     value,
     label: CHALLENGE_LABELS[value],
   }));
 }
 
-export function toTeachingStyleOptions(): HocaBulOption[] {
+export function toTeachingStyleOptions(): HocaBulOption<TutorTeachingStyle>[] {
   return TEACHING_STYLE_ORDER.map((value) => ({
     value,
     label: TEACHING_STYLE_LABELS[value],
@@ -184,22 +188,34 @@ export function toTeachingStyleOptions(): HocaBulOption[] {
   }));
 }
 
-export function toAvailabilityOptions(): HocaBulOption[] {
+export function toAvailabilityOptions(): HocaBulOption<MatchAvailabilityWindow>[] {
   return AVAILABILITY_ORDER.map((value) => ({
     value,
     label: AVAILABILITY_LABELS[value],
   }));
 }
 
-export function toBudgetOptions(options: MatchingOptions): HocaBulOption[] {
-  return options.budget_ranges.map((band) => ({
-    value: band.id,
-    label: band.label,
-    detail:
-      band.min != null && band.max != null
-        ? `${formatPrice(band.min)} – ${formatPrice(band.max)} / 40 dk`
-        : "Tüm fiyat aralıklarını değerlendir",
-  }));
+export function toBudgetOptions(
+  options: MatchingOptions
+): HocaBulOption<MatchBudgetSegment>[] {
+  return options.budget_ranges.map((band) => {
+    let detail: string | undefined;
+    if (band.min != null && band.max != null) {
+      detail = `${formatPrice(band.min)} – ${formatPrice(band.max)} / 40 dk`;
+    } else if (band.min != null) {
+      detail = `${formatPrice(band.min)} ve üzeri / 40 dk`;
+    } else if (band.max != null) {
+      detail = `${formatPrice(band.max)}’ye kadar / 40 dk`;
+    } else if (band.id === "flexible") {
+      detail = "Tüm fiyat aralıklarını değerlendir";
+    }
+
+    return {
+      value: band.id,
+      label: band.label,
+      ...(detail ? { detail } : {}),
+    };
+  });
 }
 
 // --- Review rows ----------------------------------------------------------------

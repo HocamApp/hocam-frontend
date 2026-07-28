@@ -408,11 +408,33 @@ export function pruneAnswersAgainstOptions(
   }
 
   if (next.subject_keys) {
-    const available = new Set(options.subjects.map((subject) => subject.key));
-    const kept = next.subject_keys.filter((key) => available.has(key));
+    const selectedAreas = next.goal === "YKS" ? nextClient.yks_alan : undefined;
+    const kept = next.subject_keys.filter((key) => {
+      const subject = options.subjects.find((item) => item.key === key);
+      if (
+        !subject ||
+        !Number.isFinite(subject.tutor_count) ||
+        subject.tutor_count <= 0
+      ) {
+        return false;
+      }
+      if (
+        !selectedAreas?.length ||
+        selectedAreas.includes("unsure")
+      ) {
+        return true;
+      }
+      return subject.exam_types.some((examType) =>
+        selectedAreas.includes(examType as HocaBulExamArea)
+      );
+    });
     if (kept.length !== next.subject_keys.length) {
       next.subject_keys = kept;
       dropped.push("subject_keys");
+      if (next.budget_segment !== undefined) {
+        delete next.budget_segment;
+        dropped.push("budget_segment");
+      }
     }
   }
 
@@ -426,7 +448,9 @@ export function pruneAnswersAgainstOptions(
     !options.budget_ranges.some((band) => band.id === next.budget_segment)
   ) {
     delete next.budget_segment;
-    dropped.push("budget_segment");
+    if (!dropped.includes("budget_segment")) {
+      dropped.push("budget_segment");
+    }
   }
 
   return { answers: next, client: nextClient, dropped };
@@ -475,6 +499,17 @@ export function toMatchingAnswers(
     !teaching_styles?.length ||
     !availability_windows?.length ||
     !budget_segment
+  ) {
+    return null;
+  }
+
+  if (
+    subject_keys.length > MAX_SUBJECTS ||
+    challenges.length > MAX_CHALLENGES ||
+    teaching_styles.length > MAX_TEACHING_STYLES ||
+    availability_windows.length > MAX_AVAILABILITY_WINDOWS ||
+    (availability_windows.includes("flexible") &&
+      availability_windows.length > 1)
   ) {
     return null;
   }

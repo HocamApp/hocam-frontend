@@ -313,12 +313,53 @@ describe("pruning against fresh server options", () => {
 
   it("drops a leftover area selection once the goal is no longer YKS", () => {
     const result = pruneAnswersAgainstOptions(
-      { goal: "DGS", stage: "ongoing" },
+      { goal: "DGS", stage: "ongoing", subject_keys: ["edebiyat"] },
       { yks_alan: ["TYT"] },
       options
     );
     assert.equal(result.client.yks_alan, undefined);
+    assert.deepEqual(result.answers.subject_keys, ["edebiyat"]);
     assert.deepEqual(result.dropped, ["yks_alan"]);
+  });
+
+  it("drops zero-supply and area-incompatible subjects and clears an existing budget", () => {
+    const constrainedOptions: MatchingOptions = {
+      ...options,
+      subjects: [
+        ...subjects,
+        { key: "kimya", label: "Kimya", subject_ids: ["4"], exam_types: ["AYT"], tutor_count: 0 },
+      ],
+    };
+    const result = pruneAnswersAgainstOptions(
+      {
+        goal: "YKS",
+        stage: "grade_12",
+        subject_keys: ["matematik", "ingilizce", "kimya"],
+        challenges: ["foundations"],
+        teaching_styles: ["question_speed"],
+        availability_windows: ["weekday_evening"],
+        budget_segment: "balanced",
+      },
+      { yks_alan: ["TYT"] },
+      constrainedOptions
+    );
+
+    assert.deepEqual(result.answers.subject_keys, ["matematik"]);
+    assert.equal(result.answers.budget_segment, undefined);
+    assert.deepEqual(result.answers.challenges, ["foundations"]);
+    assert.deepEqual(result.answers.teaching_styles, ["question_speed"]);
+    assert.deepEqual(result.answers.availability_windows, ["weekday_evening"]);
+    assert.deepEqual(result.dropped.sort(), ["budget_segment", "subject_keys"]);
+  });
+
+  it("preserves a budget when fresh options do not remove any subject", () => {
+    const result = pruneAnswersAgainstOptions(
+      { goal: "YKS", stage: "grade_12", subject_keys: ["matematik"], budget_segment: "balanced" },
+      { yks_alan: ["TYT"] },
+      options
+    );
+    assert.equal(result.answers.budget_segment, "balanced");
+    assert.deepEqual(result.dropped, []);
   });
 });
 
@@ -348,5 +389,33 @@ describe("request serialization", () => {
     assert.deepEqual(Object.keys(body).sort(), [...MATCHING_ANSWER_KEYS]);
     assert.equal("yks_alan" in body, false);
     assert.equal("stepId" in body, false);
+  });
+
+  it("rejects over-limit arrays and mixed flexible availability", () => {
+    assert.equal(
+      toMatchingAnswers({ ...completeAnswers, subject_keys: ["a", "b", "c", "d"] }),
+      null
+    );
+    assert.equal(
+      toMatchingAnswers({
+        ...completeAnswers,
+        availability_windows: ["flexible", "weekday_day"],
+      }),
+      null
+    );
+    assert.equal(
+      toMatchingAnswers({
+        ...completeAnswers,
+        challenges: ["foundations", "consistency", "speed_accuracy"],
+      }),
+      null
+    );
+    assert.equal(
+      toMatchingAnswers({
+        ...completeAnswers,
+        teaching_styles: ["question_speed", "high_target", "foundations_patient"],
+      }),
+      null
+    );
   });
 });

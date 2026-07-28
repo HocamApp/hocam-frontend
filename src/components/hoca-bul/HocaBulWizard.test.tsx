@@ -70,15 +70,23 @@ const options: MatchingOptions = {
       exam_types: ["TYT", "AYT"],
       tutor_count: 9,
     },
+    { key: "edebiyat", label: "Edebiyat", subject_ids: ["2"], exam_types: ["AYT"], tutor_count: 4 },
+    { key: "ingilizce", label: "İngilizce", subject_ids: ["3"], exam_types: ["YDT"], tutor_count: 3 },
+    { key: "fizik", label: "Fizik", subject_ids: ["4"], exam_types: ["TYT"], tutor_count: 2 },
+    { key: "kimya", label: "Kimya", subject_ids: ["5"], exam_types: ["TYT"], tutor_count: 0 },
   ],
   budget_ranges: [
+    { id: "economical", label: "Ekonomik", min: null, max: 300 },
     { id: "balanced", label: "Dengeli", min: 400, max: 700 },
+    { id: "premium", label: "Premium", min: 900, max: null },
     { id: "flexible", label: "Fiyat konusunda esneğim", min: null, max: null },
   ],
 };
 
 let fetchCalls = 0;
+const queryCalls: Array<{ goal: string; subjectKeys: string[] }> = [];
 let shouldFail = false;
+let currentOptions = options;
 let searchParams = new URLSearchParams();
 const routerCalls: Array<{ method: string; href?: string }> = [];
 
@@ -94,10 +102,11 @@ async function loadWizard() {
   });
   mock.module("@/lib/matchingApi", {
     namedExports: {
-      fetchMatchingOptions: async () => {
+      fetchMatchingOptions: async (goal: string, subjectKeys: string[]) => {
         fetchCalls += 1;
+        queryCalls.push({ goal, subjectKeys: [...subjectKeys] });
         if (shouldFail) throw new Error("options unavailable");
-        return options;
+        return currentOptions;
       },
     },
   });
@@ -132,10 +141,29 @@ beforeEach(async () => {
   await loadWizard();
   fetchCalls = 0;
   shouldFail = false;
+  currentOptions = options;
+  queryCalls.length = 0;
   searchParams = new URLSearchParams();
   routerCalls.length = 0;
   window.localStorage.clear();
 });
+
+async function continueWith(label: string | RegExp) {
+  fireEvent.click(await screen.findByRole("radio", { name: label }));
+  await clickContinue();
+}
+
+async function clickContinue() {
+  const button = screen.getByRole("button", { name: /Devam et/ });
+  await waitFor(() => assert.equal(button.hasAttribute("disabled"), false));
+  fireEvent.click(button);
+}
+
+async function reachDgsSubjects() {
+  await continueWith("DGS");
+  await continueWith("Bir süredir hazırlanıyorum");
+  await screen.findByRole("heading", { name: "Hangi derslerde desteğe ihtiyacın var?" });
+}
 
 afterEach(() => {
   cleanup();
@@ -170,6 +198,7 @@ describe("P3A question screens", () => {
 
     const retry = await screen.findByRole("button", { name: /Tekrar dene/ });
     assert.ok(screen.getByText("Seçenekler şu anda yüklenemedi."));
+    assert.equal(screen.getByRole("button", { name: /Devam et/ }).hasAttribute("disabled"), true);
     const callsBeforeRetry = fetchCalls;
 
     shouldFail = false;
@@ -194,7 +223,7 @@ describe("P3A question screens", () => {
       assert.equal(draft.answers?.goal, "DGS");
     });
 
-    fireEvent.click(screen.getByRole("button", { name: /Devam et/ }));
+    await clickContinue();
 
     await waitFor(() =>
       assert.equal(
@@ -208,7 +237,7 @@ describe("P3A question screens", () => {
   it("moves h1 focus when the step changes", async () => {
     renderWizard();
     fireEvent.click(await screen.findByRole("radio", { name: "DGS" }));
-    fireEvent.click(screen.getByRole("button", { name: /Devam et/ }));
+    await clickContinue();
 
     const heading = await screen.findByRole("heading", {
       level: 1,
@@ -220,7 +249,7 @@ describe("P3A question screens", () => {
   it("renders the goal-specific stage choices with exact API values", async () => {
     renderWizard();
     fireEvent.click(await screen.findByRole("radio", { name: "KPSS" }));
-    fireEvent.click(screen.getByRole("button", { name: /Devam et/ }));
+    await clickContinue();
 
     await screen.findByRole("heading", { name: "Şu an hangi aşamadasın?" });
     assert.deepEqual(
@@ -246,9 +275,9 @@ describe("P3A question screens", () => {
     it(`branches ${goal} after asama`, async () => {
       renderWizard();
       fireEvent.click(await screen.findByRole("radio", { name: goal }));
-      fireEvent.click(screen.getByRole("button", { name: /Devam et/ }));
+      await clickContinue();
       fireEvent.click(await screen.findByRole("radio", { name: stage }));
-      fireEvent.click(screen.getByRole("button", { name: /Devam et/ }));
+      await clickContinue();
 
       await screen.findByRole("heading", { level: 1, name: expectedStep });
     });
@@ -257,9 +286,9 @@ describe("P3A question screens", () => {
   it("supports YKS area combinations and exclusive unsure selection", async () => {
     renderWizard();
     fireEvent.click(await screen.findByRole("radio", { name: "YKS" }));
-    fireEvent.click(screen.getByRole("button", { name: /Devam et/ }));
+    await clickContinue();
     fireEvent.click(await screen.findByRole("radio", { name: "12. sınıf" }));
-    fireEvent.click(screen.getByRole("button", { name: /Devam et/ }));
+    await clickContinue();
 
     await screen.findByRole("heading", { name: "YKS’de neye ağırlık vereceksin?" });
     const tyt = screen.getByRole("button", { name: /TYT Temel Yeterlilik/ });
@@ -290,9 +319,9 @@ describe("P3A question screens", () => {
   it("persists real stage and client-only area answers in the draft", async () => {
     renderWizard();
     fireEvent.click(await screen.findByRole("radio", { name: "YKS" }));
-    fireEvent.click(screen.getByRole("button", { name: /Devam et/ }));
+    await clickContinue();
     fireEvent.click(await screen.findByRole("radio", { name: "Mezun" }));
-    fireEvent.click(screen.getByRole("button", { name: /Devam et/ }));
+    await clickContinue();
     fireEvent.click(await screen.findByRole("button", { name: /TYT Temel Yeterlilik/ }));
 
     await waitFor(() => {
@@ -306,7 +335,7 @@ describe("P3A question screens", () => {
   it("uses browser history for in-flow back navigation", async () => {
     renderWizard();
     fireEvent.click(await screen.findByRole("radio", { name: "DGS" }));
-    fireEvent.click(screen.getByRole("button", { name: /Devam et/ }));
+    await clickContinue();
     await screen.findByRole("heading", { name: "Şu an hangi aşamadasın?" });
 
     fireEvent.click(screen.getByRole("button", { name: "Geri" }));
@@ -413,5 +442,84 @@ describe("draft resume", () => {
     await screen.findByRole("heading", { level: 1 });
 
     assert.equal(window.localStorage.getItem(LEGACY_KEY), before);
+  });
+});
+
+describe("P3B question screens", () => {
+  it("renders supplied subjects with real counts and blocks a fourth persisted selection", async () => {
+    renderWizard();
+    await reachDgsSubjects();
+
+    assert.ok(screen.getByRole("button", { name: "Matematik 9 hoca" }));
+    assert.equal(screen.queryByRole("button", { name: /Kimya/ }), null);
+    for (const name of ["Matematik 9 hoca", "Edebiyat 4 hoca", "İngilizce 3 hoca"]) {
+      fireEvent.click(screen.getByRole("button", { name }));
+    }
+    fireEvent.click(screen.getByRole("button", { name: "Fizik 2 hoca" }));
+    assert.equal(screen.getByRole("button", { name: "Fizik 2 hoca" }).getAttribute("aria-pressed"), "false");
+    assert.equal(screen.getByRole("alert").textContent, "En fazla üç ders seçebilirsin.");
+
+    await waitFor(() => {
+      const draft = JSON.parse(window.localStorage.getItem(DRAFT_KEY) ?? "{}");
+      assert.deepEqual(draft.answers.subject_keys, ["matematik", "edebiyat", "ingilizce"]);
+    });
+    assert.ok(queryCalls.some((call) => call.subjectKeys.length === 3));
+  });
+
+  it("filters YKS subjects by the selected area union and keeps unsure broad", async () => {
+    renderWizard();
+    await continueWith("YKS");
+    await continueWith("12. sınıf");
+    fireEvent.click(await screen.findByRole("button", { name: /TYT Temel Yeterlilik/ }));
+    fireEvent.click(screen.getByRole("button", { name: /YDT Yabancı Dil/ }));
+    await clickContinue();
+
+    await screen.findByRole("button", { name: "Matematik 9 hoca" });
+    assert.ok(screen.getByRole("button", { name: "İngilizce 3 hoca" }));
+    assert.ok(screen.getByRole("button", { name: "Fizik 2 hoca" }));
+    assert.equal(screen.queryByRole("button", { name: "Edebiyat 4 hoca" }), null);
+  });
+
+  it("moves through challenge, teaching-style, availability and real budget screens", async () => {
+    renderWizard();
+    await reachDgsSubjects();
+    fireEvent.click(screen.getByRole("button", { name: "Matematik 9 hoca" }));
+    await clickContinue();
+
+    await screen.findByRole("heading", { name: "Şu an seni en çok ne zorluyor?" });
+    fireEvent.click(screen.getByRole("button", { name: "Konu temellerim eksik" }));
+    await clickContinue();
+
+    await screen.findByRole("heading", { name: "Nasıl bir hoca sana daha iyi gelir?" });
+    fireEvent.click(screen.getByRole("button", { name: /Sabırla temelden anlatan Konuyu adım adım kurar/ }));
+    await clickContinue();
+
+    await screen.findByRole("heading", { name: "Dersleri genellikle ne zaman yapabilirsin?" });
+    assert.equal(screen.getByRole("alert").textContent, "Devam etmek için en az bir zaman aralığı seç.");
+    const flexible = screen.getByRole("button", { name: "Programım esnek" });
+    const evening = screen.getByRole("button", { name: "Hafta içi akşam" });
+    fireEvent.click(flexible);
+    fireEvent.click(evening);
+    assert.equal(flexible.getAttribute("aria-pressed"), "false");
+    assert.equal(evening.getAttribute("aria-pressed"), "true");
+    assert.equal(screen.queryByText("Devam etmek için en az bir zaman aralığı seç."), null);
+    await clickContinue();
+
+    await screen.findByRole("heading", { name: "Ders başına bütçen ne kadar?" });
+    assert.ok(screen.getByRole("radio", { name: "Ekonomik ₺300’ye kadar / 40 dk" }));
+    assert.ok(screen.getByRole("radio", { name: "Dengeli ₺400 – ₺700 / 40 dk" }));
+    assert.ok(screen.getByRole("radio", { name: "Premium ₺900 ve üzeri / 40 dk" }));
+    assert.equal(screen.getByRole("button", { name: /Devam et/ }).hasAttribute("disabled"), true);
+    fireEvent.click(screen.getByRole("radio", { name: /Dengeli/ }));
+    assert.equal(screen.getByRole("button", { name: /Devam et/ }).hasAttribute("disabled"), false);
+  });
+
+  it("shows a navigable empty state instead of fabricating subjects", async () => {
+    currentOptions = { ...options, subjects: options.subjects.map((subject) => ({ ...subject, tutor_count: 0 })) };
+    renderWizard();
+    await reachDgsSubjects();
+    assert.ok(screen.getByText("Bu hedef için şu anda uygun ders bulunamadı."));
+    fireEvent.click(screen.getByRole("button", { name: "Hedefimi değiştir" }));
+    await screen.findByRole("heading", { name: "Hangi sınava hazırlanıyorsun?" });
   });
 });

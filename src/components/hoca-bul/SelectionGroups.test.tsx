@@ -108,7 +108,32 @@ describe("MultiSelectGroup keyboard behavior", () => {
     fireEvent.click(screen.getByRole("button", { name: "İkinci" }));
     fireEvent.click(screen.getByRole("button", { name: "Üçüncü" }));
 
-    assert.equal(screen.getByRole("button", { name: "Üçüncü" }).getAttribute("aria-pressed"), "false");
-    assert.ok(screen.getByText("En fazla 2 seçim yapabilirsin."));
+    const first = screen.getByRole("button", { name: "Birinci" });
+    const second = screen.getByRole("button", { name: "İkinci" });
+    const third = screen.getByRole("button", { name: "Üçüncü" });
+    assert.equal(third.getAttribute("aria-pressed"), "false");
+    const alert = screen.getByRole("alert");
+    assert.equal(alert.textContent, "En fazla 2 seçim yapabilirsin.");
+    assert.equal(third.getAttribute("data-invalid"), "true");
+    assert.equal(first.getAttribute("data-invalid"), null);
+    assert.equal(second.getAttribute("data-invalid"), null);
+    assert.ok(screen.getByRole("group", { name: "Alan seç" }).getAttribute("aria-describedby")?.includes(alert.id));
+  });
+
+  it("blocks the same option with the keyboard and clears feedback after removal", () => {
+    render(<Fixture />);
+    const first = screen.getByRole("button", { name: "Birinci" });
+    const second = screen.getByRole("button", { name: "İkinci" });
+    const third = screen.getByRole("button", { name: "Üçüncü" });
+    fireEvent.keyDown(first, { key: " " });
+    fireEvent.keyDown(second, { key: "Enter" });
+    fireEvent.keyDown(third, { key: " " });
+    assert.equal(third.getAttribute("aria-pressed"), "false");
+    assert.equal(third.getAttribute("data-invalid"), "true");
+    assert.ok(screen.getByRole("alert"));
+
+    fireEvent.click(first);
+    assert.equal(screen.queryByRole("alert"), null);
+    assert.equal(third.getAttribute("data-invalid"), null);
   });
 });

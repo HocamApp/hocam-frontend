@@ -98,6 +98,68 @@ describe("draft round trip", () => {
     assert.equal(read?.answers.subject_keys?.length, 3);
   });
 
+  it("deduplicates every stored multi-select before enforcing limits", () => {
+    const storage = seededStorage();
+    storage.setItem(
+      draftKey(USER) as string,
+      JSON.stringify({
+        ...createDraft(USER, NOW),
+        answers: {
+          subject_keys: ["matematik", "matematik", "fizik", "kimya"],
+          challenges: ["foundations", "foundations", "consistency"],
+          teaching_styles: ["question_speed", "question_speed", "high_target"],
+          availability_windows: ["weekday_day", "weekday_day", "weekend_day"],
+        },
+      })
+    );
+    const read = readDraft(storage, USER, NOW);
+    assert.deepEqual(read?.answers.subject_keys, ["matematik", "fizik", "kimya"]);
+    assert.deepEqual(read?.answers.challenges, ["foundations", "consistency"]);
+    assert.deepEqual(read?.answers.teaching_styles, ["question_speed", "high_target"]);
+    assert.deepEqual(read?.answers.availability_windows, ["weekday_day", "weekend_day"]);
+  });
+
+  it("normalizes unsure as exclusive and caps concrete stored YKS areas", () => {
+    const storage = seededStorage();
+    storage.setItem(
+      draftKey(USER) as string,
+      JSON.stringify({
+        ...createDraft(USER, NOW),
+        client: { yks_alan: ["TYT", "TYT", "AYT", "YDT", "unsure"] },
+      })
+    );
+    assert.deepEqual(readDraft(storage, USER, NOW)?.client.yks_alan, ["unsure"]);
+
+    storage.setItem(
+      draftKey(USER) as string,
+      JSON.stringify({
+        ...createDraft(USER, NOW),
+        client: { yks_alan: ["TYT", "TYT", "AYT", "YDT"] },
+      })
+    );
+    assert.deepEqual(readDraft(storage, USER, NOW)?.client.yks_alan, ["TYT", "AYT", "YDT"]);
+  });
+
+  it("retains every valid P3B answer in a complete resumable draft", () => {
+    const storage = seededStorage();
+    const complete = createDraft(USER, NOW, {
+      answers: {
+        goal: "DGS",
+        stage: "ongoing",
+        subject_keys: ["matematik", "fizik"],
+        challenges: ["foundations", "consistency"],
+        teaching_styles: ["question_speed", "high_target"],
+        availability_windows: ["weekday_evening", "weekend_day"],
+        budget_segment: "balanced",
+      },
+      stepId: "kontrol",
+    });
+    assert.ok(writeDraft(storage, complete));
+    const read = readDraft(storage, USER, NOW);
+    assert.deepEqual(read?.answers, complete.answers);
+    assert.equal(read?.stepId, "kontrol");
+  });
+
   it("clears only its own key", () => {
     const storage = seededStorage();
     writeDraft(storage, createDraft(USER, NOW));

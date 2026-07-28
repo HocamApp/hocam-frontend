@@ -64,7 +64,12 @@ export function WizardQuestionPanel({
       </p>
 
       {noticeMessage ? (
-        <p className="mt-5 rounded-xl border border-border bg-muted/50 px-4 py-3 text-sm text-foreground">
+        <p
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+          className="mt-5 rounded-xl border border-border bg-muted/50 px-4 py-3 text-sm text-foreground"
+        >
           {noticeMessage}
         </p>
       ) : null}

@@ -3,8 +3,9 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { MotionConfig } from "framer-motion";
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 
+import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { fetchMatchingOptions } from "@/lib/matchingApi";
 import { trackHocaBul } from "@/lib/hocaBulAnalytics";
@@ -18,16 +19,32 @@ import {
 } from "@/lib/hocaBulDraft";
 import {
   isStepValid,
+  MAX_AVAILABILITY_WINDOWS,
+  MAX_CHALLENGES,
   MAX_EXAM_AREAS,
+  MAX_SUBJECTS,
+  MAX_TEACHING_STYLES,
   pruneAnswersAgainstOptions,
+  toggleAvailability,
   toggleExamArea,
 } from "@/lib/hocaBulFlow";
 import {
+  toAvailabilityOptions,
+  toBudgetOptions,
+  toChallengeOptions,
   toExamAreaOptions,
   toGoalOptions,
   toStageOptions,
+  toSubjectOptions,
+  toTeachingStyleOptions,
 } from "@/lib/hocaBulOptions";
 import { getLocalStorage } from "@/lib/safeStorage";
+import type {
+  MatchAvailabilityWindow,
+  MatchBudgetSegment,
+  MatchChallenge,
+  TutorTeachingStyle,
+} from "@/types";
 import type {
   HocaBulDraft,
   HocaBulExamArea,
@@ -90,10 +107,37 @@ export function HocaBulWizard() {
   const optionsQuery = useQuery({
     queryKey: ["hoca-bul-options", goal ?? "UNDECIDED", subjectKeys] as const,
     queryFn: () => fetchMatchingOptions(goal ?? "UNDECIDED", subjectKeys),
-    enabled: Boolean(userId),
+    enabled:
+      Boolean(userId) &&
+      state.phase === "ready" &&
+      !state.pendingResume,
     staleTime: 60_000,
-    placeholderData: keepPreviousData,
+    placeholderData: (previousData, previousQuery) =>
+      previousQuery?.queryKey[1] === (goal ?? "UNDECIDED")
+        ? previousData
+        : undefined,
   });
+
+  const freshPruneResult = useMemo(() => {
+    if (
+      state.phase !== "ready" ||
+      !optionsQuery.data ||
+      optionsQuery.isPlaceholderData
+    ) {
+      return null;
+    }
+    return pruneAnswersAgainstOptions(
+      state.answers,
+      state.client,
+      optionsQuery.data
+    );
+  }, [
+    optionsQuery.data,
+    optionsQuery.isPlaceholderData,
+    state.answers,
+    state.client,
+    state.phase,
+  ]);
 
   // --- Draft hydration ---------------------------------------------------------
   useEffect(() => {
@@ -135,7 +179,12 @@ export function HocaBulWizard() {
 
   // --- Draft persistence -------------------------------------------------------
   useEffect(() => {
-    if (state.phase !== "ready" || !userId || state.pendingResume) return;
+    if (
+      state.phase !== "ready" ||
+      !userId ||
+      state.pendingResume ||
+      freshPruneResult?.dropped.length
+    ) return;
     const base = draftRef.current ?? createDraft(userId);
     const next = touchDraft(base, {
       answers: state.answers,
@@ -150,17 +199,20 @@ export function HocaBulWizard() {
     state.stepId,
     state.phase,
     state.pendingResume,
+    freshPruneResult,
     userId,
   ]);
 
   // --- Drop answers the server no longer offers --------------------------------
   useEffect(() => {
-    const options = optionsQuery.data;
-    if (!options || state.phase !== "ready") return;
-    const result = pruneAnswersAgainstOptions(state.answers, state.client, options);
-    if (result.dropped.length === 0) return;
-    dispatch({ type: "prune", answers: result.answers, client: result.client });
-  }, [optionsQuery.data, state.answers, state.client, state.phase]);
+    if (!freshPruneResult?.dropped.length) return;
+    dispatch({
+      type: "prune",
+      answers: freshPruneResult.answers,
+      client: freshPruneResult.client,
+      dropped: freshPruneResult.dropped,
+    });
+  }, [freshPruneResult]);
 
   // --- State to URL ------------------------------------------------------------
   useEffect(() => {
@@ -289,62 +341,215 @@ export function HocaBulWizard() {
     [optionsQuery.data?.subjects]
   );
 
+  const handleSelectSubjects = useCallback((values: string[]) => {
+    dispatch({ type: "answer", change: { field: "subject_keys", value: values } });
+  }, []);
+
+  const handleSelectChallenges = useCallback((values: MatchChallenge[]) => {
+    dispatch({ type: "answer", change: { field: "challenges", value: values } });
+  }, []);
+
+  const handleSelectTeachingStyles = useCallback((values: TutorTeachingStyle[]) => {
+    dispatch({ type: "answer", change: { field: "teaching_styles", value: values } });
+  }, []);
+
+  const handleSelectAvailability = useCallback((values: MatchAvailabilityWindow[]) => {
+    dispatch({ type: "answer", change: { field: "availability_windows", value: values } });
+  }, []);
+
+  const handleSelectBudget = useCallback((value: MatchBudgetSegment) => {
+    dispatch({ type: "answer", change: { field: "budget_segment", value } });
+  }, []);
+
   if (authLoading || state.phase === "hydrating") {
     return <WizardBootSkeleton />;
   }
 
+  const needsFreshBudget = step.id === "butce" && optionsQuery.isPlaceholderData;
   const optionsStatus = optionsQuery.isError
     ? "error"
-    : optionsQuery.data
+    : optionsQuery.data && !needsFreshBudget
       ? "ready"
       : "loading";
 
-  const noticeMessage = state.cleared.includes("subject_keys")
-    ? "Hedefini değiştirdiğin için ders seçimini yenilemen gerekiyor."
-    : null;
+  const noticeMessage = (() => {
+    if (!state.cleared.length || !state.invalidationSource) return null;
+    if (
+      state.invalidationSource === "goal" &&
+      state.cleared.includes("subject_keys")
+    ) {
+      return "Hedefini değiştirdiğin için ders seçimini yenilemen gerekiyor.";
+    }
+    if (
+      state.invalidationSource === "yks_alan" &&
+      state.cleared.includes("subject_keys")
+    ) {
+      return "YKS alanını değiştirdiğin için artık uygun olmayan ders seçimlerin kaldırıldı.";
+    }
+    if (
+      state.invalidationSource === "subject_keys" &&
+      state.cleared.includes("budget_segment")
+    ) {
+      return "Ders seçimin değiştiği için bütçe seçimini yenilemen gerekiyor.";
+    }
+    if (state.invalidationSource === "options") {
+      return state.cleared.includes("budget_segment")
+        ? "Artık uygun olmayan seçimlerin kaldırıldı. Bütçeni yeniden seçmen gerekiyor."
+        : "Artık uygun olmayan seçimlerin kaldırıldı.";
+    }
+    return null;
+  })();
 
   const reviewNoteId = "hoca-bul-review-note";
   const helperId = `hoca-bul-${step.id}-helper`;
+  const validationId = `hoca-bul-${step.id}-validation`;
   const currentStepIsValid = isStepValid(step.id, state.answers, state.client);
+  const validationMessage =
+    step.id === "uygun_zamanlar" && !currentStepIsValid
+      ? "Devam etmek için en az bir zaman aralığı seç."
+      : null;
+  const describedBy = [helperId, validationMessage ? validationId : null]
+    .filter(Boolean)
+    .join(" ");
 
-  const question = optionsQuery.data
-    ? step.id === "hedef"
-      ? (
+  const renderQuestion = () => {
+    const options = optionsQuery.data;
+    if (!options) return null;
+    switch (step.id) {
+      case "hedef":
+        return (
           <SingleSelectGroup
             label={copy.title}
-            options={toGoalOptions(optionsQuery.data)}
+            options={toGoalOptions(options)}
             value={state.answers.goal}
             onValueChange={handleSelectGoal}
-            describedBy={helperId}
+            describedBy={describedBy}
           />
-        )
-      : step.id === "asama"
-        ? (
+        );
+      case "asama":
+        return (
             <SingleSelectGroup
               label={copy.title}
-              options={toStageOptions(optionsQuery.data, state.answers.goal)}
+              options={toStageOptions(options, state.answers.goal)}
               value={state.answers.stage}
               onValueChange={handleSelectStage}
-              describedBy={helperId}
+              describedBy={describedBy}
             />
-          )
-        : step.id === "yks_alan" && state.answers.goal === "YKS"
-          ? (
+          );
+      case "yks_alan":
+        return state.answers.goal === "YKS" ? (
               <MultiSelectGroup
                 label={copy.title}
-                options={toExamAreaOptions(optionsQuery.data.subjects)}
+                options={toExamAreaOptions(options.subjects)}
                 values={state.client.yks_alan ?? []}
                 onValuesChange={handleSelectExamAreas}
                 maximum={MAX_EXAM_AREAS}
-                describedBy={helperId}
+                describedBy={describedBy}
                 limitMessage="En fazla 3 alan seçebilirsin."
                 onToggle={(value, values) =>
                   toggleExamArea([...values], value).values
                 }
               />
-            )
-          : null
-    : null;
+            ) : null;
+      case "dersler": {
+        const subjectOptions = toSubjectOptions(options, state.client.yks_alan);
+        if (!subjectOptions.length) {
+          return (
+            <div role="status" className="rounded-xl border border-border bg-muted/40 p-5">
+              <p className="text-sm text-foreground">
+                Bu hedef için şu anda uygun ders bulunamadı.
+              </p>
+              <Button
+                type="button"
+                variant="outline"
+                className="mt-4 min-h-11 rounded-xl"
+                onClick={() => dispatch({ type: "goToStep", stepId: "hedef" })}
+              >
+                Hedefimi değiştir
+              </Button>
+            </div>
+          );
+        }
+        return (
+          <MultiSelectGroup
+            label={copy.title}
+            options={subjectOptions}
+            values={state.answers.subject_keys ?? []}
+            onValuesChange={handleSelectSubjects}
+            maximum={MAX_SUBJECTS}
+            describedBy={describedBy}
+            limitMessage="En fazla üç ders seçebilirsin."
+          />
+        );
+      }
+      case "zorluk":
+        return (
+          <MultiSelectGroup
+            label={copy.title}
+            options={toChallengeOptions()}
+            values={state.answers.challenges ?? []}
+            onValuesChange={handleSelectChallenges}
+            maximum={MAX_CHALLENGES}
+            describedBy={describedBy}
+            limitMessage="En fazla iki seçenek seçebilirsin."
+          />
+        );
+      case "hoca_yaklasimi":
+        return (
+          <MultiSelectGroup
+            label={copy.title}
+            options={toTeachingStyleOptions()}
+            values={state.answers.teaching_styles ?? []}
+            onValuesChange={handleSelectTeachingStyles}
+            maximum={MAX_TEACHING_STYLES}
+            describedBy={describedBy}
+            limitMessage="En fazla iki seçenek seçebilirsin."
+          />
+        );
+      case "uygun_zamanlar":
+        return (
+          <MultiSelectGroup
+            label={copy.title}
+            options={toAvailabilityOptions()}
+            values={state.answers.availability_windows ?? []}
+            onValuesChange={handleSelectAvailability}
+            maximum={MAX_AVAILABILITY_WINDOWS}
+            describedBy={describedBy}
+            onToggle={(value, values) =>
+              toggleAvailability([...values], value).values
+            }
+          />
+        );
+      case "butce":
+        return (
+          <SingleSelectGroup
+            label={copy.title}
+            options={toBudgetOptions(options)}
+            value={state.answers.budget_segment}
+            onValueChange={handleSelectBudget}
+            describedBy={describedBy}
+          />
+        );
+      case "kontrol":
+        return null;
+    }
+  };
+
+  const question = renderQuestion();
+  const budgetIsCurrent =
+    step.id !== "butce" ||
+    (!optionsQuery.isPlaceholderData &&
+      Boolean(
+        state.answers.budget_segment &&
+        optionsQuery.data?.budget_ranges.some(
+          (band) => band.id === state.answers.budget_segment
+        )
+      ));
+  const continueDisabled =
+    step.isReview ||
+    optionsStatus !== "ready" ||
+    !currentStepIsValid ||
+    !budgetIsCurrent;
 
   return (
     <MotionConfig reducedMotion="user">
@@ -373,8 +578,14 @@ export function HocaBulWizard() {
         footer={
           <WizardFooter
             label={step.isReview ? "Eşleşmelerimi gör" : "Devam et"}
-            disabled={step.isReview || !currentStepIsValid}
-            describedById={step.isReview ? reviewNoteId : undefined}
+            disabled={continueDisabled}
+            describedById={
+              step.isReview
+                ? reviewNoteId
+                : validationMessage
+                  ? validationId
+                  : undefined
+            }
             onPrimary={handleNext}
           />
         }
@@ -385,7 +596,7 @@ export function HocaBulWizard() {
           helper={copy.helper}
           direction={state.direction}
           noticeMessage={noticeMessage}
-          validationMessage={null}
+          validationMessage={validationMessage}
         >
           {optionsStatus === "error" ? (
             <WizardOptionsError

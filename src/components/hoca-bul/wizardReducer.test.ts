@@ -216,4 +216,77 @@ describe("answers", () => {
     assert.equal(state.stepId, "hedef");
     assert.equal(state.answers.goal, "KPSS");
   });
+
+  it("records the answer that caused invalidation and clears metadata on a no-removal answer", () => {
+    const base = ready({
+      answers: {
+        goal: "YKS",
+        stage: "grade_12",
+        subject_keys: ["matematik"],
+        budget_segment: "balanced",
+      },
+      client: { yks_alan: ["TYT"] },
+    });
+    const changed = wizardReducer(base, {
+      type: "answer",
+      change: { field: "goal", value: "DGS" },
+    });
+    assert.equal(changed.invalidationSource, "goal");
+    assert.ok(changed.cleared.includes("subject_keys"));
+
+    const quiet = wizardReducer(changed, {
+      type: "answer",
+      change: { field: "challenges", value: ["foundations"] },
+    });
+    assert.deepEqual(quiet.cleared, []);
+    assert.equal(quiet.invalidationSource, null);
+  });
+
+  it("records fresh-option pruning and clears feedback on navigation", () => {
+    const pruned = wizardReducer(ready(), {
+      type: "prune",
+      answers: { goal: "DGS", subject_keys: ["matematik"] },
+      client: {},
+      dropped: ["subject_keys", "budget_segment"],
+    });
+    assert.deepEqual(pruned.cleared, ["subject_keys", "budget_segment"]);
+    assert.equal(pruned.invalidationSource, "options");
+
+    const navigated = wizardReducer(pruned, { type: "goToStep", stepId: "hedef" });
+    assert.deepEqual(navigated.cleared, []);
+    assert.equal(navigated.invalidationSource, null);
+  });
+
+  it("distinguishes YKS-area and subject invalidation sources", () => {
+    const areaChanged = wizardReducer(
+      ready({
+        answers: {
+          goal: "YKS",
+          subject_keys: ["matematik", "ingilizce"],
+          budget_segment: "balanced",
+        },
+        client: { yks_alan: ["TYT", "YDT"] },
+      }),
+      {
+        type: "answer",
+        change: { field: "yks_alan", value: ["TYT"] },
+        subjects: [
+          { key: "matematik", label: "Matematik", subject_ids: ["1"], exam_types: ["TYT"], tutor_count: 2 },
+          { key: "ingilizce", label: "İngilizce", subject_ids: ["2"], exam_types: ["YDT"], tutor_count: 2 },
+        ],
+      }
+    );
+    assert.equal(areaChanged.invalidationSource, "yks_alan");
+    assert.deepEqual(areaChanged.cleared.sort(), ["budget_segment", "subject_keys"]);
+
+    const subjectsChanged = wizardReducer(
+      ready({ answers: { subject_keys: ["matematik"], budget_segment: "balanced" } }),
+      {
+        type: "answer",
+        change: { field: "subject_keys", value: ["matematik", "fizik"] },
+      }
+    );
+    assert.equal(subjectsChanged.invalidationSource, "subject_keys");
+    assert.deepEqual(subjectsChanged.cleared, ["budget_segment"]);
+  });
 });

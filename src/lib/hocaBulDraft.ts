@@ -10,6 +10,7 @@ import {
 import {
   MAX_AVAILABILITY_WINDOWS,
   MAX_CHALLENGES,
+  MAX_EXAM_AREAS,
   MAX_SUBJECTS,
   MAX_TEACHING_STYLES,
 } from "@/lib/hocaBulFlow";
@@ -103,7 +104,9 @@ function keepKnown<T extends string>(
   max: number
 ): T[] | undefined {
   if (!isStringArray(value)) return undefined;
-  const kept = value.filter((item): item is T => (allowed as readonly string[]).includes(item));
+  const kept = Array.from(new Set(
+    value.filter((item): item is T => (allowed as readonly string[]).includes(item))
+  ));
   if (kept.length === 0) return undefined;
   return kept.slice(0, max);
 }
@@ -157,7 +160,7 @@ function sanitizeAnswers(raw: unknown): HocaBulApiAnswersDraft {
     answers.stage = source.stage;
   }
   if (isStringArray(source.subject_keys) && source.subject_keys.length) {
-    answers.subject_keys = source.subject_keys.slice(0, MAX_SUBJECTS);
+    answers.subject_keys = Array.from(new Set(source.subject_keys)).slice(0, MAX_SUBJECTS);
   }
   const challenges = keepKnown<MatchChallenge>(
     source.challenges,
@@ -202,7 +205,12 @@ function sanitizeClient(raw: unknown): HocaBulClientAnswers {
   const allowed = ["TYT", "AYT", "YDT", "unsure"];
   const kept = source.yks_alan.filter((area) => allowed.includes(area));
   if (kept.length === 0) return {};
-  return { yks_alan: kept as HocaBulClientAnswers["yks_alan"] };
+  const unique = Array.from(new Set(kept));
+  return {
+    yks_alan: (unique.includes("unsure")
+      ? ["unsure"]
+      : unique.slice(0, MAX_EXAM_AREAS)) as HocaBulClientAnswers["yks_alan"],
+  };
 }
 
 export function readDraft(

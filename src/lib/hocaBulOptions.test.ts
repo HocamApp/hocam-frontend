@@ -6,16 +6,20 @@ import {
   CHALLENGE_ORDER,
   TEACHING_STYLE_ORDER,
   buildReviewRows,
+  toAvailabilityOptions,
   toBudgetOptions,
+  toChallengeOptions,
   toExamAreaOptions,
   toStageOptions,
   toSubjectOptions,
+  toTeachingStyleOptions,
 } from "./hocaBulOptions";
 import type { MatchSubjectOption, MatchingOptions } from "@/types";
 
 const subjects: MatchSubjectOption[] = [
   { key: "matematik", label: "Matematik", subject_ids: ["1"], exam_types: ["TYT", "AYT"], tutor_count: 12 },
   { key: "edebiyat", label: "Edebiyat", subject_ids: ["2"], exam_types: ["AYT"], tutor_count: 4 },
+  { key: "ingilizce", label: "İngilizce", subject_ids: ["4"], exam_types: ["YDT"], tutor_count: 3 },
   { key: "kimya", label: "Kimya", subject_ids: ["3"], exam_types: ["AYT"], tutor_count: 0 },
 ];
 
@@ -62,7 +66,7 @@ describe("option adapters keep server values verbatim", () => {
     const adapted = toSubjectOptions(options);
     assert.deepEqual(
       adapted.map((option) => option.value),
-      ["matematik", "edebiyat"]
+      ["matematik", "edebiyat", "ingilizce"]
     );
     assert.equal(adapted[0].detail, "12 hoca");
   });
@@ -81,8 +85,26 @@ describe("option adapters keep server values verbatim", () => {
     );
     assert.deepEqual(
       toSubjectOptions(options, ["unsure"]).map((option) => option.value),
-      ["matematik", "edebiyat"]
+      ["matematik", "edebiyat", "ingilizce"]
     );
+  });
+
+  it("returns the union for multiple areas and hides invalid runtime counts", () => {
+    const unsafeOptions = {
+      ...options,
+      subjects: [
+        ...subjects,
+        { key: "eksik", label: "Eksik", subject_ids: ["5"], exam_types: ["TYT"] },
+        { key: "sonsuz", label: "Sonsuz", subject_ids: ["6"], exam_types: ["TYT"], tutor_count: Number.POSITIVE_INFINITY },
+      ],
+    } as MatchingOptions;
+
+    assert.deepEqual(
+      toSubjectOptions(unsafeOptions, ["AYT", "YDT"]).map((option) => option.value),
+      ["matematik", "edebiyat", "ingilizce"]
+    );
+    assert.equal(toSubjectOptions(unsafeOptions).some((option) => option.value === "eksik"), false);
+    assert.equal(toSubjectOptions(unsafeOptions).some((option) => option.value === "sonsuz"), false);
   });
 
   it("offers the exact P3A exam-area choices and details", () => {
@@ -94,14 +116,24 @@ describe("option adapters keep server values verbatim", () => {
     ]);
   });
 
-  it("uses the server's budget ids and renders the flexible band without a price", () => {
-    const adapted = toBudgetOptions(options);
-    assert.deepEqual(
-      adapted.map((option) => option.value),
-      ["balanced", "flexible"]
-    );
-    assert.ok(adapted[0].detail?.includes("/ 40 dk"));
-    assert.equal(adapted[1].detail, "Tüm fiyat aralıklarını değerlendir");
+  it("formats full, minimum-only, maximum-only and no-price budget bands", () => {
+    const adapted = toBudgetOptions({
+      ...options,
+      budget_ranges: [
+        { id: "balanced", label: "Dengeli", min: 400, max: 700 },
+        { id: "premium", label: "Premium", min: 900, max: null },
+        { id: "economical", label: "Ekonomik", min: null, max: 250 },
+        { id: "flexible", label: "Fiyat konusunda esneğim", min: null, max: null },
+        { id: "balanced", label: "Belirsiz", min: null, max: null },
+      ],
+    });
+    assert.deepEqual(adapted, [
+      { value: "balanced", label: "Dengeli", detail: "₺400 – ₺700 / 40 dk" },
+      { value: "premium", label: "Premium", detail: "₺900 ve üzeri / 40 dk" },
+      { value: "economical", label: "Ekonomik", detail: "₺250’ye kadar / 40 dk" },
+      { value: "flexible", label: "Fiyat konusunda esneğim", detail: "Tüm fiyat aralıklarını değerlendir" },
+      { value: "balanced", label: "Belirsiz" },
+    ]);
   });
 });
 
@@ -129,6 +161,19 @@ describe("label maps cover every backend enum value", () => {
       "weekend_evening",
       "flexible",
     ]);
+  });
+
+  it("adapts every P3B enum with its exact API value and approved copy", () => {
+    assert.deepEqual(toChallengeOptions(), [
+      { value: "foundations", label: "Konu temellerim eksik" },
+      { value: "question_solving", label: "Konuyu biliyorum ama soruda takılıyorum" },
+      { value: "speed_accuracy", label: "Netlerimi ve hızımı artırmam gerek" },
+      { value: "consistency", label: "Düzenli çalışamıyorum" },
+      { value: "where_to_start", label: "Nereden başlayacağımı bilmiyorum" },
+      { value: "advanced_questions", label: "Daha zor sorulara geçmek istiyorum" },
+    ]);
+    assert.equal(toTeachingStyleOptions()[0].detail, "Konuyu adım adım kurar.");
+    assert.deepEqual(toAvailabilityOptions().map((option) => option.value), AVAILABILITY_ORDER);
   });
 });
 

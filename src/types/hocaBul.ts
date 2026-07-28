@@ -85,6 +85,12 @@ export type HocaBulClearedField =
   | "subject_keys"
   | "budget_segment";
 
+export type HocaBulInvalidationSource =
+  | "goal"
+  | "yks_alan"
+  | "subject_keys"
+  | "options";
+
 export interface HocaBulAnswerState {
   answers: HocaBulApiAnswersDraft;
   client: HocaBulClientAnswers;

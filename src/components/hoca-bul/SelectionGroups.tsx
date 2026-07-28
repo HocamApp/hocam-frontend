@@ -2,6 +2,7 @@
 
 import {
   forwardRef,
+  useEffect,
   useLayoutEffect,
   useRef,
   useState,
@@ -38,6 +39,7 @@ export const OptionRow = forwardRef<HTMLButtonElement, OptionRowProps>(
         ref={ref}
         type="button"
         disabled={disabled}
+        aria-label={detail ? `${label} ${detail}` : label}
         data-selected={selected || undefined}
         data-invalid={invalid || undefined}
         className={cn(
@@ -260,31 +262,45 @@ export function MultiSelectGroup<Value extends string>({
   limitMessage = `En fazla ${maximum} seçim yapabilirsin.`,
   onToggle,
 }: MultiSelectGroupProps<Value>) {
-  const [limitHit, setLimitHit] = useState(false);
+  const [blockedValue, setBlockedValue] = useState<Value | null>(null);
+  const limitHit = blockedValue !== null;
   const generatedId = useId();
   const limitId = `${generatedId}-limit`;
   const groupDescription = [describedBy, limitHit ? limitId : undefined]
     .filter(Boolean)
     .join(" ") || undefined;
 
+  useEffect(() => {
+    if (
+      blockedValue !== null &&
+      (values.length < maximum || values.includes(blockedValue))
+    ) {
+      setBlockedValue(null);
+    }
+  }, [blockedValue, maximum, values]);
+
   const toggle = (value: Value) => {
     if (disabled) return;
     if (onToggle) {
       const next = onToggle(value, values);
-      setLimitHit(next.length > maximum);
-      if (next.length <= maximum) onValuesChange(next);
+      if (next.length > maximum) {
+        setBlockedValue(value);
+      } else {
+        setBlockedValue(null);
+        onValuesChange(next);
+      }
       return;
     }
     if (values.includes(value)) {
-      setLimitHit(false);
+      setBlockedValue(null);
       onValuesChange(values.filter((item) => item !== value));
       return;
     }
     if (values.length >= maximum) {
-      setLimitHit(true);
+      setBlockedValue(value);
       return;
     }
-    setLimitHit(false);
+    setBlockedValue(null);
     onValuesChange([...values, value]);
   };
 
@@ -309,7 +325,7 @@ export function MultiSelectGroup<Value extends string>({
             detail={option.detail}
             selected={values.includes(option.value)}
             disabled={disabled || option.disabled}
-            invalid={invalid || limitHit}
+            invalid={invalid || blockedValue === option.value}
             onClick={() => toggle(option.value)}
             onKeyDown={(event) => handleKeyDown(event, option.value)}
           />

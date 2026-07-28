@@ -14,6 +14,7 @@ import type {
   HocaBulClearedField,
   HocaBulClientAnswers,
   HocaBulDraft,
+  HocaBulInvalidationSource,
   HocaBulStepId,
   HocaBulVisibleStep,
 } from "@/types/hocaBul";
@@ -33,6 +34,7 @@ export interface WizardState {
   direction: WizardDirection;
   /** Answers an upstream change invalidated, shown once on the affected step. */
   cleared: HocaBulClearedField[];
+  invalidationSource: HocaBulInvalidationSource | null;
   /** A resumable draft waiting for the student's decision. */
   pendingResume: HocaBulDraft | null;
   exitOpen: boolean;
@@ -55,6 +57,7 @@ export type WizardAction =
       type: "prune";
       answers: HocaBulApiAnswersDraft;
       client: HocaBulClientAnswers;
+      dropped: HocaBulClearedField[];
     }
   | { type: "setExitOpen"; open: boolean }
   | { type: "dismissCleared" };
@@ -66,6 +69,7 @@ export const initialWizardState: WizardState = {
   stepId: "hedef",
   direction: 1,
   cleared: [],
+  invalidationSource: null,
   pendingResume: null,
   exitOpen: false,
 };
@@ -150,6 +154,9 @@ export function wizardReducer(
         answers: result.answers,
         client: result.client,
         cleared: result.cleared,
+        invalidationSource: result.cleared.length
+          ? invalidationSourceFor(action.change.field)
+          : null,
         // Changing the goal can remove the step the student is standing on.
         stepId: stepStillValid
           ? state.stepId
@@ -160,13 +167,13 @@ export function wizardReducer(
     case "next": {
       const next = getNextStepId(state.answers.goal, state.stepId);
       if (!next || next === "submit") return state;
-      return { ...state, stepId: next, direction: 1, cleared: [] };
+      return { ...state, stepId: next, direction: 1, cleared: [], invalidationSource: null };
     }
 
     case "back": {
       const previous = getPreviousStepId(state.answers.goal, state.stepId);
       if (!previous) return state;
-      return { ...state, stepId: previous, direction: -1, cleared: [] };
+      return { ...state, stepId: previous, direction: -1, cleared: [], invalidationSource: null };
     }
 
     case "goToStep": {
@@ -176,6 +183,7 @@ export function wizardReducer(
         direction: directionFor(state.stepId, action.stepId, state.answers, state.client),
         stepId: action.stepId,
         cleared: [],
+        invalidationSource: null,
       };
     }
 
@@ -192,6 +200,7 @@ export function wizardReducer(
         direction: directionFor(state.stepId, stepId, state.answers, state.client),
         stepId,
         cleared: [],
+        invalidationSource: null,
       };
     }
 
@@ -202,14 +211,36 @@ export function wizardReducer(
         action.answers,
         action.client
       );
-      return { ...state, answers: action.answers, client: action.client, stepId };
+      return {
+        ...state,
+        answers: action.answers,
+        client: action.client,
+        stepId,
+        cleared: action.dropped,
+        invalidationSource: action.dropped.length ? "options" : null,
+      };
     }
 
     case "setExitOpen":
       return { ...state, exitOpen: action.open };
 
     case "dismissCleared":
-      return state.cleared.length ? { ...state, cleared: [] } : state;
+      return state.cleared.length
+        ? { ...state, cleared: [], invalidationSource: null }
+        : state;
+  }
+}
+
+function invalidationSourceFor(
+  field: HocaBulAnswerChange["field"]
+): HocaBulInvalidationSource | null {
+  switch (field) {
+    case "goal":
+    case "yks_alan":
+    case "subject_keys":
+      return field;
+    default:
+      return null;
   }
 }
 
