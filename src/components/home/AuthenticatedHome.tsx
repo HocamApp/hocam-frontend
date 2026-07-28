@@ -25,10 +25,11 @@ import {
   isPastPackage,
 } from "@/components/payments/PackagePurchaseCard";
 import { trackHomeEvent } from "@/lib/homeAnalytics";
-import { MATCHING_FEATURE_ENABLED } from "@/lib/featureFlags";
-import { formatDate } from "@/lib/utils";
+import { HOCA_BUL_ENABLED, MATCHING_FEATURE_ENABLED } from "@/lib/featureFlags";
+import { cn, formatDate } from "@/lib/utils";
 import type { Booking, PackagePurchase, ProfileStudent, StudentGoal } from "@/types";
 import { HomeSubjectSearch } from "@/components/home/HomeSubjectSearch";
+import { HocaBulEntryCard } from "@/components/home/HocaBulEntryCard";
 import { HomeHeroCarousel } from "@/components/home/HomeHeroCarousel";
 import { HomeBand } from "@/components/home/HomeBand";
 import { HomeExploreCarousel } from "@/components/home/HomeExploreCarousel";
@@ -293,15 +294,31 @@ export function AuthenticatedHome() {
     <div className="overflow-hidden">
       <HomeHeroCarousel greetingName={studentProfile?.name?.trim() || undefined} />
 
+      {/* The matching entry replaces the subject search rather than joining it:
+          two competing "find a tutor" starting points on one screen is the
+          thing this flow exists to remove. Flag off, the home is unchanged. */}
+      {HOCA_BUL_ENABLED && (
+        <HomeBand tinted>
+          <HocaBulEntryCard />
+        </HomeBand>
+      )}
+
       <section aria-label="Hoca arama" className="border-b bg-background">
         <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-7 lg:px-8">
-          <HomeSubjectSearch
-            subjects={subjectsQuery.data}
-            isLoading={subjectsQuery.isLoading}
-            isError={subjectsQuery.isError}
-          />
+          {!HOCA_BUL_ENABLED && (
+            <HomeSubjectSearch
+              subjects={subjectsQuery.data}
+              isLoading={subjectsQuery.isLoading}
+              isError={subjectsQuery.isError}
+            />
+          )}
 
-          <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
+          <div
+            className={cn(
+              "flex flex-wrap items-center gap-x-5 gap-y-2 text-sm",
+              !HOCA_BUL_ENABLED && "mt-4"
+            )}
+          >
             {MATCHING_FEATURE_ENABLED && (
               <Link
                 href="/match"

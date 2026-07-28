@@ -14,6 +14,7 @@ import type {
   HocaBulClearedField,
   HocaBulClientAnswers,
   HocaBulDraft,
+  HocaBulGoal,
   HocaBulInvalidationSource,
   HocaBulStepId,
   HocaBulVisibleStep,
@@ -48,6 +49,8 @@ export type WizardAction =
       draft: HocaBulDraft | null;
       urlStepId: string | null;
       skipResume?: boolean;
+      /** A goal answered outside the wizard, e.g. on the home entry card. */
+      prefillGoal?: HocaBulGoal;
     }
   | { type: "resume" }
   | { type: "restart" }
@@ -113,7 +116,8 @@ export function wizardReducer(
 ): WizardState {
   switch (action.type) {
     case "hydrate": {
-      if (draftIsResumable(action.draft) && !action.skipResume) {
+      const resumable = draftIsResumable(action.draft);
+      if (resumable && !action.skipResume) {
         // Ask before restoring; the answers stay untouched until the student decides.
         return {
           ...state,
@@ -124,6 +128,33 @@ export function wizardReducer(
       }
       const answers = action.draft?.answers ?? {};
       const client = action.draft?.client ?? {};
+
+      // A goal answered elsewhere is applied through the same change path as a
+      // tap on the goal screen, so the invalidation rules run unchanged. It is
+      // ignored whenever a resumable draft exists — a link must never silently
+      // discard stored answers — and the resume point is then re-derived from
+      // the flow rather than assumed, since which question comes next depends
+      // on the goal that was just applied.
+      if (action.prefillGoal && !resumable) {
+        const applied = applyAnswerChange(
+          { answers, client },
+          { field: "goal", value: action.prefillGoal }
+        );
+        return {
+          ...state,
+          phase: "ready",
+          answers: applied.answers,
+          client: applied.client,
+          pendingResume: null,
+          reviewEditActive: false,
+          stepId: getFirstUnansweredStepId(
+            applied.answers.goal,
+            applied.answers,
+            applied.client
+          ),
+        };
+      }
+
       return {
         ...state,
         phase: "ready",

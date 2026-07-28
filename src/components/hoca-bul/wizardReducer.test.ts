@@ -101,6 +101,96 @@ describe("hydration", () => {
   });
 });
 
+describe("goal prefill", () => {
+  it("answers the goal and moves past the question that was already asked", () => {
+    const state = wizardReducer(initialWizardState, {
+      type: "hydrate",
+      draft: null,
+      urlStepId: null,
+      prefillGoal: "DGS",
+    });
+
+    assert.equal(state.phase, "ready");
+    assert.equal(state.answers.goal, "DGS");
+    assert.notEqual(state.stepId, "hedef");
+    assert.equal(state.stepId, "asama");
+  });
+
+  it("derives the next step from the flow rather than assuming one", () => {
+    // A non-resumable draft that already holds a stage: with the same goal
+    // re-applied nothing is invalidated, so the first gap is further along.
+    const state = wizardReducer(initialWizardState, {
+      type: "hydrate",
+      draft: draft({ answers: { goal: "DGS", stage: "ongoing" }, stepId: "hedef" }),
+      urlStepId: null,
+      prefillGoal: "DGS",
+    });
+
+    assert.equal(state.stepId, "dersler");
+  });
+
+  it("applies the change through the invalidation rules", () => {
+    const state = wizardReducer(initialWizardState, {
+      type: "hydrate",
+      draft: draft({
+        answers: { goal: "DGS", stage: "ongoing", subject_keys: ["matematik"], budget_segment: "balanced" },
+        client: {},
+        stepId: "hedef",
+      }),
+      urlStepId: null,
+      prefillGoal: "KPSS",
+    });
+
+    assert.equal(state.answers.goal, "KPSS");
+    // Changing the goal drops what the goal decides, exactly as a tap would.
+    assert.equal(state.answers.stage, undefined);
+    assert.equal(state.answers.subject_keys, undefined);
+    assert.equal(state.answers.budget_segment, undefined);
+    assert.equal(state.stepId, "asama");
+  });
+
+  it("adds the YKS-only step to the derived resume point", () => {
+    const state = wizardReducer(initialWizardState, {
+      type: "hydrate",
+      draft: null,
+      urlStepId: null,
+      prefillGoal: "YKS",
+    });
+
+    assert.equal(currentVisibleStep(state).total, 9);
+    assert.equal(state.stepId, "asama");
+  });
+
+  it("never overwrites a resumable draft, prompt or not", () => {
+    const resumable = draft({
+      answers: { goal: "DGS", stage: "ongoing" },
+      client: {},
+      stepId: "dersler",
+    });
+
+    const prompted = wizardReducer(initialWizardState, {
+      type: "hydrate",
+      draft: resumable,
+      urlStepId: null,
+      prefillGoal: "KPSS",
+    });
+    assert.ok(prompted.pendingResume);
+    assert.deepEqual(prompted.answers, {});
+
+    const skipped = wizardReducer(initialWizardState, {
+      type: "hydrate",
+      draft: resumable,
+      urlStepId: null,
+      skipResume: true,
+      prefillGoal: "KPSS",
+    });
+    assert.equal(skipped.pendingResume, null);
+    assert.equal(skipped.answers.goal, "DGS");
+    assert.equal(skipped.answers.stage, "ongoing");
+    assert.equal(skipped.stepId, "dersler");
+  });
+});
+
 describe("resume and restart", () => {
   it("restores the answers and lands on a step the answers support", () => {
     const withPrompt = wizardReducer(initialWizardState, {
