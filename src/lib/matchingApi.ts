@@ -20,10 +20,26 @@ export async function fetchMatchingOptions(
   return response.data;
 }
 
-export async function previewTutorMatches(
+interface PreviewTutorMatchOptions {
+  signal?: AbortSignal;
+  timeoutMs?: number;
+}
+
+export function previewTutorMatches(
   answers: MatchingAnswers
+): Promise<MatchingPreview>;
+export function previewTutorMatches(
+  answers: MatchingAnswers,
+  options: PreviewTutorMatchOptions
+): Promise<MatchingPreview>;
+export async function previewTutorMatches(
+  answers: MatchingAnswers,
+  options: PreviewTutorMatchOptions = {}
 ): Promise<MatchingPreview> {
-  const response = await api.post<MatchingPreview>("/matching/preview/", answers);
+  const response = await api.post<MatchingPreview>("/matching/preview/", answers, {
+    signal: options.signal,
+    timeout: options.timeoutMs,
+  });
   return response.data;
 }
 

@@ -196,6 +196,7 @@ export function HocaBulWizard({
       type: "hydrate",
       draft,
       urlStepId: searchParams.get(STEP_PARAM),
+      skipResume: searchParams.get("kaynak") === "sonuclar",
     });
     // searchParams is read once on purpose: later URL changes go through the
     // synchronisation effect below.
