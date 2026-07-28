@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { fetchMatchingOptions } from "@/lib/matchingApi";
 import { trackHocaBul } from "@/lib/hocaBulAnalytics";
+import { parseEntrySource, parseGoalParam } from "@/lib/hocaBulEntryState";
 import {
   clearDraft,
   copyLegacyDraft,
@@ -81,6 +82,10 @@ import {
 } from "./wizardReducer";
 
 const STEP_PARAM = "adim";
+/** Where the student came from. Only the closed HocaBulEntrySource set counts. */
+const SOURCE_PARAM = "kaynak";
+/** Goal already answered before the flow opened, named after the step it fills. */
+const GOAL_PARAM = "hedef";
 
 /**
  * Container for the matching wizard: it owns the reducer, the options query,
@@ -112,6 +117,7 @@ export function HocaBulWizard({
   const urlStepRef = useRef<string | null>(null);
   const pushDepthRef = useRef(0);
   const startedRef = useRef(false);
+  const entrySourceRef = useRef<ReturnType<typeof parseEntrySource>>(null);
   const completionLockRef = useRef(false);
   const completionWasPendingRef = useRef(false);
   const [completionLocked, setCompletionLocked] = useState(false);
@@ -192,11 +198,17 @@ export function HocaBulWizard({
 
     const draft = readDraft(storage, userId);
     draftRef.current = draft ?? createDraft(userId);
+    // Both known sources mean the student just came from a screen that already
+    // showed them their progress, so re-asking "resume?" would be a second
+    // question about the same decision.
+    const source = parseEntrySource(searchParams.get(SOURCE_PARAM));
+    entrySourceRef.current = source;
     dispatch({
       type: "hydrate",
       draft,
       urlStepId: searchParams.get(STEP_PARAM),
-      skipResume: searchParams.get("kaynak") === "sonuclar",
+      skipResume: source !== null,
+      prefillGoal: parseGoalParam(searchParams.get(GOAL_PARAM)) ?? undefined,
     });
     // searchParams is read once on purpose: later URL changes go through the
     // synchronisation effect below.
@@ -209,7 +221,11 @@ export function HocaBulWizard({
     trackHocaBul({
       event: "hoca_bul_started",
       goal: state.answers.goal,
-      entry: state.pendingResume ? "resume" : "direct",
+      entry: state.pendingResume
+        ? "resume"
+        : entrySourceRef.current === "home"
+          ? "home_card"
+          : "direct",
     });
   }, [state.answers.goal, state.pendingResume, state.phase]);
 

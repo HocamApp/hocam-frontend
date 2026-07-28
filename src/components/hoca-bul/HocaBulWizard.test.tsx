@@ -509,6 +509,116 @@ describe("draft resume", () => {
   });
 });
 
+describe("home entry parameters", () => {
+  function collectAnalytics() {
+    const events: Array<{ event: string; properties: Record<string, unknown> }> = [];
+    const listener = (event: Event) => {
+      events.push((event as CustomEvent).detail);
+    };
+    window.addEventListener("hocam:analytics", listener);
+    return {
+      events,
+      stop: () => window.removeEventListener("hocam:analytics", listener),
+    };
+  }
+
+  it("applies a prefilled goal and opens the next unanswered question", async () => {
+    searchParams = new URLSearchParams("hedef=YKS&kaynak=home");
+
+    renderWizard();
+
+    await screen.findByRole("heading", { level: 1, name: "Şu an hangi aşamadasın?" });
+    // The YKS branch is nine steps, so the total came from the applied goal.
+    assert.ok(screen.getAllByText("2 / 9").length > 0);
+    await waitFor(() => {
+      const draft = JSON.parse(window.localStorage.getItem(DRAFT_KEY) ?? "{}");
+      assert.equal(draft.answers?.goal, "YKS");
+    });
+  });
+
+  it("ignores an unknown hedef value instead of guessing", async () => {
+    searchParams = new URLSearchParams("hedef=LGS&kaynak=home");
+
+    renderWizard();
+
+    await screen.findByRole("heading", { level: 1, name: "Hangi sınava hazırlanıyorsun?" });
+  });
+
+  it("reports the home card as the entry point", async () => {
+    const analytics = collectAnalytics();
+    searchParams = new URLSearchParams("hedef=DGS&kaynak=home");
+
+    renderWizard();
+    await screen.findByRole("heading", { level: 1, name: "Şu an hangi aşamadasın?" });
+
+    const started = analytics.events.filter((item) => item.event === "hoca_bul_started");
+    analytics.stop();
+    assert.equal(started.length, 1);
+    assert.equal(started[0]?.properties.entry, "home_card");
+    assert.equal(started[0]?.properties.goal, "DGS");
+  });
+
+  it("still reports a direct entry when no known source is given", async () => {
+    const analytics = collectAnalytics();
+    searchParams = new URLSearchParams("kaynak=elsewhere");
+
+    renderWizard();
+    await screen.findByRole("heading", { level: 1, name: "Hangi sınava hazırlanıyorsun?" });
+
+    const started = analytics.events.filter((item) => item.event === "hoca_bul_started");
+    analytics.stop();
+    assert.equal(started[0]?.properties.entry, "direct");
+  });
+
+  it("continues a stored draft from the home card without re-asking to resume", async () => {
+    window.localStorage.setItem(
+      DRAFT_KEY,
+      JSON.stringify({
+        meta: { schemaVersion: 1, userId: "student-1", createdAt: NOW, updatedAt: NOW },
+        answers: { goal: "DGS", stage: "ongoing" },
+        client: {},
+        stepId: "dersler",
+        expiresAt: NOW + 60_000,
+      })
+    );
+    searchParams = new URLSearchParams("adim=dersler&kaynak=home");
+
+    renderWizard();
+
+    await screen.findByRole("heading", {
+      level: 1,
+      name: "Hangi derslerde desteğe ihtiyacın var?",
+    });
+    assert.equal(screen.queryByRole("dialog"), null);
+  });
+
+  it("never lets a prefilled goal wipe a resumable draft", async () => {
+    window.localStorage.setItem(
+      DRAFT_KEY,
+      JSON.stringify({
+        meta: { schemaVersion: 1, userId: "student-1", createdAt: NOW, updatedAt: NOW },
+        answers: { goal: "DGS", stage: "ongoing" },
+        client: {},
+        stepId: "dersler",
+        expiresAt: NOW + 60_000,
+      })
+    );
+    searchParams = new URLSearchParams("hedef=KPSS&kaynak=home");
+
+    renderWizard();
+
+    await screen.findByRole("heading", {
+      level: 1,
+      name: "Hangi derslerde desteğe ihtiyacın var?",
+    });
+    await waitFor(() => {
+      const draft = JSON.parse(window.localStorage.getItem(DRAFT_KEY) ?? "{}");
+      assert.equal(draft.answers?.goal, "DGS");
+      assert.equal(draft.answers?.stage, "ongoing");
+    });
+  });
+});
+
 describe("P3B question screens", () => {
   it("renders supplied subjects with real counts and blocks a fourth persisted selection", async () => {
     renderWizard();

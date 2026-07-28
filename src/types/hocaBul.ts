@@ -68,6 +68,14 @@ export interface HocaBulVisibleStep {
   isReview: boolean;
 }
 
+/**
+ * Values ?kaynak= is allowed to carry. Both suppress the resume dialog, so the
+ * parameter is parsed against this closed set rather than compared inline — an
+ * arbitrary query value must never be able to skip a question the student has
+ * not answered.
+ */
+export type HocaBulEntrySource = "sonuclar" | "home";
+
 export type HocaBulValidationCode =
   | "required"
   | "max_exceeded"
@@ -200,6 +208,13 @@ export type HocaBulAnalyticsPayload =
       step_id: HocaBulStepId;
       age_hours: number;
     }
-  | { event: "hoca_bul_legacy_draft_copied"; copied: boolean };
+  | { event: "hoca_bul_legacy_draft_copied"; copied: boolean }
+  | {
+      event: "home_matching_started";
+      /** Only present when the student picked a goal chip on the home card. */
+      goal?: HocaBulGoal;
+      /** Which card variant was clicked. */
+      state: "fresh" | "draft" | "result";
+    };
 
 export type HocaBulAnalyticsEvent = HocaBulAnalyticsPayload["event"];
