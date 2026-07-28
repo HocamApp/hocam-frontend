@@ -1,10 +1,14 @@
 import { createElement, type ReactElement } from "react";
 
-import type { HocaBulStepId } from "@/types/hocaBul";
+import { AsamaIllustration } from "./AsamaIllustration";
+import { ButceIllustration } from "./ButceIllustration";
 import { DerslerIllustration } from "./DerslerIllustration";
 import { HedefIllustration } from "./HedefIllustration";
-import { PendingIllustration } from "./PendingIllustration";
+import { HocaYaklasimiIllustration } from "./HocaYaklasimiIllustration";
+import { KontrolIllustration } from "./KontrolIllustration";
 import { UygunZamanlarIllustration } from "./UygunZamanlarIllustration";
+import { YksAlanIllustration } from "./YksAlanIllustration";
+import { ZorlukIllustration } from "./ZorlukIllustration";
 import type { IllustrationState } from "./illustrationState";
 
 /**
@@ -31,20 +35,22 @@ export function renderIllustration(
   switch (state.step) {
     case "hedef":
       return createElement(HedefIllustration, { state, compact, reduced });
+    case "asama":
+      return createElement(AsamaIllustration, { state, compact, reduced });
+    case "yks_alan":
+      return createElement(YksAlanIllustration, { state, compact, reduced });
     case "dersler":
       return createElement(DerslerIllustration, { state, compact, reduced });
+    case "zorluk":
+      return createElement(ZorlukIllustration, { state, compact, reduced });
+    case "hoca_yaklasimi":
+      return createElement(HocaYaklasimiIllustration, { state, compact, reduced });
     case "uygun_zamanlar":
       return createElement(UygunZamanlarIllustration, { state, compact, reduced });
-
-    // Their own artwork lands in P4B; until then they draw the family's neutral
-    // scene rather than a stale placeholder from a different visual language.
-    case "asama":
-    case "yks_alan":
-    case "zorluk":
-    case "hoca_yaklasimi":
     case "butce":
+      return createElement(ButceIllustration, { state, compact, reduced });
     case "kontrol":
-      return createElement(PendingIllustration, { compact });
+      return createElement(KontrolIllustration, { state, compact, reduced });
 
     default: {
       const exhaustive: never = state;
@@ -52,13 +58,3 @@ export function renderIllustration(
     }
   }
 }
-
-/** The steps still drawing the neutral scene, so a test can assert P4A's own scope. */
-export const PENDING_STEPS: readonly HocaBulStepId[] = [
-  "asama",
-  "yks_alan",
-  "zorluk",
-  "hoca_yaklasimi",
-  "butce",
-  "kontrol",
-];

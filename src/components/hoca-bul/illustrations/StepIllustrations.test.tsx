@@ -10,9 +10,13 @@ import { cleanup, render } from "@testing-library/react";
 import { answerStateVariants, assemblyVariants } from "../motion";
 import { IllustrationFrame } from "./IllustrationFrame";
 import { toIllustrationState } from "./illustrationState";
-import { PENDING_STEPS, renderIllustration } from "./registry";
+import { renderIllustration } from "./registry";
 import { COMPACT_HIDDEN_LAYERS } from "./illustrationTokens";
 import type { HocaBulStepId } from "@/types/hocaBul";
+import type {
+  HocaBulApiAnswersDraft,
+  HocaBulClientAnswers,
+} from "@/types/hocaBul";
 
 // framer-motion reads matchMedia, which the shared jsdom setup does not provide.
 // Reduced motion is exercised through renderIllustration's own flag rather than
@@ -65,6 +69,40 @@ function renderFrame(step: HocaBulStepId, compact = false) {
   );
 }
 
+/** Renders one step's artwork straight into an svg, bypassing the frame. */
+function renderArtwork(
+  step: HocaBulStepId,
+  answers: HocaBulApiAnswersDraft = {},
+  client: HocaBulClientAnswers = {}
+) {
+  return render(
+    React.createElement(
+      "svg",
+      null,
+      renderIllustration(toIllustrationState(step, answers, client), {
+        compact: false,
+        reduced: true,
+      })
+    )
+  );
+}
+
+/** One answered example per step, used to prove every artwork reacts. */
+const ANSWERED: Record<
+  HocaBulStepId,
+  { answers: HocaBulApiAnswersDraft; client: HocaBulClientAnswers }
+> = {
+  hedef: { answers: { goal: "YKS" }, client: {} },
+  asama: { answers: { stage: "grade_11" }, client: {} },
+  yks_alan: { answers: {}, client: { yks_alan: ["TYT"] } },
+  dersler: { answers: { subject_keys: ["a"] }, client: {} },
+  zorluk: { answers: { challenges: ["consistency"] }, client: {} },
+  hoca_yaklasimi: { answers: { teaching_styles: ["question_speed"] }, client: {} },
+  uygun_zamanlar: { answers: { availability_windows: ["weekday_day"] }, client: {} },
+  butce: { answers: { budget_segment: "balanced" }, client: {} },
+  kontrol: { answers: { goal: "YKS" }, client: {} },
+};
+
 afterEach(() => {
   cleanup();
 });
@@ -84,11 +122,16 @@ describe("registry coverage", () => {
     }
   });
 
-  it("still draws the neutral scene for the six steps P4B completes", () => {
-    assert.equal(PENDING_STEPS.length, 6);
-    for (const step of PENDING_STEPS) {
-      const { container } = renderFrame(step);
-      assert.ok(container.querySelector('[data-layer="primary-object"]'));
+  it("draws an answer-state for an answered state on every step", () => {
+    // The neutral fallback is gone: all nine steps have their own artwork, and
+    // every one of them visibly responds to an answer.
+    for (const step of ALL_STEPS) {
+      const { answers, client } = ANSWERED[step];
+      const { container } = renderArtwork(step, answers, client);
+      assert.ok(
+        container.querySelectorAll('[data-layer="answer-state"] *').length > 0,
+        `${step} does not react to an answer`
+      );
       cleanup();
     }
   });
@@ -298,17 +341,8 @@ describe("answer-reactive states", () => {
   });
 
   it("shows no answer-state shape before anything is answered", () => {
-    for (const step of ["hedef", "dersler", "uygun_zamanlar"] as const) {
-      const { container } = render(
-        React.createElement(
-          "svg",
-          null,
-          renderIllustration(toIllustrationState(step, {}, {}), {
-            compact: false,
-            reduced: true,
-          })
-        )
-      );
+    for (const step of ALL_STEPS) {
+      const { container } = renderArtwork(step);
       const answered = container.querySelectorAll(
         '[data-layer="answer-state"] *'
       ).length;
@@ -318,23 +352,317 @@ describe("answer-reactive states", () => {
   });
 
   it("keeps empty shapes unfilled so they cannot read as chosen in dark mode", () => {
-    for (const step of ["dersler", "uygun_zamanlar"] as const) {
-      const { container } = render(
-        React.createElement(
-          "svg",
-          null,
-          renderIllustration(toIllustrationState(step, {}, {}), {
-            compact: false,
-            reduced: true,
-          })
-        )
-      );
-      const filled = Array.from(container.querySelectorAll("rect")).filter((r) =>
-        /fill-(muted|brand|sky)/.test(r.getAttribute("class") ?? "")
-      );
+    // The selection paints are the ones that would lie: fillPrimary, fillDeep
+    // and the cool accent. Structural surfaces (background, card, soft header
+    // tint) are allowed on empty objects.
+    const SELECTION_PAINT = /fill-(brand-200|brand-400|sky-100)\b/;
+    for (const step of ALL_STEPS) {
+      const { container } = renderArtwork(step);
+      const filled = Array.from(
+        container.querySelectorAll("rect, circle, polygon, path")
+      ).filter((el) => SELECTION_PAINT.test(el.getAttribute("class") ?? ""));
       assert.equal(filled.length, 0, `${step} paints an empty shape as filled`);
       cleanup();
     }
+  });
+});
+
+describe("P4B illustrations", () => {
+  describe("asama", () => {
+    const STAGES = ["grade_9", "grade_11", "grade_12", "graduate", "other"];
+
+    it("lights exactly one step per phase while the staircase stays put", () => {
+      let positions: string | null = null;
+
+      for (const stage of STAGES) {
+        const { container } = renderArtwork("asama", { stage });
+        assert.equal(
+          container.querySelectorAll('[data-layer="answer-state"] > g').length,
+          1,
+          `${stage} should light exactly one step`
+        );
+        assert.equal(
+          container.querySelectorAll('[data-layer="answer-state"] circle')
+            .length,
+          1,
+          `${stage} should mark the lit step`
+        );
+        assert.equal(
+          container.querySelectorAll('[data-layer="primary-object"] > g')
+            .length,
+          4,
+          `${stage} should leave four unlit steps`
+        );
+
+        // The staircase is the constant: the same five slab positions in every
+        // phase, so switching stages can never read as breakage.
+        const geometry = Array.from(container.querySelectorAll("rect"))
+          .map((r) => r.getAttribute("x"))
+          .sort()
+          .join("|");
+        if (positions === null) positions = geometry;
+        else assert.equal(geometry, positions, `staircase moved for ${stage}`);
+        cleanup();
+      }
+    });
+
+    it("starts with every step unlit", () => {
+      const { container } = renderArtwork("asama");
+      assert.equal(
+        container.querySelectorAll('[data-layer="primary-object"] > g').length,
+        5
+      );
+    });
+
+    it("adds the circular-return accent for returning only", () => {
+      const returning = renderArtwork("asama", { stage: "graduate" });
+      const accent = returning.container.querySelector(
+        '[data-layer="motion-accent"]'
+      );
+      assert.ok(accent, "returning should carry the return accent");
+      assert.ok(accent!.querySelector("path"), "accent should be an arc");
+      cleanup();
+
+      for (const stage of ["grade_9", "grade_11", "grade_12", "other"]) {
+        const { container } = renderArtwork("asama", { stage });
+        assert.equal(
+          container.querySelectorAll('[data-layer="motion-accent"]').length,
+          0,
+          `${stage} should not carry the return accent`
+        );
+        cleanup();
+      }
+    });
+  });
+
+  describe("yks_alan", () => {
+    it("lights any subset of the three lanes", () => {
+      for (const [areas, expected] of [
+        [["TYT"], 1],
+        [["TYT", "YDT"], 2],
+        [["TYT", "AYT", "YDT"], 3],
+      ] as const) {
+        const { container } = renderArtwork(
+          "yks_alan",
+          {},
+          { yks_alan: [...areas] }
+        );
+        assert.equal(
+          container.querySelectorAll('[data-layer="answer-state"] > g').length,
+          expected,
+          `${areas} should light ${expected} lane(s)`
+        );
+        // The unlit lanes stay behind as hairline outlines.
+        assert.equal(
+          container.querySelectorAll('[data-layer="primary-object"] rect')
+            .length,
+          3,
+          `${areas} lost a lane`
+        );
+        cleanup();
+      }
+    });
+
+    it("draws one undecided route for unsure instead of lighting lanes", () => {
+      const { container } = renderArtwork(
+        "yks_alan",
+        {},
+        { yks_alan: ["unsure"] }
+      );
+      const route = container.querySelector(
+        '[data-layer="answer-state"] path'
+      );
+      assert.ok(route, "unsure should draw a route");
+      assert.ok(
+        route!.getAttribute("stroke-dasharray"),
+        "the undecided route should be dashed"
+      );
+      // No lane is lit: unsure is not a selection.
+      assert.equal(
+        container.querySelectorAll('[data-layer="answer-state"] rect').length,
+        0
+      );
+    });
+  });
+
+  describe("zorluk", () => {
+    it("lights up to two hurdles at their fixed posts", () => {
+      let posts: string | null = null;
+
+      for (const [challenges, expected] of [
+        [[], 0],
+        [["foundations"], 1],
+        [["consistency", "foundations"], 2],
+        [["speed_accuracy", "consistency", "foundations"], 2],
+      ] as const) {
+        const { container } = renderArtwork("zorluk", {
+          challenges: [...challenges],
+        });
+        assert.equal(
+          container.querySelectorAll('[data-layer="answer-state"] > g').length,
+          expected,
+          `${challenges} should light ${expected} hurdle(s)`
+        );
+        assert.equal(
+          container.querySelectorAll(
+            '[data-layer="primary-object"] > g, [data-layer="answer-state"] > g'
+          ).length,
+          6,
+          `${challenges} lost a hurdle`
+        );
+
+        // Posts never move: the same six crossbar positions whatever is chosen.
+        const geometry = Array.from(container.querySelectorAll("rect"))
+          .map((r) => r.getAttribute("x"))
+          .sort()
+          .join("|");
+        if (posts === null) posts = geometry;
+        else assert.equal(geometry, posts, `a hurdle moved for ${challenges}`);
+        cleanup();
+      }
+    });
+  });
+
+  describe("hoca_yaklasimi", () => {
+    it("lights up to two tools while the desk stays full", () => {
+      for (const [styles, expected] of [
+        [[], 0],
+        [["question_speed"], 1],
+        [["high_target", "foundations_patient"], 2],
+        [["high_target", "question_speed", "foundations_patient"], 2],
+      ] as const) {
+        const { container } = renderArtwork("hoca_yaklasimi", {
+          teaching_styles: [...styles],
+        });
+        assert.equal(
+          container.querySelectorAll('[data-layer="answer-state"] > g').length,
+          expected,
+          `${styles} should light ${expected} tool(s)`
+        );
+        assert.equal(
+          container.querySelectorAll(
+            '[data-layer="primary-object"] > g, [data-layer="answer-state"] > g'
+          ).length,
+          5,
+          `${styles} lost a tool`
+        );
+        // The desk itself never moves.
+        assert.equal(
+          container.querySelectorAll('[data-layer="foundation"] rect').length,
+          1
+        );
+        cleanup();
+      }
+    });
+  });
+
+  describe("butce", () => {
+    it("lights exactly the chosen level, never more", () => {
+      for (const segment of ["economical", "balanced", "premium"] as const) {
+        const { container } = renderArtwork("butce", {
+          budget_segment: segment,
+        });
+        // One lit slab: a position on a scale, not an accumulation.
+        assert.equal(
+          container.querySelectorAll('[data-layer="answer-state"] > g').length,
+          1,
+          `${segment} should light exactly one level`
+        );
+        assert.equal(
+          container.querySelectorAll('[data-layer="primary-object"] > g')
+            .length,
+          2,
+          `${segment} should leave two unlit levels`
+        );
+        cleanup();
+      }
+    });
+
+    it("draws one broad range for flexible instead of lighting levels", () => {
+      const { container } = renderArtwork("butce", {
+        budget_segment: "flexible",
+      });
+      const band = container.querySelector(
+        '[data-layer="answer-state"] rect'
+      );
+      assert.ok(band, "flexible should draw one range band");
+      assert.match(
+        band!.getAttribute("class") ?? "",
+        /fill-sky-100/,
+        "the range should use the cool accent, not a selection fill"
+      );
+      // No level is lit: flexible is not a premium pick.
+      assert.equal(
+        container.querySelectorAll('[data-layer="answer-state"] polygon')
+          .length,
+        0,
+        "flexible should not light any level"
+      );
+      assert.equal(
+        container.querySelectorAll('[data-layer="primary-object"] > g').length,
+        3,
+        "flexible should keep all three levels unlit"
+      );
+    });
+  });
+
+  describe("kontrol", () => {
+    it("draws one row per question and fills only the answered ones", () => {
+      const cases: HocaBulApiAnswersDraft[] = [
+        {},
+        { goal: "YKS" },
+        { goal: "YKS", stage: "grade_11", subject_keys: ["a"] },
+      ];
+      for (const answers of cases) {
+        const state = toIllustrationState("kontrol", answers, {});
+        assert.equal(state.step, "kontrol");
+        const { container } = renderArtwork("kontrol", answers);
+        assert.equal(
+          container.querySelectorAll('[data-layer="answer-state"] > g').length,
+          state.filled,
+          `filled rows should match the adapter`
+        );
+        assert.equal(
+          container.querySelectorAll('[data-layer="secondary-object"] > g')
+            .length,
+          state.total - state.filled,
+          `open rows should match the adapter`
+        );
+        // One tick per filled row, and it is a plain checklist tick — the same
+        // mark whether one row or every row is done.
+        assert.equal(
+          container.querySelectorAll("polyline").length,
+          state.filled
+        );
+        cleanup();
+      }
+    });
+
+    it("renders the same rows with and without the assembly motion", () => {
+      const answers: HocaBulApiAnswersDraft = { goal: "YKS", stage: "grade_11" };
+      const withMotion = render(
+        React.createElement(
+          "svg",
+          null,
+          renderIllustration(toIllustrationState("kontrol", answers, {}), {
+            compact: false,
+            reduced: false,
+          })
+        )
+      );
+      const motionRows = withMotion.container.querySelectorAll(
+        '[data-layer="answer-state"] > g, [data-layer="secondary-object"] > g'
+      ).length;
+      cleanup();
+
+      const { container } = renderArtwork("kontrol", answers);
+      assert.equal(
+        container.querySelectorAll(
+          '[data-layer="answer-state"] > g, [data-layer="secondary-object"] > g'
+        ).length,
+        motionRows
+      );
+    });
   });
 });
 
