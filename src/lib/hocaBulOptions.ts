@@ -220,17 +220,22 @@ export function toBudgetOptions(
 
 // --- Review rows ----------------------------------------------------------------
 
-function labelFor(options: HocaBulOption[], value?: string): string {
-  if (!value) return "";
-  return options.find((option) => option.value === value)?.label ?? value;
+function optionFor(
+  options: readonly HocaBulOption[],
+  value?: string
+): HocaBulOption | null {
+  if (!value) return null;
+  return options.find((option) => option.value === value) ?? null;
 }
 
-function joinLabels(
+function joinOptionLabels(
   values: string[] | undefined,
-  resolve: (value: string) => string
-): string {
-  if (!values?.length) return "";
-  return values.map(resolve).join(", ");
+  options: readonly HocaBulOption[]
+): string | null {
+  if (!values?.length) return null;
+  const resolved = values.map((value) => optionFor(options, value));
+  if (resolved.some((option) => option === null)) return null;
+  return resolved.map((option) => option?.label).join(", ");
 }
 
 /**
@@ -240,24 +245,53 @@ function joinLabels(
 export function buildReviewRows(
   answers: HocaBulApiAnswersDraft,
   client: HocaBulClientAnswers,
-  options: MatchingOptions | undefined
-): HocaBulReviewRow[] {
-  const goalOptions = options ? toGoalOptions(options) : [];
-  const stageOptions = options ? toStageOptions(options, answers.goal) : [];
-  const subjectOptions = options ? toSubjectOptions(options) : [];
-  const budgetOptions = options ? toBudgetOptions(options) : [];
+  options: MatchingOptions
+): HocaBulReviewRow[] | null {
+  const goal = optionFor(toGoalOptions(options), answers.goal);
+  const stage = optionFor(toStageOptions(options, answers.goal), answers.stage);
+  const areas =
+    answers.goal === "YKS"
+      ? joinOptionLabels(client.yks_alan, toExamAreaOptions(options.subjects))
+      : null;
+  const subjects = joinOptionLabels(
+    answers.subject_keys,
+    toSubjectOptions(options, client.yks_alan)
+  );
+  const challenges = joinOptionLabels(answers.challenges, toChallengeOptions());
+  const teachingStyles = joinOptionLabels(
+    answers.teaching_styles,
+    toTeachingStyleOptions()
+  );
+  const availability = joinOptionLabels(
+    answers.availability_windows,
+    toAvailabilityOptions()
+  );
+  const budget = optionFor(toBudgetOptions(options), answers.budget_segment);
+
+  if (
+    !goal ||
+    !stage ||
+    (answers.goal === "YKS" && !areas) ||
+    !subjects ||
+    !challenges ||
+    !teachingStyles ||
+    !availability ||
+    !budget
+  ) {
+    return null;
+  }
 
   const rows: HocaBulReviewRow[] = [
     {
       stepId: "hedef",
       label: "Hedef",
-      value: labelFor(goalOptions, answers.goal),
+      value: goal.label,
       isClientOnly: false,
     },
     {
       stepId: "asama",
       label: "Aşama",
-      value: labelFor(stageOptions, answers.stage),
+      value: stage.label,
       isClientOnly: false,
     },
   ];
@@ -266,10 +300,7 @@ export function buildReviewRows(
     rows.push({
       stepId: "yks_alan",
       label: "YKS alanı",
-      value: joinLabels(
-        client.yks_alan,
-        (value) => EXAM_AREA_LABELS[value as HocaBulExamArea] ?? value
-      ),
+      value: areas as string,
       isClientOnly: true,
     });
   }
@@ -278,42 +309,32 @@ export function buildReviewRows(
     {
       stepId: "dersler",
       label: "Dersler",
-      value: joinLabels(answers.subject_keys, (value) =>
-        labelFor(subjectOptions, value)
-      ),
+      value: subjects,
       isClientOnly: false,
     },
     {
       stepId: "zorluk",
-      label: "Zorlandığın alanlar",
-      value: joinLabels(
-        answers.challenges,
-        (value) => CHALLENGE_LABELS[value as MatchChallenge] ?? value
-      ),
+      label: "Zorluk",
+      value: challenges,
       isClientOnly: false,
     },
     {
       stepId: "hoca_yaklasimi",
       label: "Hoca yaklaşımı",
-      value: joinLabels(
-        answers.teaching_styles,
-        (value) => TEACHING_STYLE_LABELS[value as TutorTeachingStyle] ?? value
-      ),
+      value: teachingStyles,
       isClientOnly: false,
     },
     {
       stepId: "uygun_zamanlar",
       label: "Uygun zamanlar",
-      value: joinLabels(
-        answers.availability_windows,
-        (value) => AVAILABILITY_LABELS[value as MatchAvailabilityWindow] ?? value
-      ),
+      value: availability,
       isClientOnly: false,
     },
     {
       stepId: "butce",
       label: "Bütçe",
-      value: labelFor(budgetOptions, answers.budget_segment),
+      value: budget.label,
+      ...(budget.detail ? { detail: budget.detail } : {}),
       isClientOnly: false,
     }
   );

@@ -180,8 +180,13 @@ export function validateStep(
       return answers.goal ? { ok: true } : { ok: false, code: "required" };
     case "asama":
       return answers.stage ? { ok: true } : { ok: false, code: "required" };
-    case "yks_alan":
-      return sizeValidation(client.yks_alan?.length ?? 0, MAX_EXAM_AREAS);
+    case "yks_alan": {
+      const areas = client.yks_alan ?? [];
+      if (areas.includes("unsure") && areas.length > 1) {
+        return { ok: false, code: "exclusive_conflict" };
+      }
+      return sizeValidation(areas.length, MAX_EXAM_AREAS);
+    }
     case "dersler":
       return sizeValidation(answers.subject_keys?.length ?? 0, MAX_SUBJECTS);
     case "zorluk":
@@ -524,4 +529,21 @@ export function toMatchingAnswers(
     budget_segment,
     schema_version: 1,
   };
+}
+
+/**
+ * Validates the completed flow against the current server options before the
+ * existing serializer is allowed to create a completion payload.
+ */
+export function getValidatedMatchingAnswers(
+  answers: HocaBulApiAnswersDraft,
+  client: HocaBulClientAnswers,
+  options: MatchingOptions
+): HocaBulApiAnswers | null {
+  const pruned = pruneAnswersAgainstOptions(answers, client, options);
+  if (pruned.dropped.length > 0 || pruned.answers.goal !== answers.goal) {
+    return null;
+  }
+  if (!isFlowComplete(answers.goal, answers, client)) return null;
+  return toMatchingAnswers(answers);
 }

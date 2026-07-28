@@ -5,6 +5,7 @@ import {
   MATCHING_ANSWER_KEYS,
   applyAnswerChange,
   getFirstUnansweredStepId,
+  getValidatedMatchingAnswers,
   getNextStepId,
   getPreviousStepId,
   getStepTotal,
@@ -36,6 +37,23 @@ const completeAnswers: HocaBulApiAnswersDraft = {
   teaching_styles: ["question_speed"],
   availability_windows: ["weekday_evening"],
   budget_segment: "balanced",
+};
+
+const completionOptions: MatchingOptions = {
+  goals: [
+    { value: "YKS", label: "YKS" },
+    { value: "DGS", label: "DGS" },
+  ],
+  stages: {
+    YKS: [{ value: "grade_12", label: "12. sınıf" }],
+    DGS: [{ value: "ongoing", label: "Bir süredir hazırlanıyorum" }],
+    KPSS: [],
+    UNDECIDED: [],
+  },
+  subjects,
+  budget_ranges: [
+    { id: "balanced", label: "Dengeli", min: 400, max: 700 },
+  ],
 };
 
 describe("step order", () => {
@@ -168,6 +186,13 @@ describe("validation", () => {
     );
     assert.ok(
       validateStep("uygun_zamanlar", { availability_windows: ["flexible"] }, {}).ok
+    );
+  });
+
+  it("rejects unsure combined with a concrete YKS area", () => {
+    assert.deepEqual(
+      validateStep("yks_alan", {}, { yks_alan: ["unsure", "TYT"] }),
+      { ok: false, code: "exclusive_conflict" }
     );
   });
 
@@ -415,6 +440,57 @@ describe("request serialization", () => {
         ...completeAnswers,
         teaching_styles: ["question_speed", "high_target", "foundations_patient"],
       }),
+      null
+    );
+  });
+});
+
+describe("fresh completion validation", () => {
+  it("returns the serializer payload for complete YKS and non-YKS flows", () => {
+    assert.deepEqual(
+      getValidatedMatchingAnswers(completeAnswers, {}, completionOptions),
+      toMatchingAnswers(completeAnswers)
+    );
+    const yksAnswers = { ...completeAnswers, goal: "YKS" as const, stage: "grade_12" };
+    assert.deepEqual(
+      getValidatedMatchingAnswers(yksAnswers, { yks_alan: ["TYT"] }, completionOptions),
+      toMatchingAnswers(yksAnswers)
+    );
+  });
+
+  it("rejects incomplete client state and every answer removed by fresh pruning", () => {
+    const yksAnswers = { ...completeAnswers, goal: "YKS" as const, stage: "grade_12" };
+    assert.equal(getValidatedMatchingAnswers(yksAnswers, {}, completionOptions), null);
+    assert.equal(
+      getValidatedMatchingAnswers(
+        yksAnswers,
+        { yks_alan: ["unsure", "TYT"] },
+        completionOptions
+      ),
+      null
+    );
+    assert.equal(
+      getValidatedMatchingAnswers(
+        { ...completeAnswers, stage: "stale" },
+        {},
+        completionOptions
+      ),
+      null
+    );
+    assert.equal(
+      getValidatedMatchingAnswers(
+        { ...completeAnswers, subject_keys: ["missing"] },
+        {},
+        completionOptions
+      ),
+      null
+    );
+    assert.equal(
+      getValidatedMatchingAnswers(
+        { ...completeAnswers, budget_segment: "premium" },
+        {},
+        completionOptions
+      ),
       null
     );
   });

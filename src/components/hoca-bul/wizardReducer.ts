@@ -38,6 +38,8 @@ export interface WizardState {
   /** A resumable draft waiting for the student's decision. */
   pendingResume: HocaBulDraft | null;
   exitOpen: boolean;
+  /** Temporary return-to-review intent; never persisted in a draft or URL. */
+  reviewEditActive: boolean;
 }
 
 export type WizardAction =
@@ -51,6 +53,10 @@ export type WizardAction =
     }
   | { type: "next" }
   | { type: "back" }
+  | {
+      type: "editFromReview";
+      stepId: Exclude<HocaBulStepId, "kontrol">;
+    }
   | { type: "goToStep"; stepId: HocaBulStepId }
   | { type: "syncUrlStep"; stepId: string | null }
   | {
@@ -72,6 +78,7 @@ export const initialWizardState: WizardState = {
   invalidationSource: null,
   pendingResume: null,
   exitOpen: false,
+  reviewEditActive: false,
 };
 
 /** A draft is only worth interrupting for when it holds progress past the first step. */
@@ -103,7 +110,12 @@ export function wizardReducer(
     case "hydrate": {
       if (draftIsResumable(action.draft)) {
         // Ask before restoring; the answers stay untouched until the student decides.
-        return { ...state, phase: "ready", pendingResume: action.draft };
+        return {
+          ...state,
+          phase: "ready",
+          pendingResume: action.draft,
+          reviewEditActive: false,
+        };
       }
       const answers = action.draft?.answers ?? {};
       const client = action.draft?.client ?? {};
@@ -113,6 +125,7 @@ export function wizardReducer(
         answers,
         client,
         pendingResume: null,
+        reviewEditActive: false,
         stepId: sanitizeStepParam(action.urlStepId, answers.goal, answers, client),
       };
     }
@@ -130,6 +143,7 @@ export function wizardReducer(
         client,
         pendingResume: null,
         direction: 1,
+        reviewEditActive: false,
         stepId: sanitizeStepParam(draft.stepId, answers.goal, answers, client),
       };
     }
@@ -165,15 +179,55 @@ export function wizardReducer(
     }
 
     case "next": {
-      const next = getNextStepId(state.answers.goal, state.stepId);
+      const next = state.reviewEditActive
+        ? getFirstUnansweredStepId(
+            state.answers.goal,
+            state.answers,
+            state.client
+          )
+        : getNextStepId(state.answers.goal, state.stepId);
       if (!next || next === "submit") return state;
-      return { ...state, stepId: next, direction: 1, cleared: [], invalidationSource: null };
+      return {
+        ...state,
+        stepId: next,
+        direction: 1,
+        cleared: [],
+        invalidationSource: null,
+        reviewEditActive: next !== "kontrol" && state.reviewEditActive,
+      };
     }
 
     case "back": {
+      if (state.reviewEditActive) {
+        return {
+          ...state,
+          stepId: "kontrol",
+          direction: 1,
+          cleared: [],
+          invalidationSource: null,
+          reviewEditActive: false,
+        };
+      }
       const previous = getPreviousStepId(state.answers.goal, state.stepId);
       if (!previous) return state;
       return { ...state, stepId: previous, direction: -1, cleared: [], invalidationSource: null };
+    }
+
+    case "editFromReview": {
+      if (
+        state.stepId !== "kontrol" ||
+        !getStepById(state.answers.goal, action.stepId)
+      ) {
+        return state;
+      }
+      return {
+        ...state,
+        stepId: action.stepId,
+        direction: -1,
+        cleared: [],
+        invalidationSource: null,
+        reviewEditActive: true,
+      };
     }
 
     case "goToStep": {
@@ -194,13 +248,19 @@ export function wizardReducer(
         state.answers,
         state.client
       );
-      if (stepId === state.stepId) return state;
+      if (stepId === state.stepId) {
+        return state.reviewEditActive && stepId === "kontrol"
+          ? { ...state, reviewEditActive: false }
+          : state;
+      }
       return {
         ...state,
         direction: directionFor(state.stepId, stepId, state.answers, state.client),
         stepId,
         cleared: [],
         invalidationSource: null,
+        reviewEditActive:
+          stepId === "kontrol" ? false : state.reviewEditActive,
       };
     }
 

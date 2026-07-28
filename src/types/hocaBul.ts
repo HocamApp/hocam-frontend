@@ -71,6 +71,7 @@ export interface HocaBulVisibleStep {
 export type HocaBulValidationCode =
   | "required"
   | "max_exceeded"
+  | "exclusive_conflict"
   | "flexible_conflict"
   | "stale_options";
 
@@ -112,6 +113,8 @@ export interface HocaBulReviewRow {
   label: string;
   /** Already-localized answer, e.g. "Matematik, Fizik". */
   value: string;
+  /** Optional secondary copy, currently used for the selected budget range. */
+  detail?: string;
   /** True for yks_alan — shown to the student, never sent to the server. */
   isClientOnly: boolean;
 }

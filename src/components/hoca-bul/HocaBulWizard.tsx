@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useReducer, useRef } from "react";
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { MotionConfig } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
@@ -19,6 +19,8 @@ import {
 } from "@/lib/hocaBulDraft";
 import {
   isStepValid,
+  getFirstUnansweredStepId,
+  getValidatedMatchingAnswers,
   MAX_AVAILABILITY_WINDOWS,
   MAX_CHALLENGES,
   MAX_EXAM_AREAS,
@@ -29,6 +31,7 @@ import {
   toggleExamArea,
 } from "@/lib/hocaBulFlow";
 import {
+  buildReviewRows,
   toAvailabilityOptions,
   toBudgetOptions,
   toChallengeOptions,
@@ -47,14 +50,17 @@ import type {
 } from "@/types";
 import type {
   HocaBulDraft,
+  HocaBulApiAnswers,
   HocaBulExamArea,
   HocaBulGoal,
+  HocaBulStepId,
 } from "@/types/hocaBul";
 
 import { DraftResumeDialog } from "./DraftResumeDialog";
 import { ExitFlowDialog } from "./ExitFlowDialog";
 import { IllustrationPanel } from "./IllustrationPanel";
 import { MobileIllustrationBand } from "./MobileIllustrationBand";
+import { ReviewSummary } from "./ReviewSummary";
 import { MultiSelectGroup, SingleSelectGroup } from "./SelectionGroups";
 import { STEP_COPY, STEP_SHORT_LABEL } from "./stepCopy";
 import { WizardFooter } from "./WizardFooter";
@@ -84,7 +90,15 @@ const STEP_PARAM = "adim";
  * authenticated user id is known, so nothing is read during server rendering
  * and one account can never see another's draft.
  */
-export function HocaBulWizard() {
+export interface HocaBulWizardProps {
+  onComplete?: (answers: HocaBulApiAnswers) => void;
+  completionPending?: boolean;
+}
+
+export function HocaBulWizard({
+  onComplete,
+  completionPending = false,
+}: HocaBulWizardProps = {}) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, isLoading: authLoading } = useAuth();
@@ -97,6 +111,10 @@ export function HocaBulWizard() {
   const urlStepRef = useRef<string | null>(null);
   const pushDepthRef = useRef(0);
   const startedRef = useRef(false);
+  const completionLockRef = useRef(false);
+  const completionWasPendingRef = useRef(false);
+  const [completionLocked, setCompletionLocked] = useState(false);
+  const reviewNavigationRef = useRef<"idle" | "push" | "replace" | "return">("idle");
 
   const goal = state.answers.goal;
   const subjectKeys = useMemo(
@@ -138,6 +156,22 @@ export function HocaBulWizard() {
     state.client,
     state.phase,
   ]);
+  const freshPrunePending = Boolean(
+    freshPruneResult &&
+      (freshPruneResult.dropped.length > 0 ||
+        freshPruneResult.answers.goal !== state.answers.goal)
+  );
+
+  useEffect(() => {
+    if (completionPending) {
+      completionWasPendingRef.current = true;
+      return;
+    }
+    if (!completionWasPendingRef.current) return;
+    completionWasPendingRef.current = false;
+    completionLockRef.current = false;
+    setCompletionLocked(false);
+  }, [completionPending]);
 
   // --- Draft hydration ---------------------------------------------------------
   useEffect(() => {
@@ -183,7 +217,7 @@ export function HocaBulWizard() {
       state.phase !== "ready" ||
       !userId ||
       state.pendingResume ||
-      freshPruneResult?.dropped.length
+      freshPrunePending
     ) return;
     const base = draftRef.current ?? createDraft(userId);
     const next = touchDraft(base, {
@@ -200,19 +234,20 @@ export function HocaBulWizard() {
     state.phase,
     state.pendingResume,
     freshPruneResult,
+    freshPrunePending,
     userId,
   ]);
 
   // --- Drop answers the server no longer offers --------------------------------
   useEffect(() => {
-    if (!freshPruneResult?.dropped.length) return;
+    if (!freshPruneResult || !freshPrunePending) return;
     dispatch({
       type: "prune",
       answers: freshPruneResult.answers,
       client: freshPruneResult.client,
       dropped: freshPruneResult.dropped,
     });
-  }, [freshPruneResult]);
+  }, [freshPrunePending, freshPruneResult]);
 
   // --- State to URL ------------------------------------------------------------
   useEffect(() => {
@@ -223,15 +258,33 @@ export function HocaBulWizard() {
     urlStepRef.current = state.stepId;
     const href = `?${STEP_PARAM}=${state.stepId}`;
 
+    if (reviewNavigationRef.current === "return" && state.stepId === "kontrol") {
+      urlStepRef.current = "kontrol";
+      reviewNavigationRef.current = "idle";
+      if (pushDepthRef.current > 0) pushDepthRef.current -= 1;
+      router.back();
+      return;
+    }
+
     if (isFirstWrite) {
       router.replace(href, { scroll: false });
+      return;
+    }
+    if (state.reviewEditActive) {
+      if (reviewNavigationRef.current === "push") {
+        router.push(href, { scroll: false });
+        pushDepthRef.current += 1;
+        reviewNavigationRef.current = "replace";
+      } else {
+        router.replace(href, { scroll: false });
+      }
       return;
     }
     // Each step gets a history entry so the browser's back button and the
     // in-flow "Geri" control agree with each other.
     router.push(href, { scroll: false });
     pushDepthRef.current += 1;
-  }, [router, state.pendingResume, state.phase, state.stepId]);
+  }, [router, state.pendingResume, state.phase, state.reviewEditActive, state.stepId]);
 
   // --- URL to state ------------------------------------------------------------
   useEffect(() => {
@@ -267,13 +320,18 @@ export function HocaBulWizard() {
       return;
     }
     trackHocaBul({ event: "hoca_bul_step_back", step_id: state.stepId });
+    if (state.reviewEditActive) {
+      if (pushDepthRef.current > 0) reviewNavigationRef.current = "return";
+      dispatch({ type: "back" });
+      return;
+    }
     if (pushDepthRef.current > 0) {
       // Let the browser unwind its own history so back and "Geri" stay in sync.
       router.back();
       return;
     }
     dispatch({ type: "back" });
-  }, [atFirstStep, router, state.stepId]);
+  }, [atFirstStep, router, state.reviewEditActive, state.stepId]);
 
   const handleNext = useCallback(() => {
     trackHocaBul({
@@ -282,8 +340,24 @@ export function HocaBulWizard() {
       index: step.index,
       total: step.total,
     });
+    if (
+      state.reviewEditActive &&
+      getFirstUnansweredStepId(state.answers.goal, state.answers, state.client) ===
+        "kontrol" &&
+      pushDepthRef.current > 0
+    ) {
+      reviewNavigationRef.current = "return";
+    }
     dispatch({ type: "next" });
-  }, [state.stepId, step.index, step.total]);
+  }, [state.answers, state.client, state.reviewEditActive, state.stepId, step.index, step.total]);
+
+  const handleEditFromReview = useCallback(
+    (stepId: Exclude<HocaBulStepId, "kontrol">) => {
+      reviewNavigationRef.current = "push";
+      dispatch({ type: "editFromReview", stepId });
+    },
+    []
+  );
 
   const handleResume = useCallback(() => {
     const draft = state.pendingResume;
@@ -365,10 +439,12 @@ export function HocaBulWizard() {
     return <WizardBootSkeleton />;
   }
 
-  const needsFreshBudget = step.id === "butce" && optionsQuery.isPlaceholderData;
+  const needsFreshOptions =
+    (step.id === "butce" || step.id === "kontrol") &&
+    optionsQuery.isPlaceholderData;
   const optionsStatus = optionsQuery.isError
     ? "error"
-    : optionsQuery.data && !needsFreshBudget
+    : optionsQuery.data && !needsFreshOptions
       ? "ready"
       : "loading";
 
@@ -411,6 +487,33 @@ export function HocaBulWizard() {
   const describedBy = [helperId, validationMessage ? validationId : null]
     .filter(Boolean)
     .join(" ");
+
+  const validatedPayload =
+    step.id === "kontrol" &&
+    optionsStatus === "ready" &&
+    optionsQuery.data &&
+    !freshPrunePending
+      ? getValidatedMatchingAnswers(state.answers, state.client, optionsQuery.data)
+      : null;
+  const reviewRows =
+    validatedPayload && optionsQuery.data
+      ? buildReviewRows(state.answers, state.client, optionsQuery.data)
+      : null;
+
+  const handleComplete = () => {
+    if (
+      !onComplete ||
+      !validatedPayload ||
+      !reviewRows ||
+      completionPending ||
+      completionLockRef.current
+    ) {
+      return;
+    }
+    completionLockRef.current = true;
+    setCompletionLocked(true);
+    onComplete(validatedPayload);
+  };
 
   const renderQuestion = () => {
     const options = optionsQuery.data;
@@ -531,7 +634,9 @@ export function HocaBulWizard() {
           />
         );
       case "kontrol":
-        return null;
+        return reviewRows ? (
+          <ReviewSummary rows={reviewRows} onEdit={handleEditFromReview} />
+        ) : null;
     }
   };
 
@@ -546,10 +651,25 @@ export function HocaBulWizard() {
         )
       ));
   const continueDisabled =
-    step.isReview ||
-    optionsStatus !== "ready" ||
-    !currentStepIsValid ||
-    !budgetIsCurrent;
+    step.isReview
+      ? !onComplete ||
+        !validatedPayload ||
+        !reviewRows ||
+        completionPending ||
+        completionLocked
+      : optionsStatus !== "ready" ||
+        !currentStepIsValid ||
+        !budgetIsCurrent;
+  const reviewNote =
+    optionsStatus === "loading"
+      ? "Yanıtların güncel seçeneklerle doğrulanıyor."
+      : optionsStatus === "error"
+        ? "Seçenekler yüklenemediği için eşleşmeler henüz gösterilemiyor."
+        : !validatedPayload || !reviewRows
+          ? "Eksik veya geçersiz yanıtlarını tamamlaman gerekiyor."
+          : !onComplete
+            ? "Eşleşmeleri gösterme adımı henüz kullanıma hazır değil."
+            : null;
 
   return (
     <MotionConfig reducedMotion="user">
@@ -578,15 +698,19 @@ export function HocaBulWizard() {
         footer={
           <WizardFooter
             label={step.isReview ? "Eşleşmelerimi gör" : "Devam et"}
+            loading={step.isReview && completionPending}
+            loadingLabel="Eşleşmeler hazırlanıyor…"
             disabled={continueDisabled}
             describedById={
               step.isReview
-                ? reviewNoteId
+                ? reviewNote
+                  ? reviewNoteId
+                  : undefined
                 : validationMessage
                   ? validationId
                   : undefined
             }
-            onPrimary={handleNext}
+            onPrimary={step.isReview ? handleComplete : handleNext}
           />
         }
       >
@@ -606,15 +730,13 @@ export function HocaBulWizard() {
           ) : optionsStatus === "loading" ? (
             <WizardOptionsSkeleton />
           ) : (
-            <>
-              {question}
-              {step.isReview ? (
-                <p id={reviewNoteId} className="mt-4 text-sm text-muted-foreground">
-                  Eşleşme gönderimi sonraki aşamada eklenecek.
-                </p>
-              ) : null}
-            </>
+            question
           )}
+          {step.isReview && reviewNote ? (
+            <p id={reviewNoteId} className="mt-4 text-sm text-muted-foreground">
+              {reviewNote}
+            </p>
+          ) : null}
         </WizardQuestionPanel>
       </WizardShell>
 

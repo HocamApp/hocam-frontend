@@ -190,18 +190,25 @@ describe("review rows", () => {
 
   it("includes the YKS area row only for YKS, flagged as client-only", () => {
     const yksRows = buildReviewRows(answers, { yks_alan: ["TYT"] }, options);
+    assert.ok(yksRows);
     const areaRow = yksRows.find((row) => row.stepId === "yks_alan");
     assert.equal(areaRow?.isClientOnly, true);
     assert.equal(areaRow?.value, "TYT");
     assert.equal(yksRows.length, 8);
 
-    const dgsRows = buildReviewRows({ ...answers, goal: "UNDECIDED" }, {}, options);
+    const dgsRows = buildReviewRows(
+      { ...answers, goal: "UNDECIDED", stage: "exploring" },
+      {},
+      options
+    );
+    assert.ok(dgsRows);
     assert.equal(dgsRows.some((row) => row.stepId === "yks_alan"), false);
     assert.equal(dgsRows.length, 7);
   });
 
   it("localizes every answer", () => {
-    const rows = buildReviewRows(answers, {}, options);
+    const rows = buildReviewRows(answers, { yks_alan: ["TYT"] }, options);
+    assert.ok(rows);
     const byStep = Object.fromEntries(rows.map((row) => [row.stepId, row.value]));
     assert.equal(byStep.hedef, "YKS");
     assert.equal(byStep.asama, "12. sınıf");
@@ -210,11 +217,44 @@ describe("review rows", () => {
     assert.equal(byStep.hoca_yaklasimi, "Bol soru çözdüren");
     assert.equal(byStep.uygun_zamanlar, "Hafta içi akşam");
     assert.equal(byStep.butce, "Dengeli");
+    assert.equal(rows.find((row) => row.stepId === "zorluk")?.label, "Zorluk");
+    assert.equal(
+      rows.find((row) => row.stepId === "butce")?.detail,
+      "₺400 – ₺700 / 40 dk"
+    );
   });
 
-  it("renders empty values instead of crashing before the options arrive", () => {
-    const rows = buildReviewRows(answers, {}, undefined);
-    assert.equal(rows.find((row) => row.stepId === "hedef")?.value, "YKS");
-    assert.equal(rows.find((row) => row.stepId === "asama")?.value, "grade_12");
+  it("rejects unresolved values instead of exposing raw API tokens", () => {
+    assert.equal(
+      buildReviewRows({ ...answers, stage: "missing-stage" }, { yks_alan: ["TYT"] }, options),
+      null
+    );
+    assert.equal(
+      buildReviewRows({ ...answers, subject_keys: ["kimya"] }, { yks_alan: ["TYT"] }, options),
+      null
+    );
+    assert.equal(
+      buildReviewRows(answers, { yks_alan: ["TYT", "unknown" as never] }, options),
+      null
+    );
+  });
+
+  it("preserves the selected order for every multi-value summary", () => {
+    const rows = buildReviewRows(
+      {
+        ...answers,
+        subject_keys: ["matematik"],
+        challenges: ["consistency", "foundations"],
+        teaching_styles: ["high_target", "question_speed"],
+        availability_windows: ["weekend_day", "weekday_evening"],
+      },
+      { yks_alan: ["TYT"] },
+      options
+    );
+    assert.ok(rows);
+    const byStep = Object.fromEntries(rows.map((row) => [row.stepId, row.value]));
+    assert.equal(byStep.zorluk, "Düzenli çalışamıyorum, Konu temellerim eksik");
+    assert.equal(byStep.hoca_yaklasimi, "Zorlayan, yüksek hedef odaklı, Bol soru çözdüren");
+    assert.equal(byStep.uygun_zamanlar, "Hafta sonu gündüz, Hafta içi akşam");
   });
 });

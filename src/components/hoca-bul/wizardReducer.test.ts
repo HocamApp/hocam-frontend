@@ -28,6 +28,16 @@ function ready(overrides: Partial<WizardState> = {}): WizardState {
   return { ...initialWizardState, phase: "ready", ...overrides };
 }
 
+const completeAnswers = {
+  goal: "YKS" as const,
+  stage: "grade_12",
+  subject_keys: ["matematik"],
+  challenges: ["foundations" as const],
+  teaching_styles: ["question_speed" as const],
+  availability_windows: ["weekday_evening" as const],
+  budget_segment: "balanced" as const,
+};
+
 describe("hydration", () => {
   it("starts at the first step when there is no draft", () => {
     const state = wizardReducer(initialWizardState, {
@@ -154,6 +164,96 @@ describe("navigation", () => {
       stepId: "yks_alan",
     });
     assert.equal(state.stepId, "hedef");
+  });
+});
+
+describe("review editing", () => {
+  const review = () =>
+    ready({
+      answers: completeAnswers,
+      client: { yks_alan: ["TYT"] },
+      stepId: "kontrol",
+    });
+
+  it("opens every visible answer step without changing answers", () => {
+    for (const stepId of [
+      "hedef",
+      "asama",
+      "yks_alan",
+      "dersler",
+      "zorluk",
+      "hoca_yaklasimi",
+      "uygun_zamanlar",
+      "butce",
+    ] as const) {
+      const state = wizardReducer(review(), { type: "editFromReview", stepId });
+      assert.equal(state.stepId, stepId);
+      assert.equal(state.reviewEditActive, true);
+      assert.deepEqual(state.answers, completeAnswers);
+    }
+  });
+
+  it("rejects edit entry outside review and for a hidden branch step", () => {
+    const ordinary = ready({ answers: completeAnswers, stepId: "butce" });
+    assert.equal(
+      wizardReducer(ordinary, { type: "editFromReview", stepId: "hedef" }),
+      ordinary
+    );
+    const dgsReview = review();
+    dgsReview.answers = { ...completeAnswers, goal: "DGS" };
+    assert.equal(
+      wizardReducer(dgsReview, { type: "editFromReview", stepId: "yks_alan" }),
+      dgsReview
+    );
+  });
+
+  it("returns a valid leaf edit directly to review", () => {
+    const editing = wizardReducer(review(), {
+      type: "editFromReview",
+      stepId: "zorluk",
+    });
+    const returned = wizardReducer(editing, { type: "next" });
+    assert.equal(returned.stepId, "kontrol");
+    assert.equal(returned.reviewEditActive, false);
+  });
+
+  it("jumps from a subject edit to the invalidated budget only", () => {
+    let state = wizardReducer(review(), { type: "editFromReview", stepId: "dersler" });
+    state = wizardReducer(state, {
+      type: "answer",
+      change: { field: "subject_keys", value: ["matematik", "edebiyat"] },
+    });
+    state = wizardReducer(state, { type: "next" });
+    assert.equal(state.stepId, "butce");
+    assert.equal(state.reviewEditActive, true);
+  });
+
+  it("uses the first gap after a goal edit while preserving independent answers", () => {
+    let state = wizardReducer(review(), { type: "editFromReview", stepId: "hedef" });
+    state = wizardReducer(state, {
+      type: "answer",
+      change: { field: "goal", value: "DGS" },
+    });
+    state = wizardReducer(state, { type: "next" });
+    assert.equal(state.stepId, "asama");
+    assert.deepEqual(state.answers.challenges, ["foundations"]);
+    assert.deepEqual(state.answers.teaching_styles, ["question_speed"]);
+    assert.equal(state.reviewEditActive, true);
+  });
+
+  it("cancels edit intent on back, URL return, restart, and hydration", () => {
+    const editing = wizardReducer(review(), { type: "editFromReview", stepId: "butce" });
+    assert.equal(wizardReducer(editing, { type: "back" }).reviewEditActive, false);
+    assert.equal(
+      wizardReducer(editing, { type: "syncUrlStep", stepId: "kontrol" }).reviewEditActive,
+      false
+    );
+    assert.equal(wizardReducer(editing, { type: "restart" }).reviewEditActive, false);
+    assert.equal(
+      wizardReducer(editing, { type: "hydrate", draft: null, urlStepId: null })
+        .reviewEditActive,
+      false
+    );
   });
 });
 

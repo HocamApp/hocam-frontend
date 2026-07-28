@@ -11,11 +11,15 @@ import { Button } from "@/components/ui/button";
 export function WizardFooter({
   label,
   disabled = false,
+  loading = false,
+  loadingLabel,
   describedById,
   onPrimary,
 }: {
   label: string;
   disabled?: boolean;
+  loading?: boolean;
+  loadingLabel?: string;
   describedById?: string;
   onPrimary: () => void;
 }) {
@@ -28,12 +32,13 @@ export function WizardFooter({
         <Button
           type="button"
           size="lg"
-          disabled={disabled}
+          disabled={disabled || loading}
+          aria-busy={loading || undefined}
           aria-describedby={describedById}
           onClick={onPrimary}
           className="min-h-11 w-full rounded-xl sm:w-auto"
         >
-          {label}
+          {loading && loadingLabel ? loadingLabel : label}
           <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
         </Button>
       </div>

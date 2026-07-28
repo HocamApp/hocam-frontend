@@ -6,7 +6,7 @@ import React from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 
-import type { MatchingOptions } from "@/types";
+import type { MatchingAnswers, MatchingOptions } from "@/types";
 
 // framer-motion and useMediaQuery both read matchMedia, which the shared jsdom
 // setup does not provide.
@@ -86,11 +86,18 @@ const options: MatchingOptions = {
 let fetchCalls = 0;
 const queryCalls: Array<{ goal: string; subjectKeys: string[] }> = [];
 let shouldFail = false;
+let holdOptions = false;
+let releaseOptions: (() => void) | null = null;
 let currentOptions = options;
 let searchParams = new URLSearchParams();
 const routerCalls: Array<{ method: string; href?: string }> = [];
 
-let Wizard: (() => React.ReactNode) | null = null;
+type WizardProps = {
+  onComplete?: (answers: MatchingAnswers) => void;
+  completionPending?: boolean;
+};
+
+let Wizard: React.ComponentType<WizardProps> | null = null;
 
 async function loadWizard() {
   if (Wizard) return;
@@ -106,6 +113,11 @@ async function loadWizard() {
         fetchCalls += 1;
         queryCalls.push({ goal, subjectKeys: [...subjectKeys] });
         if (shouldFail) throw new Error("options unavailable");
+        if (holdOptions) {
+          await new Promise<void>((resolve) => {
+            releaseOptions = resolve;
+          });
+        }
         return currentOptions;
       },
     },
@@ -123,24 +135,64 @@ async function loadWizard() {
   });
 
   Wizard = (await import("./HocaBulWizard"))
-    .HocaBulWizard as unknown as () => React.ReactNode;
+    .HocaBulWizard as React.ComponentType<WizardProps>;
 }
 
-function renderWizard() {
+function renderWizard(props: WizardProps = {}) {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false, gcTime: 0 } },
   });
   return render(
     <QueryClientProvider client={client}>
-      {Wizard ? <Wizard /> : null}
+      {Wizard ? <Wizard {...props} /> : null}
     </QueryClientProvider>
   );
+}
+
+const completeDgsAnswers: MatchingAnswers = {
+  goal: "DGS",
+  stage: "ongoing",
+  subject_keys: ["matematik"],
+  challenges: ["foundations"],
+  teaching_styles: ["question_speed"],
+  availability_windows: ["weekday_evening"],
+  budget_segment: "balanced",
+  schema_version: 1,
+};
+
+function seedCompleteDraft() {
+  window.localStorage.setItem(
+    DRAFT_KEY,
+    JSON.stringify({
+      meta: { schemaVersion: 1, userId: "student-1", createdAt: NOW, updatedAt: NOW },
+      answers: completeDgsAnswers,
+      client: {},
+      stepId: "kontrol",
+      expiresAt: NOW + 60_000,
+    })
+  );
+}
+
+async function openCompleteReview(props: WizardProps = {}) {
+  seedCompleteDraft();
+  renderWizard(props);
+  fireEvent.click(
+    await screen.findByRole("button", { name: "Kaldığın yerden devam et" })
+  );
+  const heading = await screen.findByRole("heading", {
+    level: 1,
+    name: "Yanıtlarını kontrol et",
+  });
+  await screen.findByRole("button", { name: "Bütçe bölümünü düzenle" });
+  return heading;
 }
 
 beforeEach(async () => {
   await loadWizard();
   fetchCalls = 0;
   shouldFail = false;
+  holdOptions = false;
+  releaseOptions = null;
   currentOptions = options;
   queryCalls.length = 0;
   searchParams = new URLSearchParams();
@@ -512,6 +564,9 @@ describe("P3B question screens", () => {
     assert.equal(screen.getByRole("button", { name: /Devam et/ }).hasAttribute("disabled"), true);
     fireEvent.click(screen.getByRole("radio", { name: /Dengeli/ }));
     assert.equal(screen.getByRole("button", { name: /Devam et/ }).hasAttribute("disabled"), false);
+    await clickContinue();
+    await screen.findByRole("heading", { name: "Yanıtlarını kontrol et" });
+    assert.ok(screen.getByText("8 / 8"));
   });
 
   it("shows a navigable empty state instead of fabricating subjects", async () => {
@@ -521,5 +576,226 @@ describe("P3B question screens", () => {
     assert.ok(screen.getByText("Bu hedef için şu anda uygun ders bulunamadı."));
     fireEvent.click(screen.getByRole("button", { name: "Hedefimi değiştir" }));
     await screen.findByRole("heading", { name: "Hangi sınava hazırlanıyorsun?" });
+  });
+});
+
+describe("P3C review and completion boundary", () => {
+  it("renders seven localized semantic review sections with real budget detail", async () => {
+    await openCompleteReview();
+
+    const sections = screen.getAllByRole("region");
+    assert.equal(sections.length, 7);
+    assert.ok(screen.getByRole("heading", { level: 2, name: "Zorluk" }));
+    assert.ok(screen.getByText("Konu temellerim eksik"));
+    assert.ok(screen.getByText("₺400 – ₺700 / 40 dk"));
+    assert.equal(document.body.textContent?.includes("grade_12"), false);
+    assert.ok(screen.getByText("8 / 8"));
+  });
+
+  it("keeps the production boundary disabled with a referenced explanation", async () => {
+    await openCompleteReview();
+
+    const cta = screen.getByRole("button", { name: "Eşleşmelerimi gör" });
+    const note = screen.getByText(
+      "Eşleşmeleri gösterme adımı henüz kullanıma hazır değil."
+    );
+    assert.equal(cta.hasAttribute("disabled"), true);
+    assert.equal(cta.getAttribute("aria-describedby"), note.id);
+  });
+
+  it("passes only the validated payload once and leaves the draft and route intact", async () => {
+    const payloads: MatchingAnswers[] = [];
+    await openCompleteReview({ onComplete: (answers) => payloads.push(answers) });
+
+    const cta = screen.getByRole("button", { name: "Eşleşmelerimi gör" });
+    await waitFor(() => assert.equal(cta.hasAttribute("disabled"), false));
+    fireEvent.click(cta);
+    fireEvent.click(cta);
+
+    assert.deepEqual(payloads, [completeDgsAnswers]);
+    assert.ok(window.localStorage.getItem(DRAFT_KEY));
+    assert.equal(routerCalls.some((call) => call.href?.includes("sonuclar")), false);
+    assert.equal(cta.hasAttribute("aria-describedby"), false);
+  });
+
+  it("shows generic pending state without invoking completion again", async () => {
+    let calls = 0;
+    await openCompleteReview({
+      onComplete: () => { calls += 1; },
+      completionPending: true,
+    });
+    const cta = screen.getByRole("button", { name: "Eşleşmeler hazırlanıyor…" });
+    assert.equal(cta.getAttribute("aria-busy"), "true");
+    assert.equal(cta.hasAttribute("disabled"), true);
+    fireEvent.click(cta);
+    assert.equal(calls, 0);
+  });
+
+  it("edits one section and returns through the original review history entry", async () => {
+    await openCompleteReview();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Zorluk bölümünü düzenle" })
+    );
+    await screen.findByRole("heading", { level: 1, name: "Şu an seni en çok ne zorluyor?" });
+    assert.ok(routerCalls.some((call) => call.method === "push" && call.href === "?adim=zorluk"));
+
+    fireEvent.click(screen.getByRole("button", { name: "Düzenli çalışamıyorum" }));
+    await clickContinue();
+
+    await screen.findByRole("heading", { level: 1, name: "Yanıtlarını kontrol et" });
+    assert.ok(screen.getByText("Konu temellerim eksik, Düzenli çalışamıyorum"));
+    assert.equal(routerCalls.at(-1)?.method, "back");
+  });
+
+  it("keeps the review error explanation mounted and retryable", async () => {
+    seedCompleteDraft();
+    shouldFail = true;
+    renderWizard();
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Kaldığın yerden devam et" })
+    );
+
+    await screen.findByRole("heading", { level: 1, name: "Yanıtlarını kontrol et" });
+    assert.ok(await screen.findByRole("alert"));
+    const note = screen.getByText(
+      "Seçenekler yüklenemediği için eşleşmeler henüz gösterilemiyor."
+    );
+    const cta = screen.getByRole("button", { name: "Eşleşmelerimi gör" });
+    assert.equal(cta.getAttribute("aria-describedby"), note.id);
+
+    shouldFail = false;
+    fireEvent.click(screen.getByRole("button", { name: /Tekrar dene/ }));
+    await screen.findByRole("button", { name: "Bütçe bölümünü düzenle" });
+  });
+
+  it("keeps the review loading explanation mounted until fresh options arrive", async () => {
+    seedCompleteDraft();
+    holdOptions = true;
+    renderWizard();
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Kaldığın yerden devam et" })
+    );
+
+    await screen.findByRole("heading", { level: 1, name: "Yanıtlarını kontrol et" });
+    const note = screen.getByText("Yanıtların güncel seçeneklerle doğrulanıyor.");
+    const cta = screen.getByRole("button", { name: "Eşleşmelerimi gör" });
+    assert.equal(cta.hasAttribute("disabled"), true);
+    assert.equal(cta.getAttribute("aria-describedby"), note.id);
+
+    holdOptions = false;
+    releaseOptions?.();
+    await screen.findByRole("button", { name: "Bütçe bölümünü düzenle" });
+  });
+
+  it("replaces invalid edit jumps and preserves unrelated answers", async () => {
+    await openCompleteReview();
+    fireEvent.click(screen.getByRole("button", { name: "Dersler bölümünü düzenle" }));
+    await screen.findByRole("heading", { name: "Hangi derslerde desteğe ihtiyacın var?" });
+    fireEvent.click(screen.getByRole("button", { name: "Edebiyat 4 hoca" }));
+    await clickContinue();
+
+    await screen.findByRole("heading", { name: "Ders başına bütçen ne kadar?" });
+    assert.equal(routerCalls.at(-1)?.method, "replace");
+    fireEvent.click(screen.getByRole("radio", { name: /Dengeli/ }));
+    await clickContinue();
+
+    await screen.findByRole("heading", { name: "Yanıtlarını kontrol et" });
+    assert.ok(screen.getByText("Matematik, Edebiyat"));
+    assert.ok(screen.getByText("Konu temellerim eksik"));
+    assert.equal(routerCalls.at(-1)?.method, "back");
+  });
+
+  it("renders the complete YKS branch with its client-only area summary", async () => {
+    window.localStorage.setItem(
+      DRAFT_KEY,
+      JSON.stringify({
+        meta: { schemaVersion: 1, userId: "student-1", createdAt: NOW, updatedAt: NOW },
+        answers: { ...completeDgsAnswers, goal: "YKS", stage: "grade_12" },
+        client: { yks_alan: ["TYT"] },
+        stepId: "kontrol",
+        expiresAt: NOW + 60_000,
+      })
+    );
+    renderWizard();
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Kaldığın yerden devam et" })
+    );
+
+    await screen.findByRole("button", { name: "YKS alanı bölümünü düzenle" });
+    assert.equal(screen.getAllByRole("region").length, 8);
+    assert.ok(screen.getByRole("heading", { level: 2, name: "YKS alanı" }));
+    assert.ok(screen.getByText("9 / 9"));
+  });
+
+  it("routes a completed draft back to the first gap when its goal goes stale", async () => {
+    currentOptions = {
+      ...options,
+      goals: options.goals.filter((goal) => goal.value !== "DGS"),
+    };
+    seedCompleteDraft();
+    renderWizard();
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Kaldığın yerden devam et" })
+    );
+
+    await screen.findByRole("heading", { level: 1, name: "Hangi sınava hazırlanıyorsun?" });
+    assert.equal(screen.queryByText("DGS", { selector: "[data-value]" }), null);
+    await waitFor(() => {
+      const latest = JSON.parse(window.localStorage.getItem(DRAFT_KEY) ?? "{}");
+      assert.equal(latest.answers?.goal, undefined);
+      assert.equal(latest.stepId, "hedef");
+    });
+  });
+
+  it("routes stale subjects and budgets to their earliest required screen", async () => {
+    currentOptions = {
+      ...options,
+      subjects: options.subjects.filter((subject) => subject.key !== "matematik"),
+    };
+    seedCompleteDraft();
+    renderWizard();
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Kaldığın yerden devam et" })
+    );
+    await screen.findByRole("heading", { name: "Hangi derslerde desteğe ihtiyacın var?" });
+    cleanup();
+
+    currentOptions = {
+      ...options,
+      budget_ranges: options.budget_ranges.filter((band) => band.id !== "balanced"),
+    };
+    window.localStorage.clear();
+    seedCompleteDraft();
+    renderWizard();
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Kaldığın yerden devam et" })
+    );
+    await screen.findByRole("heading", { name: "Ders başına bütçen ne kadar?" });
+  });
+
+  it("uses ordinary Back from review and cancels an edit with one history back", async () => {
+    await openCompleteReview();
+    fireEvent.click(screen.getByRole("button", { name: "Geri" }));
+    await screen.findByRole("heading", { name: "Ders başına bütçen ne kadar?" });
+    cleanup();
+
+    routerCalls.length = 0;
+    window.localStorage.clear();
+    await openCompleteReview();
+    fireEvent.click(screen.getByRole("button", { name: "Bütçe bölümünü düzenle" }));
+    await screen.findByRole("heading", { name: "Ders başına bütçen ne kadar?" });
+    fireEvent.click(screen.getByRole("button", { name: "Geri" }));
+    const heading = await screen.findByRole("heading", { name: "Yanıtlarını kontrol et" });
+    await waitFor(() => assert.equal(document.activeElement, heading));
+    assert.equal(routerCalls.at(-1)?.method, "back");
+  });
+
+  it("keeps review cards in normal flow with wrapping content and visible actions", async () => {
+    await openCompleteReview();
+    const section = screen.getByRole("region", { name: "Dersler" });
+    assert.ok(section.className.includes("min-w-0"));
+    assert.equal(section.className.includes("overflow"), false);
+    assert.ok(section.querySelector("p")?.className.includes("break-words"));
+    assert.ok(screen.getByRole("button", { name: "Dersler bölümünü düzenle" }));
   });
 });
