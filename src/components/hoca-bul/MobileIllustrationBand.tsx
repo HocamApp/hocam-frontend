@@ -5,7 +5,7 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { IllustrationFrame } from "./illustrations/IllustrationFrame";
 import { crossFadeVariants } from "./motion";
-import type { HocaBulStepId } from "@/types/hocaBul";
+import type { IllustrationState } from "./illustrations/illustrationState";
 
 /**
  * Compact band above the question on tablet and mobile.
@@ -13,18 +13,15 @@ import type { HocaBulStepId } from "@/types/hocaBul";
  * On a short viewport it disappears entirely: the question and the primary
  * action matter more than decoration when there is no room for both.
  */
-export function MobileIllustrationBand({
-  stepId,
-  progress,
-}: {
-  stepId: HocaBulStepId;
-  progress: number;
-}) {
+export function MobileIllustrationBand({ state }: { state: IllustrationState }) {
   const reducedMotion = useReducedMotion();
   const isShortViewport = useMediaQuery("(max-height: 640px)");
   const variants = crossFadeVariants(Boolean(reducedMotion));
 
-  if (isShortViewport) return null;
+  // The query answers `undefined` until its effect runs. Rendering on that would
+  // mount the band and then pull it back out on exactly the short viewports it is
+  // supposed to spare, so it waits for a real answer instead.
+  if (isShortViewport !== false) return null;
 
   return (
     <div
@@ -33,14 +30,14 @@ export function MobileIllustrationBand({
     >
       <AnimatePresence initial={false}>
         <motion.div
-          key={stepId}
+          key={state.step}
           initial={variants.initial}
           animate={variants.animate}
           exit={variants.exit}
           transition={variants.transition}
           className="absolute inset-0 h-full w-full"
         >
-          <IllustrationFrame stepId={stepId} progress={progress} variant="band" />
+          <IllustrationFrame state={state} compact />
         </motion.div>
       </AnimatePresence>
     </div>

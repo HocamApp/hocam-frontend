@@ -58,6 +58,7 @@ import type {
 
 import { DraftResumeDialog } from "./DraftResumeDialog";
 import { ExitFlowDialog } from "./ExitFlowDialog";
+import { toIllustrationState } from "./illustrations/illustrationState";
 import { IllustrationPanel } from "./IllustrationPanel";
 import { MobileIllustrationBand } from "./MobileIllustrationBand";
 import { ReviewSummary } from "./ReviewSummary";
@@ -312,6 +313,14 @@ export function HocaBulWizard({
   const step = currentVisibleStep(state);
   const copy = STEP_COPY[step.id];
   const atFirstStep = isFirstStep(state);
+
+  // The only thing the artwork ever sees. A small typed projection rather than
+  // the wizard state itself, so an illustration cannot read an answer it has no
+  // business reading — or write one at all.
+  const illustrationState = useMemo(
+    () => toIllustrationState(step.id, state.answers, state.client),
+    [step.id, state.answers, state.client]
+  );
 
   const handleBack = useCallback(() => {
     if (atFirstStep) {
@@ -674,17 +683,9 @@ export function HocaBulWizard({
   return (
     <MotionConfig reducedMotion="user">
       <WizardShell
-        illustration={
-          <IllustrationPanel
-            stepId={step.id}
-            progress={step.humanIndex / step.total}
-          />
-        }
+        illustration={<IllustrationPanel state={illustrationState} />}
         mobileIllustration={
-          <MobileIllustrationBand
-            stepId={step.id}
-            progress={step.humanIndex / step.total}
-          />
+          <MobileIllustrationBand state={illustrationState} />
         }
         header={
           <WizardHeader

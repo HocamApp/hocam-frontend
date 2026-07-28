@@ -1,68 +1,56 @@
 "use client";
 
-import type { HocaBulStepId } from "@/types/hocaBul";
+import { useReducedMotion } from "framer-motion";
+
+import {
+  COMPACT_VIEWBOX,
+  ILLUSTRATION_VIEWBOX,
+} from "./illustrationTokens";
+import { renderIllustration } from "./registry";
+import type { IllustrationState } from "./illustrationState";
 
 /**
- * Structural placeholder for the per-step artwork built in a later phase.
+ * The frame every artwork is drawn inside.
  *
- * It already establishes the contract the real illustrations will honour: a
- * fixed viewBox, decorative-only semantics, and colours taken from theme tokens
- * via currentColor so light and dark both work without a second palette.
+ * It owns the three things that must not vary between the nine illustrations:
+ *
+ *  - The canvas. One square viewBox, scaled with `meet` rather than `slice`, so
+ *    nothing is ever cropped to fill the column. The compact band reframes the
+ *    same canvas to its authored middle rather than cropping the tall one.
+ *  - The ink. `text-foreground` inverts near-black to near-white between themes;
+ *    every stroke below is `currentColor`, so one class flips the whole family.
+ *    `text-primary` is deliberately not used — it is near-black in light but
+ *    bright blue in dark, which would change the hue rather than the lightness.
+ *  - The motion preference, read once here and passed down, rather than nine
+ *    components subscribing to the same media query.
+ *
+ * The artwork carries no information the question text does not already state,
+ * so the whole subtree is hidden from assistive technology.
  */
-export interface IllustrationProps {
-  stepId: HocaBulStepId;
-  /** How far along the flow the student is, 0–1. */
-  progress: number;
-  variant?: "panel" | "band";
+export interface IllustrationFrameProps {
+  state: IllustrationState;
+  /** The band above the question on tablet and mobile, where height is scarce. */
+  compact?: boolean;
 }
 
-const LANE_STOPS = [0.08, 0.24, 0.4, 0.56, 0.72, 0.88];
-
 export function IllustrationFrame({
-  stepId,
-  progress,
-  variant = "panel",
-}: IllustrationProps) {
-  const isBand = variant === "band";
+  state,
+  compact = false,
+}: IllustrationFrameProps) {
+  const reducedMotion = useReducedMotion();
 
   return (
     <svg
-      viewBox={isBand ? "0 120 480 240" : "0 0 480 640"}
-      className="h-full w-full text-primary"
-      preserveAspectRatio="xMidYMid slice"
+      viewBox={compact ? COMPACT_VIEWBOX : ILLUSTRATION_VIEWBOX}
+      className="h-full w-full text-foreground"
+      preserveAspectRatio="xMidYMid meet"
       aria-hidden="true"
       focusable="false"
       role="presentation"
-      data-step={stepId}
+      data-step={state.step}
+      data-compact={compact || undefined}
     >
-      <rect x="0" y="0" width="480" height="640" className="fill-muted/40" />
-      <path
-        d="M60 560 C 150 500, 180 380, 240 300 S 360 150, 420 90"
-        fill="none"
-        stroke="currentColor"
-        strokeOpacity="0.25"
-        strokeWidth="3"
-        strokeLinecap="round"
-        strokeDasharray="10 12"
-      />
-      {LANE_STOPS.map((stop, index) => {
-        const reached = progress >= stop;
-        const x = 60 + stop * 360;
-        const y = 560 - stop * 470;
-        return (
-          <circle
-            key={index}
-            cx={x}
-            cy={y}
-            r={reached ? 11 : 7}
-            fill={reached ? "currentColor" : "none"}
-            fillOpacity={reached ? 0.9 : 0}
-            stroke="currentColor"
-            strokeOpacity={reached ? 0.9 : 0.3}
-            strokeWidth="3"
-          />
-        );
-      })}
+      {renderIllustration(state, { compact, reduced: Boolean(reducedMotion) })}
     </svg>
   );
 }
