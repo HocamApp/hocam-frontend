@@ -43,7 +43,8 @@ export const OptionRow = forwardRef<HTMLButtonElement, OptionRowProps>(
         data-selected={selected || undefined}
         data-invalid={invalid || undefined}
         className={cn(
-          "group flex min-h-14 w-full items-center gap-3 rounded-2xl border px-4 py-3 text-left transition-[border-color,background-color,color,box-shadow]",
+          "group flex min-h-14 w-full items-center gap-3 rounded-2xl border px-4 py-3 text-left transition-[border-color,background-color,color,box-shadow,transform] [transition-duration:120ms]",
+          "motion-safe:active:scale-[0.98]",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
           "disabled:cursor-not-allowed disabled:opacity-50",
           selected
@@ -100,7 +101,8 @@ export const OptionChip = forwardRef<HTMLButtonElement, OptionChipProps>(
         aria-pressed={selected}
         data-invalid={invalid || undefined}
         className={cn(
-          "inline-flex min-h-11 items-center gap-2 rounded-xl border px-4 py-2.5 text-left text-sm font-semibold transition-[border-color,background-color,color,box-shadow]",
+          "inline-flex min-h-11 items-center gap-2 rounded-xl border px-4 py-2.5 text-left text-sm font-semibold transition-[border-color,background-color,color,box-shadow,transform] [transition-duration:120ms]",
+          "motion-safe:active:scale-[0.98]",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
           "disabled:cursor-not-allowed disabled:opacity-50",
           selected

@@ -6,6 +6,7 @@ import React, { useState } from "react";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 
 import { MultiSelectGroup, SingleSelectGroup } from "./SelectionGroups";
+import { HB_MOTION } from "./motion";
 
 afterEach(cleanup);
 
@@ -135,5 +136,54 @@ describe("MultiSelectGroup keyboard behavior", () => {
     fireEvent.click(first);
     assert.equal(screen.queryByRole("alert"), null);
     assert.equal(third.getAttribute("data-invalid"), null);
+  });
+});
+
+describe("option press feedback", () => {
+  it("uses the motion contract's press timing on both option shapes", () => {
+    // The class literal cannot import the contract (Tailwind scans source), so
+    // the test pins them together: changing one without the other fails here.
+    const expected = `[transition-duration:${HB_MOTION.optionPress.duration * 1000}ms]`;
+
+    render(
+      <SingleSelectGroup
+        label="Sıra seç"
+        options={radioOptions}
+        onValueChange={() => {}}
+      />
+    );
+    for (const button of screen.getAllByRole("radio")) {
+      assert.ok(button.className.includes(expected), button.className);
+      assert.ok(button.className.includes("motion-safe:active:scale-[0.98]"));
+    }
+    cleanup();
+
+    render(
+      <MultiSelectGroup
+        label="Alan seç"
+        options={toggleOptions}
+        values={[]}
+        onValuesChange={() => {}}
+        maximum={2}
+      />
+    );
+    for (const button of screen.getAllByRole("button")) {
+      assert.ok(button.className.includes(expected), button.className);
+      assert.ok(button.className.includes("motion-safe:active:scale-[0.98]"));
+    }
+  });
+
+  it("keeps the press feedback off the accessibility contract", () => {
+    render(
+      <SingleSelectGroup
+        label="Sıra seç"
+        options={radioOptions}
+        onValueChange={() => {}}
+      />
+    );
+    // Press scale is visual only: motion-safe keeps it away from reduced
+    // motion, and nothing about roles or disabled state changed with it.
+    const disabledButton = screen.getByRole("radio", { name: "Kapalı" });
+    assert.equal(disabledButton.getAttribute("disabled"), "");
   });
 });
