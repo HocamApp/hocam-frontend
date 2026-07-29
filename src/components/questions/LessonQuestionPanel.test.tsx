@@ -34,7 +34,9 @@ const silentToast = Object.assign(() => {}, {
 });
 
 let currentRole: "student" | "tutor" = "tutor";
-let Panel: (props: Record<string, unknown>) => React.ReactNode;
+let Panel:
+  | ((props: Record<string, unknown>) => React.ReactNode)
+  | undefined;
 
 async function ensurePanel() {
   if (Panel) return;
@@ -108,6 +110,7 @@ async function renderPanel(
 ) {
   currentRole = role;
   await ensurePanel();
+  assert.ok(Panel);
   const client = new QueryClient();
   render(
     React.createElement(

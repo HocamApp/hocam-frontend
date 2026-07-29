@@ -1,6 +1,12 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { HOCA_BUL_ENABLED } from "@/lib/featureFlags";
+import { PRIVATE_ROBOTS } from "@/lib/seo";
+
+export const metadata: Metadata = {
+  robots: PRIVATE_ROBOTS,
+};
 
 /**
  * /hoca-bul lives outside the (main) group on purpose: the matching flow is a
