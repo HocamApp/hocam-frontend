@@ -48,6 +48,15 @@ export function HocaBulResults() {
     queryKey: ["hoca-bul-results", userId],
     enabled: Boolean(userId),
     retry: false,
+    // The resolution is a function of the stored draft and the preview cache,
+    // neither of which the query key can see. Inheriting the app-wide five
+    // minute staleTime therefore replayed whatever the previous visit resolved:
+    // a student who edited their answers got their old matches back, and a
+    // cached "redirect" from a cold visit threw them back to the goal question
+    // moments after they finished the wizard. Re-resolving on every mount is
+    // cheap — a valid session-cache hit still short-circuits before any request.
+    staleTime: 0,
+    refetchOnMount: "always",
     queryFn: async ({ signal }) => {
       if (!userId) return { kind: "redirect", href: "/hoca-bul?adim=hedef" };
 
@@ -111,14 +120,21 @@ export function HocaBulResults() {
     },
   });
 
-  useEffect(() => {
-    if (resolution.data?.kind === "redirect") {
-      router.replace(resolution.data.href);
-    }
-  }, [resolution.data, router]);
+  // Only this mount's own resolution may be acted on. A cached value from an
+  // earlier visit is still handed over synchronously while the forced refetch
+  // is in flight, and acting on it would either show the previous answers'
+  // matches or replay a stale redirect and navigate the student out of the
+  // route they just earned. Until the refetch settles this renders as loading.
+  const resolved = resolution.isFetchedAfterMount ? resolution.data : undefined;
 
-  if (resolution.data?.kind === "ready") {
-    return <HocaBulResultsView preview={resolution.data.preview} answers={resolution.data.answers} />;
+  useEffect(() => {
+    if (resolved?.kind === "redirect") {
+      router.replace(resolved.href);
+    }
+  }, [resolved, router]);
+
+  if (resolved?.kind === "ready") {
+    return <HocaBulResultsView preview={resolved.preview} answers={resolved.answers} />;
   }
 
   if (resolution.isError) {

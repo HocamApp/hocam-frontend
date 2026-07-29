@@ -176,3 +176,124 @@ describe("HocaBulResults route resolution", () => {
     await waitFor(() => assert.equal(routerCalls.at(-1), "/hoca-bul?adim=hedef"));
   });
 });
+
+/**
+ * The resolution depends on localStorage and sessionStorage, which the query key
+ * cannot observe. These cases run against the real production cache defaults and
+ * one shared client across both visits — exactly what the app does — so a
+ * resolution that is replayed instead of recomputed fails here.
+ */
+describe("HocaBulResults revisit resolution", () => {
+  // Mirrors src/lib/queryClient.ts. Copied rather than imported so a future
+  // change to the app-wide default cannot silently disarm this regression.
+  const PRODUCTION_STALE_TIME = 1000 * 60 * 5;
+
+  function productionClient() {
+    return new QueryClient({
+      defaultOptions: {
+        queries: {
+          staleTime: PRODUCTION_STALE_TIME,
+          retry: 1,
+          refetchOnWindowFocus: false,
+        },
+      },
+    });
+  }
+
+  function mount(client: QueryClient, Component: React.ComponentType) {
+    return render(
+      <QueryClientProvider client={client}>
+        <Component />
+      </QueryClientProvider>
+    );
+  }
+
+  function completeDraft() {
+    writeDraft(
+      window.localStorage,
+      createDraft("student-1", Date.now(), {
+        answers,
+        client: { yks_alan: ["unsure"] },
+        stepId: "kontrol",
+      })
+    );
+  }
+
+  it("does not replay a cold-visit redirect after the student finishes the wizard", async () => {
+    const { HocaBulResults } = await import("./HocaBulResults");
+    const client = productionClient();
+
+    // Visit one: nothing stored yet, so the route sends them to the first step.
+    mount(client, HocaBulResults);
+    await waitFor(() => assert.equal(routerCalls.at(-1), "/hoca-bul?adim=hedef"));
+    cleanup();
+
+    // The student then completes the wizard and submits, which writes the draft
+    // and the preview cache before the results route is opened again. The
+    // baseline is taken after unmount so it counts only what the second visit
+    // navigates, not the first visit's own trailing effect run.
+    completeDraft();
+    writePreview(window.sessionStorage, "student-1", answers, {
+      matches: [],
+      candidate_count: 9,
+    });
+    const redirectsBefore = routerCalls.length;
+
+    mount(client, HocaBulResults);
+
+    await screen.findByRole("heading", {
+      name: "Şu an tam uyan bir hoca bulamadık",
+    });
+    assert.deepEqual(
+      routerCalls.slice(redirectsBefore),
+      [],
+      "the stale redirect must not fire again on the second visit"
+    );
+  });
+
+  it("resolves the new preview after preferences are edited and resubmitted", async () => {
+    const { HocaBulResults } = await import("./HocaBulResults");
+    const client = productionClient();
+
+    // Visit one: the current answers genuinely match nobody.
+    completeDraft();
+    writePreview(window.sessionStorage, "student-1", answers, {
+      matches: [],
+      candidate_count: 9,
+    });
+    mount(client, HocaBulResults);
+    await screen.findByRole("heading", {
+      name: "Şu an tam uyan bir hoca bulamadık",
+    });
+    cleanup();
+
+    // The student widens their budget and resubmits. New answers, new hash, so
+    // the wizard writes a second preview entry beside the first.
+    const widened: MatchingAnswers = { ...answers, budget_segment: "flexible" };
+    writeDraft(
+      window.localStorage,
+      createDraft("student-1", Date.now(), {
+        answers: widened,
+        client: { yks_alan: ["unsure"] },
+        stepId: "kontrol",
+      })
+    );
+    writePreview(window.sessionStorage, "student-1", widened, {
+      matches: [match("s", "strong")],
+      candidate_count: 4,
+    });
+
+    mount(client, HocaBulResults);
+
+    // The widened answers must win; the previous empty result must not persist.
+    await screen.findByRole("article", { name: "Ads Soyad" });
+    assert.equal(
+      screen.queryByRole("heading", {
+        name: "Şu an tam uyan bir hoca bulamadık",
+      }),
+      null
+    );
+    // Both visits were served from the session cache, so no request was needed.
+    assert.equal(previewCalls, 0);
+  });
+});
