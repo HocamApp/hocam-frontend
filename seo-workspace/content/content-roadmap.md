@@ -1,6 +1,16 @@
 # Content, Architecture, On-Page, Trust, Media, and Conversion Roadmap
 
-No page in this document has been created. These are visible-content and information-architecture proposals that require separate approval.
+The first approved batch has been implemented locally and is not deployed:
+
+- `/yks-ozel-ders`
+- `/yks/tyt/matematik-ozel-ders`
+- `/yks/ayt/matematik-ozel-ders`
+- `/nasil-calisir`
+- `/hocalar-nasil-dogrulaniyor`
+- `/rehber/online-ozel-ders-ucretleri`
+- `/hakkimizda`
+
+The remaining routes are proposals that still require separate approval. Contact and legal pages remain pending because approved public text and ownership details were not available.
 
 ## Recommended public architecture
 
@@ -56,7 +66,7 @@ Lower-impact alternative:
 - Preserve `/` as login.
 - Create `/yks-ozel-ders` as the primary public landing page.
 
-The preferred option is stronger for entity clarity and acquisition but changes the visible user entry flow. It requires product approval and conversion testing.
+The lower-impact alternative is implemented locally. The root authentication flow is unchanged. Moving the public experience to `/` remains a separate product decision.
 
 ## Publication order
 

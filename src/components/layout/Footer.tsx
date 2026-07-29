@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 export function Footer() {
@@ -11,11 +12,54 @@ export function Footer() {
     return null;
   }
 
+  const showPublicLinks = [
+    "/tutors",
+    "/yks",
+    "/yks-ozel-ders",
+    "/rehber",
+    "/nasil-calisir",
+    "/hocalar-nasil-dogrulaniyor",
+    "/hakkimizda",
+  ].some(
+    (publicPath) =>
+      pathname === publicPath || pathname?.startsWith(`${publicPath}/`)
+  );
+
   return (
-    <footer className="border-t py-6">
-      <p className="text-center text-sm text-muted-foreground">
-        © {new Date().getFullYear()} Hocam. Tüm hakları saklıdır.
-      </p>
+    <footer className="border-t">
+      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+        {showPublicLinks && (
+          <nav
+            aria-label="Hocam hakkında ve YKS özel ders bağlantıları"
+            className="mb-5 flex flex-wrap justify-center gap-x-5 gap-y-3 text-sm"
+          >
+            <Link href="/yks-ozel-ders" className="hover:text-primary">
+              YKS Özel Ders
+            </Link>
+            <Link href="/nasil-calisir" className="hover:text-primary">
+              Nasıl Çalışır?
+            </Link>
+            <Link
+              href="/hocalar-nasil-dogrulaniyor"
+              className="hover:text-primary"
+            >
+              Hoca Doğrulama
+            </Link>
+            <Link
+              href="/rehber/online-ozel-ders-ucretleri"
+              className="hover:text-primary"
+            >
+              Ders Ücretleri
+            </Link>
+            <Link href="/hakkimizda" className="hover:text-primary">
+              Hakkımızda
+            </Link>
+          </nav>
+        )}
+        <p className="text-center text-sm text-muted-foreground">
+          © {new Date().getFullYear()} Hocam. Tüm hakları saklıdır.
+        </p>
+      </div>
     </footer>
   );
 }
