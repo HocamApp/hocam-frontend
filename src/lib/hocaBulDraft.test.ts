@@ -1,14 +1,11 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import { MATCHING_DRAFT_KEY, createMatchingDraft } from "./matchingDraft";
 import {
   HOCA_BUL_DRAFT_TTL_MS,
   clearDraft,
-  copyLegacyDraft,
   createDraft,
   draftKey,
-  legacyDraftKey,
   readDraft,
   touchDraft,
   writeDraft,
@@ -28,7 +25,6 @@ describe("draft keys", () => {
     assert.equal(draftKey(undefined), null);
     assert.equal(draftKey(""), null);
     assert.equal(draftKey(USER), `hocam:hoca-bul-draft:v1:${USER}`);
-    assert.equal(legacyDraftKey(USER), `${MATCHING_DRAFT_KEY}:${USER}`);
   });
 });
 
@@ -163,105 +159,9 @@ describe("draft round trip", () => {
   it("clears only its own key", () => {
     const storage = seededStorage();
     writeDraft(storage, createDraft(USER, NOW));
-    storage.setItem(legacyDraftKey(USER) as string, "legacy-value");
+    storage.setItem("unrelated-key", "unrelated-value");
     clearDraft(storage, USER);
     assert.equal(storage.getItem(draftKey(USER) as string), null);
-    assert.equal(storage.getItem(legacyDraftKey(USER) as string), "legacy-value");
-  });
-});
-
-describe("legacy /match draft", () => {
-  function withLegacy() {
-    const storage = seededStorage();
-    const legacy = createMatchingDraft(
-      {
-        goal: "YKS",
-        stage: "grade_12",
-        subject_keys: ["matematik"],
-        challenges: ["foundations"],
-        teaching_styles: ["question_speed"],
-        availability_windows: ["weekday_evening"],
-        budget_segment: "balanced",
-        schema_version: 1,
-      },
-      4,
-      NOW
-    );
-    const raw = JSON.stringify(legacy);
-    storage.setItem(legacyDraftKey(USER) as string, raw);
-    return { storage, raw };
-  }
-
-  it("copies the compatible answers into the new key", () => {
-    const { storage } = withLegacy();
-    const result = copyLegacyDraft(storage, USER, NOW);
-    assert.equal(result.copied, true);
-    assert.equal(result.draft?.answers.goal, "YKS");
-    assert.equal(result.draft?.answers.stage, "grade_12");
-    assert.deepEqual(result.draft?.answers.subject_keys, ["matematik"]);
-    assert.equal(result.draft?.answers.budget_segment, "balanced");
-  });
-
-  it("leaves the legacy value byte-for-byte intact", () => {
-    const { storage, raw } = withLegacy();
-    copyLegacyDraft(storage, USER, NOW);
-    assert.equal(storage.getItem(legacyDraftKey(USER) as string), raw);
-  });
-
-  it("never calls setItem or removeItem on the legacy key", () => {
-    const { storage } = withLegacy();
-    const legacyKey = legacyDraftKey(USER) as string;
-    const touched: string[] = [];
-    const spy: StorageLike = {
-      getItem: (key) => storage.getItem(key),
-      setItem: (key, value) => {
-        touched.push(key);
-        storage.setItem(key, value);
-      },
-      removeItem: (key) => {
-        touched.push(key);
-        storage.removeItem(key);
-      },
-    };
-
-    copyLegacyDraft(spy, USER, NOW);
-    assert.equal(touched.includes(legacyKey), false);
-  });
-
-  it("does not ignore the legacy draft's numeric step, it recomputes from answers", () => {
-    const { storage } = withLegacy();
-    const result = copyLegacyDraft(storage, USER, NOW);
-    // The legacy index 4 belongs to a different order; the new draft starts at
-    // its own default and the caller derives the resume point.
-    assert.equal(result.draft?.stepId, "hedef");
-  });
-
-  it("runs once — the marker lives in the new draft, not the legacy value", () => {
-    const { storage } = withLegacy();
-    const first = copyLegacyDraft(storage, USER, NOW);
-    assert.equal(first.alreadyAttempted, false);
-    assert.equal(first.draft?.meta.legacyCopy?.copied, true);
-
-    const second = copyLegacyDraft(storage, USER, NOW + 5_000);
-    assert.equal(second.alreadyAttempted, true);
-    assert.equal(second.copied, false);
-  });
-
-  it("ignores an expired legacy draft without deleting it", () => {
-    const { storage, raw } = withLegacy();
-    const result = copyLegacyDraft(storage, USER, NOW + 8 * 24 * 60 * 60 * 1000);
-    assert.equal(result.copied, false);
-    assert.equal(storage.getItem(legacyDraftKey(USER) as string), raw);
-  });
-
-  it("keeps an in-progress hoca-bul draft instead of overwriting it", () => {
-    const { storage } = withLegacy();
-    writeDraft(
-      storage,
-      touchDraft(createDraft(USER, NOW), { answers: { goal: "KPSS" }, stepId: "asama" }, NOW)
-    );
-    const result = copyLegacyDraft(storage, USER, NOW);
-    assert.equal(result.copied, false);
-    assert.equal(result.draft?.answers.goal, "KPSS");
+    assert.equal(storage.getItem("unrelated-key"), "unrelated-value");
   });
 });

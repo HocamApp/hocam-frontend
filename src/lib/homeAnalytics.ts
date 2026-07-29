@@ -3,7 +3,6 @@ export type HomeAnalyticsEvent =
   | "home_subject_search_opened"
   | "home_subject_selected"
   | "home_tutor_search_submitted"
-  | "home_matching_started"
   | "home_learning_link_clicked"
   | "home_question_link_clicked"
   | "home_tutor_profile_opened"

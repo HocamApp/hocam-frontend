@@ -12,7 +12,6 @@ import { trackHocaBul } from "@/lib/hocaBulAnalytics";
 import { parseEntrySource, parseGoalParam } from "@/lib/hocaBulEntryState";
 import {
   clearDraft,
-  copyLegacyDraft,
   createDraft,
   readDraft,
   touchDraft,
@@ -186,16 +185,6 @@ export function HocaBulWizard({
     hydratedForUserRef.current = userId;
 
     const storage = getLocalStorage();
-    // Reads the legacy /match draft once and copies what still applies. That
-    // key is never written to or deleted here.
-    const legacy = copyLegacyDraft(storage, userId);
-    if (!legacy.alreadyAttempted) {
-      trackHocaBul({
-        event: "hoca_bul_legacy_draft_copied",
-        copied: legacy.copied,
-      });
-    }
-
     const draft = readDraft(storage, userId);
     draftRef.current = draft ?? createDraft(userId);
     // Both known sources mean the student just came from a screen that already
@@ -403,8 +392,8 @@ export function HocaBulWizard({
 
   const handleRestart = useCallback(() => {
     if (userId) {
-      // Clears this flow's own key only — the legacy /match draft and every
-      // other stored value are left exactly as they are.
+      // Clears this flow's own key only — every other stored value is left
+      // exactly as it is.
       clearDraft(getLocalStorage(), userId);
       draftRef.current = createDraft(userId);
     }

@@ -1,8 +1,4 @@
 import {
-  MATCHING_DRAFT_KEY,
-  parseMatchingDraft,
-} from "@/lib/matchingDraft";
-import {
   AVAILABILITY_ORDER,
   CHALLENGE_ORDER,
   TEACHING_STYLE_ORDER,
@@ -31,13 +27,9 @@ import type {
 
 /**
  * Draft persistence for /hoca-bul.
- *
- * Deliberately a separate module from matchingDraft.ts: that one is still
- * imported by the live /match page, so it is read here and never modified.
  */
 
 export const HOCA_BUL_DRAFT_KEY_PREFIX = "hocam:hoca-bul-draft:v1";
-export const HOCA_BUL_LEGACY_MARKER_PREFIX = "hocam:hoca-bul-legacy-copy:v1";
 export const HOCA_BUL_DRAFT_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
 const GOALS: HocaBulGoal[] = ["YKS", "DGS", "KPSS", "UNDECIDED"];
@@ -63,16 +55,6 @@ const STEP_IDS: HocaBulStepId[] = [
 export function draftKey(userId: string | undefined | null): string | null {
   if (!userId) return null;
   return `${HOCA_BUL_DRAFT_KEY_PREFIX}:${userId}`;
-}
-
-export function legacyDraftKey(userId: string | undefined | null): string | null {
-  if (!userId) return null;
-  return `${MATCHING_DRAFT_KEY}:${userId}`;
-}
-
-export function legacyMarkerKey(userId: string | undefined | null): string | null {
-  if (!userId) return null;
-  return `${HOCA_BUL_LEGACY_MARKER_PREFIX}:${userId}`;
 }
 
 export function createDraft(
@@ -140,7 +122,6 @@ export function parseDraft(
       userId,
       createdAt: typeof meta.createdAt === "number" ? meta.createdAt : now,
       updatedAt: typeof meta.updatedAt === "number" ? meta.updatedAt : now,
-      legacyCopy: meta.legacyCopy,
     },
     answers,
     client,
@@ -256,66 +237,4 @@ export function clearDraft(
   const key = draftKey(userId);
   if (!key) return;
   removeKey(storage, key);
-}
-
-// --- Legacy /match draft ------------------------------------------------------
-
-export interface LegacyCopyResult {
-  draft: HocaBulDraft | null;
-  copied: boolean;
-  /** True when a previous run already handled the legacy draft. */
-  alreadyAttempted: boolean;
-}
-
-/**
- * Reads the legacy /match draft once and maps the compatible answers into a new
- * hoca-bul draft.
- *
- * The legacy key is only ever read. It is never deleted, rewritten or marked,
- * so /match can still resume from it byte-for-byte until it is retired. The
- * "already attempted" flag therefore lives in hoca-bul's own data.
- */
-export function copyLegacyDraft(
-  storage: StorageLike | null,
-  userId: string | undefined | null,
-  now = Date.now()
-): LegacyCopyResult {
-  if (!userId) return { draft: null, copied: false, alreadyAttempted: false };
-
-  const existing = readDraft(storage, userId, now);
-  if (existing?.meta.legacyCopy) {
-    return { draft: existing, copied: false, alreadyAttempted: true };
-  }
-  const markerKey = legacyMarkerKey(userId);
-  if (!existing && markerKey && readJson(storage, markerKey)) {
-    return { draft: null, copied: false, alreadyAttempted: true };
-  }
-
-  const sourceKey = legacyDraftKey(userId);
-  const legacyRaw = sourceKey && storage ? storage.getItem(sourceKey) : null;
-  const legacy = parseMatchingDraft(legacyRaw, now);
-
-  const seedAnswers = legacy ? sanitizeAnswers(legacy.answers) : {};
-  // The legacy numeric step index does not map onto the new order; the caller
-  // recomputes the resume point from the answers instead. An in-progress
-  // hoca-bul draft always wins over the older /match one.
-  const copied = !existing && Object.keys(seedAnswers).length > 0;
-
-  const draft: HocaBulDraft = {
-    ...(existing ?? createDraft(userId, now)),
-    answers: existing ? existing.answers : seedAnswers,
-    client: existing?.client ?? {},
-  };
-  draft.meta = {
-    ...draft.meta,
-    updatedAt: now,
-    legacyCopy: { attemptedAt: now, copied, sourceKeyVersion: "v1" },
-  };
-
-  const stored = writeDraft(storage, draft);
-  if (!stored && markerKey) {
-    writeJson(storage, markerKey, { attemptedAt: now, copied });
-  }
-
-  return { draft, copied, alreadyAttempted: false };
 }

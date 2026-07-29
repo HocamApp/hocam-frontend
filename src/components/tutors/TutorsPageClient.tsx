@@ -10,14 +10,12 @@ import { AnimatedSearchBar } from "@/components/tutors/AnimatedSearchBar";
 import { TutorCard } from "@/components/tutors/TutorCard";
 import { TutorFilters } from "@/components/tutors/TutorFilters";
 import { useFavorites } from "@/hooks/useFavorites";
-import { useAuth } from "@/hooks/useAuth";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import SlidingPagination from "@/components/ui/sliding-pagination";
 import { isSubjectValidForExam } from "@/lib/subjects";
-import { MATCHING_FEATURE_ENABLED } from "@/lib/featureFlags";
 
 const PAGE_SIZE = 12;
 const FILTER_PANEL_PREFERENCE_KEY = "hocam:tutor-filters-open";
@@ -165,7 +163,6 @@ function TutorCardSkeleton() {
 }
 
 function TutorsPageContent() {
-  const { isStudent } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [filters, setFiltersState] = useState<TutorFiltersType>(() => {
@@ -331,11 +328,6 @@ function TutorsPageContent() {
                     onCommit={(search) => handleFiltersChange({ ...filters, search })}
                     disabled={isListLoading}
                   />
-                  {MATCHING_FEATURE_ENABLED && isStudent && (
-                    <Button asChild className="shrink-0 rounded-xl">
-                      <Link href="/match">7 soruda eşleş</Link>
-                    </Button>
-                  )}
                 </div>
                 {!isListLoading && tutors && (
                   <p className="mt-3 text-sm text-muted-foreground">

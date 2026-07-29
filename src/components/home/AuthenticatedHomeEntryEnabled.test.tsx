@@ -149,7 +149,6 @@ describe("authenticated home entry point (feature enabled)", () => {
   it("turns on only this flow", async () => {
     const flags = await import("@/lib/featureFlags");
     assert.equal(flags.HOCA_BUL_ENABLED, true);
-    assert.equal(flags.MATCHING_FEATURE_ENABLED, false);
   });
 
   it("leaves the surrounding quick links and continuation band untouched", async () => {
