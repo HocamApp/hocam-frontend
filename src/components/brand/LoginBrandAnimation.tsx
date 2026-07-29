@@ -25,9 +25,9 @@ export function LoginBrandAnimation() {
   return (
     <div className="flex h-full w-full items-center justify-center overflow-hidden px-[clamp(0.75rem,2vw,2rem)] py-[clamp(1rem,3vh,2.5rem)]">
       {/*
-        The six-second clip is letterboxed with object-contain rather than cropped. Its background
-        matches the surrounding card, so it can take the largest size that fits the panel without
-        distortion. The final second holds the complete Hocam lockup; playback intentionally does
+        The proof-point carousel is letterboxed with object-contain rather than cropped. Its
+        background matches the surrounding card, so it can take the largest size that fits the
+        panel without distortion. It returns to the complete Hocam lockup and intentionally does
         not loop, leaving that brand frame visible while the user signs in.
       */}
       <div className="relative mx-auto aspect-[4/3] max-h-full w-full max-w-[46rem]">
@@ -50,7 +50,7 @@ export function LoginBrandAnimation() {
             onError={() => {
               setVideoFailed(true);
             }}
-            aria-label="A book opens, a question becomes an idea, and the Hocam logo appears"
+            aria-label="The Hocam logo turns pages to reveal five education milestones"
           >
             <source src={VIDEO_SOURCE} type="video/mp4" />
           </video>
