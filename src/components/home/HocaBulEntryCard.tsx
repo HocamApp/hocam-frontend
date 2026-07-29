@@ -114,13 +114,26 @@ export function HocaBulEntryCard({
 
   return (
     <MotionConfig reducedMotion="user">
-      <section aria-labelledby={TITLE_ID}>
+      <section
+        aria-labelledby={TITLE_ID}
+        className={cn(variant === "draft" && "-my-8 sm:my-0")}
+      >
         <Card
           className="overflow-hidden rounded-2xl border-primary/15 bg-gradient-to-br from-primary/[0.06] via-card to-card shadow-sm"
           data-state={variant}
         >
-          <CardContent className="grid grid-cols-[minmax(0,1fr)] gap-6 p-6 sm:p-8 lg:grid-cols-[minmax(0,1fr)_15rem] lg:items-center lg:gap-10">
-            <div className="flex min-w-0 flex-col justify-center gap-4 lg:min-h-[14rem]">
+          <CardContent
+            className={cn(
+              "grid grid-cols-[minmax(0,1fr)] gap-6 p-6 sm:p-8 lg:grid-cols-[minmax(0,1fr)_15rem] lg:items-center lg:gap-10",
+              variant === "draft" && "gap-4 p-4 sm:p-8"
+            )}
+          >
+            <div
+              className={cn(
+                "flex min-w-0 flex-col justify-center gap-4 lg:min-h-[14rem]",
+                variant === "draft" && "gap-3 sm:gap-4"
+              )}
+            >
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary">
                 {variant === "result" ? "EŞLEŞMEN HAZIR" : "SANA ÖZEL"}
               </p>
@@ -196,7 +209,13 @@ export function HocaBulEntryCard({
                 </div>
               )}
 
-              <div className="flex flex-col gap-3 pt-1 sm:flex-row sm:items-center">
+              <div
+                className={cn(
+                  "flex flex-col gap-3 pt-1 sm:flex-row sm:items-center",
+                  variant === "draft" &&
+                    "grid grid-cols-2 gap-2 pt-0 sm:flex sm:gap-3 sm:pt-1"
+                )}
+              >
                 <Button
                   asChild
                   className="min-h-11 w-full rounded-xl sm:w-auto"
