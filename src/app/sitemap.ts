@@ -4,6 +4,7 @@ import {
   absoluteUrl,
   fetchAllPublicTutors,
 } from "@/lib/seo";
+import { PUBLIC_SEO_ROUTES } from "@/lib/publicSeo";
 
 export const revalidate = 3_600;
 
@@ -14,6 +15,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "daily",
       priority: 1,
     },
+    ...PUBLIC_SEO_ROUTES.map((route) => ({
+      url: absoluteUrl(route),
+      changeFrequency: "weekly" as const,
+      priority:
+        route === "/yks-ozel-ders"
+          ? 1
+          : route.includes("matematik-ozel-ders")
+            ? 0.9
+            : 0.7,
+    })),
   ];
 
   try {

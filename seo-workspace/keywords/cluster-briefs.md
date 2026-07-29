@@ -16,14 +16,14 @@ Metrics are deliberately marked unknown. The clusters are based on Turkish autoc
 | --- | --- | --- | --- | ---: | --- |
 | Core directory | `yks özel ders` | Commercial | `/tutors` | P0 | Optimize existing |
 | Verified ranked tutors | `yks dereceli hoca özel ders` | Commercial | `/tutors` + verification page | P0 | Existing + proposed trust page |
-| TYT mathematics | `tyt matematik özel ders` | Commercial | `/yks/tyt/matematik-ozel-ders` | P0 | Create after approval |
-| AYT mathematics | `ayt matematik özel ders` | Commercial | `/yks/ayt/matematik-ozel-ders` | P0 | Create after approval |
+| TYT mathematics | `tyt matematik özel ders` | Commercial | `/yks/tyt/matematik-ozel-ders` | P0 | Implemented locally |
+| AYT mathematics | `ayt matematik özel ders` | Commercial | `/yks/ayt/matematik-ozel-ders` | P0 | Implemented locally |
 | Mathematics hub | `yks matematik özel ders` | Commercial | `/yks/matematik-ozel-ders` | P1 | Create only if hub has distinct intent |
 | Science subjects | `yks fizik özel ders` | Commercial | Subject pages | P1 | Validate supply first |
-| Pricing | `online özel ders fiyatları` | Commercial | `/rehber/online-ozel-ders-ucretleri` | P1 | Use real platform data |
-| How it works | `online özel ders nasıl alınır` | Informational-commercial | `/nasil-calisir` | P1 | Create |
+| Pricing | `online özel ders fiyatları` | Commercial | `/rehber/online-ozel-ders-ucretleri` | P1 | Implemented locally with live public data |
+| How it works | `online özel ders nasıl alınır` | Informational-commercial | `/nasil-calisir` | P1 | Implemented locally |
 | Tutor selection | `özel ders hocası nasıl bulunur` | Informational-commercial | `/rehber/yks-hocasi-nasil-secilir` | P1 | Create |
-| Trust and verification | `doğrulanmış özel ders hocası` | Commercial support | `/hocalar-nasil-dogrulaniyor` | P1 | Create after policy review |
+| Trust and verification | `doğrulanmış özel ders hocası` | Commercial support | `/hocalar-nasil-dogrulaniyor` | P1 | Implemented locally from current process |
 | Learning-model comparison | `yks koçluk mu özel ders mi` | Comparison | `/rehber/yks-kocluk-mu-ozel-ders-mi` | P1 | Create balanced guide |
 | Competitor alternatives | `kunduz alternatifi` | Comparison | Brand-reviewed comparison pages | P2 | Approval required |
 | Tutor acquisition | `online özel ders verme` | Supply | `/hoca-ol` | P1 | Create separate funnel |

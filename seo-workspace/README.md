@@ -12,7 +12,7 @@ This workspace is the durable source for SEO, AI-readability, competitor, keywor
 | Step | Status | Evidence or limitation | Next action |
 | --- | --- | --- | --- |
 | Working folder | Complete | This `seo-workspace/` directory | Keep reports dated and version controlled |
-| Repository baseline | Complete | `hocam-frontend`, branch `agent/seo-ai-foundation-20260729`; confirmed current with `origin/main` before PR | Keep the PR unmerged until deployment approval |
+| Repository baseline | Complete | `hocam-frontend`, content batch on branch `agent/public-seo-content-20260729` | Keep the branch local until separate push/merge/deployment approval |
 | Live-site baseline | Complete | Direct HTTP checks and initial-HTML inspection on 29 July 2026 | Repeat after deployment |
 | OpenSEO project | Unavailable | No OpenSEO MCP tools are connected | Connect OpenSEO if third-party metrics are wanted |
 | Search Console | Not connected | No connector, export, or verification evidence was available | Connect the verified domain property |
@@ -20,7 +20,7 @@ This workspace is the durable source for SEO, AI-readability, competitor, keywor
 | Keyword discovery | Directional complete | Live SERP samples and Google autocomplete; volume/KD/CPC unknown | Hydrate with GSC/OpenSEO after connection |
 | Competitor research | Directional complete | Official sites, live SERPs, robots files, and sitemaps | Add backlink metrics when a provider is connected |
 | Technical implementation | Complete locally | Metadata, server-readable public profiles, crawler routes, private-route indexing controls | Review the PR; keep it unmerged until deployment approval |
-| Visible content work | Planned only | Frontend/content changes require separate approval | Approve briefs before creating pages |
+| Visible content work | Complete locally for first batch | Seven approved public landing, subject, process, trust, price, and about routes | Review locally; approve publishing separately |
 | Production release | Not authorized | `EXECUTE` did not authorize production deployment | Approve PR merge/deployment separately |
 | Outreach | Not authorized | No external messages have been sent | Approve an asset and personalized prospects first |
 
@@ -36,21 +36,21 @@ This workspace is the durable source for SEO, AI-readability, competitor, keywor
 | 5 | Site architecture and intent map | Complete as a proposal |
 | 6 | Turkish keyword research | Directional complete; proprietary metrics unavailable |
 | 7 | Competitor analysis | Directional complete; backlink metrics unavailable |
-| 8 | On-page SEO | Technical metadata complete; visible copy deferred |
+| 8 | On-page SEO | Technical metadata and the approved first public-content batch are complete locally |
 | 9 | Content strategy | Complete as approved-gate briefs |
-| 10 | Entity, expertise, and trust | Technical entity layer complete; visible proof pages deferred |
+| 10 | Entity, expertise, and trust | Technical entity layer plus local verification and about pages complete |
 | 11 | Structured data | Implemented locally for website, organization, service, and tutor profiles |
 | 12 | AI-agent readability | Implemented locally for public pages, crawler files, and `llms.txt` |
 | 13 | Local SEO | Not applicable until physical service areas are confirmed |
 | 14 | Media SEO | Audit complete; existing profile-preview `<img>` warning remains |
-| 15 | Internal linking | Public directory/profile discovery implemented; content links await pages |
+| 15 | Internal linking | Public directory/profile discovery plus links among the new public pages implemented locally |
 | 16 | External authority | Prospecting plan complete; execution not authorized |
-| 17 | Conversion review | Findings recorded; no visible UX changes made |
+| 17 | Conversion review | New pages use existing components and discovery actions; authentication and transaction flows are unchanged |
 | 18 | Security and privacy | Guardrails applied; no secrets or private API data added |
 | 19 | Prioritization | Complete |
 | 20 | Implementation plan | Complete |
-| 21 | Controlled implementation | Non-visual foundation complete locally |
-| 22 | QA | Complete for the non-visual foundation; authenticated transactions were out of scope |
+| 21 | Controlled implementation | Foundation and approved first public-content batch complete locally |
+| 22 | QA | Foundation complete; public-content regression QA recorded in the content branch |
 | 23 | Release and rollback | Plan complete; production release not authorized |
 | 24 | Monitoring | Framework complete; live data connection pending |
 
