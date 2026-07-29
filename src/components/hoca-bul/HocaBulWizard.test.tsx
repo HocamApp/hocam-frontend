@@ -24,7 +24,6 @@ Object.defineProperty(window, "matchMedia", {
   }),
 });
 
-const LEGACY_KEY = "hocam:matching-draft:v1:student-1";
 const DRAFT_KEY = "hocam:hoca-bul-draft:v1:student-1";
 const NOW = Date.now();
 
@@ -463,7 +462,6 @@ describe("draft resume", () => {
 
   it("restarts from the first step and clears only its own draft", async () => {
     seedDraft();
-    window.localStorage.setItem(LEGACY_KEY, "legacy-untouched");
     renderWizard();
     await screen.findByRole("dialog");
 
@@ -475,25 +473,6 @@ describe("draft resume", () => {
         "Hangi sınava hazırlanıyorsun?"
       )
     );
-    // The legacy /match draft must survive untouched until that flow is retired.
-    assert.equal(window.localStorage.getItem(LEGACY_KEY), "legacy-untouched");
-  });
-
-  it("never rewrites the legacy key while copying from it", async () => {
-    window.localStorage.setItem(
-      LEGACY_KEY,
-      JSON.stringify({
-        answers: { goal: "KPSS", stage: "ongoing" },
-        step: 2,
-        expiresAt: NOW + 60_000,
-      })
-    );
-    const before = window.localStorage.getItem(LEGACY_KEY);
-
-    renderWizard();
-    await screen.findByRole("heading", { level: 1 });
-
-    assert.equal(window.localStorage.getItem(LEGACY_KEY), before);
   });
 
   it("opens a requested result-edit step without showing the resume dialog", async () => {

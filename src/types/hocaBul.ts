@@ -134,15 +134,6 @@ export interface HocaBulDraftMetadata {
   userId: string;
   createdAt: number;
   updatedAt: number;
-  /**
-   * Records that the one-time read of the legacy /match draft already happened.
-   * Owned entirely by hoca-bul; nothing is ever written into the legacy value.
-   */
-  legacyCopy?: {
-    attemptedAt: number;
-    copied: boolean;
-    sourceKeyVersion: "v1";
-  };
 }
 
 export interface HocaBulDraft {
@@ -208,7 +199,6 @@ export type HocaBulAnalyticsPayload =
       step_id: HocaBulStepId;
       age_hours: number;
     }
-  | { event: "hoca_bul_legacy_draft_copied"; copied: boolean }
   | {
       event: "home_matching_started";
       /** Only present when the student picked a goal chip on the home card. */
