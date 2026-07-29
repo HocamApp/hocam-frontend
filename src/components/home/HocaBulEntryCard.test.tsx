@@ -223,6 +223,9 @@ describe("draft card", () => {
     );
     assert.equal(screen.queryByRole("group", { name: "Neye hazırlanıyorsun?" }), null);
     assert.equal(screen.queryByText("Sana uygun hocayı 2 dakikada bulalım"), null);
+
+    const actionGroup = screen.getByRole("link", { name: /Devam et/ }).parentElement;
+    assert.ok(actionGroup?.className.includes("grid-cols-2"));
   });
 });
 

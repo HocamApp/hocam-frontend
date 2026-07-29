@@ -25,6 +25,7 @@ export function WizardFooter({
 }) {
   return (
     <div
+      data-testid="wizard-footer"
       className="sticky bottom-0 z-30 border-t bg-background/95 px-5 pt-4 backdrop-blur sm:px-8 lg:static lg:border-0 lg:bg-transparent lg:px-12 lg:pb-10 lg:backdrop-blur-none"
       style={{ paddingBottom: "calc(1rem + env(safe-area-inset-bottom))" }}
     >

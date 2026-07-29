@@ -25,7 +25,7 @@ export function MobileIllustrationBand({ state }: { state: IllustrationState }) 
 
   return (
     <div
-      className="relative h-[120px] w-full overflow-hidden border-b bg-muted/30 md:h-[180px] lg:hidden"
+      className="relative h-20 w-full overflow-hidden border-b bg-muted/30 sm:h-[120px] md:h-[180px] lg:hidden"
       aria-hidden="true"
     >
       <AnimatePresence initial={false}>

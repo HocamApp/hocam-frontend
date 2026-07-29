@@ -378,14 +378,6 @@ export function HocaBulWizard({
     const draft = state.pendingResume;
     if (draft) {
       draftRef.current = draft;
-      trackHocaBul({
-        event: "hoca_bul_draft_resumed",
-        step_id: draft.stepId,
-        age_hours: Math.max(
-          0,
-          Math.round((Date.now() - draft.meta.createdAt) / 3_600_000)
-        ),
-      });
     }
     dispatch({ type: "resume" });
   }, [state.pendingResume]);

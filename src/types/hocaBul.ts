@@ -195,11 +195,6 @@ export type HocaBulAnalyticsPayload =
   | { event: "hoca_bul_all_tutors_clicked"; candidate_count: number }
   | { event: "hoca_bul_no_results"; goal: HocaBulGoal }
   | {
-      event: "hoca_bul_draft_resumed";
-      step_id: HocaBulStepId;
-      age_hours: number;
-    }
-  | {
       event: "home_matching_started";
       /** Only present when the student picked a goal chip on the home card. */
       goal?: HocaBulGoal;

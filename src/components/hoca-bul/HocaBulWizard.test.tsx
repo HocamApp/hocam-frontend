@@ -423,6 +423,18 @@ describe("P3A question screens", () => {
 });
 
 describe("draft resume", () => {
+  function collectAnalytics() {
+    const events: Array<{ event: string; properties: Record<string, unknown> }> = [];
+    const listener = (event: Event) => {
+      events.push((event as CustomEvent).detail);
+    };
+    window.addEventListener("hocam:analytics", listener);
+    return {
+      events,
+      stop: () => window.removeEventListener("hocam:analytics", listener),
+    };
+  }
+
   function seedDraft() {
     window.localStorage.setItem(
       DRAFT_KEY,
@@ -446,6 +458,7 @@ describe("draft resume", () => {
 
   it("resumes at the stored step", async () => {
     seedDraft();
+    const analytics = collectAnalytics();
     renderWizard();
     await screen.findByRole("dialog");
 
@@ -458,6 +471,11 @@ describe("draft resume", () => {
       )
     );
     assert.ok(screen.getAllByText("3 / 8").length > 0);
+    assert.equal(
+      analytics.events.some((item) => item.event === "hoca_bul_draft_resumed"),
+      false
+    );
+    analytics.stop();
   });
 
   it("restarts from the first step and clears only its own draft", async () => {
