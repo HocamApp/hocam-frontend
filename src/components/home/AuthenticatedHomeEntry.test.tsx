@@ -141,7 +141,6 @@ describe("authenticated home entry point (default configuration)", () => {
   it("leaves the flag itself switched off", async () => {
     const flags = await import("@/lib/featureFlags");
     assert.equal(flags.HOCA_BUL_ENABLED, false);
-    assert.equal(flags.MATCHING_FEATURE_ENABLED, false);
   });
 
   it("leaves the surrounding quick links and continuation band untouched", async () => {

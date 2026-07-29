@@ -7,7 +7,6 @@ import {
   CalendarCheck2,
   CheckCircle2,
   FileQuestion,
-  Sparkles,
   Target,
   WalletCards,
 } from "lucide-react";
@@ -25,7 +24,7 @@ import {
   isPastPackage,
 } from "@/components/payments/PackagePurchaseCard";
 import { trackHomeEvent } from "@/lib/homeAnalytics";
-import { HOCA_BUL_ENABLED, MATCHING_FEATURE_ENABLED } from "@/lib/featureFlags";
+import { HOCA_BUL_ENABLED } from "@/lib/featureFlags";
 import { cn, formatDate } from "@/lib/utils";
 import type { Booking, PackagePurchase, ProfileStudent, StudentGoal } from "@/types";
 import { HomeSubjectSearch } from "@/components/home/HomeSubjectSearch";
@@ -319,16 +318,6 @@ export function AuthenticatedHome() {
               !HOCA_BUL_ENABLED && "mt-4"
             )}
           >
-            {MATCHING_FEATURE_ENABLED && (
-              <Link
-                href="/match"
-                onClick={() => trackHomeEvent("home_matching_started", { placement: "hero" })}
-                className="inline-flex items-center font-medium text-primary hover:underline"
-              >
-                <Sparkles className="mr-1.5 h-4 w-4" aria-hidden="true" />
-                Sana uygun hocayı bulalım
-              </Link>
-            )}
             {questionResourcesEnabled && (
               <>
                 <Link

@@ -17,7 +17,6 @@ export default function robots(): MetadataRoute.Robots {
         "/hoca-bul",
         "/home",
         "/login",
-        "/match",
         "/messages",
         "/profile",
         "/register",

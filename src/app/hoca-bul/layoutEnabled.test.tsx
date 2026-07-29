@@ -22,9 +22,8 @@ describe("hoca-bul route gate (feature enabled)", () => {
     assert.equal(Layout({ children }), children);
   });
 
-  it("does not switch the legacy matching flow back on", async () => {
+  it("keeps the flag on", async () => {
     const flags = await import("@/lib/featureFlags");
     assert.equal(flags.HOCA_BUL_ENABLED, true);
-    assert.equal(flags.MATCHING_FEATURE_ENABLED, false);
   });
 });

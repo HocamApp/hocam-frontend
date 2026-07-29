@@ -2,8 +2,6 @@ import assert from "node:assert/strict";
 import { describe, it, mock } from "node:test";
 import React from "react";
 
-import { MATCHING_FEATURE_ENABLED } from "@/lib/featureFlags";
-
 const NOT_FOUND = "NEXT_NOT_FOUND";
 
 // No flag mock: with NEXT_PUBLIC_HOCA_BUL_ENABLED unset, the real module
@@ -23,9 +21,5 @@ describe("hoca-bul route gate (default configuration)", () => {
       () => Layout({ children: React.createElement("div") }),
       /NEXT_NOT_FOUND/
     );
-  });
-
-  it("leaves the legacy matching flag switched off and untouched", () => {
-    assert.equal(MATCHING_FEATURE_ENABLED, false);
   });
 });
