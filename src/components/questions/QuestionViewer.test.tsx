@@ -34,7 +34,9 @@ const silentToast = Object.assign(() => {}, {
 });
 
 let currentRole: "student" | "tutor" = "student";
-let Viewer: (props: Record<string, unknown>) => React.ReactNode;
+let Viewer:
+  | ((props: Record<string, unknown>) => React.ReactNode)
+  | undefined;
 
 async function ensureViewer() {
   if (Viewer) return;
@@ -52,6 +54,7 @@ async function renderViewer(
 ) {
   currentRole = role;
   await ensureViewer();
+  assert.ok(Viewer);
   const client = new QueryClient();
   render(
     React.createElement(
