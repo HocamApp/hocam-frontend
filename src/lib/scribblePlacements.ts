@@ -21,25 +21,10 @@ const EMPTY: readonly ScribbleLayerSpec[] = [];
 /* ------------------------------------------------------------------ /home */
 
 export const HOME_SCRIBBLES = {
-  /** Hero carousel band. */
-  hero: [
-    {
-      bleedBottom: 48,
-      items: [
-        {
-          id: "home-hero-yellow",
-          asset: "blob-yellow",
-          side: "right",
-          reveal: 85,
-          top: 37.7,
-          width: 319,
-          opacity: 0.45,
-          rotate: 180,
-          visibility: "narrow-up",
-        },
-      ],
-    },
-  ],
+  /**
+   * The hero carousel is left undecorated: the yellow edge blob from the Figma
+   * frame read as part of the rotating slide rather than as page decoration.
+   */
 
   /** "Sana uygun hocayı 2 dakikada bulalım" band. */
   hocaBul: [
@@ -55,10 +40,11 @@ export const HOME_SCRIBBLES = {
           top: -1.6,
           width: 160,
           opacity: 0.55,
-          rotate: -2.6,
+          rotate: 2.6,
           visibility: "md-up",
         },
         {
+          // The three strokes flick toward the card's top-left corner.
           id: "home-hocabul-curl",
           asset: "accent-curl",
           side: "inset-left",
@@ -66,7 +52,7 @@ export const HOME_SCRIBBLES = {
           top: 6.8,
           width: 34,
           opacity: 1,
-          rotate: 141.6,
+          rotate: -141.6,
           visibility: "md-up",
         },
         {

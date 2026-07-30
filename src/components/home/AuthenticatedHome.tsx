@@ -31,7 +31,6 @@ import { HomeSubjectSearch } from "@/components/home/HomeSubjectSearch";
 import { HocaBulEntryCard } from "@/components/home/HocaBulEntryCard";
 import { HomeHeroCarousel } from "@/components/home/HomeHeroCarousel";
 import { HomeBand } from "@/components/home/HomeBand";
-import { ScribbleLayers } from "@/components/decor/ScribbleLayer";
 import { HOME_SCRIBBLES } from "@/lib/scribblePlacements";
 import { HomeExploreCarousel } from "@/components/home/HomeExploreCarousel";
 import { HomeTeacherRail } from "@/components/home/HomeTeacherRail";
@@ -293,10 +292,7 @@ export function AuthenticatedHome() {
 
   return (
     <div className="overflow-hidden">
-      <div className="relative isolate">
-        <ScribbleLayers layers={HOME_SCRIBBLES.hero} />
-        <HomeHeroCarousel greetingName={studentProfile?.name?.trim() || undefined} />
-      </div>
+      <HomeHeroCarousel greetingName={studentProfile?.name?.trim() || undefined} />
 
       {/* The matching entry replaces the subject search rather than joining it:
           two competing "find a tutor" starting points on one screen is the

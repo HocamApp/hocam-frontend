@@ -77,7 +77,11 @@ export interface ScribblePlacement {
   /** Width at a 1440px viewport, in px. Scales down proportionally below that. */
   width: number;
   opacity: number;
-  /** Degrees, applied via CSS transform so one SVG serves every rotation. */
+  /**
+   * Degrees, applied via CSS transform so one SVG serves every rotation.
+   * Note the sign: CSS rotates clockwise while Figma rotates counter-clockwise,
+   * so a Figma rotation of `r` is transcribed here as `-r`.
+   */
   rotate?: number;
   side: ScribbleSide;
   /** Bleeding sides: px of the shape that stay inside the viewport edge. */

@@ -10,7 +10,7 @@ never take pointer or keyboard input, and never affect layout.
 
 | Route | Figma frame | Node | Shapes |
 |---|---|---|---|
-| `/home` | `Homepage — Lite Scribble V2 · Reference Matched` | `139:2` | 16 (+1 clip helper) |
+| `/home` | `Homepage — Lite Scribble V2 · Reference Matched` | `139:2` | 15 of 16 |
 | `/tutors` | `Hocalar — Lite Scribble` | `110:2` | 5 |
 | `/dashboard/student` | `Öğrenci Paneli — Lite Scribble` | `110:764` | 3 |
 | `/cikmis-sorular` | `Çıkmış Sorular — Lite Scribble` | `110:1130` | 4 |
@@ -21,6 +21,17 @@ deliberately left undecorated — see the `showFavorites` guard in
 
 Earlier exploration frames (`Exploration 01/A/B/C/C2`, the abandoned
 `Homepage — Lite Scribble`, the PNG playground) are **not** references.
+
+The hero carousel on `/home` is the one frame shape left out: in a live,
+rotating carousel the yellow edge blob read as part of a slide rather than as
+page decoration, so the hero stays clean.
+
+### Rotation sign
+
+Figma rotates counter-clockwise, CSS `rotate()` clockwise. A Figma rotation of
+`r` is therefore transcribed as `-r`. Getting this backwards is invisible on the
+180° shapes and very visible on anything else — it pointed the `accent-curl`
+strokes away from the card corner they are supposed to flick towards.
 
 ## Assets
 
