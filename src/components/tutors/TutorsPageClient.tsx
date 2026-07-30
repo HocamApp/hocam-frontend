@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useCallback, useEffect, Suspense } from "react";
+import { ScribbleLayers } from "@/components/decor/ScribbleLayer";
+import { TUTORS_SCRIBBLES } from "@/lib/scribblePlacements";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
@@ -308,7 +310,11 @@ function TutorsPageContent() {
     : filteredTutors;
 
   const content = (
-    <>
+    // Full-width wrapper so decorations measure from the viewport edge like
+    // the Figma frame does, not from the 1280px content container. Favourites
+    // has no approved scribble design yet, so it stays undecorated.
+    <div className="relative isolate">
+      {!showFavorites && <ScribbleLayers layers={TUTORS_SCRIBBLES} />}
       <div className="mx-auto max-w-7xl overflow-x-clip px-4 py-8 space-y-6">
         {!showFavorites && (
           <>
@@ -538,7 +544,7 @@ function TutorsPageContent() {
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
   return content;
 }
