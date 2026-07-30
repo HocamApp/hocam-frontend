@@ -108,6 +108,17 @@ export const HOME_SCRIBBLES = {
           opacity: 0.34,
           visibility: "md-up",
         },
+        {
+          // Sits on the top-right diagonal of the "Tüm dersleri gör" button.
+          id: "home-explore-spark",
+          asset: "accent-spark-yellow",
+          side: "inset-left",
+          inset: 281,
+          top: 44.1,
+          width: 34,
+          opacity: 1,
+          visibility: "md-up",
+        },
       ],
     },
   ],
@@ -124,6 +135,21 @@ export const HOME_SCRIBBLES = {
           top: -50.3,
           width: 537,
           opacity: 0.3,
+          visibility: "md-up",
+        },
+        {
+          // Hand-drawn stroke under the word "hocalar" in the section title.
+          // Figma rotates it 135.8° counter-clockwise, hence the negative angle;
+          // the offsets below are for the un-rotated box, which CSS spins about
+          // its own centre.
+          id: "home-teacherrail-underline",
+          asset: "underline-orange",
+          side: "inset-left",
+          inset: 263,
+          top: 8.9,
+          width: 80,
+          opacity: 1,
+          rotate: -135.8,
           visibility: "md-up",
         },
       ],

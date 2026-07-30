@@ -16,7 +16,9 @@ export type ScribbleAssetName =
   | "accent-target-ring"
   | "accent-diamond"
   | "accent-vertical-curl"
-  | "accent-spark";
+  | "accent-spark"
+  | "accent-spark-yellow"
+  | "underline-orange";
 
 export interface ScribbleAsset {
   src: string;
@@ -55,6 +57,16 @@ export const SCRIBBLE_ASSETS: Record<ScribbleAssetName, ScribbleAsset> = {
     height: 97,
   },
   "accent-spark": { src: "/scribbles/accent-spark.svg", width: 40, height: 54 },
+  "accent-spark-yellow": {
+    src: "/scribbles/accent-spark-yellow.svg",
+    width: 40,
+    height: 54,
+  },
+  "underline-orange": {
+    src: "/scribbles/underline-orange.svg",
+    width: 80,
+    height: 78,
+  },
 };
 
 /**

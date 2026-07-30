@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 interface HomeSectionHeaderProps {
   headingId?: string;
@@ -9,6 +10,11 @@ interface HomeSectionHeaderProps {
   href?: string;
   action?: string;
   onAction?: () => void;
+  /**
+   * Set when a decorative stroke is drawn under the title, so the description
+   * clears it instead of sitting on top of the pen mark.
+   */
+  underlinedTitle?: boolean;
 }
 
 /** Section title + subtitle + optional "show all" link, shared by every home rail. */
@@ -19,6 +25,7 @@ export function HomeSectionHeader({
   href,
   action,
   onAction,
+  underlinedTitle = false,
 }: HomeSectionHeaderProps) {
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
@@ -26,7 +33,12 @@ export function HomeSectionHeader({
         <h2 id={headingId} className="text-2xl font-semibold tracking-tight sm:text-3xl">
           {title}
         </h2>
-        <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">
+        <p
+          className={cn(
+            "max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base",
+            underlinedTitle ? "mt-4 sm:mt-5" : "mt-2"
+          )}
+        >
           {description}
         </p>
       </div>
