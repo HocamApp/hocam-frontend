@@ -31,6 +31,8 @@ import { HomeSubjectSearch } from "@/components/home/HomeSubjectSearch";
 import { HocaBulEntryCard } from "@/components/home/HocaBulEntryCard";
 import { HomeHeroCarousel } from "@/components/home/HomeHeroCarousel";
 import { HomeBand } from "@/components/home/HomeBand";
+import { ScribbleLayers } from "@/components/decor/ScribbleLayer";
+import { HOME_SCRIBBLES } from "@/lib/scribblePlacements";
 import { HomeExploreCarousel } from "@/components/home/HomeExploreCarousel";
 import { HomeTeacherRail } from "@/components/home/HomeTeacherRail";
 import { HomeTabbedDiscovery } from "@/components/home/HomeTabbedDiscovery";
@@ -291,13 +293,16 @@ export function AuthenticatedHome() {
 
   return (
     <div className="overflow-hidden">
-      <HomeHeroCarousel greetingName={studentProfile?.name?.trim() || undefined} />
+      <div className="relative isolate">
+        <ScribbleLayers layers={HOME_SCRIBBLES.hero} />
+        <HomeHeroCarousel greetingName={studentProfile?.name?.trim() || undefined} />
+      </div>
 
       {/* The matching entry replaces the subject search rather than joining it:
           two competing "find a tutor" starting points on one screen is the
           thing this flow exists to remove. Flag off, the home is unchanged. */}
       {HOCA_BUL_ENABLED && (
-        <HomeBand tinted>
+        <HomeBand tinted scribbles={HOME_SCRIBBLES.hocaBul}>
           <HocaBulEntryCard />
         </HomeBand>
       )}
@@ -363,11 +368,11 @@ export function AuthenticatedHome() {
         </HomeBand>
       )}
 
-      <HomeBand tinted>
+      <HomeBand tinted scribbles={HOME_SCRIBBLES.explore}>
         <HomeExploreCarousel />
       </HomeBand>
 
-      <HomeBand>
+      <HomeBand scribbles={HOME_SCRIBBLES.teacherRail}>
         <HomeTeacherRail
           tutors={tutorsQuery.data?.results ?? []}
           isLoading={tutorsQuery.isLoading}
@@ -376,19 +381,19 @@ export function AuthenticatedHome() {
         />
       </HomeBand>
 
-      <HomeBand tinted>
+      <HomeBand tinted scribbles={HOME_SCRIBBLES.tabbedDiscovery}>
         <HomeTabbedDiscovery isAuthenticated={isAuthenticated} />
       </HomeBand>
 
-      <HomeBand>
+      <HomeBand scribbles={HOME_SCRIBBLES.goalCards}>
         <HomeGoalCards />
       </HomeBand>
 
-      <HomeBand tinted>
+      <HomeBand tinted scribbles={HOME_SCRIBBLES.topicLinks}>
         <HomeTopicLinks />
       </HomeBand>
 
-      <HomeBand>
+      <HomeBand scribbles={HOME_SCRIBBLES.promoStrip}>
         <HomePromoStrip />
       </HomeBand>
     </div>
