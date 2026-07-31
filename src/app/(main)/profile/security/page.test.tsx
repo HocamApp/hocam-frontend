@@ -36,6 +36,13 @@ let precheckResponse: Record<string, unknown> = {
   retention_offer: null,
 };
 let deletionStatusResponse: Record<string, unknown> = { active: false };
+let securitySettingsResponse: Record<string, unknown> = {
+  email: "ogrenci@example.com",
+  is_email_verified: true,
+  email_verification_enabled: true,
+  has_usable_password: true,
+  last_seen_at: null,
+};
 
 let SecuritySettingsPage: React.ComponentType | null = null;
 
@@ -82,13 +89,7 @@ async function loadPage() {
   });
   mock.module("@/lib/authApi", {
     namedExports: {
-      fetchSecuritySettings: async () => ({
-        email: "ogrenci@example.com",
-        is_email_verified: true,
-        email_verification_enabled: true,
-        has_usable_password: true,
-        last_seen_at: null,
-      }),
+      fetchSecuritySettings: async () => securitySettingsResponse,
       fetchDeletionPrecheck: async () => precheckResponse,
       fetchDeletionStatus: async () => deletionStatusResponse,
       requestDeletionOtp: async () => {
@@ -167,8 +168,11 @@ function renderPage() {
 
 async function renderLoadedPage() {
   renderPage();
-  // Wait until the security-settings query resolves and the delete card shows.
-  await screen.findByText("Hesabı sil");
+  await screen.findByRole("heading", { name: "Şifre ve oturumlar" });
+}
+
+function openDeletionFlow() {
+  fireEvent.click(screen.getByRole("button", { name: "Hesabı sil" }));
 }
 
 function typeDeleteConfirm(value: string) {
@@ -187,6 +191,13 @@ beforeEach(async () => {
   acceptOfferCalls.length = 0;
   precheckResponse = { blockers: [], warnings: [], retention_offer: null };
   deletionStatusResponse = { active: false };
+  securitySettingsResponse = {
+    email: "ogrenci@example.com",
+    is_email_verified: true,
+    email_verification_enabled: true,
+    has_usable_password: true,
+    last_seen_at: null,
+  };
 });
 
 afterEach(() => {
@@ -194,8 +205,21 @@ afterEach(() => {
 });
 
 describe("Güvenlik sayfası — hesap silme onayı", () => {
+  it("ilk render'da silme formunu gizler ve Hesabı sil aksiyonuyla açar", async () => {
+    await renderLoadedPage();
+
+    assert.equal(screen.queryByPlaceholderText("SİL"), null);
+    assert.equal(screen.queryByText("Bu işlem kalıcıdır."), null);
+
+    openDeletionFlow();
+
+    await screen.findByPlaceholderText("SİL");
+    screen.getByRole("button", { name: "Silme alanını kapat" });
+  });
+
   it("SİL veya e-posta girilmeden silme butonu aktifleşmez", async () => {
     await renderLoadedPage();
+    openDeletionFlow();
 
     const button = screen.getByRole("button", {
       name: "Hesabı kalıcı olarak sil",
@@ -223,6 +247,7 @@ describe("Güvenlik sayfası — precheck dallanması", () => {
       retention_offer: null,
     };
     await renderLoadedPage();
+    openDeletionFlow();
 
     typeDeleteConfirm("SİL");
     fireEvent.click(
@@ -244,6 +269,7 @@ describe("Güvenlik sayfası — precheck dallanması", () => {
       retention_offer: null,
     };
     await renderLoadedPage();
+    openDeletionFlow();
 
     typeDeleteConfirm("SİL");
     fireEvent.click(
@@ -272,6 +298,7 @@ describe("Güvenlik sayfası — precheck dallanması", () => {
       },
     };
     await renderLoadedPage();
+    openDeletionFlow();
 
     typeDeleteConfirm("SİL");
     fireEvent.click(
@@ -294,6 +321,7 @@ describe("Güvenlik sayfası — precheck dallanması", () => {
 
   it("uyarı ve teklif yoksa doğrudan OTP adımına geçer", async () => {
     await renderLoadedPage();
+    openDeletionFlow();
 
     typeDeleteConfirm("SİL");
     fireEvent.click(
@@ -309,6 +337,7 @@ describe("Güvenlik sayfası — precheck dallanması", () => {
 describe("Güvenlik sayfası — OTP ve planlama", () => {
   it("OTP onayı silme isteğini tetikler; iptal butonu geri alır", async () => {
     await renderLoadedPage();
+    openDeletionFlow();
 
     typeDeleteConfirm("SİL");
     fireEvent.click(
@@ -335,8 +364,9 @@ describe("Güvenlik sayfası — OTP ve planlama", () => {
     );
 
     await waitFor(() => assert.equal(cancelDeletionCalls.length, 1));
-    // Back to the initial confirmation form.
-    await screen.findByPlaceholderText("SİL");
+    // Back to the neutral account-management card.
+    await screen.findByRole("button", { name: "Hesabı sil" });
+    assert.equal(screen.queryByPlaceholderText("SİL"), null);
   });
 
   it("aktif silme isteği varsa form yerine durum kartı gösterilir", async () => {
@@ -352,5 +382,58 @@ describe("Güvenlik sayfası — OTP ve planlama", () => {
     await screen.findByText(/iade\/ihtilaf/);
     assert.equal(screen.queryByPlaceholderText("SİL"), null);
     screen.getByRole("button", { name: "Silme işlemini iptal et" });
+  });
+});
+
+describe("Güvenlik sayfası — kullanıcı odaklı güvenlik metinleri", () => {
+  it("teknik oturum metnini kaldırır ve doğal güvenlik yönlendirmesini gösterir", async () => {
+    await renderLoadedPage();
+
+    screen.getByText(
+      "Tanımadığınız bir işlem fark ederseniz şifrenizi değiştirin ve tüm oturumlardan çıkış yapın."
+    );
+    assert.equal(screen.queryByText(/tek tokenlı oturum sistemi/i), null);
+  });
+
+  it("doğrulanmamış e-posta için amacı, çağrıyı ve kod süresini açıklar", async () => {
+    securitySettingsResponse = {
+      ...securitySettingsResponse,
+      is_email_verified: false,
+    };
+
+    await renderLoadedPage();
+
+    screen.getByText("Doğrulanmadı");
+    screen.getByText(
+      "E-posta doğrulaması; şifre sıfırlama, hesap silme ve önemli güvenlik bildirimleri için kullanılır."
+    );
+    screen.getByText(
+      "Bu e-posta size ait mi? 6 haneli bir kod göndererek hesabınızı güvenceye alın."
+    );
+    screen.getByText("Kod 10 dakika geçerlidir.");
+    assert.equal(screen.queryByText("Doğrulama gerekiyor."), null);
+  });
+
+  it("doğrulanmış e-posta için olumlu güvenlik metnini gösterir", async () => {
+    await renderLoadedPage();
+
+    screen.getByText("Doğrulandı");
+    screen.getByText(
+      "E-postanız doğrulandı. Hassas hesap işlemleri için bu adresi kullanacağız."
+    );
+  });
+
+  it("e-posta doğrulama özelliği kapalıyken mevcut bilgilendirmeyi korur", async () => {
+    securitySettingsResponse = {
+      ...securitySettingsResponse,
+      is_email_verified: false,
+      email_verification_enabled: false,
+    };
+
+    await renderLoadedPage();
+
+    screen.getByText("Geçici olarak kapalı");
+    screen.getByText("E-posta doğrulaması geçici olarak kapalı.");
+    assert.equal(screen.queryByRole("button", { name: "Kod gönder" }), null);
   });
 });

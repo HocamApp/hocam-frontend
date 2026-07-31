@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
@@ -9,13 +9,13 @@ import {
   ArrowLeft,
   BadgeCheck,
   CalendarClock,
-  Clock,
   KeyRound,
   LogOut,
   MailCheck,
   ShieldCheck,
   Send,
   Trash2,
+  X,
 } from "lucide-react";
 
 import {
@@ -46,7 +46,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
 
 function formatLastSeen(value: string | null): string {
   if (!value) return "Henüz kayıt yok";
@@ -107,6 +106,8 @@ function SecurityContent() {
   const [newPasswordConfirm, setNewPasswordConfirm] = useState("");
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [changingPassword, setChangingPassword] = useState(false);
+  const [deletionFlowOpen, setDeletionFlowOpen] = useState(false);
+  const deletionPanelRef = useRef<HTMLDivElement>(null);
 
   const accountEmail = user?.email ?? "";
   const canDeleteAccount =
@@ -139,6 +140,26 @@ function SecurityContent() {
     const timer = setTimeout(() => setOtpCooldown((v) => v - 1), 1000);
     return () => clearTimeout(timer);
   }, [otpCooldown]);
+
+  useEffect(() => {
+    if (!deletionFlowOpen) return;
+    deletionPanelRef.current?.scrollIntoView?.({
+      behavior: "smooth",
+      block: "start",
+    });
+  }, [deletionFlowOpen]);
+
+  const closeDeletionFlow = () => {
+    setDeletionFlowOpen(false);
+    setDeleteStep("confirm");
+    setDeleteConfirm("");
+    setDeletionOtp("");
+    setDeleteError(null);
+    setPrecheck(null);
+    setOfferOpen(false);
+    setOtpVerified(false);
+    setScheduledAt(null);
+  };
 
   const handleRequestCode = async () => {
     setCodeError(null);
@@ -357,6 +378,7 @@ function SecurityContent() {
       setDeleteConfirm("");
       setPrecheck(null);
       setScheduledAt(null);
+      setDeletionFlowOpen(false);
       await queryClient.invalidateQueries({
         queryKey: ["account-deletion-status"],
       });
@@ -381,7 +403,7 @@ function SecurityContent() {
         <Button variant="ghost" size="sm" asChild className="-ml-3 mb-3">
           <Link href="/profile">
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Profile dön
+            Profil&apos;e dön
           </Link>
         </Button>
         <div className="flex min-w-0 items-start gap-3">
@@ -403,11 +425,11 @@ function SecurityContent() {
         <Card>
           <CardHeader>
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-              <div>
+              <div className="min-w-0">
                 <CardTitle className="text-lg">E-posta doğrulaması</CardTitle>
-                <CardDescription>
-                  Hesap e-postanız: {data?.email}
-                </CardDescription>
+                <p className="mt-1 break-all text-sm font-medium text-foreground">
+                  {data?.email}
+                </p>
               </div>
               <Badge variant={data?.is_email_verified ? "default" : "secondary"}>
                 {data?.is_email_verified
@@ -419,14 +441,18 @@ function SecurityContent() {
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
+            <p className="text-sm leading-relaxed text-muted-foreground">
+              E-posta doğrulaması; şifre sıfırlama, hesap silme ve önemli
+              güvenlik bildirimleri için kullanılır.
+            </p>
             {data?.is_email_verified ? (
-              <Alert>
-                <BadgeCheck className="h-4 w-4" />
-                <AlertTitle>E-posta adresiniz doğrulanmış.</AlertTitle>
-                <AlertDescription>
-                  Bu hesap, güvenli bildirimler ve ileride açılacak hassas işlemler için hazır.
-                </AlertDescription>
-              </Alert>
+              <div className="flex items-start gap-3 rounded-lg border border-emerald-200/80 bg-emerald-50/60 p-3.5 text-sm dark:border-emerald-900/60 dark:bg-emerald-950/20">
+                <BadgeCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                <p className="leading-relaxed text-foreground">
+                  E-postanız doğrulandı. Hassas hesap işlemleri için bu adresi
+                  kullanacağız.
+                </p>
+              </div>
             ) : data?.email_verification_enabled === false ? (
               <Alert>
                 <MailCheck className="h-4 w-4" />
@@ -438,15 +464,17 @@ function SecurityContent() {
               </Alert>
             ) : (
               <>
-                <Alert>
-                  <MailCheck className="h-4 w-4" />
-                  <AlertTitle>Doğrulama gerekiyor.</AlertTitle>
-                  <AlertDescription>
-                    6 haneli kod e-postanıza gönderilir ve 10 dakika geçerlidir.
-                  </AlertDescription>
-                </Alert>
+                <div className="space-y-1">
+                  <p className="text-sm leading-relaxed text-foreground">
+                    Bu e-posta size ait mi? 6 haneli bir kod göndererek
+                    hesabınızı güvenceye alın.
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Kod 10 dakika geçerlidir.
+                  </p>
+                </div>
 
-                <div className="flex flex-col gap-3 sm:flex-row">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
                   <Button
                     type="button"
                     onClick={handleRequestCode}
@@ -618,26 +646,57 @@ function SecurityContent() {
                 </div>
               </div>
             )}
-            <Separator />
-            <div className="flex items-start gap-3 text-sm text-muted-foreground">
-              <Clock className="mt-0.5 h-4 w-4 shrink-0" />
-              <p>
-                Hocam şu anda tek tokenlı oturum sistemi kullanıyor; tüm oturumlardan çıkış,
-                mevcut erişim tokenınızı geçersiz kılar.
-              </p>
-            </div>
+            <p className="text-sm leading-relaxed text-muted-foreground">
+              Tanımadığınız bir işlem fark ederseniz şifrenizi değiştirin ve
+              tüm oturumlardan çıkış yapın.
+            </p>
           </CardContent>
         </Card>
 
         {isTutor ? (
           <TutorDeletionFlow accountEmail={accountEmail} />
+        ) : !activeDeletion && deleteStep !== "scheduled" && !deletionFlowOpen ? (
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg">Hesap yönetimi</CardTitle>
+              <CardDescription>
+                Hesabınızla ilgili kalıcı işlemleri buradan yönetebilirsiniz.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setDeletionFlowOpen(true)}
+                className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+              >
+                Hesabı sil
+              </Button>
+            </CardContent>
+          </Card>
         ) : (
-        <Card className="border-destructive/40">
+        <Card ref={deletionPanelRef} className="scroll-mt-6 border-destructive/40">
           <CardHeader>
-            <CardTitle className="text-lg text-destructive">Hesabı sil</CardTitle>
-            <CardDescription>
-              Hesabınızı kalıcı olarak silin. Bu işlem geri alınamaz.
-            </CardDescription>
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <CardTitle className="text-lg text-destructive">Hesabı sil</CardTitle>
+                <CardDescription>
+                  Hesabınızı kalıcı olarak silin. Bu işlem geri alınamaz.
+                </CardDescription>
+              </div>
+              {!activeDeletion && deleteStep !== "scheduled" && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={closeDeletionFlow}
+                  aria-label="Silme alanını kapat"
+                  className="-mr-2 -mt-2 shrink-0"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
           </CardHeader>
           <CardContent className="space-y-4">
             {activeDeletion ? (

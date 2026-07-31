@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
@@ -10,6 +10,7 @@ import {
   PauseCircle,
   PlayCircle,
   Trash2,
+  X,
 } from "lucide-react";
 
 import {
@@ -64,6 +65,8 @@ export function TutorDeletionFlow({ accountEmail }: TutorDeletionFlowProps) {
   const [paused, setPaused] = useState(false);
   const [cancelResult, setCancelResult] =
     useState<TutorDeletionCancelResult | null>(null);
+  const [flowOpen, setFlowOpen] = useState(false);
+  const flowRef = useRef<HTMLDivElement>(null);
 
   const statusQuery = useQuery({
     queryKey: ["account-deletion-status"],
@@ -79,6 +82,21 @@ export function TutorDeletionFlow({ accountEmail }: TutorDeletionFlowProps) {
     const timer = setTimeout(() => setOtpCooldown((v) => v - 1), 1000);
     return () => clearTimeout(timer);
   }, [otpCooldown]);
+
+  useEffect(() => {
+    if (!flowOpen) return;
+    flowRef.current?.scrollIntoView?.({ behavior: "smooth", block: "start" });
+  }, [flowOpen]);
+
+  const closeFlow = () => {
+    setFlowOpen(false);
+    setStep("intro");
+    setPrecheck(null);
+    setConfirmText("");
+    setOtpCode("");
+    setOtpVerified(false);
+    setError(null);
+  };
 
   const canConfirm =
     confirmText.trim() === "SİL" ||
@@ -204,6 +222,7 @@ export function TutorDeletionFlow({ accountEmail }: TutorDeletionFlowProps) {
       toast.success("Profiliniz yeniden yayında.");
       setCancelResult(null);
       setStep("intro");
+      setFlowOpen(false);
       setConfirmText("");
       await queryClient.invalidateQueries({
         queryKey: ["account-deletion-status"],
@@ -304,13 +323,78 @@ export function TutorDeletionFlow({ accountEmail }: TutorDeletionFlowProps) {
     );
   }
 
+  if (!flowOpen) {
+    return (
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg">Hesap yönetimi</CardTitle>
+          <CardDescription>
+            Profilinizin görünürlüğünü ve hesabınızla ilgili kalıcı işlemleri
+            yönetin.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {paused && (
+            <p className="text-sm text-muted-foreground">
+              Profiliniz şu anda duraklatılmış durumda.
+            </p>
+          )}
+          {error && <ErrorMessage message={error} />}
+          <div className="flex flex-col gap-2 sm:flex-row">
+            {paused ? (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleResume}
+                disabled={busy}
+              >
+                Profili yeniden aç
+              </Button>
+            ) : (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handlePause}
+                disabled={busy}
+              >
+                Profili duraklat
+              </Button>
+            )}
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setFlowOpen(true)}
+              className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+            >
+              Hesabı sil
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
-    <Card className="border-destructive/40">
+    <Card ref={flowRef} className="scroll-mt-6 border-destructive/40">
       <CardHeader>
-        <CardTitle className="text-lg text-destructive">Hesabı sil</CardTitle>
-        <CardDescription>
-          Hesabınızı kalıcı olarak silin. Bu işlem geri alınamaz.
-        </CardDescription>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <CardTitle className="text-lg text-destructive">Hesabı sil</CardTitle>
+            <CardDescription>
+              Hesabınızı kalıcı olarak silin. Bu işlem geri alınamaz.
+            </CardDescription>
+          </div>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={closeFlow}
+            aria-label="Silme alanını kapat"
+            className="-mr-2 -mt-2 shrink-0"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
         {step === "intro" && (
