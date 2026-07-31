@@ -16,6 +16,10 @@ let cancelResponse: Record<string, unknown> = {
 const pauseCalls: number[] = [];
 const cancelCalls: number[] = [];
 const republishCalls: unknown[] = [];
+const tutorPrecheckCalls: number[] = [];
+const otpRequestCalls: number[] = [];
+const otpConfirmCalls: string[] = [];
+const tutorDeletionCalls: string[] = [];
 
 let TutorDeletionFlow: React.ComponentType<{ accountEmail: string }> | null =
   null;
@@ -26,17 +30,22 @@ async function loadFlow() {
   mock.module("@/lib/authApi", {
     namedExports: {
       fetchDeletionStatus: async () => statusResponse,
-      fetchTutorDeletionPrecheck: async () => ({
-        blockers: [],
-        warnings: [],
-        offboarding_preview: [],
-      }),
-      requestDeletionOtp: async () => ({ detail: "ok" }),
-      confirmDeletionOtp: async () => ({ detail: "ok" }),
-      requestTutorAccountDeletion: async () => ({
-        id: "del-1",
-        status: "offboarding",
-      }),
+      fetchTutorDeletionPrecheck: async () => {
+        tutorPrecheckCalls.push(1);
+        return { blockers: [], warnings: [], offboarding_preview: [] };
+      },
+      requestDeletionOtp: async () => {
+        otpRequestCalls.push(1);
+        return { detail: "ok" };
+      },
+      confirmDeletionOtp: async (code: string) => {
+        otpConfirmCalls.push(code);
+        return { detail: "ok" };
+      },
+      requestTutorAccountDeletion: async (confirmText: string) => {
+        tutorDeletionCalls.push(confirmText);
+        return { id: "del-1", status: "offboarding" };
+      },
       cancelTutorAccountDeletion: async () => {
         cancelCalls.push(1);
         return cancelResponse;
@@ -77,6 +86,10 @@ beforeEach(async () => {
   pauseCalls.length = 0;
   cancelCalls.length = 0;
   republishCalls.length = 0;
+  tutorPrecheckCalls.length = 0;
+  otpRequestCalls.length = 0;
+  otpConfirmCalls.length = 0;
+  tutorDeletionCalls.length = 0;
 });
 
 afterEach(() => {
@@ -84,17 +97,63 @@ afterEach(() => {
 });
 
 describe("TutorDeletionFlow", () => {
-  it("duraklatma alternatifini kalıcı silmeyle eşit görünürlükte sunar", async () => {
+  it("ilk render'da nötr hesap yönetimi kartını gösterir ve silme akışını kapalı tutar", async () => {
     renderFlow();
 
-    await screen.findByText(/profilinizi duraklatabilirsiniz/);
+    await screen.findByRole("heading", { name: "Hesap yönetimi" });
     screen.getByRole("button", { name: "Profili duraklat" });
+    screen.getByRole("button", { name: "Hesabı sil" });
+    assert.equal(screen.queryByText(/Bu işlem kalıcıdır/), null);
+
+    fireEvent.click(screen.getByRole("button", { name: "Hesabı sil" }));
+
+    await screen.findByText(/profilinizi duraklatabilirsiniz/);
     screen.getByRole("button", { name: /Kalıcı silmeye devam et/ });
+    screen.getByRole("button", { name: "Silme alanını kapat" });
+  });
+
+  it("nötr karttaki duraklatma aksiyonunu korur", async () => {
+    renderFlow();
+
+    await screen.findByRole("button", { name: "Profili duraklat" });
 
     fireEvent.click(screen.getByRole("button", { name: "Profili duraklat" }));
 
     await waitFor(() => assert.equal(pauseCalls.length, 1));
     await screen.findByRole("button", { name: "Profili yeniden aç" });
+  });
+
+  it("öğretmen precheck ve OTP üzerinden kalıcı silme akışını sürdürür", async () => {
+    renderFlow();
+
+    fireEvent.click(await screen.findByRole("button", { name: "Hesabı sil" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Kalıcı silmeye devam et" })
+    );
+
+    await screen.findByText("Bu işlem kalıcıdır.");
+    assert.equal(tutorPrecheckCalls.length, 1);
+
+    fireEvent.change(screen.getByPlaceholderText("SİL"), {
+      target: { value: "SİL" },
+    });
+    fireEvent.click(
+      screen.getByRole("button", { name: "Hesabı kalıcı olarak sil" })
+    );
+
+    await screen.findByText("Son adım: e-posta doğrulaması");
+    assert.equal(otpRequestCalls.length, 1);
+
+    fireEvent.change(screen.getByPlaceholderText("000000"), {
+      target: { value: "654321" },
+    });
+    fireEvent.click(
+      screen.getByRole("button", { name: "Silme işlemini onayla" })
+    );
+
+    await screen.findByText("Kapanış süreci başladı.");
+    assert.deepEqual(otpConfirmCalls, ["654321"]);
+    assert.deepEqual(tutorDeletionCalls, ["SİL"]);
   });
 
   it("iptal sonrası can_republish=true ise yeniden yayımla akışını gösterir", async () => {
