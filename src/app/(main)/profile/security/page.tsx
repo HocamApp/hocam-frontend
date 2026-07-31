@@ -1,14 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   AlertTriangle,
   ArrowLeft,
   BadgeCheck,
+  CalendarClock,
   Clock,
   KeyRound,
   LogOut,
@@ -19,18 +19,27 @@ import {
 } from "lucide-react";
 
 import {
+  cancelAccountDeletion,
   changePassword,
+  confirmDeletionOtp,
   confirmEmailVerificationCode,
-  deleteMyAccount,
+  fetchDeletionPrecheck,
+  fetchDeletionStatus,
   fetchSecuritySettings,
   logoutAllSessions,
+  requestDeletionOtp,
+  requestAccountDeletion,
   requestEmailVerificationCode,
+  type DeletionPrecheck,
 } from "@/lib/authApi";
 import { useAuth } from "@/hooks/useAuth";
 import { useAuthContext } from "@/providers/AuthProvider";
 import { RouteGuard } from "@/components/shared/RouteGuard";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
+import { DeletionOptionsList } from "@/components/profile/DeletionOptionsList";
+import { RetentionOfferDialog } from "@/components/profile/RetentionOfferDialog";
+import { TutorDeletionFlow } from "@/components/profile/TutorDeletionFlow";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -49,11 +58,23 @@ function formatLastSeen(value: string | null): string {
   });
 }
 
+function formatDeletionDate(value: string): string {
+  return new Date(value).toLocaleDateString("tr-TR", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+}
+
+type DeleteStep = "confirm" | "options" | "otp" | "scheduled";
+
+// Retention offer is shown at most once per browser session (tab lifetime).
+const OFFER_SHOWN_STORAGE_KEY = "hocam:retention-offer-shown";
+
 function SecurityContent() {
   const queryClient = useQueryClient();
-  const router = useRouter();
-  const { logout, user } = useAuth();
-  const { clearAuth, setAuth } = useAuthContext();
+  const { logout, user, isTutor } = useAuth();
+  const { setAuth } = useAuthContext();
   const [code, setCode] = useState("");
   const [codeError, setCodeError] = useState<string | null>(null);
   const [requestingCode, setRequestingCode] = useState(false);
@@ -63,6 +84,23 @@ function SecurityContent() {
   const [deleteConfirm, setDeleteConfirm] = useState("");
   const [deletingAccount, setDeletingAccount] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deleteStep, setDeleteStep] = useState<DeleteStep>("confirm");
+  const [precheck, setPrecheck] = useState<DeletionPrecheck | null>(null);
+  const [offerOpen, setOfferOpen] = useState(false);
+  const [offerShown, setOfferShown] = useState(() => {
+    try {
+      return sessionStorage.getItem(OFFER_SHOWN_STORAGE_KEY) === "1";
+    } catch {
+      return false;
+    }
+  });
+  const [deletionOtp, setDeletionOtp] = useState("");
+  const [otpSending, setOtpSending] = useState(false);
+  const [otpConfirming, setOtpConfirming] = useState(false);
+  const [otpCooldown, setOtpCooldown] = useState(0);
+  const [otpVerified, setOtpVerified] = useState(false);
+  const [scheduledAt, setScheduledAt] = useState<string | null>(null);
+  const [cancellingDeletion, setCancellingDeletion] = useState(false);
   const [showPasswordForm, setShowPasswordForm] = useState(false);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -81,6 +119,26 @@ function SecurityContent() {
     queryFn: fetchSecuritySettings,
     staleTime: 30_000,
   });
+
+  // An active deletion request replaces the delete form with a status card.
+  // Student-only here; tutors get the same query inside TutorDeletionFlow.
+  const deletionStatusQuery = useQuery({
+    queryKey: ["account-deletion-status"],
+    queryFn: fetchDeletionStatus,
+    staleTime: 60_000,
+    retry: false,
+    enabled: !isTutor,
+  });
+  const activeDeletion =
+    deletionStatusQuery.data && deletionStatusQuery.data.active
+      ? deletionStatusQuery.data
+      : null;
+
+  useEffect(() => {
+    if (otpCooldown <= 0) return;
+    const timer = setTimeout(() => setOtpCooldown((v) => v - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [otpCooldown]);
 
   const handleRequestCode = async () => {
     setCodeError(null);
@@ -168,19 +226,144 @@ function SecurityContent() {
     }
   };
 
-  const handleDeleteAccount = async () => {
+  // Step 0 → 1: the destructive button now STARTS the flow with a precheck
+  // instead of deleting immediately.
+  const handleStartDeletion = async () => {
     if (!canDeleteAccount || deletingAccount) return;
     setDeleteError(null);
     setDeletingAccount(true);
     try {
-      await deleteMyAccount();
-      // Clear local auth state/cookie, then send the user to sign-up again.
-      clearAuth();
-      toast.success("Hesabınız kalıcı olarak silindi.");
-      router.push("/register");
+      const result = await fetchDeletionPrecheck();
+      setPrecheck(result);
+      if (result.blockers.length > 0 || result.warnings.length > 0) {
+        setDeleteStep("options");
+      } else {
+        proceedAfterPrecheck(result);
+      }
     } catch {
-      setDeleteError("Hesap silinemedi. Lütfen tekrar deneyin.");
+      setDeleteError("Hesap silme kontrolü yapılamadı. Lütfen tekrar deneyin.");
+    } finally {
       setDeletingAccount(false);
+    }
+  };
+
+  // Step 2: eligible students see the retention offer once per browser
+  // session (sessionStorage — survives a page reload within the tab);
+  // everyone else goes straight to the OTP step.
+  const proceedAfterPrecheck = (result: DeletionPrecheck) => {
+    if (result.retention_offer?.eligible && !offerShown) {
+      setOfferOpen(true);
+      return;
+    }
+    void startOtpStep();
+  };
+
+  const handleContinueFromOptions = () => {
+    if (precheck) proceedAfterPrecheck(precheck);
+  };
+
+  const markOfferShown = () => {
+    setOfferShown(true);
+    try {
+      sessionStorage.setItem(OFFER_SHOWN_STORAGE_KEY, "1");
+    } catch {
+      // Storage unavailable (private mode) — in-memory flag still applies.
+    }
+  };
+
+  // Closing the dialog via X / outside click / Escape is a neutral dismissal:
+  // no API call, and the dialog won't reopen this session.
+  const handleOfferOpenChange = (open: boolean) => {
+    setOfferOpen(open);
+    if (!open) markOfferShown();
+  };
+
+  const handleOfferDecline = () => {
+    setOfferOpen(false);
+    markOfferShown();
+    void startOtpStep();
+  };
+
+  // Step 3: e-mail OTP confirmation.
+  const startOtpStep = async () => {
+    setDeleteStep("otp");
+    setDeleteError(null);
+    setOtpSending(true);
+    setOtpVerified(false);
+    try {
+      await requestDeletionOtp();
+      setOtpCooldown(60);
+    } catch {
+      setDeleteError("Doğrulama kodu gönderilemedi. Lütfen tekrar deneyin.");
+    } finally {
+      setOtpSending(false);
+    }
+  };
+
+  const handleResendDeletionOtp = async () => {
+    if (otpCooldown > 0 || otpSending) return;
+    setDeleteError(null);
+    setOtpSending(true);
+    try {
+      await requestDeletionOtp();
+      setOtpCooldown(60);
+      toast.success("Yeni kod e-postanıza gönderildi.");
+    } catch {
+      setDeleteError("Kod gönderilemedi. Lütfen tekrar deneyin.");
+    } finally {
+      setOtpSending(false);
+    }
+  };
+
+  // Step 4: OTP confirmed → schedule the deletion (grace window, no logout).
+  const handleConfirmDeletion = async () => {
+    if (!/^\d{6}$/.test(deletionOtp)) {
+      setDeleteError("6 haneli doğrulama kodunu girin.");
+      return;
+    }
+    setDeleteError(null);
+    setOtpConfirming(true);
+    try {
+      // OTP is single-use: once confirmed, a retry of a failed request must
+      // not re-confirm (the backend would reject the consumed code and the
+      // user would be stuck until resend).
+      if (!otpVerified) {
+        await confirmDeletionOtp(deletionOtp);
+        setOtpVerified(true);
+      }
+      const result = await requestAccountDeletion(deleteConfirm);
+      setScheduledAt(result.scheduled_deletion_at ?? null);
+      setDeleteStep("scheduled");
+      setDeletionOtp("");
+      await queryClient.invalidateQueries({
+        queryKey: ["account-deletion-status"],
+      });
+    } catch {
+      setDeleteError(
+        "Kod doğrulanamadı veya işlem tamamlanamadı. Kodu kontrol edip tekrar deneyin."
+      );
+    } finally {
+      setOtpConfirming(false);
+    }
+  };
+
+  const handleCancelDeletion = async () => {
+    setDeleteError(null);
+    setCancellingDeletion(true);
+    try {
+      await cancelAccountDeletion();
+      toast.success("Silme işlemi iptal edildi.");
+      setDeleteStep("confirm");
+      setDeleteConfirm("");
+      setPrecheck(null);
+      setScheduledAt(null);
+      await queryClient.invalidateQueries({
+        queryKey: ["account-deletion-status"],
+      });
+    } catch {
+      setDeleteError("Silme işlemi iptal edilemedi. Lütfen tekrar deneyin.");
+    } finally {
+      setCancellingDeletion(false);
     }
   };
 
@@ -446,6 +629,9 @@ function SecurityContent() {
           </CardContent>
         </Card>
 
+        {isTutor ? (
+          <TutorDeletionFlow accountEmail={accountEmail} />
+        ) : (
         <Card className="border-destructive/40">
           <CardHeader>
             <CardTitle className="text-lg text-destructive">Hesabı sil</CardTitle>
@@ -454,52 +640,194 @@ function SecurityContent() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Alert variant="destructive">
-              <AlertTriangle className="h-4 w-4" />
-              <AlertTitle>Bu işlem kalıcıdır.</AlertTitle>
-              <AlertDescription>
-                Profiliniz, ders talepleriniz, rezervasyonlarınız ve mesajlarınız
-                dahil tüm hesap verileriniz kalıcı olarak silinir ve geri getirilemez.
-              </AlertDescription>
-            </Alert>
+            {activeDeletion ? (
+              <>
+                {activeDeletion.status === "blocked" ? (
+                  <Alert variant="destructive">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertTitle>Silme işlemi bekletiliyor.</AlertTitle>
+                    <AlertDescription>
+                      Hesabınızdaki açık bir finansal süreç (iade/ihtilaf)
+                      nedeniyle silme işlemi bekletiliyor. Süreç
+                      tamamlandığında silme otomatik devam edecektir.
+                    </AlertDescription>
+                  </Alert>
+                ) : (
+                  <Alert>
+                    <CalendarClock className="h-4 w-4" />
+                    <AlertTitle>Silme işleminiz planlandı.</AlertTitle>
+                    <AlertDescription>
+                      Hesabınız{" "}
+                      {activeDeletion.scheduled_deletion_at
+                        ? formatDeletionDate(activeDeletion.scheduled_deletion_at)
+                        : "planlanan tarihte"}{" "}
+                      tarihinde kalıcı olarak silinecek. Bu tarihe kadar giriş
+                      yaparak istediğiniz zaman iptal edebilirsiniz.
+                    </AlertDescription>
+                  </Alert>
+                )}
+                {deleteError && <ErrorMessage message={deleteError} />}
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleCancelDeletion}
+                  disabled={cancellingDeletion}
+                >
+                  Silme işlemini iptal et
+                </Button>
+              </>
+            ) : deleteStep === "scheduled" ? (
+              <>
+                <Alert>
+                  <CalendarClock className="h-4 w-4" />
+                  <AlertTitle>Silme işleminiz planlandı.</AlertTitle>
+                  <AlertDescription>
+                    Hesabınız{" "}
+                    {scheduledAt
+                      ? formatDeletionDate(scheduledAt)
+                      : "planlanan tarihte"}{" "}
+                    tarihinde kalıcı olarak silinecek. Bu tarihe kadar giriş
+                    yaparak istediğiniz zaman iptal edebilirsiniz.
+                  </AlertDescription>
+                </Alert>
+                {deleteError && <ErrorMessage message={deleteError} />}
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleCancelDeletion}
+                  disabled={cancellingDeletion}
+                >
+                  Silme işlemini iptal et
+                </Button>
+              </>
+            ) : deleteStep === "otp" ? (
+              <>
+                <Alert>
+                  <MailCheck className="h-4 w-4" />
+                  <AlertTitle>Son adım: e-posta doğrulaması</AlertTitle>
+                  <AlertDescription>
+                    {accountEmail} adresine 6 haneli bir kod gönderdik.
+                  </AlertDescription>
+                </Alert>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="delete-confirm">
-                Onaylamak için{" "}
-                <span className="font-semibold text-foreground">SİL</span> yazın
-                veya e-posta adresinizi girin.
-              </Label>
-              <Input
-                id="delete-confirm"
-                value={deleteConfirm}
-                onChange={(e) => setDeleteConfirm(e.target.value)}
-                placeholder="SİL"
-                autoComplete="off"
-                className="max-w-xs"
-              />
-            </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="deletion-otp">Doğrulama kodu</Label>
+                  <div className="mt-1 flex flex-col gap-2 min-[420px]:flex-row">
+                    <Input
+                      id="deletion-otp"
+                      value={deletionOtp}
+                      onChange={(e) => {
+                        setDeletionOtp(e.target.value.replace(/\D/g, "").slice(0, 6));
+                        setDeleteError(null);
+                      }}
+                      inputMode="numeric"
+                      autoComplete="one-time-code"
+                      placeholder="000000"
+                      className="w-full min-[420px]:max-w-[12rem]"
+                    />
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      className="w-full min-[420px]:w-auto"
+                      onClick={handleConfirmDeletion}
+                      disabled={otpConfirming || deletionOtp.length !== 6}
+                    >
+                      {otpConfirming ? "Kontrol ediliyor" : "Silme işlemini onayla"}
+                    </Button>
+                  </div>
+                </div>
 
-            {deleteError && <ErrorMessage message={deleteError} />}
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleResendDeletionOtp}
+                  disabled={otpSending || otpCooldown > 0}
+                >
+                  {otpCooldown > 0
+                    ? `Kodu yeniden gönder (${otpCooldown})`
+                    : "Kodu yeniden gönder"}
+                </Button>
 
-            <Button
-              type="button"
-              variant="destructive"
-              className="h-auto max-w-full whitespace-normal text-center"
-              onClick={handleDeleteAccount}
-              disabled={!canDeleteAccount || deletingAccount}
-            >
-              {deletingAccount ? (
-                <span
-                  className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"
-                  aria-hidden
-                />
-              ) : (
-                <Trash2 className="mr-2 h-4 w-4" />
-              )}
-              Hesabı kalıcı olarak sil
-            </Button>
+                {deleteError && <ErrorMessage message={deleteError} />}
+
+                <p className="text-xs text-muted-foreground">
+                  Bu işlemi siz başlatmadıysanız hesabınızın güvenliği için
+                  şifrenizi değiştirin.
+                </p>
+              </>
+            ) : (
+              <>
+                <Alert variant="destructive">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertTitle>Bu işlem kalıcıdır.</AlertTitle>
+                  <AlertDescription>
+                    Profiliniz, ders talepleriniz, rezervasyonlarınız ve mesajlarınız
+                    dahil tüm hesap verileriniz kalıcı olarak silinir ve geri getirilemez.
+                  </AlertDescription>
+                </Alert>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="delete-confirm">
+                    Onaylamak için{" "}
+                    <span className="font-semibold text-foreground">SİL</span> yazın
+                    veya e-posta adresinizi girin.
+                  </Label>
+                  <Input
+                    id="delete-confirm"
+                    value={deleteConfirm}
+                    onChange={(e) => setDeleteConfirm(e.target.value)}
+                    placeholder="SİL"
+                    autoComplete="off"
+                    className="max-w-xs"
+                  />
+                </div>
+
+                {deleteStep === "options" && precheck && (
+                  <DeletionOptionsList
+                    blockers={precheck.blockers}
+                    warnings={precheck.warnings}
+                    onContinue={handleContinueFromOptions}
+                    continuing={deletingAccount}
+                  />
+                )}
+
+                {deleteError && <ErrorMessage message={deleteError} />}
+
+                {deleteStep === "confirm" && (
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    className="h-auto max-w-full whitespace-normal text-center"
+                    onClick={handleStartDeletion}
+                    disabled={!canDeleteAccount || deletingAccount}
+                  >
+                    {deletingAccount ? (
+                      <span
+                        className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"
+                        aria-hidden
+                      />
+                    ) : (
+                      <Trash2 className="mr-2 h-4 w-4" />
+                    )}
+                    Hesabı kalıcı olarak sil
+                  </Button>
+                )}
+              </>
+            )}
           </CardContent>
         </Card>
+        )}
+
+        {precheck?.retention_offer?.eligible && (
+          <RetentionOfferDialog
+            open={offerOpen}
+            discountPercent={precheck.retention_offer.campaign.discount_percent}
+            validityHours={precheck.retention_offer.campaign.validity_hours}
+            onOpenChange={handleOfferOpenChange}
+            onDecline={handleOfferDecline}
+          />
+        )}
       </div>
     </div>
   );

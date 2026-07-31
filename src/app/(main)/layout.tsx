@@ -1,6 +1,7 @@
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { MainLayoutShell } from "@/components/layout/MainLayoutShell";
+import { AccountDeletionBanner } from "@/components/shared/AccountDeletionBanner";
 import { PresenceHeartbeat } from "@/components/shared/PresenceHeartbeat";
 import { TutorActivationGate } from "@/components/shared/TutorActivationGate";
 
@@ -12,6 +13,7 @@ export default function MainLayout({
   return (
     <>
       <Navbar />
+      <AccountDeletionBanner />
       <PresenceHeartbeat />
       <TutorActivationGate />
       <MainLayoutShell>

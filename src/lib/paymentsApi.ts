@@ -117,6 +117,24 @@ export function translatePackagePurchaseError(message: string): string {
   return message;
 }
 
+export interface RetentionOfferAcceptResult {
+  promotion_code: string;
+  plan_code: string;
+  discount_percent: number;
+  valid_until: string;
+}
+
+/**
+ * Accepts the account-deletion retention offer. Idempotent server-side, so a
+ * double-click or retry returns the same promotion code instead of stacking.
+ */
+export async function acceptRetentionOffer(): Promise<RetentionOfferAcceptResult> {
+  const response = await api.post<RetentionOfferAcceptResult>(
+    "/auth/retention-offer/accept/"
+  );
+  return response.data;
+}
+
 /** Pull the most specific error string out of a DRF error response. */
 export function extractPackagePurchaseErrorMessage(err: unknown): string {
   const axErr = err as { response?: { data?: unknown } };
