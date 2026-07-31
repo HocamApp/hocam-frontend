@@ -21,6 +21,8 @@ import { filterSelectedSubjectIds } from "@/lib/subjects";
 import type { TutorProfile, TutorTeachingStyle } from "@/types";
 
 import { RouteGuard } from "@/components/shared/RouteGuard";
+import { ScribbleLayers } from "@/components/decor/ScribbleLayer";
+import { TUTOR_EDIT_SCRIBBLES } from "@/lib/scribblePlacements";
 import { AISupportChatWidget } from "@/components/ai/AISupportChatWidget";
 import { TutorBioWizardDialog } from "@/components/ai/TutorBioWizardDialog";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
@@ -411,7 +413,14 @@ function TutorProfileEditContent() {
   };
 
   return (
-    <div className="min-h-screen bg-muted/20 pb-28 lg:pb-12">
+    <div className="relative isolate min-h-screen bg-muted/20 pb-28 lg:pb-12">
+      {/*
+        The layer is a negative-z child of the tinted page itself, so it paints
+        over that tint but under every piece of content. `isolate` creates a
+        stacking context, not a containing block, so the sticky header and the
+        fixed mobile save bar (both z-40) are unaffected.
+      */}
+      <ScribbleLayers layers={TUTOR_EDIT_SCRIBBLES} />
       <div className="relative z-40 border-b bg-background lg:sticky lg:top-16">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-4">
           <div className="min-w-0">
