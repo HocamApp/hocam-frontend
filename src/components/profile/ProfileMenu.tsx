@@ -428,7 +428,7 @@ export function ProfileMenu() {
               icon={<KeyRound className="h-4 w-4" />}
               label="Şifre değiştir"
               showChevron
-              onClick={() => go("/forgot-password")}
+              onClick={() => go("/profile/security")}
             />
             <ProfileMenuRow
               icon={<ShieldCheck className="h-4 w-4" />}
