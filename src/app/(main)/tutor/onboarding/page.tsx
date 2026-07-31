@@ -11,6 +11,8 @@ import { fetchAvailability, fetchVerification } from "@/lib/dashboardApi";
 import { VerificationForm } from "@/components/tutors/VerificationForm";
 import { AvailabilityCalendar } from "@/components/tutors/AvailabilityCalendar";
 import { RouteGuard } from "@/components/shared/RouteGuard";
+import { ScribbleLayers } from "@/components/decor/ScribbleLayer";
+import { NARROW_FLOW_SCRIBBLES } from "@/lib/scribblePlacements";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -156,6 +158,8 @@ function TutorOnboardingContent() {
   const progress = Math.round((completeCount / steps.length) * 100);
 
   return (
+    <div className="relative isolate">
+      <ScribbleLayers layers={NARROW_FLOW_SCRIBBLES} />
     <div className="mx-auto max-w-3xl px-4 py-10">
       <Card>
         <CardHeader>
@@ -277,6 +281,7 @@ function TutorOnboardingContent() {
           )}
         </CardContent>
       </Card>
+    </div>
     </div>
   );
 }
