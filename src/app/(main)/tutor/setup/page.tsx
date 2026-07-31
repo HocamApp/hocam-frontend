@@ -14,6 +14,8 @@ import {
   fetchTutorEducationOptions,
 } from "@/lib/tutorsApi";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
+import { ScribbleLayers } from "@/components/decor/ScribbleLayer";
+import { NARROW_FLOW_SCRIBBLES } from "@/lib/scribblePlacements";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -213,6 +215,8 @@ export default function TutorSetupPage() {
       ?.departments ?? [];
 
   return (
+    <div className="relative isolate">
+      <ScribbleLayers layers={NARROW_FLOW_SCRIBBLES} />
     <div className="mx-auto max-w-2xl px-4 py-10">
       <Card>
         <CardHeader>
@@ -476,6 +480,7 @@ export default function TutorSetupPage() {
           </Form>
         </CardContent>
       </Card>
+    </div>
     </div>
   );
 }

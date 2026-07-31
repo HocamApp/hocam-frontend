@@ -14,6 +14,10 @@ import type { ScribbleLayerSpec } from "@/lib/scribbles";
  *   /tutors            → "Hocalar — Lite Scribble" (110:2)
  *   /dashboard/student → "Öğrenci Paneli — Lite Scribble" (110:764)
  *   /cikmis-sorular    → "Çıkmış Sorular — Lite Scribble" (110:1130)
+ *
+ * The tutor-side surfaces at the bottom of this file have **no Figma frame**.
+ * They apply the same language — edge-weighted soft blobs, low density, nothing
+ * directional — within the density budget agreed for tutor screens.
  */
 
 const EMPTY: readonly ScribbleLayerSpec[] = [];
@@ -426,6 +430,263 @@ export const QUESTIONS_SCRIBBLES: readonly ScribbleLayerSpec[] = [
         width: 232,
         opacity: 0.35,
         visibility: "md-up",
+      },
+    ],
+  },
+];
+
+/* ---------------------------------------------------- /home (tutor role) */
+
+/**
+ * The tutor home is decorated through three hosts, not one.
+ *
+ * Its body column groups five sections with `space-y-20`, and one of them
+ * ("Öğrencilerinle ritmi sürdür") only renders when the tutor has students. A
+ * single host spanning the whole column would tie every percentage to a height
+ * that changes as that section comes and goes. Instead each host wraps two
+ * neighbouring sections that always render, and the conditional one sits
+ * between them, undecorated: it moves the hosts apart without changing the
+ * height of either.
+ */
+export const TUTOR_HOME_SCRIBBLES = {
+  /** Greeting hero. */
+  hero: [
+    {
+      items: [
+        {
+          id: "tutor-home-hero-pink",
+          asset: "blob-pink-dotted",
+          side: "left",
+          reveal: 88,
+          top: 18,
+          width: 420,
+          opacity: 0.3,
+          visibility: "lg-up",
+        },
+        {
+          id: "tutor-home-hero-blue",
+          asset: "blob-blue",
+          side: "right",
+          reveal: 72,
+          top: 46,
+          width: 248,
+          opacity: 0.3,
+          visibility: "md-up",
+        },
+      ],
+    },
+  ],
+
+  /** "Bugünün akışı" + "Yaklaşan derslerin". */
+  bodyUpper: [
+    {
+      items: [
+        {
+          id: "tutor-home-upper-yellow",
+          asset: "blob-yellow",
+          side: "right",
+          reveal: 80,
+          top: 8,
+          width: 319,
+          opacity: 0.4,
+          rotate: 180,
+          visibility: "lg-up",
+        },
+        {
+          id: "tutor-home-upper-flame",
+          asset: "blob-pink-flame",
+          side: "left",
+          reveal: 70,
+          top: 62,
+          width: 210,
+          opacity: 0.32,
+          visibility: "md-up",
+        },
+      ],
+    },
+  ],
+
+  /** "Hoca profilini güçlü tut" + "Çalışma araçların". */
+  bodyLower: [
+    {
+      items: [
+        {
+          // The one shape phones keep.
+          id: "tutor-home-lower-pink",
+          asset: "blob-pink-dotted",
+          side: "right",
+          reveal: 78,
+          top: 14,
+          width: 395,
+          opacity: 0.35,
+          visibility: "narrow-up",
+        },
+        {
+          id: "tutor-home-lower-blue",
+          asset: "blob-blue",
+          side: "left",
+          reveal: 66,
+          top: 68,
+          width: 264,
+          opacity: 0.28,
+          visibility: "lg-up",
+        },
+      ],
+    },
+  ],
+} satisfies Record<string, readonly ScribbleLayerSpec[]>;
+
+/* --------------------------------------------------------- /dashboard/tutor */
+
+/**
+ * Anchored to the dashboard header band, which is the same height on every tab,
+ * and allowed to sag into the tab body with `bleedBottom`. Hanging this off the
+ * page root instead would tie the percentages to the active tab's height — the
+ * calendar and the earnings table differ by thousands of pixels.
+ */
+export const TUTOR_DASHBOARD_SCRIBBLES: readonly ScribbleLayerSpec[] = [
+  {
+    bleedTop: 24,
+    bleedBottom: 300,
+    items: [
+      {
+        id: "tutor-dashboard-pink",
+        asset: "blob-pink-dotted",
+        side: "right",
+        reveal: 82,
+        top: -10,
+        width: 420,
+        opacity: 0.3,
+        visibility: "md-up",
+      },
+      {
+        id: "tutor-dashboard-blue",
+        asset: "blob-blue",
+        side: "left",
+        reveal: 68,
+        top: 60,
+        width: 248,
+        opacity: 0.28,
+        visibility: "lg-up",
+      },
+    ],
+  },
+];
+
+/* ---------------------------------------------------- /dashboard/tutor/edit */
+
+/** Kept clear of the sticky header at the top and the fixed save bar at the bottom. */
+export const TUTOR_EDIT_SCRIBBLES: readonly ScribbleLayerSpec[] = [
+  {
+    items: [
+      {
+        id: "tutor-edit-yellow",
+        asset: "blob-yellow",
+        side: "left",
+        reveal: 78,
+        top: 22,
+        width: 319,
+        opacity: 0.32,
+        rotate: 180,
+        visibility: "md-up",
+      },
+      {
+        id: "tutor-edit-pink",
+        asset: "blob-pink-dotted",
+        side: "right",
+        reveal: 74,
+        top: 63,
+        width: 395,
+        opacity: 0.28,
+        visibility: "lg-up",
+      },
+    ],
+  },
+];
+
+/* ------------------------------------------------------------ narrow flows */
+
+/**
+ * Shared by `/tutor/onboarding`, `/tutor/setup` and `/dashboard/tutor/packages`.
+ * All three are a single narrow column (`max-w-3xl` / `max-w-2xl`) with wide
+ * empty gutters, so they carry the same rhythm and there is nothing to gain
+ * from three separate configs. Give a page its own key only once it actually
+ * needs to differ.
+ */
+export const NARROW_FLOW_SCRIBBLES: readonly ScribbleLayerSpec[] = [
+  {
+    items: [
+      {
+        id: "narrow-flow-pink",
+        asset: "blob-pink-dotted",
+        side: "left",
+        reveal: 92,
+        top: 9,
+        width: 460,
+        opacity: 0.35,
+        visibility: "md-up",
+      },
+      {
+        id: "narrow-flow-blue",
+        asset: "blob-blue",
+        side: "right",
+        reveal: 76,
+        top: 44,
+        width: 264,
+        opacity: 0.3,
+        visibility: "lg-up",
+      },
+      {
+        id: "narrow-flow-yellow",
+        asset: "blob-yellow",
+        side: "right",
+        reveal: 84,
+        top: 78,
+        width: 319,
+        opacity: 0.32,
+        rotate: 180,
+        visibility: "lg-up",
+      },
+    ],
+  },
+];
+
+/* ---------------------------------------------------------------- /profile */
+
+/** One mount point, no role branch: students and tutors see the same page. */
+export const PROFILE_SCRIBBLES: readonly ScribbleLayerSpec[] = [
+  {
+    items: [
+      {
+        id: "profile-pink-top",
+        asset: "blob-pink-dotted",
+        side: "left",
+        reveal: 95,
+        top: 11,
+        width: 480,
+        opacity: 0.3,
+        visibility: "md-up",
+      },
+      {
+        id: "profile-blue-mid",
+        asset: "blob-blue",
+        side: "right",
+        reveal: 90,
+        top: 52,
+        width: 248,
+        opacity: 0.28,
+        visibility: "lg-up",
+      },
+      {
+        id: "profile-yellow-bottom",
+        asset: "blob-yellow",
+        side: "right",
+        reveal: 70,
+        top: 92,
+        width: 319,
+        opacity: 0.3,
+        rotate: 180,
+        visibility: "lg-up",
       },
     ],
   },
