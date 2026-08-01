@@ -9,6 +9,8 @@ import {
   PackagePlan,
   PackagePurchase,
   PaymentLedgerEntry,
+  PromoPreviewRequest,
+  PromoPreviewResponse,
   ReferralInfo,
   TutorEarningsSummary,
   TutorPackageOffer,
@@ -30,6 +32,16 @@ export async function createPackagePurchase(
 ): Promise<PackagePurchase> {
   const response = await api.post<PackagePurchase>(
     "/payments/package-purchases/",
+    payload
+  );
+  return response.data;
+}
+
+export async function previewPackagePromotion(
+  payload: PromoPreviewRequest
+): Promise<PromoPreviewResponse> {
+  const response = await api.post<PromoPreviewResponse>(
+    "/payments/package-purchases/promo-preview/",
     payload
   );
   return response.data;
@@ -153,4 +165,11 @@ export function extractPackagePurchaseErrorMessage(err: unknown): string {
     }
   }
   return translatePackagePurchaseError(message);
+}
+
+export function extractPromoPreviewErrorMessage(err: unknown): string {
+  const translated = extractPackagePurchaseErrorMessage(err);
+  return translated.startsWith("Paket talebi oluşturulamadı")
+    ? "İndirim kodu doğrulanamadı. Lütfen tekrar deneyin."
+    : translated;
 }

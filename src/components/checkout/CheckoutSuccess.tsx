@@ -15,7 +15,7 @@ interface PurchaseSuccessProps {
 
 /** Shown after a package request is created. Deliberately styled as a
  * pending state (amber clock, not a green payment success): no money has
- * moved yet — an admin activates the credits. */
+ * moved yet and activation timing is not promised here. */
 export function CheckoutPurchaseSuccess({ purchase, tutorId }: PurchaseSuccessProps) {
   return (
     <Card className="mx-auto max-w-lg">
@@ -26,8 +26,8 @@ export function CheckoutPurchaseSuccess({ purchase, tutorId }: PurchaseSuccessPr
         <div>
           <h2 className="text-lg font-semibold">Paket talebin oluşturuldu</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Admin onayı bekleniyor — onaydan sonra {purchase.total_credits} ders
-            hakkın aktifleşecek.
+            {purchase.total_credits} derslik talebini aldık. Güncel durumunu
+            Paketlerim alanından takip edebilirsin.
           </p>
         </div>
 
@@ -104,7 +104,7 @@ export function CheckoutBookingSuccess({ tutorId }: BookingSuccessProps) {
           <Check className="h-6 w-6 text-green-600 dark:text-green-400" />
         </div>
         <div>
-          <h2 className="text-lg font-semibold">Rezervasyonun oluşturuldu!</h2>
+          <h2 className="text-lg font-semibold">Rezervasyonun oluşturuldu</h2>
           <p className="mt-1 text-sm text-muted-foreground">
             Hoca onayladığında rezervasyonun kesinleşecek.
           </p>
