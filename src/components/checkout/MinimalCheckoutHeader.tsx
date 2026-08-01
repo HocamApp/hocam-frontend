@@ -36,11 +36,10 @@ export function MinimalCheckoutHeader({ tutorId }: { tutorId: string }) {
         >
           <ArrowLeft className="size-4" aria-hidden="true" />
         </button>
-        <Link href="/home" aria-label="Hocam ana sayfa" className="rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+        <Link href="/home" aria-label="Hocam ana sayfa" className="inline-flex h-10 items-center rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
           <BrandMark priority />
         </Link>
       </div>
-      <div className="h-1.5 w-full bg-[var(--checkout-accent)]" aria-hidden="true" />
     </header>
   );
 }

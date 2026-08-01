@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { test } from "node:test";
 
 import {
@@ -19,4 +20,27 @@ test("normalizes the ten temporary macro-composition options", () => {
   assert.equal(normalizeCheckoutPalette(null), "01");
   assert.equal(normalizeCheckoutPalette("a"), "01");
   assert.equal(normalizeCheckoutPalette("unknown"), "01");
+});
+
+test("keeps the approved Garden Split roles explicit and checkout-scoped", () => {
+  const css = readFileSync(
+    new URL("../../app/(checkout)/checkout.css", import.meta.url),
+    "utf8"
+  );
+  const gardenSplit = css.match(
+    /\[data-checkout-palette="01"\]\s*\{([\s\S]*?)\n\}/
+  )?.[1];
+
+  assert.ok(gardenSplit, "Garden Split token block should exist");
+  assert.match(gardenSplit, /--checkout-private: color-mix\(in srgb, #efcc5e 82%, #ffffff\)/);
+  assert.match(gardenSplit, /--checkout-feature-surface: #ffffff/);
+  assert.match(gardenSplit, /--checkout-pro: #c2ecad/);
+  assert.match(gardenSplit, /--checkout-pro-ink: #343633/);
+  assert.match(gardenSplit, /--checkout-duration-surface: #f5f4ec/);
+  assert.match(gardenSplit, /--checkout-selected-duration: #ffffff/);
+  assert.match(gardenSplit, /--checkout-duration-control: #343633/);
+  assert.match(gardenSplit, /--checkout-advantage: #efcc5e/);
+  assert.match(gardenSplit, /--checkout-cta: #ff435d/);
+  assert.match(gardenSplit, /--checkout-compare-private: #343633/);
+  assert.match(gardenSplit, /--checkout-compare-private-ink: #ffffff/);
 });

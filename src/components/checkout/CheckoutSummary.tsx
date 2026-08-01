@@ -166,29 +166,29 @@ export function CheckoutSummary({
                   tabIndex={selected ? 0 : -1}
                   onClick={() => onDurationDaysChange(days)}
                   onKeyDown={(event) => handleDurationKeyDown(event, index)}
-                  className="flex w-full items-center gap-3 px-3 py-2.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--checkout-control)] active:translate-y-px"
+                  className="flex w-full items-center gap-3 px-3 py-2.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--checkout-duration-control)] active:translate-y-px"
                 >
                   <span
                     className={cn(
                       "flex size-5 shrink-0 items-center justify-center rounded-full border-2",
                       selected
-                        ? "border-[var(--checkout-control)]"
-                        : "border-[var(--checkout-control)]/45"
+                        ? "border-[var(--checkout-duration-control)]"
+                        : "border-[var(--checkout-duration-control)]/45"
                     )}
                   >
-                    {selected && <span className="size-2 rounded-full bg-[var(--checkout-control)]" />}
+                    {selected && <span className="size-2 rounded-full bg-[var(--checkout-duration-control)]" />}
                   </span>
                   <span className="min-w-0 flex-1">
                     <span className="flex flex-wrap items-center gap-2">
                       <span className="text-sm font-bold sm:text-base">{formatPlanDuration(days)}</span>
                       {days === MOST_POPULAR_DURATION_DAYS && (
-                        <Badge className="rounded-md bg-[var(--checkout-control)] text-[0.65rem] text-[var(--checkout-on-control)] hover:bg-[var(--checkout-control)]">
+                        <Badge className="rounded-md bg-[var(--checkout-duration-control)] text-[0.65rem] text-white hover:bg-[var(--checkout-duration-control)]">
                           En popüler
                         </Badge>
                       )}
                     </span>
                     {optionPricing.discountPercent > 0 && (
-                      <span className="mt-0.5 block text-xs font-semibold text-[var(--checkout-discount)]">
+                      <span className="checkout-duration-advantage mt-1 inline-flex rounded px-1.5 py-0.5 text-xs font-bold leading-none">
                         %{optionPricing.discountPercent} fiyat avantajı
                       </span>
                     )}

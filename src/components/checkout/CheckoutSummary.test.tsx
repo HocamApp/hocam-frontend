@@ -69,6 +69,8 @@ test("renders duration choices as a single-select accordion in the decision rail
   const selectedDetailsId = selected.getAttribute("aria-describedby");
   assert.ok(selectedDetailsId);
   assert.ok(!document.getElementById(selectedDetailsId)?.textContent?.includes("Paket toplamı"));
+  const advantage = selected.querySelector(".checkout-duration-advantage");
+  assert.ok(advantage, "duration advantage should use the dedicated yellow label");
   selected.focus();
   fireEvent.keyDown(selected, { key: "ArrowRight" });
   assert.equal(document.activeElement, screen.getByRole("radio", { name: /6 Ay/ }));

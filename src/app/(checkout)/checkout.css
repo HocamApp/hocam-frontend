@@ -48,6 +48,9 @@
   --checkout-duration-ink: var(--checkout-charcoal);
   --checkout-selected-duration: var(--checkout-yellow);
   --checkout-selected-duration-ink: var(--checkout-charcoal);
+  --checkout-duration-control: var(--checkout-control);
+  --checkout-advantage: var(--checkout-yellow);
+  --checkout-advantage-ink: var(--checkout-charcoal);
   --checkout-discount: var(--checkout-forest);
   --checkout-cta: var(--checkout-forest);
   --checkout-cta-hover: var(--checkout-charcoal);
@@ -72,18 +75,25 @@
   --checkout-accent: #366b37;
   --checkout-left-surface: #f5f4ec;
   --checkout-right-surface: #c2ecad;
-  --checkout-private: #efcc5e;
+  --checkout-private: color-mix(in srgb, #efcc5e 82%, #ffffff);
   --checkout-private-body: #ffffff;
   --checkout-group: #8cd5e9;
-  --checkout-pro: #366b37;
-  --checkout-feature-surface: #c2ecad;
+  --checkout-pro: #c2ecad;
+  --checkout-pro-ink: #343633;
+  --checkout-feature-surface: #ffffff;
   --checkout-control: #366b37;
-  --checkout-duration-surface: #ffffff;
-  --checkout-selected-duration: #efcc5e;
-  --checkout-cta: #366b37;
+  --checkout-duration-surface: #f5f4ec;
+  --checkout-selected-duration: #ffffff;
+  --checkout-duration-control: #343633;
+  --checkout-advantage: #efcc5e;
+  --checkout-advantage-ink: #343633;
+  --checkout-cta: #ff435d;
+  --checkout-cta-hover: color-mix(in srgb, #ff435d 88%, #000000);
+  --checkout-on-cta: #000000;
   --checkout-promo-surface: #ffffff;
   --checkout-dialog-surface: #f5f4ec;
-  --checkout-compare-private: #efcc5e;
+  --checkout-compare-private: #343633;
+  --checkout-compare-private-ink: #ffffff;
   --checkout-compare-group: #8cd5e9;
   --checkout-compare-pro: #366b37;
 }
@@ -358,11 +368,16 @@
 }
 
 .checkout-duration-card[data-selected="true"] {
-  border-color: var(--checkout-control);
+  border-color: var(--checkout-duration-control);
   border-width: 2px;
   background: var(--checkout-selected-duration);
   color: var(--checkout-selected-duration-ink);
   box-shadow: 0 10px 24px -22px color-mix(in srgb, var(--checkout-charcoal) 55%, transparent);
+}
+
+.checkout-duration-advantage {
+  background: var(--checkout-advantage);
+  color: var(--checkout-advantage-ink);
 }
 
 .checkout-dialog-theme {
