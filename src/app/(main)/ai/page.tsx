@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { TypingIndicator } from "@/components/messaging/TypingIndicator";
+import { AssistantMessageContent } from "@/components/ai/AssistantMessageContent";
 import { cn } from "@/lib/utils";
 import { setTheme, type Theme } from "@/lib/theme";
 import {
@@ -93,7 +94,7 @@ const intentLabels: Record<AIIntent, string> = {
   tutor_recommendation: "Mentor önerisi",
   study_guidance: "Çalışma planı",
   academic_help: "Ders desteği",
-  platform_faq: "Hocam bilgisi",
+  platform_faq: "Platform",
   support_escalation: "Destek",
   general_smalltalk: "Sohbet",
   tutor_profile_feedback: "Profil yorumu",
@@ -227,19 +228,28 @@ function AIPageContent() {
               >
                 <div
                   className={cn(
-                    "max-w-[86%] rounded-lg px-4 py-3 text-sm leading-6 shadow-sm sm:max-w-[76%]",
+                    "min-w-0",
                     message.role === "user"
-                      ? "bg-primary text-primary-foreground"
-                      : "border border-border bg-background text-foreground",
+                      ? "max-w-[86%] rounded-lg bg-primary px-4 py-3 text-sm leading-6 text-primary-foreground shadow-sm sm:max-w-[76%]"
+                      : "w-full max-w-[72ch] border-l-2 border-primary/30 bg-muted/20 px-4 py-3.5 sm:px-5",
                     message.isFresh && "motion-safe:animate-message-pop"
                   )}
                 >
                   {message.intent && message.role === "assistant" && (
-                    <div className="mb-1 text-xs font-medium text-muted-foreground">
-                      {intentLabels[message.intent]}
+                    <div className="mb-2 flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                      <Bot className="h-3.5 w-3.5" aria-hidden />
+                      <span>Hocam AI</span>
+                      <span aria-hidden>·</span>
+                      <span>{intentLabels[message.intent]}</span>
                     </div>
                   )}
-                  <p className="whitespace-pre-wrap">{message.content}</p>
+                  {message.role === "assistant" ? (
+                    <AssistantMessageContent content={message.content} headingBaseLevel={2} />
+                  ) : (
+                    <p className="whitespace-pre-wrap [overflow-wrap:anywhere]">
+                      {message.content}
+                    </p>
+                  )}
                 </div>
               </div>
             ))}
