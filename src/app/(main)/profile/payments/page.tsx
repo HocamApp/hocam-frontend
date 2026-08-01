@@ -9,6 +9,7 @@ import { ProfileScreen } from "@/components/profile/ProfileScreen";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { PACKAGE_HISTORY_EMPTY_DESCRIPTION } from "@/lib/paymentHistoryCopy";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import {
@@ -136,7 +137,7 @@ function PackagesSection() {
     return (
       <EmptyState
         title="Henüz paketin yok"
-        description="Bir hocanın profilinden 10 derslik avantajlı paket talebinde bulunabilirsin."
+        description={PACKAGE_HISTORY_EMPTY_DESCRIPTION}
       />
     );
   }
