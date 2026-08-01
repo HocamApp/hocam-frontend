@@ -63,9 +63,9 @@ function SupportContent() {
           </div>
         </div>
 
-        <div className="mt-8 max-w-3xl lg:w-3/5">
+        <div className="mt-8 grid items-start gap-10 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] lg:gap-10">
           {/* Ticket form + list */}
-          <div className="space-y-6">
+          <div className="min-w-0 space-y-6">
             <Card id="support-request-form" ref={formRef} className="scroll-mt-24">
               <CardHeader>
                 <CardTitle className="text-lg">Destek talebi oluştur</CardTitle>
@@ -86,62 +86,66 @@ function SupportContent() {
 
             <SupportTicketList />
           </div>
+
+          <aside className="min-w-0">
+            <SupportAccordionSection
+              layout="stacked"
+              className="border-t-0 py-0 pb-8"
+              heading={
+                <h2 className="text-xl font-semibold tracking-tight text-foreground">
+                  Yardım & kurallar
+                </h2>
+              }
+              value={openHelpSection}
+              onValueChange={setOpenHelpSection}
+              items={[
+                {
+                  id: "help-website-feedback",
+                  title: "Web sitesi geri bildirimi",
+                  content: (
+                    <div className="space-y-3">
+                      <p className="text-base leading-7">
+                        Tasarım, metin, akış veya teknik sorunlarla ilgili geri bildirimleri
+                        destek talebi olarak iletebilirsiniz.
+                      </p>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={startWebsiteFeedback}
+                      >
+                        Geri bildirim yaz
+                      </Button>
+                    </div>
+                  ),
+                },
+                ...HELP_SECTIONS.map((section, sectionIndex) => ({
+                  id: section.anchorId ?? `help-item-${sectionIndex + 1}`,
+                  title: section.title,
+                  anchorId: section.anchorId,
+                  content: (
+                    <ul className="space-y-1.5 pl-1">
+                      {section.items.map((item, itemIndex) => (
+                        <li
+                          key={itemIndex}
+                          className="flex gap-2 text-base leading-7 text-muted-foreground"
+                        >
+                          <span
+                            className="mt-3 h-1 w-1 shrink-0 rounded-full bg-primary/50"
+                            aria-hidden
+                          />
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  ),
+                })),
+              ]}
+            />
+
+            <SupportFAQ layout="stacked" className="mt-0 py-8" />
+          </aside>
         </div>
-
-        <SupportAccordionSection
-          heading={
-            <h2 className="text-2xl font-semibold tracking-tight text-foreground">
-              Yardım & kurallar
-            </h2>
-          }
-          value={openHelpSection}
-          onValueChange={setOpenHelpSection}
-          items={[
-            {
-              id: "help-website-feedback",
-              title: "Web sitesi geri bildirimi",
-              content: (
-                <div className="space-y-3">
-                  <p className="text-base leading-7">
-                    Tasarım, metin, akış veya teknik sorunlarla ilgili geri bildirimleri
-                    destek talebi olarak iletebilirsiniz.
-                  </p>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={startWebsiteFeedback}
-                  >
-                    Geri bildirim yaz
-                  </Button>
-                </div>
-              ),
-            },
-            ...HELP_SECTIONS.map((section, sectionIndex) => ({
-              id: section.anchorId ?? `help-item-${sectionIndex + 1}`,
-              title: section.title,
-              anchorId: section.anchorId,
-              content: (
-                <ul className="space-y-1.5 pl-1">
-                  {section.items.map((item, itemIndex) => (
-                    <li
-                      key={itemIndex}
-                      className="flex gap-2 text-base leading-7 text-muted-foreground"
-                    >
-                      <span
-                        className="mt-3 h-1 w-1 shrink-0 rounded-full bg-primary/50"
-                        aria-hidden
-                      />
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              ),
-            })),
-          ]}
-        />
-
-        <SupportFAQ />
       </div>
       <AISupportChatWidget
         title={SUPPORT_PAGE_ASSISTANT.title}

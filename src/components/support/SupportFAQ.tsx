@@ -2,7 +2,10 @@
 
 import Link from "next/link";
 
-import { SupportAccordionSection } from "@/components/support/SupportAccordionSection";
+import {
+  SupportAccordionSection,
+  type SupportAccordionSectionLayout,
+} from "@/components/support/SupportAccordionSection";
 
 const faqItems = [
   {
@@ -49,23 +52,51 @@ const faqItems = [
   },
 ];
 
-export function SupportFAQ() {
+interface SupportFAQProps {
+  layout?: SupportAccordionSectionLayout;
+  className?: string;
+}
+
+export function SupportFAQ({
+  layout = "split",
+  className,
+}: SupportFAQProps = {}) {
+  const isStacked = layout === "stacked";
+
   return (
     <SupportAccordionSection
+      layout={layout}
+      className={className}
       heading={
         <>
-          <p className="text-sm font-medium text-primary">
+          <p className={isStacked ? "text-xs font-medium text-primary" : "text-sm font-medium text-primary"}>
             Sorularının cevapları
           </p>
-          <h2 className="mt-3 text-2xl font-semibold tracking-tight text-foreground">
+          <h2
+            className={
+              isStacked
+                ? "mt-2 text-xl font-semibold tracking-tight text-foreground"
+                : "mt-3 text-2xl font-semibold tracking-tight text-foreground"
+            }
+          >
             Sıkça Sorulan Sorular
           </h2>
-          <p className="mt-5 text-base leading-7 text-muted-foreground">
+          <p
+            className={
+              isStacked
+                ? "mt-3 text-sm leading-6 text-muted-foreground"
+                : "mt-5 text-base leading-7 text-muted-foreground"
+            }
+          >
             Aradığın cevabı bulamadın mı?
           </p>
           <Link
             href="#support-request-form"
-            className="mt-2 inline-flex text-base font-medium text-primary hover:underline"
+            className={
+              isStacked
+                ? "mt-1 inline-flex text-sm font-medium text-primary hover:underline"
+                : "mt-2 inline-flex text-base font-medium text-primary hover:underline"
+            }
           >
             Destek ekibimizle iletişime geç
           </Link>
