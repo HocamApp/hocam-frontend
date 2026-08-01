@@ -17,8 +17,8 @@ import {
 } from "@/lib/paymentsApi";
 import {
   MOST_POPULAR_DURATION_DAYS,
-  WEEKLY_LESSON_OPTIONS,
   calculatePackagePricing,
+  normalizeWeeklyLessonOption,
   type WeeklyLessonOption,
 } from "@/lib/lessonPricing";
 import { formatPrice } from "@/lib/utils";
@@ -43,10 +43,7 @@ function getInitials(name: string, surname: string): string {
 }
 
 function parseLessonsPerWeek(raw: string | null): WeeklyLessonOption {
-  const n = Number(raw);
-  return (WEEKLY_LESSON_OPTIONS as readonly number[]).includes(n)
-    ? (n as WeeklyLessonOption)
-    : 2;
+  return normalizeWeeklyLessonOption(raw);
 }
 
 function parseDurationDays(raw: string | null): number {

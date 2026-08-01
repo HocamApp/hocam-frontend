@@ -14,8 +14,19 @@
 export const LESSON_BASE_MINUTES = 40;
 
 /** The weekly-lesson axis of the purchase matrix (chips on checkout). */
-export const WEEKLY_LESSON_OPTIONS = [1, 2, 3, 4, 5] as const;
+export const WEEKLY_LESSON_OPTIONS = [2, 3, 4, 5, 6] as const;
 export type WeeklyLessonOption = (typeof WEEKLY_LESSON_OPTIONS)[number];
+
+/** Normalize URL/state input at the paid-package boundary. Trial and
+ * single-date booking flows do not use this package selector. */
+export function normalizeWeeklyLessonOption(
+  raw: string | number | null | undefined
+): WeeklyLessonOption {
+  const count = Number(raw);
+  return (WEEKLY_LESSON_OPTIONS as readonly number[]).includes(count)
+    ? (count as WeeklyLessonOption)
+    : 2;
+}
 
 /** Canonical duration axis, used for ordering and the "En popüler" pick.
  * The actually purchasable durations come from the plan catalog API. */
