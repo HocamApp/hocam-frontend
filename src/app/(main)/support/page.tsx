@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { LifeBuoy, MessageSquareText } from "lucide-react";
+import { LifeBuoy } from "lucide-react";
 
 import { RouteGuard } from "@/components/shared/RouteGuard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { AISupportChatWidget } from "@/components/ai/AISupportChatWidget";
 import { SUPPORT_PAGE_ASSISTANT } from "@/components/ai/pageAssistantContent";
 import { SupportFAQ } from "@/components/support/SupportFAQ";
+import { SupportAccordionSection } from "@/components/support/SupportAccordionSection";
 import { SupportTicketForm } from "@/components/support/SupportTicketForm";
 import { SupportTicketList } from "@/components/support/SupportTicketList";
 import { HELP_SECTIONS } from "@/components/support/supportContent";
@@ -56,9 +57,9 @@ function SupportContent() {
         </div>
       </div>
 
-      <div className="mt-8 grid gap-6 lg:grid-cols-5">
+      <div className="mt-8 max-w-3xl lg:w-3/5">
         {/* Ticket form + list */}
-        <div className="space-y-6 lg:col-span-3">
+        <div className="space-y-6">
           <Card id="support-request-form" ref={formRef} className="scroll-mt-24">
             <CardHeader>
               <CardTitle className="text-lg">Destek talebi oluştur</CardTitle>
@@ -85,72 +86,58 @@ function SupportContent() {
           </section>
         </div>
 
-        {/* Help / rulebook */}
-        <aside className="space-y-3 lg:col-span-2">
-          <h2 className="text-lg font-semibold text-foreground">
+      </div>
+
+      <SupportAccordionSection
+        heading={
+          <h2 className="text-2xl font-semibold tracking-tight text-foreground">
             Yardım & kurallar
           </h2>
-          <Card>
-            <CardContent className="space-y-3 p-4">
-              <div className="flex items-center gap-2">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                  <MessageSquareText className="h-4 w-4" />
-                </span>
-                <h3 className="font-medium text-foreground">
-                  Web sitesi geri bildirimi
-                </h3>
+        }
+        items={[
+          {
+            id: "help-website-feedback",
+            title: "Web sitesi geri bildirimi",
+            content: (
+              <div className="space-y-3">
+                <p className="text-base leading-7">
+                  Tasarım, metin, akış veya teknik sorunlarla ilgili geri bildirimleri
+                  destek talebi olarak iletebilirsiniz.
+                </p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={startWebsiteFeedback}
+                >
+                  Geri bildirim yaz
+                </Button>
               </div>
-              <p className="text-sm text-muted-foreground">
-                Tasarım, metin, akış veya teknik sorunlarla ilgili geri bildirimleri
-                destek talebi olarak iletebilirsiniz.
-              </p>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={startWebsiteFeedback}
-              >
-                Geri bildirim yaz
-              </Button>
-            </CardContent>
-          </Card>
-          {HELP_SECTIONS.map((section) => {
-            const Icon = section.icon;
-            return (
-              <Card
-                key={section.title}
-                id={section.anchorId}
-                className={section.anchorId ? "scroll-mt-24" : undefined}
-              >
-                <CardContent className="space-y-2 p-4">
-                  <div className="flex items-center gap-2">
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                      <Icon className="h-4 w-4" />
-                    </span>
-                    <h3 className="font-medium text-foreground">
-                      {section.title}
-                    </h3>
-                  </div>
-                  <ul className="space-y-1.5 pl-1">
-                    {section.items.map((item, i) => (
-                      <li
-                        key={i}
-                        className="flex gap-2 text-sm text-muted-foreground"
-                      >
-                        <span
-                          className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-primary/50"
-                          aria-hidden
-                        />
-                        <span>{item}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </aside>
-      </div>
+            ),
+          },
+          ...HELP_SECTIONS.map((section, sectionIndex) => ({
+            id: `help-item-${sectionIndex + 1}`,
+            title: section.title,
+            anchorId: section.anchorId,
+            content: (
+              <ul className="space-y-1.5 pl-1">
+                {section.items.map((item, itemIndex) => (
+                  <li
+                    key={itemIndex}
+                    className="flex gap-2 text-base leading-7 text-muted-foreground"
+                  >
+                    <span
+                      className="mt-3 h-1 w-1 shrink-0 rounded-full bg-primary/50"
+                      aria-hidden
+                    />
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            ),
+          })),
+        ]}
+      />
 
       <SupportFAQ />
       </div>
