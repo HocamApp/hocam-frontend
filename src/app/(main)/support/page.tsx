@@ -142,10 +142,10 @@ function SupportContent() {
                 })),
               ]}
             />
-
-            <SupportFAQ layout="stacked" className="mt-0 py-8" />
           </aside>
         </div>
+
+        <SupportFAQ />
       </div>
       <AISupportChatWidget
         title={SUPPORT_PAGE_ASSISTANT.title}
