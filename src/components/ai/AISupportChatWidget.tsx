@@ -5,6 +5,7 @@ import axios from "axios";
 import { Bot, MessageCircle, Send, Sparkles, X } from "lucide-react";
 
 import { TypingIndicator } from "@/components/messaging/TypingIndicator";
+import { AssistantMessageContent } from "@/components/ai/AssistantMessageContent";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { AIChatRequest, AIChatResponse, AIIntent, sendAIChatMessage } from "@/lib/aiAssistantApi";
@@ -31,7 +32,7 @@ const intentLabels: Record<AIIntent, string> = {
   tutor_recommendation: "Mentor önerisi",
   study_guidance: "Çalışma planı",
   academic_help: "Ders desteği",
-  platform_faq: "Hocam bilgisi",
+  platform_faq: "Platform",
   support_escalation: "Destek",
   general_smalltalk: "Sohbet",
   tutor_profile_feedback: "Profil yorumu",
@@ -84,6 +85,7 @@ export function AISupportChatWidget({
   const [activeAttentionMessage, setActiveAttentionMessage] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const shouldAutoScrollRef = useRef(true);
 
   const canSend = input.trim().length > 0 && !isSending;
 
@@ -118,7 +120,7 @@ export function AISupportChatWidget({
   }, [attentionMessage, attentionMessages, attentionStorageKey]);
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen || !shouldAutoScrollRef.current) return;
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [isOpen, messages, isSending]);
 
@@ -154,6 +156,7 @@ export function AISupportChatWidget({
       isFresh: true,
     };
     setMessages((current) => [...current, userMessage]);
+    shouldAutoScrollRef.current = true;
     setInput("");
     setError("");
     setIsSending(true);
@@ -241,7 +244,15 @@ export function AISupportChatWidget({
             </Button>
           </header>
 
-          <div className="flex-1 space-y-3 overflow-y-auto px-4 py-3">
+          <div
+            className="flex-1 space-y-3 overflow-y-auto px-3 py-3 sm:px-4"
+            onScroll={(event) => {
+              const viewport = event.currentTarget;
+              const distanceFromBottom =
+                viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight;
+              shouldAutoScrollRef.current = distanceFromBottom < 80;
+            }}
+          >
             {messages.map((message) => (
               <div
                 key={message.id}
@@ -252,19 +263,32 @@ export function AISupportChatWidget({
               >
                 <div
                   className={cn(
-                    "max-w-[86%] rounded-lg px-3 py-2.5 text-sm leading-6 shadow-sm",
+                    "min-w-0",
                     message.role === "user"
-                      ? "bg-primary text-primary-foreground"
-                      : "border border-border bg-background text-foreground",
+                      ? "max-w-[86%] rounded-lg bg-primary px-3 py-2.5 text-sm leading-6 text-primary-foreground shadow-sm"
+                      : "w-full border-l-2 border-primary/30 bg-muted/20 px-3 py-3",
                     message.isFresh && "motion-safe:animate-message-pop"
                   )}
                 >
                   {message.intent && message.role === "assistant" && (
-                    <div className="mb-1 text-xs font-medium text-muted-foreground">
-                      {intentLabels[message.intent]}
+                    <div className="mb-2 flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                      <Bot className="h-3.5 w-3.5" aria-hidden />
+                      <span>Hocam AI</span>
+                      <span aria-hidden>·</span>
+                      <span>{intentLabels[message.intent]}</span>
                     </div>
                   )}
-                  <p className="whitespace-pre-wrap">{message.content}</p>
+                  {message.role === "assistant" ? (
+                    <AssistantMessageContent
+                      content={message.content}
+                      headingBaseLevel={3}
+                      className="max-w-none"
+                    />
+                  ) : (
+                    <p className="whitespace-pre-wrap [overflow-wrap:anywhere]">
+                      {message.content}
+                    </p>
+                  )}
                   {message.action?.type === "apply_profile_bio" && message.action.value && onApplyProfileBio && (
                     <Button
                       type="button"
@@ -362,6 +386,7 @@ export function AISupportChatWidget({
         className="relative z-10 h-14 w-14 rounded-full shadow-xl motion-safe:animate-message-pop"
         onClick={() => {
           setShowAttention(false);
+          shouldAutoScrollRef.current = true;
           setIsOpen((value) => !value);
         }}
         aria-label={isOpen ? "AI destek penceresini kapat" : "AI destek penceresini aç"}
