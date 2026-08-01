@@ -1,16 +1,22 @@
 import type { ReactNode } from "react";
+import type { CheckoutPalette } from "./checkoutPalette";
 
 export function CheckoutShell({
   header,
   exploration,
   decision,
+  palette = "a",
 }: {
   header: ReactNode;
   exploration: ReactNode;
   decision: ReactNode;
+  palette?: CheckoutPalette;
 }) {
   return (
-    <div className="min-h-[100dvh] overflow-x-clip bg-[var(--checkout-left-surface)]">
+    <div
+      data-checkout-palette={palette}
+      className="min-h-[100dvh] overflow-x-clip bg-[var(--checkout-left-surface)]"
+    >
       {header}
       <main
         id="checkout-content"
@@ -18,7 +24,7 @@ export function CheckoutShell({
       >
         <section
           aria-label="Ders planı"
-          className={`min-w-0 bg-[var(--checkout-left-surface)] px-4 pb-32 pt-7 sm:px-7 sm:pt-9 lg:px-10 lg:pb-12 xl:px-14 ${decision ? "" : "lg:col-span-2"}`}
+          className={`min-w-0 bg-[var(--checkout-left-surface)] px-4 pb-32 pt-5 sm:px-7 sm:pt-6 lg:px-10 lg:pb-8 xl:px-14 ${decision ? "" : "lg:col-span-2"}`}
         >
           <div className="mx-auto w-full max-w-[50rem] lg:ml-auto lg:mr-0">
             {exploration}
@@ -27,7 +33,7 @@ export function CheckoutShell({
         {decision && (
           <aside
             aria-label="Paket kararı"
-            className="min-w-0 border-t border-[var(--checkout-soft-line)] bg-[var(--checkout-right-surface)] px-4 pb-32 pt-7 sm:px-7 sm:pt-9 lg:border-l lg:border-t-0 lg:px-8 lg:pb-12 xl:px-10"
+            className="min-w-0 border-t border-[var(--checkout-soft-line)] bg-[var(--checkout-right-surface)] px-4 pb-32 pt-5 sm:px-7 sm:pt-6 lg:border-l lg:border-t-0 lg:px-7 lg:pb-8 xl:px-9"
           >
             <div className="w-full max-w-[34rem] lg:mr-auto">{decision}</div>
           </aside>

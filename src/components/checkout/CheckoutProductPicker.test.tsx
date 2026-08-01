@@ -82,6 +82,11 @@ test("expands private package controls and benefits inside the selected plan", (
   assert.ok(privatePlan.textContent?.includes("Haftalık ders sayısını seç"));
   assert.ok(privatePlan.textContent?.includes("BİREBİR PAKET ÖZELLİKLERİ"));
   assert.ok(privatePlan.textContent?.includes("Seçtiğin hocayla canlı birebir ders"));
+  const featureList = privatePlan.querySelector('[aria-labelledby="private-features-title"] ul');
+  assert.equal(featureList?.querySelectorAll("li").length, 4);
+  assert.ok(!privatePlan.textContent?.includes("2 hafta–6 ay paket süresi"));
+  assert.ok(!privatePlan.textContent?.includes("Toplam ders hakkı"));
+  assert.ok(!privatePlan.textContent?.includes("Paket süresine göre ders başına fiyat avantajı"));
   assert.ok(privatePlan.textContent?.includes("3 ders hakkın kullanılabilir"));
   fireEvent.click(screen.getByRole("button", { name: "Mevcut ders hakkını kullan" }));
   assert.equal(creditUses, 1);
@@ -91,4 +96,24 @@ test("expands private package controls and benefits inside the selected plan", (
     assert.ok(screen.getByRole("button", { name: `${count} ders` }));
   }
   assert.equal(screen.queryByRole("button", { name: "1 ders" }), null);
+});
+
+test("uses the approved concise descriptions for future plans", () => {
+  render(
+    <CheckoutProductPicker
+      basePrice={1000}
+      weeklyPlans={plans}
+      lessonsPerWeek={2}
+      durationDays={90}
+      onLessonsPerWeekChange={() => {}}
+      onDurationDaysChange={() => {}}
+    />
+  );
+
+  assert.ok(screen.getByText("2–4 öğrenciyle, kişi başı daha avantajlı canlı dersler."));
+  assert.ok(
+    screen.getByText(
+      "Soru desteği, haftalık koçluk ve gelişim takibiyle güçlendirilmiş birebir plan."
+    )
+  );
 });

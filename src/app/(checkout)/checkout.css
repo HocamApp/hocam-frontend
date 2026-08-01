@@ -1,5 +1,6 @@
 .checkout-theme,
 .checkout-dialog-theme {
+  /* Solidroad source palette — exact samples from the supplied board. */
   --checkout-evergreen: #31542a;
   --checkout-nighttime: #132110;
   --checkout-grassland: #6cbf6d;
@@ -8,23 +9,98 @@
   --checkout-dulline: #fbf2d3;
   --checkout-placeboam: #f1d160;
   --checkout-switchback: #f3b359;
-  --checkout-left-surface: var(--checkout-dulline);
-  --checkout-right-surface: color-mix(
-    in srgb,
-    var(--checkout-dulline) 78%,
-    var(--checkout-placeboam) 22%
-  );
-  --checkout-soft-line: color-mix(
-    in srgb,
-    var(--checkout-evergreen) 20%,
-    transparent
-  );
+
+  --checkout-header-surface: var(--checkout-clearway);
+  --checkout-accent: var(--checkout-grassland);
+  --checkout-left-surface: color-mix(in srgb, var(--checkout-clearway) 72%, var(--checkout-dulline));
+  --checkout-right-surface: color-mix(in srgb, var(--checkout-clearway) 52%, var(--checkout-dulline));
+  --checkout-dialog-surface: var(--checkout-left-surface);
+  --checkout-card-surface: var(--checkout-clearway);
+  --checkout-selected-surface: color-mix(in srgb, var(--checkout-clearway) 82%, var(--checkout-dulline));
+  --checkout-muted-surface: color-mix(in srgb, var(--checkout-clearway) 58%, var(--checkout-dulline));
+  --checkout-private: var(--checkout-placeboam);
+  --checkout-group: var(--checkout-signal-bay);
+  --checkout-pro: var(--checkout-evergreen);
+  --checkout-on-pro: var(--checkout-clearway);
+  --checkout-control: var(--checkout-evergreen);
+  --checkout-control-strong: var(--checkout-nighttime);
+  --checkout-on-control: var(--checkout-clearway);
+  --checkout-discount: var(--checkout-evergreen);
+  --checkout-cta: var(--checkout-evergreen);
+  --checkout-cta-hover: var(--checkout-nighttime);
+  --checkout-on-cta: var(--checkout-clearway);
+  --checkout-feature-surface: color-mix(in srgb, var(--checkout-clearway) 70%, var(--checkout-private));
+  --checkout-soft-line: color-mix(in srgb, var(--checkout-evergreen) 18%, transparent);
   color: var(--checkout-nighttime);
+}
+
+/* A — Soft neutral */
+[data-checkout-palette="a"] {
+  --checkout-accent: var(--checkout-grassland);
+  --checkout-left-surface: color-mix(in srgb, var(--checkout-clearway) 72%, var(--checkout-dulline));
+  --checkout-right-surface: color-mix(in srgb, var(--checkout-clearway) 52%, var(--checkout-dulline));
+}
+
+/* B — Crisp contrast */
+[data-checkout-palette="b"] {
+  --checkout-header-surface: var(--checkout-dulline);
+  --checkout-accent: var(--checkout-signal-bay);
+  --checkout-left-surface: color-mix(in srgb, var(--checkout-clearway) 86%, var(--checkout-dulline));
+  --checkout-right-surface: color-mix(in srgb, var(--checkout-clearway) 62%, var(--checkout-dulline));
+  --checkout-pro: var(--checkout-nighttime);
+  --checkout-control: var(--checkout-nighttime);
+  --checkout-control-strong: var(--checkout-evergreen);
+  --checkout-cta: var(--checkout-nighttime);
+  --checkout-cta-hover: var(--checkout-evergreen);
+}
+
+/* C — Calm product */
+[data-checkout-palette="c"] {
+  --checkout-accent: var(--checkout-placeboam);
+  --checkout-left-surface: color-mix(in srgb, var(--checkout-clearway) 80%, var(--checkout-dulline));
+  --checkout-right-surface: color-mix(in srgb, var(--checkout-clearway) 90%, var(--checkout-signal-bay));
+  --checkout-private: var(--checkout-placeboam);
+  --checkout-pro: var(--checkout-evergreen);
+  --checkout-control: var(--checkout-evergreen);
+  --checkout-cta: var(--checkout-evergreen);
+}
+
+/* D — Warm editorial */
+[data-checkout-palette="d"] {
+  --checkout-accent: var(--checkout-switchback);
+  --checkout-left-surface: color-mix(in srgb, var(--checkout-clearway) 76%, var(--checkout-dulline));
+  --checkout-right-surface: color-mix(in srgb, var(--checkout-clearway) 60%, var(--checkout-dulline));
+  --checkout-pro: var(--checkout-nighttime);
+  --checkout-control: var(--checkout-nighttime);
+  --checkout-cta: var(--checkout-switchback);
+  --checkout-cta-hover: var(--checkout-placeboam);
+  --checkout-on-cta: var(--checkout-nighttime);
+}
+
+/* E — Light premium */
+[data-checkout-palette="e"] {
+  --checkout-accent: var(--checkout-evergreen);
+  --checkout-left-surface: color-mix(in srgb, var(--checkout-clearway) 80%, var(--checkout-dulline));
+  --checkout-right-surface: color-mix(in srgb, var(--checkout-clearway) 90%, var(--checkout-evergreen));
+  --checkout-private: var(--checkout-switchback);
+  --checkout-pro: var(--checkout-nighttime);
+  --checkout-control: var(--checkout-evergreen);
+  --checkout-control-strong: var(--checkout-nighttime);
+  --checkout-cta: var(--checkout-nighttime);
+  --checkout-cta-hover: var(--checkout-evergreen);
 }
 
 .checkout-theme {
   min-height: 100dvh;
   background: var(--checkout-left-surface);
+}
+
+.checkout-plan-bar {
+  border-color: var(--checkout-soft-line);
+}
+
+.checkout-plan-bar-pro {
+  border-color: color-mix(in srgb, var(--checkout-pro) 72%, var(--checkout-soft-line));
 }
 
 .checkout-duration-card {
@@ -33,14 +109,48 @@
 }
 
 .checkout-duration-card[data-selected="true"] {
-  border-color: var(--checkout-nighttime);
-  background: var(--checkout-clearway);
-  box-shadow: 0 12px 28px -24px color-mix(in srgb, var(--checkout-nighttime) 55%, transparent);
+  border-color: var(--checkout-control);
+  border-width: 2px;
+  background: var(--checkout-card-surface);
+  box-shadow: 0 10px 24px -22px color-mix(in srgb, var(--checkout-nighttime) 50%, transparent);
 }
 
 .checkout-dialog-theme {
-  background: var(--checkout-dulline);
+  background: var(--checkout-dialog-surface);
   color: var(--checkout-nighttime);
+}
+
+.checkout-compare-plan-head[data-plan="private"] > span,
+.checkout-compare-tab[data-plan="private"][data-state="active"] {
+  background: var(--checkout-private);
+  color: var(--checkout-nighttime);
+}
+
+.checkout-compare-plan-head[data-plan="group"] > span,
+.checkout-compare-tab[data-plan="group"][data-state="active"] {
+  background: var(--checkout-group);
+  color: var(--checkout-nighttime);
+}
+
+.checkout-compare-plan-head[data-plan="pro"] > span,
+.checkout-compare-tab[data-plan="pro"][data-state="active"] {
+  background: var(--checkout-pro);
+  color: var(--checkout-on-pro);
+}
+
+.checkout-compare-plan-head[data-plan="group"],
+.checkout-compare-mobile-badge[data-plan="group"] {
+  color: var(--checkout-evergreen);
+}
+
+.checkout-compare-plan-head[data-plan="pro"],
+.checkout-compare-mobile-badge[data-plan="pro"] {
+  color: var(--checkout-pro);
+}
+
+.checkout-compare-badge,
+.checkout-compare-mobile-badge {
+  border-color: currentColor;
 }
 
 @media (prefers-reduced-motion: reduce) {

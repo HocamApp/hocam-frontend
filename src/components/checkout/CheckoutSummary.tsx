@@ -13,7 +13,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
 import { cn, formatPrice } from "@/lib/utils";
 import {
   MOST_POPULAR_DURATION_DAYS,
@@ -115,7 +114,7 @@ export function CheckoutSummary({
     <div>
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-xs font-extrabold tracking-[0.16em] text-[var(--checkout-evergreen)]">
+          <h1 className="text-xs font-extrabold tracking-[0.16em] text-[var(--checkout-control)]">
             PAKET SÜRESİNİ SEÇ
           </h1>
           <p className="mt-1 text-xs opacity-65">Haftada {lessonsPerWeek} ders</p>
@@ -126,7 +125,7 @@ export function CheckoutSummary({
               src={tutor.profile_picture || undefined}
               alt={`${tutor.name} ${tutor.surname}`}
             />
-            <AvatarFallback className="rounded-lg bg-[var(--checkout-evergreen)] text-xs font-bold text-[var(--checkout-dulline)]">
+            <AvatarFallback className="rounded-lg bg-[var(--checkout-control)] text-xs font-bold text-[var(--checkout-on-control)]">
               {initials(tutor)}
             </AvatarFallback>
           </Avatar>
@@ -139,9 +138,9 @@ export function CheckoutSummary({
         </div>
       </div>
 
-      <section aria-labelledby="duration-title" className="mt-5">
+      <section aria-labelledby="duration-title" className="mt-3.5">
         <h2 id="duration-title" className="sr-only">Paket süresi</h2>
-        <div className="space-y-2.5" role="radiogroup" aria-label="Paket süresi">
+        <div className="space-y-1.5" role="radiogroup" aria-label="Paket süresi">
           {durations.map((plan, index) => {
             const days = plan.duration_days as number;
             const selected = days === durationDays;
@@ -157,7 +156,7 @@ export function CheckoutSummary({
               <div
                 key={plan.id}
                 data-selected={selected}
-                className="checkout-duration-card overflow-hidden rounded-xl border-2 transition duration-200"
+                className="checkout-duration-card overflow-hidden rounded-lg border transition duration-200"
               >
                 <button
                   type="button"
@@ -167,29 +166,29 @@ export function CheckoutSummary({
                   tabIndex={selected ? 0 : -1}
                   onClick={() => onDurationDaysChange(days)}
                   onKeyDown={(event) => handleDurationKeyDown(event, index)}
-                  className="flex w-full items-center gap-3 px-3.5 py-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--checkout-evergreen)] active:translate-y-px sm:px-4"
+                  className="flex w-full items-center gap-3 px-3 py-2.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--checkout-control)] active:translate-y-px"
                 >
                   <span
                     className={cn(
                       "flex size-5 shrink-0 items-center justify-center rounded-full border-2",
                       selected
-                        ? "border-[var(--checkout-nighttime)]"
-                        : "border-[var(--checkout-evergreen)]/50"
+                        ? "border-[var(--checkout-control)]"
+                        : "border-[var(--checkout-control)]/45"
                     )}
                   >
-                    {selected && <span className="size-2 rounded-full bg-[var(--checkout-nighttime)]" />}
+                    {selected && <span className="size-2 rounded-full bg-[var(--checkout-control)]" />}
                   </span>
                   <span className="min-w-0 flex-1">
                     <span className="flex flex-wrap items-center gap-2">
                       <span className="text-sm font-bold sm:text-base">{formatPlanDuration(days)}</span>
                       {days === MOST_POPULAR_DURATION_DAYS && (
-                        <Badge className="rounded-md bg-[var(--checkout-nighttime)] text-[0.65rem] text-[var(--checkout-dulline)] hover:bg-[var(--checkout-nighttime)]">
+                        <Badge className="rounded-md bg-[var(--checkout-control)] text-[0.65rem] text-[var(--checkout-on-control)] hover:bg-[var(--checkout-control)]">
                           En popüler
                         </Badge>
                       )}
                     </span>
                     {optionPricing.discountPercent > 0 && (
-                      <span className="mt-0.5 block text-xs font-semibold text-[var(--checkout-evergreen)]">
+                      <span className="mt-0.5 block text-xs font-semibold text-[var(--checkout-discount)]">
                         %{optionPricing.discountPercent} fiyat avantajı
                       </span>
                     )}
@@ -210,9 +209,9 @@ export function CheckoutSummary({
                 {selected && (
                   <div
                     id={`duration-details-${days}`}
-                    className="border-t border-[var(--checkout-soft-line)] bg-[var(--checkout-dulline)] px-4 py-3 text-sm motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-top-1"
+                    className="border-t border-[var(--checkout-soft-line)] bg-[var(--checkout-selected-surface)] px-3 py-2.5 text-xs motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-top-1 sm:text-sm"
                   >
-                    <dl className="space-y-2 tabular-nums">
+                    <dl className="space-y-1.5 tabular-nums">
                       <SummaryRow
                         label="Toplam ders"
                         value={selectedLessonCount != null ? `${selectedLessonCount} ders` : "—"}
@@ -235,12 +234,6 @@ export function CheckoutSummary({
                           accent
                         />
                       )}
-                      <Separator className="bg-[var(--checkout-soft-line)]" />
-                      <SummaryRow
-                        label="Paket toplamı"
-                        value={selectedTotal != null ? formatPrice(selectedTotal) : "—"}
-                        strong
-                      />
                     </dl>
                   </div>
                 )}
@@ -256,7 +249,7 @@ export function CheckoutSummary({
         </div>
       )}
 
-      <div className="mt-5 space-y-3">
+      <div className="mt-3 space-y-2.5">
         {pendingForSelectedPlan ? (
           <div className="rounded-xl bg-[var(--checkout-switchback)] p-4 text-center text-[var(--checkout-nighttime)]">
             <p className="flex items-center justify-center gap-2 text-sm font-bold">
@@ -279,14 +272,14 @@ export function CheckoutSummary({
                 Bu hoca için başka bir bekleyen talebin var ({otherPendingPlanName}).
               </p>
             )}
-            <div className="flex items-center justify-between gap-4">
+            <div className="hidden items-center justify-between gap-4 lg:flex">
               <span className="text-sm font-semibold opacity-65">Paket toplamı</span>
               <span className="text-xl font-extrabold tabular-nums">
                 {selectedTotal != null ? formatPrice(selectedTotal) : "—"}
               </span>
             </div>
             <Button
-              className="hidden h-12 w-full rounded-xl bg-[var(--checkout-placeboam)] text-base font-extrabold text-[var(--checkout-nighttime)] hover:bg-[var(--checkout-switchback)] lg:inline-flex"
+              className="hidden h-11 w-full rounded-lg bg-[var(--checkout-cta)] text-base font-extrabold text-[var(--checkout-on-cta)] hover:bg-[var(--checkout-cta-hover)] lg:inline-flex"
               onClick={onPurchaseCta}
               disabled={busy || unresolvedPromo || !planAvailable}
             >
@@ -301,31 +294,31 @@ export function CheckoutSummary({
         )}
       </div>
 
-      <div className="mt-4 border-y border-[var(--checkout-soft-line)] py-4 text-xs leading-5">
+      <div className="mt-3 border-y border-[var(--checkout-soft-line)] py-3 text-xs leading-4">
         <p className="flex items-center gap-2 font-bold">
-          <ShieldCheck className="size-4 text-[var(--checkout-evergreen)]" aria-hidden="true" />
+          <ShieldCheck className="size-4 text-[var(--checkout-control)]" aria-hidden="true" />
           Tek seferlik paket · otomatik yenilenmez
         </p>
-        <p className="mt-1.5 opacity-70">
+        <p className="mt-1 opacity-70">
           Bu adımda kartından ücret alınmaz. Talebinin durumunu Paketlerim alanından takip edebilirsin.
         </p>
         <p className="mt-1 opacity-70">
           Paket yalnız {tutor.name} {tutor.surname} ile geçerlidir.{" "}
           <Link
             href="/support#odeme-ve-iade"
-            className="font-semibold underline underline-offset-2 hover:text-[var(--checkout-evergreen)]"
+            className="font-semibold underline underline-offset-2 hover:text-[var(--checkout-control)]"
           >
             İade politikası
           </Link>
         </p>
       </div>
 
-      <section aria-labelledby="promo-title" className="mt-4">
+      <section aria-labelledby="promo-title" className="mt-3">
         <div className="flex items-center gap-2">
-          <TicketPercent className="size-4 text-[var(--checkout-evergreen)]" aria-hidden="true" />
+          <TicketPercent className="size-4 text-[var(--checkout-control)]" aria-hidden="true" />
           <h2 id="promo-title" className="text-sm font-bold">İndirim kodu</h2>
         </div>
-        <form onSubmit={submitPromo} className="mt-2.5 flex gap-2">
+        <form onSubmit={submitPromo} className="mt-2 flex gap-2">
           <Input
             value={promoCode}
             onChange={(event) => onPromoCodeChange(event.target.value)}
@@ -333,12 +326,12 @@ export function CheckoutSummary({
             aria-label="İndirim kodu"
             autoComplete="off"
             disabled={busy}
-            className="h-10 rounded-lg border-[var(--checkout-soft-line)] bg-[var(--checkout-clearway)]"
+            className="h-9 rounded-lg border-[var(--checkout-soft-line)] bg-[var(--checkout-card-surface)]"
           />
           <Button
             type="submit"
             variant="outline"
-            className="h-10 rounded-lg border-[var(--checkout-evergreen)] bg-transparent px-4 text-[var(--checkout-nighttime)]"
+            className="h-9 rounded-lg border-[var(--checkout-control)] bg-transparent px-4 text-[var(--checkout-nighttime)]"
             disabled={busy || !promoCode.trim()}
           >
             {promoStatus === "loading" ? (
@@ -353,7 +346,7 @@ export function CheckoutSummary({
             role={promoStatus === "error" ? "alert" : "status"}
             className={cn(
               "mt-2 flex items-start justify-between gap-3 text-xs",
-              promoStatus === "error" ? "text-destructive" : "text-[var(--checkout-evergreen)]"
+              promoStatus === "error" ? "text-destructive" : "text-[var(--checkout-discount)]"
             )}
           >
             <span>{promoMessage}</span>
@@ -361,7 +354,7 @@ export function CheckoutSummary({
               <button
                 type="button"
                 onClick={onRemovePromo}
-                className="shrink-0 font-bold underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--checkout-evergreen)]"
+                className="shrink-0 font-bold underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--checkout-control)]"
               >
                 Kodu kaldır
               </button>
@@ -380,7 +373,7 @@ export function CheckoutSummary({
               </span>
             </div>
             <Button
-              className="h-11 w-full rounded-xl bg-[var(--checkout-placeboam)] font-extrabold text-[var(--checkout-nighttime)] hover:bg-[var(--checkout-switchback)]"
+              className="h-11 w-full rounded-lg bg-[var(--checkout-cta)] font-extrabold text-[var(--checkout-on-cta)] hover:bg-[var(--checkout-cta-hover)]"
               onClick={onPurchaseCta}
               disabled={busy || unresolvedPromo || !planAvailable}
             >
@@ -410,7 +403,7 @@ function SummaryRow({
       <dd
         className={cn(
           "text-right",
-          accent && "font-bold text-[var(--checkout-evergreen)]",
+          accent && "font-bold text-[var(--checkout-discount)]",
           strong && "font-extrabold"
         )}
       >

@@ -66,6 +66,9 @@ test("renders duration choices as a single-select accordion in the decision rail
   assert.ok(screen.getByRole("radiogroup", { name: "Paket süresi" }));
   const selected = screen.getByRole("radio", { name: /3 Ay/ }) as HTMLButtonElement;
   assert.equal(selected.getAttribute("aria-checked"), "true");
+  const selectedDetailsId = selected.getAttribute("aria-describedby");
+  assert.ok(selectedDetailsId);
+  assert.ok(!document.getElementById(selectedDetailsId)?.textContent?.includes("Paket toplamı"));
   selected.focus();
   fireEvent.keyDown(selected, { key: "ArrowRight" });
   assert.equal(document.activeElement, screen.getByRole("radio", { name: /6 Ay/ }));

@@ -26,6 +26,7 @@ import { BookingModal } from "@/components/lessons/BookingModal";
 import { CheckoutProductPicker } from "@/components/checkout/CheckoutProductPicker";
 import { CheckoutSummary, type PromoStatus } from "@/components/checkout/CheckoutSummary";
 import { CheckoutShell } from "@/components/checkout/CheckoutShell";
+import { normalizeCheckoutPalette } from "@/components/checkout/checkoutPalette";
 import { MinimalCheckoutHeader } from "@/components/checkout/MinimalCheckoutHeader";
 import {
   CheckoutBookingSuccess,
@@ -76,6 +77,7 @@ export default function TutorCheckoutPage({
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const checkoutPalette = normalizeCheckoutPalette(searchParams.get("palette"));
   const queryClient = useQueryClient();
   const { isAuthenticated, isLoading: authLoading, isStudent, user } = useAuth();
 
@@ -356,6 +358,7 @@ export default function TutorCheckoutPage({
   return (
     <>
       <CheckoutShell
+        palette={checkoutPalette}
         header={<MinimalCheckoutHeader tutorId={tutorId} />}
         exploration={
           createdPurchase ? (
@@ -381,6 +384,7 @@ export default function TutorCheckoutPage({
             </div>
           ) : (
             <CheckoutProductPicker
+              palette={checkoutPalette}
               basePrice={basePrice}
               weeklyPlans={weeklyPlans}
               lessonsPerWeek={lessonsPerWeek}

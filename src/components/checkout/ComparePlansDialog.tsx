@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import type { CheckoutPalette } from "./checkoutPalette";
 
 type PlanKey = "private" | "group" | "pro";
 
@@ -40,12 +41,22 @@ const rows: Array<{ feature: string; private: string; group: string; pro: string
   { feature: "Satın alınabilirlik", private: "Aktif", group: "Yakında", pro: "Yakında" },
 ];
 
-export function ComparePlansDialog({ children }: { children: ReactNode }) {
+export function ComparePlansDialog({
+  children,
+  palette = "a",
+}: {
+  children: ReactNode;
+  palette?: CheckoutPalette;
+}) {
   return (
     <Dialog>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent showClose={false} className="checkout-dialog-theme h-[100dvh] max-h-[100dvh] w-screen max-w-none gap-0 overflow-hidden rounded-none border-0 border-[var(--checkout-soft-line)] p-0 sm:h-auto sm:max-h-[88dvh] sm:w-[calc(100vw-2rem)] sm:max-w-5xl sm:rounded-2xl sm:border">
-        <DialogHeader className="border-b border-[var(--checkout-soft-line)] bg-[var(--checkout-clearway)] px-5 py-5 pr-14 text-left sm:px-7">
+      <DialogContent
+        showClose={false}
+        data-checkout-palette={palette}
+        className="checkout-dialog-theme h-[100dvh] max-h-[100dvh] w-screen max-w-none gap-0 overflow-hidden rounded-none border-0 border-[var(--checkout-soft-line)] p-0 sm:h-auto sm:max-h-[88dvh] sm:w-[calc(100vw-2rem)] sm:max-w-5xl sm:rounded-2xl sm:border"
+      >
+        <DialogHeader className="border-b border-[var(--checkout-soft-line)] bg-[var(--checkout-header-surface)] px-5 py-5 pr-14 text-left sm:px-7">
           <DialogTitle className="text-2xl tracking-tight">Planları karşılaştır</DialogTitle>
           <DialogDescription>Bugün kullanabileceğin özellikleri ve üzerinde çalıştığımız planları birlikte gör.</DialogDescription>
         </DialogHeader>
@@ -56,14 +67,18 @@ export function ComparePlansDialog({ children }: { children: ReactNode }) {
         <div className="min-h-0 flex-1 overflow-y-auto px-4 py-5 sm:px-7">
           <div className="hidden md:block">
             <table className="w-full table-fixed border-separate border-spacing-0 text-left text-sm">
-              <thead className="sticky top-0 z-10 bg-[var(--checkout-dulline)]">
+              <thead className="sticky top-0 z-10 bg-[var(--checkout-dialog-surface)]">
                 <tr>
                   <th className="w-[31%] border-b py-4 pr-4 font-semibold">Özellik</th>
                   {(Object.keys(PLAN_LABELS) as PlanKey[]).map((key) => (
-                    <th key={key} className="border-b px-3 py-4 font-semibold">
-                      <span>{PLAN_LABELS[key]}</span>
+                    <th
+                      key={key}
+                      data-plan={key}
+                      className="checkout-compare-plan-head border-b px-3 py-4 font-semibold"
+                    >
+                      <span className="inline-flex rounded-md px-2 py-1">{PLAN_LABELS[key]}</span>
                       {key !== "private" && (
-                        <Badge className="ml-2 rounded-md bg-[var(--checkout-placeboam)] text-[var(--checkout-nighttime)] hover:bg-[var(--checkout-placeboam)]">
+                        <Badge className="checkout-compare-badge ml-2 rounded-md border bg-transparent text-current hover:bg-transparent">
                           Yakında
                         </Badge>
                       )}
@@ -87,12 +102,13 @@ export function ComparePlansDialog({ children }: { children: ReactNode }) {
           </div>
 
           <Tabs defaultValue="private" className="md:hidden">
-            <TabsList className="grid h-auto w-full grid-cols-3 bg-[var(--checkout-right-surface)]">
+            <TabsList className="grid h-auto w-full grid-cols-3 bg-[var(--checkout-muted-surface)]">
               {(Object.keys(PLAN_LABELS) as PlanKey[]).map((key) => (
                 <TabsTrigger
                   key={key}
                   value={key}
-                  className="px-2 py-2.5 text-xs text-[var(--checkout-nighttime)] data-[state=active]:bg-[var(--checkout-evergreen)] data-[state=active]:text-[var(--checkout-dulline)]"
+                  data-plan={key}
+                  className="checkout-compare-tab px-2 py-2.5 text-xs text-[var(--checkout-nighttime)]"
                 >
                   {PLAN_LABELS[key]}
                 </TabsTrigger>
@@ -101,7 +117,10 @@ export function ComparePlansDialog({ children }: { children: ReactNode }) {
             {(Object.keys(PLAN_LABELS) as PlanKey[]).map((key) => (
               <TabsContent key={key} value={key} className="mt-5">
                 {key !== "private" && (
-                  <Badge className="mb-3 rounded-md bg-[var(--checkout-placeboam)] text-[var(--checkout-nighttime)] hover:bg-[var(--checkout-placeboam)]">
+                  <Badge
+                    data-plan={key}
+                    className="checkout-compare-mobile-badge mb-3 rounded-md border bg-transparent hover:bg-transparent"
+                  >
                     Planlanan · Yakında
                   </Badge>
                 )}

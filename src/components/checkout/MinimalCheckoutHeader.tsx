@@ -23,7 +23,7 @@ export function MinimalCheckoutHeader({ tutorId }: { tutorId: string }) {
   }
 
   return (
-    <header className="relative z-20 bg-[var(--checkout-clearway)]">
+    <header className="relative z-20 bg-[var(--checkout-header-surface)]">
       <a href="#checkout-content" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-3 focus:z-50 focus:rounded-md focus:bg-background focus:px-3 focus:py-2 focus:ring-2 focus:ring-ring">
         İçeriğe geç
       </a>
@@ -40,7 +40,7 @@ export function MinimalCheckoutHeader({ tutorId }: { tutorId: string }) {
           <BrandMark priority />
         </Link>
       </div>
-      <div className="h-1.5 w-full bg-[var(--checkout-placeboam)]" aria-hidden="true" />
+      <div className="h-1.5 w-full bg-[var(--checkout-accent)]" aria-hidden="true" />
     </header>
   );
 }

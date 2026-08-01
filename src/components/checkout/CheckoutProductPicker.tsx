@@ -17,6 +17,7 @@ import {
   type WeeklyLessonOption,
 } from "@/lib/lessonPricing";
 import type { PackagePlan } from "@/types";
+import type { CheckoutPalette } from "./checkoutPalette";
 
 interface CheckoutProductPickerProps {
   basePrice: number;
@@ -29,6 +30,7 @@ interface CheckoutProductPickerProps {
   paidRemainingCredits?: number | null;
   onBookTrial?: () => void;
   onUseCredits?: () => void;
+  palette?: CheckoutPalette;
 }
 
 const PRIVATE_FEATURES = [
@@ -36,9 +38,6 @@ const PRIVATE_FEATURES = [
   "Hoca müsaitliğine göre ders planlama",
   "Hoca ile doğrudan mesajlaşma",
   "Haftada 2–6 ders seçimi",
-  "2 hafta–6 ay paket süresi",
-  "Toplam ders hakkı",
-  "Paket süresine göre ders başına fiyat avantajı",
 ] as const;
 
 export function CheckoutProductPicker({
@@ -49,48 +48,49 @@ export function CheckoutProductPicker({
   paidRemainingCredits = null,
   onBookTrial,
   onUseCredits,
+  palette = "a",
 }: CheckoutProductPickerProps) {
   return (
     <TooltipProvider delayDuration={180}>
       <div>
-        <p className="mb-4 text-xs font-bold tracking-[0.16em] text-[var(--checkout-evergreen)]">
+        <p className="mb-2 text-xs font-bold tracking-[0.16em] text-[var(--checkout-control)]">
           DERS PLANI
         </p>
 
-        <div className="space-y-3">
+        <div className="space-y-2">
           <FuturePlanBar
             tone="group"
             icon={Users}
             title="Küçük Grup"
-            description="Aynı öğretmenle 2–4 öğrencinin birlikte katıldığı, kişi başı daha avantajlı canlı dersler."
+            description="2–4 öğrenciyle, kişi başı daha avantajlı canlı dersler."
           />
 
           <section
             aria-label="Seçili plan: Birebir Özel Ders"
-            className="overflow-hidden rounded-2xl border-2 border-[var(--checkout-nighttime)] bg-[var(--checkout-clearway)]"
+            className="overflow-hidden rounded-xl border-2 border-[var(--checkout-control)] bg-[var(--checkout-card-surface)]"
           >
             <button
               type="button"
               aria-label="Birebir Özel Ders — seçili"
               aria-pressed="true"
-              className="flex w-full items-center gap-3 bg-[var(--checkout-placeboam)] px-4 py-3 text-left text-[var(--checkout-nighttime)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--checkout-nighttime)] sm:px-5"
+              className="flex w-full items-center gap-3 bg-[var(--checkout-private)] px-4 py-2 text-left text-[var(--checkout-nighttime)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--checkout-control)]"
             >
               <GraduationCap className="size-5 shrink-0" aria-hidden="true" />
               <span className="min-w-0 flex-1">
                 <span className="block font-bold">Birebir Özel Ders</span>
-                <span className="mt-0.5 block text-sm leading-5 opacity-80">
+                <span className="block text-xs leading-4 opacity-80 sm:text-sm">
                   Seçtiğin hocayla sana özel canlı dersler.
                 </span>
               </span>
               <span
-                className="flex size-5 shrink-0 items-center justify-center rounded-full border-2 border-[var(--checkout-nighttime)]"
+                className="flex size-5 shrink-0 items-center justify-center rounded-full border-2 border-[var(--checkout-control)]"
                 aria-hidden="true"
               >
-                <span className="size-2 rounded-full bg-[var(--checkout-nighttime)]" />
+                <span className="size-2 rounded-full bg-[var(--checkout-control)]" />
               </span>
             </button>
 
-            <div className="space-y-4 p-4 sm:p-5">
+            <div className="space-y-3 p-3 sm:p-3.5">
               <section aria-labelledby="weekly-lessons-title">
                 <div className="flex flex-wrap items-end justify-between gap-2">
                   <div>
@@ -102,7 +102,7 @@ export function CheckoutProductPicker({
                   <span className="text-xs font-semibold opacity-60">2–6 ders</span>
                 </div>
                 <div
-                  className="mt-3 grid grid-cols-5 gap-2"
+                  className="mt-2 grid grid-cols-5 gap-1.5"
                   role="group"
                   aria-label="Haftada ders sayısı"
                 >
@@ -119,9 +119,9 @@ export function CheckoutProductPicker({
                         disabled={!enabled}
                         onClick={() => onLessonsPerWeekChange(count)}
                         className={cn(
-                          "min-h-10 rounded-lg border border-[var(--checkout-soft-line)] bg-[var(--checkout-dulline)] px-1 text-xs font-bold text-[var(--checkout-nighttime)] transition duration-200 hover:-translate-y-0.5 hover:border-[var(--checkout-evergreen)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--checkout-evergreen)] focus-visible:ring-offset-2 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-35 sm:text-sm",
+                          "min-h-9 rounded-lg border border-[var(--checkout-soft-line)] bg-[var(--checkout-muted-surface)] px-1 text-xs font-bold text-[var(--checkout-nighttime)] transition duration-200 hover:-translate-y-0.5 hover:border-[var(--checkout-control)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--checkout-control)] focus-visible:ring-offset-2 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-35 sm:text-sm",
                           selected &&
-                            "border-[var(--checkout-nighttime)] bg-[var(--checkout-nighttime)] text-[var(--checkout-dulline)]"
+                            "border-[var(--checkout-control)] bg-[var(--checkout-control)] text-[var(--checkout-on-control)]"
                         )}
                       >
                         {count} ders
@@ -131,13 +131,9 @@ export function CheckoutProductPicker({
                 </div>
               </section>
 
-              <p className="border-t border-[var(--checkout-soft-line)] pt-4 text-sm leading-5">
-                Seçtiğin hocayla hedeflerine ve programına göre birebir canlı dersler planla.
-              </p>
-
               <section
                 aria-labelledby="private-features-title"
-                className="rounded-xl border border-[var(--checkout-evergreen)] bg-[var(--checkout-placeboam)] p-4"
+                className="rounded-lg border border-[var(--checkout-soft-line)] bg-[var(--checkout-feature-surface)] p-3"
               >
                 <h2
                   id="private-features-title"
@@ -145,9 +141,9 @@ export function CheckoutProductPicker({
                 >
                   BİREBİR PAKET ÖZELLİKLERİ
                 </h2>
-                <ul className="mt-3 grid gap-x-6 gap-y-2 sm:grid-cols-2">
+                <ul className="mt-2 grid gap-x-5 gap-y-1 sm:grid-cols-2">
                   {PRIVATE_FEATURES.map((feature) => (
-                    <li key={feature} className="flex items-start gap-2 text-xs leading-5 sm:text-sm">
+                    <li key={feature} className="flex items-start gap-2 text-xs leading-4 sm:text-[0.8125rem]">
                       <Check className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
                       <span>{feature}</span>
                     </li>
@@ -157,9 +153,9 @@ export function CheckoutProductPicker({
 
               {(paidRemainingCredits != null && paidRemainingCredits > 0) ||
               (trialLessonsRemaining > 0 && onBookTrial) ? (
-                <div className="space-y-2 border-t border-[var(--checkout-soft-line)] pt-4">
+                <div className="space-y-1.5 border-t border-[var(--checkout-soft-line)] pt-2.5">
                   {paidRemainingCredits != null && paidRemainingCredits > 0 && onUseCredits && (
-                    <div className="flex flex-col gap-2 rounded-xl bg-[var(--checkout-dulline)] p-3 sm:flex-row sm:items-center">
+                    <div className="flex min-h-14 flex-col gap-2 rounded-lg bg-[var(--checkout-muted-surface)] px-3 py-2 sm:flex-row sm:items-center">
                       <p className="min-w-0 flex-1 text-sm font-semibold">
                         {paidRemainingCredits} ders hakkın kullanılabilir
                       </p>
@@ -167,7 +163,7 @@ export function CheckoutProductPicker({
                         type="button"
                         size="sm"
                         onClick={onUseCredits}
-                        className="bg-[var(--checkout-evergreen)] text-[var(--checkout-dulline)] hover:bg-[var(--checkout-nighttime)]"
+                        className="h-8 bg-[var(--checkout-control)] px-3 text-xs text-[var(--checkout-on-control)] hover:bg-[var(--checkout-control-strong)]"
                       >
                         Mevcut ders hakkını kullan
                       </Button>
@@ -188,15 +184,15 @@ export function CheckoutProductPicker({
             tone="pro"
             icon={Sparkles}
             title="Hocam Pro"
-            description="Birebir dersleri sınırsız soru desteği, haftalık koçluk ve gelişim takibiyle güçlendiren kapsamlı öğrenci planı."
+            description="Soru desteği, haftalık koçluk ve gelişim takibiyle güçlendirilmiş birebir plan."
           />
         </div>
 
-        <div className="mt-4">
-          <ComparePlansDialog>
+        <div className="mt-2">
+          <ComparePlansDialog palette={palette}>
             <Button
               variant="outline"
-              className="h-9 rounded-full border-[var(--checkout-evergreen)] bg-transparent px-4 text-xs font-bold text-[var(--checkout-nighttime)] hover:bg-[var(--checkout-clearway)]"
+              className="h-8 rounded-full border-[var(--checkout-control)] bg-transparent px-4 text-xs font-bold text-[var(--checkout-nighttime)] hover:bg-[var(--checkout-card-surface)]"
             >
               Planları karşılaştır
             </Button>
@@ -222,28 +218,28 @@ function FuturePlanBar({
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <span className="block rounded-2xl focus-within:ring-2 focus-within:ring-[var(--checkout-evergreen)] focus-within:ring-offset-2">
+        <span className="block rounded-xl focus-within:ring-2 focus-within:ring-[var(--checkout-control)] focus-within:ring-offset-2">
           <button
             type="button"
             aria-disabled="true"
             aria-label={`${title} — Yakında`}
             className={cn(
-              "flex w-full cursor-not-allowed items-center gap-3 rounded-2xl border-2 border-[var(--checkout-nighttime)] px-4 py-3 text-left sm:px-5",
+              "checkout-plan-bar flex min-h-14 w-full cursor-not-allowed items-center gap-3 rounded-xl border px-4 py-2 text-left",
               isPro
-                ? "bg-[var(--checkout-evergreen)] text-[var(--checkout-dulline)]"
-                : "bg-[var(--checkout-signal-bay)] text-[var(--checkout-nighttime)]"
+                ? "checkout-plan-bar-pro bg-[var(--checkout-pro)] text-[var(--checkout-on-pro)]"
+                : "checkout-plan-bar-group bg-[var(--checkout-group)] text-[var(--checkout-nighttime)]"
             )}
           >
             <Icon className="size-5 shrink-0" aria-hidden="true" />
             <span className="min-w-0 flex-1">
               <span className="block font-bold">{title}</span>
-              <span className="mt-0.5 block text-sm leading-5 opacity-75">{description}</span>
+              <span className="block text-xs leading-4 opacity-75 sm:text-sm">{description}</span>
             </span>
             <Badge
               className={cn(
                 "rounded-md border px-2 py-0.5 text-[0.65rem] font-extrabold uppercase tracking-wide",
                 isPro
-                  ? "border-[var(--checkout-dulline)] bg-transparent text-[var(--checkout-dulline)]"
+                  ? "border-current bg-transparent text-current"
                   : "border-[var(--checkout-nighttime)] bg-transparent text-[var(--checkout-nighttime)]"
               )}
             >
