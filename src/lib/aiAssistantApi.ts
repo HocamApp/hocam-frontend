@@ -4,6 +4,7 @@ export type AIIntent =
   | "reservation_help"
   | "tutor_recommendation"
   | "study_guidance"
+  | "academic_help"
   | "platform_faq"
   | "support_escalation"
   | "general_smalltalk"

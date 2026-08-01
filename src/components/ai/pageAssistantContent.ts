@@ -8,20 +8,21 @@ export type PageAssistantContent = {
 export const STUDENT_DASHBOARD_ASSISTANT: PageAssistantContent = {
   title: "Hocam AI Öğrenci Yardımcısı",
   welcomeMessage:
-    "Merhaba! Derslerini planlamak, doğru hocayı bulmak ve çalışma hedeflerini netleştirmek için buradayım.",
+    "Merhaba! Ders sorularını açıklamak, adım adım çözüm üretmek, çalışma planı hazırlamak ve doğru hocayı bulmana yardım etmek için buradayım.",
   attentionMessages: [
     "Bugün sana nasıl yardımcı olabilirim?",
     "Derslerini planlamana yardım edeyim mi?",
     "Sıradaki adımını birlikte belirleyelim mi?",
     "Hoca seçimi veya rezervasyon konusunda bir sorun mu var?",
     "Çalışma hedefin için buradayım. Nereden başlayalım?",
+    "Anlamadığın bir ders sorusu mu var? Birlikte çözelim.",
   ],
   starterPrompts: [
+    "Fonksiyon nedir, basit bir örnekle anlatır mısın?",
+    "2x + 5 = 17 denklemini adım adım çözer misin?",
     "Bugün neye çalışmalıyım?",
-    "Bana uygun bir hoca bulmama yardım et.",
     "Yeni bir dersi nasıl planlarım?",
-    "Bekleyen rezervasyonlarımı açıkla.",
-    "Aktif paketimi ve kalan ders haklarımı açıkla.",
+    "Bana uygun bir hoca bulmama yardım et.",
   ],
 };
 

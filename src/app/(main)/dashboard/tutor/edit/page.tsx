@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -17,11 +17,12 @@ import {
   updateMyTutorProfile,
   uploadTutorProfilePicture,
 } from "@/lib/tutorsApi";
-import { validateProfilePhotoFile } from "@/lib/profilePhoto";
 import { filterSelectedSubjectIds } from "@/lib/subjects";
 import type { TutorProfile, TutorTeachingStyle } from "@/types";
 
 import { RouteGuard } from "@/components/shared/RouteGuard";
+import { ScribbleLayers } from "@/components/decor/ScribbleLayer";
+import { TUTOR_EDIT_SCRIBBLES } from "@/lib/scribblePlacements";
 import { AISupportChatWidget } from "@/components/ai/AISupportChatWidget";
 import { TutorBioWizardDialog } from "@/components/ai/TutorBioWizardDialog";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
@@ -128,7 +129,6 @@ function TutorProfileEditContent() {
   const queryClient = useQueryClient();
   const { isAuthenticated } = useAuth();
   const initializedProfileId = useRef<string | null>(null);
-  const photoInputRef = useRef<HTMLInputElement>(null);
   const [selectedSubjectIds, setSelectedSubjectIds] = useState<string[]>([]);
   const [initialSubjectIds, setInitialSubjectIds] = useState<string[]>([]);
   const [subjectError, setSubjectError] = useState<string | null>(null);
@@ -314,16 +314,8 @@ function TutorProfileEditContent() {
     }
   };
 
-  const handlePhotoUpload = async (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    event.target.value = "";
+  const handlePhotoUpload = async (file: File) => {
     setPhotoError(null);
-    const validationError = validateProfilePhotoFile(file);
-    if (validationError) {
-      setPhotoError(validationError);
-      return;
-    }
     setPhotoUploading(true);
     try {
       const updatedProfile = await uploadTutorProfilePicture(file);
@@ -421,7 +413,14 @@ function TutorProfileEditContent() {
   };
 
   return (
-    <div className="min-h-screen bg-muted/20 pb-28 lg:pb-12">
+    <div className="relative isolate min-h-screen bg-muted/20 pb-28 lg:pb-12">
+      {/*
+        The layer is a negative-z child of the tinted page itself, so it paints
+        over that tint but under every piece of content. `isolate` creates a
+        stacking context, not a containing block, so the sticky header and the
+        fixed mobile save bar (both z-40) are unaffected.
+      */}
+      <ScribbleLayers layers={TUTOR_EDIT_SCRIBBLES} />
       <div className="relative z-40 border-b bg-background lg:sticky lg:top-16">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-4">
           <div className="min-w-0">
@@ -477,7 +476,6 @@ function TutorProfileEditContent() {
                   form={form}
                   profile={profile}
                   bioValue={bioValue}
-                  photoInputRef={photoInputRef}
                   photoUploading={photoUploading}
                   photoError={photoError}
                   onPhotoUpload={handlePhotoUpload}

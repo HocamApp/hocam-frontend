@@ -54,15 +54,26 @@ export function AuthSplitScreen({
 
       {/* Right column: logo-led brand surface */}
       <section className="hidden flex-1 bg-[#f5f3ee] p-4 md:block md:flex-[2] lg:flex-1">
+        {/*
+          The card colour must stay byte-identical to the cream baked into the login animation
+          (COLORS.cream in the Remotion project). The clip is displayed with object-contain, so
+          any mismatch would draw its letterbox as a visible rectangle.
+        */}
         <div
-          className="animate-slide-right animate-delay-300 relative flex h-full w-full items-center justify-center overflow-hidden rounded-3xl border border-[#ff5968]/20 bg-[#fbfaf7] shadow-sm"
+          className="animate-slide-right animate-delay-300 relative flex h-full w-full items-center justify-center overflow-hidden rounded-3xl border border-[#ff5968]/20 bg-[#f7f5f0] shadow-sm"
         >
-          <div className="absolute -right-28 -top-28 h-80 w-80 rounded-full bg-[#ff5968]/12 blur-3xl" aria-hidden />
-          <div className="absolute -bottom-24 -left-20 h-72 w-72 rounded-full bg-[#ff8a71]/10 blur-3xl" aria-hidden />
           {rightPanel ? (
             <div className="relative z-10 h-full w-full">{rightPanel}</div>
           ) : (
-            <BrandMark size="hero" className="relative z-10 text-neutral-950" />
+            <>
+              {/*
+                Only drawn when there is no panel. The animation's frame is opaque cream, so a
+                blob passing behind it would be sliced by a hard rectangular edge.
+              */}
+              <div className="absolute -right-28 -top-28 h-80 w-80 rounded-full bg-[#ff5968]/12 blur-3xl" aria-hidden />
+              <div className="absolute -bottom-24 -left-20 h-72 w-72 rounded-full bg-[#ff8a71]/10 blur-3xl" aria-hidden />
+              <BrandMark size="hero" className="relative z-10 text-neutral-950" />
+            </>
           )}
         </div>
       </section>

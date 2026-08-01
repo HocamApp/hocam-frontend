@@ -317,12 +317,12 @@ function ConversationContent({
                 className="flex min-w-0 items-center gap-3 rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                 title={`${headerTitle} profilini aç`}
               >
-                <ParticipantAvatar name={headerTitle} avatarUrl={headerAvatarUrl} />
+                <ParticipantAvatar name={headerTitle} avatarUrl={headerAvatarUrl} shape="circle" />
                 <h1 className="truncate font-semibold hover:underline">{headerTitle}</h1>
               </Link>
             ) : (
               <>
-                <ParticipantAvatar name={headerTitle} avatarUrl={headerAvatarUrl} />
+                <ParticipantAvatar name={headerTitle} avatarUrl={headerAvatarUrl} shape="circle" />
                 <h1 className="truncate font-semibold">{headerTitle}</h1>
               </>
             )}

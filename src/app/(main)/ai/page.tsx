@@ -4,6 +4,7 @@ import { FormEvent, useMemo, useRef, useState } from "react";
 import axios from "axios";
 import {
   Bot,
+  BookOpenCheck,
   CalendarClock,
   GraduationCap,
   Info,
@@ -35,6 +36,15 @@ type ChatMessage = {
 };
 
 const suggestionGroups = [
+  {
+    label: "Ders desteği",
+    icon: BookOpenCheck,
+    prompts: [
+      "Fonksiyon nedir, basit bir örnekle anlatır mısın?",
+      "2x + 5 = 17 denklemini adım adım çözer misin?",
+      "Paragrafta ana düşünce nasıl bulunur?",
+    ],
+  },
   {
     label: "Rezervasyon",
     icon: CalendarClock,
@@ -82,6 +92,7 @@ const intentLabels: Record<AIIntent, string> = {
   reservation_help: "Rezervasyon",
   tutor_recommendation: "Mentor önerisi",
   study_guidance: "Çalışma planı",
+  academic_help: "Ders desteği",
   platform_faq: "Hocam bilgisi",
   support_escalation: "Destek",
   general_smalltalk: "Sohbet",
@@ -98,7 +109,7 @@ function AIPageContent() {
       id: "welcome",
       role: "assistant",
       content:
-        "Merhaba, ben Hocam AI Asistan. Rezervasyon, mentor bulma ve çalışma planı konusunda yardımcı olabilirim.",
+        "Merhaba, ben Hocam AI Asistan. Ders sorularını açıklayabilir, adım adım çözebilir; çalışma planı, rezervasyon ve hoca seçimi konularında yardımcı olabilirim.",
       intent: "general_smalltalk",
     },
   ]);
@@ -196,7 +207,7 @@ function AIPageContent() {
                 {statusText}
               </Badge>
               <span className="text-sm text-muted-foreground">
-                Rezervasyon, mentor önerisi ve çalışma yönlendirmesi
+                Ders desteği, çalışma planı, rezervasyon ve hoca önerisi
               </span>
             </div>
           </div>

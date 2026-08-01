@@ -11,3 +11,6 @@ screenshots/
 tsconfig.tsbuildinfo
 .claude/
 .vercel
+
+# Raw local third-party design references (Udemy/Refero captures) — do not commit
+docs/design/product-home/references/

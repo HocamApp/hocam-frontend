@@ -86,14 +86,14 @@ export function TutorCard({
             <div className="relative h-16 w-16 shrink-0">
               <Avatar className="h-16 w-16">
                 <AvatarImage
-                  src={tutor.profile_picture || '/images/demo-teacher.jpg'}
+                  src={tutor.profile_picture || undefined}
                   alt={`${tutor.name} ${tutor.surname}`}
                 />
                 <AvatarFallback className="bg-primary/10 text-primary text-lg font-medium">
                   {getInitials(tutor.name, tutor.surname)}
                 </AvatarFallback>
               </Avatar>
-              {tutor.is_online && <span className="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full border-2 border-background bg-emerald-500" aria-label="Çevrim içi" />}
+              {tutor.is_online && <span className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-background bg-emerald-500" aria-label="Çevrim içi" />}
               <VerifiedTutorMark verified={tutor.is_verified} className="absolute -right-1 -top-1 rounded-full border-2 border-background" />
             </div>
             <div className="min-w-0 flex-1">

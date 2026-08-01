@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import Link from "next/link";
@@ -17,18 +17,13 @@ import {
   updateMyTutorProfile,
   uploadTutorProfilePicture,
 } from "@/lib/tutorsApi";
-import { validateProfilePhotoFile } from "@/lib/profilePhoto";
 import type { StudentAvatarKey } from "@/lib/studentAvatars";
 import { formatPrice } from "@/lib/utils";
-import {
-  applyInterfaceLanguage,
-  getStoredInterfaceLanguage,
-  hasStoredInterfaceLanguage,
-  isInterfaceLanguage,
-} from "@/lib/interfaceLanguage";
 import type { ProfileMeResponse, ProfileStudent, ProfileTutor } from "@/types";
 
 import { RouteGuard } from "@/components/shared/RouteGuard";
+import { ScribbleLayers } from "@/components/decor/ScribbleLayer";
+import { PROFILE_SCRIBBLES } from "@/lib/scribblePlacements";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -59,7 +54,6 @@ function ProfileContent() {
   const [avatarChoicePendingKey, setAvatarChoicePendingKey] =
     useState<StudentAvatarKey | null>(null);
   const [autoApproveOverride, setAutoApproveOverride] = useState<boolean | null>(null);
-  const photoInputRef = useRef<HTMLInputElement>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ["profile-me"],
@@ -95,17 +89,6 @@ function ProfileContent() {
   const currentAutoApprove =
     autoApproveOverride ?? tutor?.auto_approve_bookings ?? false;
 
-  useEffect(() => {
-    const accountLanguage = data?.preferences?.language;
-    if (
-      accountLanguage &&
-      isInterfaceLanguage(accountLanguage) &&
-      (!hasStoredInterfaceLanguage() || getStoredInterfaceLanguage() !== accountLanguage)
-    ) {
-      applyInterfaceLanguage(accountLanguage);
-    }
-  }, [data?.preferences?.language]);
-
   const updateStudentProfileCache = (nextProfile: ProfileStudent) => {
     queryClient.setQueryData<ProfileMeResponse>(["profile-me"], (current) =>
       current ? { ...current, profile: nextProfile } : current
@@ -119,16 +102,8 @@ function ProfileContent() {
     toast.success("İsim güncellendi.");
   };
 
-  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    e.target.value = "";
+  const handlePhotoUpload = async (file: File) => {
     setPhotoError(null);
-    const validationError = validateProfilePhotoFile(file);
-    if (validationError) {
-      setPhotoError(validationError);
-      return;
-    }
     setPhotoUploading(true);
     try {
       if (studentProfile) {
@@ -230,9 +205,7 @@ function ProfileContent() {
               isTutor={isTutor}
               photoUploading={photoUploading}
               photoError={photoError}
-              fileInputRef={photoInputRef}
-              onPickFile={() => photoInputRef.current?.click()}
-              onFileChange={handlePhotoUpload}
+              onFileReady={handlePhotoUpload}
               studentAvatar={
                 studentProfile
                   ? {
@@ -251,6 +224,9 @@ function ProfileContent() {
   );
 
   return (
+    <div className="relative isolate">
+      {/* One mount point for both roles — the page itself is role-branched below. */}
+      <ScribbleLayers layers={PROFILE_SCRIBBLES} />
     <div className="mx-auto w-full min-w-0 max-w-6xl overflow-x-clip px-4 py-8 sm:py-10">
       <div className="mb-8">
         <h1 className="text-2xl font-bold tracking-tight text-foreground">Profilim</h1>
@@ -325,6 +301,7 @@ function ProfileContent() {
           <StudentLearningProfile />
         </div>
       )}
+    </div>
     </div>
   );
 }

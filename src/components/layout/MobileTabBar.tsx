@@ -6,7 +6,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import {
   Bell,
-  FileQuestion,
+  CircleHelp,
   GraduationCap,
   Heart,
   Home,
@@ -37,7 +37,7 @@ import {
 
 const iconByName = {
   Bell,
-  FileQuestion,
+  CircleHelp,
   GraduationCap,
   Heart,
   Home,

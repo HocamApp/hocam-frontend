@@ -17,6 +17,7 @@ import { HELP_SECTIONS } from "@/components/support/supportContent";
 function SupportContent() {
   const formRef = useRef<HTMLDivElement>(null);
   const [feedbackPreset, setFeedbackPreset] = useState(0);
+  const [openHelpSection, setOpenHelpSection] = useState("");
 
   // The page renders behind RouteGuard's auth check, so the browser's
   // native #hash scroll fires before the target exists — redo it on mount
@@ -24,9 +25,14 @@ function SupportContent() {
   useEffect(() => {
     const hash = window.location.hash.slice(1);
     if (!hash) return;
-    document
-      .getElementById(hash)
-      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (HELP_SECTIONS.some((section) => section.anchorId === hash)) {
+      setOpenHelpSection(hash);
+    }
+    requestAnimationFrame(() => {
+      document
+        .getElementById(hash)
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
   }, []);
 
   const startWebsiteFeedback = () => {
@@ -39,107 +45,103 @@ function SupportContent() {
   return (
     <>
       <div className="mx-auto w-full max-w-5xl px-4 py-8 sm:py-10">
-      {/* Header */}
-      <div className="flex items-start gap-3">
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-          <LifeBuoy className="h-6 w-6" />
-        </span>
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">
-            Destek
-          </h1>
-          <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-            Hocam destek merkezine hoş geldiniz. Aşağıdan bir destek talebi
-            oluşturabilir, taleplerinizin durumunu takip edebilir ve platform
-            kurallarını inceleyebilirsiniz. Talepleriniz destek ekibi tarafından
-            incelenir ve en kısa sürede yanıtlanır.
-          </p>
+        {/* Header */}
+        <div className="flex items-start gap-3">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+            <LifeBuoy className="h-6 w-6" />
+          </span>
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">
+              Destek
+            </h1>
+            <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
+              Hocam destek merkezine hoş geldiniz. Aşağıdan bir destek talebi
+              oluşturabilir, taleplerinizin durumunu takip edebilir ve platform
+              kurallarını inceleyebilirsiniz. Talepleriniz destek ekibi tarafından
+              incelenir ve en kısa sürede yanıtlanır.
+            </p>
+          </div>
         </div>
-      </div>
 
-      <div className="mt-8 max-w-3xl lg:w-3/5">
-        {/* Ticket form + list */}
-        <div className="space-y-6">
-          <Card id="support-request-form" ref={formRef} className="scroll-mt-24">
-            <CardHeader>
-              <CardTitle className="text-lg">Destek talebi oluştur</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <SupportTicketForm
-                preset={
-                  feedbackPreset
-                    ? {
-                        category: "technical",
-                        subject: "Web sitesi geri bildirimi",
-                      }
-                    : undefined
-                }
-              />
-            </CardContent>
-          </Card>
+        <div className="mt-8 max-w-3xl lg:w-3/5">
+          {/* Ticket form + list */}
+          <div className="space-y-6">
+            <Card id="support-request-form" ref={formRef} className="scroll-mt-24">
+              <CardHeader>
+                <CardTitle className="text-lg">Destek talebi oluştur</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <SupportTicketForm
+                  preset={
+                    feedbackPreset
+                      ? {
+                          category: "technical",
+                          subject: "Web sitesi geri bildirimi",
+                        }
+                      : undefined
+                  }
+                />
+              </CardContent>
+            </Card>
 
-          <section>
-            <h2 className="mb-3 text-lg font-semibold text-foreground">
-              Destek taleplerim
-            </h2>
             <SupportTicketList />
-          </section>
+          </div>
         </div>
 
-      </div>
-
-      <SupportAccordionSection
-        heading={
-          <h2 className="text-2xl font-semibold tracking-tight text-foreground">
-            Yardım & kurallar
-          </h2>
-        }
-        items={[
-          {
-            id: "help-website-feedback",
-            title: "Web sitesi geri bildirimi",
-            content: (
-              <div className="space-y-3">
-                <p className="text-base leading-7">
-                  Tasarım, metin, akış veya teknik sorunlarla ilgili geri bildirimleri
-                  destek talebi olarak iletebilirsiniz.
-                </p>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={startWebsiteFeedback}
-                >
-                  Geri bildirim yaz
-                </Button>
-              </div>
-            ),
-          },
-          ...HELP_SECTIONS.map((section, sectionIndex) => ({
-            id: `help-item-${sectionIndex + 1}`,
-            title: section.title,
-            anchorId: section.anchorId,
-            content: (
-              <ul className="space-y-1.5 pl-1">
-                {section.items.map((item, itemIndex) => (
-                  <li
-                    key={itemIndex}
-                    className="flex gap-2 text-base leading-7 text-muted-foreground"
+        <SupportAccordionSection
+          heading={
+            <h2 className="text-2xl font-semibold tracking-tight text-foreground">
+              Yardım & kurallar
+            </h2>
+          }
+          value={openHelpSection}
+          onValueChange={setOpenHelpSection}
+          items={[
+            {
+              id: "help-website-feedback",
+              title: "Web sitesi geri bildirimi",
+              content: (
+                <div className="space-y-3">
+                  <p className="text-base leading-7">
+                    Tasarım, metin, akış veya teknik sorunlarla ilgili geri bildirimleri
+                    destek talebi olarak iletebilirsiniz.
+                  </p>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={startWebsiteFeedback}
                   >
-                    <span
-                      className="mt-3 h-1 w-1 shrink-0 rounded-full bg-primary/50"
-                      aria-hidden
-                    />
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
-            ),
-          })),
-        ]}
-      />
+                    Geri bildirim yaz
+                  </Button>
+                </div>
+              ),
+            },
+            ...HELP_SECTIONS.map((section, sectionIndex) => ({
+              id: section.anchorId ?? `help-item-${sectionIndex + 1}`,
+              title: section.title,
+              anchorId: section.anchorId,
+              content: (
+                <ul className="space-y-1.5 pl-1">
+                  {section.items.map((item, itemIndex) => (
+                    <li
+                      key={itemIndex}
+                      className="flex gap-2 text-base leading-7 text-muted-foreground"
+                    >
+                      <span
+                        className="mt-3 h-1 w-1 shrink-0 rounded-full bg-primary/50"
+                        aria-hidden
+                      />
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              ),
+            })),
+          ]}
+        />
 
-      <SupportFAQ />
+        <SupportFAQ />
       </div>
       <AISupportChatWidget
         title={SUPPORT_PAGE_ASSISTANT.title}

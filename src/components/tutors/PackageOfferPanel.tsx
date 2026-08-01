@@ -3,7 +3,11 @@
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronRight, Gift } from "lucide-react";
-import { fetchPackagePlans, fetchPackagePurchases, filterMatrixPlans } from "@/lib/paymentsApi";
+import {
+  fetchPackagePurchases,
+  fetchTutorOfferedPlans,
+  filterMatrixPlans,
+} from "@/lib/paymentsApi";
 import type { TutorProfile } from "@/types";
 
 interface PackageOfferPanelProps {
@@ -17,27 +21,34 @@ interface PackageOfferPanelProps {
  * and reflects the student's current purchase state with this tutor.
  */
 export function PackageOfferPanel({ tutor }: PackageOfferPanelProps) {
+  // Tutor-scoped, not the global catalog — a tutor who has turned off every
+  // plan must not show this teaser just because *some* tutor somewhere
+  // still offers packages.
   const { data: plans } = useQuery({
-    queryKey: ["package-plans"],
-    queryFn: fetchPackagePlans,
+    queryKey: ["tutor-offered-plans", tutor.id],
+    queryFn: () => fetchTutorOfferedPlans(tutor.id),
   });
   const { data: purchases } = useQuery({
     queryKey: ["package-purchases"],
     queryFn: fetchPackagePurchases,
   });
 
-  const weeklyPlans = filterMatrixPlans(plans);
-  if (weeklyPlans.length === 0) return null;
-
-  // Without a paid or pending package, this panel would just duplicate the
-  // main "Ders Rezervasyonu Yap" CTA below it, so render nothing.
   const tutorPurchases = (purchases ?? []).filter((p) => p.tutor.id === tutor.id);
   const paidWithCredits = tutorPurchases.find(
     (p) => p.status === "paid" && p.remaining_credits > 0
   );
   const pending = tutorPurchases.find((p) => p.status === "pending");
 
-  if (!paidWithCredits && !pending) return null;
+  // Without a paid or pending package, this panel would just duplicate the
+  // main "Ders Rezervasyonu Yap" CTA below it, so render nothing. Checked
+  // first: an existing purchase (credits already paid for, or awaiting
+  // review) must stay visible even if the tutor has since turned off every
+  // current offering — this teaser also reflects past purchases, not just
+  // what's newly buyable.
+  if (!paidWithCredits && !pending) {
+    const weeklyPlans = filterMatrixPlans(plans);
+    if (weeklyPlans.length === 0) return null;
+  }
 
   const subtitle = paidWithCredits
     ? `Kullanılabilir ${paidWithCredits.remaining_credits} ders hakkı`

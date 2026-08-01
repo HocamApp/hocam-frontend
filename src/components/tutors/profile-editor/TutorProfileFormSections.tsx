@@ -1,6 +1,6 @@
 "use client";
 
-import type { ChangeEvent, ReactNode, RefObject } from "react";
+import type { ReactNode } from "react";
 import type { UseFormReturn } from "react-hook-form";
 import { Info, LockKeyhole, ShieldCheck, Sparkles, TrendingUp, WalletCards } from "lucide-react";
 
@@ -93,17 +93,15 @@ interface SharedSectionProps {
 
 interface ProfileBasicsSectionProps extends SharedSectionProps {
   bioValue: string;
-  photoInputRef: RefObject<HTMLInputElement>;
   photoUploading: boolean;
   photoError: string | null;
-  onPhotoUpload: (event: ChangeEvent<HTMLInputElement>) => void;
+  onPhotoUpload: (file: File) => void;
 }
 
 export function ProfileBasicsSection({
   form,
   profile,
   bioValue,
-  photoInputRef,
   photoUploading,
   photoError,
   onPhotoUpload,
@@ -138,9 +136,7 @@ export function ProfileBasicsSection({
               isTutor
               photoUploading={photoUploading}
               photoError={photoError}
-              fileInputRef={photoInputRef}
-              onPickFile={() => photoInputRef.current?.click()}
-              onFileChange={onPhotoUpload}
+              onFileReady={onPhotoUpload}
               avatarChoicePendingKey={null}
               onChooseStudentAvatar={() => undefined}
             />

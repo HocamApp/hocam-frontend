@@ -11,8 +11,8 @@ import { fetchTutorById } from "@/lib/tutorsApi";
 import {
   createPackagePurchase,
   extractPackagePurchaseErrorMessage,
-  fetchPackagePlans,
   fetchPackagePurchases,
+  fetchTutorOfferedPlans,
   filterMatrixPlans,
 } from "@/lib/paymentsApi";
 import {
@@ -140,8 +140,8 @@ export default function TutorCheckoutPage({
   });
 
   const { data: plans } = useQuery({
-    queryKey: ["package-plans"],
-    queryFn: fetchPackagePlans,
+    queryKey: ["tutor-offered-plans", tutorId],
+    queryFn: () => fetchTutorOfferedPlans(tutorId),
     enabled: isAuthenticated,
   });
 
@@ -271,7 +271,7 @@ export default function TutorCheckoutPage({
         <div className="flex items-center gap-2.5">
           <Avatar className="h-9 w-9">
             <AvatarImage
-              src={tutor.profile_picture || "/images/demo-teacher.jpg"}
+              src={tutor.profile_picture || undefined}
               alt={`${tutor.name} ${tutor.surname}`}
             />
             <AvatarFallback className="bg-primary/10 text-sm font-medium text-primary">

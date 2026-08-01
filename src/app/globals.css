@@ -12,18 +12,46 @@
     --popover-foreground: 222.2 84% 4.9%;
     --primary: 222.2 47.4% 11.2%;
     --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
+    /* Neutrals warmed from cool blue (hue 210-222) toward the brand hue
+       (352) at very low saturation, so the brand ramp above can blend
+       into surfaces instead of only sitting on top of them. --background,
+       --card, and --primary are deliberately untouched — pure white stays
+       pure white, and --primary at 11% lightness has an imperceptible hue
+       either way, so no CTA on the site moves. */
+    --secondary: 350 20% 97%;
     --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
+    --muted: 350 20% 97%;
+    --muted-foreground: 350 8% 46%;
+    --accent: 350 20% 97%;
     --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
+    /* Deepened from 60.2% lightness so error states stay visually distinct
+       from the brand ramp — same red family, ~8deg hue apart, was nearly
+       indistinguishable at matching lightness. */
+    --destructive: 0 72% 51%;
     --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
+    --border: 350 15% 91%;
+    --input: 350 15% 91%;
     --ring: 222.2 84% 4.9%;
     --radius: 0.5rem;
+    /* Brand ramp (logo color #FE4059 = brand-500, exact). A palette scale,
+       not a semantic surface token like --background — defined once and
+       shared by both themes. Which step to reach for inverts per theme:
+       light surfaces use low numbers (50-200) for tints and high numbers
+       (600-900) for text/fills; dark surfaces do the opposite (high
+       numbers read as saturated fills against dark, low numbers as
+       readable text). Reserved for brand-identity surfaces only — not
+       CTAs, focus rings, form borders, rating stars, links, or
+       success/error semantics (--primary and --destructive own those). */
+    --brand-50: 352 100% 97%;
+    --brand-100: 352 100% 94%;
+    --brand-200: 352 96% 88%;
+    --brand-300: 352 95% 79%;
+    --brand-400: 352 97% 71%;
+    --brand-500: 352 99% 62%;
+    --brand-600: 352 86% 52%;
+    --brand-700: 352 83% 43%;
+    --brand-800: 352 75% 37%;
+    --brand-900: 352 69% 30%;
   }
 
   .dark {
@@ -35,16 +63,22 @@
     --popover-foreground: 214 32% 91%;
     --primary: 213 94% 68%;
     --primary-foreground: 222 47% 11%;
-    --secondary: 217 33% 22%;
+    /* Same warming as light mode, same low-saturation discipline, applied
+       to the existing dark lightness bands (hue rotated to 352, saturation
+       brought down to roughly the same 20%/8%/15% bands light mode uses —
+       lightness is untouched so the surfaces stay exactly as dark).
+       --background, --card, --popover, and --primary stay untouched, same
+       reasoning as light mode. */
+    --secondary: 350 20% 22%;
     --secondary-foreground: 214 32% 91%;
-    --muted: 217 33% 20%;
-    --muted-foreground: 215 20% 65%;
-    --accent: 216 30% 24%;
+    --muted: 350 20% 20%;
+    --muted-foreground: 350 8% 65%;
+    --accent: 350 20% 24%;
     --accent-foreground: 214 32% 91%;
     --destructive: 0 63% 45%;
     --destructive-foreground: 210 40% 96%;
-    --border: 216 26% 27%;
-    --input: 216 26% 27%;
+    --border: 350 15% 27%;
+    --input: 350 15% 27%;
     --ring: 213 94% 68%;
   }
 }
@@ -124,20 +158,6 @@
   .animate-slide-right {
     animation: none;
   }
-}
-
-/* The language preference uses Google Website Translator as a hidden engine. */
-#hocam-google-translate,
-.goog-te-banner-frame,
-.goog-te-balloon-frame,
-.goog-te-gadget,
-iframe.skiptranslate {
-  display: none !important;
-}
-
-html,
-body {
-  top: 0 !important;
 }
 
 /* Mobile safe-area + dvh fallback utilities (additive, does not alter existing rules) */

@@ -11,6 +11,8 @@ import {
   PaymentLedgerEntry,
   ReferralInfo,
   TutorEarningsSummary,
+  TutorPackageOffer,
+  UpdateTutorPackageOfferPayload,
 } from "@/types";
 
 export async function fetchPackagePlans(): Promise<PackagePlan[]> {
@@ -53,6 +55,33 @@ export async function fetchTutorPackagePurchases(): Promise<PackagePurchase[]> {
   return response.data;
 }
 
+export async function fetchTutorPackageOffers(): Promise<TutorPackageOffer[]> {
+  const response = await api.get<TutorPackageOffer[]>("/payments/tutor/package-offers/");
+  return response.data;
+}
+
+export async function updateTutorPackageOffers(
+  payload: UpdateTutorPackageOfferPayload[]
+): Promise<TutorPackageOffer[]> {
+  const response = await api.patch<TutorPackageOffer[]>(
+    "/payments/tutor/package-offers/",
+    payload
+  );
+  return response.data;
+}
+
+/** Public, tutor-scoped: only the plans that tutor currently offers, at
+ * their effective (possibly overridden) discount. Shaped identically to
+ * PackagePlan so it's a drop-in replacement for fetchPackagePlans() on any
+ * screen that prices packages for one specific tutor (checkout, the offer
+ * teaser on the tutor detail page). */
+export async function fetchTutorOfferedPlans(tutorId: string): Promise<PackagePlan[]> {
+  const response = await api.get<PackagePlan[]>(
+    `/payments/tutors/${tutorId}/offered-plans/`
+  );
+  return response.data;
+}
+
 /** Purchasable matrix plans (lessons_per_week × duration_days). Retired
  * legacy bundles are inactive server-side, but guard anyway so an ad-hoc
  * row can never render as a broken card. */
@@ -71,6 +100,8 @@ export function translatePackagePurchaseError(message: string): string {
     return "Bu hoca şu anda paket satışına açık değil.";
   if (message.includes("This package plan is not active"))
     return "Bu paket planı artık aktif değil.";
+  if (message.includes("does not currently offer this package plan"))
+    return "Bu hoca şu anda bu paket planını sunmuyor.";
   if (message.includes("promotion code does not exist"))
     return "Bu indirim kodu geçerli değil.";
   if (message.includes("promotion code is not active"))
@@ -84,6 +115,24 @@ export function translatePackagePurchaseError(message: string): string {
   if (message.includes("already have a pending package purchase"))
     return "Bu hoca için zaten bekleyen bir paket talebin var.";
   return message;
+}
+
+export interface RetentionOfferAcceptResult {
+  promotion_code: string;
+  plan_code: string;
+  discount_percent: number;
+  valid_until: string;
+}
+
+/**
+ * Accepts the account-deletion retention offer. Idempotent server-side, so a
+ * double-click or retry returns the same promotion code instead of stacking.
+ */
+export async function acceptRetentionOffer(): Promise<RetentionOfferAcceptResult> {
+  const response = await api.post<RetentionOfferAcceptResult>(
+    "/auth/retention-offer/accept/"
+  );
+  return response.data;
 }
 
 /** Pull the most specific error string out of a DRF error response. */

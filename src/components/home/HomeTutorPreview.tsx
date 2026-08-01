@@ -110,7 +110,7 @@ export function HomeTutorPreview({
             <div className="relative shrink-0">
               <Avatar className="h-20 w-20 rounded-2xl">
                 <AvatarImage
-                  src={tutor.profile_picture || "/images/demo-teacher.jpg"}
+                  src={tutor.profile_picture || undefined}
                   alt={`${tutor.name} ${tutor.surname}`}
                   className="object-cover"
                 />

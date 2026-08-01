@@ -1,5 +1,10 @@
 # Authenticated Home — Grayscale Wireframe Specification
 
+> **Partly superseded.** The section-by-section wireframe below describes the V1
+> home. The implemented section order is now in
+> [`docs/design/product-home/home-v2-structure.md`](design/product-home/home-v2-structure.md).
+> The product and route decisions in §1 still hold.
+
 **Artifact status:** Ready for content review and low-fidelity validation
 **Route:** `/home`
 **Audience:** Authenticated students

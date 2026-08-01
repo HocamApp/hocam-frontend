@@ -16,22 +16,22 @@ export function QuestionCard({
   const href = `/cikmis-sorular/${question.id}?returnTo=${encodeURIComponent(returnTo)}`;
   return (
     <article className="flex h-full flex-col rounded-2xl border bg-card p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
-      <div className="flex flex-wrap items-center gap-2">
-        <Badge>{question.exam_type} {question.exam_year}</Badge>
-        {question.subject && <Badge variant="outline">{question.subject.name}</Badge>}
-      </div>
+      {question.subject && (
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge variant="outline">{question.subject.name}</Badge>
+        </div>
+      )}
       <div className="mt-4 flex items-start gap-3">
         <BookOpenCheck className="mt-1 h-5 w-5 shrink-0 text-primary" />
         <div>
           <p className="line-clamp-4 whitespace-pre-wrap text-sm leading-6">
             {question.prompt}
           </p>
-          <p className="mt-3 text-xs text-muted-foreground">
-            {question.topic?.title || question.source_book}
-            {question.original_question_number
-              ? ` · Soru ${question.original_question_number}`
-              : ""}
-          </p>
+          {question.topic && (
+            <p className="mt-3 text-xs text-muted-foreground">
+              {question.topic.title}
+            </p>
+          )}
         </div>
       </div>
       <Button asChild variant="ghost" className="mt-auto self-end pt-5">

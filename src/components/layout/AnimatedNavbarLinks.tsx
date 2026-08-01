@@ -4,8 +4,8 @@ import * as React from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   Bell,
+  CircleHelp,
   GraduationCap,
-  FileQuestion,
   Heart,
   Home,
   LayoutDashboard,
@@ -34,7 +34,7 @@ import {
 
 const iconByName = {
   Bell,
-  FileQuestion,
+  CircleHelp,
   GraduationCap,
   Heart,
   Home,
@@ -118,6 +118,8 @@ export function AnimatedNavbarLinks() {
       selected={activeIndex >= 0 ? activeIndex : null}
       onChange={handleChange}
       tabletCompact
+      activeColor="text-brand-700 dark:text-brand-200"
+      activeBackground="bg-brand-50 dark:bg-brand-900"
       className="w-max flex-nowrap rounded-xl sm:w-auto"
     />
   );
