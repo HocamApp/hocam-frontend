@@ -12,7 +12,7 @@ afterEach(() => cleanup());
 test("renders exploration and pricing as direct sibling panels without a hero", () => {
   render(
     <CheckoutShell
-      palette="e"
+      palette="10"
       header={<header>Checkout header</header>}
       exploration={<div>Plan selection</div>}
       decision={<div>Pricing decision</div>}
@@ -22,6 +22,6 @@ test("renders exploration and pricing as direct sibling panels without a hero", 
   const exploration = screen.getByRole("region", { name: "Ders planı" });
   const decision = screen.getByRole("complementary", { name: "Paket kararı" });
   assert.equal(exploration.parentElement, decision.parentElement);
-  assert.equal(exploration.closest("[data-checkout-palette]")?.getAttribute("data-checkout-palette"), "e");
+  assert.equal(exploration.closest("[data-checkout-palette]")?.getAttribute("data-checkout-palette"), "10");
   assert.equal(screen.queryByRole("heading", { name: "Ders planını oluştur" }), null);
 });

@@ -114,7 +114,7 @@ export function CheckoutSummary({
     <div>
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-xs font-extrabold tracking-[0.16em] text-[var(--checkout-control)]">
+          <h1 className="text-xs font-extrabold tracking-[0.16em] text-[var(--checkout-right-ink)]">
             PAKET SÜRESİNİ SEÇ
           </h1>
           <p className="mt-1 text-xs opacity-65">Haftada {lessonsPerWeek} ders</p>
@@ -209,7 +209,7 @@ export function CheckoutSummary({
                 {selected && (
                   <div
                     id={`duration-details-${days}`}
-                    className="border-t border-[var(--checkout-soft-line)] bg-[var(--checkout-selected-surface)] px-3 py-2.5 text-xs motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-top-1 sm:text-sm"
+                    className="border-t border-[var(--checkout-soft-line)] bg-[var(--checkout-selected-duration)] px-3 py-2.5 text-xs text-[var(--checkout-selected-duration-ink)] motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-top-1 sm:text-sm"
                   >
                     <dl className="space-y-1.5 tabular-nums">
                       <SummaryRow
@@ -326,7 +326,7 @@ export function CheckoutSummary({
             aria-label="İndirim kodu"
             autoComplete="off"
             disabled={busy}
-            className="h-9 rounded-lg border-[var(--checkout-soft-line)] bg-[var(--checkout-card-surface)]"
+            className="h-9 rounded-lg border-[var(--checkout-soft-line)] bg-[var(--checkout-promo-surface)] text-[var(--checkout-promo-ink)]"
           />
           <Button
             type="submit"

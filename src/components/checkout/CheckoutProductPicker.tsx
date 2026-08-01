@@ -48,12 +48,12 @@ export function CheckoutProductPicker({
   paidRemainingCredits = null,
   onBookTrial,
   onUseCredits,
-  palette = "a",
+  palette = "01",
 }: CheckoutProductPickerProps) {
   return (
     <TooltipProvider delayDuration={180}>
       <div>
-        <p className="mb-2 text-xs font-bold tracking-[0.16em] text-[var(--checkout-control)]">
+        <p className="mb-2 text-xs font-bold tracking-[0.16em] text-[var(--checkout-left-ink)]">
           DERS PLANI
         </p>
 
@@ -67,13 +67,13 @@ export function CheckoutProductPicker({
 
           <section
             aria-label="Seçili plan: Birebir Özel Ders"
-            className="overflow-hidden rounded-xl border-2 border-[var(--checkout-control)] bg-[var(--checkout-card-surface)]"
+            className="overflow-hidden rounded-xl border-2 border-[var(--checkout-control)] bg-[var(--checkout-private-body)] text-[var(--checkout-private-body-ink)]"
           >
             <button
               type="button"
               aria-label="Birebir Özel Ders — seçili"
               aria-pressed="true"
-              className="flex w-full items-center gap-3 bg-[var(--checkout-private)] px-4 py-2 text-left text-[var(--checkout-nighttime)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--checkout-control)]"
+              className="flex w-full items-center gap-3 bg-[var(--checkout-private)] px-4 py-2 text-left text-[var(--checkout-private-ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--checkout-control)]"
             >
               <GraduationCap className="size-5 shrink-0" aria-hidden="true" />
               <span className="min-w-0 flex-1">
@@ -133,7 +133,7 @@ export function CheckoutProductPicker({
 
               <section
                 aria-labelledby="private-features-title"
-                className="rounded-lg border border-[var(--checkout-soft-line)] bg-[var(--checkout-feature-surface)] p-3"
+                className="rounded-lg border border-[var(--checkout-soft-line)] bg-[var(--checkout-feature-surface)] p-3 text-[var(--checkout-feature-ink)]"
               >
                 <h2
                   id="private-features-title"
@@ -192,7 +192,7 @@ export function CheckoutProductPicker({
           <ComparePlansDialog palette={palette}>
             <Button
               variant="outline"
-              className="h-8 rounded-full border-[var(--checkout-control)] bg-transparent px-4 text-xs font-bold text-[var(--checkout-nighttime)] hover:bg-[var(--checkout-card-surface)]"
+              className="h-8 rounded-full border-[var(--checkout-control)] bg-transparent px-4 text-xs font-bold text-[var(--checkout-left-ink)] hover:bg-[var(--checkout-private-body)]"
             >
               Planları karşılaştır
             </Button>
@@ -226,8 +226,8 @@ function FuturePlanBar({
             className={cn(
               "checkout-plan-bar flex min-h-14 w-full cursor-not-allowed items-center gap-3 rounded-xl border px-4 py-2 text-left",
               isPro
-                ? "checkout-plan-bar-pro bg-[var(--checkout-pro)] text-[var(--checkout-on-pro)]"
-                : "checkout-plan-bar-group bg-[var(--checkout-group)] text-[var(--checkout-nighttime)]"
+                ? "checkout-plan-bar-pro bg-[var(--checkout-pro)] text-[var(--checkout-pro-ink)]"
+                : "checkout-plan-bar-group bg-[var(--checkout-group)] text-[var(--checkout-group-ink)]"
             )}
           >
             <Icon className="size-5 shrink-0" aria-hidden="true" />
@@ -240,7 +240,7 @@ function FuturePlanBar({
                 "rounded-md border px-2 py-0.5 text-[0.65rem] font-extrabold uppercase tracking-wide",
                 isPro
                   ? "border-current bg-transparent text-current"
-                  : "border-[var(--checkout-nighttime)] bg-transparent text-[var(--checkout-nighttime)]"
+                  : "border-current bg-transparent text-current"
               )}
             >
               Yakında

@@ -1,151 +1,401 @@
 .checkout-theme,
 .checkout-dialog-theme {
-  /* Solidroad source palette — exact samples from the supplied board. */
-  --checkout-evergreen: #31542a;
-  --checkout-nighttime: #132110;
-  --checkout-grassland: #6cbf6d;
-  --checkout-clearway: #ffffff;
-  --checkout-signal-bay: #7ad0e7;
-  --checkout-dulline: #fbf2d3;
-  --checkout-placeboam: #f1d160;
-  --checkout-switchback: #f3b359;
+  /* Supplied exploration palette. These tokens stay scoped to checkout. */
+  --checkout-olive: #70a031;
+  --checkout-cyan: #8cd5e9;
+  --checkout-yellow: #efcc5e;
+  --checkout-charcoal: #343633;
+  --checkout-cream: #f5f4ec;
+  --checkout-forest: #366b37;
+  --checkout-mint: #c2ecad;
+  --checkout-taupe: #8e8161;
+  --checkout-bright-green: #59af32;
+  --checkout-white: #ffffff;
+  --checkout-black: #000000;
 
-  --checkout-header-surface: var(--checkout-clearway);
-  --checkout-accent: var(--checkout-grassland);
-  --checkout-left-surface: color-mix(in srgb, var(--checkout-clearway) 72%, var(--checkout-dulline));
-  --checkout-right-surface: color-mix(in srgb, var(--checkout-clearway) 52%, var(--checkout-dulline));
-  --checkout-dialog-surface: var(--checkout-left-surface);
-  --checkout-card-surface: var(--checkout-clearway);
-  --checkout-selected-surface: color-mix(in srgb, var(--checkout-clearway) 82%, var(--checkout-dulline));
-  --checkout-muted-surface: color-mix(in srgb, var(--checkout-clearway) 58%, var(--checkout-dulline));
-  --checkout-private: var(--checkout-placeboam);
-  --checkout-group: var(--checkout-signal-bay);
-  --checkout-pro: var(--checkout-evergreen);
-  --checkout-on-pro: var(--checkout-clearway);
-  --checkout-control: var(--checkout-evergreen);
-  --checkout-control-strong: var(--checkout-nighttime);
-  --checkout-on-control: var(--checkout-clearway);
-  --checkout-discount: var(--checkout-evergreen);
-  --checkout-cta: var(--checkout-evergreen);
-  --checkout-cta-hover: var(--checkout-nighttime);
-  --checkout-on-cta: var(--checkout-clearway);
-  --checkout-feature-surface: color-mix(in srgb, var(--checkout-clearway) 70%, var(--checkout-private));
-  --checkout-soft-line: color-mix(in srgb, var(--checkout-evergreen) 18%, transparent);
-  color: var(--checkout-nighttime);
+  /* Compatibility aliases for small, non-compositional controls. */
+  --checkout-nighttime: var(--checkout-charcoal);
+  --checkout-evergreen: var(--checkout-forest);
+  --checkout-clearway: var(--checkout-white);
+  --checkout-dulline: var(--checkout-cream);
+  --checkout-switchback: var(--checkout-yellow);
+
+  /* Option 01 is the neutral fallback, not a finalized product theme. */
+  --checkout-page-surface: var(--checkout-cream);
+  --checkout-page-ink: var(--checkout-charcoal);
+  --checkout-header-surface: var(--checkout-white);
+  --checkout-header-ink: var(--checkout-charcoal);
+  --checkout-accent: var(--checkout-forest);
+  --checkout-left-surface: var(--checkout-cream);
+  --checkout-left-ink: var(--checkout-charcoal);
+  --checkout-right-surface: var(--checkout-mint);
+  --checkout-right-ink: var(--checkout-charcoal);
+  --checkout-private: var(--checkout-yellow);
+  --checkout-private-ink: var(--checkout-charcoal);
+  --checkout-private-body: var(--checkout-white);
+  --checkout-private-body-ink: var(--checkout-charcoal);
+  --checkout-group: var(--checkout-cyan);
+  --checkout-group-ink: var(--checkout-charcoal);
+  --checkout-pro: var(--checkout-forest);
+  --checkout-pro-ink: var(--checkout-white);
+  --checkout-feature-surface: var(--checkout-mint);
+  --checkout-feature-ink: var(--checkout-charcoal);
+  --checkout-muted-surface: var(--checkout-cream);
+  --checkout-control: var(--checkout-forest);
+  --checkout-control-strong: var(--checkout-charcoal);
+  --checkout-on-control: var(--checkout-white);
+  --checkout-duration-surface: var(--checkout-white);
+  --checkout-duration-ink: var(--checkout-charcoal);
+  --checkout-selected-duration: var(--checkout-yellow);
+  --checkout-selected-duration-ink: var(--checkout-charcoal);
+  --checkout-discount: var(--checkout-forest);
+  --checkout-cta: var(--checkout-forest);
+  --checkout-cta-hover: var(--checkout-charcoal);
+  --checkout-on-cta: var(--checkout-white);
+  --checkout-promo-surface: var(--checkout-white);
+  --checkout-promo-ink: var(--checkout-charcoal);
+  --checkout-dialog-surface: var(--checkout-cream);
+  --checkout-dialog-ink: var(--checkout-charcoal);
+  --checkout-compare-private: var(--checkout-yellow);
+  --checkout-compare-private-ink: var(--checkout-charcoal);
+  --checkout-compare-group: var(--checkout-cyan);
+  --checkout-compare-group-ink: var(--checkout-charcoal);
+  --checkout-compare-pro: var(--checkout-forest);
+  --checkout-compare-pro-ink: var(--checkout-white);
+  --checkout-soft-line: color-mix(in srgb, currentColor 18%, transparent);
 }
 
-/* A — Soft neutral */
-[data-checkout-palette="a"] {
-  --checkout-accent: var(--checkout-grassland);
-  --checkout-left-surface: color-mix(in srgb, var(--checkout-clearway) 72%, var(--checkout-dulline));
-  --checkout-right-surface: color-mix(in srgb, var(--checkout-clearway) 52%, var(--checkout-dulline));
+/* 01 — Garden Split */
+[data-checkout-palette="01"] {
+  --checkout-page-surface: #f5f4ec;
+  --checkout-header-surface: #ffffff;
+  --checkout-accent: #366b37;
+  --checkout-left-surface: #f5f4ec;
+  --checkout-right-surface: #c2ecad;
+  --checkout-private: #efcc5e;
+  --checkout-private-body: #ffffff;
+  --checkout-group: #8cd5e9;
+  --checkout-pro: #366b37;
+  --checkout-feature-surface: #c2ecad;
+  --checkout-control: #366b37;
+  --checkout-duration-surface: #ffffff;
+  --checkout-selected-duration: #efcc5e;
+  --checkout-cta: #366b37;
+  --checkout-promo-surface: #ffffff;
+  --checkout-dialog-surface: #f5f4ec;
+  --checkout-compare-private: #efcc5e;
+  --checkout-compare-group: #8cd5e9;
+  --checkout-compare-pro: #366b37;
 }
 
-/* B — Crisp contrast */
-[data-checkout-palette="b"] {
-  --checkout-header-surface: var(--checkout-dulline);
-  --checkout-accent: var(--checkout-signal-bay);
-  --checkout-left-surface: color-mix(in srgb, var(--checkout-clearway) 86%, var(--checkout-dulline));
-  --checkout-right-surface: color-mix(in srgb, var(--checkout-clearway) 62%, var(--checkout-dulline));
-  --checkout-pro: var(--checkout-nighttime);
-  --checkout-control: var(--checkout-nighttime);
-  --checkout-control-strong: var(--checkout-evergreen);
-  --checkout-cta: var(--checkout-nighttime);
-  --checkout-cta-hover: var(--checkout-evergreen);
+/* 02 — Cyan Studio */
+[data-checkout-palette="02"] {
+  --checkout-page-surface: #8cd5e9;
+  --checkout-header-surface: #343633;
+  --checkout-header-ink: #ffffff;
+  --checkout-accent: #efcc5e;
+  --checkout-left-surface: #8cd5e9;
+  --checkout-right-surface: #f5f4ec;
+  --checkout-private: #366b37;
+  --checkout-private-ink: #ffffff;
+  --checkout-private-body: #ffffff;
+  --checkout-group: #efcc5e;
+  --checkout-pro: #343633;
+  --checkout-feature-surface: #c2ecad;
+  --checkout-control: #343633;
+  --checkout-duration-surface: #ffffff;
+  --checkout-selected-duration: #c2ecad;
+  --checkout-cta: #efcc5e;
+  --checkout-cta-hover: #c2ecad;
+  --checkout-on-cta: #343633;
+  --checkout-promo-surface: #ffffff;
+  --checkout-dialog-surface: #ffffff;
+  --checkout-compare-private: #366b37;
+  --checkout-compare-private-ink: #ffffff;
+  --checkout-compare-group: #efcc5e;
+  --checkout-compare-pro: #343633;
 }
 
-/* C — Calm product */
-[data-checkout-palette="c"] {
-  --checkout-accent: var(--checkout-placeboam);
-  --checkout-left-surface: color-mix(in srgb, var(--checkout-clearway) 80%, var(--checkout-dulline));
-  --checkout-right-surface: color-mix(in srgb, var(--checkout-clearway) 90%, var(--checkout-signal-bay));
-  --checkout-private: var(--checkout-placeboam);
-  --checkout-pro: var(--checkout-evergreen);
-  --checkout-control: var(--checkout-evergreen);
-  --checkout-cta: var(--checkout-evergreen);
+/* 03 — Mint Ledger */
+[data-checkout-palette="03"] {
+  --checkout-page-surface: #c2ecad;
+  --checkout-header-surface: #f5f4ec;
+  --checkout-accent: #70a031;
+  --checkout-left-surface: #c2ecad;
+  --checkout-right-surface: #ffffff;
+  --checkout-private: #8cd5e9;
+  --checkout-private-body: #f5f4ec;
+  --checkout-group: #efcc5e;
+  --checkout-pro: #343633;
+  --checkout-feature-surface: #ffffff;
+  --checkout-control: #343633;
+  --checkout-duration-surface: #f5f4ec;
+  --checkout-selected-duration: #8cd5e9;
+  --checkout-cta: #59af32;
+  --checkout-cta-hover: #70a031;
+  --checkout-on-cta: #000000;
+  --checkout-promo-surface: #f5f4ec;
+  --checkout-dialog-surface: #c2ecad;
+  --checkout-compare-private: #8cd5e9;
+  --checkout-compare-group: #efcc5e;
+  --checkout-compare-pro: #343633;
 }
 
-/* D — Warm editorial */
-[data-checkout-palette="d"] {
-  --checkout-accent: var(--checkout-switchback);
-  --checkout-left-surface: color-mix(in srgb, var(--checkout-clearway) 76%, var(--checkout-dulline));
-  --checkout-right-surface: color-mix(in srgb, var(--checkout-clearway) 60%, var(--checkout-dulline));
-  --checkout-pro: var(--checkout-nighttime);
-  --checkout-control: var(--checkout-nighttime);
-  --checkout-cta: var(--checkout-switchback);
-  --checkout-cta-hover: var(--checkout-placeboam);
-  --checkout-on-cta: var(--checkout-nighttime);
+/* 04 — Charcoal Frame */
+[data-checkout-palette="04"] {
+  --checkout-page-surface: #343633;
+  --checkout-header-surface: #343633;
+  --checkout-header-ink: #ffffff;
+  --checkout-accent: #8cd5e9;
+  --checkout-left-surface: #f5f4ec;
+  --checkout-right-surface: #8e8161;
+  --checkout-right-ink: #000000;
+  --checkout-private: #c2ecad;
+  --checkout-private-body: #ffffff;
+  --checkout-group: #efcc5e;
+  --checkout-pro: #366b37;
+  --checkout-feature-surface: #8cd5e9;
+  --checkout-control: #343633;
+  --checkout-duration-surface: #f5f4ec;
+  --checkout-selected-duration: #efcc5e;
+  --checkout-cta: #8cd5e9;
+  --checkout-cta-hover: #c2ecad;
+  --checkout-on-cta: #343633;
+  --checkout-promo-surface: #ffffff;
+  --checkout-dialog-surface: #343633;
+  --checkout-dialog-ink: #ffffff;
+  --checkout-compare-private: #c2ecad;
+  --checkout-compare-group: #efcc5e;
+  --checkout-compare-pro: #366b37;
 }
 
-/* E — Light premium */
-[data-checkout-palette="e"] {
-  --checkout-accent: var(--checkout-evergreen);
-  --checkout-left-surface: color-mix(in srgb, var(--checkout-clearway) 80%, var(--checkout-dulline));
-  --checkout-right-surface: color-mix(in srgb, var(--checkout-clearway) 90%, var(--checkout-evergreen));
-  --checkout-private: var(--checkout-switchback);
-  --checkout-pro: var(--checkout-nighttime);
-  --checkout-control: var(--checkout-evergreen);
-  --checkout-control-strong: var(--checkout-nighttime);
-  --checkout-cta: var(--checkout-nighttime);
-  --checkout-cta-hover: var(--checkout-evergreen);
+/* 05 — Sunlit Fields */
+[data-checkout-palette="05"] {
+  --checkout-page-surface: #efcc5e;
+  --checkout-header-surface: #f5f4ec;
+  --checkout-accent: #59af32;
+  --checkout-left-surface: #efcc5e;
+  --checkout-right-surface: #c2ecad;
+  --checkout-private: #ffffff;
+  --checkout-private-body: #f5f4ec;
+  --checkout-group: #366b37;
+  --checkout-group-ink: #ffffff;
+  --checkout-pro: #8cd5e9;
+  --checkout-pro-ink: #343633;
+  --checkout-feature-surface: #ffffff;
+  --checkout-control: #366b37;
+  --checkout-duration-surface: #ffffff;
+  --checkout-selected-duration: #f5f4ec;
+  --checkout-cta: #343633;
+  --checkout-cta-hover: #366b37;
+  --checkout-promo-surface: #f5f4ec;
+  --checkout-dialog-surface: #efcc5e;
+  --checkout-compare-private: #ffffff;
+  --checkout-compare-group: #366b37;
+  --checkout-compare-group-ink: #ffffff;
+  --checkout-compare-pro: #8cd5e9;
+  --checkout-compare-pro-ink: #343633;
+}
+
+/* 06 — Blue Workshop */
+[data-checkout-palette="06"] {
+  --checkout-page-surface: #8cd5e9;
+  --checkout-header-surface: #8cd5e9;
+  --checkout-accent: #343633;
+  --checkout-left-surface: #ffffff;
+  --checkout-right-surface: #8cd5e9;
+  --checkout-private: #efcc5e;
+  --checkout-private-body: #f5f4ec;
+  --checkout-group: #366b37;
+  --checkout-group-ink: #ffffff;
+  --checkout-pro: #343633;
+  --checkout-feature-surface: #c2ecad;
+  --checkout-control: #343633;
+  --checkout-duration-surface: #f5f4ec;
+  --checkout-selected-duration: #c2ecad;
+  --checkout-cta: #366b37;
+  --checkout-promo-surface: #ffffff;
+  --checkout-dialog-surface: #8cd5e9;
+  --checkout-compare-private: #efcc5e;
+  --checkout-compare-group: #366b37;
+  --checkout-compare-group-ink: #ffffff;
+  --checkout-compare-pro: #343633;
+}
+
+/* 07 — Taupe Editorial */
+[data-checkout-palette="07"] {
+  --checkout-page-surface: #8e8161;
+  --checkout-header-surface: #f5f4ec;
+  --checkout-accent: #8e8161;
+  --checkout-left-surface: #f5f4ec;
+  --checkout-right-surface: #8e8161;
+  --checkout-right-ink: #000000;
+  --checkout-private: #366b37;
+  --checkout-private-ink: #ffffff;
+  --checkout-private-body: #ffffff;
+  --checkout-group: #c2ecad;
+  --checkout-pro: #efcc5e;
+  --checkout-pro-ink: #343633;
+  --checkout-feature-surface: #f5f4ec;
+  --checkout-control: #343633;
+  --checkout-duration-surface: #f5f4ec;
+  --checkout-selected-duration: #8cd5e9;
+  --checkout-cta: #366b37;
+  --checkout-promo-surface: #ffffff;
+  --checkout-dialog-surface: #f5f4ec;
+  --checkout-compare-private: #366b37;
+  --checkout-compare-private-ink: #ffffff;
+  --checkout-compare-group: #c2ecad;
+  --checkout-compare-pro: #efcc5e;
+  --checkout-compare-pro-ink: #343633;
+}
+
+/* 08 — Monochrome Signal */
+[data-checkout-palette="08"] {
+  --checkout-page-surface: #ffffff;
+  --checkout-header-surface: #ffffff;
+  --checkout-accent: #343633;
+  --checkout-left-surface: #ffffff;
+  --checkout-right-surface: #343633;
+  --checkout-right-ink: #ffffff;
+  --checkout-private: #343633;
+  --checkout-private-ink: #ffffff;
+  --checkout-private-body: #f5f4ec;
+  --checkout-group: #8cd5e9;
+  --checkout-pro: #efcc5e;
+  --checkout-pro-ink: #343633;
+  --checkout-feature-surface: #ffffff;
+  --checkout-control: #59af32;
+  --checkout-on-control: #000000;
+  --checkout-duration-surface: #f5f4ec;
+  --checkout-selected-duration: #8cd5e9;
+  --checkout-cta: #efcc5e;
+  --checkout-cta-hover: #c2ecad;
+  --checkout-on-cta: #343633;
+  --checkout-promo-surface: #ffffff;
+  --checkout-dialog-surface: #ffffff;
+  --checkout-dialog-ink: #343633;
+  --checkout-compare-private: #343633;
+  --checkout-compare-private-ink: #ffffff;
+  --checkout-compare-group: #8cd5e9;
+  --checkout-compare-pro: #efcc5e;
+  --checkout-compare-pro-ink: #343633;
+}
+
+/* 09 — Mint Commerce */
+[data-checkout-palette="09"] {
+  --checkout-page-surface: #c2ecad;
+  --checkout-header-surface: #c2ecad;
+  --checkout-accent: #70a031;
+  --checkout-left-surface: #c2ecad;
+  --checkout-right-surface: #366b37;
+  --checkout-right-ink: #ffffff;
+  --checkout-private: #f5f4ec;
+  --checkout-private-body: #ffffff;
+  --checkout-group: #efcc5e;
+  --checkout-pro: #8cd5e9;
+  --checkout-pro-ink: #343633;
+  --checkout-feature-surface: #f5f4ec;
+  --checkout-control: #343633;
+  --checkout-duration-surface: #ffffff;
+  --checkout-selected-duration: #efcc5e;
+  --checkout-cta: #ffffff;
+  --checkout-cta-hover: #f5f4ec;
+  --checkout-on-cta: #366b37;
+  --checkout-promo-surface: #f5f4ec;
+  --checkout-dialog-surface: #c2ecad;
+  --checkout-dialog-ink: #343633;
+  --checkout-compare-private: #f5f4ec;
+  --checkout-compare-group: #efcc5e;
+  --checkout-compare-pro: #8cd5e9;
+  --checkout-compare-pro-ink: #343633;
+}
+
+/* 10 — Reverse Orchard */
+[data-checkout-palette="10"] {
+  --checkout-page-surface: #366b37;
+  --checkout-header-surface: #ffffff;
+  --checkout-accent: #efcc5e;
+  --checkout-left-surface: #366b37;
+  --checkout-left-ink: #ffffff;
+  --checkout-right-surface: #f5f4ec;
+  --checkout-private: #efcc5e;
+  --checkout-private-body: #f5f4ec;
+  --checkout-group: #c2ecad;
+  --checkout-pro: #8cd5e9;
+  --checkout-pro-ink: #343633;
+  --checkout-feature-surface: #ffffff;
+  --checkout-control: #343633;
+  --checkout-duration-surface: #ffffff;
+  --checkout-selected-duration: #c2ecad;
+  --checkout-cta: #343633;
+  --checkout-promo-surface: #ffffff;
+  --checkout-dialog-surface: #366b37;
+  --checkout-dialog-ink: #ffffff;
+  --checkout-compare-private: #efcc5e;
+  --checkout-compare-group: #c2ecad;
+  --checkout-compare-pro: #8cd5e9;
+  --checkout-compare-pro-ink: #343633;
 }
 
 .checkout-theme {
   min-height: 100dvh;
-  background: var(--checkout-left-surface);
+  background: var(--checkout-page-surface);
 }
 
 .checkout-plan-bar {
-  border-color: var(--checkout-soft-line);
+  border-color: color-mix(in srgb, currentColor 28%, transparent);
 }
 
 .checkout-plan-bar-pro {
-  border-color: color-mix(in srgb, var(--checkout-pro) 72%, var(--checkout-soft-line));
+  border-color: color-mix(in srgb, currentColor 48%, transparent);
 }
 
 .checkout-duration-card {
-  border-color: var(--checkout-soft-line);
-  background: transparent;
+  border-color: color-mix(in srgb, var(--checkout-duration-ink) 20%, transparent);
+  background: var(--checkout-duration-surface);
+  color: var(--checkout-duration-ink);
 }
 
 .checkout-duration-card[data-selected="true"] {
   border-color: var(--checkout-control);
   border-width: 2px;
-  background: var(--checkout-card-surface);
-  box-shadow: 0 10px 24px -22px color-mix(in srgb, var(--checkout-nighttime) 50%, transparent);
+  background: var(--checkout-selected-duration);
+  color: var(--checkout-selected-duration-ink);
+  box-shadow: 0 10px 24px -22px color-mix(in srgb, var(--checkout-charcoal) 55%, transparent);
 }
 
 .checkout-dialog-theme {
   background: var(--checkout-dialog-surface);
-  color: var(--checkout-nighttime);
+  color: var(--checkout-dialog-ink);
 }
 
 .checkout-compare-plan-head[data-plan="private"] > span,
 .checkout-compare-tab[data-plan="private"][data-state="active"] {
-  background: var(--checkout-private);
-  color: var(--checkout-nighttime);
+  background: var(--checkout-compare-private);
+  color: var(--checkout-compare-private-ink);
 }
 
 .checkout-compare-plan-head[data-plan="group"] > span,
 .checkout-compare-tab[data-plan="group"][data-state="active"] {
-  background: var(--checkout-group);
-  color: var(--checkout-nighttime);
+  background: var(--checkout-compare-group);
+  color: var(--checkout-compare-group-ink);
 }
 
 .checkout-compare-plan-head[data-plan="pro"] > span,
 .checkout-compare-tab[data-plan="pro"][data-state="active"] {
-  background: var(--checkout-pro);
-  color: var(--checkout-on-pro);
+  background: var(--checkout-compare-pro);
+  color: var(--checkout-compare-pro-ink);
 }
 
 .checkout-compare-plan-head[data-plan="group"],
 .checkout-compare-mobile-badge[data-plan="group"] {
-  color: var(--checkout-evergreen);
+  color: var(--checkout-compare-group-ink);
 }
 
 .checkout-compare-plan-head[data-plan="pro"],
 .checkout-compare-mobile-badge[data-plan="pro"] {
-  color: var(--checkout-pro);
+  color: var(--checkout-compare-pro-ink);
 }
 
 .checkout-compare-badge,

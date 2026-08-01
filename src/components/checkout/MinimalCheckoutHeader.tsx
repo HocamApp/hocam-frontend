@@ -23,7 +23,7 @@ export function MinimalCheckoutHeader({ tutorId }: { tutorId: string }) {
   }
 
   return (
-    <header className="relative z-20 bg-[var(--checkout-header-surface)]">
+    <header className="relative z-20 bg-[var(--checkout-header-surface)] text-[var(--checkout-header-ink)]">
       <a href="#checkout-content" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-3 focus:z-50 focus:rounded-md focus:bg-background focus:px-3 focus:py-2 focus:ring-2 focus:ring-ring">
         İçeriğe geç
       </a>

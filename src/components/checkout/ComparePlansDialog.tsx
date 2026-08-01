@@ -43,7 +43,7 @@ const rows: Array<{ feature: string; private: string; group: string; pro: string
 
 export function ComparePlansDialog({
   children,
-  palette = "a",
+  palette = "01",
 }: {
   children: ReactNode;
   palette?: CheckoutPalette;
@@ -56,7 +56,7 @@ export function ComparePlansDialog({
         data-checkout-palette={palette}
         className="checkout-dialog-theme h-[100dvh] max-h-[100dvh] w-screen max-w-none gap-0 overflow-hidden rounded-none border-0 border-[var(--checkout-soft-line)] p-0 sm:h-auto sm:max-h-[88dvh] sm:w-[calc(100vw-2rem)] sm:max-w-5xl sm:rounded-2xl sm:border"
       >
-        <DialogHeader className="border-b border-[var(--checkout-soft-line)] bg-[var(--checkout-header-surface)] px-5 py-5 pr-14 text-left sm:px-7">
+        <DialogHeader className="border-b border-[var(--checkout-soft-line)] bg-[var(--checkout-header-surface)] px-5 py-5 pr-14 text-left text-[var(--checkout-header-ink)] sm:px-7">
           <DialogTitle className="text-2xl tracking-tight">Planları karşılaştır</DialogTitle>
           <DialogDescription>Bugün kullanabileceğin özellikleri ve üzerinde çalıştığımız planları birlikte gör.</DialogDescription>
         </DialogHeader>
