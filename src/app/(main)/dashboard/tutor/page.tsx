@@ -698,7 +698,7 @@ function TutorDashboardContent() {
     enabled: isAuthenticated && Boolean(profile),
   });
   const [selectedPackageFrequency, setSelectedPackageFrequency] =
-    useState<WeeklyLessonOption>(1);
+    useState<WeeklyLessonOption>(2);
   const packageCommissionRate = (priceInsight?.commission_rate_bps ?? 0) / 10_000;
   // Grouped by frequency, NOT filtered to is_offered — the picker below
   // renders every catalog plan and dims the ones this tutor has turned

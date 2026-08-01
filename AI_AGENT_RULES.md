@@ -13,7 +13,7 @@
   oluşturuyor, kart bilgisi almıyor; backend'de admin manuel onaylıyordu — bu manuel onay şu
   anda geçici olarak **kapalı** (G0/G1 denetimi sürüyor, bkz. backend `AI_AGENT_RULES.md`).
   UI'da hiçbir yerde IBAN/banka/havale bilgisi **gösterme veya isteme**.
-- Tek satın alma modeli: haftalık ders sayısı (1-5) × paket süresi (14/30/90/180 gün)
+- Tek satın alma modeli: haftalık ders sayısı (2-6) × paket süresi (14/30/90/180 gün)
   matrisi. Tekli ders alımı ve "10'luk paket" kavramları tamamen kaldırıldı — `types/api.ts`'e
   `term_months` gibi eski alanları geri **ekleme**.
 - Fiyat hesaplamaları backend'in Python `round()` davranışını (banker's rounding,

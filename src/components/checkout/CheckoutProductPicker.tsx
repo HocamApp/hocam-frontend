@@ -62,7 +62,7 @@ export function CheckoutProductPicker({
             Dersler 40 dakikadır.
           </p>
           <div
-            className="mt-2 flex flex-wrap gap-2"
+            className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-5"
             role="group"
             aria-label="Haftada ders sayısı"
           >
@@ -78,9 +78,9 @@ export function CheckoutProductPicker({
                   disabled={!enabled}
                   onClick={() => onLessonsPerWeekChange(count)}
                   className={cn(
-                    "rounded-full border px-4 py-1.5 text-sm font-medium transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+                    "w-full rounded-full border px-2 py-1.5 text-sm font-medium transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
                     lessonsPerWeek === count &&
-                      "border-primary bg-primary text-primary-foreground hover:bg-primary"
+                      "border-primary bg-primary text-primary-foreground ring-1 ring-primary hover:bg-primary"
                   )}
                 >
                   {count} ders

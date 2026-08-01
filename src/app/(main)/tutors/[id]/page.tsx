@@ -27,6 +27,7 @@ import {
 import { fetchTutorAvailability } from "@/lib/dashboardApi";
 import { useAuth } from "@/hooks/useAuth";
 import { resolveProfileImageUrl } from "@/lib/profileImages";
+import { buildTutorSubjectLabels } from "@/lib/tutorSubjectLabels";
 import { formatLessonCount, formatPrice, formatRating } from "@/lib/utils";
 import { ReviewCard } from "@/components/tutors/ReviewCard";
 import { ReviewSummary } from "@/components/tutors/ReviewSummary";
@@ -443,11 +444,14 @@ export default function TutorProfilePage({
     !isOwnProfile &&
     tutor?.trial_lesson_eligible === true &&
     trialLessonsRemaining > 0;
-  const EXAM_ORDER = ["TYT", "AYT", "YDT", "DGS", "KPSS"] as const;
-  const subjectGroups = EXAM_ORDER.map((exam) => ({
-    exam,
-    items: (tutor?.subjects ?? []).filter((s) => s.exam_type === exam),
-  })).filter((group) => group.items.length > 0);
+  const subjectLabels = buildTutorSubjectLabels(tutor?.subjects ?? []);
+  const subjectGroups = Array.from(
+    subjectLabels.reduce((groups, subject) => {
+      const group = subject.exam ?? "Diğer";
+      groups.set(group, [...(groups.get(group) ?? []), subject]);
+      return groups;
+    }, new Map<string, typeof subjectLabels>())
+  ).map(([exam, items]) => ({ exam, items }));
   const introVideoEmbedUrl = getYouTubeEmbedUrl(tutor?.intro_video_url);
   const tutorPhotoUrl = resolveProfileImageUrl(tutor?.profile_picture);
   const completedLessonsLabel = `${formatLessonCount(tutor?.completed_lessons_count ?? 0)} ders`;
@@ -678,9 +682,13 @@ export default function TutorProfilePage({
               </div>
 
               <div className="flex flex-wrap gap-1">
-                {tutor.subjects.map((s) => (
-                  <Badge key={s.id} variant="secondary" className="py-1">
-                    {s.name}
+                {subjectLabels.map((subject) => (
+                  <Badge
+                    key={subject.key}
+                    variant="secondary"
+                    className="max-w-full whitespace-normal break-words py-1 text-left"
+                  >
+                    {subject.label}
                   </Badge>
                 ))}
               </div>
@@ -913,9 +921,13 @@ export default function TutorProfilePage({
                       {group.exam} Dersleri
                     </h3>
                     <div className="mt-2 flex flex-wrap gap-2">
-                      {group.items.map((s) => (
-                        <Badge key={s.id} variant="secondary" className="py-1.5 px-3">
-                          {s.name}
+                      {group.items.map((subject) => (
+                        <Badge
+                          key={subject.key}
+                          variant="secondary"
+                          className="max-w-full whitespace-normal break-words px-3 py-1.5 text-left"
+                        >
+                          {subject.label}
                         </Badge>
                       ))}
                     </div>
