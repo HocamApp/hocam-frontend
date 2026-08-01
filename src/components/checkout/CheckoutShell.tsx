@@ -2,28 +2,35 @@ import type { ReactNode } from "react";
 
 export function CheckoutShell({
   header,
-  introduction,
   exploration,
   decision,
 }: {
   header: ReactNode;
-  introduction: ReactNode;
   exploration: ReactNode;
   decision: ReactNode;
 }) {
   return (
-    <div className="relative min-h-[100dvh] overflow-x-clip bg-background">
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-[28rem] bg-[radial-gradient(circle_at_20%_0%,hsl(var(--primary)/0.08),transparent_58%)]" aria-hidden="true" />
-      <div className="relative">{header}</div>
-      <main id="checkout-content" className="relative mx-auto w-full max-w-[84rem] px-4 pb-32 pt-8 sm:px-6 sm:pt-11 lg:px-8 lg:pb-16">
-        <div className="max-w-3xl">{introduction}</div>
-        {decision ? (
-          <div className="mt-8 grid items-start gap-10 lg:grid-cols-[minmax(0,1.45fr)_minmax(22rem,0.78fr)] xl:gap-14">
-            <div className="min-w-0">{exploration}</div>
-            <div className="min-w-0 lg:sticky lg:top-6 lg:max-h-[calc(100dvh-3rem)] lg:overflow-y-auto lg:overscroll-contain lg:pr-1">{decision}</div>
+    <div className="min-h-[100dvh] overflow-x-clip bg-[var(--checkout-left-surface)]">
+      {header}
+      <main
+        id="checkout-content"
+        className="grid min-h-[calc(100dvh-4.625rem)] lg:grid-cols-[minmax(0,3fr)_minmax(26rem,2fr)]"
+      >
+        <section
+          aria-label="Ders planı"
+          className={`min-w-0 bg-[var(--checkout-left-surface)] px-4 pb-32 pt-7 sm:px-7 sm:pt-9 lg:px-10 lg:pb-12 xl:px-14 ${decision ? "" : "lg:col-span-2"}`}
+        >
+          <div className="mx-auto w-full max-w-[50rem] lg:ml-auto lg:mr-0">
+            {exploration}
           </div>
-        ) : (
-          <div className="mt-8">{exploration}</div>
+        </section>
+        {decision && (
+          <aside
+            aria-label="Paket kararı"
+            className="min-w-0 border-t border-[var(--checkout-soft-line)] bg-[var(--checkout-right-surface)] px-4 pb-32 pt-7 sm:px-7 sm:pt-9 lg:border-l lg:border-t-0 lg:px-8 lg:pb-12 xl:px-10"
+          >
+            <div className="w-full max-w-[34rem] lg:mr-auto">{decision}</div>
+          </aside>
         )}
       </main>
     </div>

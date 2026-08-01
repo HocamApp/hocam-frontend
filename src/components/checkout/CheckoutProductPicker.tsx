@@ -10,6 +10,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { ComparePlansDialog } from "@/components/checkout/ComparePlansDialog";
+import { TrialLessonOffer } from "@/components/checkout/TrialLessonOffer";
 import { cn } from "@/lib/utils";
 import {
   WEEKLY_LESSON_OPTIONS,
@@ -24,6 +25,10 @@ interface CheckoutProductPickerProps {
   durationDays: number;
   onLessonsPerWeekChange: (count: WeeklyLessonOption) => void;
   onDurationDaysChange: (days: number) => void;
+  trialLessonsRemaining?: number;
+  paidRemainingCredits?: number | null;
+  onBookTrial?: () => void;
+  onUseCredits?: () => void;
 }
 
 const PRIVATE_FEATURES = [
@@ -40,110 +45,159 @@ export function CheckoutProductPicker({
   weeklyPlans,
   lessonsPerWeek,
   onLessonsPerWeekChange,
+  trialLessonsRemaining = 0,
+  paidRemainingCredits = null,
+  onBookTrial,
+  onUseCredits,
 }: CheckoutProductPickerProps) {
   return (
     <TooltipProvider delayDuration={180}>
-      <div className="space-y-7">
-        <section aria-labelledby="plan-type-title" className="space-y-3">
-          <div>
-            <p id="plan-type-title" className="text-sm font-semibold text-foreground">
-              Ders planı
-            </p>
-            <p className="mt-1 text-sm leading-6 text-muted-foreground">
-              Sana uygun öğrenme biçimini seç.
-            </p>
-          </div>
+      <div>
+        <p className="mb-4 text-xs font-bold tracking-[0.16em] text-[var(--checkout-evergreen)]">
+          DERS PLANI
+        </p>
 
-          <div className="space-y-3">
+        <div className="space-y-3">
+          <FuturePlanBar
+            tone="group"
+            icon={Users}
+            title="Küçük Grup"
+            description="Aynı öğretmenle 2–4 öğrencinin birlikte katıldığı, kişi başı daha avantajlı canlı dersler."
+          />
+
+          <section
+            aria-label="Seçili plan: Birebir Özel Ders"
+            className="overflow-hidden rounded-2xl border-2 border-[var(--checkout-nighttime)] bg-[var(--checkout-clearway)]"
+          >
             <button
               type="button"
+              aria-label="Birebir Özel Ders — seçili"
               aria-pressed="true"
-              className="group flex w-full items-center gap-4 rounded-2xl border border-primary/35 bg-primary px-4 py-4 text-left text-primary-foreground shadow-[0_16px_40px_-28px_hsl(var(--primary))] transition duration-200 active:translate-y-px sm:px-5"
+              className="flex w-full items-center gap-3 bg-[var(--checkout-placeboam)] px-4 py-3 text-left text-[var(--checkout-nighttime)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--checkout-nighttime)] sm:px-5"
             >
-              <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary-foreground/12">
-                <GraduationCap className="size-5" aria-hidden="true" />
-              </span>
+              <GraduationCap className="size-5 shrink-0" aria-hidden="true" />
               <span className="min-w-0 flex-1">
-                <span className="block text-base font-semibold">Birebir Özel Ders</span>
-                <span className="mt-0.5 block text-sm text-primary-foreground/75">
+                <span className="block font-bold">Birebir Özel Ders</span>
+                <span className="mt-0.5 block text-sm leading-5 opacity-80">
                   Seçtiğin hocayla sana özel canlı dersler.
                 </span>
               </span>
-              <span className="flex size-5 items-center justify-center rounded-full border-2 border-primary-foreground" aria-hidden="true">
-                <span className="size-2 rounded-full bg-primary-foreground" />
+              <span
+                className="flex size-5 shrink-0 items-center justify-center rounded-full border-2 border-[var(--checkout-nighttime)]"
+                aria-hidden="true"
+              >
+                <span className="size-2 rounded-full bg-[var(--checkout-nighttime)]" />
               </span>
             </button>
 
-            <FuturePlanBar
-              icon={Users}
-              title="Küçük Grup"
-              description="Aynı öğretmenle 2–4 öğrencinin birlikte katıldığı, kişi başı daha avantajlı canlı dersler."
-            />
-            <FuturePlanBar
-              icon={Sparkles}
-              title="Hocam Pro"
-              description="Birebir dersleri sınırsız soru desteği, haftalık koçluk ve gelişim takibiyle güçlendiren kapsamlı öğrenci planı."
-            />
-          </div>
-        </section>
-
-        <section className="rounded-[1.4rem] bg-muted/45 p-5 sm:p-6" aria-labelledby="private-features-title">
-          <div className="max-w-2xl">
-            <p id="private-features-title" className="text-base font-semibold">
-              Birebir ders paketine dahil
-            </p>
-            <p className="mt-1 text-sm leading-6 text-muted-foreground">
-              Ders haklarını yalnız seçtiğin hocayla, onun müsaitliğine göre planlarsın.
-            </p>
-          </div>
-          <ul className="mt-5 grid gap-x-8 gap-y-3 sm:grid-cols-2">
-            {PRIVATE_FEATURES.map((feature) => (
-              <li key={feature} className="flex items-start gap-2.5 text-sm leading-5">
-                <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-                  <Check className="size-3.5" aria-hidden="true" />
-                </span>
-                <span>{feature}</span>
-              </li>
-            ))}
-          </ul>
-        </section>
-
-        <section aria-labelledby="weekly-lessons-title">
-          <div className="flex flex-wrap items-end justify-between gap-3">
-            <div>
-              <p id="weekly-lessons-title" className="text-base font-semibold">
-                Haftada kaç ders?
-              </p>
-              <p className="mt-1 text-sm text-muted-foreground">Her ders 40 dakikadır.</p>
-            </div>
-            <span className="text-xs font-medium text-muted-foreground">2–6 ders</span>
-          </div>
-          <div className="mt-4 grid grid-cols-5 gap-2" role="group" aria-label="Haftada ders sayısı">
-            {WEEKLY_LESSON_OPTIONS.map((count) => {
-              const enabled = weeklyPlans.some((plan) => plan.lessons_per_week === count);
-              const selected = lessonsPerWeek === count;
-              return (
-                <button
-                  key={count}
-                  type="button"
-                  aria-pressed={selected}
-                  disabled={!enabled}
-                  onClick={() => onLessonsPerWeekChange(count)}
-                  className={cn(
-                    "min-h-12 rounded-xl border bg-background px-2 text-sm font-semibold transition duration-200 hover:-translate-y-0.5 hover:border-foreground/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-35",
-                    selected && "border-primary bg-primary text-primary-foreground shadow-sm hover:border-primary"
-                  )}
+            <div className="space-y-4 p-4 sm:p-5">
+              <section aria-labelledby="weekly-lessons-title">
+                <div className="flex flex-wrap items-end justify-between gap-2">
+                  <div>
+                    <h2 id="weekly-lessons-title" className="text-sm font-bold">
+                      Haftalık ders sayısını seç
+                    </h2>
+                    <p className="mt-0.5 text-xs opacity-65">Her ders 40 dakikadır.</p>
+                  </div>
+                  <span className="text-xs font-semibold opacity-60">2–6 ders</span>
+                </div>
+                <div
+                  className="mt-3 grid grid-cols-5 gap-2"
+                  role="group"
+                  aria-label="Haftada ders sayısı"
                 >
-                  {count} ders
-                </button>
-              );
-            })}
-          </div>
-        </section>
+                  {WEEKLY_LESSON_OPTIONS.map((count) => {
+                    const enabled = weeklyPlans.some(
+                      (plan) => plan.lessons_per_week === count
+                    );
+                    const selected = lessonsPerWeek === count;
+                    return (
+                      <button
+                        key={count}
+                        type="button"
+                        aria-pressed={selected}
+                        disabled={!enabled}
+                        onClick={() => onLessonsPerWeekChange(count)}
+                        className={cn(
+                          "min-h-10 rounded-lg border border-[var(--checkout-soft-line)] bg-[var(--checkout-dulline)] px-1 text-xs font-bold text-[var(--checkout-nighttime)] transition duration-200 hover:-translate-y-0.5 hover:border-[var(--checkout-evergreen)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--checkout-evergreen)] focus-visible:ring-offset-2 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-35 sm:text-sm",
+                          selected &&
+                            "border-[var(--checkout-nighttime)] bg-[var(--checkout-nighttime)] text-[var(--checkout-dulline)]"
+                        )}
+                      >
+                        {count} ders
+                      </button>
+                    );
+                  })}
+                </div>
+              </section>
 
-        <div className="hidden lg:block">
+              <p className="border-t border-[var(--checkout-soft-line)] pt-4 text-sm leading-5">
+                Seçtiğin hocayla hedeflerine ve programına göre birebir canlı dersler planla.
+              </p>
+
+              <section
+                aria-labelledby="private-features-title"
+                className="rounded-xl border border-[var(--checkout-evergreen)] bg-[var(--checkout-placeboam)] p-4"
+              >
+                <h2
+                  id="private-features-title"
+                  className="text-xs font-extrabold tracking-[0.06em]"
+                >
+                  BİREBİR PAKET ÖZELLİKLERİ
+                </h2>
+                <ul className="mt-3 grid gap-x-6 gap-y-2 sm:grid-cols-2">
+                  {PRIVATE_FEATURES.map((feature) => (
+                    <li key={feature} className="flex items-start gap-2 text-xs leading-5 sm:text-sm">
+                      <Check className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
+                      <span>{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+
+              {(paidRemainingCredits != null && paidRemainingCredits > 0) ||
+              (trialLessonsRemaining > 0 && onBookTrial) ? (
+                <div className="space-y-2 border-t border-[var(--checkout-soft-line)] pt-4">
+                  {paidRemainingCredits != null && paidRemainingCredits > 0 && onUseCredits && (
+                    <div className="flex flex-col gap-2 rounded-xl bg-[var(--checkout-dulline)] p-3 sm:flex-row sm:items-center">
+                      <p className="min-w-0 flex-1 text-sm font-semibold">
+                        {paidRemainingCredits} ders hakkın kullanılabilir
+                      </p>
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={onUseCredits}
+                        className="bg-[var(--checkout-evergreen)] text-[var(--checkout-dulline)] hover:bg-[var(--checkout-nighttime)]"
+                      >
+                        Mevcut ders hakkını kullan
+                      </Button>
+                    </div>
+                  )}
+                  {trialLessonsRemaining > 0 && onBookTrial && (
+                    <TrialLessonOffer
+                      remaining={trialLessonsRemaining}
+                      onSelect={onBookTrial}
+                    />
+                  )}
+                </div>
+              ) : null}
+            </div>
+          </section>
+
+          <FuturePlanBar
+            tone="pro"
+            icon={Sparkles}
+            title="Hocam Pro"
+            description="Birebir dersleri sınırsız soru desteği, haftalık koçluk ve gelişim takibiyle güçlendiren kapsamlı öğrenci planı."
+          />
+        </div>
+
+        <div className="mt-4">
           <ComparePlansDialog>
-            <Button variant="outline" className="rounded-full px-5">
+            <Button
+              variant="outline"
+              className="h-9 rounded-full border-[var(--checkout-evergreen)] bg-transparent px-4 text-xs font-bold text-[var(--checkout-nighttime)] hover:bg-[var(--checkout-clearway)]"
+            >
               Planları karşılaştır
             </Button>
           </ComparePlansDialog>
@@ -157,29 +211,44 @@ function FuturePlanBar({
   icon: Icon,
   title,
   description,
+  tone,
 }: {
   icon: typeof Users;
   title: string;
   description: string;
+  tone: "group" | "pro";
 }) {
+  const isPro = tone === "pro";
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <span className="block rounded-2xl focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
+        <span className="block rounded-2xl focus-within:ring-2 focus-within:ring-[var(--checkout-evergreen)] focus-within:ring-offset-2">
           <button
             type="button"
             aria-disabled="true"
             aria-label={`${title} — Yakında`}
-            className="flex w-full cursor-not-allowed items-center gap-4 rounded-2xl border border-border/80 bg-background/70 px-4 py-4 text-left text-foreground sm:px-5"
+            className={cn(
+              "flex w-full cursor-not-allowed items-center gap-3 rounded-2xl border-2 border-[var(--checkout-nighttime)] px-4 py-3 text-left sm:px-5",
+              isPro
+                ? "bg-[var(--checkout-evergreen)] text-[var(--checkout-dulline)]"
+                : "bg-[var(--checkout-signal-bay)] text-[var(--checkout-nighttime)]"
+            )}
           >
-            <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-muted text-muted-foreground">
-              <Icon className="size-5" aria-hidden="true" />
-            </span>
+            <Icon className="size-5 shrink-0" aria-hidden="true" />
             <span className="min-w-0 flex-1">
-              <span className="block text-base font-semibold">{title}</span>
-              <span className="mt-0.5 block text-sm text-muted-foreground">{description}</span>
+              <span className="block font-bold">{title}</span>
+              <span className="mt-0.5 block text-sm leading-5 opacity-75">{description}</span>
             </span>
-            <Badge variant="secondary" className="rounded-md px-2.5 py-1">Yakında</Badge>
+            <Badge
+              className={cn(
+                "rounded-md border px-2 py-0.5 text-[0.65rem] font-extrabold uppercase tracking-wide",
+                isPro
+                  ? "border-[var(--checkout-dulline)] bg-transparent text-[var(--checkout-dulline)]"
+                  : "border-[var(--checkout-nighttime)] bg-transparent text-[var(--checkout-nighttime)]"
+              )}
+            >
+              Yakında
+            </Badge>
           </button>
         </span>
       </TooltipTrigger>

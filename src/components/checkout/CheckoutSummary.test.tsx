@@ -53,8 +53,6 @@ test("renders duration choices as a single-select accordion in the decision rail
       purchasePending={false}
       pendingForSelectedPlan={false}
       otherPendingPlanName={null}
-      paidRemainingCredits={null}
-      onUseCredits={() => {}}
       weeklyPlans={plans}
       onDurationDaysChange={(days: number) => selections.push(days)}
       onApplyPromo={() => {}}
@@ -91,8 +89,6 @@ test("applies and removes a promotion with inline status", () => {
       purchasePending={false}
       pendingForSelectedPlan={false}
       otherPendingPlanName={null}
-      paidRemainingCredits={null}
-      onUseCredits={() => {}}
       weeklyPlans={plans}
       onDurationDaysChange={() => {}}
       onApplyPromo={() => applyCount++}
@@ -117,4 +113,35 @@ test("applies and removes a promotion with inline status", () => {
   assert.equal(removeCount, 1);
   assert.ok(screen.getByRole("status").textContent?.includes("uygulandı"));
   assert.ok(screen.getByText("-₺4.032"));
+});
+
+test("places the primary decision before trust copy and promotion controls", () => {
+  render(
+    <CheckoutSummary
+      tutor={tutor}
+      lessonsPerWeek={2}
+      durationDays={90}
+      pricing={calculatePackagePricing(1000, 24, 16)}
+      planAvailable
+      promoCode=""
+      onPromoCodeChange={() => {}}
+      onPurchaseCta={() => {}}
+      purchasePending={false}
+      pendingForSelectedPlan={false}
+      otherPendingPlanName={null}
+      weeklyPlans={plans}
+      onDurationDaysChange={() => {}}
+      onApplyPromo={() => {}}
+      promoStatus="idle"
+      promoMessage={null}
+      promoPricing={null}
+      onRemovePromo={() => {}}
+    />
+  );
+
+  const cta = screen.getAllByRole("button", { name: "Paket talebi oluştur" })[0];
+  const trust = screen.getByText(/Bu adımda kartından ücret alınmaz/);
+  const promo = screen.getByRole("heading", { name: "İndirim kodu" });
+  assert.ok(cta.compareDocumentPosition(trust) & Node.DOCUMENT_POSITION_FOLLOWING);
+  assert.ok(trust.compareDocumentPosition(promo) & Node.DOCUMENT_POSITION_FOLLOWING);
 });

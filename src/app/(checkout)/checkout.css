@@ -1,0 +1,54 @@
+.checkout-theme,
+.checkout-dialog-theme {
+  --checkout-evergreen: #31542a;
+  --checkout-nighttime: #132110;
+  --checkout-grassland: #6cbf6d;
+  --checkout-clearway: #ffffff;
+  --checkout-signal-bay: #7ad0e7;
+  --checkout-dulline: #fbf2d3;
+  --checkout-placeboam: #f1d160;
+  --checkout-switchback: #f3b359;
+  --checkout-left-surface: var(--checkout-dulline);
+  --checkout-right-surface: color-mix(
+    in srgb,
+    var(--checkout-dulline) 78%,
+    var(--checkout-placeboam) 22%
+  );
+  --checkout-soft-line: color-mix(
+    in srgb,
+    var(--checkout-evergreen) 20%,
+    transparent
+  );
+  color: var(--checkout-nighttime);
+}
+
+.checkout-theme {
+  min-height: 100dvh;
+  background: var(--checkout-left-surface);
+}
+
+.checkout-duration-card {
+  border-color: var(--checkout-soft-line);
+  background: transparent;
+}
+
+.checkout-duration-card[data-selected="true"] {
+  border-color: var(--checkout-nighttime);
+  background: var(--checkout-clearway);
+  box-shadow: 0 12px 28px -24px color-mix(in srgb, var(--checkout-nighttime) 55%, transparent);
+}
+
+.checkout-dialog-theme {
+  background: var(--checkout-dulline);
+  color: var(--checkout-nighttime);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .checkout-theme *,
+  .checkout-dialog-theme * {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

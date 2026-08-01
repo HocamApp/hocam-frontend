@@ -27,7 +27,6 @@ import { CheckoutProductPicker } from "@/components/checkout/CheckoutProductPick
 import { CheckoutSummary, type PromoStatus } from "@/components/checkout/CheckoutSummary";
 import { CheckoutShell } from "@/components/checkout/CheckoutShell";
 import { MinimalCheckoutHeader } from "@/components/checkout/MinimalCheckoutHeader";
-import { TrialLessonOffer } from "@/components/checkout/TrialLessonOffer";
 import {
   CheckoutBookingSuccess,
   CheckoutPurchaseSuccess,
@@ -358,15 +357,6 @@ export default function TutorCheckoutPage({
     <>
       <CheckoutShell
         header={<MinimalCheckoutHeader tutorId={tutorId} />}
-        introduction={
-          <>
-            <p className="text-sm font-semibold text-primary">Ders paketi</p>
-            <h1 className="mt-2 max-w-2xl text-balance text-3xl font-bold tracking-[-0.035em] sm:text-4xl lg:text-5xl">Ders planını oluştur</h1>
-            <p className="mt-3 max-w-2xl text-pretty text-base leading-7 text-muted-foreground sm:text-lg">
-              Haftalık ders sayını ve paket süreni seç; derslerini aynı hocayla kendi programına göre planla.
-            </p>
-          </>
-        }
         exploration={
           createdPurchase ? (
             <CheckoutPurchaseSuccess purchase={createdPurchase} tutorId={tutorId} />
@@ -390,17 +380,18 @@ export default function TutorCheckoutPage({
               <Button variant="outline" className="mt-5 rounded-xl" asChild><Link href={`/tutors/${tutorId}`}>Hoca profiline dön</Link></Button>
             </div>
           ) : (
-            <>
-              <CheckoutProductPicker
-                basePrice={basePrice}
-                weeklyPlans={weeklyPlans}
-                lessonsPerWeek={lessonsPerWeek}
-                durationDays={durationDays}
-                onLessonsPerWeekChange={setLessonsPerWeek}
-                onDurationDaysChange={setDurationDays}
-              />
-              {canBookFreeTrial && <TrialLessonOffer remaining={trialLessonsRemaining} onSelect={() => setBookingModalMode("trial")} />}
-            </>
+            <CheckoutProductPicker
+              basePrice={basePrice}
+              weeklyPlans={weeklyPlans}
+              lessonsPerWeek={lessonsPerWeek}
+              durationDays={durationDays}
+              onLessonsPerWeekChange={setLessonsPerWeek}
+              onDurationDaysChange={setDurationDays}
+              trialLessonsRemaining={canBookFreeTrial ? trialLessonsRemaining : 0}
+              paidRemainingCredits={paidWithCredits?.remaining_credits ?? null}
+              onBookTrial={() => setBookingModalMode("trial")}
+              onUseCredits={() => setBookingModalMode("credits")}
+            />
           )
         }
         decision={
@@ -431,8 +422,6 @@ export default function TutorCheckoutPage({
               purchasePending={purchaseMutation.isPending}
               pendingForSelectedPlan={pendingForSelectedPlan}
               otherPendingPlanName={otherPendingPlanName}
-              paidRemainingCredits={paidWithCredits?.remaining_credits ?? null}
-              onUseCredits={() => setBookingModalMode("credits")}
             />
           )
         }
