@@ -17,11 +17,15 @@ export interface SupportAccordionSectionItem {
   anchorId?: string;
 }
 
+export type SupportAccordionSectionLayout = "split" | "stacked";
+
 interface SupportAccordionSectionProps {
   heading: ReactNode;
   items: SupportAccordionSectionItem[];
   value?: string;
   onValueChange?: (value: string) => void;
+  layout?: SupportAccordionSectionLayout;
+  className?: string;
 }
 
 export function SupportAccordionSection({
@@ -29,10 +33,25 @@ export function SupportAccordionSection({
   items,
   value,
   onValueChange,
+  layout = "split",
+  className,
 }: SupportAccordionSectionProps) {
   return (
-    <section className="mt-10 border-t border-border/70 py-12 md:py-16">
-      <div className="grid gap-10 md:grid-cols-[0.85fr_1.15fr] md:gap-14">
+    <section
+      className={cn(
+        "border-t border-border/70",
+        layout === "split" ? "mt-10 py-12 md:py-16" : "py-8",
+        className
+      )}
+    >
+      <div
+        className={cn(
+          "grid",
+          layout === "split"
+            ? "gap-10 md:grid-cols-[0.85fr_1.15fr] md:gap-14"
+            : "gap-4"
+        )}
+      >
         <div>{heading}</div>
 
         <Accordion
