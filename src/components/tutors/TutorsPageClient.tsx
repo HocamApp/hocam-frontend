@@ -55,6 +55,7 @@ function filtersFromSearchParams(searchParams: URLSearchParams): TutorFiltersTyp
   const availability_day = searchParams.get("availability_day");
   const availability_time = searchParams.get("availability_time");
   const online = searchParams.get("online");
+  const teaching_attributes = searchParams.get("teaching_attributes");
   return {
     ...(search != null && search !== "" && { search }),
     ...(subject != null && subject !== "" && { subject }),
@@ -67,6 +68,7 @@ function filtersFromSearchParams(searchParams: URLSearchParams): TutorFiltersTyp
     ...(availability_day != null && availability_day !== "" && { availability_day }),
     ...(availability_time != null && availability_time !== "" && { availability_time }),
     ...(online != null && online !== "" && { online }),
+    ...(teaching_attributes != null && teaching_attributes !== "" && { teaching_attributes }),
     ordering: ordering || "rating",
   };
 }
@@ -84,6 +86,7 @@ function searchParamsFromFilters(filters: TutorFiltersType): URLSearchParams {
   if (filters.availability_day) p.set("availability_day", filters.availability_day);
   if (filters.availability_time) p.set("availability_time", filters.availability_time);
   if (filters.online) p.set("online", filters.online);
+  if (filters.teaching_attributes) p.set("teaching_attributes", filters.teaching_attributes);
   if (filters.ordering && filters.ordering !== "rating") p.set("ordering", filters.ordering);
   return p;
 }
@@ -287,6 +290,7 @@ function TutorsPageContent() {
     (filters.availability_day ?? "") !== "" ||
     (filters.availability_time ?? "") !== "" ||
     (filters.online ?? "") !== "" ||
+    (filters.teaching_attributes ?? "") !== "" ||
     (filters.ordering ?? "rating") !== "rating";
 
   const tutorList = showFavorites
@@ -334,6 +338,7 @@ function TutorsPageContent() {
     if (filters.availability_day) structuredFilters.availability_day = filters.availability_day;
     if (filters.availability_time) structuredFilters.availability_time = filters.availability_time;
     if (filters.online) structuredFilters.online = filters.online;
+    if (filters.teaching_attributes) structuredFilters.teaching_attributes = filters.teaching_attributes;
     void createDirectoryImpression({
       tutorIds: pageTutorKey ? pageTutorKey.split(",") : [], page,
       ordering: filters.ordering, filters: structuredFilters, search: filters.search,
@@ -439,6 +444,7 @@ function TutorsPageContent() {
                   {filters.availability_day && <FilterPill label={DAY_LABELS[Number(filters.availability_day)] ?? "Uygunluk günü"} onRemove={() => handleFiltersChange({ ...filters, availability_day: "", availability_time: "" })} />}
                   {filters.availability_time && <FilterPill label={`${filters.availability_time} uygunluğu`} onRemove={() => handleFiltersChange({ ...filters, availability_time: "" })} />}
                   {filters.online === "true" && <FilterPill label="Çevrim içi" onRemove={() => handleFiltersChange({ ...filters, online: "" })} />}
+                  {filters.teaching_attributes && <FilterPill label={`${filters.teaching_attributes.split(",").length} anlatım özelliği`} onRemove={() => handleFiltersChange({ ...filters, teaching_attributes: "" })} />}
                   {(filters.ordering ?? "rating") !== "rating" && <FilterPill label={ORDERING_LABELS[filters.ordering ?? ""] ?? "Sıralama"} onRemove={() => handleFiltersChange({ ...filters, ordering: "rating" })} />}
                   <Button type="button" variant="ghost" size="sm" onClick={handleClearFilters}>Temizle</Button>
                 </div>

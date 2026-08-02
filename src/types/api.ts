@@ -368,6 +368,7 @@ export interface TutorProfile {
   is_verified: boolean;
   is_public: boolean;
   teaching_styles: TutorTeachingStyle[];
+  teaching_attributes?: TutorTeachingAttribute[];
   is_online: boolean;
   last_seen_at?: string | null;
   trial_lesson_eligible?: boolean | null;
@@ -389,6 +390,13 @@ export interface TutorProfile {
     rejection_reason: string;
     submitted_at: string;
   } | null;
+}
+
+export interface TutorTeachingAttribute {
+  code: string;
+  name: string;
+  description: string;
+  evidence_status: "self_declared";
 }
 
 export type MatchGoal = "YKS" | "DGS" | "KPSS" | "UNDECIDED";
