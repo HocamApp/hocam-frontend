@@ -24,6 +24,9 @@ source. Files live under `public/images/home-v3/` and are referenced from
 | Slide | File | Creator | Source page | Subject |
 |---|---|---|---|---|
 | YKS hazırlık | `hero/yks-students.jpg` | Jibarofoto | https://www.pexels.com/photo/portrait-of-a-young-woman-with-her-friends-17734004/ | Birlikte sınava hazırlanan genç öğrenci grubu |
+| KPSS | `explore/kpss-matematik.jpg` (reused) | RDNE Stock project | https://www.pexels.com/photo/student-answering-his-examination-7092334/ | Sınav salonunda sınav kağıdını çözen öğrenci |
+| DGS | `explore/tyt-matematik.jpg` (reused) | MART PRODUCTION | https://www.pexels.com/photo/a-student-doing-homework-8472944/ | Sınav kağıtları ve matematik notları üzerinde çalışan öğrenci |
+| Sınav hazırlığı | `explore/cikmis-sorular.jpg` (reused) | Kindel Media | https://www.pexels.com/photo/a-close-up-shot-of-paper-clipped-documents-7054757/ | Düzenlenmiş basılı soru kağıtları |
 
 ## Explore — "Sınav hedeflerini keşfet"
 
