@@ -14,7 +14,6 @@ import {
 
 const KNOWN_ROUTE_PREFIXES = [
   "/tutors",
-  "/cikmis-sorular",
   "/dashboard/student",
   "/profile",
 ];

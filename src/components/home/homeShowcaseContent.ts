@@ -33,6 +33,7 @@ export interface HomeHeroSlideContent {
   ctaHref: string;
   scene: HomeHeroScene;
   tone: HomeVisualTone;
+  image?: HomeCardImage;
 }
 
 export const HOME_HERO_SLIDES: HomeHeroSlideContent[] = [
@@ -46,6 +47,10 @@ export const HOME_HERO_SLIDES: HomeHeroSlideContent[] = [
     ctaHref: "/tutors",
     scene: "study",
     tone: "brand",
+    image: {
+      src: "/images/home-v3/hero/yks-students.jpg",
+      alt: "Sınava birlikte hazırlanan genç öğrenciler",
+    },
   },
   {
     id: "kpss",
@@ -70,14 +75,14 @@ export const HOME_HERO_SLIDES: HomeHeroSlideContent[] = [
     tone: "violet",
   },
   {
-    id: "questions",
-    eyebrow: "Çıkmış sorular",
-    title: "Çıkmış sorular ve özel dersle birlikte ilerle",
+    id: "exam-prep",
+    eyebrow: "Sınav hazırlığı",
+    title: "Deneme sonuçlarını hocanla birlikte geliştir",
     description:
-      "Yıl, ders ve konuya göre filtrelediğin soruları çöz; yanlışlarını hocanla aynı ekranda konuş.",
-    ctaLabel: "Soruları aç",
-    ctaHref: "/cikmis-sorular",
-    scene: "questions",
+      "Eksiklerini belirle, çalışma ritmini oluştur ve sınav gününe kadar ilerlemeni düzenli takip et.",
+    ctaLabel: "Hocaları keşfet",
+    ctaHref: "/tutors",
+    scene: "exam",
     tone: "cream",
   },
 ];
@@ -151,15 +156,6 @@ export const HOME_EXPLORE_CARDS: HomeExploreCardContent[] = [
     image: {
       src: "/images/home-v3/explore/dgs-sayisal.jpg",
       alt: "Hesap makinesi ve notlarla sayısal soru çözen öğrenci",
-    },
-  },
-  {
-    id: "cikmis-sorular",
-    title: "Çıkmış sorular",
-    href: "/cikmis-sorular",
-    image: {
-      src: "/images/home-v3/explore/cikmis-sorular.jpg",
-      alt: "Geçmiş yılların sınav kağıtlarından oluşan bir arşiv",
     },
   },
 ];

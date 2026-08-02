@@ -12,7 +12,6 @@ import {
   CheckCircle2,
   Circle,
   Clock3,
-  FileQuestion,
   GraduationCap,
   MessageCircle,
   RefreshCw,
@@ -961,15 +960,6 @@ export function TutorAuthenticatedHome() {
             description="İçeriklerini gözden geçir, geri bildirimlerini takip et ve öğrenci deneyimini güçlendir."
           />
           <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-            <ActionCard
-              icon={<FileQuestion className="h-5 w-5" aria-hidden="true" />}
-              eyebrow="Ders içeriği"
-              title="Çıkmış soruları incele"
-              description="TYT, AYT ve YDT sorularını ders öncesi hazırlığında kaynak olarak kullan."
-              href="/cikmis-sorular"
-              action="Soru kütüphanesini aç"
-              analyticsAction="questions"
-            />
             <ActionCard
               icon={<Star className="h-5 w-5" aria-hidden="true" />}
               eyebrow="Geri bildirim"

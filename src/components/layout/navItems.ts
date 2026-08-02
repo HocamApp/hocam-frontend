@@ -59,13 +59,6 @@ const studentDescriptors: NavDescriptor[] = [
   },
   {
     kind: "route",
-    title: "Sorular",
-    icon: "CircleHelp",
-    href: "/cikmis-sorular",
-    mobilePlacement: "overflow",
-  },
-  {
-    kind: "route",
     title: "Panelim",
     icon: "LayoutDashboard",
     href: "/dashboard/student",
@@ -123,13 +116,6 @@ const tutorDescriptors: NavDescriptor[] = [
     icon: "LayoutDashboard",
     href: "/dashboard/tutor",
     mobilePlacement: "primary",
-  },
-  {
-    kind: "route",
-    title: "Sorular",
-    icon: "CircleHelp",
-    href: "/cikmis-sorular",
-    mobilePlacement: "overflow",
   },
   { kind: "separator", mobilePlacement: "hidden" },
   {

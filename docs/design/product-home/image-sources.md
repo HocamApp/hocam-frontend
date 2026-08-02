@@ -19,6 +19,12 @@ source. Files live under `public/images/home-v3/` and are referenced from
   JPEG quality 82, progressive + Huffman-optimized. Served through
   `next/image`, so the browser receives an appropriately sized variant.
 
+## Hero
+
+| Slide | File | Creator | Source page | Subject |
+|---|---|---|---|---|
+| YKS hazırlık | `hero/yks-students.jpg` | Jibarofoto | https://www.pexels.com/photo/portrait-of-a-young-woman-with-her-friends-17734004/ | Birlikte sınava hazırlanan genç öğrenci grubu |
+
 ## Explore — "Sınav hedeflerini keşfet"
 
 | Card | File | Creator | Source page | Subject |
