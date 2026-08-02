@@ -62,6 +62,10 @@ export const HOME_HERO_SLIDES: HomeHeroSlideContent[] = [
     ctaHref: "/tutors?exam_type=KPSS",
     scene: "exam",
     tone: "sky",
+    image: {
+      src: "/images/home-v3/explore/kpss-matematik.jpg",
+      alt: "Sınav salonunda sınav kağıdını çözen bir öğrenci",
+    },
   },
   {
     id: "dgs",
@@ -73,6 +77,10 @@ export const HOME_HERO_SLIDES: HomeHeroSlideContent[] = [
     ctaHref: "/tutors?exam_type=DGS",
     scene: "plan",
     tone: "violet",
+    image: {
+      src: "/images/home-v3/explore/tyt-matematik.jpg",
+      alt: "Sınav kağıtları ve matematik notları üzerinde çalışan bir öğrenci",
+    },
   },
   {
     id: "exam-prep",
@@ -84,6 +92,10 @@ export const HOME_HERO_SLIDES: HomeHeroSlideContent[] = [
     ctaHref: "/tutors",
     scene: "exam",
     tone: "cream",
+    image: {
+      src: "/images/home-v3/explore/cikmis-sorular.jpg",
+      alt: "Sınav hazırlığı için düzenlenmiş basılı soru kağıtları",
+    },
   },
 ];
 

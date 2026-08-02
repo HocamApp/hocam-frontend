@@ -41,6 +41,14 @@ test("hero slides are unique and route somewhere real", () => {
   }
 });
 
+test("every hero slide uses stock photography", () => {
+  assert.equal(HOME_HERO_SLIDES.length, 4);
+  for (const slide of HOME_HERO_SLIDES) {
+    assert.ok(slide.image?.src, `hero slide ${slide.id} needs a stock image`);
+    assert.ok(slide.image?.alt, `hero slide ${slide.id} needs image alt text`);
+  }
+});
+
 test("explore cards are unique and route somewhere real", () => {
   assert.ok(HOME_EXPLORE_CARDS.length >= 4, "explore rail needs at least 4 cards");
   assertUniqueIds(HOME_EXPLORE_CARDS, "explore card");
