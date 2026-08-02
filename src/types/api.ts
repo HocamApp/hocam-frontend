@@ -916,6 +916,21 @@ export interface PaginatedResponse<T> {
   next: string | null;
   previous: string | null;
   results: T[];
+  relaxations?: TutorSearchRelaxation[];
+}
+
+export interface TutorSearchRelaxation {
+  filter: string;
+  count: number;
+}
+
+export interface TutorSavedSearch {
+  id: string;
+  name: string;
+  filters: Record<string, string | string[]>;
+  ordering: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface AvailabilityRule {
