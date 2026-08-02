@@ -340,7 +340,10 @@ export function AuthenticatedHome() {
       </HomeBand>
 
       <HomeBand scribbles={HOME_SCRIBBLES.goalCards}>
-        <HomeGoalCards />
+        <HomeGoalCards
+          templates={learningQuery.data?.templates}
+          goals={learningQuery.data?.goals}
+        />
       </HomeBand>
 
       <HomeBand tinted scribbles={HOME_SCRIBBLES.topicLinks}>
