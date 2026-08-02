@@ -23,6 +23,7 @@ const actionClass = "inline-flex min-h-11 items-center justify-center rounded-lg
 export function HocaBulResultsView({ preview, answers }: HocaBulResultsViewProps) {
   const { favoriteIds, toggle, isFavoritePending } = useFavorites();
   const { strong, relaxed } = splitMatches(preview.matches);
+  const unavailable = preview.unavailable_match ?? null;
   const trackedHashes = useRef(new Set<string>());
   const headingRef = useRef<HTMLHeadingElement>(null);
   const payloadHash = hashAnswers(answers);
@@ -77,7 +78,7 @@ export function HocaBulResultsView({ preview, answers }: HocaBulResultsViewProps
           </Button>
         </header>
 
-        {preview.matches.length === 0 ? (
+        {preview.matches.length === 0 && !unavailable ? (
           <section className="mt-10 rounded-2xl border border-border bg-card p-6 text-center shadow-sm sm:p-10" aria-labelledby="no-results-heading">
             <h2 id="no-results-heading" tabIndex={-1} className="text-2xl font-bold text-foreground">Şu an tam uyan bir hoca bulamadık</h2>
             <p className="mx-auto mt-3 max-w-xl text-muted-foreground">Tercihlerinden birini genişletirsen eşleşme şansın artar.</p>
@@ -97,6 +98,13 @@ export function HocaBulResultsView({ preview, answers }: HocaBulResultsViewProps
               </h2>
             )}
             {relaxed.map(card)}
+            {unavailable && (
+              <section className="pt-6" aria-labelledby="unavailable-match-heading">
+                <h2 id="unavailable-match-heading" className="text-lg font-semibold">Çok iyi eşleşiyor, ancak şu anda müsait değil</h2>
+                <p className="mb-4 mt-1 text-sm text-muted-foreground">Bu hoca ders, bütçe ve anlatım tercihlerine güçlü biçimde uyuyor; şu anda rezervasyona açık olmadığı için normal önerilere eklenmedi.</p>
+                {card(unavailable)}
+              </section>
+            )}
             <div className="pt-4 text-center">
               <Link href="/tutors" onClick={() => trackHocaBul({ event: "hoca_bul_all_tutors_clicked", candidate_count: preview.candidate_count })} className={actionClass}>Tüm hocaları gör</Link>
             </div>

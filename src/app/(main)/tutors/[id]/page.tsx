@@ -449,6 +449,8 @@ export default function TutorProfilePage({
     isStudent &&
     !isOwnProfile &&
     tutor?.trial_lesson_eligible === true &&
+    tutor?.accepts_trial_lessons !== false &&
+    tutor?.is_bookable !== false &&
     trialLessonsRemaining > 0;
   const subjectLabels = buildTutorSubjectLabels(tutor?.subjects ?? []);
   const subjectGroups = Array.from(
@@ -738,6 +740,11 @@ export default function TutorProfilePage({
                 )}
                 {isAuthenticated && isStudent && !isOwnProfile && (
                   <>
+                    {tutor.is_bookable === false && (
+                      <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-900 dark:text-amber-100">
+                        Bu hoca şu anda yeni öğrenci kabul etmiyor. Profilini inceleyebilir veya daha sonra tekrar kontrol edebilirsin.
+                      </div>
+                    )}
                     {bookingComplete ? (
                       <div className="space-y-2 rounded-lg border bg-muted/40 p-3 text-center">
                         <div className="flex justify-center">
@@ -748,7 +755,7 @@ export default function TutorProfilePage({
                           <Link href="/dashboard/student">Rezervasyonlarımı gör</Link>
                         </Button>
                       </div>
-                    ) : (
+                    ) : tutor.is_bookable === false ? null : (
                       <>
                         {canBookFreeTrial ? (
                           <div className="space-y-2">

@@ -54,6 +54,7 @@ import {
   type ProfileActionItem,
 } from "@/components/tutors/profile-editor/TutorProfileEditSidebar";
 import { TeachingAttributeSelector } from "@/components/tutors/TeachingAttributeSelector";
+import { TutorCapacitySettings } from "@/components/tutors/TutorCapacitySettings";
 
 const editSchema = z.object({
   university: z.string().min(1, "Üniversite zorunludur"),
@@ -507,6 +508,7 @@ function TutorProfileEditContent() {
                     setSaveState("idle");
                   }}
                 />
+                <TutorCapacitySettings profile={profile} />
                 <PricingSection
                   form={form}
                   sixtyMinutePrice={sixtyMinutePrice}

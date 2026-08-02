@@ -369,6 +369,14 @@ export interface TutorProfile {
   is_public: boolean;
   teaching_styles: TutorTeachingStyle[];
   teaching_attributes?: TutorTeachingAttribute[];
+  accepting_new_students?: boolean;
+  open_student_slots?: number;
+  earliest_start_date?: string | null;
+  availability_confirmed_at?: string | null;
+  availability_pause_until?: string | null;
+  accepts_trial_lessons?: boolean;
+  is_bookable?: boolean;
+  availability_is_stale?: boolean;
   is_online: boolean;
   last_seen_at?: string | null;
   trial_lesson_eligible?: boolean | null;
@@ -490,6 +498,7 @@ export interface MatchingPreview {
   matches: TutorMatchResult[];
   candidate_count: number;
   discovery_impression_id?: string | null;
+  unavailable_match?: TutorMatchResult | null;
 }
 
 export interface SavedMatchingPreference extends MatchingAnswers {
