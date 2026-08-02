@@ -7,6 +7,7 @@ import {
   TutorReviewSummary,
   PaginatedResponse,
   TutorTeachingStyle,
+  TutorTeachingAttribute,
 } from "@/types";
 
 export interface CreateTutorProfilePayload {
@@ -18,7 +19,7 @@ export interface CreateTutorProfilePayload {
   hourly_price: string;
   bio: string;
   subject_ids: string[];
-  teaching_styles: TutorTeachingStyle[];
+  teaching_attribute_codes: string[];
 }
 
 export interface TutorEducationOption {
@@ -60,6 +61,12 @@ export interface TutorFilters {
   availability_day?: string;
   availability_time?: string;
   online?: string;
+  teaching_attributes?: string;
+}
+
+export async function fetchTeachingAttributes(): Promise<TutorTeachingAttribute[]> {
+  const response = await api.get<TutorTeachingAttribute[]>("/tutors/teaching-attributes/");
+  return response.data;
 }
 
 // Backend may still return a plain array during a deploy/cache lag instead of
@@ -224,6 +231,7 @@ export interface UpdateTutorProfilePayload {
   intro_video_url?: string;
   subject_ids?: string[];
   teaching_styles?: TutorTeachingStyle[];
+  teaching_attribute_codes?: string[];
 }
 
 export async function updateMyTutorProfile(

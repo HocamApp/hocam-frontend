@@ -958,6 +958,22 @@ export default function TutorProfilePage({
             )}
           </section>
 
+          {(tutor.teaching_attributes ?? []).length > 0 && (
+            <section className="mt-10">
+              <h2 className="text-xl font-semibold">Ders Anlatım Özellikleri</h2>
+              <p className="mt-1 text-sm text-muted-foreground">Hoca tarafından seçilen özellikler</p>
+              <Separator className="mt-2" />
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                {(tutor.teaching_attributes ?? []).map((attribute) => (
+                  <div key={attribute.code} className="rounded-lg border bg-card p-3">
+                    <p className="text-sm font-medium">{attribute.name}</p>
+                    <p className="mt-1 text-xs leading-5 text-muted-foreground">{attribute.description}</p>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
           {/* Section 3 — Availability */}
           <section className="mt-10">
             <h2 className="text-xl font-semibold">Müsaitlik</h2>

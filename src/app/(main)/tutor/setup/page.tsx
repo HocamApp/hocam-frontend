@@ -44,8 +44,7 @@ import {
 } from "@/components/ui/form";
 import { cn } from "@/lib/utils";
 import { filterSelectedSubjectIds, groupSubjectsByExam } from "@/lib/subjects";
-import { TeachingStyleSelector } from "@/components/tutors/TeachingStyleSelector";
-import type { TutorTeachingStyle } from "@/types";
+import { TeachingAttributeSelector } from "@/components/tutors/TeachingAttributeSelector";
 
 const setupSchema = z.object({
   name: z.string().min(1, "Ad zorunludur"),
@@ -76,8 +75,8 @@ export default function TutorSetupPage() {
     useAuth();
   const [selectedSubjectIds, setSelectedSubjectIds] = useState<string[]>([]);
   const [subjectError, setSubjectError] = useState<string | null>(null);
-  const [selectedTeachingStyles, setSelectedTeachingStyles] = useState<TutorTeachingStyle[]>([]);
-  const [teachingStyleError, setTeachingStyleError] = useState<string | null>(null);
+  const [selectedTeachingAttributes, setSelectedTeachingAttributes] = useState<string[]>([]);
+  const [teachingAttributeError, setTeachingAttributeError] = useState<string | null>(null);
   const [generalError, setGeneralError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -143,8 +142,8 @@ export default function TutorSetupPage() {
       setSubjectError("En az bir ders seçin");
       return;
     }
-    if (selectedTeachingStyles.length === 0) {
-      setTeachingStyleError("En az bir ders anlatım yaklaşımı seçin");
+    if (selectedTeachingAttributes.length < 3 || selectedTeachingAttributes.length > 5) {
+      setTeachingAttributeError("3 ila 5 ders anlatım özelliği seçin");
       return;
     }
 
@@ -159,7 +158,7 @@ export default function TutorSetupPage() {
         hourly_price: parsed.data.hourly_price,
         bio: parsed.data.bio ?? "",
         subject_ids: supportedSelectedSubjectIds,
-        teaching_styles: selectedTeachingStyles,
+        teaching_attribute_codes: selectedTeachingAttributes,
       });
 
       const updatedUser = await fetchMe();
@@ -180,7 +179,12 @@ export default function TutorSetupPage() {
           hourly_price: "hourly_price",
           bio: "bio",
         };
-        let hasFieldError = false;
+        const teachingAttributeMessages = d.teaching_attribute_codes;
+        const hasTeachingAttributeError = Array.isArray(teachingAttributeMessages);
+        if (Array.isArray(teachingAttributeMessages)) {
+          setTeachingAttributeError(String(teachingAttributeMessages[0]));
+        }
+        let hasFieldError = hasTeachingAttributeError;
         for (const [apiKey, formKey] of Object.entries(fieldMap)) {
           if (Array.isArray(d[apiKey])) {
             form.setError(formKey, { message: String((d[apiKey] as string[])[0]) });
@@ -450,12 +454,12 @@ export default function TutorSetupPage() {
                 )}
               </div>
 
-              <TeachingStyleSelector
-                value={selectedTeachingStyles}
-                error={teachingStyleError}
+              <TeachingAttributeSelector
+                value={selectedTeachingAttributes}
+                error={teachingAttributeError}
                 onChange={(next) => {
-                  setSelectedTeachingStyles(next);
-                  setTeachingStyleError(null);
+                  setSelectedTeachingAttributes(next);
+                  setTeachingAttributeError(null);
                 }}
               />
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -21,6 +22,7 @@ import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle, SheetTrigger
 import type { TutorFilters as TutorFiltersType } from "@/lib/tutorsApi";
 import type { Subject } from "@/types";
 import { getSubjectOptionsForExam, isSubjectValidForExam } from "@/lib/subjects";
+import { fetchTeachingAttributes } from "@/lib/tutorsApi";
 
 interface TutorFiltersProps {
   filters: TutorFiltersType;
@@ -51,6 +53,7 @@ function countActiveFilters(filters: TutorFiltersType): number {
     (filters.availability_day ?? "") !== "",
     (filters.availability_time ?? "") !== "",
     (filters.online ?? "") !== "",
+    (filters.teaching_attributes ?? "") !== "",
     (filters.ordering ?? "rating") !== "rating",
   ].filter(Boolean).length;
 }
@@ -79,6 +82,10 @@ function FilterPanelContent({
     ? [filters.university, ...POPULAR_UNIVERSITIES]
     : POPULAR_UNIVERSITIES;
   const hasActiveFilters = countActiveFilters(filters) > 0;
+  const { data: teachingAttributes = [] } = useQuery({
+    queryKey: ["teaching-attributes"], queryFn: fetchTeachingAttributes, staleTime: Infinity,
+  });
+  const selectedAttributes = (filters.teaching_attributes ?? "").split(",").filter(Boolean);
 
   const handleClear = () => {
     onClear();
@@ -149,6 +156,27 @@ function FilterPanelContent({
             <SelectItem value="4.5">4.5+</SelectItem>
           </SelectContent>
         </Select>
+      </div>
+
+      <div className="space-y-2">
+        <Label>Ders anlatım özellikleri</Label>
+        <div className="flex flex-wrap gap-2">
+          {teachingAttributes.map((attribute) => {
+            const selected = selectedAttributes.includes(attribute.code);
+            return (
+              <button key={attribute.code} type="button" aria-pressed={selected}
+                onClick={() => {
+                  const next = selected
+                    ? selectedAttributes.filter((code) => code !== attribute.code)
+                    : [...selectedAttributes, attribute.code];
+                  onFiltersChange({ ...filters, teaching_attributes: next.join(",") });
+                }}
+                className={`rounded-full border px-2.5 py-1 text-xs ${selected ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground"}`}>
+                {attribute.name}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       <PriceRangeSlider

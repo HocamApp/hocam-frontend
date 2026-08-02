@@ -135,6 +135,11 @@ export function TutorCard({
             {remainingCount > 0 && (
               <span className="text-xs text-muted-foreground">+{remainingCount} daha</span>
             )}
+            {(tutor.teaching_attributes ?? []).slice(0, 2).map((attribute) => (
+              <Badge key={attribute.code} variant="secondary" className="text-xs">
+                {attribute.name}
+              </Badge>
+            ))}
           </div>
         </Link>
 
