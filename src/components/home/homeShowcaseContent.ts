@@ -267,6 +267,8 @@ export interface HomeGoalCardContent {
   title: string;
   description: string;
   chips: string[];
+  templateSlug: string;
+  /** Safe destination while learning templates are still loading. */
   href: string;
   image: HomeCardImage;
 }
@@ -278,7 +280,8 @@ export const HOME_GOAL_CARDS: HomeGoalCardContent[] = [
     description:
       "Sayısal netlerini yüksek tutmak için biyoloji, kimya ve matematikte düzenli tempo.",
     chips: ["AYT Biyoloji", "AYT Kimya", "AYT Matematik"],
-    href: "/tutors?exam_type=AYT",
+    templateSlug: "yks-deneme-analizi-strateji",
+    href: "/dashboard/student",
     image: {
       src: "/images/home-v3/goals/tip.jpg",
       alt: "Kitapları ve steteskopuyla çalışan bir tıp öğrencisi",
@@ -290,7 +293,8 @@ export const HOME_GOAL_CARDS: HomeGoalCardContent[] = [
     description:
       "Matematik ve fizikte soru tipi hakimiyeti, deneme sonrası hata analizi.",
     chips: ["AYT Matematik", "AYT Fizik", "Geometri"],
-    href: "/tutors?exam_type=AYT&subject=Fizik",
+    templateSlug: "ayt-turev-limit",
+    href: "/dashboard/student",
     image: {
       src: "/images/home-v3/goals/muhendislik.jpg",
       alt: "Teknik çizim üzerinde çalışan bir mühendislik öğrencisi",
@@ -302,7 +306,8 @@ export const HOME_GOAL_CARDS: HomeGoalCardContent[] = [
     description:
       "Paragraf hızını ve sözel netlerini birlikte yukarı taşıyan bir çalışma düzeni.",
     chips: ["TYT Türkçe", "AYT Edebiyat", "Tarih"],
-    href: "/tutors?exam_type=AYT&subject=Edebiyat",
+    templateSlug: "tyt-paragraf-turkce-net-artirma",
+    href: "/dashboard/student",
     image: {
       src: "/images/home-v3/goals/hukuk.jpg",
       alt: "Hukuk kitapları ve adalet terazisi",
@@ -314,7 +319,8 @@ export const HOME_GOAL_CARDS: HomeGoalCardContent[] = [
     description:
       "Alan bilgisi ve KPSS hazırlığını aynı planda ilerletmek isteyenler için.",
     chips: ["KPSS Genel Yetenek", "Alan bilgisi"],
-    href: "/tutors?exam_type=KPSS",
+    templateSlug: "kpss-genel-yetenek-matematik",
+    href: "/dashboard/student",
     image: {
       src: "/images/home-v3/goals/ogretmenlik.jpg",
       alt: "Kara tahta başında ders anlatan bir öğretmen",

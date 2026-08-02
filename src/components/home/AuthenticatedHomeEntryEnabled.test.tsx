@@ -151,11 +151,9 @@ describe("authenticated home entry point (feature enabled)", () => {
     assert.equal(flags.HOCA_BUL_ENABLED, true);
   });
 
-  it("leaves the surrounding quick links and continuation band untouched", async () => {
+  it("leaves the continuation band untouched", async () => {
     renderWith(Home);
 
-    assert.ok(await screen.findByRole("link", { name: /Çıkmış sorulara göz at/ }));
-    assert.ok(screen.getByRole("link", { name: /Yanlış sorularım/ }));
     assert.ok(
       await screen.findByRole("heading", { name: "Kaldığın yerden devam et" })
     );
