@@ -11,6 +11,7 @@ import { trackHocaBul } from "@/lib/hocaBulAnalytics";
 import { caveatTexts, reasonTexts } from "@/lib/hocaBulResults";
 import { formatLessonCount, formatPrice, formatRating } from "@/lib/utils";
 import type { TutorMatchResult } from "@/types";
+import { recordDiscoveryEvent } from "@/lib/discovery";
 
 interface HocaBulResultCardProps {
   match: TutorMatchResult;
@@ -18,6 +19,7 @@ interface HocaBulResultCardProps {
   isFavorite: boolean;
   favoritePending: boolean;
   onToggleFavorite: (tutorId: string) => void;
+  discoveryImpressionId?: string | null;
 }
 
 function initials(name: string, surname: string): string {
@@ -42,9 +44,10 @@ export function HocaBulResultCard({
   isFavorite,
   favoritePending,
   onToggleFavorite,
+  discoveryImpressionId,
 }: HocaBulResultCardProps) {
   const { tutor } = match;
-  const href = `/tutors/${tutor.id}`;
+  const href = `/tutors/${tutor.id}${discoveryImpressionId ? `?discovery_impression_id=${encodeURIComponent(discoveryImpressionId)}` : ""}`;
   const availability = match.nearest_available_at
     ? formatAvailability(match.nearest_available_at)
     : null;
@@ -61,7 +64,11 @@ export function HocaBulResultCard({
   }
 
   return (
-    <article aria-label={`${tutor.name} ${tutor.surname}`}>
+    <article
+      aria-label={`${tutor.name} ${tutor.surname}`}
+      data-discovery-tutor-id={discoveryImpressionId ? tutor.id : undefined}
+      data-discovery-impression-id={discoveryImpressionId || undefined}
+    >
       <Card className="overflow-hidden border-border/70 bg-card shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md motion-reduce:transform-none">
         <CardContent className="p-5 sm:p-6">
           <div className="flex min-w-0 gap-4">
@@ -88,7 +95,13 @@ export function HocaBulResultCard({
                   tutorId={tutor.id}
                   isFavorite={isFavorite}
                   isPending={favoritePending}
-                  onToggle={onToggleFavorite}
+                  onToggle={(tutorId) => {
+                    void recordDiscoveryEvent(
+                      discoveryImpressionId, tutorId,
+                      isFavorite ? "favorite_removed" : "favorite_added"
+                    );
+                    onToggleFavorite(tutorId);
+                  }}
                 />
               </div>
               <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">

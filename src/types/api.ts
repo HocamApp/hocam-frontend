@@ -481,6 +481,7 @@ export interface TutorMatchResult {
 export interface MatchingPreview {
   matches: TutorMatchResult[];
   candidate_count: number;
+  discovery_impression_id?: string | null;
 }
 
 export interface SavedMatchingPreference extends MatchingAnswers {

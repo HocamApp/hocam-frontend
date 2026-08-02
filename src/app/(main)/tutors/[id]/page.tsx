@@ -53,6 +53,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { SubjectRating } from "@/types";
+import { recordDiscoveryEvent } from "@/lib/discovery";
 
 function getInitials(name: string, surname: string): string {
   const n = (name || "").trim()[0] || "";
@@ -377,6 +378,11 @@ export default function TutorProfilePage({
   const learningContext = learningContextFromSearchParams(
     new URLSearchParams(searchParams.toString())
   );
+  const discoveryImpressionId = searchParams.get("discovery_impression_id");
+
+  useEffect(() => {
+    void recordDiscoveryEvent(discoveryImpressionId, id, "profile_view");
+  }, [discoveryImpressionId, id]);
 
   const {
     data: tutor,
@@ -748,7 +754,10 @@ export default function TutorProfilePage({
                           <div className="space-y-2">
                             <Button
                               className="w-full"
-                              onClick={() => setBookingModalMode("trial")}
+                              onClick={() => {
+                                void recordDiscoveryEvent(discoveryImpressionId, id, "booking_started");
+                                setBookingModalMode("trial");
+                              }}
                             >
                               Ücretsiz deneme dersi ayırt
                             </Button>
@@ -762,7 +771,10 @@ export default function TutorProfilePage({
                         ) : (
                           <Button
                             className="w-full"
-                            onClick={() => router.push(checkoutHref)}
+                            onClick={() => {
+                              void recordDiscoveryEvent(discoveryImpressionId, id, "booking_started");
+                              router.push(checkoutHref);
+                            }}
                           >
                             Ders Rezervasyonu Yap
                           </Button>
@@ -777,7 +789,10 @@ export default function TutorProfilePage({
                     type="button"
                     variant="outline"
                     className="w-full"
-                    onClick={() => setIsRequestModalOpen(true)}
+                    onClick={() => {
+                      void recordDiscoveryEvent(discoveryImpressionId, id, "contact_started");
+                      setIsRequestModalOpen(true);
+                    }}
                   >
                     <MessageSquare className="mr-2 h-4 w-4" />
                     Hocaya Mesaj Gönder
@@ -790,7 +805,13 @@ export default function TutorProfilePage({
                     tutorId={tutor.id}
                     isFavorite={favoriteIds.has(tutor.id)}
                     isPending={isFavoritePending(tutor.id)}
-                    onToggle={toggle}
+                    onToggle={(tutorId) => {
+                      void recordDiscoveryEvent(
+                        discoveryImpressionId, tutorId,
+                        favoriteIds.has(tutorId) ? "favorite_removed" : "favorite_added"
+                      );
+                      toggle(tutorId);
+                    }}
                   />
                   {isAuthenticated && isStudent && !isOwnProfile && (
                     <Button

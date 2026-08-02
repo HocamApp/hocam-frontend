@@ -11,6 +11,7 @@ const api = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
+  withCredentials: true,
 });
 
 const PUBLIC_AUTH_PATHS = new Set([
