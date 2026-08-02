@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { TutorPresenceBadge } from "@/components/tutors/TutorPresenceBadge";
 import { FavoriteButton } from "@/components/tutors/FavoriteButton";
 import { VerifiedTutorMark } from "@/components/tutors/VerifiedTutorMark";
+import { recordDiscoveryEvent } from "@/lib/discovery";
 
 function getInitials(name: string, surname: string): string {
   const n = (name || "").trim()[0] || "";
@@ -27,6 +28,7 @@ interface TutorCardProps {
   onToggleFavorite?: (id: string) => void;
   favoritePending?: boolean;
   learningContext?: LearningContextQuery | null;
+  discoveryImpressionId?: string | null;
 }
 
 type LearningContextQuery = {
@@ -37,22 +39,21 @@ type LearningContextQuery = {
 
 function buildTutorHref(
   tutorId: string,
-  learningContext?: LearningContextQuery | null
+  learningContext?: LearningContextQuery | null,
+  discoveryImpressionId?: string | null
 ): string {
-  if (!learningContext) {
-    return `/tutors/${tutorId}`;
+  const params = new URLSearchParams();
+  if (learningContext) {
+    params.set("learning_goal_id", learningContext.learning_goal_id);
+    params.set("learning_milestone_id", learningContext.learning_milestone_id);
   }
 
-  const params = new URLSearchParams({
-    learning_goal_id: learningContext.learning_goal_id,
-    learning_milestone_id: learningContext.learning_milestone_id,
-  });
-
-  if (learningContext.learning_topic_id) {
+  if (learningContext?.learning_topic_id) {
     params.set("learning_topic_id", learningContext.learning_topic_id);
   }
-
-  return `/tutors/${tutorId}?${params.toString()}`;
+  if (discoveryImpressionId) params.set("discovery_impression_id", discoveryImpressionId);
+  const query = params.toString();
+  return `/tutors/${tutorId}${query ? `?${query}` : ""}`;
 }
 
 export function TutorCard({
@@ -61,6 +62,7 @@ export function TutorCard({
   onToggleFavorite,
   favoritePending,
   learningContext,
+  discoveryImpressionId,
 }: TutorCardProps) {
   const examOrder = ["TYT", "AYT", "YDT", "DGS", "KPSS"] as const;
   const orderedSubjectsWithDuplicates = examOrder.flatMap((exam) =>
@@ -75,11 +77,15 @@ export function TutorCard({
   });
   const visibleSubjects = orderedSubjects.slice(0, 4);
   const remainingCount = orderedSubjects.length - 4;
-  const tutorHref = buildTutorHref(tutor.id, learningContext);
+  const tutorHref = buildTutorHref(tutor.id, learningContext, discoveryImpressionId);
   const completedLessonsLabel = `${formatLessonCount(tutor.completed_lessons_count ?? 0)} ders`;
 
   return (
-    <Card className="relative h-full min-w-0 overflow-visible border-t-2 border-t-transparent transition-all duration-200 hover:z-10 hover:-translate-y-0.5 hover:border-t-primary hover:shadow-lg">
+    <Card
+      data-discovery-tutor-id={discoveryImpressionId ? tutor.id : undefined}
+      data-discovery-impression-id={discoveryImpressionId || undefined}
+      className="relative h-full min-w-0 overflow-visible border-t-2 border-t-transparent transition-all duration-200 hover:z-10 hover:-translate-y-0.5 hover:border-t-primary hover:shadow-lg"
+    >
       <CardContent className="p-0">
         <Link href={tutorHref} className="block cursor-pointer">
           <div className="flex gap-4 p-4">
@@ -163,7 +169,13 @@ export function TutorCard({
                   tutorId={tutor.id}
                   isFavorite={isFavorite ?? false}
                   isPending={favoritePending ?? false}
-                  onToggle={onToggleFavorite}
+                  onToggle={(tutorId) => {
+                    void recordDiscoveryEvent(
+                      discoveryImpressionId, tutorId,
+                      isFavorite ? "favorite_removed" : "favorite_added"
+                    );
+                    onToggleFavorite(tutorId);
+                  }}
                 />
               )}
             </div>

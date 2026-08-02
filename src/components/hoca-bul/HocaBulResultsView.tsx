@@ -11,6 +11,7 @@ import { buildResultEditHref, splitMatches } from "@/lib/hocaBulResults";
 import type { MatchingAnswers, MatchingPreview } from "@/types";
 
 import { HocaBulResultCard } from "./HocaBulResultCard";
+import { useDiscoveryExposures } from "@/hooks/useDiscoveryExposures";
 
 interface HocaBulResultsViewProps {
   preview: MatchingPreview;
@@ -25,6 +26,7 @@ export function HocaBulResultsView({ preview, answers }: HocaBulResultsViewProps
   const trackedHashes = useRef(new Set<string>());
   const headingRef = useRef<HTMLHeadingElement>(null);
   const payloadHash = hashAnswers(answers);
+  useDiscoveryExposures(preview.discovery_impression_id);
 
   useEffect(() => {
     if (trackedHashes.current.has(payloadHash)) return;
@@ -56,6 +58,7 @@ export function HocaBulResultsView({ preview, answers }: HocaBulResultsViewProps
         isFavorite={favoriteIds.has(match.tutor.id)}
         favoritePending={isFavoritePending(match.tutor.id)}
         onToggleFavorite={toggle}
+        discoveryImpressionId={preview.discovery_impression_id}
       />
     );
   }

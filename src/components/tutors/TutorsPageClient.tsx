@@ -18,6 +18,8 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import SlidingPagination from "@/components/ui/sliding-pagination";
 import { isSubjectValidForExam } from "@/lib/subjects";
+import { createDirectoryImpression, DISCOVERY_CONSENT_CHANGED } from "@/lib/discovery";
+import { useDiscoveryExposures } from "@/hooks/useDiscoveryExposures";
 
 const PAGE_SIZE = 12;
 const FILTER_PANEL_PREFERENCE_KEY = "hocam:tutor-filters-open";
@@ -174,6 +176,8 @@ function TutorsPageContent() {
   const [searchLocal, setSearchLocal] = useState(filters.search ?? "");
   const [page, setPage] = useState(1);
   const [desktopFiltersOpen, setDesktopFiltersOpen] = useState(false);
+  const [discoveryImpressionId, setDiscoveryImpressionId] = useState<string | null>(null);
+  const [consentRevision, setConsentRevision] = useState(0);
 
   // Favorites toggle is URL-synced but not a backend filter (client-side only).
   const showFavorites = searchParams.get("favorites") === "1";
@@ -308,6 +312,35 @@ function TutorsPageContent() {
   const pageTutors = showFavorites
     ? filteredTutors.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
     : filteredTutors;
+  const pageTutorKey = pageTutors.map((tutor) => tutor.id).join(",");
+
+  useEffect(() => {
+    const onConsent = () => setConsentRevision((value) => value + 1);
+    window.addEventListener(DISCOVERY_CONSENT_CHANGED, onConsent);
+    return () => window.removeEventListener(DISCOVERY_CONSENT_CHANGED, onConsent);
+  }, []);
+
+  useEffect(() => {
+    setDiscoveryImpressionId(null);
+    if (showFavorites || isListLoading || listError || !pageTutorKey) return;
+    const structuredFilters: Record<string, string> = {};
+    if (filters.subject) structuredFilters.subject = filters.subject;
+    if (filters.exam_type) structuredFilters.exam = filters.exam_type;
+    if (filters.university) structuredFilters.university = filters.university;
+    if (filters.min_rating) structuredFilters.rating = filters.min_rating;
+    if (filters.min_price) structuredFilters.price_min = filters.min_price;
+    if (filters.max_price) structuredFilters.price_max = filters.max_price;
+    if (filters.yks_rank_max) structuredFilters.yks_rank = filters.yks_rank_max;
+    if (filters.availability_day) structuredFilters.availability_day = filters.availability_day;
+    if (filters.availability_time) structuredFilters.availability_time = filters.availability_time;
+    if (filters.online) structuredFilters.online = filters.online;
+    void createDirectoryImpression({
+      tutorIds: pageTutorKey ? pageTutorKey.split(",") : [], page,
+      ordering: filters.ordering, filters: structuredFilters, search: filters.search,
+    }).then(setDiscoveryImpressionId);
+  }, [consentRevision, filters, isListLoading, listError, page, pageTutorKey, showFavorites]);
+
+  useDiscoveryExposures(discoveryImpressionId);
 
   const content = (
     // Full-width wrapper so decorations measure from the viewport edge like
@@ -516,6 +549,7 @@ function TutorsPageContent() {
                     onToggleFavorite={toggle}
                     favoritePending={isFavoritePending(tutor.id)}
                     learningContext={learningContext}
+                    discoveryImpressionId={discoveryImpressionId}
                   />
                 ))}
               </div>
