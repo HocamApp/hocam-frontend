@@ -232,12 +232,22 @@ export interface UpdateTutorProfilePayload {
   subject_ids?: string[];
   teaching_styles?: TutorTeachingStyle[];
   teaching_attribute_codes?: string[];
+  accepting_new_students?: boolean;
+  open_student_slots?: number;
+  earliest_start_date?: string | null;
+  availability_pause_until?: string | null;
+  accepts_trial_lessons?: boolean;
 }
 
 export async function updateMyTutorProfile(
   payload: UpdateTutorProfilePayload
 ): Promise<TutorProfile> {
   const response = await api.patch<TutorProfile>("/tutors/me/", payload);
+  return response.data;
+}
+
+export async function confirmTutorAvailability(): Promise<TutorProfile> {
+  const response = await api.post<TutorProfile>("/tutors/me/availability/confirm/", {});
   return response.data;
 }
 

@@ -122,6 +122,12 @@ export function TutorCard({
                     YKS Sıralaması: {formatYksRank(tutor.yks_rank)}
                   </span>
                 )}
+                {tutor.is_bookable === true && (
+                  <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:text-emerald-300">Yeni öğrenci kabul ediyor</span>
+                )}
+                {tutor.is_bookable === false && (
+                  <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-xs font-medium text-amber-800 dark:text-amber-200">Şu anda yeni öğrenci almıyor</span>
+                )}
               </div>
             </div>
           </div>
