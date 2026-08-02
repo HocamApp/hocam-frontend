@@ -48,8 +48,8 @@ export const HOME_HERO_SLIDES: HomeHeroSlideContent[] = [
     scene: "study",
     tone: "brand",
     image: {
-      src: "/images/home-v3/hero/yks-students.jpg",
-      alt: "Sınava birlikte hazırlanan genç öğrenciler",
+      src: "/images/home-v3/hero-v2/yks-students.jpg",
+      alt: "Aydınlık bir sınıfta sınava hazırlanan üniversite öğrencileri",
     },
   },
   {
@@ -63,8 +63,8 @@ export const HOME_HERO_SLIDES: HomeHeroSlideContent[] = [
     scene: "exam",
     tone: "sky",
     image: {
-      src: "/images/home-v3/explore/kpss-matematik.jpg",
-      alt: "Sınav salonunda sınav kağıdını çözen bir öğrenci",
+      src: "/images/home-v3/hero-v2/kpss-study.jpg",
+      alt: "Birlikte ders notları üzerinde çalışan iki üniversite öğrencisi",
     },
   },
   {
@@ -78,8 +78,8 @@ export const HOME_HERO_SLIDES: HomeHeroSlideContent[] = [
     scene: "plan",
     tone: "violet",
     image: {
-      src: "/images/home-v3/explore/tyt-matematik.jpg",
-      alt: "Sınav kağıtları ve matematik notları üzerinde çalışan bir öğrenci",
+      src: "/images/home-v3/hero-v2/dgs-exam-paper.jpg",
+      alt: "Sınav masasındaki optik cevap formu, soru kitapçığı ve kalem",
     },
   },
   {
@@ -93,8 +93,8 @@ export const HOME_HERO_SLIDES: HomeHeroSlideContent[] = [
     scene: "exam",
     tone: "cream",
     image: {
-      src: "/images/home-v3/explore/cikmis-sorular.jpg",
-      alt: "Sınav hazırlığı için düzenlenmiş basılı soru kağıtları",
+      src: "/images/home-v3/hero-v2/exam-answer-sheet.jpg",
+      alt: "Optik cevap formunu kurşun kalemle dolduran öğrenci",
     },
   },
 ];

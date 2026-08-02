@@ -23,10 +23,10 @@ source. Files live under `public/images/home-v3/` and are referenced from
 
 | Slide | File | Creator | Source page | Subject |
 |---|---|---|---|---|
-| YKS hazırlık | `hero/yks-students.jpg` | Jibarofoto | https://www.pexels.com/photo/portrait-of-a-young-woman-with-her-friends-17734004/ | Birlikte sınava hazırlanan genç öğrenci grubu |
-| KPSS | `explore/kpss-matematik.jpg` (reused) | RDNE Stock project | https://www.pexels.com/photo/student-answering-his-examination-7092334/ | Sınav salonunda sınav kağıdını çözen öğrenci |
-| DGS | `explore/tyt-matematik.jpg` (reused) | MART PRODUCTION | https://www.pexels.com/photo/a-student-doing-homework-8472944/ | Sınav kağıtları ve matematik notları üzerinde çalışan öğrenci |
-| Sınav hazırlığı | `explore/cikmis-sorular.jpg` (reused) | Kindel Media | https://www.pexels.com/photo/a-close-up-shot-of-paper-clipped-documents-7054757/ | Düzenlenmiş basılı soru kağıtları |
+| YKS hazırlık | `hero-v2/yks-students.jpg` | Eduard Perez | https://www.pexels.com/photo/college-students-studying-in-a-classroom-37811241/ | Aydınlık sınıfta sınava hazırlanan üniversite öğrencileri |
+| KPSS | `hero-v2/kpss-study.jpg` | Monstera Production | https://www.pexels.com/photo/diverse-students-doing-homework-together-in-classroom-6238046/ | Birlikte ders notları üzerinde çalışan üniversite öğrencileri |
+| DGS | `hero-v2/dgs-exam-paper.jpg` | Andy Barbour | https://www.pexels.com/photo/test-papers-and-pencil-on-the-desk-6683394/ | Sınav masasındaki optik form, soru kitapçığı ve kalem |
+| Sınav hazırlığı | `hero-v2/exam-answer-sheet.jpg` | Andy Barbour | https://www.pexels.com/photo/a-person-taking-an-exam-6684209/ | Optik cevap formunu dolduran öğrenci |
 
 ## Explore — "Sınav hedeflerini keşfet"
 
