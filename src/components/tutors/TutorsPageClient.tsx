@@ -3,7 +3,6 @@
 import { useState, useCallback, useEffect, Suspense } from "react";
 import { ScribbleLayers } from "@/components/decor/ScribbleLayer";
 import { TUTORS_SCRIBBLES } from "@/lib/scribblePlacements";
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { Heart, PanelLeftClose, PanelLeftOpen } from "lucide-react";
@@ -11,6 +10,7 @@ import { fetchTutors, fetchSubjects, type TutorFilters as TutorFiltersType } fro
 import { AnimatedSearchBar } from "@/components/tutors/AnimatedSearchBar";
 import { TutorCard } from "@/components/tutors/TutorCard";
 import { TutorFilters } from "@/components/tutors/TutorFilters";
+import { SavedSearchControls, TutorComparisonPanel } from "@/components/tutors/TutorDiscoveryTools";
 import { useFavorites } from "@/hooks/useFavorites";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
@@ -20,6 +20,12 @@ import SlidingPagination from "@/components/ui/sliding-pagination";
 import { isSubjectValidForExam } from "@/lib/subjects";
 import { createDirectoryImpression, DISCOVERY_CONSENT_CHANGED } from "@/lib/discovery";
 import { useDiscoveryExposures } from "@/hooks/useDiscoveryExposures";
+import {
+  defaultTutorOrdering,
+  parseComparisonIds,
+  RELAXATION_LABELS,
+  removeTutorFilterCategory,
+} from "@/lib/tutorDirectory";
 
 const PAGE_SIZE = 12;
 const FILTER_PANEL_PREFERENCE_KEY = "hocam:tutor-filters-open";
@@ -31,8 +37,11 @@ const LEARNING_CONTEXT_KEYS = [
 
 const DAY_LABELS = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar"];
 const ORDERING_LABELS: Record<string, string> = {
+  relevance: "En alakalı",
   price: "En uygun fiyat",
+  "-price": "En yüksek fiyat",
   yks_rank: "En iyi YKS sıralaması",
+  "-yks_rank": "YKS sıralaması: yüksekten",
   newest: "En yeni hocalar",
 };
 
@@ -51,7 +60,8 @@ function filtersFromSearchParams(searchParams: URLSearchParams): TutorFiltersTyp
   const max_price = searchParams.get("max_price");
   const university = searchParams.get("university");
   const yks_rank_max = searchParams.get("yks_rank_max");
-  const ordering = searchParams.get("ordering") || "rating";
+  const ordering = searchParams.get("ordering");
+  const topic = searchParams.get("topic");
   const availability_day = searchParams.get("availability_day");
   const availability_time = searchParams.get("availability_time");
   const online = searchParams.get("online");
@@ -69,7 +79,8 @@ function filtersFromSearchParams(searchParams: URLSearchParams): TutorFiltersTyp
     ...(availability_time != null && availability_time !== "" && { availability_time }),
     ...(online != null && online !== "" && { online }),
     ...(teaching_attributes != null && teaching_attributes !== "" && { teaching_attributes }),
-    ordering: ordering || "rating",
+    ...(topic != null && topic !== "" && { topic }),
+    ...(ordering != null && ordering !== "" && { ordering }),
   };
 }
 
@@ -87,7 +98,8 @@ function searchParamsFromFilters(filters: TutorFiltersType): URLSearchParams {
   if (filters.availability_time) p.set("availability_time", filters.availability_time);
   if (filters.online) p.set("online", filters.online);
   if (filters.teaching_attributes) p.set("teaching_attributes", filters.teaching_attributes);
-  if (filters.ordering && filters.ordering !== "rating") p.set("ordering", filters.ordering);
+  if (filters.topic) p.set("topic", filters.topic);
+  if (filters.ordering) p.set("ordering", filters.ordering);
   return p;
 }
 
@@ -172,10 +184,9 @@ function TutorCardSkeleton() {
 function TutorsPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [filters, setFiltersState] = useState<TutorFiltersType>(() => {
-    const fromUrl = filtersFromSearchParams(searchParams);
-    return { ...fromUrl, ordering: fromUrl.ordering || "rating" };
-  });
+  const [filters, setFiltersState] = useState<TutorFiltersType>(() =>
+    filtersFromSearchParams(searchParams)
+  );
   const [searchLocal, setSearchLocal] = useState(filters.search ?? "");
   const [page, setPage] = useState(1);
   const [desktopFiltersOpen, setDesktopFiltersOpen] = useState(false);
@@ -187,26 +198,33 @@ function TutorsPageContent() {
   const learningContext = learningContextFromSearchParams(
     new URLSearchParams(searchParams.toString())
   );
+  const comparisonIds = parseComparisonIds(searchParams.get("compare"));
+  const effectiveTopic = filters.topic || learningContext?.learning_topic_id || undefined;
+  const effectiveFilters: TutorFiltersType = {
+    ...filters,
+    ...(effectiveTopic ? { topic: effectiveTopic } : {}),
+  };
+  const defaultOrdering = defaultTutorOrdering(effectiveFilters);
 
   const setFilters = useCallback(
     (newFilters: TutorFiltersType) => {
-      const merged = { ...newFilters, ordering: newFilters.ordering || "rating" };
-      setFiltersState(merged);
+      setFiltersState(newFilters);
       setPage(1);
       const params = appendLearningContextParams(
-        searchParamsFromFilters(merged),
+        searchParamsFromFilters(newFilters),
         learningContext
       );
+      if (comparisonIds.length) params.set("compare", comparisonIds.join(","));
       const query = params.toString();
       const url = query ? `/tutors?${query}` : "/tutors";
       router.replace(url, { scroll: false });
     },
-    [learningContext, router]
+    [comparisonIds, learningContext, router]
   );
 
   const handleFiltersChange = useCallback(
     (newFilters: TutorFiltersType) => {
-      setFilters({ ...newFilters, ordering: newFilters.ordering || "rating" });
+      setFilters(newFilters);
     },
     [setFilters]
   );
@@ -216,9 +234,32 @@ function TutorsPageContent() {
     setFiltersState({});
     setPage(1);
     const params = appendLearningContextParams(new URLSearchParams(), learningContext);
+    if (comparisonIds.length) params.set("compare", comparisonIds.join(","));
     const query = params.toString();
     router.replace(query ? `/tutors?${query}` : "/tutors", { scroll: false });
-  }, [learningContext, router]);
+  }, [comparisonIds, learningContext, router]);
+
+  const updateComparison = useCallback(
+    (nextIds: string[]) => {
+      const params = new URLSearchParams(searchParams.toString());
+      if (nextIds.length) params.set("compare", nextIds.slice(0, 3).join(","));
+      else params.delete("compare");
+      const query = params.toString();
+      router.replace(query ? `/tutors?${query}` : "/tutors", { scroll: false });
+    },
+    [router, searchParams]
+  );
+
+  const toggleComparison = useCallback(
+    (tutorId: string) => {
+      if (comparisonIds.includes(tutorId)) {
+        updateComparison(comparisonIds.filter((id) => id !== tutorId));
+      } else if (comparisonIds.length < 3) {
+        updateComparison([...comparisonIds, tutorId]);
+      }
+    },
+    [comparisonIds, updateComparison]
+  );
 
   const clearLearningContext = useCallback(() => {
     const params = new URLSearchParams(searchParams.toString());
@@ -226,6 +267,19 @@ function TutorsPageContent() {
     const query = params.toString();
     router.replace(query ? `/tutors?${query}` : "/tutors", { scroll: false });
   }, [router, searchParams]);
+
+  const applyRelaxation = useCallback(
+    (filter: string) => {
+      if (filter === "topic" && !filters.topic && learningContext?.learning_topic_id) {
+        const params = new URLSearchParams(searchParams.toString());
+        params.delete("learning_topic_id");
+        router.replace(`/tutors?${params.toString()}`, { scroll: false });
+        return;
+      }
+      handleFiltersChange(removeTutorFilterCategory(filters, filter));
+    },
+    [filters, handleFiltersChange, learningContext, router, searchParams]
+  );
 
   useEffect(() => {
     const fromUrl = filtersFromSearchParams(new URLSearchParams(searchParams.toString()));
@@ -250,8 +304,8 @@ function TutorsPageContent() {
     isLoading: tutorsLoading,
     error: tutorsError,
   } = useQuery({
-    queryKey: ["tutors", filters, page],
-    queryFn: () => fetchTutors(filters, page, PAGE_SIZE),
+    queryKey: ["tutors", effectiveFilters, page],
+    queryFn: () => fetchTutors(effectiveFilters, page, PAGE_SIZE),
     enabled: !showFavorites,
     placeholderData: (previousData) => previousData,
   });
@@ -291,7 +345,8 @@ function TutorsPageContent() {
     (filters.availability_time ?? "") !== "" ||
     (filters.online ?? "") !== "" ||
     (filters.teaching_attributes ?? "") !== "" ||
-    (filters.ordering ?? "rating") !== "rating";
+    (effectiveTopic ?? "") !== "" ||
+    filters.ordering !== undefined;
 
   const tutorList = showFavorites
     ? favorites.map((favorite) => favorite.tutor)
@@ -339,11 +394,12 @@ function TutorsPageContent() {
     if (filters.availability_time) structuredFilters.availability_time = filters.availability_time;
     if (filters.online) structuredFilters.online = filters.online;
     if (filters.teaching_attributes) structuredFilters.teaching_attributes = filters.teaching_attributes;
+    if (effectiveTopic) structuredFilters.topic_id = effectiveTopic;
     void createDirectoryImpression({
       tutorIds: pageTutorKey ? pageTutorKey.split(",") : [], page,
-      ordering: filters.ordering, filters: structuredFilters, search: filters.search,
+      ordering: filters.ordering || defaultOrdering, filters: structuredFilters, search: filters.search,
     }).then(setDiscoveryImpressionId);
-  }, [consentRevision, filters, isListLoading, listError, page, pageTutorKey, showFavorites]);
+  }, [consentRevision, defaultOrdering, effectiveTopic, filters, isListLoading, listError, page, pageTutorKey, showFavorites]);
 
   useDiscoveryExposures(discoveryImpressionId);
 
@@ -413,7 +469,8 @@ function TutorsPageContent() {
                   {desktopFiltersOpen ? "Filtreleri gizle" : "Filtreleri göster"}
                 </Button>
                 {[
-                  { label: "★ En yüksek puan", active: (filters.ordering ?? "rating") === "rating", next: { ordering: "rating" } },
+                  ...(defaultOrdering === "relevance" ? [{ label: "◎ En alakalı", active: (filters.ordering ?? defaultOrdering) === "relevance", next: { ordering: "relevance" } }] : []),
+                  { label: "★ En yüksek puan", active: (filters.ordering ?? defaultOrdering) === "rating", next: { ordering: "rating" } },
                   { label: "₺ En uygun fiyat", active: filters.ordering === "price", next: { ordering: "price" } },
                   { label: "🏆 En iyi YKS sıralaması", active: filters.ordering === "yks_rank", next: { ordering: "yks_rank" } },
                   { label: "● Çevrim içi", active: filters.online === "true", next: { online: filters.online === "true" ? "" : "true" } },
@@ -435,8 +492,9 @@ function TutorsPageContent() {
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="text-xs font-medium text-muted-foreground">Aktif filtreler:</span>
                   {filters.search && <FilterPill label={`Arama: ${filters.search}`} onRemove={() => { setSearchLocal(""); handleFiltersChange({ ...filters, search: "" }); }} />}
-                  {filters.subject && <FilterPill label={filters.subject} onRemove={() => handleFiltersChange({ ...filters, subject: "" })} />}
-                  {filters.exam_type && <FilterPill label={filters.exam_type} onRemove={() => handleFiltersChange({ ...filters, exam_type: "", subject: "" })} />}
+                  {filters.subject && <FilterPill label={filters.subject} onRemove={() => handleFiltersChange({ ...filters, subject: "", topic: "" })} />}
+                  {filters.exam_type && <FilterPill label={filters.exam_type} onRemove={() => handleFiltersChange({ ...filters, exam_type: "", subject: "", topic: "" })} />}
+                  {filters.topic && <FilterPill label="Müfredat konusu" onRemove={() => handleFiltersChange({ ...filters, topic: "" })} />}
                   {filters.min_price || filters.max_price ? <FilterPill label={formatPriceFilter(filters.min_price, filters.max_price)} onRemove={() => handleFiltersChange({ ...filters, min_price: "", max_price: "" })} /> : null}
                   {filters.min_rating && <FilterPill label={`${filters.min_rating}+ puan`} onRemove={() => handleFiltersChange({ ...filters, min_rating: "" })} />}
                   {filters.yks_rank_max && <FilterPill label={`İlk ${Number(filters.yks_rank_max).toLocaleString("tr-TR")}`} onRemove={() => handleFiltersChange({ ...filters, yks_rank_max: "" })} />}
@@ -445,11 +503,18 @@ function TutorsPageContent() {
                   {filters.availability_time && <FilterPill label={`${filters.availability_time} uygunluğu`} onRemove={() => handleFiltersChange({ ...filters, availability_time: "" })} />}
                   {filters.online === "true" && <FilterPill label="Çevrim içi" onRemove={() => handleFiltersChange({ ...filters, online: "" })} />}
                   {filters.teaching_attributes && <FilterPill label={`${filters.teaching_attributes.split(",").length} anlatım özelliği`} onRemove={() => handleFiltersChange({ ...filters, teaching_attributes: "" })} />}
-                  {(filters.ordering ?? "rating") !== "rating" && <FilterPill label={ORDERING_LABELS[filters.ordering ?? ""] ?? "Sıralama"} onRemove={() => handleFiltersChange({ ...filters, ordering: "rating" })} />}
+                  {filters.ordering && <FilterPill label={ORDERING_LABELS[filters.ordering] ?? "Sıralama"} onRemove={() => { const next = { ...filters }; delete next.ordering; handleFiltersChange(next); }} />}
                   <Button type="button" variant="ghost" size="sm" onClick={handleClearFilters}>Temizle</Button>
                 </div>
               )}
             </div>
+
+            <SavedSearchControls filters={{ ...effectiveFilters, ordering: filters.ordering || defaultOrdering }} onApply={handleFiltersChange} />
+            <TutorComparisonPanel
+              ids={comparisonIds}
+              onRemove={(id) => updateComparison(comparisonIds.filter((value) => value !== id))}
+              onClear={() => updateComparison([])}
+            />
           </>
         )}
 
@@ -496,6 +561,7 @@ function TutorsPageContent() {
                 onFiltersChange={handleFiltersChange}
                 onClear={handleClearFilters}
                 isLoading={subjectsLoading || isListLoading}
+                defaultOrdering={defaultOrdering}
               />
             </aside>
           )}
@@ -529,19 +595,29 @@ function TutorsPageContent() {
               }
             />
           ) : showEmptyState ? (
-            <EmptyState
-              title="Hoca bulunamadı"
-              description={
-                filters.search
-                  ? `"${filters.search}" aramasıyla eşleşen hoca bulunamadı. Filtrelerinizi veya arama teriminizi değiştirmeyi deneyin.`
-                  : "Filtrelerinizi değiştirmeyi deneyin."
-              }
-              action={
-                <Button variant="outline" onClick={handleClearFilters}>
-                  Filtreleri Temizle
-                </Button>
-              }
-            />
+            <div className="space-y-3">
+              <EmptyState
+                title="Hoca bulunamadı"
+                description={
+                  filters.search
+                    ? `"${filters.search}" aramasıyla eşleşen hoca bulunamadı. En kısıtlayıcı filtreleri tek tek kaldırabilirsin.`
+                    : "En kısıtlayıcı filtreleri tek tek kaldırabilirsin."
+                }
+                action={<Button variant="outline" onClick={handleClearFilters}>Filtreleri Temizle</Button>}
+              />
+              {(tutors?.relaxations ?? []).some((item) => item.count > 0) && (
+                <div className="flex flex-wrap justify-center gap-2" aria-label="Filtre gevşetme önerileri">
+                  {[...(tutors?.relaxations ?? [])]
+                    .filter((item) => item.count > 0)
+                    .sort((a, b) => b.count - a.count)
+                    .map((item) => (
+                      <Button key={item.filter} type="button" size="sm" variant="secondary" onClick={() => applyRelaxation(item.filter)}>
+                        {RELAXATION_LABELS[item.filter] ?? item.filter} filtresini kaldır · {item.count} hoca
+                      </Button>
+                    ))}
+                </div>
+              )}
+            </div>
           ) : null}
 
           {!isListLoading && !listError && !showEmptyState && filteredTutors.length > 0 && (
@@ -556,6 +632,9 @@ function TutorsPageContent() {
                     favoritePending={isFavoritePending(tutor.id)}
                     learningContext={learningContext}
                     discoveryImpressionId={discoveryImpressionId}
+                    isCompared={comparisonIds.includes(tutor.id)}
+                    onToggleCompare={toggleComparison}
+                    compareDisabled={comparisonIds.length >= 3}
                   />
                 ))}
               </div>

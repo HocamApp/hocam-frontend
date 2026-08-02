@@ -23,6 +23,7 @@ import type { TutorFilters as TutorFiltersType } from "@/lib/tutorsApi";
 import type { Subject } from "@/types";
 import { getSubjectOptionsForExam, isSubjectValidForExam } from "@/lib/subjects";
 import { fetchTeachingAttributes } from "@/lib/tutorsApi";
+import { fetchLearningTopics } from "@/lib/learningApi";
 
 interface TutorFiltersProps {
   filters: TutorFiltersType;
@@ -30,6 +31,7 @@ interface TutorFiltersProps {
   onFiltersChange: (filters: TutorFiltersType) => void;
   onClear: () => void;
   isLoading: boolean;
+  defaultOrdering?: string;
 }
 
 const POPULAR_UNIVERSITIES = [
@@ -54,6 +56,7 @@ function countActiveFilters(filters: TutorFiltersType): number {
     (filters.availability_time ?? "") !== "",
     (filters.online ?? "") !== "",
     (filters.teaching_attributes ?? "") !== "",
+    (filters.topic ?? "") !== "",
     (filters.ordering ?? "rating") !== "rating",
   ].filter(Boolean).length;
 }
@@ -67,6 +70,7 @@ function FilterPanelContent({
   onPriceCommit,
   isLoading,
   showClearButton = true,
+  defaultOrdering = "rating",
 }: {
   filters: TutorFiltersType;
   subjects: Subject[];
@@ -76,6 +80,7 @@ function FilterPanelContent({
   onPriceCommit: (value: [number, number]) => void;
   isLoading: boolean;
   showClearButton?: boolean;
+  defaultOrdering?: string;
 }) {
   const subjectOptions = getSubjectOptionsForExam(subjects, filters.exam_type);
   const universityOptions = filters.university && !POPULAR_UNIVERSITIES.includes(filters.university)
@@ -84,6 +89,9 @@ function FilterPanelContent({
   const hasActiveFilters = countActiveFilters(filters) > 0;
   const { data: teachingAttributes = [] } = useQuery({
     queryKey: ["teaching-attributes"], queryFn: fetchTeachingAttributes, staleTime: Infinity,
+  });
+  const { data: learningTopics = [] } = useQuery({
+    queryKey: ["learning-topics"], queryFn: fetchLearningTopics, staleTime: Infinity,
   });
   const selectedAttributes = (filters.teaching_attributes ?? "").split(",").filter(Boolean);
 
@@ -102,7 +110,7 @@ function FilterPanelContent({
             const subject = isSubjectValidForExam(subjects, filters.subject, exam_type)
               ? filters.subject
               : "";
-            onFiltersChange({ ...filters, exam_type, subject });
+            onFiltersChange({ ...filters, exam_type, subject, topic: "" });
           }}
           disabled={isLoading}
         >
@@ -123,7 +131,7 @@ function FilterPanelContent({
         <Label>Ders</Label>
         <Select
           value={(filters.subject ?? "") || "__all__"}
-          onValueChange={(v) => onFiltersChange({ ...filters, subject: v === "__all__" ? "" : v })}
+          onValueChange={(v) => onFiltersChange({ ...filters, subject: v === "__all__" ? "" : v, topic: "" })}
           disabled={isLoading}
         >
           <SelectTrigger>
@@ -138,6 +146,38 @@ function FilterPanelContent({
             ))}
           </SelectContent>
         </Select>
+      </div>
+
+      <div className="space-y-2">
+        <Label>Müfredat konusu</Label>
+        <Select
+          value={(filters.topic ?? "") || "__all__"}
+          onValueChange={(value) => {
+            const topic = learningTopics.find((item) => item.id === value);
+            onFiltersChange({
+              ...filters,
+              topic: value === "__all__" ? "" : value,
+              ...(topic ? { subject: topic.subject_name, exam_type: topic.exam_type } : {}),
+            });
+          }}
+          disabled={isLoading}
+        >
+          <SelectTrigger><SelectValue placeholder="Tüm konular" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__all__">Tüm konular</SelectItem>
+            {learningTopics
+              .filter((topic) => !filters.exam_type || topic.exam_type === filters.exam_type)
+              .filter((topic) => !filters.subject || topic.subject_name === filters.subject)
+              .map((topic) => (
+                <SelectItem key={topic.id} value={topic.id}>
+                  {topic.exam_type} · {topic.subject_name} · {topic.title}
+                </SelectItem>
+              ))}
+          </SelectContent>
+        </Select>
+        <p className="text-xs text-muted-foreground">
+          Konu, ilgili ders hocalarını bulur; konu uzmanlığı iddiası oluşturmaz.
+        </p>
       </div>
 
       <div className="space-y-2">
@@ -273,17 +313,20 @@ function FilterPanelContent({
       <div className="space-y-2">
         <Label>Sıralama</Label>
         <Select
-          value={filters.ordering ?? "rating"}
-          onValueChange={(v) => onFiltersChange({ ...filters, ordering: v || "rating" })}
+          value={filters.ordering ?? defaultOrdering}
+          onValueChange={(v) => onFiltersChange({ ...filters, ordering: v || defaultOrdering })}
           disabled={isLoading}
         >
           <SelectTrigger>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
+            <SelectItem value="relevance">En alakalı</SelectItem>
             <SelectItem value="rating">En yüksek puan</SelectItem>
             <SelectItem value="price">En uygun fiyat</SelectItem>
+            <SelectItem value="-price">En yüksek fiyat</SelectItem>
             <SelectItem value="yks_rank">En iyi YKS sıralaması</SelectItem>
+            <SelectItem value="-yks_rank">YKS sıralaması: yüksekten</SelectItem>
             <SelectItem value="newest">En yeni</SelectItem>
           </SelectContent>
         </Select>
@@ -304,6 +347,7 @@ export function TutorFilters({
   onFiltersChange,
   onClear,
   isLoading,
+  defaultOrdering = "rating",
 }: TutorFiltersProps) {
   const [sheetOpen, setSheetOpen] = useState(false);
 
@@ -312,7 +356,7 @@ export function TutorFilters({
 
   const handleFiltersChange = useCallback(
     (newFilters: TutorFiltersType) => {
-      onFiltersChange({ ...newFilters, ordering: newFilters.ordering || "rating" });
+      onFiltersChange(newFilters);
     },
     [onFiltersChange]
   );
@@ -337,6 +381,7 @@ export function TutorFilters({
           priceValue={priceValue}
           onPriceCommit={onPriceCommit}
           isLoading={isLoading}
+          defaultOrdering={defaultOrdering}
         />
       </div>
 
@@ -370,6 +415,7 @@ export function TutorFilters({
                 priceValue={priceValue}
                 onPriceCommit={onPriceCommit}
                 isLoading={isLoading}
+                defaultOrdering={defaultOrdering}
                 showClearButton={false}
               />
             </div>

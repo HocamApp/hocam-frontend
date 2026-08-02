@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Award } from "lucide-react";
+import { ArrowRight, Award, Scale } from "lucide-react";
 import { TutorProfile } from "@/types";
 import { formatLessonCount, formatPrice, formatRating } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
@@ -29,6 +29,9 @@ interface TutorCardProps {
   favoritePending?: boolean;
   learningContext?: LearningContextQuery | null;
   discoveryImpressionId?: string | null;
+  isCompared?: boolean;
+  onToggleCompare?: (id: string) => void;
+  compareDisabled?: boolean;
 }
 
 type LearningContextQuery = {
@@ -63,6 +66,9 @@ export function TutorCard({
   favoritePending,
   learningContext,
   discoveryImpressionId,
+  isCompared,
+  onToggleCompare,
+  compareDisabled,
 }: TutorCardProps) {
   const examOrder = ["TYT", "AYT", "YDT", "DGS", "KPSS"] as const;
   const orderedSubjectsWithDuplicates = examOrder.flatMap((exam) =>
@@ -172,6 +178,21 @@ export function TutorCard({
               <span className="ml-1 text-sm text-muted-foreground">/40 dk</span>
             </Link>
             <div className="flex w-full shrink-0 items-center gap-1 sm:w-auto">
+              {onToggleCompare && (
+                <button
+                  type="button"
+                  disabled={compareDisabled && !isCompared}
+                  aria-pressed={isCompared}
+                  aria-label={isCompared ? "Karşılaştırmadan çıkar" : "Karşılaştırmaya ekle"}
+                  title={compareDisabled && !isCompared ? "En fazla üç hoca karşılaştırılabilir" : undefined}
+                  onClick={() => onToggleCompare(tutor.id)}
+                  className={`inline-flex h-9 w-9 items-center justify-center rounded-md border transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
+                    isCompared ? "border-primary bg-primary/10 text-primary" : "hover:bg-muted"
+                  }`}
+                >
+                  <Scale className="h-4 w-4" />
+                </button>
+              )}
               <Link href={tutorHref} className="flex-1 rounded-md bg-primary px-3 py-2 text-center text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 sm:flex-none">
                 Profili Gör <ArrowRight className="ml-1 inline h-3.5 w-3.5" />
               </Link>

@@ -8,6 +8,7 @@ import {
   PaginatedResponse,
   TutorTeachingStyle,
   TutorTeachingAttribute,
+  TutorSavedSearch,
 } from "@/types";
 
 export interface CreateTutorProfilePayload {
@@ -62,6 +63,7 @@ export interface TutorFilters {
   availability_time?: string;
   online?: string;
   teaching_attributes?: string;
+  topic?: string;
 }
 
 export async function fetchTeachingAttributes(): Promise<TutorTeachingAttribute[]> {
@@ -114,6 +116,38 @@ export async function fetchTutorEducationOptions(): Promise<TutorEducationOption
 export async function fetchTutorById(id: string): Promise<TutorProfile> {
   const response = await api.get<TutorProfile>(`/tutors/${id}/`);
   return response.data;
+}
+
+export async function fetchTutorComparison(ids: string[]): Promise<TutorProfile[]> {
+  const params = new URLSearchParams({ ids: ids.join(",") });
+  const response = await api.get<TutorProfile[]>(`/tutors/compare/?${params.toString()}`);
+  return response.data;
+}
+
+export async function fetchTutorSavedSearches(): Promise<TutorSavedSearch[]> {
+  const response = await api.get<TutorSavedSearch[]>("/matching/saved-searches/");
+  return response.data;
+}
+
+export async function createTutorSavedSearch(payload: {
+  name?: string;
+  filters: TutorFilters;
+  ordering: string;
+}): Promise<TutorSavedSearch> {
+  const response = await api.post<TutorSavedSearch>("/matching/saved-searches/", payload);
+  return response.data;
+}
+
+export async function updateTutorSavedSearch(
+  id: string,
+  payload: Partial<{ name: string; filters: TutorFilters; ordering: string }>
+): Promise<TutorSavedSearch> {
+  const response = await api.patch<TutorSavedSearch>(`/matching/saved-searches/${id}/`, payload);
+  return response.data;
+}
+
+export async function deleteTutorSavedSearch(id: string): Promise<void> {
+  await api.delete(`/matching/saved-searches/${id}/`);
 }
 
 export async function fetchTutorReviews(tutorId: string): Promise<Review[]> {

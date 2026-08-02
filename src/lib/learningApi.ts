@@ -3,6 +3,7 @@ import type {
   ConfirmLearningActivityPayload,
   LearningDashboardResponse,
   LearningGoalTemplate,
+  LearningTopic,
   StudentGoal,
   StudentMilestone,
   StudentMilestoneStatus,
@@ -37,6 +38,11 @@ export async function fetchLearningDashboard(): Promise<LearningDashboardRespons
 
 export async function fetchLearningGoalTemplates(): Promise<LearningGoalTemplate[]> {
   const response = await api.get<LearningGoalTemplate[]>("/learning/goal-templates/");
+  return response.data;
+}
+
+export async function fetchLearningTopics(): Promise<LearningTopic[]> {
+  const response = await api.get<LearningTopic[]>("/learning/topics/");
   return response.data;
 }
 
