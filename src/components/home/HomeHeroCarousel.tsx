@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -114,7 +115,21 @@ export function HomeHeroCarousel({ greetingName }: { greetingName?: string }) {
               aria-hidden={slideIndex !== index}
               className="relative w-full shrink-0"
             >
-              <HomeHeroArt scene={slide.scene} tone={slide.tone} />
+              {slide.image ? (
+                <>
+                  <Image
+                    src={slide.image.src}
+                    alt={slide.image.alt}
+                    fill
+                    priority={slideIndex === 0}
+                    sizes="100vw"
+                    className="object-cover object-center"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-r from-background/45 via-background/15 to-transparent" />
+                </>
+              ) : (
+                <HomeHeroArt scene={slide.scene} tone={slide.tone} />
+              )}
               <div className="relative mx-auto flex min-h-[420px] max-w-7xl items-center px-4 py-12 sm:px-6 sm:py-14 lg:min-h-[460px] lg:px-8">
                 <div className="w-full max-w-xl rounded-2xl border bg-card/95 p-6 shadow-lg backdrop-blur-sm sm:p-8">
                   {slideIndex === 0 && greetingName && (

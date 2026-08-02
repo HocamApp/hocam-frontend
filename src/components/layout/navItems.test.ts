@@ -41,13 +41,6 @@ describe("getNavDescriptors", () => {
       },
       {
         kind: "route",
-        title: "Sorular",
-        icon: "CircleHelp",
-        href: "/cikmis-sorular",
-        mobilePlacement: "overflow",
-      },
-      {
-        kind: "route",
         title: "Panelim",
         icon: "LayoutDashboard",
         href: "/dashboard/student",
@@ -78,7 +71,7 @@ describe("getNavDescriptors", () => {
     ]);
   });
 
-  it("preserves the tutor desktop order while assigning five mobile primary items", () => {
+  it("preserves the tutor desktop order while assigning mobile primary items", () => {
     assert.equal(typeof navItems.getNavDescriptors, "function");
 
     assert.deepEqual(navItems.getNavDescriptors?.("tutor"), [
@@ -110,13 +103,6 @@ describe("getNavDescriptors", () => {
         href: "/dashboard/tutor",
         mobilePlacement: "primary",
       },
-      {
-        kind: "route",
-        title: "Sorular",
-        icon: "CircleHelp",
-        href: "/cikmis-sorular",
-        mobilePlacement: "overflow",
-      },
       { kind: "separator", mobilePlacement: "hidden" },
       {
         kind: "popover",
@@ -141,7 +127,7 @@ describe("active navigation matching", () => {
       new URLSearchParams()
     );
 
-    assert.equal(activeIndex, 3);
+    assert.equal(activeIndex, 2);
   });
 
   it("matches the student panel when no more specific dashboard prefix applies", () => {
@@ -155,7 +141,7 @@ describe("active navigation matching", () => {
       new URLSearchParams()
     );
 
-    assert.equal(activeIndex, 3);
+    assert.equal(activeIndex, 2);
   });
 
   it("activates only Favoriler for the exact favorites query special case", () => {
@@ -171,7 +157,7 @@ describe("active navigation matching", () => {
       searchParams
     );
 
-    assert.equal(activeIndex, 7);
+    assert.equal(activeIndex, 6);
     assert.equal(
       navItems.isNavRouteActive?.(
         descriptors[1],
@@ -183,7 +169,7 @@ describe("active navigation matching", () => {
     );
     assert.equal(
       navItems.isNavRouteActive?.(
-        descriptors[7],
+        descriptors[6],
         descriptors,
         "/tutors",
         searchParams
