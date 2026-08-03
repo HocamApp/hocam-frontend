@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
+import { useGoogleCalendarCallbackResult } from "@/hooks/useGoogleCalendarCallbackResult";
 import {
   fetchBookings,
   getBookingErrorMessage,
@@ -600,6 +601,9 @@ function TutorDashboardContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
+  // A Google OAuth callback whose state is invalid/expired can't be attributed
+  // to a tutor, so it lands here instead of the profile page.
+  useGoogleCalendarCallbackResult();
   const { user, isAuthenticated } = useAuth();
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState(() =>

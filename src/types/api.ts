@@ -379,6 +379,11 @@ export interface TutorProfile {
   availability_is_stale?: boolean;
   is_online: boolean;
   last_seen_at?: string | null;
+  /**
+   * Public boolean only. The tutor's Google account e-mail and calendar stay
+   * private — read them from GET /api/tutor/google-calendar/ as the owner.
+   */
+  google_calendar_connected?: boolean;
   trial_lesson_eligible?: boolean | null;
   trial_lessons_remaining?: number | null;
   subjects: Subject[];
@@ -1229,4 +1234,25 @@ export interface CreateSupportTicketPayload {
   category: SupportTicketCategory;
   subject: string;
   message: string;
+}
+
+export type GoogleCalendarConnectionStatus =
+  | "disconnected"
+  | "connected"
+  | "reauthorization_required";
+
+/**
+ * GET /api/tutor/google-calendar/ — private to the owning verified tutor.
+ * Never contains tokens, the calendar id, or the Google account id.
+ */
+export interface GoogleCalendarConnection {
+  status: GoogleCalendarConnectionStatus;
+  account_email: string | null;
+  calendar_name: string;
+  connected_at: string | null;
+  last_error: string;
+}
+
+export interface GoogleCalendarAuthorization {
+  authorization_url: string;
 }

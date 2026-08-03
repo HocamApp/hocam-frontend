@@ -35,6 +35,8 @@ import { SubjectRatingBreakdown } from "@/components/tutors/SubjectRatingBreakdo
 import { TutorPresenceBadge } from "@/components/tutors/TutorPresenceBadge";
 import { VerifiedTutorMark } from "@/components/tutors/VerifiedTutorMark";
 import { AvailabilityCalendar } from "@/components/tutors/AvailabilityCalendar";
+import { GoogleCalendarAssurance } from "@/components/tutors/GoogleCalendarAssurance";
+import { GoogleCalendarConnectionCard } from "@/components/tutors/GoogleCalendarConnectionCard";
 import { MessageRequestModal } from "@/components/tutors/MessageRequestModal";
 import { BookingModal } from "@/components/lessons/BookingModal";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
@@ -985,6 +987,17 @@ export default function TutorProfilePage({
           <section className="mt-10">
             <h2 className="text-xl font-semibold">Müsaitlik</h2>
             <Separator className="mt-2" />
+            {isOwnProfile ? (
+              <div className="mt-4">
+                <GoogleCalendarConnectionCard />
+              </div>
+            ) : (
+              <div className="mt-4">
+                <GoogleCalendarAssurance
+                  connected={tutor.google_calendar_connected}
+                />
+              </div>
+            )}
             <div className="mt-4">
               {availabilityLoading ? (
                 <Card>
