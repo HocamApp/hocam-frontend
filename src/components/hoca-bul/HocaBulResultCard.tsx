@@ -1,7 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { AlertTriangle, CalendarDays, Check, Star } from "lucide-react";
+import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { AlertTriangle, CalendarDays, Check, Star, X } from "lucide-react";
+import { toast } from "sonner";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
@@ -12,6 +15,10 @@ import { caveatTexts, reasonTexts } from "@/lib/hocaBulResults";
 import { formatLessonCount, formatPrice, formatRating } from "@/lib/utils";
 import type { TutorMatchResult } from "@/types";
 import { recordDiscoveryEvent } from "@/lib/discovery";
+import { hideTutorRecommendation } from "@/lib/matchingApi";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import type { RecommendationControlReason } from "@/types";
 
 interface HocaBulResultCardProps {
   match: TutorMatchResult;
@@ -20,6 +27,7 @@ interface HocaBulResultCardProps {
   favoritePending: boolean;
   onToggleFavorite: (tutorId: string) => void;
   discoveryImpressionId?: string | null;
+  onHidden?: (tutorId: string) => void;
 }
 
 function initials(name: string, surname: string): string {
@@ -45,7 +53,11 @@ export function HocaBulResultCard({
   favoritePending,
   onToggleFavorite,
   discoveryImpressionId,
+  onHidden,
 }: HocaBulResultCardProps) {
+  const [hideOpen, setHideOpen] = useState(false);
+  const [isHiding, setIsHiding] = useState(false);
+  const queryClient = useQueryClient();
   const { tutor } = match;
   const href = `/tutors/${tutor.id}${discoveryImpressionId ? `?discovery_impression_id=${encodeURIComponent(discoveryImpressionId)}` : ""}`;
   const availability = match.nearest_available_at
@@ -63,7 +75,23 @@ export function HocaBulResultCard({
     });
   }
 
+  async function hide(reason: RecommendationControlReason) {
+    setIsHiding(true);
+    try {
+      await hideTutorRecommendation(tutor.id, reason);
+      setHideOpen(false);
+      onHidden?.(tutor.id);
+      await queryClient.invalidateQueries({ queryKey: ["recommendation-controls"] });
+      toast.success("Bu öneri sana tekrar gösterilmeyecek.");
+    } catch {
+      toast.error("Öneri gizlenemedi.");
+    } finally {
+      setIsHiding(false);
+    }
+  }
+
   return (
+    <>
     <article
       aria-label={`${tutor.name} ${tutor.surname}`}
       data-discovery-tutor-id={discoveryImpressionId ? tutor.id : undefined}
@@ -152,6 +180,10 @@ export function HocaBulResultCard({
               <span className="text-xl font-semibold">{formatPrice(tutor.hourly_price)}</span>
               <span className="ml-1 text-sm text-muted-foreground">/40 dk</span>
             </p>
+            <div className="flex flex-wrap gap-2">
+            <Button type="button" variant="ghost" onClick={() => setHideOpen(true)}>
+              <X className="mr-1.5 h-4 w-4" />Bana uygun değil
+            </Button>
             <Link
               href={href}
               aria-label={`${tutor.name} ${tutor.surname} profilini gör`}
@@ -160,9 +192,26 @@ export function HocaBulResultCard({
             >
               Profili gör
             </Link>
+            </div>
           </div>
         </CardContent>
       </Card>
     </article>
+    <Dialog open={hideOpen} onOpenChange={setHideOpen}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader><DialogTitle>Bu öneri neden uygun değil?</DialogTitle><DialogDescription>Yanıtın yalnızca senin sonuçlarını düzeltir; hocanın genel puanını etkilemez.</DialogDescription></DialogHeader>
+        <div className="grid gap-2">
+          {([
+            ["price", "Bütçeme uymuyor"], ["schedule", "Saatleri uymuyor"],
+            ["teaching_style", "Anlatım tarzı bana uygun değil"],
+            ["exam_experience", "Aradığım sınav deneyimi değil"],
+            ["not_relevant", "İhtiyacıma uygun değil"], ["do_not_show", "Bir daha gösterme"],
+          ] as Array<[RecommendationControlReason, string]>).map(([value, label]) => (
+            <Button key={value} variant="outline" className="justify-start" disabled={isHiding} onClick={() => void hide(value)}>{label}</Button>
+          ))}
+        </div>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }

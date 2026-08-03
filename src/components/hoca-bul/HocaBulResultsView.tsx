@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useQuery } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import { useFavorites } from "@/hooks/useFavorites";
@@ -12,6 +13,8 @@ import type { MatchingAnswers, MatchingPreview } from "@/types";
 
 import { HocaBulResultCard } from "./HocaBulResultCard";
 import { useDiscoveryExposures } from "@/hooks/useDiscoveryExposures";
+import { HiddenTutorControls } from "./HiddenTutorControls";
+import { fetchRecommendationControls } from "@/lib/matchingApi";
 
 interface HocaBulResultsViewProps {
   preview: MatchingPreview;
@@ -22,8 +25,14 @@ const actionClass = "inline-flex min-h-11 items-center justify-center rounded-lg
 
 export function HocaBulResultsView({ preview, answers }: HocaBulResultsViewProps) {
   const { favoriteIds, toggle, isFavoritePending } = useFavorites();
-  const { strong, relaxed } = splitMatches(preview.matches);
-  const unavailable = preview.unavailable_match ?? null;
+  const [hiddenTutorIds, setHiddenTutorIds] = useState<Set<string>>(() => new Set());
+  const controlsQuery = useQuery({ queryKey: ["recommendation-controls"], queryFn: fetchRecommendationControls });
+  const persistedHiddenIds = new Set((controlsQuery.data ?? []).filter((item) => item.hidden).map((item) => item.tutor));
+  const isHidden = (tutorId: string) => hiddenTutorIds.has(tutorId) || persistedHiddenIds.has(tutorId);
+  const visibleMatches = preview.matches.filter((item) => !isHidden(item.tutor.id));
+  const { strong, relaxed } = splitMatches(visibleMatches);
+  const unavailable = preview.unavailable_match && !isHidden(preview.unavailable_match.tutor.id)
+    ? preview.unavailable_match : null;
   const trackedHashes = useRef(new Set<string>());
   const headingRef = useRef<HTMLHeadingElement>(null);
   const payloadHash = hashAnswers(answers);
@@ -60,6 +69,7 @@ export function HocaBulResultsView({ preview, answers }: HocaBulResultsViewProps
         favoritePending={isFavoritePending(match.tutor.id)}
         onToggleFavorite={toggle}
         discoveryImpressionId={preview.discovery_impression_id}
+        onHidden={(tutorId) => setHiddenTutorIds((current) => new Set(current).add(tutorId))}
       />
     );
   }
@@ -76,9 +86,10 @@ export function HocaBulResultsView({ preview, answers }: HocaBulResultsViewProps
           <Button asChild variant="outline" className="mt-5 min-h-11 px-4">
             <Link href={buildResultEditHref("kontrol")}>Tercihlerimi düzenle</Link>
           </Button>
+          <HiddenTutorControls />
         </header>
 
-        {preview.matches.length === 0 && !unavailable ? (
+        {visibleMatches.length === 0 && !unavailable ? (
           <section className="mt-10 rounded-2xl border border-border bg-card p-6 text-center shadow-sm sm:p-10" aria-labelledby="no-results-heading">
             <h2 id="no-results-heading" tabIndex={-1} className="text-2xl font-bold text-foreground">Şu an tam uyan bir hoca bulamadık</h2>
             <p className="mx-auto mt-3 max-w-xl text-muted-foreground">Tercihlerinden birini genişletirsen eşleşme şansın artar.</p>
