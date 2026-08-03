@@ -4,6 +4,8 @@ import type {
   MatchingOptions,
   MatchingPreview,
   SavedMatchingPreference,
+  RecommendationControlReason,
+  TutorRecommendationControl,
 } from "@/types";
 
 
@@ -58,4 +60,24 @@ export async function fetchMatchingPreferences(): Promise<SavedMatchingPreferenc
     "/matching/preferences/me/"
   );
   return response.data.preference;
+}
+
+export async function hideTutorRecommendation(
+  tutor: string,
+  reason: RecommendationControlReason
+): Promise<TutorRecommendationControl> {
+  const response = await api.post<TutorRecommendationControl>(
+    "/matching/recommendation-controls/",
+    { tutor, reason, hidden: true }
+  );
+  return response.data;
+}
+
+export async function fetchRecommendationControls(): Promise<TutorRecommendationControl[]> {
+  const response = await api.get<TutorRecommendationControl[]>("/matching/recommendation-controls/");
+  return response.data;
+}
+
+export async function restoreTutorRecommendation(controlId: string): Promise<void> {
+  await api.delete(`/matching/recommendation-controls/${controlId}/`);
 }

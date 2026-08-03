@@ -45,6 +45,8 @@ export function formatMilestoneStatus(status: StudentMilestoneStatus) {
     not_started: "Başlamadı",
     planned: "Planlandı",
     in_progress: "Devam ediyor",
+    needs_review: "Tekrar gerekiyor",
+    ready_for_confirmation: "Onaya hazır",
     pending_confirmation: "Onay bekliyor",
     completed: "Tamamlandı",
   };
@@ -54,6 +56,8 @@ export function formatMilestoneStatus(status: StudentMilestoneStatus) {
 
 export function formatGoalStatus(status: StudentGoalStatus) {
   const labels: Record<StudentGoalStatus, string> = {
+    draft: "Taslak",
+    proposed: "Onay bekliyor",
     active: "Aktif",
     completed: "Tamamlandı",
     paused: "Duraklatıldı",
