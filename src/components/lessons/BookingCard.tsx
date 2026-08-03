@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { Calendar, Clock3, FolderOpen, User, Wallet } from "lucide-react";
+import { Calendar, ClipboardCheck, Clock3, FolderOpen, User, Wallet } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { LessonJoinButton } from "@/components/lessons/LessonJoinButton";
 import { ParticipantAvatar } from "@/components/messaging/ParticipantAvatar";
 import StatusBadge from "@/components/shared/StatusBadge";
+import { LessonTopicCheckInDialog } from "@/components/learning/LessonTopicCheckInDialog";
 import { cn, formatDate, formatDisputeCategory, formatPrice } from "@/lib/utils";
 import type { Booking, LearningActivityStatus } from "@/types";
 import {
@@ -73,6 +74,7 @@ export function BookingCard({
   className,
 }: BookingCardProps) {
   const [cancelOpen, setCancelOpen] = useState(false);
+  const [topicCheckInOpen, setTopicCheckInOpen] = useState(false);
   const rawStatus = booking.status;
   const status =
     typeof rawStatus === "string"
@@ -113,6 +115,11 @@ export function BookingCard({
     currentUserRole === "tutor" &&
     isCompleted &&
     learningContext?.status === "confirmed";
+  const canRecordTopicCheckIn =
+    currentUserRole === "tutor" &&
+    isCompleted &&
+    booking.topic_check_in_status?.enabled &&
+    booking.topic_check_in_status.required;
   const hasActions =
     currentUserRole === "tutor"
       ? (isPending && isFuture) ||
@@ -121,6 +128,7 @@ export function BookingCard({
         isDisputed ||
         canConfirmLearningProgress ||
         isLearningProgressConfirmed ||
+        canRecordTopicCheckIn ||
         ((isCompleted || isPast) && Boolean(onMaterialsClick))
       : (isConfirmed && isFuture) ||
         canCancel ||
@@ -294,6 +302,18 @@ export function BookingCard({
                   İlerleme onaylandı
                 </span>
               )}
+              {canRecordTopicCheckIn && (
+                <Button
+                  size="sm"
+                  variant={booking.topic_check_in_status?.submitted ? "outline" : "default"}
+                  onClick={() => setTopicCheckInOpen(true)}
+                >
+                  <ClipboardCheck className="mr-2 h-4 w-4" />
+                  {booking.topic_check_in_status?.submitted
+                    ? "Ders Kaydını Düzenle"
+                    : "Ders Sonu Kaydı"}
+                </Button>
+              )}
               {(isCompleted || isPast) && onMaterialsClick && (
                 <Button
                   size="sm"
@@ -417,6 +437,13 @@ export function BookingCard({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+    {topicCheckInOpen && (
+      <LessonTopicCheckInDialog
+        booking={booking}
+        open={topicCheckInOpen}
+        onOpenChange={setTopicCheckInOpen}
+      />
+    )}
     </>
   );
 }

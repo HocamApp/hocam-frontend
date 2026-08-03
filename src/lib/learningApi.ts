@@ -4,6 +4,8 @@ import type {
   LearningDashboardResponse,
   LearningGoalTemplate,
   LearningTopic,
+  LessonTopicCheckIn,
+  LessonTopicCheckInPayload,
   StudentGoal,
   StudentMilestone,
   StudentMilestoneStatus,
@@ -93,6 +95,27 @@ export async function confirmLearningActivity(
   const response = await api.post(
     `/learning/activities/${activityId}/confirm/`,
     payload
+  );
+  return response.data;
+}
+
+export async function upsertLessonTopicCheckIn(
+  bookingId: string,
+  payload: LessonTopicCheckInPayload
+): Promise<LessonTopicCheckIn> {
+  const response = await api.put<LessonTopicCheckIn>(
+    `/learning/bookings/${bookingId}/lesson-check-in/`,
+    payload
+  );
+  return response.data;
+}
+
+export async function fetchTutorLessonTopicCheckIns(
+  studentId: string
+): Promise<LessonTopicCheckIn[]> {
+  const response = await api.get<LessonTopicCheckIn[]>(
+    "/learning/lesson-check-ins/",
+    { params: { student: studentId } }
   );
   return response.data;
 }
