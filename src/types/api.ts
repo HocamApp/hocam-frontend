@@ -591,6 +591,20 @@ export interface MatchingPreview {
   unavailable_match?: TutorMatchResult | null;
 }
 
+export type RecommendationControlReason =
+  | "price" | "schedule" | "teaching_style" | "exam_experience"
+  | "not_relevant" | "do_not_show";
+
+export interface TutorRecommendationControl {
+  id: string;
+  tutor: string;
+  tutor_summary: { id: string; name: string; surname: string };
+  reason: RecommendationControlReason;
+  hidden: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface SavedMatchingPreference extends MatchingAnswers {
   updated_at: string;
 }
