@@ -162,6 +162,45 @@ export interface ConfirmLearningActivityPayload {
   student_level_after_lesson?: LearningLevel | "";
 }
 
+export type LessonCoverageStage = "introduced" | "practised" | "assessed";
+export type LessonUnderstanding =
+  | "understood"
+  | "partly_understood"
+  | "needs_review"
+  | "not_assessed";
+export type LessonSupportLevel =
+  | "independent"
+  | "prompted"
+  | "fully_guided"
+  | "not_applicable";
+export type LessonNextAction = "revisit" | "practise" | "advance" | "reassess" | "none";
+
+export interface LessonTopicCheckInPayload {
+  topic: string;
+  next_topic?: string | null;
+  curriculum_version: string;
+  subtopic?: string;
+  coverage_stage: LessonCoverageStage;
+  understanding: LessonUnderstanding;
+  support_level: LessonSupportLevel;
+  next_action: LessonNextAction;
+}
+
+export interface LessonTopicCheckIn extends LessonTopicCheckInPayload {
+  id: string;
+  booking: string;
+  student: string;
+  tutor: string;
+  subject: string;
+  topic_title: string;
+  next_topic_title: string | null;
+  evidence_source: "tutor_observed";
+  revision_count: number;
+  rendered_note: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface LearningTopic {
   id: string;
   exam_type: string;
@@ -565,6 +604,11 @@ export interface Booking {
   package_credit_units_used?: number;
   created_at: string;
   learning_context?: LearningContext | null;
+  topic_check_in_status?: {
+    enabled: boolean;
+    required: boolean;
+    submitted: boolean;
+  };
   conversation_id?: string | null;
 }
 
