@@ -2,10 +2,12 @@
 
 import type { ReactNode } from "react";
 import { useEffect } from "react";
+import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { MobileTabBar } from "@/components/layout/MobileTabBar";
 import { EarlySupporterWelcome } from "@/components/shared/EarlySupporterWelcome";
+import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { fetchMyTutorProfile } from "@/lib/tutorsApi";
 import { cn } from "@/lib/utils";
@@ -38,12 +40,34 @@ export function MainLayoutShell({ children }: MainLayoutShellProps) {
     if (pendingVerification) router.replace("/tutor/onboarding");
   }, [pendingVerification, router]);
 
+  // Verified tutors are no longer locked into onboarding (TutorActivationGate
+  // exemption). While required steps are still missing, keep a slim visible
+  // banner pointing back at the checklist instead of a redirect loop.
+  const showOnboardingNudge =
+    isAuthenticated &&
+    shouldCheckTutorOnboarding &&
+    !isOnboardingPath &&
+    Boolean(profileQuery.data?.is_verified) &&
+    !(user?.jitsi_tutorial_completed ?? true);
+
   const showMobileNavigation = !isLoading && isAuthenticated;
 
   if (pendingVerification) return null;
 
   return (
     <>
+      {showOnboardingNudge && (
+        <div className="border-b bg-primary/5 px-4 py-2.5 text-sm">
+          <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-2">
+            <p className="text-foreground">
+              Hesabın henüz tam açılmadı — eksik onboarding adımların var.
+            </p>
+            <Button asChild size="sm" variant="outline">
+              <Link href="/tutor/onboarding">Adımları tamamla</Link>
+            </Button>
+          </div>
+        </div>
+      )}
       <div
         className={cn(
           "flex flex-1 flex-col md:contents",

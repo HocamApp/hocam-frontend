@@ -2,8 +2,10 @@
 
 import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 
 import { useAuth } from "@/hooks/useAuth";
+import { fetchMyTutorProfile } from "@/lib/tutorsApi";
 
 // Routes a not-yet-activated tutor may still use: setup/onboarding (incl. the
 // tutorial link target), their profile (required completion + account
@@ -27,6 +29,15 @@ export interface TutorActivationGateInput {
   isAdmin: boolean;
   isImpersonating: boolean;
   tutorialCompleted: boolean;
+  /**
+   * Verification state of the tutor profile:
+   * - `true`  — verified tutor. Per product decision a verified tutor keeps
+   *   full navigation even with incomplete onboarding; missing steps surface
+   *   as a banner/checklist instead of a lock-in.
+   * - `false` — known unverified (or no profile yet): the hard gate stays.
+   * - `null`  — not resolved yet (query in flight): stay put, no bounce.
+   */
+  isVerified: boolean | null;
   pathname: string;
 }
 
@@ -47,6 +58,7 @@ export function shouldRedirectToOnboarding({
   isAdmin,
   isImpersonating,
   tutorialCompleted,
+  isVerified,
   pathname,
 }: TutorActivationGateInput) {
   return (
@@ -54,6 +66,7 @@ export function shouldRedirectToOnboarding({
     isTutor &&
     (!isAdmin || isImpersonating) &&
     !tutorialCompleted &&
+    isVerified === false &&
     !isAllowedPath(pathname)
   );
 }
@@ -67,11 +80,33 @@ export function shouldRedirectToOnboarding({
  * Exempt (grandfathered) pre-existing tutors arrive with
  * jitsi_tutorial_completed=true from the migration backfill and never hit
  * this gate.
+ *
+ * Verified-tutor exemption (product decision): a verified tutor with
+ * incomplete onboarding is NOT locked into /tutor/onboarding — they keep
+ * full navigation and see a persistent banner pointing at the remaining
+ * steps instead (MainLayoutShell). The lock-in stays only for tutors known
+ * to be unverified; while verification state is unresolved the gate waits
+ * rather than bouncing on a guess.
  */
 export function TutorActivationGate() {
   const router = useRouter();
   const pathname = usePathname();
   const { user, isTutor, isAdmin, isLoading, isImpersonating } = useAuth();
+
+  // Same queryKey/fn as MainLayoutShell — one shared fetch, no extra request.
+  const profileQuery = useQuery({
+    queryKey: ["tutor-me"],
+    queryFn: fetchMyTutorProfile,
+    enabled: isTutor && !isLoading && user?.tutor_profile_id != null,
+    retry: false,
+  });
+  const isVerified: boolean | null = !isTutor
+    ? null
+    : user?.tutor_profile_id == null
+      ? false
+      : profileQuery.data
+        ? profileQuery.data.is_verified === true
+        : null;
 
   const mustRedirect = shouldRedirectToOnboarding({
     isLoading,
@@ -80,6 +115,7 @@ export function TutorActivationGate() {
     isImpersonating,
     // A null user means auth has not resolved anyone to gate yet.
     tutorialCompleted: user?.jitsi_tutorial_completed ?? true,
+    isVerified,
     pathname,
   });
 

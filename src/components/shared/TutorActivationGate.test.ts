@@ -46,6 +46,7 @@ describe("TutorActivationGate.shouldRedirectToOnboarding", () => {
     isAdmin: false,
     isImpersonating: false,
     tutorialCompleted: false,
+    isVerified: false,
     pathname: "/dashboard/tutor",
   };
 
@@ -103,6 +104,47 @@ describe("TutorActivationGate.shouldRedirectToOnboarding", () => {
     assert.equal(
       shouldRedirectToOnboarding({ ...baseInput, isTutor: false }),
       false
+    );
+  });
+
+  it("does NOT redirect a verified tutor with incomplete onboarding (lock-in removal)", () => {
+    // Product decision: verified tutors keep full navigation; missing steps
+    // surface as a banner/checklist instead of a hard redirect loop.
+    assert.equal(
+      shouldRedirectToOnboarding({ ...baseInput, isVerified: true }),
+      false
+    );
+    assert.equal(
+      shouldRedirectToOnboarding({
+        ...baseInput,
+        isVerified: true,
+        pathname: "/tutors/some-tutor-id",
+      }),
+      false
+    );
+  });
+
+  it("does NOT redirect while verification state is unresolved", () => {
+    // No bouncing on a guess — the gate waits for the tutor-me query, the
+    // same way MainLayoutShell waits before judging verification.
+    assert.equal(
+      shouldRedirectToOnboarding({ ...baseInput, isVerified: null }),
+      false
+    );
+  });
+
+  it("still redirects a known-unverified tutor with incomplete tutorial", () => {
+    assert.equal(
+      shouldRedirectToOnboarding({ ...baseInput, isVerified: false }),
+      true
+    );
+    assert.equal(
+      shouldRedirectToOnboarding({
+        ...baseInput,
+        isVerified: false,
+        pathname: "/messages",
+      }),
+      true
     );
   });
 });

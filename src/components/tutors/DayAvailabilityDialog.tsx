@@ -125,7 +125,10 @@ export function DayAvailabilityDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      {/* Tall content (mode switch + rules + add-row + close-day) must stay
+          reachable on short viewports — without a max height the footer
+          controls could render below the fold with no way to scroll. */}
+      <DialogContent className="max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{dayLabel} Müsaitliği</DialogTitle>
           <DialogDescription>

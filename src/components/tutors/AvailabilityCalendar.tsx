@@ -62,7 +62,11 @@ export function AvailabilityCalendar({ availability, bookings = [], editable = t
   const label = `${DAY_NAMES[jsDayToBackendDay(selectedDate.getDay())]} ${selectedDate.toLocaleDateString("tr-TR", { day: "numeric", month: "long" })}`;
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[auto_minmax(0,1fr)]">
+    // Two columns only when both fit comfortably (xl+). Below that the
+    // detail panel stacked under the calendar instead of being squeezed into
+    // an unreadable strip; `minmax(22rem, 1fr)` guarantees the panel a
+    // readable minimum width when columns do kick in.
+    <div className="grid gap-6 xl:grid-cols-[auto_minmax(22rem,1fr)]">
       <Card className="w-fit">
         <CardContent className="p-3">
           <Calendar

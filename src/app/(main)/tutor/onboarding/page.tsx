@@ -19,6 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { validateProfilePhotoFile, PROFILE_PHOTO_ACCEPT } from "@/lib/profilePhoto";
+import { shouldShowLessonsEditCta } from "@/lib/tutorOnboarding";
 
 type OnboardingStep = {
   title: string;
@@ -267,6 +268,15 @@ function TutorOnboardingContent() {
                 Aşağıdaki takvimden bir gün seçip Düzenle ile uygun saatlerini ekle.
                 Bu işlem tamamlandığında hoca ana sayfana otomatik yönlendirileceksin.
               </p>
+              {shouldShowLessonsEditCta({
+                verificationApproved,
+                lessonsReady,
+                subjectCount: profile?.subjects.length ?? 0,
+              }) && (
+                <Button asChild variant="outline">
+                  <Link href="/dashboard/tutor/edit">Dersleri ve müsaitliği düzenle</Link>
+                </Button>
+              )}
               <AvailabilityCalendar availability={availability} bookings={[]} />
             </div>
           )}
