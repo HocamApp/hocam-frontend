@@ -24,6 +24,7 @@ import {
 import {
   fetchLearningTopics,
   fetchTutorLessonTopicCheckIns,
+  fetchTutorLearningPlans,
   upsertLessonTopicCheckIn,
 } from "@/lib/learningApi";
 import type {
@@ -86,6 +87,7 @@ export function LessonTopicCheckInDialog({
     useState<LessonUnderstanding>("partly_understood");
   const [supportLevel, setSupportLevel] = useState<LessonSupportLevel>("prompted");
   const [nextAction, setNextAction] = useState<LessonNextAction>("revisit");
+  const [milestoneId, setMilestoneId] = useState("__outside__");
 
   const topicsQuery = useQuery({
     queryKey: ["learning-topics"],
@@ -98,6 +100,15 @@ export function LessonTopicCheckInDialog({
     queryFn: () => fetchTutorLessonTopicCheckIns(booking.student.id),
     enabled: open,
   });
+  const plansQuery = useQuery({
+    queryKey: ["tutor-learning-plans", booking.student.id],
+    queryFn: () => fetchTutorLearningPlans(booking.student.id),
+    enabled: open && process.env.NEXT_PUBLIC_LEARNING_PLANS_ENABLED === "true",
+  });
+  const activePlans = (plansQuery.data ?? []).filter((plan) => plan.status === "active");
+  const selectedPlan = activePlans.find((plan) =>
+    plan.milestones.some((milestone) => milestone.id === milestoneId)
+  );
   const existing = checkInsQuery.data?.find((item) => item.booking === booking.id);
   const compatibleTopics = useMemo(
     () =>
@@ -123,6 +134,7 @@ export function LessonTopicCheckInDialog({
       setUnderstanding(existing.understanding);
       setSupportLevel(existing.support_level);
       setNextAction(existing.next_action);
+      setMilestoneId(existing.milestone ?? "__outside__");
       return;
     }
     setTopic(booking.learning_context?.topic?.id ?? "");
@@ -157,6 +169,8 @@ export function LessonTopicCheckInDialog({
     }
     mutation.mutate({
       topic,
+      goal: selectedPlan?.id ?? null,
+      milestone: milestoneId === "__outside__" ? null : milestoneId,
       next_topic: nextTopic === "__none__" ? null : nextTopic,
       curriculum_version: curriculumVersion.trim(),
       subtopic: subtopic.trim(),
@@ -179,6 +193,20 @@ export function LessonTopicCheckInDialog({
         </DialogHeader>
 
         <div className="grid gap-4 py-2 sm:grid-cols-2">
+          {process.env.NEXT_PUBLIC_LEARNING_PLANS_ENABLED === "true" && (
+            <div className="space-y-2 sm:col-span-2">
+              <Label>Plan aşaması</Label>
+              <Select value={milestoneId} onValueChange={setMilestoneId}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__outside__">Mevcut planın dışında işlendi</SelectItem>
+                  {activePlans.flatMap((plan) => plan.milestones.map((milestone) => (
+                    <SelectItem key={milestone.id} value={milestone.id}>{plan.title} · {milestone.title}</SelectItem>
+                  )))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           <div className="space-y-2 sm:col-span-2">
             <Label>Konu</Label>
             <Select value={topic} onValueChange={setTopic} disabled={mutation.isPending}>
