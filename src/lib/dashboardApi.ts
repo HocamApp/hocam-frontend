@@ -3,7 +3,7 @@
  * a tutor's availability (backend allows this without auth).
  */
 import api from "./api";
-import { AvailabilityRule, TutorVerification } from "@/types";
+import { AvailabilityRule, TutorLaunchProgram, TutorVerification } from "@/types";
 
 export async function fetchAvailability(): Promise<AvailabilityRule[]> {
   const response = await api.get<AvailabilityRule[]>("/availability/");
@@ -51,5 +51,17 @@ export async function submitVerification(
     formData,
     { headers: { "Content-Type": "multipart/form-data" } }
   );
+  return response.data;
+}
+
+export async function fetchTutorLaunchProgram(): Promise<TutorLaunchProgram> {
+  const response = await api.get<TutorLaunchProgram>("/tutor/launch-program/");
+  return response.data;
+}
+
+export async function updateTutorLaunchProgram(
+  payload: Partial<Pick<TutorLaunchProgram, "enabled" | "paused" | "lesson_limit" | "compensation_mode">> & { accept_terms?: boolean }
+): Promise<TutorLaunchProgram> {
+  const response = await api.patch<TutorLaunchProgram>("/tutor/launch-program/", payload);
   return response.data;
 }

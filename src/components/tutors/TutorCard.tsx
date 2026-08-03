@@ -128,6 +128,12 @@ export function TutorCard({
                     YKS Sıralaması: {formatYksRank(tutor.yks_rank)}
                   </span>
                 )}
+                {tutor.is_new_tutor && (
+                  <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">Yeni hoca</span>
+                )}
+                {tutor.launch_program_available && (
+                  <span className="rounded-full bg-violet-500/10 px-2 py-0.5 text-xs font-medium text-violet-700 dark:text-violet-300">Tanıtım programına açık</span>
+                )}
                 {tutor.is_bookable === true && (
                   <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:text-emerald-300">Yeni öğrenci kabul ediyor</span>
                 )}

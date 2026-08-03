@@ -33,6 +33,7 @@ import {
 } from "@/lib/tutorsApi";
 import { fetchAvailability } from "@/lib/dashboardApi";
 import { confirmLearningActivity } from "@/lib/learningApi";
+import { TutorLaunchProgramCard } from "@/components/tutors/TutorLaunchProgramCard";
 import {
   fetchTutorEarnings,
   fetchTutorPackageOffers,
@@ -1429,6 +1430,9 @@ function TutorDashboardContent() {
         </TabsContent>
 
         <TabsContent value="availability" id="tutor-tabpanel-availability" aria-labelledby="tutor-tab-availability" className="mt-6 space-y-6">
+          {process.env.NEXT_PUBLIC_NEW_TUTOR_LAUNCH_PROGRAM_ENABLED === "true" && (
+            <TutorLaunchProgramCard />
+          )}
           <div>
             <h3 className="mb-2 text-sm font-semibold">Önümüzdeki 14 Gün</h3>
             {availabilityLoading || bookingsLoading ? (

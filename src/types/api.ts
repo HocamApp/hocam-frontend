@@ -467,6 +467,8 @@ export interface TutorProfile {
   accepts_trial_lessons?: boolean;
   is_bookable?: boolean;
   availability_is_stale?: boolean;
+  is_new_tutor?: boolean;
+  launch_program_available?: boolean;
   is_online: boolean;
   last_seen_at?: string | null;
   trial_lesson_eligible?: boolean | null;
@@ -488,6 +490,19 @@ export interface TutorProfile {
     rejection_reason: string;
     submitted_at: string;
   } | null;
+}
+
+export interface TutorLaunchProgram {
+  enabled: boolean;
+  paused: boolean;
+  lesson_limit: number;
+  completed_lessons: number;
+  remaining_lessons: number;
+  compensation_mode: "voluntary_zero" | "platform_funded";
+  terms_version: number;
+  terms_accepted_at: string | null;
+  can_offer: boolean;
+  updated_at: string;
 }
 
 export interface TutorTeachingAttribute {
