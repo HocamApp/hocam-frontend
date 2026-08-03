@@ -10,6 +10,7 @@ import type {
   StudentMilestone,
   StudentMilestoneStatus,
   StudentNote,
+  TutorLearningPlanInput,
 } from "@/types";
 
 export interface CreateStudentGoalPayload {
@@ -117,5 +118,32 @@ export async function fetchTutorLessonTopicCheckIns(
     "/learning/lesson-check-ins/",
     { params: { student: studentId } }
   );
+  return response.data;
+}
+
+export async function fetchTutorLearningPlans(studentId: string): Promise<StudentGoal[]> {
+  const response = await api.get<StudentGoal[]>("/learning/tutor-plans/", {
+    params: { student: studentId },
+  });
+  return response.data;
+}
+
+export async function createTutorLearningPlan(
+  payload: TutorLearningPlanInput
+): Promise<StudentGoal> {
+  const response = await api.post<StudentGoal>("/learning/tutor-plans/", payload);
+  return response.data;
+}
+
+export async function proposeTutorLearningPlan(goalId: string): Promise<StudentGoal> {
+  const response = await api.post<StudentGoal>(`/learning/tutor-plans/${goalId}/propose/`);
+  return response.data;
+}
+
+export async function respondToLearningPlan(
+  goalId: string,
+  payload: { action: "accept" | "request_correction" | "pause" | "archive"; reason?: string }
+): Promise<StudentGoal> {
+  const response = await api.post<StudentGoal>(`/learning/goals/${goalId}/respond/`, payload);
   return response.data;
 }

@@ -137,12 +137,14 @@ export interface Subject {
 
 export type LearningLevel = "beginner" | "intermediate" | "advanced";
 
-export type StudentGoalStatus = "active" | "completed" | "paused" | "archived";
+export type StudentGoalStatus = "draft" | "proposed" | "active" | "completed" | "paused" | "archived";
 
 export type StudentMilestoneStatus =
   | "not_started"
   | "planned"
   | "in_progress"
+  | "needs_review"
+  | "ready_for_confirmation"
   | "pending_confirmation"
   | "completed";
 
@@ -177,6 +179,8 @@ export type LessonNextAction = "revisit" | "practise" | "advance" | "reassess" |
 
 export interface LessonTopicCheckInPayload {
   topic: string;
+  goal?: string | null;
+  milestone?: string | null;
   next_topic?: string | null;
   curriculum_version: string;
   subtopic?: string;
@@ -251,7 +255,14 @@ export interface StudentMilestone {
   template: string | null;
   topic: string | null;
   title: string;
+  outcome: string;
+  subtopic: string;
   description: string;
+  is_required: boolean;
+  expected_lessons_min: number | null;
+  expected_lessons_max: number | null;
+  completion_rule: string;
+  next_action: string;
   status: StudentMilestoneStatus;
   progress: number;
   order: number;
@@ -264,14 +275,54 @@ export interface StudentGoal {
   id: string;
   student: string;
   template: string | null;
+  responsible_tutor: string | null;
   title: string;
+  outcome: string;
   description: string;
+  exam_type: string;
+  subject_name: string;
+  curriculum_version: string;
+  estimated_lessons_min: number | null;
+  estimated_lessons_max: number | null;
+  proposal_message: string;
   status: StudentGoalStatus;
   target_date: string | null;
   milestones: StudentMilestone[];
   progress: number;
+  revision: number;
+  proposed_at: string | null;
+  accepted_at: string | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface TutorPlanMilestoneInput {
+  topic: string;
+  title: string;
+  outcome: string;
+  subtopic?: string;
+  description?: string;
+  is_required: boolean;
+  expected_lessons_min?: number | null;
+  expected_lessons_max?: number | null;
+  completion_rule: "tutor_observation";
+  next_action?: string;
+  order: number;
+}
+
+export interface TutorLearningPlanInput {
+  student: string;
+  title: string;
+  outcome: string;
+  description?: string;
+  exam_type: string;
+  subject_name: string;
+  curriculum_version: string;
+  estimated_lessons_min?: number | null;
+  estimated_lessons_max?: number | null;
+  proposal_message?: string;
+  target_date?: string | null;
+  milestones: TutorPlanMilestoneInput[];
 }
 
 export interface StudentNote {

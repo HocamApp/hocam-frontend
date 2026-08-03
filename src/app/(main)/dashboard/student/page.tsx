@@ -37,6 +37,7 @@ import {
 import { ParticipantAvatar } from "@/components/messaging/ParticipantAvatar";
 import { LessonJoinButton } from "@/components/lessons/LessonJoinButton";
 import { LearningMomentumCard } from "@/components/dashboard/student/LearningMomentumCard";
+import { ProposedLearningPlans } from "@/components/learning/ProposedLearningPlans";
 import { AISupportChatWidget } from "@/components/ai/AISupportChatWidget";
 import { STUDENT_DASHBOARD_ASSISTANT } from "@/components/ai/pageAssistantContent";
 import { EmptyState } from "@/components/shared/EmptyState";
@@ -510,6 +511,10 @@ function StudentDashboardContent() {
             </div>
           </section>
         </div>
+
+        {process.env.NEXT_PUBLIC_LEARNING_PLANS_ENABLED === "true" && (
+          <ProposedLearningPlans goals={learningDashboard?.goals ?? []} />
+        )}
 
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-2">
           <LearningMomentumCard
