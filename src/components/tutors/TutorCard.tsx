@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Award, Scale } from "lucide-react";
+import { ArrowRight, Award, Scale, Star } from "lucide-react";
 import { TutorProfile } from "@/types";
 import { cn, formatLessonCount, formatPrice, formatRating } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
@@ -81,20 +81,34 @@ function useTutorCardData(tutor: TutorProfile) {
   return { visibleSubjects, remainingCount, completedLessonsLabel };
 }
 
-function StatusBadges({ tutor, showBookable = true }: { tutor: TutorProfile; showBookable?: boolean }) {
+function StatusBadges({
+  tutor,
+  showPresence = true,
+  showNewTutorBadge = true,
+  showLaunchProgram = true,
+  showBookable = true,
+}: {
+  tutor: TutorProfile;
+  showPresence?: boolean;
+  showNewTutorBadge?: boolean;
+  showLaunchProgram?: boolean;
+  showBookable?: boolean;
+}) {
   return (
     <>
-      <TutorPresenceBadge isOnline={tutor.is_online} lastSeenAt={tutor.last_seen_at} />
+      {showPresence && (
+        <TutorPresenceBadge isOnline={tutor.is_online} lastSeenAt={tutor.last_seen_at} />
+      )}
       {tutor.yks_rank > 0 && (
-        <span className="inline-flex w-fit items-center gap-1 rounded-full border border-amber-500/20 bg-amber-500/10 px-2 py-0.5 text-xs font-medium text-amber-800 dark:text-amber-200">
+        <span className="inline-flex w-fit items-center gap-1 rounded-full border border-brand-500/20 bg-brand-500/10 px-2 py-0.5 text-xs font-medium text-brand-700 dark:text-brand-300">
           <Award className="h-3 w-3" />
-          YKS Sıralaması: {formatYksRank(tutor.yks_rank)}
+          {formatYksRank(tutor.yks_rank)}
         </span>
       )}
-      {tutor.is_new_tutor && (
+      {showNewTutorBadge && tutor.is_new_tutor && (
         <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">Yeni hoca</span>
       )}
-      {tutor.launch_program_available && (
+      {showLaunchProgram && tutor.launch_program_available && (
         <span className="rounded-full bg-violet-500/10 px-2 py-0.5 text-xs font-medium text-violet-700 dark:text-violet-300">Tanıtım programına açık</span>
       )}
       {showBookable && tutor.is_bookable === true && (
@@ -284,13 +298,13 @@ function TutorCardLarge({
                   {getInitials(tutor.name, tutor.surname)}
                 </AvatarFallback>
               </Avatar>
-              {tutor.is_online && <span className="absolute -bottom-1 -right-1 h-4 w-4 rounded-full border-2 border-background bg-emerald-500" aria-label="Çevrim içi" />}
               <VerifiedTutorMark verified={tutor.is_verified} className="absolute -right-1.5 -top-1.5 rounded-full border-2 border-background bg-primary text-primary-foreground" />
             </div>
             <div className="flex items-center gap-x-1 text-xs">
               {tutor.total_reviews > 0 ? (
                 <>
-                  <span className="font-medium">★ {formatRating(tutor.rating)}</span>
+                  <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" aria-hidden />
+                  <span className="font-medium">{formatRating(tutor.rating)}</span>
                   <span className="text-muted-foreground">({tutor.total_reviews})</span>
                 </>
               ) : (
@@ -307,7 +321,13 @@ function TutorCardLarge({
               {tutor.university} · {tutor.department}
             </p>
             <div className="flex flex-wrap items-center gap-2">
-              <StatusBadges tutor={tutor} showBookable={false} />
+              <StatusBadges
+                tutor={tutor}
+                showPresence={false}
+                showNewTutorBadge={false}
+                showLaunchProgram={false}
+                showBookable={false}
+              />
             </div>
             <div className="flex flex-wrap gap-1.5">
               {visibleSubjects.map((sub) => (
