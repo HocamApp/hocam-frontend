@@ -40,7 +40,7 @@ test("keeps the approved Garden Split roles explicit and checkout-scoped", () =>
   assert.match(gardenSplit, /--checkout-selected-duration: #ffffff/);
   assert.match(gardenSplit, /--checkout-duration-control: #343633/);
   assert.match(gardenSplit, /--checkout-advantage: #efcc5e/);
-  assert.match(gardenSplit, /--checkout-cta: #ff435d/);
-  assert.match(gardenSplit, /--checkout-compare-private: #343633/);
-  assert.match(gardenSplit, /--checkout-compare-private-ink: #ffffff/);
+  assert.match(gardenSplit, /--checkout-cta: #343633/);
+  assert.match(gardenSplit, /--checkout-compare-private: color-mix\(in srgb, #efcc5e 82%, #ffffff\)/);
+  assert.match(gardenSplit, /--checkout-compare-private-ink: #343633/);
 });
