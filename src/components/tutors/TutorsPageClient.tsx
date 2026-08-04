@@ -426,7 +426,7 @@ function TutorsPageContent() {
                   in both light and dark mode, while still letting it show through. */}
               <div className="absolute inset-0 bg-background/55" />
               <div className="relative px-5 py-7 sm:px-8 sm:py-9">
-                <div className="mx-auto max-w-3xl rounded-xl bg-background/85 px-5 py-6 text-center shadow-sm backdrop-blur-sm sm:px-8 sm:py-7">
+                <div className="mx-auto max-w-3xl rounded-xl bg-background px-5 py-6 text-center shadow-sm sm:px-8 sm:py-7">
                   <p className="text-sm font-semibold text-primary">DOĞRULANMIŞ YKS HOCALARI</p>
                   <h1 className="mt-2 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
                     Sana uygun hocayı bul
