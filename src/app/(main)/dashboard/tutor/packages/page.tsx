@@ -7,8 +7,6 @@ import { toast } from "sonner";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 
 import { RouteGuard } from "@/components/shared/RouteGuard";
-import { ScribbleLayers } from "@/components/decor/ScribbleLayer";
-import { NARROW_FLOW_SCRIBBLES } from "@/lib/scribblePlacements";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { Button } from "@/components/ui/button";
@@ -166,8 +164,6 @@ function TutorPackagesContent() {
   };
 
   return (
-    <div className="relative isolate">
-      <ScribbleLayers layers={NARROW_FLOW_SCRIBBLES} />
     <div className="mx-auto max-w-3xl px-4 py-8">
       <div className="mb-6 flex items-center gap-3">
         <Button type="button" variant="ghost" size="sm" onClick={() => router.push("/dashboard/tutor")}>
@@ -269,7 +265,6 @@ function TutorPackagesContent() {
           Devam etmek için en az bir sıklık seç.
         </p>
       )}
-    </div>
     </div>
   );
 }

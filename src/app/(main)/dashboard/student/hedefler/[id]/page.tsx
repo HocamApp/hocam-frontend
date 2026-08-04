@@ -256,7 +256,6 @@ function GoalPackageDetailContent() {
         <PackageCover
           examType={template?.exam_type}
           subjectName={template?.subject_name}
-          slug={template?.slug}
           isFeatured={template?.is_featured}
           className="h-32 w-full sm:h-40"
         />

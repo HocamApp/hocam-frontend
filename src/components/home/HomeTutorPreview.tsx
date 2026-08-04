@@ -41,7 +41,6 @@ export function HomeTutorPreview({
   if (isLoading) {
     return (
       <div className="relative mx-auto w-full max-w-md" aria-label="Hoca profili yükleniyor">
-        <div className="absolute -inset-4 -z-10 rounded-[2rem] bg-primary/[0.04]" aria-hidden="true" />
         <div className="rounded-3xl border bg-card p-6 shadow-xl shadow-primary/5">
           <div className="flex items-center gap-4">
             <Skeleton className="h-20 w-20 rounded-2xl" />
@@ -61,7 +60,6 @@ export function HomeTutorPreview({
   if (isError || !tutor) {
     return (
       <div className="relative mx-auto w-full max-w-md">
-        <div className="absolute -inset-4 -z-10 rounded-[2rem] bg-primary/[0.04]" aria-hidden="true" />
         <div className="rounded-3xl border bg-card p-7 shadow-xl shadow-primary/5">
           <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
             <GraduationCap className="h-7 w-7" aria-hidden="true" />
@@ -89,7 +87,6 @@ export function HomeTutorPreview({
 
   return (
     <div className="relative mx-auto w-full max-w-md">
-      <div className="absolute -inset-5 -z-10 rounded-[2.25rem] bg-gradient-to-br from-primary/[0.08] via-violet-500/[0.08] to-transparent" aria-hidden="true" />
       <div className="absolute -right-3 -top-4 z-10 inline-flex items-center gap-2 rounded-full border bg-background px-3 py-2 text-xs font-semibold shadow-md">
         {matched ? (
           <>

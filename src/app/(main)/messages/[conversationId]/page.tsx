@@ -354,14 +354,9 @@ function ConversationContent({
           </div>
         </header>
 
-        {/* Messages area — mostly-white with a subtle dot texture for depth */}
+        {/* Messages area */}
         <div
           className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto bg-background p-3 sm:p-4"
-          style={{
-            backgroundImage:
-              "radial-gradient(hsl(var(--muted-foreground) / 0.08) 1px, transparent 1px)",
-            backgroundSize: "22px 22px",
-          }}
         >
           {messagesLoading && (
             <div className="flex justify-center py-8">
