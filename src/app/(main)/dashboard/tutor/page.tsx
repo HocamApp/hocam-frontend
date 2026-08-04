@@ -33,6 +33,7 @@ import {
 } from "@/lib/tutorsApi";
 import { fetchAvailability } from "@/lib/dashboardApi";
 import { confirmLearningActivity } from "@/lib/learningApi";
+import { TutorLaunchProgramCard } from "@/components/tutors/TutorLaunchProgramCard";
 import {
   fetchTutorEarnings,
   fetchTutorPackageOffers,
@@ -62,8 +63,6 @@ import { EmptyState } from "@/components/shared/EmptyState";
 import { AISupportChatWidget } from "@/components/ai/AISupportChatWidget";
 import { TUTOR_DASHBOARD_ASSISTANT } from "@/components/ai/pageAssistantContent";
 import { RouteGuard } from "@/components/shared/RouteGuard";
-import { ScribbleLayers } from "@/components/decor/ScribbleLayer";
-import { TUTOR_DASHBOARD_SCRIBBLES } from "@/lib/scribblePlacements";
 import { TutorialNudgeBanner } from "@/components/shared/TutorialNudgeBanner";
 import StatusBadge from "@/components/shared/StatusBadge";
 import { BookingCard, paymentLabel } from "@/components/lessons/BookingCard";
@@ -964,13 +963,6 @@ function TutorDashboardContent() {
       <div className="mx-auto w-full min-w-0 max-w-6xl overflow-x-clip px-4">
         <TutorialNudgeBanner />
       </div>
-      {/*
-        Only the header band is decorated. It is the one block whose height is
-        the same on every tab, so the decoration cannot jump when the tab
-        changes; `bleedBottom` lets the shapes hang into the tab body below.
-      */}
-      <div className="relative isolate">
-      <ScribbleLayers layers={TUTOR_DASHBOARD_SCRIBBLES} />
       <div className="mx-auto w-full min-w-0 max-w-6xl overflow-x-clip px-4">
       <header className="mb-6 flex flex-col gap-4 border-b pb-6 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-4">
@@ -1011,7 +1003,6 @@ function TutorDashboardContent() {
           </Button>
         </div>
       </header>
-      </div>
       </div>
 
       <div className="mx-auto w-full min-w-0 max-w-6xl overflow-x-clip px-4">
@@ -1429,6 +1420,9 @@ function TutorDashboardContent() {
         </TabsContent>
 
         <TabsContent value="availability" id="tutor-tabpanel-availability" aria-labelledby="tutor-tab-availability" className="mt-6 space-y-6">
+          {process.env.NEXT_PUBLIC_NEW_TUTOR_LAUNCH_PROGRAM_ENABLED === "true" && (
+            <TutorLaunchProgramCard />
+          )}
           <div>
             <h3 className="mb-2 text-sm font-semibold">Önümüzdeki 14 Gün</h3>
             {availabilityLoading || bookingsLoading ? (

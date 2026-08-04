@@ -31,7 +31,6 @@ import { buildTutorSubjectLabels } from "@/lib/tutorSubjectLabels";
 import { formatLessonCount, formatPrice, formatRating } from "@/lib/utils";
 import { ReviewCard } from "@/components/tutors/ReviewCard";
 import { ReviewSummary } from "@/components/tutors/ReviewSummary";
-import { SubjectRatingBreakdown } from "@/components/tutors/SubjectRatingBreakdown";
 import { TutorPresenceBadge } from "@/components/tutors/TutorPresenceBadge";
 import { VerifiedTutorMark } from "@/components/tutors/VerifiedTutorMark";
 import { AvailabilityCalendar } from "@/components/tutors/AvailabilityCalendar";
@@ -53,6 +52,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { SubjectRating } from "@/types";
+import { recordDiscoveryEvent } from "@/lib/discovery";
 
 function getInitials(name: string, surname: string): string {
   const n = (name || "").trim()[0] || "";
@@ -377,6 +377,11 @@ export default function TutorProfilePage({
   const learningContext = learningContextFromSearchParams(
     new URLSearchParams(searchParams.toString())
   );
+  const discoveryImpressionId = searchParams.get("discovery_impression_id");
+
+  useEffect(() => {
+    void recordDiscoveryEvent(discoveryImpressionId, id, "profile_view");
+  }, [discoveryImpressionId, id]);
 
   const {
     data: tutor,
@@ -443,6 +448,8 @@ export default function TutorProfilePage({
     isStudent &&
     !isOwnProfile &&
     tutor?.trial_lesson_eligible === true &&
+    tutor?.accepts_trial_lessons !== false &&
+    tutor?.is_bookable !== false &&
     trialLessonsRemaining > 0;
   const subjectLabels = buildTutorSubjectLabels(tutor?.subjects ?? []);
   const subjectGroups = Array.from(
@@ -732,6 +739,11 @@ export default function TutorProfilePage({
                 )}
                 {isAuthenticated && isStudent && !isOwnProfile && (
                   <>
+                    {tutor.is_bookable === false && (
+                      <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-900 dark:text-amber-100">
+                        Bu hoca şu anda yeni öğrenci kabul etmiyor. Profilini inceleyebilir veya daha sonra tekrar kontrol edebilirsin.
+                      </div>
+                    )}
                     {bookingComplete ? (
                       <div className="space-y-2 rounded-lg border bg-muted/40 p-3 text-center">
                         <div className="flex justify-center">
@@ -742,13 +754,16 @@ export default function TutorProfilePage({
                           <Link href="/dashboard/student">Rezervasyonlarımı gör</Link>
                         </Button>
                       </div>
-                    ) : (
+                    ) : tutor.is_bookable === false ? null : (
                       <>
                         {canBookFreeTrial ? (
                           <div className="space-y-2">
                             <Button
                               className="w-full"
-                              onClick={() => setBookingModalMode("trial")}
+                              onClick={() => {
+                                void recordDiscoveryEvent(discoveryImpressionId, id, "booking_started");
+                                setBookingModalMode("trial");
+                              }}
                             >
                               Ücretsiz deneme dersi ayırt
                             </Button>
@@ -762,7 +777,10 @@ export default function TutorProfilePage({
                         ) : (
                           <Button
                             className="w-full"
-                            onClick={() => router.push(checkoutHref)}
+                            onClick={() => {
+                              void recordDiscoveryEvent(discoveryImpressionId, id, "booking_started");
+                              router.push(checkoutHref);
+                            }}
                           >
                             Ders Rezervasyonu Yap
                           </Button>
@@ -777,7 +795,10 @@ export default function TutorProfilePage({
                     type="button"
                     variant="outline"
                     className="w-full"
-                    onClick={() => setIsRequestModalOpen(true)}
+                    onClick={() => {
+                      void recordDiscoveryEvent(discoveryImpressionId, id, "contact_started");
+                      setIsRequestModalOpen(true);
+                    }}
                   >
                     <MessageSquare className="mr-2 h-4 w-4" />
                     Hocaya Mesaj Gönder
@@ -790,7 +811,13 @@ export default function TutorProfilePage({
                     tutorId={tutor.id}
                     isFavorite={favoriteIds.has(tutor.id)}
                     isPending={isFavoritePending(tutor.id)}
-                    onToggle={toggle}
+                    onToggle={(tutorId) => {
+                      void recordDiscoveryEvent(
+                        discoveryImpressionId, tutorId,
+                        favoriteIds.has(tutorId) ? "favorite_removed" : "favorite_added"
+                      );
+                      toggle(tutorId);
+                    }}
                   />
                   {isAuthenticated && isStudent && !isOwnProfile && (
                     <Button
@@ -988,11 +1015,11 @@ export default function TutorProfilePage({
               {!reviewsLoading && reviews.length > 0 && (
                 <>
                   {reviewSummary ? (
-                    <div className="mb-6 space-y-6">
+                    <div className="mb-6">
+                      {/* Per-subject scores live in the header rating popover
+                          only — rendering them again here duplicated the same
+                          information further down the same page. */}
                       <ReviewSummary summary={reviewSummary} />
-                      <SubjectRatingBreakdown
-                        subjectRatings={reviewSummary.subject_ratings}
-                      />
                     </div>
                   ) : (
                     <div className="mb-6 flex items-baseline gap-4">
@@ -1026,6 +1053,25 @@ export default function TutorProfilePage({
               )}
             </div>
           </section>
+
+          {/* Supplementary — kept out of the four required sections
+              (profil/aksiyon kartı → tanıtım videosu → verdiği dersler →
+              müsaitlik → değerlendirmeler) so their order stays unbroken. */}
+          {(tutor.teaching_attributes ?? []).length > 0 && (
+            <section className="mt-10">
+              <h2 className="text-xl font-semibold">Ders Anlatım Özellikleri</h2>
+              <p className="mt-1 text-sm text-muted-foreground">Hoca tarafından seçilen özellikler</p>
+              <Separator className="mt-2" />
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                {(tutor.teaching_attributes ?? []).map((attribute) => (
+                  <div key={attribute.code} className="rounded-lg border bg-card p-3">
+                    <p className="text-sm font-medium">{attribute.name}</p>
+                    <p className="mt-1 text-xs leading-5 text-muted-foreground">{attribute.description}</p>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
         </div>
       </div>
 

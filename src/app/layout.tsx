@@ -9,6 +9,7 @@ import { SessionExpiredDialog } from "@/components/shared/SessionExpiredDialog";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
 import { ImpersonationBanner } from "@/components/admin/ImpersonationBanner";
 import { JsonLd } from "@/components/seo/JsonLd";
+import { DiscoveryConsentBanner } from "@/components/privacy/DiscoveryConsentBanner";
 import {
   SITE_DESCRIPTION,
   SITE_NAME,
@@ -98,6 +99,7 @@ export default function RootLayout({
               <ImpersonationBanner />
               <div className="flex min-h-screen flex-1 flex-col">{children}</div>
               <SessionExpiredDialog />
+              <DiscoveryConsentBanner />
             </LanguageProvider>
           </QueryProvider>
         </AuthProvider>

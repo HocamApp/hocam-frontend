@@ -4,34 +4,19 @@ import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import {
   ArrowRight,
-  BookOpen,
   BookOpenCheck,
-  CheckCircle2,
   GraduationCap,
   PackageCheck,
   RotateCcw,
-  Target,
-  XCircle,
 } from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  fetchStudentLearningProfile,
-  fetchStudentQuestionPerformance,
-} from "@/lib/profileApi";
+import { fetchStudentLearningProfile } from "@/lib/profileApi";
 import { formatDate } from "@/lib/utils";
 import { SectionCardTitle } from "./SectionCardTitle";
-
-const PERCENT_FORMATTER = new Intl.NumberFormat("tr-TR", {
-  maximumFractionDigits: 0,
-});
-
-function formatAccuracy(value: number | null | undefined): string {
-  return value == null ? "—" : `%${PERCENT_FORMATTER.format(value)}`;
-}
 
 function RetryState({ message, onRetry }: { message: string; onRetry: () => void }) {
   return (
@@ -85,24 +70,12 @@ export function StudentLearningProfile() {
     queryFn: fetchStudentLearningProfile,
     staleTime: 5 * 60_000,
   });
-  const questionQuery = useQuery({
-    queryKey: ["student-question-performance"],
-    queryFn: fetchStudentQuestionPerformance,
-    staleTime: 5 * 60_000,
-    retry: false,
-  });
-
   const learning = learningQuery.data;
-  const questions = questionQuery.data;
   const tutor = learning?.most_studied_tutor;
   const tutorName = tutor ? `${tutor.name} ${tutor.surname}`.trim() : "";
   const tutorInitials = tutor
     ? `${tutor.name.trim()[0] ?? ""}${tutor.surname.trim()[0] ?? ""}`.toUpperCase()
     : "";
-  const correctPercent = questions?.total_attempts
-    ? (questions.correct_attempts / questions.total_attempts) * 100
-    : 0;
-  const hasStableDistribution = (questions?.total_attempts ?? 0) >= 10;
 
   return (
     <div className="grid min-w-0 grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-5 lg:items-stretch lg:gap-8">
@@ -110,11 +83,11 @@ export function StudentLearningProfile() {
         <CardHeader>
           <SectionCardTitle className="text-base">Öğrenme özetin</SectionCardTitle>
           <p className="text-sm text-muted-foreground">
-            Hocam&apos;daki gerçek ders ve soru etkinliğin.
+            Hocam&apos;daki tamamlanan derslerin ve aktif paketlerin.
           </p>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <Metric
               icon={<BookOpenCheck className="h-4 w-4" aria-hidden="true" />}
               label="Tamamlanan ders"
@@ -125,30 +98,6 @@ export function StudentLearningProfile() {
                   : "Uzun vadeli öğrenme emeğin"
               }
               loading={learningQuery.isLoading}
-            />
-            <Metric
-              icon={<BookOpen className="h-4 w-4" aria-hidden="true" />}
-              label="Çözülen soru"
-              value={questionQuery.isError ? "—" : questions?.total_attempts ?? 0}
-              detail={
-                questionQuery.isError
-                  ? "Soru özeti yüklenemedi"
-                  : "Cevapladığın toplam deneme"
-              }
-              loading={questionQuery.isLoading}
-            />
-            <Metric
-              icon={<Target className="h-4 w-4" aria-hidden="true" />}
-              label="Doğruluk"
-              value={questionQuery.isError ? "—" : formatAccuracy(questions?.accuracy_percent)}
-              detail={
-                questionQuery.isError
-                  ? "Soru özeti yüklenemedi"
-                  : questions?.total_attempts
-                    ? `${questions.total_attempts} cevap üzerinden`
-                    : "Soru çözdükçe oluşacak"
-              }
-              loading={questionQuery.isLoading}
             />
             <Metric
               icon={<PackageCheck className="h-4 w-4" aria-hidden="true" />}
@@ -241,104 +190,6 @@ export function StudentLearningProfile() {
                   Bu hoca şu anda yeni rezervasyon kabul etmiyor.
                 </p>
               )}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      <Card className="order-2 min-w-0 lg:order-3 lg:col-span-3">
-        <CardHeader>
-          <SectionCardTitle className="text-base">Soru performansın</SectionCardTitle>
-          <p className="text-sm text-muted-foreground">
-            Yalnızca cevapladığın sorular üzerinden hesaplanır.
-          </p>
-        </CardHeader>
-        <CardContent>
-          {questionQuery.isLoading ? (
-            <div className="space-y-4">
-              <Skeleton className="h-7 w-48" />
-              <Skeleton className="h-16 w-full" />
-              <Skeleton className="h-9 w-36" />
-            </div>
-          ) : questionQuery.isError ? (
-            <RetryState
-              message="Soru performansın yüklenemedi. Diğer profil bilgilerini kullanmaya devam edebilirsin."
-              onRetry={() => void questionQuery.refetch()}
-            />
-          ) : !questions?.total_attempts ? (
-            <div className="rounded-lg border border-dashed p-6 text-center">
-              <BookOpen className="mx-auto h-8 w-8 text-muted-foreground" aria-hidden="true" />
-              <p className="mt-3 font-medium">Henüz sistem üzerinden soru çözmedin.</p>
-              <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                Soru çözdükçe doğru, yanlış ve ders dağılımını burada görebileceksin.
-              </p>
-              <Button asChild size="sm" className="mt-4">
-                <Link href="/cikmis-sorular">Soru çözmeye başla</Link>
-              </Button>
-            </div>
-          ) : (
-            <div className="space-y-5">
-              <div>
-                <p className="text-2xl font-semibold tracking-tight">
-                  {questions.total_attempts} soru çözdün
-                </p>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {questions.correct_attempts} doğru · {questions.incorrect_attempts} yanlış ·{" "}
-                  {formatAccuracy(questions.accuracy_percent)} doğruluk
-                </p>
-              </div>
-
-              {hasStableDistribution ? (
-                <div className="space-y-3">
-                  <div
-                    className="flex h-3 w-full overflow-hidden rounded-full bg-muted"
-                    role="img"
-                    aria-label={`${questions.correct_attempts} doğru, ${questions.incorrect_attempts} yanlış, ${formatAccuracy(questions.accuracy_percent)} doğruluk`}
-                  >
-                    <span className="bg-emerald-500" style={{ width: `${correctPercent}%` }} />
-                    <span className="bg-rose-500" style={{ width: `${100 - correctPercent}%` }} />
-                  </div>
-                  <div className="grid grid-cols-1 gap-3 text-sm md:grid-cols-2">
-                    <div className="flex items-center gap-2 rounded-md border p-3">
-                      <CheckCircle2 className="h-4 w-4 text-emerald-600" aria-hidden="true" />
-                      <span><strong>{questions.correct_attempts}</strong> doğru</span>
-                    </div>
-                    <div className="flex items-center gap-2 rounded-md border p-3">
-                      <XCircle className="h-4 w-4 text-rose-600" aria-hidden="true" />
-                      <span><strong>{questions.incorrect_attempts}</strong> yanlış</span>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="rounded-lg border border-dashed p-4">
-                  <p className="text-sm font-medium">İlk sonuçların oluşuyor</p>
-                  <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                    Daha anlamlı bir dağılım için en az 10 soru çözmeye devam et.
-                  </p>
-                </div>
-              )}
-
-              {questions.top_subject && (
-                <div className="flex flex-col justify-between gap-2 rounded-lg bg-muted/35 p-4 sm:flex-row sm:items-center">
-                  <div>
-                    <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                      En çok çözdüğün ders
-                    </p>
-                    <p className="mt-1 font-semibold">{questions.top_subject.name}</p>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    {questions.top_subject.attempt_count} soru ·{" "}
-                    {formatAccuracy(questions.top_subject.accuracy_percent)} doğruluk
-                  </p>
-                </div>
-              )}
-
-              <Button asChild variant="outline" size="sm">
-                <Link href="/cikmis-sorular">
-                  Çözmeye devam et
-                  <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
-                </Link>
-              </Button>
             </div>
           )}
         </CardContent>

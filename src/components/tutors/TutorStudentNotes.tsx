@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Pencil, Plus, StickyNote, Trash2, X } from "lucide-react";
+import { ClipboardCheck, Pencil, Plus, StickyNote, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import {
   createTutorStudentNote,
@@ -11,6 +11,7 @@ import {
   updateTutorStudentNote,
 } from "@/lib/notificationsApi";
 import { formatDate } from "@/lib/utils";
+import { fetchTutorLessonTopicCheckIns } from "@/lib/learningApi";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -24,6 +25,11 @@ export function TutorStudentNotes({ studentId, compact = false }: { studentId: s
   const { data: notes = [], isLoading } = useQuery({
     queryKey,
     queryFn: () => fetchTutorStudentNotes(studentId),
+    enabled: Boolean(studentId),
+  });
+  const { data: checkIns = [], isLoading: checkInsLoading } = useQuery({
+    queryKey: ["lesson-topic-check-ins", studentId],
+    queryFn: () => fetchTutorLessonTopicCheckIns(studentId),
     enabled: Boolean(studentId),
   });
   const refresh = () => queryClient.invalidateQueries({ queryKey });
@@ -49,6 +55,29 @@ export function TutorStudentNotes({ studentId, compact = false }: { studentId: s
         <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary"><StickyNote className="h-4 w-4" /></span>
         <div><h3 className="text-sm font-semibold">Özel Notlarım</h3><p className="text-xs text-muted-foreground">Yalnızca sana görünür.</p></div>
       </div>
+      {checkInsLoading ? (
+        <Skeleton className="h-20 w-full" />
+      ) : checkIns.length > 0 ? (
+        <div className={compact ? "max-h-48 space-y-2 overflow-y-auto" : "space-y-2"}>
+          {checkIns.map((checkIn) => (
+            <article key={checkIn.id} className="rounded-lg border border-primary/20 bg-primary/5 p-3">
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <span className="inline-flex items-center gap-1.5 text-xs font-medium text-primary">
+                  <ClipboardCheck className="h-3.5 w-3.5" />
+                  Ders sonu kaydı · Eğitmen gözlemi
+                </span>
+                <span className="text-xs text-muted-foreground">{formatDate(checkIn.updated_at)}</span>
+              </div>
+              <p className="whitespace-pre-wrap text-sm leading-6">{checkIn.rendered_note}</p>
+              {checkIn.revision_count > 0 && (
+                <p className="mt-2 text-xs text-muted-foreground">
+                  {checkIn.revision_count} düzeltme geçmişi korunuyor.
+                </p>
+              )}
+            </article>
+          ))}
+        </div>
+      ) : null}
       {isLoading ? <Skeleton className="h-20 w-full" /> : notes.length === 0 ? <p className="rounded-lg border border-dashed p-3 text-sm text-muted-foreground">Bu öğrenci için henüz notun yok.</p> : (
         <div className={compact ? "max-h-48 space-y-2 overflow-y-auto" : "space-y-2"}>
           {notes.map((note) => (

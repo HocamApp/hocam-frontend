@@ -33,6 +33,7 @@ export interface HomeHeroSlideContent {
   ctaHref: string;
   scene: HomeHeroScene;
   tone: HomeVisualTone;
+  image?: HomeCardImage;
 }
 
 export const HOME_HERO_SLIDES: HomeHeroSlideContent[] = [
@@ -46,6 +47,10 @@ export const HOME_HERO_SLIDES: HomeHeroSlideContent[] = [
     ctaHref: "/tutors",
     scene: "study",
     tone: "brand",
+    image: {
+      src: "/images/home-v3/hero-v2/yks-students.jpg",
+      alt: "Aydınlık bir sınıfta sınava hazırlanan üniversite öğrencileri",
+    },
   },
   {
     id: "kpss",
@@ -57,6 +62,10 @@ export const HOME_HERO_SLIDES: HomeHeroSlideContent[] = [
     ctaHref: "/tutors?exam_type=KPSS",
     scene: "exam",
     tone: "sky",
+    image: {
+      src: "/images/home-v3/hero-v2/kpss-study.jpg",
+      alt: "Birlikte ders notları üzerinde çalışan iki üniversite öğrencisi",
+    },
   },
   {
     id: "dgs",
@@ -68,17 +77,25 @@ export const HOME_HERO_SLIDES: HomeHeroSlideContent[] = [
     ctaHref: "/tutors?exam_type=DGS",
     scene: "plan",
     tone: "violet",
+    image: {
+      src: "/images/home-v3/hero-v2/dgs-exam-paper.jpg",
+      alt: "Sınav masasındaki optik cevap formu, soru kitapçığı ve kalem",
+    },
   },
   {
-    id: "questions",
-    eyebrow: "Çıkmış sorular",
-    title: "Çıkmış sorular ve özel dersle birlikte ilerle",
+    id: "exam-prep",
+    eyebrow: "Sınav hazırlığı",
+    title: "Deneme sonuçlarını hocanla birlikte geliştir",
     description:
-      "Yıl, ders ve konuya göre filtrelediğin soruları çöz; yanlışlarını hocanla aynı ekranda konuş.",
-    ctaLabel: "Soruları aç",
-    ctaHref: "/cikmis-sorular",
-    scene: "questions",
+      "Eksiklerini belirle, çalışma ritmini oluştur ve sınav gününe kadar ilerlemeni düzenli takip et.",
+    ctaLabel: "Hocaları keşfet",
+    ctaHref: "/tutors",
+    scene: "exam",
     tone: "cream",
+    image: {
+      src: "/images/home-v3/hero-v2/exam-answer-sheet.jpg",
+      alt: "Optik cevap formunu kurşun kalemle dolduran öğrenci",
+    },
   },
 ];
 
@@ -151,15 +168,6 @@ export const HOME_EXPLORE_CARDS: HomeExploreCardContent[] = [
     image: {
       src: "/images/home-v3/explore/dgs-sayisal.jpg",
       alt: "Hesap makinesi ve notlarla sayısal soru çözen öğrenci",
-    },
-  },
-  {
-    id: "cikmis-sorular",
-    title: "Çıkmış sorular",
-    href: "/cikmis-sorular",
-    image: {
-      src: "/images/home-v3/explore/cikmis-sorular.jpg",
-      alt: "Geçmiş yılların sınav kağıtlarından oluşan bir arşiv",
     },
   },
 ];
@@ -271,6 +279,8 @@ export interface HomeGoalCardContent {
   title: string;
   description: string;
   chips: string[];
+  templateSlug: string;
+  /** Safe destination while learning templates are still loading. */
   href: string;
   image: HomeCardImage;
 }
@@ -282,7 +292,8 @@ export const HOME_GOAL_CARDS: HomeGoalCardContent[] = [
     description:
       "Sayısal netlerini yüksek tutmak için biyoloji, kimya ve matematikte düzenli tempo.",
     chips: ["AYT Biyoloji", "AYT Kimya", "AYT Matematik"],
-    href: "/tutors?exam_type=AYT",
+    templateSlug: "yks-deneme-analizi-strateji",
+    href: "/dashboard/student",
     image: {
       src: "/images/home-v3/goals/tip.jpg",
       alt: "Kitapları ve steteskopuyla çalışan bir tıp öğrencisi",
@@ -294,7 +305,8 @@ export const HOME_GOAL_CARDS: HomeGoalCardContent[] = [
     description:
       "Matematik ve fizikte soru tipi hakimiyeti, deneme sonrası hata analizi.",
     chips: ["AYT Matematik", "AYT Fizik", "Geometri"],
-    href: "/tutors?exam_type=AYT&subject=Fizik",
+    templateSlug: "ayt-turev-limit",
+    href: "/dashboard/student",
     image: {
       src: "/images/home-v3/goals/muhendislik.jpg",
       alt: "Teknik çizim üzerinde çalışan bir mühendislik öğrencisi",
@@ -306,7 +318,8 @@ export const HOME_GOAL_CARDS: HomeGoalCardContent[] = [
     description:
       "Paragraf hızını ve sözel netlerini birlikte yukarı taşıyan bir çalışma düzeni.",
     chips: ["TYT Türkçe", "AYT Edebiyat", "Tarih"],
-    href: "/tutors?exam_type=AYT&subject=Edebiyat",
+    templateSlug: "tyt-paragraf-turkce-net-artirma",
+    href: "/dashboard/student",
     image: {
       src: "/images/home-v3/goals/hukuk.jpg",
       alt: "Hukuk kitapları ve adalet terazisi",
@@ -318,7 +331,8 @@ export const HOME_GOAL_CARDS: HomeGoalCardContent[] = [
     description:
       "Alan bilgisi ve KPSS hazırlığını aynı planda ilerletmek isteyenler için.",
     chips: ["KPSS Genel Yetenek", "Alan bilgisi"],
-    href: "/tutors?exam_type=KPSS",
+    templateSlug: "kpss-genel-yetenek-matematik",
+    href: "/dashboard/student",
     image: {
       src: "/images/home-v3/goals/ogretmenlik.jpg",
       alt: "Kara tahta başında ders anlatan bir öğretmen",

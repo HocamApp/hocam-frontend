@@ -137,12 +137,14 @@ export interface Subject {
 
 export type LearningLevel = "beginner" | "intermediate" | "advanced";
 
-export type StudentGoalStatus = "active" | "completed" | "paused" | "archived";
+export type StudentGoalStatus = "draft" | "proposed" | "active" | "completed" | "paused" | "archived";
 
 export type StudentMilestoneStatus =
   | "not_started"
   | "planned"
   | "in_progress"
+  | "needs_review"
+  | "ready_for_confirmation"
   | "pending_confirmation"
   | "completed";
 
@@ -160,6 +162,47 @@ export interface ConfirmLearningActivityPayload {
   progress_result: TutorProgressResult;
   tutor_note?: string;
   student_level_after_lesson?: LearningLevel | "";
+}
+
+export type LessonCoverageStage = "introduced" | "practised" | "assessed";
+export type LessonUnderstanding =
+  | "understood"
+  | "partly_understood"
+  | "needs_review"
+  | "not_assessed";
+export type LessonSupportLevel =
+  | "independent"
+  | "prompted"
+  | "fully_guided"
+  | "not_applicable";
+export type LessonNextAction = "revisit" | "practise" | "advance" | "reassess" | "none";
+
+export interface LessonTopicCheckInPayload {
+  topic: string;
+  goal?: string | null;
+  milestone?: string | null;
+  next_topic?: string | null;
+  curriculum_version: string;
+  subtopic?: string;
+  coverage_stage: LessonCoverageStage;
+  understanding: LessonUnderstanding;
+  support_level: LessonSupportLevel;
+  next_action: LessonNextAction;
+}
+
+export interface LessonTopicCheckIn extends LessonTopicCheckInPayload {
+  id: string;
+  booking: string;
+  student: string;
+  tutor: string;
+  subject: string;
+  topic_title: string;
+  next_topic_title: string | null;
+  evidence_source: "tutor_observed";
+  revision_count: number;
+  rendered_note: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface LearningTopic {
@@ -212,7 +255,14 @@ export interface StudentMilestone {
   template: string | null;
   topic: string | null;
   title: string;
+  outcome: string;
+  subtopic: string;
   description: string;
+  is_required: boolean;
+  expected_lessons_min: number | null;
+  expected_lessons_max: number | null;
+  completion_rule: string;
+  next_action: string;
   status: StudentMilestoneStatus;
   progress: number;
   order: number;
@@ -225,14 +275,54 @@ export interface StudentGoal {
   id: string;
   student: string;
   template: string | null;
+  responsible_tutor: string | null;
   title: string;
+  outcome: string;
   description: string;
+  exam_type: string;
+  subject_name: string;
+  curriculum_version: string;
+  estimated_lessons_min: number | null;
+  estimated_lessons_max: number | null;
+  proposal_message: string;
   status: StudentGoalStatus;
   target_date: string | null;
   milestones: StudentMilestone[];
   progress: number;
+  revision: number;
+  proposed_at: string | null;
+  accepted_at: string | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface TutorPlanMilestoneInput {
+  topic: string;
+  title: string;
+  outcome: string;
+  subtopic?: string;
+  description?: string;
+  is_required: boolean;
+  expected_lessons_min?: number | null;
+  expected_lessons_max?: number | null;
+  completion_rule: "tutor_observation";
+  next_action?: string;
+  order: number;
+}
+
+export interface TutorLearningPlanInput {
+  student: string;
+  title: string;
+  outcome: string;
+  description?: string;
+  exam_type: string;
+  subject_name: string;
+  curriculum_version: string;
+  estimated_lessons_min?: number | null;
+  estimated_lessons_max?: number | null;
+  proposal_message?: string;
+  target_date?: string | null;
+  milestones: TutorPlanMilestoneInput[];
 }
 
 export interface StudentNote {
@@ -368,6 +458,17 @@ export interface TutorProfile {
   is_verified: boolean;
   is_public: boolean;
   teaching_styles: TutorTeachingStyle[];
+  teaching_attributes?: TutorTeachingAttribute[];
+  accepting_new_students?: boolean;
+  open_student_slots?: number;
+  earliest_start_date?: string | null;
+  availability_confirmed_at?: string | null;
+  availability_pause_until?: string | null;
+  accepts_trial_lessons?: boolean;
+  is_bookable?: boolean;
+  availability_is_stale?: boolean;
+  is_new_tutor?: boolean;
+  launch_program_available?: boolean;
   is_online: boolean;
   last_seen_at?: string | null;
   trial_lesson_eligible?: boolean | null;
@@ -389,6 +490,26 @@ export interface TutorProfile {
     rejection_reason: string;
     submitted_at: string;
   } | null;
+}
+
+export interface TutorLaunchProgram {
+  enabled: boolean;
+  paused: boolean;
+  lesson_limit: number;
+  completed_lessons: number;
+  remaining_lessons: number;
+  compensation_mode: "voluntary_zero" | "platform_funded";
+  terms_version: number;
+  terms_accepted_at: string | null;
+  can_offer: boolean;
+  updated_at: string;
+}
+
+export interface TutorTeachingAttribute {
+  code: string;
+  name: string;
+  description: string;
+  evidence_status: "self_declared";
 }
 
 export type MatchGoal = "YKS" | "DGS" | "KPSS" | "UNDECIDED";
@@ -481,6 +602,22 @@ export interface TutorMatchResult {
 export interface MatchingPreview {
   matches: TutorMatchResult[];
   candidate_count: number;
+  discovery_impression_id?: string | null;
+  unavailable_match?: TutorMatchResult | null;
+}
+
+export type RecommendationControlReason =
+  | "price" | "schedule" | "teaching_style" | "exam_experience"
+  | "not_relevant" | "do_not_show";
+
+export interface TutorRecommendationControl {
+  id: string;
+  tutor: string;
+  tutor_summary: { id: string; name: string; surname: string };
+  reason: RecommendationControlReason;
+  hidden: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface SavedMatchingPreference extends MatchingAnswers {
@@ -547,6 +684,11 @@ export interface Booking {
   package_credit_units_used?: number;
   created_at: string;
   learning_context?: LearningContext | null;
+  topic_check_in_status?: {
+    enabled: boolean;
+    required: boolean;
+    submitted: boolean;
+  };
   conversation_id?: string | null;
 }
 
@@ -914,6 +1056,21 @@ export interface PaginatedResponse<T> {
   next: string | null;
   previous: string | null;
   results: T[];
+  relaxations?: TutorSearchRelaxation[];
+}
+
+export interface TutorSearchRelaxation {
+  filter: string;
+  count: number;
+}
+
+export interface TutorSavedSearch {
+  id: string;
+  name: string;
+  filters: Record<string, string | string[]>;
+  ordering: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface AvailabilityRule {

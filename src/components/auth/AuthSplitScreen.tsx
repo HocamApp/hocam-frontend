@@ -65,15 +65,7 @@ export function AuthSplitScreen({
           {rightPanel ? (
             <div className="relative z-10 h-full w-full">{rightPanel}</div>
           ) : (
-            <>
-              {/*
-                Only drawn when there is no panel. The animation's frame is opaque cream, so a
-                blob passing behind it would be sliced by a hard rectangular edge.
-              */}
-              <div className="absolute -right-28 -top-28 h-80 w-80 rounded-full bg-[#ff5968]/12 blur-3xl" aria-hidden />
-              <div className="absolute -bottom-24 -left-20 h-72 w-72 rounded-full bg-[#ff8a71]/10 blur-3xl" aria-hidden />
-              <BrandMark size="hero" className="relative z-10 text-neutral-950" />
-            </>
+            <BrandMark size="hero" className="relative z-10 text-neutral-950" />
           )}
         </div>
       </section>

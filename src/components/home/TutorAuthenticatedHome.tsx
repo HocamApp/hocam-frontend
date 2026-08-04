@@ -12,7 +12,6 @@ import {
   CheckCircle2,
   Circle,
   Clock3,
-  FileQuestion,
   GraduationCap,
   MessageCircle,
   RefreshCw,
@@ -32,8 +31,6 @@ import { HIGHLIGHT_PARAM } from "@/hooks/useHighlightTarget";
 import type { Booking } from "@/types";
 import { ParticipantAvatar } from "@/components/messaging/ParticipantAvatar";
 import { canJoinLesson as isLessonJoinable } from "@/components/lessons/LessonJoinButton";
-import { ScribbleLayers } from "@/components/decor/ScribbleLayer";
-import { TUTOR_HOME_SCRIBBLES } from "@/lib/scribblePlacements";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { TutorialNudgeBanner } from "@/components/shared/TutorialNudgeBanner";
 import StatusBadge from "@/components/shared/StatusBadge";
@@ -651,10 +648,8 @@ export function TutorAuthenticatedHome() {
       <div className="mx-auto max-w-7xl px-4 pt-6 sm:px-6 lg:px-8 [&>*]:mb-0">
         <TutorialNudgeBanner />
       </div>
-      <section className="relative isolate border-b bg-gradient-to-br from-muted/60 via-background to-violet-500/[0.08]">
-        <ScribbleLayers layers={TUTOR_HOME_SCRIBBLES.hero} />
-        <div className="pointer-events-none absolute left-1/2 top-16 h-80 w-80 rounded-full bg-primary/[0.04] blur-3xl" aria-hidden="true" />
-        <div className="relative z-10 mx-auto grid max-w-7xl items-center gap-14 px-4 py-14 sm:px-6 sm:py-16 min-[880px]:grid-cols-[minmax(0,1.1fr)_minmax(340px,0.9fr)] min-[880px]:gap-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(360px,0.9fr)] lg:gap-16 lg:px-8 lg:py-[72px]">
+      <section className="border-b bg-gradient-to-br from-muted/60 via-background to-violet-500/[0.08]">
+        <div className="mx-auto grid max-w-7xl items-center gap-14 px-4 py-14 sm:px-6 sm:py-16 min-[880px]:grid-cols-[minmax(0,1.1fr)_minmax(340px,0.9fr)] min-[880px]:gap-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(360px,0.9fr)] lg:gap-16 lg:px-8 lg:py-[72px]">
           <div className="max-w-2xl">
             <p className="mb-3 text-sm font-medium text-muted-foreground">
               Merhaba {firstName}, bugünkü akışın burada.
@@ -729,14 +724,12 @@ export function TutorAuthenticatedHome() {
       </section>
 
       {/*
-        The body is split into four groups so the decorated hosts stay a stable
-        height: each one wraps a pair of sections that always render, and the
-        conditional "students" section is left out of both. The outer column
-        keeps the rhythm the single container used to provide.
+        The body is split into groups so each one wraps a pair of sections
+        that always render, and the conditional "students" section is left
+        out of them. The outer column keeps the rhythm the single container
+        used to provide.
       */}
       <div className="space-y-20 py-16 sm:py-20 lg:space-y-24 lg:py-24">
-      <div className="relative isolate">
-      <ScribbleLayers layers={TUTOR_HOME_SCRIBBLES.bodyUpper} />
       <div className="mx-auto max-w-7xl space-y-20 px-4 sm:px-6 lg:space-y-24 lg:px-8">
         <section aria-labelledby="tutor-home-flow-title" className="space-y-8">
           <SectionHeader
@@ -843,7 +836,6 @@ export function TutorAuthenticatedHome() {
         </section>
 
       </div>
-      </div>
 
       {studentSummaries.length > 0 && (
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -864,8 +856,6 @@ export function TutorAuthenticatedHome() {
         </div>
       )}
 
-      <div className="relative isolate">
-      <ScribbleLayers layers={TUTOR_HOME_SCRIBBLES.bodyLower} />
       <div className="mx-auto max-w-7xl space-y-20 px-4 sm:px-6 lg:space-y-24 lg:px-8">
         <section aria-labelledby="tutor-home-profile-title" className="space-y-8">
           <SectionHeader
@@ -962,15 +952,6 @@ export function TutorAuthenticatedHome() {
           />
           <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
             <ActionCard
-              icon={<FileQuestion className="h-5 w-5" aria-hidden="true" />}
-              eyebrow="Ders içeriği"
-              title="Çıkmış soruları incele"
-              description="TYT, AYT ve YDT sorularını ders öncesi hazırlığında kaynak olarak kullan."
-              href="/cikmis-sorular"
-              action="Soru kütüphanesini aç"
-              analyticsAction="questions"
-            />
-            <ActionCard
               icon={<Star className="h-5 w-5" aria-hidden="true" />}
               eyebrow="Geri bildirim"
               title={`${profile.total_reviews} değerlendirme`}
@@ -996,9 +977,7 @@ export function TutorAuthenticatedHome() {
         </section>
 
       </div>
-      </div>
 
-      {/* The closing CTA already carries its own -z-10 artwork, so it is left alone. */}
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <section className="relative isolate overflow-hidden rounded-3xl bg-primary px-6 py-9 text-primary-foreground sm:px-9 sm:py-10">
           <div className="absolute inset-y-0 right-0 -z-10 hidden w-[48%] lg:block" aria-hidden="true">

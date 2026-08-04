@@ -3,10 +3,14 @@ import type {
   ConfirmLearningActivityPayload,
   LearningDashboardResponse,
   LearningGoalTemplate,
+  LearningTopic,
+  LessonTopicCheckIn,
+  LessonTopicCheckInPayload,
   StudentGoal,
   StudentMilestone,
   StudentMilestoneStatus,
   StudentNote,
+  TutorLearningPlanInput,
 } from "@/types";
 
 export interface CreateStudentGoalPayload {
@@ -37,6 +41,11 @@ export async function fetchLearningDashboard(): Promise<LearningDashboardRespons
 
 export async function fetchLearningGoalTemplates(): Promise<LearningGoalTemplate[]> {
   const response = await api.get<LearningGoalTemplate[]>("/learning/goal-templates/");
+  return response.data;
+}
+
+export async function fetchLearningTopics(): Promise<LearningTopic[]> {
+  const response = await api.get<LearningTopic[]>("/learning/topics/");
   return response.data;
 }
 
@@ -88,5 +97,53 @@ export async function confirmLearningActivity(
     `/learning/activities/${activityId}/confirm/`,
     payload
   );
+  return response.data;
+}
+
+export async function upsertLessonTopicCheckIn(
+  bookingId: string,
+  payload: LessonTopicCheckInPayload
+): Promise<LessonTopicCheckIn> {
+  const response = await api.put<LessonTopicCheckIn>(
+    `/learning/bookings/${bookingId}/lesson-check-in/`,
+    payload
+  );
+  return response.data;
+}
+
+export async function fetchTutorLessonTopicCheckIns(
+  studentId: string
+): Promise<LessonTopicCheckIn[]> {
+  const response = await api.get<LessonTopicCheckIn[]>(
+    "/learning/lesson-check-ins/",
+    { params: { student: studentId } }
+  );
+  return response.data;
+}
+
+export async function fetchTutorLearningPlans(studentId: string): Promise<StudentGoal[]> {
+  const response = await api.get<StudentGoal[]>("/learning/tutor-plans/", {
+    params: { student: studentId },
+  });
+  return response.data;
+}
+
+export async function createTutorLearningPlan(
+  payload: TutorLearningPlanInput
+): Promise<StudentGoal> {
+  const response = await api.post<StudentGoal>("/learning/tutor-plans/", payload);
+  return response.data;
+}
+
+export async function proposeTutorLearningPlan(goalId: string): Promise<StudentGoal> {
+  const response = await api.post<StudentGoal>(`/learning/tutor-plans/${goalId}/propose/`);
+  return response.data;
+}
+
+export async function respondToLearningPlan(
+  goalId: string,
+  payload: { action: "accept" | "request_correction" | "pause" | "archive"; reason?: string }
+): Promise<StudentGoal> {
+  const response = await api.post<StudentGoal>(`/learning/goals/${goalId}/respond/`, payload);
   return response.data;
 }

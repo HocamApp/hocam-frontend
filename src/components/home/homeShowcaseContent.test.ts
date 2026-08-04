@@ -14,7 +14,6 @@ import {
 
 const KNOWN_ROUTE_PREFIXES = [
   "/tutors",
-  "/cikmis-sorular",
   "/dashboard/student",
   "/profile",
 ];
@@ -39,6 +38,14 @@ test("hero slides are unique and route somewhere real", () => {
     assert.ok(slide.title.length > 0);
     assert.ok(slide.ctaLabel.length > 0);
     assertKnownRoute(slide.ctaHref, `hero slide ${slide.id}`);
+  }
+});
+
+test("every hero slide uses stock photography", () => {
+  assert.equal(HOME_HERO_SLIDES.length, 4);
+  for (const slide of HOME_HERO_SLIDES) {
+    assert.ok(slide.image?.src, `hero slide ${slide.id} needs a stock image`);
+    assert.ok(slide.image?.alt, `hero slide ${slide.id} needs image alt text`);
   }
 });
 

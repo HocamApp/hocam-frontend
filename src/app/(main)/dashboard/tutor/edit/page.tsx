@@ -18,11 +18,9 @@ import {
   uploadTutorProfilePicture,
 } from "@/lib/tutorsApi";
 import { filterSelectedSubjectIds } from "@/lib/subjects";
-import type { TutorProfile, TutorTeachingStyle } from "@/types";
+import type { TutorProfile } from "@/types";
 
 import { RouteGuard } from "@/components/shared/RouteGuard";
-import { ScribbleLayers } from "@/components/decor/ScribbleLayer";
-import { TUTOR_EDIT_SCRIBBLES } from "@/lib/scribblePlacements";
 import { AISupportChatWidget } from "@/components/ai/AISupportChatWidget";
 import { TutorBioWizardDialog } from "@/components/ai/TutorBioWizardDialog";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
@@ -53,7 +51,8 @@ import {
   TutorProfileEditSidebar,
   type ProfileActionItem,
 } from "@/components/tutors/profile-editor/TutorProfileEditSidebar";
-import { TeachingStyleSelector } from "@/components/tutors/TeachingStyleSelector";
+import { TeachingAttributeSelector } from "@/components/tutors/TeachingAttributeSelector";
+import { TutorCapacitySettings } from "@/components/tutors/TutorCapacitySettings";
 
 const editSchema = z.object({
   university: z.string().min(1, "Üniversite zorunludur"),
@@ -132,9 +131,9 @@ function TutorProfileEditContent() {
   const [selectedSubjectIds, setSelectedSubjectIds] = useState<string[]>([]);
   const [initialSubjectIds, setInitialSubjectIds] = useState<string[]>([]);
   const [subjectError, setSubjectError] = useState<string | null>(null);
-  const [selectedTeachingStyles, setSelectedTeachingStyles] = useState<TutorTeachingStyle[]>([]);
-  const [initialTeachingStyles, setInitialTeachingStyles] = useState<TutorTeachingStyle[]>([]);
-  const [teachingStyleError, setTeachingStyleError] = useState<string | null>(null);
+  const [selectedTeachingAttributes, setSelectedTeachingAttributes] = useState<string[]>([]);
+  const [initialTeachingAttributes, setInitialTeachingAttributes] = useState<string[]>([]);
+  const [teachingAttributeError, setTeachingAttributeError] = useState<string | null>(null);
   const [generalError, setGeneralError] = useState<string | null>(null);
   const [photoError, setPhotoError] = useState<string | null>(null);
   const [photoUploading, setPhotoUploading] = useState(false);
@@ -187,8 +186,9 @@ function TutorProfileEditContent() {
     const profileSubjectIds = profile.subjects.map((subject) => subject.id);
     setSelectedSubjectIds(profileSubjectIds);
     setInitialSubjectIds(profileSubjectIds);
-    setSelectedTeachingStyles(profile.teaching_styles ?? []);
-    setInitialTeachingStyles(profile.teaching_styles ?? []);
+    const attributeCodes = (profile.teaching_attributes ?? []).map((item) => item.code);
+    setSelectedTeachingAttributes(attributeCodes);
+    setInitialTeachingAttributes(attributeCodes);
     initializedProfileId.current = profile.id;
   }, [form, profile]);
 
@@ -207,10 +207,10 @@ function TutorProfileEditContent() {
     [selectedSubjectIds, subjects]
   );
   const subjectsAreDirty = !sameIds(selectedSubjectIds, initialSubjectIds);
-  const teachingStylesAreDirty = !sameIds(selectedTeachingStyles, initialTeachingStyles);
-  const isDirty = form.formState.isDirty || subjectsAreDirty || teachingStylesAreDirty;
+  const teachingAttributesAreDirty = !sameIds(selectedTeachingAttributes, initialTeachingAttributes);
+  const isDirty = form.formState.isDirty || subjectsAreDirty || teachingAttributesAreDirty;
   const canSave =
-    isDirty && editSchema.safeParse(watchedValues).success && selectedSubjectIds.length > 0 && selectedTeachingStyles.length > 0;
+    isDirty && editSchema.safeParse(watchedValues).success && selectedSubjectIds.length > 0 && selectedTeachingAttributes.length >= 3 && selectedTeachingAttributes.length <= 5;
 
   useEffect(() => {
     if (isDirty && saveState === "success") setSaveState("idle");
@@ -256,8 +256,8 @@ function TutorProfileEditContent() {
       document.getElementById("subjects")?.scrollIntoView({ behavior: "smooth", block: "start" });
       return;
     }
-    if (selectedTeachingStyles.length === 0) {
-      setTeachingStyleError("En az bir ders anlatım yaklaşımı seç.");
+    if (selectedTeachingAttributes.length < 3 || selectedTeachingAttributes.length > 5) {
+      setTeachingAttributeError("3 ila 5 ders anlatım özelliği seç.");
       return;
     }
 
@@ -269,15 +269,16 @@ function TutorProfileEditContent() {
         intro_video_url: parsed.data.intro_video_url ?? "",
         bio: parsed.data.bio ?? "",
         subject_ids: supportedIds,
-        teaching_styles: selectedTeachingStyles,
+        teaching_attribute_codes: selectedTeachingAttributes,
       });
       queryClient.setQueryData(["tutor-me"], updatedProfile);
       form.reset(getFormValues(updatedProfile));
       const savedIds = updatedProfile.subjects.map((subject) => subject.id);
       setSelectedSubjectIds(savedIds);
       setInitialSubjectIds(savedIds);
-      setSelectedTeachingStyles(updatedProfile.teaching_styles ?? []);
-      setInitialTeachingStyles(updatedProfile.teaching_styles ?? []);
+      const savedAttributeCodes = (updatedProfile.teaching_attributes ?? []).map((item) => item.code);
+      setSelectedTeachingAttributes(savedAttributeCodes);
+      setInitialTeachingAttributes(savedAttributeCodes);
       setSaveState("success");
       toast.success(
         updatedProfile.is_verified
@@ -294,7 +295,12 @@ function TutorProfileEditContent() {
           intro_video_url: "intro_video_url",
           bio: "bio",
         };
-        let hasFieldError = false;
+        const teachingAttributeMessages = dataRecord.teaching_attribute_codes;
+        const hasTeachingAttributeError = Array.isArray(teachingAttributeMessages);
+        if (Array.isArray(teachingAttributeMessages)) {
+          setTeachingAttributeError(String(teachingAttributeMessages[0]));
+        }
+        let hasFieldError = hasTeachingAttributeError;
         for (const [apiKey, formKey] of Object.entries(fieldMap)) {
           if (Array.isArray(dataRecord[apiKey])) {
             form.setError(formKey, { message: String(dataRecord[apiKey][0]) });
@@ -413,14 +419,7 @@ function TutorProfileEditContent() {
   };
 
   return (
-    <div className="relative isolate min-h-screen bg-muted/20 pb-28 lg:pb-12">
-      {/*
-        The layer is a negative-z child of the tinted page itself, so it paints
-        over that tint but under every piece of content. `isolate` creates a
-        stacking context, not a containing block, so the sticky header and the
-        fixed mobile save bar (both z-40) are unaffected.
-      */}
-      <ScribbleLayers layers={TUTOR_EDIT_SCRIBBLES} />
+    <div className="min-h-screen bg-muted/20 pb-28 lg:pb-12">
       <div className="relative z-40 border-b bg-background lg:sticky lg:top-16">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-4">
           <div className="min-w-0">
@@ -491,15 +490,16 @@ function TutorProfileEditContent() {
                   error={subjectError}
                   onToggle={toggleSubject}
                 />
-                <TeachingStyleSelector
-                  value={selectedTeachingStyles}
-                  error={teachingStyleError}
+                <TeachingAttributeSelector
+                  value={selectedTeachingAttributes}
+                  error={teachingAttributeError}
                   onChange={(next) => {
-                    setSelectedTeachingStyles(next);
-                    setTeachingStyleError(null);
+                    setSelectedTeachingAttributes(next);
+                    setTeachingAttributeError(null);
                     setSaveState("idle");
                   }}
                 />
+                <TutorCapacitySettings profile={profile} />
                 <PricingSection
                   form={form}
                   sixtyMinutePrice={sixtyMinutePrice}

@@ -1,15 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Award } from "lucide-react";
+import { ArrowRight, Award, Scale } from "lucide-react";
 import { TutorProfile } from "@/types";
-import { formatLessonCount, formatPrice, formatRating } from "@/lib/utils";
+import { cn, formatLessonCount, formatPrice, formatRating } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { TutorPresenceBadge } from "@/components/tutors/TutorPresenceBadge";
 import { FavoriteButton } from "@/components/tutors/FavoriteButton";
 import { VerifiedTutorMark } from "@/components/tutors/VerifiedTutorMark";
+import { recordDiscoveryEvent } from "@/lib/discovery";
 
 function getInitials(name: string, surname: string): string {
   const n = (name || "").trim()[0] || "";
@@ -27,6 +28,14 @@ interface TutorCardProps {
   onToggleFavorite?: (id: string) => void;
   favoritePending?: boolean;
   learningContext?: LearningContextQuery | null;
+  discoveryImpressionId?: string | null;
+  isCompared?: boolean;
+  onToggleCompare?: (id: string) => void;
+  compareDisabled?: boolean;
+  /** "lg" is used by the main directory grid: a wider, photo-left row
+   * (portrait photo, bio excerpt, price/rating/CTA column) instead of the
+   * compact stacked card. Every other call site keeps the original size. */
+  size?: "default" | "lg";
 }
 
 type LearningContextQuery = {
@@ -37,31 +46,24 @@ type LearningContextQuery = {
 
 function buildTutorHref(
   tutorId: string,
-  learningContext?: LearningContextQuery | null
+  learningContext?: LearningContextQuery | null,
+  discoveryImpressionId?: string | null
 ): string {
-  if (!learningContext) {
-    return `/tutors/${tutorId}`;
+  const params = new URLSearchParams();
+  if (learningContext) {
+    params.set("learning_goal_id", learningContext.learning_goal_id);
+    params.set("learning_milestone_id", learningContext.learning_milestone_id);
   }
 
-  const params = new URLSearchParams({
-    learning_goal_id: learningContext.learning_goal_id,
-    learning_milestone_id: learningContext.learning_milestone_id,
-  });
-
-  if (learningContext.learning_topic_id) {
+  if (learningContext?.learning_topic_id) {
     params.set("learning_topic_id", learningContext.learning_topic_id);
   }
-
-  return `/tutors/${tutorId}?${params.toString()}`;
+  if (discoveryImpressionId) params.set("discovery_impression_id", discoveryImpressionId);
+  const query = params.toString();
+  return `/tutors/${tutorId}${query ? `?${query}` : ""}`;
 }
 
-export function TutorCard({
-  tutor,
-  isFavorite,
-  onToggleFavorite,
-  favoritePending,
-  learningContext,
-}: TutorCardProps) {
+function useTutorCardData(tutor: TutorProfile) {
   const examOrder = ["TYT", "AYT", "YDT", "DGS", "KPSS"] as const;
   const orderedSubjectsWithDuplicates = examOrder.flatMap((exam) =>
     tutor.subjects.filter((s) => s.exam_type === exam)
@@ -75,11 +77,63 @@ export function TutorCard({
   });
   const visibleSubjects = orderedSubjects.slice(0, 4);
   const remainingCount = orderedSubjects.length - 4;
-  const tutorHref = buildTutorHref(tutor.id, learningContext);
   const completedLessonsLabel = `${formatLessonCount(tutor.completed_lessons_count ?? 0)} ders`;
+  return { visibleSubjects, remainingCount, completedLessonsLabel };
+}
+
+function StatusBadges({ tutor, showBookable = true }: { tutor: TutorProfile; showBookable?: boolean }) {
+  return (
+    <>
+      <TutorPresenceBadge isOnline={tutor.is_online} lastSeenAt={tutor.last_seen_at} />
+      {tutor.yks_rank > 0 && (
+        <span className="inline-flex w-fit items-center gap-1 rounded-full border border-amber-500/20 bg-amber-500/10 px-2 py-0.5 text-xs font-medium text-amber-800 dark:text-amber-200">
+          <Award className="h-3 w-3" />
+          YKS Sıralaması: {formatYksRank(tutor.yks_rank)}
+        </span>
+      )}
+      {tutor.is_new_tutor && (
+        <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">Yeni hoca</span>
+      )}
+      {tutor.launch_program_available && (
+        <span className="rounded-full bg-violet-500/10 px-2 py-0.5 text-xs font-medium text-violet-700 dark:text-violet-300">Tanıtım programına açık</span>
+      )}
+      {showBookable && tutor.is_bookable === true && (
+        <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:text-emerald-300">Yeni öğrenci kabul ediyor</span>
+      )}
+      {showBookable && tutor.is_bookable === false && (
+        <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-xs font-medium text-amber-800 dark:text-amber-200">Şu anda yeni öğrenci almıyor</span>
+      )}
+    </>
+  );
+}
+
+export function TutorCard(props: TutorCardProps) {
+  if (props.size === "lg") {
+    return <TutorCardLarge {...props} />;
+  }
+  return <TutorCardDefault {...props} />;
+}
+
+function TutorCardDefault({
+  tutor,
+  isFavorite,
+  onToggleFavorite,
+  favoritePending,
+  learningContext,
+  discoveryImpressionId,
+  isCompared,
+  onToggleCompare,
+  compareDisabled,
+}: TutorCardProps) {
+  const { visibleSubjects, remainingCount, completedLessonsLabel } = useTutorCardData(tutor);
+  const tutorHref = buildTutorHref(tutor.id, learningContext, discoveryImpressionId);
 
   return (
-    <Card className="relative h-full min-w-0 overflow-visible border-t-2 border-t-transparent transition-all duration-200 hover:z-10 hover:-translate-y-0.5 hover:border-t-primary hover:shadow-lg">
+    <Card
+      data-discovery-tutor-id={discoveryImpressionId ? tutor.id : undefined}
+      data-discovery-impression-id={discoveryImpressionId || undefined}
+      className="relative h-full min-w-0 overflow-visible border-t-2 border-t-transparent transition-all duration-200 hover:z-10 hover:-translate-y-0.5 hover:border-t-primary hover:shadow-lg"
+    >
       <CardContent className="p-0">
         <Link href={tutorHref} className="block cursor-pointer">
           <div className="flex gap-4 p-4">
@@ -106,16 +160,7 @@ export function TutorCard({
                 {tutor.university} · {tutor.department}
               </p>
               <div className="mt-1 flex flex-wrap items-center gap-2">
-                <TutorPresenceBadge
-                  isOnline={tutor.is_online}
-                  lastSeenAt={tutor.last_seen_at}
-                />
-                {tutor.yks_rank > 0 && (
-                  <span className="inline-flex w-fit items-center gap-1 rounded-full border border-amber-500/20 bg-amber-500/10 px-2 py-0.5 text-xs font-medium text-amber-800 dark:text-amber-200">
-                    <Award className="h-3 w-3" />
-                    YKS Sıralaması: {formatYksRank(tutor.yks_rank)}
-                  </span>
-                )}
+                <StatusBadges tutor={tutor} />
               </div>
             </div>
           </div>
@@ -129,6 +174,11 @@ export function TutorCard({
             {remainingCount > 0 && (
               <span className="text-xs text-muted-foreground">+{remainingCount} daha</span>
             )}
+            {(tutor.teaching_attributes ?? []).slice(0, 2).map((attribute) => (
+              <Badge key={attribute.code} variant="secondary" className="text-xs">
+                {attribute.name}
+              </Badge>
+            ))}
           </div>
         </Link>
 
@@ -155,6 +205,22 @@ export function TutorCard({
               <span className="ml-1 text-sm text-muted-foreground">/40 dk</span>
             </Link>
             <div className="flex w-full shrink-0 items-center gap-1 sm:w-auto">
+              {onToggleCompare && (
+                <button
+                  type="button"
+                  disabled={compareDisabled && !isCompared}
+                  aria-pressed={isCompared}
+                  aria-label={isCompared ? "Karşılaştırmadan çıkar" : "Karşılaştırmaya ekle"}
+                  title={compareDisabled && !isCompared ? "En fazla üç hoca karşılaştırılabilir" : undefined}
+                  onClick={() => onToggleCompare(tutor.id)}
+                  className={cn(
+                    "inline-flex h-9 w-9 items-center justify-center rounded-md border transition-colors disabled:cursor-not-allowed disabled:opacity-40",
+                    isCompared ? "border-primary bg-primary/10 text-primary" : "hover:bg-muted"
+                  )}
+                >
+                  <Scale className="h-4 w-4" />
+                </button>
+              )}
               <Link href={tutorHref} className="flex-1 rounded-md bg-primary px-3 py-2 text-center text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 sm:flex-none">
                 Profili Gör <ArrowRight className="ml-1 inline h-3.5 w-3.5" />
               </Link>
@@ -163,10 +229,157 @@ export function TutorCard({
                   tutorId={tutor.id}
                   isFavorite={isFavorite ?? false}
                   isPending={favoritePending ?? false}
-                  onToggle={onToggleFavorite}
+                  onToggle={(tutorId) => {
+                    void recordDiscoveryEvent(
+                      discoveryImpressionId, tutorId,
+                      isFavorite ? "favorite_removed" : "favorite_added"
+                    );
+                    onToggleFavorite(tutorId);
+                  }}
                 />
               )}
             </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// Wider "photo left / details middle / price+CTA right" row, closer to the
+// reference the tutor-search competitors use. Falls back to a stacked
+// (photo+info block, then price+CTA block) layout below the `sm` breakpoint
+// so it still holds up in the single mobile column.
+function TutorCardLarge({
+  tutor,
+  isFavorite,
+  onToggleFavorite,
+  favoritePending,
+  learningContext,
+  discoveryImpressionId,
+  isCompared,
+  onToggleCompare,
+  compareDisabled,
+}: TutorCardProps) {
+  const { visibleSubjects, remainingCount, completedLessonsLabel } = useTutorCardData(tutor);
+  const tutorHref = buildTutorHref(tutor.id, learningContext, discoveryImpressionId);
+
+  return (
+    <Card
+      data-discovery-tutor-id={discoveryImpressionId ? tutor.id : undefined}
+      data-discovery-impression-id={discoveryImpressionId || undefined}
+      className="relative h-full min-w-0 overflow-visible border-t-2 border-t-transparent transition-all duration-200 hover:z-10 hover:-translate-y-0.5 hover:border-t-primary hover:shadow-lg"
+    >
+      <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:gap-4">
+        <Link href={tutorHref} className="flex min-w-0 flex-1 cursor-pointer gap-4 sm:gap-4">
+          <div className="flex shrink-0 flex-col items-center gap-1.5">
+            <div className="relative h-24 w-24 sm:h-28 sm:w-28">
+              <Avatar className="h-24 w-24 rounded-xl sm:h-28 sm:w-28">
+                <AvatarImage
+                  className="rounded-xl object-cover"
+                  src={tutor.profile_picture || undefined}
+                  alt={`${tutor.name} ${tutor.surname}`}
+                />
+                <AvatarFallback className="rounded-xl bg-primary/10 text-2xl font-medium text-primary">
+                  {getInitials(tutor.name, tutor.surname)}
+                </AvatarFallback>
+              </Avatar>
+              {tutor.is_online && <span className="absolute -bottom-1 -right-1 h-4 w-4 rounded-full border-2 border-background bg-emerald-500" aria-label="Çevrim içi" />}
+              <VerifiedTutorMark verified={tutor.is_verified} className="absolute -right-1.5 -top-1.5 rounded-full border-2 border-background bg-primary text-primary-foreground" />
+            </div>
+            <div className="flex items-center gap-x-1 text-xs">
+              {tutor.total_reviews > 0 ? (
+                <>
+                  <span className="font-medium">★ {formatRating(tutor.rating)}</span>
+                  <span className="text-muted-foreground">({tutor.total_reviews})</span>
+                </>
+              ) : (
+                <span className="text-muted-foreground">Yeni</span>
+              )}
+            </div>
+          </div>
+
+          <div className="min-w-0 flex-1 space-y-1 pr-14 sm:pr-0">
+            <p className="truncate text-xl font-semibold">
+              {tutor.name} {tutor.surname}
+            </p>
+            <p className="truncate text-base text-muted-foreground">
+              {tutor.university} · {tutor.department}
+            </p>
+            <div className="flex flex-wrap items-center gap-2">
+              <StatusBadges tutor={tutor} showBookable={false} />
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {visibleSubjects.map((sub) => (
+                <Badge key={sub.id} variant="outline" className="text-sm">
+                  {sub.name}
+                </Badge>
+              ))}
+              {remainingCount > 0 && (
+                <span className="text-sm text-muted-foreground">+{remainingCount} daha</span>
+              )}
+              {(tutor.teaching_attributes ?? []).slice(0, 2).map((attribute) => (
+                <Badge key={attribute.code} variant="secondary" className="text-sm">
+                  {attribute.name}
+                </Badge>
+              ))}
+            </div>
+            {tutor.bio && (
+              <p className="line-clamp-2 text-sm text-muted-foreground">{tutor.bio}</p>
+            )}
+          </div>
+        </Link>
+
+        <div className="flex items-center justify-between gap-4 border-t pt-3 sm:w-44 sm:shrink-0 sm:flex-col sm:items-end sm:justify-center sm:gap-3 sm:border-l sm:border-t-0 sm:pl-4 sm:pt-0 sm:text-right">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 sm:justify-end">
+              <Link href={tutorHref} className="min-w-0 cursor-pointer">
+                <span className="text-xl font-semibold">{formatPrice(tutor.hourly_price)}</span>
+                <span className="ml-1 text-base text-muted-foreground">/40 dk</span>
+              </Link>
+              {onToggleFavorite && (
+                <FavoriteButton
+                  tutorId={tutor.id}
+                  isFavorite={isFavorite ?? false}
+                  isPending={favoritePending ?? false}
+                  onToggle={(tutorId) => {
+                    void recordDiscoveryEvent(
+                      discoveryImpressionId, tutorId,
+                      isFavorite ? "favorite_removed" : "favorite_added"
+                    );
+                    onToggleFavorite(tutorId);
+                  }}
+                />
+              )}
+            </div>
+            <Link href={tutorHref} className="block cursor-pointer">
+              <p className="mt-1 text-sm text-muted-foreground">{completedLessonsLabel}</p>
+            </Link>
+          </div>
+
+          <div className="flex shrink-0 items-center gap-1.5 sm:w-full sm:flex-col sm:items-stretch">
+            <Link
+              href={tutorHref}
+              className="rounded-md bg-primary px-4 py-2.5 text-center text-base font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+            >
+              Profili Gör <ArrowRight className="ml-1 inline h-3.5 w-3.5" />
+            </Link>
+            {onToggleCompare && (
+              <button
+                type="button"
+                disabled={compareDisabled && !isCompared}
+                aria-pressed={isCompared}
+                aria-label={isCompared ? "Karşılaştırmadan çıkar" : "Karşılaştırmaya ekle"}
+                title={compareDisabled && !isCompared ? "En fazla üç hoca karşılaştırılabilir" : undefined}
+                onClick={() => onToggleCompare(tutor.id)}
+                className={cn(
+                  "inline-flex h-11 items-center justify-center gap-1.5 rounded-md border px-3 text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-40 sm:w-full",
+                  isCompared ? "border-primary bg-primary/10 text-primary" : "hover:bg-muted"
+                )}
+              >
+                <Scale className="h-4 w-4" /> Karşılaştır
+              </button>
+            )}
           </div>
         </div>
       </CardContent>

@@ -71,7 +71,7 @@ export function AnimatedSearchBar({
             "border border-input bg-muted/80 text-foreground ring-ring/30 hover:bg-accent focus-visible:ring-ring focus-visible:ring-offset-background",
           input: "text-foreground placeholder:text-muted-foreground",
           bubbleSurface:
-            "border border-input bg-popover text-foreground ring-ring/30",
+            "border border-brand-600 bg-brand-600 text-white ring-brand-600/30 dark:border-brand-500 dark:bg-brand-500",
         }}
       />
     </div>

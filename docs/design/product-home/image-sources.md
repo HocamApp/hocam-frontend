@@ -19,6 +19,17 @@ source. Files live under `public/images/home-v3/` and are referenced from
   JPEG quality 82, progressive + Huffman-optimized. Served through
   `next/image`, so the browser receives an appropriately sized variant.
 
+## Hero
+
+| Slide | File | Creator | Source page | Subject |
+|---|---|---|---|---|
+| YKS hazırlık | `hero-v2/yks-students.jpg` | Eduard Perez | https://www.pexels.com/photo/college-students-studying-in-a-classroom-37811241/ | Aydınlık sınıfta sınava hazırlanan üniversite öğrencileri |
+| KPSS | `hero-v2/kpss-study.jpg` | Monstera Production | https://www.pexels.com/photo/diverse-students-doing-homework-together-in-classroom-6238046/ | Birlikte ders notları üzerinde çalışan üniversite öğrencileri |
+| DGS | `hero-v2/dgs-exam-paper.jpg` | Andy Barbour | https://www.pexels.com/photo/test-papers-and-pencil-on-the-desk-6683394/ | Sınav masasındaki optik form, soru kitapçığı ve kalem |
+| Sınav hazırlığı | `hero-v2/exam-answer-sheet.jpg` | Andy Barbour | https://www.pexels.com/photo/a-person-taking-an-exam-6684209/ | Optik cevap formunu dolduran öğrenci |
+
+`hero-v2/yks-students.jpg` is also reused as the banner photo behind "Sana uygun hocayı bul" on the `/tutors` (Hocalar) directory page, matching the same slide's CTA ("Hocaları keşfet" → `/tutors`) — same license, no new download needed.
+
 ## Explore — "Sınav hedeflerini keşfet"
 
 | Card | File | Creator | Source page | Subject |

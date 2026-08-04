@@ -7,6 +7,8 @@ import {
   TutorReviewSummary,
   PaginatedResponse,
   TutorTeachingStyle,
+  TutorTeachingAttribute,
+  TutorSavedSearch,
 } from "@/types";
 
 export interface CreateTutorProfilePayload {
@@ -18,7 +20,7 @@ export interface CreateTutorProfilePayload {
   hourly_price: string;
   bio: string;
   subject_ids: string[];
-  teaching_styles: TutorTeachingStyle[];
+  teaching_attribute_codes: string[];
 }
 
 export interface TutorEducationOption {
@@ -60,6 +62,13 @@ export interface TutorFilters {
   availability_day?: string;
   availability_time?: string;
   online?: string;
+  teaching_attributes?: string;
+  topic?: string;
+}
+
+export async function fetchTeachingAttributes(): Promise<TutorTeachingAttribute[]> {
+  const response = await api.get<TutorTeachingAttribute[]>("/tutors/teaching-attributes/");
+  return response.data;
 }
 
 // Backend may still return a plain array during a deploy/cache lag instead of
@@ -107,6 +116,38 @@ export async function fetchTutorEducationOptions(): Promise<TutorEducationOption
 export async function fetchTutorById(id: string): Promise<TutorProfile> {
   const response = await api.get<TutorProfile>(`/tutors/${id}/`);
   return response.data;
+}
+
+export async function fetchTutorComparison(ids: string[]): Promise<TutorProfile[]> {
+  const params = new URLSearchParams({ ids: ids.join(",") });
+  const response = await api.get<TutorProfile[]>(`/tutors/compare/?${params.toString()}`);
+  return response.data;
+}
+
+export async function fetchTutorSavedSearches(): Promise<TutorSavedSearch[]> {
+  const response = await api.get<TutorSavedSearch[]>("/matching/saved-searches/");
+  return response.data;
+}
+
+export async function createTutorSavedSearch(payload: {
+  name?: string;
+  filters: TutorFilters;
+  ordering: string;
+}): Promise<TutorSavedSearch> {
+  const response = await api.post<TutorSavedSearch>("/matching/saved-searches/", payload);
+  return response.data;
+}
+
+export async function updateTutorSavedSearch(
+  id: string,
+  payload: Partial<{ name: string; filters: TutorFilters; ordering: string }>
+): Promise<TutorSavedSearch> {
+  const response = await api.patch<TutorSavedSearch>(`/matching/saved-searches/${id}/`, payload);
+  return response.data;
+}
+
+export async function deleteTutorSavedSearch(id: string): Promise<void> {
+  await api.delete(`/matching/saved-searches/${id}/`);
 }
 
 export async function fetchTutorReviews(tutorId: string): Promise<Review[]> {
@@ -224,12 +265,23 @@ export interface UpdateTutorProfilePayload {
   intro_video_url?: string;
   subject_ids?: string[];
   teaching_styles?: TutorTeachingStyle[];
+  teaching_attribute_codes?: string[];
+  accepting_new_students?: boolean;
+  open_student_slots?: number;
+  earliest_start_date?: string | null;
+  availability_pause_until?: string | null;
+  accepts_trial_lessons?: boolean;
 }
 
 export async function updateMyTutorProfile(
   payload: UpdateTutorProfilePayload
 ): Promise<TutorProfile> {
   const response = await api.patch<TutorProfile>("/tutors/me/", payload);
+  return response.data;
+}
+
+export async function confirmTutorAvailability(): Promise<TutorProfile> {
+  const response = await api.post<TutorProfile>("/tutors/me/availability/confirm/", {});
   return response.data;
 }
 

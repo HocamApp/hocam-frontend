@@ -22,8 +22,6 @@ import { formatPrice } from "@/lib/utils";
 import type { ProfileMeResponse, ProfileStudent, ProfileTutor } from "@/types";
 
 import { RouteGuard } from "@/components/shared/RouteGuard";
-import { ScribbleLayers } from "@/components/decor/ScribbleLayer";
-import { PROFILE_SCRIBBLES } from "@/lib/scribblePlacements";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -224,9 +222,6 @@ function ProfileContent() {
   );
 
   return (
-    <div className="relative isolate">
-      {/* One mount point for both roles — the page itself is role-branched below. */}
-      <ScribbleLayers layers={PROFILE_SCRIBBLES} />
     <div className="mx-auto w-full min-w-0 max-w-6xl overflow-x-clip px-4 py-8 sm:py-10">
       <div className="mb-8">
         <h1 className="text-2xl font-bold tracking-tight text-foreground">Profilim</h1>
@@ -301,7 +296,6 @@ function ProfileContent() {
           <StudentLearningProfile />
         </div>
       )}
-    </div>
     </div>
   );
 }

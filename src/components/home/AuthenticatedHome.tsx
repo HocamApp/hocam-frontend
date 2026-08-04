@@ -5,8 +5,6 @@ import Link from "next/link";
 import {
   ArrowRight,
   CalendarCheck2,
-  CheckCircle2,
-  FileQuestion,
   Target,
   WalletCards,
 } from "lucide-react";
@@ -17,7 +15,6 @@ import { fetchLearningDashboard } from "@/lib/learningApi";
 import { fetchBookings } from "@/lib/lessonsApi";
 import { fetchPackagePurchases } from "@/lib/paymentsApi";
 import { fetchProfileMe } from "@/lib/profileApi";
-import { fetchQuestionMetadata } from "@/lib/questionsApi";
 import { goalPackageHref } from "@/lib/learning";
 import {
   computePackageExpiry,
@@ -31,7 +28,6 @@ import { HomeSubjectSearch } from "@/components/home/HomeSubjectSearch";
 import { HocaBulEntryCard } from "@/components/home/HocaBulEntryCard";
 import { HomeHeroCarousel } from "@/components/home/HomeHeroCarousel";
 import { HomeBand } from "@/components/home/HomeBand";
-import { HOME_SCRIBBLES } from "@/lib/scribblePlacements";
 import { HomeExploreCarousel } from "@/components/home/HomeExploreCarousel";
 import { HomeTeacherRail } from "@/components/home/HomeTeacherRail";
 import { HomeTabbedDiscovery } from "@/components/home/HomeTabbedDiscovery";
@@ -199,12 +195,6 @@ export function AuthenticatedHome() {
     enabled: isAuthenticated,
     retry: false,
   });
-  const questionsQuery = useQuery({
-    queryKey: ["question-metadata"],
-    queryFn: fetchQuestionMetadata,
-    enabled: isAuthenticated,
-    retry: false,
-  });
 
   const studentProfile = useMemo(() => {
     const profile = profileQuery.data?.profile;
@@ -288,8 +278,6 @@ export function AuthenticatedHome() {
     );
   }
 
-  const questionResourcesEnabled = questionsQuery.data?.enabled !== false;
-
   return (
     <div className="overflow-hidden">
       <HomeHeroCarousel greetingName={studentProfile?.name?.trim() || undefined} />
@@ -298,7 +286,7 @@ export function AuthenticatedHome() {
           two competing "find a tutor" starting points on one screen is the
           thing this flow exists to remove. Flag off, the home is unchanged. */}
       {HOCA_BUL_ENABLED && (
-        <HomeBand tinted scribbles={HOME_SCRIBBLES.hocaBul}>
+        <HomeBand tinted>
           <HocaBulEntryCard />
         </HomeBand>
       )}
@@ -313,37 +301,6 @@ export function AuthenticatedHome() {
             />
           )}
 
-          <div
-            className={cn(
-              "flex flex-wrap items-center gap-x-5 gap-y-2 text-sm",
-              !HOCA_BUL_ENABLED && "mt-4"
-            )}
-          >
-            {questionResourcesEnabled && (
-              <>
-                <Link
-                  href="/cikmis-sorular"
-                  onClick={() =>
-                    trackHomeEvent("home_question_link_clicked", { placement: "hero" })
-                  }
-                  className="inline-flex items-center text-muted-foreground hover:text-foreground hover:underline"
-                >
-                  <FileQuestion className="mr-1.5 h-4 w-4" aria-hidden="true" />
-                  Çıkmış sorulara göz at
-                </Link>
-                <Link
-                  href="/dashboard/student/learning/yanlis-sorular"
-                  onClick={() =>
-                    trackHomeEvent("home_practice_opened", { resource: "wrong_questions" })
-                  }
-                  className="inline-flex items-center text-muted-foreground hover:text-foreground hover:underline"
-                >
-                  <CheckCircle2 className="mr-1.5 h-4 w-4" aria-hidden="true" />
-                  Yanlış sorularım
-                </Link>
-              </>
-            )}
-          </div>
         </div>
       </section>
 
@@ -364,11 +321,11 @@ export function AuthenticatedHome() {
         </HomeBand>
       )}
 
-      <HomeBand tinted scribbles={HOME_SCRIBBLES.explore}>
+      <HomeBand tinted>
         <HomeExploreCarousel />
       </HomeBand>
 
-      <HomeBand scribbles={HOME_SCRIBBLES.teacherRail}>
+      <HomeBand>
         <HomeTeacherRail
           tutors={tutorsQuery.data?.results ?? []}
           isLoading={tutorsQuery.isLoading}
@@ -377,19 +334,22 @@ export function AuthenticatedHome() {
         />
       </HomeBand>
 
-      <HomeBand tinted scribbles={HOME_SCRIBBLES.tabbedDiscovery}>
+      <HomeBand tinted>
         <HomeTabbedDiscovery isAuthenticated={isAuthenticated} />
       </HomeBand>
 
-      <HomeBand scribbles={HOME_SCRIBBLES.goalCards}>
-        <HomeGoalCards />
+      <HomeBand>
+        <HomeGoalCards
+          templates={learningQuery.data?.templates}
+          goals={learningQuery.data?.goals}
+        />
       </HomeBand>
 
-      <HomeBand tinted scribbles={HOME_SCRIBBLES.topicLinks}>
+      <HomeBand tinted>
         <HomeTopicLinks />
       </HomeBand>
 
-      <HomeBand scribbles={HOME_SCRIBBLES.promoStrip}>
+      <HomeBand>
         <HomePromoStrip />
       </HomeBand>
     </div>
