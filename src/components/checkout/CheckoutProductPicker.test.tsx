@@ -2,77 +2,118 @@ import "@/test/setupDom";
 
 import assert from "node:assert/strict";
 import { afterEach, test } from "node:test";
-import React, { useState } from "react";
+import React from "react";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import type { PackagePlan } from "@/types";
-import {
-  WEEKLY_LESSON_OPTIONS,
-  normalizeWeeklyLessonOption,
-  type WeeklyLessonOption,
-} from "@/lib/lessonPricing";
+
 import { CheckoutProductPicker } from "./CheckoutProductPicker";
+import type { PackagePlan } from "@/types";
 
-afterEach(() => cleanup());
+Object.defineProperty(globalThis, "self", {
+  value: window,
+  configurable: true,
+});
 
-const plans: PackagePlan[] = WEEKLY_LESSON_OPTIONS.map((count) => ({
-  id: `plan-${count}`,
-  name: `${count} ders`,
-  code: `weekly_${count}_90d`,
-  lesson_count: count * 12,
+const plans: PackagePlan[] = [2, 3, 4, 5, 6].map((lessonsPerWeek) => ({
+  id: `plan-${lessonsPerWeek}`,
+  name: `Haftada ${lessonsPerWeek} Ders`,
+  code: `weekly_${lessonsPerWeek}_90d`,
+  lesson_count: lessonsPerWeek * 12,
   lesson_duration_minutes: 40,
-  lessons_per_week: count,
+  lessons_per_week: lessonsPerWeek,
   duration_days: 90,
-  discount_percent: 0,
+  discount_percent: 15,
   is_active: true,
   created_at: "2026-08-01T00:00:00Z",
   updated_at: "2026-08-01T00:00:00Z",
 }));
 
-function PickerHarness() {
-  const [count, setCount] = useState<WeeklyLessonOption>(2);
-  return (
+afterEach(() => cleanup());
+
+test("shows the active private plan and readable disabled future plans", () => {
+  render(
     <CheckoutProductPicker
-      basePrice={100}
+      basePrice={1000}
       weeklyPlans={plans}
-      lessonsPerWeek={count}
+      lessonsPerWeek={2}
       durationDays={90}
-      onLessonsPerWeekChange={setCount}
+      onLessonsPerWeekChange={() => {}}
+      onDurationDaysChange={() => {}}
+      trialLessonsRemaining={1}
+      paidRemainingCredits={3}
+      onBookTrial={() => {}}
+      onUseCredits={() => {}}
+    />
+  );
+
+  assert.ok(screen.getByText("Birebir Özel Ders"));
+  const group = screen.getByRole("button", { name: /Küçük Grup/ }) as HTMLButtonElement;
+  const pro = screen.getByRole("button", { name: /Hocam Pro/ }) as HTMLButtonElement;
+  assert.equal(group.getAttribute("aria-disabled"), "true");
+  assert.equal(pro.getAttribute("aria-disabled"), "true");
+  assert.equal(screen.getAllByText("Yakında").length, 2);
+
+  const planButtons = screen.getAllByRole("button").filter((button) =>
+    /Küçük Grup|Birebir Özel Ders|Hocam Pro/.test(button.getAttribute("aria-label") ?? button.textContent ?? "")
+  );
+  assert.match(planButtons[0]?.textContent ?? "", /Küçük Grup/);
+  assert.match(planButtons[1]?.textContent ?? "", /Birebir Özel Ders/);
+  assert.match(planButtons[2]?.textContent ?? "", /Hocam Pro/);
+});
+
+test("expands private package controls and benefits inside the selected plan", () => {
+  let creditUses = 0;
+  render(
+    <CheckoutProductPicker
+      basePrice={1000}
+      weeklyPlans={plans}
+      lessonsPerWeek={2}
+      durationDays={90}
+      onLessonsPerWeekChange={() => {}}
+      onDurationDaysChange={() => {}}
+      trialLessonsRemaining={1}
+      paidRemainingCredits={3}
+      onBookTrial={() => {}}
+      onUseCredits={() => creditUses++}
+    />
+  );
+
+  const privatePlan = screen.getByRole("button", { name: /Birebir Özel Ders/ }).closest("section");
+  assert.ok(privatePlan);
+  assert.ok(privatePlan.textContent?.includes("Haftalık ders sayısını seç"));
+  assert.ok(privatePlan.textContent?.includes("BİREBİR PAKET ÖZELLİKLERİ"));
+  assert.ok(privatePlan.textContent?.includes("Seçtiğin hocayla canlı birebir ders"));
+  const featureList = privatePlan.querySelector('[aria-labelledby="private-features-title"] ul');
+  assert.equal(featureList?.querySelectorAll("li").length, 4);
+  assert.ok(!privatePlan.textContent?.includes("2 hafta–6 ay paket süresi"));
+  assert.ok(!privatePlan.textContent?.includes("Toplam ders hakkı"));
+  assert.ok(!privatePlan.textContent?.includes("Paket süresine göre ders başına fiyat avantajı"));
+  assert.ok(privatePlan.textContent?.includes("3 ders hakkın kullanılabilir"));
+  fireEvent.click(screen.getByRole("button", { name: "Mevcut ders hakkını kullan" }));
+  assert.equal(creditUses, 1);
+
+  assert.ok(screen.getByRole("button", { name: "Planları karşılaştır" }));
+  for (const count of [2, 3, 4, 5, 6]) {
+    assert.ok(screen.getByRole("button", { name: `${count} ders` }));
+  }
+  assert.equal(screen.queryByRole("button", { name: "1 ders" }), null);
+});
+
+test("uses the approved concise descriptions for future plans", () => {
+  render(
+    <CheckoutProductPicker
+      basePrice={1000}
+      weeklyPlans={plans}
+      lessonsPerWeek={2}
+      durationDays={90}
+      onLessonsPerWeekChange={() => {}}
       onDurationDaysChange={() => {}}
     />
   );
-}
 
-test("offers only 2 through 6 lessons and allows every option to be selected", () => {
-  render(<PickerHarness />);
-
-  const group = screen.getByRole("group", { name: "Haftada ders sayısı" });
-  assert.deepEqual(
-    Array.from(group.querySelectorAll("button")).map((button) => button.textContent),
-    ["2 ders", "3 ders", "4 ders", "5 ders", "6 ders"]
+  assert.ok(screen.getByText("2–4 öğrenciyle, kişi başı daha avantajlı canlı dersler."));
+  assert.ok(
+    screen.getByText(
+      "Soru desteği, haftalık koçluk ve gelişim takibiyle güçlendirilmiş birebir plan."
+    )
   );
-  assert.equal(screen.queryByRole("button", { name: "1 ders" }), null);
-
-  for (const count of WEEKLY_LESSON_OPTIONS) {
-    const button = screen.getByRole("button", { name: `${count} ders` });
-    fireEvent.click(button);
-    assert.equal(button.getAttribute("aria-pressed"), "true");
-  }
-});
-
-test("changing the lesson count updates the displayed package total", () => {
-  render(<PickerHarness />);
-  assert.ok(screen.getByText("24 ders"));
-
-  fireEvent.click(screen.getByRole("button", { name: "6 ders" }));
-
-  assert.ok(screen.getByText("72 ders"));
-  assert.equal(screen.queryByText("24 ders"), null);
-});
-
-test("normalizes stale or tampered package counts to 2", () => {
-  assert.equal(normalizeWeeklyLessonOption("1"), 2);
-  assert.equal(normalizeWeeklyLessonOption("7"), 2);
-  assert.equal(normalizeWeeklyLessonOption("-1"), 2);
-  assert.equal(normalizeWeeklyLessonOption(null), 2);
-  assert.equal(normalizeWeeklyLessonOption("6"), 6);
 });

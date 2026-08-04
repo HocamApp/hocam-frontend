@@ -1,19 +1,20 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Gift } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { fetchTutorById } from "@/lib/tutorsApi";
 import {
   createPackagePurchase,
   extractPackagePurchaseErrorMessage,
+  extractPromoPreviewErrorMessage,
   fetchPackagePurchases,
   fetchTutorOfferedPlans,
   filterMatrixPlans,
+  previewPackagePromotion,
 } from "@/lib/paymentsApi";
 import {
   MOST_POPULAR_DURATION_DAYS,
@@ -21,26 +22,22 @@ import {
   normalizeWeeklyLessonOption,
   type WeeklyLessonOption,
 } from "@/lib/lessonPricing";
-import { formatPrice } from "@/lib/utils";
 import { BookingModal } from "@/components/lessons/BookingModal";
 import { CheckoutProductPicker } from "@/components/checkout/CheckoutProductPicker";
-import { CheckoutSummary } from "@/components/checkout/CheckoutSummary";
+import { CheckoutSummary, type PromoStatus } from "@/components/checkout/CheckoutSummary";
+import { CheckoutShell } from "@/components/checkout/CheckoutShell";
+import { normalizeCheckoutPalette } from "@/components/checkout/checkoutPalette";
+import { MinimalCheckoutHeader } from "@/components/checkout/MinimalCheckoutHeader";
 import {
   CheckoutBookingSuccess,
   CheckoutPurchaseSuccess,
 } from "@/components/checkout/CheckoutSuccess";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import type { PackagePurchase } from "@/types";
-
-function getInitials(name: string, surname: string): string {
-  const n = (name || "").trim()[0] || "";
-  const s = (surname || "").trim()[0] || "";
-  return (n + s).toUpperCase() || "?";
-}
+import { Skeleton } from "@/components/ui/skeleton";
+import type { PackagePlan, PackagePurchase, PromoPreviewResponse } from "@/types";
 
 function parseLessonsPerWeek(raw: string | null): WeeklyLessonOption {
   return normalizeWeeklyLessonOption(raw);
@@ -80,6 +77,7 @@ export default function TutorCheckoutPage({
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const checkoutPalette = normalizeCheckoutPalette(searchParams.get("palette"));
   const queryClient = useQueryClient();
   const { isAuthenticated, isLoading: authLoading, isStudent, user } = useAuth();
 
@@ -90,6 +88,12 @@ export default function TutorCheckoutPage({
     parseDurationDays(searchParams.get("duration"))
   );
   const [promoCode, setPromoCode] = useState("");
+  const [promoStatus, setPromoStatus] = useState<PromoStatus>("idle");
+  const [promoMessage, setPromoMessage] = useState<string | null>(null);
+  const [promoPricing, setPromoPricing] = useState<PromoPreviewResponse | null>(null);
+  const [appliedPromoCode, setAppliedPromoCode] = useState<string | null>(null);
+  const [promoPlanId, setPromoPlanId] = useState<string | null>(null);
+  const promoRequestId = useRef(0);
   // "credits" books with existing package credits; "trial" is the free
   // intro-lesson path — both reuse the BookingModal.
   const [bookingModalMode, setBookingModalMode] = useState<
@@ -136,7 +140,12 @@ export default function TutorCheckoutPage({
     enabled: isAuthenticated,
   });
 
-  const { data: plans } = useQuery({
+  const {
+    data: plans,
+    isLoading: plansLoading,
+    error: plansError,
+    refetch: refetchPlans,
+  } = useQuery({
     queryKey: ["tutor-offered-plans", tutorId],
     queryFn: () => fetchTutorOfferedPlans(tutorId),
     enabled: isAuthenticated,
@@ -158,6 +167,24 @@ export default function TutorCheckoutPage({
       ) ?? null,
     [weeklyPlans, lessonsPerWeek, durationDays]
   );
+
+  // Deep links may point at a retired combination or a plan this tutor has
+  // switched off. Resolve deterministically to a real offer, preferring the
+  // popular 90-day term for the requested weekly cadence.
+  useEffect(() => {
+    if (plansLoading || weeklyPlans.length === 0 || selectedPlan) return;
+    const sameCadence = weeklyPlans
+      .filter((plan) => plan.lessons_per_week === lessonsPerWeek)
+      .sort((a, b) => (a.duration_days ?? 0) - (b.duration_days ?? 0));
+    const fallback =
+      sameCadence.find((plan) => plan.duration_days === MOST_POPULAR_DURATION_DAYS) ??
+      sameCadence[0] ??
+      weeklyPlans[0];
+    if (fallback.lessons_per_week != null) {
+      setLessonsPerWeek(normalizeWeeklyLessonOption(fallback.lessons_per_week));
+    }
+    if (fallback.duration_days != null) setDurationDays(fallback.duration_days);
+  }, [lessonsPerWeek, plansLoading, selectedPlan, weeklyPlans]);
 
   const basePrice = tutor?.hourly_price ?? 0;
   // Server-authoritative numbers only: no client-side plan constants exist
@@ -203,6 +230,77 @@ export default function TutorCheckoutPage({
       toast.error(extractPackagePurchaseErrorMessage(err));
     },
   });
+
+  const { mutate: runPromoPreview } = useMutation({
+    mutationFn: previewPackagePromotion,
+  });
+
+  const requestPromoPreview = useCallback(
+    (code: string, plan: PackagePlan) => {
+      const normalized = code.trim().toUpperCase();
+      if (!normalized) {
+        setPromoStatus("error");
+        setPromoMessage("Bir indirim kodu yaz.");
+        return;
+      }
+      const requestId = ++promoRequestId.current;
+      setPromoStatus("loading");
+      setPromoMessage("Kod doğrulanıyor…");
+      setPromoPricing(null);
+      runPromoPreview(
+        {
+          tutor: tutorId,
+          plan: plan.id,
+          promotion_code: normalized,
+        },
+        {
+          onSuccess: (preview) => {
+            if (requestId !== promoRequestId.current) return;
+            setPromoCode(preview.promotion_code);
+            setAppliedPromoCode(preview.promotion_code);
+            setPromoPlanId(plan.id);
+            setPromoPricing(preview);
+            setPromoStatus("applied");
+            setPromoMessage("İndirim kodu uygulandı.");
+          },
+          onError: (error) => {
+            if (requestId !== promoRequestId.current) return;
+            setAppliedPromoCode(null);
+            setPromoPlanId(null);
+            setPromoPricing(null);
+            setPromoStatus("error");
+            setPromoMessage(extractPromoPreviewErrorMessage(error));
+          },
+        }
+      );
+    },
+    [runPromoPreview, tutorId]
+  );
+
+  useEffect(() => {
+    if (!appliedPromoCode || !selectedPlan || promoPlanId === selectedPlan.id) return;
+    requestPromoPreview(appliedPromoCode, selectedPlan);
+  }, [appliedPromoCode, promoPlanId, requestPromoPreview, selectedPlan]);
+
+  function handlePromoCodeChange(code: string) {
+    promoRequestId.current += 1;
+    setPromoCode(code);
+    setAppliedPromoCode(null);
+    setPromoPlanId(null);
+    setPromoPricing(null);
+    setPromoStatus(code.trim() ? "editing" : "idle");
+    setPromoMessage(null);
+  }
+
+  function removePromo() {
+    promoRequestId.current += 1;
+    setPromoCode("");
+    setAppliedPromoCode(null);
+    setPromoPlanId(null);
+    setPromoPricing(null);
+    setPromoStatus("idle");
+    setPromoMessage(null);
+  }
 
   const isOwnProfile = !!tutor && !!user && user.id === tutor.user;
   const trialLessonsRemaining = tutor?.trial_lessons_remaining ?? 0;
@@ -255,118 +353,83 @@ export default function TutorCheckoutPage({
     );
   }
 
+  const complete = Boolean(createdPurchase || bookingComplete);
+
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <Link
-          href={`/tutors/${tutorId}`}
-          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Hoca profiline dön
-        </Link>
-        <div className="flex items-center gap-2.5">
-          <Avatar className="h-9 w-9">
-            <AvatarImage
-              src={tutor.profile_picture || undefined}
-              alt={`${tutor.name} ${tutor.surname}`}
-            />
-            <AvatarFallback className="bg-primary/10 text-sm font-medium text-primary">
-              {getInitials(tutor.name, tutor.surname)}
-            </AvatarFallback>
-          </Avatar>
-          <div className="text-sm leading-tight">
-            <p className="font-medium">
-              {tutor.name} {tutor.surname}
-            </p>
-            <p className="text-muted-foreground">
-              {formatPrice(tutor.hourly_price)} / 40 dk
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <h1 className="mt-6 text-2xl font-bold">Ders paketini seç</h1>
-      <p className="mt-1 text-sm text-muted-foreground">
-        Haftalık ders sayısını ve paket süresini seç, ders başına avantaj
-        kazan.
-      </p>
-
-      {createdPurchase ? (
-        <div className="mt-8">
-          <CheckoutPurchaseSuccess purchase={createdPurchase} tutorId={tutorId} />
-        </div>
-      ) : bookingComplete ? (
-        <div className="mt-8">
-          <CheckoutBookingSuccess tutorId={tutorId} />
-        </div>
-      ) : (
-        <div className="mt-6 grid gap-6 lg:grid-cols-3">
-          <div className="space-y-4 lg:col-span-2">
-            {canBookFreeTrial && (
-              <div className="flex flex-wrap items-center gap-3 rounded-xl border border-dashed border-primary/50 bg-primary/5 p-4">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-                  <Gift className="h-4 w-4" />
-                </span>
-                <div className="min-w-[14rem] flex-1">
-                  <p className="text-sm font-medium">
-                    Bu hocayı hiç denemediyseniz önce ücretsiz tanışma dersi
-                    alın
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Bu ay {trialLessonsRemaining} ücretsiz deneme hakkın kaldı.
-                  </p>
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="shrink-0"
-                  onClick={() => setBookingModalMode("trial")}
-                >
-                  Ücretsiz dersi ayarla
-                </Button>
-              </div>
-            )}
+    <>
+      <CheckoutShell
+        palette={checkoutPalette}
+        header={<MinimalCheckoutHeader tutorId={tutorId} />}
+        exploration={
+          createdPurchase ? (
+            <CheckoutPurchaseSuccess purchase={createdPurchase} tutorId={tutorId} />
+          ) : bookingComplete ? (
+            <CheckoutBookingSuccess tutorId={tutorId} />
+          ) : plansLoading ? (
+            <div className="space-y-4" aria-label="Paket seçenekleri yükleniyor">
+              <Skeleton className="h-24 rounded-2xl" />
+              <Skeleton className="h-52 rounded-2xl" />
+              <Skeleton className="h-24 rounded-2xl" />
+            </div>
+          ) : plansError ? (
+            <div className="rounded-2xl border p-6">
+              <ErrorMessage message="Paket seçenekleri yüklenemedi." />
+              <Button variant="outline" className="mt-4 rounded-xl" onClick={() => refetchPlans()}>Tekrar dene</Button>
+            </div>
+          ) : weeklyPlans.length === 0 ? (
+            <div className="rounded-2xl border border-dashed p-8 text-center">
+              <h2 className="font-semibold">Bu hoca için açık paket bulunmuyor</h2>
+              <p className="mt-2 text-sm text-muted-foreground">Hoca profilinden diğer ders seçeneklerini inceleyebilirsin.</p>
+              <Button variant="outline" className="mt-5 rounded-xl" asChild><Link href={`/tutors/${tutorId}`}>Hoca profiline dön</Link></Button>
+            </div>
+          ) : (
             <CheckoutProductPicker
+              palette={checkoutPalette}
               basePrice={basePrice}
               weeklyPlans={weeklyPlans}
               lessonsPerWeek={lessonsPerWeek}
               durationDays={durationDays}
               onLessonsPerWeekChange={setLessonsPerWeek}
               onDurationDaysChange={setDurationDays}
+              trialLessonsRemaining={canBookFreeTrial ? trialLessonsRemaining : 0}
+              paidRemainingCredits={paidWithCredits?.remaining_credits ?? null}
+              onBookTrial={() => setBookingModalMode("trial")}
+              onUseCredits={() => setBookingModalMode("credits")}
             />
-          </div>
-          <div>
-            <div className="lg:sticky lg:top-24">
-              <CheckoutSummary
-                tutor={tutor}
-                lessonsPerWeek={lessonsPerWeek}
-                durationDays={durationDays}
-                pricing={pricing}
-                planAvailable={!!selectedPlan}
-                promoCode={promoCode}
-                onPromoCodeChange={setPromoCode}
-                onPurchaseCta={() => {
-                  if (!selectedPlan) return;
-                  purchaseMutation.mutate({
-                    tutor: tutor.id,
-                    plan: selectedPlan.id,
-                    ...(promoCode.trim()
-                      ? { promotion_code: promoCode.trim() }
-                      : {}),
-                  });
-                }}
-                purchasePending={purchaseMutation.isPending}
-                pendingForSelectedPlan={pendingForSelectedPlan}
-                otherPendingPlanName={otherPendingPlanName}
-                paidRemainingCredits={paidWithCredits?.remaining_credits ?? null}
-                onUseCredits={() => setBookingModalMode("credits")}
-              />
-            </div>
-          </div>
-        </div>
-      )}
-
+          )
+        }
+        decision={
+          complete || plansLoading || plansError || weeklyPlans.length === 0 ? null : (
+            <CheckoutSummary
+              tutor={tutor}
+              lessonsPerWeek={lessonsPerWeek}
+              durationDays={durationDays}
+              pricing={pricing}
+              planAvailable={Boolean(selectedPlan)}
+              promoCode={promoCode}
+              onPromoCodeChange={handlePromoCodeChange}
+              onApplyPromo={() => selectedPlan && requestPromoPreview(promoCode, selectedPlan)}
+              promoStatus={promoStatus}
+              promoMessage={promoMessage}
+              promoPricing={promoPlanId === selectedPlan?.id ? promoPricing : null}
+              onRemovePromo={removePromo}
+              onDurationDaysChange={setDurationDays}
+              weeklyPlans={weeklyPlans}
+              onPurchaseCta={() => {
+                if (!selectedPlan) return;
+                purchaseMutation.mutate({
+                  tutor: tutor.id,
+                  plan: selectedPlan.id,
+                  ...(appliedPromoCode && promoPlanId === selectedPlan.id ? { promotion_code: appliedPromoCode } : {}),
+                });
+              }}
+              purchasePending={purchaseMutation.isPending}
+              pendingForSelectedPlan={pendingForSelectedPlan}
+              otherPendingPlanName={otherPendingPlanName}
+            />
+          )
+        }
+      />
       <BookingModal
         tutor={tutor}
         isOpen={bookingModalMode !== null}
@@ -381,6 +444,6 @@ export default function TutorCheckoutPage({
           toast.success("Ders rezervasyonu oluşturuldu.");
         }}
       />
-    </div>
+    </>
   );
 }

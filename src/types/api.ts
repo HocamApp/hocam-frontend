@@ -1024,6 +1024,22 @@ export interface CreatePackagePurchasePayload {
   promotion_code?: string;
 }
 
+export interface PromoPreviewRequest {
+  tutor: string;
+  plan: string;
+  promotion_code: string;
+}
+
+export interface PromoPreviewResponse {
+  promotion_code: string;
+  total_credits: number;
+  unit_price: number;
+  subtotal_price: number;
+  discount_amount: number;
+  promo_discount_amount: number;
+  total_price: number;
+}
+
 export interface ReferralInfo {
   referral_code: string;
   referral_url: string;

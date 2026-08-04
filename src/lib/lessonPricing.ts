@@ -7,8 +7,9 @@
  * and stores every amount at purchase time and stays the source of truth.
  * Lesson counts and discount percentages always come from the plan catalog
  * API (never hardcoded here); this module only mirrors the arithmetic.
- * Promo-code discounts are intentionally NOT simulated here (no preview
- * endpoint exists); they apply server-side when the purchase is created.
+ * Promo-code discounts are intentionally NOT simulated here; the checkout
+ * screen gets them from the /payments/package-purchases/promo-preview/
+ * endpoint instead, and they apply server-side when the purchase is created.
  */
 
 export const LESSON_BASE_MINUTES = 40;
