@@ -193,7 +193,7 @@ describe("/profile — Takvim bağlantıları bölümü her kullanıcıda görü
     renderPage();
 
     await screen.findByRole("heading", { name: "Takvim bağlantıları" });
-    await screen.findByText("kullanici@example.com · Hocam Dersleri");
+    await screen.findByText("kul***@example.com · Hocam Dersleri");
     assert.ok(screen.getByRole("button", { name: "Bağlantıyı kes" }));
   });
 
@@ -203,7 +203,7 @@ describe("/profile — Takvim bağlantıları bölümü her kullanıcıda görü
     renderPage();
 
     await screen.findByRole("heading", { name: "Takvim bağlantıları" });
-    await screen.findByText("kullanici@example.com · Hocam Dersleri");
+    await screen.findByText("kul***@example.com · Hocam Dersleri");
   });
 
   it("profil kaydı olmayan eski hesap da kartı görür", async () => {
@@ -217,7 +217,7 @@ describe("/profile — Takvim bağlantıları bölümü her kullanıcıda görü
     renderPage();
 
     await screen.findByRole("heading", { name: "Takvim bağlantıları" });
-    await screen.findByText("kullanici@example.com · Hocam Dersleri");
+    await screen.findByText("kul***@example.com · Hocam Dersleri");
   });
 
   it("tutor profili eksik/oluşmamış hoca da kartı görür", async () => {
@@ -235,7 +235,7 @@ describe("/profile — Takvim bağlantıları bölümü her kullanıcıda görü
     renderPage();
 
     await screen.findByRole("heading", { name: "Takvim bağlantıları" });
-    await screen.findByText("kullanici@example.com · Hocam Dersleri");
+    await screen.findByText("kul***@example.com · Hocam Dersleri");
   });
 
   it("bağlı olmayan kullanıcı bağlantı çağrısını görür", async () => {

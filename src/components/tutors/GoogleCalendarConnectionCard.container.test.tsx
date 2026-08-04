@@ -123,13 +123,13 @@ describe("GoogleCalendarConnectionCard — connection states", () => {
     renderCard();
 
     assert.ok(screen.getByTestId("google-calendar-loading"));
-    await screen.findByText("hoca@example.com · Hocam Dersleri");
+    await screen.findByText("hoc***@example.com · Hocam Dersleri");
   });
 
   it("renders the connected account and the disconnect control", async () => {
     renderCard();
 
-    await screen.findByText("hoca@example.com · Hocam Dersleri");
+    await screen.findByText("hoc***@example.com · Hocam Dersleri");
     assert.ok(screen.getByRole("button", { name: "Bağlantıyı kes" }));
     assert.equal(
       screen.queryByRole("button", { name: "Google Calendar'a bağla" }),
@@ -167,7 +167,7 @@ describe("GoogleCalendarConnectionCard — connection states", () => {
     fetchShouldFail = false;
     fireEvent.click(retry);
 
-    await screen.findByText("hoca@example.com · Hocam Dersleri");
+    await screen.findByText("hoc***@example.com · Hocam Dersleri");
   });
 });
 
@@ -263,7 +263,7 @@ describe("GoogleCalendarConnectionCard — disconnect", () => {
     fireEvent.click(screen.getByRole("button", { name: "Evet, bağlantıyı kes" }));
 
     await waitFor(() => assert.equal(disconnectCalls, 1));
-    assert.ok(screen.getByText("hoca@example.com · Hocam Dersleri"));
+    assert.ok(screen.getByText("hoc***@example.com · Hocam Dersleri"));
   });
 });
 
@@ -313,7 +313,7 @@ describe("GoogleCalendarConnectionCard — OAuth callback cleanup", () => {
     currentSearch = "google_calendar=connected";
     renderCard();
 
-    await screen.findByText("hoca@example.com · Hocam Dersleri");
+    await screen.findByText("hoc***@example.com · Hocam Dersleri");
     assert.ok(fetchCalls >= 1);
   });
 

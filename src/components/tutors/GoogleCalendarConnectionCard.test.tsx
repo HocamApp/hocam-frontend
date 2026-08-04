@@ -77,7 +77,39 @@ describe("GoogleCalendarConnectionCardView", () => {
   it("shows the connected account and calendar to the owner", () => {
     renderCard({ connection: connected });
 
-    assert.ok(screen.getByText("hoca@example.com · Hocam Dersleri"));
+    assert.ok(screen.getByText("hoc***@example.com · Hocam Dersleri"));
+    assert.ok(screen.getByRole("button", { name: "Bağlantıyı kes" }));
+  });
+
+  it("never prints the full connected address", () => {
+    renderCard({
+      connection: { ...connected, account_email: "officialardaguner@gmail.com" },
+    });
+
+    assert.ok(screen.getByText("off***@gmail.com · Hocam Dersleri"));
+    assert.equal(screen.queryByText(/officialardaguner@gmail\.com/), null);
+    assert.equal(screen.queryByText(/ardaguner/), null);
+  });
+
+  it("keeps short local parts readable", () => {
+    renderCard({ connection: { ...connected, account_email: "ab@gmail.com" } });
+
+    assert.ok(screen.getByText("ab***@gmail.com · Hocam Dersleri"));
+  });
+
+  it("falls back to the calendar name for a malformed address", () => {
+    renderCard({ connection: { ...connected, account_email: "not-an-email" } });
+
+    assert.ok(screen.getByText("Hocam Dersleri"));
+    assert.equal(screen.queryByText(/not-an-email/), null);
+    // The disconnect control must survive the fallback.
+    assert.ok(screen.getByRole("button", { name: "Bağlantıyı kes" }));
+  });
+
+  it("falls back to the calendar name when the API sends no address", () => {
+    renderCard({ connection: { ...connected, account_email: null } });
+
+    assert.ok(screen.getByText("Hocam Dersleri"));
     assert.ok(screen.getByRole("button", { name: "Bağlantıyı kes" }));
   });
 

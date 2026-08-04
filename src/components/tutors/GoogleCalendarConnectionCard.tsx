@@ -10,6 +10,7 @@ import {
   fetchGoogleCalendarConnection,
   startGoogleCalendarConnection,
 } from "@/lib/googleCalendarApi";
+import { maskAccountEmail } from "@/lib/maskAccountEmail";
 import { useGoogleCalendarCallbackResult } from "@/hooks/useGoogleCalendarCallbackResult";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -85,6 +86,8 @@ export function GoogleCalendarConnectionCardView({
 
   const isConnected = connection.status === "connected";
   const needsReauthorization = connection.status === "reauthorization_required";
+  // Display only — the payload still carries the full address.
+  const maskedAccountEmail = maskAccountEmail(connection.account_email);
 
   return (
     <div className="rounded-lg border bg-card p-4">
@@ -110,8 +113,8 @@ export function GoogleCalendarConnectionCardView({
             <p className="text-sm font-medium">Google Calendar</p>
             {isConnected && (
               <p className="mt-0.5 text-xs leading-5 text-muted-foreground">
-                {connection.account_email
-                  ? `${connection.account_email} · ${connection.calendar_name}`
+                {maskedAccountEmail
+                  ? `${maskedAccountEmail} · ${connection.calendar_name}`
                   : connection.calendar_name}
               </p>
             )}
