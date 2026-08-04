@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import type { TutorFilters as TutorFiltersType } from "@/lib/tutorsApi";
 import type { Subject } from "@/types";
@@ -175,9 +176,6 @@ function FilterPanelContent({
               ))}
           </SelectContent>
         </Select>
-        <p className="text-xs text-muted-foreground">
-          Konu, ilgili ders hocalarını bulur; konu uzmanlığı iddiası oluşturmaz.
-        </p>
       </div>
 
       <div className="space-y-2">
@@ -198,26 +196,39 @@ function FilterPanelContent({
         </Select>
       </div>
 
-      <div className="space-y-2">
-        <Label>Ders anlatım özellikleri</Label>
-        <div className="flex flex-wrap gap-2">
-          {teachingAttributes.map((attribute) => {
-            const selected = selectedAttributes.includes(attribute.code);
-            return (
-              <button key={attribute.code} type="button" aria-pressed={selected}
-                onClick={() => {
-                  const next = selected
-                    ? selectedAttributes.filter((code) => code !== attribute.code)
-                    : [...selectedAttributes, attribute.code];
-                  onFiltersChange({ ...filters, teaching_attributes: next.join(",") });
-                }}
-                className={`rounded-full border px-2.5 py-1 text-xs ${selected ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground"}`}>
-                {attribute.name}
-              </button>
-            );
-          })}
-        </div>
-      </div>
+      <Accordion type="single" collapsible className="-my-2">
+        <AccordionItem value="teaching-attributes" className="border-none">
+          <AccordionTrigger className="py-2 text-sm font-medium hover:no-underline">
+            <span className="flex items-center gap-2">
+              Ders anlatım özellikleri
+              {selectedAttributes.length > 0 && (
+                <Badge variant="secondary" className="h-5 min-w-5 justify-center rounded-full px-1.5 tabular-nums">
+                  {selectedAttributes.length}
+                </Badge>
+              )}
+            </span>
+          </AccordionTrigger>
+          <AccordionContent className="pb-1">
+            <div className="flex flex-wrap gap-2">
+              {teachingAttributes.map((attribute) => {
+                const selected = selectedAttributes.includes(attribute.code);
+                return (
+                  <button key={attribute.code} type="button" aria-pressed={selected}
+                    onClick={() => {
+                      const next = selected
+                        ? selectedAttributes.filter((code) => code !== attribute.code)
+                        : [...selectedAttributes, attribute.code];
+                      onFiltersChange({ ...filters, teaching_attributes: next.join(",") });
+                    }}
+                    className={`rounded-full border px-2.5 py-1 text-xs ${selected ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground"}`}>
+                    {attribute.name}
+                  </button>
+                );
+              })}
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
 
       <PriceRangeSlider
         value={priceValue}

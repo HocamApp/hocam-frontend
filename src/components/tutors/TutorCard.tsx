@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { ArrowRight, Award, Scale } from "lucide-react";
 import { TutorProfile } from "@/types";
-import { formatLessonCount, formatPrice, formatRating } from "@/lib/utils";
+import { cn, formatLessonCount, formatPrice, formatRating } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -32,6 +32,9 @@ interface TutorCardProps {
   isCompared?: boolean;
   onToggleCompare?: (id: string) => void;
   compareDisabled?: boolean;
+  /** "lg" is used by the main directory grid now that it shows fewer,
+   * larger cards per row; every other call site keeps the original size. */
+  size?: "default" | "lg";
 }
 
 type LearningContextQuery = {
@@ -69,7 +72,9 @@ export function TutorCard({
   isCompared,
   onToggleCompare,
   compareDisabled,
+  size = "default",
 }: TutorCardProps) {
+  const isLg = size === "lg";
   const examOrder = ["TYT", "AYT", "YDT", "DGS", "KPSS"] as const;
   const orderedSubjectsWithDuplicates = examOrder.flatMap((exam) =>
     tutor.subjects.filter((s) => s.exam_type === exam)
@@ -94,14 +99,14 @@ export function TutorCard({
     >
       <CardContent className="p-0">
         <Link href={tutorHref} className="block cursor-pointer">
-          <div className="flex gap-4 p-4">
-            <div className="relative h-16 w-16 shrink-0">
-              <Avatar className="h-16 w-16">
+          <div className={cn("flex gap-4 p-4", isLg && "gap-5 p-5")}>
+            <div className={cn("relative h-16 w-16 shrink-0", isLg && "h-20 w-20")}>
+              <Avatar className={cn("h-16 w-16", isLg && "h-20 w-20")}>
                 <AvatarImage
                   src={tutor.profile_picture || undefined}
                   alt={`${tutor.name} ${tutor.surname}`}
                 />
-                <AvatarFallback className="bg-primary/10 text-primary text-lg font-medium">
+                <AvatarFallback className={cn("bg-primary/10 text-primary text-lg font-medium", isLg && "text-xl")}>
                   {getInitials(tutor.name, tutor.surname)}
                 </AvatarFallback>
               </Avatar>
@@ -110,11 +115,11 @@ export function TutorCard({
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex min-w-0 items-center gap-1">
-                <p className="min-w-0 truncate text-lg font-semibold">
+                <p className={cn("min-w-0 truncate text-lg font-semibold", isLg && "text-xl")}>
                   {tutor.name} {tutor.surname}
                 </p>
               </div>
-              <p className="truncate text-sm text-muted-foreground">
+              <p className={cn("truncate text-sm text-muted-foreground", isLg && "text-base")}>
                 {tutor.university} · {tutor.department}
               </p>
               <div className="mt-1 flex flex-wrap items-center gap-2">
@@ -123,47 +128,47 @@ export function TutorCard({
                   lastSeenAt={tutor.last_seen_at}
                 />
                 {tutor.yks_rank > 0 && (
-                  <span className="inline-flex w-fit items-center gap-1 rounded-full border border-amber-500/20 bg-amber-500/10 px-2 py-0.5 text-xs font-medium text-amber-800 dark:text-amber-200">
+                  <span className={cn("inline-flex w-fit items-center gap-1 rounded-full border border-amber-500/20 bg-amber-500/10 px-2 py-0.5 text-xs font-medium text-amber-800 dark:text-amber-200", isLg && "text-sm")}>
                     <Award className="h-3 w-3" />
                     YKS Sıralaması: {formatYksRank(tutor.yks_rank)}
                   </span>
                 )}
                 {tutor.is_new_tutor && (
-                  <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">Yeni hoca</span>
+                  <span className={cn("rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary", isLg && "text-sm")}>Yeni hoca</span>
                 )}
                 {tutor.launch_program_available && (
-                  <span className="rounded-full bg-violet-500/10 px-2 py-0.5 text-xs font-medium text-violet-700 dark:text-violet-300">Tanıtım programına açık</span>
+                  <span className={cn("rounded-full bg-violet-500/10 px-2 py-0.5 text-xs font-medium text-violet-700 dark:text-violet-300", isLg && "text-sm")}>Tanıtım programına açık</span>
                 )}
                 {tutor.is_bookable === true && (
-                  <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:text-emerald-300">Yeni öğrenci kabul ediyor</span>
+                  <span className={cn("rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:text-emerald-300", isLg && "text-sm")}>Yeni öğrenci kabul ediyor</span>
                 )}
                 {tutor.is_bookable === false && (
-                  <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-xs font-medium text-amber-800 dark:text-amber-200">Şu anda yeni öğrenci almıyor</span>
+                  <span className={cn("rounded-full bg-amber-500/10 px-2 py-0.5 text-xs font-medium text-amber-800 dark:text-amber-200", isLg && "text-sm")}>Şu anda yeni öğrenci almıyor</span>
                 )}
               </div>
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-1 px-4 pb-3">
+          <div className={cn("flex flex-wrap gap-1 px-4 pb-3", isLg && "gap-1.5 px-5 pb-4")}>
             {visibleSubjects.map((sub, index) => (
-              <Badge key={sub.id} variant={index === 0 ? "default" : "outline"} className="text-xs">
+              <Badge key={sub.id} variant={index === 0 ? "default" : "outline"} className={cn("text-xs", isLg && "text-sm")}>
                 {sub.name}
               </Badge>
             ))}
             {remainingCount > 0 && (
-              <span className="text-xs text-muted-foreground">+{remainingCount} daha</span>
+              <span className={cn("text-xs text-muted-foreground", isLg && "text-sm")}>+{remainingCount} daha</span>
             )}
             {(tutor.teaching_attributes ?? []).slice(0, 2).map((attribute) => (
-              <Badge key={attribute.code} variant="secondary" className="text-xs">
+              <Badge key={attribute.code} variant="secondary" className={cn("text-xs", isLg && "text-sm")}>
                 {attribute.name}
               </Badge>
             ))}
           </div>
         </Link>
 
-        <div className="border-t px-4 py-3">
+        <div className={cn("border-t px-4 py-3", isLg && "px-5 py-4")}>
           <Link href={tutorHref} className="block min-w-0 cursor-pointer">
-            <div className="flex min-w-0 flex-wrap items-center gap-x-1 text-sm">
+            <div className={cn("flex min-w-0 flex-wrap items-center gap-x-1 text-sm", isLg && "text-base")}>
               {tutor.total_reviews > 0 ? (
                 <>
                   <span className="font-medium">★ {formatRating(tutor.rating)}</span>
@@ -178,10 +183,10 @@ export function TutorCard({
               <span className="text-muted-foreground">{completedLessonsLabel}</span>
             </div>
           </Link>
-          <div className="mt-3 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className={cn("mt-3 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between", isLg && "mt-4")}>
             <Link href={tutorHref} className="min-w-0 sm:shrink-0">
-              <span className="text-lg font-semibold">{formatPrice(tutor.hourly_price)}</span>
-              <span className="ml-1 text-sm text-muted-foreground">/40 dk</span>
+              <span className={cn("text-lg font-semibold", isLg && "text-xl")}>{formatPrice(tutor.hourly_price)}</span>
+              <span className={cn("ml-1 text-sm text-muted-foreground", isLg && "text-base")}>/40 dk</span>
             </Link>
             <div className="flex w-full shrink-0 items-center gap-1 sm:w-auto">
               {onToggleCompare && (
@@ -192,14 +197,22 @@ export function TutorCard({
                   aria-label={isCompared ? "Karşılaştırmadan çıkar" : "Karşılaştırmaya ekle"}
                   title={compareDisabled && !isCompared ? "En fazla üç hoca karşılaştırılabilir" : undefined}
                   onClick={() => onToggleCompare(tutor.id)}
-                  className={`inline-flex h-9 w-9 items-center justify-center rounded-md border transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
-                    isCompared ? "border-primary bg-primary/10 text-primary" : "hover:bg-muted"
-                  }`}
+                  className={cn(
+                    "inline-flex h-9 w-9 items-center justify-center rounded-md border transition-colors disabled:cursor-not-allowed disabled:opacity-40",
+                    isCompared ? "border-primary bg-primary/10 text-primary" : "hover:bg-muted",
+                    isLg && "h-11 w-11"
+                  )}
                 >
-                  <Scale className="h-4 w-4" />
+                  <Scale className={cn("h-4 w-4", isLg && "h-5 w-5")} />
                 </button>
               )}
-              <Link href={tutorHref} className="flex-1 rounded-md bg-primary px-3 py-2 text-center text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 sm:flex-none">
+              <Link
+                href={tutorHref}
+                className={cn(
+                  "flex-1 rounded-md bg-primary px-3 py-2 text-center text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 sm:flex-none",
+                  isLg && "px-4 py-2.5 text-base"
+                )}
+              >
                 Profili Gör <ArrowRight className="ml-1 inline h-3.5 w-3.5" />
               </Link>
               {onToggleFavorite && (
