@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  CalendarCheck,
   Check,
   Copy,
   Flag,
@@ -25,17 +26,18 @@ import {
   type TutorReportReason,
 } from "@/lib/tutorsApi";
 import { fetchTutorAvailability } from "@/lib/dashboardApi";
+import { fetchTutorBusyIntervals } from "@/lib/lessonsApi";
 import { useAuth } from "@/hooks/useAuth";
 import { resolveProfileImageUrl } from "@/lib/profileImages";
 import { buildTutorSubjectLabels } from "@/lib/tutorSubjectLabels";
-import { formatLessonCount, formatPrice, formatRating } from "@/lib/utils";
+import { formatLessonCount, formatPrice, formatRating, formatDateLocal } from "@/lib/utils";
 import { ReviewCard } from "@/components/tutors/ReviewCard";
 import { ReviewSummary } from "@/components/tutors/ReviewSummary";
 import { TutorPresenceBadge } from "@/components/tutors/TutorPresenceBadge";
 import { VerifiedTutorMark } from "@/components/tutors/VerifiedTutorMark";
 import { AvailabilityCalendar } from "@/components/tutors/AvailabilityCalendar";
 import { GoogleCalendarAssurance } from "@/components/tutors/GoogleCalendarAssurance";
-import { GoogleCalendarConnectionCard } from "@/components/tutors/GoogleCalendarConnectionCard";
+import { CALENDAR_CONNECTIONS_HREF } from "@/components/profile/CalendarConnectionsSection";
 import { MessageRequestModal } from "@/components/tutors/MessageRequestModal";
 import { BookingModal } from "@/components/lessons/BookingModal";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
@@ -439,6 +441,19 @@ export default function TutorProfilePage({
   const { data: availability = [], isLoading: availabilityLoading } = useQuery({
     queryKey: ["tutor-availability", id],
     queryFn: () => fetchTutorAvailability(id),
+    enabled: !!tutor,
+  });
+
+  // Privacy-minimal busy spans (start/end only, never a student identity) so
+  // the visitor calendar can mark Kısmen dolu / Dolu days and slots. Same
+  // six-month horizon the availability calendar displays.
+  const busyRangeStart = formatDateLocal(new Date());
+  const busyRangeEnd = formatDateLocal(
+    new Date(new Date().setMonth(new Date().getMonth() + 6))
+  );
+  const { data: busyIntervals = [] } = useQuery({
+    queryKey: ["tutor-busy-intervals", id, busyRangeStart, busyRangeEnd],
+    queryFn: () => fetchTutorBusyIntervals(id, busyRangeStart, busyRangeEnd),
     enabled: !!tutor,
   });
 
@@ -987,8 +1002,33 @@ export default function TutorProfilePage({
             <h2 className="text-xl font-semibold">Müsaitlik</h2>
             <Separator className="mt-2" />
             {isOwnProfile ? (
-              <div className="mt-4">
-                <GoogleCalendarConnectionCard />
+              // Connection management lives in one shared place (/profile)
+              // for students and tutors alike — the owner only gets a
+              // compact pointer to it here, never the full management card.
+              <div className="mt-4 rounded-lg border bg-card p-4 sm:flex sm:items-center sm:justify-between sm:gap-4">
+                <div className="flex items-start gap-3">
+                  <CalendarCheck
+                    className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground"
+                    aria-hidden="true"
+                  />
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium">Google Calendar</p>
+                    <p className="mt-0.5 text-xs leading-5 text-muted-foreground">
+                      Takvim bağlantını profil sayfandaki &quot;Takvim
+                      bağlantıları&quot; bölümünden yönet.
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mt-3 w-full sm:mt-0 sm:w-auto"
+                  asChild
+                >
+                  <Link href={CALENDAR_CONNECTIONS_HREF}>
+                    Takvim bağlantılarına git
+                  </Link>
+                </Button>
               </div>
             ) : (
               <div className="mt-4">
@@ -1017,6 +1057,7 @@ export default function TutorProfilePage({
                   <CardContent className="py-4">
                     <AvailabilityCalendar
                       availability={availability}
+                      busyIntervals={busyIntervals}
                       editable={false}
                       showBookings={false}
                     />

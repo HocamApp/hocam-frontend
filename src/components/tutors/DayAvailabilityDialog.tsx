@@ -20,7 +20,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { TimeSelect } from "@/components/ui/time-select";
-import { availabilityRulesOverlap } from "@/lib/availability";
+import { availabilityRulesOverlap, ruleHasBookingOnDate, type DayBusyInterval } from "@/lib/availability";
 
 function formatRuleTime(t: string | null): string {
   if (!t) return "";
@@ -33,6 +33,9 @@ interface DayAvailabilityDialogProps {
   dayOfWeek: number;
   date: string;
   dayLabel: string;
+  /** Active bookings on this date: slots overlapping one are visible but
+   *  deliberately NOT deletable — removing the rule would strand a lesson. */
+  bookedIntervals?: DayBusyInterval[];
 }
 
 export function DayAvailabilityDialog({
@@ -41,6 +44,7 @@ export function DayAvailabilityDialog({
   dayOfWeek,
   date,
   dayLabel,
+  bookedIntervals = [],
 }: DayAvailabilityDialogProps) {
   const queryClient = useQueryClient();
   const [startTime, setStartTime] = useState("");
@@ -152,6 +156,11 @@ export function DayAvailabilityDialog({
               {dayRules.map((rule) => {
                 const start = formatRuleTime(rule.start_time);
                 const end = formatRuleTime(rule.end_time);
+                // Booking overlap is only knowable for the concrete date —
+                // weekly repeats stay editable from here.
+                const isBooked =
+                  mode === "date" &&
+                  ruleHasBookingOnDate(rule, new Date(`${date}T00:00:00`), bookedIntervals);
                 return (
                   <div
                     key={rule.id}
@@ -160,15 +169,24 @@ export function DayAvailabilityDialog({
                     <span className="font-medium tabular-nums">
                       {start}–{end}
                     </span>
-                    <button
-                      type="button"
-                      onClick={() => deleteMutation.mutate(rule.id)}
-                      disabled={isMutating}
-                      aria-label={`${dayLabel} ${start}–${end} saatini sil`}
-                      className="text-muted-foreground transition-colors hover:text-destructive disabled:pointer-events-none disabled:opacity-50"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
+                    {isBooked ? (
+                      <span
+                        className="text-xs text-muted-foreground"
+                        data-testid="availability-slot-booked"
+                      >
+                        Rezervasyon var
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => deleteMutation.mutate(rule.id)}
+                        disabled={isMutating}
+                        aria-label={`${dayLabel} ${start}–${end} saatini sil`}
+                        className="text-muted-foreground transition-colors hover:text-destructive disabled:pointer-events-none disabled:opacity-50"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    )}
                   </div>
                 );
               })}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import Link from "next/link";
@@ -34,6 +34,7 @@ import { ProfileSummary } from "@/components/profile/ProfileSummary";
 import { AvatarEditor } from "@/components/profile/AvatarEditor";
 import { StudentLearningProfile } from "@/components/profile/StudentLearningProfile";
 import { TutorVideoSection } from "@/components/profile/TutorVideoSection";
+import { CalendarConnectionsSection } from "@/components/profile/CalendarConnectionsSection";
 
 function getInitials(name: string, surname: string): string {
   return ((name.trim()[0] || "") + (surname.trim()[0] || "")).toUpperCase();
@@ -223,6 +224,17 @@ function ProfileContent() {
     </Card>
   );
 
+  // One definition, both role branches: the calendar section is identical
+  // for students and tutors and must render regardless of profile state.
+  // The OAuth callback lands back on this page (?google_calendar=…), and
+  // the card's callback hook reads useSearchParams — hence the Suspense
+  // boundary, which keeps prerendering from bailing out.
+  const calendarConnections = (
+    <Suspense fallback={null}>
+      <CalendarConnectionsSection />
+    </Suspense>
+  );
+
   return (
     <div className="relative isolate">
       {/* One mount point for both roles — the page itself is role-branched below. */}
@@ -240,6 +252,7 @@ function ProfileContent() {
       {isTutor ? (
         <div className="space-y-6 lg:space-y-8">
           {identitySummary}
+          {calendarConnections}
           <Card>
             <CardHeader>
               <SectionCardTitle className="text-base">Hoca Bilgileri</SectionCardTitle>
@@ -298,6 +311,7 @@ function ProfileContent() {
       ) : (
         <div className="space-y-6 lg:space-y-8">
           {identitySummary}
+          {calendarConnections}
           <StudentLearningProfile />
         </div>
       )}

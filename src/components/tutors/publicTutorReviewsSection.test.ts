@@ -100,27 +100,40 @@ describe("SubjectRatingBreakdown component", () => {
 });
 
 describe("public tutor profile — Google Calendar block placement", () => {
-  it("renders the owner card inside the availability section", () => {
-    const availabilityHeading = publicPage.indexOf(">Müsaitlik<");
-    const card = publicPage.indexOf("<GoogleCalendarConnectionCard />");
-    const calendar = publicPage.indexOf("<AvailabilityCalendar");
-    const reviewsHeading = publicPage.indexOf(">Değerlendirmeler<");
-
-    assert.ok(card > availabilityHeading, "card must come after the heading");
-    assert.ok(card < calendar, "card must sit above the availability calendar");
-    assert.ok(calendar < reviewsHeading, "reviews must stay last");
+  it("no longer embeds the full management card on the public page", () => {
+    // Connection management has a single shared home (/profile "Takvim
+    // bağlantıları") for students and tutors — the public page only links
+    // there, it never mounts the management card itself.
+    assert.equal(publicPage.includes("<GoogleCalendarConnectionCard"), false);
+    assert.equal(publicPage.includes('GoogleCalendarConnectionCard";'), false);
+    assert.equal(
+      publicPage.includes(
+        'import { GoogleCalendarConnectionCard } from "@/components/tutors/GoogleCalendarConnectionCard"'
+      ),
+      false
+    );
   });
 
-  it("shows the owner card only to the profile owner", () => {
-    assert.ok(
-      publicPage.includes("{isOwnProfile ? (") ||
-        publicPage.includes("isOwnProfile ? (")
-    );
+  it("shows the owner a compact link to the shared management screen", () => {
+    const availabilityHeading = publicPage.indexOf(">Müsaitlik<");
+    const calendar = publicPage.indexOf("<AvailabilityCalendar");
+    const reviewsHeading = publicPage.indexOf(">Değerlendirmeler<");
+    const cta = publicPage.indexOf("Takvim bağlantılarına git");
+
+    assert.ok(cta > availabilityHeading, "owner CTA must come after the heading");
+    assert.ok(cta < calendar, "owner CTA must sit above the availability calendar");
+    assert.ok(calendar < reviewsHeading, "reviews must stay last");
+    assert.ok(publicPage.includes("CALENDAR_CONNECTIONS_HREF"));
+    assert.equal(publicPage.includes("/profile#takvim-baglantilari"), false);
+  });
+
+  it("scopes the management link to the owner branch only", () => {
+    assert.ok(publicPage.includes("isOwnProfile ? ("));
     const ownerBranch = publicPage.slice(
       publicPage.indexOf("isOwnProfile ? ("),
       publicPage.indexOf("<AvailabilityCalendar")
     );
-    assert.ok(ownerBranch.includes("<GoogleCalendarConnectionCard />"));
+    assert.ok(ownerBranch.includes("Takvim bağlantılarına git"));
     assert.ok(ownerBranch.includes("<GoogleCalendarAssurance"));
   });
 
@@ -132,12 +145,13 @@ describe("public tutor profile — Google Calendar block placement", () => {
     assert.equal(publicPage.includes("last_error"), false);
   });
 
-  it("keeps the AvailabilityCalendar props untouched", () => {
+  it("keeps the AvailabilityCalendar read-only and feeds it privacy-minimal busy intervals", () => {
     const calendarBlock = publicPage.slice(
       publicPage.indexOf("<AvailabilityCalendar"),
-      publicPage.indexOf("<AvailabilityCalendar") + 220
+      publicPage.indexOf("<AvailabilityCalendar") + 260
     );
     assert.ok(calendarBlock.includes("availability={availability}"));
+    assert.ok(calendarBlock.includes("busyIntervals={busyIntervals}"));
     assert.ok(calendarBlock.includes("editable={false}"));
     assert.ok(calendarBlock.includes("showBookings={false}"));
   });

@@ -15,7 +15,9 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { GoogleCalendarConnection } from "@/types/api";
 
-export const GOOGLE_CALENDAR_QUERY_KEY = ["tutor", "google-calendar"] as const;
+// Role-neutral cache key: students and tutors share the same connection
+// endpoint and the same card, so the query must not be namespaced per role.
+export const GOOGLE_CALENDAR_QUERY_KEY = ["google-calendar"] as const;
 
 /**
  * Shown to the tutor before disconnecting. The wording is deliberate: nothing
@@ -183,8 +185,10 @@ export function GoogleCalendarConnectionCardView({
 }
 
 /**
- * Owner-only Google Calendar control, rendered inside the profile's
- * availability section. Students and visitors never see this component.
+ * The single Google Calendar management control for every authenticated
+ * user — student or tutor, with or without a tutor profile. Rendered inside
+ * the shared "Takvim bağlantıları" section on /profile; the public tutor
+ * page only links here.
  */
 export function GoogleCalendarConnectionCard() {
   const queryClient = useQueryClient();

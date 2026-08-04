@@ -52,6 +52,7 @@ import {
   ProfileMenuRow,
   ProfileToggleRow,
 } from "@/components/profile/ProfileMenuRow";
+import { CALENDAR_CONNECTIONS_HREF } from "@/components/profile/CalendarConnectionsSection";
 import {
   PaymentMethodSelector,
   type PaymentMethod,
@@ -354,6 +355,15 @@ export function ProfileMenu() {
               label="Profil sayfasına git"
               showChevron
               onClick={() => go(isTutor ? editHref : "/profile")}
+            />
+
+            {/* Google Calendar management — one shared screen for both
+                roles, reachable without knowing any public tutor ID. */}
+            <ProfileMenuRow
+              icon={<CalendarClock className="h-4 w-4" />}
+              label="Takvim bağlantıları"
+              showChevron
+              onClick={() => go(CALENDAR_CONNECTIONS_HREF)}
             />
           </ProfileAccordionSection>
 

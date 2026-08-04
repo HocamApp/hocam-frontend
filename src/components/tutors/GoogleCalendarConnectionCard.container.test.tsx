@@ -10,6 +10,9 @@ import type { GoogleCalendarConnection } from "@/types/api";
 
 /**
  * Container-level tests: the card wired to react-query and the callback hook.
+ * The card is role-neutral and now lives in the shared "Takvim bağlantıları"
+ * section on /profile, so the mocked pathname below is /profile — the same
+ * screen a student and a tutor return to after the OAuth round-trip.
  *
  * Two things are deliberately NOT asserted here because this jsdom harness
  * cannot observe them (see the Phase 7 report):
@@ -52,7 +55,7 @@ before(async () => {
         replace: (href: string) => routerReplaceCalls.push(href),
         push: () => {},
       }),
-      usePathname: () => "/tutors/tutor-1",
+      usePathname: () => "/profile",
       useSearchParams: () => new URLSearchParams(currentSearch),
     },
   });
@@ -115,7 +118,7 @@ afterEach(() => {
   cleanup();
 });
 
-describe("GoogleCalendarConnectionCard — owner states", () => {
+describe("GoogleCalendarConnectionCard — connection states", () => {
   it("shows the loading state before the status arrives", async () => {
     renderCard();
 
@@ -270,7 +273,7 @@ describe("GoogleCalendarConnectionCard — OAuth callback cleanup", () => {
     renderCard();
 
     await waitFor(() => assert.equal(routerReplaceCalls.length, 1));
-    assert.equal(routerReplaceCalls[0], "/tutors/tutor-1");
+    assert.equal(routerReplaceCalls[0], "/profile");
   });
 
   it("cleans the URL after a failed callback", async () => {
@@ -278,7 +281,7 @@ describe("GoogleCalendarConnectionCard — OAuth callback cleanup", () => {
     renderCard();
 
     await waitFor(() => assert.equal(routerReplaceCalls.length, 1));
-    assert.equal(routerReplaceCalls[0], "/tutors/tutor-1");
+    assert.equal(routerReplaceCalls[0], "/profile");
   });
 
   it("cleans the URL after an invalid state", async () => {
@@ -286,7 +289,7 @@ describe("GoogleCalendarConnectionCard — OAuth callback cleanup", () => {
     renderCard();
 
     await waitFor(() => assert.equal(routerReplaceCalls.length, 1));
-    assert.equal(routerReplaceCalls[0], "/tutors/tutor-1");
+    assert.equal(routerReplaceCalls[0], "/profile");
   });
 
   it("keeps the other query parameters when cleaning up", async () => {
@@ -297,7 +300,7 @@ describe("GoogleCalendarConnectionCard — OAuth callback cleanup", () => {
     await waitFor(() => assert.equal(routerReplaceCalls.length, 1));
     const [path, query] = routerReplaceCalls[0].split("?");
     const params = new URLSearchParams(query);
-    assert.equal(path, "/tutors/tutor-1");
+    assert.equal(path, "/profile");
     assert.equal(params.get("learning_goal_id"), "goal-1");
     assert.equal(params.get("discovery_impression_id"), "imp-9");
     assert.equal(params.has("google_calendar"), false);

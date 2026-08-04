@@ -4,9 +4,14 @@ import type {
   GoogleCalendarConnection,
 } from "@/types/api";
 
-/** The owning tutor's own connection. Students never call this. */
+/**
+ * Role-neutral endpoints: every authenticated user — student or tutor, with
+ * or without a tutor profile — reads and manages their own connection here.
+ * The legacy `/tutor/google-calendar/` alias stays for old clients only; new
+ * code must not call it.
+ */
 export async function fetchGoogleCalendarConnection(): Promise<GoogleCalendarConnection> {
-  const { data } = await api.get<GoogleCalendarConnection>("/tutor/google-calendar/");
+  const { data } = await api.get<GoogleCalendarConnection>("/google-calendar/");
   return data;
 }
 
@@ -16,7 +21,7 @@ export async function fetchGoogleCalendarConnection(): Promise<GoogleCalendarCon
  */
 export async function startGoogleCalendarConnection(): Promise<GoogleCalendarAuthorization> {
   const { data } = await api.post<GoogleCalendarAuthorization>(
-    "/tutor/google-calendar/"
+    "/google-calendar/"
   );
   return data;
 }
@@ -26,5 +31,5 @@ export async function startGoogleCalendarConnection(): Promise<GoogleCalendarAut
  * are deliberately left in place — only future syncing stops.
  */
 export async function disconnectGoogleCalendar(): Promise<void> {
-  await api.delete("/tutor/google-calendar/");
+  await api.delete("/google-calendar/");
 }
