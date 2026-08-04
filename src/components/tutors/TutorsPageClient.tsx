@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect, Suspense } from "react";
+import Image from "next/image";
 import { ScribbleLayers } from "@/components/decor/ScribbleLayer";
 import { TUTORS_SCRIBBLES } from "@/lib/scribblePlacements";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -412,28 +413,41 @@ function TutorsPageContent() {
       <div className="mx-auto max-w-7xl overflow-x-clip px-4 py-8 space-y-6">
         {!showFavorites && (
           <>
-            <div className="overflow-hidden rounded-2xl border bg-gradient-to-br from-primary/15 via-background to-violet-500/10 px-5 py-7 shadow-sm sm:px-8 sm:py-9">
-              <div className="mx-auto max-w-3xl text-center">
-                <p className="text-sm font-semibold text-primary">DOĞRULANMIŞ YKS HOCALARI</p>
-                <h1 className="mt-2 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-                  Sana uygun hocayı bul
-                </h1>
-                <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">
-                  Dersine, hedeflerine ve uygun saatlerine göre hoca ara; profilleri karşılaştırıp güvenle rezervasyon yap.
-                </p>
-                <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
-                  <AnimatedSearchBar
-                    value={searchLocal}
-                    onChange={setSearchLocal}
-                    onCommit={(search) => handleFiltersChange({ ...filters, search })}
-                    disabled={isListLoading}
-                  />
-                </div>
-                {!isListLoading && tutors && (
-                  <p className="mt-3 text-sm text-muted-foreground">
-                    <span className="font-semibold text-foreground">{tutors.count ?? 0}</span> doğrulanmış hoca bulundu
+            <div className="relative isolate overflow-hidden rounded-2xl border shadow-sm">
+              <Image
+                src="/images/home-v3/hero-v2/yks-students.jpg"
+                alt="Aydınlık bir sınıfta sınava hazırlanan üniversite öğrencileri"
+                fill
+                priority
+                sizes="100vw"
+                className="object-cover object-center"
+              />
+              {/* Wash so the headline and body copy stay legible over the photo
+                  in both light and dark mode, while still letting it show through. */}
+              <div className="absolute inset-0 bg-background/55" />
+              <div className="relative px-5 py-7 sm:px-8 sm:py-9">
+                <div className="mx-auto max-w-3xl rounded-xl bg-background/85 px-5 py-6 text-center shadow-sm backdrop-blur-sm sm:px-8 sm:py-7">
+                  <p className="text-sm font-semibold text-primary">DOĞRULANMIŞ YKS HOCALARI</p>
+                  <h1 className="mt-2 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+                    Sana uygun hocayı bul
+                  </h1>
+                  <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">
+                    Dersine, hedeflerine ve uygun saatlerine göre hoca ara; profilleri karşılaştırıp güvenle rezervasyon yap.
                   </p>
-                )}
+                  <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
+                    <AnimatedSearchBar
+                      value={searchLocal}
+                      onChange={setSearchLocal}
+                      onCommit={(search) => handleFiltersChange({ ...filters, search })}
+                      disabled={isListLoading}
+                    />
+                  </div>
+                  {!isListLoading && tutors && (
+                    <p className="mt-3 text-sm text-muted-foreground">
+                      <span className="font-semibold text-foreground">{tutors.count ?? 0}</span> doğrulanmış hoca bulundu
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
 
