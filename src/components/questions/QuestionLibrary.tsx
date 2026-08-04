@@ -1,8 +1,6 @@
 "use client";
 
 import { useEffect, useMemo } from "react";
-import { ScribbleLayers } from "@/components/decor/ScribbleLayer";
-import { QUESTIONS_SCRIBBLES } from "@/lib/scribblePlacements";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { AlertTriangle, RotateCcw } from "lucide-react";
@@ -74,8 +72,6 @@ export function QuestionLibrary({ wrongOnly = false }: { wrongOnly?: boolean }) 
   }, [questions.data, returnTo]);
 
   return (
-    <div className="relative isolate">
-      <ScribbleLayers layers={QUESTIONS_SCRIBBLES} />
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       <div className="mb-7">
         <p className="text-sm font-medium text-primary">MEBİ kaynaklı YKS arşivi</p>
@@ -158,7 +154,6 @@ export function QuestionLibrary({ wrongOnly = false }: { wrongOnly?: boolean }) 
         </>
       )}
       </div>
-    </div>
   );
 }
 

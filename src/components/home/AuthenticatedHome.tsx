@@ -28,7 +28,6 @@ import { HomeSubjectSearch } from "@/components/home/HomeSubjectSearch";
 import { HocaBulEntryCard } from "@/components/home/HocaBulEntryCard";
 import { HomeHeroCarousel } from "@/components/home/HomeHeroCarousel";
 import { HomeBand } from "@/components/home/HomeBand";
-import { HOME_SCRIBBLES } from "@/lib/scribblePlacements";
 import { HomeExploreCarousel } from "@/components/home/HomeExploreCarousel";
 import { HomeTeacherRail } from "@/components/home/HomeTeacherRail";
 import { HomeTabbedDiscovery } from "@/components/home/HomeTabbedDiscovery";
@@ -287,7 +286,7 @@ export function AuthenticatedHome() {
           two competing "find a tutor" starting points on one screen is the
           thing this flow exists to remove. Flag off, the home is unchanged. */}
       {HOCA_BUL_ENABLED && (
-        <HomeBand tinted scribbles={HOME_SCRIBBLES.hocaBul}>
+        <HomeBand tinted>
           <HocaBulEntryCard />
         </HomeBand>
       )}
@@ -322,11 +321,11 @@ export function AuthenticatedHome() {
         </HomeBand>
       )}
 
-      <HomeBand tinted scribbles={HOME_SCRIBBLES.explore}>
+      <HomeBand tinted>
         <HomeExploreCarousel />
       </HomeBand>
 
-      <HomeBand scribbles={HOME_SCRIBBLES.teacherRail}>
+      <HomeBand>
         <HomeTeacherRail
           tutors={tutorsQuery.data?.results ?? []}
           isLoading={tutorsQuery.isLoading}
@@ -335,22 +334,22 @@ export function AuthenticatedHome() {
         />
       </HomeBand>
 
-      <HomeBand tinted scribbles={HOME_SCRIBBLES.tabbedDiscovery}>
+      <HomeBand tinted>
         <HomeTabbedDiscovery isAuthenticated={isAuthenticated} />
       </HomeBand>
 
-      <HomeBand scribbles={HOME_SCRIBBLES.goalCards}>
+      <HomeBand>
         <HomeGoalCards
           templates={learningQuery.data?.templates}
           goals={learningQuery.data?.goals}
         />
       </HomeBand>
 
-      <HomeBand tinted scribbles={HOME_SCRIBBLES.topicLinks}>
+      <HomeBand tinted>
         <HomeTopicLinks />
       </HomeBand>
 
-      <HomeBand scribbles={HOME_SCRIBBLES.promoStrip}>
+      <HomeBand>
         <HomePromoStrip />
       </HomeBand>
     </div>

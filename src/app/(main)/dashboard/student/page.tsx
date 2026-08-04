@@ -43,8 +43,6 @@ import { STUDENT_DASHBOARD_ASSISTANT } from "@/components/ai/pageAssistantConten
 import { EmptyState } from "@/components/shared/EmptyState";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { RouteGuard } from "@/components/shared/RouteGuard";
-import { ScribbleLayers } from "@/components/decor/ScribbleLayer";
-import { STUDENT_DASHBOARD_SCRIBBLES } from "@/lib/scribblePlacements";
 import StatusBadge from "@/components/shared/StatusBadge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -301,9 +299,7 @@ function StudentDashboardContent() {
   );
 
   return (
-    <div className="relative isolate">
-      <ScribbleLayers layers={STUDENT_DASHBOARD_SCRIBBLES} />
-      <div className="mx-auto w-full min-w-0 max-w-7xl overflow-x-clip px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+    <div className="mx-auto w-full min-w-0 max-w-7xl overflow-x-clip px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
       <div className="space-y-8">
         <header className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
           <div>
@@ -676,7 +672,6 @@ function StudentDashboardContent() {
             if (!open) setSelectedPackage(null);
           }}
         />
-      </div>
       </div>
     </div>
   );

@@ -1,23 +1,13 @@
 import {
   Atom,
-  AudioWaveform,
   BookOpen,
-  BookOpenText,
-  Briefcase,
-  Calculator,
   Dna,
   FlaskConical,
-  FunctionSquare,
   Globe2,
   GraduationCap,
-  Grid3x3,
   Landmark,
   Languages,
-  Puzzle,
-  Shapes,
   Sigma,
-  Target,
-  TrendingUp,
   type LucideIcon,
 } from "lucide-react";
 import type {
@@ -148,51 +138,6 @@ export function getPackageCoverTheme(
       ?.icon ?? GraduationCap;
 
   return { gradient, Icon };
-}
-
-export type CoverPattern =
-  | "dots"
-  | "grid"
-  | "waves"
-  | "curve"
-  | "rings"
-  | "diagonal";
-
-export interface PackageCoverDecoration {
-  Icon: LucideIcon;
-  pattern: CoverPattern;
-}
-
-/** Topic-specific cover art hints, matched against the package slug. */
-const COVER_DECORATIONS: Array<{
-  match: RegExp;
-  icon: LucideIcon;
-  pattern: CoverPattern;
-}> = [
-  { match: /integral/, icon: Sigma, pattern: "curve" },
-  { match: /turev|limit/, icon: TrendingUp, pattern: "curve" },
-  { match: /trigonometri/, icon: AudioWaveform, pattern: "waves" },
-  { match: /geometri/, icon: Shapes, pattern: "diagonal" },
-  { match: /fonksiyon|polinom/, icon: FunctionSquare, pattern: "curve" },
-  { match: /problem/, icon: Puzzle, pattern: "grid" },
-  { match: /deneme|strateji|analiz|mentorluk/, icon: Target, pattern: "rings" },
-  { match: /paragraf|turkce/, icon: BookOpenText, pattern: "dots" },
-  { match: /kpss/, icon: Briefcase, pattern: "diagonal" },
-  { match: /dgs/, icon: Calculator, pattern: "diagonal" },
-  { match: /temel|baslangic/, icon: Grid3x3, pattern: "grid" },
-];
-
-export function getPackageCoverDecoration(
-  slug?: string | null,
-  subjectName?: string | null
-): PackageCoverDecoration {
-  const hit = COVER_DECORATIONS.find(({ match }) => slug && match.test(slug));
-  if (hit) return { Icon: hit.icon, pattern: hit.pattern };
-
-  const Icon =
-    SUBJECT_ICONS.find(({ match }) => subjectName && match.test(subjectName))
-      ?.icon ?? GraduationCap;
-  return { Icon, pattern: "dots" };
 }
 
 export type MilestonePathNodeKind = "start" | "milestone" | "reward";

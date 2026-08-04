@@ -21,7 +21,6 @@ export function RelatedPackageCard({ template }: RelatedPackageCardProps) {
       <PackageCover
         examType={template.exam_type}
         subjectName={template.subject_name}
-        slug={template.slug}
         className="h-20 w-24 shrink-0 rounded-lg"
       />
       <div className="min-w-0">
