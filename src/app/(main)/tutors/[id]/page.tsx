@@ -31,7 +31,6 @@ import { buildTutorSubjectLabels } from "@/lib/tutorSubjectLabels";
 import { formatLessonCount, formatPrice, formatRating } from "@/lib/utils";
 import { ReviewCard } from "@/components/tutors/ReviewCard";
 import { ReviewSummary } from "@/components/tutors/ReviewSummary";
-import { SubjectRatingBreakdown } from "@/components/tutors/SubjectRatingBreakdown";
 import { TutorPresenceBadge } from "@/components/tutors/TutorPresenceBadge";
 import { VerifiedTutorMark } from "@/components/tutors/VerifiedTutorMark";
 import { AvailabilityCalendar } from "@/components/tutors/AvailabilityCalendar";
@@ -965,22 +964,6 @@ export default function TutorProfilePage({
             )}
           </section>
 
-          {(tutor.teaching_attributes ?? []).length > 0 && (
-            <section className="mt-10">
-              <h2 className="text-xl font-semibold">Ders Anlatım Özellikleri</h2>
-              <p className="mt-1 text-sm text-muted-foreground">Hoca tarafından seçilen özellikler</p>
-              <Separator className="mt-2" />
-              <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                {(tutor.teaching_attributes ?? []).map((attribute) => (
-                  <div key={attribute.code} className="rounded-lg border bg-card p-3">
-                    <p className="text-sm font-medium">{attribute.name}</p>
-                    <p className="mt-1 text-xs leading-5 text-muted-foreground">{attribute.description}</p>
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
-
           {/* Section 3 — Availability */}
           <section className="mt-10">
             <h2 className="text-xl font-semibold">Müsaitlik</h2>
@@ -1032,11 +1015,11 @@ export default function TutorProfilePage({
               {!reviewsLoading && reviews.length > 0 && (
                 <>
                   {reviewSummary ? (
-                    <div className="mb-6 space-y-6">
+                    <div className="mb-6">
+                      {/* Per-subject scores live in the header rating popover
+                          only — rendering them again here duplicated the same
+                          information further down the same page. */}
                       <ReviewSummary summary={reviewSummary} />
-                      <SubjectRatingBreakdown
-                        subjectRatings={reviewSummary.subject_ratings}
-                      />
                     </div>
                   ) : (
                     <div className="mb-6 flex items-baseline gap-4">
@@ -1070,6 +1053,25 @@ export default function TutorProfilePage({
               )}
             </div>
           </section>
+
+          {/* Supplementary — kept out of the four required sections
+              (profil/aksiyon kartı → tanıtım videosu → verdiği dersler →
+              müsaitlik → değerlendirmeler) so their order stays unbroken. */}
+          {(tutor.teaching_attributes ?? []).length > 0 && (
+            <section className="mt-10">
+              <h2 className="text-xl font-semibold">Ders Anlatım Özellikleri</h2>
+              <p className="mt-1 text-sm text-muted-foreground">Hoca tarafından seçilen özellikler</p>
+              <Separator className="mt-2" />
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                {(tutor.teaching_attributes ?? []).map((attribute) => (
+                  <div key={attribute.code} className="rounded-lg border bg-card p-3">
+                    <p className="text-sm font-medium">{attribute.name}</p>
+                    <p className="mt-1 text-xs leading-5 text-muted-foreground">{attribute.description}</p>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
         </div>
       </div>
 
