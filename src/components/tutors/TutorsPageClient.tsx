@@ -160,9 +160,9 @@ function formatPriceFilter(minPrice?: string, maxPrice?: string) {
 
 function TutorCardSkeleton() {
   return (
-    <div className="rounded-lg border bg-card p-4 shadow-sm">
-      <div className="flex gap-4">
-        <Skeleton className="h-16 w-16 shrink-0 rounded-lg" />
+    <div className="rounded-lg border bg-card p-5 shadow-sm">
+      <div className="flex gap-5">
+        <Skeleton className="h-20 w-20 shrink-0 rounded-lg" />
         <div className="flex-1 space-y-2">
           <Skeleton className="h-5 w-3/4" />
           <Skeleton className="h-4 w-full" />
@@ -591,7 +591,7 @@ function TutorsPageContent() {
             )}
 
             {isListLoading && (
-            <div className={`grid grid-cols-1 gap-4 md:grid-cols-2 ${filtersPanelVisible ? "" : "xl:grid-cols-3"}`}>
+            <div className={`grid grid-cols-1 gap-6 ${filtersPanelVisible ? "" : "md:grid-cols-2"}`}>
               {Array.from({ length: PAGE_SIZE }).map((_, i) => (
                 <TutorCardSkeleton key={i} />
               ))}
@@ -636,11 +636,12 @@ function TutorsPageContent() {
 
           {!isListLoading && !listError && !showEmptyState && filteredTutors.length > 0 && (
             <>
-              <div className={`grid grid-cols-1 gap-4 md:grid-cols-2 ${filtersPanelVisible ? "" : "xl:grid-cols-3"}`}>
+              <div className={`grid grid-cols-1 gap-6 ${filtersPanelVisible ? "" : "md:grid-cols-2"}`}>
                 {pageTutors.map((tutor) => (
                   <TutorCard
                     key={tutor.id}
                     tutor={tutor}
+                    size="lg"
                     isFavorite={favoriteIds.has(tutor.id)}
                     onToggleFavorite={toggle}
                     favoritePending={isFavoritePending(tutor.id)}
@@ -691,7 +692,7 @@ function TutorsPageFallback() {
       </div>
       <div className="flex gap-8">
         <div className="min-w-0 flex-1">
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             {Array.from({ length: 6 }).map((_, i) => (
               <TutorCardSkeleton key={i} />
             ))}
