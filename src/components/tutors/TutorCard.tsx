@@ -270,22 +270,6 @@ function TutorCardLarge({
       data-discovery-impression-id={discoveryImpressionId || undefined}
       className="relative h-full min-w-0 overflow-visible border-t-2 border-t-transparent transition-all duration-200 hover:z-10 hover:-translate-y-0.5 hover:border-t-primary hover:shadow-lg"
     >
-      {onToggleFavorite && (
-        <div className="absolute right-4 top-4 z-10">
-          <FavoriteButton
-            tutorId={tutor.id}
-            isFavorite={isFavorite ?? false}
-            isPending={favoritePending ?? false}
-            onToggle={(tutorId) => {
-              void recordDiscoveryEvent(
-                discoveryImpressionId, tutorId,
-                isFavorite ? "favorite_removed" : "favorite_added"
-              );
-              onToggleFavorite(tutorId);
-            }}
-          />
-        </div>
-      )}
       <CardContent className="flex flex-col gap-4 p-5 sm:flex-row sm:gap-5">
         <Link href={tutorHref} className="flex min-w-0 flex-1 cursor-pointer gap-4 sm:gap-5">
           <div className="relative h-24 w-24 shrink-0 sm:h-32 sm:w-32">
@@ -300,7 +284,7 @@ function TutorCardLarge({
               </AvatarFallback>
             </Avatar>
             {tutor.is_online && <span className="absolute -bottom-1 -right-1 h-4 w-4 rounded-full border-2 border-background bg-emerald-500" aria-label="Çevrim içi" />}
-            <VerifiedTutorMark verified={tutor.is_verified} className="absolute -right-1.5 -top-1.5 rounded-full border-2 border-background" />
+            <VerifiedTutorMark verified={tutor.is_verified} className="absolute -right-1.5 -top-1.5 rounded-full border-2 border-background bg-primary text-primary-foreground" />
           </div>
 
           <div className="min-w-0 flex-1 space-y-1.5 pr-14 sm:pr-0">
@@ -314,8 +298,8 @@ function TutorCardLarge({
               <StatusBadges tutor={tutor} />
             </div>
             <div className="flex flex-wrap gap-1.5 pt-0.5">
-              {visibleSubjects.map((sub, index) => (
-                <Badge key={sub.id} variant={index === 0 ? "default" : "outline"} className="text-sm">
+              {visibleSubjects.map((sub) => (
+                <Badge key={sub.id} variant="outline" className="text-sm">
                   {sub.name}
                 </Badge>
               ))}
@@ -334,26 +318,44 @@ function TutorCardLarge({
           </div>
         </Link>
 
-        <div className="flex items-center justify-between gap-4 border-t pt-4 sm:w-44 sm:shrink-0 sm:flex-col sm:items-end sm:justify-start sm:border-l sm:border-t-0 sm:pl-5 sm:pt-0 sm:text-right">
-          <Link href={tutorHref} className="min-w-0 cursor-pointer">
-            <div>
-              <span className="text-xl font-semibold">{formatPrice(tutor.hourly_price)}</span>
-              <span className="ml-1 text-base text-muted-foreground">/40 dk</span>
-            </div>
-            <div className="mt-1.5 flex items-center gap-x-1 text-sm sm:justify-end">
-              {tutor.total_reviews > 0 ? (
-                <>
-                  <span className="font-medium">★ {formatRating(tutor.rating)}</span>
-                  <span className="text-muted-foreground">({tutor.total_reviews})</span>
-                </>
-              ) : (
-                <span className="text-muted-foreground">Henüz değerlendirme yok</span>
+        <div className="flex items-center justify-between gap-4 border-t pt-4 sm:w-44 sm:shrink-0 sm:flex-col sm:items-end sm:justify-center sm:gap-4 sm:border-l sm:border-t-0 sm:pl-5 sm:pt-0 sm:text-right">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 sm:justify-end">
+              <Link href={tutorHref} className="min-w-0 cursor-pointer">
+                <span className="text-xl font-semibold">{formatPrice(tutor.hourly_price)}</span>
+                <span className="ml-1 text-base text-muted-foreground">/40 dk</span>
+              </Link>
+              {onToggleFavorite && (
+                <FavoriteButton
+                  tutorId={tutor.id}
+                  isFavorite={isFavorite ?? false}
+                  isPending={favoritePending ?? false}
+                  onToggle={(tutorId) => {
+                    void recordDiscoveryEvent(
+                      discoveryImpressionId, tutorId,
+                      isFavorite ? "favorite_removed" : "favorite_added"
+                    );
+                    onToggleFavorite(tutorId);
+                  }}
+                />
               )}
             </div>
-            <p className="text-sm text-muted-foreground">{completedLessonsLabel}</p>
-          </Link>
+            <Link href={tutorHref} className="block cursor-pointer">
+              <div className="mt-1.5 flex items-center gap-x-1 text-sm sm:justify-end">
+                {tutor.total_reviews > 0 ? (
+                  <>
+                    <span className="font-medium">★ {formatRating(tutor.rating)}</span>
+                    <span className="text-muted-foreground">({tutor.total_reviews})</span>
+                  </>
+                ) : (
+                  <span className="text-muted-foreground">Henüz değerlendirme yok</span>
+                )}
+              </div>
+              <p className="text-sm text-muted-foreground">{completedLessonsLabel}</p>
+            </Link>
+          </div>
 
-          <div className="flex shrink-0 items-center gap-1.5 sm:mt-3 sm:w-full sm:flex-col sm:items-stretch">
+          <div className="flex shrink-0 items-center gap-1.5 sm:w-full sm:flex-col sm:items-stretch">
             <Link
               href={tutorHref}
               className="rounded-md bg-primary px-4 py-2.5 text-center text-base font-medium text-primary-foreground transition-colors hover:bg-primary/90"
