@@ -7,7 +7,6 @@ import {
   ArrowRight,
   Calendar,
   CalendarPlus,
-  CheckCircle2,
   Clock3,
   MessageCircle,
   Wallet,
@@ -27,7 +26,6 @@ import { cn, formatDate } from "@/lib/utils";
 import {
   computePackageExpiry,
   isPastPackage,
-  PackageLearningCard,
   PackageLearningDetailsSheet,
 } from "@/components/payments/PackagePurchaseCard";
 import {
@@ -36,11 +34,11 @@ import {
 } from "@/components/lessons/LessonConfirmDisputeCard";
 import { ParticipantAvatar } from "@/components/messaging/ParticipantAvatar";
 import { LessonJoinButton } from "@/components/lessons/LessonJoinButton";
-import { LearningMomentumCard } from "@/components/dashboard/student/LearningMomentumCard";
+import { LearningMomentumBar } from "@/components/dashboard/student/LearningMomentumBar";
+import { StudentMessagesPreview } from "@/components/dashboard/student/StudentMessagesPreview";
 import { ProposedLearningPlans } from "@/components/learning/ProposedLearningPlans";
 import { AISupportChatWidget } from "@/components/ai/AISupportChatWidget";
 import { STUDENT_DASHBOARD_ASSISTANT } from "@/components/ai/pageAssistantContent";
-import { EmptyState } from "@/components/shared/EmptyState";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { RouteGuard } from "@/components/shared/RouteGuard";
 import StatusBadge from "@/components/shared/StatusBadge";
@@ -52,6 +50,10 @@ import type { Booking, PackagePurchase } from "@/types";
 
 const DASHBOARD_PREVIEW_COUNT = 3;
 const LESSON_COUNTDOWN_WINDOW_MS = 60 * 60 * 1000;
+const DAY_MS = 24 * 60 * 60 * 1000;
+/** Renew nudge thresholds: a week or less left, or nearly out of credits. */
+const RENEW_DAYS_THRESHOLD = 7;
+const RENEW_CREDITS_THRESHOLD = 2;
 
 function formatTime(isoString: string): string {
   return new Date(isoString).toLocaleTimeString("tr-TR", {
@@ -106,6 +108,16 @@ function previewWithHighlight(bookings: Booking[], highlightedId: string | null)
     return preview;
   }
   return [...preview.slice(0, DASHBOARD_PREVIEW_COUNT - 1), highlighted];
+}
+
+function packageDaysLeft(purchase: PackagePurchase): number | null {
+  const expiry = computePackageExpiry(purchase);
+  if (!expiry) return null;
+  if (expiry.isInGrace) return expiry.graceDaysLeft;
+  return Math.max(
+    0,
+    Math.ceil((expiry.termEndDate.getTime() - Date.now()) / DAY_MS)
+  );
 }
 
 function CompactBookingRow({
@@ -198,6 +210,131 @@ function LessonPreview({
   );
 }
 
+/** Glanceable package-credit strip near the top of the dashboard — Preply-style
+ * "hours left" psychology. Clicking the summary opens the package details sheet. */
+function CreditStatusStrip({
+  activePackage,
+  pendingPackage,
+  loading,
+  error,
+  onRetry,
+  onSelect,
+}: {
+  activePackage: PackagePurchase | undefined;
+  pendingPackage: PackagePurchase | undefined;
+  loading: boolean;
+  error: boolean;
+  onRetry: () => void;
+  onSelect: (purchase: PackagePurchase) => void;
+}) {
+  if (loading) {
+    return <Skeleton className="h-[68px] w-full rounded-2xl" />;
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col gap-3 rounded-2xl border px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+        <ErrorMessage message="Paket bilgilerin yüklenemedi." />
+        <Button variant="outline" size="sm" onClick={onRetry}>
+          Tekrar dene
+        </Button>
+      </div>
+    );
+  }
+
+  if (activePackage) {
+    const daysLeft = packageDaysLeft(activePackage);
+    const needsRenewal =
+      activePackage.remaining_credits <= RENEW_CREDITS_THRESHOLD ||
+      (daysLeft !== null && daysLeft <= RENEW_DAYS_THRESHOLD);
+
+    return (
+      <div
+        className={cn(
+          "flex flex-col gap-3 rounded-2xl border bg-card px-5 py-4 sm:flex-row sm:items-center sm:justify-between",
+          needsRenewal &&
+            "border-amber-300 bg-amber-50/60 dark:border-amber-900/60 dark:bg-amber-950/20"
+        )}
+      >
+        <button
+          type="button"
+          onClick={() => onSelect(activePackage)}
+          className="flex min-w-0 items-center gap-3 rounded-lg text-left transition-colors hover:bg-muted/50"
+        >
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+            <Wallet className="h-5 w-5" aria-hidden="true" />
+          </span>
+          <span className="min-w-0">
+            <span className="block font-semibold tabular-nums">
+              {activePackage.remaining_credits} ders hakkın
+              {daysLeft !== null ? ` · ${daysLeft} gün kaldı` : ""}
+            </span>
+            <span className="block truncate text-sm text-muted-foreground">
+              {activePackage.plan.name} — detaylar için tıkla
+            </span>
+          </span>
+        </button>
+        <div className="flex shrink-0 items-center gap-2">
+          {needsRenewal && (
+            <Button asChild size="sm">
+              <Link href="/tutors">Paketini yenile</Link>
+            </Button>
+          )}
+          <Button asChild variant="ghost" size="sm">
+            <Link href="/profile/payments">
+              Tüm paketler
+              <ArrowRight className="ml-1 h-4 w-4" aria-hidden="true" />
+            </Link>
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (pendingPackage) {
+    return (
+      <div className="flex flex-col gap-3 rounded-2xl border bg-card px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex min-w-0 items-center gap-3">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+            <Wallet className="h-5 w-5" aria-hidden="true" />
+          </span>
+          <div className="min-w-0">
+            <p className="font-semibold">Paket talebin inceleniyor</p>
+            <p className="truncate text-sm text-muted-foreground">
+              {pendingPackage.tutor.name} {pendingPackage.tutor.surname} ile paket talebin alındı. Senden ek bir işlem beklenmiyor.
+            </p>
+          </div>
+        </div>
+        <Button asChild variant="ghost" size="sm" className="shrink-0">
+          <Link href="/profile/payments">
+            Tüm paketler
+            <ArrowRight className="ml-1 h-4 w-4" aria-hidden="true" />
+          </Link>
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-3 rounded-2xl border border-dashed px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex min-w-0 items-center gap-3">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+          <Wallet className="h-5 w-5" aria-hidden="true" />
+        </span>
+        <div className="min-w-0">
+          <p className="font-semibold">Aktif paketin yok</p>
+          <p className="text-sm text-muted-foreground">
+            Bir hocanın profilinden sana uygun ders planını inceleyebilirsin.
+          </p>
+        </div>
+      </div>
+      <Button asChild size="sm" className="shrink-0">
+        <Link href="/tutors">Hoca bul</Link>
+      </Button>
+    </div>
+  );
+}
+
 function StudentDashboardContent() {
   const { user, isAuthenticated } = useAuth();
   const [selectedPackage, setSelectedPackage] = useState<PackagePurchase | null>(null);
@@ -279,7 +416,6 @@ function StudentDashboardContent() {
   const pendingPackage = currentPackagePurchases.find(
     (purchase) => purchase.status === "pending"
   );
-  const featuredPackage = activePackage ?? pendingPackage;
   const activeGoal =
     learningDashboard?.goals.find((goal) => goal.status === "active") ?? null;
   const learningHref = activeGoal
@@ -298,18 +434,18 @@ function StudentDashboardContent() {
         LESSON_COUNTDOWN_WINDOW_MS
   );
 
+  const hasActionItems = actionableBookings.length > 0 || pendingBookings.length > 0;
+
   return (
-    <div className="mx-auto w-full min-w-0 max-w-7xl overflow-x-clip px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
-      <div className="space-y-8">
+    <div className="relative isolate">
+      <div className="mx-auto w-full min-w-0 max-w-7xl overflow-x-clip px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+      <div className="space-y-6">
         <header className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-sm font-medium text-primary">Öğrenci panelin</p>
             <h1 className="mt-1 text-3xl font-semibold tracking-tight sm:text-4xl">
               {greeting()}, {firstNameFromUser(user)} 👋
             </h1>
-            <p className="mt-2 max-w-2xl text-sm text-muted-foreground sm:text-base">
-              Bir sonraki dersin ve bugün tamamlaman gereken işlemler burada.
-            </p>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row">
             <Button asChild variant="outline" size="lg">
@@ -327,6 +463,15 @@ function StudentDashboardContent() {
           </div>
         </header>
 
+        <CreditStatusStrip
+          activePackage={activePackage}
+          pendingPackage={pendingPackage}
+          loading={packagePurchasesLoading}
+          error={packagePurchasesError}
+          onRetry={() => void refetchPackages()}
+          onSelect={setSelectedPackage}
+        />
+
         {bookingsError && (
           <div className="space-y-3">
             <ErrorMessage
@@ -339,7 +484,7 @@ function StudentDashboardContent() {
           </div>
         )}
 
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-[minmax(0,1.55fr)_minmax(320px,0.85fr)]">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1.55fr)_minmax(320px,0.85fr)]">
           <section aria-labelledby="next-lesson-title">
             {bookingsLoading ? (
               <Skeleton className="h-[330px] w-full rounded-2xl" />
@@ -438,149 +583,68 @@ function StudentDashboardContent() {
             )}
           </section>
 
-          <section aria-labelledby="attention-title" className="rounded-2xl border bg-card p-5 sm:p-6">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                  Önceliklerin
-                </p>
-                <h2 id="attention-title" className="mt-1 text-lg font-semibold tracking-tight">
-                  İşlem gerektirenler
-                </h2>
-              </div>
-              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/10 text-amber-700 dark:text-amber-300">
-                <AlertCircle className="h-5 w-5" aria-hidden="true" />
-              </span>
-            </div>
-
-            <div className="mt-5 space-y-4">
-              {actionableBookings.length > 0 && (
-                <LessonConfirmDisputeCard
-                  bookings={allBookings}
-                  onChanged={() => void refetchBookings()}
-                />
-              )}
-
-              {pendingBookings.length > 0 && (
-                <div className="rounded-xl border border-amber-200 bg-amber-50/60 p-4 dark:border-amber-900/60 dark:bg-amber-950/20">
-                  <div className="flex items-start gap-3">
-                    <Clock3 className="mt-0.5 h-4 w-4 shrink-0 text-amber-700 dark:text-amber-300" />
-                    <div>
-                      <p className="font-medium">
-                        Hoca onayı bekleniyor · {pendingBookings.length}
-                      </p>
-                      <p className="mt-1 text-sm leading-5 text-muted-foreground">
-                        Taleplerin hocalara gönderildi. Şu anda senden bir işlem beklenmiyor.
-                      </p>
-                      <Button asChild variant="link" size="sm" className="mt-1 h-auto px-0">
-                        <Link href="/profile/lessons?tab=upcoming">Rezervasyonları gör</Link>
-                      </Button>
-                    </div>
+          <div className="flex flex-col gap-6">
+            {hasActionItems && (
+              <section aria-labelledby="attention-title" className="rounded-2xl border bg-card p-5 sm:p-6">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                      Önceliklerin
+                    </p>
+                    <h2 id="attention-title" className="mt-1 text-lg font-semibold tracking-tight">
+                      İşlem gerektirenler
+                    </h2>
                   </div>
+                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/10 text-amber-700 dark:text-amber-300">
+                    <AlertCircle className="h-5 w-5" aria-hidden="true" />
+                  </span>
                 </div>
-              )}
 
-              {pendingPackage && (
-                <div className="rounded-xl border p-4">
-                  <p className="font-medium">Paket talebin inceleniyor</p>
-                  <p className="mt-1 text-sm leading-5 text-muted-foreground">
-                    {pendingPackage.tutor.name} {pendingPackage.tutor.surname} ile paket talebin alındı. Senden ek bir işlem beklenmiyor.
-                  </p>
-                </div>
-              )}
+                <div className="mt-5 space-y-4">
+                  {actionableBookings.length > 0 && (
+                    <LessonConfirmDisputeCard
+                      bookings={allBookings}
+                      onChanged={() => void refetchBookings()}
+                    />
+                  )}
 
-              {actionableBookings.length === 0 &&
-                pendingBookings.length === 0 &&
-                !pendingPackage && (
-                  <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-4 dark:border-emerald-900/60 dark:bg-emerald-950/20">
-                    <div className="flex items-start gap-3">
-                      <CheckCircle2 className="mt-0.5 h-5 w-5 text-emerald-700 dark:text-emerald-300" />
-                      <div>
-                        <p className="font-medium">Her şey yolunda</p>
-                        <p className="mt-1 text-sm text-muted-foreground">
-                          Şu anda senden beklenen bir işlem yok.
-                        </p>
+                  {pendingBookings.length > 0 && (
+                    <div className="rounded-xl border border-amber-200 bg-amber-50/60 p-4 dark:border-amber-900/60 dark:bg-amber-950/20">
+                      <div className="flex items-start gap-3">
+                        <Clock3 className="mt-0.5 h-4 w-4 shrink-0 text-amber-700 dark:text-amber-300" />
+                        <div>
+                          <p className="font-medium">
+                            Hoca onayı bekleniyor · {pendingBookings.length}
+                          </p>
+                          <p className="mt-1 text-sm leading-5 text-muted-foreground">
+                            Taleplerin hocalara gönderildi. Şu anda senden bir işlem beklenmiyor.
+                          </p>
+                          <Button asChild variant="link" size="sm" className="mt-1 h-auto px-0">
+                            <Link href="/profile/lessons?tab=upcoming">Rezervasyonları gör</Link>
+                          </Button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                )}
-            </div>
-          </section>
+                  )}
+                </div>
+              </section>
+            )}
+
+            <StudentMessagesPreview />
+          </div>
         </div>
 
         {process.env.NEXT_PUBLIC_LEARNING_PLANS_ENABLED === "true" && (
           <ProposedLearningPlans goals={learningDashboard?.goals ?? []} />
         )}
 
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-2">
-          <LearningMomentumCard
-            activeGoal={activeGoal}
-            learningLoading={learningLoading}
-            bookings={allBookings}
-            activePackage={activePackage}
-            learningHref={learningHref}
-          />
-
-          <section id="my-packages" className="scroll-mt-24 rounded-2xl border bg-card p-5 sm:p-6">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                  Ders hakların
-                </p>
-                <h2 className="mt-1 text-lg font-semibold tracking-tight">Aktif paketlerin</h2>
-              </div>
-              <Wallet className="h-5 w-5 text-primary" aria-hidden="true" />
-            </div>
-
-            <div className="mt-5">
-              {packagePurchasesLoading ? (
-                <Skeleton className="h-44 w-full rounded-xl" />
-              ) : packagePurchasesError ? (
-                <div className="space-y-3">
-                  <ErrorMessage message="Paket bilgilerin yüklenemedi." />
-                  <Button variant="outline" size="sm" onClick={() => void refetchPackages()}>
-                    Tekrar dene
-                  </Button>
-                </div>
-              ) : featuredPackage ? (
-                <>
-                  <PackageLearningCard
-                    purchase={featuredPackage}
-                    completedLessonCount={allBookings.filter(
-                      (booking) =>
-                        booking.package_purchase === featuredPackage.id &&
-                        booking.status === "completed"
-                    ).length}
-                    scheduledLessonCount={allBookings.filter(
-                      (booking) =>
-                        booking.package_purchase === featuredPackage.id &&
-                        new Date(booking.start_time) > now &&
-                        booking.status !== "cancelled"
-                    ).length}
-                    onClick={() => setSelectedPackage(featuredPackage)}
-                  />
-                  {currentPackagePurchases.length > 1 && (
-                    <p className="mt-3 text-sm text-muted-foreground">
-                      Ayrıca {currentPackagePurchases.length - 1} güncel paketin daha var.
-                    </p>
-                  )}
-                </>
-              ) : (
-                <EmptyState
-                  title="Aktif paketin yok"
-                  description="Bir hocanın profilinden sana uygun ders planını inceleyebilirsin."
-                  action={<Button asChild><Link href="/tutors">Hoca bul</Link></Button>}
-                />
-              )}
-            </div>
-            <Button asChild variant="ghost" className="mt-3 w-full">
-              <Link href="/profile/payments">
-                Tüm paketleri gör
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
-          </section>
-        </div>
+        <LearningMomentumBar
+          activeGoal={activeGoal}
+          learningLoading={learningLoading}
+          bookings={allBookings}
+          activePackage={activePackage}
+          learningHref={learningHref}
+        />
 
         <section id="lessons" className="scroll-mt-24 rounded-2xl border bg-card p-5 sm:p-6">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
@@ -649,21 +713,6 @@ function StudentDashboardContent() {
           )}
         </section>
 
-        <section className="flex flex-col gap-4 rounded-2xl bg-primary px-5 py-6 text-primary-foreground sm:flex-row sm:items-center sm:justify-between sm:px-7">
-          <div>
-            <p className="text-sm font-medium text-primary-foreground/70">Önerilen sonraki adım</p>
-            <h2 className="mt-1 text-xl font-semibold">
-              {activeGoal ? "Aktif hedefindeki sıradaki adıma geç" : "Çalışma hedefini netleştir"}
-            </h2>
-          </div>
-          <Button asChild variant="secondary" size="lg" className="shrink-0">
-            <Link href={learningHref}>
-              {activeGoal ? "Hedefe devam et" : "Hedefleri keşfet"}
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Link>
-          </Button>
-        </section>
-
         <PackageLearningDetailsSheet
           purchase={selectedPackage}
           bookings={allBookings}
@@ -672,6 +721,7 @@ function StudentDashboardContent() {
             if (!open) setSelectedPackage(null);
           }}
         />
+      </div>
       </div>
     </div>
   );
