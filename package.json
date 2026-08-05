@@ -9,7 +9,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test:unit": "node --experimental-test-module-mocks --test-force-exit --import tsx --test src/lib/matchingDraft.test.ts src/lib/matchingFlow.test.ts src/lib/questionsApi.test.ts src/lib/questionsApi.session.test.ts src/lib/jitsiSessionControls.test.ts src/lib/liveLessonTutorialSteps.test.ts src/lib/lessonSessionState.test.ts src/lib/lessonPresence.test.ts src/components/layout/navItems.test.ts src/components/questions/lessonQuestionInvitation.test.ts src/components/questions/QuestionViewer.test.tsx src/components/questions/LessonQuestionPanel.test.tsx src/components/tutors/TutorStudentMaterials.test.tsx src/components/shared/TutorActivationGate.test.ts",
+    "test:unit": "node --experimental-test-module-mocks --test-force-exit --import tsx --test src/lib/matchingDraft.test.ts src/lib/matchingFlow.test.ts src/lib/questionsApi.test.ts src/lib/questionsApi.session.test.ts src/lib/jitsiSessionControls.test.ts src/lib/liveLessonTutorialSteps.test.ts src/lib/lessonSessionState.test.ts src/lib/lessonPresence.test.ts src/components/layout/navItems.test.ts src/components/questions/lessonQuestionInvitation.test.ts src/components/questions/QuestionViewer.test.tsx src/components/questions/LessonQuestionPanel.test.tsx src/components/tutors/TutorStudentMaterials.test.tsx src/components/shared/TutorActivationGate.test.ts src/lib/money.test.ts src/lib/coachingApi.test.ts",
     "motion:check": "tsx scripts/matching-motion-check.ts",
     "responsive:check": "tsx scripts/responsive-check.ts"
   },
@@ -31,6 +31,7 @@
     "axios": "^1.7.7",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
+    "embla-carousel-react": "8.5.2",
     "framer-motion": "^12.42.0",
     "js-cookie": "^3.0.5",
     "lucide-react": "^0.454.0",

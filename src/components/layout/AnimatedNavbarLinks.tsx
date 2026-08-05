@@ -4,6 +4,7 @@ import * as React from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   Bell,
+  Compass,
   GraduationCap,
   FileQuestion,
   Heart,
@@ -15,6 +16,7 @@ import {
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
+import { useCoachingFlag } from "@/hooks/useCoachingFlag";
 import { usePageVisibility } from "@/hooks/usePageVisibility";
 import { ExpandableTabs } from "@/components/ui/expandable-tabs";
 import {
@@ -34,6 +36,7 @@ import {
 
 const iconByName = {
   Bell,
+  Compass,
   FileQuestion,
   GraduationCap,
   Heart,
@@ -55,6 +58,7 @@ export function AnimatedNavbarLinks() {
   const { isAuthenticated, isTutor, isLoading } = useAuth();
   const isPageVisible = usePageVisibility();
 
+  const { enabled: coachingEnabled } = useCoachingFlag();
   const { data: summary } = useQuery({
     queryKey: ["notification-summary"],
     queryFn: fetchNotificationSummary,
@@ -65,7 +69,9 @@ export function AnimatedNavbarLinks() {
 
   if (isLoading || !isAuthenticated) return null;
 
-  const descriptors = getNavDescriptors(isTutor ? "tutor" : "student");
+  const descriptors = getNavDescriptors(isTutor ? "tutor" : "student", {
+    coachingEnabled,
+  });
   const activeIndex = getActiveNavIndex(descriptors, pathname, searchParams);
 
   const makePopoverWrapper = (descriptor: NavPopoverDescriptor) => {

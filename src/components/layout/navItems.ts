@@ -4,6 +4,7 @@ export type MobileNavPlacement = "primary" | "overflow" | "hidden";
 
 export type NavIconName =
   | "Bell"
+  | "Compass"
   | "FileQuestion"
   | "GraduationCap"
   | "Heart"
@@ -141,8 +142,46 @@ const tutorDescriptors: NavDescriptor[] = [
   },
 ];
 
-export function getNavDescriptors(role: NavRole): NavDescriptor[] {
-  return role === "tutor" ? tutorDescriptors : studentDescriptors;
+/**
+ * The tutor's coaching entry. Kept out of `tutorDescriptors` and spliced in
+ * only when coaching is enabled, so the tab leaves no trace at all while the
+ * feature is off — see getNavDescriptors' `coachingEnabled` option.
+ */
+const tutorCoachingDescriptor: NavRouteDescriptor = {
+  kind: "route",
+  title: "Koçluk",
+  icon: "Compass",
+  href: "/dashboard/tutor/coaching",
+  mobilePlacement: "overflow",
+};
+
+export type NavOptions = {
+  /** Whether the coaching feature is on for this viewer. Defaults to off. */
+  coachingEnabled?: boolean;
+};
+
+export function getNavDescriptors(
+  role: NavRole,
+  options: NavOptions = {}
+): NavDescriptor[] {
+  if (role !== "tutor") {
+    return studentDescriptors;
+  }
+  if (!options.coachingEnabled) {
+    return tutorDescriptors;
+  }
+  // Placed right after "Panom": coaching is a tutor workspace, so it belongs
+  // with the dashboard rather than at the end of the overflow list.
+  const insertAfter = tutorDescriptors.findIndex(
+    (descriptor) =>
+      descriptor.kind === "route" && descriptor.href === "/dashboard/tutor"
+  );
+  const index = insertAfter === -1 ? tutorDescriptors.length : insertAfter + 1;
+  return [
+    ...tutorDescriptors.slice(0, index),
+    tutorCoachingDescriptor,
+    ...tutorDescriptors.slice(index),
+  ];
 }
 
 /**

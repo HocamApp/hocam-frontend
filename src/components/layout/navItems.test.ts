@@ -222,3 +222,40 @@ describe("active navigation matching", () => {
     );
   });
 });
+
+describe("coaching nav entry", () => {
+  type RouteLike = { kind: string; href?: string; title?: string };
+
+  const hrefs = (role: "student" | "tutor", coachingEnabled?: boolean) =>
+    (
+      (navItems.getNavDescriptors as unknown as (
+        role: string,
+        options?: { coachingEnabled?: boolean }
+      ) => RouteLike[])(role, { coachingEnabled }) ?? []
+    )
+      .filter((descriptor) => descriptor.kind === "route")
+      .map((descriptor) => descriptor.href);
+
+  it("is absent for tutors when coaching is disabled", () => {
+    assert.equal(hrefs("tutor", false).includes("/dashboard/tutor/coaching"), false);
+  });
+
+  it("is absent when no options are passed at all", () => {
+    assert.equal(hrefs("tutor").includes("/dashboard/tutor/coaching"), false);
+  });
+
+  it("appears for tutors when coaching is enabled", () => {
+    assert.equal(hrefs("tutor", true).includes("/dashboard/tutor/coaching"), true);
+  });
+
+  it("sits directly after the tutor dashboard", () => {
+    const routes = hrefs("tutor", true);
+    const dashboardIndex = routes.indexOf("/dashboard/tutor");
+    const coachingIndex = routes.indexOf("/dashboard/tutor/coaching");
+    assert.equal(coachingIndex, dashboardIndex + 1);
+  });
+
+  it("never appears for students", () => {
+    assert.equal(hrefs("student", true).includes("/dashboard/tutor/coaching"), false);
+  });
+});
