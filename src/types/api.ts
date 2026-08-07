@@ -349,6 +349,25 @@ export interface GoogleAuthNeedsRole {
 
 export type GoogleAuthResponse = GoogleAuthSuccess | GoogleAuthNeedsRole;
 
+/**
+ * Public coaching plan facts shown on a tutor's profile.
+ *
+ * Tutor-global and public — it says what is on offer, never whether the
+ * current student may buy it. That verdict comes only from
+ * `fetchCoachingEligibility()`.
+ */
+export interface TutorCoachingSummary {
+  frequency: "biweekly" | "weekly" | "twice_weekly";
+  session_duration_minutes: number;
+  price_per_session_minor: number;
+  price_per_session_display: string;
+  is_free: boolean;
+  target_exam_types: string[];
+  description: string;
+  /** The tutor's own switch, not live capacity. */
+  is_accepting_new_students: boolean;
+}
+
 export interface TutorProfile {
   id: string;
   user: string;
@@ -368,6 +387,16 @@ export interface TutorProfile {
   is_verified: boolean;
   is_public: boolean;
   teaching_styles: TutorTeachingStyle[];
+  /** Tutor-global: has a PUBLISHED coaching plan. */
+  offers_coaching?: boolean;
+  /** Tutor-global: published coaching plan priced at 0. */
+  offers_free_coaching?: boolean;
+  /** The tutor's manual "accepting new students" toggle — NOT live
+   *  capacity. Real eligibility comes only from /coaching/eligibility/. */
+  coaching_intake_open?: boolean;
+  /** Public plan summary. Detail endpoint only — the cached list never
+   *  carries it, so this is undefined on tutors that came from a list. */
+  coaching?: TutorCoachingSummary | null;
   is_online: boolean;
   last_seen_at?: string | null;
   trial_lesson_eligible?: boolean | null;
@@ -419,6 +448,13 @@ export interface MatchingAnswers {
   subject_keys: string[];
   challenges: MatchChallenge[];
   teaching_styles: TutorTeachingStyle[];
+  /** Tutor-global: has a PUBLISHED coaching plan. */
+  offers_coaching?: boolean;
+  /** Tutor-global: published coaching plan priced at 0. */
+  offers_free_coaching?: boolean;
+  /** The tutor's manual "accepting new students" toggle — NOT live
+   *  capacity. Real eligibility comes only from /coaching/eligibility/. */
+  coaching_intake_open?: boolean;
   availability_windows: MatchAvailabilityWindow[];
   budget_segment: MatchBudgetSegment;
   schema_version: 1;

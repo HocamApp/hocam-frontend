@@ -1,6 +1,6 @@
 "use client";
 
-import { Sparkles, Users } from "lucide-react";
+import { Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn, formatPrice } from "@/lib/utils";
 import {
@@ -168,36 +168,24 @@ export function CheckoutProductPicker({
         </p>
       </section>
 
-      {/* ——— Yakında ——— */}
-      <div className="grid gap-3 sm:grid-cols-2">
-        <div
-          className="pointer-events-none flex items-center gap-3 rounded-xl border bg-card p-4 opacity-60"
-          aria-disabled
-        >
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
-            <Users className="h-4 w-4" />
-          </span>
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-medium">Küçük grup dersleri</p>
-            <p className="text-xs text-muted-foreground">2–4 kişilik gruplar</p>
-          </div>
-          <Badge variant="secondary">Yakında</Badge>
+      {/* ——— Yakında ———
+          The "Pro / Koçluk — Yakında" card that used to sit next to this
+          one is gone: coaching is real now. Tutors who publish a plan sell
+          it on the step before this one, and tutors who do not should not
+          be advertising someone else's product. Small-group lessons are
+          still genuinely unbuilt, so that card stays. */}
+      <div
+        className="pointer-events-none flex items-center gap-3 rounded-xl border bg-card p-4 opacity-60"
+        aria-disabled
+      >
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
+          <Users className="h-4 w-4" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-medium">Küçük grup dersleri</p>
+          <p className="text-xs text-muted-foreground">2–4 kişilik gruplar</p>
         </div>
-        <div
-          className="pointer-events-none flex items-center gap-3 rounded-xl border bg-card p-4 opacity-60"
-          aria-disabled
-        >
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
-            <Sparkles className="h-4 w-4" />
-          </span>
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-medium">Pro / Koçluk</p>
-            <p className="text-xs text-muted-foreground">
-              Birebir koçluk ve takip
-            </p>
-          </div>
-          <Badge variant="secondary">Yakında</Badge>
-        </div>
+        <Badge variant="secondary">Yakında</Badge>
       </div>
     </div>
   );

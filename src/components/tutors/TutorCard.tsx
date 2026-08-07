@@ -120,6 +120,16 @@ export function TutorCard({
             </div>
           </div>
 
+          {tutor.offers_coaching && (
+            <div className="px-4 pb-2">
+              <Badge variant="secondary" className="text-xs">
+                {tutor.offers_free_coaching
+                  ? "Ücretsiz çalışma koçluğu"
+                  : "Çalışma koçluğu"}
+              </Badge>
+            </div>
+          )}
+
           <div className="flex flex-wrap gap-1 px-4 pb-3">
             {visibleSubjects.map((sub, index) => (
               <Badge key={sub.id} variant={index === 0 ? "default" : "outline"} className="text-xs">

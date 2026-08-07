@@ -11,6 +11,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { ParticipantAvatar } from "@/components/messaging/ParticipantAvatar";
+import { PackageRequestStatus } from "@/components/payments/PackageRequestStatus";
 import type { Booking, PackagePurchase } from "@/types";
 
 // Mirrors backend apps/payments/services.py PACKAGE_GRACE_PERIOD_DAYS — a
@@ -100,6 +101,9 @@ export function PackagePurchaseCard({ purchase }: { purchase: PackagePurchase })
           <span className="font-medium">{expiry.graceDaysLeft} gün</span>.
         </p>
       )}
+      {/* Renders nothing for purchases with no acceptance request — i.e.
+          everything created before the acceptance layer. */}
+      <PackageRequestStatus purchaseId={purchase.id} />
     </div>
   );
 }

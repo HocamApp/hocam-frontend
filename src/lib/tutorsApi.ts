@@ -60,6 +60,8 @@ export interface TutorFilters {
   availability_day?: string;
   availability_time?: string;
   online?: string;
+  has_coaching?: string;
+  free_coaching?: string;
 }
 
 // Backend may still return a plain array during a deploy/cache lag instead of

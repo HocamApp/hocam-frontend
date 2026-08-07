@@ -51,6 +51,7 @@ function countActiveFilters(filters: TutorFiltersType): number {
     (filters.availability_day ?? "") !== "",
     (filters.availability_time ?? "") !== "",
     (filters.online ?? "") !== "",
+    (filters.has_coaching ?? "") !== "" || (filters.free_coaching ?? "") !== "",
     (filters.ordering ?? "rating") !== "rating",
   ].filter(Boolean).length;
 }
@@ -221,6 +222,36 @@ function FilterPanelContent({
           <SelectContent>
             <SelectItem value="__all__">Herhangi bir saat</SelectItem>
             {["08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00", "22:00"].map((time) => <SelectItem key={time} value={time}>{time}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="space-y-2">
+        <Label>Çalışma koçluğu</Label>
+        <Select
+          value={
+            filters.free_coaching === "true"
+              ? "free"
+              : filters.has_coaching === "true"
+                ? "any"
+                : "__all__"
+          }
+          onValueChange={(v) =>
+            onFiltersChange({
+              ...filters,
+              has_coaching: v === "any" ? "true" : "",
+              free_coaching: v === "free" ? "true" : "",
+            })
+          }
+          disabled={isLoading}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Tümü" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__all__">Tümü</SelectItem>
+            <SelectItem value="any">Koçluk sunanlar</SelectItem>
+            <SelectItem value="free">Ücretsiz koçluk sunanlar</SelectItem>
           </SelectContent>
         </Select>
       </div>

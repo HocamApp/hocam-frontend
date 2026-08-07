@@ -400,3 +400,339 @@ export function extractCoachingErrorMessage(error: unknown): string {
   }
   return "Beklenmeyen bir hata oluştu.";
 }
+
+// --- Student checkout surface (Faz 3) ---------------------------------
+
+export type CoachingEligibilityReason =
+  | "ok"
+  | "no_plan"
+  | "no_availability"
+  | "capacity_full"
+  | "intake_closed"
+  | "exam_mismatch"
+  | "unsupported_exam_configuration"
+  | "missing_target_exam"
+  | "has_active_coach"
+  | "price_over_cap";
+
+export interface CoachingEligibilityPlan {
+  frequency: CoachingFrequency;
+  session_duration_minutes: number;
+  price_per_session_minor: number;
+  price_per_session_display: string;
+  is_free: boolean;
+  target_exam_types: string[];
+  description: string;
+}
+
+export interface CoachingEligibility {
+  eligible: boolean;
+  reason: CoachingEligibilityReason;
+  message: string;
+  plan: CoachingEligibilityPlan | null;
+  available_exam_targets?: string[];
+}
+
+/**
+ * Per-student, never cached. The frontend renders the returned reason and
+ * decides nothing about eligibility itself — exam matching, active-coach
+ * and capacity checks all live server-side.
+ */
+export async function fetchCoachingEligibility(
+  tutorId: string
+): Promise<CoachingEligibility | null> {
+  try {
+    const response = await api.get<CoachingEligibility>("/coaching/eligibility/", {
+      params: { tutor: tutorId },
+    });
+    return response.data;
+  } catch (error: unknown) {
+    const status = (error as { response?: { status?: number } })?.response?.status;
+    // 404 (coaching not built in) or 403 (runtime flag off) both mean
+    // "coaching is not on offer", not "something broke".
+    if (status === 404 || status === 403) return null;
+    throw error;
+  }
+}
+
+export interface CoachingQuote {
+  duration_days: number;
+  lessons_per_week: number;
+  weeks: number;
+  total_sessions: number;
+  discount_percent: number;
+  commission_bps: number;
+  unit_price_minor: number;
+  unit_price_display: string;
+  subtotal_price_minor: number;
+  subtotal_price_display: string;
+  discount_amount_minor: number;
+  discount_amount_display: string;
+  total_price_minor: number;
+  total_price_display: string;
+  platform_fee_minor: number;
+  tutor_net_minor: number;
+  is_free: boolean;
+  quote_fingerprint: string;
+}
+
+export async function fetchCoachingPricePreview(params: {
+  tutorId: string;
+  durationDays: number;
+  lessonsPerWeek: number;
+}): Promise<CoachingQuote | null> {
+  try {
+    const response = await api.get<CoachingQuote>("/coaching/price-preview/", {
+      params: {
+        tutor: params.tutorId,
+        duration_days: params.durationDays,
+        lessons_per_week: params.lessonsPerWeek,
+      },
+    });
+    return response.data;
+  } catch (error: unknown) {
+    const status = (error as { response?: { status?: number } })?.response?.status;
+    if (status === 404 || status === 403 || status === 400) return null;
+    throw error;
+  }
+}
+
+export interface CoachingHold {
+  id: string;
+  /** Server-issued. The countdown is driven from this, never from a
+   *  client-side 15-minute timer — the browser clock is not authoritative. */
+  expires_at: string;
+  quote_fingerprint: string;
+  duration_days: number;
+  lessons_per_week: number;
+  total_sessions: number;
+  total_price_minor: number;
+  total_price_display: string;
+}
+
+export async function fetchCoachingHold(tutorId: string): Promise<CoachingHold | null> {
+  try {
+    const response = await api.get<{ hold: CoachingHold | null }>("/coaching/hold/", {
+      params: { tutor: tutorId },
+    });
+    return response.data.hold;
+  } catch (error: unknown) {
+    const status = (error as { response?: { status?: number } })?.response?.status;
+    if (status === 404 || status === 403) return null;
+    throw error;
+  }
+}
+
+export async function createCoachingHold(params: {
+  tutorId: string;
+  durationDays: number;
+  lessonsPerWeek: number;
+  idempotencyKey: string;
+}): Promise<{ hold: CoachingHold; quote: CoachingQuote }> {
+  const response = await api.post<{ hold: CoachingHold; quote: CoachingQuote }>(
+    "/coaching/hold/",
+    {
+      tutor: params.tutorId,
+      duration_days: params.durationDays,
+      lessons_per_week: params.lessonsPerWeek,
+      idempotency_key: params.idempotencyKey,
+    }
+  );
+  return response.data;
+}
+
+// --- Tutor acceptance (payments-owned, coaching-independent) ------------
+
+export interface TutorAcceptanceConfig {
+  enabled: boolean;
+  has_open_requests: boolean;
+  acceptance_expiry_hours: number;
+}
+
+/**
+ * Deliberately NOT read from /coaching/flag/: that route is unmounted when
+ * the backend's coaching build flag is off, and lesson-only package
+ * acceptance has to keep working — and stay visible — regardless.
+ */
+export async function fetchTutorAcceptanceConfig(): Promise<TutorAcceptanceConfig> {
+  try {
+    const response = await api.get<TutorAcceptanceConfig>(
+      "/payments/tutor-acceptance/config/"
+    );
+    return response.data;
+  } catch {
+    return { enabled: false, has_open_requests: false, acceptance_expiry_hours: 48 };
+  }
+}
+
+export type AcceptanceStatus =
+  | "pending"
+  | "accepted"
+  | "rejected"
+  | "expired"
+  | "withdrawn";
+
+export interface AcceptanceRequest {
+  id: string;
+  student: { id: string; name: string; surname: string };
+  package: {
+    id: string;
+    plan_name: string;
+    lessons_per_week: number | null;
+    duration_days: number | null;
+    total_credits: number;
+    total_price: number;
+  };
+  coaching: {
+    frequency: CoachingFrequency;
+    total_sessions: number;
+    total_price_minor: number;
+    service_status: string;
+  } | null;
+  includes_coaching: boolean;
+  status: AcceptanceStatus;
+  purchase_status: string;
+  requested_at: string;
+  expires_at: string;
+  responded_at: string | null;
+  rejection_reason: string;
+  rejection_note: string;
+}
+
+export async function fetchAcceptanceRequests(): Promise<AcceptanceRequest[]> {
+  const response = await api.get<AcceptanceRequest[]>(
+    "/payments/tutor-acceptance/requests/"
+  );
+  return response.data;
+}
+
+export async function respondToAcceptanceRequest(params: {
+  id: string;
+  decision: "accept" | "reject";
+  reasonCode?: string;
+  note?: string;
+}): Promise<AcceptanceRequest> {
+  const response = await api.post<AcceptanceRequest>(
+    `/payments/tutor-acceptance/requests/${params.id}/respond/`,
+    {
+      decision: params.decision,
+      ...(params.reasonCode ? { reason_code: params.reasonCode } : {}),
+      ...(params.note ? { note: params.note } : {}),
+    }
+  );
+  return response.data;
+}
+
+/**
+ * Honest status copy. Nothing here may say "ödendi", "iade edildi",
+ * "para çekildi" or "hakediş oluştu" — no payment provider is connected,
+ * so an accepted request is exactly that and nothing more.
+ */
+export const ACCEPTANCE_STATUS_COPY: Record<string, string> = {
+  pending: "Öğretmen yanıtı bekleniyor",
+  accepted: "Öğretmen kabul etti. Ödeme aktivasyonu bekleniyor.",
+  rejected: "Öğretmen talebi kabul etmedi",
+  expired: "Talebin yanıt süresi doldu",
+  withdrawn: "Talep geri çekildi",
+  cancelled: "Talep iptal edildi",
+};
+
+export function acceptanceStatusCopy(status: string): string {
+  return ACCEPTANCE_STATUS_COPY[status] ?? "Talep durumu bilinmiyor";
+}
+
+// --- shared student-facing copy ----------------------------------------
+
+/**
+ * Session frequency labels.
+ *
+ * Single source: the tutor profile section, the checkout choice card and
+ * the checkout summary all read this. Three copies of the same three
+ * strings is exactly how "haftada 1" and "Haftada 1" end up on adjacent
+ * screens.
+ */
+export const COACHING_FREQUENCY_LABEL: Record<string, string> = {
+  biweekly: "İki haftada 1 görüşme",
+  weekly: "Haftada 1 görüşme",
+  twice_weekly: "Haftada 2 görüşme",
+};
+
+export function coachingFrequencyLabel(frequency: string): string {
+  return COACHING_FREQUENCY_LABEL[frequency] ?? frequency;
+}
+
+/**
+ * "Koçluk nasıl çalışır?" — the same six lines on the profile and on the
+ * checkout choice screen.
+ *
+ * Nothing here may promise a payment, refund or payout: no provider is
+ * connected. Cancellation and refund rules are linked, not restated.
+ */
+export const COACHING_HOW_IT_WORKS: string[] = [
+  "Koçluk ders paketine bağlıdır; tek başına satın alınamaz.",
+  "Bütün koçluk görüşmeleri 30 dakikadır.",
+  "Görüşme saatini, öğretmen talebini kabul ettikten sonra seçersin.",
+  "Mesajlarına 24 saat içinde yanıt verilir.",
+  "Dönemsel haklar birikmez; kullanılmayan görüşme sonraki döneme devretmez.",
+  "İptal, katılmama ve iade kurallarını destek sayfasından okuyabilirsin.",
+];
+
+// --- student side of a package request ---------------------------------
+
+export interface PurchaseAcceptanceState {
+  requires_tutor_acceptance: boolean;
+  acceptance: {
+    id: string;
+    status: AcceptanceStatus | "cancelled";
+    expires_at: string;
+    responded_at: string | null;
+    includes_coaching: boolean;
+  } | null;
+  purchase_status?: string;
+  coaching_service_status?: string | null;
+  can_withdraw?: boolean;
+  can_cancel_unpaid?: boolean;
+}
+
+/**
+ * The student's own view of their request.
+ *
+ * Lives here rather than in paymentsApi because the acceptance layer is
+ * what it describes, but note the URLs: every one of these is under
+ * `/payments/`, not `/coaching/`. A lesson-only request goes through the
+ * exact same three endpoints, and they stay mounted with coaching switched
+ * off.
+ */
+export async function fetchPurchaseAcceptanceState(
+  purchaseId: string
+): Promise<PurchaseAcceptanceState> {
+  const response = await api.get<PurchaseAcceptanceState>(
+    `/payments/package-purchases/${purchaseId}/acceptance-status/`
+  );
+  return response.data;
+}
+
+/** Pull a request back BEFORE the tutor answered. */
+export async function withdrawPackageRequest(
+  purchaseId: string
+): Promise<PurchaseAcceptanceState> {
+  const response = await api.post<PurchaseAcceptanceState>(
+    `/payments/package-purchases/${purchaseId}/withdraw/`
+  );
+  return response.data;
+}
+
+/**
+ * Back out AFTER the tutor accepted but before payment activation.
+ *
+ * Not a refund and not a withdrawal: no money ever moved, and the
+ * acceptance record stays `accepted` because the tutor really did say yes.
+ */
+export async function cancelUnpaidPackagePurchase(
+  purchaseId: string
+): Promise<PurchaseAcceptanceState> {
+  const response = await api.post<PurchaseAcceptanceState>(
+    `/payments/package-purchases/${purchaseId}/cancel-unpaid/`
+  );
+  return response.data;
+}

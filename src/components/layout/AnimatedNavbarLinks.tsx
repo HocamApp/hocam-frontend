@@ -4,6 +4,7 @@ import * as React from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   Bell,
+  ClipboardList,
   Compass,
   GraduationCap,
   FileQuestion,
@@ -17,6 +18,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useCoachingFlag } from "@/hooks/useCoachingFlag";
+import { useTutorAcceptanceConfig } from "@/hooks/useTutorAcceptanceConfig";
 import { usePageVisibility } from "@/hooks/usePageVisibility";
 import { ExpandableTabs } from "@/components/ui/expandable-tabs";
 import {
@@ -36,6 +38,7 @@ import {
 
 const iconByName = {
   Bell,
+  ClipboardList,
   Compass,
   FileQuestion,
   GraduationCap,
@@ -59,6 +62,7 @@ export function AnimatedNavbarLinks() {
   const isPageVisible = usePageVisibility();
 
   const { enabled: coachingEnabled } = useCoachingFlag();
+  const { showPackageRequests } = useTutorAcceptanceConfig();
   const { data: summary } = useQuery({
     queryKey: ["notification-summary"],
     queryFn: fetchNotificationSummary,
@@ -71,6 +75,7 @@ export function AnimatedNavbarLinks() {
 
   const descriptors = getNavDescriptors(isTutor ? "tutor" : "student", {
     coachingEnabled,
+    packageRequestsEnabled: showPackageRequests,
   });
   const activeIndex = getActiveNavIndex(descriptors, pathname, searchParams);
 

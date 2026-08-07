@@ -6,6 +6,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import {
   Bell,
+  ClipboardList,
   Compass,
   FileQuestion,
   GraduationCap,
@@ -19,6 +20,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useCoachingFlag } from "@/hooks/useCoachingFlag";
+import { useTutorAcceptanceConfig } from "@/hooks/useTutorAcceptanceConfig";
 import { usePageVisibility } from "@/hooks/usePageVisibility";
 import {
   Popover,
@@ -39,6 +41,7 @@ import {
 
 const iconByName = {
   Bell,
+  ClipboardList,
   Compass,
   FileQuestion,
   GraduationCap,
@@ -61,6 +64,7 @@ export function MobileTabBar() {
   const [isMoreOpen, setIsMoreOpen] = React.useState(false);
 
   const { enabled: coachingEnabled } = useCoachingFlag();
+  const { showPackageRequests } = useTutorAcceptanceConfig();
   const { data: summary } = useQuery({
     queryKey: ["notification-summary"],
     queryFn: fetchNotificationSummary,
@@ -72,6 +76,7 @@ export function MobileTabBar() {
 
   const descriptors = getNavDescriptors(isTutor ? "tutor" : "student", {
     coachingEnabled,
+    packageRequestsEnabled: showPackageRequests,
   });
   const primaryDescriptors = descriptors.filter(
     (

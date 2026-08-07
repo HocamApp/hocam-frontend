@@ -4,6 +4,7 @@ export type MobileNavPlacement = "primary" | "overflow" | "hidden";
 
 export type NavIconName =
   | "Bell"
+  | "ClipboardList"
   | "Compass"
   | "FileQuestion"
   | "GraduationCap"
@@ -155,9 +156,24 @@ const tutorCoachingDescriptor: NavRouteDescriptor = {
   mobilePlacement: "overflow",
 };
 
+/**
+ * The tutor's package-requests entry. Separate from the coaching tab on
+ * purpose: it also covers lesson-only requests, so its visibility follows
+ * the payments-level acceptance rollout, not the coaching feature flag.
+ */
+const tutorRequestsDescriptor: NavRouteDescriptor = {
+  kind: "route",
+  title: "Paket Talepleri",
+  icon: "ClipboardList",
+  href: "/dashboard/tutor/requests",
+  mobilePlacement: "overflow",
+};
+
 export type NavOptions = {
   /** Whether the coaching feature is on for this viewer. Defaults to off. */
   coachingEnabled?: boolean;
+  /** Whether the tutor should be offered the package-requests screen. */
+  packageRequestsEnabled?: boolean;
 };
 
 export function getNavDescriptors(
@@ -167,11 +183,17 @@ export function getNavDescriptors(
   if (role !== "tutor") {
     return studentDescriptors;
   }
-  if (!options.coachingEnabled) {
+  // Both extras sit right after "Panom": they are tutor workspaces, so
+  // they belong with the dashboard rather than at the end of the overflow
+  // list. Each is independent — a tutor can have package requests without
+  // coaching, and vice versa.
+  const extras: NavRouteDescriptor[] = [];
+  if (options.coachingEnabled) extras.push(tutorCoachingDescriptor);
+  if (options.packageRequestsEnabled) extras.push(tutorRequestsDescriptor);
+  if (extras.length === 0) {
     return tutorDescriptors;
   }
-  // Placed right after "Panom": coaching is a tutor workspace, so it belongs
-  // with the dashboard rather than at the end of the overflow list.
+
   const insertAfter = tutorDescriptors.findIndex(
     (descriptor) =>
       descriptor.kind === "route" && descriptor.href === "/dashboard/tutor"
@@ -179,7 +201,7 @@ export function getNavDescriptors(
   const index = insertAfter === -1 ? tutorDescriptors.length : insertAfter + 1;
   return [
     ...tutorDescriptors.slice(0, index),
-    tutorCoachingDescriptor,
+    ...extras,
     ...tutorDescriptors.slice(index),
   ];
 }
