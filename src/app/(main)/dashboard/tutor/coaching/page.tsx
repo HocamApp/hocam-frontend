@@ -117,6 +117,11 @@ function CoachingOverview() {
               </Link>
             </Button>
             <Button asChild variant="outline" size="sm">
+              <Link href="/dashboard/tutor/coaching/reports">
+                Raporlar
+              </Link>
+            </Button>
+            <Button asChild variant="outline" size="sm">
               <Link href="/dashboard/tutor/coaching/time-requests">
                 Saat talepleri
               </Link>

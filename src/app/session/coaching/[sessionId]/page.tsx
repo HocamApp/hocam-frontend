@@ -5,12 +5,14 @@ import { useParams, useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { WifiOff } from "lucide-react";
+import { useState } from "react";
 
 import { useAuth } from "@/hooks/useAuth";
 import { RouteGuard } from "@/components/shared/RouteGuard";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { formatDate } from "@/lib/utils";
 import { CoachingAttachmentPanel } from "@/components/coaching/CoachingAttachmentPanel";
 import {
@@ -28,6 +30,7 @@ import {
   fetchCoachingSessionToken,
   reportCoachingSessionNoShow,
   reportCoachingSessionTechnicalIssue,
+  COACHING_SESSION_QUERY_KEYS,
   extractCoachingErrorMessage,
   extractCoachingErrorCode,
 } from "@/lib/coachingApi";
@@ -45,25 +48,36 @@ function CoachingRoomPanel({
   viewerRole: "student" | "tutor";
 }) {
   const queryClient = useQueryClient();
+  const [incidentNote, setIncidentNote] = useState("");
   const { data: detail } = useQuery({
-    queryKey: ["coaching-session-detail", sessionId],
+    queryKey: COACHING_SESSION_QUERY_KEYS.detail(sessionId),
     queryFn: () => fetchCoachingSessionDetail(sessionId),
   });
 
+  const invalidateTerminalIncident = () => {
+    queryClient.invalidateQueries({ queryKey: COACHING_SESSION_QUERY_KEYS.detail(sessionId) });
+    queryClient.invalidateQueries({ queryKey: COACHING_SESSION_QUERY_KEYS.studentList() });
+    queryClient.invalidateQueries({ queryKey: COACHING_SESSION_QUERY_KEYS.tutorList() });
+    // This active query refetches and moves the room out of its stale joinable UI.
+    queryClient.invalidateQueries({ queryKey: COACHING_SESSION_QUERY_KEYS.token(sessionId) });
+  };
+
   const noShowMutation = useMutation({
-    mutationFn: (party: "student" | "tutor") => reportCoachingSessionNoShow(sessionId, party),
+    mutationFn: (party: "student" | "tutor") => reportCoachingSessionNoShow(sessionId, party, incidentNote),
     onSuccess: () => {
       toast.success("Bildirim kaydedildi.");
-      queryClient.invalidateQueries({ queryKey: ["coaching-session-detail", sessionId] });
+      setIncidentNote("");
+      invalidateTerminalIncident();
     },
     onError: (err) => toast.error(extractCoachingErrorMessage(err)),
   });
 
   const technicalIssueMutation = useMutation({
-    mutationFn: () => reportCoachingSessionTechnicalIssue(sessionId),
+    mutationFn: () => reportCoachingSessionTechnicalIssue(sessionId, incidentNote),
     onSuccess: () => {
       toast.success("Teknik sorun bildirildi.");
-      queryClient.invalidateQueries({ queryKey: ["coaching-session-detail", sessionId] });
+      setIncidentNote("");
+      invalidateTerminalIncident();
     },
     onError: (err) => toast.error(extractCoachingErrorMessage(err)),
   });
@@ -91,6 +105,13 @@ function CoachingRoomPanel({
 
       <div className="space-y-2 border-t pt-3">
         <p className="text-sm font-medium">Bir sorun mu var?</p>
+        <Textarea
+          className="min-h-20"
+          value={incidentNote}
+          onChange={(event) => setIncidentNote(event.target.value)}
+          placeholder="Kısa incident notu (opsiyonel)"
+          aria-label="Incident notu"
+        />
         <Button
           size="sm"
           variant="outline"

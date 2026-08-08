@@ -14,6 +14,7 @@ const STATUS_LABEL: Record<string, string> = {
   scheduled: "Planlandı",
   reschedule_requested: "Değişiklik bekleniyor",
   in_progress: "Devam ediyor",
+  awaiting_report: "Rapor bekleniyor",
 };
 
 const JOINABLE_STATUSES = new Set(["scheduled", "in_progress"]);
@@ -64,6 +65,13 @@ function UpcomingList() {
                   <Link href={`/session/coaching/${session.id}`}>Katıl</Link>
                 </Button>
               )}
+              {session.status === "awaiting_report" ? (
+                <Button asChild size="sm">
+                  <Link href={`/dashboard/tutor/coaching/sessions/${session.id}/report`}>
+                    Raporu hazırla
+                  </Link>
+                </Button>
+              ) : null}
             </div>
           </CardContent>
         </Card>

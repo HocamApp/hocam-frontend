@@ -67,6 +67,21 @@ export function CoachingSessionList() {
                 <Badge variant="secondary" className="mt-1">
                   {STATUS_LABEL[session.status] ?? session.status}
                 </Badge>
+                {session.report_overdue && session.report_due_at ? (
+                  <p className="mt-1 text-xs text-destructive">
+                    Primary rapor gecikti. Son zaman: {new Date(session.report_due_at).toLocaleString("tr-TR", { dateStyle: "medium", timeStyle: "short" })}
+                  </p>
+                ) : null}
+                {session.complaint_eligible ? (
+                  <Link href="/support" className="mt-1 inline-block text-xs font-medium text-primary underline">
+                    Eksik rapor için desteğe başvur
+                  </Link>
+                ) : null}
+                {!session.complaint_eligible && session.complaint_eligible_at ? (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Eksik rapor desteği {new Date(session.complaint_eligible_at).toLocaleString("tr-TR", { dateStyle: "medium", timeStyle: "short" })} itibarıyla kullanılabilir.
+                  </p>
+                ) : null}
               </div>
               <div className="flex items-center gap-2">
                 {JOINABLE_STATUSES.has(session.status) && (

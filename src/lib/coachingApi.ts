@@ -778,6 +778,8 @@ export async function cancelUnpaidPackagePurchase(
 
 export interface CoachingSchedulingState {
   id: string;
+  /** Explicit active period identity supplied by the server; never inferred client-side. */
+  service_period_id: string | null;
   service_status: string;
   frequency: CoachingFrequency;
   weeks: number;
@@ -939,6 +941,11 @@ export interface CoachingSessionItem {
   duration_minutes: number;
   reschedule_count: number;
   student_name?: string;
+  /** Faz 6 values are issued by the server; the browser never derives them. */
+  report_due_at: string | null;
+  report_overdue: boolean;
+  complaint_eligible_at: string | null;
+  complaint_eligible: boolean;
 }
 
 export async function fetchCoachingSessions(): Promise<CoachingSessionItem[]> {
@@ -1033,6 +1040,7 @@ export async function changeCoachingRecurringSlot(params: {
 
 export interface CoachingStudentRow {
   purchase_id: string;
+  service_period_id: string | null;
   student_name: string;
   service_status: string;
   frequency: CoachingFrequency;
@@ -1165,21 +1173,23 @@ export async function fetchCoachingSessionToken(
 
 export async function reportCoachingSessionNoShow(
   sessionId: string,
-  party: "student" | "tutor"
+  party: "student" | "tutor",
+  note = ""
 ): Promise<{ status: CoachingSessionStatus }> {
   const response = await api.post<{ status: CoachingSessionStatus }>(
     `/coaching/sessions/${sessionId}/report-no-show/`,
-    { party }
+    { party, note }
   );
   return response.data;
 }
 
 export async function reportCoachingSessionTechnicalIssue(
-  sessionId: string
+  sessionId: string,
+  note = ""
 ): Promise<{ status: CoachingSessionStatus }> {
   const response = await api.post<{ status: CoachingSessionStatus }>(
     `/coaching/sessions/${sessionId}/report-technical-issue/`,
-    {}
+    { note }
   );
   return response.data;
 }
@@ -1245,4 +1255,337 @@ export async function fetchCoachingAttachmentDownloadUrl(
     `/coaching/attachments/${attachmentId}/download/`
   );
   return response.data;
+}
+
+// =========================================================================
+// Faz 6 — program, primary reports and their immutable published revisions.
+//
+// Keep draft and published data deliberately separate: the tutor owns the
+// mutable draft workspace, while a student can only read latest_revision.
+// =========================================================================
+
+export const COACHING_FAZ6_QUERY_KEYS = {
+  program: (servicePeriodId: string) => ["coaching-program", servicePeriodId] as const,
+  reportDraft: (sessionId: string) => ["coaching-report-draft", sessionId] as const,
+  publishedReport: (reportId: string) =>
+    ["coaching-published-report", reportId] as const,
+  tutorReportList: () => ["coaching-tutor-report-list"] as const,
+  studentReportList: () => ["coaching-student-report-list"] as const,
+  reportHistory: (reportId: string) =>
+    ["coaching-tutor-report-history", reportId] as const,
+};
+
+export const COACHING_SESSION_QUERY_KEYS = {
+  detail: (sessionId: string) => ["coaching-session-detail", sessionId] as const,
+  token: (sessionId: string) => ["coaching-session-token", sessionId] as const,
+  studentList: () => ["coaching-sessions"] as const,
+  tutorList: () => ["coaching-tutor-sessions"] as const,
+};
+
+/** Shared cache targets for a publish operation; reportId is never a revision UUID. */
+export function getReportPublishInvalidationKeys(params: {
+  sessionId: string;
+  reportId: string;
+  initial: boolean;
+}) {
+  return {
+    draft: COACHING_FAZ6_QUERY_KEYS.reportDraft(params.sessionId),
+    reportHistory: COACHING_FAZ6_QUERY_KEYS.reportHistory(params.reportId),
+    publishedReport: COACHING_FAZ6_QUERY_KEYS.publishedReport(params.reportId),
+    tutorReportList: COACHING_FAZ6_QUERY_KEYS.tutorReportList(),
+    studentReportList: COACHING_FAZ6_QUERY_KEYS.studentReportList(),
+    sessionDetail: COACHING_SESSION_QUERY_KEYS.detail(params.sessionId),
+    sessionToken: COACHING_SESSION_QUERY_KEYS.token(params.sessionId),
+    ...(params.initial
+      ? {
+          studentSessionList: COACHING_SESSION_QUERY_KEYS.studentList(),
+          tutorSessionList: COACHING_SESSION_QUERY_KEYS.tutorList(),
+        }
+      : {}),
+  };
+}
+
+export interface CoachingProgramTask {
+  id: string;
+  program_id?: string;
+  title: string;
+  description: string;
+  subject: string;
+  due_date: string | null;
+  priority: string | null;
+  sort_order: number;
+  is_completed: boolean;
+  completed_at: string | null;
+}
+
+export interface CoachingProgram {
+  id: string;
+  service_period_id: string;
+  title: string;
+  objective: string;
+  start_date: string | null;
+  end_date: string | null;
+  tasks: CoachingProgramTask[];
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface CoachingProgramInput {
+  title: string;
+  objective: string;
+  start_date?: string | null;
+  end_date?: string | null;
+}
+
+export interface CoachingProgramTaskInput {
+  title: string;
+  description?: string;
+  subject?: string;
+  due_date?: string | null;
+  priority?: string | null;
+}
+
+export async function fetchCoachingProgram(
+  servicePeriodId: string
+): Promise<CoachingProgram | null> {
+  try {
+    const response = await api.get<CoachingProgram>(
+      `/coaching/service-periods/${servicePeriodId}/program/`
+    );
+    return response.data;
+  } catch (error: unknown) {
+    const status = (error as { response?: { status?: number } })?.response?.status;
+    if (status === 404) return null;
+    throw error;
+  }
+}
+
+export async function saveCoachingProgram(
+  servicePeriodId: string,
+  payload: CoachingProgramInput
+): Promise<CoachingProgram> {
+  const response = await api.put<CoachingProgram>(
+    `/coaching/service-periods/${servicePeriodId}/program/`,
+    payload
+  );
+  return response.data;
+}
+
+export async function createCoachingProgramTask(
+  programId: string,
+  payload: CoachingProgramTaskInput
+): Promise<CoachingProgramTask> {
+  const response = await api.post<CoachingProgramTask>(
+    `/coaching/programs/${programId}/tasks/`,
+    payload
+  );
+  return response.data;
+}
+
+export async function updateCoachingProgramTask(
+  taskId: string,
+  payload: CoachingProgramTaskInput
+): Promise<CoachingProgramTask> {
+  const response = await api.patch<CoachingProgramTask>(
+    `/coaching/program-tasks/${taskId}/`,
+    payload
+  );
+  return response.data;
+}
+
+export async function deleteCoachingProgramTask(taskId: string): Promise<void> {
+  await api.delete(`/coaching/program-tasks/${taskId}/`);
+}
+
+export async function reorderCoachingProgramTasks(
+  programId: string,
+  taskIds: string[]
+): Promise<CoachingProgramTask[]> {
+  const response = await api.post<CoachingProgramTask[]>(
+    `/coaching/programs/${programId}/tasks/reorder/`,
+    { task_ids: taskIds }
+  );
+  return response.data;
+}
+
+export async function toggleCoachingProgramTaskCompletion(
+  taskId: string
+): Promise<CoachingProgramTask> {
+  const response = await api.post<CoachingProgramTask>(
+    `/coaching/program-tasks/${taskId}/toggle-completion/`
+  );
+  return response.data;
+}
+
+export interface CoachingExamAnalysis {
+  exam_type?: "YKS" | "DGS" | "KPSS" | string;
+  exam_name?: string;
+  date?: string | null;
+  score_or_net?: number | null;
+  strengths?: string[];
+  focus_areas?: string[];
+  tutor_interpretation?: string;
+  next_actions?: string[];
+}
+
+export interface CoachingRecommendedResource {
+  title: string;
+  url?: string;
+  note?: string;
+  attachment_id?: string;
+  attachment?: Pick<CoachingAttachmentItem, "id" | "original_name" | "mime_type">;
+}
+
+export interface CoachingReportDraftInput {
+  short_summary: string;
+  topics_discussed: string;
+  student_progress: string;
+  next_priorities: string;
+  study_recommendations: string;
+  focus_until_next_meeting: string;
+  exam_analysis?: CoachingExamAnalysis | null;
+  recommended_resources?: CoachingRecommendedResource[];
+  program_changes_summary?: string;
+}
+
+export interface CoachingSessionReport {
+  id: string;
+  session_id: string;
+  draft_version: number;
+  content: CoachingReportDraftInput;
+  updated_at: string;
+}
+
+export interface CoachingSessionReportRevision {
+  id: string;
+  report_id?: string;
+  revision_number: number;
+  source_draft_version: number;
+  content: CoachingReportDraftInput;
+  created_by?: string;
+  published_at: string;
+  change_note: string | null;
+}
+
+export interface CoachingReportListItem {
+  id: string;
+  session_id: string;
+  student_name?: string;
+  tutor_name?: string;
+  scheduled_start?: string;
+  first_published_at?: string;
+  draft_version?: number;
+  latest_revision: CoachingSessionReportRevision | null;
+}
+
+export async function fetchCoachingReportDraft(
+  sessionId: string
+): Promise<CoachingSessionReport | null> {
+  try {
+    const response = await api.get<CoachingSessionReport>(
+      `/coaching/sessions/${sessionId}/report-draft/`
+    );
+    return response.data;
+  } catch (error: unknown) {
+    const status = (error as { response?: { status?: number } })?.response?.status;
+    if (status === 404) return null;
+    throw error;
+  }
+}
+
+export async function saveCoachingReportDraft(
+  sessionId: string,
+  payload: CoachingReportDraftInput
+): Promise<CoachingSessionReport> {
+  const response = await api.put<CoachingSessionReport>(
+    `/coaching/sessions/${sessionId}/report-draft/`,
+    payload
+  );
+  return response.data;
+}
+
+export async function publishInitialCoachingReport(
+  sessionId: string
+): Promise<CoachingSessionReportRevision> {
+  const response = await api.post<CoachingSessionReportRevision>(
+    `/coaching/sessions/${sessionId}/publish-initial-report/`
+  );
+  return response.data;
+}
+
+export async function fetchCoachingReports(): Promise<CoachingReportListItem[]> {
+  const response = await api.get<Array<{
+    report_id: string;
+    session_id: string;
+    draft_version?: number;
+    latest_revision: CoachingSessionReportRevision | null;
+  }>>("/coaching/reports/");
+  return response.data.map((report) => ({
+    id: report.report_id,
+    session_id: report.session_id,
+    draft_version: report.draft_version,
+    latest_revision: report.latest_revision,
+  }));
+}
+
+export async function fetchCoachingReport(
+  reportId: string
+): Promise<CoachingSessionReportRevision> {
+  const response = await api.get<CoachingSessionReportRevision>(`/coaching/reports/${reportId}/`);
+  return response.data;
+}
+
+/** Tutor-only history endpoint; student callers deliberately use fetchCoachingReport. */
+export async function fetchTutorCoachingReportHistory(reportId: string): Promise<{
+  draft: CoachingSessionReport;
+  revisions: CoachingSessionReportRevision[];
+}> {
+  const response = await api.get<{
+    draft: CoachingSessionReport;
+    revisions: CoachingSessionReportRevision[];
+  }>(`/coaching/reports/${reportId}/`);
+  return response.data;
+}
+
+export async function publishCoachingReportRevision(
+  reportId: string,
+  changeNote = ""
+): Promise<CoachingSessionReportRevision> {
+  const response = await api.post<CoachingSessionReportRevision>(
+    `/coaching/reports/${reportId}/publish-revision/`,
+    { change_note: changeNote }
+  );
+  return response.data;
+}
+
+export async function fetchCoachingReportPdf(reportId: string): Promise<Blob> {
+  const response = await api.get<Blob>(`/coaching/reports/${reportId}/pdf/`, {
+    responseType: "blob",
+  });
+  return response.data;
+}
+
+export interface PrimaryReportTimingSource {
+  report_due_at: string | null;
+  report_overdue: boolean;
+  complaint_eligible_at: string | null;
+  complaint_eligible: boolean;
+}
+
+/** The API contract accepts an optional finite numeric score/net, never a string. */
+export function normalizeScoreOrNet(value: string): number | null {
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  const numeric = Number(trimmed);
+  return Number.isFinite(numeric) ? numeric : null;
+}
+
+/** A display-only mapping: no browser clock or deadline arithmetic is used. */
+export function getPrimaryReportTiming(source: PrimaryReportTimingSource) {
+  return {
+    reportDueAt: source.report_due_at,
+    reportOverdue: source.report_overdue,
+    complaintEligibleAt: source.complaint_eligible_at,
+    complaintEligible: source.complaint_eligible,
+  };
 }

@@ -52,6 +52,13 @@ function PrepareContent({ sessionId }: { sessionId: string }) {
               <Link href={`/session/coaching/${sessionId}`}>Görüşmeye katıl</Link>
             </Button>
           )}
+          {detail.status === "awaiting_report" ? (
+            <Button asChild>
+              <Link href={`/dashboard/tutor/coaching/sessions/${sessionId}/report`}>
+                Raporu hazırla
+              </Link>
+            </Button>
+          ) : null}
         </CardContent>
       </Card>
 

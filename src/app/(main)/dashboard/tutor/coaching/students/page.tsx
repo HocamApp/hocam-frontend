@@ -51,6 +51,14 @@ function StudentsContent() {
                 {SERVICE_STATUS_LABEL[row.service_status] ?? row.service_status}
               </Badge>
             </div>
+            {row.service_period_id ? (
+              <Link
+                href={`/dashboard/tutor/coaching/service-periods/${row.service_period_id}/program`}
+                className="inline-block text-sm font-medium text-primary underline"
+              >
+                Programı yönet
+              </Link>
+            ) : null}
             {row.recurring_slots.length > 0 ? (
               <div className="flex flex-wrap gap-2">
                 {row.recurring_slots.map((slot) => (

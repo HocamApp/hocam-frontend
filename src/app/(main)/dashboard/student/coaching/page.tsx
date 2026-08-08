@@ -90,24 +90,22 @@ function OverviewContent() {
             </CardContent>
           </Card>
         </Link>
-        <Card className="opacity-60">
-          <CardContent className="flex items-center gap-3 py-4">
-            <ListTodo className="h-5 w-5 text-muted-foreground" />
-            <div>
+        <Link href="/dashboard/student/coaching/program">
+          <Card className="transition-colors hover:bg-muted/50">
+            <CardContent className="flex items-center gap-3 py-4">
+              <ListTodo className="h-5 w-5 text-primary" />
               <span className="text-sm font-medium">Programım</span>
-              <p className="text-xs text-muted-foreground">Yakında</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="opacity-60">
-          <CardContent className="flex items-center gap-3 py-4">
-            <FileText className="h-5 w-5 text-muted-foreground" />
-            <div>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link href="/dashboard/student/coaching/reports">
+          <Card className="transition-colors hover:bg-muted/50">
+            <CardContent className="flex items-center gap-3 py-4">
+              <FileText className="h-5 w-5 text-primary" />
               <span className="text-sm font-medium">Raporlarım</span>
-              <p className="text-xs text-muted-foreground">Yakında</p>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </Link>
         <Link href="/messages">
           <Card className="transition-colors hover:bg-muted/50">
             <CardContent className="flex items-center gap-3 py-4">
