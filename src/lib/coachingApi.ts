@@ -376,6 +376,22 @@ const ERROR_MESSAGES: Record<string, string> = {
   plan_required: "Önce bir koçluk planı oluştur.",
   contract_version_hash_mismatch:
     "Koçluk sözleşmesinde bir yapılandırma sorunu var. Lütfen destekle iletişime geç.",
+  // --- Faz 4: recurring scheduling, time requests, reschedule ---------
+  not_awaiting_schedule: "Bu koçluk şu anda saat seçimine açık değil.",
+  scheduling_deadline_expired: "Saat seçme süren doldu.",
+  slot_unavailable: "Bu saat artık uygun değil. Lütfen listeyi yenile.",
+  slot_outside_coaching_availability:
+    "Bu saat öğretmenin yayınlanmış koçluk müsaitliğinin dışında.",
+  lesson_conflict: "Bu saat mevcut bir dersle çakışıyor.",
+  coaching_conflict: "Bu saat başka bir koçluk görüşmesiyle çakışıyor.",
+  duplicate_slot: "Aynı gün ve saat iki kez seçilemez.",
+  frequency_slot_count_mismatch: "Seçilmesi gereken saat sayısı planınla uyuşmuyor.",
+  plan_unpublished: "Öğretmenin koçluk planı artık yayında değil.",
+  requested_time_pending: "Bu saat için zaten açık bir talebin var.",
+  requested_time_expired: "Bu talebin yanıt süresi doldu.",
+  requested_time_rejected: "Bu öneri artık geçerli değil.",
+  reschedule_pending: "Bu görüşme için zaten bekleyen bir değişiklik talebi var.",
+  session_not_reschedulable: "Bu görüşme şu anda yeniden planlanamaz.",
 };
 
 /** Human-readable message for a coaching error, preferring the server's own. */
@@ -734,5 +750,358 @@ export async function cancelUnpaidPackagePurchase(
   const response = await api.post<PurchaseAcceptanceState>(
     `/payments/package-purchases/${purchaseId}/cancel-unpaid/`
   );
+  return response.data;
+}
+
+// =========================================================================
+// Faz 4 — recurring scheduling, 48h time-request fallback, reschedule,
+// recurring-time-change.
+//
+// Every deadline/expiry shown to the user comes from a server timestamp
+// (`slot_selection_deadline_at`, `expires_at`) — this module never adds
+// "7 days" or "48 hours" on the client. The server is the only clock.
+// =========================================================================
+
+export interface CoachingSchedulingState {
+  id: string;
+  service_status: string;
+  frequency: CoachingFrequency;
+  weeks: number;
+  total_sessions: number;
+  slot_selection_deadline_at: string | null;
+  required_slot_count: number;
+}
+
+export async function fetchCoachingSchedulingState(): Promise<CoachingSchedulingState | null> {
+  try {
+    const response = await api.get<CoachingSchedulingState>("/coaching/scheduling/");
+    return response.data;
+  } catch (error: unknown) {
+    const status = (error as { response?: { status?: number } })?.response?.status;
+    if (status === 404) return null;
+    throw error;
+  }
+}
+
+export interface CoachingAvailableSlot {
+  day_of_week: number;
+  start_time: string;
+}
+
+export interface CoachingAcceptedProposal {
+  day_of_week: number;
+  start_time: string;
+}
+
+export interface CoachingSchedulingSlots {
+  availability_slots: CoachingAvailableSlot[];
+  accepted_proposals: Record<number, CoachingAcceptedProposal>;
+}
+
+export async function fetchCoachingSchedulingSlots(): Promise<CoachingSchedulingSlots> {
+  const response = await api.get<CoachingSchedulingSlots>("/coaching/scheduling/slots/");
+  return response.data;
+}
+
+export interface SubmittedRecurringSlot {
+  slot_index: number;
+  day_of_week: number;
+  start_time: string;
+}
+
+export interface CoachingSchedulingConfirmResult {
+  service_period_id: string;
+  starts_on: string;
+  ends_on: string;
+  sessions_planned: number;
+}
+
+export async function confirmCoachingRecurringSlots(
+  slots: SubmittedRecurringSlot[]
+): Promise<CoachingSchedulingConfirmResult> {
+  const response = await api.post<CoachingSchedulingConfirmResult>(
+    "/coaching/scheduling/confirm/",
+    { slots }
+  );
+  return response.data;
+}
+
+// --- 48h time-request fallback ------------------------------------------
+
+export type CoachingTimeRequestStatus = "pending" | "matched" | "unresolved" | "withdrawn";
+export type CoachingTimeProposalStatus =
+  | "pending"
+  | "accepted"
+  | "declined"
+  | "superseded";
+
+export interface CoachingTimeProposal {
+  id: string;
+  day_of_week: number;
+  start_time: string;
+  status: CoachingTimeProposalStatus;
+  proposed_at: string;
+  responded_at: string | null;
+}
+
+export interface CoachingTimeRequest {
+  id: string;
+  slot_index: number;
+  status: CoachingTimeRequestStatus;
+  note: string;
+  requested_at: string;
+  expires_at: string;
+  resolved_at: string | null;
+  proposals: CoachingTimeProposal[];
+}
+
+export async function fetchCoachingTimeRequests(): Promise<CoachingTimeRequest[]> {
+  const response = await api.get<CoachingTimeRequest[]>("/coaching/scheduling/time-request/");
+  return response.data;
+}
+
+export async function createCoachingTimeRequest(params: {
+  slotIndex: number;
+  note?: string;
+}): Promise<CoachingTimeRequest> {
+  const response = await api.post<CoachingTimeRequest>("/coaching/scheduling/time-request/", {
+    slot_index: params.slotIndex,
+    note: params.note ?? "",
+  });
+  return response.data;
+}
+
+export async function withdrawCoachingTimeRequest(
+  timeRequestId: string
+): Promise<CoachingTimeRequest> {
+  const response = await api.post<CoachingTimeRequest>(
+    "/coaching/scheduling/time-request/withdraw/",
+    { time_request_id: timeRequestId }
+  );
+  return response.data;
+}
+
+export async function acceptCoachingTimeProposal(
+  proposalId: string
+): Promise<CoachingTimeProposal> {
+  const response = await api.post<CoachingTimeProposal>(
+    "/coaching/scheduling/time-request/accept/",
+    { proposal_id: proposalId }
+  );
+  return response.data;
+}
+
+export async function declineCoachingTimeProposal(
+  proposalId: string
+): Promise<CoachingTimeProposal> {
+  const response = await api.post<CoachingTimeProposal>(
+    "/coaching/scheduling/time-request/decline/",
+    { proposal_id: proposalId }
+  );
+  return response.data;
+}
+
+// --- sessions + single-session reschedule --------------------------------
+
+export type CoachingSessionStatus =
+  | "scheduled"
+  | "reschedule_requested"
+  | "in_progress"
+  | "awaiting_report"
+  | "completed"
+  | "student_no_show"
+  | "tutor_no_show"
+  | "cancelled"
+  | "technical_failure";
+
+export interface CoachingSessionItem {
+  id: string;
+  sequence_number: number;
+  week_index: number;
+  status: CoachingSessionStatus;
+  scheduled_start: string;
+  scheduled_local_date: string;
+  scheduled_local_time: string;
+  duration_minutes: number;
+  reschedule_count: number;
+  student_name?: string;
+}
+
+export async function fetchCoachingSessions(): Promise<CoachingSessionItem[]> {
+  const response = await api.get<CoachingSessionItem[]>("/coaching/sessions/");
+  return response.data;
+}
+
+export type CoachingRescheduleRequestStatus =
+  | "pending"
+  | "approved"
+  | "auto_approved"
+  | "rejected"
+  | "expired";
+
+export interface CoachingRescheduleRequestItem {
+  id: string;
+  session_id: string;
+  requested_by: "student" | "tutor";
+  original_start: string;
+  proposed_start: string;
+  is_free: boolean;
+  consumes_student_free_entitlement: boolean;
+  requires_tutor_approval: boolean;
+  granted_free_by_tutor: boolean;
+  status: CoachingRescheduleRequestStatus;
+  requested_at: string;
+  responded_at: string | null;
+  rejection_reason: string;
+}
+
+export async function requestCoachingSessionReschedule(
+  sessionId: string,
+  params: { localDate: string; localTime: string }
+): Promise<CoachingRescheduleRequestItem> {
+  const response = await api.post<CoachingRescheduleRequestItem>(
+    `/coaching/sessions/${sessionId}/reschedule/`,
+    { local_date: params.localDate, local_time: params.localTime }
+  );
+  return response.data;
+}
+
+// --- recurring-time-change (student self-service) -------------------------
+
+export type CoachingRecurringSlotSource = "availability" | "tutor_proposal";
+
+export interface CoachingRecurringSlotItem {
+  id: string;
+  slot_index: number;
+  day_of_week: number;
+  start_time: string;
+  source: CoachingRecurringSlotSource;
+}
+
+export async function changeCoachingRecurringSlot(params: {
+  purchaseId: string;
+  slotIndex: number;
+  newDayOfWeek: number;
+  newStartTime: string;
+}): Promise<CoachingRecurringSlotItem> {
+  const response = await api.post<CoachingRecurringSlotItem>(
+    "/coaching/recurring-slots/change/",
+    {
+      purchase_id: params.purchaseId,
+      slot_index: params.slotIndex,
+      new_day_of_week: params.newDayOfWeek,
+      new_start_time: params.newStartTime,
+    }
+  );
+  return response.data;
+}
+
+// --- tutor side ------------------------------------------------------------
+
+export interface CoachingStudentRow {
+  purchase_id: string;
+  student_name: string;
+  service_status: string;
+  frequency: CoachingFrequency;
+  recurring_slots: CoachingRecurringSlotItem[];
+}
+
+export async function fetchCoachingStudents(): Promise<CoachingStudentRow[]> {
+  const response = await api.get<CoachingStudentRow[]>("/coaching/students/");
+  return response.data;
+}
+
+export async function fetchTutorCoachingTimeRequests(): Promise<CoachingTimeRequest[]> {
+  const response = await api.get<CoachingTimeRequest[]>("/coaching/tutor/time-requests/");
+  return response.data;
+}
+
+export async function proposeCoachingTime(
+  timeRequestId: string,
+  params: { dayOfWeek: number; startTime: string }
+): Promise<CoachingTimeProposal> {
+  const response = await api.post<CoachingTimeProposal>(
+    `/coaching/tutor/time-requests/${timeRequestId}/propose/`,
+    { day_of_week: params.dayOfWeek, start_time: params.startTime }
+  );
+  return response.data;
+}
+
+export async function fetchTutorCoachingRescheduleRequests(): Promise<
+  CoachingRescheduleRequestItem[]
+> {
+  const response = await api.get<CoachingRescheduleRequestItem[]>(
+    "/coaching/tutor/reschedule-requests/"
+  );
+  return response.data;
+}
+
+export async function respondToCoachingRescheduleRequest(
+  requestId: string,
+  params: { decision: "approve" | "reject"; grantFree?: boolean; note?: string }
+): Promise<CoachingRescheduleRequestItem> {
+  const response = await api.post<CoachingRescheduleRequestItem>(
+    `/coaching/tutor/reschedule-requests/${requestId}/respond/`,
+    {
+      decision: params.decision,
+      grant_free: params.grantFree ?? false,
+      note: params.note ?? "",
+    }
+  );
+  return response.data;
+}
+
+export async function tutorChangeCoachingRecurringSlot(params: {
+  purchaseId: string;
+  slotIndex: number;
+  newDayOfWeek: number;
+  newStartTime: string;
+}): Promise<CoachingRecurringSlotItem> {
+  const response = await api.post<CoachingRecurringSlotItem>(
+    "/coaching/recurring-slots/tutor-change/",
+    {
+      purchase_id: params.purchaseId,
+      slot_index: params.slotIndex,
+      new_day_of_week: params.newDayOfWeek,
+      new_start_time: params.newStartTime,
+    }
+  );
+  return response.data;
+}
+
+// --- shared UI copy --------------------------------------------------------
+
+export const COACHING_DAY_LABEL: Record<number, string> = {
+  0: "Pazartesi",
+  1: "Salı",
+  2: "Çarşamba",
+  3: "Perşembe",
+  4: "Cuma",
+  5: "Cumartesi",
+  6: "Pazar",
+};
+
+export const TIME_REQUEST_STATUS_COPY: Record<CoachingTimeRequestStatus, string> = {
+  pending: "Öğretmen önerisi bekleniyor",
+  matched: "Ortak saat bulundu",
+  unresolved: "Ortak saat bulunamadı",
+  withdrawn: "Geri çekildi",
+};
+
+export const RESCHEDULE_STATUS_COPY: Record<CoachingRescheduleRequestStatus, string> = {
+  pending: "Öğretmen onayı bekleniyor",
+  approved: "Onaylandı",
+  auto_approved: "Otomatik onaylandı",
+  rejected: "Reddedildi",
+  expired: "Süresi doldu",
+};
+
+export interface MyRecurringSlots {
+  purchase_id: string | null;
+  recurring_slots: CoachingRecurringSlotItem[];
+}
+
+export async function fetchMyCoachingRecurringSlots(): Promise<MyRecurringSlots> {
+  const response = await api.get<MyRecurringSlots>("/coaching/my-recurring-slots/");
   return response.data;
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
@@ -98,6 +99,14 @@ export function PackageRequestStatus({ purchaseId }: { purchaseId: string }) {
           Öğretmenin kabul etti. Paket henüz ödeme aktivasyonu bekliyor —
           hiçbir tahsilat yapılmadı.
         </p>
+      ) : null}
+
+      {data.coaching_service_status === "accepted_awaiting_schedule" ? (
+        <Button size="sm" asChild>
+          <Link href="/dashboard/student/coaching/schedule">
+            Koçluk saatini seç
+          </Link>
+        </Button>
       ) : null}
 
       {error ? <ErrorMessage message={error} /> : null}

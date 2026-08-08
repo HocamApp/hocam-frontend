@@ -106,6 +106,21 @@ function CoachingOverview() {
                 Öğrenci görünümü
               </Link>
             </Button>
+            <Button asChild variant="outline" size="sm">
+              <Link href="/dashboard/tutor/coaching/students">
+                Koçluk öğrencilerim
+              </Link>
+            </Button>
+            <Button asChild variant="outline" size="sm">
+              <Link href="/dashboard/tutor/coaching/time-requests">
+                Saat talepleri
+              </Link>
+            </Button>
+            <Button asChild variant="outline" size="sm">
+              <Link href="/dashboard/tutor/coaching/reschedule-requests">
+                Değişiklik talepleri
+              </Link>
+            </Button>
           </div>
         </CardContent>
       </Card>
