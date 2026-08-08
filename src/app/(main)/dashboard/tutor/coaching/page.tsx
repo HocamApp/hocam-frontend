@@ -112,6 +112,11 @@ function CoachingOverview() {
               </Link>
             </Button>
             <Button asChild variant="outline" size="sm">
+              <Link href="/dashboard/tutor/coaching/upcoming">
+                Yaklaşan görüşmeler
+              </Link>
+            </Button>
+            <Button asChild variant="outline" size="sm">
               <Link href="/dashboard/tutor/coaching/time-requests">
                 Saat talepleri
               </Link>

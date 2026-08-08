@@ -1,12 +1,16 @@
 "use client";
 
+import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { RescheduleDialog } from "@/components/coaching/RescheduleDialog";
 import { fetchCoachingSessions } from "@/lib/coachingApi";
+
+const JOINABLE_STATUSES = new Set(["scheduled", "in_progress"]);
 
 const STATUS_LABEL: Record<string, string> = {
   scheduled: "Planlandı",
@@ -64,7 +68,14 @@ export function CoachingSessionList() {
                   {STATUS_LABEL[session.status] ?? session.status}
                 </Badge>
               </div>
-              {canReschedule ? <RescheduleDialog session={session} /> : null}
+              <div className="flex items-center gap-2">
+                {JOINABLE_STATUSES.has(session.status) && (
+                  <Button size="sm" asChild>
+                    <Link href={`/session/coaching/${session.id}`}>Katıl</Link>
+                  </Button>
+                )}
+                {canReschedule ? <RescheduleDialog session={session} /> : null}
+              </div>
             </CardContent>
           </Card>
         );

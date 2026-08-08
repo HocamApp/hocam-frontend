@@ -67,4 +67,14 @@ describe("extractCoachingErrorMessage", () => {
       "Beklenmeyen bir hata oluştu."
     );
   });
+
+  it("does not surface a single HTML character for a non-JSON (HTML) error body", () => {
+    // Regression: a raw HTML error page (e.g. a dev-mode 500) as response
+    // data used to fall through to Object.values(htmlString), which
+    // iterates the string's characters and returned "<" as the "message".
+    const message = extractCoachingErrorMessage(
+      axiosError("<!DOCTYPE html><html>...</html>", 500)
+    );
+    assert.equal(message, "Beklenmeyen bir hata oluştu.");
+  });
 });

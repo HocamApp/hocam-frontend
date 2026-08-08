@@ -392,6 +392,14 @@ const ERROR_MESSAGES: Record<string, string> = {
   requested_time_rejected: "Bu öneri artık geçerli değil.",
   reschedule_pending: "Bu görüşme için zaten bekleyen bir değişiklik talebi var.",
   session_not_reschedulable: "Bu görüşme şu anda yeniden planlanamaz.",
+  // --- Faz 5: session participation, attendance, attachments ----------
+  too_early: "Görüşme odası henüz açılmadı.",
+  session_ended: "Bu görüşme sona erdi.",
+  session_not_active: "Bu görüşme şu anda aktif değil.",
+  invalid_transition: "Bu işlem şu an için geçerli değil.",
+  session_service_period_mismatch: "Bu dosya bu görüşmeye ait değil.",
+  not_a_participant: "Bu koçluğun katılımcısı değilsin.",
+  invalid_file: "PDF, JPG, PNG, WebP, DOCX veya PPTX dosyası yükleyin.",
 };
 
 /** Human-readable message for a coaching error, preferring the server's own. */
@@ -401,8 +409,14 @@ export function extractCoachingErrorMessage(error: unknown): string {
   const code = extractCoachingErrorCode(error);
   if (code && ERROR_MESSAGES[code]) return ERROR_MESSAGES[code];
 
-  if (data) {
-    const detail = data.detail;
+  // A non-JSON error body (e.g. an HTML 500/502 page from a dev server or
+  // proxy) arrives here as a raw string. Object.values() on a string
+  // yields its individual CHARACTERS as "values" — without this guard,
+  // that silently surfaced the response body's first character (commonly
+  // "<" from "<!DOCTYPE...") as the entire error message instead of a
+  // sane fallback.
+  if (data && typeof data === "object") {
+    const detail = (data as Record<string, unknown>).detail;
     if (typeof detail === "string") return detail;
     // Field errors: surface the first message we can find, including the
     // structured description-guardrail payload.
@@ -932,6 +946,25 @@ export async function fetchCoachingSessions(): Promise<CoachingSessionItem[]> {
   return response.data;
 }
 
+export interface CoachingSessionDetail extends CoachingSessionItem {
+  tutor_name: string;
+  student_name: string;
+  student_id: string;
+  viewer_role: "student" | "tutor";
+}
+
+export async function fetchCoachingSessionDetail(
+  sessionId: string
+): Promise<CoachingSessionDetail> {
+  const response = await api.get<CoachingSessionDetail>(`/coaching/sessions/${sessionId}/`);
+  return response.data;
+}
+
+export async function fetchTutorCoachingSessions(): Promise<CoachingSessionItem[]> {
+  const response = await api.get<CoachingSessionItem[]>("/coaching/tutor/sessions/");
+  return response.data;
+}
+
 export type CoachingRescheduleRequestStatus =
   | "pending"
   | "approved"
@@ -1103,5 +1136,113 @@ export interface MyRecurringSlots {
 
 export async function fetchMyCoachingRecurringSlots(): Promise<MyRecurringSlots> {
   const response = await api.get<MyRecurringSlots>("/coaching/my-recurring-slots/");
+  return response.data;
+}
+
+// --- Faz 5: session token, no-show, technical issue, attendance,
+// attachments. Every timestamp below is server-issued (server_time on the
+// token response, requested_at/created_at on others) — this module never
+// computes a deadline or "is it time yet" decision client-side; see
+// CoachingSessionTokenView's own docstring for why the token GET itself
+// never mutates anything.
+
+export interface CoachingSessionToken {
+  token: string;
+  room: string;
+  domain: string;
+  server_time: string;
+  session_status: CoachingSessionStatus;
+}
+
+export async function fetchCoachingSessionToken(
+  sessionId: string
+): Promise<CoachingSessionToken> {
+  const response = await api.get<CoachingSessionToken>(
+    `/coaching/sessions/${sessionId}/session-token/`
+  );
+  return response.data;
+}
+
+export async function reportCoachingSessionNoShow(
+  sessionId: string,
+  party: "student" | "tutor"
+): Promise<{ status: CoachingSessionStatus }> {
+  const response = await api.post<{ status: CoachingSessionStatus }>(
+    `/coaching/sessions/${sessionId}/report-no-show/`,
+    { party }
+  );
+  return response.data;
+}
+
+export async function reportCoachingSessionTechnicalIssue(
+  sessionId: string
+): Promise<{ status: CoachingSessionStatus }> {
+  const response = await api.post<{ status: CoachingSessionStatus }>(
+    `/coaching/sessions/${sessionId}/report-technical-issue/`,
+    {}
+  );
+  return response.data;
+}
+
+export interface CoachingSessionAttendanceSummaryEntry {
+  first_joined_at: string | null;
+  last_left_at: string | null;
+  join_count: number;
+  total_connected_seconds: number;
+}
+
+export interface CoachingSessionAttendanceSummary {
+  student: CoachingSessionAttendanceSummaryEntry;
+  tutor: CoachingSessionAttendanceSummaryEntry;
+}
+
+export async function fetchCoachingSessionAttendanceSummary(
+  sessionId: string
+): Promise<CoachingSessionAttendanceSummary> {
+  const response = await api.get<CoachingSessionAttendanceSummary>(
+    `/coaching/sessions/${sessionId}/attendance-summary/`
+  );
+  return response.data;
+}
+
+export interface CoachingAttachmentItem {
+  id: string;
+  session_id: string | null;
+  original_name: string;
+  mime_type: string;
+  size_bytes: number;
+  uploaded_by_role: "student" | "tutor";
+  created_at: string;
+}
+
+export async function fetchCoachingSessionAttachments(
+  sessionId: string
+): Promise<CoachingAttachmentItem[]> {
+  const response = await api.get<CoachingAttachmentItem[]>(
+    `/coaching/sessions/${sessionId}/attachments/`
+  );
+  return response.data;
+}
+
+export async function uploadCoachingSessionAttachment(
+  sessionId: string,
+  file: File
+): Promise<CoachingAttachmentItem> {
+  const formData = new FormData();
+  formData.append("file", file);
+  const response = await api.post<CoachingAttachmentItem>(
+    `/coaching/sessions/${sessionId}/attachments/`,
+    formData,
+    { headers: { "Content-Type": "multipart/form-data" } }
+  );
+  return response.data;
+}
+
+export async function fetchCoachingAttachmentDownloadUrl(
+  attachmentId: string
+): Promise<{ url: string }> {
+  const response = await api.get<{ url: string }>(
+    `/coaching/attachments/${attachmentId}/download/`
+  );
   return response.data;
 }

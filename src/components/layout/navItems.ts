@@ -157,6 +157,20 @@ const tutorCoachingDescriptor: NavRouteDescriptor = {
 };
 
 /**
+ * The student's coaching entry (Faz 5) — symmetric with
+ * tutorCoachingDescriptor, spliced in only when coaching is enabled.
+ * Before this, a student's only route to /dashboard/student/coaching was
+ * the checkout-status CTA, no persistent nav entry.
+ */
+const studentCoachingDescriptor: NavRouteDescriptor = {
+  kind: "route",
+  title: "Koçluk",
+  icon: "Compass",
+  href: "/dashboard/student/coaching",
+  mobilePlacement: "overflow",
+};
+
+/**
  * The tutor's package-requests entry. Separate from the coaching tab on
  * purpose: it also covers lesson-only requests, so its visibility follows
  * the payments-level acceptance rollout, not the coaching feature flag.
@@ -181,7 +195,19 @@ export function getNavDescriptors(
   options: NavOptions = {}
 ): NavDescriptor[] {
   if (role !== "tutor") {
-    return studentDescriptors;
+    if (!options.coachingEnabled) {
+      return studentDescriptors;
+    }
+    const insertAfter = studentDescriptors.findIndex(
+      (descriptor) =>
+        descriptor.kind === "route" && descriptor.href === "/dashboard/student"
+    );
+    const index = insertAfter === -1 ? studentDescriptors.length : insertAfter + 1;
+    return [
+      ...studentDescriptors.slice(0, index),
+      studentCoachingDescriptor,
+      ...studentDescriptors.slice(index),
+    ];
   }
   // Both extras sit right after "Panom": they are tutor workspaces, so
   // they belong with the dashboard rather than at the end of the overflow
