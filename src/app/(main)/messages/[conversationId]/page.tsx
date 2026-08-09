@@ -27,6 +27,7 @@ import { RouteGuard } from "@/components/shared/RouteGuard";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import {
   Dialog,
   DialogContent,
@@ -236,6 +237,14 @@ function ConversationContent({
   const handleMessageSent = (newMessage: Message) => {
     sentIdsRef.current.add(newMessage.id);
     setLocalMessages((prev) => [...prev, newMessage]);
+    // A coaching send can open/satisfy an SLA cycle and create a message
+    // event, so refresh both thread/inbox state and the bell without relying
+    // on a client clock or optimistic SLA calculation.
+    queryClient.invalidateQueries({ queryKey: ["messages", conversationId] });
+    queryClient.invalidateQueries({ queryKey: ["conversation", conversationId] });
+    queryClient.invalidateQueries({ queryKey: ["conversations"] });
+    queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    queryClient.invalidateQueries({ queryKey: ["notification-summary"] });
   };
 
   const handleSelectConversation = (selectedConversationId: string) => {
@@ -277,6 +286,14 @@ function ConversationContent({
   const tutorForBooking = conversation?.tutor_profile ?? null;
   const showBookingButton = !!tutorForBooking;
   const profileHref = tutorForBooking ? `/tutors/${tutorForBooking.id}` : null;
+  const responseSla = conversation?.response_sla;
+  const slaLabel = responseSla?.status === "calendar_pending"
+    ? "Yanıt süresi takvim doğrulamasını bekliyor"
+    : responseSla?.status === "breached"
+      ? "Yanıt süresi aşıldı"
+      : responseSla?.due_at
+        ? `Yanıt bekleniyor · ${new Date(responseSla.due_at).toLocaleString("tr-TR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}`
+        : null;
 
   return (
     <div className="flex h-[calc(100dvh_-_3.5rem_-_4rem_-_env(safe-area-inset-bottom))] w-full min-w-0 overflow-hidden md:h-[calc(100vh-64px)]">
@@ -353,6 +370,11 @@ function ConversationContent({
             )}
           </div>
         </header>
+        {slaLabel && (
+          <div className={cn("border-b px-4 py-2 text-xs", responseSla?.status === "breached" ? "bg-destructive/10 text-destructive" : "bg-muted/50 text-muted-foreground")}>
+            {slaLabel}
+          </div>
+        )}
 
         {/* Messages area — mostly-white with a subtle dot texture for depth */}
         <div

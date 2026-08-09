@@ -739,6 +739,28 @@ export interface Conversation {
   unread_count?: number;
   tutor_profile?: TutorProfile | null;
   is_blocked: boolean;
+  coaching_purchase_id?: string | null;
+  response_sla?: CoachingResponseSla | null;
+}
+
+export interface CoachingResponseSla {
+  id: string;
+  status: "calendar_pending" | "pending" | "breached" | "satisfied";
+  first_unanswered_at: string;
+  due_at: string | null;
+  breached_at: string | null;
+  satisfied_at: string | null;
+}
+
+export interface MessageAttachment {
+  id: string;
+  kind: "image" | "file" | "voice";
+  original_name: string;
+  mime_type: string;
+  size_bytes: number;
+  voice_duration_ms?: number | null;
+  storage_state: "pending" | "active" | "delete_pending";
+  download_url: string;
 }
 
 export interface MessageReplyPreview {
@@ -758,6 +780,7 @@ export interface Message {
   read_at?: string | null;
   reply_to?: MessageReplyPreview | null;
   is_deleted?: boolean;
+  attachment?: MessageAttachment | null;
 }
 
 export interface Review {
@@ -969,6 +992,7 @@ export interface UserPreferences {
   notify_lesson_requests: boolean;
   notify_booking_reminders: boolean;
   notify_email: boolean;
+  notify_coaching_updates: boolean;
   language: string;
 }
 

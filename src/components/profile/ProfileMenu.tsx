@@ -207,6 +207,7 @@ export function ProfileMenu() {
       notify_messages: true,
       notify_lesson_requests: true,
       notify_booking_reminders: true,
+      notify_coaching_updates: true,
       notify_email: false,
       language: "tr",
       ...(data?.preferences ?? {}),
