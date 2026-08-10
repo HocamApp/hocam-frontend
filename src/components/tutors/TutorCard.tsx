@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Award, Scale, Star } from "lucide-react";
+import { ArrowRight, Award, Star } from "lucide-react";
 import { TutorProfile } from "@/types";
-import { cn, formatLessonCount, formatPrice, formatRating } from "@/lib/utils";
+import { formatLessonCount, formatPrice, formatRating } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -29,9 +29,6 @@ interface TutorCardProps {
   favoritePending?: boolean;
   learningContext?: LearningContextQuery | null;
   discoveryImpressionId?: string | null;
-  isCompared?: boolean;
-  onToggleCompare?: (id: string) => void;
-  compareDisabled?: boolean;
   /** "lg" is used by the main directory grid: a wider, photo-left row
    * (portrait photo, bio excerpt, price/rating/CTA column) instead of the
    * compact stacked card. Every other call site keeps the original size. */
@@ -100,7 +97,11 @@ function StatusBadges({
         <TutorPresenceBadge isOnline={tutor.is_online} lastSeenAt={tutor.last_seen_at} />
       )}
       {tutor.yks_rank > 0 && (
-        <span className="inline-flex w-fit items-center gap-1 rounded-full border border-brand-500/20 bg-brand-500/10 px-2 py-0.5 text-xs font-medium text-brand-700 dark:text-brand-300">
+        <span
+          className="inline-flex w-fit items-center gap-1 text-xs font-semibold text-brand-600 dark:text-brand-300"
+          title="YKS sıralaması"
+          aria-label={`YKS sıralaması: ${formatYksRank(tutor.yks_rank)}`}
+        >
           <Award className="h-3 w-3" />
           {formatYksRank(tutor.yks_rank)}
         </span>
@@ -135,9 +136,6 @@ function TutorCardDefault({
   favoritePending,
   learningContext,
   discoveryImpressionId,
-  isCompared,
-  onToggleCompare,
-  compareDisabled,
 }: TutorCardProps) {
   const { visibleSubjects, remainingCount, completedLessonsLabel } = useTutorCardData(tutor);
   const tutorHref = buildTutorHref(tutor.id, learningContext, discoveryImpressionId);
@@ -219,22 +217,6 @@ function TutorCardDefault({
               <span className="ml-1 text-sm text-muted-foreground">/40 dk</span>
             </Link>
             <div className="flex w-full shrink-0 items-center gap-1 sm:w-auto">
-              {onToggleCompare && (
-                <button
-                  type="button"
-                  disabled={compareDisabled && !isCompared}
-                  aria-pressed={isCompared}
-                  aria-label={isCompared ? "Karşılaştırmadan çıkar" : "Karşılaştırmaya ekle"}
-                  title={compareDisabled && !isCompared ? "En fazla üç hoca karşılaştırılabilir" : undefined}
-                  onClick={() => onToggleCompare(tutor.id)}
-                  className={cn(
-                    "inline-flex h-9 w-9 items-center justify-center rounded-md border transition-colors disabled:cursor-not-allowed disabled:opacity-40",
-                    isCompared ? "border-primary bg-primary/10 text-primary" : "hover:bg-muted"
-                  )}
-                >
-                  <Scale className="h-4 w-4" />
-                </button>
-              )}
               <Link href={tutorHref} className="flex-1 rounded-md bg-primary px-3 py-2 text-center text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 sm:flex-none">
                 Profili Gör <ArrowRight className="ml-1 inline h-3.5 w-3.5" />
               </Link>
@@ -271,9 +253,6 @@ function TutorCardLarge({
   favoritePending,
   learningContext,
   discoveryImpressionId,
-  isCompared,
-  onToggleCompare,
-  compareDisabled,
 }: TutorCardProps) {
   const { visibleSubjects, remainingCount, completedLessonsLabel } = useTutorCardData(tutor);
   const tutorHref = buildTutorHref(tutor.id, learningContext, discoveryImpressionId);
@@ -282,13 +261,13 @@ function TutorCardLarge({
     <Card
       data-discovery-tutor-id={discoveryImpressionId ? tutor.id : undefined}
       data-discovery-impression-id={discoveryImpressionId || undefined}
-      className="relative h-full min-w-0 overflow-visible border-t-2 border-t-transparent transition-all duration-200 hover:z-10 hover:-translate-y-0.5 hover:border-t-primary hover:shadow-lg sm:min-h-[280px]"
+      className="relative h-full min-w-0 overflow-visible border-t-2 border-t-transparent transition-all duration-200 hover:z-10 hover:-translate-y-0.5 hover:border-t-primary hover:shadow-lg sm:min-h-[250px]"
     >
       <CardContent className="flex h-full flex-col gap-4 p-4 sm:flex-row sm:p-5">
-        <Link href={tutorHref} className="flex min-w-0 flex-1 cursor-pointer gap-4 sm:gap-4">
+        <Link href={tutorHref} className="flex min-w-0 flex-1 cursor-pointer gap-3">
           <div className="flex shrink-0 flex-col items-center gap-1.5">
-            <div className="relative h-28 w-28 sm:h-44 sm:w-36">
-              <Avatar className="h-28 w-28 rounded-2xl sm:h-44 sm:w-36">
+            <div className="relative h-28 w-28 sm:h-36 sm:w-32">
+              <Avatar className="h-28 w-28 rounded-2xl sm:h-36 sm:w-32">
                 <AvatarImage
                   className="rounded-2xl object-cover"
                   src={tutor.profile_picture || undefined}
@@ -387,22 +366,6 @@ function TutorCardLarge({
             >
               Profili Gör <ArrowRight className="ml-1 inline h-3.5 w-3.5" />
             </Link>
-            {onToggleCompare && (
-              <button
-                type="button"
-                disabled={compareDisabled && !isCompared}
-                aria-pressed={isCompared}
-                aria-label={isCompared ? "Karşılaştırmadan çıkar" : "Karşılaştırmaya ekle"}
-                title={compareDisabled && !isCompared ? "En fazla üç hoca karşılaştırılabilir" : undefined}
-                onClick={() => onToggleCompare(tutor.id)}
-                className={cn(
-                  "inline-flex h-11 items-center justify-center gap-1.5 rounded-md border px-3 text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-40 sm:w-full",
-                  isCompared ? "border-primary bg-primary/10 text-primary" : "hover:bg-muted"
-                )}
-              >
-                <Scale className="h-4 w-4" /> Karşılaştır
-              </button>
-            )}
           </div>
         </div>
       </CardContent>

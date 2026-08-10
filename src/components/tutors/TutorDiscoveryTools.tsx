@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { BookmarkPlus, Scale, Trash2, X } from "lucide-react";
+import { BookmarkPlus, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,11 +10,9 @@ import { useAuth } from "@/hooks/useAuth";
 import {
   createTutorSavedSearch,
   deleteTutorSavedSearch,
-  fetchTutorComparison,
   fetchTutorSavedSearches,
   type TutorFilters,
 } from "@/lib/tutorsApi";
-import { formatPrice, formatRating } from "@/lib/utils";
 import { savedSearchToTutorFilters } from "@/lib/tutorDirectory";
 
 export function SavedSearchControls({
@@ -102,70 +100,5 @@ export function SavedSearchControls({
         </div>
       )}
     </div>
-  );
-}
-
-export function TutorComparisonPanel({
-  ids,
-  onRemove,
-  onClear,
-}: {
-  ids: string[];
-  onRemove: (id: string) => void;
-  onClear: () => void;
-}) {
-  const { data: tutors = [], isLoading, isError } = useQuery({
-    queryKey: ["tutor-comparison", ids],
-    queryFn: () => fetchTutorComparison(ids),
-    enabled: ids.length > 0,
-  });
-
-  if (ids.length === 0) return null;
-
-  return (
-    <section className="rounded-xl border bg-card p-4 shadow-sm" aria-labelledby="comparison-title">
-      <div className="mb-3 flex items-center justify-between gap-3">
-        <div>
-          <h2 id="comparison-title" className="flex items-center gap-2 font-semibold">
-            <Scale className="h-4 w-4 text-primary" /> Hoca karşılaştırması
-          </h2>
-          <p className="text-xs text-muted-foreground">En fazla üç hoca; bu sayfanın bağlantısı paylaşılabilir.</p>
-        </div>
-        <Button type="button" variant="ghost" size="sm" onClick={onClear}>Temizle</Button>
-      </div>
-      {isLoading ? (
-        <p className="text-sm text-muted-foreground">Karşılaştırma yükleniyor…</p>
-      ) : isError ? (
-        <p className="text-sm text-destructive">Karşılaştırma yüklenemedi.</p>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[640px] text-left text-sm">
-            <thead>
-              <tr className="border-b">
-                <th className="p-2 text-muted-foreground">Özellik</th>
-                {tutors.map((tutor) => (
-                  <th key={tutor.id} className="p-2 align-top">
-                    <div className="flex items-start justify-between gap-2">
-                      <span>{tutor.name} {tutor.surname}</span>
-                      <button type="button" onClick={() => onRemove(tutor.id)} aria-label={`${tutor.name} hocayı karşılaştırmadan çıkar`}>
-                        <X className="h-4 w-4 text-muted-foreground" />
-                      </button>
-                    </div>
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y">
-              <tr><th className="p-2 font-medium">Fiyat</th>{tutors.map((t) => <td key={t.id} className="p-2">{formatPrice(t.hourly_price)} / 40 dk</td>)}</tr>
-              <tr><th className="p-2 font-medium">Rezervasyon</th>{tutors.map((t) => <td key={t.id} className="p-2">{t.is_bookable ? "Uygun" : "Şu an uygun değil"}</td>)}</tr>
-              <tr><th className="p-2 font-medium">Dersler</th>{tutors.map((t) => <td key={t.id} className="p-2">{Array.from(new Set(t.subjects.map((s) => s.name))).join(", ")}</td>)}</tr>
-              <tr><th className="p-2 font-medium">Doğrulama</th>{tutors.map((t) => <td key={t.id} className="p-2">{t.is_verified ? "Doğrulanmış" : "Doğrulanmamış"}</td>)}</tr>
-              <tr><th className="p-2 font-medium">Puan</th>{tutors.map((t) => <td key={t.id} className="p-2">{t.total_reviews ? `${formatRating(t.rating)} (${t.total_reviews})` : "Henüz değerlendirme yok"}</td>)}</tr>
-              <tr><th className="p-2 font-medium">Anlatım özellikleri</th>{tutors.map((t) => <td key={t.id} className="p-2">{t.teaching_attributes?.map((a) => a.name).join(", ") || "Belirtilmemiş"}</td>)}</tr>
-            </tbody>
-          </table>
-        </div>
-      )}
-    </section>
   );
 }
