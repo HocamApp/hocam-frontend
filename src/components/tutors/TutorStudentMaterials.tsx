@@ -18,6 +18,7 @@ import {
   deleteTutorStudentMaterial,
   fetchTutorStudentMaterialAccess,
   fetchTutorStudentMaterials,
+  getMaterialUploadError,
   uploadTutorStudentMaterial,
 } from "@/lib/notificationsApi";
 import { cn, formatDate } from "@/lib/utils";
@@ -208,7 +209,7 @@ export function TutorStudentMaterials({ studentId, compact = false }: { studentI
       await queryClient.invalidateQueries({ queryKey });
       toast.success("Materyal eklendi.");
     },
-    onError: () => toast.error("Materyal yüklenemedi."),
+    onError: (error) => toast.error(getMaterialUploadError(error)),
     onSettled: () => setUploadProgress(0),
   });
   const deleteMutation = useMutation({

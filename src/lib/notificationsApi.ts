@@ -1,3 +1,4 @@
+import axios from "axios";
 import api from "./api";
 import type {
   Notification,
@@ -66,6 +67,15 @@ export async function uploadTutorStudentMaterial(studentId: string, file: File, 
     }
   );
   return data;
+}
+
+export function getMaterialUploadError(error: unknown): string {
+  if (!axios.isAxiosError(error)) return "Materyal yüklenemedi. Lütfen tekrar dene.";
+  const data = error.response?.data;
+  const fileError = Array.isArray(data?.file) ? data.file[0] : undefined;
+  const studentError = Array.isArray(data?.student) ? data.student[0] : undefined;
+  const detail = typeof data?.detail === "string" ? data.detail : undefined;
+  return fileError || studentError || detail || "Materyal yüklenemedi. Lütfen tekrar dene.";
 }
 
 export async function fetchTutorStudentMaterialAccess(
