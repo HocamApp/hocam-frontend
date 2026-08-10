@@ -66,19 +66,24 @@ function StarInput({
   value: number;
   onChange: (value: number) => void;
 }) {
+  const [hovered, setHovered] = useState<number | null>(null);
+  const active = hovered ?? value;
   return (
-    <div className="flex gap-1">
+    <div className="flex gap-1" onMouseLeave={() => setHovered(null)}>
       {[1, 2, 3, 4, 5].map((star) => (
         <button
           key={star}
           type="button"
           onClick={() => onChange(star)}
-          className="text-2xl leading-none focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded"
+          onMouseEnter={() => setHovered(star)}
+          className="text-3xl leading-none transition-transform duration-150 hover:scale-125 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded"
           aria-label={`${star} yıldız`}
         >
           <span
             className={
-              star <= value ? "text-amber-500" : "text-muted-foreground/50"
+              star <= active
+                ? "text-amber-400 drop-shadow-[0_1px_2px_rgba(251,191,36,0.5)]"
+                : "text-muted-foreground/30"
             }
           >
             ★
@@ -87,6 +92,21 @@ function StarInput({
       ))}
     </div>
   );
+}
+
+// Playful reaction that mirrors the running average — purely cosmetic, never
+// sent to the API (rating is still computed server-side from the criteria).
+const RATING_REACTIONS: { max: number; emoji: string; label: string }[] = [
+  { max: 1.5, emoji: "😕", label: "Daha iyisini hak ediyorsun" },
+  { max: 2.5, emoji: "🙂", label: "Fena değil" },
+  { max: 3.5, emoji: "😊", label: "Güzel gidiyor" },
+  { max: 4.5, emoji: "🤩", label: "Harika!" },
+  { max: 5.01, emoji: "🎉", label: "Mükemmel ders!" },
+];
+
+function reactionFor(rating: number | null) {
+  if (rating === null) return null;
+  return RATING_REACTIONS.find((r) => rating <= r.max) ?? RATING_REACTIONS[RATING_REACTIONS.length - 1];
 }
 
 export function ReviewModal({
@@ -113,6 +133,7 @@ export function ReviewModal({
   const computedRating = allRated
     ? criteriaValues.reduce((sum, value) => sum + value, 0) / 4
     : null;
+  const reaction = reactionFor(computedRating);
 
   const onSubmit = async (data: ReviewFormValues) => {
     setSubmitError(null);
@@ -159,23 +180,30 @@ export function ReviewModal({
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Dersi değerlendir</DialogTitle>
-          <DialogDescription>
-            {booking.subject.name} · Bu değerlendirme hocanın profilindeki ders
-            ve kriter puanlarına yansır.
-          </DialogDescription>
-        </DialogHeader>
+        <div className="-m-6 mb-0 rounded-t-lg bg-gradient-to-br from-brand-500 via-brand-600 to-brand-700 px-6 py-5 text-white">
+          <DialogHeader>
+            <DialogTitle className="text-xl text-white">
+              Dersi değerlendir ✨
+            </DialogTitle>
+            <DialogDescription className="text-brand-50">
+              {booking.subject.name} · Bu değerlendirme hocanın profilindeki
+              ders ve kriter puanlarına yansır.
+            </DialogDescription>
+          </DialogHeader>
+        </div>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            {REVIEW_CRITERIA.map(({ field: fieldName, label, question }) => (
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-2">
+            {REVIEW_CRITERIA.map(({ field: fieldName, label, question, icon: Icon }) => (
               <FormField
                 key={fieldName}
                 control={form.control}
                 name={fieldName}
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{label}</FormLabel>
+                  <FormItem className="rounded-xl border bg-gradient-to-br from-brand-50/60 to-transparent p-3">
+                    <FormLabel className="flex items-center gap-1.5 text-brand-800">
+                      <Icon className="h-4 w-4 text-brand-500" />
+                      {label}
+                    </FormLabel>
                     <p className="text-xs text-muted-foreground">{question}</p>
                     <FormControl>
                       <StarInput
@@ -189,15 +217,20 @@ export function ReviewModal({
               />
             ))}
 
-            <div className="rounded-lg border bg-muted/40 p-3">
-              <p className="text-sm font-medium">
-                {computedRating !== null
-                  ? `Bu ders için hesaplanan puan: ${formatRating(computedRating)} / 5`
-                  : "Bu ders için hesaplanan puan: — / 5"}
-              </p>
-              <p className="mt-0.5 text-xs text-muted-foreground">
-                Ders puanı, dört kriterin ortalamasıyla otomatik hesaplanır.
-              </p>
+            <div className="flex items-center gap-3 rounded-xl border border-brand-200 bg-gradient-to-br from-brand-50 to-amber-50 p-3">
+              <span className="text-3xl" aria-hidden>
+                {reaction?.emoji ?? "⭐"}
+              </span>
+              <div>
+                <p className="text-sm font-semibold text-brand-800">
+                  {computedRating !== null
+                    ? `${formatRating(computedRating)} / 5 — ${reaction?.label}`
+                    : "Tüm kriterleri puanlayınca puan burada belirir"}
+                </p>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  Ders puanı, dört kriterin ortalamasıyla otomatik hesaplanır.
+                </p>
+              </div>
             </div>
 
             <FormField
@@ -233,12 +266,12 @@ export function ReviewModal({
 
             <Button
               type="submit"
-              className="w-full"
+              className="w-full bg-gradient-to-r from-brand-500 to-brand-600 text-white shadow-md transition-transform hover:scale-[1.02] hover:from-brand-600 hover:to-brand-700"
               disabled={form.formState.isSubmitting}
             >
               {form.formState.isSubmitting
                 ? "Gönderiliyor..."
-                : "Değerlendirmeyi gönder"}
+                : "Değerlendirmeyi gönder 🚀"}
             </Button>
           </form>
         </Form>

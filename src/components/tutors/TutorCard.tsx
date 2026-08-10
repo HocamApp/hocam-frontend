@@ -282,19 +282,19 @@ function TutorCardLarge({
     <Card
       data-discovery-tutor-id={discoveryImpressionId ? tutor.id : undefined}
       data-discovery-impression-id={discoveryImpressionId || undefined}
-      className="relative h-full min-w-0 overflow-visible border-t-2 border-t-transparent transition-all duration-200 hover:z-10 hover:-translate-y-0.5 hover:border-t-primary hover:shadow-lg"
+      className="relative h-full min-w-0 overflow-visible border-t-2 border-t-transparent transition-all duration-200 hover:z-10 hover:-translate-y-0.5 hover:border-t-primary hover:shadow-lg sm:min-h-[280px]"
     >
-      <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:gap-4">
+      <CardContent className="flex h-full flex-col gap-4 p-4 sm:flex-row sm:p-5">
         <Link href={tutorHref} className="flex min-w-0 flex-1 cursor-pointer gap-4 sm:gap-4">
           <div className="flex shrink-0 flex-col items-center gap-1.5">
-            <div className="relative h-24 w-24 sm:h-28 sm:w-28">
-              <Avatar className="h-24 w-24 rounded-xl sm:h-28 sm:w-28">
+            <div className="relative h-28 w-28 sm:h-44 sm:w-36">
+              <Avatar className="h-28 w-28 rounded-2xl sm:h-44 sm:w-36">
                 <AvatarImage
-                  className="rounded-xl object-cover"
+                  className="rounded-2xl object-cover"
                   src={tutor.profile_picture || undefined}
                   alt={`${tutor.name} ${tutor.surname}`}
                 />
-                <AvatarFallback className="rounded-xl bg-primary/10 text-2xl font-medium text-primary">
+                <AvatarFallback className="rounded-2xl bg-primary/10 text-2xl font-medium text-primary">
                   {getInitials(tutor.name, tutor.surname)}
                 </AvatarFallback>
               </Avatar>
@@ -313,7 +313,7 @@ function TutorCardLarge({
             </div>
           </div>
 
-          <div className="min-w-0 flex-1 space-y-1 pr-14 sm:pr-0">
+          <div className="min-w-0 flex-1 space-y-2 pr-14 sm:pr-0">
             <p className="truncate text-xl font-semibold">
               {tutor.name} {tutor.surname}
             </p>
@@ -345,14 +345,14 @@ function TutorCardLarge({
               ))}
             </div>
             {tutor.bio && (
-              <p className="line-clamp-2 text-sm text-muted-foreground">{tutor.bio}</p>
+              <p className="line-clamp-4 text-sm leading-6 text-muted-foreground">{tutor.bio}</p>
             )}
           </div>
         </Link>
 
-        <div className="flex items-center justify-between gap-4 border-t pt-3 sm:w-44 sm:shrink-0 sm:flex-col sm:items-end sm:justify-center sm:gap-3 sm:border-l sm:border-t-0 sm:pl-4 sm:pt-0 sm:text-right">
+        <div className="flex items-center justify-between gap-4 rounded-xl border bg-gradient-to-br from-primary/[0.07] via-background to-amber-50/60 p-4 sm:w-52 sm:shrink-0 sm:flex-col sm:items-stretch sm:justify-center sm:gap-4 sm:text-right">
           <div className="min-w-0">
-            <div className="flex items-center gap-2 sm:justify-end">
+            <div className="flex items-center gap-2 sm:justify-between">
               <Link href={tutorHref} className="min-w-0 cursor-pointer">
                 <span className="text-xl font-semibold">{formatPrice(tutor.hourly_price)}</span>
                 <span className="ml-1 text-base text-muted-foreground">/40 dk</span>
@@ -375,6 +375,9 @@ function TutorCardLarge({
             <Link href={tutorHref} className="block cursor-pointer">
               <p className="mt-1 text-sm text-muted-foreground">{completedLessonsLabel}</p>
             </Link>
+            <p className="mt-2 text-xs leading-5 text-muted-foreground sm:text-left">
+              Paket seçeneklerini ve müsait saatleri profilde incele.
+            </p>
           </div>
 
           <div className="flex shrink-0 items-center gap-1.5 sm:w-full sm:flex-col sm:items-stretch">

@@ -598,6 +598,26 @@ function SessionContent() {
       : booking.student.display_name || booking.student.email
     : user?.email?.split("@", 1)[0] ?? "Kullanıcı";
 
+  // Jitsi falls back to initials when no avatar is passed. The booking
+  // payload already carries each side's own photo (student.avatar_url /
+  // tutor.profile_picture), so reuse the same self/other-role branch as
+  // displayName above rather than the bare auth user, which has no photo.
+  const avatarUrl = booking
+    ? user?.role === "tutor"
+      ? booking.tutor.profile_picture || undefined
+      : booking.student.avatar_url || undefined
+    : undefined;
+
+  // @jitsi/react-sdk's userInfo type only declares displayName/email, but the
+  // underlying Jitsi IFrame API does honor avatarURL. Build this as a named
+  // variable (not an inline object literal) so TS's excess-property check
+  // doesn't reject the extra field.
+  const jitsiUserInfo: { displayName: string; email: string; avatarURL?: string } = {
+    displayName,
+    email: user?.email ?? "",
+    ...(avatarUrl ? { avatarURL: avatarUrl } : {}),
+  };
+
   const handleToggleWhiteboard = () => {
     if (!jitsiApi?.executeCommand) {
       toast.info("Ders odası hazırlanıyor. Birkaç saniye sonra tekrar dene.");
@@ -801,10 +821,7 @@ function SessionContent() {
           roomName={sessionToken.room}
           jwt={sessionToken.token}
           lang="tr"
-          userInfo={{
-            displayName,
-            email: user?.email ?? "",
-          }}
+          userInfo={jitsiUserInfo}
           configOverwrite={getLessonJitsiConfigOverwrite(user?.role)}
           interfaceConfigOverwrite={{
             SHOW_JITSI_WATERMARK: false,

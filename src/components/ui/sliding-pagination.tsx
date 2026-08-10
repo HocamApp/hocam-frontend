@@ -13,6 +13,28 @@ interface PaginationProps {
   maxVisiblePages?: number // max number of page buttons to show before adding dots
 }
 
+export function getVisiblePages(
+  totalPages: number,
+  currentPage: number,
+  maxVisiblePages = 7
+): (number | -1)[] {
+  if (totalPages <= maxVisiblePages) {
+    return Array.from({ length: totalPages }, (_, index) => index + 1)
+  }
+
+  const innerSlots = Math.max(1, maxVisiblePages - 2)
+  let start = Math.max(2, currentPage - Math.floor(innerSlots / 2))
+  let end = Math.min(totalPages - 1, start + innerSlots - 1)
+  start = Math.max(2, end - innerSlots + 1)
+
+  const pages: (number | -1)[] = [1]
+  if (start > 2) pages.push(-1)
+  for (let page = start; page <= end; page += 1) pages.push(page)
+  if (end < totalPages - 1) pages.push(-1)
+  pages.push(totalPages)
+  return pages
+}
+
 export default function SlidingPagination({
   totalPages,
   currentPage,
@@ -39,38 +61,7 @@ export default function SlidingPagination({
     }
   }, [currentPage, totalPages])
 
-  // Generate pages array with ellipsis if needed
-  const generatePages = () => {
-    if (totalPages <= maxVisiblePages) return Array.from({ length: totalPages }, (_, i) => i + 1)
-
-    const pages: (number | -1)[] = []
-    const first = 1
-    const last = totalPages
-    const sideCount = 1
-    const middleCount = maxVisiblePages - 2 * sideCount - 2
-
-    pages.push(first)
-
-    // left/right bounds around current page
-    let left = Math.max(currentPage - Math.floor(middleCount / 2), sideCount + 1)
-    let right = Math.min(currentPage + Math.floor(middleCount / 2), totalPages - sideCount)
-
-    // Add first ellipsis if needed
-    if (left > sideCount + 1) pages.push(-1)
-    else left = sideCount + 1 // include pages after first if no dots
-
-    // Add middle pages
-    for (let i = left; i <= right; i++) pages.push(i)
-
-    // Add last ellipsis if needed
-    if (right < totalPages - sideCount) pages.push(-1)
-
-    pages.push(last)
-
-    return pages
-  }
-
-  const pagesToShow = generatePages()
+  const pagesToShow = getVisiblePages(totalPages, currentPage, maxVisiblePages)
 
   return (
     <div className={cn("relative inline-flex items-center gap-2", className)}>
