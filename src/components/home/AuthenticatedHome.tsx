@@ -15,7 +15,6 @@ import { fetchLearningDashboard } from "@/lib/learningApi";
 import { fetchBookings } from "@/lib/lessonsApi";
 import { fetchPackagePurchases } from "@/lib/paymentsApi";
 import { fetchProfileMe } from "@/lib/profileApi";
-import { goalPackageHref } from "@/lib/learning";
 import {
   computePackageExpiry,
   isPastPackage,
@@ -31,7 +30,6 @@ import { HomeBand } from "@/components/home/HomeBand";
 import { HomeExploreCarousel } from "@/components/home/HomeExploreCarousel";
 import { HomeTeacherRail } from "@/components/home/HomeTeacherRail";
 import { HomeTabbedDiscovery } from "@/components/home/HomeTabbedDiscovery";
-import { HomeGoalCards } from "@/components/home/HomeGoalCards";
 import { HomeTopicLinks } from "@/components/home/HomeTopicLinks";
 import { HomePromoStrip } from "@/components/home/HomePromoStrip";
 import { Button } from "@/components/ui/button";
@@ -253,7 +251,7 @@ export function AuthenticatedHome() {
         title={activeGoal.title}
         description={nextMilestone?.title ?? "Hedef yolculuğundaki ilerlemeni görüntüle."}
         progress={activeGoal.progress}
-        href={goalPackageHref(activeGoal.id)}
+        href="/dashboard/student/learning"
         action="Yola devam et"
         contentType="goal"
         contentId={activeGoal.id}
@@ -336,13 +334,6 @@ export function AuthenticatedHome() {
 
       <HomeBand tinted>
         <HomeTabbedDiscovery isAuthenticated={isAuthenticated} />
-      </HomeBand>
-
-      <HomeBand>
-        <HomeGoalCards
-          templates={learningQuery.data?.templates}
-          goals={learningQuery.data?.goals}
-        />
       </HomeBand>
 
       <HomeBand tinted>

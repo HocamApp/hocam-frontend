@@ -21,7 +21,6 @@ import {
 import { fetchBookings } from "@/lib/lessonsApi";
 import { fetchPackagePurchases } from "@/lib/paymentsApi";
 import { fetchLearningDashboard } from "@/lib/learningApi";
-import { goalPackageHref } from "@/lib/learning";
 import { cn, formatDate } from "@/lib/utils";
 import {
   computePackageExpiry,
@@ -416,11 +415,7 @@ function StudentDashboardContent() {
   const pendingPackage = currentPackagePurchases.find(
     (purchase) => purchase.status === "pending"
   );
-  const activeGoal =
-    learningDashboard?.goals.find((goal) => goal.status === "active") ?? null;
-  const learningHref = activeGoal
-    ? goalPackageHref(activeGoal.id)
-    : "/dashboard/student";
+  const learningHref = "/hoca-bul";
 
   const nextTutorName = nextLesson?.tutor.name
     ? `${nextLesson.tutor.name} ${nextLesson.tutor.surname}`
@@ -639,7 +634,7 @@ function StudentDashboardContent() {
         )}
 
         <LearningMomentumBar
-          activeGoal={activeGoal}
+          activeGoal={null}
           learningLoading={learningLoading}
           bookings={allBookings}
           activePackage={activePackage}
