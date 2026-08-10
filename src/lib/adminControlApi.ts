@@ -20,6 +20,22 @@ export async function startAdminImpersonation(targetUserId: string): Promise<Use
   return data.user;
 }
 
+export async function startAdminTutorOnboarding(): Promise<User> {
+  const { data } = await api.post<{ impersonation_token: string; expires_at: string; user: User }>(
+    "/admin-control/tutor-onboarding-sessions/"
+  );
+  Cookies.set("admin_impersonation_token", data.impersonation_token, {
+    expires: new Date(data.expires_at),
+    secure: window.location.protocol === "https:",
+    sameSite: "strict",
+  });
+  return data.user;
+}
+
+export async function bypassAdminTutorOnboardingVerification(): Promise<void> {
+  await api.post("/admin-control/tutor-onboarding-sessions/verification-bypass/");
+}
+
 export async function endAdminImpersonation(): Promise<User> {
   // Drop the short-lived target credential before asking the server to end
   // actor-owned sessions. This keeps a stale impersonation from cascading

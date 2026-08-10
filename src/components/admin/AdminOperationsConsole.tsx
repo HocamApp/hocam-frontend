@@ -21,6 +21,7 @@ import {
   Search,
   ShieldAlert,
   ShieldCheck,
+  FlaskConical,
   UserRoundCog,
   Users,
 } from "lucide-react";
@@ -43,6 +44,7 @@ import {
   grantAdminTestCredits,
   markAllAccountsAsTest,
   startAdminImpersonation,
+  startAdminTutorOnboarding,
   updateAdminTutorTestSettings,
 } from "@/lib/adminControlApi";
 import { cn, formatPrice } from "@/lib/utils";
@@ -305,6 +307,15 @@ export function AdminOperationsConsole() {
     },
     onError: (error) => toast.error(apiError(error, "Hesap görünümüne geçilemedi.")),
   });
+  const startTutorOnboarding = useMutation({
+    mutationFn: startAdminTutorOnboarding,
+    onSuccess: (user) => {
+      queryClient.clear();
+      updateUser(user);
+      router.push("/tutor/setup");
+    },
+    onError: (error) => toast.error(apiError(error, "QA hoca kayıt akışı başlatılamadı.")),
+  });
   const approve = useMutation({
     mutationFn: approveAdminTestBooking,
     onSuccess: () => { toast.success("Rezervasyon onaylandı ve ders odası hazırlandı."); refresh(); },
@@ -429,6 +440,23 @@ export function AdminOperationsConsole() {
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6 pt-4">
+          <Card className="border-violet-300 bg-violet-50/60 dark:border-violet-900 dark:bg-violet-950/20">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-lg"><FlaskConical className="h-5 w-5" />Hoca kayıt akışını test et</CardTitle>
+              <CardDescription>
+                Giriş yapılamayan yeni bir TEST hoca hesabı oluşturur ve gerçek kayıt/onboarding ekranını açar. E-posta doğrulaması hazır gelir; belge adımı yalnız bu admin QA oturumunda güvenle atlanabilir.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button
+                type="button"
+                disabled={startTutorOnboarding.isPending}
+                onClick={() => startTutorOnboarding.mutate()}
+              >
+                {startTutorOnboarding.isPending ? "QA hesabı hazırlanıyor…" : "Yeni hoca kayıt testini başlat"}
+              </Button>
+            </CardContent>
+          </Card>
           <Alert className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <AlertTitle>QA / test modu</AlertTitle>

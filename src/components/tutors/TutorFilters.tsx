@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -33,6 +33,7 @@ interface TutorFiltersProps {
   onClear: () => void;
   isLoading: boolean;
   defaultOrdering?: string;
+  savedSearchControls?: ReactNode;
 }
 
 const POPULAR_UNIVERSITIES = [
@@ -359,6 +360,7 @@ export function TutorFilters({
   onClear,
   isLoading,
   defaultOrdering = "rating",
+  savedSearchControls,
 }: TutorFiltersProps) {
   const [sheetOpen, setSheetOpen] = useState(false);
 
@@ -394,6 +396,7 @@ export function TutorFilters({
           isLoading={isLoading}
           defaultOrdering={defaultOrdering}
         />
+        {savedSearchControls && <div className="mt-4">{savedSearchControls}</div>}
       </div>
 
       {/* Mobile/tablet: bottom-sheet trigger */}
@@ -429,6 +432,7 @@ export function TutorFilters({
                 defaultOrdering={defaultOrdering}
                 showClearButton={false}
               />
+              {savedSearchControls && <div className="mt-5">{savedSearchControls}</div>}
             </div>
             <SheetFooter className="flex-row gap-3 border-t p-4">
               <Button

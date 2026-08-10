@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { validateProfilePhotoFile, PROFILE_PHOTO_ACCEPT } from "@/lib/profilePhoto";
+import { bypassAdminTutorOnboardingVerification } from "@/lib/adminControlApi";
 
 type OnboardingStep = {
   title: string;
@@ -84,6 +85,15 @@ function TutorOnboardingContent() {
       setPhotoError(null);
     },
     onError: () => setPhotoError("Fotoğraf yüklenemedi. Lütfen tekrar deneyin."),
+  });
+  const qaVerificationMutation = useMutation({
+    mutationFn: bypassAdminTutorOnboardingVerification,
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["verification"] }),
+        queryClient.invalidateQueries({ queryKey: ["tutor-me"] }),
+      ]);
+    },
   });
 
   useEffect(() => {
@@ -237,7 +247,28 @@ function TutorOnboardingContent() {
               own not-submitted/pending/approved/rejected states internally,
               so it stays mounted for the whole stage (through pending
               review) — only the tutorial CTA below is gated on submission. */}
-          {profileComplete && photoComplete && !verificationApproved && <VerificationForm />}
+          {profileComplete && photoComplete && !verificationApproved && (
+            <div className="space-y-4">
+              {user?.impersonation && user.is_test_account && (
+                <div className="rounded-lg border border-violet-300 bg-violet-50 p-4 dark:border-violet-900 dark:bg-violet-950/20">
+                  <p className="font-medium">Admin QA doğrulama kısayolu</p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Bu TEST hesap için belge ve üniversite e-postası yüklemeden akışın sonraki adımlarını inceleyebilirsin.
+                  </p>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="mt-3"
+                    disabled={qaVerificationMutation.isPending}
+                    onClick={() => qaVerificationMutation.mutate()}
+                  >
+                    {qaVerificationMutation.isPending ? "QA doğrulaması uygulanıyor…" : "Belge doğrulamasını QA için geç"}
+                  </Button>
+                </div>
+              )}
+              <VerificationForm />
+            </div>
+          )}
           {/* Stage 2: only presented once verification has been submitted —
               sequencing, not a completion dependency. verificationApproved
               is never checked here, so an approval still pending doesn't

@@ -516,7 +516,6 @@ function TutorsPageContent() {
               )}
             </div>
 
-            <SavedSearchControls filters={{ ...effectiveFilters, ordering: filters.ordering || defaultOrdering }} onApply={handleFiltersChange} />
             <TutorComparisonPanel
               ids={comparisonIds}
               onRemove={(id) => updateComparison(comparisonIds.filter((value) => value !== id))}
@@ -556,7 +555,7 @@ function TutorsPageContent() {
           {!showFavorites && (
             <aside
               id="tutor-filter-panel"
-              className={`min-w-0 overflow-hidden lg:sticky lg:top-24 lg:transition-[opacity,transform,visibility] lg:duration-300 lg:ease-out ${
+              className={`min-w-0 overflow-hidden lg:self-start lg:transition-[opacity,transform,visibility] lg:duration-300 lg:ease-out ${
                 filtersPanelVisible
                   ? "lg:visible lg:translate-x-0 lg:opacity-100"
                   : "lg:invisible lg:pointer-events-none lg:-translate-x-3 lg:opacity-0"
@@ -569,6 +568,12 @@ function TutorsPageContent() {
                 onClear={handleClearFilters}
                 isLoading={subjectsLoading || isListLoading}
                 defaultOrdering={defaultOrdering}
+                savedSearchControls={
+                  <SavedSearchControls
+                    filters={{ ...effectiveFilters, ordering: filters.ordering || defaultOrdering }}
+                    onApply={handleFiltersChange}
+                  />
+                }
               />
             </aside>
           )}
