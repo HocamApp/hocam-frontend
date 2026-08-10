@@ -104,9 +104,6 @@ before(async () => {
   mock.module("@/components/home/HomeTabbedDiscovery", {
     namedExports: { HomeTabbedDiscovery: stub("discovery-stub") },
   });
-  mock.module("@/components/home/HomeGoalCards", {
-    namedExports: { HomeGoalCards: stub("goal-cards-stub") },
-  });
   mock.module("@/components/home/HomeTopicLinks", {
     namedExports: { HomeTopicLinks: stub("topic-links-stub") },
   });

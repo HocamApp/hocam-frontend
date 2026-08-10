@@ -2,7 +2,6 @@ import api from "./api";
 import type {
   ConfirmLearningActivityPayload,
   LearningDashboardResponse,
-  LearningGoalTemplate,
   LearningTopic,
   LessonTopicCheckIn,
   LessonTopicCheckInPayload,
@@ -14,7 +13,6 @@ import type {
 } from "@/types";
 
 export interface CreateStudentGoalPayload {
-  template?: string | null;
   title?: string;
   description?: string;
   target_date?: string | null;
@@ -36,11 +34,6 @@ export interface CreateStudentNotePayload {
 
 export async function fetchLearningDashboard(): Promise<LearningDashboardResponse> {
   const response = await api.get<LearningDashboardResponse>("/learning/dashboard/");
-  return response.data;
-}
-
-export async function fetchLearningGoalTemplates(): Promise<LearningGoalTemplate[]> {
-  const response = await api.get<LearningGoalTemplate[]>("/learning/goal-templates/");
   return response.data;
 }
 

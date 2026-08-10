@@ -140,7 +140,7 @@ export function LearningMomentumBar({
                   ? `Hedefinin %${activeGoal.progress} kadarı tamamlandı. Sıradaki adıma geçebilirsin.`
                   : momentum
                     ? momentum.description
-                    : "Hazır hedef paketleriyle çalışmalarını adım adım takip et."}
+                    : "Derslerini, hedeflerini ve ilerlemeni tek yerde takip et."}
               </p>
               {progressPercent !== null && (
                 <div className="mt-2 flex items-center gap-3">
@@ -167,7 +167,7 @@ export function LearningMomentumBar({
 
         <Button asChild variant="outline" className="shrink-0 sm:ml-2">
           <Link href={learningHref}>
-            {activeGoal ? "Hedefe devam et" : "Hedefleri keşfet"}
+            {activeGoal ? "Hedefe devam et" : "Hoca bul"}
             <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
           </Link>
         </Button>
