@@ -253,6 +253,7 @@ function SessionContent() {
   const [jitsiKey, setJitsiKey] = useState(0);
   const [notesPanelOpen, setNotesPanelOpen] = useState(false);
   const [isScreenSharing, setIsScreenSharing] = useState(false);
+  const screenSharingKnownRef = useRef(false);
   const [capabilities, setCapabilities] = useState<JitsiCapabilities>({
     videoQuality: true,
     filmstrip: true,
@@ -638,6 +639,9 @@ function SessionContent() {
     }
     try {
       jitsiApi.executeCommand("toggleShareScreen");
+      if (!isScreenSharing) {
+        toast.info("Paylaşılacak ekranı seç. Paylaşım başladığında burada göreceksin.");
+      }
     } catch {
       toast.error("Ekran paylaşımı şu anda açılamadı.");
     }
@@ -699,6 +703,15 @@ function SessionContent() {
           Bağlantı koptu. Yeniden bağlanmaya çalışılıyor...
         </div>
       )}
+      {isTutor && isScreenSharing && (
+        <div
+          className="flex items-center justify-center gap-2 bg-emerald-600 px-4 py-1.5 text-center text-xs font-semibold text-white"
+          role="status"
+        >
+          <MonitorUp className="h-3.5 w-3.5" aria-hidden="true" />
+          Ekranın şu anda öğrenciyle paylaşılıyor
+        </div>
+      )}
 
       {/* KEEP IN SYNC: the tutor tutorial replicates this control bar in
           src/components/tutorial/MockLessonScreen.tsx — mirror any control
@@ -749,7 +762,12 @@ function SessionContent() {
           {isTutor && (
             <button
               onClick={handleToggleScreenShare}
-              className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded border border-white/20 px-3 py-1 text-xs transition-colors hover:bg-white/10"
+              className={`inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded border px-3 py-1 text-xs font-medium transition-colors ${
+                isScreenSharing
+                  ? "border-emerald-300 bg-emerald-500 text-white hover:bg-emerald-600"
+                  : "border-white/20 hover:bg-white/10"
+              }`}
+              aria-pressed={isScreenSharing}
             >
               <MonitorUp className="h-3.5 w-3.5" aria-hidden="true" />
               {getScreenShareButtonLabel(isScreenSharing)}
@@ -836,6 +854,7 @@ function SessionContent() {
           onApiReady={(api: JitsiApi) => {
             setJitsiApi(api);
             setIsScreenSharing(false);
+            screenSharingKnownRef.current = false;
             setConnectionStatus("connected");
             // Fresh meeting (initial or post-reconnect remount): the real
             // filmstrip/whiteboard visibility is unknown until events arrive, so
@@ -856,7 +875,15 @@ function SessionContent() {
 
             api.addEventListener?.("screenSharingStatusChanged", (event?: unknown) => {
               const sharing = screenSharingStateFromEvent(event);
-              if (sharing !== null) setIsScreenSharing(sharing);
+              if (sharing === null) return;
+              setIsScreenSharing(sharing);
+              if (screenSharingKnownRef.current) {
+                if (sharing) toast.success("Ekran paylaşımı başladı.");
+                else toast.info("Ekran paylaşımı durduruldu.");
+              } else if (sharing) {
+                toast.success("Ekran paylaşımı başladı.");
+              }
+              screenSharingKnownRef.current = true;
             });
             api.addEventListener?.("videoQualityChanged", (event?: unknown) => {
               const height = videoHeightFromEvent(event);
