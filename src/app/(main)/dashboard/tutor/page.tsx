@@ -32,6 +32,7 @@ import {
   updateMyTutorProfile,
 } from "@/lib/tutorsApi";
 import { fetchAvailability } from "@/lib/dashboardApi";
+import { fetchConversations } from "@/lib/messagingApi";
 import { confirmLearningActivity } from "@/lib/learningApi";
 import { TutorLaunchProgramCard } from "@/components/tutors/TutorLaunchProgramCard";
 import {
@@ -647,6 +648,11 @@ function TutorDashboardContent() {
     queryFn: fetchBookings,
     enabled: isAuthenticated,
   });
+  const { data: conversations = [] } = useQuery({
+    queryKey: ["conversations"],
+    queryFn: fetchConversations,
+    enabled: isAuthenticated,
+  });
   const highlightedBookingId = useHighlightTarget(
     !bookingsLoading && !!bookings && activeTab === "bookings"
   );
@@ -822,6 +828,12 @@ function TutorDashboardContent() {
     ? nextBooking.student.display_name || nextBooking.student.email
     : "";
   const nextBookingCountdown = nextBooking ? formatLessonCountdown(nextBooking.start_time) : "";
+  const nextBookingConversationId = nextBooking
+    ? nextBooking.conversation_id ??
+      conversations.find(
+        (conversation) => conversation.student === nextBooking.student.id
+      )?.id
+    : null;
 
   const pendingActionBookings = useMemo(
     () =>
@@ -1076,7 +1088,7 @@ function TutorDashboardContent() {
                 <Badge variant="outline">Oda onaydan sonra oluşur</Badge>
               )}
               <Button asChild variant="outline">
-                <Link href={nextBooking.conversation_id ? `/messages/${nextBooking.conversation_id}` : "/messages"}>
+                <Link href={nextBookingConversationId ? `/messages/${nextBookingConversationId}` : "/messages"}>
                   <MessageCircle className="mr-2 h-4 w-4" />
                   Öğrenciye Mesaj
                 </Link>

@@ -199,7 +199,12 @@ export function MockLessonScreen({ activeStep, onStepAction }: MockLessonScreenP
             data-tutorial-target="control-screen-share"
             tabIndex={isTabbable("control-screen-share") ? 0 : -1}
             onClick={() => setScreenSharing((sharing) => !sharing)}
-            className={controlButtonClass}
+            className={
+              screenSharing
+                ? `${controlButtonClass} border-emerald-300 bg-emerald-500 text-white hover:bg-emerald-600`
+                : controlButtonClass
+            }
+            aria-pressed={screenSharing}
           >
             <MonitorUp className="h-3.5 w-3.5" aria-hidden="true" />
             {screenSharing ? "Paylaşımı durdur" : "Ekran paylaş"}
