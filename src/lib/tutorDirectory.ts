@@ -1,12 +1,6 @@
 import type { TutorSavedSearch } from "@/types";
 import type { TutorFilters } from "@/lib/tutorsApi";
 
-export function parseComparisonIds(value: string | null): string[] {
-  return Array.from(
-    new Set((value ?? "").split(",").map((id) => id.trim()).filter(Boolean))
-  ).slice(0, 3);
-}
-
 export function defaultTutorOrdering(filters: TutorFilters): "relevance" | "rating" {
   return filters.search || filters.subject || filters.topic ? "relevance" : "rating";
 }

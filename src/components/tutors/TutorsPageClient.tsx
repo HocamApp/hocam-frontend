@@ -9,7 +9,7 @@ import { fetchTutors, fetchSubjects, type TutorFilters as TutorFiltersType } fro
 import { AnimatedSearchBar } from "@/components/tutors/AnimatedSearchBar";
 import { TutorCard } from "@/components/tutors/TutorCard";
 import { TutorFilters } from "@/components/tutors/TutorFilters";
-import { SavedSearchControls, TutorComparisonPanel } from "@/components/tutors/TutorDiscoveryTools";
+import { SavedSearchControls } from "@/components/tutors/TutorDiscoveryTools";
 import { useFavorites } from "@/hooks/useFavorites";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
@@ -21,7 +21,6 @@ import { createDirectoryImpression, DISCOVERY_CONSENT_CHANGED } from "@/lib/disc
 import { useDiscoveryExposures } from "@/hooks/useDiscoveryExposures";
 import {
   defaultTutorOrdering,
-  parseComparisonIds,
   RELAXATION_LABELS,
   removeTutorFilterCategory,
 } from "@/lib/tutorDirectory";
@@ -197,7 +196,6 @@ function TutorsPageContent() {
   const learningContext = learningContextFromSearchParams(
     new URLSearchParams(searchParams.toString())
   );
-  const comparisonIds = parseComparisonIds(searchParams.get("compare"));
   const effectiveTopic = filters.topic || learningContext?.learning_topic_id || undefined;
   const effectiveFilters: TutorFiltersType = {
     ...filters,
@@ -213,12 +211,11 @@ function TutorsPageContent() {
         searchParamsFromFilters(newFilters),
         learningContext
       );
-      if (comparisonIds.length) params.set("compare", comparisonIds.join(","));
       const query = params.toString();
       const url = query ? `/tutors?${query}` : "/tutors";
       router.replace(url, { scroll: false });
     },
-    [comparisonIds, learningContext, router]
+    [learningContext, router]
   );
 
   const handleFiltersChange = useCallback(
@@ -233,32 +230,9 @@ function TutorsPageContent() {
     setFiltersState({});
     setPage(1);
     const params = appendLearningContextParams(new URLSearchParams(), learningContext);
-    if (comparisonIds.length) params.set("compare", comparisonIds.join(","));
     const query = params.toString();
     router.replace(query ? `/tutors?${query}` : "/tutors", { scroll: false });
-  }, [comparisonIds, learningContext, router]);
-
-  const updateComparison = useCallback(
-    (nextIds: string[]) => {
-      const params = new URLSearchParams(searchParams.toString());
-      if (nextIds.length) params.set("compare", nextIds.slice(0, 3).join(","));
-      else params.delete("compare");
-      const query = params.toString();
-      router.replace(query ? `/tutors?${query}` : "/tutors", { scroll: false });
-    },
-    [router, searchParams]
-  );
-
-  const toggleComparison = useCallback(
-    (tutorId: string) => {
-      if (comparisonIds.includes(tutorId)) {
-        updateComparison(comparisonIds.filter((id) => id !== tutorId));
-      } else if (comparisonIds.length < 3) {
-        updateComparison([...comparisonIds, tutorId]);
-      }
-    },
-    [comparisonIds, updateComparison]
-  );
+  }, [learningContext, router]);
 
   const clearLearningContext = useCallback(() => {
     const params = new URLSearchParams(searchParams.toString());
@@ -425,7 +399,7 @@ function TutorsPageContent() {
                     Sana uygun hocayı bul
                   </h1>
                   <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">
-                    Dersine, hedeflerine ve uygun saatlerine göre hoca ara; profilleri karşılaştırıp güvenle rezervasyon yap.
+                    Dersine, hedeflerine ve uygun saatlerine göre hoca ara; profilleri inceleyip güvenle rezervasyon yap.
                   </p>
                   <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
                     <AnimatedSearchBar
@@ -516,11 +490,6 @@ function TutorsPageContent() {
               )}
             </div>
 
-            <TutorComparisonPanel
-              ids={comparisonIds}
-              onRemove={(id) => updateComparison(comparisonIds.filter((value) => value !== id))}
-              onClear={() => updateComparison([])}
-            />
           </>
         )}
 
@@ -645,9 +614,6 @@ function TutorsPageContent() {
                     favoritePending={isFavoritePending(tutor.id)}
                     learningContext={learningContext}
                     discoveryImpressionId={discoveryImpressionId}
-                    isCompared={comparisonIds.includes(tutor.id)}
-                    onToggleCompare={toggleComparison}
-                    compareDisabled={comparisonIds.length >= 3}
                   />
                 ))}
               </div>

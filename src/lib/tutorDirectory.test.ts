@@ -3,14 +3,9 @@ import test from "node:test";
 
 import {
   defaultTutorOrdering,
-  parseComparisonIds,
   removeTutorFilterCategory,
   savedSearchToTutorFilters,
 } from "./tutorDirectory";
-
-test("comparison ids are unique and capped at three", () => {
-  assert.deepEqual(parseComparisonIds("a,b,a,c,d"), ["a", "b", "c"]);
-});
 
 test("relevance is the implicit default for discovery searches", () => {
   assert.equal(defaultTutorOrdering({ search: "matematik" }), "relevance");

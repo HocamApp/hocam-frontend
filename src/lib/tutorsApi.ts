@@ -118,12 +118,6 @@ export async function fetchTutorById(id: string): Promise<TutorProfile> {
   return response.data;
 }
 
-export async function fetchTutorComparison(ids: string[]): Promise<TutorProfile[]> {
-  const params = new URLSearchParams({ ids: ids.join(",") });
-  const response = await api.get<TutorProfile[]>(`/tutors/compare/?${params.toString()}`);
-  return response.data;
-}
-
 export async function fetchTutorSavedSearches(): Promise<TutorSavedSearch[]> {
   const response = await api.get<TutorSavedSearch[]>("/matching/saved-searches/");
   return response.data;
