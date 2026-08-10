@@ -1,14 +1,17 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 
-import { CoachingGuard } from "@/components/coaching/CoachingGuard";
+import { CoachingRecordGuard } from "@/components/coaching/CoachingGuard";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
-import { COACHING_DAY_LABEL, fetchCoachingStudents } from "@/lib/coachingApi";
+import { COACHING_DAY_LABEL, fetchCoachingStudents, terminateTutorCoaching } from "@/lib/coachingApi";
 
 const SERVICE_STATUS_LABEL: Record<string, string> = {
   accepted_awaiting_schedule: "Saat seçimi bekleniyor",
@@ -17,9 +20,22 @@ const SERVICE_STATUS_LABEL: Record<string, string> = {
 };
 
 function StudentsContent() {
+  const client = useQueryClient();
   const { data: students = [], isLoading } = useQuery({
     queryKey: ["coaching-tutor-students"],
     queryFn: fetchCoachingStudents,
+  });
+  const [terminationFor, setTerminationFor] = useState<string | null>(null);
+  const [reason, setReason] = useState("");
+  const terminate = useMutation({
+    mutationFn: (purchaseId: string) => terminateTutorCoaching(purchaseId, reason),
+    onSuccess: () => {
+      setTerminationFor(null);
+      setReason("");
+      client.invalidateQueries({ queryKey: ["coaching-tutor-students"] });
+      client.invalidateQueries({ queryKey: ["coaching-tutor-sessions"] });
+      client.invalidateQueries({ queryKey: ["coaching-disputes", "tutor"] });
+    },
   });
 
   if (isLoading) {
@@ -76,6 +92,14 @@ function StudentsContent() {
                 Öğrenci henüz saat seçmedi.
               </p>
             )}
+            {terminationFor === row.purchase_id ? (
+              <div className="space-y-2 rounded border p-3">
+                <p className="text-sm font-medium">Koçluğun tamamını sonlandırma</p>
+                <Textarea value={reason} onChange={(event) => setReason(event.target.value)} placeholder="Gerekli gerekçe" />
+                <div className="flex gap-2"><Button size="sm" variant="destructive" disabled={!reason.trim() || terminate.isPending} onClick={() => terminate.mutate(row.purchase_id)}>Sonlandırmayı kaydet</Button><Button size="sm" variant="ghost" onClick={() => setTerminationFor(null)}>Vazgeç</Button></div>
+                {terminate.error ? <p className="text-xs text-destructive">İşlem güncel koçluk durumuyla çakıştı; sayfayı yenileyip tekrar dene.</p> : null}
+              </div>
+            ) : <Button size="sm" variant="outline" onClick={() => setTerminationFor(row.purchase_id)}>Koçluğu sonlandır</Button>}
           </CardContent>
         </Card>
       ))}
@@ -85,7 +109,7 @@ function StudentsContent() {
 
 export default function CoachingStudentsPage() {
   return (
-    <CoachingGuard>
+    <CoachingRecordGuard>
       <div className="mx-auto max-w-3xl px-4 py-8">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
@@ -107,6 +131,6 @@ export default function CoachingStudentsPage() {
           <StudentsContent />
         </div>
       </div>
-    </CoachingGuard>
+    </CoachingRecordGuard>
   );
 }

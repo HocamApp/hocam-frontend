@@ -45,3 +45,16 @@ function CoachingFlagGate({ children }: { children: React.ReactNode }) {
 
   return <>{children}</>;
 }
+
+/**
+ * Wraps existing-coaching-record tutor pages (disputes, earnings, the
+ * students list): tutor-only, but deliberately NOT gated on the runtime
+ * sales flag. Master Spec §42's kill switch only closes new coaching
+ * sales/intake ("mevcut kayıtlar silinmez") — a tutor must still be able
+ * to see and act on coaching they already have while new sales are off.
+ * Sale-intake surfaces (plan, availability, onboarding) keep using
+ * CoachingGuard above.
+ */
+export function CoachingRecordGuard({ children }: { children: React.ReactNode }) {
+  return <RouteGuard requireRole="tutor">{children}</RouteGuard>;
+}

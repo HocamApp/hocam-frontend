@@ -1589,3 +1589,249 @@ export function getPrimaryReportTiming(source: PrimaryReportTimingSource) {
     complaintEligible: source.complaint_eligible,
   };
 }
+
+// --- Faz 8: disputes, evidence, financial truth ---------------------
+
+/**
+ * These labels deliberately describe the server's financial fact.  They are
+ * not a payment formatter: an obligation is not settlement and a READY
+ * earning is not paid.
+ */
+export type CoachingRefundPresentationState =
+  | "none"
+  | "obligation_pending"
+  | "processing"
+  | "manual_review"
+  | "settled"
+  | "nothing_to_settle";
+
+export type CoachingEarningStatus =
+  | "eligible_unfunded"
+  | "pending"
+  | "on_hold"
+  | "reversed"
+  | "ready"
+  | "paid";
+
+export function coachingRefundStateCopy(state: CoachingRefundPresentationState | string): string {
+  const copy: Record<string, string> = {
+    none: "Henüz iade yükümlülüğü yok.",
+    obligation_pending: "İade gerekli; işlem henüz başlatılmadı.",
+    processing: "İade işlemi işleniyor.",
+    manual_review: "İade işlemi manuel inceleme gerektiriyor.",
+    settled: "İade tamamlandı.",
+    nothing_to_settle: "Ödeme gerekmiyor.",
+  };
+  return copy[state] ?? "İade durumu güncelleniyor.";
+}
+
+export function coachingEarningStatusCopy(status: CoachingEarningStatus | string): string {
+  const copy: Record<string, string> = {
+    eligible_unfunded: "Hakediş oluştu; ödeme fonu henüz doğrulanmadı.",
+    pending: "Hakediş aylık ödeme değerlendirmesinde.",
+    on_hold: "Hakediş inceleme nedeniyle beklemede.",
+    reversed: "Hakediş ters kaydedildi.",
+    ready: "Aylık ödeme için hazır; ödeme aktarımı henüz kaydedilmedi.",
+    paid: "Ödendi.",
+  };
+  return copy[status] ?? "Hakediş durumu güncelleniyor.";
+}
+
+export const COACHING_FAZ8_QUERY_KEYS = {
+  studentDisputes: () => ["coaching-disputes", "student"] as const,
+  studentDispute: (disputeId: string) => ["coaching-dispute", "student", disputeId] as const,
+  tutorDisputes: () => ["coaching-disputes", "tutor"] as const,
+  tutorDispute: (disputeId: string) => ["coaching-dispute", "tutor", disputeId] as const,
+  eligibility: (purchaseId: string) => ["coaching-dispute-eligibility", purchaseId] as const,
+  financialSummary: (purchaseId: string) => ["coaching-financial-summary", purchaseId] as const,
+  evidenceStatus: (evidenceId: string) => ["coaching-dispute-evidence", evidenceId] as const,
+  tutorEarnings: () => ["coaching-tutor-earnings"] as const,
+} as const;
+
+export interface CoachingDisputeEligibilityIssue {
+  category: string;
+  label?: string;
+  eligible: boolean;
+  reason?: string;
+  filing_deadline_at?: string | null;
+}
+
+export interface CoachingDisputeEligibility {
+  purchase_id?: string;
+  categories?: string[];
+  missing_report?: { eligible: boolean; complaint_eligible_at: string | null; session_id: string | null };
+  filing_deadline_at?: string | null;
+  remaining_eligibility_seconds?: number | null;
+  safety_intake_available?: boolean;
+  [key: string]: unknown;
+}
+
+export interface CoachingDisputeEvidence {
+  id: string;
+  original_name: string;
+  mime_type: string;
+  size_bytes: number;
+  scan_state: "pending" | "active" | "scan_unavailable" | "rejected" | string;
+  validated_at: string | null;
+  deleted_requested: boolean;
+  tutor_disclosed?: boolean | null;
+}
+
+export interface CoachingDisputeDetermination {
+  id: string;
+  merit: string;
+  allowed_remedies: string[];
+  determined_at: string;
+}
+
+export interface CoachingDisputeApplication {
+  id: string;
+  remedy_type: string;
+  applied_at: string;
+  session_id: string | null;
+  service_period_id: string | null;
+  refund_obligation_status: string | null;
+}
+
+export interface CoachingDispute {
+  id: string;
+  category: string;
+  status: "waiting_review" | "under_review" | "needs_more_info" | "awaiting_student_choice" | "resolved" | "closed" | string;
+  description: string;
+  submitted_at: string;
+  service_period_id: string | null;
+  session_id: string | null;
+  determination: CoachingDisputeDetermination | null;
+  selected_remedy: string | null;
+  application: CoachingDisputeApplication | null;
+  refund: { liability_minor: number; settled_minor: number; state: CoachingRefundPresentationState | string };
+  evidence: CoachingDisputeEvidence[];
+  tutor_responses: { body: string; created_at: string }[];
+  timeline: { event_type: string; participant_message: string; created_at: string }[];
+}
+
+export interface CoachingDisputeCreateInput {
+  category: string;
+  description: string;
+  submission_key: string;
+  evidence_ids?: string[];
+}
+
+export interface CoachingFinancialSummary {
+  service_status: "active" | "cancellation_pending" | "cancelled" | "terminated" | string;
+  financial_status: string;
+  collected_amount_minor: number;
+  refund_liability_minor: number;
+  refund_processing_count: number;
+  refund_settled_minor: number;
+  cancellation_pending: boolean;
+  refund_state: CoachingRefundPresentationState | string;
+}
+
+export interface CoachingCancellationResult {
+  service_status: string;
+  cancellation_pending: boolean;
+  active_service_period_id: string | null;
+  terminated_upcoming_period_ids: string[];
+  refund_liability_minor: number;
+  refund_state: CoachingRefundPresentationState | string;
+}
+
+export interface CoachingTutorEarningSummary {
+  eligible_unfunded_minor: number;
+  pending_minor: number;
+  on_hold_minor: number;
+  reversed_minor: number;
+  payout_batches: { local_month: string; status: CoachingEarningStatus | string; total_amount_minor: number; paid_at: string | null }[];
+}
+
+export async function fetchCoachingDisputeEligibility(purchaseId: string): Promise<CoachingDisputeEligibility> {
+  const response = await api.get<CoachingDisputeEligibility>(`/coaching/purchases/${purchaseId}/dispute-eligibility/`);
+  return response.data;
+}
+
+export async function fetchStudentCoachingDisputes(): Promise<CoachingDispute[]> {
+  const response = await api.get<CoachingDispute[]>("/coaching/disputes/");
+  return response.data;
+}
+
+export async function createStudentCoachingDispute(purchaseId: string, payload: CoachingDisputeCreateInput): Promise<CoachingDispute> {
+  const response = await api.post<CoachingDispute>(`/coaching/purchases/${purchaseId}/disputes/`, payload);
+  return response.data;
+}
+
+export async function fetchStudentCoachingDispute(disputeId: string): Promise<CoachingDispute> {
+  const response = await api.get<CoachingDispute>(`/coaching/disputes/${disputeId}/`);
+  return response.data;
+}
+
+export async function uploadCoachingDisputeEvidence(disputeId: string, file: File): Promise<CoachingDisputeEvidence> {
+  const body = new FormData();
+  body.append("file", file);
+  // The shared client defaults to JSON.  Clear it so the browser supplies the
+  // multipart boundary; otherwise Django treats the upload as an empty file.
+  const response = await api.post<CoachingDisputeEvidence>(
+    `/coaching/disputes/${disputeId}/evidence/`,
+    body,
+    { headers: { "Content-Type": undefined } },
+  );
+  return response.data;
+}
+
+export async function fetchCoachingDisputeEvidenceStatus(evidenceId: string): Promise<CoachingDisputeEvidence> {
+  const response = await api.get<CoachingDisputeEvidence>(`/coaching/dispute-evidence/${evidenceId}/status/`);
+  return response.data;
+}
+
+export async function requestCoachingDisputeEvidenceDeletion(evidenceId: string): Promise<CoachingDisputeEvidence> {
+  const response = await api.delete<CoachingDisputeEvidence>(`/coaching/dispute-evidence/${evidenceId}/`);
+  return response.data;
+}
+
+export async function fetchCoachingDisputeEvidenceAccessUrl(evidenceId: string): Promise<string> {
+  const response = await api.get<{ url: string }>(`/coaching/dispute-evidence/${evidenceId}/`);
+  return response.data.url;
+}
+
+export async function applyStudentCoachingDisputeRemedy(
+  disputeId: string,
+  payload: { remedy_type: string; determination_id: string }
+): Promise<CoachingDisputeApplication> {
+  const response = await api.post<CoachingDisputeApplication>(`/coaching/disputes/${disputeId}/remedy/`, payload);
+  return response.data;
+}
+
+export async function cancelStudentCoaching(purchaseId: string): Promise<CoachingCancellationResult> {
+  const response = await api.post<CoachingCancellationResult>(`/coaching/purchases/${purchaseId}/cancel-coaching/`);
+  return response.data;
+}
+
+export async function fetchStudentCoachingFinancialSummary(purchaseId: string): Promise<CoachingFinancialSummary> {
+  const response = await api.get<CoachingFinancialSummary>(`/coaching/purchases/${purchaseId}/financial-summary/`);
+  return response.data;
+}
+
+export async function fetchTutorCoachingDisputes(): Promise<CoachingDispute[]> {
+  const response = await api.get<CoachingDispute[]>("/coaching/tutor/disputes/");
+  return response.data;
+}
+
+export async function fetchTutorCoachingDispute(disputeId: string): Promise<CoachingDispute> {
+  const response = await api.get<CoachingDispute>(`/coaching/tutor/disputes/${disputeId}/`);
+  return response.data;
+}
+
+export async function respondToTutorCoachingDispute(disputeId: string, body: string): Promise<{ body: string; created_at: string }> {
+  const response = await api.post<{ body: string; created_at: string }>(`/coaching/tutor/disputes/${disputeId}/response/`, { body });
+  return response.data;
+}
+
+export async function terminateTutorCoaching(purchaseId: string, reason: string): Promise<{ service_status: string; refund_liability_minor: number }> {
+  const response = await api.post<{ service_status: string; refund_liability_minor: number }>(`/coaching/tutor/purchases/${purchaseId}/terminate/`, { reason });
+  return response.data;
+}
+
+export async function fetchTutorCoachingEarnings(): Promise<CoachingTutorEarningSummary> {
+  const response = await api.get<CoachingTutorEarningSummary>("/coaching/tutor/earnings/");
+  return response.data;
+}

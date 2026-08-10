@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { Calendar, FileText, HelpCircle, ListTodo, MessageCircle } from "lucide-react";
+import { Calendar, FileText, HelpCircle, ListTodo, MessageCircle, ShieldAlert } from "lucide-react";
 
 import { RouteGuard } from "@/components/shared/RouteGuard";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
@@ -119,6 +119,14 @@ function OverviewContent() {
             <CardContent className="flex items-center gap-3 py-4">
               <HelpCircle className="h-5 w-5 text-primary" />
               <span className="text-sm font-medium">Destek</span>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link href="/dashboard/student/coaching/complaints">
+          <Card className="transition-colors hover:bg-muted/50">
+            <CardContent className="flex items-center gap-3 py-4">
+              <ShieldAlert className="h-5 w-5 text-primary" />
+              <span className="text-sm font-medium">Koçluk Başvurularım</span>
             </CardContent>
           </Card>
         </Link>
