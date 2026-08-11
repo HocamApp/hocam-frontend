@@ -5,7 +5,8 @@ import { useQuery } from "@tanstack/react-query";
 import { FileText } from "lucide-react";
 
 import { RouteGuard } from "@/components/shared/RouteGuard";
-import { EmptyState } from "@/components/shared/EmptyState";
+import { CoachingEmptyState as EmptyState } from "@/components/coaching/CoachingEmptyState";
+import { CoachingPageShell } from "@/components/coaching/CoachingPageShell";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { Card, CardContent } from "@/components/ui/card";
@@ -28,5 +29,5 @@ function StudentReportsContent() {
 }
 
 export default function StudentCoachingReportsPage() {
-  return <RouteGuard requireAuth requireRole="student"><div className="mx-auto max-w-3xl px-4 py-8"><h1 className="mb-6 text-2xl font-semibold">Raporlarım</h1><StudentReportsContent /></div></RouteGuard>;
+  return <RouteGuard requireAuth requireRole="student"><CoachingPageShell title="Görüşme raporlarım" description="Öğretmeninin yayınladığı en güncel görüşme raporlarını incele ve geri bildirim ver." parentHref="/dashboard/student/coaching" parentLabel="Çalışma koçluğum" eyebrow="Raporlar" width="narrow"><StudentReportsContent /></CoachingPageShell></RouteGuard>;
 }

@@ -3,8 +3,9 @@
 import { useQuery } from "@tanstack/react-query";
 
 import { StudentProgramTasks } from "@/components/coaching/StudentProgramTasks";
+import { CoachingPageShell } from "@/components/coaching/CoachingPageShell";
 import { RouteGuard } from "@/components/shared/RouteGuard";
-import { EmptyState } from "@/components/shared/EmptyState";
+import { CoachingEmptyState as EmptyState } from "@/components/coaching/CoachingEmptyState";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import {
@@ -36,5 +37,5 @@ function StudentProgramContent() {
 }
 
 export default function StudentCoachingProgramPage() {
-  return <RouteGuard requireAuth requireRole="student"><div className="mx-auto max-w-3xl px-4 py-8"><h1 className="mb-6 text-2xl font-semibold">Programım</h1><StudentProgramContent /></div></RouteGuard>;
+  return <RouteGuard requireAuth requireRole="student"><CoachingPageShell title="Çalışma programım" description="Öğretmeninle belirlediğin görevleri, hedefleri ve ilerleme durumunu takip et." parentHref="/dashboard/student/coaching" parentLabel="Çalışma koçluğum" eyebrow="Program" width="narrow"><StudentProgramContent /></CoachingPageShell></RouteGuard>;
 }

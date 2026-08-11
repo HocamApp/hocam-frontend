@@ -4,7 +4,8 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { CoachingGuard } from "@/components/coaching/CoachingGuard";
-import { EmptyState } from "@/components/shared/EmptyState";
+import { CoachingEmptyState as EmptyState } from "@/components/coaching/CoachingEmptyState";
+import { CoachingPageShell } from "@/components/coaching/CoachingPageShell";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -110,17 +111,7 @@ function RescheduleRequestsContent() {
 export default function CoachingRescheduleRequestsPage() {
   return (
     <CoachingGuard>
-      <div className="mx-auto max-w-3xl px-4 py-8">
-        <h1 className="text-2xl font-bold">Değişiklik Talepleri</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Öğrencinin ücretsiz hakkını kullandıktan sonraki görüşme değişiklik talepleri.
-          &ldquo;Ücretsiz onayla&rdquo; öğrenciden ücret almadan acil bir değişikliğe izin
-          verir.
-        </p>
-        <div className="mt-6">
-          <RescheduleRequestsContent />
-        </div>
-      </div>
+      <CoachingPageShell title="Görüşme değişiklik talepleri" description="Öğrencinin koçluk görüşmesi için istediği tarih değişikliklerini mevcut hak ve durum bilgisiyle değerlendir." parentHref="/dashboard/tutor/coaching/students" parentLabel="Koçluk öğrencilerim" eyebrow="Planlama" width="narrow"><RescheduleRequestsContent /></CoachingPageShell>
     </CoachingGuard>
   );
 }

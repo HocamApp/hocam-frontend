@@ -3,9 +3,10 @@
 import { useParams } from "next/navigation";
 
 import { CoachingGuard } from "@/components/coaching/CoachingGuard";
+import { CoachingPageShell } from "@/components/coaching/CoachingPageShell";
 import { CoachingReportWizard } from "@/components/coaching/CoachingReportWizard";
 
 export default function TutorCoachingReportPage() {
   const { id } = useParams<{ id: string }>();
-  return <CoachingGuard><div className="mx-auto max-w-3xl px-4 py-8"><h1 className="mb-6 text-2xl font-semibold">Görüşme raporu</h1><CoachingReportWizard sessionId={id} /></div></CoachingGuard>;
+  return <CoachingGuard><CoachingPageShell title="Görüşme raporu" description="Görüşme notlarını düzenle, öğrenciye açık raporu gözden geçir ve mevcut yayınlama semantiğiyle paylaş." parentHref="/dashboard/tutor/coaching/reports" parentLabel="Görüşme raporları" eyebrow="Rapor" width="narrow"><CoachingReportWizard sessionId={id} /></CoachingPageShell></CoachingGuard>;
 }

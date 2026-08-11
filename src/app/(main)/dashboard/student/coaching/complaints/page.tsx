@@ -5,8 +5,9 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { RouteGuard } from "@/components/shared/RouteGuard";
+import { CoachingPageShell } from "@/components/coaching/CoachingPageShell";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
-import { EmptyState } from "@/components/shared/EmptyState";
+import { CoachingEmptyState as EmptyState } from "@/components/coaching/CoachingEmptyState";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -21,6 +22,7 @@ import {
   fetchStudentCoachingDisputes,
   fetchStudentCoachingFinancialSummary,
 } from "@/lib/coachingApi";
+import { formatTryMinor } from "@/lib/money";
 
 function NewDisputeForm({ purchaseId }: { purchaseId: string }) {
   const queryClient = useQueryClient();
@@ -86,7 +88,7 @@ function ComplaintsContent() {
     <NewDisputeForm purchaseId={purchaseId} />
     <Card><CardContent className="space-y-3 py-5"><div className="flex items-center justify-between gap-2"><h2 className="font-semibold">Koçluk iptali ve iade durumu</h2><Badge variant="secondary">{financial.data?.service_status ?? "Yükleniyor"}</Badge></div>
       <p className="text-sm text-muted-foreground">{financial.data ? coachingRefundStateCopy(financial.data.refund_state) : "Finansal durum yükleniyor."}</p>
-      {financial.data ? <p className="text-xs text-muted-foreground">Sunucu kaydındaki iade yükümlülüğü: {financial.data.refund_liability_minor} kuruş.</p> : null}
+      {financial.data ? <p className="text-xs text-muted-foreground">Sunucu kaydındaki iade yükümlülüğü: {formatTryMinor(financial.data.refund_liability_minor)}.</p> : null}
       {financial.data?.cancellation_pending ? <p className="text-sm">İptal talebin işleniyor; aktif dönem geçmiş kayıtlarda korunur.</p> : <Button variant="outline" disabled={cancel.isPending} onClick={() => cancel.mutate()}>Koçluğu sonlandırmayı iste</Button>}
       {cancel.error ? <p className="text-sm text-destructive">İptal talebi güncel durumla çakıştı; sayfayı yenileyip tekrar dene.</p> : null}
     </CardContent></Card>
@@ -95,5 +97,5 @@ function ComplaintsContent() {
 }
 
 export default function StudentCoachingComplaintsPage() {
-  return <RouteGuard requireAuth requireRole="student"><main className="mx-auto max-w-3xl px-4 py-8"><h1 className="mb-6 text-2xl font-semibold">Koçluk başvuruları</h1><ComplaintsContent /></main></RouteGuard>;
+  return <RouteGuard requireAuth requireRole="student"><CoachingPageShell title="Koçluk başvurularım" description="Bir sorun olduğunda başvuru oluştur, paylaşılmış finansal durumu incele ve mevcut süreci takip et." parentHref="/dashboard/student/coaching" parentLabel="Çalışma koçluğum" eyebrow="Başvurular" width="narrow"><ComplaintsContent /></CoachingPageShell></RouteGuard>;
 }

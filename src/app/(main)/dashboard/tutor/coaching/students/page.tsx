@@ -5,7 +5,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 
 import { CoachingRecordGuard } from "@/components/coaching/CoachingGuard";
-import { EmptyState } from "@/components/shared/EmptyState";
+import { CoachingEmptyState as EmptyState } from "@/components/coaching/CoachingEmptyState";
+import { CoachingPageShell } from "@/components/coaching/CoachingPageShell";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -110,27 +111,7 @@ function StudentsContent() {
 export default function CoachingStudentsPage() {
   return (
     <CoachingRecordGuard>
-      <div className="mx-auto max-w-3xl px-4 py-8">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div>
-            <h1 className="text-2xl font-bold">Koçluk Öğrencilerim</h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Aktif koçluk öğrencilerin ve düzenli saatleri.
-            </p>
-          </div>
-          <div className="flex gap-2 text-sm">
-            <Link href="/dashboard/tutor/coaching/time-requests" className="underline">
-              Saat talepleri
-            </Link>
-            <Link href="/dashboard/tutor/coaching/reschedule-requests" className="underline">
-              Değişiklik talepleri
-            </Link>
-          </div>
-        </div>
-        <div className="mt-6">
-          <StudentsContent />
-        </div>
-      </div>
+      <CoachingPageShell title="Koçluk öğrencilerim" description="Aktif öğrencilerin hizmet durumunu, düzenli koçluk saatlerini ve çalışma programlarını yönet." parentHref="/dashboard/tutor/coaching" parentLabel="Koçluk ana sayfası" eyebrow="Öğrenciler" width="narrow" actions={<div className="flex flex-wrap gap-3 text-sm"><Link href="/dashboard/tutor/coaching/time-requests" className="underline">Saat talepleri</Link><Link href="/dashboard/tutor/coaching/reschedule-requests" className="underline">Değişiklik talepleri</Link></div>}><StudentsContent /></CoachingPageShell>
     </CoachingRecordGuard>
   );
 }

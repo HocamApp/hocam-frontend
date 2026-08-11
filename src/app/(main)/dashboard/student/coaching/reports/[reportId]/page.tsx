@@ -6,6 +6,7 @@ import { Download } from "lucide-react";
 import { toast } from "sonner";
 
 import { PublishedReportView } from "@/components/coaching/PublishedReportView";
+import { CoachingPageShell } from "@/components/coaching/CoachingPageShell";
 import { ReportFeedbackCard } from "@/components/coaching/ReportFeedbackCard";
 import { RouteGuard } from "@/components/shared/RouteGuard";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
@@ -49,5 +50,5 @@ function StudentReportDetail({ reportId }: { reportId: string }) {
 
 export default function StudentCoachingReportDetailPage() {
   const { reportId } = useParams<{ reportId: string }>();
-  return <RouteGuard requireAuth requireRole="student"><div className="mx-auto max-w-3xl px-4 py-8"><h1 className="mb-6 text-2xl font-semibold">Görüşme raporu</h1><StudentReportDetail reportId={reportId} /></div></RouteGuard>;
+  return <RouteGuard requireAuth requireRole="student"><CoachingPageShell title="Görüşme raporu" description="Yayınlanan görüşme özetini, ekleri ve çalışma önerilerini incele." parentHref="/dashboard/student/coaching/reports" parentLabel="Görüşme raporlarım" eyebrow="Rapor detayı" width="narrow"><StudentReportDetail reportId={reportId} /></CoachingPageShell></RouteGuard>;
 }

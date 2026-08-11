@@ -4,7 +4,8 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { CoachingGuard } from "@/components/coaching/CoachingGuard";
-import { EmptyState } from "@/components/shared/EmptyState";
+import { CoachingEmptyState as EmptyState } from "@/components/coaching/CoachingEmptyState";
+import { CoachingPageShell } from "@/components/coaching/CoachingPageShell";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -130,16 +131,7 @@ function TimeRequestsContent() {
 export default function CoachingTimeRequestsPage() {
   return (
     <CoachingGuard>
-      <div className="mx-auto max-w-3xl px-4 py-8">
-        <h1 className="text-2xl font-bold">Koçluk Saat Talepleri</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Öğrencilerin uygun saat bulamadığında açtığı talepler. 48 saat içinde bir saat
-          önermen gerekir; ortak saat bulunamazsa koçluk iptal edilir.
-        </p>
-        <div className="mt-6">
-          <TimeRequestsContent />
-        </div>
-      </div>
+      <CoachingPageShell title="Koçluk saat talepleri" description="Öğrencilerin ortak saat bulamadığında ilettiği talepleri incele ve uygun bir koçluk saati öner." parentHref="/dashboard/tutor/coaching/students" parentLabel="Koçluk öğrencilerim" eyebrow="Saat planlama" width="narrow"><TimeRequestsContent /></CoachingPageShell>
     </CoachingGuard>
   );
 }

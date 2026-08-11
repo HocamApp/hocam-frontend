@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 
 import { CoachingGuard } from "@/components/coaching/CoachingGuard";
+import { CoachingPageShell } from "@/components/coaching/CoachingPageShell";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { Button } from "@/components/ui/button";
@@ -87,10 +88,7 @@ export default function TutorCoachingPreparePage() {
   const { id } = useParams<{ id: string }>();
   return (
     <CoachingGuard>
-      <div className="mx-auto max-w-3xl px-4 py-8">
-        <h1 className="mb-6 text-2xl font-semibold">Görüşmeye Hazırlan</h1>
-        <PrepareContent sessionId={id} />
-      </div>
+      <CoachingPageShell title="Görüşmeye hazırlan" description="Öğrencinin önceki geri bildirimini, paylaşılan dosyaları ve özel çalışma alanını görüşme öncesinde gözden geçir." parentHref="/dashboard/tutor/coaching/upcoming" parentLabel="Yaklaşan görüşmeler" eyebrow="Görüşme" width="narrow"><PrepareContent sessionId={id} /></CoachingPageShell>
     </CoachingGuard>
   );
 }

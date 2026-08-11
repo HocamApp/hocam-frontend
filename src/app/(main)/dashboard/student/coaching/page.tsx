@@ -5,8 +5,9 @@ import { useQuery } from "@tanstack/react-query";
 import { Calendar, FileText, HelpCircle, ListTodo, MessageCircle, ShieldAlert } from "lucide-react";
 
 import { RouteGuard } from "@/components/shared/RouteGuard";
+import { CoachingPageShell } from "@/components/coaching/CoachingPageShell";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
-import { EmptyState } from "@/components/shared/EmptyState";
+import { CoachingEmptyState as EmptyState } from "@/components/coaching/CoachingEmptyState";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -44,7 +45,7 @@ function OverviewContent() {
     return (
       <EmptyState
         title="Henüz bir çalışma koçluğun yok"
-        description="Bir öğretmenin koçluk teklifini kabul ettiğinde burada göreceksin."
+        description="Ders paketine koçluk ekleyip bundle talebin öğretmenin tarafından kabul edildikten sonra koçluk alanın burada açılır."
       />
     );
   }
@@ -138,10 +139,7 @@ function OverviewContent() {
 export default function StudentCoachingOverviewPage() {
   return (
     <RouteGuard requireAuth requireRole="student">
-      <div className="mx-auto max-w-3xl px-4 py-8">
-        <h1 className="mb-6 text-2xl font-semibold">Koçluk</h1>
-        <OverviewContent />
-      </div>
+      <CoachingPageShell title="Çalışma koçluğum" description="Koçluk görüşmelerini, programını, raporlarını ve hizmet durumunu tek yerden takip et." parentHref="/dashboard/student" parentLabel="Öğrenci paneli" eyebrow="Çalışma koçluğu" width="narrow"><OverviewContent /></CoachingPageShell>
     </RouteGuard>
   );
 }

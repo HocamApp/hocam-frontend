@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { RescheduleDialog } from "@/components/coaching/RescheduleDialog";
+import { CoachingEmptyState } from "@/components/coaching/CoachingEmptyState";
 import { fetchCoachingSessions } from "@/lib/coachingApi";
 
 const JOINABLE_STATUSES = new Set(["scheduled", "in_progress"]);
@@ -41,9 +42,7 @@ export function CoachingSessionList() {
   }
 
   if (sessions.length === 0) {
-    return (
-      <p className="text-sm text-muted-foreground">Henüz görüşme oluşturulmadı.</p>
-    );
+    return <CoachingEmptyState title="Henüz görüşme oluşturulmadı" description="Düzenli koçluk saatlerin onaylandığında planlanan görüşmeler burada görünür." />;
   }
 
   const now = Date.now();
@@ -69,7 +68,7 @@ export function CoachingSessionList() {
                 </Badge>
                 {session.report_overdue && session.report_due_at ? (
                   <p className="mt-1 text-xs text-destructive">
-                    Primary rapor gecikti. Son zaman: {new Date(session.report_due_at).toLocaleString("tr-TR", { dateStyle: "medium", timeStyle: "short" })}
+                    Görüşme raporu gecikti. Son zaman: {new Date(session.report_due_at).toLocaleString("tr-TR", { dateStyle: "medium", timeStyle: "short" })}
                   </p>
                 ) : null}
                 {session.complaint_eligible ? (

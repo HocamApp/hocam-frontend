@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 
 import { CoachingGuard } from "@/components/coaching/CoachingGuard";
+import { CoachingEmptyState } from "@/components/coaching/CoachingEmptyState";
+import { CoachingPageShell } from "@/components/coaching/CoachingPageShell";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -34,7 +36,7 @@ function UpcomingList() {
   }
 
   if (!sessions || sessions.length === 0) {
-    return <p className="text-sm text-muted-foreground">Yaklaşan görüşme yok.</p>;
+    return <CoachingEmptyState title="Yaklaşan görüşme yok" description="Planlanan bir koçluk görüşmesi olduğunda tarihi, hazırlık alanı ve katılım bağlantısı burada görünür." />;
   }
 
   return (
@@ -83,10 +85,7 @@ function UpcomingList() {
 export default function TutorCoachingUpcomingPage() {
   return (
     <CoachingGuard>
-      <div className="mx-auto max-w-3xl px-4 py-8">
-        <h1 className="mb-6 text-2xl font-semibold">Yaklaşan Görüşmeler</h1>
-        <UpcomingList />
-      </div>
+      <CoachingPageShell title="Yaklaşan görüşmeler" description="Planlanan koçluk görüşmelerine hazırlan, katıl ve görüşme sonrası rapor akışını tamamla." parentHref="/dashboard/tutor/coaching" parentLabel="Koçluk ana sayfası" eyebrow="Takvim" width="narrow"><UpcomingList /></CoachingPageShell>
     </CoachingGuard>
   );
 }

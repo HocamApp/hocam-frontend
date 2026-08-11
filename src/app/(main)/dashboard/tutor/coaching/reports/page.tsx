@@ -5,7 +5,8 @@ import { useQuery } from "@tanstack/react-query";
 import { FilePenLine } from "lucide-react";
 
 import { CoachingGuard } from "@/components/coaching/CoachingGuard";
-import { EmptyState } from "@/components/shared/EmptyState";
+import { CoachingEmptyState as EmptyState } from "@/components/coaching/CoachingEmptyState";
+import { CoachingPageShell } from "@/components/coaching/CoachingPageShell";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { Card, CardContent } from "@/components/ui/card";
@@ -24,5 +25,5 @@ function TutorReportsContent() {
 }
 
 export default function TutorCoachingReportsPage() {
-  return <CoachingGuard><div className="mx-auto max-w-3xl px-4 py-8"><h1 className="mb-6 text-2xl font-semibold">Raporlar</h1><TutorReportsContent /></div></CoachingGuard>;
+  return <CoachingGuard><CoachingPageShell title="Görüşme raporları" description="Taslak, yayınlanan ve revizyon bekleyen koçluk raporlarını yönet." parentHref="/dashboard/tutor/coaching" parentLabel="Koçluk ana sayfası" eyebrow="Raporlar" width="narrow"><TutorReportsContent /></CoachingPageShell></CoachingGuard>;
 }
