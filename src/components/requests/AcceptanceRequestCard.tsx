@@ -8,7 +8,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { formatTryMinor } from "@/lib/money";
 import { formatPrice } from "@/lib/utils";
-import { acceptanceStatusCopy, type AcceptanceRequest } from "@/lib/coachingApi";
+import {
+  acceptanceStatusCopy,
+  coachingFrequencyLabel,
+  type AcceptanceRequest,
+} from "@/lib/coachingApi";
+import { formatPlanDuration } from "@/lib/lessonPricing";
 
 const STATUS_VARIANT: Record<string, "default" | "secondary" | "destructive"> = {
   pending: "default",
@@ -61,20 +66,36 @@ export function AcceptanceRequestCard({
           </div>
         </div>
 
-        <dl className="grid gap-2 text-sm sm:grid-cols-2">
-          <div className="flex justify-between gap-3 sm:block">
-            <dt className="text-muted-foreground">Ders paketi</dt>
-            <dd className="font-medium">
-              {request.package.total_credits} ders ·{" "}
-              {formatPrice(request.package.total_price)}
+        <dl className="grid gap-3 text-sm sm:grid-cols-2">
+          <div className="rounded-lg border bg-muted/20 p-3">
+            <dt className="font-medium">Ders paketi</dt>
+            <dd className="mt-1 space-y-1 text-muted-foreground">
+              {request.package.lessons_per_week !== null &&
+              request.package.duration_days !== null ? (
+                <p>
+                  Haftada {request.package.lessons_per_week} ders ·{" "}
+                  {formatPlanDuration(request.package.duration_days)}
+                </p>
+              ) : null}
+              <p>
+                {request.package.total_credits} ders ·{" "}
+                <span className="font-medium text-foreground">
+                  {formatPrice(request.package.total_price)}
+                </span>
+              </p>
             </dd>
           </div>
           {request.coaching ? (
-            <div className="flex justify-between gap-3 sm:block">
-              <dt className="text-muted-foreground">Çalışma koçluğu</dt>
-              <dd className="font-medium">
-                {request.coaching.total_sessions} görüşme ·{" "}
-                {formatTryMinor(request.coaching.total_price_minor)}
+            <div className="rounded-lg border bg-muted/20 p-3">
+              <dt className="font-medium">Çalışma koçluğu ek hizmeti</dt>
+              <dd className="mt-1 space-y-1 text-muted-foreground">
+                <p>{coachingFrequencyLabel(request.coaching.frequency)}</p>
+                <p>
+                  {request.coaching.total_sessions} görüşme ·{" "}
+                  <span className="font-medium text-foreground">
+                    {formatTryMinor(request.coaching.total_price_minor)}
+                  </span>
+                </p>
               </dd>
             </div>
           ) : null}
