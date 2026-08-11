@@ -35,6 +35,18 @@ describe("extractCoachingErrorCode", () => {
 });
 
 describe("extractCoachingErrorMessage", () => {
+  it("uses a dynamic server validation message instead of a hardcoded price policy", () => {
+    assert.equal(
+      extractCoachingErrorMessage(
+        axiosError({
+          code: ["price_exceeds_cap"],
+          detail: "Koçluk görüşme fiyatı ders fiyatının en fazla %72'si olabilir.",
+        })
+      ),
+      "Koçluk görüşme fiyatı ders fiyatının en fazla %72'si olabilir."
+    );
+  });
+
   it("prefers the known message for a recognised code", () => {
     const message = extractCoachingErrorMessage(
       axiosError({ code: "availability_required" })

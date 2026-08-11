@@ -142,6 +142,31 @@ export async function completeCoachingOnboarding(): Promise<CoachingOnboardingSt
 
 export type CoachingFrequency = "biweekly" | "weekly" | "twice_weekly";
 
+export interface CoachingSetupConfig {
+  exam_groups: string[];
+  session_duration_minutes: number;
+  lesson_price_minor: number;
+  lesson_price_display: string;
+  max_price_ratio_percent: number;
+  price_cap_minor: number;
+  price_cap_display: string;
+  commission_bps: number;
+  frequency_options: Array<{
+    value: CoachingFrequency;
+    label: string;
+    packages: Array<{
+      duration_days: number;
+      weeks: number;
+      total_sessions: number;
+    }>;
+  }>;
+}
+
+export async function fetchCoachingSetupConfig(): Promise<CoachingSetupConfig> {
+  const response = await api.get<CoachingSetupConfig>("/coaching/tutor/setup-config/");
+  return response.data;
+}
+
 export interface CoachingCapacity {
   weekly_slot_count: number;
   theoretical_capacity: number;
@@ -406,9 +431,6 @@ const ERROR_MESSAGES: Record<string, string> = {
 export function extractCoachingErrorMessage(error: unknown): string {
   const data = (error as { response?: { data?: Record<string, unknown> } })?.response
     ?.data;
-  const code = extractCoachingErrorCode(error);
-  if (code && ERROR_MESSAGES[code]) return ERROR_MESSAGES[code];
-
   // A non-JSON error body (e.g. an HTML 500/502 page from a dev server or
   // proxy) arrives here as a raw string. Object.values() on a string
   // yields its individual CHARACTERS as "values" — without this guard,
@@ -420,7 +442,8 @@ export function extractCoachingErrorMessage(error: unknown): string {
     if (typeof detail === "string") return detail;
     // Field errors: surface the first message we can find, including the
     // structured description-guardrail payload.
-    for (const value of Object.values(data)) {
+    for (const [key, value] of Object.entries(data)) {
+      if (key === "code") continue;
       const first = Array.isArray(value) ? value[0] : value;
       if (typeof first === "string") return first;
       if (first && typeof first === "object" && "message" in first) {
@@ -428,6 +451,8 @@ export function extractCoachingErrorMessage(error: unknown): string {
       }
     }
   }
+  const code = extractCoachingErrorCode(error);
+  if (code && ERROR_MESSAGES[code]) return ERROR_MESSAGES[code];
   return "Beklenmeyen bir hata oluştu.";
 }
 
