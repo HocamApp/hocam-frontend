@@ -2,9 +2,8 @@
 
 import dynamic from "next/dynamic";
 import { useParams, useRouter } from "next/navigation";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
-import { WifiOff } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { WifiOff, FileText } from "lucide-react";
 import { useState } from "react";
 
 import { useAuth } from "@/hooks/useAuth";
@@ -12,14 +11,10 @@ import { RouteGuard } from "@/components/shared/RouteGuard";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { formatDate } from "@/lib/utils";
 import { CoachingAttachmentPanel } from "@/components/coaching/CoachingAttachmentPanel";
-import {
-  NO_SHOW_CONSUMED_COPY,
-  NO_SHOW_PARTY_LABEL,
-  NO_SHOW_RIGHT_PRESERVED_COPY,
-} from "@/lib/coachingSessionCopy";
+import { CoachingIncidentActions } from "@/components/coaching/CoachingIncidentActions";
+import { CoachingReportWizard } from "@/components/coaching/CoachingReportWizard";
 import {
   getCoachingJitsiConfigOverwrite,
   COACHING_JITSI_INTERFACE_CONFIG_OVERWRITE,
@@ -28,8 +23,6 @@ import {
 import {
   fetchCoachingSessionDetail,
   fetchCoachingSessionToken,
-  reportCoachingSessionNoShow,
-  reportCoachingSessionTechnicalIssue,
   COACHING_SESSION_QUERY_KEYS,
   extractCoachingErrorMessage,
   extractCoachingErrorCode,
@@ -47,43 +40,11 @@ function CoachingRoomPanel({
   sessionId: string;
   viewerRole: "student" | "tutor";
 }) {
-  const queryClient = useQueryClient();
-  const [incidentNote, setIncidentNote] = useState("");
+  const [reportOpen, setReportOpen] = useState(false);
   const { data: detail } = useQuery({
     queryKey: COACHING_SESSION_QUERY_KEYS.detail(sessionId),
     queryFn: () => fetchCoachingSessionDetail(sessionId),
   });
-
-  const invalidateTerminalIncident = () => {
-    queryClient.invalidateQueries({ queryKey: COACHING_SESSION_QUERY_KEYS.detail(sessionId) });
-    queryClient.invalidateQueries({ queryKey: COACHING_SESSION_QUERY_KEYS.studentList() });
-    queryClient.invalidateQueries({ queryKey: COACHING_SESSION_QUERY_KEYS.tutorList() });
-    // This active query refetches and moves the room out of its stale joinable UI.
-    queryClient.invalidateQueries({ queryKey: COACHING_SESSION_QUERY_KEYS.token(sessionId) });
-  };
-
-  const noShowMutation = useMutation({
-    mutationFn: (party: "student" | "tutor") => reportCoachingSessionNoShow(sessionId, party, incidentNote),
-    onSuccess: () => {
-      toast.success("Bildirim kaydedildi.");
-      setIncidentNote("");
-      invalidateTerminalIncident();
-    },
-    onError: (err) => toast.error(extractCoachingErrorMessage(err)),
-  });
-
-  const technicalIssueMutation = useMutation({
-    mutationFn: () => reportCoachingSessionTechnicalIssue(sessionId, incidentNote),
-    onSuccess: () => {
-      toast.success("Teknik sorun bildirildi.");
-      setIncidentNote("");
-      invalidateTerminalIncident();
-    },
-    onError: (err) => toast.error(extractCoachingErrorMessage(err)),
-  });
-
-  const otherParty = viewerRole === "tutor" ? "student" : "tutor";
-  const otherPartyLabel = NO_SHOW_PARTY_LABEL[otherParty];
 
   return (
     <div className="flex h-full flex-col gap-4 overflow-y-auto p-4">
@@ -103,39 +64,27 @@ function CoachingRoomPanel({
 
       <CoachingAttachmentPanel sessionId={sessionId} />
 
-      <div className="space-y-2 border-t pt-3">
-        <p className="text-sm font-medium">Bir sorun mu var?</p>
-        <Textarea
-          className="min-h-20"
-          value={incidentNote}
-          onChange={(event) => setIncidentNote(event.target.value)}
-          placeholder="Kısa incident notu (opsiyonel)"
-          aria-label="Incident notu"
-        />
-        <Button
-          size="sm"
-          variant="outline"
-          className="w-full"
-          disabled={noShowMutation.isPending}
-          onClick={() => noShowMutation.mutate(otherParty)}
-        >
-          {otherPartyLabel}
-        </Button>
-        <Button
-          size="sm"
-          variant="outline"
-          className="w-full"
-          disabled={technicalIssueMutation.isPending}
-          onClick={() => technicalIssueMutation.mutate()}
-        >
-          Teknik sorun bildir
-        </Button>
-        {viewerRole === "tutor" && (
-          <p className="text-xs text-muted-foreground">{NO_SHOW_CONSUMED_COPY}</p>
-        )}
-        {viewerRole === "student" && (
-          <p className="text-xs text-muted-foreground">{NO_SHOW_RIGHT_PRESERVED_COPY}</p>
-        )}
+      {viewerRole === "tutor" && detail?.status === "in_progress" && (
+        <div className="space-y-2 border-t pt-3">
+          <Button
+            size="sm"
+            variant={reportOpen ? "secondary" : "outline"}
+            className="w-full justify-start"
+            onClick={() => setReportOpen((current) => !current)}
+          >
+            <FileText className="mr-2 h-4 w-4" />
+            {reportOpen ? "Rapor taslağını gizle" : "Rapor taslağını görüşme sırasında doldur"}
+          </Button>
+          {reportOpen && (
+            <div className="rounded-md border p-3">
+              <CoachingReportWizard sessionId={sessionId} />
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className="border-t pt-3">
+        <CoachingIncidentActions sessionId={sessionId} viewerRole={viewerRole} />
       </div>
     </div>
   );
@@ -205,7 +154,13 @@ function CoachingSessionContent() {
           api.addEventListener?.("connectionInterrupted", onConnectionInterrupted);
           api.addEventListener?.("connectionRestored", onConnectionRestored);
         }}
-        onReadyToClose={() => router.push(`/dashboard/${viewerRole}`)}
+        onReadyToClose={() =>
+          router.push(
+            viewerRole === "student"
+              ? `/session/coaching/${sessionId}/summary`
+              : `/dashboard/${viewerRole}`
+          )
+        }
         getIFrameRef={(iframeRef: HTMLElement) => {
           iframeRef.style.height = "100%";
           iframeRef.style.width = "100%";

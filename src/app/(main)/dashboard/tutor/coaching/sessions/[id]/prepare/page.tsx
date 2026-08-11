@@ -15,6 +15,7 @@ import { formatDate } from "@/lib/utils";
 import {
   fetchCoachingSessionDetail,
   extractCoachingErrorMessage,
+  REPORT_FEEDBACK_LABELS,
 } from "@/lib/coachingApi";
 
 const JOINABLE_STATUSES = new Set(["scheduled", "in_progress"]);
@@ -61,6 +62,17 @@ function PrepareContent({ sessionId }: { sessionId: string }) {
           ) : null}
         </CardContent>
       </Card>
+
+      {detail.previous_report_feedback && (
+        <Card>
+          <CardContent className="py-4 text-sm">
+            <p className="font-medium">Öğrencinin son rapor geri bildirimi</p>
+            <p className="mt-1 text-muted-foreground">
+              {REPORT_FEEDBACK_LABELS[detail.previous_report_feedback]}
+            </p>
+          </CardContent>
+        </Card>
+      )}
 
       <CoachingAttachmentPanel sessionId={sessionId} />
 

@@ -4,6 +4,9 @@ import { describe, it } from "node:test";
 import {
   extractCoachingErrorCode,
   extractCoachingErrorMessage,
+  readCoachingSelectedFromSearchParams,
+  shouldSkipCoachingChoiceScreen,
+  type CoachingEligibility,
 } from "./coachingApi";
 
 function axiosError(data: unknown, status = 400) {
@@ -76,5 +79,111 @@ describe("extractCoachingErrorMessage", () => {
       axiosError("<!DOCTYPE html><html>...</html>", 500)
     );
     assert.equal(message, "Beklenmeyen bir hata oluştu.");
+  });
+});
+
+function eligibility(
+  overrides: Partial<CoachingEligibility>
+): CoachingEligibility {
+  return {
+    eligible: false,
+    reason: "no_plan",
+    message: "",
+    plan: null,
+    ...overrides,
+  };
+}
+
+const plan: CoachingEligibility["plan"] = {
+  frequency: "weekly",
+  session_duration_minutes: 30,
+  price_per_session_minor: 10000,
+  price_per_session_display: "100 TL",
+  is_free: false,
+  target_exam_types: ["YKS"],
+  description: "",
+};
+
+describe("shouldSkipCoachingChoiceScreen", () => {
+  it("skips the screen when the tutor has no coaching plan at all (§14.1)", () => {
+    assert.equal(
+      shouldSkipCoachingChoiceScreen(eligibility({ reason: "no_plan", plan: null })),
+      true
+    );
+  });
+
+  it("skips the screen on an exam group mismatch (§14.5) even though a plan is returned", () => {
+    assert.equal(
+      shouldSkipCoachingChoiceScreen(
+        eligibility({ reason: "exam_mismatch", plan })
+      ),
+      true
+    );
+  });
+
+  it("does NOT skip the screen when the student is just missing an exam target (§14.6)", () => {
+    assert.equal(
+      shouldSkipCoachingChoiceScreen(
+        eligibility({ reason: "missing_target_exam", plan, available_exam_targets: ["YKS"] })
+      ),
+      false
+    );
+  });
+
+  it("does NOT skip the screen for an ordinary blocked-but-shown reason (capacity full)", () => {
+    assert.equal(
+      shouldSkipCoachingChoiceScreen(eligibility({ reason: "capacity_full", plan })),
+      false
+    );
+  });
+
+  it("does NOT skip the screen when eligible", () => {
+    assert.equal(
+      shouldSkipCoachingChoiceScreen(eligibility({ eligible: true, reason: "ok", plan })),
+      false
+    );
+  });
+
+  it("skips the screen when eligibility hasn't loaded yet or has no plan", () => {
+    assert.equal(shouldSkipCoachingChoiceScreen(null), true);
+    assert.equal(shouldSkipCoachingChoiceScreen(undefined), true);
+    assert.equal(
+      shouldSkipCoachingChoiceScreen(eligibility({ reason: "ok", plan: null })),
+      true
+    );
+  });
+});
+
+describe("readCoachingSelectedFromSearchParams", () => {
+  it("§14.7: a returning checkout session (via Düzenle or back) sees the prior choice, not a reset", () => {
+    assert.equal(
+      readCoachingSelectedFromSearchParams(new URLSearchParams("coaching=1")),
+      true
+    );
+    assert.equal(
+      readCoachingSelectedFromSearchParams(
+        new URLSearchParams("coaching=1&per_week=2&duration=90")
+      ),
+      true
+    );
+  });
+
+  it("defaults to unselected on a fresh entry with no coaching param", () => {
+    assert.equal(readCoachingSelectedFromSearchParams(new URLSearchParams("")), false);
+    assert.equal(
+      readCoachingSelectedFromSearchParams(new URLSearchParams("per_week=2")),
+      false
+    );
+  });
+
+  it("only the exact '1' value counts as selected", () => {
+    assert.equal(
+      readCoachingSelectedFromSearchParams(new URLSearchParams("coaching=0")),
+      false
+    );
+    assert.equal(
+      readCoachingSelectedFromSearchParams(new URLSearchParams("coaching=true")),
+      false
+    );
   });
 });

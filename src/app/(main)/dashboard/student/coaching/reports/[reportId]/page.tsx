@@ -6,6 +6,7 @@ import { Download } from "lucide-react";
 import { toast } from "sonner";
 
 import { PublishedReportView } from "@/components/coaching/PublishedReportView";
+import { ReportFeedbackCard } from "@/components/coaching/ReportFeedbackCard";
 import { RouteGuard } from "@/components/shared/RouteGuard";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
@@ -43,7 +44,7 @@ function StudentReportDetail({ reportId }: { reportId: string }) {
   });
   if (reportQuery.isLoading) return <div className="flex min-h-48 items-center justify-center"><LoadingSpinner /></div>;
   if (reportQuery.isError || !reportQuery.data) return <ErrorMessage message={extractCoachingErrorMessage(reportQuery.error)} />;
-  return <div className="space-y-4"><div className="flex justify-end"><Button variant="outline" disabled={pdfMutation.isPending} onClick={() => pdfMutation.mutate()}><Download className="mr-2 h-4 w-4" /> PDF indir</Button></div><PublishedReportView revision={reportQuery.data} onDownloadAttachment={(attachmentId) => attachmentMutation.mutate(attachmentId)} /></div>;
+  return <div className="space-y-4"><div className="flex justify-end"><Button variant="outline" disabled={pdfMutation.isPending} onClick={() => pdfMutation.mutate()}><Download className="mr-2 h-4 w-4" /> PDF indir</Button></div><PublishedReportView revision={reportQuery.data} onDownloadAttachment={(attachmentId) => attachmentMutation.mutate(attachmentId)} /><ReportFeedbackCard reportId={reportId} currentChoice={reportQuery.data.student_feedback} /></div>;
 }
 
 export default function StudentCoachingReportDetailPage() {

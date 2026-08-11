@@ -464,6 +464,49 @@ export interface CoachingEligibility {
 }
 
 /**
+ * Master spec §14.1 / §14.5: the coaching choice screen has nothing to ask
+ * when there's no plan to offer, or the tutor's plan doesn't cover the
+ * student's exam group — it must be skipped entirely, never shown as a
+ * disabled card. Deliberately does NOT include "missing_target_exam"
+ * (§14.6): that reason still shows the screen and asks the student to pick
+ * an exam target. A type guard (not just a boolean) so the page can narrow
+ * `eligibility.plan` to non-null immediately after the early return.
+ */
+export function eligibilityAllowsCoachingChoice(
+  eligibility: CoachingEligibility | null | undefined
+): eligibility is CoachingEligibility & {
+  plan: NonNullable<CoachingEligibility["plan"]>;
+} {
+  return Boolean(
+    eligibility &&
+      eligibility.reason !== "no_plan" &&
+      eligibility.reason !== "exam_mismatch" &&
+      eligibility.plan
+  );
+}
+
+export function shouldSkipCoachingChoiceScreen(
+  eligibility: CoachingEligibility | null | undefined
+): boolean {
+  return !eligibilityAllowsCoachingChoice(eligibility);
+}
+
+/**
+ * Master Spec §14.7 "Checkout oturumu boyunca seçim korunur" — the
+ * coaching choice is carried in the `coaching` URL param (same mechanism
+ * as package duration/lessons-per-week), so it survives a login round-trip,
+ * a shared link, and returning to the choice step via "Düzenle" or the
+ * browser back button. A fresh entry with no `coaching` param correctly
+ * defaults to unselected (§14.1/§14.6) — this is not the same thing as
+ * losing an already-made choice.
+ */
+export function readCoachingSelectedFromSearchParams(
+  searchParams: URLSearchParams
+): boolean {
+  return searchParams.get("coaching") === "1";
+}
+
+/**
  * Per-student, never cached. The frontend renders the returned reason and
  * decides nothing about eligibility itself — exam matching, active-coach
  * and capacity checks all live server-side.
@@ -958,6 +1001,8 @@ export interface CoachingSessionDetail extends CoachingSessionItem {
   student_name: string;
   student_id: string;
   viewer_role: "student" | "tutor";
+  /** Tutor viewer only — the prior session's report feedback (§22.9, #53). */
+  previous_report_feedback?: CoachingReportFeedbackChoice | null;
 }
 
 export async function fetchCoachingSessionDetail(
@@ -1190,6 +1235,50 @@ export async function reportCoachingSessionTechnicalIssue(
   const response = await api.post<{ status: CoachingSessionStatus }>(
     `/coaching/sessions/${sessionId}/report-technical-issue/`,
     { note }
+  );
+  return response.data;
+}
+
+// --- Faz 8: per-session rating (§41, decisions #32/#130). No separate
+// general star rating exists (§48 V2 exclusion) — these seven named
+// criteria are the whole rating surface, optional every session.
+export const RATING_CRITERIA = [
+  "program_benefit",
+  "attentiveness",
+  "message_responsiveness",
+  "motivation",
+  "session_efficiency",
+  "tutor_preparation",
+  "technical_quality",
+] as const;
+
+export type CoachingRatingCriterion = (typeof RATING_CRITERIA)[number];
+
+export const RATING_CRITERIA_LABELS: Record<CoachingRatingCriterion, string> = {
+  program_benefit: "Program faydası",
+  attentiveness: "İlgi ve takip",
+  message_responsiveness: "Mesajlara yanıt hızı",
+  motivation: "Motivasyon",
+  session_efficiency: "Görüşme verimliliği",
+  tutor_preparation: "Öğretmen hazırlığı",
+  technical_quality: "Teknik kalite",
+};
+
+export type CoachingSessionRatingScores = Record<CoachingRatingCriterion, number>;
+
+export interface CoachingSessionRatingResult extends CoachingSessionRatingScores {
+  id: string;
+  public_comment: string;
+}
+
+export async function submitCoachingSessionRating(
+  sessionId: string,
+  scores: CoachingSessionRatingScores,
+  publicComment = ""
+): Promise<CoachingSessionRatingResult> {
+  const response = await api.post<CoachingSessionRatingResult>(
+    `/coaching/sessions/${sessionId}/rating/`,
+    { ...scores, public_comment: publicComment }
   );
   return response.data;
 }
@@ -1465,6 +1554,36 @@ export interface CoachingSessionReportRevision {
   created_by?: string;
   published_at: string;
   change_note: string | null;
+  /** Only present for the student viewer — see submitCoachingReportFeedback. */
+  student_feedback?: CoachingReportFeedbackChoice | null;
+}
+
+// --- Faz 8: student short report feedback (§22.9, decision #53). Not a
+// comment thread — one fixed choice, shown on the *next* session's
+// prepare screen (see previous_report_feedback on CoachingSessionDetail).
+export const REPORT_FEEDBACK_CHOICES = [
+  "goals_understood",
+  "want_to_change_goal",
+  "want_to_leave_note",
+] as const;
+
+export type CoachingReportFeedbackChoice = (typeof REPORT_FEEDBACK_CHOICES)[number];
+
+export const REPORT_FEEDBACK_LABELS: Record<CoachingReportFeedbackChoice, string> = {
+  goals_understood: "Hedefleri anladım",
+  want_to_change_goal: "Bu hedefi değiştirmek istiyorum",
+  want_to_leave_note: "Öğretmenime not bırakmak istiyorum",
+};
+
+export async function submitCoachingReportFeedback(
+  reportId: string,
+  choice: CoachingReportFeedbackChoice
+): Promise<{ choice: CoachingReportFeedbackChoice }> {
+  const response = await api.post<{ choice: CoachingReportFeedbackChoice }>(
+    `/coaching/reports/${reportId}/feedback/`,
+    { choice }
+  );
+  return response.data;
 }
 
 export interface CoachingReportListItem {

@@ -25,6 +25,7 @@ import {
   createCoachingHold,
   extractCoachingErrorMessage,
   fetchCoachingEligibility,
+  readCoachingSelectedFromSearchParams,
   type CoachingQuote,
 } from "@/lib/coachingApi";
 import { formatPrice } from "@/lib/utils";
@@ -100,7 +101,7 @@ export default function TutorCheckoutPage({
   );
   // Coaching selection rides in the URL like the package selection does,
   // so it survives the login round-trip and a shared link.
-  const coachingSelected = searchParams.get("coaching") === "1";
+  const coachingSelected = readCoachingSelectedFromSearchParams(searchParams);
   const [promoCode, setPromoCode] = useState("");
   // "credits" books with existing package credits; "trial" is the free
   // intro-lesson path — both reuse the BookingModal.

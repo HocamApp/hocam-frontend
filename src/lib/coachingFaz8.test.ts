@@ -3,6 +3,10 @@ import { describe, it } from "node:test";
 
 import {
   COACHING_FAZ8_QUERY_KEYS,
+  RATING_CRITERIA,
+  RATING_CRITERIA_LABELS,
+  REPORT_FEEDBACK_CHOICES,
+  REPORT_FEEDBACK_LABELS,
   type CoachingDispute,
   type CoachingDisputeEvidence,
   type CoachingFinancialSummary,
@@ -83,5 +87,25 @@ describe("Faz 8 participant contract state", () => {
     assert.equal(earnings.on_hold_minor, 3);
     assert.equal(earnings.reversed_minor, 4);
     assert.match(coachingEarningStatusCopy(earnings.payout_batches[0].status), /hazır/i);
+  });
+});
+
+describe("§41 session rating and §22.9 report feedback contract", () => {
+  it("has exactly the seven named rating criteria, each with a Turkish label", () => {
+    assert.equal(RATING_CRITERIA.length, 7);
+    for (const criterion of RATING_CRITERIA) {
+      assert.ok(RATING_CRITERIA_LABELS[criterion]?.length, `missing label for ${criterion}`);
+    }
+  });
+
+  it("has exactly the three fixed report-feedback choices, not a comment thread", () => {
+    assert.deepEqual(REPORT_FEEDBACK_CHOICES, [
+      "goals_understood",
+      "want_to_change_goal",
+      "want_to_leave_note",
+    ]);
+    for (const choice of REPORT_FEEDBACK_CHOICES) {
+      assert.ok(REPORT_FEEDBACK_LABELS[choice]?.length, `missing label for ${choice}`);
+    }
   });
 });

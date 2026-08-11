@@ -359,6 +359,19 @@ function ConversationContent({
                 Ders rezervasyonu yap
               </button>
             )}
+            {/* Master Spec §31.1: messaging is one of the five required
+                "report a problem" entry points, alongside coaching home,
+                session detail, report, and the post-session screen. Only
+                shown for a coaching conversation, student side — the
+                create-complaint form itself lives on the complaints page. */}
+            {!isTutor && conversation?.coaching_purchase_id && (
+              <Link
+                href="/dashboard/student/coaching/complaints"
+                className="text-sm font-medium text-muted-foreground hover:text-foreground hover:underline"
+              >
+                Sorun bildir
+              </Link>
+            )}
             {isTutor && conversation && !conversation.is_blocked && (
               <button
                 type="button"

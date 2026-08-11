@@ -3,8 +3,9 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft } from "lucide-react";
+import { toast } from "sonner";
 
 import { CoachingChoiceCard } from "@/components/checkout/CoachingChoiceCard";
 import { RouteGuard } from "@/components/shared/RouteGuard";
@@ -19,22 +20,83 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { cn, formatPrice } from "@/lib/utils";
 import { fetchTutorById } from "@/lib/tutorsApi";
+import { updateMatchingGoal } from "@/lib/matchingApi";
 import {
   COACHING_HOW_IT_WORKS,
+  eligibilityAllowsCoachingChoice,
   fetchCoachingEligibility,
+  readCoachingSelectedFromSearchParams,
 } from "@/lib/coachingApi";
+
+const EXAM_TARGET_LABEL: Record<string, string> = { YKS: "YKS", DGS: "DGS", KPSS: "KPSS" };
+
+/**
+ * Master Spec §14.6 "Sınav hedefi eksik" — "YKS / DGS / KPSS seçimi
+ * istenir. Yalnız öğretmenin desteklediği seçenekler aktiftir": only this
+ * tutor's own supported exam targets are offered, never the full YKS/DGS/
+ * KPSS set. Saving refetches eligibility so the card above unlocks in
+ * place — no page reload, no trip to the general profile settings page.
+ */
+function ExamTargetPicker({
+  targets,
+  onSaved,
+}: {
+  targets: string[];
+  onSaved: () => void;
+}) {
+  const save = useMutation({
+    mutationFn: (goal: "YKS" | "DGS" | "KPSS") => updateMatchingGoal(goal),
+    onSuccess: () => {
+      toast.success("Sınav hedefin kaydedildi.");
+      onSaved();
+    },
+    onError: () => {
+      toast.error("Sınav hedefi kaydedilemedi. Lütfen tekrar dene.");
+    },
+  });
+
+  return (
+    <Card>
+      <CardContent className="space-y-3 py-5">
+        <div>
+          <h2 className="font-semibold">Sınav hedefini seç</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Bu hocanın koçluk planını görebilmek için sınav hedefini seçmen gerekiyor.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {targets.map((target) => (
+            <Button
+              key={target}
+              type="button"
+              variant="outline"
+              disabled={save.isPending}
+              onClick={() => save.mutate(target as "YKS" | "DGS" | "KPSS")}
+            >
+              {EXAM_TARGET_LABEL[target] ?? target}
+            </Button>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 
 function CoachingChoiceContent({ tutorId }: { tutorId: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [selected, setSelected] = useState(false);
+  const queryClient = useQueryClient();
+  const [selected, setSelected] = useState(() =>
+    readCoachingSelectedFromSearchParams(searchParams)
+  );
 
   const { data: tutor, isLoading: tutorLoading } = useQuery({
     queryKey: ["tutor", tutorId],
     queryFn: () => fetchTutorById(tutorId),
   });
+  const eligibilityQueryKey = ["coaching-eligibility", tutorId];
   const { data: eligibility, isLoading: eligibilityLoading } = useQuery({
-    queryKey: ["coaching-eligibility", tutorId],
+    queryKey: eligibilityQueryKey,
     queryFn: () => fetchCoachingEligibility(tutorId),
   });
 
@@ -57,9 +119,13 @@ function CoachingChoiceContent({ tutorId }: { tutorId: string }) {
     );
   }
 
-  // No coaching on offer at all: this step has nothing to ask, so skip it
-  // entirely rather than showing an empty screen (master spec §14.1).
-  if (!eligibility || eligibility.reason === "no_plan" || !eligibility.plan) {
+  // No coaching on offer at all (§14.1), or this tutor's plan doesn't
+  // cover the student's exam group (§14.5 "Sınav grubu uyumsuz" — "Koçluk
+  // ekranı gösterilmez"): this step has nothing the student could pick, so
+  // skip it entirely rather than showing a disabled card. Distinct from
+  // §14.6 missing_target_exam, which still shows the screen and asks the
+  // student to choose an exam target.
+  if (!eligibilityAllowsCoachingChoice(eligibility)) {
     router.replace(`/tutors/${tutorId}/checkout?${searchParams.toString()}`);
     return (
       <div className="flex min-h-[24rem] items-center justify-center">
@@ -86,11 +152,18 @@ function CoachingChoiceContent({ tutorId }: { tutorId: string }) {
 
       <div className="mt-6 grid gap-6 lg:grid-cols-3">
         <div className="space-y-4 lg:col-span-2">
-          <CoachingChoiceCard
-            eligibility={eligibility}
-            selected={selected}
-            onSelect={() => setSelected(true)}
-          />
+          {eligibility.reason === "missing_target_exam" && eligibility.available_exam_targets?.length ? (
+            <ExamTargetPicker
+              targets={eligibility.available_exam_targets}
+              onSaved={() => queryClient.invalidateQueries({ queryKey: eligibilityQueryKey })}
+            />
+          ) : (
+            <CoachingChoiceCard
+              eligibility={eligibility}
+              selected={selected}
+              onSelect={() => setSelected(true)}
+            />
+          )}
 
           <button
             type="button"

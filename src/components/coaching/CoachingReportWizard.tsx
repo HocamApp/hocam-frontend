@@ -269,8 +269,14 @@ export function CoachingReportWizard({ sessionId }: { sessionId: string }) {
   if (isIncident(session.status)) {
     return <div className="space-y-4"><ReportTimingNotice session={session} /><CoachingAttachmentPanel sessionId={sessionId} /></div>;
   }
-  if (session.status !== "awaiting_report" && !report?.latest_revision) {
-    return <Alert><AlertCircle className="h-4 w-4" /><AlertTitle>Rapor henüz açılamaz</AlertTitle><AlertDescription>Primary rapor, görüşme rapor bekliyor durumuna geldiğinde hazırlanabilir.</AlertDescription></Alert>;
+  // Master Spec §22.2: "Görüşme sırasında otomatik taslak açılır. Öğretmen
+  // görüşmede doldurabilir." — the backend already accepts a draft write
+  // as soon as the session is in_progress (see save_report_draft), so the
+  // wizard must open for drafting then too, not only once the session
+  // reaches awaiting_report. Publishing itself stays gated below.
+  const draftableStatuses = ["in_progress", "awaiting_report"];
+  if (!draftableStatuses.includes(session.status) && !report?.latest_revision) {
+    return <Alert><AlertCircle className="h-4 w-4" /><AlertTitle>Rapor henüz açılamaz</AlertTitle><AlertDescription>Primary rapor taslağı, görüşme başladığında hazırlanabilir.</AlertDescription></Alert>;
   }
 
   const hasPublishedRevision = Boolean(report?.latest_revision);

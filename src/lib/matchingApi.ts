@@ -43,3 +43,14 @@ export async function fetchMatchingPreferences(): Promise<SavedMatchingPreferenc
   );
   return response.data.preference;
 }
+
+/**
+ * Master Spec §14.6 — the coaching checkout screen's inline exam-target
+ * picker. Updates only the goal field; never touches subjects/stage.
+ */
+export async function updateMatchingGoal(
+  goal: "YKS" | "DGS" | "KPSS"
+): Promise<{ goal: string }> {
+  const response = await api.patch<{ goal: string }>("/matching/goal/", { goal });
+  return response.data;
+}
