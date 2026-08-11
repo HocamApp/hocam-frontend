@@ -6,6 +6,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check } from "lucide-react";
 
 import { CoachingGuard } from "@/components/coaching/CoachingGuard";
+import { CoachingPageShell } from "@/components/coaching/CoachingPageShell";
 import { OnboardingCarousel } from "@/components/coaching/OnboardingCarousel";
 import { OnboardingControlQuestions } from "@/components/coaching/OnboardingControlQuestions";
 import { Button } from "@/components/ui/button";
@@ -24,9 +25,9 @@ import {
 
 const STEP_LABELS: Record<string, string> = {
   carousel: "Tanıtım",
-  control_questions: "Kontrol soruları",
+  control_questions: "Hızlı kontrol",
   contract: "Sözleşme",
-  plan: "Plan",
+  plan: "Teklif",
 };
 
 function OnboardingContent() {
@@ -66,7 +67,7 @@ function OnboardingContent() {
     onSuccess: () => {
       setError(null);
       invalidate();
-      router.push("/dashboard/tutor/coaching/plan");
+      router.push("/dashboard/tutor/coaching/plan?step=frequency");
     },
     onError: (err) => setError(extractCoachingErrorMessage(err)),
   });
@@ -99,12 +100,12 @@ function OnboardingContent() {
       <Card>
         <CardContent className="space-y-4 pt-6 text-center">
           <Check className="mx-auto h-10 w-10 text-primary" aria-hidden="true" />
-          <h2 className="text-lg font-semibold">Koçluk onboarding&apos;i tamamlandı</h2>
+          <h2 className="text-lg font-semibold">Koçluk tanıtımı tamamlandı</h2>
           <p className="text-sm text-muted-foreground">
-            Artık koçluk planını oluşturabilir ve müsaitliğini belirleyebilirsin.
+            Artık koçluk teklifini oluşturabilir ve müsaitliğini belirleyebilirsin.
           </p>
-          <Button onClick={() => router.push("/dashboard/tutor/coaching/plan")}>
-            Plan ayarlarına git
+          <Button onClick={() => router.push("/dashboard/tutor/coaching/plan?step=frequency")}>
+            Teklifini oluştur
           </Button>
         </CardContent>
       </Card>
@@ -117,7 +118,7 @@ function OnboardingContent() {
     <div className="space-y-6">
       {/* Progress indicator only — the educational content itself is the
           carousel below, not this list. */}
-      <ol className="flex flex-wrap items-center gap-2" aria-label="Onboarding adımları">
+      <ol className="flex flex-wrap items-center gap-2" aria-label="Koçluk tanıtım adımları">
         {state.steps.map((step, index) => {
           const isDone = index < state.current_step;
           const isCurrent = index === state.current_step;
@@ -147,7 +148,7 @@ function OnboardingContent() {
             onClick={() => advance.mutate(state.current_step + 1)}
             disabled={advance.isPending}
           >
-            Kontrol sorularına geç
+            Hızlı kontrole geç
           </Button>
         </section>
       ) : null}
@@ -155,8 +156,7 @@ function OnboardingContent() {
       {stepKey === "control_questions" ? (
         <section className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            Bu bir sınav değil. Amaç, koçluğun kurallarını netleştirmek. Yanlış
-            cevapta ilgili açıklamayı tekrar okuyup düzeltebilirsin.
+            Kısa bir hatırlatma turu: amaç puan vermek değil, hizmet düzenini birlikte netleştirmek. Yanıtını istediğin kadar düzeltebilirsin.
           </p>
           <OnboardingControlQuestions
             questions={state.control_questions}
@@ -225,13 +225,13 @@ function OnboardingContent() {
             <CardContent className="space-y-3 pt-6">
               <h2 className="text-lg font-semibold">Son adım</h2>
               <p className="text-sm text-muted-foreground">
-                Onboarding&apos;i tamamladığında koçluk planını oluşturabilir,
+                Tanıtımı tamamladığında koçluk teklifini oluşturabilir,
                 müsaitliğini ve kapasiteni belirleyebilirsin.
               </p>
             </CardContent>
           </Card>
           <Button onClick={() => complete.mutate()} disabled={complete.isPending}>
-            Onboarding&apos;i tamamla
+            Tanıtımı tamamla
           </Button>
         </section>
       ) : null}
@@ -242,16 +242,16 @@ function OnboardingContent() {
 export default function CoachingOnboardingPage() {
   return (
     <CoachingGuard>
-      <div className="mx-auto max-w-3xl px-4 py-8">
-        <h1 className="text-2xl font-bold">Koçluk vermeye başla</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Çalışma koçluğu, özel dersten farklı bir hizmettir. Başlamadan önce
-          kapsamı ve sorumlulukları gözden geçirelim.
-        </p>
-        <div className="mt-6">
-          <OnboardingContent />
-        </div>
-      </div>
+      <CoachingPageShell
+        title="Koçluk vermeye başla"
+        description="Çalışma koçluğu özel dersten farklı bir ek hizmettir. Kapsamı gözden geçir, hızlı kontrolü tamamla ve sözleşmeyi kabul et."
+        parentHref="/dashboard/tutor/coaching"
+        parentLabel="Koçluk ana sayfası"
+        eyebrow="Kısa tanıtım"
+        width="narrow"
+      >
+        <OnboardingContent />
+      </CoachingPageShell>
     </CoachingGuard>
   );
 }
