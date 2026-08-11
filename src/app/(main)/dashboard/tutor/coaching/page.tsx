@@ -1,167 +1,104 @@
 "use client";
 
-import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 
 import { CoachingGuard } from "@/components/coaching/CoachingGuard";
-import { CapacityPreviewCard } from "@/components/coaching/CapacityPreviewCard";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
+import { TutorCoachingDashboard } from "@/components/coaching/TutorCoachingDashboard";
+import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { Skeleton } from "@/components/ui/skeleton";
-import { EmptyState } from "@/components/shared/EmptyState";
+import { useCoachingFlag } from "@/hooks/useCoachingFlag";
 import {
+  extractCoachingErrorMessage,
+  fetchAcceptanceRequests,
   fetchCoachingCapacity,
   fetchCoachingOnboarding,
   fetchCoachingPlan,
+  fetchCoachingStudents,
+  fetchTutorCoachingSessions,
 } from "@/lib/coachingApi";
+import { deriveCoachingMetrics, deriveCoachingStatus } from "@/lib/coachingPresentation";
 
 function CoachingOverview() {
-  const { data: onboarding, isLoading: onboardingLoading } = useQuery({
+  const { checkoutEnabled } = useCoachingFlag();
+  const onboardingQuery = useQuery({
     queryKey: ["coaching-onboarding"],
     queryFn: fetchCoachingOnboarding,
   });
-  const { data: plan, isLoading: planLoading } = useQuery({
+  const planQuery = useQuery({
     queryKey: ["coaching-plan"],
     queryFn: fetchCoachingPlan,
   });
-  const { data: capacity } = useQuery({
+  const hasPlan = Boolean(planQuery.data);
+  const capacityQuery = useQuery({
     queryKey: ["coaching-capacity"],
     queryFn: fetchCoachingCapacity,
-    enabled: Boolean(plan),
+    enabled: hasPlan,
+  });
+  const studentsQuery = useQuery({
+    queryKey: ["coaching-students"],
+    queryFn: fetchCoachingStudents,
+    enabled: hasPlan,
+  });
+  const sessionsQuery = useQuery({
+    queryKey: ["coaching-tutor-sessions"],
+    queryFn: fetchTutorCoachingSessions,
+    enabled: hasPlan,
+  });
+  const requestsQuery = useQuery({
+    queryKey: ["tutor-acceptance-requests"],
+    queryFn: fetchAcceptanceRequests,
+    enabled: hasPlan,
   });
 
-  if (onboardingLoading || planLoading) {
+  if (onboardingQuery.isLoading || planQuery.isLoading) {
     return (
-      <div className="space-y-4">
-        <Skeleton className="h-32 w-full" />
-        <Skeleton className="h-32 w-full" />
+      <div className="mx-auto w-full max-w-7xl space-y-4 px-4 py-8 sm:px-6">
+        <Skeleton className="h-24 w-full" />
+        <Skeleton className="h-64 w-full" />
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, index) => (
+            <Skeleton key={index} className="h-28 w-full" />
+          ))}
+        </div>
       </div>
     );
   }
 
-  if (!onboarding?.is_completed) {
+  if (onboardingQuery.isError || planQuery.isError) {
     return (
-      <EmptyState
-        title="Koçluk vermeye henüz başlamadın"
-        description="Çalışma koçluğu, ders paketine bağlı ayrı bir hizmettir. Kısa bir tanıtımdan sonra planını oluşturabilirsin."
-        action={
-          <Button asChild>
-            <Link href="/dashboard/tutor/coaching/onboarding">
-              Koçluk vermeye başla
-            </Link>
-          </Button>
-        }
-      />
+      <div className="mx-auto max-w-3xl px-4 py-8">
+        <ErrorMessage
+          message={extractCoachingErrorMessage(onboardingQuery.error ?? planQuery.error)}
+        />
+      </div>
     );
   }
 
-  if (!plan) {
-    return (
-      <EmptyState
-        title="Koçluk planın yok"
-        description="Onboarding'i tamamladın. Şimdi sıklık, fiyat ve hedef sınav gruplarını belirleyerek planını oluştur."
-        action={
-          <Button asChild>
-            <Link href="/dashboard/tutor/coaching/plan">Plan oluştur</Link>
-          </Button>
-        }
-      />
-    );
-  }
+  const rawMetrics = deriveCoachingMetrics({
+    students: studentsQuery.data ?? [],
+    sessions: sessionsQuery.data ?? [],
+    requests: requestsQuery.data ?? [],
+  });
+  const metrics = {
+    activeStudents: studentsQuery.isSuccess ? rawMetrics.activeStudents : null,
+    upcomingSessions: sessionsQuery.isSuccess ? rawMetrics.upcomingSessions : null,
+    pendingReports: sessionsQuery.isSuccess ? rawMetrics.pendingReports : null,
+    pendingRequests: requestsQuery.isSuccess ? rawMetrics.pendingRequests : null,
+  };
+  const status = deriveCoachingStatus({
+    onboardingComplete: Boolean(onboardingQuery.data?.is_completed),
+    plan: planQuery.data ?? null,
+    capacity: capacityQuery.data ?? null,
+    checkoutEnabled,
+  });
 
-  return (
-    <div className="space-y-6">
-      <Card>
-        <CardContent className="space-y-4 pt-6">
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <h2 className="text-lg font-semibold">Koçluk planın</h2>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {plan.session_duration_minutes} dakikalık görüşme ·{" "}
-                {plan.price_per_session_display} / görüşme
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <Badge variant={plan.is_published ? "default" : "secondary"}>
-                {plan.is_published ? "Yayında" : "Taslak"}
-              </Badge>
-              {plan.is_published && !plan.is_accepting_new_students ? (
-                <Badge variant="secondary">Yeni öğrenci alımı kapalı</Badge>
-              ) : null}
-            </div>
-          </div>
-
-          <div className="flex flex-wrap gap-2">
-            <Button asChild variant="outline" size="sm">
-              <Link href="/dashboard/tutor/coaching/plan">Plan ve fiyat</Link>
-            </Button>
-            <Button asChild variant="outline" size="sm">
-              <Link href="/dashboard/tutor/coaching/availability">
-                Müsaitlik ve kapasite
-              </Link>
-            </Button>
-            <Button asChild variant="outline" size="sm">
-              <Link href="/dashboard/tutor/coaching/preview">
-                Öğrenci görünümü
-              </Link>
-            </Button>
-            <Button asChild variant="outline" size="sm">
-              <Link href="/dashboard/tutor/coaching/students">
-                Koçluk öğrencilerim
-              </Link>
-            </Button>
-            <Button asChild variant="outline" size="sm">
-              <Link href="/dashboard/tutor/coaching/upcoming">
-                Yaklaşan görüşmeler
-              </Link>
-            </Button>
-            <Button asChild variant="outline" size="sm">
-              <Link href="/dashboard/tutor/coaching/reports">
-                Raporlar
-              </Link>
-            </Button>
-            <Button asChild variant="outline" size="sm">
-              <Link href="/dashboard/tutor/coaching/complaints">
-                Başvurular
-              </Link>
-            </Button>
-            <Button asChild variant="outline" size="sm">
-              <Link href="/dashboard/tutor/coaching/earnings">
-                Hakedişler
-              </Link>
-            </Button>
-            <Button asChild variant="outline" size="sm">
-              <Link href="/dashboard/tutor/coaching/time-requests">
-                Saat talepleri
-              </Link>
-            </Button>
-            <Button asChild variant="outline" size="sm">
-              <Link href="/dashboard/tutor/coaching/reschedule-requests">
-                Değişiklik talepleri
-              </Link>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {capacity ? <CapacityPreviewCard capacity={capacity} /> : null}
-    </div>
-  );
+  return <TutorCoachingDashboard status={status} metrics={metrics} />;
 }
 
 export default function CoachingDashboardPage() {
   return (
     <CoachingGuard>
-      <div className="mx-auto max-w-3xl px-4 py-8">
-        <h1 className="text-2xl font-bold">Koçluk</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Çalışma koçluğu planını, müsaitliğini ve kapasiteni buradan yönet.
-        </p>
-        <div className="mt-6">
-          <CoachingOverview />
-        </div>
-      </div>
+      <CoachingOverview />
     </CoachingGuard>
   );
 }
