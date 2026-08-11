@@ -389,7 +389,7 @@ const ERROR_MESSAGES: Record<string, string> = {
     "Plan oluşturmadan önce koçluk onboarding'ini tamamlamalısın.",
   plan_incomplete: "Planında eksik alanlar var.",
   price_exceeds_cap:
-    "Koçluk görüşme fiyatı, ders fiyatının en fazla %75'i olabilir.",
+    "Koçluk görüşme fiyatı güncel üst sınırı aşıyor.",
   availability_required:
     "Koçluk müsaitliği eklemeden planını yayınlayamazsın.",
   capacity_required: "En az 1 öğrencilik kapasite belirlemelisin.",
@@ -1771,14 +1771,14 @@ export function coachingRefundStateCopy(state: CoachingRefundPresentationState |
 
 export function coachingEarningStatusCopy(status: CoachingEarningStatus | string): string {
   const copy: Record<string, string> = {
-    eligible_unfunded: "Hakediş oluştu; ödeme fonu henüz doğrulanmadı.",
-    pending: "Hakediş aylık ödeme değerlendirmesinde.",
-    on_hold: "Hakediş inceleme nedeniyle beklemede.",
-    reversed: "Hakediş ters kaydedildi.",
-    ready: "Aylık ödeme için hazır; ödeme aktarımı henüz kaydedilmedi.",
-    paid: "Ödendi.",
+    eligible_unfunded: "Kazanç hesabına uygun · kullanılabilir ödeme fonu doğrulanmadı",
+    pending: "Aylık değerlendirmede",
+    on_hold: "İnceleme nedeniyle bekliyor",
+    reversed: "Muhasebe kaydı geri çevrildi",
+    ready: "Aktarım hazırlığında · banka ödemesi doğrulanmadı",
+    paid: "Sistem kaydında işlendi · banka aktarımı ayrıca doğrulanmalı",
   };
-  return copy[status] ?? "Hakediş durumu güncelleniyor.";
+  return copy[status] ?? "Kazanç durumu inceleniyor";
 }
 
 export const COACHING_FAZ8_QUERY_KEYS = {

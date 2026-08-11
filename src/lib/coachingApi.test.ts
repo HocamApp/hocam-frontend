@@ -2,12 +2,25 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
 import {
+  coachingEarningStatusCopy,
   extractCoachingErrorCode,
   extractCoachingErrorMessage,
   readCoachingSelectedFromSearchParams,
   shouldSkipCoachingChoiceScreen,
   type CoachingEligibility,
 } from "./coachingApi";
+
+describe("coachingEarningStatusCopy", () => {
+  it("maps internal accounting states without claiming bank settlement", () => {
+    assert.equal(coachingEarningStatusCopy("eligible_unfunded"), "Kazanç hesabına uygun · kullanılabilir ödeme fonu doğrulanmadı");
+    assert.equal(coachingEarningStatusCopy("pending"), "Aylık değerlendirmede");
+    assert.equal(coachingEarningStatusCopy("on_hold"), "İnceleme nedeniyle bekliyor");
+    assert.equal(coachingEarningStatusCopy("reversed"), "Muhasebe kaydı geri çevrildi");
+    assert.equal(coachingEarningStatusCopy("ready"), "Aktarım hazırlığında · banka ödemesi doğrulanmadı");
+    assert.equal(coachingEarningStatusCopy("paid"), "Sistem kaydında işlendi · banka aktarımı ayrıca doğrulanmalı");
+    assert.equal(coachingEarningStatusCopy("unexpected"), "Kazanç durumu inceleniyor");
+  });
+});
 
 function axiosError(data: unknown, status = 400) {
   return { response: { status, data } };
