@@ -16,12 +16,8 @@ export function CapacityPreviewCard({
 }: {
   capacity: CoachingCapacityDetail;
 }) {
-  const rows = [
-    { label: "Haftalık koçluk slotu", value: capacity.weekly_slot_count },
-    { label: "Teorik kapasite", value: capacity.theoretical_capacity },
-    { label: "Belirlediğin kapasite", value: capacity.max_active_students },
-    { label: "Aktif koçluk öğrencisi", value: capacity.active_students },
-  ];
+  const safeTheoretical = Math.max(1, capacity.theoretical_capacity);
+  const selectedPercent = Math.min(100, Math.round((capacity.max_active_students / safeTheoretical) * 100));
 
   return (
     <Card>
@@ -35,14 +31,28 @@ export function CapacityPreviewCard({
           </Badge>
         </div>
 
-        <dl className="space-y-2 text-sm">
-          {rows.map((row) => (
-            <div key={row.label} className="flex items-center justify-between">
-              <dt className="text-muted-foreground">{row.label}</dt>
-              <dd className="font-medium tabular-nums">{row.value}</dd>
-            </div>
-          ))}
+        <p className="text-sm leading-6 text-muted-foreground">
+          Sunucu, ayrı koçluk müsaitliğindeki 30 dakikalık saatleri seçtiğin görüşme düzenine göre kapasiteye çevirir.
+        </p>
+
+        <dl className="grid gap-3 sm:grid-cols-2">
+          <CapacityValue value={`${capacity.weekly_slot_count} haftalık slot`} label="Müsaitliğinden oluşan" />
+          <CapacityValue value={`${capacity.theoretical_capacity} öğrenci teorik sınırı`} label="Görüşme düzenine göre" />
+          <CapacityValue value={`${capacity.max_active_students} öğrenci seçili kapasite`} label="Senin belirlediğin" />
+          <CapacityValue value={`${capacity.active_students} aktif öğrenci`} label="Şu anda hizmet alan" />
         </dl>
+
+        {capacity.theoretical_capacity > 0 ? (
+          <div className="space-y-2" aria-label="Seçili kapasitenin teorik sınıra oranı">
+            <div className="flex justify-between text-xs text-muted-foreground">
+              <span>Seçili kapasite</span>
+              <span>%{selectedPercent}</span>
+            </div>
+            <div className="h-2 overflow-hidden rounded-full bg-muted">
+              <div className="h-full rounded-full bg-foreground" style={{ width: `${selectedPercent}%` }} />
+            </div>
+          </div>
+        ) : null}
 
         {capacity.weekly_slot_count === 0 ? (
           <p className="rounded-md bg-muted p-3 text-xs text-muted-foreground">
@@ -52,5 +62,14 @@ export function CapacityPreviewCard({
         ) : null}
       </CardContent>
     </Card>
+  );
+}
+
+function CapacityValue({ value, label }: { value: string; label: string }) {
+  return (
+    <div className="rounded-lg border p-3">
+      <dt className="text-xs text-muted-foreground">{label}</dt>
+      <dd className="mt-1 font-semibold tabular-nums">{value}</dd>
+    </div>
   );
 }

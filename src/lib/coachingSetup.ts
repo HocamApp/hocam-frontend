@@ -14,6 +14,18 @@ export const COACHING_SETUP_STEPS = [
 
 export type CoachingSetupStep = (typeof COACHING_SETUP_STEPS)[number];
 
+const ERROR_STEP: Record<string, CoachingSetupStep> = {
+  availability_required: "availability",
+  capacity_required: "capacity",
+  capacity_exceeds_theoretical: "capacity",
+  price_exceeds_cap: "price",
+  plan_incomplete: "frequency",
+};
+
+export function coachingSetupStepForError(code: string | null): CoachingSetupStep {
+  return (code && ERROR_STEP[code]) || "publish";
+}
+
 export function readCoachingSetupStep(value: string | null): CoachingSetupStep {
   return COACHING_SETUP_STEPS.includes(value as CoachingSetupStep)
     ? (value as CoachingSetupStep)

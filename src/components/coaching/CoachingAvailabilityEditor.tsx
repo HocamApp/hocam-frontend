@@ -67,7 +67,13 @@ export function CoachingAvailabilityEditor({
       {error ? <ErrorMessage message={error} /> : null}
 
       <Card>
-        <CardContent className="pt-6">
+        <CardContent className="space-y-4 pt-6">
+          <div>
+            <h2 className="text-lg font-semibold tracking-tight">Koçluk saatlerini ekle</h2>
+            <p className="mt-1 text-sm leading-6 text-muted-foreground">
+              Bu saatler yalnız 30 dakikalık koçluk görüşmeleri için kullanılır; normal ders müsaitliğin buraya aktarılmaz.
+            </p>
+          </div>
           <form onSubmit={handleAdd} className="grid gap-3 sm:grid-cols-4 sm:items-end">
             <div>
               <Label htmlFor="coaching-day">Gün</Label>
@@ -108,7 +114,7 @@ export function CoachingAvailabilityEditor({
               Aralık ekle
             </Button>
           </form>
-          <p className="mt-3 text-xs text-muted-foreground">
+          <p className="text-xs text-muted-foreground">
             Aralıklar otomatik olarak 30 dakikalık koçluk slotlarına bölünür.
             Çakışan aralıklar kabul edilmez; bitişik aralıklar (19.00–20.00 ve
             20.00–21.00) kullanılabilir.

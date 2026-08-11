@@ -4,6 +4,7 @@ import { describe, it } from "node:test";
 import {
   COACHING_SETUP_STEPS,
   buildCoachingPlanPayload,
+  coachingSetupStepForError,
   readCoachingSetupStep,
   unlockedCoachingSetupSteps,
 } from "./coachingSetup";
@@ -38,6 +39,14 @@ describe("Coaching setup navigation", () => {
       unlockedCoachingSetupSteps({ hasPlan: false, weeklySlotCount: 2 }),
       COACHING_SETUP_STEPS
     );
+  });
+
+  it("routes publish validation back to the field the tutor can act on", () => {
+    assert.equal(coachingSetupStepForError("availability_required"), "availability");
+    assert.equal(coachingSetupStepForError("capacity_exceeds_theoretical"), "capacity");
+    assert.equal(coachingSetupStepForError("price_exceeds_cap"), "price");
+    assert.equal(coachingSetupStepForError("has_active_students"), "publish");
+    assert.equal(coachingSetupStepForError(null), "publish");
   });
 });
 
