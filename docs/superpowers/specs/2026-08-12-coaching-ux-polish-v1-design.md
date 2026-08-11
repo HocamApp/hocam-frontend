@@ -38,6 +38,9 @@ The implementation must not change the following:
 - No payout, settlement, refund, or paid state may be inferred or invented.
 - Existing bundle acceptance semantics remain the only acceptance lifecycle.
 - Checkout remains disabled while runtime `is_checkout_enabled=false`.
+- Plan publication, tutor intake, tutor capacity, and platform-level checkout
+  availability are separate states. A published and open plan does not imply
+  that a new sale can currently be completed.
 - Production flags, Railway, Vercel, Django admin, and production data are out
   of scope.
 
@@ -147,6 +150,8 @@ copy, and at most one useful primary action plus one contextual link.
 
 Presents draft/published meaning, frequency, 30-minute duration, price,
 canonical exam groups, active/theoretical capacity, and intake state.
+Platform-level checkout availability is presented separately and never as a
+tutor readiness requirement.
 
 ### `CoachingSectionNav`
 
@@ -206,8 +211,29 @@ availability, capacity mismatch, unpublished plan, pending Coaching request,
 report requiring action, or no current activity.
 
 Draft copy states that students cannot see the offer. Published copy states
-that eligible students can see it on the tutor profile. Intake-closed and
-capacity-full are distinct states.
+that eligible students can see it on the tutor profile. Intake-closed,
+capacity-full, and platform-level checkout-disabled are distinct states. When
+the global checkout flag is disabled, the published summary says:
+
+> Teklifin yayında. Yeni koçluk satışları platform genelinde şu anda kapalı.
+
+This is informational. It is not a readiness failure and does not offer a
+tutor action that claims to enable checkout.
+
+## 7.1 Coaching status model
+
+The UI treats these axes independently:
+
+1. **Plan publication:** no plan, draft, or published.
+2. **Tutor intake:** accepting or not accepting new Coaching students.
+3. **Capacity:** no availability, capacity available, or capacity full/server
+   constrained.
+4. **Platform checkout:** enabled or disabled by runtime Coaching config.
+5. **Tutor readiness:** onboarding, plan, availability, capacity, preview, and
+   publication requirements backed by real state.
+
+Only tutor-readiness items may generate a “complete this” action. A disabled
+platform checkout flag is controlled by Hocam and remains read-only context.
 
 ## 8. Guided setup and direct editing
 
@@ -227,7 +253,8 @@ Availability precedes capacity so the capacity explanation is based on real
 
 Each stage contains one conceptual decision. Selection cards replace tiny
 pills for frequency. A selected frequency reveals its 30-minute cadence and
-representative package meeting count in the same context.
+package meeting counts derived from canonical domain/API truth in the same
+context; illustrative values are never hardcoded as product logic.
 
 The setup form preserves unsaved state while moving between stages. Saving:
 
@@ -265,6 +292,12 @@ Other durations are available in an expandable region. Each duration shows:
 The estimate disclaimer remains visible and says that live collection and
 external payout settlement are not active.
 
+Package durations and meeting counts use the canonical 2, 4, 12, and 24-week
+product model already represented by the backend revenue-preview contract.
+Frequency, Coaching meeting count, effective package discount, 15% commission,
+and estimated net values are consumed from current domain/API truth. The
+frontend does not recreate discount tables or embed sample calculations.
+
 ## 10. Availability and capacity
 
 The page explicitly states:
@@ -288,7 +321,10 @@ Capacity is explained only after availability exists. It presents:
 - selected/theoretical progress.
 
 The UI never permits or implies a capacity above server truth. Existing
-students are not removed when capacity is lowered.
+backend capacity-downshift semantics are preserved. This UX task does not
+introduce automatic student termination or any new lifecycle behaviour. If
+the backend rejects a lower capacity because of current active load, the UI
+surfaces that server validation clearly and keeps the saved capacity intact.
 
 ## 11. Onboarding
 
@@ -344,11 +380,15 @@ Status copy distinguishes:
 - pending processing;
 - on hold or disputed;
 - reversed accounting state;
-- a locally prepared payout batch.
+- internal monthly accounting records, when the API returns them.
 
-`earning_eligible_at` is not a payment date. `paid_at` is shown only if the
-existing backend record actually includes it and the label remains a server
-record, not a bank-settlement guarantee.
+Tutor-facing copy maps these records to plain Turkish and does not expose
+terms such as “local payout batch”. `earning_eligible_at` is not a payment
+date. `paid_at`, if returned, is not labelled “bankaya yatırıldı”, “ödeme
+tamamlandı”, or otherwise presented as guaranteed external settlement unless
+the backend contract explicitly proves that state. External payout settlement
+is not production-ready, so every summary remains accounting context rather
+than a bank-transfer claim.
 
 ## 15. Exam-group correction
 
@@ -409,6 +449,8 @@ and cards preserve logical keyboard order.
 - `price_exceeds_cap` returns the tutor to the price stage.
 - capacity violations return the tutor to the capacity stage with server
   values intact.
+- runtime Coaching config supplies platform-level checkout state; the UI does
+  not infer it from plan publication, intake, or capacity and cannot mutate it.
 - Successful mutations invalidate or update only relevant Coaching and
   acceptance query keys.
 - Existing checkout gating and feature flags are not bypassed.
