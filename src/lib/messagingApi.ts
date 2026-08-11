@@ -1,5 +1,5 @@
 import api from "./api";
-import { Conversation, Message, MessageReplyPreview, MessageRequest } from "@/types";
+import { Conversation, Message, MessageAttachment, MessageReplyPreview, MessageRequest } from "@/types";
 
 export interface CreateMessageRequestPayload {
   tutor: string;
@@ -47,6 +47,7 @@ interface RawMessage {
   read_at?: string | null;
   reply_to?: MessageReplyPreview | null;
   is_deleted?: boolean;
+  attachment?: MessageAttachment | null;
 }
 
 function normalizeMessage(m: RawMessage): Message {
@@ -60,6 +61,7 @@ function normalizeMessage(m: RawMessage): Message {
     read_at: m.read_at ?? null,
     reply_to: m.reply_to ?? null,
     is_deleted: m.is_deleted ?? false,
+    attachment: m.attachment ?? null,
   };
 }
 
@@ -98,6 +100,8 @@ export interface SendMessagePayload {
   conversation_id: string;
   message_text?: string;
   image?: File;
+  attachment?: File;
+  attachment_kind?: "image" | "file" | "voice";
   reply_to?: string;
 }
 
@@ -105,12 +109,16 @@ export async function sendMessage(
   payload: SendMessagePayload
 ): Promise<Message> {
   let response;
-  if (payload.image) {
+  const attachment = payload.attachment ?? payload.image;
+  if (attachment) {
     const formData = new FormData();
     formData.append("conversation_id", payload.conversation_id);
     if (payload.message_text) formData.append("message_text", payload.message_text);
     if (payload.reply_to) formData.append("reply_to", payload.reply_to);
-    formData.append("image", payload.image);
+    // Keep image for legacy conversations; coaching API recognizes attachment.
+    if (payload.image && !payload.attachment) formData.append("image", payload.image);
+    else formData.append("attachment", attachment);
+    if (payload.attachment_kind) formData.append("attachment_kind", payload.attachment_kind);
     // Clear the global JSON default so the browser sets multipart/form-data WITH
     // its boundary; otherwise Django cannot parse the upload and the image is dropped.
     response = await api.post<Message>("/messages/", formData, {
@@ -124,6 +132,16 @@ export async function sendMessage(
     });
   }
   return normalizeMessage(response.data as unknown as RawMessage);
+}
+
+export async function fetchMessageAttachmentAccess(id: string): Promise<{ url: string; expires_in: number }> {
+  const response = await api.get<{ url: string; expires_in: number }>(`/messages/attachments/${id}/download/`);
+  return response.data;
+}
+
+export async function fetchCoachingPurchaseConversation(purchaseId: string): Promise<Conversation> {
+  const response = await api.get<Conversation>(`/coaching/purchases/${purchaseId}/conversation/`);
+  return response.data;
 }
 
 /** Soft-delete own message; returns the tombstoned message. */

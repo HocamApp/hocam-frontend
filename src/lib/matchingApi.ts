@@ -81,3 +81,14 @@ export async function fetchRecommendationControls(): Promise<TutorRecommendation
 export async function restoreTutorRecommendation(controlId: string): Promise<void> {
   await api.delete(`/matching/recommendation-controls/${controlId}/`);
 }
+
+/**
+ * Master Spec §14.6 — the coaching checkout screen's inline exam-target
+ * picker. Updates only the goal field; never touches subjects/stage.
+ */
+export async function updateMatchingGoal(
+  goal: "YKS" | "DGS" | "KPSS"
+): Promise<{ goal: string }> {
+  const response = await api.patch<{ goal: string }>("/matching/goal/", { goal });
+  return response.data;
+}

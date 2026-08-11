@@ -7,6 +7,9 @@ import { useQuery } from "@tanstack/react-query";
 import {
   Bell,
   CircleHelp,
+  ClipboardList,
+  Compass,
+  FileQuestion,
   GraduationCap,
   Heart,
   Home,
@@ -17,6 +20,8 @@ import {
   Route,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useCoachingFlag } from "@/hooks/useCoachingFlag";
+import { useTutorAcceptanceConfig } from "@/hooks/useTutorAcceptanceConfig";
 import { usePageVisibility } from "@/hooks/usePageVisibility";
 import {
   Popover,
@@ -38,6 +43,9 @@ import {
 const iconByName = {
   Bell,
   CircleHelp,
+  ClipboardList,
+  Compass,
+  FileQuestion,
   GraduationCap,
   Heart,
   Home,
@@ -57,6 +65,8 @@ export function MobileTabBar() {
   const isPageVisible = usePageVisibility();
   const [isMoreOpen, setIsMoreOpen] = React.useState(false);
 
+  const { enabled: coachingEnabled } = useCoachingFlag();
+  const { showPackageRequests } = useTutorAcceptanceConfig();
   const { data: summary } = useQuery({
     queryKey: ["notification-summary"],
     queryFn: fetchNotificationSummary,
@@ -66,7 +76,10 @@ export function MobileTabBar() {
 
   if (isLoading || !isAuthenticated) return null;
 
-  const descriptors = getNavDescriptors(isTutor ? "tutor" : "student");
+  const descriptors = getNavDescriptors(isTutor ? "tutor" : "student", {
+    coachingEnabled,
+    packageRequestsEnabled: showPackageRequests,
+  });
   const primaryDescriptors = descriptors.filter(
     (
       descriptor

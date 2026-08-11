@@ -22,6 +22,13 @@ import {
   normalizeWeeklyLessonOption,
   type WeeklyLessonOption,
 } from "@/lib/lessonPricing";
+import {
+  createCoachingHold,
+  extractCoachingErrorMessage,
+  fetchCoachingEligibility,
+  readCoachingSelectedFromSearchParams,
+  type CoachingQuote,
+} from "@/lib/coachingApi";
 import { BookingModal } from "@/components/lessons/BookingModal";
 import { CheckoutProductPicker } from "@/components/checkout/CheckoutProductPicker";
 import { CheckoutSummary, type PromoStatus } from "@/components/checkout/CheckoutSummary";
@@ -87,6 +94,9 @@ export default function TutorCheckoutPage({
   const [durationDays, setDurationDays] = useState<number>(() =>
     parseDurationDays(searchParams.get("duration"))
   );
+  // Coaching selection rides in the URL like the package selection does,
+  // so it survives the login round-trip and a shared link.
+  const coachingSelected = readCoachingSelectedFromSearchParams(searchParams);
   const [promoCode, setPromoCode] = useState("");
   const [promoStatus, setPromoStatus] = useState<PromoStatus>("idle");
   const [promoMessage, setPromoMessage] = useState<string | null>(null);
@@ -125,6 +135,8 @@ export default function TutorCheckoutPage({
     next.set("duration", String(durationDays));
     next.delete("package");
     next.delete("term");
+    // `coaching` is deliberately left untouched here — it is owned by the
+    // choice step and the "Düzenle" link, not by this effect.
     if (next.toString() !== searchParams.toString()) {
       router.replace(`${pathname}?${next.toString()}`, { scroll: false });
     }
@@ -219,6 +231,109 @@ export default function TutorCheckoutPage({
     (p) => p.status === "paid" && p.remaining_credits > 0
   );
 
+  // Eligibility is per-student and uncached; the coaching row only renders
+  // when the server says this student can actually buy it.
+  const { data: coachingEligibility } = useQuery({
+    queryKey: ["coaching-eligibility", tutorId],
+    queryFn: () => fetchCoachingEligibility(tutorId),
+    enabled: isAuthenticated && isStudent && coachingSelected,
+  });
+
+  const coachingAvailable = Boolean(
+    coachingSelected && coachingEligibility?.eligible
+  );
+
+  // The student asked for coaching and the server says no — an active
+  // coach, a full plan, a mismatched exam. Lesson-only is the right
+  // outcome, but it must be stated: arriving here after a login round-trip
+  // and finding coaching quietly missing looks like the site lost it.
+  const coachingUnavailableMessage =
+    coachingSelected &&
+    coachingEligibility &&
+    !coachingEligibility.eligible &&
+    coachingEligibility.message
+      ? coachingEligibility.message
+      : null;
+
+  const [coachingQuote, setCoachingQuote] = useState<CoachingQuote | null>(null);
+  const [coachingHoldExpiresAt, setCoachingHoldExpiresAt] = useState<string | null>(
+    null
+  );
+  const [coachingHoldError, setCoachingHoldError] = useState<string | null>(null);
+  // Set when the server rejected the submit because the price moved. Blocks
+  // the CTA until the student explicitly accepts the new number, so a
+  // second click cannot buy at a price they never agreed to.
+  const [coachingPriceChanged, setCoachingPriceChanged] = useState(false);
+  // Bumped when the student accepts a new price. It is a dependency of the
+  // hold effect on purpose: clearing the banner is not enough, because the
+  // SERVER's hold still carries the old fingerprint and would reject the
+  // next submit for the same reason. Accepting has to re-quote.
+  const [coachingQuoteNonce, setCoachingQuoteNonce] = useState(0);
+
+  // The student asked for coaching AND the server has actually quoted and
+  // held it. Only this may put `coaching` on the request.
+  //
+  // `coachingAvailable` is NOT enough: it says the student is eligible, not
+  // that a hold exists. If the hold call fails, the summary falls back to
+  // lesson-only numbers — sending the coaching flag anyway would create a
+  // bundle the student was never shown a price for.
+  const coachingReady = coachingAvailable && coachingQuote !== null;
+  const coachingBlocked = coachingAvailable && coachingQuote === null;
+
+  // The hold is taken HERE, not on the choice screen: the quote depends on
+  // package duration and weekly-lesson count, which are only settled once
+  // the student is on this page. Re-quoting reuses the same server row and
+  // never extends the 15-minute window.
+  useEffect(() => {
+    if (!coachingAvailable || !selectedPlan) {
+      setCoachingQuote(null);
+      setCoachingHoldExpiresAt(null);
+      setCoachingHoldError(null);
+      return;
+    }
+    let cancelled = false;
+    const storageKey = `coaching-hold-key:${tutorId}`;
+    let idempotencyKey = sessionStorage.getItem(storageKey);
+    if (!idempotencyKey) {
+      idempotencyKey = crypto.randomUUID();
+      sessionStorage.setItem(storageKey, idempotencyKey);
+    }
+
+    createCoachingHold({
+      tutorId,
+      durationDays,
+      lessonsPerWeek,
+      idempotencyKey,
+    })
+      .then(({ hold, quote }) => {
+        if (cancelled) return;
+        setCoachingQuote(quote);
+        // Countdown source is the server's expiry, never a local timer.
+        setCoachingHoldExpiresAt(hold.expires_at);
+        setCoachingHoldError(null);
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        setCoachingQuote(null);
+        setCoachingHoldExpiresAt(null);
+        // Kept in state, not only in a toast: a toast disappears while the
+        // summary still shows lesson-only numbers, and the student has no
+        // way to tell that the coaching they picked did not make it in.
+        setCoachingHoldError(extractCoachingErrorMessage(err));
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    coachingAvailable,
+    selectedPlan,
+    tutorId,
+    durationDays,
+    lessonsPerWeek,
+    coachingQuoteNonce,
+  ]);
+
   const purchaseMutation = useMutation({
     mutationFn: createPackagePurchase,
     onSuccess: (purchase) => {
@@ -227,6 +342,27 @@ export default function TutorCheckoutPage({
       setCreatedPurchase(purchase);
     },
     onError: (err: unknown) => {
+      // The server refuses a bundle whose price moved since the quote and
+      // hands back the current one (409 price_changed). Show the new
+      // numbers and make the student confirm them — do not retry silently,
+      // and do not leave the old total on screen.
+      const response = (
+        err as {
+          response?: { status?: number; data?: Record<string, unknown> };
+        }
+      ).response;
+      const data = response?.data;
+      if (response?.status === 409 && data?.code === "price_changed") {
+        const fresh = data.coaching_quote as CoachingQuote | undefined;
+        if (fresh) setCoachingQuote(fresh);
+        setCoachingPriceChanged(true);
+        toast.error(
+          typeof data.detail === "string"
+            ? data.detail
+            : "Koçluk fiyatı değişti. Yeni tutarı onayla."
+        );
+        return;
+      }
       toast.error(extractPackagePurchaseErrorMessage(err));
     },
   });
@@ -417,15 +553,42 @@ export default function TutorCheckoutPage({
               weeklyPlans={weeklyPlans}
               onPurchaseCta={() => {
                 if (!selectedPlan) return;
+                // Refuse rather than guess: coaching was chosen but has
+                // no live quote, so neither answer is safe — sending it
+                // buys an unpriced bundle, dropping it silently buys
+                // less than was chosen.
+                if (coachingBlocked) return;
+                if (coachingPriceChanged) return;
                 purchaseMutation.mutate({
                   tutor: tutor.id,
                   plan: selectedPlan.id,
                   ...(appliedPromoCode && promoPlanId === selectedPlan.id ? { promotion_code: appliedPromoCode } : {}),
+                  // The server re-derives duration/per-week from the plan
+                  // and re-checks the quote; this flag only says "the
+                  // student wants coaching too".
+                  ...(coachingReady ? { coaching: {} } : {}),
                 });
               }}
               purchasePending={purchaseMutation.isPending}
               pendingForSelectedPlan={pendingForSelectedPlan}
               otherPendingPlanName={otherPendingPlanName}
+              paidRemainingCredits={paidWithCredits?.remaining_credits ?? null}
+              onUseCredits={() => setBookingModalMode("credits")}
+              coachingQuote={coachingReady ? coachingQuote : null}
+              coachingBlockedMessage={
+                coachingBlocked
+                  ? coachingHoldError ??
+                    "Koçluk kontenjanı şu anda doğrulanamadı."
+                  : null
+              }
+              coachingHoldExpiresAt={coachingHoldExpiresAt}
+              coachingUnavailableMessage={coachingUnavailableMessage}
+              coachingPriceChanged={coachingPriceChanged}
+              onAcceptNewCoachingPrice={() => {
+                setCoachingPriceChanged(false);
+                setCoachingQuoteNonce((n) => n + 1);
+              }}
+              coachingEditHref={`/tutors/${tutorId}/checkout/coaching?${searchParams.toString()}`}
             />
           )
         }

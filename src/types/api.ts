@@ -439,6 +439,25 @@ export interface GoogleAuthNeedsRole {
 
 export type GoogleAuthResponse = GoogleAuthSuccess | GoogleAuthNeedsRole;
 
+/**
+ * Public coaching plan facts shown on a tutor's profile.
+ *
+ * Tutor-global and public — it says what is on offer, never whether the
+ * current student may buy it. That verdict comes only from
+ * `fetchCoachingEligibility()`.
+ */
+export interface TutorCoachingSummary {
+  frequency: "biweekly" | "weekly" | "twice_weekly";
+  session_duration_minutes: number;
+  price_per_session_minor: number;
+  price_per_session_display: string;
+  is_free: boolean;
+  target_exam_types: string[];
+  description: string;
+  /** The tutor's own switch, not live capacity. */
+  is_accepting_new_students: boolean;
+}
+
 export interface TutorProfile {
   id: string;
   user: string;
@@ -469,6 +488,16 @@ export interface TutorProfile {
   availability_is_stale?: boolean;
   is_new_tutor?: boolean;
   launch_program_available?: boolean;
+  /** Tutor-global: has a PUBLISHED coaching plan. */
+  offers_coaching?: boolean;
+  /** Tutor-global: published coaching plan priced at 0. */
+  offers_free_coaching?: boolean;
+  /** The tutor's manual "accepting new students" toggle — NOT live
+   *  capacity. Real eligibility comes only from /coaching/eligibility/. */
+  coaching_intake_open?: boolean;
+  /** Public plan summary. Detail endpoint only — the cached list never
+   *  carries it, so this is undefined on tutors that came from a list. */
+  coaching?: TutorCoachingSummary | null;
   is_online: boolean;
   last_seen_at?: string | null;
   trial_lesson_eligible?: boolean | null;
@@ -540,6 +569,13 @@ export interface MatchingAnswers {
   subject_keys: string[];
   challenges: MatchChallenge[];
   teaching_styles: TutorTeachingStyle[];
+  /** Tutor-global: has a PUBLISHED coaching plan. */
+  offers_coaching?: boolean;
+  /** Tutor-global: published coaching plan priced at 0. */
+  offers_free_coaching?: boolean;
+  /** The tutor's manual "accepting new students" toggle — NOT live
+   *  capacity. Real eligibility comes only from /coaching/eligibility/. */
+  coaching_intake_open?: boolean;
   availability_windows: MatchAvailabilityWindow[];
   budget_segment: MatchBudgetSegment;
   schema_version: 1;
@@ -845,6 +881,28 @@ export interface Conversation {
   unread_count?: number;
   tutor_profile?: TutorProfile | null;
   is_blocked: boolean;
+  coaching_purchase_id?: string | null;
+  response_sla?: CoachingResponseSla | null;
+}
+
+export interface CoachingResponseSla {
+  id: string;
+  status: "calendar_pending" | "pending" | "breached" | "satisfied";
+  first_unanswered_at: string;
+  due_at: string | null;
+  breached_at: string | null;
+  satisfied_at: string | null;
+}
+
+export interface MessageAttachment {
+  id: string;
+  kind: "image" | "file" | "voice";
+  original_name: string;
+  mime_type: string;
+  size_bytes: number;
+  voice_duration_ms?: number | null;
+  storage_state: "pending" | "active" | "delete_pending";
+  download_url: string;
 }
 
 export interface MessageReplyPreview {
@@ -864,6 +922,7 @@ export interface Message {
   read_at?: string | null;
   reply_to?: MessageReplyPreview | null;
   is_deleted?: boolean;
+  attachment?: MessageAttachment | null;
 }
 
 export interface Review {
@@ -1132,6 +1191,7 @@ export interface UserPreferences {
   notify_lesson_requests: boolean;
   notify_booking_reminders: boolean;
   notify_email: boolean;
+  notify_coaching_updates: boolean;
   language: string;
 }
 
