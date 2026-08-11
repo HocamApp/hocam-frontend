@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 
-import { CoachingGuard } from "@/components/coaching/CoachingGuard";
+import { CoachingRecordGuard as CoachingGuard } from "@/components/coaching/CoachingGuard";
 import { CoachingPageShell } from "@/components/coaching/CoachingPageShell";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";

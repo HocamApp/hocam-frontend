@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { CoachingGuard } from "@/components/coaching/CoachingGuard";
+import { CoachingRecordGuard as CoachingGuard } from "@/components/coaching/CoachingGuard";
 import { CoachingEmptyState as EmptyState } from "@/components/coaching/CoachingEmptyState";
 import { CoachingPageShell } from "@/components/coaching/CoachingPageShell";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 
-import { CoachingGuard } from "@/components/coaching/CoachingGuard";
+import { CoachingRecordGuard as CoachingGuard } from "@/components/coaching/CoachingGuard";
 import { CoachingEmptyState } from "@/components/coaching/CoachingEmptyState";
 import { CoachingPageShell } from "@/components/coaching/CoachingPageShell";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";

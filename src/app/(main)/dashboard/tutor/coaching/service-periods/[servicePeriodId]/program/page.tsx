@@ -2,7 +2,7 @@
 
 import { useParams } from "next/navigation";
 
-import { CoachingGuard } from "@/components/coaching/CoachingGuard";
+import { CoachingRecordGuard as CoachingGuard } from "@/components/coaching/CoachingGuard";
 import { CoachingPageShell } from "@/components/coaching/CoachingPageShell";
 import { CoachingProgramEditor } from "@/components/coaching/CoachingProgramEditor";
 

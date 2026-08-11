@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { FilePenLine } from "lucide-react";
 
-import { CoachingGuard } from "@/components/coaching/CoachingGuard";
+import { CoachingRecordGuard as CoachingGuard } from "@/components/coaching/CoachingGuard";
 import { CoachingEmptyState as EmptyState } from "@/components/coaching/CoachingEmptyState";
 import { CoachingPageShell } from "@/components/coaching/CoachingPageShell";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
