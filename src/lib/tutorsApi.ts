@@ -64,6 +64,8 @@ export interface TutorFilters {
   online?: string;
   teaching_attributes?: string;
   topic?: string;
+  has_coaching?: string;
+  free_coaching?: string;
 }
 
 export async function fetchTeachingAttributes(): Promise<TutorTeachingAttribute[]> {

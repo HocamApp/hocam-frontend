@@ -34,6 +34,7 @@ import { ReviewSummary } from "@/components/tutors/ReviewSummary";
 import { TutorPresenceBadge } from "@/components/tutors/TutorPresenceBadge";
 import { VerifiedTutorMark } from "@/components/tutors/VerifiedTutorMark";
 import { AvailabilityCalendar } from "@/components/tutors/AvailabilityCalendar";
+import { TutorCoachingSection } from "@/components/tutors/TutorCoachingSection";
 import { MessageRequestModal } from "@/components/tutors/MessageRequestModal";
 import { BookingModal } from "@/components/lessons/BookingModal";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
@@ -480,7 +481,13 @@ export default function TutorProfilePage({
       }
     }
     const query = qp.toString();
-    return `/tutors/${id}/checkout${query ? `?${query}` : ""}`;
+    // Tutors who offer coaching get the choice step first (master spec
+    // §13.1); everyone else goes straight to package selection, so the
+    // extra screen never appears where it has nothing to ask.
+    const base = tutor?.offers_coaching
+      ? `/tutors/${id}/checkout/coaching`
+      : `/tutors/${id}/checkout`;
+    return `${base}${query ? `?${query}` : ""}`;
   })();
 
   const submitTutorReport = async () => {
@@ -963,6 +970,16 @@ export default function TutorProfilePage({
               </div>
             )}
           </section>
+
+          {/* Section 2b — Coaching (only when this tutor publishes a plan) */}
+          {tutor.coaching ? (
+            <TutorCoachingSection
+              tutorId={id}
+              coaching={tutor.coaching}
+              isStudent={isAuthenticated && isStudent && !isOwnProfile}
+              checkoutHref={checkoutHref}
+            />
+          ) : null}
 
           {/* Section 3 — Availability */}
           <section className="mt-10">

@@ -60,6 +60,8 @@ test("renders duration choices as a single-select accordion in the decision rail
       promoMessage={null}
       promoPricing={null}
       onRemovePromo={() => {}}
+      paidRemainingCredits={null}
+      onUseCredits={() => {}}
     />
   );
 
@@ -109,6 +111,8 @@ test("applies and removes a promotion with inline status", () => {
         total_price: 16128,
       }}
       onRemovePromo={() => removeCount++}
+      paidRemainingCredits={null}
+      onUseCredits={() => {}}
     />
   );
 
@@ -141,6 +145,8 @@ test("places the primary decision before trust copy and promotion controls", () 
       promoMessage={null}
       promoPricing={null}
       onRemovePromo={() => {}}
+      paidRemainingCredits={null}
+      onUseCredits={() => {}}
     />
   );
 

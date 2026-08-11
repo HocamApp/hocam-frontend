@@ -208,3 +208,81 @@ describe("active navigation matching", () => {
     );
   });
 });
+
+describe("coaching nav entry", () => {
+  type RouteLike = { kind: string; href?: string; title?: string };
+
+  const hrefs = (role: "student" | "tutor", coachingEnabled?: boolean) =>
+    (
+      (navItems.getNavDescriptors as unknown as (
+        role: string,
+        options?: { coachingEnabled?: boolean }
+      ) => RouteLike[])(role, { coachingEnabled }) ?? []
+    )
+      .filter((descriptor) => descriptor.kind === "route")
+      .map((descriptor) => descriptor.href);
+
+  it("is absent for tutors when coaching is disabled", () => {
+    assert.equal(hrefs("tutor", false).includes("/dashboard/tutor/coaching"), false);
+  });
+
+  it("is absent when no options are passed at all", () => {
+    assert.equal(hrefs("tutor").includes("/dashboard/tutor/coaching"), false);
+  });
+
+  it("appears for tutors when coaching is enabled", () => {
+    assert.equal(hrefs("tutor", true).includes("/dashboard/tutor/coaching"), true);
+  });
+
+  it("sits directly after the tutor dashboard", () => {
+    const routes = hrefs("tutor", true);
+    const dashboardIndex = routes.indexOf("/dashboard/tutor");
+    const coachingIndex = routes.indexOf("/dashboard/tutor/coaching");
+    assert.equal(coachingIndex, dashboardIndex + 1);
+  });
+
+  it("never appears for students", () => {
+    assert.equal(hrefs("student", true).includes("/dashboard/tutor/coaching"), false);
+  });
+});
+
+describe("package requests nav entry", () => {
+  type RouteLike = { kind: string; href?: string };
+
+  const hrefs = (options?: {
+    coachingEnabled?: boolean;
+    packageRequestsEnabled?: boolean;
+  }) =>
+    (
+      (navItems.getNavDescriptors as unknown as (
+        role: string,
+        options?: Record<string, boolean>
+      ) => RouteLike[])("tutor", options) ?? []
+    )
+      .filter((descriptor) => descriptor.kind === "route")
+      .map((descriptor) => descriptor.href);
+
+  it("is absent by default", () => {
+    assert.equal(hrefs().includes("/dashboard/tutor/requests"), false);
+  });
+
+  it("appears independently of coaching", () => {
+    // A tutor with no coaching plan still gets ordinary package requests.
+    const routes = hrefs({ coachingEnabled: false, packageRequestsEnabled: true });
+    assert.equal(routes.includes("/dashboard/tutor/requests"), true);
+    assert.equal(routes.includes("/dashboard/tutor/coaching"), false);
+  });
+
+  it("coaching appears independently of package requests", () => {
+    const routes = hrefs({ coachingEnabled: true, packageRequestsEnabled: false });
+    assert.equal(routes.includes("/dashboard/tutor/coaching"), true);
+    assert.equal(routes.includes("/dashboard/tutor/requests"), false);
+  });
+
+  it("both sit after the tutor dashboard, coaching first", () => {
+    const routes = hrefs({ coachingEnabled: true, packageRequestsEnabled: true });
+    const dashboardIndex = routes.indexOf("/dashboard/tutor");
+    assert.equal(routes.indexOf("/dashboard/tutor/coaching"), dashboardIndex + 1);
+    assert.equal(routes.indexOf("/dashboard/tutor/requests"), dashboardIndex + 2);
+  });
+});

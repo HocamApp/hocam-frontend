@@ -3,6 +3,7 @@
 import type { FormEvent, KeyboardEvent } from "react";
 import Link from "next/link";
 import {
+  CheckCircle2,
   ChevronDown,
   Clock,
   Loader2,
@@ -13,13 +14,16 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
 import { cn, formatPrice } from "@/lib/utils";
+import { formatTryMinor } from "@/lib/money";
 import {
   MOST_POPULAR_DURATION_DAYS,
   calculatePackagePricing,
   formatPlanDuration,
   type PackagePricing,
 } from "@/lib/lessonPricing";
+import type { CoachingQuote } from "@/lib/coachingApi";
 import type { PackagePlan, PromoPreviewResponse, TutorProfile } from "@/types";
 
 export type PromoStatus = "idle" | "editing" | "loading" | "applied" | "error";
@@ -43,6 +47,32 @@ interface CheckoutSummaryProps {
   promoMessage: string | null;
   promoPricing: PromoPreviewResponse | null;
   onRemovePromo: () => void;
+  /** Remaining credits on a paid package with this tutor, if any. */
+  paidRemainingCredits: number | null;
+  onUseCredits: () => void;
+  /** Server-priced coaching add-on; null when coaching is not selected. */
+  coachingQuote?: CoachingQuote | null;
+  /** Server-issued hold expiry — the countdown source, not a local timer. */
+  coachingHoldExpiresAt?: string | null;
+  /**
+   * Set when the student chose coaching but the server has not quoted or
+   * held it. The summary then shows lesson-only numbers, so it must say
+   * out loud that coaching is not in this order — and the CTA is blocked
+   * rather than quietly submitting a different basket than the one shown.
+   */
+  coachingBlockedMessage?: string | null;
+  /**
+   * The student picked coaching but is not eligible for it. Unlike
+   * `coachingBlockedMessage` this is not transient and does not block the
+   * CTA — the lesson package alone is a valid order. It only has to be
+   * said out loud instead of silently dropping what they chose.
+   */
+  coachingUnavailableMessage?: string | null;
+  /** The server refused the submit because the coaching price moved. */
+  coachingPriceChanged?: boolean;
+  onAcceptNewCoachingPrice?: () => void;
+  /** Back to the coaching choice step, keeping the package selection. */
+  coachingEditHref?: string;
 }
 
 function initials(tutor: TutorProfile) {
@@ -68,6 +98,15 @@ export function CheckoutSummary({
   promoMessage,
   promoPricing,
   onRemovePromo,
+  paidRemainingCredits,
+  onUseCredits,
+  coachingQuote = null,
+  coachingHoldExpiresAt = null,
+  coachingBlockedMessage = null,
+  coachingUnavailableMessage = null,
+  coachingPriceChanged = false,
+  onAcceptNewCoachingPrice,
+  coachingEditHref,
 }: CheckoutSummaryProps) {
   const durations = weeklyPlans
     .filter((plan) => plan.lessons_per_week === lessonsPerWeek && plan.duration_days != null)
@@ -78,6 +117,21 @@ export function CheckoutSummary({
   const selectedPlanDiscount = promoPricing?.discount_amount ?? pricing?.discountAmount ?? null;
   const busy = purchasePending || promoStatus === "loading";
   const unresolvedPromo = Boolean(promoCode.trim()) && promoStatus !== "applied";
+  // Bundle total is summed in minor units — the lesson package's whole-TL
+  // total is converted up, never the coaching total rounded down.
+  const bundleTotalMinor =
+    pricing && coachingQuote
+      ? pricing.total * 100 + coachingQuote.total_price_minor
+      : null;
+  const totalLabel = coachingQuote ? "Toplam" : "Paket toplamı";
+  const displayedTotal =
+    bundleTotalMinor !== null
+      ? formatTryMinor(bundleTotalMinor)
+      : selectedTotal != null
+        ? formatPrice(selectedTotal)
+        : "—";
+  const purchaseBlocked =
+    busy || unresolvedPromo || !planAvailable || !!coachingBlockedMessage || coachingPriceChanged;
 
   const handleDurationKeyDown = (
     event: KeyboardEvent<HTMLButtonElement>,
@@ -249,6 +303,97 @@ export function CheckoutSummary({
         </div>
       )}
 
+      {coachingQuote && (
+        <section aria-labelledby="coaching-title" className="mt-3.5">
+          <div className="flex items-center justify-between gap-4">
+            <h2 id="coaching-title" className="text-sm font-bold">Çalışma koçluğu</h2>
+            {coachingEditHref && (
+              <Link
+                href={coachingEditHref}
+                className="text-xs underline underline-offset-2 hover:text-foreground"
+              >
+                Düzenle
+              </Link>
+            )}
+          </div>
+          <dl className="mt-1.5 space-y-1.5 text-xs sm:text-sm">
+            <SummaryRow
+              label={`${coachingQuote.total_sessions} görüşme × ${coachingQuote.unit_price_display}`}
+              value={coachingQuote.subtotal_price_display}
+            />
+            {/* Amount, not just percent: a free plan still carries the
+                package's discount percent, and "Paket indirimi (%16)
+                -0,00 ₺" is a line that says nothing. */}
+            {coachingQuote.discount_percent > 0 && coachingQuote.discount_amount_minor > 0 && (
+              <SummaryRow
+                label={`Paket indirimi (%${coachingQuote.discount_percent})`}
+                value={`-${coachingQuote.discount_amount_display}`}
+                accent
+              />
+            )}
+            <SummaryRow
+              label="Koçluk toplamı"
+              value={
+                coachingQuote.is_free
+                  ? "₺0 — Ders paketinle ücretsiz"
+                  : coachingQuote.total_price_display
+              }
+              strong
+            />
+          </dl>
+          {coachingHoldExpiresAt && (
+            <p className="mt-1.5 text-xs opacity-65">
+              Koçluk kontenjanın{" "}
+              {new Date(coachingHoldExpiresAt).toLocaleTimeString("tr-TR", {
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+              &apos;e kadar senin için tutuluyor.
+            </p>
+          )}
+        </section>
+      )}
+
+      {coachingUnavailableMessage && (
+        <div className="mt-3 rounded-xl border border-dashed border-[var(--checkout-evergreen)] p-3 text-xs">
+          <p className="font-bold">Çalışma koçluğu şu anda eklenemiyor</p>
+          <p className="mt-1 opacity-70">
+            {coachingUnavailableMessage} Aşağıdaki tutar yalnız ders paketini kapsıyor.
+          </p>
+        </div>
+      )}
+
+      {coachingPriceChanged && (
+        <div className="mt-3 rounded-xl border border-destructive/40 bg-destructive/5 p-3 text-xs">
+          <p className="font-bold text-destructive">Koçluk fiyatı değişti</p>
+          <p className="mt-1 opacity-70">
+            Öğretmen sen bu sayfadayken koçluk ücretini güncelledi. Yukarıdaki
+            tutarlar yeni fiyata göre. Talebin oluşturulmadı — devam etmek
+            için yeni tutarı onayla.
+          </p>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            className="mt-2.5 rounded-lg"
+            onClick={onAcceptNewCoachingPrice}
+          >
+            Yeni tutarı onaylıyorum
+          </Button>
+        </div>
+      )}
+
+      {coachingBlockedMessage && (
+        <div className="mt-3 rounded-xl border border-destructive/40 bg-destructive/5 p-3 text-xs">
+          <p className="font-bold text-destructive">Çalışma koçluğu bu talebe eklenemedi</p>
+          <p className="mt-1 opacity-70">
+            {coachingBlockedMessage} Aşağıdaki tutar yalnız ders paketini
+            kapsıyor. Sayfayı yenileyip tekrar deneyebilir ya da koçluk
+            seçimini kaldırıp devam edebilirsin.
+          </p>
+        </div>
+      )}
+
       <div className="mt-3 space-y-2.5">
         {pendingForSelectedPlan ? (
           <div className="rounded-xl bg-[var(--checkout-switchback)] p-4 text-center text-[var(--checkout-nighttime)]">
@@ -273,15 +418,13 @@ export function CheckoutSummary({
               </p>
             )}
             <div className="hidden items-center justify-between gap-4 lg:flex">
-              <span className="text-sm font-semibold opacity-65">Paket toplamı</span>
-              <span className="text-xl font-extrabold tabular-nums">
-                {selectedTotal != null ? formatPrice(selectedTotal) : "—"}
-              </span>
+              <span className="text-sm font-semibold opacity-65">{totalLabel}</span>
+              <span className="text-xl font-extrabold tabular-nums">{displayedTotal}</span>
             </div>
             <Button
               className="hidden h-11 w-full rounded-lg bg-[var(--checkout-cta)] text-base font-extrabold text-[var(--checkout-on-cta)] hover:bg-[var(--checkout-cta-hover)] lg:inline-flex"
               onClick={onPurchaseCta}
-              disabled={busy || unresolvedPromo || !planAvailable}
+              disabled={purchaseBlocked}
             >
               {purchasePending ? "Talep oluşturuluyor…" : "Paket talebi oluştur"}
             </Button>
@@ -291,6 +434,22 @@ export function CheckoutSummary({
               </p>
             )}
           </>
+        )}
+        {paidRemainingCredits !== null && paidRemainingCredits > 0 && (
+          <div className="rounded-xl bg-[var(--checkout-switchback)] p-3 text-center text-xs leading-5 text-[var(--checkout-nighttime)]">
+            <p className="flex items-center justify-center gap-1.5 font-bold">
+              <CheckCircle2 className="size-4 shrink-0" aria-hidden="true" />
+              Bu hocada kullanılabilir {paidRemainingCredits} ders hakkın var
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              className="mt-2 w-full border-[var(--checkout-nighttime)] bg-transparent"
+              onClick={onUseCredits}
+            >
+              Ders hakkını kullan
+            </Button>
+          </div>
         )}
       </div>
 
@@ -367,15 +526,13 @@ export function CheckoutSummary({
         <div className="fixed inset-x-0 bottom-0 z-40 border-t border-[var(--checkout-soft-line)] bg-[var(--checkout-right-surface)] pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 lg:hidden">
           <div className="mx-auto max-w-md px-4">
             <div className="mb-2 flex items-center justify-between gap-3">
-              <span className="text-xs font-semibold opacity-65">Paket toplamı</span>
-              <span className="font-extrabold tabular-nums">
-                {selectedTotal != null ? formatPrice(selectedTotal) : "—"}
-              </span>
+              <span className="text-xs font-semibold opacity-65">{totalLabel}</span>
+              <span className="font-extrabold tabular-nums">{displayedTotal}</span>
             </div>
             <Button
               className="h-11 w-full rounded-lg bg-[var(--checkout-cta)] font-extrabold text-[var(--checkout-on-cta)] hover:bg-[var(--checkout-cta-hover)]"
               onClick={onPurchaseCta}
-              disabled={busy || unresolvedPromo || !planAvailable}
+              disabled={purchaseBlocked}
             >
               {purchasePending ? "Talep oluşturuluyor…" : "Paket talebi oluştur"}
             </Button>

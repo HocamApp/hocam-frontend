@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Ban, Check, CheckCheck, ImageIcon, Reply, Trash2 } from "lucide-react";
+import { Ban, Check, CheckCheck, Download, FileAudio, FileText, ImageIcon, Reply, Trash2 } from "lucide-react";
 import { Message } from "@/types";
 import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { fetchMessageAttachmentAccess } from "@/lib/messagingApi";
 
 interface MessageBubbleProps {
   message: Message;
@@ -40,6 +41,37 @@ export function MessageBubble({
   const isDeleted = message.is_deleted;
   const reply = message.reply_to ?? null;
   const [isImagePreviewOpen, setIsImagePreviewOpen] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [voiceSource, setVoiceSource] = useState<string | null>(null);
+  const [isLoadingVoice, setIsLoadingVoice] = useState(false);
+  const [voiceError, setVoiceError] = useState<string | null>(null);
+
+  const downloadAttachment = async () => {
+    if (!message.attachment || isDownloading) return;
+    setIsDownloading(true);
+    try {
+      const { url } = await fetchMessageAttachmentAccess(message.attachment.id);
+      window.open(url, "_blank", "noopener,noreferrer");
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
+  const loadVoice = async () => {
+    if (!message.attachment || isLoadingVoice) return;
+    setIsLoadingVoice(true);
+    setVoiceError(null);
+    try {
+      // The browser receives a short-lived, authorized URL only in component
+      // state.  It is never stored in a Message, cache payload, or snapshot.
+      const { url } = await fetchMessageAttachmentAccess(message.attachment.id);
+      setVoiceSource(url);
+    } catch {
+      setVoiceError("Sesli mesaj şu anda yüklenemedi. Tekrar deneyin.");
+    } finally {
+      setIsLoadingVoice(false);
+    }
+  };
 
   return (
     <div
@@ -133,6 +165,33 @@ export function MessageBubble({
               <p className="whitespace-pre-wrap break-words text-sm leading-relaxed [overflow-wrap:anywhere]">
                 {message.message_text}
               </p>
+            )}
+            {message.attachment?.kind === "voice" ? (
+              <div className={cn("mt-2 min-w-0 rounded-lg border px-3 py-2", isOwnMessage ? "border-primary-foreground/30 bg-primary-foreground/10" : "bg-background/60")}>
+                <div className="mb-1 flex min-w-0 items-center gap-2 text-xs">
+                  <FileAudio className="h-4 w-4 shrink-0" />
+                  <span className="min-w-0 flex-1 truncate">{message.attachment.original_name}</span>
+                </div>
+                {voiceSource ? (
+                  <audio controls preload="metadata" className="block w-full max-w-full" aria-label="Sesli mesaj oynatıcı">
+                    <source src={voiceSource} type={message.attachment.mime_type} />
+                    Tarayıcınız sesli mesaj oynatmayı desteklemiyor.
+                  </audio>
+                ) : (
+                  <div className="space-y-1">
+                    <button type="button" onClick={loadVoice} disabled={isLoadingVoice} className="text-xs underline underline-offset-2 disabled:opacity-60">
+                      {isLoadingVoice ? "Ses hazırlanıyor…" : voiceError ? "Yeniden dene" : "Sesli mesajı oynat"}
+                    </button>
+                    {voiceError && <p className="text-xs text-destructive" role="alert">{voiceError}</p>}
+                  </div>
+                )}
+              </div>
+            ) : message.attachment && (
+              <button type="button" onClick={downloadAttachment} disabled={isDownloading} className={cn("mt-2 flex max-w-full items-center gap-2 rounded-lg border px-3 py-2 text-left text-xs", isOwnMessage ? "border-primary-foreground/30 bg-primary-foreground/10" : "bg-background/60")}>
+                {message.attachment.kind === "image" ? <ImageIcon className="h-4 w-4 shrink-0" /> : <FileText className="h-4 w-4 shrink-0" />}
+                <span className="min-w-0 flex-1 truncate">{message.attachment.original_name}</span>
+                <Download className="h-4 w-4 shrink-0" />
+              </button>
             )}
             {showTime && (
               <p

@@ -27,6 +27,7 @@ import { RouteGuard } from "@/components/shared/RouteGuard";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import {
   Dialog,
   DialogContent,
@@ -236,6 +237,14 @@ function ConversationContent({
   const handleMessageSent = (newMessage: Message) => {
     sentIdsRef.current.add(newMessage.id);
     setLocalMessages((prev) => [...prev, newMessage]);
+    // A coaching send can open/satisfy an SLA cycle and create a message
+    // event, so refresh both thread/inbox state and the bell without relying
+    // on a client clock or optimistic SLA calculation.
+    queryClient.invalidateQueries({ queryKey: ["messages", conversationId] });
+    queryClient.invalidateQueries({ queryKey: ["conversation", conversationId] });
+    queryClient.invalidateQueries({ queryKey: ["conversations"] });
+    queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    queryClient.invalidateQueries({ queryKey: ["notification-summary"] });
   };
 
   const handleSelectConversation = (selectedConversationId: string) => {
@@ -277,6 +286,14 @@ function ConversationContent({
   const tutorForBooking = conversation?.tutor_profile ?? null;
   const showBookingButton = !!tutorForBooking;
   const profileHref = tutorForBooking ? `/tutors/${tutorForBooking.id}` : null;
+  const responseSla = conversation?.response_sla;
+  const slaLabel = responseSla?.status === "calendar_pending"
+    ? "Yanıt süresi takvim doğrulamasını bekliyor"
+    : responseSla?.status === "breached"
+      ? "Yanıt süresi aşıldı"
+      : responseSla?.due_at
+        ? `Yanıt bekleniyor · ${new Date(responseSla.due_at).toLocaleString("tr-TR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}`
+        : null;
 
   return (
     <div className="flex h-[calc(100dvh_-_3.5rem_-_4rem_-_env(safe-area-inset-bottom))] w-full min-w-0 overflow-hidden md:h-[calc(100vh-64px)]">
@@ -301,7 +318,7 @@ function ConversationContent({
 
       <section className="flex min-w-0 flex-1 flex-col overflow-hidden">
         {/* Header */}
-        <header className="flex shrink-0 items-center justify-between gap-3 border-b p-4">
+        <header className="flex shrink-0 flex-col gap-3 border-b p-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex min-w-0 items-center gap-3">
             <button
               type="button"
@@ -342,6 +359,19 @@ function ConversationContent({
                 Ders rezervasyonu yap
               </button>
             )}
+            {/* Master Spec §31.1: messaging is one of the five required
+                "report a problem" entry points, alongside coaching home,
+                session detail, report, and the post-session screen. Only
+                shown for a coaching conversation, student side — the
+                create-complaint form itself lives on the complaints page. */}
+            {!isTutor && conversation?.coaching_purchase_id && (
+              <Link
+                href="/dashboard/student/coaching/complaints"
+                className="text-sm font-medium text-muted-foreground hover:text-foreground hover:underline"
+              >
+                Sorun bildir
+              </Link>
+            )}
             {isTutor && conversation && !conversation.is_blocked && (
               <button
                 type="button"
@@ -353,6 +383,11 @@ function ConversationContent({
             )}
           </div>
         </header>
+        {slaLabel && (
+          <div className={cn("border-b px-4 py-2 text-xs", responseSla?.status === "breached" ? "bg-destructive/10 text-destructive" : "bg-muted/50 text-muted-foreground")}>
+            {slaLabel}
+          </div>
+        )}
 
         {/* Messages area */}
         <div
