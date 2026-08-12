@@ -12,7 +12,7 @@ const OUT = process.env.COACHING_QA_OUT
   : path.join(ROOT, "screenshots", "coaching-qa", "visual-polish-v2");
 
 type Role = "tutor" | "student";
-type Scenario = "empty" | "onboarding" | "draft" | "published" | "availability-empty";
+type Scenario = "empty" | "onboarding" | "draft" | "published" | "availability-empty" | "earnings-zero" | "earnings-populated";
 type QaState = { role: Role; scenario: Scenario; acceptancePosts: number; unknown: string[] };
 
 const examGroups = ["YKS", "DGS", "KPSS"];
@@ -190,7 +190,25 @@ async function installApi(context: BrowserContext, state: QaState) {
     if (pathname === "/api/coaching/students/") return json(route, []);
     if (pathname === "/api/coaching/tutor/sessions/" || pathname === "/api/coaching/sessions/") return json(route, state.scenario === "availability-empty" ? [] : sessions);
     if (pathname === "/api/coaching/tutor/time-requests/" || pathname === "/api/coaching/tutor/reschedule-requests/") return json(route, []);
-    if (pathname === "/api/coaching/tutor/earnings/") return json(route, { eligible_unfunded_minor: 123456, pending_minor: 50000, on_hold_minor: 0, reversed_minor: 0, payout_batches: [{ local_month: "2026-08", status: "ready", total_amount_minor: 123456, paid_at: null }] });
+    if (pathname === "/api/coaching/tutor/earnings/") {
+      if (state.scenario === "earnings-zero") {
+        return json(route, { eligible_unfunded_minor: 0, pending_minor: 0, on_hold_minor: 0, reversed_minor: 0, payout_batches: [] });
+      }
+      return json(route, {
+        eligible_unfunded_minor: 123456,
+        pending_minor: 50000,
+        on_hold_minor: 10000,
+        reversed_minor: 2500,
+        payout_batches: [
+          { local_month: "2026-03", status: "ready", total_amount_minor: 52000, paid_at: null },
+          { local_month: "2026-04", status: "ready", total_amount_minor: 78000, paid_at: null },
+          { local_month: "2026-05", status: "ready", total_amount_minor: 67000, paid_at: null },
+          { local_month: "2026-06", status: "ready", total_amount_minor: 98000, paid_at: null },
+          { local_month: "2026-07", status: "ready", total_amount_minor: 112000, paid_at: null },
+          { local_month: "2026-08", status: "ready", total_amount_minor: 123456, paid_at: null },
+        ],
+      });
+    }
     if (pathname === "/api/coaching/tutor/disputes/" || pathname === "/api/coaching/disputes/") return json(route, []);
     if (pathname === "/api/coaching/purchases/purchase-qa/dispute-eligibility/") return json(route, { categories: [], submission_key: "qa-submission", evidence_ids: [] });
     if (pathname === "/api/coaching/purchases/purchase-qa/financial-summary/") return json(route, { service_status: "active", financial_status: "unfunded", collected_amount_minor: 0, refund_liability_minor: 0, refund_processing_count: 0, refund_settled_minor: 0, cancellation_pending: false, refund_state: "nothing_to_settle" });
@@ -316,6 +334,44 @@ async function captureMicroPolishSet(page: Page, state: QaState, width: number) 
       assertTryPrecision: true,
       scrollSubnavBy,
     });
+  }
+}
+
+async function captureWalletSet(page: Page, state: QaState, width: number) {
+  const route = "/dashboard/tutor/coaching/earnings";
+  const heading = "Koçluk kazançları";
+  const populatedFile = width === 1440
+    ? "desktop-earnings-populated.png"
+    : width === 768
+      ? "tablet-earnings-populated.png"
+      : "mobile-earnings-populated.png";
+
+  await capture(page, state, {
+    file: populatedFile,
+    route,
+    heading,
+    scenario: "earnings-populated",
+    role: "tutor",
+    assertTryPrecision: true,
+  });
+  if (width === 375) {
+    await page.screenshot({ path: path.join(OUT, "mobile-earnings-populated-full.png"), fullPage: true });
+  }
+  assert.equal(await page.getByRole("button", { name: /parayı çek/i }).count(), 0, `${width}: unsupported withdrawal action rendered`);
+  await page.getByTestId("coaching-earnings-chart").waitFor();
+
+  if (width === 1440) {
+    await page.getByTestId("coaching-earnings-chart").locator("xpath=..").screenshot({ path: path.join(OUT, "desktop-earnings-graph-close-up.png") });
+    await capture(page, state, {
+      file: "desktop-earnings-zero.png",
+      route,
+      heading,
+      scenario: "earnings-zero",
+      role: "tutor",
+      assertTryPrecision: true,
+    });
+    assert.equal(await page.getByTestId("coaching-earnings-chart").locator("[data-chart-month]").count(), 0, "zero fixture rendered fabricated chart points");
+    await page.getByText("Henüz grafik oluşturacak aylık kazanç kaydı yok.").waitFor();
   }
 }
 
@@ -483,6 +539,7 @@ async function main() {
     const browser = await chromium.launch({ headless: true });
     const hoverEvidence: Record<string, unknown> = {};
     const microOnly = process.env.COACHING_QA_MICRO_ONLY === "1";
+    const walletOnly = process.env.COACHING_QA_WALLET_ONLY === "1";
     const viewports = microOnly
       ? [{ width: 375, height: 812 }, { width: 1440, height: 900 }]
       : [{ width: 375, height: 812 }, { width: 768, height: 1024 }, { width: 1440, height: 900 }];
@@ -493,7 +550,9 @@ async function main() {
       const page = await context.newPage();
       const consoleErrors: string[] = [];
       page.on("console", (message) => { if (message.type() === "error") consoleErrors.push(message.text()); });
-      if (microOnly) {
+      if (walletOnly) {
+        await captureWalletSet(page, state, viewport.width);
+      } else if (microOnly) {
         await captureMicroPolishSet(page, state, viewport.width);
       } else {
         if (process.env.COACHING_QA_HOVER_ONLY !== "1") await runRouteMatrix(page, state, viewport.width);
@@ -506,7 +565,7 @@ async function main() {
       );
       assert.deepEqual(actionableConsoleErrors, [], `browser console errors at ${viewport.width}px`);
       assert.ok(state.unknown.length < 12, `too many unhandled APIs: ${state.unknown.join(", ")}`);
-      if (!microOnly) {
+      if (!microOnly && !walletOnly) {
         await page.screenshot({ path: path.join(OUT, `coaching-final-${viewport.width}.png`), fullPage: true });
       }
       await context.close();
