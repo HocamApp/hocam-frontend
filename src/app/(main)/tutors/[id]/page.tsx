@@ -27,6 +27,7 @@ import {
 import { fetchTutorAvailability } from "@/lib/dashboardApi";
 import { useAuth } from "@/hooks/useAuth";
 import { useCoachingFlag } from "@/hooks/useCoachingFlag";
+import { TutorCheckoutCta } from "@/components/tutors/TutorCheckoutCta";
 import { resolveProfileImageUrl } from "@/lib/profileImages";
 import { buildTutorSubjectLabels } from "@/lib/tutorSubjectLabels";
 import { formatLessonCount, formatPrice, formatRating } from "@/lib/utils";
@@ -361,7 +362,7 @@ export default function TutorProfilePage({
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
   const { isAuthenticated, isStudent, user } = useAuth();
-  const { checkoutEnabled: coachingCheckoutEnabled } = useCoachingFlag();
+  const { checkoutEnabled: coachingCheckoutEnabled, checkoutState } = useCoachingFlag();
   const { favoriteIds, toggle, isFavoritePending } = useFavorites();
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
   // Paid bookings now go through /tutors/[id]/checkout; this modal only
@@ -784,15 +785,15 @@ export default function TutorProfilePage({
                             </div>
                           </div>
                         ) : (
-                          <Button
-                            className="w-full"
-                            onClick={() => {
+                          <TutorCheckoutCta
+                            href={checkoutHref}
+                            offersCoaching={tutor.offers_coaching === true}
+                            checkoutState={checkoutState}
+                            onStart={(href) => {
                               void recordDiscoveryEvent(discoveryImpressionId, id, "booking_started");
-                              router.push(checkoutHref);
+                              router.push(href);
                             }}
-                          >
-                            Ders Rezervasyonu Yap
-                          </Button>
+                          />
                         )}
                       </>
                     )}
