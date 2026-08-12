@@ -7,7 +7,7 @@ import { chromium, type BrowserContext, type Locator, type Page, type Route } fr
 const ROOT = process.cwd();
 const PORT = Number(process.env.COACHING_QA_PORT ?? 3158);
 const BASE = `http://127.0.0.1:${PORT}`;
-const OUT = path.join(ROOT, "screenshots", "coaching-qa");
+const OUT = path.join(ROOT, "screenshots", "coaching-qa", "visual-polish-v2");
 
 type Role = "tutor" | "student";
 type Scenario = "empty" | "onboarding" | "draft" | "published" | "availability-empty";
@@ -95,6 +95,11 @@ const tutorProfile = {
   completed_lessons_count: 12, is_verified: true, is_public: true, accepting_new_students: true,
   teaching_styles: [], teaching_attributes: [], is_online: false, last_seen_at: null,
   trial_lesson_eligible: false, trial_lessons_remaining: 0, subjects: [], created_at: "2026-08-01T09:00:00Z",
+  coaching: {
+    frequency: "weekly", session_duration_minutes: 30, price_per_session_minor: 25000,
+    price_per_session_display: "250,00 ₺", is_free: false, target_exam_types: examGroups,
+    description: plan.description, is_accepting_new_students: true,
+  },
 };
 const booking = {
   id: "booking-qa",
@@ -181,7 +186,7 @@ async function installApi(context: BrowserContext, state: QaState) {
     if (pathname === "/api/payments/tutor-acceptance/config/") return json(route, { enabled: true, has_open_requests: true, acceptance_expiry_hours: 48 });
     if (/^\/api\/payments\/tutor-acceptance\/requests\/[^/]+\/respond\/$/.test(pathname)) { state.acceptancePosts += 1; return json(route, { ...acceptanceRequests[0], status: "accepted" }); }
     if (pathname === "/api/coaching/students/") return json(route, []);
-    if (pathname === "/api/coaching/tutor/sessions/" || pathname === "/api/coaching/sessions/") return json(route, sessions);
+    if (pathname === "/api/coaching/tutor/sessions/" || pathname === "/api/coaching/sessions/") return json(route, state.scenario === "availability-empty" ? [] : sessions);
     if (pathname === "/api/coaching/tutor/time-requests/" || pathname === "/api/coaching/tutor/reschedule-requests/") return json(route, []);
     if (pathname === "/api/coaching/tutor/earnings/") return json(route, { eligible_unfunded_minor: 123456, pending_minor: 50000, on_hold_minor: 0, reversed_minor: 0, payout_batches: [{ local_month: "2026-08", status: "ready", total_amount_minor: 123456, paid_at: null }] });
     if (pathname === "/api/coaching/tutor/disputes/" || pathname === "/api/coaching/disputes/") return json(route, []);
@@ -192,7 +197,9 @@ async function installApi(context: BrowserContext, state: QaState) {
     if (pathname === "/api/coaching/scheduling/slots/") return json(route, { availability_slots: [{ day_of_week: 0, start_time: "18:00" }], accepted_proposals: {} });
     if (pathname === "/api/coaching/my-recurring-slots/") return json(route, { purchase_id: "purchase-qa", slots: [{ id: "slot-qa", slot_index: 0, day_of_week: 0, start_time: "18:00", source: "availability" }] });
     if (pathname === "/api/coaching/service-periods/period-qa/program/") return json(route, { id: "program-qa", service_period_id: "period-qa", title: "Ağustos çalışma programı", objective: "Düzenli deneme takibi", start_date: "2026-08-01", end_date: "2026-08-31", tasks: [] });
-    if (pathname === "/api/tutors/me/") return json(route, tutorProfile);
+    if (pathname === "/api/tutors/me/" || pathname === `/api/tutors/${tutorProfile.id}/`) return json(route, tutorProfile);
+    if (pathname === `/api/coaching/tutors/${tutorProfile.id}/eligibility/`) return json(route, { eligible: true, message: "Koçluk bu ders paketiyle seçilebilir.", plan: tutorProfile.coaching });
+    if (pathname === `/api/tutors/${tutorProfile.id}/availability/`) return json(route, []);
     if (pathname === "/api/bookings/") return json(route, [booking]);
     if (pathname === "/api/conversations/" || pathname === "/api/availability/" || pathname === "/api/payments/tutor/package-offers/" || pathname === "/api/payments/tutor/package-purchases/") return json(route, []);
     if (pathname === "/api/payments/tutor/earnings/") return json(route, { last_7_days: { total: 0, lesson_count: 0 }, last_30_days: { total: 0, lesson_count: 1 }, lifetime: { total: 0, lesson_count: 12 } });
@@ -230,7 +237,89 @@ async function assertPage(page: Page, route: string, heading: RegExp | string, l
   assert.ok(geometry.scroll <= geometry.client, `${label}: horizontal overflow ${geometry.scroll} > ${geometry.client}`);
   assert.equal(geometry.overlay, false, `${label}: Next error overlay`);
   assert.deepEqual(errors, [], `${label}: page errors`);
+  const visibleText = await page.locator("body").innerText();
+  assert.doesNotMatch(visibleText, /\b(?:AM|PM)\b/, `${label}: locale time marker leaked`);
+  assert.doesNotMatch(visibleText, /\bbundle\b/i, `${label}: internal bundle terminology leaked`);
   page.off("pageerror", onError);
+}
+
+async function capture(page: Page, state: QaState, options: {
+  file: string;
+  route: string;
+  heading: RegExp | string;
+  scenario: Scenario;
+  role?: Role;
+  fullPage?: boolean;
+  scrollToHeading?: RegExp | string;
+  waitForText?: RegExp | string;
+}) {
+  state.role = options.role ?? "tutor";
+  state.scenario = options.scenario;
+  await page.evaluate((role: Role) => {
+    const current = JSON.parse(localStorage.getItem("auth_user") ?? "{}");
+    localStorage.setItem("auth_user", JSON.stringify({
+      ...current,
+      id: `${role}-qa`,
+      email: `${role}@example.invalid`,
+      role,
+      tutor_profile_id: role === "tutor" ? "profile-tutor-qa" : null,
+    }));
+  }, state.role);
+  await page.goto("about:blank");
+  await assertPage(page, options.route, options.heading, options.file);
+  if (options.waitForText) {
+    await page.getByText(options.waitForText).waitFor({ timeout: 10_000 });
+  }
+  if (options.scrollToHeading) {
+    await page.getByRole("heading", { name: options.scrollToHeading }).scrollIntoViewIfNeeded();
+  }
+  await page.screenshot({ path: path.join(OUT, options.file), fullPage: options.fullPage ?? false });
+}
+
+async function captureReviewSet(page: Page, state: QaState, width: number) {
+  if (width === 1440) {
+    const desktop = [
+      ["01-tutor-home-published.png", "/dashboard/tutor/coaching", /Çalışma koçluğu/i, "published", "tutor"],
+      ["02-tutor-home-draft.png", "/dashboard/tutor/coaching", /Çalışma koçluğu/i, "draft", "tutor"],
+      ["03-setup-frequency.png", "/dashboard/tutor/coaching/plan?step=frequency", "Koçluk teklifini hazırla", "draft", "tutor"],
+      ["04-setup-price.png", "/dashboard/tutor/coaching/plan?step=price", "Koçluk teklifini hazırla", "draft", "tutor"],
+      ["05-setup-exams.png", "/dashboard/tutor/coaching/plan?step=exams", "Koçluk teklifini hazırla", "draft", "tutor"],
+      ["06-setup-description.png", "/dashboard/tutor/coaching/plan?step=description", "Koçluk teklifini hazırla", "draft", "tutor"],
+      ["07-setup-availability.png", "/dashboard/tutor/coaching/plan?step=availability", "Koçluk teklifini hazırla", "draft", "tutor"],
+      ["08-setup-capacity.png", "/dashboard/tutor/coaching/plan?step=capacity", "Koçluk teklifini hazırla", "draft", "tutor"],
+      ["09-student-preview-offer.png", "/dashboard/tutor/coaching/preview", "Öğrenci görünümü", "published", "tutor"],
+      ["10-setup-publish.png", "/dashboard/tutor/coaching/plan?step=publish", "Koçluk teklifini hazırla", "published", "tutor"],
+      ["11-upcoming-empty.png", "/dashboard/tutor/coaching/upcoming", "Yaklaşan görüşmeler", "availability-empty", "tutor"],
+      ["12-reports-empty.png", "/dashboard/tutor/coaching/reports", "Görüşme raporları", "published", "tutor"],
+      ["13-coaching-requests.png", "/dashboard/tutor/coaching/requests", "Yeni öğrenci talepleri", "published", "tutor"],
+      ["14-coaching-earnings.png", "/dashboard/tutor/coaching/earnings", "Koçluk kazançları", "published", "tutor"],
+      ["15-student-no-active.png", "/dashboard/student/coaching", "Çalışma koçluğum", "empty", "student"],
+      ["16-public-profile-offer.png", `/tutors/${tutorProfile.id}`, /QA Tutor/i, "published", "student"],
+    ] as const;
+    for (const [file, route, heading, scenario, role] of desktop) {
+      await capture(page, state, {
+        file,
+        route,
+        heading,
+        scenario,
+        role,
+        scrollToHeading: file === "16-public-profile-offer.png" ? "Çalışma koçluğu" : undefined,
+        waitForText: file === "15-student-no-active.png" ? "Henüz bir çalışma koçluğun yok" : undefined,
+      });
+    }
+  }
+
+  if (width === 375) {
+    const mobile = [
+      ["mobile-home.png", "/dashboard/tutor/coaching", /Çalışma koçluğu/i, "published", "tutor"],
+      ["mobile-setup.png", "/dashboard/tutor/coaching/plan?step=exams", "Koçluk teklifini hazırla", "draft", "tutor"],
+      ["mobile-empty.png", "/dashboard/tutor/coaching/reports", "Görüşme raporları", "published", "tutor"],
+      ["mobile-offer.png", "/dashboard/tutor/coaching/preview", "Öğrenci görünümü", "published", "tutor"],
+    ] as const;
+    for (const [file, route, heading, scenario, role] of mobile) {
+      await capture(page, state, { file, route, heading, scenario, role });
+    }
+  }
 }
 
 async function runRouteMatrix(page: Page, state: QaState, width: number) {
@@ -358,6 +447,7 @@ async function main() {
       const consoleErrors: string[] = [];
       page.on("console", (message) => { if (message.type() === "error") consoleErrors.push(message.text()); });
       if (process.env.COACHING_QA_HOVER_ONLY !== "1") await runRouteMatrix(page, state, viewport.width);
+      if (process.env.COACHING_QA_HOVER_ONLY !== "1") await captureReviewSet(page, state, viewport.width);
       state.role = "tutor";
       hoverEvidence[String(viewport.width)] = await inspectHover(page, viewport.width);
       const actionableConsoleErrors = consoleErrors.filter(
