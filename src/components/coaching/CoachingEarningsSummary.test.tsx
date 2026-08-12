@@ -18,5 +18,9 @@ describe("CoachingEarningsSummary", () => {
     assert.equal(screen.queryByText(/bankaya yatırıldı/i), null);
     assert.equal(screen.queryByText(/ödeme tamamlandı/i), null);
     assert.ok(screen.getByText("Aylık kazanç kayıtları"));
+    assert.ok(screen.getByRole("heading", { name: "Kazanç görünümü" }));
+    assert.ok(screen.getByLabelText("Kazanç durumlarının dağılımı"));
+    assert.ok(screen.getByText("₺500,00"));
+    assert.ok(screen.getByText("Ağustos 2026"));
   });
 });

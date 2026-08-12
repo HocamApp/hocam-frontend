@@ -26,6 +26,8 @@ export default function TutorCoachingEarningsPage() {
         parentLabel="Koçluk ana sayfası"
         eyebrow="Kazançlar"
         width="narrow"
+        currentHref="/dashboard/tutor/coaching/earnings"
+        audience="tutor"
       >
         <Earnings />
       </CoachingPageShell>
