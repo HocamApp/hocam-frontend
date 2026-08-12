@@ -38,6 +38,8 @@ export default function CoachingAvailabilityPage() {
         parentLabel="Koçluk ana sayfası"
         eyebrow="Ayarlar"
         width="narrow"
+        currentHref="/dashboard/tutor/coaching/availability"
+        audience="tutor"
       >
         <AvailabilityContent />
       </CoachingPageShell>

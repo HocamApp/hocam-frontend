@@ -3,7 +3,7 @@ import "@/test/setupDom";
 import assert from "node:assert/strict";
 import { after, afterEach, describe, it } from "node:test";
 import React from "react";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 
 import { CapacityPreviewCard } from "./CapacityPreviewCard";
 import { CoachingAvailabilityEditor } from "./CoachingAvailabilityEditor";
@@ -25,6 +25,33 @@ describe("Coaching availability and capacity presentation", () => {
 
     assert.ok(screen.getByText(/Koçluk saatlerin normal ders saatlerinden ayrıdır/));
     assert.ok(screen.getByRole("heading", { name: "Koçluk saatlerini ekle" }));
+    assert.equal(screen.getAllByRole("article").length, 7);
+    assert.equal(screen.queryByText(/AM|PM/), null);
+  });
+
+  it("submits application-controlled 24-hour values without locale conversion", () => {
+    let submitted: unknown = null;
+    render(
+      <CoachingAvailabilityEditor
+        windows={[]}
+        onCreate={(payload) => {
+          submitted = payload;
+        }}
+        onDelete={() => undefined}
+        isMutating={false}
+        error={null}
+      />
+    );
+
+    fireEvent.change(screen.getByLabelText("Başlangıç"), { target: { value: "18:00" } });
+    fireEvent.change(screen.getByLabelText("Bitiş"), { target: { value: "20:00" } });
+    fireEvent.click(screen.getByRole("button", { name: "Aralık ekle" }));
+
+    assert.deepEqual(submitted, {
+      day_of_week: 0,
+      start_time: "18:00",
+      end_time: "20:00",
+    });
   });
 
   it("explains server-reported weekly slots, theoretical, selected, and active capacity", () => {
