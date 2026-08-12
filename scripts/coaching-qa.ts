@@ -12,7 +12,7 @@ const OUT = process.env.COACHING_QA_OUT
   : path.join(ROOT, "screenshots", "coaching-qa", "visual-polish-v2");
 
 type Role = "tutor" | "student";
-type Scenario = "empty" | "onboarding" | "draft" | "published" | "availability-empty" | "earnings-zero" | "earnings-populated";
+type Scenario = "empty" | "onboarding" | "draft" | "published" | "checkout-disabled" | "availability-empty" | "earnings-zero" | "earnings-populated";
 type QaState = { role: Role; scenario: Scenario; acceptancePosts: number; unknown: string[] };
 
 const examGroups = ["YKS", "DGS", "KPSS"];
@@ -97,6 +97,7 @@ const tutorProfile = {
   completed_lessons_count: 12, is_verified: true, is_public: true, accepting_new_students: true,
   teaching_styles: [], teaching_attributes: [], is_online: false, last_seen_at: null,
   trial_lesson_eligible: false, trial_lessons_remaining: 0, subjects: [], created_at: "2026-08-01T09:00:00Z",
+  offers_coaching: true,
   coaching: {
     frequency: "weekly", session_duration_minutes: 30, price_per_session_minor: 25000,
     price_per_session_display: "250,00 ₺", is_free: false, target_exam_types: examGroups,
@@ -165,7 +166,7 @@ async function installApi(context: BrowserContext, state: QaState) {
     });
     if (pathname === "/api/auth/account/deletion/status/") return json(route, { active: false, status: "none", scheduled_deletion_at: null });
     if (pathname === "/api/notifications/summary/") return json(route, { unread_count: 0 });
-    if (pathname === "/api/coaching/flag/") return json(route, { enabled: true, checkout_enabled: false });
+    if (pathname === "/api/coaching/flag/") return json(route, { enabled: true, checkout_enabled: state.scenario !== "checkout-disabled" });
     if (pathname === "/api/coaching/onboarding/") return json(route, onboardingState(state.scenario));
     if (pathname === "/api/coaching/tutor/setup-config/") return json(route, {
       exam_groups: examGroups, session_duration_minutes: 30, lesson_price_minor: 98000, lesson_price_display: "980,00 ₺",
@@ -178,7 +179,8 @@ async function installApi(context: BrowserContext, state: QaState) {
     });
     if (pathname === "/api/coaching/plan/") {
       if (state.scenario === "empty") return json(route, null);
-      return json(route, { ...plan, is_published: state.scenario === "published", published_at: state.scenario === "published" ? plan.published_at : null });
+      const isPublished = ["published", "checkout-disabled", "earnings-zero", "earnings-populated"].includes(state.scenario);
+      return json(route, { ...plan, is_published: isPublished, published_at: isPublished ? plan.published_at : null });
     }
     if (pathname === "/api/coaching/capacity/") return json(route, capacity);
     if (pathname === "/api/coaching/availability/") return json(route, state.scenario === "availability-empty" ? [] : [{ id: "window-qa", day_of_week: 0, start_time: "18:00", end_time: "21:00", created_at: "2026-08-01T09:00:00Z" }]);
@@ -218,7 +220,7 @@ async function installApi(context: BrowserContext, state: QaState) {
     if (pathname === "/api/coaching/my-recurring-slots/") return json(route, { purchase_id: "purchase-qa", slots: [{ id: "slot-qa", slot_index: 0, day_of_week: 0, start_time: "18:00", source: "availability" }] });
     if (pathname === "/api/coaching/service-periods/period-qa/program/") return json(route, { id: "program-qa", service_period_id: "period-qa", title: "Ağustos çalışma programı", objective: "Düzenli deneme takibi", start_date: "2026-08-01", end_date: "2026-08-31", tasks: [] });
     if (pathname === "/api/tutors/me/" || pathname === `/api/tutors/${tutorProfile.id}/`) return json(route, tutorProfile);
-    if (pathname === `/api/coaching/tutors/${tutorProfile.id}/eligibility/`) return json(route, { eligible: true, message: "Koçluk bu ders paketiyle seçilebilir.", plan: tutorProfile.coaching });
+    if (pathname === "/api/coaching/eligibility/" || pathname === `/api/coaching/tutors/${tutorProfile.id}/eligibility/`) return json(route, { eligible: true, reason: "ok", message: "Koçluk bu ders paketiyle seçilebilir.", plan: tutorProfile.coaching });
     if (pathname === `/api/tutors/${tutorProfile.id}/availability/`) return json(route, []);
     if (pathname === "/api/bookings/") return json(route, [booking]);
     if (pathname === "/api/conversations/" || pathname === "/api/availability/" || pathname === "/api/payments/tutor/package-offers/" || pathname === "/api/payments/tutor/package-purchases/") return json(route, []);
@@ -357,22 +359,73 @@ async function captureWalletSet(page: Page, state: QaState, width: number) {
   if (width === 375) {
     await page.screenshot({ path: path.join(OUT, "mobile-earnings-populated-full.png"), fullPage: true });
   }
-  assert.equal(await page.getByRole("button", { name: /parayı çek/i }).count(), 0, `${width}: unsupported withdrawal action rendered`);
+  const populatedWithdrawal = page.getByRole("button", { name: "Parayı çek" });
+  await populatedWithdrawal.waitFor();
+  assert.equal(await populatedWithdrawal.getAttribute("aria-disabled"), "true", `${width}: eligible-unfunded incorrectly enabled withdrawal`);
+  await page.getByText("Ödeme aktarımı, gerçek ödeme altyapısı etkinleştirildiğinde kullanılabilir.").waitFor();
   await page.getByTestId("coaching-earnings-chart").waitFor();
 
   if (width === 1440) {
     await page.getByTestId("coaching-earnings-chart").locator("xpath=..").screenshot({ path: path.join(OUT, "desktop-earnings-graph-close-up.png") });
-    await capture(page, state, {
-      file: "desktop-earnings-zero.png",
-      route,
-      heading,
-      scenario: "earnings-zero",
-      role: "tutor",
-      assertTryPrecision: true,
-    });
-    assert.equal(await page.getByTestId("coaching-earnings-chart").locator("[data-chart-month]").count(), 0, "zero fixture rendered fabricated chart points");
-    await page.getByText("Henüz grafik oluşturacak aylık kazanç kaydı yok.").waitFor();
   }
+  await capture(page, state, {
+    file: `earnings-zero-${width}.png`,
+    route,
+    heading,
+    scenario: "earnings-zero",
+    role: "tutor",
+    assertTryPrecision: true,
+  });
+  assert.equal(await page.getByTestId("coaching-earnings-chart").locator("[data-chart-month]").count(), 0, "zero fixture rendered fabricated chart points");
+  await page.getByText("Henüz grafik oluşturacak aylık kazanç kaydı yok.").waitFor();
+  assert.equal(await page.getByRole("button", { name: "Parayı çek" }).getAttribute("aria-disabled"), "true", "zero fixture enabled withdrawal");
+}
+
+async function captureCheckoutRolloutSet(page: Page, state: QaState, width: number) {
+  state.role = "student";
+  state.scenario = "published";
+  await page.goto(`${BASE}/login`, { waitUntil: "domcontentloaded" });
+  await page.evaluate(() => {
+    localStorage.setItem("auth_user", JSON.stringify({ id: "student-qa", email: "student@example.invalid", role: "student", tutor_profile_id: null, is_email_verified: true, is_admin: false, is_test_account: true, jitsi_tutorial_completed: true, jitsi_tutorial_grandfathered: true, impersonation: null }));
+  });
+  await page.goto("about:blank");
+
+  await capture(page, state, {
+    file: `checkout-unselected-${width}.png`,
+    route: `/tutors/${tutorProfile.id}/checkout/coaching`,
+    heading: "Çalışma Koçluğu",
+    scenario: "published",
+    role: "student",
+    assertTryPrecision: true,
+  });
+  const optOut = page.getByRole("button", { name: /Koçluk olmadan devam et/ });
+  assert.equal(await optOut.getAttribute("aria-pressed"), "true", `${width}: Coaching default was not unselected`);
+  assert.equal(await page.getByRole("link", { name: "Paket seçeneklerine devam et" }).getAttribute("href"), `/tutors/${tutorProfile.id}/checkout`);
+
+  await page.getByRole("button", { name: /^Çalışma Koçluğu/ }).click();
+  await page.getByText("Dahil olanlar").waitFor();
+  const selectedHref = await page.getByRole("link", { name: "Paket seçeneklerine devam et" }).getAttribute("href");
+  assert.equal(selectedHref, `/tutors/${tutorProfile.id}/checkout?coaching=1`, `${width}: Coaching selection did not survive navigation`);
+  await page.screenshot({ path: path.join(OUT, `checkout-selected-${width}.png`) });
+
+  await optOut.click();
+  assert.equal(await optOut.getAttribute("aria-pressed"), "true", `${width}: exact opt-out CTA did not clear Coaching`);
+  assert.equal(await page.getByRole("link", { name: "Paket seçeneklerine devam et" }).getAttribute("href"), `/tutors/${tutorProfile.id}/checkout`);
+
+  state.scenario = "checkout-disabled";
+  await page.goto(`${BASE}/tutors/${tutorProfile.id}/checkout/coaching`, { waitUntil: "domcontentloaded" });
+  await page.waitForURL(new RegExp(`/tutors/${tutorProfile.id}/checkout(?:\\?|$)`));
+  assert.equal(await page.getByRole("heading", { name: "Çalışma Koçluğu" }).count(), 0, `${width}: disabled checkout still exposed Coaching choice`);
+
+  await capture(page, state, {
+    file: `public-profile-coaching-${width}.png`,
+    route: `/tutors/${tutorProfile.id}`,
+    heading: /QA Tutor/i,
+    scenario: "published",
+    role: "student",
+    scrollToHeading: "Çalışma Koçluğu",
+  });
+  await page.getByRole("link", { name: "Ders paketiyle koçluk al" }).waitFor();
 }
 
 async function captureReviewSet(page: Page, state: QaState, width: number) {
@@ -434,9 +487,10 @@ async function runRouteMatrix(page: Page, state: QaState, width: number) {
   for (const step of ["frequency", "price", "exams", "description", "availability", "capacity", "preview"]) {
     await assertPage(page, `/dashboard/tutor/coaching/plan?step=${step}`, "Koçluk teklifini hazırla", `setup ${step} ${width}`);
   }
-  state.scenario = "published";
+  state.scenario = "checkout-disabled";
   await assertPage(page, "/dashboard/tutor/coaching/plan?step=publish", "Koçluk teklifini hazırla", `published checkout-paused ${width}`);
   await page.getByText("Teklifin yayında. Yeni koçluk satışları platform genelinde şu anda kapalı.").waitFor();
+  state.scenario = "published";
   for (const [route, heading] of [
     ["/dashboard/tutor/coaching/students", "Koçluk öğrencilerim"],
     ["/dashboard/tutor/coaching/upcoming", "Yaklaşan görüşmeler"],
@@ -540,6 +594,7 @@ async function main() {
     const hoverEvidence: Record<string, unknown> = {};
     const microOnly = process.env.COACHING_QA_MICRO_ONLY === "1";
     const walletOnly = process.env.COACHING_QA_WALLET_ONLY === "1";
+    const rolloutOnly = process.env.COACHING_QA_ROLLOUT_ONLY === "1";
     const viewports = microOnly
       ? [{ width: 375, height: 812 }, { width: 1440, height: 900 }]
       : [{ width: 375, height: 812 }, { width: 768, height: 1024 }, { width: 1440, height: 900 }];
@@ -550,13 +605,18 @@ async function main() {
       const page = await context.newPage();
       const consoleErrors: string[] = [];
       page.on("console", (message) => { if (message.type() === "error") consoleErrors.push(message.text()); });
-      if (walletOnly) {
+      if (rolloutOnly) {
+        await captureCheckoutRolloutSet(page, state, viewport.width);
+        await captureWalletSet(page, state, viewport.width);
+      } else if (walletOnly) {
         await captureWalletSet(page, state, viewport.width);
       } else if (microOnly) {
         await captureMicroPolishSet(page, state, viewport.width);
       } else {
         if (process.env.COACHING_QA_HOVER_ONLY !== "1") await runRouteMatrix(page, state, viewport.width);
         if (process.env.COACHING_QA_HOVER_ONLY !== "1") await captureReviewSet(page, state, viewport.width);
+        if (process.env.COACHING_QA_HOVER_ONLY !== "1") await captureCheckoutRolloutSet(page, state, viewport.width);
+        if (process.env.COACHING_QA_HOVER_ONLY !== "1") await captureWalletSet(page, state, viewport.width);
         state.role = "tutor";
         hoverEvidence[String(viewport.width)] = await inspectHover(page, viewport.width);
       }

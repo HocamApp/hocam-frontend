@@ -49,7 +49,9 @@ describe("CoachingEarningsSummary", () => {
     assert.deepEqual(labels, ["Haz", "Tem", "Ağu"]);
     assert.ok(screen.getByText("₺700,00"));
     assert.ok(screen.getByText("₺950,00"));
-    assert.equal(screen.queryByRole("button", { name: /parayı çek/i }), null);
+    const withdrawal = screen.getByRole("button", { name: "Parayı çek" });
+    assert.equal(withdrawal.getAttribute("aria-disabled"), "true");
+    assert.ok(screen.getByText("Ödeme aktarımı, gerçek ödeme altyapısı etkinleştirildiğinde kullanılabilir."));
   });
 
   it("keeps a finished zero chart without inventing monthly points or withdrawal", () => {
@@ -72,6 +74,7 @@ describe("CoachingEarningsSummary", () => {
     const distributionSegments = Array.from(screen.getByLabelText("Kazanç durumlarının dağılımı").children) as HTMLElement[];
     assert.ok(distributionSegments.every((segment) => segment.style.width === "0%"));
     assert.ok(screen.getByText("Henüz grafik oluşturacak aylık kazanç kaydı yok."));
-    assert.equal(screen.queryByRole("button", { name: /parayı çek/i }), null);
+    const withdrawal = screen.getByRole("button", { name: "Parayı çek" });
+    assert.equal(withdrawal.getAttribute("aria-disabled"), "true");
   });
 });

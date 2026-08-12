@@ -498,12 +498,14 @@ export interface CoachingEligibility {
  * `eligibility.plan` to non-null immediately after the early return.
  */
 export function eligibilityAllowsCoachingChoice(
-  eligibility: CoachingEligibility | null | undefined
+  eligibility: CoachingEligibility | null | undefined,
+  checkoutEnabled = true
 ): eligibility is CoachingEligibility & {
   plan: NonNullable<CoachingEligibility["plan"]>;
 } {
   return Boolean(
-    eligibility &&
+    checkoutEnabled &&
+      eligibility &&
       eligibility.reason !== "no_plan" &&
       eligibility.reason !== "exam_mismatch" &&
       eligibility.plan

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -11,6 +11,7 @@ import { CoachingChoiceCard } from "@/components/checkout/CoachingChoiceCard";
 import { RouteGuard } from "@/components/shared/RouteGuard";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { Button } from "@/components/ui/button";
+import { useCoachingFlag } from "@/hooks/useCoachingFlag";
 import {
   Accordion,
   AccordionContent,
@@ -18,7 +19,8 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Card, CardContent } from "@/components/ui/card";
-import { cn, formatPrice } from "@/lib/utils";
+import { cn } from "@/lib/utils";
+import { formatTryMinor } from "@/lib/money";
 import { fetchTutorById } from "@/lib/tutorsApi";
 import { updateMatchingGoal } from "@/lib/matchingApi";
 import {
@@ -86,6 +88,7 @@ function CoachingChoiceContent({ tutorId }: { tutorId: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
+  const { checkoutEnabled, isLoading: flagLoading } = useCoachingFlag();
   const [selected, setSelected] = useState(() =>
     readCoachingSelectedFromSearchParams(searchParams)
   );
@@ -99,6 +102,16 @@ function CoachingChoiceContent({ tutorId }: { tutorId: string }) {
     queryKey: eligibilityQueryKey,
     queryFn: () => fetchCoachingEligibility(tutorId),
   });
+  const shouldRedirectToLessonCheckout =
+    !flagLoading &&
+    !tutorLoading &&
+    !eligibilityLoading &&
+    !eligibilityAllowsCoachingChoice(eligibility, checkoutEnabled);
+
+  useEffect(() => {
+    if (!shouldRedirectToLessonCheckout) return;
+    router.replace(`/tutors/${tutorId}/checkout?${searchParams.toString()}`);
+  }, [router, searchParams, shouldRedirectToLessonCheckout, tutorId]);
 
   const checkoutHref = useMemo(() => {
     const next = new URLSearchParams(searchParams.toString());
@@ -111,7 +124,7 @@ function CoachingChoiceContent({ tutorId }: { tutorId: string }) {
     return `/tutors/${tutorId}/checkout${query ? `?${query}` : ""}`;
   }, [searchParams, selected, tutorId]);
 
-  if (tutorLoading || eligibilityLoading) {
+  if (tutorLoading || eligibilityLoading || flagLoading) {
     return (
       <div className="flex min-h-[24rem] items-center justify-center">
         <LoadingSpinner />
@@ -125,8 +138,7 @@ function CoachingChoiceContent({ tutorId }: { tutorId: string }) {
   // skip it entirely rather than showing a disabled card. Distinct from
   // §14.6 missing_target_exam, which still shows the screen and asks the
   // student to choose an exam target.
-  if (!eligibilityAllowsCoachingChoice(eligibility)) {
-    router.replace(`/tutors/${tutorId}/checkout?${searchParams.toString()}`);
+  if (shouldRedirectToLessonCheckout || !eligibilityAllowsCoachingChoice(eligibility, checkoutEnabled)) {
     return (
       <div className="flex min-h-[24rem] items-center justify-center">
         <LoadingSpinner />
@@ -214,7 +226,7 @@ function CoachingChoiceContent({ tutorId }: { tutorId: string }) {
                   </div>
                   <div className="flex justify-between gap-4">
                     <dt className="text-muted-foreground">Ders fiyatı</dt>
-                    <dd>{tutor ? `${formatPrice(tutor.hourly_price)} / 40 dk` : "—"}</dd>
+                    <dd>{tutor ? `${formatTryMinor(Number(tutor.hourly_price) * 100)} / 40 dk` : "—"}</dd>
                   </div>
                   <div className="flex justify-between gap-4">
                     <dt className="text-muted-foreground">Çalışma koçluğu</dt>

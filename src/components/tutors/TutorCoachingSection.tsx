@@ -13,11 +13,13 @@ export function TutorCoachingSection({
   tutorId,
   coaching,
   isStudent,
+  checkoutEnabled,
   checkoutHref,
 }: {
   tutorId: string;
   coaching: TutorCoachingSummary;
   isStudent: boolean;
+  checkoutEnabled: boolean;
   checkoutHref: string;
 }) {
   const { data: eligibility, isLoading } = useQuery({
@@ -27,7 +29,7 @@ export function TutorCoachingSection({
   });
 
   const intakeClosed = !coaching.is_accepting_new_students;
-  const canBuy = isStudent && !isLoading && eligibility?.eligible === true && !intakeClosed;
+  const canBuy = isStudent && checkoutEnabled && !isLoading && eligibility?.eligible === true && !intakeClosed;
   const statusMessage = intakeClosed
     ? "Bu hoca şu anda koçluk için yeni öğrenci almıyor."
     : isStudent && !isLoading && eligibility && !eligibility.eligible

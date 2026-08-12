@@ -3,6 +3,7 @@ import { describe, it } from "node:test";
 
 import {
   coachingEarningStatusCopy,
+  eligibilityAllowsCoachingChoice,
   extractCoachingErrorCode,
   extractCoachingErrorMessage,
   readCoachingSelectedFromSearchParams,
@@ -174,6 +175,28 @@ describe("shouldSkipCoachingChoiceScreen", () => {
     assert.equal(shouldSkipCoachingChoiceScreen(undefined), true);
     assert.equal(
       shouldSkipCoachingChoiceScreen(eligibility({ reason: "ok", plan: null })),
+      true
+    );
+  });
+});
+
+describe("eligibilityAllowsCoachingChoice checkout gate", () => {
+  it("does not expose an otherwise eligible Coaching offer while platform checkout is closed", () => {
+    assert.equal(
+      eligibilityAllowsCoachingChoice(
+        eligibility({ eligible: true, reason: "ok", plan }),
+        false
+      ),
+      false
+    );
+  });
+
+  it("allows an eligible published offer when platform checkout is open", () => {
+    assert.equal(
+      eligibilityAllowsCoachingChoice(
+        eligibility({ eligible: true, reason: "ok", plan }),
+        true
+      ),
       true
     );
   });
