@@ -249,6 +249,8 @@ export default function CoachingOnboardingPage() {
         parentLabel="Koçluk ana sayfası"
         eyebrow="Kısa tanıtım"
         width="narrow"
+        currentHref="/dashboard/tutor/coaching/onboarding"
+        audience="tutor"
       >
         <OnboardingContent />
       </CoachingPageShell>

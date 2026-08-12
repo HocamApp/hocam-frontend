@@ -8,5 +8,5 @@ import { CoachingProgramEditor } from "@/components/coaching/CoachingProgramEdit
 
 export default function TutorCoachingProgramPage() {
   const { servicePeriodId } = useParams<{ servicePeriodId: string }>();
-  return <CoachingGuard><CoachingPageShell title="Öğrenci programı" description="Bu hizmet dönemi için çalışma hedeflerini ve program maddelerini düzenle." parentHref="/dashboard/tutor/coaching/students" parentLabel="Koçluk öğrencilerim" eyebrow="Çalışma programı" width="narrow"><CoachingProgramEditor servicePeriodId={servicePeriodId} /></CoachingPageShell></CoachingGuard>;
+  return <CoachingGuard><CoachingPageShell title="Öğrenci programı" description="Bu hizmet dönemi için çalışma hedeflerini ve program maddelerini düzenle." parentHref="/dashboard/tutor/coaching/students" parentLabel="Koçluk öğrencilerim" eyebrow="Çalışma programı" width="narrow" currentHref="/dashboard/tutor/coaching/students" audience="tutor"><CoachingProgramEditor servicePeriodId={servicePeriodId} /></CoachingPageShell></CoachingGuard>;
 }

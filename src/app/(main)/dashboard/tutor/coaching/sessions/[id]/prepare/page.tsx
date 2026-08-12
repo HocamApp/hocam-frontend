@@ -88,7 +88,7 @@ export default function TutorCoachingPreparePage() {
   const { id } = useParams<{ id: string }>();
   return (
     <CoachingGuard>
-      <CoachingPageShell title="Görüşmeye hazırlan" description="Öğrencinin önceki geri bildirimini, paylaşılan dosyaları ve özel çalışma alanını görüşme öncesinde gözden geçir." parentHref="/dashboard/tutor/coaching/upcoming" parentLabel="Yaklaşan görüşmeler" eyebrow="Görüşme" width="narrow"><PrepareContent sessionId={id} /></CoachingPageShell>
+      <CoachingPageShell title="Görüşmeye hazırlan" description="Öğrencinin önceki geri bildirimini, paylaşılan dosyaları ve özel çalışma alanını görüşme öncesinde gözden geçir." parentHref="/dashboard/tutor/coaching/upcoming" parentLabel="Yaklaşan görüşmeler" eyebrow="Görüşme" width="narrow" currentHref="/dashboard/tutor/coaching/sessions/prepare" audience="tutor"><PrepareContent sessionId={id} /></CoachingPageShell>
     </CoachingGuard>
   );
 }

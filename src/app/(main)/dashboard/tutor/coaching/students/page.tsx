@@ -53,6 +53,7 @@ function StudentsContent() {
       <EmptyState
         title="Henüz koçluk öğrencin yok"
         description="Bir öğrenci koçluk talebini kabul edip ödemesi aktive olduğunda burada görünecek."
+        steps={["Birleşik talebi değerlendirirsin", "Aktif öğrenci çalışma alanına eklenir"]}
       />
     );
   }
@@ -111,7 +112,7 @@ function StudentsContent() {
 export default function CoachingStudentsPage() {
   return (
     <CoachingRecordGuard>
-      <CoachingPageShell title="Koçluk öğrencilerim" description="Aktif öğrencilerin hizmet durumunu, düzenli koçluk saatlerini ve çalışma programlarını yönet." parentHref="/dashboard/tutor/coaching" parentLabel="Koçluk ana sayfası" eyebrow="Öğrenciler" width="narrow" actions={<div className="flex flex-wrap gap-3 text-sm"><Link href="/dashboard/tutor/coaching/time-requests" className="underline">Saat talepleri</Link><Link href="/dashboard/tutor/coaching/reschedule-requests" className="underline">Değişiklik talepleri</Link></div>}><StudentsContent /></CoachingPageShell>
+      <CoachingPageShell title="Koçluk öğrencilerim" description="Aktif öğrencilerin hizmet durumunu, düzenli koçluk saatlerini ve çalışma programlarını yönet." parentHref="/dashboard/tutor/coaching" parentLabel="Koçluk ana sayfası" eyebrow="Öğrenciler" width="narrow" currentHref="/dashboard/tutor/coaching/students" audience="tutor" actions={<div className="flex flex-wrap gap-3 text-sm"><Link href="/dashboard/tutor/coaching/time-requests" className="underline">Saat talepleri</Link><Link href="/dashboard/tutor/coaching/reschedule-requests" className="underline">Değişiklik talepleri</Link></div>}><StudentsContent /></CoachingPageShell>
     </CoachingRecordGuard>
   );
 }

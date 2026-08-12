@@ -78,7 +78,8 @@ function ScheduleContent() {
     return (
       <EmptyState
         title="Şu anda planlanacak bir koçluğun yok"
-        description="Ders paketi ve koçluk bundle talebin öğretmenin tarafından kabul edilip hizmetin aktive olduğunda burada saat seçebilirsin."
+description="Ders paketi ve çalışma koçluğu talebin öğretmenin tarafından kabul edilip hizmetin aktive olduğunda burada saat seçebilirsin."
+steps={["Birleşik talebin kabul edilir", "Koçluk müsaitliğinden düzenli saat seçersin"]}
       />
     );
   }
@@ -233,7 +234,7 @@ function ActiveScheduleView() {
 export default function CoachingSchedulePage() {
   return (
     <RouteGuard requireRole="student">
-      <CoachingPageShell title="Koçluk saatlerim" description="Öğretmenin ayrı koçluk müsaitliğinden düzenli görüşme saatlerini seç veya mevcut saat değişikliklerini yönet." parentHref="/dashboard/student/coaching" parentLabel="Çalışma koçluğum" eyebrow="Planlama" width="narrow"><ScheduleContent /></CoachingPageShell>
+      <CoachingPageShell title="Koçluk saatlerim" description="Öğretmenin ayrı koçluk müsaitliğinden düzenli görüşme saatlerini seç veya mevcut saat değişikliklerini yönet." parentHref="/dashboard/student/coaching" parentLabel="Çalışma koçluğum" eyebrow="Planlama" width="narrow" currentHref="/dashboard/student/coaching/upcoming" audience="student"><ScheduleContent /></CoachingPageShell>
     </RouteGuard>
   );
 }

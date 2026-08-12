@@ -2,9 +2,11 @@ import Link from "next/link";
 import {
   CalendarDays,
   CircleDollarSign,
+  ClipboardList,
   FileText,
   LayoutDashboard,
   Settings2,
+  ShieldAlert,
   UserPlus,
   UsersRound,
 } from "lucide-react";
@@ -16,6 +18,7 @@ const TUTOR_LINKS = [
   { label: "Öğrenciler", href: "/dashboard/tutor/coaching/students", icon: UsersRound },
   { label: "Görüşmeler", href: "/dashboard/tutor/coaching/upcoming", icon: CalendarDays },
   { label: "Talepler", href: "/dashboard/tutor/coaching/requests", icon: UserPlus },
+  { label: "Kayıtlar", href: "/dashboard/tutor/coaching/reports", icon: ClipboardList },
   { label: "Kazançlar", href: "/dashboard/tutor/coaching/earnings", icon: CircleDollarSign },
   { label: "Teklif ayarları", href: "/dashboard/tutor/coaching/plan", icon: Settings2 },
 ] as const;
@@ -25,6 +28,7 @@ const STUDENT_LINKS = [
   { label: "Programım", href: "/dashboard/student/coaching/program", icon: FileText },
   { label: "Görüşmeler", href: "/dashboard/student/coaching/upcoming", icon: CalendarDays },
   { label: "Raporlar", href: "/dashboard/student/coaching/reports", icon: FileText },
+  { label: "Destek", href: "/dashboard/student/coaching/complaints", icon: ShieldAlert },
 ] as const;
 
 function isCurrentRoute(currentHref: string, href: string) {
@@ -33,7 +37,13 @@ function isCurrentRoute(currentHref: string, href: string) {
     return currentHref.includes("/sessions/") || currentHref.includes("/reschedule-requests");
   }
   if (href.endsWith("/plan")) {
-    return currentHref.includes("/availability") || currentHref.includes("/preview");
+    return currentHref.includes("/availability") || currentHref.includes("/preview") || currentHref.includes("/onboarding");
+  }
+  if (href.endsWith("/students")) {
+    return currentHref.includes("/service-periods/") || currentHref.includes("/time-requests");
+  }
+  if (href.endsWith("/reports")) {
+    return currentHref.includes("/reports") || currentHref.includes("/complaints");
   }
   return false;
 }

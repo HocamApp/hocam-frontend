@@ -42,7 +42,7 @@ export function CoachingSessionList() {
   }
 
   if (sessions.length === 0) {
-    return <CoachingEmptyState title="Henüz görüşme oluşturulmadı" description="Düzenli koçluk saatlerin onaylandığında planlanan görüşmeler burada görünür." />;
+    return <CoachingEmptyState title="Henüz görüşme oluşturulmadı" description="Düzenli koçluk saatlerin onaylandığında planlanan görüşmeler burada görünür." steps={["Koçluk saatin belirlenir", "Görüşme takvimine eklenir"]} />;
   }
 
   const now = Date.now();

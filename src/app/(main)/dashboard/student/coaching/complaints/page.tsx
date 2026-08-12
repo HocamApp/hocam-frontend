@@ -83,7 +83,7 @@ function ComplaintsContent() {
   });
 
   if (state.isLoading || disputes.isLoading) return <div className="flex min-h-[12rem] items-center justify-center"><LoadingSpinner /></div>;
-  if (!purchaseId) return <EmptyState title="Koçluk kaydı bulunamadı" description="Koçluk başvuruları aktif bir koçluk satın alımıyla ilişkilidir." />;
+  if (!purchaseId) return <EmptyState title="Koçluk kaydı bulunamadı" description="Koçluk başvuruları aktif bir koçluk satın alımıyla ilişkilidir." steps={["Aktif koçluk kaydı doğrulanır", "Başvuru alanı hizmete bağlanır"]} />;
   return <div className="space-y-6">
     <NewDisputeForm purchaseId={purchaseId} />
     <Card><CardContent className="space-y-3 py-5"><div className="flex items-center justify-between gap-2"><h2 className="font-semibold">Koçluk iptali ve iade durumu</h2><Badge variant="secondary">{financial.data?.service_status ?? "Yükleniyor"}</Badge></div>
@@ -92,10 +92,10 @@ function ComplaintsContent() {
       {financial.data?.cancellation_pending ? <p className="text-sm">İptal talebin işleniyor; aktif dönem geçmiş kayıtlarda korunur.</p> : <Button variant="outline" disabled={cancel.isPending} onClick={() => cancel.mutate()}>Koçluğu sonlandırmayı iste</Button>}
       {cancel.error ? <p className="text-sm text-destructive">İptal talebi güncel durumla çakıştı; sayfayı yenileyip tekrar dene.</p> : null}
     </CardContent></Card>
-    <section className="space-y-3"><h2 className="text-lg font-semibold">Başvurularım</h2>{disputes.data?.length ? disputes.data.map((dispute) => <Link key={dispute.id} href={`/dashboard/student/coaching/complaints/${dispute.id}`}><Card className="mb-3 transition-colors hover:bg-muted/50"><CardContent className="flex items-center justify-between gap-3 py-4"><div><p className="font-medium">{dispute.category}</p><p className="text-sm text-muted-foreground">{new Date(dispute.submitted_at).toLocaleString("tr-TR")}</p></div><Badge>{dispute.status}</Badge></CardContent></Card></Link>) : <EmptyState title="Henüz başvurun yok" description="Bir sorun olduğunda başvurunu buradan takip edebilirsin." />}</section>
+    <section className="space-y-3"><h2 className="text-lg font-semibold">Başvurularım</h2>{disputes.data?.length ? disputes.data.map((dispute) => <Link key={dispute.id} href={`/dashboard/student/coaching/complaints/${dispute.id}`}><Card className="mb-3 transition-colors hover:bg-muted/50"><CardContent className="flex items-center justify-between gap-3 py-4"><div><p className="font-medium">{dispute.category}</p><p className="text-sm text-muted-foreground">{new Date(dispute.submitted_at).toLocaleString("tr-TR")}</p></div><Badge>{dispute.status}</Badge></CardContent></Card></Link>) : <EmptyState title="Henüz başvurun yok" description="Bir sorun olduğunda başvurunu buradan takip edebilirsin." steps={["Başvurunu ve kanıtını paylaşırsın", "Paylaşılabilir süreç güncellemelerini izlersin"]} />}</section>
   </div>;
 }
 
 export default function StudentCoachingComplaintsPage() {
-  return <RouteGuard requireAuth requireRole="student"><CoachingPageShell title="Koçluk başvurularım" description="Bir sorun olduğunda başvuru oluştur, paylaşılmış finansal durumu incele ve mevcut süreci takip et." parentHref="/dashboard/student/coaching" parentLabel="Çalışma koçluğum" eyebrow="Başvurular" width="narrow"><ComplaintsContent /></CoachingPageShell></RouteGuard>;
+  return <RouteGuard requireAuth requireRole="student"><CoachingPageShell title="Koçluk başvurularım" description="Bir sorun olduğunda başvuru oluştur, paylaşılmış finansal durumu incele ve mevcut süreci takip et." parentHref="/dashboard/student/coaching" parentLabel="Çalışma koçluğum" eyebrow="Başvurular" width="narrow" currentHref="/dashboard/student/coaching/complaints" audience="student"><ComplaintsContent /></CoachingPageShell></RouteGuard>;
 }

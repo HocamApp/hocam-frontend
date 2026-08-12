@@ -36,7 +36,7 @@ function UpcomingList() {
   }
 
   if (!sessions || sessions.length === 0) {
-    return <CoachingEmptyState title="Yaklaşan görüşme yok" description="Planlanan bir koçluk görüşmesi olduğunda tarihi, hazırlık alanı ve katılım bağlantısı burada görünür." />;
+    return <CoachingEmptyState title="Yaklaşan görüşme yok" description="Planlanan bir koçluk görüşmesi olduğunda tarihi, hazırlık alanı ve katılım bağlantısı burada görünür." steps={["Öğrenciyle düzenli saat belirlenir", "Görüşme öncesi hazırlık alanı açılır"]} tone="accent" />;
   }
 
   return (
@@ -85,7 +85,7 @@ function UpcomingList() {
 export default function TutorCoachingUpcomingPage() {
   return (
     <CoachingGuard>
-      <CoachingPageShell title="Yaklaşan görüşmeler" description="Planlanan koçluk görüşmelerine hazırlan, katıl ve görüşme sonrası rapor akışını tamamla." parentHref="/dashboard/tutor/coaching" parentLabel="Koçluk ana sayfası" eyebrow="Takvim" width="narrow"><UpcomingList /></CoachingPageShell>
+      <CoachingPageShell title="Yaklaşan görüşmeler" description="Planlanan koçluk görüşmelerine hazırlan, katıl ve görüşme sonrası rapor akışını tamamla." parentHref="/dashboard/tutor/coaching" parentLabel="Koçluk ana sayfası" eyebrow="Takvim" width="narrow" currentHref="/dashboard/tutor/coaching/upcoming" audience="tutor"><UpcomingList /></CoachingPageShell>
     </CoachingGuard>
   );
 }

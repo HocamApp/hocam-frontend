@@ -56,6 +56,8 @@ export default function CoachingPreviewPage() {
         parentLabel="Koçluk ana sayfası"
         eyebrow="Önizleme"
         width="narrow"
+        currentHref="/dashboard/tutor/coaching/preview"
+        audience="tutor"
       >
         <PreviewContent />
       </CoachingPageShell>

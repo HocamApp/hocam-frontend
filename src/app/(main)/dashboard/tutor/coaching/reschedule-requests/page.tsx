@@ -59,6 +59,7 @@ function RescheduleRequestsContent() {
       <EmptyState
         title="Bekleyen değişiklik talebi yok"
         description="Bir öğrenci ücretsiz hakkını kullandıktan sonra yeni bir değişiklik istediğinde burada görünür."
+        steps={["Öğrenci yeni saat ister", "Mevcut hak ve durumla değerlendirirsin"]}
       />
     );
   }
@@ -111,7 +112,7 @@ function RescheduleRequestsContent() {
 export default function CoachingRescheduleRequestsPage() {
   return (
     <CoachingGuard>
-      <CoachingPageShell title="Görüşme değişiklik talepleri" description="Öğrencinin koçluk görüşmesi için istediği tarih değişikliklerini mevcut hak ve durum bilgisiyle değerlendir." parentHref="/dashboard/tutor/coaching/students" parentLabel="Koçluk öğrencilerim" eyebrow="Planlama" width="narrow"><RescheduleRequestsContent /></CoachingPageShell>
+      <CoachingPageShell title="Görüşme değişiklik talepleri" description="Öğrencinin koçluk görüşmesi için istediği tarih değişikliklerini mevcut hak ve durum bilgisiyle değerlendir." parentHref="/dashboard/tutor/coaching/students" parentLabel="Koçluk öğrencilerim" eyebrow="Planlama" width="narrow" currentHref="/dashboard/tutor/coaching/reschedule-requests" audience="tutor"><RescheduleRequestsContent /></CoachingPageShell>
     </CoachingGuard>
   );
 }

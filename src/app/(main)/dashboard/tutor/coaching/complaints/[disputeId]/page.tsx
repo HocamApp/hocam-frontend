@@ -29,4 +29,4 @@ function Detail() {
   </div>;
 }
 
-export default function TutorCoachingComplaintDetailPage() { return <CoachingRecordGuard><CoachingPageShell title="Koçluk başvurusu" description="Paylaşılması uygun başvuru durumunu ve kanıtları incele; gerekiyorsa ek bağlam ilet." parentHref="/dashboard/tutor/coaching/complaints" parentLabel="Koçluk başvuruları" eyebrow="Başvuru detayı" width="narrow"><Detail /></CoachingPageShell></CoachingRecordGuard>; }
+export default function TutorCoachingComplaintDetailPage() { return <CoachingRecordGuard><CoachingPageShell title="Koçluk başvurusu" description="Paylaşılması uygun başvuru durumunu ve kanıtları incele; gerekiyorsa ek bağlam ilet." parentHref="/dashboard/tutor/coaching/complaints" parentLabel="Koçluk başvuruları" eyebrow="Başvuru detayı" width="narrow" currentHref="/dashboard/tutor/coaching/complaints" audience="tutor"><Detail /></CoachingPageShell></CoachingRecordGuard>; }

@@ -88,6 +88,7 @@ function TimeRequestsContent() {
       <EmptyState
         title="Bekleyen saat talebi yok"
         description="Bir öğrenci uygun saat bulamadığında burada bir talep açılır ve 48 saat içinde bir saat önermen gerekir."
+        steps={["Öğrenci uygun saat bulamaz", "Sen alternatif bir saat önerirsin"]}
       />
     );
   }
@@ -131,7 +132,7 @@ function TimeRequestsContent() {
 export default function CoachingTimeRequestsPage() {
   return (
     <CoachingGuard>
-      <CoachingPageShell title="Koçluk saat talepleri" description="Öğrencilerin ortak saat bulamadığında ilettiği talepleri incele ve uygun bir koçluk saati öner." parentHref="/dashboard/tutor/coaching/students" parentLabel="Koçluk öğrencilerim" eyebrow="Saat planlama" width="narrow"><TimeRequestsContent /></CoachingPageShell>
+      <CoachingPageShell title="Koçluk saat talepleri" description="Öğrencilerin ortak saat bulamadığında ilettiği talepleri incele ve uygun bir koçluk saati öner." parentHref="/dashboard/tutor/coaching/students" parentLabel="Koçluk öğrencilerim" eyebrow="Saat planlama" width="narrow" currentHref="/dashboard/tutor/coaching/time-requests" audience="tutor"><TimeRequestsContent /></CoachingPageShell>
     </CoachingGuard>
   );
 }

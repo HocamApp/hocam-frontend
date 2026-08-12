@@ -50,5 +50,5 @@ function StudentReportDetail({ reportId }: { reportId: string }) {
 
 export default function StudentCoachingReportDetailPage() {
   const { reportId } = useParams<{ reportId: string }>();
-  return <RouteGuard requireAuth requireRole="student"><CoachingPageShell title="Görüşme raporu" description="Yayınlanan görüşme özetini, ekleri ve çalışma önerilerini incele." parentHref="/dashboard/student/coaching/reports" parentLabel="Görüşme raporlarım" eyebrow="Rapor detayı" width="narrow"><StudentReportDetail reportId={reportId} /></CoachingPageShell></RouteGuard>;
+  return <RouteGuard requireAuth requireRole="student"><CoachingPageShell title="Görüşme raporu" description="Yayınlanan görüşme özetini, ekleri ve çalışma önerilerini incele." parentHref="/dashboard/student/coaching/reports" parentLabel="Görüşme raporlarım" eyebrow="Rapor detayı" width="narrow" currentHref="/dashboard/student/coaching/reports" audience="student"><StudentReportDetail reportId={reportId} /></CoachingPageShell></RouteGuard>;
 }

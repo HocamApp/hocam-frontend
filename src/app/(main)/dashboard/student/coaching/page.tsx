@@ -43,10 +43,11 @@ function OverviewContent() {
 
   if (!state) {
     return (
-      <EmptyState
-        title="Henüz bir çalışma koçluğun yok"
-        description="Ders paketine koçluk ekleyip bundle talebin öğretmenin tarafından kabul edildikten sonra koçluk alanın burada açılır."
-      />
+<EmptyState
+title="Henüz bir çalışma koçluğun yok"
+description="Ders paketine çalışma koçluğu eklediğin talep öğretmenin tarafından kabul edildikten sonra koçluk alanın burada açılır."
+steps={["Ders paketi ve koçluk talebin kabul edilir", "Ödemen aktive olduğunda koçluk alanın açılır"]}
+/>
     );
   }
 
@@ -139,7 +140,7 @@ function OverviewContent() {
 export default function StudentCoachingOverviewPage() {
   return (
     <RouteGuard requireAuth requireRole="student">
-      <CoachingPageShell title="Çalışma koçluğum" description="Koçluk görüşmelerini, programını, raporlarını ve hizmet durumunu tek yerden takip et." parentHref="/dashboard/student" parentLabel="Öğrenci paneli" eyebrow="Çalışma koçluğu" width="narrow"><OverviewContent /></CoachingPageShell>
+      <CoachingPageShell title="Çalışma koçluğum" description="Koçluk görüşmelerini, programını, raporlarını ve hizmet durumunu tek yerden takip et." parentHref="/dashboard/student" parentLabel="Öğrenci paneli" eyebrow="Çalışma koçluğu" width="narrow" currentHref="/dashboard/student/coaching" audience="student"><OverviewContent /></CoachingPageShell>
     </RouteGuard>
   );
 }
