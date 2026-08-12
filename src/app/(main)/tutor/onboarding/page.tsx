@@ -7,9 +7,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Camera, CheckCircle2, Circle, Clock, PartyPopper } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { fetchMyTutorProfile, uploadTutorProfilePicture } from "@/lib/tutorsApi";
-import { fetchAvailability, fetchVerification } from "@/lib/dashboardApi";
+import { fetchVerification } from "@/lib/dashboardApi";
 import { VerificationForm } from "@/components/tutors/VerificationForm";
-import { AvailabilityCalendar } from "@/components/tutors/AvailabilityCalendar";
 import { RouteGuard } from "@/components/shared/RouteGuard";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -18,12 +17,15 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { validateProfilePhotoFile, PROFILE_PHOTO_ACCEPT } from "@/lib/profilePhoto";
 import { bypassAdminTutorOnboardingVerification } from "@/lib/adminControlApi";
+import { TutorJourneyAside } from "@/components/tutors/TutorJourneyAside";
+import { cn } from "@/lib/utils";
 
 type OnboardingStep = {
   title: string;
   description: string;
   complete: boolean;
   active: boolean;
+  waiting?: boolean;
 };
 
 function TutorOnboardingContent() {
@@ -38,11 +40,6 @@ function TutorOnboardingContent() {
     enabled: isAuthenticated,
     retry: false,
     refetchInterval: 15_000,
-  });
-  const { data: availability = [] } = useQuery({
-    queryKey: ["availability"],
-    queryFn: fetchAvailability,
-    enabled: isAuthenticated && !!profile,
   });
   const { data: verification } = useQuery({
     queryKey: ["verification"],
@@ -75,8 +72,7 @@ function TutorOnboardingContent() {
   // Independent axis: the tutorial can be completed while documents are still
   // under review. Backend truth arrives via /auth/me/.
   const tutorialComplete = Boolean(user?.jitsi_tutorial_completed);
-  const lessonsReady = verificationApproved && photoComplete && (profile?.subjects.length ?? 0) > 0 && availability.length > 0;
-  const setupComplete = lessonsReady && tutorialComplete;
+  const setupComplete = verificationApproved && photoComplete && tutorialComplete;
 
   const photoMutation = useMutation({
     mutationFn: uploadTutorProfilePicture,
@@ -141,10 +137,8 @@ function TutorOnboardingContent() {
       title: "Belge doğrulaması",
       description: "Öğrenci kimliği ve YKS sonuç belgesi incelenir.",
       complete: verificationApproved,
-      // Nothing left to do once submitted (pending review) — active hands
-      // off to the tutorial stage rather than staying lit while approval
-      // is out of the tutor's hands.
       active: profileComplete && photoComplete && !verificationSubmitted,
+      waiting: verification?.status === "pending",
     },
     {
       title: "Canlı ders eğitimi",
@@ -155,63 +149,96 @@ function TutorOnboardingContent() {
       // without any reference to verification state.
       active: profileComplete && photoComplete && verificationSubmitted && !tutorialComplete,
     },
-    {
-      title: "Dersler ve müsaitlik",
-      description: "Verdiğin dersleri ve uygun saatlerini ayarla.",
-      complete: lessonsReady,
-      active: verificationApproved && photoComplete && !lessonsReady,
-    },
   ];
-  const completeCount = steps.filter((step) => step.complete).length;
+  const completeCount = steps.filter((step) => step.complete || step.waiting).length;
   const progress = Math.round((completeCount / steps.length) * 100);
+  const activeStep = steps.find((step) => step.active || step.waiting);
+  const journeyCopy = !profileComplete
+    ? {
+        title: "Öğrencilerin seni tanıyacağı profili oluşturalım.",
+        description: "Temel bilgilerini, verdiğin dersleri ve anlatım tarzını tek seferde ekle.",
+        fact: "Üniversite ve bölüm seçenekleri YÖK Atlas verileriyle desteklenir; listede yoksa kendi bilgini ekleyebilirsin.",
+      }
+    : !photoComplete
+      ? {
+          title: "Şimdi profiline bir yüz kazandıralım.",
+          description: "Net ve doğal bir fotoğraf, öğrencilerin seni daha kolay tanımasına yardımcı olur.",
+          fact: "Fotoğrafını ve profil bilgilerini daha sonra hoca panelinden güncelleyebilirsin.",
+        }
+      : !verificationSubmitted
+        ? {
+            title: "Güven adımındasın.",
+            description: "Belgelerin yalnızca hoca doğrulaması için incelenir ve profilinde yayınlanmaz.",
+            fact: "Belgelerini gönderdikten sonra inceleme sonucunu beklemeden canlı ders eğitimine geçebilirsin.",
+          }
+        : !tutorialComplete
+          ? {
+              title: "Son kontrol: ders ekranını tanı.",
+              description: "Kısa rehber kamera, tahta, canlı soru ve ders bitirme araçlarını uygulamalı gösterir.",
+              fact: "Canlı ders eğitimi yaklaşık 5 dakika sürer ve kaldığın yerden devam edebilirsin.",
+            }
+          : !verificationApproved
+            ? {
+                title: "Senin tarafındaki her şey tamam.",
+                description: "Belgelerin inceleniyor. Onaylandığında profilin otomatik olarak hazır olacak.",
+                fact: "Müsait saatlerini ve verdiğin dersleri hoca panelinden istediğin zaman düzenleyebilirsin.",
+              }
+            : {
+                title: "Hocam’da ders vermeye hazırsın!",
+                description: "Profilin tamamlandı. Öğrenciler artık seni keşfedebilir.",
+                fact: "Ders ücretin ve takvimin senin kontrolünde; ikisini de hoca panelinden değiştirebilirsin.",
+              };
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-10">
-      <Card>
+    <div className="mx-auto grid max-w-6xl gap-6 px-4 py-8 lg:grid-cols-[minmax(0,1.65fr)_minmax(300px,0.75fr)] lg:items-start lg:py-10">
+      <Card className="overflow-hidden rounded-3xl border-brand-100 shadow-sm dark:border-brand-900">
         <CardHeader>
-          <CardTitle>Hoca hesabını tamamla</CardTitle>
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand-600 dark:text-brand-300">
+            {activeStep ? `Sıradaki: ${activeStep.title}` : "Profilin hazır"}
+          </p>
+          <CardTitle className="text-2xl sm:text-3xl">Hoca hesabını tamamla</CardTitle>
           <CardDescription>
-            Öğrenciler yalnızca doğrulanmış ve tamamlanmış hoca profillerini görebilir.
+            Her adım kısa ve nettir. Tamamladıkça ilerlemen anında güncellenir.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-8">
           <div>
             <div className="mb-2 flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Profil ilerlemesi</span>
-              <span className="font-medium">%{progress}</span>
+              <span className="text-muted-foreground">{completeCount}/{steps.length} adım tamamlandı</span>
+              <span className="font-semibold text-brand-700 dark:text-brand-200">%{progress}</span>
             </div>
-            <div className="h-2 overflow-hidden rounded-full bg-muted">
-              <div className="h-full bg-primary transition-all" style={{ width: `${progress}%` }} />
+            <div className="h-2.5 overflow-hidden rounded-full bg-brand-50 dark:bg-brand-900/40">
+              <div className="h-full rounded-full bg-brand-600 transition-[width] duration-500 ease-out dark:bg-brand-400" style={{ width: `${progress}%` }} />
             </div>
           </div>
 
-          <ol className="space-y-4">
+          <ol className="space-y-3">
             {steps.map((step, index) => (
-              <li key={step.title}>
-                {/* Verification and the tutorial read as two distinct stages
-                    rather than adjacent checklist items — a small stage
-                    label plus a divider ahead of each, instead of a
-                    structural rewrite of the steps array. */}
-                {step.title === "Belge doğrulaması" && (
-                  <p className="mb-2 border-t pt-4 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    Aşama 1 · Hesap doğrulama
-                  </p>
+              <li
+                key={step.title}
+                className={cn(
+                  "rounded-2xl border px-4 py-3 transition-colors",
+                  step.active && "border-brand-300 bg-brand-50/70 dark:border-brand-700 dark:bg-brand-900/20",
+                  step.waiting && "border-amber-200 bg-amber-50/70 dark:border-amber-800 dark:bg-amber-950/20",
+                  step.complete && "border-emerald-100 bg-emerald-50/40 dark:border-emerald-900 dark:bg-emerald-950/10"
                 )}
-                {step.title === "Canlı ders eğitimi" && (
-                  <p className="mb-2 border-t pt-4 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    Aşama 2 · Derse hazırlık
-                  </p>
-                )}
+              >
                 <div className="flex gap-3">
                   {step.complete ? (
                     <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-green-600" />
+                  ) : step.waiting ? (
+                    <Clock className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
                   ) : step.active ? (
-                    <Clock className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                    <Clock className="mt-0.5 h-5 w-5 shrink-0 text-brand-600 dark:text-brand-300" />
                   ) : (
                     <Circle className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" />
                   )}
-                  <div>
-                    <p className="font-medium">{index + 1}. {step.title}</p>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="font-medium">{index + 1}. {step.title}</p>
+                      {step.waiting && <span className="text-xs font-medium text-amber-700 dark:text-amber-300">İncelemede</span>}
+                      {step.complete && <span className="text-xs font-medium text-emerald-700 dark:text-emerald-300">Tamamlandı</span>}
+                    </div>
                     <p className="text-sm text-muted-foreground">{step.description}</p>
                   </div>
                 </div>
@@ -220,7 +247,7 @@ function TutorOnboardingContent() {
           </ol>
 
           {!profileComplete && (
-            <Button asChild className="w-full"><Link href="/tutor/setup">Profil bilgilerini ekle</Link></Button>
+            <Button asChild className="h-12 w-full bg-brand-600 text-white hover:bg-brand-700 dark:bg-brand-500 dark:hover:bg-brand-400"><Link href="/tutor/setup">Profilini oluşturmaya başla</Link></Button>
           )}
           {profileComplete && !photoComplete && (
             <div className="space-y-4 rounded-lg border p-5">
@@ -243,10 +270,6 @@ function TutorOnboardingContent() {
               </Button>
             </div>
           )}
-          {/* Stage 1: document verification. VerificationForm handles its
-              own not-submitted/pending/approved/rejected states internally,
-              so it stays mounted for the whole stage (through pending
-              review) — only the tutorial CTA below is gated on submission. */}
           {profileComplete && photoComplete && !verificationApproved && (
             <div className="space-y-4">
               {user?.impersonation && user.is_test_account && (
@@ -269,10 +292,6 @@ function TutorOnboardingContent() {
               <VerificationForm />
             </div>
           )}
-          {/* Stage 2: only presented once verification has been submitted —
-              sequencing, not a completion dependency. verificationApproved
-              is never checked here, so an approval still pending doesn't
-              block the tutorial. */}
           {profileComplete && photoComplete && verificationSubmitted && !tutorialComplete && (
             <div className="flex flex-col gap-3 rounded-lg border p-5 sm:flex-row sm:items-center sm:justify-between">
               <div>
@@ -287,16 +306,6 @@ function TutorOnboardingContent() {
               </Button>
             </div>
           )}
-          {verificationApproved && !lessonsReady && (
-            <div className="space-y-3 rounded-lg border p-4">
-              <p className="font-medium">Son adım: dersler ve müsaitlik</p>
-              <p className="text-sm text-muted-foreground">
-                Aşağıdaki takvimden bir gün seçip Düzenle ile uygun saatlerini ekle.
-                Bu işlem tamamlandığında hoca ana sayfana otomatik yönlendirileceksin.
-              </p>
-              <AvailabilityCalendar availability={availability} bookings={[]} />
-            </div>
-          )}
           {setupComplete && (
             <div className="rounded-lg border border-green-200 bg-green-50 p-5 text-center dark:border-green-900/60 dark:bg-green-950/30">
               <PartyPopper className="mx-auto mb-2 h-8 w-8 text-green-600" />
@@ -308,6 +317,14 @@ function TutorOnboardingContent() {
           )}
         </CardContent>
       </Card>
+      <TutorJourneyAside
+        eyebrow="Hocam hoca yolculuğu"
+        title={journeyCopy.title}
+        description={journeyCopy.description}
+        progress={progress}
+        progressLabel={`${completeCount}/${steps.length} adım tamamlandı`}
+        fact={journeyCopy.fact}
+      />
     </div>
   );
 }

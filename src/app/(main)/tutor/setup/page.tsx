@@ -19,13 +19,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   Card,
   CardContent,
   CardDescription,
@@ -43,6 +36,8 @@ import {
 import { cn } from "@/lib/utils";
 import { filterSelectedSubjectIds, groupSubjectsByExam } from "@/lib/subjects";
 import { TeachingAttributeSelector } from "@/components/tutors/TeachingAttributeSelector";
+import { SearchableEducationSelect } from "@/components/tutors/SearchableEducationSelect";
+import { TutorJourneyAside } from "@/components/tutors/TutorJourneyAside";
 import { syncCreatedTutorProfile } from "@/lib/tutorSetup";
 
 const setupSchema = z.object({
@@ -99,7 +94,11 @@ export default function TutorSetupPage() {
     queryFn: fetchSubjects,
     enabled: isAuthenticated && isTutor,
   });
-  const { data: educationOptions = [], isLoading: educationOptionsLoading } = useQuery({
+  const {
+    data: educationOptions = [],
+    isLoading: educationOptionsLoading,
+    isError: educationOptionsError,
+  } = useQuery({
     queryKey: ["tutor-education-options"],
     queryFn: fetchTutorEducationOptions,
     enabled: isAuthenticated && isTutor,
@@ -214,17 +213,34 @@ export default function TutorSetupPage() {
 
   const subjectGroups = groupSubjectsByExam(subjects);
   const selectedUniversity = form.watch("university");
+  const watchedValues = form.watch();
   const availableDepartments =
     educationOptions.find((option) => option.university === selectedUniversity)
       ?.departments ?? [];
+  const universities = educationOptions.map((option) => option.university);
+  const profileChecks = [
+    Boolean(watchedValues.name.trim() && watchedValues.surname.trim()),
+    Boolean(watchedValues.university && watchedValues.department),
+    Boolean(watchedValues.yks_rank && watchedValues.hourly_price),
+    selectedSubjectIds.length > 0,
+    selectedTeachingAttributes.length >= 3,
+  ];
+  const profileCompletedCount = profileChecks.filter(Boolean).length;
+  const profileProgress = Math.round((profileCompletedCount / profileChecks.length) * 100);
+  const priceFact = watchedValues.hourly_price
+    ? `40 dakikalık ders ücretin profilinde ₺${watchedValues.hourly_price} olarak görünecek. Ücretini daha sonra değiştirebilirsin.`
+    : "Ders ücretini sen belirlersin. Öğrenciler talep göndermeden önce ücreti profilinde açıkça görür.";
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-10">
-      <Card>
+    <div className="mx-auto grid max-w-6xl gap-6 px-4 py-8 lg:grid-cols-[minmax(0,1.65fr)_minmax(300px,0.75fr)] lg:items-start lg:py-10">
+      <Card className="overflow-hidden rounded-3xl border-brand-100 shadow-sm dark:border-brand-900">
         <CardHeader>
-          <CardTitle className="text-2xl">Hoca Profilini Oluştur</CardTitle>
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand-600 dark:text-brand-300">
+            Profil bilgileri
+          </p>
+          <CardTitle className="text-2xl sm:text-3xl">Öğrenciler seni tanısın</CardTitle>
           <CardDescription>
-            Profilini tamamlayarak öğrencilere ulaşmaya başla.
+            Temel bilgilerini bir kez ekle; verdiğin dersleri, ücretini ve profil detaylarını daha sonra panelinden güncelleyebilirsin.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -269,42 +285,23 @@ export default function TutorSetupPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Üniversite</FormLabel>
-                    <Select
-                      disabled={educationOptionsLoading || educationOptions.length === 0}
-                      onValueChange={(value) => {
+                    <FormControl>
+                      <SearchableEducationSelect
+                        disabled={educationOptionsLoading}
+                        value={field.value}
+                        options={universities}
+                        placeholder={educationOptionsLoading ? "Üniversiteler yükleniyor..." : "Üniversiteni ara"}
+                        searchPlaceholder="Üniversite adı yaz"
+                        customLabel="“{value}” üniversitesini kullan"
+                        onChange={(value) => {
                         field.onChange(value);
                         form.setValue("department", "", { shouldValidate: true });
-                      }}
-                      value={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue
-                            placeholder={
-                              educationOptionsLoading
-                                ? "Üniversiteler yükleniyor..."
-                                : "Kayıtlı üniversiteni seç"
-                            }
-                          />
-                        </SelectTrigger>
-                      </FormControl>
-                      {/* Radix flips the panel above the trigger when it doesn't
-                          fit below (position="popper" from the shared default).
-                          A smaller max-height than the shared max-h-96 fits below
-                          on shorter viewports far more often, so it opens
-                          downward instead of upward — scoped to this instance,
-                          not the shared component. */}
-                      <SelectContent className="max-h-60">
-                        {educationOptions.map((option) => (
-                          <SelectItem key={option.university} value={option.university}>
-                            {option.university}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {!educationOptionsLoading && educationOptions.length === 0 && (
+                        }}
+                      />
+                    </FormControl>
+                    {educationOptionsError && (
                       <p className="text-xs text-muted-foreground">
-                        Kayıtlı üniversite seçenekleri henüz bulunamadı.
+                        Liste şu anda alınamadı. Üniversitenin adını yazarak devam edebilirsin.
                       </p>
                     )}
                     <FormMessage />
@@ -317,30 +314,22 @@ export default function TutorSetupPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Bölüm</FormLabel>
-                    <Select
-                      disabled={!selectedUniversity || educationOptionsLoading}
-                      onValueChange={field.onChange}
-                      value={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue
-                            placeholder={
-                              selectedUniversity
-                                ? "Bölümünü seç"
-                                : "Önce üniversiteni seç"
-                            }
-                          />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent className="max-h-60">
-                        {availableDepartments.map((department) => (
-                          <SelectItem key={department} value={department}>
-                            {department}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <FormControl>
+                      <SearchableEducationSelect
+                        disabled={!selectedUniversity || educationOptionsLoading}
+                        value={field.value}
+                        options={availableDepartments}
+                        placeholder={selectedUniversity ? "Bölümünü ara" : "Önce üniversiteni seç"}
+                        searchPlaceholder="Bölüm adı yaz"
+                        customLabel="“{value}” bölümünü kullan"
+                        onChange={field.onChange}
+                      />
+                    </FormControl>
+                    {selectedUniversity && !educationOptionsLoading && (
+                      <p className="text-xs text-muted-foreground">
+                        Bölümünü bulamazsan adını yazıp kendi seçeneğini ekleyebilirsin.
+                      </p>
+                    )}
                     <FormMessage />
                   </FormItem>
                 )}
@@ -463,7 +452,7 @@ export default function TutorSetupPage() {
 
               <Button
                 type="submit"
-                className="w-full"
+                className="h-12 w-full bg-brand-600 text-white hover:bg-brand-700 dark:bg-brand-500 dark:hover:bg-brand-400"
                 disabled={form.formState.isSubmitting}
               >
                 {form.formState.isSubmitting ? (
@@ -475,13 +464,21 @@ export default function TutorSetupPage() {
                     Profil Oluşturuluyor
                   </span>
                 ) : (
-                  "Profili Oluştur"
+                  "Kaydet ve fotoğraf adımına geç"
                 )}
               </Button>
             </form>
           </Form>
         </CardContent>
       </Card>
+      <TutorJourneyAside
+        eyebrow="Hocam’a hoş geldin"
+        title={profileProgress === 100 ? "Profilin hazır görünüyor!" : "Profilin adım adım şekilleniyor."}
+        description="Kısa ve net bir profil, öğrencilerin seni daha hızlı anlamasına yardımcı olur. Her tamamlanan alan ilerlemeni anında artırır."
+        progress={profileProgress}
+        progressLabel={`${profileCompletedCount}/5 profil bölümü hazır`}
+        fact={priceFact}
+      />
     </div>
   );
 }
