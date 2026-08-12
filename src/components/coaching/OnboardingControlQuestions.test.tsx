@@ -29,6 +29,8 @@ describe("OnboardingControlQuestions", () => {
     assert.ok(screen.getByText("Koçluk neyi kapsar?"));
     assert.equal(screen.queryByText("Görüşme kaç dakika?"), null);
     assert.ok(screen.getByText("1 / 2"));
+    assert.ok(screen.getByRole("progressbar", { name: "Hızlı kontrol ilerlemesi" }));
+    assert.equal(screen.queryByText(/puan|test sonucu|sınav/i), null);
   });
 
   it("moves to the first answer that is not server-confirmed as correct", () => {
@@ -43,5 +45,6 @@ describe("OnboardingControlQuestions", () => {
     assert.equal(screen.queryByText("Koçluk neyi kapsar?"), null);
     assert.ok(screen.getByText("Görüşme kaç dakika?"));
     assert.ok(screen.getByText("2 / 2"));
+    assert.equal(screen.queryByText(/puan|test sonucu/i), null);
   });
 });

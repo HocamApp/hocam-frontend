@@ -11,7 +11,7 @@ after(() => window.close());
 afterEach(cleanup);
 
 describe("CoachingOfferCard", () => {
-  it("keeps bundle context and canonical offer details visible", () => {
+  it("keeps the package relationship and canonical offer details visible", () => {
     render(
       <CoachingOfferCard
         offer={{
@@ -30,6 +30,10 @@ describe("CoachingOfferCard", () => {
     assert.ok(screen.getByText("Haftada 1 · 30 dakika"));
     assert.ok(screen.getByText("250,00 ₺"));
     assert.ok(screen.getByText("YKS"));
+    assert.ok(screen.getByText("DGS"));
+    assert.ok(screen.getByRole("heading", { name: "Planlı çalış, ilerlemeni görünür kıl" }));
+    assert.ok(screen.getByRole("region", { name: "Koçluk ücret özeti" }));
+    assert.ok(screen.getByText("Ders paketine ek hizmet"));
     assert.ok(screen.getByRole("button", { name: "Ders paketiyle koçluk al" }));
     assert.ok(screen.getByText(/yalnız ders paketiyle birlikte/i));
   });

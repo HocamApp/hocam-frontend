@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CheckCircle2, RotateCcw } from "lucide-react";
+import { CheckCircle2, RotateCcw, ShieldCheck } from "lucide-react";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -22,10 +22,10 @@ export function OnboardingControlQuestions({
   const nextIndex = questions.findIndex((question) => answers[question.id]?.is_correct !== true);
   if (nextIndex < 0) {
     return (
-      <Card className="border-emerald-200 bg-emerald-50/70 shadow-none">
-        <CardContent className="flex items-center gap-3 p-5 text-sm text-emerald-950">
-          <CheckCircle2 aria-hidden className="h-5 w-5 shrink-0" />
-          <p><span className="font-semibold">Hızlı kontrol tamamlandı.</span> Sözleşme adımına geçebilirsin.</p>
+      <Card className="overflow-hidden rounded-[1.35rem] border-emerald-200 bg-emerald-50/70 shadow-none">
+        <CardContent className="flex items-center gap-4 p-5 text-sm text-emerald-950 sm:p-6">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white/75"><CheckCircle2 aria-hidden className="h-5 w-5" /></span>
+          <div><p className="font-semibold">Hızlı kontrol tamamlandı.</p><p className="mt-1 text-emerald-900/80">Sözleşme adımına geçebilirsin.</p></div>
         </CardContent>
       </Card>
     );
@@ -45,14 +45,22 @@ export function OnboardingControlQuestions({
   };
 
   return (
-    <Card className="overflow-hidden border-foreground/15 shadow-sm">
+    <Card className="overflow-hidden rounded-[1.35rem] border-foreground/15 shadow-sm">
       <CardContent className="p-0">
-        <div className="flex items-center justify-between border-b bg-muted/25 px-5 py-4">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Hızlı kontrol</p>
-            <p className="mt-1 text-sm text-muted-foreground">Kuralı doğru anladığından emin olalım.</p>
+        <div className="border-b bg-primary/[0.045] px-5 py-4 sm:px-6">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-background text-primary"><ShieldCheck className="h-5 w-5" aria-hidden="true" /></span>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">Hızlı kontrol</p>
+                <p className="mt-1 text-sm text-muted-foreground">Kuralı doğru anladığından emin olalım.</p>
+              </div>
+            </div>
+            <span className="text-xs font-semibold tabular-nums">{activeIndex + 1} / {questions.length}</span>
           </div>
-          <span className="rounded-full border bg-background px-3 py-1 text-xs font-semibold tabular-nums">{activeIndex + 1} / {questions.length}</span>
+          <div role="progressbar" aria-label="Hızlı kontrol ilerlemesi" aria-valuemin={0} aria-valuemax={questions.length} aria-valuenow={activeIndex + 1} className="mt-4 h-1.5 overflow-hidden rounded-full bg-background">
+            <div className="h-full rounded-full bg-primary transition-[width] motion-reduce:transition-none" style={{ width: `${((activeIndex + 1) / questions.length) * 100}%` }} />
+          </div>
         </div>
         <fieldset className="space-y-4 p-5 sm:p-6">
           <legend className="text-base font-semibold leading-6">{question.question}</legend>
@@ -63,7 +71,7 @@ export function OnboardingControlQuestions({
                 <label
                   key={option.value}
                   className={cn(
-                    "flex min-h-12 cursor-pointer items-center gap-3 rounded-lg border p-3 text-sm transition-colors",
+                    "flex min-h-14 cursor-pointer items-center gap-3 rounded-xl border p-3 text-sm transition-colors",
                     selected && isCorrect && "border-emerald-600 bg-emerald-50 text-emerald-950",
                     selected && isWrong && "border-amber-500 bg-amber-50 text-amber-950",
                     !selected && "hover:bg-muted/50"
