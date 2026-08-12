@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { toast } from "sonner";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { fetchMe } from "@/lib/authApi";
 import {
@@ -43,6 +43,7 @@ import {
 import { cn } from "@/lib/utils";
 import { filterSelectedSubjectIds, groupSubjectsByExam } from "@/lib/subjects";
 import { TeachingAttributeSelector } from "@/components/tutors/TeachingAttributeSelector";
+import { syncCreatedTutorProfile } from "@/lib/tutorSetup";
 
 const setupSchema = z.object({
   name: z.string().min(1, "Ad zorunludur"),
@@ -69,7 +70,8 @@ type SetupFormValues = z.infer<typeof setupSchema>;
 
 export default function TutorSetupPage() {
   const router = useRouter();
-  const { isAuthenticated, isLoading, isTutor, user, setAuth, token } =
+  const queryClient = useQueryClient();
+  const { isAuthenticated, isLoading, isTutor, user, updateUser } =
     useAuth();
   const [selectedSubjectIds, setSelectedSubjectIds] = useState<string[]>([]);
   const [subjectError, setSubjectError] = useState<string | null>(null);
@@ -147,7 +149,7 @@ export default function TutorSetupPage() {
 
     setGeneralError(null);
     try {
-      await createTutorProfile({
+      const createdProfile = await createTutorProfile({
         name: parsed.data.name,
         surname: parsed.data.surname,
         university: parsed.data.university,
@@ -160,7 +162,7 @@ export default function TutorSetupPage() {
       });
 
       const updatedUser = await fetchMe();
-      setAuth(updatedUser, token!);
+      syncCreatedTutorProfile(queryClient, createdProfile, updatedUser, updateUser);
       toast.success("Profil bilgilerin kaydedildi.");
       router.replace("/tutor/onboarding");
     } catch (err: unknown) {
