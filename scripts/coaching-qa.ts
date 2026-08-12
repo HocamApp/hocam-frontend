@@ -7,7 +7,9 @@ import { chromium, type BrowserContext, type Locator, type Page, type Route } fr
 const ROOT = process.cwd();
 const PORT = Number(process.env.COACHING_QA_PORT ?? 3158);
 const BASE = `http://127.0.0.1:${PORT}`;
-const OUT = path.join(ROOT, "screenshots", "coaching-qa", "visual-polish-v2");
+const OUT = process.env.COACHING_QA_OUT
+  ? path.resolve(ROOT, process.env.COACHING_QA_OUT)
+  : path.join(ROOT, "screenshots", "coaching-qa", "visual-polish-v2");
 
 type Role = "tutor" | "student";
 type Scenario = "empty" | "onboarding" | "draft" | "published" | "availability-empty";
@@ -252,9 +254,14 @@ async function capture(page: Page, state: QaState, options: {
   fullPage?: boolean;
   scrollToHeading?: RegExp | string;
   waitForText?: RegExp | string;
+  assertTryPrecision?: boolean;
+  scrollSubnavBy?: number;
 }) {
   state.role = options.role ?? "tutor";
   state.scenario = options.scenario;
+  if (page.url() === "about:blank") {
+    await page.goto(`${BASE}/login`, { waitUntil: "domcontentloaded" });
+  }
   await page.evaluate((role: Role) => {
     const current = JSON.parse(localStorage.getItem("auth_user") ?? "{}");
     localStorage.setItem("auth_user", JSON.stringify({
@@ -273,7 +280,43 @@ async function capture(page: Page, state: QaState, options: {
   if (options.scrollToHeading) {
     await page.getByRole("heading", { name: options.scrollToHeading }).scrollIntoViewIfNeeded();
   }
+  if (options.scrollSubnavBy) {
+    await page.getByRole("navigation", { name: "Koçluk bölümleri" }).evaluate((element, left) => {
+      element.scrollLeft = left;
+    }, options.scrollSubnavBy);
+  }
+  if (options.assertTryPrecision) {
+    const tryValues = (await page.locator("body").innerText()).match(/₺[0-9][0-9.,]*/g) ?? [];
+    const inconsistent = tryValues.filter((value) => !/,\d{2}$/.test(value));
+    assert.deepEqual(inconsistent, [], `${options.file}: inconsistent TRY values: ${inconsistent.join(", ")}`);
+  }
   await page.screenshot({ path: path.join(OUT, options.file), fullPage: options.fullPage ?? false });
+}
+
+async function captureMicroPolishSet(page: Page, state: QaState, width: number) {
+  const desktop = [
+    ["desktop-coaching-requests.png", "/dashboard/tutor/coaching/requests", "Yeni öğrenci talepleri", "published", 0],
+    ["desktop-coaching-earnings.png", "/dashboard/tutor/coaching/earnings", "Koçluk kazançları", "published", 0],
+    ["desktop-setup-price.png", "/dashboard/tutor/coaching/plan?step=price", "Koçluk teklifini hazırla", "draft", 0],
+    ["desktop-coaching-home.png", "/dashboard/tutor/coaching", /Çalışma koçluğu/i, "published", 0],
+  ] as const;
+  const mobile = [
+    ["mobile-coaching-home.png", "/dashboard/tutor/coaching", /Çalışma koçluğu/i, "published", 0],
+    ["mobile-setup-price.png", "/dashboard/tutor/coaching/plan?step=price", "Koçluk teklifini hazırla", "draft", 0],
+    ["mobile-subnav-continuation.png", "/dashboard/tutor/coaching/reports", "Görüşme raporları", "published", 120],
+  ] as const;
+  const captures = width === 1440 ? desktop : width === 375 ? mobile : [];
+  for (const [file, route, heading, scenario, scrollSubnavBy] of captures) {
+    await capture(page, state, {
+      file,
+      route,
+      heading,
+      scenario,
+      role: "tutor",
+      assertTryPrecision: true,
+      scrollSubnavBy,
+    });
+  }
 }
 
 async function captureReviewSet(page: Page, state: QaState, width: number) {
@@ -439,23 +482,33 @@ async function main() {
     if (server) await waitForServer(server);
     const browser = await chromium.launch({ headless: true });
     const hoverEvidence: Record<string, unknown> = {};
-    for (const viewport of [{ width: 375, height: 812 }, { width: 768, height: 1024 }, { width: 1440, height: 900 }]) {
+    const microOnly = process.env.COACHING_QA_MICRO_ONLY === "1";
+    const viewports = microOnly
+      ? [{ width: 375, height: 812 }, { width: 1440, height: 900 }]
+      : [{ width: 375, height: 812 }, { width: 768, height: 1024 }, { width: 1440, height: 900 }];
+    for (const viewport of viewports) {
       const state: QaState = { role: "tutor", scenario: "published", acceptancePosts: 0, unknown: [] };
       const context = await browser.newContext({ viewport, hasTouch: viewport.width === 375, isMobile: viewport.width === 375 });
       await installApi(context, state);
       const page = await context.newPage();
       const consoleErrors: string[] = [];
       page.on("console", (message) => { if (message.type() === "error") consoleErrors.push(message.text()); });
-      if (process.env.COACHING_QA_HOVER_ONLY !== "1") await runRouteMatrix(page, state, viewport.width);
-      if (process.env.COACHING_QA_HOVER_ONLY !== "1") await captureReviewSet(page, state, viewport.width);
-      state.role = "tutor";
-      hoverEvidence[String(viewport.width)] = await inspectHover(page, viewport.width);
+      if (microOnly) {
+        await captureMicroPolishSet(page, state, viewport.width);
+      } else {
+        if (process.env.COACHING_QA_HOVER_ONLY !== "1") await runRouteMatrix(page, state, viewport.width);
+        if (process.env.COACHING_QA_HOVER_ONLY !== "1") await captureReviewSet(page, state, viewport.width);
+        state.role = "tutor";
+        hoverEvidence[String(viewport.width)] = await inspectHover(page, viewport.width);
+      }
       const actionableConsoleErrors = consoleErrors.filter(
         (message) => !(message.includes("Failed to fetch RSC payload") && message.includes("Falling back to browser navigation")),
       );
       assert.deepEqual(actionableConsoleErrors, [], `browser console errors at ${viewport.width}px`);
       assert.ok(state.unknown.length < 12, `too many unhandled APIs: ${state.unknown.join(", ")}`);
-      await page.screenshot({ path: path.join(OUT, `coaching-final-${viewport.width}.png`), fullPage: true });
+      if (!microOnly) {
+        await page.screenshot({ path: path.join(OUT, `coaching-final-${viewport.width}.png`), fullPage: true });
+      }
       await context.close();
     }
     await browser.close();

@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/accordion";
 import { Card, CardContent } from "@/components/ui/card";
 import type { CoachingRevenuePreview, CoachingRevenueRow } from "@/lib/coachingApi";
+import { formatTryMinor } from "@/lib/money";
 
 export function RevenuePreviewCard({ preview }: { preview: CoachingRevenuePreview }) {
   const primary = preview.rows.find((row) => row.weeks === 4) ?? preview.rows[0];
@@ -29,7 +30,7 @@ export function RevenuePreviewCard({ preview }: { preview: CoachingRevenuePrevie
           <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <p className="text-xs font-medium text-muted-foreground">Tahmini net koçluk kazancı</p>
-              <p className="mt-1 text-3xl font-semibold tabular-nums tracking-tight">{primary.tutor_net_display}</p>
+              <p className="mt-1 text-3xl font-semibold tabular-nums tracking-tight">{formatTryMinor(primary.tutor_net_minor)}</p>
             </div>
             <p className="flex flex-wrap items-center gap-1 text-sm font-semibold">
               <span>{primary.total_sessions} görüşme</span>
@@ -38,14 +39,14 @@ export function RevenuePreviewCard({ preview }: { preview: CoachingRevenuePrevie
             </p>
           </div>
           <dl className="mt-5 grid gap-2 border-t border-primary/10 pt-4 text-xs sm:grid-cols-3">
-            <RevenueLine label="Öğrencinin koçluk toplamı" value={primary.total_price_display} />
-            <RevenueLine label={`Paket indirimi · %${primary.discount_percent}`} value={`−${primary.discount_amount_display}`} />
-            <RevenueLine label="Platform komisyonu" value={`−${primary.platform_fee_display}`} />
+            <RevenueLine label="Öğrencinin koçluk toplamı" value={formatTryMinor(primary.total_price_minor)} />
+            <RevenueLine label={`Paket indirimi · %${primary.discount_percent}`} value={`−${formatTryMinor(primary.discount_amount_minor)}`} />
+            <RevenueLine label="Platform komisyonu" value={`−${formatTryMinor(primary.platform_fee_minor)}`} />
           </dl>
         </div>
 
         <div className="rounded-lg border bg-muted/20 p-4 text-xs leading-5 text-muted-foreground">
-          Görüşme fiyatı {preview.unit_price_display}. Bu ekran tahsilat veya banka ödemesi göstermez; yalnız plan ve paket verilerinden oluşan bir tahmindir.
+          Görüşme fiyatı {formatTryMinor(preview.unit_price_minor)}. Bu ekran tahsilat veya banka ödemesi göstermez; yalnız plan ve paket verilerinden oluşan bir tahmindir.
         </div>
 
         {alternatives.length > 0 ? (
@@ -84,11 +85,11 @@ function PackageRevenue({ row }: { row: CoachingRevenueRow }) {
           <p className="font-semibold">{row.weeks} haftalık paket</p>
           <p className="text-xs text-muted-foreground">{row.total_sessions} görüşme · %{row.discount_percent} paket indirimi</p>
         </div>
-        <p className="font-semibold tabular-nums">{row.tutor_net_display}</p>
+        <p className="font-semibold tabular-nums">{formatTryMinor(row.tutor_net_minor)}</p>
       </div>
       <dl className="mt-3 space-y-1 border-t pt-3 text-xs text-muted-foreground">
-        <div className="flex justify-between gap-3"><dt>Öğrenci toplamı</dt><dd>{row.total_price_display}</dd></div>
-        <div className="flex justify-between gap-3"><dt>Platform komisyonu</dt><dd>−{row.platform_fee_display}</dd></div>
+        <div className="flex justify-between gap-3"><dt>Öğrenci toplamı</dt><dd>{formatTryMinor(row.total_price_minor)}</dd></div>
+        <div className="flex justify-between gap-3"><dt>Platform komisyonu</dt><dd>−{formatTryMinor(row.platform_fee_minor)}</dd></div>
       </dl>
     </div>
   );

@@ -17,7 +17,7 @@ describe("CoachingOfferCard", () => {
         offer={{
           frequencyLabel: "Haftada 1",
           sessionDurationMinutes: 30,
-          priceDisplay: "250,00 ₺",
+          priceMinor: 25000,
           isFree: false,
           examTypes: ["YKS", "DGS"],
           description: "Haftalık program takibi.",
@@ -28,7 +28,7 @@ describe("CoachingOfferCard", () => {
     );
 
     assert.ok(screen.getByText("Haftada 1 · 30 dakika"));
-    assert.ok(screen.getByText("250,00 ₺"));
+    assert.ok(screen.getByText("₺250,00"));
     assert.ok(screen.getByText("YKS"));
     assert.ok(screen.getByText("DGS"));
     assert.ok(screen.getByRole("heading", { name: "Planlı çalış, ilerlemeni görünür kıl" }));
@@ -44,7 +44,7 @@ describe("CoachingOfferCard", () => {
         offer={{
           frequencyLabel: "İki haftada 1",
           sessionDurationMinutes: 30,
-          priceDisplay: "0,00 ₺",
+          priceMinor: 0,
           isFree: true,
           examTypes: ["KPSS"],
           description: "",

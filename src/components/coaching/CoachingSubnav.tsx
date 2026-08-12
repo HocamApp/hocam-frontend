@@ -1,6 +1,7 @@
 import Link from "next/link";
 import {
   CalendarDays,
+  ChevronRight,
   CircleDollarSign,
   ClipboardList,
   FileText,
@@ -63,10 +64,11 @@ export function CoachingSubnav({
       <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground md:hidden">
         Koçlukta konumun
       </p>
-      <nav
-        aria-label="Koçluk bölümleri"
-        className="flex gap-1.5 overflow-x-auto rounded-2xl border border-border/60 bg-card/90 p-1.5 shadow-sm [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-      >
+      <div className="relative">
+        <nav
+          aria-label="Koçluk bölümleri"
+          className="flex gap-1.5 overflow-x-auto rounded-2xl border border-border/60 bg-card/90 p-1.5 pr-12 shadow-sm [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:pr-1.5"
+        >
         {links.map(({ label, href, icon: Icon }) => {
           const active = isCurrentRoute(currentHref, href);
           return (
@@ -86,7 +88,14 @@ export function CoachingSubnav({
             </Link>
           );
         })}
-      </nav>
+        </nav>
+        <span
+          aria-label="Diğer koçluk bölümleri için yatay kaydır"
+          className="pointer-events-none absolute inset-y-1 right-1 flex w-12 items-center justify-end rounded-r-xl bg-gradient-to-l from-card via-card/95 to-transparent pr-2 text-muted-foreground md:hidden"
+        >
+          <ChevronRight aria-hidden="true" className="h-4 w-4" />
+        </span>
+      </div>
       {current ? (
         <p className="sr-only" aria-live="polite">
           Koçlukta konumun: {current.label}

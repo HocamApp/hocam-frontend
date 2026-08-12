@@ -20,6 +20,9 @@ describe("CoachingEarningsSummary", () => {
     assert.ok(screen.getByText("Aylık kazanç kayıtları"));
     assert.ok(screen.getByRole("heading", { name: "Kazanç görünümü" }));
     assert.ok(screen.getByLabelText("Kazanç durumlarının dağılımı"));
+    const distribution = screen.getByLabelText("Kazanç durumlarının dağılımı");
+    const caveat = screen.getByRole("note", { name: "Finansal kayıt açıklaması" });
+    assert.equal(distribution.compareDocumentPosition(caveat) & Node.DOCUMENT_POSITION_FOLLOWING, Node.DOCUMENT_POSITION_FOLLOWING);
     assert.ok(screen.getByText("₺500,00"));
     assert.ok(screen.getByText("Ağustos 2026"));
   });

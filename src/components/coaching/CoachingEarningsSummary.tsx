@@ -18,15 +18,15 @@ export function CoachingEarningsSummary({ summary }: { summary: CoachingTutorEar
   return (
     <div className="space-y-5">
       <CoachingStudioPanel className="overflow-hidden">
-        <div className="grid gap-6 p-5 sm:p-6 lg:grid-cols-[minmax(0,0.68fr)_minmax(32rem,1.32fr)] lg:items-center">
-          <div>
-            <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+        <div className="space-y-5 p-5 sm:p-6">
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
               <WalletCards className="h-5 w-5" aria-hidden="true" />
             </div>
-            <h2 className="text-xl font-semibold tracking-tight">Kazanç görünümü</h2>
-            <p className="mt-2 text-sm leading-6 text-muted-foreground">
-              Tutarlar platform içi muhasebe kaydını gösterir. Bir durumun işlenmiş olması banka aktarımının tamamlandığı anlamına gelmez.
-            </p>
+            <div>
+              <h2 className="text-xl font-semibold tracking-tight">Kazanç görünümü</h2>
+              <p className="mt-1 text-sm text-muted-foreground">Koçluk kazanç kayıtlarının güncel dağılımı.</p>
+            </div>
           </div>
           <div className="space-y-4 rounded-[1.25rem] bg-muted/40 p-4 sm:p-5">
             <div aria-label="Kazanç durumlarının dağılımı" className="flex h-3 overflow-hidden rounded-full bg-background">
@@ -51,6 +51,10 @@ export function CoachingEarningsSummary({ summary }: { summary: CoachingTutorEar
                 </div>
               ))}
             </div>
+          </div>
+          <div role="note" aria-label="Finansal kayıt açıklaması" className="flex gap-3 rounded-[1.15rem] border bg-background/70 p-4 text-xs leading-5 text-muted-foreground">
+            <Info aria-hidden className="h-4 w-4 shrink-0" />
+            <p>Tutarlar platform içi muhasebe kaydını gösterir. Bir durumun işlenmiş olması banka aktarımının tamamlandığı anlamına gelmez.</p>
           </div>
         </div>
       </CoachingStudioPanel>

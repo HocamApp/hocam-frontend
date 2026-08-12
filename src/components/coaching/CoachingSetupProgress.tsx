@@ -33,7 +33,7 @@ export function CoachingSetupProgress({
   return (
     <nav
       aria-label="Koçluk kurulum adımları"
-      className="rounded-[1.5rem] border border-border/60 bg-card p-4 shadow-sm sm:p-5"
+      className="rounded-[1.25rem] border border-border/60 bg-card p-3 shadow-sm sm:rounded-[1.5rem] sm:p-5"
     >
       <div className="md:hidden">
         <div className="flex items-start justify-between gap-4">
@@ -41,7 +41,7 @@ export function CoachingSetupProgress({
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">
               Adım {stepNumber} / {COACHING_SETUP_STEPS.length}
             </p>
-            <h2 className="mt-1 text-xl font-semibold tracking-[-0.025em]">
+            <h2 className="mt-0.5 text-lg font-semibold tracking-[-0.025em]">
               {STEP_LABELS[currentStep]}
             </h2>
             <p className="mt-1 text-xs text-muted-foreground">
@@ -65,7 +65,7 @@ export function CoachingSetupProgress({
           aria-valuemin={1}
           aria-valuemax={COACHING_SETUP_STEPS.length}
           aria-valuenow={stepNumber}
-          className="mt-4 h-2 overflow-hidden rounded-full bg-muted"
+          className="mt-3 h-1.5 overflow-hidden rounded-full bg-muted"
         >
           <span
             aria-hidden="true"

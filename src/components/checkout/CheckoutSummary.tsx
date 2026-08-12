@@ -124,6 +124,8 @@ export function CheckoutSummary({
       ? pricing.total * 100 + coachingQuote.total_price_minor
       : null;
   const totalLabel = coachingQuote ? "Toplam" : "Paket toplamı";
+  const formatLessonAmount = (amount: number) =>
+    coachingQuote ? formatTryMinor(amount * 100) : formatPrice(amount);
   const displayedTotal =
     bundleTotalMinor !== null
       ? formatTryMinor(bundleTotalMinor)
@@ -187,7 +189,7 @@ export function CheckoutSummary({
             <p className="max-w-48 truncate text-sm font-bold">
               {tutor.name} {tutor.surname}
             </p>
-            <p className="text-xs opacity-65">{formatPrice(tutor.hourly_price)} / 40 dk</p>
+            <p className="text-xs opacity-65">{formatLessonAmount(tutor.hourly_price)} / 40 dk</p>
           </div>
         </div>
       </div>
@@ -248,7 +250,7 @@ export function CheckoutSummary({
                     )}
                   </span>
                   <span className="shrink-0 text-right tabular-nums">
-                    <span className="block text-sm font-bold sm:text-base">{formatPrice(cardUnit)}</span>
+                    <span className="block text-sm font-bold sm:text-base">{formatLessonAmount(cardUnit)}</span>
                     <span className="block text-xs opacity-55">/ ders</span>
                   </span>
                   <ChevronDown
@@ -272,19 +274,19 @@ export function CheckoutSummary({
                       />
                       <SummaryRow
                         label="Liste fiyatı"
-                        value={selectedSubtotal != null ? formatPrice(selectedSubtotal) : "—"}
+                        value={selectedSubtotal != null ? formatLessonAmount(selectedSubtotal) : "—"}
                       />
                       {pricing && pricing.discountPercent > 0 && selectedPlanDiscount != null && (
                         <SummaryRow
                           label={`Paket indirimi (%${pricing.discountPercent})`}
-                          value={`-${formatPrice(selectedPlanDiscount)}`}
+                          value={`-${formatLessonAmount(selectedPlanDiscount)}`}
                           accent
                         />
                       )}
                       {promoPricing && promoPricing.promo_discount_amount > 0 && (
                         <SummaryRow
                           label={`İndirim kodu (${promoPricing.promotion_code})`}
-                          value={`-${formatPrice(promoPricing.promo_discount_amount)}`}
+                          value={`-${formatLessonAmount(promoPricing.promo_discount_amount)}`}
                           accent
                         />
                       )}
@@ -318,8 +320,8 @@ export function CheckoutSummary({
           </div>
           <dl className="mt-1.5 space-y-1.5 text-xs sm:text-sm">
             <SummaryRow
-              label={`${coachingQuote.total_sessions} görüşme × ${coachingQuote.unit_price_display}`}
-              value={coachingQuote.subtotal_price_display}
+              label={`${coachingQuote.total_sessions} görüşme × ${formatTryMinor(coachingQuote.unit_price_minor)}`}
+              value={formatTryMinor(coachingQuote.subtotal_price_minor)}
             />
             {/* Amount, not just percent: a free plan still carries the
                 package's discount percent, and "Paket indirimi (%16)
@@ -327,7 +329,7 @@ export function CheckoutSummary({
             {coachingQuote.discount_percent > 0 && coachingQuote.discount_amount_minor > 0 && (
               <SummaryRow
                 label={`Paket indirimi (%${coachingQuote.discount_percent})`}
-                value={`-${coachingQuote.discount_amount_display}`}
+                value={`-${formatTryMinor(coachingQuote.discount_amount_minor)}`}
                 accent
               />
             )}
@@ -335,8 +337,8 @@ export function CheckoutSummary({
               label="Koçluk toplamı"
               value={
                 coachingQuote.is_free
-                  ? "₺0 — Ders paketinle ücretsiz"
-                  : coachingQuote.total_price_display
+                  ? `${formatTryMinor(0)} — Ders paketinle ücretsiz`
+                  : formatTryMinor(coachingQuote.total_price_minor)
               }
               strong
             />

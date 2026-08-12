@@ -58,5 +58,23 @@ describe("CoachingPageShell", () => {
     assert.ok(navigation.contains(currentLink));
     assert.equal(currentLink.getAttribute("aria-current"), "page");
     assert.ok(screen.getByText("Koçlukta konumun"));
+    assert.ok(screen.getByLabelText("Diğer koçluk bölümleri için yatay kaydır"));
+  });
+
+  it("uses compact mobile chrome without changing the desktop scale", () => {
+    render(
+      <CoachingPageShell
+        title="Koçluk teklifini hazırla"
+        description="Sekiz adımda ilerle."
+        parentHref="/dashboard/tutor/coaching"
+        parentLabel="Koçluk ana sayfası"
+      >
+        <p>Karar içeriği</p>
+      </CoachingPageShell>
+    );
+
+    assert.match(screen.getByTestId("coaching-shell-stack").className, /space-y-4/);
+    assert.match(screen.getByTestId("coaching-page-header").className, /p-4/);
+    assert.match(screen.getByTestId("coaching-page-header").className, /sm:p-7/);
   });
 });

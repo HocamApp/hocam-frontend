@@ -49,7 +49,11 @@ describe("AcceptanceRequestCard", () => {
     assert.ok(screen.getByText(/24 ders/));
     assert.ok(screen.getByText(/Haftada 1 görüşme/));
     assert.ok(screen.getByText(/12 görüşme/));
+    assert.ok(screen.getByText("₺23.520,00"));
     assert.ok(screen.getByText(/9\.600,00/));
+    assert.match(screen.getByText("Çalışma koçluğu dahil").className, /text-muted-foreground/);
+    assert.doesNotMatch(screen.getByText("Çalışma koçluğu dahil").className, /bg-primary/);
+    assert.match(screen.getByText("Öğretmen yanıtı bekleniyor").className, /bg-primary/);
     assert.ok(screen.getByRole("heading", { name: "Birlikte değerlendirilecek talep" }));
     assert.equal(screen.queryByText(/bundle/i), null);
   });

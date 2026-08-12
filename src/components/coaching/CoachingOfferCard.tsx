@@ -10,6 +10,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { COACHING_HOW_IT_WORKS } from "@/lib/coachingApi";
+import { formatTryMinor } from "@/lib/money";
 
 const INCLUDED = [
   "Çalışma programı",
@@ -22,7 +23,7 @@ const INCLUDED = [
 export type CoachingOfferView = {
   frequencyLabel: string;
   sessionDurationMinutes: number;
-  priceDisplay: string;
+  priceMinor: number;
   isFree: boolean;
   examTypes: string[];
   description: string;
@@ -65,7 +66,7 @@ export function CoachingOfferCard({
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.15em] text-muted-foreground">Ders paketine ek hizmet</p>
               <p className="mt-3 text-2xl font-semibold tabular-nums sm:text-3xl">
-                {offer.isFree ? "Ders paketinle ücretsiz" : offer.priceDisplay}
+                {offer.isFree ? "Ders paketinle ücretsiz" : formatTryMinor(offer.priceMinor)}
               </p>
               {!offer.isFree ? <p className="text-xs text-muted-foreground">görüşme başına</p> : null}
             </div>

@@ -63,10 +63,17 @@ describe("CoachingPlanForm", () => {
 
   it("explains the dynamic lesson-price cap without hardcoding 75 percent", () => {
     render(form("price"));
-    assert.ok(screen.getByText(/1\.070,00 ₺/));
+    assert.ok(screen.getByText(/₺1\.070,00/));
     assert.ok(screen.getByText(/%72/));
-    assert.ok(screen.getByText(/770,40 ₺/));
+    assert.ok(screen.getByText(/₺770,40/));
     assert.equal(screen.queryByText(/%75/), null);
+  });
+
+  it("formats setup money from canonical minor values", () => {
+    render(form("price"));
+    assert.ok(screen.getByText("₺1.070,00"));
+    assert.ok(screen.getByText("₺770,40"));
+    assert.equal(screen.queryByText("1.070,00 ₺"), null);
   });
 
   it("offers only the server-provided canonical Coaching exams", () => {

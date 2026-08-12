@@ -43,7 +43,7 @@ export function TutorCoachingSection({
           offer={{
             frequencyLabel: coachingFrequencyLabel(coaching.frequency),
             sessionDurationMinutes: coaching.session_duration_minutes,
-            priceDisplay: coaching.price_per_session_display,
+            priceMinor: coaching.price_per_session_minor,
             isFree: coaching.is_free,
             examTypes: coaching.target_exam_types,
             description: coaching.description,

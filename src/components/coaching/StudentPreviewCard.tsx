@@ -9,7 +9,7 @@ export function StudentPreviewCard({ preview }: { preview: CoachingPlanPreview }
       offer={{
         frequencyLabel: preview.frequency_display,
         sessionDurationMinutes: preview.session_duration_minutes,
-        priceDisplay: preview.price_per_session_display,
+        priceMinor: preview.price_per_session_minor,
         isFree: preview.is_free,
         examTypes: preview.target_exam_types,
         description: preview.description,

@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { formatTryMinor } from "@/lib/money";
-import { formatPrice } from "@/lib/utils";
 import {
   acceptanceStatusCopy,
   coachingFrequencyLabel,
@@ -67,7 +66,9 @@ export function AcceptanceRequestCard({
           </div>
           <div className="flex flex-wrap gap-2">
             {request.includes_coaching ? (
-              <Badge>Çalışma koçluğu dahil</Badge>
+              <Badge variant="outline" className="border-border bg-muted/35 text-muted-foreground">
+                Çalışma koçluğu dahil
+              </Badge>
             ) : null}
             <Badge variant={STATUS_VARIANT[request.status] ?? "secondary"}>
               {acceptanceStatusCopy(request.status)}
@@ -89,7 +90,7 @@ export function AcceptanceRequestCard({
               <p>
                 {request.package.total_credits} ders ·{" "}
                 <span className="font-medium text-foreground">
-                  {formatPrice(request.package.total_price)}
+                  {formatTryMinor(request.package.total_price * 100)}
                 </span>
               </p>
             </dd>

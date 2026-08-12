@@ -52,6 +52,8 @@ describe("CoachingSetupProgress", () => {
     assert.ok(screen.getByRole("heading", { name: "Koçluk verdiğin sınavlar" }));
     assert.ok(screen.getByText("Sırada: Kısa açıklama"));
     assert.equal(screen.getByRole("progressbar").getAttribute("aria-valuenow"), "3");
+    assert.match(screen.getByRole("navigation", { name: "Koçluk kurulum adımları" }).className, /p-3/);
+    assert.match(screen.getByRole("navigation", { name: "Koçluk kurulum adımları" }).className, /sm:p-5/);
 
     fireEvent.click(screen.getByRole("button", { name: "Kurulum adımlarını göster" }));
     assert.ok(screen.getByRole("link", { name: /^Koçluk fiyatı$/ }));

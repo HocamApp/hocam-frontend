@@ -156,3 +156,57 @@ test("places the primary decision before trust copy and promotion controls", () 
   assert.ok(cta.compareDocumentPosition(trust) & Node.DOCUMENT_POSITION_FOLLOWING);
   assert.ok(trust.compareDocumentPosition(promo) & Node.DOCUMENT_POSITION_FOLLOWING);
 });
+
+test("uses canonical minor values and one TRY convention for a Coaching bundle", () => {
+  render(
+    <CheckoutSummary
+      tutor={tutor}
+      lessonsPerWeek={2}
+      durationDays={90}
+      pricing={calculatePackagePricing(1000, 24, 16)}
+      planAvailable
+      promoCode=""
+      onPromoCodeChange={() => {}}
+      onPurchaseCta={() => {}}
+      purchasePending={false}
+      pendingForSelectedPlan={false}
+      otherPendingPlanName={null}
+      weeklyPlans={plans}
+      onDurationDaysChange={() => {}}
+      onApplyPromo={() => {}}
+      promoStatus="idle"
+      promoMessage={null}
+      promoPricing={null}
+      onRemovePromo={() => {}}
+      paidRemainingCredits={null}
+      onUseCredits={() => {}}
+      coachingQuote={{
+        duration_days: 90,
+        lessons_per_week: 2,
+        weeks: 12,
+        total_sessions: 12,
+        discount_percent: 16,
+        commission_bps: 1500,
+        unit_price_minor: 94000,
+        unit_price_display: "940,00 ₺",
+        subtotal_price_minor: 1128000,
+        subtotal_price_display: "11.280,00 ₺",
+        discount_amount_minor: 0,
+        discount_amount_display: "0,00 ₺",
+        total_price_minor: 1128000,
+        total_price_display: "11.280,00 ₺",
+        platform_fee_minor: 169200,
+        tutor_net_minor: 958800,
+        is_free: false,
+        quote_fingerprint: "fixture",
+      }}
+    />
+  );
+
+  assert.ok(screen.getByText("₺24.000,00"));
+  assert.ok(screen.getByText("-₺3.840,00"));
+  assert.ok(screen.getByText(/12 görüşme × ₺940,00/));
+  assert.equal(screen.getAllByText("₺11.280,00").length, 2);
+  assert.equal(screen.getAllByText("₺31.440,00").length, 2);
+  assert.equal(screen.queryByText("11.280,00 ₺"), null);
+});

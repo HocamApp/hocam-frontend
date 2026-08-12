@@ -17,6 +17,7 @@ import type {
   CoachingSetupConfig,
 } from "@/lib/coachingApi";
 import { isCoachingExamGroup } from "@/lib/coachingPresentation";
+import { formatTryMinor } from "@/lib/money";
 import {
   buildCoachingPlanPayload,
   COACHING_SETUP_STEPS,
@@ -156,9 +157,9 @@ export function CoachingPlanForm({
           description="Koçluk, 40 dakikalık ders fiyatına bağlı bir ek hizmettir. Fiyat kuralı ve tavan sunucudaki güncel ayardan gelir."
         >
           <div className="grid gap-3 sm:grid-cols-3">
-            <PolicyValue label="40 dk ders fiyatın" value={setupConfig.lesson_price_display} />
+            <PolicyValue label="40 dk ders fiyatın" value={formatTryMinor(setupConfig.lesson_price_minor)} />
             <PolicyValue label="Koçluk fiyat tavanı" value={`%${setupConfig.max_price_ratio_percent}`} />
-            <PolicyValue label="Girebileceğin en yüksek fiyat" value={setupConfig.price_cap_display} />
+            <PolicyValue label="Girebileceğin en yüksek fiyat" value={formatTryMinor(setupConfig.price_cap_minor)} />
           </div>
           <div className="rounded-2xl border border-primary/15 bg-primary/[0.04] p-4 sm:p-5">
           <div className="max-w-sm">
@@ -177,7 +178,7 @@ export function CoachingPlanForm({
             <p id="coaching-price-hint" className="mt-2 text-xs leading-5 text-muted-foreground">
               Ücretsiz sunmak için 0 girebilirsin. Güncel platform komisyonu %{setupConfig.commission_bps / 100}; paket indirimi ve tahmini net kazanç kayıtlı plan üzerinden sunucuda hesaplanır.
             </p>
-            {overCap ? <p className="mt-2 text-xs font-medium text-destructive">Bu fiyat {setupConfig.price_cap_display} üst sınırını aşıyor.</p> : null}
+            {overCap ? <p className="mt-2 text-xs font-medium text-destructive">Bu fiyat {formatTryMinor(setupConfig.price_cap_minor)} üst sınırını aşıyor.</p> : null}
           </div>
           </div>
         </StepCard>
