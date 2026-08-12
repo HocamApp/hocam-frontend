@@ -19,6 +19,8 @@ export function TutorCoachingDashboard({
       parentLabel="Öğretmen paneli"
       eyebrow="Koçluk merkezi"
       width="wide"
+      currentHref="/dashboard/tutor/coaching"
+      audience="tutor"
     >
       <CoachingStatusCard status={status} />
       <CoachingMetricGrid metrics={metrics} />

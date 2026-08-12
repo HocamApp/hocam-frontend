@@ -40,9 +40,13 @@ describe("TutorCoachingDashboard", () => {
     );
     assert.equal(screen.queryByText(/checkout aç/i), null);
     assert.equal(screen.queryByText(/satışları aç/i), null);
+    assert.ok(screen.getByRole("region", { name: "Koçluk hizmet durumu" }));
+    const platformRegion = screen.getByRole("region", { name: "Platform durumu" });
+    assert.ok(platformRegion.textContent?.includes("platform genelinde şu anda kapalı"));
     assert.ok(screen.getByRole("link", { name: /Yeni öğrenci talepleri/i }));
     assert.ok(screen.getByRole("heading", { name: /Teklif ve ayarlar/i }));
     assert.ok(screen.getByRole("link", { name: /Teklifini düzenle/i }));
+    assert.equal(screen.queryByText(/bundle/i), null);
   });
 
   it("shows unavailable metrics without inventing zero", () => {
