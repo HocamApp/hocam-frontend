@@ -26,6 +26,7 @@ import {
 } from "@/lib/tutorsApi";
 import { fetchTutorAvailability } from "@/lib/dashboardApi";
 import { useAuth } from "@/hooks/useAuth";
+import { useCoachingFlag } from "@/hooks/useCoachingFlag";
 import { resolveProfileImageUrl } from "@/lib/profileImages";
 import { buildTutorSubjectLabels } from "@/lib/tutorSubjectLabels";
 import { formatLessonCount, formatPrice, formatRating } from "@/lib/utils";
@@ -360,6 +361,7 @@ export default function TutorProfilePage({
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
   const { isAuthenticated, isStudent, user } = useAuth();
+  const { checkoutEnabled: coachingCheckoutEnabled } = useCoachingFlag();
   const { favoriteIds, toggle, isFavoritePending } = useFavorites();
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
   // Paid bookings now go through /tutors/[id]/checkout; this modal only
@@ -484,7 +486,7 @@ export default function TutorProfilePage({
     // Tutors who offer coaching get the choice step first (master spec
     // §13.1); everyone else goes straight to package selection, so the
     // extra screen never appears where it has nothing to ask.
-    const base = tutor?.offers_coaching
+    const base = tutor?.offers_coaching && coachingCheckoutEnabled
       ? `/tutors/${id}/checkout/coaching`
       : `/tutors/${id}/checkout`;
     return `${base}${query ? `?${query}` : ""}`;
@@ -977,6 +979,7 @@ export default function TutorProfilePage({
               tutorId={id}
               coaching={tutor.coaching}
               isStudent={isAuthenticated && isStudent && !isOwnProfile}
+              checkoutEnabled={coachingCheckoutEnabled}
               checkoutHref={checkoutHref}
             />
           ) : null}

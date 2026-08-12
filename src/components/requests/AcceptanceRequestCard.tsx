@@ -1,14 +1,19 @@
 "use client";
 
 import { useState } from "react";
+import { BookOpen, GraduationCap } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { formatTryMinor } from "@/lib/money";
-import { formatPrice } from "@/lib/utils";
-import { acceptanceStatusCopy, type AcceptanceRequest } from "@/lib/coachingApi";
+import {
+  acceptanceStatusCopy,
+  coachingFrequencyLabel,
+  type AcceptanceRequest,
+} from "@/lib/coachingApi";
+import { formatPlanDuration } from "@/lib/lessonPricing";
 
 const STATUS_VARIANT: Record<string, "default" | "secondary" | "destructive"> = {
   pending: "default",
@@ -19,7 +24,7 @@ const STATUS_VARIANT: Record<string, "default" | "secondary" | "destructive"> = 
 };
 
 /**
- * One package request, lesson-only or bundled with coaching.
+ * One package request, lesson-only or combined with coaching.
  *
  * The tutor answers the WHOLE request — there is no "take the lessons but
  * not the coaching". Status copy comes from acceptanceStatusCopy() so no
@@ -42,18 +47,28 @@ export function AcceptanceRequestCard({
   const isOpen = request.status === "pending";
 
   return (
-    <Card>
-      <CardContent className="space-y-4 pt-6">
+    <Card className="overflow-hidden rounded-[1.35rem] border-border/70 shadow-[0_18px_48px_-38px_hsl(var(--foreground)/0.4)]">
+      <CardContent className="space-y-5 p-0">
+        {request.includes_coaching ? (
+          <div className="border-b border-primary/10 bg-primary/[0.055] px-5 py-4 sm:px-6">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">Tek karar · iki hizmet</p>
+            <h3 className="mt-1 text-lg font-semibold tracking-tight">Birlikte değerlendirilecek talep</h3>
+            <p className="mt-1 max-w-2xl text-xs leading-5 text-muted-foreground">Ders paketi ve çalışma koçluğu tek talebin parçalarıdır. Kabul veya red kararı tamamına uygulanır.</p>
+          </div>
+        ) : null}
+        <div className="space-y-5 px-5 pb-5 sm:px-6 sm:pb-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h3 className="text-base font-semibold">{studentName}</h3>
+            <p className="text-base font-semibold">{studentName}</p>
             <p className="text-sm text-muted-foreground">
               {request.package.plan_name}
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
             {request.includes_coaching ? (
-              <Badge>Çalışma koçluğu dahil</Badge>
+              <Badge variant="outline" className="border-border bg-muted/35 text-muted-foreground">
+                Çalışma koçluğu dahil
+              </Badge>
             ) : null}
             <Badge variant={STATUS_VARIANT[request.status] ?? "secondary"}>
               {acceptanceStatusCopy(request.status)}
@@ -61,20 +76,36 @@ export function AcceptanceRequestCard({
           </div>
         </div>
 
-        <dl className="grid gap-2 text-sm sm:grid-cols-2">
-          <div className="flex justify-between gap-3 sm:block">
-            <dt className="text-muted-foreground">Ders paketi</dt>
-            <dd className="font-medium">
-              {request.package.total_credits} ders ·{" "}
-              {formatPrice(request.package.total_price)}
+        <dl className="grid gap-3 text-sm sm:grid-cols-2">
+          <div className="rounded-[1.1rem] border bg-muted/20 p-4">
+            <dt className="flex items-center gap-2 font-medium"><BookOpen className="h-4 w-4 text-primary" aria-hidden="true" />Ders paketi</dt>
+            <dd className="mt-1 space-y-1 text-muted-foreground">
+              {request.package.lessons_per_week !== null &&
+              request.package.duration_days !== null ? (
+                <p>
+                  Haftada {request.package.lessons_per_week} ders ·{" "}
+                  {formatPlanDuration(request.package.duration_days)}
+                </p>
+              ) : null}
+              <p>
+                {request.package.total_credits} ders ·{" "}
+                <span className="font-medium text-foreground">
+                  {formatTryMinor(request.package.total_price * 100)}
+                </span>
+              </p>
             </dd>
           </div>
           {request.coaching ? (
-            <div className="flex justify-between gap-3 sm:block">
-              <dt className="text-muted-foreground">Çalışma koçluğu</dt>
-              <dd className="font-medium">
-                {request.coaching.total_sessions} görüşme ·{" "}
-                {formatTryMinor(request.coaching.total_price_minor)}
+            <div className="rounded-[1.1rem] border border-primary/15 bg-primary/[0.045] p-4">
+              <dt className="flex items-center gap-2 font-medium"><GraduationCap className="h-4 w-4 text-primary" aria-hidden="true" />Çalışma koçluğu ek hizmeti</dt>
+              <dd className="mt-1 space-y-1 text-muted-foreground">
+                <p>{coachingFrequencyLabel(request.coaching.frequency)}</p>
+                <p>
+                  {request.coaching.total_sessions} görüşme ·{" "}
+                  <span className="font-medium text-foreground">
+                    {formatTryMinor(request.coaching.total_price_minor)}
+                  </span>
+                </p>
               </dd>
             </div>
           ) : null}
@@ -149,6 +180,7 @@ export function AcceptanceRequestCard({
             Notun: {request.rejection_note}
           </p>
         ) : null}
+        </div>
       </CardContent>
     </Card>
   );

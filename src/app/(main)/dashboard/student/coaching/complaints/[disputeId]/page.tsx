@@ -3,6 +3,8 @@
 import { useParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { RouteGuard } from "@/components/shared/RouteGuard";
+import { CoachingPageShell } from "@/components/coaching/CoachingPageShell";
+import { CoachingEmptyState } from "@/components/coaching/CoachingEmptyState";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -20,9 +22,9 @@ function Detail() {
   const access = useMutation({ mutationFn: fetchCoachingDisputeEvidenceAccessUrl, onSuccess: (url) => window.open(url, "_blank", "noopener,noreferrer") });
   const remedy = useMutation({ mutationFn: (remedy_type: string) => applyStudentCoachingDisputeRemedy(disputeId, { remedy_type, determination_id: query.data!.determination!.id }), onSuccess: refresh, onError: refresh });
   if (query.isLoading) return <div className="flex min-h-[12rem] items-center justify-center"><LoadingSpinner /></div>;
-  if (!query.data) return <p>Başvuru bulunamadı.</p>;
+  if (!query.data) return <CoachingEmptyState title="Başvuru bulunamadı" description="Bu kayıt artık erişilebilir değil veya hesabına ait değil." />;
   const dispute = query.data;
-  return <div className="space-y-5"><Card><CardContent className="space-y-3 py-5"><div className="flex justify-between gap-2"><div><h1 className="text-xl font-semibold">Koçluk başvurusu</h1><p className="text-sm text-muted-foreground">{dispute.category}</p></div><Badge>{dispute.status}</Badge></div><p className="whitespace-pre-wrap text-sm">{dispute.description}</p></CardContent></Card>
+  return <div className="space-y-5"><Card><CardContent className="space-y-3 py-5"><div className="flex justify-between gap-2"><div><h2 className="text-xl font-semibold">Başvuru özeti</h2><p className="text-sm text-muted-foreground">{dispute.category}</p></div><Badge>{dispute.status}</Badge></div><p className="whitespace-pre-wrap text-sm">{dispute.description}</p></CardContent></Card>
     {dispute.status === "needs_more_info" ? <Card><CardContent className="space-y-1 py-4"><h2 className="font-semibold">Ek bilgi gerekli</h2><p className="text-sm text-muted-foreground">Süreç mesajını inceleyip istenen bağlamı veya kanıtı aşağıdan ekleyebilirsin. Bu durum tek başına bir iade ya da çözüm kararı değildir.</p></CardContent></Card> : null}
     <Card><CardContent className="space-y-3 py-5"><h2 className="font-semibold">Kanıtlar</h2><input type="file" onChange={(event) => { const file = event.target.files?.[0]; if (file) upload.mutate(file); }} disabled={upload.isPending} />
       {upload.error ? <p className="text-sm text-destructive">Dosya yüklenemedi; doğrulama sonucunu tekrar kontrol et.</p> : null}
@@ -33,4 +35,4 @@ function Detail() {
   </div>;
 }
 
-export default function StudentCoachingComplaintDetailPage() { return <RouteGuard requireAuth requireRole="student"><main className="mx-auto max-w-3xl px-4 py-8"><Detail /></main></RouteGuard>; }
+export default function StudentCoachingComplaintDetailPage() { return <RouteGuard requireAuth requireRole="student"><CoachingPageShell title="Koçluk başvurusu" description="Başvuru durumunu, kanıtlarını ve sunucu tarafından açılan çözüm seçeneklerini takip et." parentHref="/dashboard/student/coaching/complaints" parentLabel="Koçluk başvurularım" eyebrow="Başvuru detayı" width="narrow" currentHref="/dashboard/student/coaching/complaints" audience="student"><Detail /></CoachingPageShell></RouteGuard>; }

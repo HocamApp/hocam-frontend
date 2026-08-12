@@ -142,6 +142,31 @@ export async function completeCoachingOnboarding(): Promise<CoachingOnboardingSt
 
 export type CoachingFrequency = "biweekly" | "weekly" | "twice_weekly";
 
+export interface CoachingSetupConfig {
+  exam_groups: string[];
+  session_duration_minutes: number;
+  lesson_price_minor: number;
+  lesson_price_display: string;
+  max_price_ratio_percent: number;
+  price_cap_minor: number;
+  price_cap_display: string;
+  commission_bps: number;
+  frequency_options: Array<{
+    value: CoachingFrequency;
+    label: string;
+    packages: Array<{
+      duration_days: number;
+      weeks: number;
+      total_sessions: number;
+    }>;
+  }>;
+}
+
+export async function fetchCoachingSetupConfig(): Promise<CoachingSetupConfig> {
+  const response = await api.get<CoachingSetupConfig>("/coaching/tutor/setup-config/");
+  return response.data;
+}
+
 export interface CoachingCapacity {
   weekly_slot_count: number;
   theoretical_capacity: number;
@@ -364,7 +389,7 @@ const ERROR_MESSAGES: Record<string, string> = {
     "Plan oluşturmadan önce koçluk onboarding'ini tamamlamalısın.",
   plan_incomplete: "Planında eksik alanlar var.",
   price_exceeds_cap:
-    "Koçluk görüşme fiyatı, ders fiyatının en fazla %75'i olabilir.",
+    "Koçluk görüşme fiyatı güncel üst sınırı aşıyor.",
   availability_required:
     "Koçluk müsaitliği eklemeden planını yayınlayamazsın.",
   capacity_required: "En az 1 öğrencilik kapasite belirlemelisin.",
@@ -406,9 +431,6 @@ const ERROR_MESSAGES: Record<string, string> = {
 export function extractCoachingErrorMessage(error: unknown): string {
   const data = (error as { response?: { data?: Record<string, unknown> } })?.response
     ?.data;
-  const code = extractCoachingErrorCode(error);
-  if (code && ERROR_MESSAGES[code]) return ERROR_MESSAGES[code];
-
   // A non-JSON error body (e.g. an HTML 500/502 page from a dev server or
   // proxy) arrives here as a raw string. Object.values() on a string
   // yields its individual CHARACTERS as "values" — without this guard,
@@ -420,7 +442,8 @@ export function extractCoachingErrorMessage(error: unknown): string {
     if (typeof detail === "string") return detail;
     // Field errors: surface the first message we can find, including the
     // structured description-guardrail payload.
-    for (const value of Object.values(data)) {
+    for (const [key, value] of Object.entries(data)) {
+      if (key === "code") continue;
       const first = Array.isArray(value) ? value[0] : value;
       if (typeof first === "string") return first;
       if (first && typeof first === "object" && "message" in first) {
@@ -428,6 +451,8 @@ export function extractCoachingErrorMessage(error: unknown): string {
       }
     }
   }
+  const code = extractCoachingErrorCode(error);
+  if (code && ERROR_MESSAGES[code]) return ERROR_MESSAGES[code];
   return "Beklenmeyen bir hata oluştu.";
 }
 
@@ -473,12 +498,14 @@ export interface CoachingEligibility {
  * `eligibility.plan` to non-null immediately after the early return.
  */
 export function eligibilityAllowsCoachingChoice(
-  eligibility: CoachingEligibility | null | undefined
+  eligibility: CoachingEligibility | null | undefined,
+  checkoutEnabled = true
 ): eligibility is CoachingEligibility & {
   plan: NonNullable<CoachingEligibility["plan"]>;
 } {
   return Boolean(
-    eligibility &&
+    checkoutEnabled &&
+      eligibility &&
       eligibility.reason !== "no_plan" &&
       eligibility.reason !== "exam_mismatch" &&
       eligibility.plan
@@ -1746,14 +1773,14 @@ export function coachingRefundStateCopy(state: CoachingRefundPresentationState |
 
 export function coachingEarningStatusCopy(status: CoachingEarningStatus | string): string {
   const copy: Record<string, string> = {
-    eligible_unfunded: "Hakediş oluştu; ödeme fonu henüz doğrulanmadı.",
-    pending: "Hakediş aylık ödeme değerlendirmesinde.",
-    on_hold: "Hakediş inceleme nedeniyle beklemede.",
-    reversed: "Hakediş ters kaydedildi.",
-    ready: "Aylık ödeme için hazır; ödeme aktarımı henüz kaydedilmedi.",
-    paid: "Ödendi.",
+    eligible_unfunded: "Kazanç hesabına uygun · kullanılabilir ödeme fonu doğrulanmadı",
+    pending: "Aylık değerlendirmede",
+    on_hold: "İnceleme nedeniyle bekliyor",
+    reversed: "Muhasebe kaydı geri çevrildi",
+    ready: "Aktarım hazırlığında · banka ödemesi doğrulanmadı",
+    paid: "Sistem kaydında işlendi · banka aktarımı ayrıca doğrulanmalı",
   };
-  return copy[status] ?? "Hakediş durumu güncelleniyor.";
+  return copy[status] ?? "Kazanç durumu inceleniyor";
 }
 
 export const COACHING_FAZ8_QUERY_KEYS = {
