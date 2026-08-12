@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { BookOpen, GraduationCap } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -24,7 +25,7 @@ const STATUS_VARIANT: Record<string, "default" | "secondary" | "destructive"> = 
 };
 
 /**
- * One package request, lesson-only or bundled with coaching.
+ * One package request, lesson-only or combined with coaching.
  *
  * The tutor answers the WHOLE request — there is no "take the lessons but
  * not the coaching". Status copy comes from acceptanceStatusCopy() so no
@@ -47,11 +48,19 @@ export function AcceptanceRequestCard({
   const isOpen = request.status === "pending";
 
   return (
-    <Card>
-      <CardContent className="space-y-4 pt-6">
+    <Card className="overflow-hidden rounded-[1.35rem] border-border/70 shadow-[0_18px_48px_-38px_hsl(var(--foreground)/0.4)]">
+      <CardContent className="space-y-5 p-0">
+        {request.includes_coaching ? (
+          <div className="border-b border-primary/10 bg-primary/[0.055] px-5 py-4 sm:px-6">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">Tek karar · iki hizmet</p>
+            <h3 className="mt-1 text-lg font-semibold tracking-tight">Birlikte değerlendirilecek talep</h3>
+            <p className="mt-1 max-w-2xl text-xs leading-5 text-muted-foreground">Ders paketi ve çalışma koçluğu tek talebin parçalarıdır. Kabul veya red kararı tamamına uygulanır.</p>
+          </div>
+        ) : null}
+        <div className="space-y-5 px-5 pb-5 sm:px-6 sm:pb-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h3 className="text-base font-semibold">{studentName}</h3>
+            <p className="text-base font-semibold">{studentName}</p>
             <p className="text-sm text-muted-foreground">
               {request.package.plan_name}
             </p>
@@ -67,8 +76,8 @@ export function AcceptanceRequestCard({
         </div>
 
         <dl className="grid gap-3 text-sm sm:grid-cols-2">
-          <div className="rounded-lg border bg-muted/20 p-3">
-            <dt className="font-medium">Ders paketi</dt>
+          <div className="rounded-[1.1rem] border bg-muted/20 p-4">
+            <dt className="flex items-center gap-2 font-medium"><BookOpen className="h-4 w-4 text-primary" aria-hidden="true" />Ders paketi</dt>
             <dd className="mt-1 space-y-1 text-muted-foreground">
               {request.package.lessons_per_week !== null &&
               request.package.duration_days !== null ? (
@@ -86,8 +95,8 @@ export function AcceptanceRequestCard({
             </dd>
           </div>
           {request.coaching ? (
-            <div className="rounded-lg border bg-muted/20 p-3">
-              <dt className="font-medium">Çalışma koçluğu ek hizmeti</dt>
+            <div className="rounded-[1.1rem] border border-primary/15 bg-primary/[0.045] p-4">
+              <dt className="flex items-center gap-2 font-medium"><GraduationCap className="h-4 w-4 text-primary" aria-hidden="true" />Çalışma koçluğu ek hizmeti</dt>
               <dd className="mt-1 space-y-1 text-muted-foreground">
                 <p>{coachingFrequencyLabel(request.coaching.frequency)}</p>
                 <p>
@@ -170,6 +179,7 @@ export function AcceptanceRequestCard({
             Notun: {request.rejection_note}
           </p>
         ) : null}
+        </div>
       </CardContent>
     </Card>
   );

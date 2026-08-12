@@ -39,7 +39,7 @@ const bundledRequest: AcceptanceRequest = {
 };
 
 describe("AcceptanceRequestCard", () => {
-  it("shows the lesson package and Coaching add-on as one understandable bundle", () => {
+  it("shows the lesson package and Coaching add-on as one understandable request", () => {
     render(<AcceptanceRequestCard request={bundledRequest} isPending={false} onRespond={() => undefined} />);
 
     assert.ok(screen.getByText("Deniz Yılmaz"));
@@ -50,9 +50,11 @@ describe("AcceptanceRequestCard", () => {
     assert.ok(screen.getByText(/Haftada 1 görüşme/));
     assert.ok(screen.getByText(/12 görüşme/));
     assert.ok(screen.getByText(/9\.600,00/));
+    assert.ok(screen.getByRole("heading", { name: "Birlikte değerlendirilecek talep" }));
+    assert.equal(screen.queryByText(/bundle/i), null);
   });
 
-  it("answers the whole bundle through one existing decision callback", () => {
+  it("answers the whole combined request through one existing decision callback", () => {
     const decisions: Array<["accept" | "reject", string | undefined]> = [];
     render(
       <AcceptanceRequestCard

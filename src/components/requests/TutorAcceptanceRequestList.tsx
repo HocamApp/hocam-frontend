@@ -54,9 +54,10 @@ export function TutorAcceptanceRequestList({ surface }: { surface: "coaching" | 
         title={surface === "coaching" ? "Yeni koçluk talebin yok" : "Bekleyen ders paketi talebin yok"}
         description={
           surface === "coaching"
-            ? "Bir öğrenci ders paketine çalışma koçluğu ekleyerek seni seçtiğinde bundle talebi burada görünür."
+            ? "Bir öğrenci ders paketine çalışma koçluğu ekleyerek seni seçtiğinde birleşik talep burada görünür."
             : "Bir öğrenci yalnızca ders paketi için seni seçtiğinde talep burada görünür."
         }
+        steps={surface === "coaching" ? ["Ders paketi ve koçluk birlikte görünür", "Tek kabul veya red kararı verirsin"] : undefined}
       />
     );
   }
