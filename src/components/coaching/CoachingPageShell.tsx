@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { CoachingSubnav } from "./CoachingSubnav";
 
 type CoachingPageShellProps = {
   title: string;
@@ -12,6 +13,8 @@ type CoachingPageShellProps = {
   eyebrow?: string;
   actions?: ReactNode;
   width?: "narrow" | "default" | "wide";
+  currentHref?: string;
+  audience?: "tutor" | "student";
   children: ReactNode;
 };
 
@@ -29,11 +32,14 @@ export function CoachingPageShell({
   eyebrow,
   actions,
   width = "default",
+  currentHref,
+  audience,
   children,
 }: CoachingPageShellProps) {
   return (
-    <main className={cn("mx-auto w-full space-y-7 px-4 py-6 sm:px-6 sm:py-8", WIDTH_CLASS[width])}>
-      <header className="space-y-4 border-b border-border/70 pb-6">
+    <main className="min-h-[calc(100vh-4rem)] bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.055),transparent_32rem),linear-gradient(to_bottom,hsl(var(--muted)/0.2),transparent_28rem)]">
+      <div className={cn("mx-auto w-full space-y-6 px-4 py-5 sm:px-6 sm:py-8", WIDTH_CLASS[width])}>
+      <header className="space-y-4 rounded-[1.5rem] border border-border/60 bg-card/90 p-5 shadow-[0_18px_50px_-42px_hsl(var(--foreground)/0.45)] backdrop-blur sm:p-7">
         <nav aria-label="Sayfa yolu">
           <Link
             href={parentHref}
@@ -50,7 +56,7 @@ export function CoachingPageShell({
                 {eyebrow}
               </p>
             ) : null}
-            <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+            <h1 className="text-3xl font-semibold tracking-[-0.035em] text-foreground sm:text-4xl">
               {title}
             </h1>
             <p className="max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">
@@ -60,7 +66,11 @@ export function CoachingPageShell({
           {actions ? <div className="shrink-0">{actions}</div> : null}
         </div>
       </header>
+      {currentHref && audience ? (
+        <CoachingSubnav currentHref={currentHref} audience={audience} />
+      ) : null}
       {children}
+      </div>
     </main>
   );
 }

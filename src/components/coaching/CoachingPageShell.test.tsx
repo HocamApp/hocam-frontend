@@ -33,4 +33,30 @@ describe("CoachingPageShell", () => {
     );
     assert.ok(screen.getByText("Görüşmeler için ayırdığın saatleri düzenle."));
   });
+
+  it("keeps the current Coaching location visible inside operational pages", () => {
+    render(
+      <CoachingPageShell
+        title="Yaklaşan görüşmeler"
+        description="Planlanan koçluk görüşmelerini takip et."
+        parentHref="/dashboard/tutor/coaching"
+        parentLabel="Çalışma koçluğu"
+        currentHref="/dashboard/tutor/coaching/upcoming"
+        audience="tutor"
+      >
+        <p>Görüşme içeriği</p>
+      </CoachingPageShell>
+    );
+
+    const navigation = screen.getByRole("navigation", {
+      name: "Koçluk bölümleri",
+    });
+    const currentLink = screen.getByRole("link", {
+      name: "Görüşmeler",
+    });
+
+    assert.ok(navigation.contains(currentLink));
+    assert.equal(currentLink.getAttribute("aria-current"), "page");
+    assert.ok(screen.getByText("Koçlukta konumun"));
+  });
 });
