@@ -19,6 +19,8 @@ import { fetchCoachingFlag } from "@/lib/coachingApi";
  */
 const BUILD_FLAG_ON = process.env.NEXT_PUBLIC_COACHING_ENABLED === "true";
 
+export type CoachingCheckoutState = "loading" | "enabled" | "disabled" | "error";
+
 export function useCoachingFlag() {
   const { isAuthenticated } = useAuth();
 
@@ -31,10 +33,20 @@ export function useCoachingFlag() {
   });
 
   const enabled = BUILD_FLAG_ON && (query.data?.enabled ?? false);
+  const checkoutState: CoachingCheckoutState = !BUILD_FLAG_ON || !isAuthenticated
+    ? "disabled"
+    : query.isLoading
+      ? "loading"
+      : query.isError
+        ? "error"
+        : query.data?.checkout_enabled
+          ? "enabled"
+          : "disabled";
 
   return {
     enabled,
-    checkoutEnabled: BUILD_FLAG_ON && (query.data?.checkout_enabled ?? false),
+    checkoutEnabled: checkoutState === "enabled",
+    checkoutState,
     // Only "loading" when we actually asked. With the build flag off the
     // answer is known immediately, so nav never flickers.
     isLoading: BUILD_FLAG_ON && isAuthenticated && query.isLoading,

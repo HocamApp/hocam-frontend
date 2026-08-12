@@ -13,7 +13,15 @@ const OUT = process.env.COACHING_QA_OUT
 
 type Role = "tutor" | "student";
 type Scenario = "empty" | "onboarding" | "draft" | "published" | "checkout-disabled" | "availability-empty" | "earnings-zero" | "earnings-populated";
-type QaState = { role: Role; scenario: Scenario; acceptancePosts: number; unknown: string[] };
+type QaState = {
+  role: Role;
+  scenario: Scenario;
+  acceptancePosts: number;
+  bookingStarted: number;
+  flagPending: boolean;
+  releaseFlag: (() => void) | null;
+  unknown: string[];
+};
 
 const examGroups = ["YKS", "DGS", "KPSS"];
 const plan = {
@@ -187,7 +195,23 @@ async function installApi(context: BrowserContext, state: QaState) {
     });
     if (pathname === "/api/auth/account/deletion/status/") return json(route, { active: false, status: "none", scheduled_deletion_at: null });
     if (pathname === "/api/notifications/summary/") return json(route, { unread_count: 0 });
-    if (pathname === "/api/coaching/flag/") return json(route, { enabled: true, checkout_enabled: state.scenario !== "checkout-disabled" });
+    if (pathname === "/api/coaching/flag/") {
+      if (state.flagPending) {
+        return new Promise<void>((resolve) => {
+          state.releaseFlag = () => {
+            state.flagPending = false;
+            json(route, { enabled: true, checkout_enabled: state.scenario !== "checkout-disabled" });
+            resolve();
+          };
+        });
+      }
+      return json(route, { enabled: true, checkout_enabled: state.scenario !== "checkout-disabled" });
+    }
+    if (pathname === "/api/discovery/interactions/") {
+      const body = request.postDataJSON() as { kind?: string } | null;
+      if (body?.kind === "booking_started") state.bookingStarted += 1;
+      return json(route, {});
+    }
     if (pathname === "/api/coaching/onboarding/") return json(route, onboardingState(state.scenario));
     if (pathname === "/api/coaching/tutor/setup-config/") return json(route, {
       exam_groups: examGroups, session_duration_minutes: 30, lesson_price_minor: 98000, lesson_price_display: "980,00 ₺",
@@ -449,6 +473,57 @@ async function captureCheckoutRolloutSet(page: Page, state: QaState, width: numb
   await page.getByRole("link", { name: "Ders paketiyle koçluk al" }).waitFor();
 }
 
+async function captureCheckoutFlagRace(page: Page, state: QaState, width: number) {
+  state.role = "student";
+  state.scenario = "published";
+  state.flagPending = true;
+  await page.goto(`${BASE}/login`, { waitUntil: "domcontentloaded" });
+  await page.evaluate(() => {
+    localStorage.setItem("auth_user", JSON.stringify({
+      id: "student-qa", email: "student@example.invalid", role: "student",
+      tutor_profile_id: null, is_email_verified: true, is_admin: false,
+      is_test_account: true, jitsi_tutorial_completed: true,
+      jitsi_tutorial_grandfathered: true, impersonation: null,
+    }));
+  });
+  await page.goto(`${BASE}/tutors/${tutorProfile.id}?discovery_impression_id=race-impression`, { waitUntil: "domcontentloaded" });
+  const loadingCta = page.getByRole("button", { name: "Hazırlanıyor…" });
+  await loadingCta.waitFor();
+  assert.equal(await loadingCta.isDisabled(), true, `${width}: pending flag left reservation CTA enabled`);
+  const loadingBox = await loadingCta.boundingBox();
+  assert.ok(loadingBox, `${width}: pending flag CTA was not visible`);
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true, `${width}: pending flag caused horizontal document overflow`);
+  await loadingCta.click({ force: true });
+  assert.match(page.url(), new RegExp(`/tutors/${tutorProfile.id}(?:\\?|$)`), `${width}: pending flag entered checkout`);
+  assert.equal(state.bookingStarted, 0, `${width}: pending flag emitted booking_started`);
+  await page.screenshot({ path: path.join(OUT, `checkout-flag-race-loading-${width}.png`) });
+
+  assert.ok(state.releaseFlag, `${width}: flag request did not become pending`);
+  state.releaseFlag();
+  const readyCta = page.getByRole("button", { name: "Ders Rezervasyonu Yap" });
+  await readyCta.waitFor();
+  const readyBox = await readyCta.boundingBox();
+  assert.ok(readyBox, `${width}: ready reservation CTA was not visible`);
+  assert.equal(readyBox.height, loadingBox.height, `${width}: flag resolution changed CTA height`);
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true, `${width}: resolved flag caused horizontal document overflow`);
+  await readyCta.focus();
+  await page.keyboard.press("Enter");
+  await page.waitForURL(new RegExp(`/tutors/${tutorProfile.id}/checkout/coaching(?:\\?|$)`));
+  assert.equal(state.bookingStarted, 1, `${width}: ready navigation did not emit booking_started exactly once`);
+  await page.screenshot({ path: path.join(OUT, `checkout-flag-race-enabled-${width}.png`) });
+
+  state.scenario = "checkout-disabled";
+  state.flagPending = false;
+  state.releaseFlag = null;
+  state.bookingStarted = 0;
+  await page.goto(`${BASE}/tutors/${tutorProfile.id}?discovery_impression_id=race-impression`, { waitUntil: "domcontentloaded" });
+  const disabledCta = page.getByRole("button", { name: "Ders Rezervasyonu Yap" });
+  await disabledCta.waitFor();
+  await disabledCta.click();
+  await page.waitForURL(new RegExp(`/tutors/${tutorProfile.id}/checkout(?:\\?|$)`));
+  assert.doesNotMatch(page.url(), /\/checkout\/coaching(?:\\?|$)/, `${width}: disabled flag entered Coaching checkout`);
+}
+
 async function captureReviewSet(page: Page, state: QaState, width: number) {
   if (width === 1440) {
     const desktop = [
@@ -617,17 +692,20 @@ async function main() {
     const walletOnly = process.env.COACHING_QA_WALLET_ONLY === "1";
     const rolloutOnly = process.env.COACHING_QA_ROLLOUT_ONLY === "1";
     const checkoutOnly = process.env.COACHING_QA_CHECKOUT_ONLY === "1";
+    const raceOnly = process.env.COACHING_QA_RACE_ONLY === "1";
     const viewports = microOnly
       ? [{ width: 375, height: 812 }, { width: 1440, height: 900 }]
       : [{ width: 375, height: 812 }, { width: 768, height: 1024 }, { width: 1440, height: 900 }];
     for (const viewport of viewports) {
-      const state: QaState = { role: checkoutOnly ? "student" : "tutor", scenario: "published", acceptancePosts: 0, unknown: [] };
+      const state: QaState = { role: checkoutOnly || raceOnly ? "student" : "tutor", scenario: "published", acceptancePosts: 0, bookingStarted: 0, flagPending: false, releaseFlag: null, unknown: [] };
       const context = await browser.newContext({ viewport, hasTouch: viewport.width === 375, isMobile: viewport.width === 375 });
       await installApi(context, state);
       const page = await context.newPage();
       const consoleErrors: string[] = [];
       page.on("console", (message) => { if (message.type() === "error") consoleErrors.push(message.text()); });
-      if (checkoutOnly) {
+      if (raceOnly) {
+        await captureCheckoutFlagRace(page, state, viewport.width);
+      } else if (checkoutOnly) {
         await captureCheckoutRolloutSet(page, state, viewport.width);
       } else if (rolloutOnly) {
         await captureCheckoutRolloutSet(page, state, viewport.width);
