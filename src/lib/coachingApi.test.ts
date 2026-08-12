@@ -2,12 +2,26 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
 import {
+  coachingEarningStatusCopy,
+  eligibilityAllowsCoachingChoice,
   extractCoachingErrorCode,
   extractCoachingErrorMessage,
   readCoachingSelectedFromSearchParams,
   shouldSkipCoachingChoiceScreen,
   type CoachingEligibility,
 } from "./coachingApi";
+
+describe("coachingEarningStatusCopy", () => {
+  it("maps internal accounting states without claiming bank settlement", () => {
+    assert.equal(coachingEarningStatusCopy("eligible_unfunded"), "Kazanç hesabına uygun · kullanılabilir ödeme fonu doğrulanmadı");
+    assert.equal(coachingEarningStatusCopy("pending"), "Aylık değerlendirmede");
+    assert.equal(coachingEarningStatusCopy("on_hold"), "İnceleme nedeniyle bekliyor");
+    assert.equal(coachingEarningStatusCopy("reversed"), "Muhasebe kaydı geri çevrildi");
+    assert.equal(coachingEarningStatusCopy("ready"), "Aktarım hazırlığında · banka ödemesi doğrulanmadı");
+    assert.equal(coachingEarningStatusCopy("paid"), "Sistem kaydında işlendi · banka aktarımı ayrıca doğrulanmalı");
+    assert.equal(coachingEarningStatusCopy("unexpected"), "Kazanç durumu inceleniyor");
+  });
+});
 
 function axiosError(data: unknown, status = 400) {
   return { response: { status, data } };
@@ -35,6 +49,18 @@ describe("extractCoachingErrorCode", () => {
 });
 
 describe("extractCoachingErrorMessage", () => {
+  it("uses a dynamic server validation message instead of a hardcoded price policy", () => {
+    assert.equal(
+      extractCoachingErrorMessage(
+        axiosError({
+          code: ["price_exceeds_cap"],
+          detail: "Koçluk görüşme fiyatı ders fiyatının en fazla %72'si olabilir.",
+        })
+      ),
+      "Koçluk görüşme fiyatı ders fiyatının en fazla %72'si olabilir."
+    );
+  });
+
   it("prefers the known message for a recognised code", () => {
     const message = extractCoachingErrorMessage(
       axiosError({ code: "availability_required" })
@@ -149,6 +175,28 @@ describe("shouldSkipCoachingChoiceScreen", () => {
     assert.equal(shouldSkipCoachingChoiceScreen(undefined), true);
     assert.equal(
       shouldSkipCoachingChoiceScreen(eligibility({ reason: "ok", plan: null })),
+      true
+    );
+  });
+});
+
+describe("eligibilityAllowsCoachingChoice checkout gate", () => {
+  it("does not expose an otherwise eligible Coaching offer while platform checkout is closed", () => {
+    assert.equal(
+      eligibilityAllowsCoachingChoice(
+        eligibility({ eligible: true, reason: "ok", plan }),
+        false
+      ),
+      false
+    );
+  });
+
+  it("allows an eligible published offer when platform checkout is open", () => {
+    assert.equal(
+      eligibilityAllowsCoachingChoice(
+        eligibility({ eligible: true, reason: "ok", plan }),
+        true
+      ),
       true
     );
   });

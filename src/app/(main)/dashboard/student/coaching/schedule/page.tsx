@@ -5,9 +5,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { RouteGuard } from "@/components/shared/RouteGuard";
+import { CoachingPageShell } from "@/components/coaching/CoachingPageShell";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
-import { EmptyState } from "@/components/shared/EmptyState";
+import { CoachingEmptyState as EmptyState } from "@/components/coaching/CoachingEmptyState";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -77,7 +78,8 @@ function ScheduleContent() {
     return (
       <EmptyState
         title="Şu anda planlanacak bir koçluğun yok"
-        description="Bir koçluk talebin öğretmenin tarafından kabul edilip ödemesi aktive olduğunda burada saat seçebileceksin."
+description="Ders paketi ve çalışma koçluğu talebin öğretmenin tarafından kabul edilip hizmetin aktive olduğunda burada saat seçebilirsin."
+steps={["Birleşik talebin kabul edilir", "Koçluk müsaitliğinden düzenli saat seçersin"]}
       />
     );
   }
@@ -122,8 +124,7 @@ function ScheduleContent() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Koçluk Saatini Seç</h1>
-        <div className="mt-2 flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2">
           <Badge variant="secondary">{coachingFrequencyLabel(state.frequency)}</Badge>
           <Badge variant="secondary">30 dakika</Badge>
           <Badge variant="secondary">{state.total_sessions} görüşme</Badge>
@@ -233,9 +234,7 @@ function ActiveScheduleView() {
 export default function CoachingSchedulePage() {
   return (
     <RouteGuard requireRole="student">
-      <div className="mx-auto max-w-3xl px-4 py-8">
-        <ScheduleContent />
-      </div>
+      <CoachingPageShell title="Koçluk saatlerim" description="Öğretmenin ayrı koçluk müsaitliğinden düzenli görüşme saatlerini seç veya mevcut saat değişikliklerini yönet." parentHref="/dashboard/student/coaching" parentLabel="Çalışma koçluğum" eyebrow="Planlama" width="narrow" currentHref="/dashboard/student/coaching/upcoming" audience="student"><ScheduleContent /></CoachingPageShell>
     </RouteGuard>
   );
 }

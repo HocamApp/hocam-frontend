@@ -2,12 +2,14 @@
 
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
+import { Eye } from "lucide-react";
 
+import { CoachingEmptyState } from "@/components/coaching/CoachingEmptyState";
 import { CoachingGuard } from "@/components/coaching/CoachingGuard";
+import { CoachingPageShell } from "@/components/coaching/CoachingPageShell";
 import { StudentPreviewCard } from "@/components/coaching/StudentPreviewCard";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { EmptyState } from "@/components/shared/EmptyState";
 import { fetchCoachingPlanPreview } from "@/lib/coachingApi";
 
 function PreviewContent() {
@@ -20,10 +22,11 @@ function PreviewContent() {
 
   if (!preview) {
     return (
-      <EmptyState
+      <CoachingEmptyState
+        icon={Eye}
         title="Önizlenecek plan yok"
         description="Koçluk planını oluşturduğunda öğrencilerin ne göreceğini buradan kontrol edebilirsin."
-        action={
+        actions={
           <Button asChild>
             <Link href="/dashboard/tutor/coaching/plan">Plan oluştur</Link>
           </Button>
@@ -34,7 +37,7 @@ function PreviewContent() {
 
   return (
     <div className="space-y-4">
-      <p className="rounded-md bg-muted p-3 text-xs text-muted-foreground">
+      <p className="rounded-lg border bg-muted/25 p-4 text-sm leading-6 text-muted-foreground">
         Bu, öğrencilerin koçluk teklifini nasıl gördüğünün önizlemesidir.
         Sayfada yaptığın hiçbir işlem öğrencilere gitmez.
       </p>
@@ -46,15 +49,18 @@ function PreviewContent() {
 export default function CoachingPreviewPage() {
   return (
     <CoachingGuard>
-      <div className="mx-auto max-w-xl px-4 py-8">
-        <h1 className="text-2xl font-bold">Öğrenci görünümü</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Koçluk teklifin öğrenciye böyle görünür.
-        </p>
-        <div className="mt-6">
-          <PreviewContent />
-        </div>
-      </div>
+      <CoachingPageShell
+        title="Öğrenci görünümü"
+        description="Koçluk teklifinin öğrenci profilinde nasıl anlatıldığını kontrol et. Bu sayfa salt okunurdur."
+        parentHref="/dashboard/tutor/coaching"
+        parentLabel="Koçluk ana sayfası"
+        eyebrow="Önizleme"
+        width="narrow"
+        currentHref="/dashboard/tutor/coaching/preview"
+        audience="tutor"
+      >
+        <PreviewContent />
+      </CoachingPageShell>
     </CoachingGuard>
   );
 }
