@@ -49,7 +49,7 @@ export function MainLayoutShell({ children }: MainLayoutShellProps) {
         className={cn(
           "flex flex-1 flex-col md:contents",
           useStudentDashboardSurface &&
-            "[&>footer]:bg-[#fbfaf8] [&>main]:bg-[#fbfaf8]",
+            "[&>footer]:bg-white [&>main]:bg-white",
           showMobileNavigation &&
             "pb-[calc(4rem+env(safe-area-inset-bottom))] [&>main]:min-h-[calc(100dvh_-_3.5rem_-_4rem_-_env(safe-area-inset-bottom))] md:pb-0 md:[&>main]:min-h-[calc(100vh-64px)]"
         )}

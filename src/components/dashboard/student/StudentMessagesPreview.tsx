@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowUpRight, MessageCircle } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { fetchConversations } from "@/lib/messagingApi";
@@ -35,19 +35,11 @@ export function StudentMessagesPreview() {
   if (!isLoading && preview.length === 0) return null;
 
   return (
-    <section aria-labelledby="messages-preview-title" className="rounded-[28px] border border-slate-200 bg-white p-5 sm:p-6">
+    <section aria-labelledby="messages-preview-title" className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
       <div className="flex items-center justify-between gap-3">
-        <div>
-          <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#e9004f]">
-            İletişim
-          </p>
-          <h2 id="messages-preview-title" className="mt-1 text-xl font-semibold tracking-[-0.02em] text-slate-950">
-            Mesajların
-          </h2>
-        </div>
-        <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#fff0f5] text-[#e9004f]">
-          <MessageCircle className="h-5 w-5" aria-hidden="true" />
-        </span>
+        <h2 id="messages-preview-title" className="text-xl font-semibold tracking-[-0.02em] text-slate-950">
+          Mesajların
+        </h2>
       </div>
 
       <div className="mt-4">
@@ -66,7 +58,7 @@ export function StudentMessagesPreview() {
                 <li key={conversation.id}>
                   <Link
                     href={`/messages/${conversation.id}`}
-                    className="group flex items-center gap-3 rounded-2xl border border-transparent px-2 py-2.5 transition-colors hover:border-slate-200 hover:bg-[#fbfaf8]"
+                    className="group flex items-center gap-3 rounded-lg px-1 py-2.5 transition-colors hover:bg-slate-50"
                   >
                     <ParticipantAvatar
                       name={name}
@@ -100,7 +92,7 @@ export function StudentMessagesPreview() {
         )}
       </div>
 
-      <Link href="/messages" className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-slate-700 transition-colors hover:text-[#e9004f]">
+      <Link href="/messages" className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-slate-700 transition-colors hover:text-slate-950">
         Tüm mesajlar
         <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
       </Link>
