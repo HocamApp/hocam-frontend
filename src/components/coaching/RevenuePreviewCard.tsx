@@ -15,7 +15,7 @@ export function RevenuePreviewCard({ preview }: { preview: CoachingRevenuePrevie
   if (!primary) return null;
 
   return (
-    <Card>
+    <Card role="region" aria-label="Sunucu hesaplamalı kazanç tahmini" className="overflow-hidden border-primary/15 shadow-sm">
       <CardContent className="space-y-5 p-5 sm:p-6">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Sunucu hesaplaması</p>
@@ -25,10 +25,23 @@ export function RevenuePreviewCard({ preview }: { preview: CoachingRevenuePrevie
           </p>
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-3">
-          <RevenueValue label="Görüşme" value={`${primary.total_sessions} görüşme`} />
-          <RevenueValue label={`Paket indirimi · %${primary.discount_percent}`} value={`−${primary.discount_amount_display}`} />
-          <RevenueValue label="Tahmini net" value={primary.tutor_net_display} prominent />
+        <div className="rounded-2xl border border-primary/15 bg-primary/[0.045] p-4 sm:p-5">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-xs font-medium text-muted-foreground">Tahmini net koçluk kazancı</p>
+              <p className="mt-1 text-3xl font-semibold tabular-nums tracking-tight">{primary.tutor_net_display}</p>
+            </div>
+            <p className="flex flex-wrap items-center gap-1 text-sm font-semibold">
+              <span>{primary.total_sessions} görüşme</span>
+              <span aria-hidden="true">·</span>
+              <span>{primary.weeks} hafta</span>
+            </p>
+          </div>
+          <dl className="mt-5 grid gap-2 border-t border-primary/10 pt-4 text-xs sm:grid-cols-3">
+            <RevenueLine label="Öğrencinin koçluk toplamı" value={primary.total_price_display} />
+            <RevenueLine label={`Paket indirimi · %${primary.discount_percent}`} value={`−${primary.discount_amount_display}`} />
+            <RevenueLine label="Platform komisyonu" value={`−${primary.platform_fee_display}`} />
+          </dl>
         </div>
 
         <div className="rounded-lg border bg-muted/20 p-4 text-xs leading-5 text-muted-foreground">
@@ -54,11 +67,11 @@ export function RevenuePreviewCard({ preview }: { preview: CoachingRevenuePrevie
   );
 }
 
-function RevenueValue({ label, value, prominent = false }: { label: string; value: string; prominent?: boolean }) {
+function RevenueLine({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg border bg-background p-4">
-      <p className="text-xs text-muted-foreground">{label}</p>
-      <p className={prominent ? "mt-1 text-xl font-semibold tabular-nums" : "mt-1 font-semibold tabular-nums"}>{value}</p>
+    <div className="flex justify-between gap-3 sm:block">
+      <dt className="text-muted-foreground">{label}</dt>
+      <dd className="font-semibold tabular-nums sm:mt-1">{value}</dd>
     </div>
   );
 }

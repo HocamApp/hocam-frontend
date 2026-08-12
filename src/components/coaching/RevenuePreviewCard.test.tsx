@@ -52,6 +52,9 @@ describe("RevenuePreviewCard", () => {
 
     assert.ok(screen.getByText("dört-hafta-net"));
     assert.ok(screen.getByText("4 görüşme"));
+    assert.ok(screen.getByRole("region", { name: "Sunucu hesaplamalı kazanç tahmini" }));
+    assert.ok(screen.getByText("Öğrencinin koçluk toplamı"));
+    assert.ok(screen.getByText("Platform komisyonu"));
     assert.ok(screen.getByRole("button", { name: "Diğer paketlerde kazancını gör" }));
   });
 });

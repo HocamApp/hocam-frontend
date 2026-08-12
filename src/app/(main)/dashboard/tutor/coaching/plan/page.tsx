@@ -266,6 +266,8 @@ export default function CoachingPlanPage() {
         parentLabel="Koçluk ana sayfası"
         eyebrow="Teklif kurulumu"
         width="wide"
+        currentHref="/dashboard/tutor/coaching/plan"
+        audience="tutor"
       >
         <Suspense fallback={<Skeleton className="h-72 w-full" />}>
           <PlanContent />

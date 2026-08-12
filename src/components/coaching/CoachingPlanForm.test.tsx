@@ -3,7 +3,7 @@ import "@/test/setupDom";
 import assert from "node:assert/strict";
 import { after, afterEach, describe, it } from "node:test";
 import React from "react";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 
 import type { CoachingSetupConfig } from "@/lib/coachingApi";
 import { CoachingPlanForm } from "./CoachingPlanForm";
@@ -52,7 +52,9 @@ function form(step: "frequency" | "price" | "exams") {
 describe("CoachingPlanForm", () => {
   it("renders frequency package counts only from server setup config", () => {
     render(form("frequency"));
-    assert.ok(screen.getByText("Haftada bir"));
+    const selected = screen.getByRole("button", { name: /Haftada bir/ });
+    assert.equal(selected.getAttribute("aria-pressed"), "true");
+    assert.ok(selected.textContent?.includes("Seçili düzen"));
     assert.ok(screen.getByText("4 haftada"));
     assert.ok(screen.getByText("4 görüşme"));
     assert.ok(screen.getByText("24 haftada"));
@@ -69,7 +71,11 @@ describe("CoachingPlanForm", () => {
 
   it("offers only the server-provided canonical Coaching exams", () => {
     render(form("exams"));
-    assert.ok(screen.getByRole("button", { name: "YKS" }));
+    const yks = screen.getByRole("button", { name: /YKS/ });
+    assert.ok(yks.textContent?.includes("TYT, AYT ve YDT hedeflerini birlikte kapsar"));
+    fireEvent.click(yks);
+    assert.equal(yks.getAttribute("aria-pressed"), "true");
+    assert.ok(yks.textContent?.includes("Seçildi"));
     assert.ok(screen.getByRole("button", { name: "DGS" }));
     assert.ok(screen.getByRole("button", { name: "KPSS" }));
     assert.equal(screen.queryByRole("button", { name: "TYT" }), null);

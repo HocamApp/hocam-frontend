@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowRight, Clock3, Info } from "lucide-react";
+import { ArrowRight, Check, Clock3, Info, Target } from "lucide-react";
 
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { Button } from "@/components/ui/button";
@@ -26,6 +26,12 @@ import { cn } from "@/lib/utils";
 import { CapacityPreviewCard } from "./CapacityPreviewCard";
 
 const DESCRIPTION_MAX = 500;
+
+const EXAM_CONTEXT: Record<string, string> = {
+  YKS: "TYT, AYT ve YDT hedeflerini birlikte kapsar.",
+  DGS: "Ön lisans sonrası lisans geçişi için çalışma ritmi kurar.",
+  KPSS: "Kamu sınavı hazırlığını plan ve takip odağında destekler.",
+};
 
 export function CoachingPlanForm({
   plan,
@@ -110,11 +116,23 @@ export function CoachingPlanForm({
                     aria-pressed={selected}
                     onClick={() => setFrequency(option.value)}
                     className={cn(
-                      "rounded-xl border p-4 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-                      selected ? "border-foreground bg-muted/50" : "hover:border-foreground/30"
+                      "relative rounded-2xl border-2 p-5 text-left transition-[border-color,background-color,box-shadow] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                      selected
+                        ? "border-primary bg-primary/[0.055] shadow-[0_16px_40px_-34px_hsl(var(--primary)/0.7)]"
+                        : "border-border/70 bg-card hover:border-foreground/25 hover:bg-muted/20"
                     )}
                   >
-                    <span className="block font-semibold">{option.label}</span>
+                    <span className="flex items-center justify-between gap-3">
+                      <span className="block text-lg font-semibold">{option.label}</span>
+                      {selected ? (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-primary px-2.5 py-1 text-[11px] font-semibold text-primary-foreground">
+                          <Check aria-hidden="true" className="h-3 w-3" />
+                          Seçili düzen
+                        </span>
+                      ) : (
+                        <span aria-hidden="true" className="h-5 w-5 rounded-full border-2 border-border" />
+                      )}
+                    </span>
                     <span className="mt-3 grid gap-1.5 text-xs text-muted-foreground">
                       {option.packages.map((item) => (
                         <span key={item.duration_days} className="flex justify-between gap-3">
@@ -142,6 +160,7 @@ export function CoachingPlanForm({
             <PolicyValue label="Koçluk fiyat tavanı" value={`%${setupConfig.max_price_ratio_percent}`} />
             <PolicyValue label="Girebileceğin en yüksek fiyat" value={setupConfig.price_cap_display} />
           </div>
+          <div className="rounded-2xl border border-primary/15 bg-primary/[0.04] p-4 sm:p-5">
           <div className="max-w-sm">
             <Label htmlFor="coaching-price">Görüşme başına fiyat (₺)</Label>
             <Input
@@ -160,6 +179,7 @@ export function CoachingPlanForm({
             </p>
             {overCap ? <p className="mt-2 text-xs font-medium text-destructive">Bu fiyat {setupConfig.price_cap_display} üst sınırını aşıyor.</p> : null}
           </div>
+          </div>
         </StepCard>
       ) : null}
 
@@ -170,21 +190,39 @@ export function CoachingPlanForm({
         >
           <fieldset>
             <legend className="sr-only">Hedef sınav grupları</legend>
-            <div className="flex flex-wrap gap-2">
+            <div className="grid gap-3 md:grid-cols-3">
               {setupConfig.exam_groups.filter(isCoachingExamGroup).map((exam) => {
                 const selected = examTypes.includes(exam);
                 return (
                   <button
                     key={exam}
                     type="button"
+                    aria-label={exam}
                     aria-pressed={selected}
                     onClick={() => toggleExamType(exam)}
                     className={cn(
-                      "min-h-11 rounded-full border px-5 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-                      selected ? "border-foreground bg-foreground text-background" : "hover:bg-muted/50"
+                      "relative min-h-40 rounded-2xl border-2 p-5 text-left transition-[border-color,background-color,box-shadow] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                      selected
+                        ? "border-primary bg-primary/[0.055] shadow-[0_16px_40px_-34px_hsl(var(--primary)/0.7)]"
+                        : "border-border/70 bg-card hover:border-foreground/25 hover:bg-muted/20"
                     )}
                   >
-                    {exam}
+                    <span className="flex items-start justify-between gap-3">
+                      <span className="inline-flex h-10 w-10 items-center justify-center rounded-full border bg-background">
+                        <Target aria-hidden="true" className="h-4 w-4" />
+                      </span>
+                      <span className={cn(
+                        "inline-flex h-7 items-center gap-1 rounded-full px-2.5 text-[11px] font-semibold",
+                        selected ? "bg-primary text-primary-foreground" : "border bg-background text-muted-foreground"
+                      )}>
+                        {selected ? <Check aria-hidden="true" className="h-3 w-3" /> : null}
+                        {selected ? "Seçildi" : "Seç"}
+                      </span>
+                    </span>
+                    <span className="mt-5 block text-xl font-semibold tracking-tight">{exam}</span>
+                    <span className="mt-2 block text-sm font-normal leading-6 text-muted-foreground">
+                      {EXAM_CONTEXT[exam]}
+                    </span>
                   </button>
                 );
               })}
@@ -198,7 +236,8 @@ export function CoachingPlanForm({
           title="Öğrenciye kısa bir açıklama yaz"
           description="Nasıl bir çalışma düzeni kurduğunu sade ve somut biçimde anlat. Bu alan isteğe bağlıdır."
         >
-          <div>
+          <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_16rem]">
+          <div className="rounded-2xl border bg-background p-4 sm:p-5">
             <Label htmlFor="coaching-description">Kısa açıklama</Label>
             <Textarea
               id="coaching-description"
@@ -212,6 +251,15 @@ export function CoachingPlanForm({
             <p className="mt-2 text-xs leading-5 text-muted-foreground">
               {description.length}/{DESCRIPTION_MAX}. Platform dışı iletişim, sınırsız destek veya sınav sonucu garantisi gibi vaatler kullanma.
             </p>
+          </div>
+          <aside className="rounded-2xl border border-primary/15 bg-primary/[0.04] p-4 text-sm">
+            <p className="font-semibold">İyi bir açıklama ne söyler?</p>
+            <ul className="mt-3 space-y-2 text-xs leading-5 text-muted-foreground">
+              <li>· Nasıl bir çalışma düzeni kurduğunu</li>
+              <li>· Görüşmelerde neyi takip ettiğini</li>
+              <li>· Öğrencinin süreçte ne bekleyebileceğini</li>
+            </ul>
+          </aside>
           </div>
         </StepCard>
       ) : null}
@@ -263,9 +311,9 @@ export function CoachingPlanForm({
 function StepCard({ title, description, children }: { title: string; description: string; children: React.ReactNode }) {
   return (
     <Card>
-      <CardContent className="space-y-6 p-5 sm:p-6">
+      <CardContent className="space-y-6 p-5 sm:p-7">
         <div className="max-w-2xl">
-          <h2 className="text-xl font-semibold tracking-tight">{title}</h2>
+          <h2 className="text-2xl font-semibold tracking-[-0.03em]">{title}</h2>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">{description}</p>
         </div>
         {children}
@@ -276,7 +324,7 @@ function StepCard({ title, description, children }: { title: string; description
 
 function PolicyValue({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg border bg-muted/20 p-3">
+    <div className="rounded-2xl border bg-muted/25 p-4">
       <p className="text-xs text-muted-foreground">{label}</p>
       <p className="mt-1 font-semibold tabular-nums">{value}</p>
     </div>
