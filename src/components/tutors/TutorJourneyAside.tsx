@@ -49,12 +49,12 @@ export function TutorJourneyAside({
         </div>
 
         <Image
-          src="/images/onboarding/hocam-guide.png"
-          alt="Hocam maskotu"
-          width={360}
-          height={360}
+          src="/images/onboarding/hocam-professional-guide.webp"
+          alt="Tabletindeki hoca profilini gösteren Hocam rehberi"
+          width={1024}
+          height={1536}
           priority
-          className="relative z-0 mx-auto -mb-24 mt-1 hidden w-64 drop-shadow-2xl lg:block"
+          className="relative z-0 mx-auto -mb-32 mt-3 hidden w-72 drop-shadow-2xl lg:block"
         />
       </div>
     </aside>
