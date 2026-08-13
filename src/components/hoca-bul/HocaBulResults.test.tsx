@@ -98,11 +98,18 @@ function match(id: string, level: TutorMatchResult["match_level"]): TutorMatchRe
   };
 }
 
+function renderResultsView(element: React.ReactElement) {
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+  });
+  return render(<QueryClientProvider client={client}>{element}</QueryClientProvider>);
+}
+
 describe("HocaBulResultsView", () => {
   it("groups strong results first and renders only supported real details", async () => {
     const { HocaBulResultsView } = await import("./HocaBulResultsView");
     const preview: MatchingPreview = { matches: [match("r", "budget_relaxed"), match("s", "strong")], candidate_count: 8 };
-    render(<HocaBulResultsView preview={preview} answers={answers} />);
+    renderResultsView(<HocaBulResultsView preview={preview} answers={answers} />);
 
     const articles = screen.getAllByRole("article");
     assert.match(articles[0].textContent ?? "", /Ads Soyad/);
@@ -122,7 +129,9 @@ describe("HocaBulResultsView", () => {
 
   it("renders the approved zero state and edit/all-tutor actions", async () => {
     const { HocaBulResultsView } = await import("./HocaBulResultsView");
-    render(<HocaBulResultsView preview={{ matches: [], candidate_count: 0 }} answers={answers} />);
+    renderResultsView(
+      <HocaBulResultsView preview={{ matches: [], candidate_count: 0 }} answers={answers} />
+    );
     assert.ok(screen.getByRole("heading", { name: "Şu an tam uyan bir hoca bulamadık" }));
     assert.equal(screen.getByRole("link", { name: "Bütçemi genişlet" }).getAttribute("href"), "/hoca-bul?adim=butce&kaynak=sonuclar");
     assert.equal(screen.getByRole("link", { name: "Tüm hocaları gör" }).getAttribute("href"), "/tutors");

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -188,7 +189,11 @@ export function LessonTopicCheckInDialog({
           <DialogTitle>Ders Sonu Gelişim Kaydı</DialogTitle>
           <DialogDescription>
             Yalnızca bu derste gözlemlediğin bilgiyi kaydet. Bu kayıt kesin bir seviye
-            veya başarı ölçümü değildir.
+            veya başarı ölçümü değildir. Verinin kullanımı ve öğrencinin hakları için{" "}
+            <Link href="/kvkk/ogrenci-gelisim-kayitlari" className="underline">
+              gelişim kayıtları aydınlatma metnini
+            </Link>{" "}
+            inceleyebilirsin.
           </DialogDescription>
         </DialogHeader>
 
