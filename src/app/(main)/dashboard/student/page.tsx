@@ -181,14 +181,17 @@ function EmptyStudentDashboard({
             </Button>
           </div>
 
-          <div className="relative mx-auto h-[230px] w-[210px] sm:h-[270px] sm:w-[245px] lg:h-[290px] lg:w-[265px]">
-            <div className="absolute inset-x-1 bottom-0 h-4/5 rounded-full bg-[#fbe9ef] ring-1 ring-inset ring-[#f6d5df]" aria-hidden="true" />
+          <div className="relative mx-auto h-[240px] w-[240px] sm:h-[280px] sm:w-[280px] lg:h-[300px] lg:w-[300px]">
+            <div
+              className="absolute -bottom-12 right-2 h-[270px] w-[190px] rotate-[-5deg] rounded-[58%_42%_22%_78%/42%_35%_65%_58%] bg-[#f7dfe7]"
+              aria-hidden="true"
+            />
             <Image
               src="/images/dashboard/student-empty-mascot-long-neck.png"
               alt="Hocam'ın uzun boyunlu ördek maskotu"
               fill
-              sizes="(min-width: 1024px) 265px, 245px"
-              className="object-contain object-bottom drop-shadow-[0_8px_12px_rgba(15,23,42,0.08)]"
+              sizes="(min-width: 1024px) 300px, 280px"
+              className="translate-x-3 translate-y-5 scale-[1.12] object-contain object-bottom drop-shadow-[0_10px_14px_rgba(15,23,42,0.12)]"
               priority
             />
           </div>
@@ -340,14 +343,19 @@ function RecentLessonContent({
 }) {
   return (
     <section aria-labelledby="recent-lessons-title" className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex items-start justify-between gap-3">
         <div>
           <h2 id="recent-lessons-title" className="text-xl font-semibold tracking-[-0.02em] text-slate-950">Son derslerin</h2>
           <p className="mt-1 text-sm text-slate-500">Notlarına, dosyalarına ve çözülen sorulara dön.</p>
         </div>
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-50 text-slate-600">
-          <BookOpenText className="h-5 w-5" aria-hidden="true" />
-        </span>
+        <Button asChild variant="ghost" size="sm" className="shrink-0 text-slate-600">
+          <Link href="/profile/lessons?tab=history">
+            <BookOpenText className="mr-1.5 h-4 w-4" aria-hidden="true" />
+            <span className="hidden sm:inline">Tüm geçmiş dersler</span>
+            <span className="sm:hidden">Tümü</span>
+            <ArrowUpRight className="ml-1 h-4 w-4" aria-hidden="true" />
+          </Link>
+        </Button>
       </div>
 
       {bookings.length > 0 ? (
