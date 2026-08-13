@@ -182,13 +182,13 @@ function EmptyStudentDashboard({
           </div>
 
           <div className="relative mx-auto h-[230px] w-[210px] sm:h-[270px] sm:w-[245px] lg:h-[290px] lg:w-[265px]">
-            <div className="absolute inset-x-1 bottom-0 h-4/5 rounded-full bg-slate-50" aria-hidden="true" />
+            <div className="absolute inset-x-1 bottom-0 h-4/5 rounded-full bg-[#fbe9ef] ring-1 ring-inset ring-[#f6d5df]" aria-hidden="true" />
             <Image
               src="/images/dashboard/student-empty-mascot-long-neck.png"
               alt="Hocam'ın uzun boyunlu ördek maskotu"
               fill
               sizes="(min-width: 1024px) 265px, 245px"
-              className="object-contain object-bottom"
+              className="object-contain object-bottom drop-shadow-[0_8px_12px_rgba(15,23,42,0.08)]"
               priority
             />
           </div>
