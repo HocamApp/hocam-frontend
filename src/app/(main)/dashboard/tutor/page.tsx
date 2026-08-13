@@ -7,13 +7,17 @@ import axios from "axios";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AlertCircle,
+  ArrowLeft,
+  ArrowRight,
+  BookOpen,
   Calendar,
-  Clock3,
+  CalendarDays,
   ExternalLink,
   Info,
   MessageCircle,
   Pencil,
   Star,
+  Users,
   Video,
   Wallet,
 } from "lucide-react";
@@ -72,7 +76,6 @@ import { LessonMaterialsDialog } from "@/components/lessons/LessonMaterialsDialo
 import { ParticipantAvatar } from "@/components/messaging/ParticipantAvatar";
 import { AvailabilityCalendar } from "@/components/tutors/AvailabilityCalendar";
 import { TutorStudentPrivateWorkspace } from "@/components/tutors/TutorStudentPrivateWorkspace";
-import { TutorWeeklySchedule } from "@/components/tutors/TutorWeeklySchedule";
 import { VerifiedTutorMark } from "@/components/tutors/VerifiedTutorMark";
 import { ReviewCard } from "@/components/tutors/ReviewCard";
 import { ReviewSummary } from "@/components/tutors/ReviewSummary";
@@ -106,7 +109,7 @@ import {
 const TUTOR_TABS = [
   { value: "bookings", label: "Rezervasyonlar" },
   { value: "students", label: "Öğrencilerim" },
-  { value: "earnings", label: "Kazançlar" },
+  { value: "earnings", label: "Ders Özeti" },
   { value: "reviews", label: "Değerlendirmeler" },
   { value: "availability", label: "Müsaitlik" },
   { value: "packages", label: "Paketlerim" },
@@ -144,6 +147,17 @@ function startOfDay(date: Date): Date {
   const clone = new Date(date);
   clone.setHours(0, 0, 0, 0);
   return clone;
+}
+
+function isSameCalendarDay(first: Date, second: Date): boolean {
+  return startOfDay(first).getTime() === startOfDay(second).getTime();
+}
+
+function getGreeting(): string {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Günaydın";
+  if (hour < 18) return "İyi günler";
+  return "İyi akşamlar";
 }
 
 function formatLessonCountdown(startTime: string): string {
@@ -600,23 +614,21 @@ function TutorDashboardContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
-  const { user, isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuth();
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState(() =>
     TUTOR_TABS.some((tab) => tab.value === searchParams.get("tab"))
       ? searchParams.get("tab")!
-      : "bookings"
+      : "overview"
   );
-  // The useState initializer above only runs on mount, so it can't react to
-  // a same-session soft navigation that changes just the `tab` query param
-  // (e.g. clicking a booking notification while already on this page, on a
-  // different tab). This effect keeps activeTab synced to the URL whenever
-  // `tab` is present and valid; it never writes to the URL itself, so manual
-  // tab clicks (which don't touch the query string) can't create a loop.
+  // Keep the focused management view synchronized with URL-driven navigation
+  // (notifications, home shortcuts and browser history all use ?tab=...).
   const tabParam = searchParams.get("tab");
   useEffect(() => {
     if (tabParam && tabParam !== activeTab && TUTOR_TABS.some((tab) => tab.value === tabParam)) {
       setActiveTab(tabParam);
+    } else if (!tabParam && activeTab !== "overview") {
+      setActiveTab("overview");
     }
   }, [tabParam, activeTab]);
   const [confirmingBooking, setConfirmingBooking] = useState<Booking | null>(null);
@@ -834,6 +846,11 @@ function TutorDashboardContent() {
         (conversation) => conversation.student === nextBooking.student.id
       )?.id
     : null;
+  const allTodayBookings = upcomingBookings.filter((booking) =>
+    isSameCalendarDay(new Date(booking.start_time), new Date())
+  );
+  const todayBookings = allTodayBookings.slice(0, DASHBOARD_LIST_PREVIEW_COUNT);
+  const activePackageCount = packageOffers?.filter((offer) => offer.is_offered).length ?? 0;
 
   const pendingActionBookings = useMemo(
     () =>
@@ -976,98 +993,64 @@ function TutorDashboardContent() {
         <TutorialNudgeBanner />
       </div>
       <div className="mx-auto w-full min-w-0 max-w-6xl overflow-x-clip px-4">
-      <header className="mb-6 flex flex-col gap-4 border-b pb-6 md:flex-row md:items-center md:justify-between">
+      <header className="mb-8 flex items-center gap-4">
         <div className="flex items-center gap-4">
-          <Avatar className="h-14 w-14">
+          <Avatar className="h-12 w-12 border border-border/70">
             {profile.profile_picture ? (
               <AvatarImage
                 src={profile.profile_picture}
                 alt={`${profile.name} ${profile.surname}`}
               />
             ) : null}
-            <AvatarFallback className="bg-primary/10 text-lg font-semibold text-primary">
+            <AvatarFallback className="bg-muted text-base font-semibold text-foreground">
               {getInitials(profile.name, profile.surname)}
             </AvatarFallback>
           </Avatar>
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight">Merhaba {profile.name} 👋</h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Bugünkü derslerini, öğrencilerini, müsaitliğini ve kazançlarını buradan
-              yönetebilirsin.
-            </p>
-            <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
-              <span>
-                {profile.name} {profile.surname} · {user?.email}
-              </span>
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl font-semibold tracking-tight">{getGreeting()}, {profile.name} 👋</h1>
               <VerifiedTutorMark verified={profile.is_verified} />
             </div>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {allTodayBookings.length > 0
+                ? `Bugün ${allTodayBookings.length} dersin var${nextBooking ? ` · İlki ${new Date(nextBooking.start_time).toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })}’da` : ""}.`
+                : "Bugün planlanmış dersin yok. Programını ve öğrencilerini buradan yönetebilirsin."}
+            </p>
           </div>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Button variant="outline" asChild>
-            <Link href={`/tutors/${profile.id}`}>
-              <ExternalLink className="mr-2 h-4 w-4" />
-              Public Profil
-            </Link>
-          </Button>
-          <Button asChild>
-            <Link href="/dashboard/tutor/edit">Profili Düzenle</Link>
-          </Button>
         </div>
       </header>
       </div>
 
       <div className="mx-auto w-full min-w-0 max-w-6xl overflow-x-clip px-4">
+      {activeTab === "overview" ? (
+        <div className="space-y-6">
       {nextBooking ? (
-        <Card className="mb-6 overflow-hidden border-primary/30 bg-gradient-to-br from-primary/5 via-card to-card">
-          <CardContent className="p-5 sm:p-6">
-            <div className="flex flex-wrap items-start justify-between gap-4">
-              <div className="flex min-w-0 items-center gap-3">
+        <Card className="overflow-hidden border-border bg-card shadow-sm">
+          <CardContent className="p-6 sm:p-8">
+            <div className="grid items-center gap-6 md:grid-cols-[minmax(0,1fr)_auto]">
+              <div className="flex min-w-0 items-center gap-4">
                 <ParticipantAvatar
                   name={nextBookingStudentName}
                   avatarUrl={nextBooking.student.avatar_url}
-                  className="h-12 w-12 shrink-0"
+                  className="h-16 w-16 shrink-0 rounded-xl"
                 />
                 <div className="min-w-0">
-                  <p className="text-xs font-medium uppercase tracking-wide text-primary">
+                  <p className="text-sm font-medium text-muted-foreground">
                     Sıradaki dersin
                   </p>
-                  <p className="truncate text-lg font-semibold">{nextBooking.subject.name}</p>
-                  <p className="truncate text-sm text-muted-foreground">
-                    {nextBookingStudentName}
-                  </p>
+                  <p className="mt-1 truncate text-2xl font-semibold tracking-tight">{nextBooking.subject.name}</p>
+                  <p className="mt-1 truncate text-base text-muted-foreground">{nextBookingStudentName} · {nextBooking.duration_minutes} dk</p>
                 </div>
               </div>
-              <div className="flex shrink-0 flex-col items-end gap-1.5">
-                <StatusBadge status={nextBooking.status} type="booking" />
-                {nextBookingCountdown && (
-                  <span className="text-xs font-medium text-primary">
-                    {nextBookingCountdown}
-                  </span>
-                )}
+              <div className="flex min-w-[150px] flex-col rounded-xl border bg-muted/20 px-5 py-4 md:items-end">
+                <span className="text-sm font-medium text-muted-foreground">{nextBookingCountdown}</span>
+                <span className="mt-1 text-3xl font-semibold tracking-tight">
+                  {new Date(nextBooking.start_time).toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })}
+                </span>
+                <span className="mt-1 text-xs text-muted-foreground">{formatDate(nextBooking.start_time)}</span>
               </div>
             </div>
-
-            <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-1.5 text-sm text-muted-foreground">
-              <span className="inline-flex items-center gap-1.5">
-                <Calendar className="h-4 w-4" aria-hidden="true" />
-                {formatDate(nextBooking.start_time)}
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <Clock3 className="h-4 w-4" aria-hidden="true" />
-                {new Date(nextBooking.start_time).toLocaleTimeString("tr-TR", {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}{" "}
-                · {nextBooking.duration_minutes} dk
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <Wallet className="h-4 w-4" aria-hidden="true" />
-                {paymentLabel(nextBooking)}
-              </span>
-            </div>
-
-            <div className="mt-5 flex flex-wrap items-center gap-2 border-t pt-4">
+            <div className="mt-6 flex flex-wrap items-center gap-3 border-t pt-5">
               {nextBooking.room_url &&
               canJoinLesson(
                 nextBooking.start_time,
@@ -1093,73 +1076,118 @@ function TutorDashboardContent() {
                   Öğrenciye Mesaj
                 </Link>
               </Button>
+              <div className="ml-auto hidden items-center gap-2 text-sm text-muted-foreground sm:flex">
+                <StatusBadge status={nextBooking.status} type="booking" />
+                <span>{paymentLabel(nextBooking)}</span>
+              </div>
             </div>
           </CardContent>
         </Card>
       ) : (
-        <div className="mb-6">
-          <EmptyState
-            title="Planlanmış yaklaşan dersin yok."
-            description="Müsaitlik takvimini güncel tutarak öğrencilerin sana uygun saatlerden rezervasyon oluşturmasını sağlayabilirsin."
-            action={
-              <Button onClick={() => setActiveTab("availability")}>Müsaitliği Düzenle</Button>
-            }
-          />
-        </div>
+        <Card className="border-border shadow-sm">
+          <CardContent className="flex flex-col items-start justify-between gap-5 p-6 sm:flex-row sm:items-center sm:p-8">
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">Sıradaki dersin</p>
+              <h2 className="mt-2 text-2xl font-semibold tracking-tight">Takvimin şu anda sakin</h2>
+              <p className="mt-2 max-w-xl text-sm text-muted-foreground">Müsaitlik saatlerini güncel tutarak öğrencilerin sana uygun zamanlardan rezervasyon yapmasını sağlayabilirsin.</p>
+            </div>
+            <Button onClick={() => router.push("/dashboard/tutor?tab=availability")}>Müsaitliği düzenle</Button>
+          </CardContent>
+        </Card>
       )}
 
-      <TutorWeeklySchedule
-        bookings={bookings ?? []}
-        onEdit={() => setActiveTab("availability")}
-      />
+      {pendingActionBookings.length > 0 && (
+        <button type="button" onClick={() => router.push("/dashboard/tutor?tab=bookings")} className="flex w-full items-center justify-between gap-4 rounded-xl border border-amber-200 bg-amber-50/70 px-5 py-4 text-left transition-colors hover:bg-amber-50">
+          <span className="flex items-center gap-3"><AlertCircle className="h-5 w-5 text-amber-700" /><span><strong className="block text-sm">{pendingActionBookings.length} işlem seni bekliyor</strong><span className="text-sm text-muted-foreground">Onay, itiraz veya ders ilerlemesi gerektiren kayıtlarını kontrol et.</span></span></span>
+          <ArrowRight className="h-4 w-4 shrink-0" />
+        </button>
+      )}
 
-      <Card className="mb-6">
-        <CardHeader className="p-4 pb-2">
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Calendar className="h-4 w-4 text-primary" />
-              Müsaitlik
-            </CardTitle>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setActiveTab("availability")}
-            >
-              {availability.length === 0 ? "Ekle" : "Düzenle"}
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent className="p-4 pt-0">
-          {availabilityLoading ? (
-            <Skeleton className="h-6 w-48" />
-          ) : availability.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Müsaitlik eklenmemiş.</p>
-          ) : (
-            <div className="space-y-2">
-              <p className="text-sm">
-                <span className="font-medium">{availabilityDays.length} gün aktif</span>
-                <span className="ml-2 text-muted-foreground">
-                  · {availability.length} zaman aralığı
-                </span>
-              </p>
-              <div className="flex flex-wrap gap-1">
-                {availabilityDays.map((day) => (
-                  <Badge key={day} variant="secondary">
-                    {DAY_NAMES[day]}
-                  </Badge>
-                ))}
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1.35fr)_minmax(320px,.65fr)]">
+        <Card className="border-border shadow-sm">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 p-6 pb-3">
+            <div><CardTitle className="text-xl">Bugünkü programın</CardTitle><p className="mt-1 text-sm text-muted-foreground">Sıradaki derslerine hızlıca göz at.</p></div>
+            <Button variant="ghost" size="sm" onClick={() => router.push("/dashboard/tutor?tab=bookings")}>Tüm dersler <ArrowRight className="ml-2 h-4 w-4" /></Button>
+          </CardHeader>
+          <CardContent className="p-6 pt-2">
+            {bookingsLoading ? <Skeleton className="h-48 w-full" /> : todayBookings.length === 0 ? (
+              <div className="rounded-xl border border-dashed px-5 py-10 text-center"><CalendarDays className="mx-auto h-6 w-6 text-muted-foreground" /><p className="mt-3 font-medium">Bugün dersin yok</p><p className="mt-1 text-sm text-muted-foreground">Yaklaşan tüm derslerini takvimden görebilirsin.</p></div>
+            ) : (
+              <div className="divide-y">
+                {todayBookings.map((booking) => {
+                  const studentName = booking.student.display_name || booking.student.email;
+                  return <button key={booking.id} type="button" onClick={() => router.push(`/dashboard/tutor?tab=bookings&${HIGHLIGHT_PARAM}=${booking.id}`)} className="flex w-full items-center gap-4 py-4 text-left first:pt-2 last:pb-0">
+                    <ParticipantAvatar name={studentName} avatarUrl={booking.student.avatar_url} className="h-11 w-11 shrink-0 rounded-lg" />
+                    <span className="min-w-0 flex-1"><strong className="block truncate text-sm">{booking.subject.name}</strong><span className="mt-0.5 block truncate text-sm text-muted-foreground">{studentName}</span></span>
+                    <span className="text-right"><strong className="block text-sm">{new Date(booking.start_time).toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })}</strong><span className="text-xs text-muted-foreground">{booking.duration_minutes} dk</span></span>
+                  </button>;
+                })}
               </div>
-            </div>
-          )}
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="border-border shadow-sm">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 p-6 pb-3">
+            <div><CardTitle className="text-xl">Öğrencilerin</CardTitle><p className="mt-1 text-sm text-muted-foreground">{studentRoster.length} aktif öğrenci</p></div>
+            <Button variant="ghost" size="icon" aria-label="Tüm öğrenciler" onClick={() => router.push("/dashboard/tutor?tab=students")}><ArrowRight className="h-4 w-4" /></Button>
+          </CardHeader>
+          <CardContent className="p-6 pt-2">
+            {bookingsLoading ? <Skeleton className="h-48 w-full" /> : studentRoster.length === 0 ? (
+              <div className="rounded-xl border border-dashed px-4 py-10 text-center"><Users className="mx-auto h-6 w-6 text-muted-foreground" /><p className="mt-3 font-medium">Henüz öğrencin yok</p><p className="mt-1 text-sm text-muted-foreground">İlk rezervasyonun geldiğinde burada göreceksin.</p></div>
+            ) : (
+              <div className="divide-y">
+                {studentRoster.slice(0, 3).map((entry) => {
+                  const name = entry.student.display_name || entry.student.email;
+                  return <button key={entry.student.id} type="button" onClick={() => setSelectedStudentId(entry.student.id)} className="flex w-full items-center gap-3 py-4 text-left first:pt-2 last:pb-0">
+                    <ParticipantAvatar name={name} avatarUrl={entry.student.avatar_url} className="h-10 w-10 shrink-0" />
+                    <span className="min-w-0 flex-1"><strong className="block truncate text-sm">{name}</strong><span className="mt-0.5 block text-xs text-muted-foreground">{entry.upcomingLessons > 0 ? `${entry.upcomingLessons} yaklaşan ders` : `${entry.totalLessons} toplam ders`}</span></span>
+                    {entry.totalCredits > 0 && <Badge variant="secondary" className="shrink-0">{entry.remainingCredits}/{entry.totalCredits}</Badge>}
+                  </button>;
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card className="border-border shadow-sm">
+        <CardContent className="grid gap-0 p-0 sm:grid-cols-3">
+          <button type="button" onClick={() => router.push("/dashboard/tutor?tab=earnings")} className="flex items-center gap-4 px-6 py-5 text-left transition-colors hover:bg-muted/30 sm:border-r">
+            <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted"><BookOpen className="h-5 w-5" /></span><span><span className="block text-2xl font-semibold">{earnings?.last_30_days.lesson_count ?? 0}</span><span className="text-sm text-muted-foreground">Bu ay tamamlanan ders</span></span>
+          </button>
+          <button type="button" onClick={() => router.push("/dashboard/tutor?tab=students")} className="flex items-center gap-4 border-t px-6 py-5 text-left transition-colors hover:bg-muted/30 sm:border-r sm:border-t-0">
+            <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted"><Users className="h-5 w-5" /></span><span><span className="block text-2xl font-semibold">{studentRoster.length}</span><span className="text-sm text-muted-foreground">Aktif öğrenci</span></span>
+          </button>
+          <button type="button" onClick={() => router.push("/dashboard/tutor?tab=reviews")} className="flex items-center gap-4 border-t px-6 py-5 text-left transition-colors hover:bg-muted/30 sm:border-t-0">
+            <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted"><Star className="h-5 w-5" /></span><span><span className="block text-2xl font-semibold">{tutorReviewSummary ? formatRating(tutorReviewSummary.overall_rating) : "—"}</span><span className="text-sm text-muted-foreground">{tutorReviewSummary?.review_count ?? 0} değerlendirme</span></span>
+          </button>
         </CardContent>
       </Card>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
+      <section>
+        <div className="mb-3 flex items-end justify-between"><div><h2 className="text-lg font-semibold">Ayarlar ve görünürlük</h2><p className="mt-1 text-sm text-muted-foreground">Sık değişmeyen işletme ayarların.</p></div></div>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {[
+            { title: "Müsaitlik", detail: availabilityLoading ? "Yükleniyor" : availability.length ? `${availabilityDays.length} gün · ${availability.length} zaman aralığı` : "Henüz eklenmedi", icon: CalendarDays, href: "/dashboard/tutor?tab=availability" },
+            { title: "Paketlerim", detail: packageOffersLoading ? "Yükleniyor" : `${activePackageCount} aktif paket`, icon: Wallet, href: "/dashboard/tutor?tab=packages" },
+            { title: "Değerlendirmeler", detail: `${tutorReviewSummary?.review_count ?? 0} öğrenci yorumu`, icon: Star, href: "/dashboard/tutor?tab=reviews" },
+            { title: "Public profil", detail: "Öğrencilerin gördüğü sayfa", icon: ExternalLink, href: `/tutors/${profile.id}` },
+          ].map((item) => <Link key={item.title} href={item.href} className="group flex items-center gap-3 rounded-xl border bg-card p-4 transition-colors hover:bg-muted/30"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted"><item.icon className="h-5 w-5" /></span><span className="min-w-0 flex-1"><strong className="block text-sm">{item.title}</strong><span className="block truncate text-xs text-muted-foreground">{item.detail}</span></span><ArrowRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" /></Link>)}
+        </div>
+        <div className="mt-3 text-right"><Button variant="ghost" size="sm" asChild><Link href="/dashboard/tutor/edit"><Pencil className="mr-2 h-4 w-4" />Profili düzenle</Link></Button></div>
+      </section>
+        </div>
+      ) : (
+        <div>
+          <Button variant="ghost" className="mb-5 -ml-3" onClick={() => router.push("/dashboard/tutor")}><ArrowLeft className="mr-2 h-4 w-4" />Panoya dön</Button>
+          <div className="mb-5"><h2 className="text-2xl font-semibold tracking-tight">Hoca yönetim merkezi</h2><p className="mt-1 text-sm text-muted-foreground">Derslerini, öğrencilerini ve profil ayarlarını ayrıntılı yönet.</p></div>
+      <Tabs value={activeTab} onValueChange={(value) => router.push(`/dashboard/tutor?tab=${value}`)}>
         <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] overflow-x-auto pb-1">
           <AnimatedTabs
             tabs={TUTOR_TABS}
             value={activeTab}
-            onValueChange={setActiveTab}
+            onValueChange={(value) => router.push(`/dashboard/tutor?tab=${value}`)}
             idPrefix="tutor"
           />
         </div>
@@ -1197,7 +1225,7 @@ function TutorDashboardContent() {
                       type="button"
                       variant="outline"
                       size="sm"
-                      onClick={() => setActiveTab("availability")}
+                      onClick={() => router.push("/dashboard/tutor?tab=availability")}
                     >
                       Müsaitliği Düzenle
                     </Button>
@@ -1605,6 +1633,8 @@ function TutorDashboardContent() {
           )}
         </TabsContent>
       </Tabs>
+        </div>
+      )}
 
       {confirmingBooking && (
         <LearningProgressConfirmModal
