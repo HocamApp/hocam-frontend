@@ -46,6 +46,13 @@ describe("getNavDescriptors", () => {
         href: "/dashboard/student",
         mobilePlacement: "overflow",
       },
+      {
+        kind: "route",
+        title: "Çalışma Programım",
+        icon: "CalendarDays",
+        href: "/schedule",
+        mobilePlacement: "overflow",
+      },
       { kind: "separator", mobilePlacement: "hidden" },
       {
         kind: "route",
@@ -157,7 +164,7 @@ describe("active navigation matching", () => {
       searchParams
     );
 
-    assert.equal(activeIndex, 6);
+    assert.equal(activeIndex, 7);
     assert.equal(
       navItems.isNavRouteActive?.(
         descriptors[1],
@@ -169,7 +176,7 @@ describe("active navigation matching", () => {
     );
     assert.equal(
       navItems.isNavRouteActive?.(
-        descriptors[6],
+        descriptors[7],
         descriptors,
         "/tutors",
         searchParams
@@ -206,6 +213,55 @@ describe("active navigation matching", () => {
       ),
       -1
     );
+  });
+});
+
+describe("study schedule nav entry", () => {
+  type RouteLike = { kind: string; href?: string };
+
+  const hrefs = (role: "student" | "tutor") =>
+    (
+      (navItems.getNavDescriptors as unknown as (role: string) => RouteLike[])(
+        role
+      ) ?? []
+    )
+      .filter((descriptor) => descriptor.kind === "route")
+      .map((descriptor) => descriptor.href);
+
+  it("is offered to students and sits right after their panel", () => {
+    const studentHrefs = hrefs("student");
+
+    assert.equal(studentHrefs.includes("/schedule"), true);
+    assert.equal(
+      studentHrefs.indexOf("/schedule"),
+      studentHrefs.indexOf("/dashboard/student") + 1
+    );
+  });
+
+  it("is not offered to tutors — the screen is a student's own program", () => {
+    assert.equal(hrefs("tutor").includes("/schedule"), false);
+  });
+
+  it("stays active on the schedule route", () => {
+    const descriptors = navItems.getNavDescriptors?.("student") ?? [];
+    const activeIndex = navItems.getActiveNavIndex?.(
+      descriptors,
+      "/schedule",
+      new URLSearchParams()
+    );
+
+    assert.equal(activeIndex, 3);
+  });
+
+  it("does not steal activation from the student panel", () => {
+    const descriptors = navItems.getNavDescriptors?.("student") ?? [];
+    const activeIndex = navItems.getActiveNavIndex?.(
+      descriptors,
+      "/dashboard/student",
+      new URLSearchParams()
+    );
+
+    assert.equal(activeIndex, 2);
   });
 });
 

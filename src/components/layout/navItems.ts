@@ -4,6 +4,7 @@ export type MobileNavPlacement = "primary" | "overflow" | "hidden";
 
 export type NavIconName =
   | "Bell"
+  | "CalendarDays"
   | "CircleHelp"
   | "ClipboardList"
   | "Compass"
@@ -65,6 +66,13 @@ const studentDescriptors: NavDescriptor[] = [
     title: "Panelim",
     icon: "LayoutDashboard",
     href: "/dashboard/student",
+    mobilePlacement: "overflow",
+  },
+  {
+    kind: "route",
+    title: "Çalışma Programım",
+    icon: "CalendarDays",
+    href: "/schedule",
     mobilePlacement: "overflow",
   },
   { kind: "separator", mobilePlacement: "hidden" },

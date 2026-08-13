@@ -6,6 +6,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import {
   Bell,
+  CalendarDays,
   CircleHelp,
   ClipboardList,
   Compass,
@@ -42,6 +43,7 @@ import {
 
 const iconByName = {
   Bell,
+  CalendarDays,
   CircleHelp,
   ClipboardList,
   Compass,

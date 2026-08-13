@@ -1430,3 +1430,92 @@ export interface CreateSupportTicketPayload {
   subject: string;
   message: string;
 }
+
+// --- Çalışma Programım (apps/schedule) -------------------------------------
+// Every calendar event carries an Istanbul wall clock as `local_date` +
+// `local_time` strings. Never parse them with `new Date(iso)` — the backend
+// deliberately does not send an instant, because its three sources store time
+// three different ways (see apps/schedule/timezones.py).
+
+export type ScheduleEventSource = "booking" | "coaching" | "study_block";
+
+export type StudyBlockType =
+  | "konu_anlatim"
+  | "soru_cozumu"
+  | "deneme"
+  | "custom";
+
+export type StudyBlockRecurrence = "none" | "weekly";
+
+export interface ScheduleEvent {
+  source: ScheduleEventSource;
+  id: string;
+  /** YYYY-MM-DD, Istanbul local. */
+  local_date: string;
+  /** HH:MM, Istanbul local. */
+  local_time: string;
+  duration_minutes: number;
+  status: string;
+  subject: Subject | null;
+  title: string;
+  block_type: StudyBlockType | null;
+  completed: boolean | null;
+  /** False for lessons and coaching: the student may not edit those. */
+  editable: boolean;
+  room_url: string;
+  /** Only set for study blocks — the date of this occurrence in the series. */
+  occurrence_date: string | null;
+  /** Study blocks only: decides which delete choices apply. */
+  recurrence: StudyBlockRecurrence | null;
+  /** Study blocks only: the student's own note, before display composition. */
+  block_title: string | null;
+}
+
+export interface ScheduleCalendarResponse {
+  from: string;
+  to: string;
+  events: ScheduleEvent[];
+}
+
+export interface WeeklyCompletion {
+  completed: number;
+  total: number;
+  percentage: number;
+}
+
+export interface ScheduleSubjectStat {
+  subject: string;
+  completed_lesson_minutes: number;
+  completed_study_minutes: number;
+  total_minutes: number;
+}
+
+export interface ScheduleProgressResponse {
+  week_start: string;
+  week_end: string;
+  weekly_completion: WeeklyCompletion;
+  /** All-time totals — the week parameter does not scope these. */
+  subject_stats: ScheduleSubjectStat[];
+}
+
+export interface StudyBlock {
+  id: string;
+  subject: string | null;
+  block_type: StudyBlockType;
+  title: string;
+  start_date: string;
+  start_time: string;
+  duration_minutes: number;
+  recurrence: StudyBlockRecurrence;
+  recurrence_end_date: string | null;
+}
+
+export interface StudyBlockPayload {
+  subject?: string | null;
+  block_type: StudyBlockType;
+  title?: string;
+  start_date: string;
+  start_time: string;
+  duration_minutes: number;
+  recurrence: StudyBlockRecurrence;
+}

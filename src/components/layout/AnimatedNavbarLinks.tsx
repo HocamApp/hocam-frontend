@@ -4,6 +4,7 @@ import * as React from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   Bell,
+  CalendarDays,
   CircleHelp,
   ClipboardList,
   Compass,
@@ -39,6 +40,7 @@ import {
 
 const iconByName = {
   Bell,
+  CalendarDays,
   CircleHelp,
   ClipboardList,
   Compass,
