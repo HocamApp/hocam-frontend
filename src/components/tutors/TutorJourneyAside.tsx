@@ -20,7 +20,7 @@ export function TutorJourneyAside({
 }: TutorJourneyAsideProps) {
   return (
     <aside className="overflow-hidden rounded-3xl bg-gradient-to-br from-brand-600 via-brand-600 to-brand-700 text-white shadow-lg shadow-brand-600/10 lg:sticky lg:top-24">
-      <div className="relative isolate px-6 py-6 sm:px-8 lg:min-h-[560px] lg:py-8">
+      <div className="relative isolate px-6 py-6 sm:px-8 lg:min-h-[760px] lg:py-8">
         <div className="absolute -right-16 -top-20 h-48 w-48 rounded-full bg-white/10 blur-2xl" />
         <div className="relative z-10">
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand-100">{eyebrow}</p>
@@ -49,12 +49,12 @@ export function TutorJourneyAside({
         </div>
 
         <Image
-          src="/images/onboarding/hocam-professional-guide.webp"
-          alt="Tabletindeki hoca profilini gösteren Hocam rehberi"
-          width={1024}
-          height={1536}
+          src="/images/onboarding/hocam-corner-guide.webp"
+          alt="Panelin köşesinden adımları gösteren Hocam maskotu"
+          width={884}
+          height={888}
           priority
-          className="relative z-0 mx-auto -mb-32 mt-3 hidden w-72 drop-shadow-2xl lg:block"
+          className="absolute bottom-0 right-0 z-0 hidden w-64 translate-x-6 translate-y-4 drop-shadow-2xl lg:block"
         />
       </div>
     </aside>
