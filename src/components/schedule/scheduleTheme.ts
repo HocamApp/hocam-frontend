@@ -1,3 +1,12 @@
+import {
+  BookOpen,
+  ClipboardCheck,
+  GraduationCap,
+  Lock,
+  PencilLine,
+  type LucideIcon,
+} from "lucide-react";
+
 import type { ScheduleEvent, StudyBlockType } from "@/types";
 
 /**
@@ -11,6 +20,8 @@ import type { ScheduleEvent, StudyBlockType } from "@/types";
  */
 
 export type ScheduleTone = {
+  /** Small badge left of the category label. */
+  icon: LucideIcon;
   /** Card surface for the daily/weekly views. */
   card: string;
   /** Small dot used in the month grid chips. */
@@ -40,24 +51,28 @@ export type ScheduleTone = {
  */
 const STUDY_TONES: Record<StudyBlockType, ScheduleTone> = {
   konu_anlatim: {
+    icon: BookOpen,
     card: "bg-sky-700 text-white border-transparent dark:bg-sky-800",
     dot: "bg-sky-500",
     label: "text-white/90",
     kindLabel: "Konu Anlatımı",
   },
   soru_cozumu: {
+    icon: PencilLine,
     card: "bg-emerald-700 text-white border-transparent dark:bg-emerald-800",
     dot: "bg-emerald-500",
     label: "text-white/90",
     kindLabel: "Soru Çözümü",
   },
   deneme: {
+    icon: ClipboardCheck,
     card: "bg-amber-700 text-white border-transparent dark:bg-amber-800",
     dot: "bg-amber-500",
     label: "text-white",
     kindLabel: "Deneme",
   },
   custom: {
+    icon: PencilLine,
     card: "bg-slate-600 text-white border-transparent dark:bg-slate-700",
     dot: "bg-slate-500",
     label: "text-white/90",
@@ -66,6 +81,7 @@ const STUDY_TONES: Record<StudyBlockType, ScheduleTone> = {
 };
 
 const LESSON_TONE: ScheduleTone = {
+  icon: GraduationCap,
   card: "bg-brand-50 text-brand-900 border-brand-300 dark:bg-brand-900/30 dark:text-brand-100 dark:border-brand-700",
   dot: "bg-brand-500",
   label: "text-brand-600 dark:text-brand-300",
@@ -73,6 +89,7 @@ const LESSON_TONE: ScheduleTone = {
 };
 
 const COACHING_TONE: ScheduleTone = {
+  icon: Lock,
   card: "bg-indigo-50 text-indigo-900 border-indigo-300 dark:bg-indigo-950/50 dark:text-indigo-100 dark:border-indigo-700",
   dot: "bg-indigo-500",
   label: "text-indigo-600 dark:text-indigo-300",

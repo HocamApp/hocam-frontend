@@ -81,6 +81,7 @@ export function ScheduleEventCard({
   style,
 }: ScheduleEventCardProps) {
   const tone = toneForEvent(event);
+  const KindIcon = tone.icon;
   const personal = isPersonal(event);
   const compact = density === "compact";
   // A week column is ~120px wide; a full "18:00 - 19:30 · Onaylandı" line just
@@ -88,12 +89,20 @@ export function ScheduleEventCard({
   const timeRange = compact
     ? event.local_time
     : `${event.local_time} - ${endTimeLabel(event.local_time, event.duration_minutes)}`;
+  // In a ~120px week column the composed "Matematik · Soru Çözümü" title spends
+  // its whole width on the subject and truncates before the type is readable.
+  // The student's own note, or just the subject, says more in the same space;
+  // the composed form stays in the full-width views.
+  const displayTitle =
+    compact && personal
+      ? event.block_title?.trim() || event.subject?.name || event.title
+      : event.title;
 
   return (
     <div
       style={style}
       className={cn(
-        "flex min-w-0 gap-2 overflow-hidden rounded-xl border px-3 py-2 shadow-sm",
+        "flex min-w-0 gap-2 overflow-hidden rounded-2xl border px-3 py-2 shadow-md",
         tone.card,
         pending && "opacity-60",
         className
@@ -101,15 +110,18 @@ export function ScheduleEventCard({
     >
       <div className="min-w-0 flex-1">
         <p className={cn("truncate text-[10px] font-semibold uppercase tracking-wide", tone.label)}>
-          {personal ? tone.kindLabel : (
-            <span className="inline-flex items-center gap-1">
-              <Lock className="h-2.5 w-2.5" aria-hidden />
-              {tone.kindLabel}
-              {/* The lock is decorative, so the read-only fact has to be said
-                  in text or a screen reader never learns it. */}
-              <span className="sr-only">, salt okunur</span>
-            </span>
-          )}
+          <span className="inline-flex items-center gap-1">
+            <KindIcon className="h-2.5 w-2.5" aria-hidden />
+            {tone.kindLabel}
+            {!personal && (
+              <>
+                <Lock className="h-2.5 w-2.5" aria-hidden />
+                {/* The lock is decorative, so the read-only fact has to be
+                    said in text or a screen reader never learns it. */}
+                <span className="sr-only">, salt okunur</span>
+              </>
+            )}
+          </span>
         </p>
         <p
           // Truncated everywhere the card is narrow; the native tooltip is the
@@ -121,7 +133,7 @@ export function ScheduleEventCard({
             compact ? "text-xs" : "text-sm"
           )}
         >
-          {event.title}
+          {displayTitle}
         </p>
         <p className={cn("truncate tabular-nums", compact ? "text-[10px]" : "text-xs")}>
           {timeRange}
