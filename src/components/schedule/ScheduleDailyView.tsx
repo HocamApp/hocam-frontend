@@ -5,6 +5,7 @@ import { useMemo } from "react";
 import { cn } from "@/lib/utils";
 import type { ScheduleEvent } from "@/types";
 import { ScheduleEventCard } from "./ScheduleEventCard";
+import { layoutDayEvents } from "./dayLayout";
 import { isSameDay, timeToMinutes, toDateKey } from "./scheduleDates";
 
 const HOUR_HEIGHT = 64;
@@ -62,6 +63,7 @@ export function ScheduleDailyView({
     [events, dayKey]
   );
 
+  const positioned = useMemo(() => layoutDayEvents(dayEvents), [dayEvents]);
   const { start, end } = useMemo(() => hourWindow(dayEvents), [dayEvents]);
   const hours = Array.from({ length: end - start + 1 }, (_, index) => start + index);
 
@@ -115,18 +117,26 @@ export function ScheduleDailyView({
           </p>
         )}
 
-        {dayEvents.map((event) => {
+        {positioned.map(({ event, column, columns }) => {
           const offset = ((timeToMinutes(event.local_time) - start * 60) / 60) * HOUR_HEIGHT;
           const height = Math.max(
             (event.duration_minutes / 60) * HOUR_HEIGHT,
             MIN_CARD_HEIGHT
           );
+          // Overlapping events share the width instead of hiding each other.
+          const width = 100 / columns;
           return (
             <ScheduleEventCard
               key={`${event.source}-${event.id}-${event.occurrence_date ?? ""}`}
               event={event}
-              style={{ top: offset, height }}
-              className={cn("absolute inset-x-0 z-[5] items-center")}
+              style={{
+                top: offset,
+                height,
+                left: `${column * width}%`,
+                width: `calc(${width}% - ${columns > 1 ? "0.25rem" : "0px"})`,
+              }}
+              className={cn("absolute z-[5] items-center")}
+              density={columns > 1 ? "compact" : "full"}
               pending={pendingIds.has(event.id)}
               onToggleCompleted={onToggleCompleted}
               onEdit={onEdit}
