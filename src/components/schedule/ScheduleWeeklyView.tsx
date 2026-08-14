@@ -2,10 +2,12 @@
 
 import { useEffect, useMemo, useState } from "react";
 
+import { EmptyState } from "@/components/shared/EmptyState";
 import { HorizontalDayPicker } from "@/components/shared/HorizontalDayPicker";
 import { cn } from "@/lib/utils";
 import type { ScheduleEvent } from "@/types";
 import { ScheduleEventCard } from "./ScheduleEventCard";
+import { eventKey } from "./eventIdentity";
 import {
   WEEKDAY_LABELS,
   isSameDay,
@@ -18,7 +20,7 @@ import {
 interface ScheduleWeeklyViewProps {
   anchor: Date;
   events: ScheduleEvent[];
-  pendingIds: Set<string>;
+  pendingKeys: Set<string>;
   onToggleCompleted: (event: ScheduleEvent, completed: boolean) => void;
   onEdit: (event: ScheduleEvent) => void;
   onDelete: (event: ScheduleEvent) => void;
@@ -32,7 +34,7 @@ interface ScheduleWeeklyViewProps {
 export function ScheduleWeeklyView({
   anchor,
   events,
-  pendingIds,
+  pendingKeys,
   onToggleCompleted,
   onEdit,
   onDelete,
@@ -70,6 +72,18 @@ export function ScheduleWeeklyView({
   const selectedDate = days[selectedDayIndex] ?? days[0];
   const selectedEvents = eventsForDay(selectedDate);
 
+  // Seven cells each saying "Boş" is not an empty state, it is the same word
+  // seven times. One message when the whole week is empty; per-day "Boş" only
+  // when other days do have something.
+  if (events.length === 0) {
+    return (
+      <EmptyState
+        title="Bu hafta boş görünüyor"
+        description="Bu hafta için planlanmış ders, koçluk ya da çalışma yok. “+ Çalışma Ekle” ile kendi bloklarını ekleyebilirsin."
+      />
+    );
+  }
+
   return (
     <>
       {/* Mobile: day picker + selected day */}
@@ -93,7 +107,7 @@ export function ScheduleWeeklyView({
               <ScheduleEventCard
                 key={`${event.source}-${event.id}-${event.occurrence_date ?? ""}`}
                 event={event}
-                pending={pendingIds.has(event.id)}
+                pending={pendingKeys.has(eventKey(event))}
                 onToggleCompleted={onToggleCompleted}
                 onEdit={onEdit}
                 onDelete={onDelete}
@@ -110,8 +124,12 @@ export function ScheduleWeeklyView({
             const dayEvents = eventsForDay(date);
             const isToday = isSameDay(date, today);
             return (
-              <div
+              // A labelled landmark per day: without it a screen reader reads
+              // the week as one long list of cards with no way to tell where
+              // Tuesday ends and Wednesday begins.
+              <section
                 key={toDateKey(date)}
+                aria-label={longDayLabel(date)}
                 className={cn(
                   "min-h-[15rem] rounded-2xl border bg-card p-2",
                   isToday && "border-brand-300 bg-brand-50/40 dark:bg-brand-900/20"
@@ -141,7 +159,7 @@ export function ScheduleWeeklyView({
                         key={`${event.source}-${event.id}-${event.occurrence_date ?? ""}`}
                         event={event}
                         density="compact"
-                        pending={pendingIds.has(event.id)}
+                        pending={pendingKeys.has(eventKey(event))}
                         onToggleCompleted={onToggleCompleted}
                         onEdit={onEdit}
                         onDelete={onDelete}
@@ -149,7 +167,7 @@ export function ScheduleWeeklyView({
                     ))}
                   </div>
                 )}
-              </div>
+              </section>
             );
           })}
         </div>

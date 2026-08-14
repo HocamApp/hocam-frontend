@@ -8,12 +8,13 @@ import {
 } from "@/components/ui/dialog";
 import type { ScheduleEvent } from "@/types";
 import { ScheduleEventCard } from "./ScheduleEventCard";
+import { eventKey } from "./eventIdentity";
 import { longDayLabel, parseLocalDate } from "./scheduleDates";
 
 interface ScheduleEventDetailDialogProps {
   event: ScheduleEvent | null;
   onOpenChange: (open: boolean) => void;
-  pendingIds: Set<string>;
+  pendingKeys: Set<string>;
   onToggleCompleted: (event: ScheduleEvent, completed: boolean) => void;
   onEdit: (event: ScheduleEvent) => void;
   onDelete: (event: ScheduleEvent) => void;
@@ -26,7 +27,7 @@ interface ScheduleEventDetailDialogProps {
 export function ScheduleEventDetailDialog({
   event,
   onOpenChange,
-  pendingIds,
+  pendingKeys,
   onToggleCompleted,
   onEdit,
   onDelete,
@@ -44,7 +45,7 @@ export function ScheduleEventDetailDialog({
             event={event}
             // The one surface with room for the whole note.
             wrapText
-            pending={pendingIds.has(event.id)}
+            pending={pendingKeys.has(eventKey(event))}
             onToggleCompleted={onToggleCompleted}
             onEdit={(target) => {
               onOpenChange(false);

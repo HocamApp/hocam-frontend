@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 
+import { EmptyState } from "@/components/shared/EmptyState";
 import { cn } from "@/lib/utils";
 import type { ScheduleEvent } from "@/types";
 import {
@@ -49,6 +50,15 @@ export function ScheduleMonthlyView({
     );
     return map;
   }, [events]);
+
+  if (events.length === 0) {
+    return (
+      <EmptyState
+        title="Bu ay boş görünüyor"
+        description="Bu ay için ne ders, ne koçluk, ne de kendi çalışman planlanmış. “+ Çalışma Ekle” ile başlayabilirsin."
+      />
+    );
+  }
 
   return (
     <div className="overflow-x-auto">

@@ -216,6 +216,48 @@ describe("active navigation matching", () => {
   });
 });
 
+describe("study schedule nav flag", () => {
+  type RouteLike = { kind: string; href?: string };
+
+  const hrefsWith = (options: Record<string, boolean>) =>
+    (
+      (navItems.getNavDescriptors as unknown as (
+        role: string,
+        options?: Record<string, boolean>
+      ) => RouteLike[])("student", options) ?? []
+    )
+      .filter((descriptor) => descriptor.kind === "route")
+      .map((descriptor) => descriptor.href);
+
+  it("is present when the flag is not passed at all — the feature is live", () => {
+    assert.equal(hrefsWith({}).includes("/schedule"), true);
+  });
+
+  it("is present when explicitly enabled", () => {
+    assert.equal(hrefsWith({ scheduleEnabled: true }).includes("/schedule"), true);
+  });
+
+  it("leaves no trace when disabled", () => {
+    assert.equal(hrefsWith({ scheduleEnabled: false }).includes("/schedule"), false);
+  });
+
+  it("sits after coaching when both are on", () => {
+    const routes = hrefsWith({ coachingEnabled: true, scheduleEnabled: true });
+    assert.equal(
+      routes.indexOf("/schedule"),
+      routes.indexOf("/dashboard/student/coaching") + 1
+    );
+  });
+
+  it("still follows the panel when coaching is off", () => {
+    const routes = hrefsWith({ scheduleEnabled: true });
+    assert.equal(
+      routes.indexOf("/schedule"),
+      routes.indexOf("/dashboard/student") + 1
+    );
+  });
+});
+
 describe("study schedule nav entry", () => {
   type RouteLike = { kind: string; href?: string };
 

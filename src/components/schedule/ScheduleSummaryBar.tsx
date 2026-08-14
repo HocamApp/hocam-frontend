@@ -34,8 +34,9 @@ export function ScheduleSummaryBar({
   if (total === 0) {
     return (
       <div className="rounded-2xl border border-dashed border-border px-4 py-3 text-sm text-muted-foreground">
-        {weekLabel ? `${weekLabel} haftası için` : "Bu hafta için"} planlanmış bir
-        çalışma yok. “+ Çalışma Ekle” ile başlayabilirsin.
+        {/* The calendar below already offers the "+ Çalışma Ekle" prompt when
+            it is empty; this line only states the week's numbers. */}
+        {weekLabel ? `${weekLabel} haftasında` : "Bu hafta"} planlanmış çalışma yok.
       </div>
     );
   }
