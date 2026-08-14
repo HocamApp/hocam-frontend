@@ -31,6 +31,17 @@ import { toDateKey } from "./scheduleDates";
 const NO_SUBJECT = "__none__";
 const DURATION_OPTIONS = [30, 45, 60, 90, 120, 180];
 
+/** Durations offered, plus the block's own if it is not one of them.
+ *
+ * A block created outside this form (API, import, a future option list) would
+ * otherwise open with an empty Süre field and be saved back at whatever the
+ * student's first interaction produced — silently rewriting a value they never
+ * touched. Showing the real value keeps the edit honest. */
+function durationOptions(current: number): number[] {
+  if (DURATION_OPTIONS.includes(current)) return DURATION_OPTIONS;
+  return [...DURATION_OPTIONS, current].sort((a, b) => a - b);
+}
+
 export interface StudyBlockFormValues extends StudyBlockPayload {}
 
 interface StudyBlockFormDialogProps {
@@ -209,7 +220,7 @@ export function StudyBlockFormDialog({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {DURATION_OPTIONS.map((minutes) => (
+                {durationOptions(duration).map((minutes) => (
                   <SelectItem key={minutes} value={String(minutes)}>
                     {minutes} dakika
                   </SelectItem>

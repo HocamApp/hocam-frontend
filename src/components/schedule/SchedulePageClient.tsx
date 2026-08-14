@@ -22,6 +22,7 @@ import {
 } from "@/lib/scheduleApi";
 import type { ScheduleEvent, StudyBlockPayload } from "@/types";
 import { DeleteStudyBlockDialog, type DeleteScope } from "./DeleteStudyBlockDialog";
+import { eventKey } from "./eventIdentity";
 import { ScheduleDailyView } from "./ScheduleDailyView";
 import { ScheduleEventDetailDialog } from "./ScheduleEventDetailDialog";
 import { ScheduleMonthlyView } from "./ScheduleMonthlyView";
@@ -44,11 +45,6 @@ const VIEW_TABS: { value: ScheduleView; label: string }[] = [
   { value: "weekly", label: "Haftalık" },
   { value: "monthly", label: "Aylık" },
 ];
-
-/** Identity of one calendar row: a series shows up once per occurrence. */
-function eventKey(event: ScheduleEvent): string {
-  return `${event.source}-${event.id}-${event.occurrence_date ?? event.local_date}`;
-}
 
 function todayLocal(): Date {
   const now = new Date();
@@ -90,11 +86,14 @@ export function SchedulePageClient() {
     queryClient.invalidateQueries({ queryKey: ["schedule-progress"] });
   };
 
-  const markPending = (id: string, pending: boolean) => {
+  // Keyed by occurrence, not by block: every week of a weekly series shares
+  // one block id, so keying on that dimmed the whole series while a single
+  // checkbox was in flight.
+  const markPending = (key: string, pending: boolean) => {
     setPendingIds((previous) => {
       const next = new Set(previous);
-      if (pending) next.add(id);
-      else next.delete(id);
+      if (pending) next.add(key);
+      else next.delete(key);
       return next;
     });
   };
@@ -112,13 +111,14 @@ export function SchedulePageClient() {
         event.occurrence_date ?? event.local_date,
         completed
       ),
-    onMutate: ({ event }) => markPending(event.id, true),
+    onMutate: ({ event }) => markPending(eventKey(event), true),
     onSuccess: () => refresh(),
     onError: (error) =>
       toast.error(
         getScheduleErrorMessage(error, "Çalışma güncellenemedi. Lütfen tekrar dene.")
       ),
-    onSettled: (_data, _error, variables) => markPending(variables.event.id, false),
+    onSettled: (_data, _error, variables) =>
+      markPending(eventKey(variables.event), false),
   });
 
   const saveMutation = useMutation({
@@ -176,6 +176,16 @@ export function SchedulePageClient() {
     [events, detailKey]
   );
 
+  /** Switching view keeps the anchor, which after paging through months lands
+   * on the 1st rather than the week the student is actually in. Re-anchor to
+   * today whenever the target view's range would not contain it. */
+  const changeView = (next: ScheduleView) => {
+    const { from, to } = rangeForView(next, anchor);
+    const today = toDateKey(todayLocal());
+    setAnchor(from <= today && today <= to ? anchor : todayLocal());
+    setView(next);
+  };
+
   const openCreate = () => {
     setEditing(null);
     setFormError(null);
@@ -203,25 +213,24 @@ export function SchedulePageClient() {
               Derslerin, koçluk görüşmelerin ve kendi çalışmaların tek takvimde.
             </p>
           </div>
-          <Button onClick={openCreate} className="shrink-0">
-            <Plus className="mr-1.5 h-4 w-4" aria-hidden />
-            Çalışma Ekle
-          </Button>
         </div>
 
         <div className="flex flex-wrap items-center justify-between gap-3">
+          {/* Plain buttons rather than a tablist: the ARIA tabs pattern also
+              requires a linked tabpanel and arrow-key navigation, and half of
+              it announces a contract the widget does not honour. aria-pressed
+              says the same thing honestly for a third of the code. */}
           <div
             className="inline-flex rounded-full border border-border bg-card p-1"
-            role="tablist"
+            role="group"
             aria-label="Takvim görünümü"
           >
             {VIEW_TABS.map((tab) => (
               <button
                 key={tab.value}
                 type="button"
-                role="tab"
-                aria-selected={view === tab.value}
-                onClick={() => setView(tab.value)}
+                aria-pressed={view === tab.value}
+                onClick={() => changeView(tab.value)}
                 className={cn(
                   "rounded-full px-4 py-1.5 text-sm font-medium transition-colors",
                   view === tab.value
@@ -257,6 +266,12 @@ export function SchedulePageClient() {
             <Button variant="ghost" size="sm" onClick={() => setAnchor(todayLocal())}>
               Bugün
             </Button>
+            {/* Sits with the range controls rather than up by the title: this
+                is the row the student is already working in. */}
+            <Button onClick={openCreate} className="ml-1 shrink-0">
+              <Plus className="mr-1.5 h-4 w-4" aria-hidden />
+              Çalışma Ekle
+            </Button>
           </div>
         </div>
       </header>
@@ -282,7 +297,7 @@ export function SchedulePageClient() {
           <ScheduleDailyView
             day={anchor}
             events={events}
-            pendingIds={pendingIds}
+            pendingKeys={pendingIds}
             onToggleCompleted={(event, completed) =>
               toggleMutation.mutate({ event, completed })
             }
@@ -293,7 +308,7 @@ export function SchedulePageClient() {
           <ScheduleWeeklyView
             anchor={anchor}
             events={events}
-            pendingIds={pendingIds}
+            pendingKeys={pendingIds}
             onToggleCompleted={(event, completed) =>
               toggleMutation.mutate({ event, completed })
             }
@@ -306,6 +321,8 @@ export function SchedulePageClient() {
             events={events}
             onSelectEvent={(event) => setDetailKey(eventKey(event))}
             onSelectDay={(day) => {
+              // An explicit day pick is its own anchor; changeView would
+              // second-guess it back to today.
               setAnchor(day);
               setView("daily");
             }}
@@ -355,7 +372,7 @@ export function SchedulePageClient() {
         onOpenChange={(open) => {
           if (!open) setDetailKey(null);
         }}
-        pendingIds={pendingIds}
+        pendingKeys={pendingIds}
         onToggleCompleted={(event, completed) =>
           toggleMutation.mutate({ event, completed })
         }

@@ -5,6 +5,7 @@ import { useMemo } from "react";
 import { cn } from "@/lib/utils";
 import type { ScheduleEvent } from "@/types";
 import { ScheduleEventCard } from "./ScheduleEventCard";
+import { eventKey } from "./eventIdentity";
 import { layoutDayEvents } from "./dayLayout";
 import { isSameDay, timeToMinutes, toDateKey } from "./scheduleDates";
 
@@ -14,7 +15,7 @@ const MIN_CARD_HEIGHT = 52;
 interface ScheduleDailyViewProps {
   day: Date;
   events: ScheduleEvent[];
-  pendingIds: Set<string>;
+  pendingKeys: Set<string>;
   onToggleCompleted: (event: ScheduleEvent, completed: boolean) => void;
   onEdit: (event: ScheduleEvent) => void;
   onDelete: (event: ScheduleEvent) => void;
@@ -49,7 +50,7 @@ function hourWindow(events: ScheduleEvent[]): { start: number; end: number } {
 export function ScheduleDailyView({
   day,
   events,
-  pendingIds,
+  pendingKeys,
   onToggleCompleted,
   onEdit,
   onDelete,
@@ -95,7 +96,7 @@ export function ScheduleDailyView({
           <div
             key={hour}
             style={{ top: index * HOUR_HEIGHT }}
-            className="absolute inset-x-0 border-t border-dashed border-border/70"
+            className="absolute inset-x-0 border-t border-border/60"
           />
         ))}
 
@@ -137,7 +138,7 @@ export function ScheduleDailyView({
               }}
               className={cn("absolute z-[5] items-center")}
               density={columns > 1 ? "compact" : "full"}
-              pending={pendingIds.has(event.id)}
+              pending={pendingKeys.has(eventKey(event))}
               onToggleCompleted={onToggleCompleted}
               onEdit={onEdit}
               onDelete={onDelete}

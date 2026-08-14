@@ -35,8 +35,9 @@ export function ScheduleSubjectTotals({ stats, isLoading }: ScheduleSubjectTotal
   if (!stats || stats.length === 0) {
     return (
       <p className="rounded-2xl border border-dashed border-border p-4 text-sm text-muted-foreground">
-        Tamamladığın çalışmalar burada ders ders toplanır. Henüz tamamlanmış bir
-        çalışman yok.
+        {/* Deliberately not another "add something" prompt — this section is
+            about completed work, and the calendar above already asks. */}
+        Tamamladığın çalışmalar burada ders ders toplanır.
       </p>
     );
   }
