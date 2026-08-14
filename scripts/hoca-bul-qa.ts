@@ -328,8 +328,14 @@ function generalApiFixture(method: string, pathname: string, activeUser: QaUser)
       },
     },
     "GET /api/discovery/consent/": {
-      body: { status: "unset", policy_version: "2026-08-02" },
+      body: { status: "denied", policy_version: "2026-08-02" },
     },
+    "GET /api/matching/recommendation-controls/": { body: [] },
+    "GET /api/matching/saved-searches/": { body: [] },
+    "GET /api/payments/tutor-acceptance/config/": {
+      body: { enabled: false, has_open_requests: false, acceptance_expiry_hours: 48 },
+    },
+    "GET /api/conversations/": { body: [] },
     "GET /api/auth/account/deletion/status/": { body: { active: false } },
     "POST /api/auth/presence/": { status: 204 },
     "GET /api/notifications/summary/": { body: { has_unread: false, unread_count: 0 } },

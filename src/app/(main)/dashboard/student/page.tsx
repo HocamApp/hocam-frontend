@@ -6,13 +6,14 @@ import { useMemo, useState } from "react";
 import {
   ArrowRight,
   ArrowUpRight,
+  BookOpenText,
   CalendarDays,
   Check,
   Clock3,
+  FolderOpen,
   MessageCircle,
   Search,
   Sparkles,
-  WalletCards,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
@@ -33,7 +34,7 @@ import {
 } from "@/components/lessons/LessonConfirmDisputeCard";
 import { ParticipantAvatar } from "@/components/messaging/ParticipantAvatar";
 import { LessonJoinButton } from "@/components/lessons/LessonJoinButton";
-import { StudentMessagesPreview } from "@/components/dashboard/student/StudentMessagesPreview";
+import { LessonMaterialsDialog } from "@/components/lessons/LessonMaterialsDialog";
 import { AISupportChatWidget } from "@/components/ai/AISupportChatWidget";
 import { STUDENT_DASHBOARD_ASSISTANT } from "@/components/ai/pageAssistantContent";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
@@ -159,8 +160,8 @@ function EmptyStudentDashboard({
     <div className="space-y-7">
       <DashboardGreeting name={name} avatarUrl={avatarUrl} summary="Hocam’a hoş geldin. Başlamak sandığından kolay." />
 
-      <section className="relative isolate overflow-hidden rounded-2xl border border-slate-200 bg-white px-6 py-8 sm:px-8 sm:py-10 lg:min-h-[360px] lg:px-10">
-        <div className="relative z-10 grid items-center gap-8 lg:grid-cols-[minmax(0,1fr)_340px]">
+      <section className="relative isolate overflow-hidden rounded-2xl border border-slate-200 bg-white px-6 py-8 sm:px-8 sm:py-10 lg:min-h-[330px] lg:px-10">
+        <div className="relative z-10 grid items-center gap-8 lg:grid-cols-[minmax(0,1fr)_300px]">
           <div className="max-w-xl">
             <span className="inline-flex items-center gap-2 text-sm font-semibold text-[#e9004f]">
               <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
@@ -180,14 +181,17 @@ function EmptyStudentDashboard({
             </Button>
           </div>
 
-          <div className="relative mx-auto h-[230px] w-[230px] sm:h-[280px] sm:w-[280px] lg:h-[310px] lg:w-[310px]">
-            <div className="absolute inset-5 rounded-full bg-slate-50" aria-hidden="true" />
+          <div className="relative mx-auto h-[240px] w-[240px] sm:h-[280px] sm:w-[280px] lg:h-[300px] lg:w-[300px]">
+            <div
+              className="absolute -bottom-12 right-2 h-[270px] w-[190px] rotate-[-5deg] rounded-[58%_42%_22%_78%/42%_35%_65%_58%] bg-[#f7dfe7]"
+              aria-hidden="true"
+            />
             <Image
-              src="/images/dashboard/student-empty-mascot.png"
-              alt="Defterini tutan Hocam maskotu"
+              src="/images/dashboard/student-empty-mascot-long-neck.png"
+              alt="Hocam'ın uzun boyunlu ördek maskotu"
               fill
-              sizes="(min-width: 1024px) 310px, 280px"
-              className="object-contain"
+              sizes="(min-width: 1024px) 300px, 280px"
+              className="translate-x-3 translate-y-5 scale-[1.12] object-contain object-bottom drop-shadow-[0_10px_14px_rgba(15,23,42,0.12)]"
               priority
             />
           </div>
@@ -330,6 +334,55 @@ function UpcomingLessons({ bookings }: { bookings: Booking[] }) {
   );
 }
 
+function RecentLessonContent({
+  bookings,
+  onOpen,
+}: {
+  bookings: Booking[];
+  onOpen: (booking: Booking) => void;
+}) {
+  return (
+    <section aria-labelledby="recent-lessons-title" className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h2 id="recent-lessons-title" className="text-xl font-semibold tracking-[-0.02em] text-slate-950">Son derslerin</h2>
+          <p className="mt-1 text-sm text-slate-500">Notlarına, dosyalarına ve çözülen sorulara dön.</p>
+        </div>
+        <Button asChild variant="ghost" size="sm" className="shrink-0 text-slate-600">
+          <Link href="/profile/lessons?tab=history">
+            <BookOpenText className="mr-1.5 h-4 w-4" aria-hidden="true" />
+            <span className="hidden sm:inline">Tüm geçmiş dersler</span>
+            <span className="sm:hidden">Tümü</span>
+            <ArrowUpRight className="ml-1 h-4 w-4" aria-hidden="true" />
+          </Link>
+        </Button>
+      </div>
+
+      {bookings.length > 0 ? (
+        <ol className="mt-4 divide-y divide-slate-100">
+          {bookings.map((booking) => (
+            <li key={booking.id} className="flex items-center gap-3 py-3.5">
+              <ParticipantAvatar name={tutorName(booking)} avatarUrl={booking.tutor.profile_picture} className="h-10 w-10 shrink-0" />
+              <div className="min-w-0 flex-1">
+                <p className="truncate font-semibold text-slate-950">{booking.subject.name}</p>
+                <p className="mt-0.5 truncate text-sm text-slate-500">{tutorName(booking)} · {formatLessonDay(booking.start_time)}</p>
+              </div>
+              <Button variant="ghost" size="sm" className="shrink-0 text-slate-700" onClick={() => onOpen(booking)}>
+                <FolderOpen className="mr-1.5 h-4 w-4" aria-hidden="true" />
+                İçeriği aç
+              </Button>
+            </li>
+          ))}
+        </ol>
+      ) : (
+        <div className="mt-5 rounded-xl bg-slate-50 px-4 py-5 text-sm leading-6 text-slate-500">
+          Tamamladığın derslerin içerikleri burada birikecek.
+        </div>
+      )}
+    </section>
+  );
+}
+
 function CreditSummary({
   activePackage,
   pendingPackage,
@@ -337,6 +390,7 @@ function CreditSummary({
   error,
   onRetry,
   onSelect,
+  bookings,
 }: {
   activePackage?: PackagePurchase;
   pendingPackage?: PackagePurchase;
@@ -344,6 +398,7 @@ function CreditSummary({
   error: boolean;
   onRetry: () => void;
   onSelect: (purchase: PackagePurchase) => void;
+  bookings: Booking[];
 }) {
   if (loading) return <Skeleton className="h-[154px] w-full rounded-2xl" />;
   if (error) {
@@ -374,27 +429,56 @@ function CreditSummary({
   if (!activePackage) return null;
   const daysLeft = packageDaysLeft(activePackage);
   const needsRenewal = activePackage.remaining_credits <= RENEW_CREDITS_THRESHOLD || (daysLeft !== null && daysLeft <= RENEW_DAYS_THRESHOLD);
+  const usedCredits = Math.max(0, activePackage.total_credits - activePackage.remaining_credits);
+  const progress = activePackage.total_credits > 0
+    ? Math.min(100, Math.round((usedCredits / activePackage.total_credits) * 100))
+    : 0;
+  const scheduledCount = bookings.filter((booking) =>
+    booking.package_purchase === activePackage.id &&
+    (booking.status === "confirmed" || booking.status === "in_progress") &&
+    new Date(booking.start_time).getTime() > Date.now()
+  ).length;
+  const tutor = `${activePackage.tutor.name} ${activePackage.tutor.surname}`.trim();
 
   return (
-    <section className={cn("rounded-2xl border bg-white p-5 sm:p-6", needsRenewal ? "border-amber-300" : "border-slate-200")}>
-      <button type="button" onClick={() => onSelect(activePackage)} className="w-full text-left">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <p className="text-sm font-medium text-slate-500">Ders hakların</p>
-            <p className="mt-1 text-3xl font-semibold tracking-[-0.04em] text-slate-950">
+    <section className={cn("relative overflow-hidden rounded-2xl border bg-white", needsRenewal ? "border-amber-300" : "border-slate-200")}>
+      <button type="button" onClick={() => onSelect(activePackage)} className="group grid w-full gap-6 p-5 text-left sm:p-7 lg:grid-cols-[minmax(230px,0.8fr)_minmax(320px,1.2fr)_auto] lg:items-center">
+        <div className="flex min-w-0 items-center gap-4">
+          <div className="relative shrink-0">
+            <div className="absolute -inset-2 rounded-full bg-slate-50" aria-hidden="true" />
+            <ParticipantAvatar name={tutor} avatarUrl={activePackage.tutor.profile_picture} className="relative h-16 w-16 border-2 border-white shadow-sm" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-sm font-medium text-slate-500">Ders paketin</p>
+            <p className="mt-1 truncate text-lg font-semibold text-slate-950">{activePackage.plan.name}</p>
+            <p className="mt-1 truncate text-sm text-slate-500">{tutor}{daysLeft !== null ? ` · ${daysLeft} gün` : ""}</p>
+          </div>
+        </div>
+
+        <div>
+          <div className="flex items-end justify-between gap-4">
+            <p className="text-3xl font-semibold tracking-[-0.04em] text-slate-950">
               {activePackage.remaining_credits} <span className="text-lg font-medium text-slate-500">ders kaldı</span>
             </p>
-            <p className="mt-1 text-sm text-slate-500">{activePackage.tutor.name} {activePackage.tutor.surname}{daysLeft !== null ? ` · ${daysLeft} gün` : ""}</p>
+            <p className="text-sm text-slate-500">{usedCredits} / {activePackage.total_credits} kullanıldı</p>
           </div>
-          <span className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border", needsRenewal ? "border-amber-300 bg-amber-50 text-amber-800" : "border-slate-200 text-slate-600")}>
-            <WalletCards className="h-5 w-5" aria-hidden="true" />
-          </span>
+          <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-100" aria-label={`Paketin yüzde ${progress} kadarı kullanıldı`}>
+            <div className={cn("h-full rounded-full", needsRenewal ? "bg-amber-500" : "bg-slate-900")} style={{ width: `${progress}%` }} />
+          </div>
+          <p className="mt-3 text-sm text-slate-500">{scheduledCount > 0 ? `${scheduledCount} ders planlandı` : "Yeni derslerini istediğin zaman planlayabilirsin."}</p>
         </div>
+
+        <span className="flex items-center justify-between gap-3 border-t border-slate-100 pt-4 font-semibold text-slate-700 group-hover:text-slate-950 lg:border-l lg:border-t-0 lg:py-3 lg:pl-6 lg:pt-3">
+          Paket detayları
+          <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+        </span>
       </button>
-      <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-4">
-        <button type="button" onClick={() => onSelect(activePackage)} className="text-sm font-semibold text-slate-700 hover:text-slate-950">Paket detayları</button>
-        {needsRenewal && <Button asChild size="sm"><Link href="/tutors">Ders hakkı al</Link></Button>}
-      </div>
+      {needsRenewal && (
+        <div className="flex items-center justify-between border-t border-amber-200 bg-amber-50 px-5 py-3 text-sm sm:px-7">
+          <span className="font-medium text-amber-900">Paketin yakında yenilenmeli.</span>
+          <Button asChild size="sm"><Link href="/tutors">Ders hakkı al</Link></Button>
+        </div>
+      )}
     </section>
   );
 }
@@ -402,6 +486,7 @@ function CreditSummary({
 function StudentDashboardContent() {
   const { user, isAuthenticated } = useAuth();
   const [selectedPackage, setSelectedPackage] = useState<PackagePurchase | null>(null);
+  const [materialsBooking, setMaterialsBooking] = useState<Booking | null>(null);
 
   const bookingsQuery = useQuery({ queryKey: ["bookings"], queryFn: fetchBookings, enabled: isAuthenticated });
   const packagesQuery = useQuery({ queryKey: ["package-purchases"], queryFn: fetchPackagePurchases, enabled: isAuthenticated });
@@ -421,6 +506,10 @@ function StudentDashboardContent() {
   }));
   const nextLesson = upcomingBookings[0] ?? null;
   const followingLessons = upcomingBookings.slice(1, 4);
+  const recentLessons = [...allBookings]
+    .filter((booking) => booking.status === "completed")
+    .sort((a, b) => new Date(b.completed_at || b.start_time).getTime() - new Date(a.completed_at || a.start_time).getTime())
+    .slice(0, 3);
   const actionableBookings = actionableConfirmDisputeBookings(allBookings);
 
   const currentPackages = (packagesQuery.data ?? []).filter((purchase) => {
@@ -492,34 +581,26 @@ function StudentDashboardContent() {
       )}
 
       {nextLesson && (
-        <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1.42fr)_minmax(290px,0.78fr)]">
+        <div className="grid items-start gap-5 lg:grid-cols-2">
           <UpcomingLessons bookings={followingLessons} />
-          <div className="space-y-5">
-            <StudentMessagesPreview />
-            <CreditSummary
-              activePackage={activePackage}
-              pendingPackage={pendingPackage}
-              loading={packagesQuery.isLoading}
-              error={packagesQuery.isError}
-              onRetry={() => void packagesQuery.refetch()}
-              onSelect={setSelectedPackage}
-            />
-          </div>
+          <RecentLessonContent bookings={recentLessons} onOpen={setMaterialsBooking} />
         </div>
       )}
 
       {!nextLesson && hasAccountActivity && (
-        <div className="grid items-start gap-5 lg:grid-cols-2">
-          <StudentMessagesPreview />
-          <CreditSummary
-            activePackage={activePackage}
-            pendingPackage={pendingPackage}
-            loading={packagesQuery.isLoading}
-            error={packagesQuery.isError}
-            onRetry={() => void packagesQuery.refetch()}
-            onSelect={setSelectedPackage}
-          />
-        </div>
+        <RecentLessonContent bookings={recentLessons} onOpen={setMaterialsBooking} />
+      )}
+
+      {hasAccountActivity && (
+        <CreditSummary
+          activePackage={activePackage}
+          pendingPackage={pendingPackage}
+          loading={packagesQuery.isLoading}
+          error={packagesQuery.isError}
+          onRetry={() => void packagesQuery.refetch()}
+          onSelect={setSelectedPackage}
+          bookings={allBookings}
+        />
       )}
 
       <PackageLearningDetailsSheet
@@ -527,6 +608,11 @@ function StudentDashboardContent() {
         bookings={allBookings}
         open={!!selectedPackage}
         onOpenChange={(open) => { if (!open) setSelectedPackage(null); }}
+      />
+      <LessonMaterialsDialog
+        booking={materialsBooking}
+        open={Boolean(materialsBooking)}
+        onOpenChange={(open) => { if (!open) setMaterialsBooking(null); }}
       />
     </div>
   );

@@ -16,6 +16,17 @@ This is the active product and technical direction for Hocam. It supersedes earl
 
 - Django REST backend on Railway; Supabase Storage for verification documents; Next.js frontend on Vercel.
 - Password reset is implemented.
+- F-002 tutor-observed lesson topic check-ins have a dedicated public KVKK
+  notice and link from the tutor form. Backend collection remains fail-closed:
+  legal approval, a notice version and an explicit pilot/full rollout decision
+  are required before the form is exposed.
+- F-009 learning plans remain dormant and F-013 Hoca Bul redesign remains
+  postponed by current product decision.
+- F-006 may display only dormant launch-program metadata. It must not promise a
+  free lesson, entitlement or tutor payment until the approved iyzico and
+  reconciliation path exists.
+- F-003 remains offline research; readiness or model output never changes live
+  matching from the frontend.
 - Booking lifecycle transitions are centralized in `apps/lessons/services.py::transition_booking`. Tutors cannot directly complete lessons.
 - Tutor approval requests that pass their lesson start time are automatically cancelled by the backend; legacy `expired` records are displayed as automatically cancelled.
 - Video uses JaaS / 8x8. A confirmed booking has a `room_url`, and users join via `/session/[bookingId]`. Do not implement the obsolete Daily.co plan or `/lesson/[bookingId]`.
