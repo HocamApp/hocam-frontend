@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useCoachingFlag } from "@/hooks/useCoachingFlag";
+import { useScheduleFlag } from "@/hooks/useScheduleFlag";
 import { useTutorAcceptanceConfig } from "@/hooks/useTutorAcceptanceConfig";
 import { usePageVisibility } from "@/hooks/usePageVisibility";
 import {
@@ -68,6 +69,7 @@ export function MobileTabBar() {
   const [isMoreOpen, setIsMoreOpen] = React.useState(false);
 
   const { enabled: coachingEnabled } = useCoachingFlag();
+  const scheduleEnabled = useScheduleFlag();
   const { showPackageRequests } = useTutorAcceptanceConfig();
   const { data: summary } = useQuery({
     queryKey: ["notification-summary"],
@@ -81,6 +83,7 @@ export function MobileTabBar() {
   const descriptors = getNavDescriptors(isTutor ? "tutor" : "student", {
     coachingEnabled,
     packageRequestsEnabled: showPackageRequests,
+    scheduleEnabled,
   });
   const primaryDescriptors = descriptors.filter(
     (

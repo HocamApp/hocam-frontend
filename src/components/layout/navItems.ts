@@ -68,13 +68,6 @@ const studentDescriptors: NavDescriptor[] = [
     href: "/dashboard/student",
     mobilePlacement: "overflow",
   },
-  {
-    kind: "route",
-    title: "Çalışma Programım",
-    icon: "CalendarDays",
-    href: "/schedule",
-    mobilePlacement: "overflow",
-  },
   { kind: "separator", mobilePlacement: "hidden" },
   {
     kind: "route",
@@ -166,6 +159,19 @@ const studentCoachingDescriptor: NavRouteDescriptor = {
 };
 
 /**
+ * The student's study programme entry. Spliced in like the coaching tabs so
+ * that turning the feature off leaves no trace in the nav — but unlike those,
+ * it is on unless explicitly disabled, because the screen is already live.
+ */
+const studentScheduleDescriptor: NavRouteDescriptor = {
+  kind: "route",
+  title: "Çalışma Programım",
+  icon: "CalendarDays",
+  href: "/schedule",
+  mobilePlacement: "overflow",
+};
+
+/**
  * The tutor's package-requests entry. Separate from the coaching tab on
  * purpose: it also covers lesson-only requests, so its visibility follows
  * the payments-level acceptance rollout, not the coaching feature flag.
@@ -183,6 +189,9 @@ export type NavOptions = {
   coachingEnabled?: boolean;
   /** Whether the tutor should be offered the package-requests screen. */
   packageRequestsEnabled?: boolean;
+  /** Whether the study programme is available. Defaults to ON — see
+   * `studentScheduleDescriptor`. */
+  scheduleEnabled?: boolean;
 };
 
 export function getNavDescriptors(
@@ -190,7 +199,12 @@ export function getNavDescriptors(
   options: NavOptions = {}
 ): NavDescriptor[] {
   if (role !== "tutor") {
-    if (!options.coachingEnabled) {
+    // Both extras sit right after "Panelim", coaching first, so the student's
+    // own workspaces stay together.
+    const extras: NavRouteDescriptor[] = [];
+    if (options.coachingEnabled) extras.push(studentCoachingDescriptor);
+    if (options.scheduleEnabled ?? true) extras.push(studentScheduleDescriptor);
+    if (extras.length === 0) {
       return studentDescriptors;
     }
     const insertAfter = studentDescriptors.findIndex(
@@ -200,7 +214,7 @@ export function getNavDescriptors(
     const index = insertAfter === -1 ? studentDescriptors.length : insertAfter + 1;
     return [
       ...studentDescriptors.slice(0, index),
-      studentCoachingDescriptor,
+      ...extras,
       ...studentDescriptors.slice(index),
     ];
   }

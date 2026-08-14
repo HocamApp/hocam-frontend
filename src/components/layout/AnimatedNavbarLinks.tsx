@@ -20,6 +20,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useCoachingFlag } from "@/hooks/useCoachingFlag";
+import { useScheduleFlag } from "@/hooks/useScheduleFlag";
 import { useTutorAcceptanceConfig } from "@/hooks/useTutorAcceptanceConfig";
 import { usePageVisibility } from "@/hooks/usePageVisibility";
 import { ExpandableTabs } from "@/components/ui/expandable-tabs";
@@ -66,6 +67,7 @@ export function AnimatedNavbarLinks() {
   const isPageVisible = usePageVisibility();
 
   const { enabled: coachingEnabled } = useCoachingFlag();
+  const scheduleEnabled = useScheduleFlag();
   const { showPackageRequests } = useTutorAcceptanceConfig();
   const { data: summary } = useQuery({
     queryKey: ["notification-summary"],
@@ -80,6 +82,7 @@ export function AnimatedNavbarLinks() {
   const descriptors = getNavDescriptors(isTutor ? "tutor" : "student", {
     coachingEnabled,
     packageRequestsEnabled: showPackageRequests,
+    scheduleEnabled,
   });
   const activeIndex = getActiveNavIndex(descriptors, pathname, searchParams);
 
