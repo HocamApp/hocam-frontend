@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { CalendarX, Repeat } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -40,6 +41,27 @@ export function DeleteStudyBlockDialog({
 }: DeleteStudyBlockDialogProps) {
   const open = event !== null;
   const isSeries = event?.recurrence === "weekly";
+
+  /** Same double-click latch as the form dialog, and for the same reason: the
+   * second click of a double-click runs before React re-renders, so neither
+   * `disabled` nor the isSubmitting prop has flipped yet. Every delete path
+   * happens to be idempotent, so this costs nothing and stops the duplicate
+   * request rather than relying on that luck. */
+  const submitting = useRef(false);
+
+  useEffect(() => {
+    if (!isSubmitting) submitting.current = false;
+  }, [isSubmitting]);
+
+  useEffect(() => {
+    if (event) submitting.current = false;
+  }, [event]);
+
+  const confirm = (scope: DeleteScope) => {
+    if (submitting.current || !event) return;
+    submitting.current = true;
+    onConfirm(event, scope);
+  };
   const occurrenceLabel = event?.occurrence_date
     ? longDayLabel(parseLocalDate(event.occurrence_date))
     : "";
@@ -63,7 +85,7 @@ export function DeleteStudyBlockDialog({
             <button
               type="button"
               disabled={isSubmitting}
-              onClick={() => event && onConfirm(event, "this_occurrence")}
+              onClick={() => confirm("this_occurrence")}
               className="flex w-full items-start gap-3 rounded-xl border border-border p-3 text-left transition-colors hover:border-brand-300 hover:bg-brand-50/50 disabled:opacity-60 dark:hover:bg-brand-900/20"
             >
               <CalendarX className="mt-0.5 h-4 w-4 shrink-0 text-brand-500" aria-hidden />
@@ -78,7 +100,7 @@ export function DeleteStudyBlockDialog({
             <button
               type="button"
               disabled={isSubmitting}
-              onClick={() => event && onConfirm(event, "series")}
+              onClick={() => confirm("series")}
               className="flex w-full items-start gap-3 rounded-xl border border-border p-3 text-left transition-colors hover:border-destructive/50 hover:bg-destructive/5 disabled:opacity-60"
             >
               <Repeat className="mt-0.5 h-4 w-4 shrink-0 text-destructive" aria-hidden />
@@ -106,7 +128,7 @@ export function DeleteStudyBlockDialog({
               type="button"
               variant="destructive"
               disabled={isSubmitting}
-              onClick={() => event && onConfirm(event, "single")}
+              onClick={() => confirm("single")}
             >
               {isSubmitting ? "Siliniyor..." : "Sil"}
             </Button>

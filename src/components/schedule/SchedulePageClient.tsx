@@ -30,6 +30,7 @@ import { ScheduleSummaryBar } from "./ScheduleSummaryBar";
 import { ScheduleWeeklyView } from "./ScheduleWeeklyView";
 import { StudyBlockFormDialog } from "./StudyBlockFormDialog";
 import {
+  parseLocalDate,
   rangeForView,
   rangeLabel,
   shiftAnchor,
@@ -262,6 +263,11 @@ export function SchedulePageClient() {
 
       <ScheduleSummaryBar
         completion={progressQuery.data?.weekly_completion}
+        weekLabel={
+          progressQuery.data
+            ? rangeLabel("weekly", parseLocalDate(progressQuery.data.week_start))
+            : undefined
+        }
         isLoading={progressQuery.isLoading}
       />
 

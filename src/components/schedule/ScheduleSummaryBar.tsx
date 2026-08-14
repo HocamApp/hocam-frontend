@@ -5,6 +5,8 @@ import type { WeeklyCompletion } from "@/types";
 
 interface ScheduleSummaryBarProps {
   completion?: WeeklyCompletion;
+  /** The week these numbers describe, e.g. "10 – 16 Ağustos". */
+  weekLabel?: string;
   isLoading?: boolean;
 }
 
@@ -16,7 +18,11 @@ interface ScheduleSummaryBarProps {
  * by design. That makes this a "how much of your plan is done" number, never a
  * success rate — the copy must not imply the student failed at anything.
  */
-export function ScheduleSummaryBar({ completion, isLoading }: ScheduleSummaryBarProps) {
+export function ScheduleSummaryBar({
+  completion,
+  weekLabel,
+  isLoading,
+}: ScheduleSummaryBarProps) {
   if (isLoading || !completion) {
     return (
       <div className="h-14 animate-pulse rounded-2xl border border-border bg-muted/50" />
@@ -28,7 +34,8 @@ export function ScheduleSummaryBar({ completion, isLoading }: ScheduleSummaryBar
   if (total === 0) {
     return (
       <div className="rounded-2xl border border-dashed border-border px-4 py-3 text-sm text-muted-foreground">
-        Bu hafta için planlanmış bir çalışma yok. “+ Çalışma Ekle” ile başlayabilirsin.
+        {weekLabel ? `${weekLabel} haftası için` : "Bu hafta için"} planlanmış bir
+        çalışma yok. “+ Çalışma Ekle” ile başlayabilirsin.
       </div>
     );
   }
@@ -44,6 +51,10 @@ export function ScheduleSummaryBar({ completion, isLoading }: ScheduleSummaryBar
           &apos;i tamamlandı
         </p>
         <p className="text-xs tabular-nums text-muted-foreground">
+          {/* Named explicitly: in the monthly view the calendar shows a whole
+              month while these numbers only ever describe one week, and an
+              unlabelled "bu hafta" reads as whatever the grid is showing. */}
+          {weekLabel && <span className="mr-2">{weekLabel} haftası</span>}
           {completed} / {total} çalışma
         </p>
       </div>

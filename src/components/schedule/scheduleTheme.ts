@@ -21,29 +21,46 @@ export type ScheduleTone = {
   kindLabel: string;
 };
 
+/**
+ * Fills are the -700 step, not -500.
+ *
+ * White on the -500 shades measured 2.15–2.77:1, far under the 4.5:1 WCAG AA
+ * needs for body text, and the faded labels on top of them were worse
+ * (white/80 on amber-500 was 1.85:1). Measured ratios for what is used now:
+ * sky-700 5.93, emerald-700 5.48, amber-700 5.02, slate-600 7.58 — slate was
+ * already passing and sets the bar for the others.
+ *
+ * Label opacity is per-tone for the same reason: white/90 clears 4.5 on sky
+ * (5.13), emerald (4.78) and slate (6.53), but lands at 4.39 on amber, so
+ * amber's label stays at full white. Hierarchy comes from size and weight,
+ * not from washing the text out.
+ *
+ * Dots keep the -500 shade: they are decorative, sit on the page background,
+ * and never carry text.
+ */
 const STUDY_TONES: Record<StudyBlockType, ScheduleTone> = {
   konu_anlatim: {
-    card: "bg-sky-500 text-white border-transparent dark:bg-sky-600",
+    card: "bg-sky-700 text-white border-transparent dark:bg-sky-800",
     dot: "bg-sky-500",
-    label: "text-white/75",
+    label: "text-white/90",
     kindLabel: "Konu Anlatımı",
   },
   soru_cozumu: {
-    card: "bg-emerald-500 text-white border-transparent dark:bg-emerald-600",
+    card: "bg-emerald-700 text-white border-transparent dark:bg-emerald-800",
     dot: "bg-emerald-500",
-    label: "text-white/75",
+    label: "text-white/90",
     kindLabel: "Soru Çözümü",
   },
   deneme: {
-    card: "bg-amber-500 text-white border-transparent dark:bg-amber-600",
+    card: "bg-amber-700 text-white border-transparent dark:bg-amber-800",
     dot: "bg-amber-500",
-    label: "text-white/80",
+    label: "text-white",
     kindLabel: "Deneme",
   },
   custom: {
     card: "bg-slate-600 text-white border-transparent dark:bg-slate-700",
     dot: "bg-slate-500",
-    label: "text-white/75",
+    label: "text-white/90",
     kindLabel: "Çalışma",
   },
 };

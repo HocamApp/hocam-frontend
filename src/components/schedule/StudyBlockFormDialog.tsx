@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
@@ -68,11 +68,17 @@ export function StudyBlockFormDialog({
   const [startTime, setStartTime] = useState("19:30");
   const [duration, setDuration] = useState(60);
   const [repeats, setRepeats] = useState(false);
+  // A ref, not the isSubmitting prop: both halves of a double-click run before
+  // the parent re-renders with the mutation's pending state, so anything
+  // derived from React state still reads false on the second click. The ref
+  // flips synchronously inside the first handler.
+  const submitting = useRef(false);
 
   // Re-seed every time the dialog opens so a cancelled edit never leaks into
   // the next "+ Çalışma Ekle".
   useEffect(() => {
     if (!open) return;
+    submitting.current = false;
     if (editing) {
       setSubjectId(editing.subject?.id ?? NO_SUBJECT);
       setBlockType(editing.block_type ?? "custom");
@@ -94,8 +100,17 @@ export function StudyBlockFormDialog({
     }
   }, [open, editing, defaultDate]);
 
+  // Release the latch once the mutation settles. On success the dialog closes;
+  // on failure it stays open with an inline error, and the student has to be
+  // able to fix the field and submit again.
+  useEffect(() => {
+    if (!isSubmitting) submitting.current = false;
+  }, [isSubmitting]);
+
   const handleSubmit = (formEvent: React.FormEvent) => {
     formEvent.preventDefault();
+    if (submitting.current) return;
+    submitting.current = true;
     onSubmit({
       subject: subjectId === NO_SUBJECT ? null : subjectId,
       block_type: blockType,

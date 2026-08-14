@@ -15,6 +15,9 @@ interface ScheduleEventCardProps {
   onDelete?: (event: ScheduleEvent) => void;
   /** "full" for the daily view, "compact" for a weekly column cell. */
   density?: "full" | "compact";
+  /** Let the title wrap instead of truncating — for the detail dialog, which
+   * is the one place with room to show a long note in full. */
+  wrapText?: boolean;
   pending?: boolean;
   className?: string;
   style?: React.CSSProperties;
@@ -72,6 +75,7 @@ export function ScheduleEventCard({
   onEdit,
   onDelete,
   density = "full",
+  wrapText = false,
   pending,
   className,
   style,
@@ -101,13 +105,25 @@ export function ScheduleEventCard({
             <span className="inline-flex items-center gap-1">
               <Lock className="h-2.5 w-2.5" aria-hidden />
               {tone.kindLabel}
+              {/* The lock is decorative, so the read-only fact has to be said
+                  in text or a screen reader never learns it. */}
+              <span className="sr-only">, salt okunur</span>
             </span>
           )}
         </p>
-        <p className={cn("truncate font-semibold", compact ? "text-xs" : "text-sm")}>
+        <p
+          // Truncated everywhere the card is narrow; the native tooltip is the
+          // only way to read a long note without opening the edit dialog.
+          title={event.title}
+          className={cn(
+            "font-semibold",
+            wrapText ? "break-words" : "truncate",
+            compact ? "text-xs" : "text-sm"
+          )}
+        >
           {event.title}
         </p>
-        <p className={cn("truncate tabular-nums", compact ? "text-[10px] opacity-80" : "text-xs opacity-90")}>
+        <p className={cn("truncate tabular-nums", compact ? "text-[10px]" : "text-xs")}>
           {timeRange}
           {!personal && !compact && ` · ${lessonStatusLabel(event.status)}`}
         </p>

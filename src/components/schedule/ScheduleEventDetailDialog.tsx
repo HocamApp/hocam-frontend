@@ -42,6 +42,8 @@ export function ScheduleEventDetailDialog({
         {event && (
           <ScheduleEventCard
             event={event}
+            // The one surface with room for the whole note.
+            wrapText
             pending={pendingIds.has(event.id)}
             onToggleCompleted={onToggleCompleted}
             onEdit={(target) => {
