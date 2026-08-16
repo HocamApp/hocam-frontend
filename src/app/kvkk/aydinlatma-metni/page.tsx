@@ -114,8 +114,15 @@ export default function AydinlatmaMetniPage() {
         <Section title="5. Yurt dışına aktarım">
           <p>
             Yukarıdaki sağlayıcıların sunucuları Türkiye dışındadır, bu nedenle
-            verilerin yurt dışına aktarılır. Bu aktarım KVKK’nın 9. maddesi
-            uyarınca standart sözleşme güvencesiyle yapılır.
+            verilerin yurt dışına aktarılır.
+          </p>
+          <p>
+            KVKK’nın 9. maddesi bu aktarımlar için uygun güvenceler öngörür.
+            Sağlayıcılarımızla imzalanacak <strong>standart sözleşmelerin
+            hazırlık süreci devam etmektedir</strong>; tamamlandığında
+            sözleşmeler Kişisel Verileri Koruma Kurulu’na bildirilecek ve bu
+            sayfa güncellenecektir. Süreç tamamlanmadan bu konuda kesin bir
+            beyanda bulunmuyoruz.
           </p>
         </Section>
 
