@@ -10,6 +10,7 @@ import {
   CalendarPlus,
   Check,
   CheckCircle2,
+  ClipboardCheck,
   ChevronLeft,
   ChevronRight,
   ChevronsUpDown,
@@ -35,6 +36,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/useAuth";
 import {
+  activateAdminCoachingQaNoCharge,
   activateAdminPackage,
   approveAdminTestBooking,
   cancelAdminPackage,
@@ -44,6 +46,7 @@ import {
   grantAdminTestCredits,
   markAllAccountsAsTest,
   startAdminImpersonation,
+  startAdminCoachingQa,
   startAdminTutorOnboarding,
   updateAdminTutorTestSettings,
 } from "@/lib/adminControlApi";
@@ -85,6 +88,22 @@ const actionLabels: Record<string, string> = {
   test_accounts_marked: "Hesaplar TEST olarak işaretlendi",
   qa_video_session_created: "Anında test konferansı açıldı",
   tutor_test_settings_updated: "Hoca test ayarı değiştirildi",
+  coaching_qa_started: "Koçluk QA akışı başlatıldı",
+  coaching_qa_no_charge_activated: "Ücretsiz Koçluk QA hakkı açıldı",
+};
+
+const coachingPhaseLabels: Record<string, string> = {
+  onboarding: "Hoca Koçluk tanıtımı",
+  plan: "Koçluk teklifini hazırlama",
+  student_offer: "Öğrenci teklif ve checkout",
+  tutor_acceptance: "Hoca talep kararı",
+  request_closed: "Talep kapandı; yeni talep denenebilir",
+  qa_activation: "Ödeme alınmayan QA hakkını açma",
+  payment_gate: "Ücretli Koçluk ödeme kapısında bekliyor",
+  scheduling: "Düzenli saat belirleme",
+  program: "Çalışma programı",
+  report: "Görüşme raporu",
+  review: "Öğrenci değerlendirmesi",
 };
 
 function displayName(account: AdminTestAccount) {
@@ -316,6 +335,23 @@ export function AdminOperationsConsole() {
     },
     onError: (error) => toast.error(apiError(error, "QA hoca kayıt akışı başlatılamadı.")),
   });
+  const startCoachingQa = useMutation({
+    mutationFn: startAdminCoachingQa,
+    onSuccess: ({ user }) => {
+      queryClient.clear();
+      updateUser(user);
+      router.push("/dashboard/tutor/coaching/onboarding");
+    },
+    onError: (error) => toast.error(apiError(error, "Koçluk QA akışı başlatılamadı.")),
+  });
+  const activateCoachingQa = useMutation({
+    mutationFn: activateAdminCoachingQaNoCharge,
+    onSuccess: () => {
+      toast.success("Ücretsiz TEST Koçluk hakkı açıldı; ödeme ve paket kredisi oluşturulmadı.");
+      refresh();
+    },
+    onError: (error) => toast.error(apiError(error, "Koçluk QA hakkı açılamadı.")),
+  });
   const approve = useMutation({
     mutationFn: approveAdminTestBooking,
     onSuccess: () => { toast.success("Rezervasyon onaylandı ve ders odası hazırlandı."); refresh(); },
@@ -440,6 +476,75 @@ export function AdminOperationsConsole() {
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6 pt-4">
+          <Card className="border-emerald-300 bg-emerald-50/60 dark:border-emerald-900 dark:bg-emerald-950/20">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-lg"><ClipboardCheck className="h-5 w-5" />Koçluk akışını test et</CardTitle>
+              <CardDescription>
+                Doğrulanmış TEST hoca ve TEST öğrenci çifti oluşturur; gerçek Koçluk onboarding ekranını açar. Uçtan uca ilerlemek için Koçluk fiyatını 0 TL seçin. Gerçek ödeme, paket kredisi, kazanç veya banka iadesi oluşturmaz.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Button
+                type="button"
+                disabled={startCoachingQa.isPending}
+                onClick={() => startCoachingQa.mutate()}
+              >
+                {startCoachingQa.isPending ? "Koçluk QA hazırlanıyor…" : "Yeni Koçluk testi başlat"}
+              </Button>
+
+              {(monitor.data.coaching_qa_scenarios ?? []).length > 0 && (
+                <div className="space-y-3 border-t pt-4">
+                  <p className="text-sm font-semibold">Son Koçluk testleri</p>
+                  {(monitor.data.coaching_qa_scenarios ?? []).slice(0, 3).map((scenario) => {
+                    const completed = Object.values(scenario.checklist).filter(Boolean).length;
+                    const total = Object.keys(scenario.checklist).length;
+                    const nextAccount = scenario.next_role === "tutor" ? scenario.tutor : scenario.student;
+                    return (
+                      <div key={scenario.id} className="rounded-lg border bg-background/80 p-3">
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <Badge>TEST</Badge>
+                              <span className="text-sm font-medium">Koçluk QA #{scenario.id.slice(0, 8)}</span>
+                            </div>
+                            <p className="mt-2 text-sm text-muted-foreground">
+                              Mevcut aşama: {coachingPhaseLabels[scenario.phase] ?? scenario.phase}
+                            </p>
+                            <p className="mt-1 text-xs text-muted-foreground">
+                              {completed}/{total} kontrol tamamlandı · Gerçek ödeme kapalı
+                            </p>
+                          </div>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            disabled={impersonate.isPending}
+                            onClick={() => goToAccount(nextAccount, scenario.next_path)}
+                          >
+                            Teste devam et
+                          </Button>
+                        </div>
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {scenario.can_activate_no_charge && (
+                            <Button
+                              type="button"
+                              size="sm"
+                              disabled={activateCoachingQa.isPending}
+                              onClick={() => activateCoachingQa.mutate(scenario.id)}
+                            >
+                              Ödeme almadan QA hakkını aç
+                            </Button>
+                          )}
+                          <Button type="button" size="sm" variant="ghost" onClick={() => goToAccount(scenario.tutor, "/dashboard/tutor/coaching")}>Hoca görünümü</Button>
+                          <Button type="button" size="sm" variant="ghost" onClick={() => goToAccount(scenario.student, "/dashboard/student/coaching")}>Öğrenci görünümü</Button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
           <Card className="border-violet-300 bg-violet-50/60 dark:border-violet-900 dark:bg-violet-950/20">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-lg"><FlaskConical className="h-5 w-5" />Hoca kayıt akışını test et</CardTitle>
