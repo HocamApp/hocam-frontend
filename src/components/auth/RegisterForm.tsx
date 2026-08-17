@@ -465,6 +465,19 @@ export function RegisterForm({
             )}
           />
 
+          <p className="text-xs leading-5 text-neutral-400">
+            Bilgilerini göndermeden önce kişisel verilerinin nasıl işlendiğini
+            açıklayan{" "}
+            <Link
+              href="/kvkk/aydinlatma-metni"
+              className="text-white underline underline-offset-2"
+              target="_blank"
+            >
+              Aydınlatma Metni’ni
+            </Link>{" "}
+            inceleyebilirsin. Bu bağlantı bir açık rıza talebi değildir.
+          </p>
+
           <button
             type="submit"
             disabled={form.formState.isSubmitting}

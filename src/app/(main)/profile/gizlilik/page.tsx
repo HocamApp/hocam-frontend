@@ -19,9 +19,9 @@ export default function PrivacySettingsPage() {
 
       <h1 className="mt-6 text-3xl font-bold">Gizlilik ve Verilerim</h1>
       <p className="mt-3 text-muted-foreground">
-        Hangi verilerinin nasıl kullanıldığına buradan karar verirsin. Onay
-        vermediğin özellikler kapalı kalır; ders alma, mesajlaşma ve ödeme gibi
-        temel işlevler her hâlükârda çalışır.
+        Kişisel verilerinle ilgili bilgilere, mevcut onay kayıtlarına ve başvuru
+        kanalına buradan ulaşabilirsin. Ders alma, gerekli mesajlaşma ve ödeme
+        gibi temel işlemler pazarlama onayından bağımsızdır.
       </p>
       <p className="mt-2 text-sm text-muted-foreground">
         Verilerini nasıl işlediğimizi{" "}

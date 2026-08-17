@@ -7,11 +7,17 @@ import { getDiscoveryConsent, setDiscoveryConsent, type DiscoveryConsentStatus }
 
 export function DiscoveryConsentBanner() {
   const [status, setStatus] = useState<DiscoveryConsentStatus | "loading">("loading");
+  const [collectionEnabled, setCollectionEnabled] = useState(false);
   const [saving, setSaving] = useState(false);
   useEffect(() => {
-    getDiscoveryConsent().then((value) => setStatus(value.status)).catch(() => setStatus("unset"));
+    getDiscoveryConsent()
+      .then((value) => {
+        setStatus(value.status);
+        setCollectionEnabled(value.collection_enabled);
+      })
+      .catch(() => setStatus("unset"));
   }, []);
-  if (status !== "unset") return null;
+  if (status !== "unset" || !collectionEnabled) return null;
 
   async function choose(granted: boolean) {
     setSaving(true);

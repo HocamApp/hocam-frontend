@@ -45,7 +45,17 @@ export function DataSubjectRequestForm() {
       setMessage("");
       toast.success("Başvurun alındı. En geç 30 gün içinde döneceğiz.");
     },
-    onError: () => toast.error("Başvuru gönderilemedi. Tekrar dener misin?"),
+    onError: (error: unknown) => {
+      const status = (error as { response?: { status?: number } })?.response
+        ?.status;
+      if (status === 503) {
+        toast.error(
+          "Çevrimiçi kanal şu anda kullanılamıyor. Başvurunu kvkk@hocamozelders.com adresine gönderebilirsin.",
+        );
+        return;
+      }
+      toast.error("Başvuru gönderilemedi. Tekrar dener misin?");
+    },
   });
 
   return (
