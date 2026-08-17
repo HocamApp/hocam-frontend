@@ -16,6 +16,7 @@ import {
 } from "@/lib/coachingApi";
 
 const SERVICE_STATUS_LABEL: Record<string, string> = {
+  accepted_awaiting_payment: "Ödeme doğrulaması bekleniyor",
   accepted_awaiting_schedule: "Saat seçimi bekleniyor",
   active: "Aktif",
   cancellation_pending: "İptal işleniyor",
@@ -75,6 +76,10 @@ steps={["Ders paketi ve koçluk talebin kabul edilir", "Ödemen aktive olduğund
             </p>
           ) : state.service_status === "active" ? (
             <p className="text-sm text-muted-foreground">Yaklaşan görüşme yok.</p>
+          ) : state.service_status === "accepted_awaiting_payment" ? (
+            <p className="text-sm text-muted-foreground">
+              Öğretmenin koçluk talebini kabul etti. Ödeme doğrulandıktan sonra görüşme saatini seçebilirsin.
+            </p>
           ) : (
             <Link href="/dashboard/student/coaching/schedule" className="text-sm text-primary underline">
               Koçluk saatini seç
