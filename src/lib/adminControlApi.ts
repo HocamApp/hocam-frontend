@@ -1,6 +1,14 @@
 import Cookies from "js-cookie";
 import api from "./api";
-import type { AdminMonitorResponse, AdminMonitoredBooking, AdminMonitoredPackage, User } from "@/types";
+import type { AdminCoachingQaScenario, AdminMonitorResponse, AdminMonitoredBooking, AdminMonitoredPackage, User } from "@/types";
+
+function storeImpersonationToken(token: string, expiresAt: string) {
+  Cookies.set("admin_impersonation_token", token, {
+    expires: new Date(expiresAt),
+    secure: window.location.protocol === "https:",
+    sameSite: "strict",
+  });
+}
 
 export async function fetchAdminMonitor(): Promise<AdminMonitorResponse> {
   const { data } = await api.get<AdminMonitorResponse>("/admin-control/monitor/");
@@ -12,11 +20,7 @@ export async function startAdminImpersonation(targetUserId: string): Promise<Use
     "/admin-control/impersonations/",
     { target_user_id: targetUserId }
   );
-  Cookies.set("admin_impersonation_token", data.impersonation_token, {
-    expires: new Date(data.expires_at),
-    secure: window.location.protocol === "https:",
-    sameSite: "strict",
-  });
+  storeImpersonationToken(data.impersonation_token, data.expires_at);
   return data.user;
 }
 
@@ -24,12 +28,31 @@ export async function startAdminTutorOnboarding(): Promise<User> {
   const { data } = await api.post<{ impersonation_token: string; expires_at: string; user: User }>(
     "/admin-control/tutor-onboarding-sessions/"
   );
-  Cookies.set("admin_impersonation_token", data.impersonation_token, {
-    expires: new Date(data.expires_at),
-    secure: window.location.protocol === "https:",
-    sameSite: "strict",
-  });
+  storeImpersonationToken(data.impersonation_token, data.expires_at);
   return data.user;
+}
+
+export async function startAdminCoachingQa(): Promise<{
+  user: User;
+  scenario: AdminCoachingQaScenario;
+}> {
+  const { data } = await api.post<{
+    impersonation_token: string;
+    expires_at: string;
+    user: User;
+    scenario: AdminCoachingQaScenario;
+  }>("/admin-control/coaching-qa-scenarios/");
+  storeImpersonationToken(data.impersonation_token, data.expires_at);
+  return { user: data.user, scenario: data.scenario };
+}
+
+export async function activateAdminCoachingQaNoCharge(
+  scenarioId: string
+): Promise<AdminCoachingQaScenario> {
+  const { data } = await api.post<AdminCoachingQaScenario>(
+    `/admin-control/coaching-qa-scenarios/${scenarioId}/activate-no-charge/`
+  );
+  return data;
 }
 
 export async function bypassAdminTutorOnboardingVerification(): Promise<void> {

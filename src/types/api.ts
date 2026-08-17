@@ -83,6 +83,34 @@ export interface AdminAction {
   created_at: string;
 }
 
+export interface AdminCoachingQaScenario {
+  id: string;
+  status: "active" | "completed" | "cancelled";
+  tutor: AdminTestAccount;
+  student: AdminTestAccount;
+  phase: string;
+  next_role: "tutor" | "student";
+  next_path: string;
+  payment_mode: "none";
+  can_activate_no_charge: boolean;
+  checklist: {
+    onboarding_completed: boolean;
+    plan_published: boolean;
+    purchase_created: boolean;
+    tutor_accepted: boolean;
+    schedule_created: boolean;
+    program_created: boolean;
+    report_published: boolean;
+    dispute_created: boolean;
+  };
+  purchase: {
+    id: string;
+    service_status: string;
+    financial_status: string;
+  } | null;
+  created_at: string;
+}
+
 export interface AdminMonitorResponse {
   accounts: AdminTestAccount[];
   bookings: AdminMonitoredBooking[];
@@ -96,6 +124,7 @@ export interface AdminMonitorResponse {
   manual_package_activation_enabled: boolean;
   test_credit_grants: AdminTestCreditGrant[];
   actions: AdminAction[];
+  coaching_qa_scenarios: AdminCoachingQaScenario[];
   server_time: string;
 }
 
