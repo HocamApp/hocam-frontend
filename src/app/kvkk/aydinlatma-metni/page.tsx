@@ -160,13 +160,14 @@ export default function AydinlatmaMetniPage() {
             talep etme haklarına sahipsin.
           </p>
           <p>
-            Başvurunu{" "}
+            Başvurunu her zaman kvkk@hocamozelders.com adresine; çevrimiçi kanal
+            etkinse ayrıca{" "}
             <Link href="/profile/gizlilik" className="text-primary underline">
               Gizlilik ve Verilerim
             </Link>{" "}
-            sayfasından veya kvkk@hocamozelders.com adresinden iletebilirsin.
-            En geç 30 gün içinde cevaplarız. Cevabımızı yetersiz bulursan
-            Kişisel Verileri Koruma Kurulu’na şikâyette bulunabilirsin.
+            sayfasından iletebilirsin. En geç 30 gün içinde cevaplarız.
+            Cevabımızı yetersiz bulursan Kişisel Verileri Koruma Kurulu’na
+            şikâyette bulunabilirsin.
           </p>
         </Section>
 

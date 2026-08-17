@@ -60,7 +60,7 @@ export default function KvkkIndexPage() {
       </ul>
 
       <div className="mt-10 rounded-lg border bg-muted/40 p-4 text-sm leading-6">
-        Mevcut onaylarını geri almak veya KVKK 11. madde kapsamında başvuru yapmak için{" "}
+        Mevcut onaylarını geri almak ve çevrimiçi başvuru kanalının durumunu görmek için{" "}
         <Link href="/profile/gizlilik" className="text-primary underline">
           Gizlilik ve Verilerim
         </Link>{" "}

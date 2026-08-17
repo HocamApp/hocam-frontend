@@ -13,6 +13,7 @@ export interface ConsentState {
   text_version: string;
   collection_enabled: boolean;
   guardian_approval_enabled: boolean;
+  request_channel_enabled: boolean;
   birth_date: string | null;
   /**
    * null means we have never asked. Distinct from false on purpose: the UI

@@ -41,8 +41,9 @@ export default function PrivacySettingsPage() {
       <section className="mt-12">
         <h2 className="text-xl font-semibold">Haklarımı kullanmak istiyorum</h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          KVKK 11. madde kapsamındaki taleplerini buradan iletebilirsin.
-          Başvurunu en geç 30 gün içinde cevaplarız.
+          KVKK 11. madde kapsamındaki taleplerini her zaman
+          kvkk@hocamozelders.com adresine; çevrimiçi kanal etkinse aşağıdaki
+          formdan iletebilirsin. Başvurunu en geç 30 gün içinde cevaplarız.
         </p>
         <div className="mt-4">
           <DataSubjectRequestForm />
