@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Award, TrendingUp } from "lucide-react";
+import { ArrowRight, Award, Sparkles, TrendingUp } from "lucide-react";
 import { TutorProfile } from "@/types";
 import { cn, formatLessonCount, formatPrice, formatRating } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
@@ -329,10 +329,9 @@ function TutorCardLarge({
 
   // Attribute pills fill whatever room the subject pills leave, capped so the
   // tag row stays one or two lines.
-  const pillBudget = 5 - visibleSubjects.length - (coachingLabel ? 1 : 0);
   const attributeTags = (tutor.teaching_attributes ?? []).slice(
     0,
-    Math.min(2, Math.max(0, pillBudget))
+    Math.min(2, Math.max(0, 5 - visibleSubjects.length))
   );
 
   const popularityLabel = tutorPopularityLabel(tutor);
@@ -354,12 +353,9 @@ function TutorCardLarge({
     >
       <CardContent className="flex h-full flex-col gap-4 p-4 sm:flex-row sm:gap-5 sm:p-6">
         <Link href={tutorHref} className="block min-w-0 flex-1 cursor-pointer">
-          {/* Floated rather than a flex column: the copy wraps beside the
-              portrait and then continues underneath it, so neither the space
-              under the photo nor the space beside the short lines is dead. */}
-          <div className="float-left mb-2 mr-4 w-28 sm:w-40">
-            <div className="relative h-28 w-28 sm:h-40 sm:w-40">
-              <Avatar className="h-28 w-28 rounded-xl sm:h-40 sm:w-40">
+          <div className="float-left mb-2 mr-4 h-28 w-28 sm:h-40 sm:w-40">
+            <div className="relative h-full w-full">
+              <Avatar className="h-full w-full rounded-xl">
                 <AvatarImage
                   className="rounded-xl object-cover"
                   src={tutor.profile_picture || undefined}
@@ -371,11 +367,6 @@ function TutorCardLarge({
               </Avatar>
               <PresenceDot isOnline={tutor.is_online} />
             </div>
-            {/* Full school and department, wrapped rather than truncated —
-                where the tutor studies is a primary trust signal here. */}
-            <p className="mt-2 line-clamp-3 min-h-[3.75rem] text-xs font-medium leading-5 text-foreground/80">
-              {tutor.university} · {tutor.department}
-            </p>
           </div>
 
           <p className="truncate text-xl font-semibold">
@@ -387,15 +378,12 @@ function TutorCardLarge({
               İlk {formatYksRank(tutor.yks_rank)}
             </p>
           )}
+          {/* Full school and department, wrapped rather than truncated — where
+              the tutor studies is a primary trust signal here. */}
+          <p className="mt-1.5 text-xs font-medium leading-5 text-foreground/80">
+            {tutor.university} · {tutor.department}
+          </p>
           <div className="mt-2 flex flex-wrap gap-1.5">
-            {coachingLabel && (
-              <Badge
-                variant="outline"
-                className="border-brand-200 bg-brand-50 text-xs text-brand-700 dark:border-brand-800 dark:bg-brand-900/40 dark:text-brand-200"
-              >
-                {coachingLabel}
-              </Badge>
-            )}
             {visibleSubjects.map((sub) => (
               <Badge key={sub.id} variant="outline" className="text-xs">
                 {sub.name}
@@ -412,13 +400,15 @@ function TutorCardLarge({
               </span>
             )}
           </div>
+          {/* Clears the portrait so the tutor's own words start at the card's
+              left edge and run the full width, rather than in the gutter. */}
           {tutor.bio && (
-            <p className="mt-2 text-sm leading-6 text-foreground/90">
+            <p className="clear-left pt-3 text-sm leading-6 text-foreground/90">
               {truncateBio(tutor.bio)}
             </p>
           )}
           {popularityLabel && (
-            <p className="mt-2 flex items-center gap-1.5 clear-left text-xs font-medium text-brand-600 dark:text-brand-300">
+            <p className="clear-left mt-2 flex items-center gap-1.5 text-xs font-medium text-brand-600 dark:text-brand-300">
               <TrendingUp className="h-3.5 w-3.5 shrink-0" aria-hidden />
               <span className="truncate">{popularityLabel}</span>
             </p>
@@ -427,7 +417,7 @@ function TutorCardLarge({
 
         {/* Deliberately not a boxed panel: a plain column separated by a rule,
             so price -> numbers -> CTA reads as one vertical flow. */}
-        <div className="flex flex-col gap-4 border-t pt-4 sm:w-48 sm:shrink-0 sm:justify-center sm:border-l sm:border-t-0 sm:pl-4 sm:pt-0">
+        <div className="flex flex-col gap-4 border-t pt-4 sm:w-44 sm:shrink-0 sm:border-l sm:border-t-0 sm:pl-4 sm:pt-0">
           <div className="flex items-start justify-between gap-2">
             <Link href={tutorHref} className="min-w-0 cursor-pointer">
               <p className="text-2xl font-bold leading-tight">{formatPrice(tutor.hourly_price)}</p>
@@ -460,7 +450,13 @@ function TutorCardLarge({
             ))}
           </dl>
 
-          <div className="flex flex-col gap-2">
+          <div className="mt-auto flex flex-col gap-2 pt-2">
+            {coachingLabel && (
+              <span className="inline-flex w-fit items-center gap-1 rounded-full bg-brand-50 px-2.5 py-1 text-xs font-medium text-brand-700 dark:bg-brand-900/40 dark:text-brand-200">
+                <Sparkles className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                {coachingLabel}
+              </span>
+            )}
             <Link
               href={tutorHref}
               className="rounded-md bg-primary px-4 py-2.5 text-center text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
