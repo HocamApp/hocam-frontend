@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { ArrowRight, Award, TrendingUp } from "lucide-react";
 import { TutorProfile } from "@/types";
-import { formatLessonCount, formatPrice, formatRating } from "@/lib/utils";
+import { cn, formatLessonCount, formatPrice, formatRating } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -77,6 +77,33 @@ function tutorPopularityLabel(tutor: TutorProfile): string | null {
   // threshold, so it printed the same line on every card in the list — filler,
   // not signal. The line appears only once a tutor has earned it.
   return null;
+}
+
+/** Bios run from ~100 to ~600 characters. Trimmed in JS rather than with
+ *  `line-clamp`, because a `-webkit-box` does not wrap around a float: it
+ *  would pin the bio to the narrow strip beside the portrait and leave the
+ *  space under it empty. Plain text flows beside the photo and then under it. */
+function truncateBio(bio: string, maxLength = 260): string {
+  const text = bio.trim();
+  if (text.length <= maxLength) return text;
+  const cut = text.slice(0, maxLength);
+  const lastSpace = cut.lastIndexOf(" ");
+  return `${(lastSpace > maxLength * 0.6 ? cut.slice(0, lastSpace) : cut).replace(/[.,;:!?]$/, "")}…`;
+}
+
+function PresenceDot({ isOnline }: { isOnline: boolean }) {
+  const label = isOnline ? "Çevrim içi" : "Çevrim dışı";
+  return (
+    <span
+      role="img"
+      aria-label={label}
+      title={label}
+      className={cn(
+        "absolute -bottom-1 -right-1 h-5 w-5 rounded-md border-2 border-background",
+        isOnline ? "bg-emerald-500" : "bg-muted-foreground/40"
+      )}
+    />
+  );
 }
 
 function useTutorCardData(tutor: TutorProfile) {
@@ -296,8 +323,6 @@ function TutorCardLarge({
 
   // Compact trust line, in place of a badge pile.
   const trustSignals = [
-    tutor.is_verified ? "Doğrulanmış Hoca" : null,
-    tutor.yks_rank > 0 ? `İlk ${formatYksRank(tutor.yks_rank)}` : null,
     tutor.teaching_attributes?.[0]?.name ?? null,
     tutor.offers_coaching ? "Koçluk desteği" : null,
   ].filter((signal): signal is string => Boolean(signal));
@@ -327,65 +352,73 @@ function TutorCardLarge({
       className="relative h-full min-w-0 overflow-visible border-t-2 border-t-transparent transition-all duration-200 hover:z-10 hover:-translate-y-0.5 hover:border-t-primary hover:shadow-lg sm:min-h-[320px]"
     >
       <CardContent className="flex h-full flex-col gap-4 p-4 sm:flex-row sm:gap-5 sm:p-6">
-        <Link href={tutorHref} className="flex min-w-0 flex-1 cursor-pointer gap-4">
-          <div className="relative h-28 w-28 shrink-0 sm:h-32 sm:w-32">
-            <Avatar className="h-28 w-28 rounded-xl sm:h-32 sm:w-32">
-              <AvatarImage
-                className="rounded-xl object-cover"
-                src={tutor.profile_picture || undefined}
-                alt={`${tutor.name} ${tutor.surname}`}
-              />
-              <AvatarFallback className="rounded-xl bg-primary/10 text-2xl font-medium text-primary">
-                {getInitials(tutor.name, tutor.surname)}
-              </AvatarFallback>
-            </Avatar>
-            {tutor.is_online && (
-              <span
-                className="absolute bottom-1.5 right-1.5 h-3.5 w-3.5 rounded-full border-2 border-background bg-emerald-500"
-                aria-label="Çevrim içi"
-              />
-            )}
-          </div>
-
-          <div className="min-w-0 flex-1 space-y-2">
-            <p className="truncate text-xl font-semibold">
-              {tutor.name} {tutor.surname}
-            </p>
-            <p className="truncate text-sm text-muted-foreground">
+        <Link href={tutorHref} className="block min-w-0 flex-1 cursor-pointer">
+          {/* Floated rather than a flex column: the copy wraps beside the
+              portrait and then continues underneath it, so neither the space
+              under the photo nor the space beside the short lines is dead. */}
+          <div className="float-left mb-2 mr-4 w-28 sm:w-40">
+            <div className="relative h-28 w-28 sm:h-40 sm:w-40">
+              <Avatar className="h-28 w-28 rounded-xl sm:h-40 sm:w-40">
+                <AvatarImage
+                  className="rounded-xl object-cover"
+                  src={tutor.profile_picture || undefined}
+                  alt={`${tutor.name} ${tutor.surname}`}
+                />
+                <AvatarFallback className="rounded-xl bg-primary/10 text-3xl font-medium text-primary">
+                  {getInitials(tutor.name, tutor.surname)}
+                </AvatarFallback>
+              </Avatar>
+              <PresenceDot isOnline={tutor.is_online} />
+            </div>
+            {/* Full school and department, wrapped rather than truncated —
+                where the tutor studies is a primary trust signal here. */}
+            <p className="mt-2 line-clamp-3 min-h-[3.75rem] text-xs leading-5 text-muted-foreground">
               {tutor.university} · {tutor.department}
             </p>
-            {trustSignals.length > 0 && (
-              <p className="truncate text-xs text-muted-foreground">
-                {trustSignals.join(" · ")}
-              </p>
-            )}
-            <div className="flex flex-wrap gap-1.5">
-              {visibleSubjects.map((sub) => (
-                <Badge key={sub.id} variant="outline" className="text-xs">
-                  {sub.name}
-                </Badge>
-              ))}
-              {attributeTags.map((attribute) => (
-                <Badge key={attribute.code} variant="secondary" className="text-xs">
-                  {attribute.name}
-                </Badge>
-              ))}
-              {remainingCount > 0 && (
-                <span className="self-center text-xs text-muted-foreground">
-                  +{remainingCount} daha
-                </span>
-              )}
-            </div>
-            {tutor.bio && (
-              <p className="line-clamp-3 text-sm leading-6 text-muted-foreground">{tutor.bio}</p>
-            )}
-            {popularityLabel && (
-              <p className="flex items-center gap-1.5 text-xs font-medium text-brand-600 dark:text-brand-300">
-                <TrendingUp className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                <span className="truncate">{popularityLabel}</span>
-              </p>
+          </div>
+
+          <p className="truncate text-xl font-semibold">
+            {tutor.name} {tutor.surname}
+          </p>
+          {tutor.yks_rank > 0 && (
+            <p className="mt-1.5 flex items-center gap-1 text-xs font-semibold text-brand-600 dark:text-brand-300">
+              <Award className="h-3.5 w-3.5 shrink-0" aria-hidden />
+              İlk {formatYksRank(tutor.yks_rank)}
+            </p>
+          )}
+          {trustSignals.length > 0 && (
+            <p className="mt-1.5 truncate text-xs text-muted-foreground">
+              {trustSignals.join(" · ")}
+            </p>
+          )}
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {visibleSubjects.map((sub) => (
+              <Badge key={sub.id} variant="outline" className="text-xs">
+                {sub.name}
+              </Badge>
+            ))}
+            {attributeTags.map((attribute) => (
+              <Badge key={attribute.code} variant="secondary" className="text-xs">
+                {attribute.name}
+              </Badge>
+            ))}
+            {remainingCount > 0 && (
+              <span className="self-center text-xs text-muted-foreground">
+                +{remainingCount} daha
+              </span>
             )}
           </div>
+          {tutor.bio && (
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">
+              {truncateBio(tutor.bio)}
+            </p>
+          )}
+          {popularityLabel && (
+            <p className="mt-2 flex items-center gap-1.5 clear-left text-xs font-medium text-brand-600 dark:text-brand-300">
+              <TrendingUp className="h-3.5 w-3.5 shrink-0" aria-hidden />
+              <span className="truncate">{popularityLabel}</span>
+            </p>
+          )}
         </Link>
 
         {/* Deliberately not a boxed panel: a plain column separated by a rule,
