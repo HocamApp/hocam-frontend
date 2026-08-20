@@ -182,6 +182,9 @@ export function MessageBubble({
                 {message.message_text}
               </p>
             )}
+            {/* Voice messaging was removed as a feature. Historical voice
+                attachments stay playable so old conversations are not broken;
+                no new one can be created. */}
             {message.attachment?.kind === "voice" ? (
               <div className={cn("mt-2 min-w-0 rounded-lg border px-3 py-2", isOwnMessage ? "border-primary-foreground/30 bg-primary-foreground/10" : "bg-background/60")}>
                 <div className="mb-1 flex min-w-0 items-center gap-2 text-xs">

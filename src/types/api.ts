@@ -925,6 +925,7 @@ export interface CoachingResponseSla {
 
 export interface MessageAttachment {
   id: string;
+  /** "voice" is read-only history: voice messaging can no longer be created. */
   kind: "image" | "file" | "voice";
   original_name: string;
   mime_type: string;
