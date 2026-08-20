@@ -34,7 +34,6 @@ import { formatLessonCount, formatPrice, formatRating } from "@/lib/utils";
 import { ReviewCard } from "@/components/tutors/ReviewCard";
 import { ReviewSummary } from "@/components/tutors/ReviewSummary";
 import { TutorPresenceBadge } from "@/components/tutors/TutorPresenceBadge";
-import { VerifiedTutorMark } from "@/components/tutors/VerifiedTutorMark";
 import { AvailabilityCalendar } from "@/components/tutors/AvailabilityCalendar";
 import { TutorCoachingSection } from "@/components/tutors/TutorCoachingSection";
 import { MessageRequestModal } from "@/components/tutors/MessageRequestModal";
@@ -361,13 +360,18 @@ export default function TutorProfilePage({
   const router = useRouter();
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
-  const { isAuthenticated, isStudent, user } = useAuth();
+  const { isAuthenticated, isStudent, user, isLoading: authLoading } = useAuth();
   const { checkoutEnabled: coachingCheckoutEnabled, checkoutState } = useCoachingFlag();
   const { favoriteIds, toggle, isFavoritePending } = useFavorites();
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
   // Paid bookings now go through /tutors/[id]/checkout; this modal only
   // handles the free trial path (which deliberately skips checkout).
   const [bookingModalMode, setBookingModalMode] = useState<"trial" | null>(null);
+  // `?intent=trial` arrives from the tutor card, which cannot know this
+  // student's eligibility (that lives on the uncached detail endpoint only).
+  const trialIntent = searchParams.get("intent") === "trial";
+  const trialIntentHandledRef = useRef(false);
+  const bookingRailRef = useRef<HTMLDivElement | null>(null);
   const [bookingComplete, setBookingComplete] = useState(false);
   const [isPhotoPreviewOpen, setIsPhotoPreviewOpen] = useState(false);
   const [isSharePreviewOpen, setIsSharePreviewOpen] = useState(false);
@@ -455,6 +459,40 @@ export default function TutorProfilePage({
     tutor?.accepts_trial_lessons !== false &&
     tutor?.is_bookable !== false &&
     trialLessonsRemaining > 0;
+
+  // Decide only once BOTH async sources have settled. On the first render the
+  // tutor query and the auth rehydrate are still pending, so canBookFreeTrial
+  // is false for reasons that say nothing about eligibility — acting then would
+  // scroll past the modal and burn the guard for good.
+  useEffect(() => {
+    if (!trialIntent || trialIntentHandledRef.current) return;
+    if (isLoading || authLoading) return;
+    if (error || !tutor) return;
+
+    trialIntentHandledRef.current = true;
+
+    if (canBookFreeTrial) {
+      setBookingModalMode("trial");
+      return;
+    }
+
+    // Not eligible: fall back to the reservation rail. The rail is committed in
+    // the same render that satisfies the guards above, so the ref is already
+    // attached here — no animation frame needed, and deliberately none used:
+    // rAF never fires while the tab is backgrounded, which is exactly when a
+    // deep link tends to be opened.
+    const rail = bookingRailRef.current;
+    if (!rail) return;
+    rail.scrollIntoView({ behavior: "smooth", block: "start" });
+    // Smooth scrolling is itself frame-driven, so it silently does nothing in a
+    // background tab (and in reduced-motion shims). Land on the rail regardless.
+    window.setTimeout(() => {
+      if (rail.getBoundingClientRect().top > 160) {
+        rail.scrollIntoView({ behavior: "auto", block: "start" });
+      }
+    }, 400);
+  }, [trialIntent, isLoading, authLoading, error, tutor, canBookFreeTrial]);
+
   const subjectLabels = buildTutorSubjectLabels(tutor?.subjects ?? []);
   const subjectGroups = Array.from(
     subjectLabels.reduce((groups, subject) => {
@@ -604,15 +642,8 @@ export default function TutorProfilePage({
               </div>
             )}
             <div className="min-w-0">
-              {/* The mark sits inside the h1 so it trails the last word of the
-                  name. As a sibling flex item it dropped onto a line of its
-                  own whenever a long name wrapped. */}
               <h1 className="text-3xl font-bold leading-tight break-words">
                 {tutor.name} {tutor.surname}
-                <VerifiedTutorMark
-                  verified={tutor.is_verified}
-                  className="ml-1.5 inline-flex h-7 w-7 align-middle"
-                />
               </h1>
               <p className="mt-1 text-muted-foreground">
                 {tutor.university} · {tutor.department}
@@ -662,7 +693,11 @@ export default function TutorProfilePage({
 
         {/* Reservation rail — spans row 1 and row 2 so the card can stick
             for the full length of the left column. Contains only the card. */}
-        <div className="mt-8 lg:col-start-2 lg:row-start-1 lg:row-end-3 lg:mt-0">
+        <div
+          id="rezervasyon"
+          ref={bookingRailRef}
+          className="mt-8 scroll-mt-24 lg:col-start-2 lg:row-start-1 lg:row-end-3 lg:mt-0"
+        >
           <Card className="lg:sticky lg:top-24">
             <CardContent className="pt-6 space-y-4">
               {/* Price + lesson duration */}
@@ -775,7 +810,7 @@ export default function TutorProfilePage({
                                 setBookingModalMode("trial");
                               }}
                             >
-                              Ücretsiz deneme dersi ayırt
+                              Deneme Dersi Al
                             </Button>
                             <div className="space-y-1 text-center text-xs text-muted-foreground">
                               <p>Uygun değilse sorun yok.</p>
