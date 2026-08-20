@@ -157,23 +157,32 @@ function formatPriceFilter(minPrice?: string, maxPrice?: string) {
 
 function TutorCardSkeleton() {
   return (
-    <div className="rounded-lg border bg-card p-5 shadow-sm">
-      <div className="flex gap-5">
-        <Skeleton className="h-20 w-20 shrink-0 rounded-lg" />
+    <div className="flex flex-col gap-4 rounded-lg border bg-card p-4 shadow-sm sm:min-h-[320px] sm:flex-row sm:gap-5 sm:p-6">
+      <div className="flex flex-1 gap-4">
+        <Skeleton className="h-28 w-28 shrink-0 rounded-xl sm:h-32 sm:w-32" />
         <div className="flex-1 space-y-2">
-          <Skeleton className="h-5 w-3/4" />
+          <Skeleton className="h-6 w-3/4" />
+          <Skeleton className="h-4 w-2/3" />
+          <Skeleton className="h-3 w-1/2" />
+          <div className="flex gap-1.5 pt-1">
+            <Skeleton className="h-5 w-16 rounded-full" />
+            <Skeleton className="h-5 w-20 rounded-full" />
+            <Skeleton className="h-5 w-14 rounded-full" />
+          </div>
           <Skeleton className="h-4 w-full" />
-          <Skeleton className="h-4 w-1/2" />
+          <Skeleton className="h-4 w-5/6" />
         </div>
       </div>
-      <div className="mt-3 flex gap-1">
-        <Skeleton className="h-5 w-16 rounded-full" />
-        <Skeleton className="h-5 w-20 rounded-full" />
-        <Skeleton className="h-5 w-14 rounded-full" />
-      </div>
-      <div className="mt-4 flex justify-between border-t pt-3">
-        <Skeleton className="h-4 w-24" />
-        <Skeleton className="h-4 w-16" />
+      <div className="flex flex-col gap-4 border-t pt-4 sm:w-48 sm:shrink-0 sm:justify-center sm:border-l sm:border-t-0 sm:pl-4 sm:pt-0">
+        <Skeleton className="h-8 w-28" />
+        <div className="grid grid-cols-2 gap-2">
+          <Skeleton className="h-8 w-full" />
+          <Skeleton className="h-8 w-full" />
+        </div>
+        <div className="flex flex-col gap-2">
+          <Skeleton className="h-10 w-full rounded-md" />
+          <Skeleton className="h-10 w-full rounded-md" />
+        </div>
       </div>
     </div>
   );

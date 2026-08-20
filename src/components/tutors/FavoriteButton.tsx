@@ -53,7 +53,9 @@ export function FavoriteButton({
         <Heart
           className={cn(
             "h-5 w-5 transition duration-200 ease-out group-hover:scale-105",
-            isFavorite ? "fill-brand-500 text-brand-500" : "text-muted-foreground"
+            isFavorite
+              ? "fill-brand-500 text-brand-500"
+              : "text-muted-foreground group-hover:text-brand-500"
           )}
         />
       </Button>

@@ -10,7 +10,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TutorPresenceBadge } from "@/components/tutors/TutorPresenceBadge";
-import { VerifiedTutorMark } from "@/components/tutors/VerifiedTutorMark";
 
 interface HomeTutorPreviewProps {
   tutor?: TutorProfile;
@@ -115,10 +114,6 @@ export function HomeTutorPreview({
                   {getInitials(tutor)}
                 </AvatarFallback>
               </Avatar>
-              <VerifiedTutorMark
-                verified={tutor.is_verified}
-                className="absolute -right-1.5 -top-1.5 rounded-full border-2 border-background"
-              />
             </div>
             <div className="min-w-0 flex-1">
               <h2 className="truncate text-xl font-semibold tracking-tight">
