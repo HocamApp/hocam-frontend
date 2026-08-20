@@ -327,13 +327,6 @@ function TutorCardLarge({
     ? "Koçluk"
     : null;
 
-  // Attribute pills fill whatever room the subject pills leave, capped so the
-  // tag row stays one or two lines.
-  const attributeTags = (tutor.teaching_attributes ?? []).slice(
-    0,
-    Math.min(2, Math.max(0, 5 - visibleSubjects.length))
-  );
-
   const popularityLabel = tutorPopularityLabel(tutor);
 
   // Value-over-label stat columns. Anything the tutor has no data for drops
@@ -343,6 +336,9 @@ function TutorCardLarge({
       ? { value: `${formatRating(tutor.rating)} ★`, label: `${tutor.total_reviews} yorum` }
       : null,
     { value: formatLessonCount(tutor.completed_lessons_count ?? 0), label: "verilen ders" },
+    tutor.yks_rank > 0
+      ? { value: `İlk ${formatYksRank(tutor.yks_rank)}`, label: "YKS sıralaması" }
+      : null,
   ].filter((stat): stat is { value: string; label: string } => stat !== null);
 
   return (
@@ -372,26 +368,15 @@ function TutorCardLarge({
           <p className="truncate text-xl font-semibold">
             {tutor.name} {tutor.surname}
           </p>
-          {tutor.yks_rank > 0 && (
-            <p className="mt-1.5 flex items-center gap-1 text-xs font-semibold text-brand-600 dark:text-brand-300">
-              <Award className="h-3.5 w-3.5 shrink-0" aria-hidden />
-              İlk {formatYksRank(tutor.yks_rank)}
-            </p>
-          )}
           {/* Full school and department, wrapped rather than truncated — where
               the tutor studies is a primary trust signal here. */}
-          <p className="mt-1.5 text-xs font-medium leading-5 text-foreground/80">
+          <p className="mt-1 text-xs font-medium leading-5 text-foreground/80">
             {tutor.university} · {tutor.department}
           </p>
           <div className="mt-2 flex flex-wrap gap-1.5">
             {visibleSubjects.map((sub) => (
               <Badge key={sub.id} variant="outline" className="text-xs">
                 {sub.name}
-              </Badge>
-            ))}
-            {attributeTags.map((attribute) => (
-              <Badge key={attribute.code} variant="secondary" className="text-xs">
-                {attribute.name}
               </Badge>
             ))}
             {remainingCount > 0 && (
@@ -417,7 +402,7 @@ function TutorCardLarge({
 
         {/* Deliberately not a boxed panel: a plain column separated by a rule,
             so price -> numbers -> CTA reads as one vertical flow. */}
-        <div className="flex flex-col gap-4 border-t pt-4 sm:w-44 sm:shrink-0 sm:border-l sm:border-t-0 sm:pl-4 sm:pt-0">
+        <div className="flex flex-col gap-3 border-t pt-4 sm:w-44 sm:shrink-0 sm:border-l sm:border-t-0 sm:pl-4 sm:pt-0">
           <div className="flex items-start justify-between gap-2">
             <Link href={tutorHref} className="min-w-0 cursor-pointer">
               <p className="text-2xl font-bold leading-tight">{formatPrice(tutor.hourly_price)}</p>
@@ -439,34 +424,36 @@ function TutorCardLarge({
             )}
           </div>
 
-          <dl
-            className={`grid gap-2 ${stats.length === 2 ? "grid-cols-2" : "grid-cols-1"}`}
-          >
+          {coachingLabel && (
+            <span className="-mt-2 inline-flex w-fit items-center gap-1 rounded-full bg-brand-50 px-2.5 py-1 text-xs font-medium text-brand-700 dark:bg-brand-900/40 dark:text-brand-200">
+              <Sparkles className="h-3.5 w-3.5 shrink-0" aria-hidden />
+              {coachingLabel}
+            </span>
+          )}
+
+          {/* Stacked, not columnar: the rail is too narrow for three labels
+              side by side and they truncated. Values carry the weight, labels
+              stay quiet — the reader scans the numbers first. */}
+          <dl className="space-y-1.5">
             {stats.map((stat) => (
               <div key={stat.label} className="min-w-0">
-                <dd className="truncate text-sm font-semibold leading-tight">{stat.value}</dd>
+                <dd className="truncate text-lg font-bold leading-tight">{stat.value}</dd>
                 <dt className="truncate text-xs leading-4 text-muted-foreground">{stat.label}</dt>
               </div>
             ))}
           </dl>
 
-          <div className="mt-auto flex flex-col gap-2 pt-2">
-            {coachingLabel && (
-              <span className="inline-flex w-fit items-center gap-1 rounded-full bg-brand-50 px-2.5 py-1 text-xs font-medium text-brand-700 dark:bg-brand-900/40 dark:text-brand-200">
-                <Sparkles className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                {coachingLabel}
-              </span>
-            )}
+          <div className="mt-auto flex flex-col gap-2">
             <Link
               href={tutorHref}
-              className="rounded-md bg-primary px-4 py-2.5 text-center text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+              className="rounded-md bg-primary px-4 py-2 text-center text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
             >
               Profili Gör <ArrowRight className="ml-1 inline h-4 w-4" />
             </Link>
             {showTrialCta && (
               <Link
                 href={trialHref}
-                className="rounded-md border px-4 py-2.5 text-center text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
+                className="rounded-md border px-4 py-2 text-center text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
               >
                 Deneme Dersi Al
               </Link>
