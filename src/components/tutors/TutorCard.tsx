@@ -365,15 +365,41 @@ function TutorCardLarge({
             </div>
           </div>
 
-          <p className="truncate text-xl font-semibold">
-            {tutor.name} {tutor.surname}
-          </p>
+          <div className="flex items-start justify-between gap-3">
+            <p className="min-w-0 truncate text-xl font-semibold">
+              {tutor.name} {tutor.surname}
+            </p>
+            {onToggleFavorite && (
+              <FavoriteButton
+                className="-mr-2 -mt-1.5"
+                tutorId={tutor.id}
+                isFavorite={isFavorite ?? false}
+                isPending={favoritePending ?? false}
+                onToggle={(tutorId) => {
+                  void recordDiscoveryEvent(
+                    discoveryImpressionId, tutorId,
+                    isFavorite ? "favorite_removed" : "favorite_added"
+                  );
+                  onToggleFavorite(tutorId);
+                }}
+              />
+            )}
+          </div>
           {/* Full school and department, wrapped rather than truncated — where
               the tutor studies is a primary trust signal here. */}
           <p className="mt-1 text-xs font-medium leading-5 text-foreground/80">
             {tutor.university} · {tutor.department}
           </p>
           <div className="mt-2 flex flex-wrap gap-1.5">
+            {coachingLabel && (
+              <Badge
+                variant="outline"
+                className="gap-1 border-brand-200 bg-brand-50 text-xs text-brand-700 dark:border-brand-800 dark:bg-brand-900/40 dark:text-brand-200"
+              >
+                <Sparkles className="h-3 w-3 shrink-0" aria-hidden />
+                {coachingLabel}
+              </Badge>
+            )}
             {visibleSubjects.map((sub) => (
               <Badge key={sub.id} variant="outline" className="text-xs">
                 {sub.name}
@@ -403,33 +429,10 @@ function TutorCardLarge({
         {/* Deliberately not a boxed panel: a plain column separated by a rule,
             so price -> numbers -> CTA reads as one vertical flow. */}
         <div className="flex flex-col gap-3 border-t pt-4 sm:w-44 sm:shrink-0 sm:border-l sm:border-t-0 sm:pl-4 sm:pt-0">
-          <div className="flex items-start justify-between gap-2">
-            <Link href={tutorHref} className="min-w-0 cursor-pointer">
-              <p className="text-2xl font-bold leading-tight">{formatPrice(tutor.hourly_price)}</p>
-              <p className="mt-0.5 text-sm text-muted-foreground">40 dk ders</p>
-            </Link>
-            {onToggleFavorite && (
-              <FavoriteButton
-                tutorId={tutor.id}
-                isFavorite={isFavorite ?? false}
-                isPending={favoritePending ?? false}
-                onToggle={(tutorId) => {
-                  void recordDiscoveryEvent(
-                    discoveryImpressionId, tutorId,
-                    isFavorite ? "favorite_removed" : "favorite_added"
-                  );
-                  onToggleFavorite(tutorId);
-                }}
-              />
-            )}
-          </div>
-
-          {coachingLabel && (
-            <span className="-mt-2 inline-flex w-fit items-center gap-1 rounded-full bg-brand-50 px-2.5 py-1 text-xs font-medium text-brand-700 dark:bg-brand-900/40 dark:text-brand-200">
-              <Sparkles className="h-3.5 w-3.5 shrink-0" aria-hidden />
-              {coachingLabel}
-            </span>
-          )}
+          <Link href={tutorHref} className="min-w-0 cursor-pointer">
+            <p className="text-3xl font-bold leading-none">{formatPrice(tutor.hourly_price)}</p>
+            <p className="mt-1.5 text-sm text-muted-foreground">40 dk ders</p>
+          </Link>
 
           {/* Stacked, not columnar: the rail is too narrow for three labels
               side by side and they truncated. Values carry the weight, labels
@@ -443,7 +446,7 @@ function TutorCardLarge({
             ))}
           </dl>
 
-          <div className="mt-auto flex flex-col gap-2">
+          <div className="mt-auto flex flex-col gap-2 pt-3">
             <Link
               href={tutorHref}
               className="rounded-md bg-primary px-4 py-2 text-center text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
