@@ -321,17 +321,18 @@ function TutorCardLarge({
   // must hide the button, never reveal one the backend has not allowed.
   const showTrialCta = tutor.accepts_trial_lessons === true && tutor.is_bookable === true;
 
-  // Compact trust line, in place of a badge pile.
-  const trustSignals = [
-    tutor.teaching_attributes?.[0]?.name ?? null,
-    tutor.offers_coaching ? "Koçluk desteği" : null,
-  ].filter((signal): signal is string => Boolean(signal));
+  const coachingLabel = tutor.offers_free_coaching
+    ? "Ücretsiz koçluk"
+    : tutor.offers_coaching
+    ? "Koçluk"
+    : null;
 
   // Attribute pills fill whatever room the subject pills leave, capped so the
   // tag row stays one or two lines.
+  const pillBudget = 5 - visibleSubjects.length - (coachingLabel ? 1 : 0);
   const attributeTags = (tutor.teaching_attributes ?? []).slice(
     0,
-    Math.min(2, Math.max(0, 5 - visibleSubjects.length))
+    Math.min(2, Math.max(0, pillBudget))
   );
 
   const popularityLabel = tutorPopularityLabel(tutor);
@@ -349,7 +350,7 @@ function TutorCardLarge({
     <Card
       data-discovery-tutor-id={discoveryImpressionId ? tutor.id : undefined}
       data-discovery-impression-id={discoveryImpressionId || undefined}
-      className="relative h-full min-w-0 overflow-visible border-t-2 border-t-transparent transition-all duration-200 hover:z-10 hover:-translate-y-0.5 hover:border-t-primary hover:shadow-lg sm:min-h-[320px]"
+      className="relative h-full min-w-0 overflow-visible transition-all duration-200 hover:z-10 hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-lg sm:min-h-[320px]"
     >
       <CardContent className="flex h-full flex-col gap-4 p-4 sm:flex-row sm:gap-5 sm:p-6">
         <Link href={tutorHref} className="block min-w-0 flex-1 cursor-pointer">
@@ -372,7 +373,7 @@ function TutorCardLarge({
             </div>
             {/* Full school and department, wrapped rather than truncated —
                 where the tutor studies is a primary trust signal here. */}
-            <p className="mt-2 line-clamp-3 min-h-[3.75rem] text-xs leading-5 text-muted-foreground">
+            <p className="mt-2 line-clamp-3 min-h-[3.75rem] text-xs font-medium leading-5 text-foreground/80">
               {tutor.university} · {tutor.department}
             </p>
           </div>
@@ -386,12 +387,15 @@ function TutorCardLarge({
               İlk {formatYksRank(tutor.yks_rank)}
             </p>
           )}
-          {trustSignals.length > 0 && (
-            <p className="mt-1.5 truncate text-xs text-muted-foreground">
-              {trustSignals.join(" · ")}
-            </p>
-          )}
           <div className="mt-2 flex flex-wrap gap-1.5">
+            {coachingLabel && (
+              <Badge
+                variant="outline"
+                className="border-brand-200 bg-brand-50 text-xs text-brand-700 dark:border-brand-800 dark:bg-brand-900/40 dark:text-brand-200"
+              >
+                {coachingLabel}
+              </Badge>
+            )}
             {visibleSubjects.map((sub) => (
               <Badge key={sub.id} variant="outline" className="text-xs">
                 {sub.name}
@@ -409,7 +413,7 @@ function TutorCardLarge({
             )}
           </div>
           {tutor.bio && (
-            <p className="mt-2 text-sm leading-6 text-muted-foreground">
+            <p className="mt-2 text-sm leading-6 text-foreground/90">
               {truncateBio(tutor.bio)}
             </p>
           )}
