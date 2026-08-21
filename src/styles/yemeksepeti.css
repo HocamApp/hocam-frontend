@@ -52,6 +52,44 @@
   background-color: var(--ys-white);
 }
 
+/*
+ * Aydınlık shadcn token'ları, `.ys-root` kapsamında yeniden tanımlanıyor.
+ *
+ * Source of truth: `src/app/globals.css` `:root`. This is a deliberate copy,
+ * not a fork — keep the two in sync, and delete this block the moment `/`
+ * grows a real theme story.
+ *
+ * Why it exists: `THEME_INIT_SCRIPT` puts `.dark` on <html> from
+ * localStorage["hocam-theme"], which darkens --card/--foreground/--border.
+ * `.ys-root` paints a hardcoded white page, so without this the visitor
+ * would get dark tutor cards and dark Select triggers floating on a white
+ * page. The `--brand-*` ramp is theme-shared and deliberately not repeated.
+ *
+ * Known gap: Radix portals (Select dropdown, mobile Sheet, Tooltip) mount on
+ * <body>, outside this scope, so they still follow `.dark`.
+ */
+.ys-root {
+  --background: 0 0% 100%;
+  --foreground: 222.2 84% 4.9%;
+  --card: 0 0% 100%;
+  --card-foreground: 222.2 84% 4.9%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 222.2 84% 4.9%;
+  --primary: 222.2 47.4% 11.2%;
+  --primary-foreground: 210 40% 98%;
+  --secondary: 350 20% 97%;
+  --secondary-foreground: 222.2 47.4% 11.2%;
+  --muted: 350 20% 97%;
+  --muted-foreground: 350 8% 46%;
+  --accent: 350 20% 97%;
+  --accent-foreground: 222.2 47.4% 11.2%;
+  --destructive: 0 72% 51%;
+  --destructive-foreground: 210 40% 98%;
+  --border: 350 15% 91%;
+  --input: 350 15% 91%;
+  --ring: 222.2 84% 4.9%;
+}
+
 /* ---------------------------------------------------------------- layout -- */
 
 .ys-shell {
@@ -123,15 +161,6 @@
   color: var(--ys-neutral-strong);
 }
 
-.ys-btn--text {
-  background-color: transparent;
-  color: var(--ys-neutral-primary);
-}
-
-.ys-btn--text:hover {
-  background-color: var(--ys-neutral-surface);
-}
-
 .ys-icon-btn {
   display: inline-flex;
   align-items: center;
@@ -152,11 +181,6 @@
   cursor: not-allowed;
 }
 
-.ys-icon-btn--small {
-  width: 32px;
-  height: 32px;
-}
-
 .ys-icon-btn--contained {
   background-color: var(--ys-white);
   box-shadow: 0 1px 4px rgb(0 0 0 / 16%);
@@ -167,24 +191,17 @@
  *
  * This stylesheet is injected after Tailwind's utilities, so `.ys-btn` and
  * `.ys-icon-btn` would win over `hidden` / `md:inline-flex` at equal
- * specificity. These helpers keep the breakpoint behaviour inside the same
- * cascade layer instead of fighting it.
+ * specificity. This helper keeps the breakpoint behaviour inside the same
+ * cascade layer instead of fighting it. Never pass a `.ys-*` class to a
+ * shadcn component — that is what keeps the two systems from colliding.
  */
 .ys-from-md {
   display: none;
 }
 
-.ys-until-md {
-  display: flex;
-}
-
 @media (min-width: 768px) {
   .ys-from-md {
     display: inline-flex;
-  }
-
-  .ys-until-md {
-    display: none;
   }
 }
 
@@ -228,215 +245,6 @@
 .ys-tab[data-selected="true"]::after {
   width: 100%;
   opacity: 1;
-}
-
-/* ------------------------------------------------------------------ tags -- */
-
-.ys-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--ys-space-xxs);
-  height: 20px;
-  padding: 0 var(--ys-space-xs);
-  border-radius: var(--ys-radius-base);
-  font-size: 0.75rem;
-  font-weight: 600;
-  line-height: 1.5;
-  white-space: nowrap;
-}
-
-.ys-tag--sponsored {
-  background-color: rgb(255 255 255 / 90%);
-  color: var(--ys-neutral-primary);
-}
-
-.ys-tag--deal {
-  background-color: var(--ys-deal-highlight-1);
-  color: var(--ys-deal-primary);
-}
-
-.ys-tag--new {
-  background-color: var(--ys-brand-highlight-1);
-  color: var(--ys-interaction-primary-hover);
-}
-
-/* --------------------------------------------------------------- controls -- */
-
-.ys-choice {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--ys-space-st);
-  padding: var(--ys-space-xs) 0;
-  font-size: 0.875rem;
-  line-height: 1.571;
-  cursor: pointer;
-}
-
-.ys-choice__box {
-  position: relative;
-  flex: none;
-  width: 20px;
-  height: 20px;
-  margin-top: 1px;
-  border: 2px solid var(--ys-neutral-border);
-  background-color: var(--ys-white);
-  transition:
-    border-color 150ms ease,
-    background-color 150ms ease;
-}
-
-.ys-choice__box--radio {
-  border-radius: var(--ys-radius-pill);
-}
-
-.ys-choice__box--checkbox {
-  border-radius: var(--ys-radius-base);
-}
-
-.ys-choice:hover .ys-choice__box {
-  border-color: var(--ys-neutral-secondary);
-}
-
-.ys-choice[data-checked="true"] .ys-choice__box--radio {
-  border-color: var(--ys-interaction-primary);
-}
-
-.ys-choice[data-checked="true"] .ys-choice__box--radio::after {
-  content: "";
-  position: absolute;
-  inset: 3px;
-  border-radius: var(--ys-radius-pill);
-  background-color: var(--ys-interaction-primary);
-}
-
-.ys-choice[data-checked="true"] .ys-choice__box--checkbox {
-  border-color: var(--ys-interaction-primary);
-  background-color: var(--ys-interaction-primary);
-}
-
-.ys-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--ys-space-xxs);
-  height: 32px;
-  padding: 0 var(--ys-space-st);
-  border: 1px solid var(--ys-neutral-border);
-  border-radius: var(--ys-radius-pill);
-  background-color: var(--ys-white);
-  color: var(--ys-neutral-primary);
-  font-size: 0.875rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition:
-    background-color 150ms ease,
-    border-color 150ms ease,
-    color 150ms ease;
-}
-
-.ys-pill:hover {
-  background-color: var(--ys-neutral-surface);
-}
-
-.ys-pill[data-selected="true"] {
-  border-color: var(--ys-neutral-strong);
-  background-color: var(--ys-neutral-strong);
-  color: var(--ys-white);
-}
-
-.ys-search {
-  display: flex;
-  align-items: center;
-  gap: var(--ys-space-xs);
-  height: 40px;
-  padding: 0 var(--ys-space-st);
-  border: 1px solid var(--ys-neutral-border);
-  border-radius: var(--ys-radius-field);
-  background-color: var(--ys-white);
-  color: var(--ys-neutral-secondary);
-  transition: border-color 150ms ease;
-}
-
-.ys-search:focus-within {
-  border-color: var(--ys-neutral-primary);
-}
-
-.ys-search--small {
-  height: 32px;
-}
-
-.ys-search input {
-  width: 100%;
-  border: 0;
-  background: transparent;
-  color: var(--ys-neutral-primary);
-  font-size: 0.875rem;
-  outline: none;
-}
-
-.ys-search input::placeholder {
-  color: var(--ys-neutral-secondary);
-}
-
-/* ------------------------------------------------------------ vendor tile -- */
-
-.ys-vendor-grid {
-  display: grid;
-  gap: var(--ys-space-md);
-  grid-template-columns: repeat(1, minmax(0, 1fr));
-}
-
-@media (min-width: 528px) {
-  .ys-vendor-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (min-width: 1264px) {
-  .ys-vendor-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}
-
-.ys-tile {
-  position: relative;
-  min-width: 0;
-  border-radius: var(--ys-radius-media);
-  transition: background-color 200ms ease;
-}
-
-.ys-tile__image {
-  position: relative;
-  aspect-ratio: 16 / 9;
-  overflow: hidden;
-  border-radius: var(--ys-radius-media);
-}
-
-.ys-tile__image-inner {
-  position: absolute;
-  inset: 0;
-  transform-origin: 50%;
-  transition: transform 300ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
-}
-
-.ys-tile:hover .ys-tile__image-inner {
-  transform: scale(1.0238);
-}
-
-.ys-tile__row {
-  display: flex;
-  align-items: center;
-  gap: var(--ys-space-xxs);
-  min-width: 0;
-  font-size: 0.75rem;
-  font-weight: 400;
-  line-height: 16px;
-  color: var(--ys-neutral-secondary);
-  white-space: nowrap;
-}
-
-.ys-tile__bullet {
-  color: var(--ys-neutral-inactive);
-  font-size: 0.625rem;
 }
 
 /* ---------------------------------------------------------- campaign lane -- */
