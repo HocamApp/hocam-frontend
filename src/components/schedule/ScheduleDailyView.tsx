@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 
 import { cn } from "@/lib/utils";
 import type { ScheduleEvent } from "@/types";
@@ -62,6 +62,11 @@ export function ScheduleDailyView({
   );
 
   const positioned = useMemo(() => layoutDayEvents(dayEvents), [dayEvents]);
+  const firstEventOffset = useMemo(() => {
+    if (dayEvents.length === 0) return 0;
+    const { start: windowStart } = hourWindow(dayEvents);
+    return ((timeToMinutes(dayEvents[0].local_time) - windowStart * 60) / 60) * HOUR_HEIGHT;
+  }, [dayEvents]);
   const { start, end } = useMemo(() => hourWindow(dayEvents), [dayEvents]);
   // Boundary labels, closing hour included — so there is one more label than
   // there are rows, and the canvas spans (end - start) hours, not one more.
@@ -73,8 +78,31 @@ export function ScheduleDailyView({
   const nowOffset =
     ((now.getHours() * 60 + now.getMinutes() - start * 60) / 60) * HOUR_HEIGHT;
 
+  // A day holding a 09:00 and a 23:00 block spans sixteen hours, which is
+  // 1024px of grid. Letting the page carry that scrolled the header, the view
+  // switch and the progress bar off screen to reach the evening, and the two
+  // blocks could never be on screen together. The grid scrolls inside its own
+  // box instead, the way a calendar normally does.
+  const scrollRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const container = scrollRef.current;
+    if (!container) return;
+    // Open on what matters: the current time on today, the first block
+    // otherwise. Landing on an empty 08:00 when everything starts at 19:00 is
+    // the same problem in a smaller form.
+    const anchor = showNowLine && nowOffset >= 0 ? nowOffset : firstEventOffset;
+    container.scrollTop = Math.max(0, anchor - HOUR_HEIGHT / 2);
+    // Re-anchor when the day changes, not on every tick of the clock.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dayKey]);
+
   return (
-    <div className="relative flex gap-3 overflow-hidden">
+    <div
+      ref={scrollRef}
+      // max-height only: a three-hour day keeps its natural height and does
+      // not become a tall box with empty space under it.
+      className="relative flex max-h-[70vh] gap-3 overflow-y-auto overflow-x-hidden"
+    >
       {/* Hour rail. Labels are positioned like the grid lines and centred on
           them; stacking fixed-height rows against a canvas with no matching
           top padding left every label 4px below the line it names. */}

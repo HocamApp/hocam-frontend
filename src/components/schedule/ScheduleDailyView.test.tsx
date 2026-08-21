@@ -84,6 +84,23 @@ describe("daily view geometry", () => {
     assert.equal(screen.getAllByText(/^\d\d:00$/).length, 4);
   });
 
+  // A day spanning 09:00 to 23:00 is 1024px of grid. Before this the container
+  // was overflow-hidden, so the page carried it: reaching the evening block
+  // scrolled the header and the view switch off screen, and the two blocks
+  // could never be visible together.
+  it("scrolls inside its own box rather than growing the page", () => {
+    const { container } = renderDay([block("sabah", "09:00", 60), block("gece", "23:00", 60)]);
+
+    const scroller = container.firstElementChild as HTMLElement;
+    assert.match(scroller.className, /overflow-y-auto/);
+    assert.match(scroller.className, /max-h-/);
+    assert.doesNotMatch(scroller.className, /overflow-hidden/);
+
+    // 08:00–24:00 once the window pads each end.
+    const canvas = container.querySelector<HTMLElement>(".relative.flex-1");
+    assert.equal(canvas?.style.height, `${16 * HOUR_HEIGHT}px`);
+  });
+
   it("still says when a day is empty", () => {
     renderDay([]);
     assert.ok(screen.getByText("Bu gün için planlanmış bir şey yok."));
