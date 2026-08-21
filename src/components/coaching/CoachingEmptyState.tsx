@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { Check, Sparkles, type LucideIcon } from "lucide-react";
 
 import { CoachingStudioPanel } from "@/components/coaching/CoachingStudioPanel";
+import { COACHING_SECTION_TITLE_CLASS } from "@/components/coaching/CoachingSectionHeading";
 
 export function CoachingEmptyState({
   icon: Icon,
@@ -34,7 +35,7 @@ export function CoachingEmptyState({
             <span className="absolute -right-2 -top-2 h-5 w-5 rounded-full bg-primary/15" aria-hidden="true" />
             <EmptyIcon aria-hidden className="h-7 w-7" />
           </div>
-          <h2 className="text-xl font-semibold tracking-tight sm:text-2xl">{title}</h2>
+          <h2 className={COACHING_SECTION_TITLE_CLASS}>{title}</h2>
           <p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">{description}</p>
           {context ? <p className="mt-3 max-w-xl text-xs leading-5 text-muted-foreground">{context}</p> : null}
           {steps && steps.length > 0 ? (

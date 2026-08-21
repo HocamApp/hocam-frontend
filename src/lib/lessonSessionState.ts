@@ -78,6 +78,48 @@ export function formatDuration(ms: number): string {
 }
 
 /**
+ * How long until the room opens, in a shape the waiting room can render.
+ *
+ * computeCountdown above is about time *inside* a lesson and is clamped to the
+ * lesson's own duration, so it cannot answer this. formatDuration is M:SS and
+ * deliberately unbounded, which is right for a lesson clock and wrong for a
+ * wait: a lesson fifteen hours out rendered as "904:43", a number no student
+ * can read as a time.
+ */
+export type JoinCountdown =
+  | { mode: "open" }
+  /** Under an hour — a live M:SS clock still means something. */
+  | { mode: "soon"; label: string }
+  /** Later today — hours and minutes. */
+  | { mode: "today"; label: string }
+  /** Another day — days and hours, and the caller should show the date instead. */
+  | { mode: "later"; label: string };
+
+const MINUTE_MS = 60_000;
+const HOUR_MS = 60 * MINUTE_MS;
+const DAY_MS = 24 * HOUR_MS;
+
+export function formatJoinCountdown(msUntilJoin: number): JoinCountdown {
+  if (msUntilJoin <= 0) return { mode: "open" };
+  if (msUntilJoin < HOUR_MS) return { mode: "soon", label: formatDuration(msUntilJoin) };
+
+  // Turkish nouns do not inflect for number, so "2 gün 4 saat" needs no plural
+  // handling; a zero component is dropped rather than written out.
+  if (msUntilJoin < DAY_MS) {
+    const hours = Math.floor(msUntilJoin / HOUR_MS);
+    const minutes = Math.floor((msUntilJoin % HOUR_MS) / MINUTE_MS);
+    return {
+      mode: "today",
+      label: minutes > 0 ? `${hours} saat ${minutes} dakika` : `${hours} saat`,
+    };
+  }
+
+  const days = Math.floor(msUntilJoin / DAY_MS);
+  const hours = Math.floor((msUntilJoin % DAY_MS) / HOUR_MS);
+  return { mode: "later", label: hours > 0 ? `${days} gün ${hours} saat` : `${days} gün` };
+}
+
+/**
  * Whether a locally-known early-end request version is stale relative to the
  * authoritative server state (e.g. from a 409 body). When stale, the client
  * should adopt the server's early_end_request rather than its own optimistic view.

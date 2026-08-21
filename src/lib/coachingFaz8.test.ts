@@ -12,6 +12,18 @@ import {
   type CoachingFinancialSummary,
   type CoachingCancellationResult,
   type CoachingTutorEarningSummary,
+  COACHING_DISPUTE_CATEGORY_LABEL,
+  COACHING_DISPUTE_MERIT_LABEL,
+  COACHING_DISPUTE_REMEDY_LABEL,
+  COACHING_DISPUTE_STATUS_LABEL,
+  COACHING_EVIDENCE_SCAN_STATE_LABEL,
+  COACHING_SERVICE_STATUS_LABEL,
+  coachingDisputeCategoryLabel,
+  coachingDisputeMeritLabel,
+  coachingDisputeRemedyLabel,
+  coachingDisputeStatusLabel,
+  coachingEvidenceScanStateLabel,
+  coachingServiceStatusLabel,
   coachingEarningStatusCopy,
   coachingRefundStateCopy,
 } from "./coachingApi";
@@ -107,5 +119,104 @@ describe("§41 session rating and §22.9 report feedback contract", () => {
     for (const choice of REPORT_FEEDBACK_CHOICES) {
       assert.ok(REPORT_FEEDBACK_LABELS[choice]?.length, `missing label for ${choice}`);
     }
+  });
+});
+
+/**
+ * The dispute vocabulary reaches the UI as bare codes. These screens used to
+ * print them verbatim, so a student picked a complaint reason from a list that
+ * read "scope_deficient" and "message_sla".
+ */
+describe("§31–§32 dispute vocabulary is Turkish, never a machine code", () => {
+  const UNKNOWN = "totally_unknown_code";
+
+  it("covers every category the backend can send", () => {
+    assert.deepEqual(Object.keys(COACHING_DISPUTE_CATEGORY_LABEL).sort(), [
+      "inappropriate_behavior",
+      "message_sla",
+      "other",
+      "program_absent",
+      "report_absent",
+      "scope_deficient",
+      "technical",
+      "tutor_no_show",
+    ]);
+    assert.equal(
+      coachingDisputeCategoryLabel("scope_deficient"),
+      "Hizmet açıklanan kapsamda sunulmadı"
+    );
+  });
+
+  it("covers every dispute status", () => {
+    assert.deepEqual(Object.keys(COACHING_DISPUTE_STATUS_LABEL).sort(), [
+      "awaiting_student_choice",
+      "closed",
+      "needs_more_info",
+      "resolved",
+      "under_review",
+      "waiting_review",
+    ]);
+  });
+
+  it("covers merits, remedies and evidence scan states", () => {
+    assert.deepEqual(Object.keys(COACHING_DISPUTE_MERIT_LABEL).sort(), [
+      "partial",
+      "student_upheld",
+      "tutor_upheld",
+    ]);
+    assert.deepEqual(Object.keys(COACHING_DISPUTE_REMEDY_LABEL).sort(), [
+      "period_refund",
+      "reschedule",
+      "terminate_remaining",
+    ]);
+    assert.deepEqual(Object.keys(COACHING_EVIDENCE_SCAN_STATE_LABEL).sort(), [
+      "active",
+      "pending",
+      "rejected",
+      "scan_unavailable",
+    ]);
+  });
+
+  it("covers the service statuses, including the ones the page-local copies missed", () => {
+    ["pending_tutor_acceptance", "paused_by_platform", "rejected", "completed", "refunded"].forEach(
+      (status) => assert.ok(COACHING_SERVICE_STATUS_LABEL[status], `missing ${status}`)
+    );
+    assert.equal(
+      coachingServiceStatusLabel("accepted_awaiting_payment"),
+      "Ödeme doğrulaması bekleniyor"
+    );
+  });
+
+  // An unknown code means deploy skew. Echoing it at the student is the bug,
+  // not a diagnostic — every accessor has to answer in Turkish regardless.
+  it("never echoes an unknown code back at the user", () => {
+    [
+      coachingDisputeCategoryLabel,
+      coachingDisputeStatusLabel,
+      coachingDisputeMeritLabel,
+      coachingDisputeRemedyLabel,
+      coachingEvidenceScanStateLabel,
+      coachingServiceStatusLabel,
+    ].forEach((label) => {
+      const result = label(UNKNOWN);
+      assert.notEqual(result, UNKNOWN);
+      assert.doesNotMatch(result, /_/, `"${result}" still looks like a code`);
+    });
+  });
+
+  it("every label in every map is Turkish prose, not a snake_case echo", () => {
+    [
+      COACHING_DISPUTE_CATEGORY_LABEL,
+      COACHING_DISPUTE_STATUS_LABEL,
+      COACHING_DISPUTE_MERIT_LABEL,
+      COACHING_DISPUTE_REMEDY_LABEL,
+      COACHING_EVIDENCE_SCAN_STATE_LABEL,
+      COACHING_SERVICE_STATUS_LABEL,
+    ].forEach((map) =>
+      Object.entries(map).forEach(([code, label]) => {
+        assert.doesNotMatch(label, /_/, `${code} was left as a code`);
+        assert.notEqual(label, code);
+      })
+    );
   });
 });

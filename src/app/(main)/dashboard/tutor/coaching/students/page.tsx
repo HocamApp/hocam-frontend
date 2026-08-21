@@ -12,13 +12,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
-import { COACHING_DAY_LABEL, fetchCoachingStudents, terminateTutorCoaching } from "@/lib/coachingApi";
-
-const SERVICE_STATUS_LABEL: Record<string, string> = {
-  accepted_awaiting_schedule: "Saat seçimi bekleniyor",
-  active: "Aktif",
-  cancellation_pending: "İptal işleniyor",
-};
+import { COACHING_DAY_LABEL, coachingServiceStatusLabel, fetchCoachingStudents, terminateTutorCoaching } from "@/lib/coachingApi";
 
 function StudentsContent() {
   const client = useQueryClient();
@@ -66,7 +60,7 @@ function StudentsContent() {
             <div className="flex flex-wrap items-center justify-between gap-2">
               <p className="font-medium">{row.student_name}</p>
               <Badge variant="secondary">
-                {SERVICE_STATUS_LABEL[row.service_status] ?? row.service_status}
+                {coachingServiceStatusLabel(row.service_status)}
               </Badge>
             </div>
             {row.service_period_id ? (

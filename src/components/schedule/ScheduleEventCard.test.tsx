@@ -175,27 +175,51 @@ describe("lessons and coaching are read-only", () => {
     assert.equal(screen.queryByLabelText("Çalışmayı sil"), null);
   });
 
+  // In the day view the pale body is the same for both kinds, so the lock and
+  // the checkbox are the only things left saying which is which. They have to
+  // survive that density.
+  it("still separates a lesson from a study block once the fill stops doing it", () => {
+    const { unmount } = render(<ScheduleEventCard event={lesson()} density="expanded" />);
+    assert.ok(screen.getByText(", salt okunur"));
+    assert.equal(screen.queryByRole("checkbox"), null);
+    unmount();
+
+    render(
+      <ScheduleEventCard
+        event={studyBlock()}
+        density="expanded"
+        onToggleCompleted={() => {}}
+      />
+    );
+    assert.ok(screen.getByRole("checkbox"));
+    assert.equal(screen.queryByText(", salt okunur"), null);
+  });
+
   it("says it is read-only for a screen reader, not only with a lock glyph", () => {
     render(<ScheduleEventCard event={lesson()} />);
 
     assert.ok(screen.getByText(", salt okunur"));
   });
 
-  it("links a lesson to the in-app session, never the raw room url", () => {
+  // The schedule is where a student reads their week; joining a lesson lives on
+  // the panel. A join button here also cost ~84px of un-shrinkable width in a
+  // ~100px week column, which truncated every lesson title to one character.
+  it("offers no way to join — even when the event carries a room url", () => {
     render(<ScheduleEventCard event={lesson()} />);
 
-    const link = screen.getByText("Derse git").closest("a");
-    assert.equal(link?.getAttribute("href"), "/session/booking-1");
+    assert.ok(lesson().room_url, "fixture must have a room url or this proves nothing");
+    assert.equal(screen.queryByText("Derse git"), null);
+    assert.equal(screen.queryAllByRole("link").length, 0);
   });
 
-  it("links coaching to its own session route", () => {
+  it("offers no way to join a coaching session either", () => {
     render(
       <ScheduleEventCard
         event={lesson({ source: "coaching", id: "session-9", subject: null })}
       />
     );
 
-    const link = screen.getByText("Görüşmeye git").closest("a");
-    assert.equal(link?.getAttribute("href"), "/session/coaching/session-9");
+    assert.equal(screen.queryByText("Görüşmeye git"), null);
+    assert.equal(screen.queryAllByRole("link").length, 0);
   });
 });
