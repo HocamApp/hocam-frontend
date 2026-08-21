@@ -7,6 +7,7 @@ import tailwindColors from "tailwindcss/colors.js";
 import type { ScheduleEvent } from "@/types";
 import {
   CURATED_SUBJECT_HUES,
+  dayHueForEvent,
   FALLBACK_HUE_RING,
   SUBJECT_HUES,
   STUDY_TONES_FOR_TEST,
@@ -125,6 +126,38 @@ describe("subject hues", () => {
     Object.entries(CURATED_SUBJECT_HUES).forEach(([key, id]) =>
       assert.ok(SUBJECT_HUES[id], `${key} -> ${id} missing`)
     );
+  });
+});
+
+// The day view trades the filled body for a pale one plus a fixed 4px bar, so
+// that a two-hour block does not carry three times the ink of a 40-minute one.
+// What it must not trade away is any of the pale-body contrast.
+describe("day-view surfaces stay pale whatever the duration", () => {
+  const cases: [string, ScheduleEvent][] = [
+    ["lesson", lesson("Matematik")],
+    ["subject-less lesson", lesson(null)],
+    ["coaching", { ...lesson(null), source: "coaching" }],
+    ["study block", { ...lesson(null), source: "study_block", block_type: "deneme" }],
+  ];
+
+  cases.forEach(([name, event]) => {
+    it(`${name} gets a tinted body and a saturated bar`, () => {
+      const hue = dayHueForEvent(event);
+
+      assert.doesNotMatch(hue.card, /text-white/, `${name} is still a solid fill`);
+      assert.match(hue.card, /^bg-[a-z]+-50(\s|$)/, `${name} is not a -50 tint`);
+      // The bar is where the colour lives now, so it has to be saturated.
+      assert.match(hue.dot, /-500$/, `${name} has no saturated bar colour`);
+    });
+  });
+
+  it("gives each study block type its own bar colour", () => {
+    const types = ["konu_anlatim", "soru_cozumu", "deneme", "custom"] as const;
+    const bars = types.map(
+      (block_type) => dayHueForEvent({ ...lesson(null), source: "study_block", block_type }).dot
+    );
+
+    assert.equal(new Set(bars).size, types.length, "two block types share a bar colour");
   });
 });
 

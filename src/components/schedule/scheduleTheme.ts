@@ -397,6 +397,57 @@ export function subjectAccent(name: string | null | undefined): { dot: string; c
   return { dot: hue.dot, chip: hue.chip };
 }
 
+/**
+ * Day-view surfaces.
+ *
+ * The week and month grids give every event the same height, so a saturated
+ * fill costs the same ink whatever the duration. The day view does not: height
+ * is proportional to time, so the -700 fill that reads as a neat chip at 40
+ * minutes becomes a slab at two hours — the same paint over three times the
+ * area. Visual weight is area times saturation, and only one of those is
+ * supposed to mean anything.
+ *
+ * So the day view decouples them, the way the calendars that solved this
+ * already do: the saturated colour lives in a fixed-width bar down the left
+ * edge and the body is a pale tint. A four-hour block and a half-hour one then
+ * carry the same amount of loud pixels.
+ *
+ * The rule this must not break is that a lesson never looks like something the
+ * student typed in. Fill style stops carrying that here, so the lock, the
+ * graduation cap and the checkbox do — which is where the real signal always
+ * was; the comment at the top of this file lists the fill as one of three
+ * carriers, not the only one.
+ */
+const STUDY_BLOCK_HUES: Record<StudyBlockType, SubjectHueId> = {
+  konu_anlatim: "sky",
+  soru_cozumu: "emerald",
+  deneme: "amber",
+  custom: "slate",
+};
+
+const COACHING_HUE: SubjectHue = {
+  id: "violet",
+  card: "bg-indigo-50 text-indigo-900 border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-100 dark:border-indigo-800",
+  label: "text-indigo-800 dark:text-indigo-300",
+  dot: "bg-indigo-500",
+  chip: "bg-indigo-50 text-indigo-800 dark:bg-indigo-900/40 dark:text-indigo-200",
+};
+
+const BRAND_HUE: SubjectHue = {
+  id: "rose",
+  card: "bg-brand-50 text-brand-900 border-brand-200 dark:bg-brand-900/30 dark:text-brand-100 dark:border-brand-800",
+  label: "text-brand-600 dark:text-brand-300",
+  dot: "bg-brand-500",
+  chip: "bg-brand-50 text-brand-600 dark:bg-brand-900/40 dark:text-brand-200",
+};
+
+/** The pale body (`card`) and saturated left bar (`dot`) for a day-view block. */
+export function dayHueForEvent(event: ScheduleEvent): SubjectHue {
+  if (event.source === "coaching") return COACHING_HUE;
+  if (event.source === "booking") return subjectHue(event.subject?.name) ?? BRAND_HUE;
+  return SUBJECT_HUES[STUDY_BLOCK_HUES[event.block_type ?? "custom"]];
+}
+
 /** Lesson colour for a subject-less booking — the brand tint, as before. */
 const LESSON_TONE: ScheduleTone = {
   icon: GraduationCap,

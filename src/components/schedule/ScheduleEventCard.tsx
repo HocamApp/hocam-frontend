@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import type { ScheduleEvent } from "@/types";
 import { endTimeLabel, formatMinutes } from "./scheduleDates";
 import { shortEventLabel } from "./eventLabels";
-import { isPersonal, lessonStatusLabel, toneForEvent } from "./scheduleTheme";
+import { dayHueForEvent, isPersonal, lessonStatusLabel, toneForEvent } from "./scheduleTheme";
 
 /**
  * How much room the card has, which decides what it can afford to say.
@@ -36,11 +36,14 @@ function CompletionCheckbox({
   onChange,
   disabled,
   withLabel,
+  onLight,
 }: {
   checked: boolean;
   onChange: (next: boolean) => void;
   disabled?: boolean;
   withLabel: boolean;
+  /** Pale day-view body: white-on-dark styling would be invisible there. */
+  onLight?: boolean;
 }) {
   return (
     <button
@@ -55,17 +58,26 @@ function CompletionCheckbox({
       }}
       className={cn(
         "flex shrink-0 items-center gap-1.5 rounded-lg px-1.5 py-1 text-[11px] font-medium transition-colors",
-        "hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70",
+        "focus-visible:outline-none focus-visible:ring-2",
+        onLight
+          ? "hover:bg-black/5 focus-visible:ring-ring dark:hover:bg-white/10"
+          : "hover:bg-white/15 focus-visible:ring-white/70",
         disabled && "opacity-60"
       )}
     >
       <span
         className={cn(
-          "flex h-4 w-4 items-center justify-center rounded border-2 border-white/70",
-          checked && "bg-white"
+          "flex h-4 w-4 items-center justify-center rounded border-2",
+          onLight ? "border-current opacity-90" : "border-white/70",
+          checked && (onLight ? "bg-current" : "bg-white")
         )}
       >
-        {checked && <Check className="h-3 w-3 text-slate-900" strokeWidth={3} />}
+        {checked && (
+          <Check
+            className={cn("h-3 w-3", onLight ? "text-background" : "text-slate-900")}
+            strokeWidth={3}
+          />
+        )}
       </span>
       {withLabel && <span>Tamamlandı</span>}
     </button>
@@ -120,19 +132,31 @@ export function ScheduleEventCard({
   const hasActions = !compact && personal && Boolean(onToggleCompleted || showEdit || showDelete);
   const statusLabel = personal ? null : lessonStatusLabel(event.status);
 
+  // The day view paints a pale body and puts the saturated colour in a fixed
+  // 4px bar, so a two-hour block carries no more loud pixels than a 30-minute
+  // one. Everywhere else the chip height is constant and the tone can fill it.
+  const dayHue = expanded ? dayHueForEvent(event) : null;
+
   return (
     <div
       style={style}
       className={cn(
-        "flex min-w-0 overflow-hidden border",
+        "relative flex min-w-0 overflow-hidden border",
         compact
           ? "gap-1.5 rounded-xl px-2 py-1.5 shadow-sm"
-          : "gap-2 rounded-2xl px-3 py-2 shadow-md",
-        tone.card,
+          : "gap-2 rounded-2xl py-2 shadow-md",
+        expanded ? "pl-4 pr-3" : !compact && "px-3",
+        dayHue ? dayHue.card : tone.card,
         pending && "opacity-60",
         className
       )}
     >
+      {dayHue && (
+        <span
+          className={cn("absolute inset-y-0 left-0 w-1", dayHue.dot)}
+          aria-hidden
+        />
+      )}
       <div className="min-w-0 flex-1">
         {expanded ? (
           // One line across the full width of a day row: time, then the full
@@ -145,7 +169,7 @@ export function ScheduleEventCard({
             <span
               className={cn(
                 "inline-flex shrink-0 items-center gap-1 text-[10px] font-semibold uppercase tracking-wide",
-                tone.label
+                dayHue ? dayHue.label : tone.label
               )}
             >
               <KindIcon className="h-2.5 w-2.5" aria-hidden />
@@ -173,15 +197,12 @@ export function ScheduleEventCard({
           </p>
         ) : null}
 
-        <div
-          className={cn(
-            "flex min-w-0 items-center gap-1",
-            compact && "justify-between",
-            // A day row is hundreds of pixels wide; stacking the label under
-            // the title there wasted all of it and left the card looking empty.
-            expanded && "hidden"
-          )}
-        >
+        {/* The expanded row above already carries the category, the icon and
+            the lock. Rendering this block as well and hiding it with a class
+            left the ", salt okunur" note in the DOM twice, so a screen reader
+            announced it twice. */}
+        {!expanded && (
+        <div className={cn("flex min-w-0 items-center gap-1", compact && "justify-between")}>
           <p
             className={cn(
               "min-w-0 truncate text-[10px] font-semibold",
@@ -217,6 +238,7 @@ export function ScheduleEventCard({
             />
           )}
         </div>
+        )}
 
         {!compact && !expanded && (
           <>
@@ -258,6 +280,7 @@ export function ScheduleEventCard({
               checked={Boolean(event.completed)}
               disabled={pending}
               withLabel
+              onLight={expanded}
               onChange={(next) => onToggleCompleted(event, next)}
             />
           )}
@@ -269,7 +292,7 @@ export function ScheduleEventCard({
                   type="button"
                   aria-label="Çalışmayı düzenle"
                   onClick={() => onEdit(event)}
-                  className="rounded-md p-1 hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+                  className={cn("rounded-md p-1 focus-visible:outline-none focus-visible:ring-2", expanded ? "hover:bg-black/5 focus-visible:ring-ring dark:hover:bg-white/10" : "hover:bg-white/20 focus-visible:ring-white/70")}
                 >
                   <Pencil className="h-3.5 w-3.5" />
                 </button>
@@ -279,7 +302,7 @@ export function ScheduleEventCard({
                   type="button"
                   aria-label="Çalışmayı sil"
                   onClick={() => onDelete(event)}
-                  className="rounded-md p-1 hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+                  className={cn("rounded-md p-1 focus-visible:outline-none focus-visible:ring-2", expanded ? "hover:bg-black/5 focus-visible:ring-ring dark:hover:bg-white/10" : "hover:bg-white/20 focus-visible:ring-white/70")}
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                 </button>

@@ -175,6 +175,26 @@ describe("lessons and coaching are read-only", () => {
     assert.equal(screen.queryByLabelText("Çalışmayı sil"), null);
   });
 
+  // In the day view the pale body is the same for both kinds, so the lock and
+  // the checkbox are the only things left saying which is which. They have to
+  // survive that density.
+  it("still separates a lesson from a study block once the fill stops doing it", () => {
+    const { unmount } = render(<ScheduleEventCard event={lesson()} density="expanded" />);
+    assert.ok(screen.getByText(", salt okunur"));
+    assert.equal(screen.queryByRole("checkbox"), null);
+    unmount();
+
+    render(
+      <ScheduleEventCard
+        event={studyBlock()}
+        density="expanded"
+        onToggleCompleted={() => {}}
+      />
+    );
+    assert.ok(screen.getByRole("checkbox"));
+    assert.equal(screen.queryByText(", salt okunur"), null);
+  });
+
   it("says it is read-only for a screen reader, not only with a lock glyph", () => {
     render(<ScheduleEventCard event={lesson()} />);
 
