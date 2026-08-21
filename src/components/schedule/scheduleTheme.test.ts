@@ -144,8 +144,11 @@ describe("day-view surfaces stay pale whatever the duration", () => {
     it(`${name} gets a tinted body and a saturated bar`, () => {
       const hue = dayHueForEvent(event);
 
-      assert.doesNotMatch(hue.card, /text-white/, `${name} is still a solid fill`);
-      assert.match(hue.card, /^bg-[a-z]+-50(\s|$)/, `${name} is not a -50 tint`);
+      assert.doesNotMatch(hue.dayCard, /text-white/, `${name} is still a solid fill`);
+      // -200, not -50: at -50 the body separates from the page by about 1.05
+      // and a two-hour block reads as an empty outline instead of booked time.
+      assert.match(hue.dayCard, /^bg-[a-z]+-200(\s|$)/, `${name} is not a -200 body`);
+      assert.match(hue.dayCard, /border-[a-z]+-300/, `${name} has no delineating border`);
       // The bar is where the colour lives now, so it has to be saturated.
       assert.match(hue.dot, /-500$/, `${name} has no saturated bar colour`);
     });

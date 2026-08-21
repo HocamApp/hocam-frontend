@@ -112,6 +112,13 @@ export type SubjectHue = {
   dot: string;
   /** Soft icon chip for the subject totals cards. */
   chip: string;
+  /**
+   * Day-view body. A step darker than `card`, which is nearly white: at -50 a
+   * two-hour block separates from the page by 1.04–1.10 and reads as an empty
+   * outline rather than occupied time. -200 separates by 1.17–1.42 and still
+   * leaves the -900 text at 6.8:1 or better.
+   */
+  dayCard: string;
 };
 
 /**
@@ -146,6 +153,7 @@ export const SUBJECT_HUES: Record<SubjectHueId, SubjectHue> = {
     label: "text-blue-800 dark:text-blue-300",
     dot: "bg-blue-500",
     chip: "bg-blue-50 text-blue-800 dark:bg-blue-900/40 dark:text-blue-200",
+    dayCard: "bg-blue-200 text-blue-900 border-blue-300 dark:bg-blue-900/40 dark:text-blue-100 dark:border-blue-700",
   },
   violet: {
     id: "violet",
@@ -153,6 +161,7 @@ export const SUBJECT_HUES: Record<SubjectHueId, SubjectHue> = {
     label: "text-violet-800 dark:text-violet-300",
     dot: "bg-violet-500",
     chip: "bg-violet-50 text-violet-800 dark:bg-violet-900/40 dark:text-violet-200",
+    dayCard: "bg-violet-200 text-violet-900 border-violet-300 dark:bg-violet-900/40 dark:text-violet-100 dark:border-violet-700",
   },
   teal: {
     id: "teal",
@@ -160,6 +169,7 @@ export const SUBJECT_HUES: Record<SubjectHueId, SubjectHue> = {
     label: "text-teal-800 dark:text-teal-300",
     dot: "bg-teal-500",
     chip: "bg-teal-50 text-teal-800 dark:bg-teal-900/40 dark:text-teal-200",
+    dayCard: "bg-teal-200 text-teal-900 border-teal-300 dark:bg-teal-900/40 dark:text-teal-100 dark:border-teal-700",
   },
   rose: {
     id: "rose",
@@ -167,6 +177,7 @@ export const SUBJECT_HUES: Record<SubjectHueId, SubjectHue> = {
     label: "text-rose-800 dark:text-rose-300",
     dot: "bg-rose-500",
     chip: "bg-rose-50 text-rose-800 dark:bg-rose-900/40 dark:text-rose-200",
+    dayCard: "bg-rose-200 text-rose-900 border-rose-300 dark:bg-rose-900/40 dark:text-rose-100 dark:border-rose-700",
   },
   orange: {
     id: "orange",
@@ -174,6 +185,7 @@ export const SUBJECT_HUES: Record<SubjectHueId, SubjectHue> = {
     label: "text-orange-800 dark:text-orange-300",
     dot: "bg-orange-500",
     chip: "bg-orange-50 text-orange-800 dark:bg-orange-900/40 dark:text-orange-200",
+    dayCard: "bg-orange-200 text-orange-900 border-orange-300 dark:bg-orange-900/40 dark:text-orange-100 dark:border-orange-700",
   },
   cyan: {
     id: "cyan",
@@ -181,6 +193,7 @@ export const SUBJECT_HUES: Record<SubjectHueId, SubjectHue> = {
     label: "text-cyan-800 dark:text-cyan-300",
     dot: "bg-cyan-500",
     chip: "bg-cyan-50 text-cyan-800 dark:bg-cyan-900/40 dark:text-cyan-200",
+    dayCard: "bg-cyan-200 text-cyan-900 border-cyan-300 dark:bg-cyan-900/40 dark:text-cyan-100 dark:border-cyan-700",
   },
   purple: {
     id: "purple",
@@ -188,6 +201,7 @@ export const SUBJECT_HUES: Record<SubjectHueId, SubjectHue> = {
     label: "text-purple-800 dark:text-purple-300",
     dot: "bg-purple-500",
     chip: "bg-purple-50 text-purple-800 dark:bg-purple-900/40 dark:text-purple-200",
+    dayCard: "bg-purple-200 text-purple-900 border-purple-300 dark:bg-purple-900/40 dark:text-purple-100 dark:border-purple-700",
   },
   green: {
     id: "green",
@@ -195,6 +209,7 @@ export const SUBJECT_HUES: Record<SubjectHueId, SubjectHue> = {
     label: "text-green-800 dark:text-green-300",
     dot: "bg-green-500",
     chip: "bg-green-50 text-green-800 dark:bg-green-900/40 dark:text-green-200",
+    dayCard: "bg-green-200 text-green-900 border-green-300 dark:bg-green-900/40 dark:text-green-100 dark:border-green-700",
   },
   fuchsia: {
     id: "fuchsia",
@@ -202,6 +217,7 @@ export const SUBJECT_HUES: Record<SubjectHueId, SubjectHue> = {
     label: "text-fuchsia-800 dark:text-fuchsia-300",
     dot: "bg-fuchsia-500",
     chip: "bg-fuchsia-50 text-fuchsia-800 dark:bg-fuchsia-900/40 dark:text-fuchsia-200",
+    dayCard: "bg-fuchsia-200 text-fuchsia-900 border-fuchsia-300 dark:bg-fuchsia-900/40 dark:text-fuchsia-100 dark:border-fuchsia-700",
   },
   amber: {
     id: "amber",
@@ -209,6 +225,7 @@ export const SUBJECT_HUES: Record<SubjectHueId, SubjectHue> = {
     label: "text-amber-800 dark:text-amber-300",
     dot: "bg-amber-500",
     chip: "bg-amber-50 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200",
+    dayCard: "bg-amber-200 text-amber-900 border-amber-300 dark:bg-amber-900/40 dark:text-amber-100 dark:border-amber-700",
   },
   sky: {
     id: "sky",
@@ -216,6 +233,7 @@ export const SUBJECT_HUES: Record<SubjectHueId, SubjectHue> = {
     label: "text-sky-800 dark:text-sky-300",
     dot: "bg-sky-500",
     chip: "bg-sky-50 text-sky-800 dark:bg-sky-900/40 dark:text-sky-200",
+    dayCard: "bg-sky-200 text-sky-900 border-sky-300 dark:bg-sky-900/40 dark:text-sky-100 dark:border-sky-700",
   },
   pink: {
     id: "pink",
@@ -223,6 +241,7 @@ export const SUBJECT_HUES: Record<SubjectHueId, SubjectHue> = {
     label: "text-pink-800 dark:text-pink-300",
     dot: "bg-pink-500",
     chip: "bg-pink-50 text-pink-800 dark:bg-pink-900/40 dark:text-pink-200",
+    dayCard: "bg-pink-200 text-pink-900 border-pink-300 dark:bg-pink-900/40 dark:text-pink-100 dark:border-pink-700",
   },
   lime: {
     id: "lime",
@@ -230,6 +249,7 @@ export const SUBJECT_HUES: Record<SubjectHueId, SubjectHue> = {
     label: "text-lime-800 dark:text-lime-300",
     dot: "bg-lime-500",
     chip: "bg-lime-50 text-lime-800 dark:bg-lime-900/40 dark:text-lime-200",
+    dayCard: "bg-lime-200 text-lime-900 border-lime-300 dark:bg-lime-900/40 dark:text-lime-100 dark:border-lime-700",
   },
   stone: {
     id: "stone",
@@ -237,6 +257,7 @@ export const SUBJECT_HUES: Record<SubjectHueId, SubjectHue> = {
     label: "text-stone-800 dark:text-stone-300",
     dot: "bg-stone-500",
     chip: "bg-stone-50 text-stone-800 dark:bg-stone-900/40 dark:text-stone-200",
+    dayCard: "bg-stone-200 text-stone-900 border-stone-300 dark:bg-stone-900/40 dark:text-stone-100 dark:border-stone-700",
   },
   emerald: {
     id: "emerald",
@@ -244,6 +265,7 @@ export const SUBJECT_HUES: Record<SubjectHueId, SubjectHue> = {
     label: "text-emerald-800 dark:text-emerald-300",
     dot: "bg-emerald-500",
     chip: "bg-emerald-50 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200",
+    dayCard: "bg-emerald-200 text-emerald-900 border-emerald-300 dark:bg-emerald-900/40 dark:text-emerald-100 dark:border-emerald-700",
   },
   slate: {
     id: "slate",
@@ -251,6 +273,7 @@ export const SUBJECT_HUES: Record<SubjectHueId, SubjectHue> = {
     label: "text-slate-800 dark:text-slate-300",
     dot: "bg-slate-500",
     chip: "bg-slate-50 text-slate-800 dark:bg-slate-900/40 dark:text-slate-200",
+    dayCard: "bg-slate-200 text-slate-900 border-slate-300 dark:bg-slate-900/40 dark:text-slate-100 dark:border-slate-700",
   },
 };
 
@@ -431,6 +454,7 @@ const COACHING_HUE: SubjectHue = {
   label: "text-indigo-800 dark:text-indigo-300",
   dot: "bg-indigo-500",
   chip: "bg-indigo-50 text-indigo-800 dark:bg-indigo-900/40 dark:text-indigo-200",
+  dayCard: "bg-indigo-200 text-indigo-900 border-indigo-300 dark:bg-indigo-900/40 dark:text-indigo-100 dark:border-indigo-700",
 };
 
 const BRAND_HUE: SubjectHue = {
@@ -439,6 +463,7 @@ const BRAND_HUE: SubjectHue = {
   label: "text-brand-600 dark:text-brand-300",
   dot: "bg-brand-500",
   chip: "bg-brand-50 text-brand-600 dark:bg-brand-900/40 dark:text-brand-200",
+  dayCard: "bg-brand-200 text-brand-900 border-brand-300 dark:bg-brand-900/40 dark:text-brand-100 dark:border-brand-700",
 };
 
 /** The pale body (`card`) and saturated left bar (`dot`) for a day-view block. */

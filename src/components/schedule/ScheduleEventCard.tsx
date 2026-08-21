@@ -146,7 +146,7 @@ export function ScheduleEventCard({
           ? "gap-1.5 rounded-xl px-2 py-1.5 shadow-sm"
           : "gap-2 rounded-2xl py-2 shadow-md",
         expanded ? "pl-4 pr-3" : !compact && "px-3",
-        dayHue ? dayHue.card : tone.card,
+        dayHue ? dayHue.dayCard : tone.card,
         pending && "opacity-60",
         className
       )}
