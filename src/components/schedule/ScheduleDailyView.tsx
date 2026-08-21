@@ -125,12 +125,12 @@ export function ScheduleDailyView({
           );
           // Overlapping events share the width instead of hiding each other.
           const width = 100 / columns;
-          // Density follows the height the card actually gets, not the column
-          // count: a 40-minute lesson in its own column still only has 56px,
-          // which clips a three-line card mid-glyph. A card that does have the
-          // room gets "expanded", whose right-hand meta column fills the ~500px
-          // that a full-width day row otherwise leaves blank.
-          const density = columns > 1 || slotHeight < HOUR_HEIGHT ? "compact" : "expanded";
+          // A day row is wide even when it shares the width: half of a ~1000px
+          // canvas is still ~500px. The week-cell layout stacks its lines, which
+          // in that space reads as a mostly-empty card, so the day view uses the
+          // single-line "expanded" row and only falls back once a cluster is
+          // genuinely narrow.
+          const density = columns > 2 ? "compact" : "expanded";
           return (
             <ScheduleEventCard
               key={`${event.source}-${event.id}-${event.occurrence_date ?? ""}`}
@@ -143,7 +143,10 @@ export function ScheduleDailyView({
                 left: `${column * width}%`,
                 width: `calc(${width}% - ${columns > 1 ? "0.25rem" : "0px"})`,
               }}
-              className={cn("absolute z-[5] items-center")}
+              // Content sits at the top of its slot, not centred in it: a
+              // two-hour block centred its one line in the middle of 144px and
+              // read as an empty slab.
+              className={cn("absolute z-[5] items-start")}
               density={density}
               pending={pendingKeys.has(eventKey(event))}
               onToggleCompleted={onToggleCompleted}

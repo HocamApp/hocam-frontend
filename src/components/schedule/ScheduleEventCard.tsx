@@ -134,7 +134,33 @@ export function ScheduleEventCard({
       )}
     >
       <div className="min-w-0 flex-1">
-        {compact ? (
+        {expanded ? (
+          // One line across the full width of a day row: time, then the full
+          // composed title, then the category pushed out to the right.
+          <p className="flex min-w-0 items-baseline gap-2">
+            <span className="shrink-0 text-sm font-semibold tabular-nums">{timeRange}</span>
+            <span title={event.title} className="min-w-0 flex-1 truncate text-sm font-semibold">
+              {displayTitle}
+            </span>
+            <span
+              className={cn(
+                "inline-flex shrink-0 items-center gap-1 text-[10px] font-semibold uppercase tracking-wide",
+                tone.label
+              )}
+            >
+              <KindIcon className="h-2.5 w-2.5" aria-hidden />
+              {/* The words go first when there is room; the icon and the lock
+                  stay at every width, so the read-only signal never drops. */}
+              <span className="hidden sm:inline">{tone.kindLabel}</span>
+              {!personal && (
+                <>
+                  <Lock className="h-2.5 w-2.5" aria-hidden />
+                  <span className="sr-only">, salt okunur</span>
+                </>
+              )}
+            </span>
+          </p>
+        ) : compact ? (
           // Time first: it is what a student scans a week for, and it is the
           // one field short enough to survive at any column width.
           <p className="flex min-w-0 items-baseline gap-1.5">
@@ -147,7 +173,15 @@ export function ScheduleEventCard({
           </p>
         ) : null}
 
-        <div className={cn("flex min-w-0 items-center gap-1", compact && "justify-between")}>
+        <div
+          className={cn(
+            "flex min-w-0 items-center gap-1",
+            compact && "justify-between",
+            // A day row is hundreds of pixels wide; stacking the label under
+            // the title there wasted all of it and left the card looking empty.
+            expanded && "hidden"
+          )}
+        >
           <p
             className={cn(
               "min-w-0 truncate text-[10px] font-semibold",
@@ -184,7 +218,7 @@ export function ScheduleEventCard({
           )}
         </div>
 
-        {!compact && (
+        {!compact && !expanded && (
           <>
             <p
               // Truncated everywhere the card is narrow; the native tooltip is
@@ -196,7 +230,7 @@ export function ScheduleEventCard({
             </p>
             <p className="truncate text-xs tabular-nums">
               {timeRange}
-              {statusLabel && !expanded && ` · ${statusLabel}`}
+              {statusLabel && ` · ${statusLabel}`}
             </p>
           </>
         )}
