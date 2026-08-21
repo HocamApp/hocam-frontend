@@ -12,10 +12,14 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
+import { CoachingSectionHeading } from "@/components/coaching/CoachingSectionHeading";
 import {
   COACHING_FAZ8_QUERY_KEYS,
   cancelStudentCoaching,
+  coachingDisputeCategoryLabel,
+  coachingDisputeStatusLabel,
   coachingRefundStateCopy,
+  coachingServiceStatusLabel,
   createStudentCoachingDispute,
   fetchCoachingDisputeEligibility,
   fetchCoachingSchedulingState,
@@ -39,25 +43,53 @@ function NewDisputeForm({ purchaseId }: { purchaseId: string }) {
     },
   });
   const categories = eligibility.data?.categories ?? [];
-  const [category, setCategory] = useState("scope_deficient");
+  const [category, setCategory] = useState("");
   const [description, setDescription] = useState("");
+  // The server decides which reasons are open right now; the local state can
+  // lag a refetch, so the submitted value is always taken from the live list.
+  const selected = categories.includes(category) ? category : categories[0] ?? "";
+  const canSubmit = Boolean(selected) && Boolean(description.trim()) && !create.isPending;
 
   return (
     <Card>
       <CardContent className="space-y-4 py-5">
-        <div>
-          <h2 className="font-semibold">Koçluk başvurusu oluştur</h2>
-          <p className="mt-1 text-sm text-muted-foreground">Konu ve kapsam sunucunun mevcut koçluk kaydından doğrulanır.</p>
-        </div>
-        {eligibility.isLoading ? <LoadingSpinner /> : null}
-        <select className="w-full rounded-md border bg-background p-2 text-sm" value={category} onChange={(event) => setCategory(event.target.value)}>
-          {categories.length ? categories.map((item) => (
-            <option key={item} value={item}>{item}</option>
-          )) : <option value="scope_deficient">Koçluk kapsamı</option>}
-        </select>
-        <Textarea value={description} onChange={(event) => setDescription(event.target.value)} placeholder="Durumu kısaca açıkla" />
+        <CoachingSectionHeading
+          level="subsection"
+          description="Konu ve kapsam sunucunun mevcut koçluk kaydından doğrulanır."
+        >
+          Koçluk başvurusu oluştur
+        </CoachingSectionHeading>
+        {eligibility.isLoading ? (
+          <LoadingSpinner />
+        ) : eligibility.isError ? (
+          <p className="text-sm text-destructive">
+            Başvuru konuları şu anda getirilemedi. Sayfayı yenileyip tekrar dene.
+          </p>
+        ) : categories.length === 0 ? (
+          // An empty list is an answer, not a failure: nothing is currently
+          // eligible. Offering a placeholder reason here only produced a
+          // paragraph of writing that the server then rejected.
+          <p className="text-sm text-muted-foreground">
+            Şu anda başvuru açabileceğin bir konu görünmüyor. Koçluk kaydın ilerledikçe
+            uygun konular burada listelenir.
+          </p>
+        ) : (
+          <>
+            <select
+              className="w-full rounded-md border bg-background p-2 text-sm"
+              aria-label="Başvuru konusu"
+              value={selected}
+              onChange={(event) => setCategory(event.target.value)}
+            >
+              {categories.map((item) => (
+                <option key={item} value={item}>{coachingDisputeCategoryLabel(item)}</option>
+              ))}
+            </select>
+            <Textarea value={description} onChange={(event) => setDescription(event.target.value)} placeholder="Durumu kısaca açıkla" />
+          </>
+        )}
         {create.error ? <p className="text-sm text-destructive">Başvuru oluşturulamadı. Lütfen güncel durumu tekrar kontrol et.</p> : null}
-        <Button disabled={!description.trim() || create.isPending} onClick={() => create.mutate({ category, description })}>
+        <Button disabled={!canSubmit} onClick={() => create.mutate({ category: selected, description })}>
           {create.isPending ? "Gönderiliyor…" : "Başvuruyu gönder"}
         </Button>
       </CardContent>
@@ -86,13 +118,13 @@ function ComplaintsContent() {
   if (!purchaseId) return <EmptyState title="Koçluk kaydı bulunamadı" description="Koçluk başvuruları aktif bir koçluk satın alımıyla ilişkilidir." steps={["Aktif koçluk kaydı doğrulanır", "Başvuru alanı hizmete bağlanır"]} />;
   return <div className="space-y-6">
     <NewDisputeForm purchaseId={purchaseId} />
-    <Card><CardContent className="space-y-3 py-5"><div className="flex items-center justify-between gap-2"><h2 className="font-semibold">Koçluk iptali ve iade durumu</h2><Badge variant="secondary">{financial.data?.service_status ?? "Yükleniyor"}</Badge></div>
+    <Card><CardContent className="space-y-3 py-5"><div className="flex items-center justify-between gap-2"><CoachingSectionHeading level="subsection">Koçluk iptali ve iade durumu</CoachingSectionHeading><Badge variant="secondary">{financial.data ? coachingServiceStatusLabel(financial.data.service_status) : "Yükleniyor"}</Badge></div>
       <p className="text-sm text-muted-foreground">{financial.data ? coachingRefundStateCopy(financial.data.refund_state) : "Finansal durum yükleniyor."}</p>
       {financial.data ? <p className="text-xs text-muted-foreground">Sunucu kaydındaki iade yükümlülüğü: {formatTryMinor(financial.data.refund_liability_minor)}.</p> : null}
       {financial.data?.cancellation_pending ? <p className="text-sm">İptal talebin işleniyor; aktif dönem geçmiş kayıtlarda korunur.</p> : <Button variant="outline" disabled={cancel.isPending} onClick={() => cancel.mutate()}>Koçluğu sonlandırmayı iste</Button>}
       {cancel.error ? <p className="text-sm text-destructive">İptal talebi güncel durumla çakıştı; sayfayı yenileyip tekrar dene.</p> : null}
     </CardContent></Card>
-    <section className="space-y-3"><h2 className="text-lg font-semibold">Başvurularım</h2>{disputes.data?.length ? disputes.data.map((dispute) => <Link key={dispute.id} href={`/dashboard/student/coaching/complaints/${dispute.id}`}><Card className="mb-3 transition-colors hover:bg-muted/50"><CardContent className="flex items-center justify-between gap-3 py-4"><div><p className="font-medium">{dispute.category}</p><p className="text-sm text-muted-foreground">{new Date(dispute.submitted_at).toLocaleString("tr-TR")}</p></div><Badge>{dispute.status}</Badge></CardContent></Card></Link>) : <EmptyState title="Henüz başvurun yok" description="Bir sorun olduğunda başvurunu buradan takip edebilirsin." steps={["Başvurunu ve kanıtını paylaşırsın", "Paylaşılabilir süreç güncellemelerini izlersin"]} />}</section>
+    <section className="space-y-3"><CoachingSectionHeading>Başvurularım</CoachingSectionHeading>{disputes.data?.length ? disputes.data.map((dispute) => <Link key={dispute.id} href={`/dashboard/student/coaching/complaints/${dispute.id}`}><Card className="mb-3 transition-colors hover:bg-muted/50"><CardContent className="flex items-center justify-between gap-3 py-4"><div><p className="font-medium">{coachingDisputeCategoryLabel(dispute.category)}</p><p className="text-sm text-muted-foreground">{new Date(dispute.submitted_at).toLocaleString("tr-TR")}</p></div><Badge>{coachingDisputeStatusLabel(dispute.status)}</Badge></CardContent></Card></Link>) : <EmptyState title="Henüz başvurun yok" description="Bir sorun olduğunda başvurunu buradan takip edebilirsin." steps={["Başvurunu ve kanıtını paylaşırsın", "Paylaşılabilir süreç güncellemelerini izlersin"]} />}</section>
   </div>;
 }
 

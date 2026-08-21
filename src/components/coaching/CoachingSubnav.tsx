@@ -32,8 +32,10 @@ const STUDENT_LINKS = [
   { label: "Destek", href: "/dashboard/student/coaching/complaints", icon: ShieldAlert },
 ] as const;
 
-function isCurrentRoute(currentHref: string, href: string) {
-  if (currentHref === href) return true;
+type Audience = "tutor" | "student";
+
+/** Sub-pages that belong under a tab without matching its href exactly. */
+function matchesGroup(href: string, currentHref: string, audience: Audience) {
   if (href.endsWith("/upcoming")) {
     return currentHref.includes("/sessions/") || currentHref.includes("/reschedule-requests");
   }
@@ -44,9 +46,31 @@ function isCurrentRoute(currentHref: string, href: string) {
     return currentHref.includes("/service-periods/") || currentHref.includes("/time-requests");
   }
   if (href.endsWith("/reports")) {
-    return currentHref.includes("/reports") || currentHref.includes("/complaints");
+    // The tutor files complaints under "Kayıtlar" and has no separate tab for
+    // them. The student does have one — "Destek" — so folding /complaints into
+    // Raporlar there lit two tabs at once on the complaints page.
+    if (audience === "tutor") {
+      return currentHref.includes("/reports") || currentHref.includes("/complaints");
+    }
+    return currentHref.includes("/reports");
   }
   return false;
+}
+
+/**
+ * The one current tab. Resolved once rather than per link: the pill and the
+ * screen-reader announcement used to decide independently, so an overlapping
+ * rule could — and did — highlight two tabs while announcing a third.
+ * An exact href always wins; grouping is only the fallback.
+ */
+export function resolveCoachingSubnavHref(
+  links: readonly { href: string }[],
+  currentHref: string,
+  audience: Audience
+): string | null {
+  const exact = links.find((link) => link.href === currentHref);
+  if (exact) return exact.href;
+  return links.find((link) => matchesGroup(link.href, currentHref, audience))?.href ?? null;
 }
 
 export function CoachingSubnav({
@@ -54,10 +78,11 @@ export function CoachingSubnav({
   audience,
 }: {
   currentHref: string;
-  audience: "tutor" | "student";
+  audience: Audience;
 }) {
   const links = audience === "tutor" ? TUTOR_LINKS : STUDENT_LINKS;
-  const current = links.find((link) => isCurrentRoute(currentHref, link.href));
+  const activeHref = resolveCoachingSubnavHref(links, currentHref, audience);
+  const current = links.find((link) => link.href === activeHref);
 
   return (
     <div className="space-y-2">
@@ -70,7 +95,7 @@ export function CoachingSubnav({
           className="flex gap-1.5 overflow-x-auto rounded-2xl border border-border/60 bg-card/90 p-1.5 pr-12 shadow-sm [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:pr-1.5"
         >
         {links.map(({ label, href, icon: Icon }) => {
-          const active = isCurrentRoute(currentHref, href);
+          const active = href === activeHref;
           return (
             <Link
               key={href}

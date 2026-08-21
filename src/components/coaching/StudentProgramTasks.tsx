@@ -6,6 +6,7 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { COACHING_SECTION_TITLE_CLASS } from "@/components/coaching/CoachingSectionHeading";
 import {
   COACHING_FAZ6_QUERY_KEYS,
   extractCoachingErrorMessage,
@@ -28,7 +29,7 @@ export function StudentProgramTasks({ program }: { program: CoachingProgram }) {
     <div className="space-y-5">
       <Card>
         <CardHeader>
-          <CardTitle>{program.title}</CardTitle>
+          <CardTitle className={COACHING_SECTION_TITLE_CLASS}>{program.title}</CardTitle>
           <p className="whitespace-pre-wrap text-sm leading-6 text-muted-foreground">{program.objective}</p>
           {program.start_date || program.end_date ? (
             <p className="text-xs text-muted-foreground">
@@ -38,7 +39,7 @@ export function StudentProgramTasks({ program }: { program: CoachingProgram }) {
         </CardHeader>
       </Card>
       <Card>
-        <CardHeader><CardTitle className="text-lg">Görevlerim</CardTitle></CardHeader>
+        <CardHeader><CardTitle className={COACHING_SECTION_TITLE_CLASS}>Görevlerim</CardTitle></CardHeader>
         <CardContent className="space-y-2">
           {tasks.length ? tasks.map((task) => (
             <div key={task.id} className="flex items-start gap-3 rounded-lg border p-3">

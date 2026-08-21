@@ -6,22 +6,16 @@ import { Calendar, FileText, HelpCircle, ListTodo, MessageCircle, ShieldAlert } 
 
 import { RouteGuard } from "@/components/shared/RouteGuard";
 import { CoachingPageShell } from "@/components/coaching/CoachingPageShell";
+import { CoachingSectionHeading } from "@/components/coaching/CoachingSectionHeading";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { CoachingEmptyState as EmptyState } from "@/components/coaching/CoachingEmptyState";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
+  coachingServiceStatusLabel,
   fetchCoachingSchedulingState,
   fetchCoachingSessions,
 } from "@/lib/coachingApi";
-
-const SERVICE_STATUS_LABEL: Record<string, string> = {
-  accepted_awaiting_payment: "Ödeme doğrulaması bekleniyor",
-  accepted_awaiting_schedule: "Saat seçimi bekleniyor",
-  active: "Aktif",
-  cancellation_pending: "İptal işleniyor",
-  cancelled: "İptal edildi",
-};
 
 function OverviewContent() {
   const { data: state, isLoading: stateLoading } = useQuery({
@@ -61,7 +55,7 @@ steps={["Ders paketi ve koçluk talebin kabul edilir", "Ödemen aktive olduğund
           <div className="flex items-center justify-between">
             <p className="text-sm font-medium">Çalışma Koçluğu</p>
             <Badge variant="secondary">
-              {SERVICE_STATUS_LABEL[state.service_status] ?? state.service_status}
+              {coachingServiceStatusLabel(state.service_status)}
             </Badge>
           </div>
           {sessionsLoading ? (
@@ -87,6 +81,8 @@ steps={["Ders paketi ve koçluk talebin kabul edilir", "Ödemen aktive olduğund
           )}
         </CardContent>
       </Card>
+
+      <CoachingSectionHeading>Koçluk alanların</CoachingSectionHeading>
 
       <div className="grid gap-3 sm:grid-cols-2">
         <Link href="/dashboard/student/coaching/upcoming">
