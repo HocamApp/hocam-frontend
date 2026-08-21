@@ -243,35 +243,52 @@ export function SchedulePageClient() {
             ))}
           </div>
 
-          <div className="flex items-center gap-1">
-            <Button
-              variant="ghost"
-              size="icon"
-              aria-label="Önceki"
-              onClick={() => setAnchor(shiftAnchor(view, anchor, -1))}
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <span className="min-w-[10rem] text-center text-sm font-medium tabular-nums">
-              {rangeLabel(view, anchor)}
-            </span>
-            <Button
-              variant="ghost"
-              size="icon"
-              aria-label="Sonraki"
-              onClick={() => setAnchor(shiftAnchor(view, anchor, 1))}
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-            <Button variant="ghost" size="sm" onClick={() => setAnchor(todayLocal())}>
-              Bugün
-            </Button>
-            {/* Sits with the range controls rather than up by the title: this
-                is the row the student is already working in. */}
-            <Button onClick={openCreate} className="ml-1 shrink-0">
-              <Plus className="mr-1.5 h-4 w-4" aria-hidden />
-              Çalışma Ekle
-            </Button>
+          {/* Laid out as two groups that wrap: on a 375px screen the arrows,
+              the range label, "Bugün" and "Çalışma Ekle" add up to ~466px in
+              343px of content, and as one non-wrapping row they pushed the
+              whole page sideways. */}
+          <div className="flex w-full flex-wrap items-center gap-1 sm:w-auto">
+            {/* Full width below sm so the actions drop to their own line: with
+                a flex-1 basis of 0 the label just squeezed instead, and
+                "17 – 23 Ağustos" broke across three lines. */}
+            <div className="flex w-full min-w-0 items-center gap-1 sm:w-auto">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="shrink-0"
+                aria-label="Önceki"
+                onClick={() => setAnchor(shiftAnchor(view, anchor, -1))}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              {/* The fixed 10rem keeps the label from jittering as the range
+                  text changes width, which only matters where there is room
+                  for it; below sm it takes what is left of the row instead. */}
+              <span className="min-w-0 flex-1 text-center text-sm font-medium tabular-nums sm:min-w-[10rem] sm:flex-none">
+                {rangeLabel(view, anchor)}
+              </span>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="shrink-0"
+                aria-label="Sonraki"
+                onClick={() => setAnchor(shiftAnchor(view, anchor, 1))}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+
+            <div className="flex items-center gap-1">
+              <Button variant="ghost" size="sm" onClick={() => setAnchor(todayLocal())}>
+                Bugün
+              </Button>
+              {/* Sits with the range controls rather than up by the title: this
+                  is the row the student is already working in. */}
+              <Button onClick={openCreate} className="ml-1 shrink-0">
+                <Plus className="mr-1.5 h-4 w-4" aria-hidden />
+                Çalışma Ekle
+              </Button>
+            </div>
           </div>
         </div>
       </header>
