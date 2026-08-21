@@ -56,6 +56,20 @@ export function Footer() {
             </Link>
           </nav>
         )}
+        <nav
+          aria-label="Yasal ve gizlilik bağlantıları"
+          className="mb-4 flex flex-wrap justify-center gap-x-5 gap-y-2 text-sm text-muted-foreground"
+        >
+          <Link href="/kvkk" className="hover:text-primary">
+            KVKK ve Gizlilik
+          </Link>
+          <Link href="/kvkk/aydinlatma-metni" className="hover:text-primary">
+            Aydınlatma Metni
+          </Link>
+          <Link href="/kvkk/cerez-politikasi" className="hover:text-primary">
+            Çerez Politikası
+          </Link>
+        </nav>
         <p className="text-center text-sm text-muted-foreground">
           © {new Date().getFullYear()} Hocam. Tüm hakları saklıdır.
         </p>

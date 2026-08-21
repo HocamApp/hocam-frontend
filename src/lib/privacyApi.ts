@@ -11,6 +11,9 @@ export type ConsentPurpose =
 
 export interface ConsentState {
   text_version: string;
+  collection_enabled: boolean;
+  guardian_approval_enabled: boolean;
+  request_channel_enabled: boolean;
   birth_date: string | null;
   /**
    * null means we have never asked. Distinct from false on purpose: the UI
@@ -63,7 +66,11 @@ export async function submitBirthDate(
 export async function startGuardianApproval(
   guardianEmail: string,
   purposes: ConsentPurpose[],
-): Promise<{ id: string; guardian_email: string }> {
+): Promise<{
+  id: string;
+  guardian_email: string;
+  delivery_status: "sent";
+}> {
   const { data } = await api.post("/privacy/guardian-approval/", {
     guardian_email: guardianEmail,
     purposes,

@@ -19,9 +19,9 @@ export default function PrivacySettingsPage() {
 
       <h1 className="mt-6 text-3xl font-bold">Gizlilik ve Verilerim</h1>
       <p className="mt-3 text-muted-foreground">
-        Hangi verilerinin nasıl kullanıldığına buradan karar verirsin. Onay
-        vermediğin özellikler kapalı kalır; ders alma, mesajlaşma ve ödeme gibi
-        temel işlevler her hâlükârda çalışır.
+        Kişisel verilerinle ilgili bilgilere, mevcut onay kayıtlarına ve başvuru
+        kanalına buradan ulaşabilirsin. Ders alma, gerekli mesajlaşma ve ödeme
+        gibi temel işlemler pazarlama onayından bağımsızdır.
       </p>
       <p className="mt-2 text-sm text-muted-foreground">
         Verilerini nasıl işlediğimizi{" "}
@@ -41,8 +41,9 @@ export default function PrivacySettingsPage() {
       <section className="mt-12">
         <h2 className="text-xl font-semibold">Haklarımı kullanmak istiyorum</h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          KVKK 11. madde kapsamındaki taleplerini buradan iletebilirsin.
-          Başvurunu en geç 30 gün içinde cevaplarız.
+          KVKK 11. madde kapsamındaki taleplerini her zaman
+          kvkk@hocamozelders.com adresine; çevrimiçi kanal etkinse aşağıdaki
+          formdan iletebilirsin. Başvurunu en geç 30 gün içinde cevaplarız.
         </p>
         <div className="mt-4">
           <DataSubjectRequestForm />

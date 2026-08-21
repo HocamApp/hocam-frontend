@@ -4,7 +4,11 @@ export type DiscoveryConsentStatus = "unset" | "granted" | "denied" | "withdrawn
 export const DISCOVERY_CONSENT_CHANGED = "hocam:discovery-consent-changed";
 
 export async function getDiscoveryConsent() {
-  const response = await api.get<{ status: DiscoveryConsentStatus; policy_version: string }>("/discovery/consent/");
+  const response = await api.get<{
+    status: DiscoveryConsentStatus;
+    policy_version: string;
+    collection_enabled: boolean;
+  }>("/discovery/consent/");
   return response.data;
 }
 

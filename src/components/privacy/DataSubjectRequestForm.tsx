@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  fetchConsentState,
   fetchDataSubjectRequests,
   submitDataSubjectRequest,
   type DataSubjectRequestType,
@@ -37,6 +38,10 @@ export function DataSubjectRequestForm() {
     queryKey: ["privacy", "requests"],
     queryFn: fetchDataSubjectRequests,
   });
+  const { data: consentState } = useQuery({
+    queryKey: ["privacy", "consents"],
+    queryFn: fetchConsentState,
+  });
 
   const mutation = useMutation({
     mutationFn: () => submitDataSubjectRequest(requestType, message),
@@ -45,44 +50,67 @@ export function DataSubjectRequestForm() {
       setMessage("");
       toast.success("Başvurun alındı. En geç 30 gün içinde döneceğiz.");
     },
-    onError: () => toast.error("Başvuru gönderilemedi. Tekrar dener misin?"),
+    onError: (error: unknown) => {
+      const status = (error as { response?: { status?: number } })?.response
+        ?.status;
+      if (status === 503) {
+        toast.error(
+          "Çevrimiçi kanal şu anda kullanılamıyor. Başvurunu kvkk@hocamozelders.com adresine gönderebilirsin.",
+        );
+        return;
+      }
+      toast.error("Başvuru gönderilemedi. Tekrar dener misin?");
+    },
   });
 
   return (
     <div className="space-y-6">
-      <div className="space-y-3 rounded-lg border p-4">
-        <div className="space-y-2">
-          {REQUEST_TYPES.map((option) => (
-            <label
-              key={option.value}
-              className="flex cursor-pointer items-center gap-2 text-sm"
-            >
-              <input
-                type="radio"
-                name="request_type"
-                value={option.value}
-                checked={requestType === option.value}
-                onChange={() => setRequestType(option.value)}
-              />
-              {option.label}
-            </label>
-          ))}
+      {consentState?.request_channel_enabled ? (
+        <div className="space-y-3 rounded-lg border p-4">
+          <div className="space-y-2">
+            {REQUEST_TYPES.map((option) => (
+              <label
+                key={option.value}
+                className="flex cursor-pointer items-center gap-2 text-sm"
+              >
+                <input
+                  type="radio"
+                  name="request_type"
+                  value={option.value}
+                  checked={requestType === option.value}
+                  onChange={() => setRequestType(option.value)}
+                />
+                {option.label}
+              </label>
+            ))}
+          </div>
+
+          <Textarea
+            value={message}
+            onChange={(event) => setMessage(event.target.value)}
+            placeholder="Talebini kısaca anlatabilirsin (isteğe bağlı)."
+            rows={4}
+          />
+
+          <Button
+            onClick={() => mutation.mutate()}
+            disabled={mutation.isPending}
+          >
+            Başvuruyu gönder
+          </Button>
         </div>
-
-        <Textarea
-          value={message}
-          onChange={(event) => setMessage(event.target.value)}
-          placeholder="Talebini kısaca anlatabilirsin (isteğe bağlı)."
-          rows={4}
-        />
-
-        <Button
-          onClick={() => mutation.mutate()}
-          disabled={mutation.isPending}
-        >
-          Başvuruyu gönder
-        </Button>
-      </div>
+      ) : (
+        <div className="rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm leading-6 dark:border-amber-800 dark:bg-amber-950/40">
+          Çevrimiçi başvuru kanalı henüz etkin değil. Başvurunu her zaman{" "}
+          <a
+            href="mailto:kvkk@hocamozelders.com"
+            className="font-medium text-primary underline"
+          >
+            kvkk@hocamozelders.com
+          </a>{" "}
+          adresine gönderebilirsin.
+        </div>
+      )}
 
       {requests && requests.length > 0 && (
         <div className="space-y-2">
