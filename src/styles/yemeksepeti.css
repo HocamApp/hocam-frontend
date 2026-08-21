@@ -1,0 +1,495 @@
+/*
+ * Scoped design tokens + component classes for the Yemeksepeti-inspired
+ * homepage experiment.
+ *
+ * Everything is namespaced under `.ys-root` so the experiment cannot leak into
+ * the rest of the Hocam app. The token values mirror the ones read off the
+ * captured page so the layout lands close to the reference; swapping them for
+ * Hocam's own palette is the intended next step.
+ */
+
+.ys-root {
+  --ys-brand-primary: #fa0050;
+  --ys-interaction-primary: #ea004b;
+  --ys-interaction-primary-hover: #cd0042;
+  --ys-interaction-primary-feedback: #fdf2f5;
+  --ys-brand-highlight: #fdf2f5;
+  --ys-brand-highlight-1: #ffe6ee;
+
+  --ys-neutral-primary: #333;
+  --ys-neutral-secondary: #707070;
+  --ys-neutral-inactive: #cacaca;
+  --ys-neutral-border: #dcdcdc;
+  --ys-neutral-divider: #ebebeb;
+  --ys-neutral-surface: #f7f7f7;
+  --ys-neutral-strong: #1a1a1a;
+  --ys-white: #fff;
+
+  --ys-deal-primary: #007942;
+  --ys-deal-secondary: #00c26a;
+  --ys-deal-highlight-1: #d2ffeb;
+
+  --ys-radius-base: 8px;
+  --ys-radius-media: 12px;
+  --ys-radius-edge: 16px;
+  --ys-radius-field: 12px;
+  --ys-radius-pill: 9999px;
+
+  --ys-space-xxxs: 2px;
+  --ys-space-xxs: 4px;
+  --ys-space-xs: 8px;
+  --ys-space-st: 12px;
+  --ys-space-sm: 16px;
+  --ys-space-md: 24px;
+  --ys-space-lg: 32px;
+  --ys-space-xl: 48px;
+  --ys-space-xxl: 64px;
+
+  --ys-elevation-low: 0 0 24px 0 rgb(0 0 0 / 16%);
+  --ys-max-width: 1440px;
+
+  color: var(--ys-neutral-primary);
+  background-color: var(--ys-white);
+}
+
+/* ---------------------------------------------------------------- layout -- */
+
+.ys-shell {
+  width: 100%;
+  max-width: var(--ys-max-width);
+  margin: 0 auto;
+  padding: 0 var(--ys-space-sm);
+}
+
+@media (min-width: 960px) {
+  .ys-shell {
+    padding: 0 var(--ys-space-lg);
+  }
+}
+
+@media (min-width: 1264px) {
+  .ys-shell {
+    padding: 0 var(--ys-space-xxl);
+  }
+}
+
+/* --------------------------------------------------------------- buttons -- */
+
+.ys-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ys-space-xs);
+  border-radius: var(--ys-radius-base);
+  font-weight: 600;
+  white-space: nowrap;
+  transition:
+    background-color 150ms cubic-bezier(0.22, 0.1, 0.1, 1),
+    color 150ms cubic-bezier(0.22, 0.1, 0.1, 1),
+    border-color 150ms cubic-bezier(0.22, 0.1, 0.1, 1);
+}
+
+.ys-btn--small {
+  height: 32px;
+  padding: 0 var(--ys-space-st);
+  font-size: 0.875rem;
+  line-height: 1.571;
+}
+
+.ys-btn--regular {
+  height: 40px;
+  padding: 0 var(--ys-space-sm);
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.ys-btn--primary {
+  background-color: var(--ys-interaction-primary);
+  color: var(--ys-white);
+}
+
+.ys-btn--primary:hover {
+  background-color: var(--ys-interaction-primary-hover);
+}
+
+.ys-btn--secondary {
+  background-color: var(--ys-white);
+  color: var(--ys-neutral-primary);
+  border: 1px solid var(--ys-neutral-border);
+}
+
+.ys-btn--secondary:hover {
+  background-color: var(--ys-neutral-surface);
+  color: var(--ys-neutral-strong);
+}
+
+.ys-btn--text {
+  background-color: transparent;
+  color: var(--ys-neutral-primary);
+}
+
+.ys-btn--text:hover {
+  background-color: var(--ys-neutral-surface);
+}
+
+.ys-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--ys-radius-pill);
+  color: var(--ys-neutral-primary);
+  transition: background-color 150ms cubic-bezier(0.22, 0.1, 0.1, 1);
+}
+
+.ys-icon-btn:hover {
+  background-color: var(--ys-neutral-surface);
+}
+
+.ys-icon-btn:disabled {
+  color: var(--ys-neutral-inactive);
+  cursor: not-allowed;
+}
+
+.ys-icon-btn--small {
+  width: 32px;
+  height: 32px;
+}
+
+.ys-icon-btn--contained {
+  background-color: var(--ys-white);
+  box-shadow: 0 1px 4px rgb(0 0 0 / 16%);
+}
+
+/*
+ * Responsive display helpers.
+ *
+ * This stylesheet is injected after Tailwind's utilities, so `.ys-btn` and
+ * `.ys-icon-btn` would win over `hidden` / `md:inline-flex` at equal
+ * specificity. These helpers keep the breakpoint behaviour inside the same
+ * cascade layer instead of fighting it.
+ */
+.ys-from-md {
+  display: none;
+}
+
+.ys-until-md {
+  display: flex;
+}
+
+@media (min-width: 768px) {
+  .ys-from-md {
+    display: inline-flex;
+  }
+
+  .ys-until-md {
+    display: none;
+  }
+}
+
+/* ------------------------------------------------------------------ tabs -- */
+
+.ys-tab {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: var(--ys-space-xs);
+  height: 56px;
+  padding: 0 var(--ys-space-sm);
+  color: var(--ys-neutral-secondary);
+  font-size: 0.875rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.ys-tab::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  margin: 0 auto;
+  width: 0;
+  height: 2px;
+  opacity: 0;
+  background-color: var(--ys-neutral-strong);
+  transition: width 200ms cubic-bezier(0.35, 0.12, 0.14, 1.42);
+}
+
+.ys-tab:hover {
+  color: var(--ys-neutral-strong);
+}
+
+.ys-tab[data-selected="true"] {
+  color: var(--ys-neutral-strong);
+}
+
+.ys-tab[data-selected="true"]::after {
+  width: 100%;
+  opacity: 1;
+}
+
+/* ------------------------------------------------------------------ tags -- */
+
+.ys-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ys-space-xxs);
+  height: 20px;
+  padding: 0 var(--ys-space-xs);
+  border-radius: var(--ys-radius-base);
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+.ys-tag--sponsored {
+  background-color: rgb(255 255 255 / 90%);
+  color: var(--ys-neutral-primary);
+}
+
+.ys-tag--deal {
+  background-color: var(--ys-deal-highlight-1);
+  color: var(--ys-deal-primary);
+}
+
+.ys-tag--new {
+  background-color: var(--ys-brand-highlight-1);
+  color: var(--ys-interaction-primary-hover);
+}
+
+/* --------------------------------------------------------------- controls -- */
+
+.ys-choice {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--ys-space-st);
+  padding: var(--ys-space-xs) 0;
+  font-size: 0.875rem;
+  line-height: 1.571;
+  cursor: pointer;
+}
+
+.ys-choice__box {
+  position: relative;
+  flex: none;
+  width: 20px;
+  height: 20px;
+  margin-top: 1px;
+  border: 2px solid var(--ys-neutral-border);
+  background-color: var(--ys-white);
+  transition:
+    border-color 150ms ease,
+    background-color 150ms ease;
+}
+
+.ys-choice__box--radio {
+  border-radius: var(--ys-radius-pill);
+}
+
+.ys-choice__box--checkbox {
+  border-radius: var(--ys-radius-base);
+}
+
+.ys-choice:hover .ys-choice__box {
+  border-color: var(--ys-neutral-secondary);
+}
+
+.ys-choice[data-checked="true"] .ys-choice__box--radio {
+  border-color: var(--ys-interaction-primary);
+}
+
+.ys-choice[data-checked="true"] .ys-choice__box--radio::after {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  border-radius: var(--ys-radius-pill);
+  background-color: var(--ys-interaction-primary);
+}
+
+.ys-choice[data-checked="true"] .ys-choice__box--checkbox {
+  border-color: var(--ys-interaction-primary);
+  background-color: var(--ys-interaction-primary);
+}
+
+.ys-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ys-space-xxs);
+  height: 32px;
+  padding: 0 var(--ys-space-st);
+  border: 1px solid var(--ys-neutral-border);
+  border-radius: var(--ys-radius-pill);
+  background-color: var(--ys-white);
+  color: var(--ys-neutral-primary);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease,
+    color 150ms ease;
+}
+
+.ys-pill:hover {
+  background-color: var(--ys-neutral-surface);
+}
+
+.ys-pill[data-selected="true"] {
+  border-color: var(--ys-neutral-strong);
+  background-color: var(--ys-neutral-strong);
+  color: var(--ys-white);
+}
+
+.ys-search {
+  display: flex;
+  align-items: center;
+  gap: var(--ys-space-xs);
+  height: 40px;
+  padding: 0 var(--ys-space-st);
+  border: 1px solid var(--ys-neutral-border);
+  border-radius: var(--ys-radius-field);
+  background-color: var(--ys-white);
+  color: var(--ys-neutral-secondary);
+  transition: border-color 150ms ease;
+}
+
+.ys-search:focus-within {
+  border-color: var(--ys-neutral-primary);
+}
+
+.ys-search--small {
+  height: 32px;
+}
+
+.ys-search input {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: var(--ys-neutral-primary);
+  font-size: 0.875rem;
+  outline: none;
+}
+
+.ys-search input::placeholder {
+  color: var(--ys-neutral-secondary);
+}
+
+/* ------------------------------------------------------------ vendor tile -- */
+
+.ys-vendor-grid {
+  display: grid;
+  gap: var(--ys-space-md);
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+}
+
+@media (min-width: 528px) {
+  .ys-vendor-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1264px) {
+  .ys-vendor-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.ys-tile {
+  position: relative;
+  min-width: 0;
+  border-radius: var(--ys-radius-media);
+  transition: background-color 200ms ease;
+}
+
+.ys-tile__image {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: var(--ys-radius-media);
+}
+
+.ys-tile__image-inner {
+  position: absolute;
+  inset: 0;
+  transform-origin: 50%;
+  transition: transform 300ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.ys-tile:hover .ys-tile__image-inner {
+  transform: scale(1.0238);
+}
+
+.ys-tile__row {
+  display: flex;
+  align-items: center;
+  gap: var(--ys-space-xxs);
+  min-width: 0;
+  font-size: 0.75rem;
+  font-weight: 400;
+  line-height: 16px;
+  color: var(--ys-neutral-secondary);
+  white-space: nowrap;
+}
+
+.ys-tile__bullet {
+  color: var(--ys-neutral-inactive);
+  font-size: 0.625rem;
+}
+
+/* ---------------------------------------------------------- campaign lane -- */
+
+.ys-lane {
+  display: flex;
+  gap: var(--ys-space-sm);
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  padding-bottom: var(--ys-space-xxs);
+}
+
+.ys-lane__item {
+  flex: none;
+  width: 280px;
+  height: 120px;
+  overflow: hidden;
+  border-radius: var(--ys-radius-media);
+}
+
+/* ---------------------------------------------------------------- footer -- */
+
+.ys-footer-link {
+  color: var(--ys-neutral-secondary);
+  font-size: 0.875rem;
+  line-height: 1.571;
+}
+
+.ys-footer-link:hover {
+  color: var(--ys-neutral-primary);
+  text-decoration: underline;
+}
+
+/* --------------------------------------------------- placeholder imagery -- */
+
+/*
+ * No Yemeksepeti photography, logo or campaign art is bundled with this
+ * experiment. Tiles render a deterministic gradient derived from the mock
+ * record's `hue` instead.
+ */
+.ys-placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  padding: var(--ys-space-st);
+  background-image: linear-gradient(
+    135deg,
+    hsl(var(--ys-hue) 70% 62%) 0%,
+    hsl(calc(var(--ys-hue) + 18) 68% 46%) 100%
+  );
+  color: var(--ys-white);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-shadow: 0 1px 2px rgb(0 0 0 / 35%);
+}
