@@ -6,11 +6,8 @@ import { cn } from "@/lib/utils";
 import type { ScheduleEvent } from "@/types";
 import { ScheduleEventCard } from "./ScheduleEventCard";
 import { eventKey } from "./eventIdentity";
-import { layoutDayEvents } from "./dayLayout";
+import { HOUR_HEIGHT, MIN_CARD_HEIGHT, layoutDayEvents } from "./dayLayout";
 import { isSameDay, timeToMinutes, toDateKey } from "./scheduleDates";
-
-const HOUR_HEIGHT = 64;
-const MIN_CARD_HEIGHT = 52;
 
 interface ScheduleDailyViewProps {
   day: Date;
@@ -66,7 +63,10 @@ export function ScheduleDailyView({
 
   const positioned = useMemo(() => layoutDayEvents(dayEvents), [dayEvents]);
   const { start, end } = useMemo(() => hourWindow(dayEvents), [dayEvents]);
+  // Boundary labels, closing hour included — so there is one more label than
+  // there are rows, and the canvas spans (end - start) hours, not one more.
   const hours = Array.from({ length: end - start + 1 }, (_, index) => start + index);
+  const canvasHeight = (end - start) * HOUR_HEIGHT;
 
   const now = new Date();
   const showNowLine = isSameDay(day, now);
@@ -75,23 +75,22 @@ export function ScheduleDailyView({
 
   return (
     <div className="relative flex gap-3 overflow-hidden">
-      {/* Hour rail */}
-      <div className="w-12 shrink-0 pt-1 sm:w-14">
-        {hours.map((hour) => (
+      {/* Hour rail. Labels are positioned like the grid lines and centred on
+          them; stacking fixed-height rows against a canvas with no matching
+          top padding left every label 4px below the line it names. */}
+      <div className="relative w-12 shrink-0 sm:w-14" style={{ height: canvasHeight }}>
+        {hours.map((hour, index) => (
           <div
             key={hour}
-            style={{ height: HOUR_HEIGHT }}
-            className="text-right text-[11px] tabular-nums text-muted-foreground"
+            style={{ top: index * HOUR_HEIGHT }}
+            className="absolute right-0 -translate-y-1/2 text-right text-[11px] tabular-nums text-muted-foreground"
           >
             {String(hour).padStart(2, "0")}:00
           </div>
         ))}
       </div>
 
-      <div
-        className="relative flex-1"
-        style={{ height: (end - start + 1) * HOUR_HEIGHT }}
-      >
+      <div className="relative flex-1" style={{ height: canvasHeight }}>
         {hours.map((hour, index) => (
           <div
             key={hour}
@@ -100,7 +99,7 @@ export function ScheduleDailyView({
           />
         ))}
 
-        {showNowLine && nowOffset >= 0 && nowOffset <= (end - start + 1) * HOUR_HEIGHT && (
+        {showNowLine && nowOffset >= 0 && nowOffset <= canvasHeight && (
           <div
             style={{ top: nowOffset }}
             className="absolute inset-x-0 z-10 flex items-center"
@@ -120,24 +119,32 @@ export function ScheduleDailyView({
 
         {positioned.map(({ event, column, columns }) => {
           const offset = ((timeToMinutes(event.local_time) - start * 60) / 60) * HOUR_HEIGHT;
-          const height = Math.max(
+          const slotHeight = Math.max(
             (event.duration_minutes / 60) * HOUR_HEIGHT,
             MIN_CARD_HEIGHT
           );
           // Overlapping events share the width instead of hiding each other.
           const width = 100 / columns;
+          // Density follows the height the card actually gets, not the column
+          // count: a 40-minute lesson in its own column still only has 56px,
+          // which clips a three-line card mid-glyph. A card that does have the
+          // room gets "expanded", whose right-hand meta column fills the ~500px
+          // that a full-width day row otherwise leaves blank.
+          const density = columns > 1 || slotHeight < HOUR_HEIGHT ? "compact" : "expanded";
           return (
             <ScheduleEventCard
               key={`${event.source}-${event.id}-${event.occurrence_date ?? ""}`}
               event={event}
               style={{
                 top: offset,
-                height,
+                // minHeight, not height: dayLayout reserves the same minimum on
+                // the canvas, so a card is free to be as tall as its content.
+                minHeight: slotHeight,
                 left: `${column * width}%`,
                 width: `calc(${width}% - ${columns > 1 ? "0.25rem" : "0px"})`,
               }}
               className={cn("absolute z-[5] items-center")}
-              density={columns > 1 ? "compact" : "full"}
+              density={density}
               pending={pendingKeys.has(eventKey(event))}
               onToggleCompleted={onToggleCompleted}
               onEdit={onEdit}

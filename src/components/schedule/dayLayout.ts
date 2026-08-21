@@ -11,6 +11,14 @@ import { timeToMinutes } from "./scheduleDates";
  *
  * Events that merely touch (one ends exactly when the next starts) do not
  * overlap and keep the full width.
+ *
+ * Packing uses the *drawn* height, not the real duration. A card is never
+ * painted shorter than MIN_CARD_HEIGHT, so a 30-minute block occupies 52.5
+ * minutes of canvas. Packing on real minutes said two back-to-back 30-minute
+ * blocks did not overlap and gave both the full width — and they then covered
+ * each other by ~19px on screen. The tie-break sort below stays on the real
+ * duration: "the longer event takes the left column" is about the lesson, not
+ * about the pixels.
  */
 
 export interface PositionedEvent {
@@ -21,8 +29,18 @@ export interface PositionedEvent {
   columns: number;
 }
 
-function endOf(event: ScheduleEvent): number {
-  return timeToMinutes(event.local_time) + event.duration_minutes;
+/** Row height of one hour in the day grid, in pixels. */
+export const HOUR_HEIGHT = 64;
+/** No card is painted shorter than this, however brief the event. */
+export const MIN_CARD_HEIGHT = 56;
+/** The canvas a card actually consumes, expressed in minutes. */
+export const MIN_VISUAL_MINUTES = (MIN_CARD_HEIGHT / HOUR_HEIGHT) * 60;
+
+function visualEndOf(event: ScheduleEvent): number {
+  return (
+    timeToMinutes(event.local_time) +
+    Math.max(event.duration_minutes, MIN_VISUAL_MINUTES)
+  );
 }
 
 export function layoutDayEvents(events: ScheduleEvent[]): PositionedEvent[] {
@@ -56,9 +74,9 @@ export function layoutDayEvents(events: ScheduleEvent[]): PositionedEvent[] {
     let column = columnEnds.findIndex((columnEnd) => columnEnd <= start);
     if (column === -1) {
       column = columnEnds.length;
-      columnEnds.push(endOf(event));
+      columnEnds.push(visualEndOf(event));
     } else {
-      columnEnds[column] = endOf(event);
+      columnEnds[column] = visualEndOf(event);
     }
 
     const entry: PositionedEvent = { event, column, columns: columnEnds.length };

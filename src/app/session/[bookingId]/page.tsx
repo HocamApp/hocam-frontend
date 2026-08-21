@@ -18,7 +18,7 @@ import { RouteGuard } from "@/components/shared/RouteGuard";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { Button } from "@/components/ui/button";
-import { formatDate } from "@/lib/utils";
+import { cn, formatDate } from "@/lib/utils";
 import {
   audioOnlyFromEvent,
   checkJitsiCapabilities,
@@ -37,6 +37,7 @@ import {
 } from "@/lib/jitsiSessionControls";
 import {
   computeCountdown,
+  formatJoinCountdown,
   teacherVideoStorageKey,
   videoQualityStorageKey,
 } from "@/lib/lessonSessionState";
@@ -87,13 +88,6 @@ const JitsiMeeting = dynamic(
   { ssr: false }
 );
 
-function formatCountdown(ms: number) {
-  const totalSeconds = Math.max(0, Math.ceil(ms / 1000));
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  return `${minutes}:${String(seconds).padStart(2, "0")}`;
-}
-
 function scheduledEndTime(booking: Booking) {
   return (
     new Date(booking.start_time).getTime() + booking.duration_minutes * 60_000
@@ -108,15 +102,29 @@ function LessonWaitingRoom({
   onBack: () => void;
 }) {
   const [now, setNow] = useState(() => Date.now());
+  // booking.start_time is a real ISO instant, unlike the schedule feature's
+  // local_date + local_time wall clocks — new Date(iso) is correct here and
+  // must not be "harmonised" with src/components/schedule/scheduleDates.ts.
   const startAt = new Date(booking.start_time).getTime();
   const joinAt = startAt - EARLY_JOIN_MINUTES * 60 * 1000;
   const timeToJoin = joinAt - now;
+  const countdown = formatJoinCountdown(timeToJoin);
+  const showsLiveClock = countdown.mode === "soon";
   const tutorName = `${booking.tutor.name} ${booking.tutor.surname}`.trim();
+  const startClock = new Date(booking.start_time).toLocaleTimeString("tr-TR", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 
   useEffect(() => {
-    const interval = window.setInterval(() => setNow(Date.now()), 1000);
+    // A second-by-second tick only earns its keep while a M:SS clock is on
+    // screen; further out, once a minute is plenty.
+    const interval = window.setInterval(
+      () => setNow(Date.now()),
+      showsLiveClock ? 1000 : 30_000
+    );
     return () => window.clearInterval(interval);
-  }, []);
+  }, [showsLiveClock]);
 
   return (
     <div className="relative flex flex-1 overflow-hidden bg-slate-950 text-white">
@@ -140,12 +148,32 @@ function LessonWaitingRoom({
         </p>
 
         <div className="mt-8 rounded-lg border border-white/10 bg-white/5 px-6 py-4">
-          <p className="text-xs uppercase tracking-[0.18em] text-slate-400">
-            Odaya girişe kalan
-          </p>
-          <p className="mt-2 text-4xl font-semibold tabular-nums">
-            {formatCountdown(timeToJoin)}
-          </p>
+          {countdown.mode === "later" ? (
+            // A day or more out, a countdown is noise; the date is the answer.
+            <>
+              <p className="text-xs uppercase tracking-[0.18em] text-slate-400">
+                Ders başlangıcı
+              </p>
+              <p className="mt-2 text-2xl font-semibold">
+                {formatDate(booking.start_time)} · {startClock}
+              </p>
+              <p className="mt-1 text-sm text-slate-400">{countdown.label} kaldı</p>
+            </>
+          ) : (
+            <>
+              <p className="text-xs uppercase tracking-[0.18em] text-slate-400">
+                Odaya girişe kalan
+              </p>
+              <p
+                className={cn(
+                  "mt-2 font-semibold",
+                  showsLiveClock ? "text-4xl tabular-nums" : "text-3xl"
+                )}
+              >
+                {countdown.mode === "open" ? "Oda açık" : countdown.label}
+              </p>
+            </>
+          )}
         </div>
 
         <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
