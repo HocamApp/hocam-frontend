@@ -1183,13 +1183,20 @@ export interface BusyInterval {
 export interface TutorVerification {
   id: string;
   tutor: string;
-  student_id_document: string;
-  yks_result_document: string;
   university_email: string;
   status: "pending" | "approved" | "rejected";
+  security_status: "not_scanned" | "safe" | "qa_bypass" | "legacy_reviewed";
   submitted_at: string;
   reviewed_at: string | null;
+  documents_deleted_at: string | null;
   rejection_reason?: string;
+}
+
+export interface UniversityEmailVerification {
+  status: "not_started" | "code_sent" | "verified";
+  email: string | null;
+  verified_at?: string | null;
+  audience?: "student" | "institutional";
 }
 
 export interface ApiError {
