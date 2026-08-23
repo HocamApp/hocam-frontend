@@ -237,6 +237,13 @@ export function VerificationForm() {
             Profilindeki üniversiteye ait e-posta adresine tek kullanımlık kod göndereceğiz.
             Bu adım yalnızca bu kurumsal gelen kutusuna erişebildiğini kanıtlar.
           </p>
+          <p className="mt-2 text-xs text-muted-foreground">
+            Bu süreçte işlenen veriler ve saklama süreleri için{" "}
+            <a href="/kvkk/hoca-dogrulama" className="font-medium text-primary underline">
+              Hoca Doğrulama Aydınlatma Metni
+            </a>
+            ’ni inceleyebilirsin.
+          </p>
         </div>
         <div className="space-y-2">
           <Label htmlFor="university-email-proof">Üniversite e-postası</Label>

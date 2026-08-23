@@ -14,6 +14,12 @@ const DOCUMENTS = [
       "Hangi verilerini, neden işlediğimizi, kimlerle paylaştığımızı ve haklarını anlatır.",
   },
   {
+    href: "/kvkk/hoca-dogrulama",
+    title: "Hoca Doğrulama Aydınlatma Metni",
+    description:
+      "Üniversite e-postası, öğrenci belgesi ve YKS belgesinin nasıl incelendiğini ve ne kadar saklandığını anlatır.",
+  },
+  {
     href: "/kvkk/cerez-politikasi",
     title: "Çerez Politikası",
     description:

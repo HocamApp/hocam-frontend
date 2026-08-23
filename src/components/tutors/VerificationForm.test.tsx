@@ -73,5 +73,10 @@ describe("VerificationForm university email review state", () => {
       screen.queryByText("E-posta uzantın incelemeye alındı"),
       null
     );
+    assert.equal(
+      screen.getByRole("link", { name: "Hoca Doğrulama Aydınlatma Metni" })
+        .getAttribute("href"),
+      "/kvkk/hoca-dogrulama"
+    );
   });
 });
