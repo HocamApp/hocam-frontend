@@ -77,6 +77,7 @@ export interface GooeyInputClassNames {
   input?: string;
   bubble?: string;
   bubbleSurface?: string;
+  clear?: string;
 }
 
 export interface GooeyInputProps {
@@ -248,6 +249,12 @@ export function GooeyInput({
               placeholder={isExpanded ? placeholder : (collapsedPlaceholder ?? placeholder)}
               className={cn(
                 "h-full min-w-0 flex-1 bg-transparent text-sm text-background outline-none",
+                /* The browser's own search-cancel button is unstyleable in
+                   practice: it renders in the UA accent colour, has no hover
+                   state, and inherits the field's text cursor, so it reads as
+                   broken. Hidden here in favour of the real button below. */
+                "[&::-webkit-search-cancel-button]:hidden [&::-webkit-search-cancel-button]:appearance-none",
+                isExpanded && searchText ? "pr-7" : null,
                 isExpanded
                   ? "placeholder:text-background/50 dark:placeholder:text-background/45"
                   : "pointer-events-none placeholder:text-background/80 dark:placeholder:text-background/70",
@@ -278,6 +285,44 @@ export function GooeyInput({
           </div>
         </motion.div>
       </div>
+
+      {/* Sits in the root rather than inside `filterWrap`: anything under the
+          gooey filter gets melted along with the pill, and a smeared close
+          affordance is worse than none. The root shrink-wraps the expanded
+          pill, so `right-3` lands just inside its trailing edge.
+          `onMouseDown` is swallowed so the field keeps focus and the pill
+          does not collapse out from under the click. */}
+      {isExpanded && searchText ? (
+        <button
+          type="button"
+          aria-label="Aramayı temizle"
+          onMouseDown={(event) => event.preventDefault()}
+          onClick={() => {
+            setSearchText("");
+            inputRef.current?.focus();
+          }}
+          className={cn(
+            "absolute top-1/2 right-3 z-10 flex size-5 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full",
+            "text-background/60 transition-colors outline-none",
+            "hover:bg-background/20 hover:text-background",
+            "focus-visible:ring-2 focus-visible:ring-background/70",
+            classNames?.clear,
+          )}
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeLinecap="round"
+            strokeWidth={2.5}
+            className="size-3"
+            aria-hidden
+          >
+            <path d="M18 6 6 18M6 6l12 12" />
+          </svg>
+        </button>
+      ) : null}
     </div>
   );
 }

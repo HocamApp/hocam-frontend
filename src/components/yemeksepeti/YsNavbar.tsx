@@ -13,12 +13,16 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
+import { AnimatedSearchBar } from "@/components/tutors/AnimatedSearchBar";
 import { BrandMark } from "@/components/brand/BrandMark";
 import { VERTICAL_TABS } from "@/lib/yemeksepetiMock";
 
 type Props = {
   activeTab: string;
   onTabChange: (id: string) => void;
+  searchDraft: string;
+  onSearchDraftChange: (value: string) => void;
+  onSearchCommit: (value: string | undefined) => void;
 };
 
 /** Same icons the real Hocam navbar uses, keyed by `navItems.ts` icon names. */
@@ -50,7 +54,13 @@ const NUDGE_DELAY_MS = 900;
 const NUDGE_VISIBLE_MS = 6000;
 const NUDGE_EXIT_MS = 200;
 
-export function YsNavbar({ activeTab, onTabChange }: Props) {
+export function YsNavbar({
+  activeTab,
+  onTabChange,
+  searchDraft,
+  onSearchDraftChange,
+  onSearchCommit,
+}: Props) {
   /* A self-dismissing hint pointing at the register button, in the reference's
      coachmark style. It says nothing the button itself does not, so it is
      hidden from assistive tech rather than announced twice. */
@@ -133,6 +143,18 @@ export function YsNavbar({ activeTab, onTabChange }: Props) {
             );
           })}
         </div>
+
+        {/* The directory's own search bar, moved up here. It sits to the left
+            of the account icons rather than centred: the icons are the row's
+            visual anchor on the right, and breaking them apart reads worse
+            than letting the search lean against them. */}
+        <AnimatedSearchBar
+          className="hidden shrink-0 py-2 md:block"
+          tone="neutral"
+          value={searchDraft}
+          onChange={onSearchDraftChange}
+          onCommit={onSearchCommit}
+        />
 
         <div
           className="hidden shrink-0 items-center gap-1 border-l pl-3 md:flex"

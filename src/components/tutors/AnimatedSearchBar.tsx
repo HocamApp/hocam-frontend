@@ -10,6 +10,13 @@ interface AnimatedSearchBarProps {
   onCommit: (value: string | undefined) => void;
   disabled?: boolean;
   className?: string;
+  /**
+   * Colour of the detached search bubble. "brand" is the red circle the tutor
+   * directory uses; "neutral" falls through to the component's own
+   * foreground/background pair. Defaults to "brand" so existing call sites
+   * are untouched.
+   */
+  tone?: "brand" | "neutral";
 }
 
 export function AnimatedSearchBar({
@@ -18,6 +25,7 @@ export function AnimatedSearchBar({
   onCommit,
   disabled,
   className,
+  tone = "brand",
 }: AnimatedSearchBarProps) {
   const commitSearch = useCallback(
     (nextValue = value) => {
@@ -70,8 +78,14 @@ export function AnimatedSearchBar({
           trigger:
             "border border-input bg-muted/80 text-foreground ring-ring/30 hover:bg-accent focus-visible:ring-ring focus-visible:ring-offset-background",
           input: "text-foreground placeholder:text-muted-foreground",
+          /* The trigger is overridden to a light pill above, so the clear
+             button needs dark-on-light rather than GooeyInput's own
+             light-on-dark default. */
+          clear: "text-muted-foreground hover:bg-foreground/10 hover:text-foreground",
           bubbleSurface:
-            "border border-brand-600 bg-brand-600 text-white ring-brand-600/30 dark:border-brand-500 dark:bg-brand-500",
+            tone === "brand"
+              ? "border border-brand-600 bg-brand-600 text-white ring-brand-600/30 dark:border-brand-500 dark:bg-brand-500"
+              : undefined,
         }}
       />
     </div>

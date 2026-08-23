@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 
@@ -61,7 +61,7 @@ function TutorCardSkeleton() {
   );
 }
 
-export function YsTutorDirectory() {
+export function YsTutorDirectory({ search }: { search?: string }) {
   const [filters, setFilters] = useState<TutorFiltersType>({});
   const [page, setPage] = useState(1);
   /* Starts closed on purpose, and deliberately does NOT read
@@ -70,13 +70,27 @@ export function YsTutorDirectory() {
      flash on first paint either. */
   const [filtersOpen, setFiltersOpen] = useState(false);
 
+  /* The navbar owns the search term, so it is merged in here rather than
+     living in `filters`. Feeding it through `defaultTutorOrdering` is what
+     makes the "En alakalı" chip appear once there is something to be
+     relevant to. */
+  const effectiveFilters = useMemo<TutorFiltersType>(
+    () => (search ? { ...filters, search } : filters),
+    [filters, search],
+  );
+
+  // A new term should land the reader on the first page of its own results.
+  useEffect(() => {
+    setPage(1);
+  }, [search]);
+
   const {
     data: tutors,
     isLoading,
     error,
   } = useQuery({
-    queryKey: ["tutors", filters, page],
-    queryFn: () => fetchTutors(filters, page, PAGE_SIZE),
+    queryKey: ["tutors", effectiveFilters, page],
+    queryFn: () => fetchTutors(effectiveFilters, page, PAGE_SIZE),
     placeholderData: (previousData) => previousData,
   });
 
@@ -88,11 +102,11 @@ export function YsTutorDirectory() {
 
   const { favoriteIds, toggle, isFavoritePending } = useFavorites();
 
-  const defaultOrdering = defaultTutorOrdering(filters);
+  const defaultOrdering = defaultTutorOrdering(effectiveFilters);
   const results = tutors?.results ?? [];
   const totalPages = Math.max(1, Math.ceil((tutors?.count ?? 0) / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
-  const hasActiveFilters = Object.values(filters).some((value) => (value ?? "") !== "");
+  const hasActiveFilters = Object.values(effectiveFilters).some((value) => (value ?? "") !== "");
   const showEmptyState = !isLoading && !error && results.length === 0;
 
   const handleFiltersChange = (next: TutorFiltersType) => {
