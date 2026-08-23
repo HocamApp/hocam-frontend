@@ -6,6 +6,7 @@ import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 
 import { fetchSubjects, fetchTutors, type TutorFilters as TutorFiltersType } from "@/lib/tutorsApi";
 import { defaultTutorOrdering } from "@/lib/tutorDirectory";
+import { useDelayedVisible } from "@/hooks/useDelayedVisible";
 import { useFavorites } from "@/hooks/useFavorites";
 import { TutorCard } from "@/components/tutors/TutorCard";
 import { TutorFilters } from "@/components/tutors/TutorFilters";
@@ -87,6 +88,7 @@ export function YsTutorDirectory({ search }: { search?: string }) {
   const {
     data: tutors,
     isLoading,
+    isPlaceholderData,
     error,
   } = useQuery({
     queryKey: ["tutors", effectiveFilters, page],
@@ -102,12 +104,24 @@ export function YsTutorDirectory({ search }: { search?: string }) {
 
   const { favoriteIds, toggle, isFavoritePending } = useFavorites();
 
+  /* `isLoading` alone only covers the very first fetch — `placeholderData`
+     keeps the previous page on screen for every filter change after that, so
+     the list would sit on stale results with no sign anything was happening.
+     `isPlaceholderData` is what says "these rows no longer match the
+     controls", which is exactly when the placeholder belongs.
+     Held back 200ms either way: a cached turn resolves faster than that, and
+     a one-frame flash reads as a glitch rather than as progress. */
+  const isResolving = isLoading || isPlaceholderData;
+  const showSkeleton = useDelayedVisible(isResolving);
+
   const defaultOrdering = defaultTutorOrdering(effectiveFilters);
   const results = tutors?.results ?? [];
   const totalPages = Math.max(1, Math.ceil((tutors?.count ?? 0) / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
   const hasActiveFilters = Object.values(effectiveFilters).some((value) => (value ?? "") !== "");
-  const showEmptyState = !isLoading && !error && results.length === 0;
+  // Suppressed for the whole resolve, not just while the skeleton is up,
+  // so "not found" cannot flash during the 200ms grace window.
+  const showEmptyState = !isResolving && !error && results.length === 0;
 
   const handleFiltersChange = (next: TutorFiltersType) => {
     setFilters(next);
@@ -228,8 +242,13 @@ export function YsTutorDirectory({ search }: { search?: string }) {
             />
           )}
 
-          {isLoading && (
-            <div className={`grid grid-cols-1 gap-6 ${filtersOpen ? "" : "md:grid-cols-2"}`}>
+          {showSkeleton && (
+            <div
+              aria-busy
+              aria-label="Hocalar yükleniyor"
+              role="status"
+              className={`grid grid-cols-1 gap-6 ${filtersOpen ? "" : "md:grid-cols-2"}`}
+            >
               {Array.from({ length: PAGE_SIZE }).map((_, index) => (
                 <TutorCardSkeleton key={index} />
               ))}
@@ -254,7 +273,7 @@ export function YsTutorDirectory({ search }: { search?: string }) {
               />
             ))}
 
-          {!isLoading && !error && results.length > 0 && (
+          {!showSkeleton && !error && results.length > 0 && (
             <>
               <div className={`grid grid-cols-1 gap-6 ${filtersOpen ? "" : "md:grid-cols-2"}`}>
                 {results.map((tutor) => (

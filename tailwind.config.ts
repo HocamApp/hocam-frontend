@@ -63,6 +63,13 @@ const config: Config = {
         sm: "calc(var(--radius) - 4px)",
       },
       keyframes: {
+        /* Skeleton shimmer: a highlight band sweeps across the placeholder.
+           Only `transform` animates, so it composites on the GPU and never
+           reflows the (often long) lists these sit in. 1.5s is the settled
+           industry cycle — under ~1s reads as anxious, over ~2s as stalled. */
+        "skeleton-shimmer": {
+          "100%": { transform: "translateX(100%)" },
+        },
         "typing-dot": {
           "0%, 60%, 100%": { transform: "translateY(0)", opacity: "0.4" },
           "30%": { transform: "translateY(-3px)", opacity: "1" },
@@ -81,6 +88,7 @@ const config: Config = {
         },
       },
       animation: {
+        "skeleton-shimmer": "skeleton-shimmer 1.5s infinite",
         "typing-dot": "typing-dot 1.2s ease-in-out infinite",
         "message-pop": "message-pop 0.22s ease-out",
         "accordion-down": "accordion-down 0.2s ease-out",
