@@ -1193,10 +1193,13 @@ export interface TutorVerification {
 }
 
 export interface UniversityEmailVerification {
-  status: "not_started" | "code_sent" | "verified";
+  status: "not_started" | "code_sent" | "verified" | "review_required" | "under_review";
   email: string | null;
   verified_at?: string | null;
   audience?: "student" | "institutional";
+  detail?: string;
+  reason?: string;
+  submitted_at?: string;
 }
 
 export interface ApiError {
