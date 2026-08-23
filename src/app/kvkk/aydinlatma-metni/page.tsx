@@ -8,8 +8,8 @@ export const metadata = {
 
 // Kept in sync with hocam-backend/docs/kvkk/01-genel-aydinlatma-metni.md.
 // The document is the source of truth; this page renders it.
-const VERSION = "v1.0";
-const UPDATED_AT = "16 Ağustos 2026";
+const VERSION = "v1.1";
+const UPDATED_AT = "23 Ağustos 2026";
 
 function Section({
   title,
@@ -71,8 +71,10 @@ export default function AydinlatmaMetniPage() {
           <p>
             <strong>Öğretmensen:</strong> bunlara ek olarak üniversiten,
             bölümün, YKS sıralaman, tanıtım videon, saatlik ücretin, müsaitlik
-            takvimin ve doğrulama için ilettiğin öğrenci belgen ile YKS sonuç
-            belgen.
+            takvimin; doğrulama için ilettiğin üniversite e-posta adresin,
+            e-posta/admin inceleme kayıtların, öğrenci belgen ile YKS sonuç
+            belgen. Dosya güvenlik sonuçları, güvenli önizlemeler, dosya
+            özetleri ve yetkili erişim kayıtları da bu kapsamdadır.
           </p>
           <p className="font-medium">
             Görüntülü derslerinin ses ve görüntü kaydını almıyoruz. Yalnızca
@@ -130,8 +132,10 @@ export default function AydinlatmaMetniPage() {
           <p>
             Hesap bilgilerin hesabın açık olduğu sürece; ders ve rezervasyon
             kayıtların 10 yıl; mesajların hesap kapanışından itibaren 1 yıl;
-            öğretmen doğrulama belgeleri karardan itibaren 2 yıl; analitik
-            veriler 12 ay saklanır.
+            hoca doğrulama ham belgeleri ve güvenli önizlemeleri onaydan sonra
+            7 gün, ret veya bekleyen başvuruda en fazla 30 gün; analitik veriler
+            12 ay saklanır. Üniversite e-posta ispatı ve alan adı inceleme kaydı
+            hesap süresince tutulur.
           </p>
           <p>
             <strong>Fatura ve mali kayıtlar 10 yıl saklanır</strong> ve vergi ve
@@ -199,6 +203,9 @@ export default function AydinlatmaMetniPage() {
         </Link>
         <Link href="/kvkk/analitik" className="text-primary underline">
           Analitik Aydınlatma Metni
+        </Link>
+        <Link href="/kvkk/hoca-dogrulama" className="text-primary underline">
+          Hoca Doğrulama Aydınlatma Metni
         </Link>
         <Link href="/" className="text-primary underline">
           Hocam’a dön
