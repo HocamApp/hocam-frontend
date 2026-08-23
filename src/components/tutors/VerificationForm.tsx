@@ -71,7 +71,11 @@ export function VerificationForm() {
     onSuccess: (result) => {
       queryClient.setQueryData(["university-email-verification"], result);
       setEmailError(null);
-      toast.success("Doğrulama kodu üniversite e-postana gönderildi.");
+      if (result.status === "review_required" || result.status === "under_review") {
+        toast.info("E-posta uzantın admin incelemesine alındı.");
+      } else {
+        toast.success("Doğrulama kodu üniversite e-postana gönderildi.");
+      }
     },
     onError: (error: unknown) => setEmailError(apiErrorMessage(error, "Kod gönderilemedi.")),
   });
@@ -276,6 +280,16 @@ export function VerificationForm() {
             >
               {emailConfirmMutation.isPending ? "Doğrulanıyor..." : "E-postayı doğrula"}
             </Button>
+          </div>
+        )}
+        {(emailProof?.status === "review_required" || emailProof?.status === "under_review") && (
+          <div className="rounded-lg border border-amber-200 bg-amber-50/70 p-4 text-sm dark:border-amber-900 dark:bg-amber-950/20">
+            <p className="font-medium">E-posta uzantın incelemeye alındı</p>
+            <p className="mt-1 text-muted-foreground">
+              {emailProof.email} otomatik listede bulunamadı. Hesabın reddedilmedi;
+              admin ekibi üniversite uzantısını kontrol edecek. Farklı bir üniversite
+              adresin varsa yukarıdan tekrar deneyebilirsin.
+            </p>
           </div>
         )}
         {emailError && <ErrorMessage message={emailError} />}
