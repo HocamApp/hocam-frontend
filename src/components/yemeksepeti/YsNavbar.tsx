@@ -1,6 +1,16 @@
 "use client";
 
 import Link from "next/link";
+import {
+  Bell,
+  CalendarDays,
+  Compass,
+  GraduationCap,
+  Heart,
+  LayoutDashboard,
+  MessageCircle,
+  type LucideIcon,
+} from "lucide-react";
 
 import { BrandMark } from "@/components/brand/BrandMark";
 import { VERTICAL_TABS } from "@/lib/yemeksepetiMock";
@@ -9,6 +19,23 @@ type Props = {
   activeTab: string;
   onTabChange: (id: string) => void;
 };
+
+/** Same icons the real Hocam navbar uses, keyed by `navItems.ts` icon names. */
+const TAB_ICONS: Record<string, LucideIcon> = {
+  GraduationCap,
+  LayoutDashboard,
+  Compass,
+  CalendarDays,
+};
+
+/* Icon-only, exactly as in the Hocam navbar. No labels underneath, and no
+   unread badge on the bell — a permanently lit badge on a page that has no
+   notifications would be misinformation, not decoration. */
+const UTILITY_ICONS: { id: string; label: string; Icon: LucideIcon }[] = [
+  { id: "messages", label: "Mesajlar", Icon: MessageCircle },
+  { id: "notifications", label: "Bildirimler", Icon: Bell },
+  { id: "favorites", label: "Favoriler", Icon: Heart },
+];
 
 export function YsNavbar({ activeTab, onTabChange }: Props) {
   return (
@@ -24,8 +51,8 @@ export function YsNavbar({ activeTab, onTabChange }: Props) {
       </a>
 
       {/* Top row — brand on the left, account actions on the right. The
-          address picker, language selector, favourites and cart the reference
-          page carries have no Hocam counterpart and are gone. */}
+          address picker, language selector and cart the reference page
+          carries have no Hocam counterpart and are gone. */}
       <header className="ys-shell flex h-16 items-center gap-2">
         <Link href="/" aria-label="Hocam ana sayfa" className="shrink-0">
           <BrandMark priority />
@@ -41,22 +68,38 @@ export function YsNavbar({ activeTab, onTabChange }: Props) {
         </div>
       </header>
 
-      {/* Bottom row — vertical switcher. Only the first tab is wired to
-          anything; the rest are placeholders for future Hocam verticals. */}
+      {/* Bottom row — vertical switcher on the left, the account utility icons
+          sitting directly under the auth buttons on the right. Neither is
+          wired to a route yet; both are presentational. */}
       <div
         className="ys-shell flex items-center gap-4 border-t"
         style={{ borderColor: "var(--ys-neutral-divider)" }}
       >
         <div className="scrollbar-none flex min-w-0 flex-1 overflow-x-auto">
-          {VERTICAL_TABS.map((tab) => (
-            <button
-              key={tab.id}
-              type="button"
-              className="ys-tab"
-              data-selected={activeTab === tab.id}
-              onClick={() => onTabChange(tab.id)}
-            >
-              {tab.label}
+          {VERTICAL_TABS.map((tab) => {
+            const Icon = TAB_ICONS[tab.icon];
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                className="ys-tab"
+                data-selected={activeTab === tab.id}
+                onClick={() => onTabChange(tab.id)}
+              >
+                {Icon ? <Icon className="ys-tab__icon h-[18px] w-[18px]" aria-hidden /> : null}
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
+
+        <div
+          className="hidden shrink-0 items-center gap-1 border-l pl-3 md:flex"
+          style={{ borderColor: "var(--ys-neutral-divider)" }}
+        >
+          {UTILITY_ICONS.map(({ id, label, Icon }) => (
+            <button key={id} type="button" className="ys-icon-btn" aria-label={label}>
+              <Icon className="h-5 w-5" />
             </button>
           ))}
         </div>

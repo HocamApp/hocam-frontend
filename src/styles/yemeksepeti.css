@@ -34,6 +34,7 @@
   --ys-radius-edge: 16px;
   --ys-radius-field: 12px;
   --ys-radius-pill: 9999px;
+  --ys-radius-mini: 4px;
 
   --ys-space-xxxs: 2px;
   --ys-space-xxs: 4px;
@@ -207,35 +208,67 @@
 
 /* ------------------------------------------------------------------ tabs -- */
 
+/*
+ * Rebuilt from the captured page's own tab rules, gesture for gesture:
+ *
+ *   idle     no underline, muted text
+ *   hover    a 30px pill springs out from the centre + a faint grey plate
+ *   selected the same pill, held at full width
+ *
+ * The spring is the reference's `--bdsMotionEasingBounce`. Animating `width`
+ * with an overshoot easing is not what you'd reach for from scratch, but the
+ * whole point of this page is to match that motion — a transform-based
+ * substitute reads visibly different at the ends of the sweep.
+ */
+
 .ys-tab {
   position: relative;
   display: inline-flex;
   flex: none;
   align-items: center;
-  gap: var(--ys-space-xs);
+  justify-content: center;
   height: 56px;
   padding: 0 var(--ys-space-sm);
+  border-radius: var(--ys-radius-mini);
   color: var(--ys-neutral-secondary);
   font-size: 0.875rem;
   font-weight: 600;
   white-space: nowrap;
+  cursor: pointer;
+  transition:
+    color 150ms cubic-bezier(0.22, 0.1, 0.1, 1),
+    background-color 150ms cubic-bezier(0.22, 0.1, 0.1, 1);
+}
+
+.ys-tab__icon {
+  margin-right: var(--ys-space-xs);
+  flex: none;
 }
 
 .ys-tab::after {
   content: "";
   position: absolute;
-  inset-inline: 0;
   bottom: 0;
-  margin: 0 auto;
+  left: 50%;
+  transform: translateX(-50%);
   width: 0;
-  height: 2px;
+  height: 4px;
+  border-radius: 20px;
   opacity: 0;
   background-color: var(--ys-neutral-strong);
-  transition: width 200ms cubic-bezier(0.35, 0.12, 0.14, 1.42);
+  transition:
+    width 150ms cubic-bezier(0.35, 0.12, 0.14, 1.42),
+    opacity 150ms cubic-bezier(0.35, 0.12, 0.14, 1.42);
 }
 
 .ys-tab:hover {
   color: var(--ys-neutral-strong);
+  background-color: var(--ys-neutral-surface);
+}
+
+.ys-tab:hover::after {
+  width: 30px;
+  opacity: 1;
 }
 
 .ys-tab[data-selected="true"] {
@@ -245,6 +278,23 @@
 .ys-tab[data-selected="true"]::after {
   width: 100%;
   opacity: 1;
+  transition: width 200ms cubic-bezier(0.35, 0.12, 0.14, 1.42);
+}
+
+/* A selected tab keeps its plate white — only unselected tabs light up. */
+.ys-tab[data-selected="true"]:hover {
+  background-color: var(--ys-white);
+}
+
+.ys-tab[data-selected="true"]:hover::after {
+  width: 100%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ys-tab,
+  .ys-tab::after {
+    transition: none;
+  }
 }
 
 /* ---------------------------------------------------------- campaign lane -- */

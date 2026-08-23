@@ -7,11 +7,17 @@
  * catalogue this file used to hold was deleted with the mock filter panel.
  */
 
+/**
+ * The vertical switcher. Labels and icons are Hocam's own nav items (see
+ * `src/components/layout/navItems.ts`); only the Yemeksepeti tab *shape* and
+ * its hover animation are borrowed. Nothing here routes yet — the tabs are
+ * presentational while the homepage design is being worked out.
+ */
 export const VERTICAL_TABS = [
-  { id: "tutors", label: "Hocalar" },
-  { id: "pickup", label: "Gel Al" },
-  { id: "ymarket", label: "Y-Market" },
-  { id: "markets", label: "Marketler" },
+  { id: "tutors", label: "Hocalar", icon: "GraduationCap" },
+  { id: "dashboard", label: "Panelim", icon: "LayoutDashboard" },
+  { id: "coaching", label: "Koçluk", icon: "Compass" },
+  { id: "schedule", label: "Çalışma Programım", icon: "CalendarDays" },
 ] as const;
 
 export const CAMPAIGNS = [
