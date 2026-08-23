@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   Bell,
@@ -37,7 +38,33 @@ const UTILITY_ICONS: { id: string; label: string; Icon: LucideIcon }[] = [
   { id: "favorites", label: "Favoriler", Icon: Heart },
 ];
 
+/*
+ * When the hint appears, how long it stays, and how long its exit lasts.
+ *
+ * 6s of dwell is the Material snackbar band (4s short / 10s long) applied to
+ * this sentence: ~11 Turkish words is roughly 3.5s of reading at 200wpm, and
+ * the rest is the buffer for noticing it in the first place. Long enough to
+ * finish reading, short enough that it never becomes furniture.
+ */
+const NUDGE_DELAY_MS = 900;
+const NUDGE_VISIBLE_MS = 6000;
+const NUDGE_EXIT_MS = 200;
+
 export function YsNavbar({ activeTab, onTabChange }: Props) {
+  /* A self-dismissing hint pointing at the register button, in the reference's
+     coachmark style. It says nothing the button itself does not, so it is
+     hidden from assistive tech rather than announced twice. */
+  const [nudge, setNudge] = useState<"hidden" | "visible" | "leaving">("hidden");
+
+  useEffect(() => {
+    const timers = [
+      setTimeout(() => setNudge("visible"), NUDGE_DELAY_MS),
+      setTimeout(() => setNudge("leaving"), NUDGE_DELAY_MS + NUDGE_VISIBLE_MS),
+      setTimeout(() => setNudge("hidden"), NUDGE_DELAY_MS + NUDGE_VISIBLE_MS + NUDGE_EXIT_MS),
+    ];
+    return () => timers.forEach(clearTimeout);
+  }, []);
+
   return (
     <section
       className="sticky top-0 z-30 flex w-full flex-col bg-white"
@@ -62,9 +89,23 @@ export function YsNavbar({ activeTab, onTabChange }: Props) {
           <Link href="/login" className="ys-btn ys-btn--secondary ys-btn--small">
             Giriş Yap
           </Link>
-          <Link href="/register" className="ys-btn ys-btn--primary ys-btn--small ys-from-md">
-            Ücretsiz deneme dersi için kaydolun
-          </Link>
+          <div className="relative">
+            <Link href="/register" className="ys-btn ys-btn--primary ys-btn--small ys-from-md">
+              Ücretsiz deneme dersi için kaydolun
+            </Link>
+
+            {nudge !== "hidden" && (
+              <div
+                className="ys-coachmark"
+                data-leaving={nudge === "leaving"}
+                aria-hidden
+                onClick={() => setNudge("leaving")}
+              >
+                İstediğin hocayla 20 dakikalık ilk görüşmeni ücret ödemeden
+                yapabilirsin. <strong>Kaydol</strong>
+              </div>
+            )}
+          </div>
         </div>
       </header>
 
