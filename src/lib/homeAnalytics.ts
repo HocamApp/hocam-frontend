@@ -7,6 +7,7 @@ export type HomeAnalyticsEvent =
   | "home_learning_link_clicked"
   | "home_question_link_clicked"
   | "home_tutor_profile_opened"
+  | "home_tutor_tab_changed"
   | "home_all_tutors_clicked"
   | "home_package_opened"
   | "home_continue_clicked"

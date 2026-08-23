@@ -8,18 +8,16 @@ import {
   BookOpen,
   CalendarCheck2,
   CheckCircle2,
-  Clock3,
   FileQuestion,
   GraduationCap,
   RefreshCw,
-  ShieldCheck,
   Sparkles,
-  Star,
   Target,
   WalletCards,
 } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
+import { useFavorites } from "@/hooks/useFavorites";
 import { fetchTutors, fetchSubjects } from "@/lib/tutorsApi";
 import {
   fetchLearningDashboard,
@@ -35,58 +33,30 @@ import {
   isPastPackage,
 } from "@/components/payments/PackagePurchaseCard";
 import { trackHomeEvent } from "@/lib/homeAnalytics";
+import {
+  HOME_TUTOR_PAGE_SIZE,
+  HOME_TUTOR_TAB_ALL,
+  buildHomeTutorsQueryKey,
+  examTabsFromSubjects,
+  homeTutorFilterFor,
+  prioritizedTemplates,
+  selectHomeTutors,
+  selectResumeEntries,
+  type ResumeEntry,
+} from "@/lib/homeContent";
 import { formatDate } from "@/lib/utils";
-import type {
-  Booking,
-  LearningGoalTemplate,
-  PackagePurchase,
-  ProfileStudent,
-  StudentGoal,
-  Subject,
-} from "@/types";
+import type { Booking, ProfileStudent, TutorProfile } from "@/types";
 import { HomeSubjectSearch } from "@/components/home/HomeSubjectSearch";
-import { HomeTutorPreview } from "@/components/home/HomeTutorPreview";
+import { HomeCardRow } from "@/components/home/HomeCardRow";
+import { HomeSectionHeader } from "@/components/home/HomeSectionHeader";
 import { TutorCard } from "@/components/tutors/TutorCard";
 import { GoalPackageCard } from "@/components/learning/GoalPackageCard";
+import { CategoryNavPills } from "@/components/learning/CategoryNav";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-
-function HomeSectionHeader({
-  headingId,
-  title,
-  description,
-  href,
-  action,
-  onAction,
-}: {
-  headingId?: string;
-  title: string;
-  description: string;
-  href?: string;
-  action?: string;
-  onAction?: () => void;
-}) {
-  return (
-    <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-      <div>
-        <h2 id={headingId} className="text-2xl font-semibold tracking-tight sm:text-3xl">{title}</h2>
-        <p className="mt-2 text-sm leading-6 text-muted-foreground sm:text-base">
-          {description}
-        </p>
-      </div>
-      {href && action && (
-        <Button asChild variant="ghost" className="w-fit shrink-0 px-0 text-primary hover:bg-transparent hover:underline">
-          <Link href={href} onClick={onAction}>
-            {action}
-            <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
-          </Link>
-        </Button>
-      )}
-    </div>
-  );
-}
 
 function TutorCardSkeleton() {
   return (
@@ -108,12 +78,13 @@ function TutorCardSkeleton() {
   );
 }
 
-function ContinueCard({
+function ResumeCard({
   icon,
   eyebrow,
   title,
   description,
   meta,
+  metaDateTime,
   progress,
   href,
   action,
@@ -125,6 +96,7 @@ function ContinueCard({
   title: string;
   description: string;
   meta?: string;
+  metaDateTime?: string;
   progress?: number;
   href: string;
   action: string;
@@ -165,7 +137,17 @@ function ContinueCard({
         )}
 
         <div className="mt-auto flex flex-col gap-4 pt-5 sm:flex-row sm:items-center sm:justify-between">
-          {meta && <p className="text-xs font-medium text-muted-foreground">{meta}</p>}
+          {meta &&
+            (metaDateTime ? (
+              <time
+                dateTime={metaDateTime}
+                className="text-xs font-medium text-muted-foreground"
+              >
+                {meta}
+              </time>
+            ) : (
+              <p className="text-xs font-medium text-muted-foreground">{meta}</p>
+            ))}
           <Button asChild variant="outline" className="rounded-xl sm:ml-auto">
             <Link
               href={href}
@@ -184,70 +166,6 @@ function ContinueCard({
       </CardContent>
     </Card>
   );
-}
-
-function formatLessonDateTime(booking: Booking) {
-  const date = new Date(booking.start_time);
-  return date.toLocaleString("tr-TR", {
-    day: "numeric",
-    month: "long",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
-function firstUpcomingBooking(bookings: Booking[]) {
-  const now = Date.now();
-  return [...bookings]
-    .filter((booking) => {
-      const status = booking.status.toLowerCase();
-      return (
-        status === "in_progress" ||
-        (status === "confirmed" && new Date(booking.start_time).getTime() > now)
-      );
-    })
-    .sort(
-      (a, b) =>
-        new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
-    )[0];
-}
-
-function firstActiveGoal(goals: StudentGoal[]) {
-  return goals.find((goal) => goal.status === "active");
-}
-
-function firstActivePackage(purchases: PackagePurchase[]) {
-  return purchases.find((purchase) => {
-    const expiry = computePackageExpiry(purchase);
-    return (
-      purchase.status === "paid" &&
-      purchase.remaining_credits > 0 &&
-      !isPastPackage(purchase, expiry)
-    );
-  });
-}
-
-function prioritizedTemplates(
-  templates: LearningGoalTemplate[],
-  targetExamType?: string
-) {
-  return templates
-    .map((template, index) => ({ template, index }))
-    .sort((a, b) => {
-      const aTarget =
-        Boolean(targetExamType) &&
-        a.template.exam_type.toUpperCase() === targetExamType?.toUpperCase();
-      const bTarget =
-        Boolean(targetExamType) &&
-        b.template.exam_type.toUpperCase() === targetExamType?.toUpperCase();
-      if (aTarget !== bTarget) return aTarget ? -1 : 1;
-      if (a.template.is_featured !== b.template.is_featured) {
-        return a.template.is_featured ? -1 : 1;
-      }
-      return a.index - b.index;
-    })
-    .slice(0, 3)
-    .map(({ template }) => template);
 }
 
 function PracticeCard({
@@ -287,9 +205,84 @@ function PracticeCard({
   );
 }
 
+function formatLessonDateTime(booking: Booking) {
+  return new Date(booking.start_time).toLocaleString("tr-TR", {
+    day: "numeric",
+    month: "long",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function resumeCardFor(entry: ResumeEntry): ReactNode {
+  if (entry.kind === "lesson") {
+    const booking = entry.booking;
+    const tutorName = `${booking.tutor.name} ${booking.tutor.surname}`.trim();
+    return (
+      <ResumeCard
+        key={`lesson-${booking.id}`}
+        icon={<CalendarCheck2 className="h-5 w-5" aria-hidden="true" />}
+        eyebrow="Sıradaki dersin"
+        title={booking.subject.name}
+        description={`${tutorName || "Hoca bilgisi bekleniyor"} ile ${booking.duration_minutes} dakikalık ders`}
+        meta={formatLessonDateTime(booking)}
+        metaDateTime={booking.start_time}
+        href="/profile/lessons/upcoming"
+        action="Dersi görüntüle"
+        contentType="lesson"
+        contentId={booking.id}
+      />
+    );
+  }
+
+  if (entry.kind === "goal") {
+    const goal = entry.goal;
+    const nextMilestone = goal.milestones.find(
+      (milestone) => milestone.status !== "completed"
+    );
+    return (
+      <ResumeCard
+        key={`goal-${goal.id}`}
+        icon={<Target className="h-5 w-5" aria-hidden="true" />}
+        eyebrow="Aktif hedefin"
+        title={goal.title}
+        description={nextMilestone?.title ?? "Hedef yolculuğundaki ilerlemeni görüntüle."}
+        progress={goal.progress}
+        href={goalPackageHref(goal.id)}
+        action="Yola devam et"
+        contentType="goal"
+        contentId={goal.id}
+      />
+    );
+  }
+
+  const purchase = entry.purchase;
+  const expiry = computePackageExpiry(purchase);
+  return (
+    <ResumeCard
+      key={`package-${purchase.id}`}
+      icon={<WalletCards className="h-5 w-5" aria-hidden="true" />}
+      eyebrow="Aktif ders paketin"
+      title={`${purchase.tutor.name} ${purchase.tutor.surname}`}
+      description={`${purchase.remaining_credits} ders kredisi kaldı.`}
+      meta={expiry ? `Süre sonu ${formatDate(expiry.termEndDate.toISOString())}` : undefined}
+      href="/dashboard/student"
+      action="Paketi görüntüle"
+      contentType="package"
+      contentId={purchase.id}
+    />
+  );
+}
+
 export function AuthenticatedHome() {
   const { isAuthenticated } = useAuth();
-  const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
+  const {
+    favorites,
+    favoriteIds,
+    toggle: toggleFavorite,
+    isFavoritePending,
+  } = useFavorites();
+  const [examTab, setExamTab] = useState<string>(HOME_TUTOR_TAB_ALL);
   const trackedView = useRef(false);
 
   const profileQuery = useQuery({
@@ -305,10 +298,23 @@ export function AuthenticatedHome() {
     enabled: isAuthenticated,
     staleTime: Infinity,
   });
+  // Every result-affecting parameter is in the key, so a tab switch can never
+  // read another tab's cached page, and revisiting a tab is served from cache
+  // instead of refetching.
   const tutorsQuery = useQuery({
-    queryKey: ["home-tutors"],
-    queryFn: () => fetchTutors({ ordering: "rating" }, 1, 4),
+    queryKey: buildHomeTutorsQueryKey({
+      ordering: "rating",
+      examType: examTab,
+      pageSize: HOME_TUTOR_PAGE_SIZE,
+    }),
+    queryFn: () =>
+      fetchTutors(
+        { ordering: "rating", exam_type: homeTutorFilterFor(examTab) },
+        1,
+        HOME_TUTOR_PAGE_SIZE
+      ),
     enabled: isAuthenticated,
+    placeholderData: keepPreviousData,
   });
   const learningQuery = useQuery({
     queryKey: ["learning-dashboard"],
@@ -346,10 +352,14 @@ export function AuthenticatedHome() {
     return profile as ProfileStudent;
   }, [profileQuery.data?.profile]);
 
-  const tutorResults = tutorsQuery.data?.results ?? [];
-  const heroTutor = tutorResults[0];
-  const recommendedTutors =
-    tutorResults.length >= 4 ? tutorResults.slice(1, 4) : tutorResults.slice(0, 3);
+  const tutors = useMemo(
+    () => selectHomeTutors(tutorsQuery.data?.results),
+    [tutorsQuery.data?.results]
+  );
+  const examTabs = useMemo(
+    () => examTabsFromSubjects(subjectsQuery.data),
+    [subjectsQuery.data]
+  );
   const templates = useMemo(
     () => templatesQuery.data ?? learningQuery.data?.templates ?? [],
     [learningQuery.data?.templates, templatesQuery.data]
@@ -358,120 +368,98 @@ export function AuthenticatedHome() {
     () => prioritizedTemplates(templates, studentProfile?.target_exam_type),
     [studentProfile?.target_exam_type, templates]
   );
-  const activeGoal = firstActiveGoal(learningQuery.data?.goals ?? []);
-  const upcomingBooking = firstUpcomingBooking(bookingsQuery.data ?? []);
-  const activePackage = firstActivePackage(packagesQuery.data ?? []);
+  const resumeEntries = useMemo(
+    () =>
+      selectResumeEntries({
+        bookings: bookingsQuery.data,
+        goals: learningQuery.data?.goals,
+        purchases: packagesQuery.data,
+        isPastPackage: (purchase) =>
+          isPastPackage(purchase, computePackageExpiry(purchase)),
+      }),
+    [bookingsQuery.data, learningQuery.data?.goals, packagesQuery.data]
+  );
+  const favoriteTutors = useMemo(
+    () => selectHomeTutors(favorites.map((favorite) => favorite.tutor)),
+    [favorites]
+  );
+
+  const isResumeLoading = bookingsQuery.isLoading || learningQuery.isLoading;
+  const showResumeSection = isResumeLoading || resumeEntries.length > 0;
 
   useEffect(() => {
     if (trackedView.current || learningQuery.isLoading || bookingsQuery.isLoading) return;
     trackedView.current = true;
-    const hasActivity = Boolean(activeGoal || upcomingBooking || activePackage);
     trackHomeEvent("authenticated_home_viewed", {
-      student_state: hasActivity ? "active" : "new_or_inactive",
-      has_active_goal: Boolean(activeGoal),
-      has_upcoming_lesson: Boolean(upcomingBooking),
+      student_state: resumeEntries.length > 0 ? "active" : "new_or_inactive",
+      has_active_goal: resumeEntries.some((entry) => entry.kind === "goal"),
+      has_upcoming_lesson: resumeEntries.some((entry) => entry.kind === "lesson"),
     });
-  }, [
-    activeGoal,
-    activePackage,
-    bookingsQuery.isLoading,
-    learningQuery.isLoading,
-    upcomingBooking,
-  ]);
-
-  const continuationCards: ReactNode[] = [];
-  if (upcomingBooking) {
-    const tutorName = `${upcomingBooking.tutor.name} ${upcomingBooking.tutor.surname}`.trim();
-    continuationCards.push(
-      <ContinueCard
-        key={`lesson-${upcomingBooking.id}`}
-        icon={<CalendarCheck2 className="h-5 w-5" aria-hidden="true" />}
-        eyebrow="Sıradaki dersin"
-        title={upcomingBooking.subject.name}
-        description={`${tutorName || "Hoca bilgisi bekleniyor"} ile ${upcomingBooking.duration_minutes} dakikalık ders`}
-        meta={formatLessonDateTime(upcomingBooking)}
-        href="/profile/lessons/upcoming"
-        action="Dersi görüntüle"
-        contentType="lesson"
-        contentId={upcomingBooking.id}
-      />
-    );
-  }
-  if (activeGoal && continuationCards.length < 2) {
-    const nextMilestone = activeGoal.milestones.find(
-      (milestone) => milestone.status !== "completed"
-    );
-    continuationCards.push(
-      <ContinueCard
-        key={`goal-${activeGoal.id}`}
-        icon={<Target className="h-5 w-5" aria-hidden="true" />}
-        eyebrow="Aktif hedefin"
-        title={activeGoal.title}
-        description={nextMilestone?.title ?? "Hedef yolculuğundaki ilerlemeni görüntüle."}
-        progress={activeGoal.progress}
-        href={goalPackageHref(activeGoal.id)}
-        action="Yola devam et"
-        contentType="goal"
-        contentId={activeGoal.id}
-      />
-    );
-  }
-  if (activePackage && continuationCards.length < 2) {
-    const expiry = computePackageExpiry(activePackage);
-    continuationCards.push(
-      <ContinueCard
-        key={`package-${activePackage.id}`}
-        icon={<WalletCards className="h-5 w-5" aria-hidden="true" />}
-        eyebrow="Aktif ders paketin"
-        title={`${activePackage.tutor.name} ${activePackage.tutor.surname}`}
-        description={`${activePackage.remaining_credits} ders kredisi kaldı.`}
-        meta={expiry ? `Süre sonu ${formatDate(expiry.termEndDate.toISOString())}` : undefined}
-        href="/dashboard/student"
-        action="Paketi görüntüle"
-        contentType="package"
-        contentId={activePackage.id}
-      />
-    );
-  }
+  }, [bookingsQuery.isLoading, learningQuery.isLoading, resumeEntries]);
 
   const questionResourcesEnabled = questionsQuery.data?.enabled !== false;
   const greetingName = studentProfile?.name?.trim();
 
+  function renderTutorCard(tutor: TutorProfile, index: number, placement: string) {
+    return (
+      <div
+        key={tutor.id}
+        className="min-w-0"
+        onClickCapture={(event) => {
+          if ((event.target as HTMLElement).closest("a")) {
+            trackHomeEvent("home_tutor_profile_opened", {
+              tutor_id: tutor.id,
+              placement,
+              position: index + 1,
+            });
+          }
+        }}
+      >
+        <TutorCard
+          tutor={tutor}
+          isFavorite={favoriteIds.has(tutor.id)}
+          onToggleFavorite={toggleFavorite}
+          favoritePending={isFavoritePending(tutor.id)}
+        />
+      </div>
+    );
+  }
+
   return (
-    <div className="overflow-hidden">
-      <section className="relative border-b bg-gradient-to-br from-muted/60 via-background to-violet-500/[0.08]">
-        <div className="pointer-events-none absolute left-1/2 top-16 -z-0 h-80 w-80 rounded-full bg-primary/[0.04] blur-3xl" aria-hidden="true" />
-        <div className="relative z-10 mx-auto grid max-w-7xl items-center gap-14 px-4 py-14 sm:px-6 sm:py-16 min-[880px]:grid-cols-[minmax(0,1.1fr)_minmax(340px,0.9fr)] min-[880px]:gap-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(360px,0.9fr)] lg:gap-16 lg:px-8 lg:py-[72px]">
+    <div>
+      {/* Compact functional hero: greeting, one supporting line, the existing
+          subject combobox and a single primary action. No marketing rail. */}
+      <section className="border-b bg-muted/30">
+        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8 lg:py-12">
           <div className="max-w-2xl">
             {greetingName && (
-              <p className="mb-3 text-sm font-medium text-muted-foreground">
-                Merhaba {greetingName}, bugün neye odaklanmak istersin?
+              <p className="text-sm font-medium text-muted-foreground">
+                Merhaba {greetingName},
               </p>
             )}
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary sm:text-sm">
-              Doğrulanmış YKS hocaları
-            </p>
-            <h1 className="mt-4 text-4xl font-bold leading-[1.08] tracking-[-0.035em] text-foreground sm:text-5xl lg:text-[3.55rem]">
-              Hedefine uygun hocayı bul, öğrenmeye bugün başla.
+            <h1 className="mt-1 text-3xl font-bold leading-tight tracking-[-0.03em] sm:text-4xl">
+              Bugün neye odaklanmak istersin?
             </h1>
-            <p className="mt-5 max-w-xl text-base leading-7 text-muted-foreground sm:text-lg sm:leading-8">
-              Dersine, sınav hedefine, bütçene ve uygun saatlerine göre doğrulanmış hocaları karşılaştır. İstersen hazır çalışma paketleri ve soru içerikleriyle kendi hızında ilerle.
+            <p className="mt-3 text-sm leading-6 text-muted-foreground sm:text-base">
+              Dersini seç, doğrulanmış YKS hocalarını karşılaştır ve uygun saatte
+              dersini planla.
             </p>
 
-            <div className="mt-8">
+            <div className="mt-6">
               <HomeSubjectSearch
                 subjects={subjectsQuery.data}
                 isLoading={subjectsQuery.isLoading}
                 isError={subjectsQuery.isError}
-                onSelectedSubjectChange={setSelectedSubject}
               />
             </div>
 
-            <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center">
-              <Button asChild size="lg" className="rounded-xl">
+            <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
+              <Button asChild className="rounded-xl">
                 <Link
                   href="/match"
-                  onClick={() => trackHomeEvent("home_matching_started", { placement: "hero" })}
+                  onClick={() =>
+                    trackHomeEvent("home_matching_started", { placement: "hero" })
+                  }
                 >
                   <Sparkles className="mr-2 h-4 w-4" aria-hidden="true" />
                   Sana uygun hocayı bulalım
@@ -479,57 +467,71 @@ export function AuthenticatedHome() {
               </Button>
               <Link
                 href="/cikmis-sorular"
-                onClick={() => trackHomeEvent("home_question_link_clicked", { placement: "hero" })}
+                onClick={() =>
+                  trackHomeEvent("home_question_link_clicked", { placement: "hero" })
+                }
                 className="inline-flex min-h-11 items-center px-1 text-sm text-muted-foreground hover:text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 Çıkmış sorulara göz at
               </Link>
             </div>
-
-            <ul className="mt-7 grid grid-cols-1 gap-3 text-sm text-muted-foreground md:grid-cols-2 lg:grid-cols-3">
-              <li className="flex items-center gap-2">
-                <ShieldCheck className="h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
-                <span>
-                  {tutorsQuery.data
-                    ? `${tutorsQuery.data.count} doğrulanmış hoca`
-                    : "Doğrulanmış bilgiler"}
-                </span>
-              </li>
-              <li className="flex items-center gap-2">
-                <Star className="h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
-                <span>Şeffaf değerlendirmeler</span>
-              </li>
-              <li className="flex items-center gap-2">
-                <Clock3 className="h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
-                <span>Esnek ders saatleri</span>
-              </li>
-            </ul>
           </div>
-
-          <HomeTutorPreview
-            tutor={heroTutor}
-            selectedSubject={selectedSubject}
-            isLoading={tutorsQuery.isLoading}
-            isError={tutorsQuery.isError}
-          />
         </div>
       </section>
 
-      <div className="mx-auto max-w-7xl space-y-20 px-4 py-16 sm:px-6 sm:py-20 lg:space-y-24 lg:px-8 lg:py-24">
-        <section aria-labelledby="home-tutors-title" className="space-y-8">
+      <div className="mx-auto max-w-7xl space-y-16 px-4 py-12 sm:px-6 sm:py-14 lg:space-y-20 lg:px-8 lg:py-16">
+        {/* Resume: the returning student's own state, before any catalog.
+            Unmounts entirely for a student with nothing in progress. */}
+        {showResumeSection && (
+          <section aria-labelledby="home-continue-title" className="space-y-6">
+            <h2
+              id="home-continue-title"
+              className="text-2xl font-semibold tracking-tight sm:text-3xl"
+            >
+              Kaldığın yerden devam et
+            </h2>
+            {isResumeLoading && resumeEntries.length === 0 ? (
+              <div className="grid gap-5 md:grid-cols-2">
+                <Skeleton className="h-56 rounded-2xl" />
+              </div>
+            ) : (
+              <div className="grid gap-5 md:grid-cols-2">
+                {resumeEntries.map((entry) => resumeCardFor(entry))}
+              </div>
+            )}
+          </section>
+        )}
+
+        <section aria-labelledby="home-tutors-title" className="space-y-6">
           <HomeSectionHeader
             headingId="home-tutors-title"
-            title="Sana uygun hocaları keşfet"
-            description="Ders, sınav ve uygunluk bilgilerine göre karşılaştır."
+            title="Hocaları keşfet"
+            description="Doğrulanmış hocaları puanına, dersine ve fiyatına göre karşılaştır."
             href="/tutors"
             action="Tüm hocaları gör"
-            onAction={() => trackHomeEvent("home_all_tutors_clicked", { placement: "tutor_section" })}
+            onAction={() =>
+              trackHomeEvent("home_all_tutors_clicked", { placement: "tutor_section" })
+            }
           />
 
+          {examTabs.length > 0 && (
+            <CategoryNavPills
+              label="Sınava göre hocalar"
+              items={examTabs}
+              activeId={examTab}
+              onSelect={(id) => {
+                setExamTab(id);
+                trackHomeEvent("home_tutor_tab_changed", { exam_type: id });
+              }}
+            />
+          )}
+
           {tutorsQuery.isLoading ? (
-            <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-              {[0, 1, 2].map((item) => <TutorCardSkeleton key={item} />)}
-            </div>
+            <HomeCardRow>
+              {[0, 1, 2].map((item) => (
+                <TutorCardSkeleton key={item} />
+              ))}
+            </HomeCardRow>
           ) : tutorsQuery.isError ? (
             <div className="space-y-3">
               <ErrorMessage message="Hoca önerileri şu anda yüklenemedi. Tüm hocaları görüntülemeye devam edebilirsin." />
@@ -538,46 +540,60 @@ export function AuthenticatedHome() {
                 Tekrar dene
               </Button>
             </div>
-          ) : recommendedTutors.length > 0 ? (
-            <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-              {recommendedTutors.map((tutor, index) => (
-                <div
-                  key={tutor.id}
-                  className="min-w-0"
-                  onClickCapture={(event) => {
-                    if ((event.target as HTMLElement).closest("a")) {
-                      trackHomeEvent("home_tutor_profile_opened", {
-                        tutor_id: tutor.id,
-                        placement: "list",
-                        position: index + 1,
-                      });
-                    }
-                  }}
-                >
-                  <TutorCard tutor={tutor} />
-                </div>
-              ))}
-            </div>
+          ) : tutors.length > 0 ? (
+            <HomeCardRow>
+              {tutors.map((tutor, index) =>
+                renderTutorCard(tutor, index, "tutor_section")
+              )}
+            </HomeCardRow>
           ) : (
-            <div className="rounded-2xl border border-dashed p-8 text-center">
-              <p className="font-medium">Şu anda gösterilecek hoca yok.</p>
-              <Button asChild variant="link" className="mt-2">
-                <Link href="/tutors">Hoca aramasına git</Link>
-              </Button>
-            </div>
+            <EmptyState
+              title={
+                examTab === HOME_TUTOR_TAB_ALL
+                  ? "Şu anda gösterilecek hoca yok."
+                  : `${examTab} için şu anda hoca yok.`
+              }
+              description="Diğer sınavları ve dersleri hoca aramasından inceleyebilirsin."
+              action={
+                <Button asChild variant="outline">
+                  <Link
+                    href="/tutors"
+                    onClick={() =>
+                      trackHomeEvent("home_all_tutors_clicked", {
+                        placement: "tutor_empty_state",
+                      })
+                    }
+                  >
+                    Hoca aramasına git
+                  </Link>
+                </Button>
+              }
+            />
           )}
         </section>
 
-        {continuationCards.length > 0 && (
-          <section aria-labelledby="home-continue-title" className="space-y-7">
-            <h2 id="home-continue-title" className="text-2xl font-semibold tracking-tight sm:text-3xl">
-              Kaldığın yerden devam et
-            </h2>
-            <div className="grid gap-5 md:grid-cols-2">{continuationCards}</div>
+        {/* Favorites only exist as a section when the student really has some. */}
+        {favoriteTutors.length > 0 && (
+          <section aria-labelledby="home-favorites-title" className="space-y-6">
+            <HomeSectionHeader
+              headingId="home-favorites-title"
+              title="Favori hocaların"
+              description="Daha önce kaydettiğin hocalar."
+              href="/tutors?favorites=1"
+              action="Tümünü gör"
+              onAction={() =>
+                trackHomeEvent("home_all_tutors_clicked", { placement: "favorites" })
+              }
+            />
+            <HomeCardRow>
+              {favoriteTutors.map((tutor, index) =>
+                renderTutorCard(tutor, index, "favorites")
+              )}
+            </HomeCardRow>
           </section>
         )}
 
-        <section aria-labelledby="home-packages-title" className="space-y-8">
+        <section aria-labelledby="home-packages-title" className="space-y-6">
           <HomeSectionHeader
             headingId="home-packages-title"
             title="Hedefine göre çalışma paketleri"
@@ -586,10 +602,12 @@ export function AuthenticatedHome() {
             action="Panelime git"
           />
 
-          {(templatesQuery.isLoading && learningQuery.isLoading) ? (
-            <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-              {[0, 1, 2].map((item) => <Skeleton key={item} className="h-[390px] rounded-2xl" />)}
-            </div>
+          {templatesQuery.isLoading && learningQuery.isLoading ? (
+            <HomeCardRow>
+              {[0, 1, 2].map((item) => (
+                <Skeleton key={item} className="h-[390px] rounded-2xl" />
+              ))}
+            </HomeCardRow>
           ) : templatesQuery.isError && learningQuery.isError ? (
             <div className="space-y-3">
               <ErrorMessage message="Çalışma paketleri şu anda yüklenemedi." />
@@ -598,7 +616,7 @@ export function AuthenticatedHome() {
               </Button>
             </div>
           ) : packageTemplates.length > 0 ? (
-            <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+            <HomeCardRow>
               {packageTemplates.map((template, index) => (
                 <div
                   key={template.id}
@@ -627,18 +645,20 @@ export function AuthenticatedHome() {
                   />
                 </div>
               ))}
-            </div>
+            </HomeCardRow>
           ) : (
             <div className="rounded-2xl border border-dashed p-8 text-center">
               <BookOpen className="mx-auto h-6 w-6 text-muted-foreground" aria-hidden="true" />
               <p className="mt-3 font-medium">Hazır paketler yakında burada</p>
-              <p className="mt-1 text-sm text-muted-foreground">Yeni içerikler yakında burada olacak.</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Yeni içerikler yakında burada olacak.
+              </p>
             </div>
           )}
         </section>
 
         {questionResourcesEnabled && (
-          <section aria-labelledby="home-practice-title" className="space-y-8">
+          <section aria-labelledby="home-practice-title" className="space-y-6">
             <HomeSectionHeader
               headingId="home-practice-title"
               title="Bugün biraz pratik yap"
@@ -701,7 +721,9 @@ export function AuthenticatedHome() {
             <Button asChild size="lg" variant="secondary" className="mt-7 w-full rounded-xl lg:mt-0 lg:w-auto lg:shrink-0">
               <Link
                 href="/tutors"
-                onClick={() => trackHomeEvent("home_all_tutors_clicked", { placement: "closing_cta" })}
+                onClick={() =>
+                  trackHomeEvent("home_all_tutors_clicked", { placement: "closing_cta" })
+                }
               >
                 Hocaları keşfet
                 <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />

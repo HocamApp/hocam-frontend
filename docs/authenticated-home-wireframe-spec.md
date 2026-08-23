@@ -1,5 +1,13 @@
 # Authenticated Home — Grayscale Wireframe Specification
 
+> **Superseded (composition only).** The homepage composition and section
+> ordering in this document have been superseded by
+> [`docs/design/product-home/product-home-spec.md`](design/product-home/product-home-spec.md).
+> Where the two conflict on section order, hero composition, or which sections
+> render, the newer specification wins. This document remains the reference for
+> page role, route/role behavior, the student navigation map, state rules and
+> the accessibility/analytics contracts, all of which are unchanged.
+
 **Artifact status:** Ready for content review and low-fidelity validation
 **Route:** `/home`
 **Audience:** Authenticated students
