@@ -38,9 +38,11 @@ export function YemeksepetiHome({ fontClassName }: { fontClassName?: string }) {
             below them, inside the directory, rather than beside them. */}
         <div className="ys-shell pb-12">
           <YsSignupBanner />
-          <YsFavouritesBanner />
-          <YsCampaignLane />
           <YsAppBanner />
+          <YsCampaignLane />
+          {/* Sits directly above the tutor list: the gesture it demonstrates
+              is the heart on the cards right below it. */}
+          <YsFavouritesBanner />
           <YsTutorDirectory search={search} />
           <YsHomeFaq />
         </div>

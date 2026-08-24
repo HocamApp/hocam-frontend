@@ -392,6 +392,190 @@
   }
 }
 
+
+/* ---------------------------------------------------- favourites banner -- */
+
+/*
+ * The little "click the heart" demo, rebuilt from the reference banner: a
+ * pointer drifts in, turns into a pointing hand, presses, and the heart fills.
+ * Then it lets go and leaves, and the loop restarts.
+ *
+ * One shared cycle length drives four elements, so they stay in step no matter
+ * how the timings are retuned — change `--ys-fav-cycle` and the whole gesture
+ * scales with it. Only transform and opacity animate; nothing here reflows.
+ *
+ * Purely decorative, so the markup is aria-hidden and reduced motion drops
+ * straight to the end state (filled heart, no cursor) rather than looping.
+ */
+
+.ys-fav-demo {
+  --ys-fav-cycle: 4.2s;
+  position: relative;
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+}
+
+.ys-fav-demo__disc {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  border-radius: var(--ys-radius-pill);
+  background-color: var(--ys-white);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 8%);
+  animation: ys-fav-press var(--ys-fav-cycle) cubic-bezier(0.22, 0.1, 0.1, 1) infinite;
+}
+
+.ys-fav-demo__heart {
+  position: absolute;
+  color: var(--ys-interaction-primary);
+}
+
+/* The filled heart sits on top of the outline and fades in on the press. */
+.ys-fav-demo__heart--fill {
+  animation: ys-fav-fill var(--ys-fav-cycle) cubic-bezier(0.22, 0.1, 0.1, 1) infinite;
+}
+
+.ys-fav-demo__cursor {
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  color: var(--ys-neutral-strong);
+  animation: ys-fav-travel var(--ys-fav-cycle) cubic-bezier(0.22, 0.1, 0.1, 1) infinite;
+}
+
+.ys-fav-demo__pointer {
+  position: absolute;
+  inset: 0;
+}
+
+.ys-fav-demo__pointer--arrow {
+  animation: ys-fav-arrow var(--ys-fav-cycle) linear infinite;
+}
+
+.ys-fav-demo__pointer--hand {
+  animation: ys-fav-hand var(--ys-fav-cycle) linear infinite;
+}
+
+@keyframes ys-fav-travel {
+  0% {
+    opacity: 0;
+    transform: translate(26px, 22px);
+  }
+  10% {
+    opacity: 1;
+  }
+  28% {
+    opacity: 1;
+    transform: translate(0, 0);
+  }
+  34% {
+    transform: translate(0, 3px) scale(0.9);
+  }
+  42%,
+  74% {
+    transform: translate(0, 0) scale(1);
+  }
+  92%,
+  100% {
+    opacity: 0;
+    transform: translate(26px, 22px);
+  }
+}
+
+/* Hard swaps rather than a cross-fade: two cursors ghosting through each
+   other looks like a rendering bug, not like a cursor changing shape. */
+@keyframes ys-fav-arrow {
+  0%,
+  20% {
+    opacity: 1;
+  }
+  20.01%,
+  76% {
+    opacity: 0;
+  }
+  76.01%,
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes ys-fav-hand {
+  0%,
+  20% {
+    opacity: 0;
+  }
+  20.01%,
+  76% {
+    opacity: 1;
+  }
+  76.01%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes ys-fav-fill {
+  0%,
+  33% {
+    opacity: 0;
+    transform: scale(0.55);
+  }
+  40% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+  46%,
+  70% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  78%,
+  100% {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+}
+
+@keyframes ys-fav-press {
+  0%,
+  32% {
+    transform: scale(1);
+  }
+  36% {
+    transform: scale(0.92);
+  }
+  44% {
+    transform: scale(1.07);
+  }
+  52%,
+  100% {
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ys-fav-demo__disc,
+  .ys-fav-demo__heart--fill,
+  .ys-fav-demo__cursor,
+  .ys-fav-demo__pointer {
+    animation: none;
+  }
+
+  .ys-fav-demo__heart--fill {
+    opacity: 1;
+  }
+
+  .ys-fav-demo__cursor {
+    display: none;
+  }
+}
+
 /* ---------------------------------------------------------- campaign lane -- */
 
 .ys-lane {

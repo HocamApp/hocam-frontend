@@ -1,6 +1,7 @@
 "use client";
 
-import { Apple, Heart, Play, QrCode, UtensilsCrossed } from "lucide-react";
+import Link from "next/link";
+import { Apple, Heart, MousePointer2, Play, Pointer, QrCode, UtensilsCrossed } from "lucide-react";
 
 export function YsSignupBanner() {
   return (
@@ -27,35 +28,72 @@ export function YsSignupBanner() {
   );
 }
 
+/**
+ * The "save your favourites" banner.
+ *
+ * The icon is a looping demonstration of the gesture it is describing: a
+ * pointer arrives, becomes a pointing hand, presses, and the heart fills. It
+ * says the same thing as the sentence beside it, so it is `aria-hidden` and a
+ * reader on reduced motion just gets the filled heart. Timings live in
+ * `.ys-fav-*` in yemeksepeti.css.
+ */
 export function YsFavouritesBanner() {
   return (
     <div
-      className="mt-6 flex items-center gap-6 rounded-lg p-6"
+      className="relative mt-6 overflow-hidden rounded-lg"
       style={{
         background:
           "linear-gradient(135deg, var(--ys-brand-highlight) 0%, var(--ys-interaction-primary-feedback) 50%, var(--ys-white) 100%)",
       }}
     >
-      <div
-        className="hidden h-14 w-14 shrink-0 items-center justify-center rounded-full sm:flex"
-        style={{ background: "var(--ys-white)" }}
-        aria-hidden
-      >
+      {/* Soft heart drift in the trailing corner, matching the reference. */}
+      <div className="pointer-events-none absolute inset-y-0 right-0 hidden w-1/2 sm:block" aria-hidden>
         <Heart
-          className="h-7 w-7"
-          style={{ color: "var(--ys-interaction-primary)" }}
+          className="absolute -bottom-16 right-4 size-56"
+          style={{ color: "var(--ys-brand-highlight-1)" }}
           fill="currentColor"
+          strokeWidth={0}
+        />
+        <Heart
+          className="absolute -top-6 right-40 size-24"
+          style={{ color: "var(--ys-brand-highlight-1)" }}
+          fill="currentColor"
+          strokeWidth={0}
         />
       </div>
-      <div className="flex flex-col items-start">
-        <h2 className="text-2xl font-bold leading-[1.333]">Favoriler listenizi oluşturun</h2>
-        <p className="text-base" style={{ color: "var(--ys-neutral-secondary)" }}>
-          Sevdiğiniz yerleri kaydedin. Herhangi bir satıcıyı Favorilerinize eklemek için kalp
-          simgesine tıklayın.
-        </p>
-        <button type="button" className="ys-btn ys-btn--primary ys-btn--small mt-4">
-          Şimdi keşfet
-        </button>
+
+      <div className="relative flex items-center gap-5 p-6">
+        <div className="ys-fav-demo" aria-hidden>
+          <span className="ys-fav-demo__disc">
+            <Heart className="ys-fav-demo__heart size-6" strokeWidth={2} />
+            <Heart className="ys-fav-demo__heart ys-fav-demo__heart--fill size-6" fill="currentColor" strokeWidth={0} />
+          </span>
+
+          <span className="ys-fav-demo__cursor size-5">
+            <MousePointer2
+              className="ys-fav-demo__pointer ys-fav-demo__pointer--arrow size-5"
+              fill="currentColor"
+              strokeWidth={1.5}
+            />
+            <Pointer
+              className="ys-fav-demo__pointer ys-fav-demo__pointer--hand size-5"
+              fill="var(--ys-white)"
+              strokeWidth={1.75}
+            />
+          </span>
+        </div>
+
+        <div className="flex min-w-0 flex-col items-start">
+          <h2 className="text-2xl font-bold leading-[1.333]">
+            Favori hocalarının listesini oluştur
+          </h2>
+          <p className="text-base" style={{ color: "var(--ys-neutral-secondary)" }}>
+            Beğendiğin hocaları kaydet. Hoca kartındaki kalp simgesine dokunman yeterli.
+          </p>
+          <Link href="/tutors" className="ys-btn ys-btn--primary ys-btn--small mt-4">
+            Şimdi keşfet
+          </Link>
+        </div>
       </div>
     </div>
   );
