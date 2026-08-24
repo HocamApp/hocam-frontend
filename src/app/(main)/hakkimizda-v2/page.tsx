@@ -3,6 +3,14 @@ import Link from "next/link";
 import { Compass, GraduationCap, HeartHandshake, ShieldCheck, Sparkles, Target } from "lucide-react";
 
 import { AboutSection, AboutShell } from "@/components/about/AboutSection";
+import {
+  Timeline,
+  TimelineContent,
+  TimelineDot,
+  TimelineHeading,
+  TimelineItem,
+  TimelineLine,
+} from "@/components/ui/timeline";
 
 /**
  * A richer take on the About page, kept beside the existing `/hakkimizda`
@@ -26,21 +34,35 @@ export const metadata: Metadata = {
   robots: { index: false, follow: true },
 };
 
+/**
+ * `status: "done"` marks what has happened; the last entry is the one that has
+ * not. It renders muted, with an open dot and a dimmed connector, so the page
+ * never states an ambition as if it were a fact.
+ */
 const TIMELINE = [
   {
     period: "Lise yılları",
     title: "Mersin Eyüp Aygar Fen Lisesi",
     body: "Aynı okulda tanıştık, aynı sınavlara birlikte hazırlandık. O yıllarda gördük ki bir öğrencinin nereye gideceğini çoğu zaman kapasitesi değil, hangi hocaya ulaşabildiği belirliyor.",
+    status: "done" as const,
   },
   {
     period: "Üniversite",
     title: "Sınavda derece, aklımızda aynı soru",
     body: "Üçümüz de YKS'de derece yaptık. İkimiz Yıldız Teknik Üniversitesi'ne, birimiz Amerika'da Lafayette College'a gitti. Kendi hocalarımızı bulurken ne kadar şansa bağlı ilerlediğimizi ancak o zaman fark ettik.",
+    status: "done" as const,
   },
   {
     period: "2026",
     title: "Hocam kuruldu",
     body: "Bir öğrencinin, kendi şehrinde bulamadığı hocaya birkaç dakikada ulaşabilmesi için yola çıktık. Doğrulanmış profiller, açık ücretler ve tek bir karşılaştırma ekranı.",
+    status: "current" as const,
+  },
+  {
+    period: "2028 · Hedefimiz",
+    title: "Her ilden bir öğrencinin ulaşabildiği bir yer",
+    body: "Hedefimiz, Türkiye'nin her ilinden öğrencinin aradığı hocayı bulabildiği, hazırlık sürecinin coğrafyaya bağlı kalmadığı bir platform olmak. Henüz oraya varmadık; yolun neresinde olduğumuzu açık tutacağız.",
+    status: "upcoming" as const,
   },
 ] as const;
 
@@ -121,21 +143,39 @@ export default function AboutV2Page() {
           title="Hocam'ın tohumları nerede atıldı?"
           lede="Üç kurucu, aynı sıralarda başlayan ve aynı soruda birleşen bir yol."
         >
-          <ol className="relative space-y-10 border-l pl-8">
-            {TIMELINE.map((item) => (
-              <li key={item.period} className="relative">
-                <span
-                  className="absolute -left-[2.3rem] top-1.5 size-3 rounded-full border-2 border-brand-600 bg-background"
-                  aria-hidden
-                />
-                <p className="text-sm font-bold text-brand-700 dark:text-brand-300">
-                  {item.period}
-                </p>
-                <h3 className="mt-1 text-xl font-semibold">{item.title}</h3>
-                <p className="mt-2 max-w-2xl leading-7 text-muted-foreground">{item.body}</p>
-              </li>
-            ))}
-          </ol>
+          <Timeline>
+            {TIMELINE.map((item, index) => {
+              const done = item.status === "done";
+              const upcoming = item.status === "upcoming";
+              const isLast = index === TIMELINE.length - 1;
+
+              return (
+                <TimelineItem key={item.period} status={done ? "done" : "default"}>
+                  <TimelineHeading
+                    className={`line-clamp-none whitespace-normal text-lg font-semibold ${
+                      upcoming ? "text-muted-foreground" : "text-foreground"
+                    }`}
+                  >
+                    {item.title}
+                  </TimelineHeading>
+
+                  <TimelineDot
+                    status={done ? "done" : item.status === "current" ? "current" : "default"}
+                    className={upcoming ? "border-dashed opacity-60" : undefined}
+                  />
+
+                  {!isLast && <TimelineLine done={done} />}
+
+                  <TimelineContent className={upcoming ? "opacity-70" : undefined}>
+                    <span className="text-sm font-bold text-brand-700 dark:text-brand-300">
+                      {item.period}
+                    </span>
+                    <p className="mt-1.5 max-w-2xl leading-7">{item.body}</p>
+                  </TimelineContent>
+                </TimelineItem>
+              );
+            })}
+          </Timeline>
         </AboutSection>
 
         <AboutSection eyebrow="NEREYE GİDİYORUZ?" title="Misyon & Vizyon" align="center">
