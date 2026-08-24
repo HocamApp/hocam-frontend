@@ -56,12 +56,13 @@ const FOOTER_COLUMNS: FooterColumn[] = [
   {
     heading: "Hocam",
     entries: [
-      { label: "Hakkımızda", href: "/hakkimizda" },
+      { label: "Hakkımızda", href: "/hakkimizda-v2" },
+      { label: "Başarı hikayeleri", href: "/basari-hikayeleri" },
+      { label: "İletişim", href: "/iletisim" },
       { label: "Hoca ol", href: "/register?role=tutor" },
       { label: "Giriş yap", href: "/login" },
       { label: "Blog" },
       { label: "Kariyer" },
-      { label: "İletişim" },
     ],
   },
   {

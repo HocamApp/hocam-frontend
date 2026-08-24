@@ -2,14 +2,14 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Check, GraduationCap, X } from "lucide-react";
+import { GraduationCap, X } from "lucide-react";
 
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { useAuth } from "@/hooks/useAuth";
 import { getLocalStorage } from "@/lib/safeStorage";
 import { markEntryPromoSeen, shouldShowEntryPromo } from "@/lib/homeEntryPromo";
 
-import { MAX_PACKAGE_DISCOUNT_PERCENT, MONTHLY_TRIAL_LIMIT, TRIAL_MINUTES } from "./ysHomeFacts";
+import { MAX_PACKAGE_DISCOUNT_PERCENT, TRIAL_MINUTES } from "./ysHomeFacts";
 
 /**
  * The first-visit promo.
@@ -81,19 +81,26 @@ export function YsEntryDialog({ onResolved }: { onResolved: () => void }) {
         overlayClassName="z-[110]"
         className="z-[110] w-[calc(100dvw-1rem)] max-w-[calc(100dvw-1rem)] gap-0 overflow-hidden rounded-2xl border-neutral-200 bg-white p-0 text-neutral-900 sm:max-w-[420px]"
       >
-        <div className="relative overflow-hidden bg-brand-700 px-6 pb-6 pt-5 text-white">
+        {/* One idea, one number, one button. The earlier draft explained the
+            whole trial policy here; nobody reads a paragraph in a promo, and
+            the detail already lives in the FAQ further down the page. */}
+        <div className="relative overflow-hidden bg-brand-700 px-7 pb-8 pt-7 text-center text-white">
           <GraduationCap
-            className="pointer-events-none absolute -bottom-3 right-3 size-24 text-white/10"
+            className="pointer-events-none absolute -left-4 -top-4 size-28 rotate-[-12deg] text-white/10"
             aria-hidden
           />
-          <p className="text-xs font-bold tracking-[0.16em] text-white/75">HOCAM</p>
-          <DialogTitle className="mt-3 text-[1.625rem] font-bold leading-tight text-white">
-            İlk dersin ücretsiz
+          <p className="relative text-xs font-bold tracking-[0.22em] text-white/70">HOCAM</p>
+
+          <DialogTitle className="relative mt-4 text-[2.5rem] font-extrabold leading-[1.05] tracking-tight text-white">
+            İlk ders
+            <br />
+            ücretsiz
           </DialogTitle>
-          <DialogDescription className="mt-2 text-sm leading-6 text-white/90">
-            Seçtiğin hocayla {TRIAL_MINUTES} dakikalık deneme dersini ücret ödemeden yap. Ödeme
-            ya da paket hakkı gerekmez.
-          </DialogDescription>
+
+          <p className="relative mt-5 inline-flex items-baseline gap-2 rounded-full bg-white px-5 py-2 text-brand-700">
+            <span className="text-3xl font-extrabold leading-none">{TRIAL_MINUTES}</span>
+            <span className="text-sm font-bold">dakika</span>
+          </p>
 
           <DialogClose
             aria-label="Kapat"
@@ -103,42 +110,23 @@ export function YsEntryDialog({ onResolved }: { onResolved: () => void }) {
           </DialogClose>
         </div>
 
-        <div className="bg-white px-6 py-5">
-          <ul className="space-y-2.5">
-            {[
-              `Her hocayla bir kez, ayda en fazla ${MONTHLY_TRIAL_LIMIT} deneme dersi.`,
-              `Devam edersen uzun paketlerde ders başına fiyat %${MAX_PACKAGE_DISCOUNT_PERCENT}'a kadar düşer.`,
-              "Hocalar öğrenci kimliği, YKS belgesi ve .edu.tr e-postasıyla doğrulanır.",
-            ].map((line) => (
-              <li key={line} className="flex gap-2.5 text-sm leading-6 text-neutral-700">
-                <Check className="mt-1 size-4 shrink-0 text-brand-700" aria-hidden />
-                <span>{line}</span>
-              </li>
-            ))}
-          </ul>
+        <div className="bg-white px-7 pb-6 pt-5 text-center">
+          <DialogDescription className="text-sm leading-6 text-neutral-600">
+            Seçtiğin hocayla tanış, ücret ödeme. Devam edersen paketlerde %
+            {MAX_PACKAGE_DISCOUNT_PERCENT}&apos;a varan avantaj.
+          </DialogDescription>
 
           <Link
             href="/register"
             onClick={dismiss}
-            className="mt-5 flex h-11 w-full items-center justify-center rounded-lg bg-brand-700 text-sm font-semibold text-white transition-colors hover:bg-brand-800"
+            className="mt-5 flex h-12 w-full items-center justify-center rounded-full bg-brand-700 text-base font-bold text-white transition-colors hover:bg-brand-800"
           >
-            Ücretsiz kaydol
+            Hemen başla
           </Link>
 
-          <DialogClose className="mt-2 w-full rounded-lg py-2 text-sm font-medium text-neutral-600 transition-colors hover:text-neutral-900">
-            Önce hocaları inceleyeyim
+          <DialogClose className="mt-3 text-sm text-neutral-500 transition-colors hover:text-neutral-800">
+            Şimdi değil
           </DialogClose>
-
-          <p className="mt-4 text-center text-xs text-neutral-500">
-            Hesabın var mı?{" "}
-            <Link
-              href="/login"
-              onClick={dismiss}
-              className="font-medium text-brand-700 underline-offset-2 hover:underline"
-            >
-              Giriş yap
-            </Link>
-          </p>
         </div>
       </DialogContent>
     </Dialog>
