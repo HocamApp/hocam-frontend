@@ -1,37 +1,24 @@
 "use client";
 
-import { useRef } from "react";
 import Image from "next/image";
-import type { Variants } from "framer-motion";
 
-import { TimelineContent } from "@/components/ui/timeline-animation";
+import { Card, CardContent } from "@/components/ui/card";
+import { Marquee } from "@/components/ui/marquee";
 
 /**
- * "Hocalar ve Öğrencilerden" — the testimonial wall, ported from the Framer
- * site so the quotes, names and credentials stay exactly as they were written
- * there. Do not reword them; they are attributed to real people.
+ * "Hocalar ve Öğrencilerden" — two marquee rows running in opposite
+ * directions, both pausing on hover.
  *
- * Layout follows the 21st.dev bento reference, with two changes the reference
- * did not have: the grid-line texture behind the light cards is gone, and the
- * blue/black palette is replaced by Hocam's — brand pink for the accent cards,
- * `--ys-neutral-strong` for the dark ones, `brand-50` for the light ones. Only
- * `--brand-*` and literal neutrals are used, so this survives a portal or a
- * theme swap the same way the entry dialog does.
+ * The quotes, names and credentials come from the Framer site verbatim. Do not
+ * reword them; they are attributed to real people. For the same reason the
+ * body is never clamped — half a testimonial misrepresents whoever said it.
+ *
+ * Colour follows the reference's logic rather than its palette: the section
+ * sits on a faint brand tint and the cards are plain white, so they separate
+ * by tone alone. Hover fills the card with `brand-700` — the reference's
+ * yellow, translated. Only `--brand-*` and literal neutrals are used, so a
+ * theme swap cannot break it.
  */
-
-/**
- * Portraits. **Placeholders** — these are the repo's stock demo photos, not the
- * people quoted below. Drop the real files into `public/images/testimonials/`
- * and repoint this map; it is the only place a photo path appears.
- */
-const PHOTOS = {
-  bahadir: "/images/tutors/demo-man-1.jpg",
-  zeynep: "/images/tutors/demo-woman-1.jpg",
-  selin: "/images/tutors/demo-woman-3.jpg",
-  nazli: "/images/tutors/demo-woman-2.jpg",
-  kaan: "/images/tutors/demo-man-2.jpg",
-  elif: "/images/tutors/demo-woman-4.jpg",
-} as const;
 
 type Testimonial = {
   quote: string;
@@ -40,165 +27,115 @@ type Testimonial = {
   photo: string;
 };
 
-const SELIN: Testimonial = {
-  quote:
-    "Bizim lisede bir abi vardı, herkes ona soru sorardı. Ben de biraz onun gibi olmak istedim; şimdi haftada birkaç saat ders veriyorum, hem para kazanıyorum hem de anlattığım konu daha da pekişiyor bende.",
-  name: "Selin",
-  credential: "ODTÜ Endüstri Müh., YKS sıralaması 5.400",
-  photo: PHOTOS.selin,
-};
+/**
+ * Photos live in `public/images/testimonials/`. `yedek-1.jpeg` came in the same
+ * batch but belongs to nobody quoted here — it is spare, deliberately unused.
+ */
+const TESTIMONIALS: Testimonial[] = [
+  {
+    quote:
+      "Bizim lisede bir abi vardı, herkes ona soru sorardı. Ben de biraz onun gibi olmak istedim; şimdi haftada birkaç saat ders veriyorum, hem para kazanıyorum hem de anlattığım konu daha da pekişiyor bende.",
+    name: "Selin",
+    credential: "ODTÜ Endüstri Müh., YKS sıralaması 5.400",
+    photo: "/images/testimonials/selin.jpeg",
+  },
+  {
+    quote:
+      "3 aydır matematik dersi alıyorum, netlerim 18'den 27'ye çıktı. Hocam bana özellikle hangi konuda takıldığımı görüp ona göre gidiyor, okuldaki gibi herkese aynı şey anlatmıyor.",
+    name: "Nazli",
+    credential: "12. sınıf",
+    photo: "/images/testimonials/nazli.jpeg",
+  },
+  {
+    quote:
+      "Dershanede hoca konuyu anlatıyor ama sınavda nasıl çıkacağını bilmiyordu resmen. Burdaki abi geçen sene aynı soruları çözmüş, o yüzden nereye dikkat etmem gerektiğini biliyo.",
+    name: "Kaan",
+    credential: "12. sınıf",
+    photo: "/images/testimonials/kaan.jpeg",
+  },
+  {
+    quote:
+      "İlk başta güvenmedim açıkçası, herkes hoca diyebiliyo internette. Ama profilde sıralaması falan yazıyordu, gerçekten doğrulanmış olması içimi rahatlattı.",
+    name: "Bahadir",
+    credential: "12. sınıf",
+    photo: "/images/testimonials/bahadir.jpeg",
+  },
+  {
+    quote:
+      "Özel ders parası ailemize yük oluyordu direkt. Burda saatlik fiyat neredeyse yarı yarıya, üstüne hoca da yaşça bana yakın olunca daha rahat soru sorabiliyorum.",
+    name: "Elif",
+    credential: "11. sınıf",
+    photo: "/images/testimonials/elif.jpeg",
+  },
+  {
+    quote:
+      "Mezun olunca kitapları atacaktım normalde, hepsi çöpe gidecekti. Şimdi hem kendi bilgim işime yarıyor hem de üniversite masraflarımı çıkarıyorum.",
+    name: "Zeynep",
+    credential: "Boğaziçi Bilgisayar Müh., YKS sıralaması 3.100",
+    photo: "/images/testimonials/zeynep.jpeg",
+  },
+];
 
-const ELIF: Testimonial = {
-  quote:
-    "Özel ders parası ailemize yük oluyordu direkt. Burda saatlik fiyat neredeyse yarı yarıya, üstüne hoca da yaşça bana yakın olunca daha rahat soru sorabiliyorum.",
-  name: "Elif",
-  credential: "11. sınıf",
-  photo: PHOTOS.elif,
-};
+const FIRST_ROW = TESTIMONIALS.slice(0, TESTIMONIALS.length / 2);
+const SECOND_ROW = TESTIMONIALS.slice(TESTIMONIALS.length / 2);
 
-const NAZLI: Testimonial = {
-  quote:
-    "3 aydır matematik dersi alıyorum, netlerim 18'den 27'ye çıktı. Hocam bana özellikle hangi konuda takıldığımı görüp ona göre gidiyor, okuldaki gibi herkese aynı şey anlatmıyor.",
-  name: "Nazli",
-  credential: "12. sınıf",
-  photo: PHOTOS.nazli,
-};
-
-const KAAN: Testimonial = {
-  quote:
-    "Dershanede hoca konuyu anlatıyor ama sınavda nasıl çıkacağını bilmiyordu resmen. Burdaki abi geçen sene aynı soruları çözmüş, o yüzden nereye dikkat etmem gerektiğini biliyo.",
-  name: "Kaan",
-  credential: "12. sınıf",
-  photo: PHOTOS.kaan,
-};
-
-const BAHADIR: Testimonial = {
-  quote:
-    "İlk başta güvenmedim açıkçası, herkes hoca diyebiliyo internette. Ama profilde sıralaması falan yazıyordu, gerçekten doğrulanmış olması içimi rahatlattı.",
-  name: "Bahadir",
-  credential: "12. sınıf",
-  photo: PHOTOS.bahadir,
-};
-
-const ZEYNEP: Testimonial = {
-  quote:
-    "Mezun olunca kitapları atacaktım normalde, hepsi çöpe gidecekti. Şimdi hem kendi bilgim işime yarıyor hem de üniversite masraflarımı çıkarıyorum.",
-  name: "Zeynep",
-  credential: "Boğaziçi Bilgisayar Müh., YKS sıralaması 3.100",
-  photo: PHOTOS.zeynep,
-};
-
-const REVEAL: Variants = {
-  hidden: { opacity: 0, y: -20, filter: "blur(10px)" },
-  visible: (index: number) => ({
-    opacity: 1,
-    y: 0,
-    filter: "blur(0px)",
-    transition: { delay: index * 0.12, duration: 0.5 },
-  }),
-};
-
-/** Shared body of every card, so only the surface colours differ per tone. */
-function Quote({
-  testimonial,
-  tone,
-}: {
-  testimonial: Testimonial;
-  tone: "light" | "dark" | "brand";
-}) {
-  const credentialClass = tone === "light" ? "text-neutral-500" : "text-white/75";
-
+function ReviewCard({ quote, name, credential, photo }: Testimonial) {
   return (
-    <article className="mt-auto">
-      <p className="text-[15px] leading-6">{testimonial.quote}</p>
-      <div className="flex items-end justify-between gap-4 pt-5">
-        <div className="min-w-0">
-          <h3 className="text-lg font-semibold">{testimonial.name}</h3>
-          <p className={`text-sm ${credentialClass}`}>{testimonial.credential}</p>
+    <Card className="group/card h-full w-[16.5rem] shrink-0 sm:w-[21rem] cursor-default border-brand-100 bg-white p-5 shadow-none transition-colors duration-200 hover:border-brand-700 hover:bg-brand-700">
+      <CardContent className="flex h-full flex-col gap-3 p-0">
+        <div className="flex flex-row items-center gap-3">
+          <Image
+            src={photo}
+            alt=""
+            width={96}
+            height={96}
+            className="size-11 shrink-0 rounded-full object-cover"
+          />
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-neutral-900 transition-colors duration-200 group-hover/card:text-white">
+              {name}
+            </p>
+            <p className="text-xs text-neutral-500 transition-colors duration-200 group-hover/card:text-white/75">
+              {credential}
+            </p>
+          </div>
         </div>
-        <Image
-          src={testimonial.photo}
-          alt=""
-          width={200}
-          height={200}
-          className="size-14 shrink-0 rounded-xl object-cover"
-        />
-      </div>
-    </article>
+        <p className="text-[15px] leading-6 text-neutral-700 transition-colors duration-200 group-hover/card:text-white">
+          {quote}
+        </p>
+      </CardContent>
+    </Card>
   );
 }
 
-const TONE_CLASS = {
-  light: "bg-brand-50 border-brand-100 text-neutral-900",
-  dark: "bg-[#1a1a1a] border-[#1a1a1a] text-white",
-  brand: "bg-brand-700 border-brand-700 text-white",
-} as const;
-
 export function YsTestimonials() {
-  const sectionRef = useRef<HTMLDivElement>(null);
-
-  const card = (
-    testimonial: Testimonial,
-    tone: keyof typeof TONE_CLASS,
-    animationNum: number,
-    sizing: string,
-  ) => (
-    <TimelineContent
-      animationNum={animationNum}
-      customVariants={REVEAL}
-      timelineRef={sectionRef}
-      className={`flex flex-col justify-between rounded-lg border p-5 ${TONE_CLASS[tone]} ${sizing}`}
-    >
-      <Quote testimonial={testimonial} tone={tone} />
-    </TimelineContent>
-  );
-
   return (
-    <section ref={sectionRef} className="mt-14">
-      <div className="mx-auto max-w-2xl space-y-2 text-center">
-        <TimelineContent
-          as="h2"
-          animationNum={0}
-          customVariants={REVEAL}
-          timelineRef={sectionRef}
-          className="text-3xl font-bold tracking-tight"
-        >
-          Hocalar ve Öğrencilerden
-        </TimelineContent>
-        <TimelineContent
-          as="p"
-          animationNum={1}
-          customVariants={REVEAL}
-          timelineRef={sectionRef}
-          className="text-base"
-        >
-          <span style={{ color: "var(--ys-neutral-secondary)" }}>
-            Hocam&apos;da ders veren hocalar ve ders alan öğrenciler, kendi deneyimlerini
-            anlatıyor.
-          </span>
-        </TimelineContent>
+    <section className="mt-14 overflow-hidden rounded-lg bg-brand-50 py-12">
+      <div className="mx-auto max-w-2xl space-y-2 px-4 text-center">
+        <h2 className="text-3xl font-bold tracking-tight">Hocalar ve Öğrencilerden</h2>
+        <p className="text-base" style={{ color: "var(--ys-neutral-secondary)" }}>
+          Hocam&apos;da ders veren hocalar ve ders alan öğrenciler, kendi deneyimlerini
+          anlatıyor.
+        </p>
       </div>
 
-      {/* Three columns on desktop; each becomes a two-card row on tablet and
-          unwraps into a single stack on mobile. The 7/3 grow ratios only split
-          whatever slack the tallest column leaves over, so in practice the
-          rows land close to even — the reference's dramatic size contrast
-          needed fixed heights, which would clip these quotes. */}
-      <div className="mt-8 flex flex-col gap-3 lg:grid lg:grid-cols-3">
-        <div className="flex flex-col gap-3 md:flex-row lg:flex-col">
-          {card(SELIN, "light", 0, "lg:flex-[7_0_auto]")}
-          {card(ELIF, "brand", 1, "lg:flex-[3_0_auto]")}
-        </div>
+      <div className="relative mt-8 flex w-full flex-col items-center justify-center">
+        <Marquee pauseOnHover className="[--duration:38s]">
+          {FIRST_ROW.map((item) => (
+            <ReviewCard key={item.name} {...item} />
+          ))}
+        </Marquee>
+        <Marquee reverse pauseOnHover className="[--duration:38s]">
+          {SECOND_ROW.map((item) => (
+            <ReviewCard key={item.name} {...item} />
+          ))}
+        </Marquee>
 
-        <div className="flex flex-col gap-3 md:flex-row lg:flex-col">
-          {card(NAZLI, "dark", 2, "lg:flex-[1_0_auto]")}
-          {card(KAAN, "dark", 3, "lg:flex-[1_0_auto]")}
-        </div>
-
-        <div className="flex flex-col gap-3 md:flex-row lg:flex-col">
-          {card(BAHADIR, "brand", 4, "lg:flex-[3_0_auto]")}
-          {card(ZEYNEP, "light", 5, "lg:flex-[7_0_auto]")}
-        </div>
+        {/* Fades to the section tint, not to white — the cards must look like
+            they slide under the edge, not into a different surface. Narrow on
+            phones, where a proportional fade would cover a third of the row. */}
+        <div className="pointer-events-none absolute inset-y-0 left-0 w-10 bg-gradient-to-r from-brand-50 sm:w-1/6" />
+        <div className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-brand-50 sm:w-1/6" />
       </div>
     </section>
   );

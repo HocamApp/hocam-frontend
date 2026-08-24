@@ -70,6 +70,14 @@ const config: Config = {
         "skeleton-shimmer": {
           "100%": { transform: "translateX(100%)" },
         },
+        /* Marquee: one copy of the row slides exactly its own width plus a
+           gap, so the next identical copy lands where it started and the loop
+           is seamless. `transform` only — this runs forever, so it must never
+           touch layout. */
+        marquee: {
+          from: { transform: "translateX(0)" },
+          to: { transform: "translateX(calc(-100% - var(--gap)))" },
+        },
         "typing-dot": {
           "0%, 60%, 100%": { transform: "translateY(0)", opacity: "0.4" },
           "30%": { transform: "translateY(-3px)", opacity: "1" },
@@ -89,6 +97,7 @@ const config: Config = {
       },
       animation: {
         "skeleton-shimmer": "skeleton-shimmer 1.5s infinite",
+        marquee: "marquee var(--duration) linear infinite",
         "typing-dot": "typing-dot 1.2s ease-in-out infinite",
         "message-pop": "message-pop 0.22s ease-out",
         "accordion-down": "accordion-down 0.2s ease-out",
