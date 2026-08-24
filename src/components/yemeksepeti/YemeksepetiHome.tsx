@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import "@/styles/yemeksepeti.css";
 import { YsCampaignLane } from "./YsCampaignLane";
+import { YsEntryDialog } from "./YsEntryDialog";
 import { YsFooter } from "./YsFooter";
 import { YsHomeFaq } from "./YsHomeFaq";
 import { YsNavbar } from "./YsNavbar";
@@ -16,6 +17,10 @@ export function YemeksepetiHome({ fontClassName }: { fontClassName?: string }) {
      `search` only moves on blur or Enter, matching /tutors. */
   const [searchDraft, setSearchDraft] = useState("");
   const [search, setSearch] = useState<string | undefined>(undefined);
+  /* The coachmark waits for the entry promo: it fires at 900ms and would
+     otherwise spend its whole life behind the modal overlay. */
+  const [coachmarkReady, setCoachmarkReady] = useState(false);
+  const handlePromoResolved = useCallback(() => setCoachmarkReady(true), []);
 
   return (
     <div className={`ys-root flex min-h-screen flex-col ${fontClassName ?? ""}`}>
@@ -25,6 +30,7 @@ export function YemeksepetiHome({ fontClassName }: { fontClassName?: string }) {
         searchDraft={searchDraft}
         onSearchDraftChange={setSearchDraft}
         onSearchCommit={setSearch}
+        startCoachmark={coachmarkReady}
       />
 
       <main id="ys-main-content" className="flex-1">
@@ -41,6 +47,8 @@ export function YemeksepetiHome({ fontClassName }: { fontClassName?: string }) {
       </main>
 
       <YsFooter />
+
+      <YsEntryDialog onResolved={handlePromoResolved} />
     </div>
   );
 }

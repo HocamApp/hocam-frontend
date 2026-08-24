@@ -23,6 +23,10 @@ type Props = {
   searchDraft: string;
   onSearchDraftChange: (value: string) => void;
   onSearchCommit: (value: string | undefined) => void;
+  /** Held false while the entry promo is on screen — the coachmark would
+   *  otherwise live and die underneath its overlay. Defaults to true so the
+   *  navbar on its own behaves exactly as before. */
+  startCoachmark?: boolean;
 };
 
 /** Same icons the real Hocam navbar uses, keyed by `navItems.ts` icon names. */
@@ -60,6 +64,7 @@ export function YsNavbar({
   searchDraft,
   onSearchDraftChange,
   onSearchCommit,
+  startCoachmark = true,
 }: Props) {
   /* A self-dismissing hint pointing at the register button, in the reference's
      coachmark style. It says nothing the button itself does not, so it is
@@ -67,13 +72,15 @@ export function YsNavbar({
   const [nudge, setNudge] = useState<"hidden" | "visible" | "leaving">("hidden");
 
   useEffect(() => {
+    if (!startCoachmark) return;
+
     const timers = [
       setTimeout(() => setNudge("visible"), NUDGE_DELAY_MS),
       setTimeout(() => setNudge("leaving"), NUDGE_DELAY_MS + NUDGE_VISIBLE_MS),
       setTimeout(() => setNudge("hidden"), NUDGE_DELAY_MS + NUDGE_VISIBLE_MS + NUDGE_EXIT_MS),
     ];
     return () => timers.forEach(clearTimeout);
-  }, []);
+  }, [startCoachmark]);
 
   return (
     <section
