@@ -8,6 +8,7 @@ import { YsFooter } from "./YsFooter";
 import { YsHomeFaq } from "./YsHomeFaq";
 import { YsNavbar } from "./YsNavbar";
 import { YsAppBanner, YsFavouritesBanner, YsSignupBanner } from "./YsPromoBanners";
+import { YsTestimonials } from "./YsTestimonials";
 import { YsTutorDirectory } from "./YsTutorDirectory";
 
 export function YemeksepetiHome({ fontClassName }: { fontClassName?: string }) {
@@ -44,6 +45,9 @@ export function YemeksepetiHome({ fontClassName }: { fontClassName?: string }) {
               is the heart on the cards right below it. */}
           <YsFavouritesBanner />
           <YsTutorDirectory search={search} />
+          {/* Between the directory and the FAQ: proof after browsing, before the
+              objections the FAQ answers. */}
+          <YsTestimonials />
           <YsHomeFaq />
         </div>
       </main>
