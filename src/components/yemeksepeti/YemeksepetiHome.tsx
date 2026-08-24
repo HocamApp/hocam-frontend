@@ -4,6 +4,7 @@ import { useState } from "react";
 import "@/styles/yemeksepeti.css";
 import { YsCampaignLane } from "./YsCampaignLane";
 import { YsFooter } from "./YsFooter";
+import { YsHomeFaq } from "./YsHomeFaq";
 import { YsNavbar } from "./YsNavbar";
 import { YsAppBanner, YsFavouritesBanner, YsSignupBanner } from "./YsPromoBanners";
 import { YsTutorDirectory } from "./YsTutorDirectory";
@@ -35,6 +36,7 @@ export function YemeksepetiHome({ fontClassName }: { fontClassName?: string }) {
           <YsCampaignLane />
           <YsAppBanner />
           <YsTutorDirectory search={search} />
+          <YsHomeFaq />
         </div>
       </main>
 

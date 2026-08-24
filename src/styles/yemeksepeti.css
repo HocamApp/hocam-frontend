@@ -418,6 +418,14 @@
   line-height: 1.571;
 }
 
+/* Same colour and size as a footer link, but inert: these label things the
+   product does not have a page for yet, so they must not invite a click. */
+.ys-footer-text {
+  color: var(--ys-neutral-secondary);
+  font-size: 0.875rem;
+  line-height: 1.571;
+}
+
 .ys-footer-link:hover {
   color: var(--ys-neutral-primary);
   text-decoration: underline;
