@@ -11,7 +11,7 @@ import { YsTestimonials } from "./YsTestimonials";
 import { YsTutorDirectory } from "./YsTutorDirectory";
 import { YsUniversityStrip } from "./YsUniversityStrip";
 
-export function YemeksepetiHome({ fontClassName }: { fontClassName?: string }) {
+export function YemeksepetiHome() {
   const [activeTab, setActiveTab] = useState("tutors");
   /* The search bar lives in the navbar but drives the directory below, so the
      committed term is held here. `searchDraft` is what is being typed;
@@ -24,7 +24,7 @@ export function YemeksepetiHome({ fontClassName }: { fontClassName?: string }) {
   const handlePromoResolved = useCallback(() => setCoachmarkReady(true), []);
 
   return (
-    <div className={`ys-root flex min-h-screen flex-col ${fontClassName ?? ""}`}>
+    <div className="ys-root flex min-h-screen flex-col">
       <YsNavbar
         activeTab={activeTab}
         onTabChange={setActiveTab}

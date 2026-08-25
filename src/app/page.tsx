@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Open_Sans } from "next/font/google";
 
 import { YemeksepetiHome } from "@/components/yemeksepeti/YemeksepetiHome";
 
@@ -13,8 +12,6 @@ import { YemeksepetiHome } from "@/components/yemeksepeti/YemeksepetiHome";
  * to host still lives at `/login` and `/register`.
  */
 
-const openSans = Open_Sans({ subsets: ["latin", "latin-ext"], display: "swap" });
-
 export const metadata: Metadata = {
   alternates: {
     canonical: "/",
@@ -27,5 +24,5 @@ export const metadata: Metadata = {
 };
 
 export default function Home() {
-  return <YemeksepetiHome fontClassName={openSans.className} />;
+  return <YemeksepetiHome />;
 }

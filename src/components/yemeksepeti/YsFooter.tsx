@@ -109,7 +109,7 @@ export function YsFooter() {
   const hasSocialLinks = SOCIAL_LINKS.some((social) => social.href);
 
   return (
-    <footer className="mt-12 border-t" style={{ borderColor: "var(--ys-neutral-divider)" }}>
+    <footer className="mt-16 md:mt-24 border-t" style={{ borderColor: "var(--ys-neutral-divider)" }}>
       <div className="ys-shell py-10">
         <div className="grid grid-cols-2 gap-x-6 gap-y-8 md:grid-cols-4 lg:grid-cols-5">
           {FOOTER_COLUMNS.map((column) => (

@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { Poppins } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/providers/AuthProvider";
@@ -16,7 +16,22 @@ import {
   SITE_URL,
 } from "@/lib/seo";
 
-const inter = Inter({ subsets: ["latin"] });
+/**
+ * Poppins, three weights. 300 was cut because its only assignment was one
+ * element and a weight loaded for one element is not a system; 600 was cut
+ * because it is close enough to 700 that keeping both makes every future
+ * heading a coin flip.
+ *
+ * `latin-ext` is not optional. Without it ğ, ş, İ and ı fall back to a system
+ * font and Turkish names render with mixed glyphs mid-word — on a site whose
+ * content is tutor names and university titles, that is most of the page.
+ */
+const poppins = Poppins({
+  subsets: ["latin", "latin-ext"],
+  weight: ["400", "500", "700"],
+  variable: "--font-poppins",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -92,7 +107,7 @@ export default function RootLayout({
         />
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       </head>
-      <body className={`${inter.className} min-h-screen flex flex-col antialiased`}>
+      <body className={`${poppins.className} min-h-screen flex flex-col antialiased`}>
         <AuthProvider>
           <QueryProvider>
             <LanguageProvider>

@@ -6,8 +6,8 @@ import { Apple, Heart, MousePointer2, Play, Pointer, QrCode, UtensilsCrossed } f
 export function YsSignupBanner() {
   return (
     <div
-      className="mt-6 flex items-center justify-between overflow-hidden rounded-lg"
-      style={{ background: "var(--ys-brand-highlight)" }}
+      className="mt-16 md:mt-24 flex items-center justify-between overflow-hidden rounded-card"
+      style={{ background: "var(--pink-pale)" }}
     >
       <div className="flex flex-col items-start gap-4 p-6">
         <h1 className="text-2xl font-semibold leading-[1.3125] md:text-[2rem]">
@@ -40,11 +40,10 @@ export function YsSignupBanner() {
 export function YsFavouritesBanner() {
   return (
     <div
-      className="relative mt-6 overflow-hidden rounded-lg"
-      style={{
-        background:
-          "linear-gradient(135deg, var(--ys-brand-highlight) 0%, var(--ys-interaction-primary-feedback) 50%, var(--ys-white) 100%)",
-      }}
+      className="relative mt-16 md:mt-24 overflow-hidden rounded-card"
+      /* Was a three-stop gradient. Flat fill: DESIGN.md bans gradients
+          outright, and --pink-pale exists precisely to be a section surface. */
+      style={{ background: "var(--pink-pale)" }}
     >
       {/* Soft heart drift in the trailing corner, matching the reference. */}
       <div className="pointer-events-none absolute inset-y-0 right-0 hidden w-1/2 sm:block" aria-hidden>
@@ -101,14 +100,16 @@ export function YsFavouritesBanner() {
 
 export function YsAppBanner() {
   return (
-    <section className="mt-8">
-      <div
-        className="flex items-center justify-between gap-8 rounded-lg p-6"
-        style={{ background: "var(--ys-deal-highlight-1)" }}
-      >
+    <section className="mt-16 md:mt-24">
+      {/* A white in-flow surface on paper, separated by a hairline. It was a
+          full-bleed slab of the old green accent; mapping that onto gold made
+          it worse, because gold at this scale sits directly against the pink
+          bands above and below it and the two vibrate. Gold is a badge-scale
+          surface here, not a section. */}
+      <div className="flex items-center justify-between gap-8 rounded-card border border-line bg-white p-6">
         <div className="flex items-center gap-6">
           <div
-            className="hidden h-[104px] w-[104px] shrink-0 items-center justify-center rounded-lg bg-white sm:flex"
+            className="hidden h-[104px] w-[104px] shrink-0 items-center justify-center rounded-card border border-line sm:flex"
             aria-hidden
           >
             <QrCode className="h-16 w-16" style={{ color: "var(--ys-neutral-strong)" }} />
@@ -117,7 +118,7 @@ export function YsAppBanner() {
             <div className="mb-4">
               <div className="text-lg font-normal leading-[1.555]">
                 Size özel kampanyalar ve çok daha fazlası{" "}
-                <span className="font-bold" style={{ color: "var(--ys-deal-primary)" }}>
+                <span className="font-bold" style={{ color: "var(--pink)" }}>
                   Mobil uygulamamız
                 </span>{" "}
                 ile
@@ -138,11 +139,6 @@ export function YsAppBanner() {
             </div>
           </div>
         </div>
-        <div
-          className="hidden h-[140px] w-[120px] shrink-0 rounded-lg lg:block"
-          style={{ background: "var(--ys-deal-secondary)" }}
-          aria-hidden
-        />
       </div>
     </section>
   );

@@ -84,7 +84,7 @@ export function YsUniversityStrip() {
   return (
     // No rule above it any more: it now sits between two coloured banners,
     // which separate it on their own. A divider there would only add a line.
-    <section className="mt-8">
+    <section className="mt-16 md:mt-24">
       <p
         className="text-center text-lg font-semibold"
         style={{ color: "var(--ys-neutral-strong)" }}
@@ -102,8 +102,8 @@ export function YsUniversityStrip() {
           ))}
         </Marquee>
 
-        <div className="pointer-events-none absolute inset-y-0 left-0 w-12 bg-gradient-to-r from-white sm:w-32" />
-        <div className="pointer-events-none absolute inset-y-0 right-0 w-12 bg-gradient-to-l from-white sm:w-32" />
+        <div className="pointer-events-none absolute inset-y-0 left-0 w-12 bg-gradient-to-r from-paper sm:w-32" />
+        <div className="pointer-events-none absolute inset-y-0 right-0 w-12 bg-gradient-to-l from-paper sm:w-32" />
       </div>
     </section>
   );

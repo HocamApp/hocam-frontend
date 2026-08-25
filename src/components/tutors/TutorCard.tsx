@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Award, Sparkles, TrendingUp } from "lucide-react";
+import { ArrowRight, TrendingUp } from "lucide-react";
 import { TutorProfile } from "@/types";
+import { RankMark } from "@/components/brand/marks";
 import { cn, formatLessonCount, formatPrice, formatRating } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -100,7 +101,7 @@ function PresenceDot({ isOnline }: { isOnline: boolean }) {
       title={label}
       className={cn(
         "absolute -bottom-1 -right-1 h-5 w-5 rounded-md border-2 border-background",
-        isOnline ? "bg-emerald-500" : "bg-muted-foreground/40"
+        isOnline ? "bg-[--success]" : "bg-line"
       )}
     />
   );
@@ -142,27 +143,44 @@ function StatusBadges({
       {showPresence && (
         <TutorPresenceBadge isOnline={tutor.is_online} lastSeenAt={tutor.last_seen_at} />
       )}
+      {/* Every badge below used to be a tint fill: a pale same-hue background
+          under saturated same-hue text. That is the bg-x-100/text-x-700 shape
+          that ships in every generated dashboard, and it was here five times
+          over in four different hues. A badge now either has real contrast or
+          it has no container at all.
+
+          Gold carries the rank because rank is the achievement this product
+          is built around. Gold is a surface and --gold-ink sits on it, never
+          the other way round: #FFD100 as a text colour measures about 1.6:1. */}
       {tutor.yks_rank > 0 && (
         <span
-          className="inline-flex w-fit items-center gap-1 text-xs font-semibold text-brand-600 dark:text-brand-300"
+          className="inline-flex w-fit items-center gap-1 rounded-[14px] bg-gold px-2 py-0.5 text-xs font-semibold tabular-nums text-gold-ink"
           title="YKS sıralaması"
           aria-label={`YKS sıralaması: ${formatYksRank(tutor.yks_rank)}`}
         >
-          <Award className="h-3 w-3" />
+          <RankMark className="h-3 w-3" />
           {formatYksRank(tutor.yks_rank)}
         </span>
       )}
       {showNewTutorBadge && tutor.is_new_tutor && (
-        <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">Yeni hoca</span>
+        <span className="rounded-pill border border-line px-2 py-0.5 text-xs font-medium text-ink">
+          Yeni hoca
+        </span>
       )}
       {showLaunchProgram && tutor.launch_program_available && (
-        <span className="rounded-full bg-violet-500/10 px-2 py-0.5 text-xs font-medium text-violet-700 dark:text-violet-300">Tanıtım programına açık</span>
+        <span className="rounded-pill border border-line px-2 py-0.5 text-xs font-medium text-ink">
+          Tanıtım programına açık
+        </span>
       )}
+      {/* Availability is the one state worth a solid fill, because it is the
+          thing that decides whether the rest of the card is actionable. */}
       {showBookable && tutor.is_bookable === true && (
-        <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:text-emerald-300">Yeni öğrenci kabul ediyor</span>
+        <span className="rounded-pill bg-[--success] px-2 py-0.5 text-xs font-medium text-white">
+          Yeni öğrenci kabul ediyor
+        </span>
       )}
       {showBookable && tutor.is_bookable === false && (
-        <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-xs font-medium text-amber-800 dark:text-amber-200">Şu anda yeni öğrenci almıyor</span>
+        <span className="text-xs font-medium text-ink-mid">Şu anda yeni öğrenci almıyor</span>
       )}
     </>
   );
@@ -190,7 +208,11 @@ function TutorCardDefault({
     <Card
       data-discovery-tutor-id={discoveryImpressionId ? tutor.id : undefined}
       data-discovery-impression-id={discoveryImpressionId || undefined}
-      className="relative h-full min-w-0 overflow-visible border-t-2 border-t-transparent transition-all duration-200 hover:z-10 hover:-translate-y-0.5 hover:border-t-primary hover:shadow-lg"
+      /* Was a lift plus a shadow. A card sits in the document flow and does
+         not float, so a shadow on it is a lie about its physics, and the lift
+         needs its own prefers-reduced-motion escape hatch. The hairline going
+         to ink says the same thing in 120ms and degrades to nothing. */
+      className="relative h-full min-w-0 overflow-visible border-line transition-colors duration-[--duration-state] hover:border-ink"
     >
       <CardContent className="p-0">
         <Link href={tutorHref} className="block cursor-pointer">
@@ -201,11 +223,11 @@ function TutorCardDefault({
                   src={tutor.profile_picture || undefined}
                   alt={`${tutor.name} ${tutor.surname}`}
                 />
-                <AvatarFallback className="bg-primary/10 text-primary text-lg font-medium">
+                <AvatarFallback className="bg-ink text-lg font-medium text-white">
                   {getInitials(tutor.name, tutor.surname)}
                 </AvatarFallback>
               </Avatar>
-              {tutor.is_online && <span className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-background bg-emerald-500" aria-label="Çevrim içi" />}
+              {tutor.is_online && <span className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-pill border-2 border-white bg-[--success]" aria-label="Çevrim içi" />}
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex min-w-0 items-center gap-1">
@@ -357,7 +379,7 @@ function TutorCardLarge({
                   src={tutor.profile_picture || undefined}
                   alt={`${tutor.name} ${tutor.surname}`}
                 />
-                <AvatarFallback className="rounded-xl bg-primary/10 text-3xl font-medium text-primary">
+                <AvatarFallback className="rounded-xl bg-ink text-3xl font-medium text-white">
                   {getInitials(tutor.name, tutor.surname)}
                 </AvatarFallback>
               </Avatar>
@@ -392,11 +414,7 @@ function TutorCardLarge({
           </p>
           <div className="mt-2 flex flex-wrap gap-1.5">
             {coachingLabel && (
-              <Badge
-                variant="outline"
-                className="gap-1 border-brand-200 bg-brand-50 text-xs text-brand-700 dark:border-brand-800 dark:bg-brand-900/40 dark:text-brand-200"
-              >
-                <Sparkles className="h-3 w-3 shrink-0" aria-hidden />
+              <Badge className="border-transparent bg-ink text-xs text-white">
                 {coachingLabel}
               </Badge>
             )}

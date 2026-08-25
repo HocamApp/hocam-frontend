@@ -80,12 +80,12 @@ export function YsEntryDialog({ onResolved }: { onResolved: () => void }) {
         data-ys-entry-promo
         showClose={false}
         overlayClassName="z-[110]"
-        className="z-[110] w-[calc(100dvw-1rem)] max-w-[calc(100dvw-1rem)] gap-0 overflow-hidden rounded-2xl border-neutral-200 bg-white p-0 text-neutral-900 sm:max-w-[420px]"
+        className="z-[110] w-[calc(100dvw-1rem)] max-w-[calc(100dvw-1rem)] gap-0 overflow-hidden rounded-modal border-line bg-white p-0 text-ink sm:max-w-[420px]"
       >
         {/* One idea, one number, one button. The earlier draft explained the
             whole trial policy here; nobody reads a paragraph in a promo, and
             the detail already lives in the FAQ further down the page. */}
-        <div className="relative overflow-hidden bg-brand-700 px-7 pb-8 pt-7 text-center text-white">
+        <div className="relative overflow-hidden bg-pink px-7 pb-8 pt-7 text-center text-white">
           <GraduationCap
             className="pointer-events-none absolute -left-4 -top-4 size-28 rotate-[-12deg] text-white/10"
             aria-hidden
@@ -98,7 +98,7 @@ export function YsEntryDialog({ onResolved }: { onResolved: () => void }) {
             ücretsiz
           </DialogTitle>
 
-          <p className="relative mt-5 inline-flex items-baseline gap-2 rounded-full bg-white px-5 py-2 text-brand-700">
+          <p className="relative mt-5 inline-flex items-baseline gap-2 rounded-pill bg-white px-5 py-2 text-pink">
             <span className="text-3xl font-extrabold leading-none">{TRIAL_MINUTES}</span>
             <span className="text-sm font-bold">dakika</span>
           </p>
@@ -112,7 +112,7 @@ export function YsEntryDialog({ onResolved }: { onResolved: () => void }) {
         </div>
 
         <div className="bg-white px-7 pb-6 pt-5 text-center">
-          <DialogDescription className="text-sm leading-6 text-neutral-600">
+          <DialogDescription className="text-sm leading-6 text-ink-mid">
             Seçtiğin hocayla tanış, ücret ödeme. Devam edersen paketlerde %
             {MAX_PACKAGE_DISCOUNT_PERCENT}&apos;a varan avantaj.
           </DialogDescription>
@@ -120,12 +120,12 @@ export function YsEntryDialog({ onResolved }: { onResolved: () => void }) {
           <Link
             href="/register"
             onClick={dismiss}
-            className="mt-5 flex h-12 w-full items-center justify-center rounded-full bg-brand-700 text-base font-bold text-white transition-colors hover:bg-brand-800"
+            className="mt-5 flex h-12 w-full items-center justify-center rounded-pill bg-pink text-base font-bold text-white transition-colors duration-[--duration-state] hover:bg-pink-deep"
           >
             Hemen başla
           </Link>
 
-          <DialogClose className="mt-3 text-sm text-neutral-500 transition-colors hover:text-neutral-800">
+          <DialogClose className="mt-3 text-sm text-ink-mid transition-colors duration-[--duration-state] hover:text-ink">
             Şimdi değil
           </DialogClose>
         </div>

@@ -8,33 +8,42 @@
  * Hocam's own palette is the intended next step.
  */
 
+/*
+ * The `--ys-*` names are kept so every call site does not have to change at
+ * once, but each one now points at a DESIGN.md token. The pink needed no
+ * work: `#fa0050` was already the value the design doc arrived at
+ * independently, since both trace back to the same rebrand palette.
+ *
+ * What did change: the neutrals moved off `#333`/`#1a1a1a` onto `--ink`, the
+ * page surface moved off pure white onto `--paper`, the radius steps moved off
+ * 8/12/16 onto 10/20/28, and the green deal trio is gone. DESIGN.md caps the
+ * palette at three hues plus neutrals, and a fourth is where it starts reading
+ * as rainbow, so those three now resolve to gold.
+ */
 .ys-root {
-  --ys-brand-primary: #fa0050;
-  --ys-interaction-primary: #ea004b;
-  --ys-interaction-primary-hover: #cd0042;
-  --ys-interaction-primary-feedback: #fdf2f5;
-  --ys-brand-highlight: #fdf2f5;
-  --ys-brand-highlight-1: #ffe6ee;
+  --ys-brand-primary: var(--pink);
+  --ys-interaction-primary: var(--pink);
+  --ys-interaction-primary-hover: var(--pink-deep);
+  --ys-interaction-primary-feedback: var(--pink-pale);
+  --ys-brand-highlight: var(--pink-pale);
+  --ys-brand-highlight-1: var(--pink-pale);
 
-  --ys-neutral-primary: #333;
-  --ys-neutral-secondary: #707070;
-  --ys-neutral-inactive: #cacaca;
-  --ys-neutral-border: #dcdcdc;
-  --ys-neutral-divider: #ebebeb;
-  --ys-neutral-surface: #f7f7f7;
-  --ys-neutral-strong: #1a1a1a;
+  --ys-neutral-primary: var(--ink);
+  --ys-neutral-secondary: var(--ink-mid);
+  --ys-neutral-inactive: var(--ink-mid);
+  --ys-neutral-border: var(--line);
+  --ys-neutral-divider: var(--line);
+  --ys-neutral-surface: var(--paper);
+  --ys-neutral-strong: var(--ink);
   --ys-white: #fff;
 
-  --ys-deal-primary: #007942;
-  --ys-deal-secondary: #00c26a;
-  --ys-deal-highlight-1: #d2ffeb;
 
-  --ys-radius-base: 8px;
-  --ys-radius-media: 12px;
-  --ys-radius-edge: 16px;
-  --ys-radius-field: 12px;
-  --ys-radius-pill: 9999px;
-  --ys-radius-mini: 4px;
+  --ys-radius-base: var(--radius-input);
+  --ys-radius-media: var(--radius-input);
+  --ys-radius-edge: var(--radius-card);
+  --ys-radius-field: var(--radius-input);
+  --ys-radius-pill: var(--radius-pill);
+  --ys-radius-mini: var(--radius-input);
 
   --ys-space-xxxs: 2px;
   --ys-space-xxs: 4px;
@@ -46,11 +55,16 @@
   --ys-space-xl: 48px;
   --ys-space-xxl: 64px;
 
-  --ys-elevation-low: 0 0 24px 0 rgb(0 0 0 / 16%);
+  /* Ink-tinted rather than pure black: rgba(0,0,0,..) over a warm off-white
+     page reads as dirt instead of shadow. */
+  --ys-elevation-low: var(--shadow-float);
   --ys-max-width: 1440px;
 
   color: var(--ys-neutral-primary);
-  background-color: var(--ys-white);
+  /* The page is paper, not white. That value difference is how in-flow
+     surfaces separate, so a pure white page does not merely look plainer, it
+     removes the only thing holding the elevation system up. */
+  background-color: var(--paper);
 }
 
 /*
@@ -119,7 +133,9 @@
   align-items: center;
   justify-content: center;
   gap: var(--ys-space-xs);
-  border-radius: var(--ys-radius-base);
+  /* Pill, not the shared base radius: --ys-radius-base also feeds inputs,
+     and DESIGN.md wants those at 10px while buttons go fully round. */
+  border-radius: var(--radius-pill);
   font-weight: 600;
   white-space: nowrap;
   transition:

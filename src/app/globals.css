@@ -52,6 +52,51 @@
     --brand-700: 352 83% 43%;
     --brand-800: 352 75% 37%;
     --brand-900: 352 69% 30%;
+
+    /* ---------------------------------------------------------------------
+       Brand tokens, from DESIGN.md. Raw hex rather than the HSL triplets
+       above, because these are read as `var(--paper)` directly instead of
+       being wrapped in hsl() by Tailwind's shadcn bridge.
+
+       Each value carries its reason in DESIGN.md. The two that get broken
+       most often by accident:
+
+       --gold is a surface and never a text colour. #FFD100 on #FBF6F6 is
+       about 1.6:1, far under the 4.5:1 floor. It fills a shape and
+       --gold-ink sits on it.
+
+       --error leans orange on purpose. At the brand pink an error message
+       is indistinguishable from a promotion; #B33A24 sits roughly 30deg
+       away, which is enough to read as a different category at a glance.
+       --------------------------------------------------------------------- */
+    --pink: #fa0050;
+    --pink-deep: #d70f64;
+    --pink-pale: #fce5f1;
+    --gold: #ffd100;
+    --gold-ink: #4a3b00;
+    --paper: #fbf6f6;
+    --ink: #02171a;
+    --ink-mid: #5c6b6d;
+    --line: #e6dddd;
+    --success: #1c7a55;
+    --error: #b33a24;
+
+    /* Off the Tailwind grid on purpose: 6, 8, 12, 16 and 24 are all
+       reachable by typing a stock utility, so landing on one means
+       inheriting a default rather than choosing a value. The larger effect
+       is contrast across the scale — a 10px input beside a pill button
+       beside a 20px card reads as designed. Uniformity is the tell. */
+    --radius-input: 10px;
+    --radius-card: 20px;
+    --radius-modal: 28px;
+    --radius-pill: 999px;
+
+    /* Two layers: a diffused drop and a tight contact shadow. The contact
+       layer is what stops a floating surface looking like it hovers three
+       feet above the page. Ink-tinted, never pure black — rgba(0,0,0,..)
+       over warm off-white reads as dirt. */
+    --shadow-float: 0 8px 24px rgb(2 23 26 / 10%), 0 1px 3px rgb(2 23 26 / 6%);
+    --duration-state: 120ms;
   }
 
   .dark {

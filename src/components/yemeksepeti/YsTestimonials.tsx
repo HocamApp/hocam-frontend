@@ -15,9 +15,9 @@ import { Marquee } from "@/components/ui/marquee";
  *
  * Colour follows the reference's logic rather than its palette: the section
  * sits on a faint brand tint and the cards are plain white, so they separate
- * by tone alone. Hover fills the card with `brand-700` — the reference's
- * yellow, translated. Only `--brand-*` and literal neutrals are used, so a
- * theme swap cannot break it.
+ * by tone alone. Hover fills the card with `--ink` — the reference's yellow,
+ * translated through DESIGN.md, where a filled hover is a colour change and
+ * never a lift.
  */
 
 type Testimonial = {
@@ -81,7 +81,7 @@ const SECOND_ROW = TESTIMONIALS.slice(TESTIMONIALS.length / 2);
 
 function ReviewCard({ quote, name, credential, photo }: Testimonial) {
   return (
-    <Card className="group/card h-full w-[16.5rem] shrink-0 sm:w-[21rem] cursor-default border-brand-100 bg-white p-5 shadow-none transition-colors duration-200 hover:border-brand-700 hover:bg-brand-700">
+    <Card className="group/card h-full w-[16.5rem] shrink-0 sm:w-[21rem] cursor-default border-line bg-white p-5 shadow-none transition-colors duration-[--duration-state] hover:border-ink hover:bg-ink">
       <CardContent className="flex h-full flex-col gap-3 p-0">
         <div className="flex flex-row items-center gap-3">
           <Image
@@ -92,15 +92,15 @@ function ReviewCard({ quote, name, credential, photo }: Testimonial) {
             className="size-11 shrink-0 rounded-full object-cover"
           />
           <div className="min-w-0">
-            <p className="text-sm font-semibold text-neutral-900 transition-colors duration-200 group-hover/card:text-white">
+            <p className="text-sm font-semibold text-ink transition-colors duration-[--duration-state] group-hover/card:text-white">
               {name}
             </p>
-            <p className="text-xs text-neutral-500 transition-colors duration-200 group-hover/card:text-white/75">
+            <p className="text-xs text-ink-mid transition-colors duration-[--duration-state] group-hover/card:text-white/75">
               {credential}
             </p>
           </div>
         </div>
-        <p className="text-[15px] leading-6 text-neutral-700 transition-colors duration-200 group-hover/card:text-white">
+        <p className="text-[15px] leading-6 text-ink transition-colors duration-[--duration-state] group-hover/card:text-white">
           {quote}
         </p>
       </CardContent>
@@ -110,7 +110,7 @@ function ReviewCard({ quote, name, credential, photo }: Testimonial) {
 
 export function YsTestimonials() {
   return (
-    <section className="mt-14 overflow-hidden rounded-lg bg-brand-50 py-12">
+    <section className="mt-16 md:mt-24 overflow-hidden rounded-card bg-pink-pale py-16 md:py-24">
       <div className="mx-auto max-w-2xl space-y-2 px-4 text-center">
         <h2 className="text-3xl font-bold tracking-tight">Hocalar ve Öğrencilerden</h2>
         <p className="text-base" style={{ color: "var(--ys-neutral-secondary)" }}>
@@ -134,8 +134,8 @@ export function YsTestimonials() {
         {/* Fades to the section tint, not to white — the cards must look like
             they slide under the edge, not into a different surface. Narrow on
             phones, where a proportional fade would cover a third of the row. */}
-        <div className="pointer-events-none absolute inset-y-0 left-0 w-10 bg-gradient-to-r from-brand-50 sm:w-1/6" />
-        <div className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-brand-50 sm:w-1/6" />
+        <div className="pointer-events-none absolute inset-y-0 left-0 w-10 bg-gradient-to-r from-pink-pale sm:w-1/6" />
+        <div className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-pink-pale sm:w-1/6" />
       </div>
     </section>
   );

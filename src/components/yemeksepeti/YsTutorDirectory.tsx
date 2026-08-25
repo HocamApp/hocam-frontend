@@ -147,25 +147,25 @@ export function YsTutorDirectory({ search }: { search?: string }) {
         ]
       : []),
     {
-      label: "★ En yüksek puan",
+      label: "En yüksek puan",
       active: (filters.ordering ?? defaultOrdering) === "rating",
       next: { ordering: "rating" },
     },
-    { label: "₺ En uygun fiyat", active: filters.ordering === "price", next: { ordering: "price" } },
+    { label: "En uygun fiyat", active: filters.ordering === "price", next: { ordering: "price" } },
     {
-      label: "🏆 En iyi YKS sıralaması",
+      label: "En iyi YKS sıralaması",
       active: filters.ordering === "yks_rank",
       next: { ordering: "yks_rank" },
     },
     {
-      label: "● Çevrim içi",
+      label: "Çevrim içi",
       active: filters.online === "true",
       next: { online: filters.online === "true" ? "" : "true" },
     },
   ];
 
   return (
-    <section className="mt-8" aria-labelledby="ys-tutor-list-title">
+    <section className="mt-16 md:mt-24" aria-labelledby="ys-tutor-list-title">
       <h2
         id="ys-tutor-list-title"
         className="mb-4 text-2xl font-semibold leading-[1.3125] md:text-[2rem]"
@@ -196,8 +196,11 @@ export function YsTutorDirectory({ search }: { search?: string }) {
             key={chip.label}
             type="button"
             size="sm"
-            variant={chip.active ? "default" : "outline"}
-            className="shrink-0 rounded-full"
+            /* Solid ink when selected, not pink: pink marks the one primary
+               action in a region, and a sort toggle is not it. */
+            variant="outline"
+            data-selected={chip.active || undefined}
+            className="shrink-0 data-[selected]:border-ink data-[selected]:bg-ink data-[selected]:text-white"
             onClick={() => handleFiltersChange({ ...filters, ...chip.next })}
           >
             {chip.label}

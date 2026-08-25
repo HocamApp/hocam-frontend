@@ -16,13 +16,21 @@ export function safeReturnUrl(raw: string | null | undefined): string | null {
   return raw;
 }
 
-// Format a price number as Turkish Lira
+/**
+ * Turkish Lira, with the symbol after the number: `980 ₺`, not `₺980`.
+ *
+ * `Intl` with `style: "currency"` puts the symbol in front for tr-TR, which is
+ * not how it is written in Turkish. Every prototype built during the design
+ * process had this backwards, so the decimal formatter does the number and the
+ * suffix is appended by hand. The thousands period and decimal comma still
+ * come from the tr-TR locale.
+ */
 export function formatPrice(price: number | string): string {
-  return new Intl.NumberFormat("tr-TR", {
-    style: "currency",
-    currency: "TRY",
+  const amount = new Intl.NumberFormat("tr-TR", {
+    style: "decimal",
     maximumFractionDigits: 0,
   }).format(Number(price));
+  return `${amount} ₺`;
 }
 
 // Format a rating to one decimal place

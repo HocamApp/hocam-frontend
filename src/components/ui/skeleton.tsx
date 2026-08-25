@@ -23,10 +23,15 @@ function Skeleton({ className, ...props }: React.HTMLAttributes<HTMLDivElement>)
     <div
       aria-hidden
       className={cn(
-        "relative overflow-hidden rounded-md bg-muted",
-        "after:absolute after:inset-0 after:-translate-x-full",
-        "after:bg-gradient-to-r after:from-transparent after:via-foreground/[0.07] after:to-transparent",
-        "after:animate-skeleton-shimmer motion-reduce:after:animate-none",
+        /* An opacity pulse, not a shimmer sweep. A moving gradient is banned
+           twice over: once as motion that decorates rather than communicates
+           system state, once as a gradient. The pulse still says the system is
+           working, which is the only thing a skeleton owes anyone.
+
+           The fill is #EDE6E6, one step darker than --line. Not grey — grey
+           reads cold against warm paper and gives the loading state a
+           different temperature from the page it is loading into. */
+        "animate-skeleton-pulse rounded-input bg-[#EDE6E6] motion-reduce:animate-none",
         className,
       )}
       {...props}

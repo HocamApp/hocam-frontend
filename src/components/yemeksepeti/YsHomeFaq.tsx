@@ -31,7 +31,7 @@ import {
  * flags that both default to off), and any turnaround time (no SLA exists).
  */
 
-const faqLinkClass = "font-medium text-brand-700 underline-offset-2 hover:underline";
+const faqLinkClass = "font-medium text-pink underline-offset-2 hover:underline";
 
 const YS_HOME_FAQ_ITEMS: SupportAccordionSectionItem[] = [
   {
@@ -141,7 +141,7 @@ export { YS_HOME_FAQ_ITEMS };
 
 export function YsHomeFaq() {
   return (
-    <div id="sikca-sorulan-sorular" className="scroll-mt-24">
+    <div id="sikca-sorulan-sorular" className="scroll-mt-24 [&>section]:mt-16 [&>section]:py-0 md:[&>section]:mt-24">
       <SupportAccordionSection
         layout="split"
         items={YS_HOME_FAQ_ITEMS}
