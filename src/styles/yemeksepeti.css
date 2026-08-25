@@ -459,8 +459,10 @@
 
 .ys-fav-demo__cursor {
   position: absolute;
-  right: -2px;
-  bottom: -2px;
+  /* Tucked inside the disc rather than hanging off its corner, so the
+     fingertip lands on the heart instead of pressing the rim beside it. */
+  right: 4px;
+  bottom: 4px;
   color: var(--ys-neutral-strong);
   animation: ys-fav-travel var(--ys-fav-cycle) cubic-bezier(0.22, 0.1, 0.1, 1) infinite;
 }

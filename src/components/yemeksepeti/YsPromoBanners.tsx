@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { Cursor, ForkKnife, HandPointing, Heart, QrCode } from "@phosphor-icons/react";
 
 import { AppStoreBadge, GooglePlayBadge } from "@/components/ui/store-badges";
@@ -77,23 +76,21 @@ export function YsFavouritesBanner() {
               className="ys-fav-demo__pointer ys-fav-demo__pointer--arrow size-5"
               weight="fill"
             />
-            <HandPointing
-              className="ys-fav-demo__pointer ys-fav-demo__pointer--hand size-5"
-              weight="fill"
-            />
+            <span className="ys-fav-demo__pointer ys-fav-demo__pointer--hand">
+              <HandPointing className="absolute inset-0 size-6 text-white" weight="fill" />
+              <HandPointing className="absolute inset-0 size-6" weight="bold" />
+            </span>
           </span>
         </div>
 
-        <div className="flex min-w-0 flex-col items-start">
+        <div className="flex min-w-0 flex-col items-start justify-center">
           <h2 className="text-lg font-bold leading-snug">
             Favori hocalarının listesini oluştur
           </h2>
           <p className="mt-1 text-sm leading-6" style={{ color: "var(--ys-neutral-secondary)" }}>
             Beğendiğin hocaları kaydet. Kartlardaki kalbe dokunman yeterli.
           </p>
-          <Link href="/tutors" className="ys-btn ys-btn--primary ys-btn--small mt-3">
-            Şimdi keşfet
-          </Link>
+
         </div>
       </div>
     </div>

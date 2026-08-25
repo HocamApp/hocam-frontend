@@ -172,8 +172,12 @@ export function YsTutorDirectory({ search }: { search?: string }) {
           the room they leave on the right. The promo used to be a full-width
           band of its own between two other bands, which gave the page three
           stacked promos in a row before any tutor appeared. */}
-      <div className="mb-6 flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-        <div className="min-w-0 lg:flex-1">
+      {/* `items-stretch` so the promo ends exactly where the chips do, top and
+          bottom. It is a fixed 340px and only shares the row from xl up: the
+          five chips need 811px, and anything narrower than that on the left
+          clipped "Çevrim içi" mid-word. */}
+      <div className="mb-6 flex flex-col gap-6 min-[1400px]:flex-row min-[1400px]:items-stretch min-[1400px]:justify-between">
+        <div className="min-w-0 min-[1400px]:flex-1">
           <h2
             id="ys-tutor-list-title"
             className="mb-4 text-2xl font-semibold leading-[1.3125] md:text-[2rem]"
@@ -217,7 +221,7 @@ export function YsTutorDirectory({ search }: { search?: string }) {
           </div>
         </div>
 
-        <div className="lg:w-[38%] lg:shrink-0">
+        <div className="min-[1400px]:w-[340px] min-[1400px]:shrink-0">
           <YsFavouritesBanner />
         </div>
       </div>
