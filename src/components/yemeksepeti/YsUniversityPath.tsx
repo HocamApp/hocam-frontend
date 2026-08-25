@@ -13,9 +13,10 @@ import MarqueeAlongSvgPath from "@/components/ui/marquee-along-svg-path";
  * stacks above the questions and there is no slack to fill, so the same block
  * would just push the answers down.
  *
- * **Logos are not in yet.** Each entry renders its `short` name in a tile;
- * once the files land in `public/images/universities/`, give the entry a
- * `logo` and `UniversityTile` swaps to the image. Nothing else changes.
+ * Logos come from Wikipedia/Wikimedia at 160px wide — the tiles draw them at
+ * ~36px, so that is already retina-safe and keeps the set under 400KB. An
+ * entry without a `logo` falls back to its `short` name, which is what keeps
+ * a missing or pulled file from leaving a blank tile.
  */
 
 type University = {
@@ -33,18 +34,18 @@ type University = {
  * ranking, and it claims nothing about where any individual tutor studies.
  */
 const UNIVERSITIES: University[] = [
-  { name: "Boğaziçi Üniversitesi", short: "Boğaziçi" },
-  { name: "Orta Doğu Teknik Üniversitesi", short: "ODTÜ" },
-  { name: "İstanbul Teknik Üniversitesi", short: "İTÜ" },
-  { name: "Koç Üniversitesi", short: "Koç" },
-  { name: "Sabancı Üniversitesi", short: "Sabancı" },
-  { name: "Bilkent Üniversitesi", short: "Bilkent" },
-  { name: "Hacettepe Üniversitesi", short: "Hacettepe" },
-  { name: "Yıldız Teknik Üniversitesi", short: "Yıldız Teknik" },
-  { name: "İstanbul Üniversitesi", short: "İstanbul Ü." },
-  { name: "İstanbul Üniversitesi-Cerrahpaşa", short: "Cerrahpaşa" },
-  { name: "Galatasaray Üniversitesi", short: "Galatasaray" },
-  { name: "Ankara Üniversitesi", short: "Ankara Ü." },
+  { name: "Boğaziçi Üniversitesi", short: "Boğaziçi", logo: "/images/universities/bogazici.png" },
+  { name: "Orta Doğu Teknik Üniversitesi", short: "ODTÜ", logo: "/images/universities/odtu.png" },
+  { name: "İstanbul Teknik Üniversitesi", short: "İTÜ", logo: "/images/universities/itu.png" },
+  { name: "Koç Üniversitesi", short: "Koç", logo: "/images/universities/koc.png" },
+  { name: "Sabancı Üniversitesi", short: "Sabancı", logo: "/images/universities/sabanci.png" },
+  { name: "Bilkent Üniversitesi", short: "Bilkent", logo: "/images/universities/bilkent.png" },
+  { name: "Hacettepe Üniversitesi", short: "Hacettepe", logo: "/images/universities/hacettepe.png" },
+  { name: "Yıldız Teknik Üniversitesi", short: "Yıldız Teknik", logo: "/images/universities/yildiz-teknik.png" },
+  { name: "İstanbul Üniversitesi", short: "İstanbul Ü.", logo: "/images/universities/istanbul.png" },
+  { name: "İstanbul Üniversitesi-Cerrahpaşa", short: "Cerrahpaşa", logo: "/images/universities/cerrahpasa.png" },
+  { name: "Galatasaray Üniversitesi", short: "Galatasaray", logo: "/images/universities/galatasaray.png" },
+  { name: "Ankara Üniversitesi", short: "Ankara Ü.", logo: "/images/universities/ankara.png" },
 ];
 
 /**
@@ -62,14 +63,14 @@ function UniversityTile({ name, short, logo }: University) {
     // Centred on its point rather than hung from it, so the curve runs through
     // the middle of each tile instead of along their top-left corners.
     <div className="-translate-x-1/2 -translate-y-1/2 transition-transform duration-300 ease-in-out hover:scale-125">
-      <div className="flex h-11 items-center justify-center rounded-lg border border-brand-100 bg-white px-3 shadow-sm">
+      <div className="flex size-14 items-center justify-center rounded-xl border border-brand-100 bg-white p-1.5 shadow-sm">
         {logo ? (
           // Plain <img>: logo files vary in aspect ratio and next/image wants
           // per-file dimensions for each one. They are ~2KB decorative marks.
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={logo} alt={name} className="h-6 w-auto object-contain" draggable={false} />
+          <img src={logo} alt={name} className="max-h-full max-w-full object-contain" draggable={false} />
         ) : (
-          <span className="whitespace-nowrap text-xs font-semibold text-neutral-700">
+          <span className="text-center text-[10px] font-semibold leading-tight text-neutral-700">
             {short}
           </span>
         )}
