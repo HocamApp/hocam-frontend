@@ -185,7 +185,11 @@ export function YsTutorDirectory({ search }: { search?: string }) {
             Hocalar
           </h2>
 
-          <div className="flex gap-2 overflow-x-auto pb-1">
+          {/* No bottom padding: it was 4px of scrollbar room, and it put the
+              promo's lower edge 4px past the chips it is meant to line up
+              with. Above 1400 the chips do not overflow, and below it the
+              promo stacks anyway. */}
+          <div className="flex gap-2 overflow-x-auto">
         <Button
           type="button"
           size="sm"

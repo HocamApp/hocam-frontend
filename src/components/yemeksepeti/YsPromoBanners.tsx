@@ -56,7 +56,7 @@ export function YsFavouritesBanner() {
         aria-hidden
       />
 
-      <div className="relative flex items-start gap-4 p-5">
+      <div className="relative flex h-full items-center gap-4 p-5">
         <div className="ys-fav-demo" aria-hidden>
           {/* Phosphor takes `weight`, not Lucide's `fill` and `strokeWidth`.
               Carried over unchanged in the icon swap, those props did nothing:
@@ -87,9 +87,6 @@ export function YsFavouritesBanner() {
           <h2 className="text-lg font-bold leading-snug">
             Favori hocalarının listesini oluştur
           </h2>
-          <p className="mt-1 text-sm leading-6" style={{ color: "var(--ys-neutral-secondary)" }}>
-            Beğendiğin hocaları kaydet. Kartlardaki kalbe dokunman yeterli.
-          </p>
 
         </div>
       </div>
