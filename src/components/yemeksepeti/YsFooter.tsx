@@ -1,15 +1,8 @@
 import Link from "next/link";
-import {
-  Apple,
-  Instagram,
-  Linkedin,
-  Play,
-  Twitter,
-  Youtube,
-  type LucideIcon,
-} from "lucide-react";
+import { Instagram, Linkedin, Twitter, Youtube, type LucideIcon } from "lucide-react";
 
 import { BrandMark } from "@/components/brand/BrandMark";
+import { AppStoreBadge, GooglePlayBadge } from "@/components/ui/store-badges";
 
 /**
  * The homepage footer.
@@ -135,27 +128,11 @@ export function YsFooter() {
           <div className="col-span-2 md:col-span-4 lg:col-span-1">
             <h4 className="mb-3 text-sm font-semibold">Hocam mobilde</h4>
             <p className="ys-footer-text mb-3 block">Mobil uygulama yakında.</p>
+            {/* Deliberately inert: there is no Hocam app yet. Both badges
+                become real anchors the moment they are handed an href. */}
             <div className="flex flex-wrap gap-2">
-              {/* Deliberately inert: there is no Hocam app yet. Same treatment
-                  the checkout gives its not-yet-available plans. */}
-              <button
-                type="button"
-                aria-disabled="true"
-                aria-label="App Store — Yakında"
-                className="ys-btn ys-btn--secondary ys-btn--small cursor-not-allowed"
-              >
-                <Apple className="h-4 w-4" />
-                App Store
-              </button>
-              <button
-                type="button"
-                aria-disabled="true"
-                aria-label="Google Play — Yakında"
-                className="ys-btn ys-btn--secondary ys-btn--small cursor-not-allowed"
-              >
-                <Play className="h-4 w-4" />
-                Google Play
-              </button>
+              <AppStoreBadge />
+              <GooglePlayBadge />
             </div>
           </div>
         </div>
