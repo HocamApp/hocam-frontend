@@ -32,6 +32,9 @@ type University = {
  * Scoped to schools a student in roughly the top 15.000 can realistically
  * reach — the band this marketplace is built around. It is a sample, not a
  * ranking, and it claims nothing about where any individual tutor studies.
+ *
+ * Kept to ten. Twelve crowded the loop badly, and the two that went were the
+ * two nobody asked for — one of which had no clean logo source anyway.
  */
 const UNIVERSITIES: University[] = [
   { name: "Boğaziçi Üniversitesi", short: "Boğaziçi", logo: "/images/universities/bogazici.png" },
@@ -44,51 +47,59 @@ const UNIVERSITIES: University[] = [
   { name: "Yıldız Teknik Üniversitesi", short: "Yıldız Teknik", logo: "/images/universities/yildiz-teknik.png" },
   { name: "İstanbul Üniversitesi", short: "İstanbul Ü.", logo: "/images/universities/istanbul.png" },
   { name: "İstanbul Üniversitesi-Cerrahpaşa", short: "Cerrahpaşa", logo: "/images/universities/cerrahpasa.png" },
-  { name: "Galatasaray Üniversitesi", short: "Galatasaray", logo: "/images/universities/galatasaray.png" },
-  { name: "Ankara Üniversitesi", short: "Ankara Ü.", logo: "/images/universities/ankara.png" },
 ];
 
 /**
- * A serpentine that crosses the column: right, back to the left, out right
- * again. The viewBox is kept close to the column's own aspect ratio on
- * purpose — `responsive` scales by the smaller of the two axes, so a box
- * shaped differently from its container gets letterboxed and the curve
- * collapses into a narrow wiggle.
+ * Traced from the route Arda drew over a screenshot: a long climb from the
+ * bottom-left, a loop in the middle that crosses back over itself, then a
+ * sweep out to the top-right corner.
+ *
+ * The self-crossing is the whole character of it — a curve that only wiggles
+ * reads as a wave, and this has to read as a knot. Segments four and five are
+ * what make it cross; keep them if you retune the rest.
+ *
+ * The viewBox tracks the column's own aspect ratio on purpose. `responsive`
+ * scales by the smaller of the two axes, so a box shaped differently from its
+ * container gets letterboxed and the curve shrinks into a corner.
  */
-const PATH =
-  "M 30 50 C 190 10, 470 50, 455 140 C 440 230, 130 170, 95 250 C 65 325, 270 350, 490 300";
+const PATH = [
+  "M 25 390",
+  "C 90 355, 140 322, 175 275", // climb out of the bottom-left
+  "C 215 198, 285 118, 368 145", // over the top of the loop
+  "C 452 172, 458 268, 358 288", // down its right side, kept wide
+  "C 258 308, 212 245, 255 172", // back left and up — crosses the climb here
+  "C 305 82, 410 45, 505 32", // away to the top-right
+].join(" ");
 
 function UniversityTile({ name, short, logo }: University) {
   return (
     // Centred on its point rather than hung from it, so the curve runs through
-    // the middle of each tile instead of along their top-left corners.
-    <div className="-translate-x-1/2 -translate-y-1/2 transition-transform duration-300 ease-in-out hover:scale-125">
-      <div className="flex size-14 items-center justify-center rounded-xl border border-brand-100 bg-white p-1.5 shadow-sm">
-        {logo ? (
-          // Plain <img>: logo files vary in aspect ratio and next/image wants
-          // per-file dimensions for each one. They are ~2KB decorative marks.
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={logo} alt={name} className="max-h-full max-w-full object-contain" draggable={false} />
-        ) : (
-          <span className="text-center text-[10px] font-semibold leading-tight text-neutral-700">
-            {short}
-          </span>
-        )}
-      </div>
+    // the middle of each mark instead of along their top-left corners.
+    <div className="flex size-[68px] -translate-x-1/2 -translate-y-1/2 items-center justify-center transition-transform duration-300 ease-in-out hover:scale-125">
+      {logo ? (
+        // Plain <img>: logo files vary in aspect ratio and next/image wants
+        // per-file dimensions for each one. No card, no border — these are
+        // finished marks and the chrome only competed with them.
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={logo} alt={name} className="max-h-full max-w-full object-contain" draggable={false} />
+      ) : (
+        <span className="text-center text-xs font-semibold leading-tight text-neutral-700">
+          {short}
+        </span>
+      )}
     </div>
   );
 }
 
 export function YsUniversityPath({ className }: { className?: string }) {
   return (
-    <div className={className}>
-      <p className="text-sm leading-6 text-muted-foreground">
-        Hocalarımızın okuduğu üniversitelerden bazıları
-      </p>
-
+    // No visible caption — the column is meant to hold the title and this, and
+    // nothing else. The label survives for screen readers, which would
+    // otherwise get twelve university names with no idea why.
+    <div className={className} role="img" aria-label="Hocalarımızın okuduğu üniversitelerden bazıları">
       <MarqueeAlongSvgPath
         path={PATH}
-        viewBox="0 0 520 360"
+        viewBox="0 0 520 410"
         baseVelocity={3}
         slowdownOnHover
         draggable
@@ -97,7 +108,7 @@ export function YsUniversityPath({ className }: { className?: string }) {
         repeat={1}
         responsive
         rotateAlongPath={false}
-        className="mt-3 h-[330px] w-full"
+        className="mt-6 h-[400px] w-full"
       >
         {UNIVERSITIES.map((university) => (
           <UniversityTile key={university.name} {...university} />
