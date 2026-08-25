@@ -33,7 +33,11 @@
     --input: 350 15% 91%;
     --ring: 222.2 84% 4.9%;
     --radius: 0.5rem;
-    /* Brand ramp (logo color #FE4059 = brand-500, exact). A palette scale,
+    /* Brand ramp. Was anchored to the old logo coral #FE4059; the logo has
+       since been recoloured to DESIGN.md's --pink (#FA0050), so this ramp no
+       longer matches the mark and is kept only for the 83 pages that have not
+       been rebranded yet. New work uses --pink / --pink-deep / --pink-pale.
+       A palette scale,
        not a semantic surface token like --background — defined once and
        shared by both themes. Which step to reach for inverts per theme:
        light surfaces use low numbers (50-200) for tints and high numbers

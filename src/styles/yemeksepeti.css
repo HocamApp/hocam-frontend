@@ -443,7 +443,7 @@
   height: 100%;
   border-radius: var(--ys-radius-pill);
   background-color: var(--ys-white);
-  box-shadow: 0 1px 3px rgb(0 0 0 / 8%);
+  box-shadow: 0 1px 3px rgb(2 23 26 / 8%);
   animation: ys-fav-press var(--ys-fav-cycle) cubic-bezier(0.22, 0.1, 0.1, 1) infinite;
 }
 

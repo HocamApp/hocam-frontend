@@ -42,56 +42,56 @@ export function YsSignupBanner() {
 export function YsFavouritesBanner() {
   return (
     <div
-      className="relative mt-16 md:mt-24 overflow-hidden rounded-card"
+      className="relative h-full overflow-hidden rounded-card"
       /* Was a three-stop gradient. Flat fill: DESIGN.md bans gradients
           outright, and --pink-pale exists precisely to be a section surface. */
       style={{ background: "var(--pink-pale)" }}
     >
-      {/* Soft heart drift in the trailing corner, matching the reference. */}
-      <div className="pointer-events-none absolute inset-y-0 right-0 hidden w-1/2 sm:block" aria-hidden>
-        <Heart
-          className="absolute -bottom-16 right-4 size-56"
-          style={{ color: "var(--ys-brand-highlight-1)" }}
-          fill="currentColor"
-          strokeWidth={0}
-        />
-        <Heart
-          className="absolute -top-6 right-40 size-24"
-          style={{ color: "var(--ys-brand-highlight-1)" }}
-          fill="currentColor"
-          strokeWidth={0}
-        />
-      </div>
+      {/* One heart, low and to the right, at the brand pink barely turned on.
+          There were two, sized for a full-width band, and they used a token
+          that now resolves to the same pink-pale as the surface behind them —
+          so they were both oversized and invisible. */}
+      <Heart
+        className="pointer-events-none absolute -bottom-10 -right-8 size-40 text-[rgb(250_0_80_/_0.07)]"
+        weight="fill"
+        aria-hidden
+      />
 
-      <div className="relative flex items-center gap-5 p-6">
+      <div className="relative flex items-start gap-4 p-5">
         <div className="ys-fav-demo" aria-hidden>
+          {/* Phosphor takes `weight`, not Lucide's `fill` and `strokeWidth`.
+              Carried over unchanged in the icon swap, those props did nothing:
+              the "filled" heart never filled and the pointing hand rendered as
+              an empty outline, which is why the gesture read as a blank shape
+              hovering over the disc. */}
           <span className="ys-fav-demo__disc">
-            <Heart className="ys-fav-demo__heart size-6" strokeWidth={2} />
-            <Heart className="ys-fav-demo__heart ys-fav-demo__heart--fill size-6" fill="currentColor" strokeWidth={0} />
+            <Heart className="ys-fav-demo__heart size-6" weight="regular" />
+            <Heart
+              className="ys-fav-demo__heart ys-fav-demo__heart--fill size-6"
+              weight="fill"
+            />
           </span>
 
           <span className="ys-fav-demo__cursor size-5">
             <Cursor
               className="ys-fav-demo__pointer ys-fav-demo__pointer--arrow size-5"
-              fill="currentColor"
-              strokeWidth={1.5}
+              weight="fill"
             />
             <HandPointing
               className="ys-fav-demo__pointer ys-fav-demo__pointer--hand size-5"
-              fill="var(--ys-white)"
-              strokeWidth={1.75}
+              weight="fill"
             />
           </span>
         </div>
 
         <div className="flex min-w-0 flex-col items-start">
-          <h2 className="text-2xl font-bold leading-[1.333]">
+          <h2 className="text-lg font-bold leading-snug">
             Favori hocalarının listesini oluştur
           </h2>
-          <p className="text-base" style={{ color: "var(--ys-neutral-secondary)" }}>
-            Beğendiğin hocaları kaydet. Hoca kartındaki kalp simgesine dokunman yeterli.
+          <p className="mt-1 text-sm leading-6" style={{ color: "var(--ys-neutral-secondary)" }}>
+            Beğendiğin hocaları kaydet. Kartlardaki kalbe dokunman yeterli.
           </p>
-          <Link href="/tutors" className="ys-btn ys-btn--primary ys-btn--small mt-4">
+          <Link href="/tutors" className="ys-btn ys-btn--primary ys-btn--small mt-3">
             Şimdi keşfet
           </Link>
         </div>

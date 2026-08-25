@@ -359,15 +359,15 @@ function TutorCardLarge({
       : null,
     { value: formatLessonCount(tutor.completed_lessons_count ?? 0), label: "verilen ders" },
     tutor.yks_rank > 0
-      ? { value: `İlk ${formatYksRank(tutor.yks_rank)}`, label: "YKS sıralaması" }
+      ? { value: `İlk ${formatYksRank(tutor.yks_rank)}`, label: "YKS sıralaması", rank: true }
       : null,
-  ].filter((stat): stat is { value: string; label: string } => stat !== null);
+  ].filter((stat): stat is { value: string; label: string; rank?: boolean } => stat !== null);
 
   return (
     <Card
       data-discovery-tutor-id={discoveryImpressionId ? tutor.id : undefined}
       data-discovery-impression-id={discoveryImpressionId || undefined}
-      className="relative h-full min-w-0 overflow-visible transition-all duration-200 hover:z-10 hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-lg sm:min-h-[320px]"
+      className="relative h-full min-w-0 overflow-visible border-line transition-colors duration-[--duration-state] hover:border-ink sm:min-h-[320px]"
     >
       <CardContent className="flex h-full flex-col gap-4 p-4 sm:flex-row sm:gap-5 sm:p-6">
         <Link href={tutorHref} className="block min-w-0 flex-1 cursor-pointer">
@@ -458,8 +458,21 @@ function TutorCardLarge({
           <dl className="space-y-1.5">
             {stats.map((stat) => (
               <div key={stat.label} className="min-w-0">
-                <dd className="truncate text-lg font-bold leading-tight">{stat.value}</dd>
-                <dt className="truncate text-xs leading-4 text-muted-foreground">{stat.label}</dt>
+                {stat.rank ? (
+                  /* Gold, and the only gold on the card. It is a surface with
+                     --gold-ink on it, never a text colour: #FFD100 as type
+                     measures about 1.6:1 on paper. 14px inside the 20px shell,
+                     following the nesting subtraction rule. */
+                  <dd className="inline-flex items-center gap-1.5 rounded-[14px] bg-gold px-2 py-0.5 text-lg font-bold leading-tight tabular-nums text-gold-ink">
+                    <RankMark className="h-3.5 w-3.5" />
+                    {stat.value}
+                  </dd>
+                ) : (
+                  <dd className="truncate text-lg font-bold leading-tight tabular-nums">
+                    {stat.value}
+                  </dd>
+                )}
+                <dt className="mt-0.5 truncate text-xs leading-4 text-ink-mid">{stat.label}</dt>
               </div>
             ))}
           </dl>
@@ -467,7 +480,7 @@ function TutorCardLarge({
           <div className="mt-auto flex flex-col gap-2 pt-3">
             <Link
               href={tutorHref}
-              className="rounded-md bg-primary px-4 py-2 text-center text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+              className="rounded-pill bg-ink px-4 py-2 text-center text-sm font-semibold text-white transition-colors duration-[--duration-state] hover:bg-pink"
             >
               Profili Gör <ArrowRight className="ml-1 inline h-4 w-4" />
             </Link>

@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { SidebarSimple } from "@phosphor-icons/react";
 
+import { YsFavouritesBanner } from "./YsPromoBanners";
+
 import { fetchSubjects, fetchTutors, type TutorFilters as TutorFiltersType } from "@/lib/tutorsApi";
 import { defaultTutorOrdering } from "@/lib/tutorDirectory";
 import { useDelayedVisible } from "@/hooks/useDelayedVisible";
@@ -166,14 +168,20 @@ export function YsTutorDirectory({ search }: { search?: string }) {
 
   return (
     <section className="mt-16 md:mt-24" aria-labelledby="ys-tutor-list-title">
-      <h2
-        id="ys-tutor-list-title"
-        className="mb-4 text-2xl font-semibold leading-[1.3125] md:text-[2rem]"
-      >
-        Hocalar
-      </h2>
+      {/* Heading and sort controls on the left, the favourites promo taking
+          the room they leave on the right. The promo used to be a full-width
+          band of its own between two other bands, which gave the page three
+          stacked promos in a row before any tutor appeared. */}
+      <div className="mb-6 flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+        <div className="min-w-0 lg:flex-1">
+          <h2
+            id="ys-tutor-list-title"
+            className="mb-4 text-2xl font-semibold leading-[1.3125] md:text-[2rem]"
+          >
+            Hocalar
+          </h2>
 
-      <div className="mb-6 flex gap-2 overflow-x-auto pb-1">
+          <div className="flex gap-2 overflow-x-auto pb-1">
         <Button
           type="button"
           size="sm"
@@ -206,6 +214,12 @@ export function YsTutorDirectory({ search }: { search?: string }) {
             {chip.label}
           </Button>
         ))}
+          </div>
+        </div>
+
+        <div className="lg:w-[38%] lg:shrink-0">
+          <YsFavouritesBanner />
+        </div>
       </div>
 
       {/* The sidebar column animates from 0 to 16rem. That 16rem is coupled to
