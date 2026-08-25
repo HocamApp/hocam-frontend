@@ -4,14 +4,14 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   Bell,
-  CalendarDays,
+  CalendarBlank,
+  ChatCircle,
   Compass,
   GraduationCap,
   Heart,
-  LayoutDashboard,
-  MessageCircle,
-  type LucideIcon,
-} from "lucide-react";
+  SquaresFour,
+  type Icon,
+} from "@phosphor-icons/react";
 
 import { AnimatedSearchBar } from "@/components/tutors/AnimatedSearchBar";
 import { BrandMark } from "@/components/brand/BrandMark";
@@ -30,18 +30,18 @@ type Props = {
 };
 
 /** Same icons the real Hocam navbar uses, keyed by `navItems.ts` icon names. */
-const TAB_ICONS: Record<string, LucideIcon> = {
+const TAB_ICONS: Record<string, Icon> = {
   GraduationCap,
-  LayoutDashboard,
+  SquaresFour,
   Compass,
-  CalendarDays,
+  CalendarBlank,
 };
 
 /* Icon-only, exactly as in the Hocam navbar. No labels underneath, and no
    unread badge on the bell — a permanently lit badge on a page that has no
    notifications would be misinformation, not decoration. */
-const UTILITY_ICONS: { id: string; label: string; Icon: LucideIcon }[] = [
-  { id: "messages", label: "Mesajlar", Icon: MessageCircle },
+const UTILITY_ICONS: { id: string; label: string; Icon: Icon }[] = [
+  { id: "messages", label: "Mesajlar", Icon: ChatCircle },
   { id: "notifications", label: "Bildirimler", Icon: Bell },
   { id: "favorites", label: "Favoriler", Icon: Heart },
 ];
@@ -144,7 +144,16 @@ export function YsNavbar({
                 data-selected={activeTab === tab.id}
                 onClick={() => onTabChange(tab.id)}
               >
-                {Icon ? <Icon className="ys-tab__icon h-[18px] w-[18px]" aria-hidden /> : null}
+                {Icon ? (
+                  /* Outline by default, filled when active. The weight change
+                     is what carries the state, which is why the tab needs no
+                     underline or accent bar to say it a second time. */
+                  <Icon
+                    className="ys-tab__icon h-5 w-5"
+                    weight={activeTab === tab.id ? "fill" : "regular"}
+                    aria-hidden
+                  />
+                ) : null}
                 {tab.label}
               </button>
             );

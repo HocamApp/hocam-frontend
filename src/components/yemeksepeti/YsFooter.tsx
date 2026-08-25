@@ -1,5 +1,11 @@
 import Link from "next/link";
-import { Instagram, Linkedin, Twitter, Youtube, type LucideIcon } from "lucide-react";
+import {
+  InstagramLogo,
+  LinkedinLogo,
+  XLogo,
+  YoutubeLogo,
+  type Icon,
+} from "@phosphor-icons/react";
 
 import { BrandMark } from "@/components/brand/BrandMark";
 import { AppStoreBadge, GooglePlayBadge } from "@/components/ui/store-badges";
@@ -78,11 +84,11 @@ const LEGAL_ENTRIES: FooterEntry[] = [
   { label: "KVKK başvuru: kvkk@hocamozelders.com", href: "mailto:kvkk@hocamozelders.com" },
 ];
 
-const SOCIAL_LINKS: { id: string; label: string; Icon: LucideIcon; href?: string }[] = [
-  { id: "instagram", label: "Instagram", Icon: Instagram },
-  { id: "x", label: "X", Icon: Twitter },
-  { id: "youtube", label: "YouTube", Icon: Youtube },
-  { id: "linkedin", label: "LinkedIn", Icon: Linkedin },
+const SOCIAL_LINKS: { id: string; label: string; Icon: Icon; href?: string }[] = [
+  { id: "instagram", label: "Instagram", Icon: InstagramLogo },
+  { id: "x", label: "X", Icon: XLogo },
+  { id: "youtube", label: "YouTube", Icon: YoutubeLogo },
+  { id: "linkedin", label: "LinkedIn", Icon: LinkedinLogo },
 ];
 
 function FooterLink({ entry }: { entry: FooterEntry }) {

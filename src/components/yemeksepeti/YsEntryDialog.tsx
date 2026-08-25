@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { GraduationCap, X } from "lucide-react";
+import { GraduationCap, X } from "@phosphor-icons/react";
 
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { useAuth } from "@/hooks/useAuth";

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { ShieldCheck } from "lucide-react";
+import { ShieldCheck } from "@phosphor-icons/react";
 
 import { Button } from "@/components/ui/button";
 import {

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { SidebarSimple } from "@phosphor-icons/react";
 
 import { fetchSubjects, fetchTutors, type TutorFilters as TutorFiltersType } from "@/lib/tutorsApi";
 import { defaultTutorOrdering } from "@/lib/tutorDirectory";
@@ -184,9 +184,9 @@ export function YsTutorDirectory({ search }: { search?: string }) {
           onClick={() => setFiltersOpen((open) => !open)}
         >
           {filtersOpen ? (
-            <PanelLeftClose className="mr-1.5 h-4 w-4" />
+            <SidebarSimple className="mr-1.5 h-4 w-4" />
           ) : (
-            <PanelLeftOpen className="mr-1.5 h-4 w-4" />
+            <SidebarSimple className="mr-1.5 h-4 w-4" />
           )}
           {filtersOpen ? "Filtreleri gizle" : "Filtreleri göster"}
         </Button>

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, TrendingUp } from "lucide-react";
+import { ArrowRight, TrendUp } from "@phosphor-icons/react";
 import { TutorProfile } from "@/types";
 import { RankMark } from "@/components/brand/marks";
 import { cn, formatLessonCount, formatPrice, formatRating } from "@/lib/utils";
@@ -438,7 +438,7 @@ function TutorCardLarge({
           )}
           {popularityLabel && (
             <p className="clear-left mt-2 flex items-center gap-1.5 text-xs font-medium text-brand-600 dark:text-brand-300">
-              <TrendingUp className="h-3.5 w-3.5 shrink-0" aria-hidden />
+              <TrendUp className="h-3.5 w-3.5 shrink-0" aria-hidden />
               <span className="truncate">{popularityLabel}</span>
             </p>
           )}

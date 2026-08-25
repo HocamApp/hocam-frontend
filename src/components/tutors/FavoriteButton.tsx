@@ -1,6 +1,6 @@
 "use client";
 
-import { Heart } from "lucide-react";
+import { Heart } from "@phosphor-icons/react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -51,11 +51,10 @@ export function FavoriteButton({
         className="peer relative h-8 w-8 shrink-0 after:absolute after:-inset-1.5 after:content-['']"
       >
         <Heart
+          weight={isFavorite ? "fill" : "regular"}
           className={cn(
             "h-5 w-5 transition duration-200 ease-out group-hover:scale-105",
-            isFavorite
-              ? "fill-brand-500 text-brand-500"
-              : "text-muted-foreground group-hover:text-brand-500"
+            isFavorite ? "text-pink" : "text-ink-mid group-hover:text-pink"
           )}
         />
       </Button>

@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { Apple, Heart, MousePointer2, Play, Pointer, QrCode, UtensilsCrossed } from "lucide-react";
+import { Cursor, ForkKnife, HandPointing, Heart, QrCode } from "@phosphor-icons/react";
+
+import { AppStoreBadge, GooglePlayBadge } from "@/components/ui/store-badges";
 
 export function YsSignupBanner() {
   return (
@@ -22,7 +24,7 @@ export function YsSignupBanner() {
         style={{ background: "var(--ys-brand-highlight-1)" }}
         aria-hidden
       >
-        <UtensilsCrossed className="h-16 w-16" style={{ color: "var(--ys-interaction-primary)" }} />
+        <ForkKnife className="h-16 w-16" style={{ color: "var(--ys-interaction-primary)" }} />
       </div>
     </div>
   );
@@ -69,12 +71,12 @@ export function YsFavouritesBanner() {
           </span>
 
           <span className="ys-fav-demo__cursor size-5">
-            <MousePointer2
+            <Cursor
               className="ys-fav-demo__pointer ys-fav-demo__pointer--arrow size-5"
               fill="currentColor"
               strokeWidth={1.5}
             />
-            <Pointer
+            <HandPointing
               className="ys-fav-demo__pointer ys-fav-demo__pointer--hand size-5"
               fill="var(--ys-white)"
               strokeWidth={1.75}
@@ -127,15 +129,12 @@ export function YsAppBanner() {
                 Yemekten market ürünlerine ve fazlasına özel fırsatlar Yemeksepeti&apos;nde
               </div>
             </div>
+            {/* The real badges, same as the footer. Two different
+                approximations of a store badge on one page is worse than
+                either of them. Both stay inert until the apps exist. */}
             <div className="flex flex-wrap gap-2">
-              <button type="button" className="ys-btn ys-btn--secondary ys-btn--small">
-                <Apple className="h-4 w-4" />
-                App Store
-              </button>
-              <button type="button" className="ys-btn ys-btn--secondary ys-btn--small">
-                <Play className="h-4 w-4" />
-                Play Store
-              </button>
+              <AppStoreBadge />
+              <GooglePlayBadge />
             </div>
           </div>
         </div>

@@ -2,7 +2,7 @@
 
 import { useState, useCallback, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Filter } from "lucide-react";
+import { FunnelSimple } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
@@ -435,7 +435,7 @@ export function TutorFilters({
         <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
           <SheetTrigger asChild>
             <Button variant="outline" size="sm" className="gap-2">
-              <Filter className="h-4 w-4" />
+              <FunnelSimple className="h-4 w-4" />
               Filtrele
               {activeCount > 0 && (
                 <Badge
