@@ -58,7 +58,12 @@ export function FavoriteButton({
           )}
         />
       </Button>
-      <span className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-3 -translate-x-1/2 translate-y-1 whitespace-nowrap rounded-full border border-slate-700/20 bg-slate-900 px-2.5 py-1 text-xs font-medium text-slate-50 opacity-0 shadow-lg shadow-slate-950/10 transition duration-200 ease-out scale-95 group-hover:translate-y-0 group-hover:scale-100 group-hover:opacity-100 peer-focus-visible:translate-y-0 peer-focus-visible:scale-100 peer-focus-visible:opacity-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:shadow-slate-950/30">
+      {/* Hidden below sm rather than merely transparent. The heart sits at the
+          card's right edge, so a 108px tooltip centred on it reaches past the
+          viewport and gives the whole page 13px of horizontal scroll on a
+          390px screen — while never being reachable, since touch has no
+          hover. */}
+      <span className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-3 hidden -translate-x-1/2 translate-y-1 sm:block whitespace-nowrap rounded-full border border-slate-700/20 bg-slate-900 px-2.5 py-1 text-xs font-medium text-slate-50 opacity-0 shadow-lg shadow-slate-950/10 transition duration-200 ease-out scale-95 group-hover:translate-y-0 group-hover:scale-100 group-hover:opacity-100 peer-focus-visible:translate-y-0 peer-focus-visible:scale-100 peer-focus-visible:opacity-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:shadow-slate-950/30">
         {tooltipLabel}
         <span className="absolute left-1/2 top-full h-2 w-2 -translate-x-1/2 -translate-y-1/2 rotate-45 border-b border-r border-slate-700/20 bg-slate-900 dark:border-slate-700 dark:bg-slate-800" />
       </span>

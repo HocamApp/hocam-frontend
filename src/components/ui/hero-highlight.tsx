@@ -20,10 +20,16 @@ import { cn } from "@/lib/utils";
  * where mount and first sight are the same moment; ours sits mid-page, and a
  * stroke that finished before anyone scrolled to it is a stroke nobody sees.
  *
- * The gradient is the brand pink, not the indigo/purple of the original. Both
- * stops stay in the light end of the ramp because dark text sits on top of
- * them — `brand-500` and up would need white text and stop reading as a
- * highlighter.
+ * Brand pink at 18%, flat, where the original ran indigo to purple. It is
+ * still written as a gradient with both stops the same colour, and that is
+ * load-bearing rather than lazy: `background-size` only animates on a
+ * background *image*, so a plain `background-color` would fill instantly and
+ * there would be no stroke to draw. Two identical stops render flat and keep
+ * the sweep.
+ *
+ * The alpha, not `--pink-pale`: pale pink against paper is too close to
+ * register as a mark, and pink at full strength would need white text and
+ * stop reading as a highlighter.
  *
  * The registry entry also ships a `HeroHighlight` wrapper — a full-bleed dotted
  * grid with a cursor-following spotlight. Nothing here uses a hero of that
@@ -39,7 +45,7 @@ export function Highlight({
   const reduceMotion = useReducedMotion();
 
   const shared = cn(
-    "relative inline-block rounded-lg bg-gradient-to-r from-brand-100 to-brand-200 px-1 pb-1",
+    "relative inline-block rounded-input bg-gradient-to-r from-[rgb(250_0_80_/_0.18)] to-[rgb(250_0_80_/_0.18)] px-1 pb-1",
     className,
   );
   const paint = {
