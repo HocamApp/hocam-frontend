@@ -1,5 +1,6 @@
 "use client";
 
+import { Highlight } from "@/components/ui/hero-highlight";
 import { Marquee } from "@/components/ui/marquee";
 
 /**
@@ -88,7 +89,7 @@ export function YsUniversityStrip() {
         className="text-center text-lg font-semibold"
         style={{ color: "var(--ys-neutral-strong)" }}
       >
-        Hocalarımızın öğrencisi olduğu üniversiteler.
+        <Highlight>Hocalarımızın</Highlight> öğrencisi olduğu üniversiteler.
       </p>
 
       <div className="relative mt-6">
