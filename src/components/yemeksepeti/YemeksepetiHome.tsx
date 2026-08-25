@@ -10,6 +10,7 @@ import { YsNavbar } from "./YsNavbar";
 import { YsAppBanner, YsFavouritesBanner, YsSignupBanner } from "./YsPromoBanners";
 import { YsTestimonials } from "./YsTestimonials";
 import { YsTutorDirectory } from "./YsTutorDirectory";
+import { YsUniversityPath } from "./YsUniversityPath";
 
 export function YemeksepetiHome({ fontClassName }: { fontClassName?: string }) {
   const [activeTab, setActiveTab] = useState("tutors");
@@ -48,6 +49,8 @@ export function YemeksepetiHome({ fontClassName }: { fontClassName?: string }) {
           {/* Between the directory and the FAQ: proof after browsing, before the
               objections the FAQ answers. */}
           <YsTestimonials />
+          {/* A breath between the wall of quotes and the wall of questions. */}
+          <YsUniversityPath />
           <YsHomeFaq />
         </div>
       </main>

@@ -15,7 +15,6 @@ import {
   PACKAGE_GRACE_DAYS,
   TRIAL_MINUTES,
 } from "./ysHomeFacts";
-import { YsUniversityPath } from "./YsUniversityPath";
 
 /**
  * The homepage FAQ.
@@ -147,18 +146,16 @@ export function YsHomeFaq() {
         layout="split"
         items={YS_HOME_FAQ_ITEMS}
         heading={
-          /* Title and nothing else. The eyebrow and standfirst both restated
-             it, and the "Ders sürecinin tamamını oku" link went to a page
-             that has no business being introduced here — /nasil-calisir is
-             still reachable from the footer and half a dozen guide pages, so
-             only the link is gone, not the page. */
+          /* Title and the guide link, nothing more. The eyebrow and standfirst
+             both restated the title. The column runs short beside the
+             accordion, which is what the link is doing down there. */
           <div>
             <h2 className="text-2xl font-bold leading-[1.333] tracking-tight">
               Sıkça Sorulan Sorular
             </h2>
-            {/* Fills the column's leftover height. Desktop only — stacked on a
-                phone there is no leftover height, only added scroll. */}
-            <YsUniversityPath className="hidden md:block" />
+            <Link href="/nasil-calisir" className={`mt-4 inline-flex ${faqLinkClass}`}>
+              Ders sürecinin tamamını oku
+            </Link>
           </div>
         }
       />

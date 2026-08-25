@@ -3,38 +3,33 @@
 import MarqueeAlongSvgPath from "@/components/ui/marquee-along-svg-path";
 
 /**
- * The universities our tutors come from, drifting along a serpentine path.
+ * The universities our tutors come from, strung along the reference's own
+ * curve — the long ribbon with a loop in the middle, kept verbatim from the
+ * 21st.dev demo along with its viewBox, velocity and repeat count. Earlier
+ * attempts redrew the path to fit a narrow column and lost what made it work;
+ * this one gets a full-width band of its own so the curve can be itself.
  *
- * This exists to fill the slack in the FAQ heading column — that column holds
- * one title and one link beside an accordion three times its height, and the
- * gap read as a mistake. It is decoration with a job, not a new section.
- *
- * Desktop only (`hidden md:block` at the call site): on a phone the FAQ column
- * stacks above the questions and there is no slack to fill, so the same block
- * would just push the answers down.
- *
- * Logos come from Wikipedia/Wikimedia at 160px wide — the tiles draw them at
- * ~36px, so that is already retina-safe and keeps the set under 400KB. An
- * entry without a `logo` falls back to its `short` name, which is what keeps
- * a missing or pulled file from leaving a blank tile.
+ * No visible caption. The band sits between the testimonials and the FAQ and
+ * is meant to read as a breath between them, so the label lives on the
+ * container for screen readers, which would otherwise get a list of
+ * university names and no idea why.
  */
 
 type University = {
   /** Full name, used for assistive tech. */
   name: string;
-  /** What the tile shows until a logo file exists. */
+  /** Shown when a logo file is missing, so a gap never appears. */
   short: string;
-  /** Path under `public/`; falls back to the wordmark when absent. */
   logo?: string;
 };
 
 /**
- * Scoped to schools a student in roughly the top 15.000 can realistically
- * reach — the band this marketplace is built around. It is a sample, not a
- * ranking, and it claims nothing about where any individual tutor studies.
+ * Schools a student in roughly the top 15.000 can realistically reach — the
+ * band this marketplace is built around. A sample, not a ranking, and it
+ * claims nothing about where any individual tutor studied.
  *
- * Kept to ten. Twelve crowded the loop badly, and the two that went were the
- * two nobody asked for — one of which had no clean logo source anyway.
+ * Logos come from Wikipedia/Wikimedia at 160px wide; the ribbon draws them
+ * around 68px, which is already retina-safe.
  */
 const UNIVERSITIES: University[] = [
   { name: "Boğaziçi Üniversitesi", short: "Boğaziçi", logo: "/images/universities/bogazici.png" },
@@ -43,47 +38,80 @@ const UNIVERSITIES: University[] = [
   { name: "Koç Üniversitesi", short: "Koç", logo: "/images/universities/koc.png" },
   { name: "Sabancı Üniversitesi", short: "Sabancı", logo: "/images/universities/sabanci.png" },
   { name: "Bilkent Üniversitesi", short: "Bilkent", logo: "/images/universities/bilkent.png" },
-  { name: "Hacettepe Üniversitesi", short: "Hacettepe", logo: "/images/universities/hacettepe.png" },
-  { name: "Yıldız Teknik Üniversitesi", short: "Yıldız Teknik", logo: "/images/universities/yildiz-teknik.png" },
-  { name: "İstanbul Üniversitesi", short: "İstanbul Ü.", logo: "/images/universities/istanbul.png" },
-  { name: "İstanbul Üniversitesi-Cerrahpaşa", short: "Cerrahpaşa", logo: "/images/universities/cerrahpasa.png" },
+  {
+    name: "Hacettepe Üniversitesi",
+    short: "Hacettepe",
+    logo: "/images/universities/hacettepe.png",
+  },
+  {
+    name: "Yıldız Teknik Üniversitesi",
+    short: "Yıldız Teknik",
+    logo: "/images/universities/yildiz-teknik.png",
+  },
+  {
+    name: "İstanbul Üniversitesi",
+    short: "İstanbul Ü.",
+    logo: "/images/universities/istanbul.png",
+  },
+  {
+    name: "İstanbul Üniversitesi-Cerrahpaşa",
+    short: "Cerrahpaşa",
+    logo: "/images/universities/cerrahpasa.png",
+  },
+  { name: "Ankara Üniversitesi", short: "Ankara Ü.", logo: "/images/universities/ankara.png" },
+  { name: "Ege Üniversitesi", short: "Ege", logo: "/images/universities/ege.png" },
+  { name: "Gazi Üniversitesi", short: "Gazi", logo: "/images/universities/gazi.png" },
+  { name: "Marmara Üniversitesi", short: "Marmara", logo: "/images/universities/marmara.png" },
+  {
+    name: "Dokuz Eylül Üniversitesi",
+    short: "Dokuz Eylül",
+    logo: "/images/universities/dokuz-eylul.png",
+  },
+  {
+    name: "İzmir Yüksek Teknoloji Enstitüsü",
+    short: "İYTE",
+    logo: "/images/universities/iyte.png",
+  },
+  {
+    name: "Galatasaray Üniversitesi",
+    short: "Galatasaray",
+    logo: "/images/universities/galatasaray.png",
+  },
 ];
 
-/**
- * Traced from the route Arda drew over a screenshot: a long climb from the
- * bottom-left, a loop in the middle that crosses back over itself, then a
- * sweep out to the top-right corner.
- *
- * The self-crossing is the whole character of it — a curve that only wiggles
- * reads as a wave, and this has to read as a knot. Segments four and five are
- * what make it cross; keep them if you retune the rest.
- *
- * The viewBox tracks the column's own aspect ratio on purpose. `responsive`
- * scales by the smaller of the two axes, so a box shaped differently from its
- * container gets letterboxed and the curve shrinks into a corner.
- */
-const PATH = [
-  "M 25 390",
-  "C 90 355, 140 322, 175 275", // climb out of the bottom-left
-  "C 215 198, 285 118, 368 145", // over the top of the loop
-  "C 452 172, 458 268, 358 288", // down its right side, kept wide
-  "C 258 308, 212 245, 255 172", // back left and up — crosses the climb here
-  "C 305 82, 410 45, 505 32", // away to the top-right
-].join(" ");
+/** The demo's curve, unchanged. */
+const PATH =
+  "M1 209.434C58.5872 255.935 387.926 325.938 482.583 209.434C600.905 63.8051 525.516 -43.2211 427.332 19.9613C329.149 83.1436 352.902 242.723 515.041 267.302C644.752 286.966 943.56 181.94 995 156.5";
 
-function UniversityTile({ name, short, logo }: University) {
+/**
+ * On the curve a mark is centred on its point rather than hung from it, so the
+ * path runs through the marks instead of along their top-left corners. It is
+ * 72px, not the reference's 56 — the reference scales its tiles up more than a
+ * page-width band can, so matching its number would read smaller here.
+ *
+ * `inline` is the phone fallback: normal flow, no centring transform, which in
+ * that context would only shift every mark up and left by half its own size.
+ */
+function UniversityMark({
+  name,
+  short,
+  logo,
+  inline = false,
+}: University & { inline?: boolean }) {
   return (
-    // Centred on its point rather than hung from it, so the curve runs through
-    // the middle of each mark instead of along their top-left corners.
-    <div className="flex size-[68px] -translate-x-1/2 -translate-y-1/2 items-center justify-center transition-transform duration-300 ease-in-out hover:scale-125">
+    <div
+      className={`flex items-center justify-center duration-300 ease-in-out hover:scale-150 ${
+        inline ? "size-12" : "size-[72px] -translate-x-1/2 -translate-y-1/2"
+      }`}
+    >
       {logo ? (
-        // Plain <img>: logo files vary in aspect ratio and next/image wants
-        // per-file dimensions for each one. No card, no border — these are
-        // finished marks and the chrome only competed with them.
+        // Plain <img>: these vary in aspect ratio and next/image wants per-file
+        // dimensions for each. `contain`, not the reference's `cover` — cropping
+        // a university seal to a square mangles it.
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={logo} alt={name} className="max-h-full max-w-full object-contain" draggable={false} />
+        <img src={logo} alt={name} className="h-full w-full object-contain" draggable={false} />
       ) : (
-        <span className="text-center text-xs font-semibold leading-tight text-neutral-700">
+        <span className="text-center text-[11px] font-semibold leading-tight text-neutral-700">
           {short}
         </span>
       )}
@@ -91,29 +119,46 @@ function UniversityTile({ name, short, logo }: University) {
   );
 }
 
-export function YsUniversityPath({ className }: { className?: string }) {
+export function YsUniversityPath() {
   return (
-    // No visible caption — the column is meant to hold the title and this, and
-    // nothing else. The label survives for screen readers, which would
-    // otherwise get twelve university names with no idea why.
-    <div className={className} role="img" aria-label="Hocalarımızın okuduğu üniversitelerden bazıları">
+    <section
+      className="mt-12 overflow-hidden"
+      role="img"
+      aria-label="Hocalarımızın okuduğu üniversitelerden bazıları"
+    >
+      {/* The ribbon needs width. `responsive` scales the 996-unit viewBox to
+          fit, so on a 390px screen every mark lands at 27px — unreadable. The
+          marks still belong on a phone, just not on a curve, so below md they
+          fall back to a plain wrap. */}
+      <div className="flex flex-wrap items-center justify-center gap-6 px-4 py-6 md:hidden">
+        {UNIVERSITIES.map((university) => (
+          <UniversityMark key={university.name} {...university} inline />
+        ))}
+      </div>
+
       <MarqueeAlongSvgPath
         path={PATH}
-        viewBox="0 0 520 410"
-        baseVelocity={3}
+        viewBox="0 0 996 330"
+        baseVelocity={8}
         slowdownOnHover
         draggable
         grabCursor
         dragSensitivity={0.1}
+        // One pass, not the reference's two. It carries thirteen images; we
+        // carry seventeen universities, and doubling them packed the ribbon
+        // until the seals overlapped into noise.
         repeat={1}
         responsive
+        // Upright, unlike the reference. Its tiles are abstract type art that
+        // reads at any angle; a wordmark like İTÜ or Sabancı would end up
+        // upside down on the loop's return.
         rotateAlongPath={false}
-        className="mt-6 h-[400px] w-full"
+        className="hidden h-[420px] w-full scale-105 md:block"
       >
         {UNIVERSITIES.map((university) => (
-          <UniversityTile key={university.name} {...university} />
+          <UniversityMark key={university.name} {...university} />
         ))}
       </MarqueeAlongSvgPath>
-    </div>
+    </section>
   );
 }
