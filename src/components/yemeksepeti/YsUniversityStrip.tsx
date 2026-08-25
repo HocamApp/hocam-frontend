@@ -3,8 +3,8 @@
 import { Marquee } from "@/components/ui/marquee";
 
 /**
- * The universities our tutors study at — a flat logo strip between the
- * testimonial wall and the FAQ.
+ * The universities our tutors study at — a flat logo strip sitting where the
+ * campaign lane used to, between the app banner and the favourites banner.
  *
  * The whole design problem here is optical size. A university set mixes
  * circular seals with horizontal wordmarks, and neither obvious rule works:
@@ -81,12 +81,17 @@ function UniversityLogo({ name, logo, height }: University) {
 
 export function YsUniversityStrip() {
   return (
-    <section className="mt-14 border-t pt-12" style={{ borderColor: "var(--ys-neutral-divider)" }}>
-      <p className="text-center text-sm" style={{ color: "var(--ys-neutral-secondary)" }}>
+    // No rule above it any more: it now sits between two coloured banners,
+    // which separate it on their own. A divider there would only add a line.
+    <section className="mt-8">
+      <p
+        className="text-center text-lg font-semibold"
+        style={{ color: "var(--ys-neutral-strong)" }}
+      >
         Hocalarımızın öğrencisi olduğu üniversiteler.
       </p>
 
-      <div className="relative mt-8">
+      <div className="relative mt-6">
         {/* Pause rather than slow down. Changing an animation's duration
             mid-run restarts its clock and the row visibly jumps; pausing is
             the one hover response that stays smooth. */}

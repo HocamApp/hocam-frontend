@@ -576,24 +576,6 @@
   }
 }
 
-/* ---------------------------------------------------------- campaign lane -- */
-
-.ys-lane {
-  display: flex;
-  gap: var(--ys-space-sm);
-  overflow-x: auto;
-  scroll-behavior: smooth;
-  padding-bottom: var(--ys-space-xxs);
-}
-
-.ys-lane__item {
-  flex: none;
-  width: 280px;
-  height: 120px;
-  overflow: hidden;
-  border-radius: var(--ys-radius-media);
-}
-
 /* ---------------------------------------------------------------- footer -- */
 
 .ys-footer-link {

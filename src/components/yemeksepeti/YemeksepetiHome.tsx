@@ -2,7 +2,6 @@
 
 import { useCallback, useState } from "react";
 import "@/styles/yemeksepeti.css";
-import { YsCampaignLane } from "./YsCampaignLane";
 import { YsEntryDialog } from "./YsEntryDialog";
 import { YsFooter } from "./YsFooter";
 import { YsHomeFaq } from "./YsHomeFaq";
@@ -41,7 +40,9 @@ export function YemeksepetiHome({ fontClassName }: { fontClassName?: string }) {
         <div className="ys-shell pb-12">
           <YsSignupBanner />
           <YsAppBanner />
-          <YsCampaignLane />
+          {/* Where the campaign lane used to be: it carried Yemeksepeti's own
+              restaurant deals, which we have no equivalent of. */}
+          <YsUniversityStrip />
           {/* Sits directly above the tutor list: the gesture it demonstrates
               is the heart on the cards right below it. */}
           <YsFavouritesBanner />
@@ -49,8 +50,6 @@ export function YemeksepetiHome({ fontClassName }: { fontClassName?: string }) {
           {/* Between the directory and the FAQ: proof after browsing, before the
               objections the FAQ answers. */}
           <YsTestimonials />
-          {/* A breath between the wall of quotes and the wall of questions. */}
-          <YsUniversityStrip />
           <YsHomeFaq />
         </div>
       </main>
