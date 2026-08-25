@@ -10,7 +10,7 @@ import { YsNavbar } from "./YsNavbar";
 import { YsAppBanner, YsFavouritesBanner, YsSignupBanner } from "./YsPromoBanners";
 import { YsTestimonials } from "./YsTestimonials";
 import { YsTutorDirectory } from "./YsTutorDirectory";
-import { YsUniversityPath } from "./YsUniversityPath";
+import { YsUniversityStrip } from "./YsUniversityStrip";
 
 export function YemeksepetiHome({ fontClassName }: { fontClassName?: string }) {
   const [activeTab, setActiveTab] = useState("tutors");
@@ -50,7 +50,7 @@ export function YemeksepetiHome({ fontClassName }: { fontClassName?: string }) {
               objections the FAQ answers. */}
           <YsTestimonials />
           {/* A breath between the wall of quotes and the wall of questions. */}
-          <YsUniversityPath />
+          <YsUniversityStrip />
           <YsHomeFaq />
         </div>
       </main>
