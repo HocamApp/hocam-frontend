@@ -15,6 +15,7 @@ import {
   PACKAGE_GRACE_DAYS,
   TRIAL_MINUTES,
 } from "./ysHomeFacts";
+import { YsUniversityPath } from "./YsUniversityPath";
 
 /**
  * The homepage FAQ.
@@ -146,17 +147,19 @@ export function YsHomeFaq() {
         layout="split"
         items={YS_HOME_FAQ_ITEMS}
         heading={
+          /* Eyebrow and standfirst removed: the title says the same thing
+             twice over, and dropping them lets it sit level with the first
+             question instead of floating below it. */
           <div>
-            <p className="text-sm font-medium text-brand-700">Merak edilenler</p>
-            <h2 className="mt-3 text-2xl font-bold leading-[1.333] tracking-tight">
+            <h2 className="text-2xl font-bold leading-[1.333] tracking-tight">
               Sıkça Sorulan Sorular
             </h2>
-            <p className="mt-5 text-base leading-7 text-muted-foreground">
-              Deneme dersinden paket seçimine kadar en çok sorulanlar.
-            </p>
-            <Link href="/nasil-calisir" className={`mt-2 inline-flex ${faqLinkClass}`}>
+            <Link href="/nasil-calisir" className={`mt-3 inline-flex ${faqLinkClass}`}>
               Ders sürecinin tamamını oku
             </Link>
+            {/* Fills the column's leftover height. Desktop only — stacked on a
+                phone there is no leftover height, only added scroll. */}
+            <YsUniversityPath className="mt-8 hidden md:block" />
           </div>
         }
       />

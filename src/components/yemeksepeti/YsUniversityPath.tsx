@@ -1,0 +1,107 @@
+"use client";
+
+import MarqueeAlongSvgPath from "@/components/ui/marquee-along-svg-path";
+
+/**
+ * The universities our tutors come from, drifting along a serpentine path.
+ *
+ * This exists to fill the slack in the FAQ heading column — that column holds
+ * one title and one link beside an accordion three times its height, and the
+ * gap read as a mistake. It is decoration with a job, not a new section.
+ *
+ * Desktop only (`hidden md:block` at the call site): on a phone the FAQ column
+ * stacks above the questions and there is no slack to fill, so the same block
+ * would just push the answers down.
+ *
+ * **Logos are not in yet.** Each entry renders its `short` name in a tile;
+ * once the files land in `public/images/universities/`, give the entry a
+ * `logo` and `UniversityTile` swaps to the image. Nothing else changes.
+ */
+
+type University = {
+  /** Full name, used for assistive tech. */
+  name: string;
+  /** What the tile shows until a logo file exists. */
+  short: string;
+  /** Path under `public/`; falls back to the wordmark when absent. */
+  logo?: string;
+};
+
+/**
+ * Scoped to schools a student in roughly the top 15.000 can realistically
+ * reach — the band this marketplace is built around. It is a sample, not a
+ * ranking, and it claims nothing about where any individual tutor studies.
+ */
+const UNIVERSITIES: University[] = [
+  { name: "Boğaziçi Üniversitesi", short: "Boğaziçi" },
+  { name: "Orta Doğu Teknik Üniversitesi", short: "ODTÜ" },
+  { name: "İstanbul Teknik Üniversitesi", short: "İTÜ" },
+  { name: "Koç Üniversitesi", short: "Koç" },
+  { name: "Sabancı Üniversitesi", short: "Sabancı" },
+  { name: "Bilkent Üniversitesi", short: "Bilkent" },
+  { name: "Hacettepe Üniversitesi", short: "Hacettepe" },
+  { name: "Yıldız Teknik Üniversitesi", short: "Yıldız Teknik" },
+  { name: "İstanbul Üniversitesi", short: "İstanbul Ü." },
+  { name: "İstanbul Üniversitesi-Cerrahpaşa", short: "Cerrahpaşa" },
+  { name: "Galatasaray Üniversitesi", short: "Galatasaray" },
+  { name: "Ankara Üniversitesi", short: "Ankara Ü." },
+];
+
+/**
+ * A serpentine that crosses the column: right, back to the left, out right
+ * again. The viewBox is kept close to the column's own aspect ratio on
+ * purpose — `responsive` scales by the smaller of the two axes, so a box
+ * shaped differently from its container gets letterboxed and the curve
+ * collapses into a narrow wiggle.
+ */
+const PATH =
+  "M 30 50 C 190 10, 470 50, 455 140 C 440 230, 130 170, 95 250 C 65 325, 270 350, 490 300";
+
+function UniversityTile({ name, short, logo }: University) {
+  return (
+    // Centred on its point rather than hung from it, so the curve runs through
+    // the middle of each tile instead of along their top-left corners.
+    <div className="-translate-x-1/2 -translate-y-1/2 transition-transform duration-300 ease-in-out hover:scale-125">
+      <div className="flex h-11 items-center justify-center rounded-lg border border-brand-100 bg-white px-3 shadow-sm">
+        {logo ? (
+          // Plain <img>: logo files vary in aspect ratio and next/image wants
+          // per-file dimensions for each one. They are ~2KB decorative marks.
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={logo} alt={name} className="h-6 w-auto object-contain" draggable={false} />
+        ) : (
+          <span className="whitespace-nowrap text-xs font-semibold text-neutral-700">
+            {short}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export function YsUniversityPath({ className }: { className?: string }) {
+  return (
+    <div className={className}>
+      <p className="text-sm leading-6 text-muted-foreground">
+        Hocalarımızın okuduğu üniversitelerden bazıları
+      </p>
+
+      <MarqueeAlongSvgPath
+        path={PATH}
+        viewBox="0 0 520 360"
+        baseVelocity={3}
+        slowdownOnHover
+        draggable
+        grabCursor
+        dragSensitivity={0.1}
+        repeat={1}
+        responsive
+        rotateAlongPath={false}
+        className="mt-3 h-[330px] w-full"
+      >
+        {UNIVERSITIES.map((university) => (
+          <UniversityTile key={university.name} {...university} />
+        ))}
+      </MarqueeAlongSvgPath>
+    </div>
+  );
+}
