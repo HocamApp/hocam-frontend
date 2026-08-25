@@ -23,10 +23,10 @@ import { MAX_PACKAGE_DISCOUNT_PERCENT, TRIAL_MINUTES } from "./ysHomeFacts";
  * overridden by `.dark`. A shadcn `Button` inside would silently drag
  * `--primary` back in, so the CTA is styled by hand.
  *
- * **The consent card out-ranks it.** `DiscoveryConsentBanner` now sits at
- * `z-[120]`, above this dialog's 110, and shows for anonymous visitors: a
- * legal choice is answered before a marketing one. The raised overlay here
- * still matters for everything else on the page.
+ * **The consent card out-ranks it.** `DiscoveryConsentBanner` sits at
+ * `z-[120]`, above this dialog's 110, and shows for anonymous visitors. It is
+ * a corner card rather than a modal, so the two do not fight for the middle —
+ * but a legal choice stays clickable over a marketing one.
  *
  * **It reports when it is done.** The navbar coachmark fires at 900ms and would
  * otherwise live and die underneath this overlay; `onResolved` starts its

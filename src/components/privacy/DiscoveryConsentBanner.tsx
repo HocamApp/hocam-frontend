@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { BarChart3 } from "lucide-react";
+import { ShieldCheck } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -12,23 +12,31 @@ import {
 } from "@/lib/discovery";
 
 /**
- * Analytics consent, asked once, as a centred card.
+ * Consent for measuring how discovery performs, asked once, as a small card in
+ * the bottom-left corner.
  *
- * Three things here are deliberate and should survive a redesign:
+ * **It is not a cookie notice and must not be dressed as one.** Nothing here
+ * writes a cookie: the answer is a record on `/discovery/consent/` and what it
+ * covers is impressions, profile views and favourites. "Çerez Tercihleri" is
+ * the phrase Turkish sites use and it would have been the familiar choice, but
+ * it would be a false statement in a consent prompt, which is the one place a
+ * familiar-sounding lie costs the most.
  *
- * **Reject is a button, not a link.** The card this borrows its shape from
- * pairs a large "Accept" with a small underlined "Manage your preferences",
- * which is the pattern KVKK and the GDPR both treat as invalid consent —
- * refusing has to cost no more effort than agreeing. Both options are buttons
- * of the same size for that reason.
+ * Corner on desktop, full width on a phone — a 304px card pinned to one side
+ * of a 390px screen just looks misaligned.
  *
- * **It does not block the page.** The wrapper is `pointer-events-none` and
- * there is no scrim, so a visitor can keep browsing and answer whenever. A
- * modal that traps you until you consent is not freely given consent.
+ * Corner, not centre. Bottom-left corner cards draw the most interaction of
+ * any placement — declines as well as accepts — while a centre modal buys
+ * opt-ins by frustration, and NN/g measured 18% of visitors leaving outright
+ * when a banner covers half the screen on load.
  *
- * **It sits above the homepage promo** at `z-[120]`. That dialog is at 110 and
- * appears at 700ms; a legal choice outranks a marketing one, so this is
- * answered first and the promo is waiting underneath.
+ * Reject is a button the same size as accept. The reference this borrows its
+ * shape from pairs a big filled "Accept" with a small underlined link, which
+ * KVKK and the GDPR both treat as invalid consent: refusing cannot cost more
+ * effort than agreeing.
+ *
+ * Nothing blocks the page — no scrim, no focus trap. Consent taken by trapping
+ * someone is not freely given.
  */
 export function DiscoveryConsentBanner() {
   const [status, setStatus] = useState<DiscoveryConsentStatus | "loading">("loading");
@@ -51,42 +59,32 @@ export function DiscoveryConsentBanner() {
   }
 
   return (
-    <div className="pointer-events-none fixed inset-0 z-[120] flex items-center justify-center p-4">
-      <aside
-        aria-label="Analiz tercihi"
-        className="pointer-events-auto w-full max-w-[22rem] rounded-xl border bg-background p-6 shadow-2xl"
-      >
-        <div className="flex items-center gap-2.5">
-          <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-700 dark:bg-brand-900/40 dark:text-brand-300">
-            {/* A chart, not a cookie: what is being asked for is measurement of
-                search and match results, and no advertising cookie is set. */}
-            <BarChart3 className="size-5" aria-hidden />
-          </span>
-          {/* A short label, not a question: beside a 36px icon in a 352px card
-              anything longer wraps, and a wrapped heading next to an icon
-              reads as a mistake. The asking happens in the body. */}
-          <h2 className="text-lg font-semibold leading-tight">Ölçümleme izni</h2>
-        </div>
+    <aside
+      aria-label="Gizlilik tercihi"
+      className="fixed bottom-4 left-4 right-4 z-[120] rounded-2xl border bg-background p-5 shadow-xl duration-500 animate-in fade-in slide-in-from-bottom-4 motion-reduce:animate-none sm:right-auto sm:max-w-[19rem]"
+    >
+      <div className="flex items-center gap-2.5">
+        <span className="inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand-700 dark:bg-brand-900/40 dark:text-brand-300">
+          <ShieldCheck className="size-[18px]" aria-hidden />
+        </span>
+        <h2 className="text-base font-semibold">Kullanım verileri</h2>
+      </div>
 
-        <p className="mt-4 text-sm leading-6 text-muted-foreground">
-          Hoca arama ve eşleşme sonuçlarının işe yarayıp yaramadığını, kimliğini açığa
-          çıkarmayan bir oturumla ölçmek istiyoruz. Reddedersen site aynı şekilde
-          çalışır.{" "}
-          <Link className="font-medium underline underline-offset-2" href="/kvkk/analitik">
-            Analitik aydınlatma metni
-          </Link>
-          .
-        </p>
+      <p className="mt-3 text-sm leading-6 text-muted-foreground">
+        Aramaların işe yarayıp yaramadığını ölçüyoruz. Kimliğin açığa çıkmaz.{" "}
+        <Link className="font-medium underline underline-offset-2" href="/kvkk/analitik">
+          Detaylar
+        </Link>
+      </p>
 
-        <div className="mt-6 grid grid-cols-2 gap-2">
-          <Button variant="outline" disabled={saving} onClick={() => void choose(false)}>
-            Reddet
-          </Button>
-          <Button disabled={saving} onClick={() => void choose(true)}>
-            İzin ver
-          </Button>
-        </div>
-      </aside>
-    </div>
+      <div className="mt-4 grid grid-cols-2 gap-2">
+        <Button size="sm" variant="outline" disabled={saving} onClick={() => void choose(false)}>
+          Reddet
+        </Button>
+        <Button size="sm" disabled={saving} onClick={() => void choose(true)}>
+          İzin ver
+        </Button>
+      </div>
+    </aside>
   );
 }
