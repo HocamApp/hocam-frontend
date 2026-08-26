@@ -43,7 +43,7 @@ export function YemeksepetiHome() {
         {/* Outside the shell on purpose: a diagonal band is full bleed, and
             `.ys-shell` would cap it at 1440px and inset it by its padding. It
             opens its own shell for the text. */}
-        <div className="mt-16 md:mt-24">
+        <div className="mt-12 md:mt-16">
           <YsVerifiedBand />
         </div>
 

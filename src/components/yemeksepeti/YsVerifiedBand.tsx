@@ -21,7 +21,13 @@ import Link from "next/link";
  */
 export function YsVerifiedBand() {
   return (
-    <section className="ys-band py-16 md:py-20" aria-labelledby="ys-band-title">
+    // 96/108 is the mock's own padding, kept to the pixel. At 80/80 the band
+    // read as a thin wedge and its right-hand end, the shallow end of the cut,
+    // fell off the first screen entirely.
+    <section
+      className="ys-band pb-24 pt-20 md:pb-[108px] md:pt-24"
+      aria-labelledby="ys-band-title"
+    >
       <div className="ys-shell">
         <h2 id="ys-band-title" className="max-w-[18ch] text-h1-m font-bold md:text-h1">
           Belgesi olmayan kimse ders veremez

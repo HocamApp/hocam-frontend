@@ -18,7 +18,7 @@ import Link from "next/link";
  */
 export function YsHeroIntro() {
   return (
-    <section className="py-20 md:py-32" aria-labelledby="ys-hero-title">
+    <section className="py-16 md:py-24" aria-labelledby="ys-hero-title">
       <h1 id="ys-hero-title" className="text-display-m md:text-display">
         Dünün öğrencisi,
         <br />
