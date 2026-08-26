@@ -8,7 +8,13 @@ import { useEffect, useState } from "react";
  * content directly in the registration dialog. This keeps the modal in sync
  * with the public page without weakening the global anti-framing header.
  */
-export function AydinlatmaMetniPreview({ onReady }: { onReady: () => void }) {
+export function AydinlatmaMetniPreview({
+  noticeUrl,
+  onReady,
+}: {
+  noticeUrl: string;
+  onReady: () => void;
+}) {
   const [html, setHtml] = useState<string | null>(null);
   const [failed, setFailed] = useState(false);
 
@@ -17,7 +23,7 @@ export function AydinlatmaMetniPreview({ onReady }: { onReady: () => void }) {
 
     async function loadNotice() {
       try {
-        const response = await fetch("/kvkk/aydinlatma-metni", {
+        const response = await fetch(noticeUrl, {
           credentials: "same-origin",
           signal: controller.signal,
         });
@@ -40,7 +46,7 @@ export function AydinlatmaMetniPreview({ onReady }: { onReady: () => void }) {
 
     void loadNotice();
     return () => controller.abort();
-  }, [onReady]);
+  }, [noticeUrl, onReady]);
 
   if (failed) {
     return (
@@ -49,7 +55,7 @@ export function AydinlatmaMetniPreview({ onReady }: { onReady: () => void }) {
           Aydınlatma Metni şu anda bu pencerede yüklenemedi.
         </p>
         <Link
-          href="/kvkk/aydinlatma-metni"
+          href={noticeUrl}
           target="_blank"
           className="text-sm font-medium text-primary underline underline-offset-4"
         >

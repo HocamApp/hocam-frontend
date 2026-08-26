@@ -24,6 +24,20 @@ export interface ConsentState {
   consents: Record<ConsentPurpose, boolean>;
 }
 
+export interface RegistrationNoticeConfig {
+  code: string;
+  version: string;
+  url: string;
+  acknowledgement_required: true;
+}
+
+export async function fetchRegistrationNotice(): Promise<RegistrationNoticeConfig> {
+  const { data } = await api.get<RegistrationNoticeConfig>(
+    "/privacy/notices/registration/"
+  );
+  return data;
+}
+
 export type DataSubjectRequestType =
   | "info"
   | "correction"
