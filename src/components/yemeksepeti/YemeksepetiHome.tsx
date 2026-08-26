@@ -12,12 +12,6 @@ import { YsUniversityStrip } from "./YsUniversityStrip";
 import { YsVerifiedBand } from "./YsVerifiedBand";
 
 export function YemeksepetiHome() {
-  const [activeTab, setActiveTab] = useState("tutors");
-  /* The search bar lives in the navbar but drives the directory below, so the
-     committed term is held here. `searchDraft` is what is being typed;
-     `search` only moves on blur or Enter, matching /tutors. */
-  const [searchDraft, setSearchDraft] = useState("");
-  const [search, setSearch] = useState<string | undefined>(undefined);
   /* The coachmark waits for the entry promo: it fires at 900ms and would
      otherwise spend its whole life behind the modal overlay. */
   const [coachmarkReady, setCoachmarkReady] = useState(false);
@@ -25,14 +19,7 @@ export function YemeksepetiHome() {
 
   return (
     <div className="ys-root flex min-h-screen flex-col">
-      <YsNavbar
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-        searchDraft={searchDraft}
-        onSearchDraftChange={setSearchDraft}
-        onSearchCommit={setSearch}
-        startCoachmark={coachmarkReady}
-      />
+      <YsNavbar startCoachmark={coachmarkReady} />
 
       <main id="ys-main-content" className="flex-1">
         <div className="ys-shell">
@@ -50,7 +37,7 @@ export function YemeksepetiHome() {
           {/* Directly under the band: the band makes the claim, these logos
               are the evidence for it. */}
           <YsUniversityStrip />
-          <YsTutorDirectory search={search} />
+          <YsTutorDirectory />
           {/* Between the directory and the FAQ: proof after browsing, before the
               objections the FAQ answers. */}
           <YsTestimonials />

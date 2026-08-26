@@ -1,12 +1,18 @@
 "use client";
 
+import { useSearchParams } from "next/navigation";
+
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { SidebarSimple } from "@phosphor-icons/react";
 
 import { YsFavouritesBanner } from "./YsPromoBanners";
 
-import { fetchSubjects, fetchTutors, type TutorFilters as TutorFiltersType } from "@/lib/tutorsApi";
+import {
+  fetchSubjects,
+  fetchTutors,
+  type TutorFilters as TutorFiltersType,
+} from "@/lib/tutorsApi";
 import { defaultTutorOrdering } from "@/lib/tutorDirectory";
 import { useDelayedVisible } from "@/hooks/useDelayedVisible";
 import { useFavorites } from "@/hooks/useFavorites";
@@ -25,10 +31,12 @@ import SlidingPagination from "@/components/ui/sliding-pagination";
  * owns the state around them. It deliberately carries *less* than
  * `TutorsPageClient`:
  *
- * - **No URL sync.** `TutorsPageClient` hardcodes `/tutors` in every
+ * - **No filter URL sync.** `TutorsPageClient` hardcodes `/tutors` in every
  *   `router.replace`, so reusing it here would navigate the visitor off the
- *   homepage on the first filter change. Dropping the sync also keeps `/`
- *   statically prerenderable (no `useSearchParams` -> no `force-dynamic`).
+ *   homepage on the first filter change. The subject/price/rating filters
+ *   therefore stay local. The *search term* is the exception: it is committed
+ *   from the header, which can be on any route, so the URL is the only place
+ *   the two can meet.
  * - **No discovery telemetry.** The directory-impression payload has no
  *   surface field, so homepage impressions would silently contaminate
  *   `/tutors` ranking measurement.
@@ -64,7 +72,14 @@ function TutorCardSkeleton() {
   );
 }
 
-export function YsTutorDirectory({ search }: { search?: string }) {
+export function YsTutorDirectory() {
+  /* Read rather than received. The search box lives in the header, which is
+     rendered by a layout and has no path down to this component — so the URL
+     carries the term between them. It also survives a reload and a back
+     button, which the old prop never did. */
+  const searchParams = useSearchParams();
+  const search = searchParams.get("search") ?? undefined;
+
   const [filters, setFilters] = useState<TutorFiltersType>({});
   const [page, setPage] = useState(1);
   /* Starts closed on purpose, and deliberately does NOT read
@@ -120,7 +135,9 @@ export function YsTutorDirectory({ search }: { search?: string }) {
   const results = tutors?.results ?? [];
   const totalPages = Math.max(1, Math.ceil((tutors?.count ?? 0) / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
-  const hasActiveFilters = Object.values(effectiveFilters).some((value) => (value ?? "") !== "");
+  const hasActiveFilters = Object.values(effectiveFilters).some(
+    (value) => (value ?? "") !== "",
+  );
   // Suppressed for the whole resolve, not just while the skeleton is up,
   // so "not found" cannot flash during the 200ms grace window.
   const showEmptyState = !isResolving && !error && results.length === 0;
@@ -153,7 +170,11 @@ export function YsTutorDirectory({ search }: { search?: string }) {
       active: (filters.ordering ?? defaultOrdering) === "rating",
       next: { ordering: "rating" },
     },
-    { label: "En uygun fiyat", active: filters.ordering === "price", next: { ordering: "price" } },
+    {
+      label: "En uygun fiyat",
+      active: filters.ordering === "price",
+      next: { ordering: "price" },
+    },
     {
       label: "En iyi YKS sıralaması",
       active: filters.ordering === "yks_rank",
@@ -190,38 +211,40 @@ export function YsTutorDirectory({ search }: { search?: string }) {
               with. Above 1400 the chips do not overflow, and below it the
               promo stacks anyway. */}
           <div className="flex gap-2 overflow-x-auto">
-        <Button
-          type="button"
-          size="sm"
-          variant="outline"
-          className="hidden shrink-0 rounded-full lg:inline-flex"
-          aria-expanded={filtersOpen}
-          aria-controls="ys-tutor-filter-panel"
-          onClick={() => setFiltersOpen((open) => !open)}
-        >
-          {filtersOpen ? (
-            <SidebarSimple className="mr-1.5 h-4 w-4" />
-          ) : (
-            <SidebarSimple className="mr-1.5 h-4 w-4" />
-          )}
-          {filtersOpen ? "Filtreleri gizle" : "Filtreleri göster"}
-        </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="hidden shrink-0 rounded-full lg:inline-flex"
+              aria-expanded={filtersOpen}
+              aria-controls="ys-tutor-filter-panel"
+              onClick={() => setFiltersOpen((open) => !open)}
+            >
+              {filtersOpen ? (
+                <SidebarSimple className="mr-1.5 h-4 w-4" />
+              ) : (
+                <SidebarSimple className="mr-1.5 h-4 w-4" />
+              )}
+              {filtersOpen ? "Filtreleri gizle" : "Filtreleri göster"}
+            </Button>
 
-        {chips.map((chip) => (
-          <Button
-            key={chip.label}
-            type="button"
-            size="sm"
-            /* Solid ink when selected, not pink: pink marks the one primary
+            {chips.map((chip) => (
+              <Button
+                key={chip.label}
+                type="button"
+                size="sm"
+                /* Solid ink when selected, not pink: pink marks the one primary
                action in a region, and a sort toggle is not it. */
-            variant="outline"
-            data-selected={chip.active || undefined}
-            className="shrink-0 data-[selected]:border-ink data-[selected]:bg-ink data-[selected]:text-white"
-            onClick={() => handleFiltersChange({ ...filters, ...chip.next })}
-          >
-            {chip.label}
-          </Button>
-        ))}
+                variant="outline"
+                data-selected={chip.active || undefined}
+                className="shrink-0 data-[selected]:border-ink data-[selected]:bg-ink data-[selected]:text-white"
+                onClick={() =>
+                  handleFiltersChange({ ...filters, ...chip.next })
+                }
+              >
+                {chip.label}
+              </Button>
+            ))}
           </div>
         </div>
 
@@ -262,7 +285,9 @@ export function YsTutorDirectory({ search }: { search?: string }) {
           {error && (
             <ErrorMessage
               message={
-                error instanceof Error ? error.message : "Hocalar yüklenirken bir hata oluştu."
+                error instanceof Error
+                  ? error.message
+                  : "Hocalar yüklenirken bir hata oluştu."
               }
             />
           )}
@@ -300,7 +325,9 @@ export function YsTutorDirectory({ search }: { search?: string }) {
 
           {!showSkeleton && !error && results.length > 0 && (
             <>
-              <div className={`grid grid-cols-1 gap-6 ${filtersOpen ? "" : "md:grid-cols-2"}`}>
+              <div
+                className={`grid grid-cols-1 gap-6 ${filtersOpen ? "" : "md:grid-cols-2"}`}
+              >
                 {results.map((tutor) => (
                   <TutorCard
                     key={tutor.id}

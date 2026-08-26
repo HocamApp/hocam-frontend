@@ -108,7 +108,7 @@
      * arrives with the navbar that produces it.
      */
     --app-header-row-1-h: 3.5rem;
-    --app-header-row-2-h: 0px;
+    --app-header-row-2-h: 3.5rem;
     --app-header-h: var(--app-header-row-1-h);
 
     /* Off the Tailwind grid on purpose: 6, 8, 12, 16 and 24 are all

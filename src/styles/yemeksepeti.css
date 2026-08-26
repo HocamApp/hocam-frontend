@@ -251,7 +251,9 @@
   flex: none;
   align-items: center;
   justify-content: center;
-  height: 56px;
+  /* Fills the row rather than setting it, so the header height token
+     stays the cause of the geometry instead of a copy of it. */
+  height: 100%;
   padding: 0 var(--ys-space-sm);
   border-radius: var(--ys-radius-mini);
   color: var(--ys-neutral-secondary);
