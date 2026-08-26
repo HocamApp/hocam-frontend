@@ -41,8 +41,8 @@ export function TutorPresenceBadge({
   return (
     <span
       className={[
-        "inline-flex items-center gap-1.5 text-xs font-medium",
-        isOnline ? "text-emerald-700" : "text-muted-foreground",
+        "inline-flex items-center gap-1.5 text-label",
+        isOnline ? "text-success" : "text-ink-mid",
         className,
       ].join(" ")}
       aria-label={label}
@@ -50,7 +50,7 @@ export function TutorPresenceBadge({
       <span
         className={[
           "h-2 w-2 rounded-full",
-          isOnline ? "bg-emerald-500" : "bg-muted-foreground/50",
+          isOnline ? "bg-success" : "bg-line",
         ].join(" ")}
         aria-hidden="true"
       />

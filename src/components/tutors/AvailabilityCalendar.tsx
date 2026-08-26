@@ -77,15 +77,15 @@ export function AvailabilityCalendar({ availability, bookings = [], editable = t
             numberOfMonths={1}
             modifiers={{ available: availableDates, closed: closedDates, booked: bookedDates }}
             modifiersClassNames={{
-              available: "[&>button]:bg-emerald-50 [&>button]:text-emerald-800 dark:[&>button]:bg-emerald-950/40 dark:[&>button]:text-emerald-200",
-              closed: "[&>button]:bg-destructive/10 [&>button]:text-destructive",
-              booked: "[&>button]:after:absolute [&>button]:after:bottom-1 [&>button]:after:size-1 [&>button]:after:rounded-full [&>button]:after:bg-primary",
+              available: "[&>button]:border [&>button]:border-success [&>button]:text-ink",
+              closed: "[&>button]:border [&>button]:border-error [&>button]:text-error [&>button]:line-through",
+              booked: "[&>button]:after:absolute [&>button]:after:bottom-1 [&>button]:after:size-1 [&>button]:after:rounded-full [&>button]:after:bg-pink",
             }}
           />
-          <div className="mt-3 flex flex-wrap gap-3 text-xs text-muted-foreground" aria-label="Takvim açıklaması">
-            <span className="flex items-center gap-1"><i className="size-2 rounded-full bg-emerald-500" /> Müsait</span>
-            <span className="flex items-center gap-1"><i className="size-2 rounded-full bg-destructive" /> Kapalı</span>
-            <span className="flex items-center gap-1"><i className="size-2 rounded-full bg-primary" /> Rezervasyon</span>
+          <div className="mt-3 flex flex-wrap gap-3 text-xs text-ink-mid" aria-label="Takvim açıklaması">
+            <span className="flex items-center gap-1"><i className="size-2 rounded-pill border border-success" /> Müsait</span>
+            <span className="flex items-center gap-1"><i className="size-2 rounded-pill bg-error" /> Kapalı</span>
+            <span className="flex items-center gap-1"><i className="size-2 rounded-pill bg-pink" /> Rezervasyon</span>
           </div>
         </CardContent>
       </Card>
@@ -93,22 +93,22 @@ export function AvailabilityCalendar({ availability, bookings = [], editable = t
         <CardContent className="space-y-4 p-4">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="flex items-center gap-2 font-semibold"><CalendarIcon className="h-4 w-4 text-primary" /> {label}</p>
-              <p className="mt-1 text-sm text-muted-foreground">Bu tarih için müsaitlik ve derslerin.</p>
+              <p className="flex items-center gap-2 font-semibold"><CalendarIcon className="h-4 w-4 text-ink" /> {label}</p>
+              <p className="mt-1 text-sm text-ink-mid">Bu tarih için müsaitlik ve derslerin.</p>
             </div>
             {editable && !isPastSelectedDate && <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}><Pencil className="mr-2 h-3.5 w-3.5" /> Düzenle</Button>}
           </div>
           {selectedRules.some((rule) => rule.is_unavailable) ? (
-            <p className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">Bu gün kapalı olarak işaretlenmiş.</p>
+            <p className="rounded-input border border-error p-3 text-small text-error">Bu gün kapalı olarak işaretlenmiş.</p>
           ) : selectedRules.length === 0 ? (
-            <p className="rounded-lg border border-dashed p-3 text-sm text-muted-foreground">Bu gün için müsaitlik tanımlanmamış.</p>
+            <p className="rounded-input border border-line p-3 text-small text-ink-mid">Bu gün için müsaitlik tanımlanmamış.</p>
           ) : (
             <div className="flex flex-wrap gap-2">
-              {selectedRules.map((rule) => <span key={rule.id} className="rounded-md border bg-muted/40 px-2 py-1 text-sm tabular-nums">{rule.start_time?.slice(0, 5)}–{rule.end_time?.slice(0, 5)}</span>)}
+              {selectedRules.map((rule) => <span key={rule.id} className="rounded-pill border border-line px-3 py-1 text-small tabular-nums text-ink">{rule.start_time?.slice(0, 5)}–{rule.end_time?.slice(0, 5)}</span>)}
             </div>
           )}
-          {showBookings && selectedBookings.length > 0 && <div className="space-y-2 border-t pt-4"><p className="text-sm font-semibold">Dersler</p>{selectedBookings.map((booking) => <div key={booking.id} className="flex items-center justify-between gap-3 rounded-lg border p-3"><span className="text-sm font-medium">{new Date(booking.start_time).toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })} · {booking.student.display_name || booking.student.email}</span><StatusBadge status={booking.status} type="booking" /></div>)}</div>}
-          {editable && (isPastSelectedDate ? <p className="text-xs text-muted-foreground">Geçmiş tarihler yalnızca görüntülenebilir.</p> : <p className="text-xs text-muted-foreground"><Pencil className="mr-1 inline h-3 w-3" /> Takvimde bir gün seçerek o güne özel saat veya kapalı gün tanımlayabilirsin.</p>)}
+          {showBookings && selectedBookings.length > 0 && <div className="space-y-2 border-t border-line pt-4"><p className="text-sm font-semibold">Dersler</p>{selectedBookings.map((booking) => <div key={booking.id} className="flex items-center justify-between gap-3 rounded-card border border-line p-3"><span className="text-sm font-medium">{new Date(booking.start_time).toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })} · {booking.student.display_name || booking.student.email}</span><StatusBadge status={booking.status} type="booking" /></div>)}</div>}
+          {editable && (isPastSelectedDate ? <p className="text-xs text-ink-mid">Geçmiş tarihler yalnızca görüntülenebilir.</p> : <p className="text-xs text-ink-mid"><Pencil className="mr-1 inline h-3 w-3" /> Takvimde bir gün seçerek o güne özel saat veya kapalı gün tanımlayabilirsin.</p>)}
         </CardContent>
       </Card>
       {editable && !isPastSelectedDate && <DayAvailabilityDialog open={isEditing} onOpenChange={setIsEditing} dayOfWeek={jsDayToBackendDay(selectedDate.getDay())} date={formatDateLocal(selectedDate)} dayLabel={label} />}

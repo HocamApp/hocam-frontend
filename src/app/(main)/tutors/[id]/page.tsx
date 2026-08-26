@@ -4,17 +4,22 @@ import { useEffect, useRef, useState, type FocusEvent } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
-import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  useInfiniteQuery,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
+import {
+  ChatCircle,
+  ChatText,
   Check,
   Copy,
   Flag,
-  MessageCircle,
-  MessageSquare,
   PlayCircle,
-  Share2,
+  ShareNetwork,
   X,
-} from "lucide-react";
+} from "@phosphor-icons/react";
+import { RankMark } from "@/components/brand/marks";
 import { useFavorites } from "@/hooks/useFavorites";
 import { FavoriteButton } from "@/components/tutors/FavoriteButton";
 import {
@@ -40,7 +45,6 @@ import { MessageRequestModal } from "@/components/tutors/MessageRequestModal";
 import { BookingModal } from "@/components/lessons/BookingModal";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -50,7 +54,11 @@ import {
   DialogDescription,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { SubjectRating } from "@/types";
@@ -69,7 +77,7 @@ type LearningContextQuery = {
 };
 
 function learningContextFromSearchParams(
-  searchParams: URLSearchParams
+  searchParams: URLSearchParams,
 ): LearningContextQuery | null {
   const learning_goal_id = searchParams.get("learning_goal_id");
   const learning_milestone_id = searchParams.get("learning_milestone_id");
@@ -90,11 +98,18 @@ function Stars({ rating }: { rating: number }) {
   return (
     <span className="inline-flex gap-0.5" aria-label={`${rating} yıldız`}>
       {[1, 2, 3, 4, 5].map((i) =>
+        // Gold is a surface, never text: #FFD100 as a glyph measures about
+        // 1.6:1 on paper. The rank lockup carries the gold on this page; the
+        // stars are ink, and the numeral beside them carries the value.
         i <= Math.round(rating) ? (
-          <span key={i} className="text-amber-500">★</span>
+          <span key={i} className="text-ink">
+            ★
+          </span>
         ) : (
-          <span key={i} className="text-muted-foreground/60">☆</span>
-        )
+          <span key={i} className="text-line">
+            ☆
+          </span>
+        ),
       )}
     </span>
   );
@@ -153,7 +168,7 @@ function RatingSummaryPopover({
         <button
           ref={triggerRef}
           type="button"
-          className="inline-flex items-center gap-1.5 rounded-md transition-colors hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          className="inline-flex items-center gap-1.5 rounded-input transition-colors duration-[--duration-state] hover:bg-paper focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2"
           aria-label={`${formatRating(rating)} yıldız puan detayları`}
           onFocus={openPopoverOnKeyboardFocus}
           onBlur={closePopover}
@@ -184,21 +199,21 @@ function RatingSummaryPopover({
         <div className="p-4 text-sm">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="text-xs font-medium uppercase text-muted-foreground">
-                Genel puan
-              </p>
+              <p className="text-label uppercase text-ink-mid">Genel puan</p>
               <div className="mt-1 flex items-center gap-2">
                 <Stars rating={rating} />
-                <span className="text-lg font-semibold">{formatRating(rating)}</span>
+                <span className="text-lg font-semibold">
+                  {formatRating(rating)}
+                </span>
               </div>
             </div>
-            <span className="rounded-full bg-muted px-2 py-1 text-xs text-muted-foreground">
+            <span className="rounded-pill border border-line px-2.5 py-1 text-label text-ink-mid">
               {totalReviews} değerlendirme
             </span>
           </div>
 
           <div className="mt-4 border-t pt-4">
-            <p className="mb-3 text-xs font-medium uppercase text-muted-foreground">
+            <p className="mb-3 text-xs font-medium uppercase text-ink-mid">
               Derslere göre puan
             </p>
             {subjectRatings.length > 0 ? (
@@ -211,7 +226,7 @@ function RatingSummaryPopover({
                     <div className="min-w-0">
                       <p className="truncate font-medium">
                         {sr.subject.name}
-                        <span className="ml-1 text-xs text-muted-foreground">
+                        <span className="ml-1 text-xs text-ink-mid">
                           {sr.subject.exam_type}
                         </span>
                       </p>
@@ -219,9 +234,11 @@ function RatingSummaryPopover({
                     <div className="shrink-0 text-right">
                       <div className="flex items-center justify-end gap-1">
                         <Stars rating={sr.average} />
-                        <span className="font-medium">{formatRating(sr.average)}</span>
+                        <span className="font-medium">
+                          {formatRating(sr.average)}
+                        </span>
                       </div>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-xs text-ink-mid">
                         {sr.count} değerlendirme
                       </p>
                     </div>
@@ -229,7 +246,7 @@ function RatingSummaryPopover({
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground">
+              <p className="text-small text-ink-mid">
                 Ders bazlı puan henüz yok.
               </p>
             )}
@@ -296,7 +313,7 @@ function ProfileSkeleton() {
       <div className="flex gap-8">
         <div className="flex-1 space-y-4">
           <div className="flex gap-4 md:gap-6">
-            <Skeleton className="h-28 w-28 shrink-0 rounded-lg sm:h-36 sm:w-36 md:h-44 md:w-44 lg:h-56 lg:w-56 xl:h-64 xl:w-64" />
+            <Skeleton className="h-28 w-28 shrink-0 rounded-card sm:h-36 sm:w-36 md:h-44 md:w-44 lg:h-56 lg:w-56 xl:h-64 xl:w-64" />
             <div className="flex-1 space-y-2">
               <Skeleton className="h-9 w-48" />
               <Skeleton className="h-5 w-64" />
@@ -308,7 +325,7 @@ function ProfileSkeleton() {
           <Skeleton className="h-4 w-3/4" />
         </div>
         <div className="hidden w-[300px] shrink-0 lg:block xl:w-[360px]">
-          <Skeleton className="h-48 w-full rounded-lg" />
+          <Skeleton className="h-48 w-full rounded-card" />
         </div>
       </div>
       <div>
@@ -322,15 +339,15 @@ function ProfileSkeleton() {
       <div>
         <Skeleton className="mb-2 h-6 w-24" />
         <Separator />
-        <Skeleton className="mt-4 h-20 w-full rounded-lg" />
+        <Skeleton className="mt-4 h-20 w-full rounded-card" />
       </div>
       <div>
         <Skeleton className="mb-2 h-6 w-36" />
         <Separator />
         <div className="mt-4 space-y-3">
-          <Skeleton className="h-24 w-full rounded-lg" />
-          <Skeleton className="h-24 w-full rounded-lg" />
-          <Skeleton className="h-24 w-full rounded-lg" />
+          <Skeleton className="h-24 w-full rounded-card" />
+          <Skeleton className="h-24 w-full rounded-card" />
+          <Skeleton className="h-24 w-full rounded-card" />
         </div>
       </div>
     </div>
@@ -339,7 +356,7 @@ function ProfileSkeleton() {
 
 function ReviewSkeletonCard() {
   return (
-    <div className="rounded-lg border p-4">
+    <div className="rounded-card border border-line p-4">
       <div className="flex justify-between">
         <Skeleton className="h-4 w-24" />
         <Skeleton className="h-4 w-20" />
@@ -360,13 +377,21 @@ export default function TutorProfilePage({
   const router = useRouter();
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
-  const { isAuthenticated, isStudent, user, isLoading: authLoading } = useAuth();
-  const { checkoutEnabled: coachingCheckoutEnabled, checkoutState } = useCoachingFlag();
+  const {
+    isAuthenticated,
+    isStudent,
+    user,
+    isLoading: authLoading,
+  } = useAuth();
+  const { checkoutEnabled: coachingCheckoutEnabled, checkoutState } =
+    useCoachingFlag();
   const { favoriteIds, toggle, isFavoritePending } = useFavorites();
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
   // Paid bookings now go through /tutors/[id]/checkout; this modal only
   // handles the free trial path (which deliberately skips checkout).
-  const [bookingModalMode, setBookingModalMode] = useState<"trial" | null>(null);
+  const [bookingModalMode, setBookingModalMode] = useState<"trial" | null>(
+    null,
+  );
   // `?intent=trial` arrives from the tutor card, which cannot know this
   // student's eligibility (that lives on the uncached detail endpoint only).
   const trialIntent = searchParams.get("intent") === "trial";
@@ -378,12 +403,14 @@ export default function TutorProfilePage({
   const [shareCopied, setShareCopied] = useState(false);
   const [shareUrl, setShareUrl] = useState("");
   const [isReportOpen, setIsReportOpen] = useState(false);
-  const [reportReason, setReportReason] = useState<TutorReportReason>("inappropriate_photo");
+  const [reportReason, setReportReason] = useState<TutorReportReason>(
+    "inappropriate_photo",
+  );
   const [reportDescription, setReportDescription] = useState("");
   const [reportError, setReportError] = useState("");
   const [isSubmittingReport, setIsSubmittingReport] = useState(false);
   const learningContext = learningContextFromSearchParams(
-    new URLSearchParams(searchParams.toString())
+    new URLSearchParams(searchParams.toString()),
   );
   const discoveryImpressionId = searchParams.get("discovery_impression_id");
 
@@ -429,7 +456,7 @@ export default function TutorProfilePage({
           fetchNextPage();
         }
       },
-      { rootMargin: "240px 0px" }
+      { rootMargin: "240px 0px" },
     );
     observer.observe(target);
     return () => observer.disconnect();
@@ -499,14 +526,12 @@ export default function TutorProfilePage({
       const group = subject.exam ?? "Diğer";
       groups.set(group, [...(groups.get(group) ?? []), subject]);
       return groups;
-    }, new Map<string, typeof subjectLabels>())
+    }, new Map<string, typeof subjectLabels>()),
   ).map(([exam, items]) => ({ exam, items }));
   const introVideoEmbedUrl = getYouTubeEmbedUrl(tutor?.intro_video_url);
   const tutorPhotoUrl = resolveProfileImageUrl(tutor?.profile_picture);
   const completedLessonsLabel = `${formatLessonCount(tutor?.completed_lessons_count ?? 0)} ders`;
-  const shareTitle = tutor
-    ? `${tutor.name} ${tutor.surname} · Hocam`
-    : "Hocam";
+  const shareTitle = tutor ? `${tutor.name} ${tutor.surname} · Hocam` : "Hocam";
   const whatsappShareUrl = shareUrl
     ? `https://wa.me/?text=${encodeURIComponent(`${shareTitle}\n${shareUrl}`)}`
     : "";
@@ -525,9 +550,10 @@ export default function TutorProfilePage({
     // Tutors who offer coaching get the choice step first (master spec
     // §13.1); everyone else goes straight to package selection, so the
     // extra screen never appears where it has nothing to ask.
-    const base = tutor?.offers_coaching && coachingCheckoutEnabled
-      ? `/tutors/${id}/checkout/coaching`
-      : `/tutors/${id}/checkout`;
+    const base =
+      tutor?.offers_coaching && coachingCheckoutEnabled
+        ? `/tutors/${id}/checkout/coaching`
+        : `/tutors/${id}/checkout`;
     return `${base}${query ? `?${query}` : ""}`;
   })();
 
@@ -574,26 +600,31 @@ export default function TutorProfilePage({
 
   if (isLoading) {
     return (
-      <div className="mx-auto max-w-7xl px-4 py-8">
-        <ProfileSkeleton />
+      <div className="min-h-full bg-paper">
+        <div className="mx-auto max-w-7xl px-4 py-8">
+          <ProfileSkeleton />
+        </div>
       </div>
     );
   }
 
   if (error || !tutor) {
     return (
-      <div className="mx-auto max-w-7xl px-4 py-8">
-        <ErrorMessage message="Hoca profili yüklenemedi." />
-        <Button variant="outline" className="mt-4" asChild>
-          <Link href="/tutors">Geri Dön</Link>
-        </Button>
+      <div className="min-h-full bg-paper">
+        <div className="mx-auto max-w-7xl px-4 py-8">
+          <ErrorMessage message="Hoca profili yüklenemedi." />
+          <Button variant="outline" className="mt-4" asChild>
+            <Link href="/tutors">Geri Dön</Link>
+          </Button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8">
-      {/* Two-column body: all sections on the left, reservation rail on the
+    <div className="min-h-full bg-paper">
+      <div className="mx-auto max-w-7xl px-4 py-8">
+        {/* Two-column body: all sections on the left, reservation rail on the
           right. Children are placed explicitly, so placement is NOT automatic:
           the rail deliberately spans both rows (`lg:row-start-1 lg:row-end-3`)
           to give its sticky card a full-height containing block, and row 2 of
@@ -601,642 +632,761 @@ export default function TutorProfilePage({
           Add new left-column sections INSIDE that row-2 wrapper — a new direct
           child of this grid without `lg:col-start-1 lg:row-start-2` gets
           auto-placed into the wrong cell (or on top of the rail) silently. */}
-      <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_300px] lg:gap-x-8 xl:grid-cols-[minmax(0,1fr)_360px]">
-        {/* Section 1 — Profile header */}
-        <div className="space-y-4 lg:col-start-1 lg:row-start-1">
-          {/* Photo in column 1; info stack in column 2 with the bio beneath it
+        <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_300px] lg:gap-x-8 xl:grid-cols-[minmax(0,1fr)_360px]">
+          {/* Section 1 — Profile header */}
+          <div className="space-y-4 lg:col-start-1 lg:row-start-1">
+            {/* Photo in column 1; info stack in column 2 with the bio beneath it
               so the text fills the widened container instead of leaving a
               gutter. The bio spans both columns below md, where sitting beside
               a 112px photo would squeeze it too narrow. At md+ the photo spans
               both rows so row 1's height is set by the info stack, not the
               photo — otherwise the bio (row 2) starts below the photo's
               bottom edge instead of right after the subject badges. */}
-          <div className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-4 md:gap-x-6">
-            {tutorPhotoUrl ? (
-              <button
-                type="button"
-                onClick={() => setIsPhotoPreviewOpen(true)}
-                className="shrink-0 self-start rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 md:row-span-2"
-                aria-label={`${tutor.name} ${tutor.surname} profil fotoğrafını büyüt`}
-              >
-                <Avatar className="h-28 w-28 cursor-zoom-in sm:h-36 sm:w-36 md:h-44 md:w-44 lg:h-56 lg:w-56 xl:h-64 xl:w-64">
-                  <AvatarImage
-                    src={tutorPhotoUrl}
-                    alt={`${tutor.name} ${tutor.surname}`}
-                    className="object-cover object-center"
-                  />
-                  <AvatarFallback className="bg-primary/10 text-primary text-2xl font-medium md:text-4xl lg:text-5xl">
-                    {getInitials(tutor.name, tutor.surname)}
-                  </AvatarFallback>
-                </Avatar>
-              </button>
-            ) : (
-              // No photo to zoom into — a plain, non-interactive wrapper so
-              // there's no focusable control that opens an empty dialog.
-              <div className="shrink-0 self-start rounded-lg md:row-span-2">
-                <Avatar className="h-28 w-28 sm:h-36 sm:w-36 md:h-44 md:w-44 lg:h-56 lg:w-56 xl:h-64 xl:w-64">
-                  <AvatarFallback className="bg-primary/10 text-primary text-2xl font-medium md:text-4xl lg:text-5xl">
-                    {getInitials(tutor.name, tutor.surname)}
-                  </AvatarFallback>
-                </Avatar>
-              </div>
-            )}
-            <div className="min-w-0">
-              <h1 className="text-3xl font-bold leading-tight break-words">
-                {tutor.name} {tutor.surname}
-              </h1>
-              <p className="mt-1 text-muted-foreground">
-                {tutor.university} · {tutor.department}
-              </p>
-              <div className="mt-2 flex flex-wrap items-center gap-2">
-                <TutorPresenceBadge
-                  isOnline={tutor.is_online}
-                  lastSeenAt={tutor.last_seen_at}
-                />
-              </div>
-              {tutor.total_reviews > 0 && (
-                <div className="mt-2 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-sm">
-                  <RatingSummaryPopover
-                    rating={tutor.rating}
-                    totalReviews={tutor.total_reviews}
-                    subjectRatings={subjectRatings}
-                  />
-                  <span className="text-muted-foreground">
-                    ({tutor.total_reviews} değerlendirme)
-                  </span>
-                  <span className="text-muted-foreground">·</span>
-                  <span className="text-muted-foreground">{completedLessonsLabel}</span>
+            <div className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-4 md:gap-x-6">
+              {tutorPhotoUrl ? (
+                <button
+                  type="button"
+                  onClick={() => setIsPhotoPreviewOpen(true)}
+                  className="shrink-0 self-start rounded-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2 md:row-span-2"
+                  aria-label={`${tutor.name} ${tutor.surname} profil fotoğrafını büyüt`}
+                >
+                  <Avatar className="h-28 w-28 cursor-zoom-in sm:h-36 sm:w-36 md:h-44 md:w-44 lg:h-56 lg:w-56 xl:h-64 xl:w-64">
+                    <AvatarImage
+                      src={tutorPhotoUrl}
+                      alt={`${tutor.name} ${tutor.surname}`}
+                      className="object-cover object-center"
+                    />
+                    <AvatarFallback className="bg-ink text-2xl font-medium text-white md:text-4xl lg:text-5xl">
+                      {getInitials(tutor.name, tutor.surname)}
+                    </AvatarFallback>
+                  </Avatar>
+                </button>
+              ) : (
+                // No photo to zoom into — a plain, non-interactive wrapper so
+                // there's no focusable control that opens an empty dialog.
+                <div className="shrink-0 self-start rounded-card md:row-span-2">
+                  <Avatar className="h-28 w-28 sm:h-36 sm:w-36 md:h-44 md:w-44 lg:h-56 lg:w-56 xl:h-64 xl:w-64">
+                    <AvatarFallback className="bg-ink text-2xl font-medium text-white md:text-4xl lg:text-5xl">
+                      {getInitials(tutor.name, tutor.surname)}
+                    </AvatarFallback>
+                  </Avatar>
                 </div>
               )}
-              {tutor.yks_rank > 0 && (
-                <p className="mt-1.5 text-sm text-muted-foreground">
-                  YKS Sıralaması: {tutor.yks_rank.toLocaleString("tr-TR")}
+              <div className="min-w-0">
+                <h1 className="text-h2-m font-bold leading-tight break-words md:text-h2">
+                  {tutor.name} {tutor.surname}
+                </h1>
+                <p className="mt-1 text-body text-ink-mid">
+                  {tutor.university} · {tutor.department}
                 </p>
-              )}
-              {subjectGroups.length > 0 && (
-                <div className="mt-2 flex flex-wrap gap-1">
-                  {subjectGroups.map((g) => (
-                    <Badge key={g.exam} variant="outline" className="text-xs">
-                      {g.exam}
-                    </Badge>
-                  ))}
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <TutorPresenceBadge
+                    isOnline={tutor.is_online}
+                    lastSeenAt={tutor.last_seen_at}
+                  />
                 </div>
-              )}
-            </div>
-            {tutor.bio && (
-              <p className="col-span-2 max-w-prose text-base md:col-span-1 md:col-start-2">
-                {tutor.bio}
-              </p>
-            )}
-          </div>
-        </div>
-
-        {/* Reservation rail — spans row 1 and row 2 so the card can stick
-            for the full length of the left column. Contains only the card. */}
-        <div
-          id="rezervasyon"
-          ref={bookingRailRef}
-          className="mt-8 scroll-mt-24 lg:col-start-2 lg:row-start-1 lg:row-end-3 lg:mt-0"
-        >
-          <Card className="lg:sticky lg:top-24">
-            <CardContent className="pt-6 space-y-4">
-              {/* Price + lesson duration */}
-              <div>
-                <p className="text-3xl font-bold">
-                  {formatPrice(tutor.hourly_price)}
-                  <span className="text-base font-normal text-muted-foreground">
-                    {" "}/ 40 dk
-                  </span>
-                </p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  40 dakikalık ders. Daha uzun dersler orantılı ücretlendirilir.
-                </p>
-              </div>
-
-              {/* Rating / reviews */}
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
-                {tutor.total_reviews > 0 ? (
-                  <>
+                {tutor.total_reviews > 0 && (
+                  <div className="mt-2 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-sm">
                     <RatingSummaryPopover
                       rating={tutor.rating}
                       totalReviews={tutor.total_reviews}
                       subjectRatings={subjectRatings}
                     />
-                    <span className="text-muted-foreground">
-                      {tutor.total_reviews} değerlendirme
+                    <span className="text-ink-mid">
+                      ({tutor.total_reviews} değerlendirme)
                     </span>
-                  </>
-                ) : (
-                  <span className="text-muted-foreground">Henüz değerlendirme yok</span>
+                    <span className="text-ink-mid">·</span>
+                    <span className="text-ink-mid">
+                      {completedLessonsLabel}
+                    </span>
+                  </div>
                 )}
-                <span className="text-muted-foreground">·</span>
-                <span className="text-muted-foreground">{completedLessonsLabel}</span>
+                {/* The rank is the achievement the whole product is built on, so
+                  it takes the gold surface here as it does on the tutor card,
+                  at 14px inside the page's 20px surfaces. Gold never carries
+                  the text: --gold-ink sits on top of it. */}
+                {tutor.yks_rank > 0 && (
+                  <div className="mt-2.5 inline-flex items-center gap-2.5 rounded-[14px] bg-gold px-3 py-2 text-gold-ink">
+                    <RankMark className="size-4 shrink-0" />
+                    <span className="text-h3-m font-bold leading-none tabular-nums">
+                      {tutor.yks_rank.toLocaleString("tr-TR")}
+                    </span>
+                    <span className="text-[11px] font-medium leading-[1.25]">
+                      YKS
+                      <br />
+                      sıralaması
+                    </span>
+                  </div>
+                )}
+                {subjectGroups.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-1">
+                    {subjectGroups.map((g) => (
+                      <span
+                        key={g.exam}
+                        className="inline-flex items-center rounded-pill border border-line px-3 py-1 text-label text-ink"
+                      >
+                        {g.exam}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
-
-              <div className="flex flex-wrap gap-1">
-                {subjectLabels.map((subject) => (
-                  <Badge
-                    key={subject.key}
-                    variant="secondary"
-                    className="max-w-full whitespace-normal break-words py-1 text-left"
-                  >
-                    {subject.label}
-                  </Badge>
-                ))}
-              </div>
-
-              {learningContext && (
-                <div className="rounded-lg border bg-primary/5 p-3 text-sm text-muted-foreground">
-                  Bu ders seçtiğin öğrenme hedefiyle ilişkilendirilecek.
-                </div>
+              {tutor.bio && (
+                <p className="col-span-2 max-w-prose text-body md:col-span-1 md:col-start-2">
+                  {tutor.bio}
+                </p>
               )}
+            </div>
+          </div>
 
-              <Separator />
-
-              <div className="space-y-3 pt-1">
-                {!isAuthenticated && (
-                  <Button
-                    className="w-full"
-                    onClick={() =>
-                      router.push(
-                        `/login?returnUrl=${encodeURIComponent(`/tutors/${id}`)}`
-                      )
-                    }
-                  >
-                    Ders ayırtmak için giriş yap
-                  </Button>
-                )}
-                {isAuthenticated && isOwnProfile && (
-                  <>
-                    <p className="text-sm text-muted-foreground">
-                      Bu kendi herkese açık profilin. Değerlendirmeler dışındaki bilgilerini
-                      buradan güncelleyebilirsin.
-                    </p>
-                    <Button className="w-full" asChild>
-                      <Link href="/dashboard/tutor/edit">Profili Düzenle</Link>
-                    </Button>
-                  </>
-                )}
-                {isAuthenticated && !isOwnProfile && !isStudent && (
-                  <p className="text-sm text-muted-foreground">
-                    Ders ayırtmak için öğrenci hesabı gereklidir.
+          {/* Reservation rail — spans row 1 and row 2 so the card can stick
+            for the full length of the left column. Contains only the card. */}
+          <div
+            id="rezervasyon"
+            ref={bookingRailRef}
+            className="mt-8 scroll-mt-24 lg:col-start-2 lg:row-start-1 lg:row-end-3 lg:mt-0"
+          >
+            <Card className="lg:sticky lg:top-24">
+              <CardContent className="pt-6 space-y-4">
+                {/* Price + lesson duration */}
+                <div>
+                  <p className="text-h2-m font-bold md:text-h2">
+                    {formatPrice(tutor.hourly_price)}
+                    <span className="text-body font-normal text-ink-mid">
+                      {" "}
+                      / 40 dk
+                    </span>
                   </p>
+                  <p className="mt-1.5 text-small text-ink-mid">
+                    40 dakikalık ders. Daha uzun dersler orantılı
+                    ücretlendirilir.
+                  </p>
+                </div>
+
+                {/* Rating / reviews */}
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+                  {tutor.total_reviews > 0 ? (
+                    <>
+                      <RatingSummaryPopover
+                        rating={tutor.rating}
+                        totalReviews={tutor.total_reviews}
+                        subjectRatings={subjectRatings}
+                      />
+                      <span className="text-ink-mid">
+                        {tutor.total_reviews} değerlendirme
+                      </span>
+                    </>
+                  ) : (
+                    <span className="text-ink-mid">
+                      Henüz değerlendirme yok
+                    </span>
+                  )}
+                  <span className="text-ink-mid">·</span>
+                  <span className="text-ink-mid">{completedLessonsLabel}</span>
+                </div>
+
+                <div className="flex flex-wrap gap-1">
+                  {subjectLabels.map((subject) => (
+                    <span
+                      key={subject.key}
+                      className="inline-flex max-w-full items-center whitespace-normal break-words rounded-pill border border-line px-3 py-1 text-left text-label text-ink"
+                    >
+                      {subject.label}
+                    </span>
+                  ))}
+                </div>
+
+                {learningContext && (
+                  <div className="rounded-input border border-line bg-paper p-3 text-small text-ink-mid">
+                    Bu ders seçtiğin öğrenme hedefiyle ilişkilendirilecek.
+                  </div>
                 )}
-                {isAuthenticated && isStudent && !isOwnProfile && (
-                  <>
-                    {tutor.is_bookable === false && (
-                      <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-900 dark:text-amber-100">
-                        Bu hoca şu anda yeni öğrenci kabul etmiyor. Profilini inceleyebilir veya daha sonra tekrar kontrol edebilirsin.
-                      </div>
-                    )}
-                    {bookingComplete ? (
-                      <div className="space-y-2 rounded-lg border bg-muted/40 p-3 text-center">
-                        <div className="flex justify-center">
-                          <Check className="h-6 w-6 text-green-600" />
+
+                <Separator />
+
+                <div className="space-y-3 pt-1">
+                  {!isAuthenticated && (
+                    <Button
+                      className="w-full"
+                      onClick={() =>
+                        router.push(
+                          `/login?returnUrl=${encodeURIComponent(`/tutors/${id}`)}`,
+                        )
+                      }
+                    >
+                      Ders ayırtmak için giriş yap
+                    </Button>
+                  )}
+                  {isAuthenticated && isOwnProfile && (
+                    <>
+                      <p className="text-small text-ink-mid">
+                        Bu kendi herkese açık profilin. Değerlendirmeler
+                        dışındaki bilgilerini buradan güncelleyebilirsin.
+                      </p>
+                      <Button className="w-full" asChild>
+                        <Link href="/dashboard/tutor/edit">
+                          Profili Düzenle
+                        </Link>
+                      </Button>
+                    </>
+                  )}
+                  {isAuthenticated && !isOwnProfile && !isStudent && (
+                    <p className="text-small text-ink-mid">
+                      Ders ayırtmak için öğrenci hesabı gereklidir.
+                    </p>
+                  )}
+                  {isAuthenticated && isStudent && !isOwnProfile && (
+                    <>
+                      {tutor.is_bookable === false && (
+                        <div className="rounded-input border border-ink bg-white p-3 text-small text-ink">
+                          Bu hoca şu anda yeni öğrenci kabul etmiyor. Profilini
+                          inceleyebilir veya daha sonra tekrar kontrol
+                          edebilirsin.
                         </div>
-                        <p className="text-sm font-medium">Rezervasyonunuz oluşturuldu!</p>
-                        <Button variant="outline" size="sm" className="w-full" asChild>
-                          <Link href="/dashboard/student">Rezervasyonlarımı gör</Link>
-                        </Button>
-                      </div>
-                    ) : tutor.is_bookable === false ? null : (
-                      <>
-                        {canBookFreeTrial ? (
-                          <div className="space-y-2">
-                            <Button
-                              className="w-full"
-                              onClick={() => {
-                                void recordDiscoveryEvent(discoveryImpressionId, id, "booking_started");
-                                setBookingModalMode("trial");
-                              }}
-                            >
-                              Deneme Dersi Al
-                            </Button>
-                            <div className="space-y-1 text-center text-xs text-muted-foreground">
-                              <p>Uygun değilse sorun yok.</p>
-                              <p>
-                                Bu ay {trialLessonsRemaining} ücretsiz deneme hakkın kaldı.
-                              </p>
-                            </div>
+                      )}
+                      {bookingComplete ? (
+                        <div className="space-y-2 rounded-input border border-line bg-paper p-3 text-center">
+                          <div className="flex justify-center">
+                            <Check className="size-6 text-success" />
                           </div>
-                        ) : (
-                          <TutorCheckoutCta
-                            href={checkoutHref}
-                            offersCoaching={tutor.offers_coaching === true}
-                            checkoutState={checkoutState}
-                            onStart={(href) => {
-                              void recordDiscoveryEvent(discoveryImpressionId, id, "booking_started");
-                              router.push(href);
-                            }}
-                          />
-                        )}
-                      </>
-                    )}
-                  </>
-                )}
+                          <p className="text-sm font-medium">
+                            Rezervasyonunuz oluşturuldu!
+                          </p>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-full"
+                            asChild
+                          >
+                            <Link href="/dashboard/student">
+                              Rezervasyonlarımı gör
+                            </Link>
+                          </Button>
+                        </div>
+                      ) : tutor.is_bookable === false ? null : (
+                        <>
+                          {canBookFreeTrial ? (
+                            <div className="space-y-2">
+                              <Button
+                                className="w-full"
+                                onClick={() => {
+                                  void recordDiscoveryEvent(
+                                    discoveryImpressionId,
+                                    id,
+                                    "booking_started",
+                                  );
+                                  setBookingModalMode("trial");
+                                }}
+                              >
+                                Deneme Dersi Al
+                              </Button>
+                              <div className="space-y-1 text-center text-xs text-ink-mid">
+                                <p>Uygun değilse sorun yok.</p>
+                                <p>
+                                  Bu ay {trialLessonsRemaining} ücretsiz deneme
+                                  hakkın kaldı.
+                                </p>
+                              </div>
+                            </div>
+                          ) : (
+                            <TutorCheckoutCta
+                              href={checkoutHref}
+                              offersCoaching={tutor.offers_coaching === true}
+                              checkoutState={checkoutState}
+                              onStart={(href) => {
+                                void recordDiscoveryEvent(
+                                  discoveryImpressionId,
+                                  id,
+                                  "booking_started",
+                                );
+                                router.push(href);
+                              }}
+                            />
+                          )}
+                        </>
+                      )}
+                    </>
+                  )}
 
-                {isAuthenticated && isStudent && !isOwnProfile && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="w-full"
-                    onClick={() => {
-                      void recordDiscoveryEvent(discoveryImpressionId, id, "contact_started");
-                      setIsRequestModalOpen(true);
-                    }}
-                  >
-                    <MessageSquare className="mr-2 h-4 w-4" />
-                    Hocaya Mesaj Gönder
-                  </Button>
-                )}
-
-                {/* Secondary icon actions: favorite, report, share */}
-                <div className="flex items-center justify-center gap-1">
-                  <FavoriteButton
-                    tutorId={tutor.id}
-                    isFavorite={favoriteIds.has(tutor.id)}
-                    isPending={isFavoritePending(tutor.id)}
-                    onToggle={(tutorId) => {
-                      void recordDiscoveryEvent(
-                        discoveryImpressionId, tutorId,
-                        favoriteIds.has(tutorId) ? "favorite_removed" : "favorite_added"
-                      );
-                      toggle(tutorId);
-                    }}
-                  />
                   {isAuthenticated && isStudent && !isOwnProfile && (
                     <Button
                       type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                      aria-label="Hocayı şikâyet et"
-                      title="Hocayı şikâyet et"
-                      onClick={() => setIsReportOpen(true)}
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => {
+                        void recordDiscoveryEvent(
+                          discoveryImpressionId,
+                          id,
+                          "contact_started",
+                        );
+                        setIsRequestModalOpen(true);
+                      }}
                     >
-                      <Flag className="h-5 w-5" />
+                      <ChatText className="mr-2 h-4 w-4" />
+                      Hocaya Mesaj Gönder
                     </Button>
                   )}
-                  <Popover open={isSharePreviewOpen} onOpenChange={setIsSharePreviewOpen}>
-                    <PopoverTrigger asChild>
+
+                  {/* Secondary icon actions: favorite, report, share */}
+                  <div className="flex items-center justify-center gap-1">
+                    <FavoriteButton
+                      tutorId={tutor.id}
+                      isFavorite={favoriteIds.has(tutor.id)}
+                      isPending={isFavoritePending(tutor.id)}
+                      onToggle={(tutorId) => {
+                        void recordDiscoveryEvent(
+                          discoveryImpressionId,
+                          tutorId,
+                          favoriteIds.has(tutorId)
+                            ? "favorite_removed"
+                            : "favorite_added",
+                        );
+                        toggle(tutorId);
+                      }}
+                    />
+                    {isAuthenticated && isStudent && !isOwnProfile && (
                       <Button
                         type="button"
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8"
-                        aria-label={shareCopied ? "Profil bağlantısı kopyalandı" : "Profili paylaş"}
-                        title={shareCopied ? "Kopyalandı" : "Profili paylaş"}
-                        onClick={handleShare}
+                        className="size-8 text-ink-mid hover:text-error"
+                        aria-label="Hocayı şikâyet et"
+                        title="Hocayı şikâyet et"
+                        onClick={() => setIsReportOpen(true)}
                       >
-                        {shareCopied ? (
-                          <Check className="h-5 w-5 motion-safe:animate-message-pop" />
-                        ) : (
-                          <Share2 className="h-5 w-5 transition-transform duration-200" />
-                        )}
+                        <Flag className="h-5 w-5" />
                       </Button>
-                    </PopoverTrigger>
-                    <PopoverContent align="end" className="w-64 p-3">
-                      <div className="space-y-3">
-                        <div className="flex items-start gap-3">
-                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted">
-                            <Check className="h-4 w-4 motion-safe:animate-message-pop" />
+                    )}
+                    <Popover
+                      open={isSharePreviewOpen}
+                      onOpenChange={setIsSharePreviewOpen}
+                    >
+                      <PopoverTrigger asChild>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          aria-label={
+                            shareCopied
+                              ? "Profil bağlantısı kopyalandı"
+                              : "Profili paylaş"
+                          }
+                          title={shareCopied ? "Kopyalandı" : "Profili paylaş"}
+                          onClick={handleShare}
+                        >
+                          {shareCopied ? (
+                            <Check className="h-5 w-5 motion-safe:animate-message-pop" />
+                          ) : (
+                            <ShareNetwork className="h-5 w-5 transition-transform duration-200" />
+                          )}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent align="end" className="w-64 p-3">
+                        <div className="space-y-3">
+                          <div className="flex items-start gap-3">
+                            <div className="flex size-9 shrink-0 items-center justify-center rounded-pill bg-ink text-white">
+                              <Check className="h-4 w-4 motion-safe:animate-message-pop" />
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-sm font-medium">
+                                Link kopyalandı
+                              </p>
+                              <p className="mt-0.5 text-xs text-ink-mid">
+                                Şimdi yapıştırabilir veya hızlıca
+                                paylaşabilirsin.
+                              </p>
+                            </div>
                           </div>
-                          <div className="min-w-0">
-                            <p className="text-sm font-medium">Link kopyalandı</p>
-                            <p className="mt-0.5 text-xs text-muted-foreground">
-                              Şimdi yapıştırabilir veya hızlıca paylaşabilirsin.
+                          <div className="rounded-input border border-line bg-paper px-2.5 py-2">
+                            <p className="truncate text-xs text-ink-mid">
+                              {shareUrl || "Profil bağlantısı hazırlanıyor"}
                             </p>
                           </div>
-                        </div>
-                        <div className="rounded-md border bg-muted/40 px-2.5 py-2">
-                          <p className="truncate text-xs text-muted-foreground">
-                            {shareUrl || "Profil bağlantısı hazırlanıyor"}
-                          </p>
-                        </div>
-                        <div className="grid grid-cols-2 gap-2">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              if (!shareUrl) return;
-                              copyTextToClipboard(shareUrl)
-                                .then(() => {
-                                  setShareCopied(true);
-                                  toast.success("Profil bağlantısı kopyalandı.");
-                                })
-                                .catch(() => toast.error("Bağlantı kopyalanamadı."));
-                            }}
-                          >
-                            <Copy className="mr-1.5 h-3.5 w-3.5" />
-                            Linki kopyala
-                          </Button>
-                          {whatsappShareUrl ? (
-                            <Button type="button" variant="outline" size="sm" asChild>
-                              <a
-                                href={whatsappShareUrl}
-                                target="_blank"
-                                rel="noreferrer"
+                          <div className="grid grid-cols-2 gap-2">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                if (!shareUrl) return;
+                                copyTextToClipboard(shareUrl)
+                                  .then(() => {
+                                    setShareCopied(true);
+                                    toast.success(
+                                      "Profil bağlantısı kopyalandı.",
+                                    );
+                                  })
+                                  .catch(() =>
+                                    toast.error("Bağlantı kopyalanamadı."),
+                                  );
+                              }}
+                            >
+                              <Copy className="mr-1.5 h-3.5 w-3.5" />
+                              Linki kopyala
+                            </Button>
+                            {whatsappShareUrl ? (
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                asChild
                               >
-                                <MessageCircle className="mr-1.5 h-3.5 w-3.5" />
+                                <a
+                                  href={whatsappShareUrl}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                >
+                                  <ChatCircle className="mr-1.5 h-3.5 w-3.5" />
+                                  WhatsApp
+                                </a>
+                              </Button>
+                            ) : (
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                disabled
+                              >
+                                <ChatCircle className="mr-1.5 h-3.5 w-3.5" />
                                 WhatsApp
-                              </a>
-                            </Button>
-                          ) : (
-                            <Button type="button" variant="outline" size="sm" disabled>
-                              <MessageCircle className="mr-1.5 h-3.5 w-3.5" />
-                              WhatsApp
-                            </Button>
-                          )}
+                              </Button>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    </PopoverContent>
-                  </Popover>
+                      </PopoverContent>
+                    </Popover>
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+              </CardContent>
+            </Card>
+          </div>
 
-        {/* Sections 2-4 — left column, row 2 */}
-        <div className="lg:col-start-1 lg:row-start-2">
-          {introVideoEmbedUrl && (
+          {/* Sections 2-4 — left column, row 2 */}
+          <div className="lg:col-start-1 lg:row-start-2">
+            {introVideoEmbedUrl && (
+              <section className="mt-10">
+                <h2 className="flex items-center gap-2 text-h3-m font-medium md:text-h3">
+                  <PlayCircle className="size-5 text-pink" />
+                  Tanıtım Videosu
+                </h2>
+                <Separator className="mt-2" />
+                <div className="mt-4 aspect-video overflow-hidden rounded-card border border-line bg-paper">
+                  <iframe
+                    className="h-full w-full"
+                    src={introVideoEmbedUrl}
+                    title={`${tutor.name} ${tutor.surname} tanıtım videosu`}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowFullScreen
+                  />
+                </div>
+              </section>
+            )}
+
+            {/* Section 2 — Subjects */}
             <section className="mt-10">
-              <h2 className="flex items-center gap-2 text-xl font-semibold">
-                <PlayCircle className="h-5 w-5 text-primary" />
-                Tanıtım Videosu
+              <h2 className="text-h3-m font-medium md:text-h3">
+                Verdiği Dersler
               </h2>
               <Separator className="mt-2" />
-              <div className="mt-4 aspect-video overflow-hidden rounded-lg border bg-muted">
-                <iframe
-                  className="h-full w-full"
-                  src={introVideoEmbedUrl}
-                  title={`${tutor.name} ${tutor.surname} tanıtım videosu`}
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                  allowFullScreen
-                />
-              </div>
-            </section>
-          )}
-
-          {/* Section 2 — Subjects */}
-          <section className="mt-10">
-            <h2 className="text-xl font-semibold">Verdiği Dersler</h2>
-            <Separator className="mt-2" />
-            {tutor.subjects.length === 0 ? (
-              <p className="mt-4 text-muted-foreground">Henüz ders eklenmemiş</p>
-            ) : (
-              <div className="mt-4 space-y-4">
-                {subjectGroups.map((group) => (
-                  <div key={group.exam}>
-                    <h3 className="text-sm font-medium text-muted-foreground">
-                      {group.exam} Dersleri
-                    </h3>
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      {group.items.map((subject) => (
-                        <Badge
-                          key={subject.key}
-                          variant="secondary"
-                          className="max-w-full whitespace-normal break-words px-3 py-1.5 text-left"
-                        >
-                          {subject.label}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
-
-          {/* Section 2b — Coaching (only when this tutor publishes a plan) */}
-          {tutor.coaching ? (
-            <TutorCoachingSection
-              tutorId={id}
-              coaching={tutor.coaching}
-              isStudent={isAuthenticated && isStudent && !isOwnProfile}
-              checkoutEnabled={coachingCheckoutEnabled}
-              checkoutHref={checkoutHref}
-            />
-          ) : null}
-
-          {/* Section 3 — Availability */}
-          <section className="mt-10">
-            <h2 className="text-xl font-semibold">Müsaitlik</h2>
-            <Separator className="mt-2" />
-            <div className="mt-4">
-              {availabilityLoading ? (
-                <Card>
-                  <CardContent className="py-4 space-y-2">
-                    <Skeleton className="h-5 w-48" />
-                    <Skeleton className="h-5 w-40" />
-                    <Skeleton className="h-5 w-44" />
-                  </CardContent>
-                </Card>
-              ) : availability.length === 0 ? (
-                <Card>
-                  <CardContent className="py-6 text-center text-muted-foreground">
-                    Müsaitlik bilgisi henüz eklenmemiş
-                  </CardContent>
-                </Card>
+              {tutor.subjects.length === 0 ? (
+                <p className="mt-4 text-ink-mid">Henüz ders eklenmemiş</p>
               ) : (
-                <Card>
-                  <CardContent className="py-4">
-                    <AvailabilityCalendar
-                      availability={availability}
-                      editable={false}
-                      showBookings={false}
-                    />
-                  </CardContent>
-                </Card>
-              )}
-            </div>
-          </section>
-
-          {/* Section 4 — Reviews */}
-          <section className="mt-10">
-            <h2 className="text-xl font-semibold">Değerlendirmeler</h2>
-            <Separator className="mt-2" />
-            <div className="mt-4 space-y-6">
-              {reviewsLoading && (
-                <div className="space-y-3">
-                  <ReviewSkeletonCard />
-                  <ReviewSkeletonCard />
-                  <ReviewSkeletonCard />
-                </div>
-              )}
-              {!reviewsLoading && reviews.length === 0 && (
-                <p className="text-muted-foreground">Henüz değerlendirme yok</p>
-              )}
-              {!reviewsLoading && reviews.length > 0 && (
-                <>
-                  {reviewSummary ? (
-                    <div className="mb-6">
-                      {/* Per-subject scores live in the header rating popover
-                          only — rendering them again here duplicated the same
-                          information further down the same page. */}
-                      <ReviewSummary summary={reviewSummary} />
-                    </div>
-                  ) : (
-                    <div className="mb-6 flex items-baseline gap-4">
-                      <span className="text-4xl font-bold">{formatRating(tutor.rating)}</span>
-                      <div>
-                        <Stars rating={tutor.rating} />
-                        <p className="text-sm text-muted-foreground">
-                          {tutor.total_reviews} değerlendirme
-                        </p>
+                <div className="mt-4 space-y-4">
+                  {subjectGroups.map((group) => (
+                    <div key={group.exam}>
+                      <h3 className="text-label text-ink-mid">
+                        {group.exam} Dersleri
+                      </h3>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {group.items.map((subject) => (
+                          <span
+                            key={subject.key}
+                            className="inline-flex max-w-full items-center whitespace-normal break-words rounded-pill border border-line px-3.5 py-1.5 text-left text-body text-ink"
+                          >
+                            {subject.label}
+                          </span>
+                        ))}
                       </div>
                     </div>
-                  )}
-                  <div className="space-y-3">
-                    {reviews.map((review) => (
-                      <ReviewCard key={review.id} review={review} />
-                    ))}
-                  </div>
-                  {isFetchingNextPage && (
-                    <div className="space-y-3">
-                      <ReviewSkeletonCard />
-                    </div>
-                  )}
-                  {hasNextPage && (
-                    <div
-                      ref={reviewsLoadMoreRef}
-                      className="h-1"
-                      aria-hidden="true"
-                    />
-                  )}
-                </>
+                  ))}
+                </div>
               )}
-            </div>
-          </section>
+            </section>
 
-          {/* Supplementary — kept out of the four required sections
-              (profil/aksiyon kartı → tanıtım videosu → verdiği dersler →
-              müsaitlik → değerlendirmeler) so their order stays unbroken. */}
-          {(tutor.teaching_attributes ?? []).length > 0 && (
+            {/* Section 2b — Coaching (only when this tutor publishes a plan) */}
+            {tutor.coaching ? (
+              <TutorCoachingSection
+                tutorId={id}
+                coaching={tutor.coaching}
+                isStudent={isAuthenticated && isStudent && !isOwnProfile}
+                checkoutEnabled={coachingCheckoutEnabled}
+                checkoutHref={checkoutHref}
+              />
+            ) : null}
+
+            {/* Section 3 — Availability */}
             <section className="mt-10">
-              <h2 className="text-xl font-semibold">Ders Anlatım Özellikleri</h2>
-              <p className="mt-1 text-sm text-muted-foreground">Hoca tarafından seçilen özellikler</p>
+              <h2 className="text-h3-m font-medium md:text-h3">Müsaitlik</h2>
               <Separator className="mt-2" />
-              <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                {(tutor.teaching_attributes ?? []).map((attribute) => (
-                  <div key={attribute.code} className="rounded-lg border bg-card p-3">
-                    <p className="text-sm font-medium">{attribute.name}</p>
-                    <p className="mt-1 text-xs leading-5 text-muted-foreground">{attribute.description}</p>
-                  </div>
-                ))}
+              <div className="mt-4">
+                {availabilityLoading ? (
+                  <Card>
+                    <CardContent className="py-4 space-y-2">
+                      <Skeleton className="h-5 w-48" />
+                      <Skeleton className="h-5 w-40" />
+                      <Skeleton className="h-5 w-44" />
+                    </CardContent>
+                  </Card>
+                ) : availability.length === 0 ? (
+                  <Card>
+                    <CardContent className="py-6 text-center text-ink-mid">
+                      Müsaitlik bilgisi henüz eklenmemiş
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <Card>
+                    <CardContent className="py-4">
+                      <AvailabilityCalendar
+                        availability={availability}
+                        editable={false}
+                        showBookings={false}
+                      />
+                    </CardContent>
+                  </Card>
+                )}
               </div>
             </section>
-          )}
-        </div>
-      </div>
 
-      <MessageRequestModal
-        tutor={tutor}
-        isOpen={isRequestModalOpen}
-        onClose={() => setIsRequestModalOpen(false)}
-        onSuccess={(messageRequest) => {
-          setIsRequestModalOpen(false);
-          toast.success("Mesajın gönderildi.");
-          if (messageRequest.conversation_id) {
-            router.push(`/messages/${messageRequest.conversation_id}`);
-          }
-        }}
-      />
-      <BookingModal
-        tutor={tutor}
-        isOpen={bookingModalMode !== null}
-        isTrial={bookingModalMode === "trial"}
-        onClose={() => setBookingModalMode(null)}
-        learningContext={learningContext}
-        onSuccess={() => {
-          setBookingComplete(true);
-          setBookingModalMode(null);
-          queryClient.invalidateQueries({ queryKey: ["tutor", id] });
-          toast.success("Ücretsiz deneme dersi isteğin gönderildi.");
-        }}
-      />
-      <Dialog open={isReportOpen} onOpenChange={setIsReportOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogTitle>Hocayı şikâyet et</DialogTitle>
-          <DialogDescription>
-            Şikâyetin yalnızca inceleme ekibimiz tarafından görülür. Küfür veya aşağılayıcı ifade kullanma.
-          </DialogDescription>
-          <div className="space-y-4 pt-2">
-            <label className="block text-sm font-medium" htmlFor="tutor-report-reason">
-              Şikâyet nedeni
-            </label>
-            <select
-              id="tutor-report-reason"
-              value={reportReason}
-              onChange={(event) => setReportReason(event.target.value as TutorReportReason)}
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-            >
-              <optgroup label="Profil hakkında">
-                <option value="inappropriate_photo">Uygunsuz profil fotoğrafı</option>
-                <option value="inappropriate_profile_text">Profilinde uygunsuz/küfürlü ifade</option>
-                <option value="misleading_profile">Yanıltıcı profil bilgisi</option>
-                <option value="excessive_price">Fahiş fiyat</option>
-                <option value="other">Diğer</option>
-              </optgroup>
-              {hasTakenLesson && (
-                <optgroup label="Ders hakkında">
-                  <option value="inappropriate_conduct">Derste uygunsuz davranış</option>
-                  <option value="harassment">Taciz veya zorbalık</option>
-                  <option value="lesson_not_delivered">Dersi işlemedi / derse gelmedi</option>
-                </optgroup>
-              )}
-            </select>
-            <label className="block text-sm font-medium" htmlFor="tutor-report-description">
-              Açıklama <span className="font-normal text-muted-foreground">(isteğe bağlı)</span>
-            </label>
-            <textarea
-              id="tutor-report-description"
-              value={reportDescription}
-              onChange={(event) => setReportDescription(event.target.value)}
-              maxLength={2000}
-              placeholder="İncelememize yardımcı olacak bilgileri paylaş."
-              className="min-h-28 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-            />
-            {reportError && <p className="text-sm text-destructive">{reportError}</p>}
-            <div className="flex justify-end gap-2">
-              <Button type="button" variant="outline" onClick={() => setIsReportOpen(false)}>
-                Vazgeç
-              </Button>
-              <Button type="button" variant="destructive" onClick={submitTutorReport} disabled={isSubmittingReport}>
-                {isSubmittingReport ? "Gönderiliyor..." : "Şikâyeti gönder"}
-              </Button>
-            </div>
+            {/* Section 4 — Reviews */}
+            <section className="mt-10">
+              <h2 className="text-h3-m font-medium md:text-h3">
+                Değerlendirmeler
+              </h2>
+              <Separator className="mt-2" />
+              <div className="mt-4 space-y-6">
+                {reviewsLoading && (
+                  <div className="space-y-3">
+                    <ReviewSkeletonCard />
+                    <ReviewSkeletonCard />
+                    <ReviewSkeletonCard />
+                  </div>
+                )}
+                {!reviewsLoading && reviews.length === 0 && (
+                  <p className="text-ink-mid">Henüz değerlendirme yok</p>
+                )}
+                {!reviewsLoading && reviews.length > 0 && (
+                  <>
+                    {reviewSummary ? (
+                      <div className="mb-6">
+                        {/* Per-subject scores live in the header rating popover
+                          only — rendering them again here duplicated the same
+                          information further down the same page. */}
+                        <ReviewSummary summary={reviewSummary} />
+                      </div>
+                    ) : (
+                      <div className="mb-6 flex items-baseline gap-4">
+                        <span className="text-h1-m font-bold">
+                          {formatRating(tutor.rating)}
+                        </span>
+                        <div>
+                          <Stars rating={tutor.rating} />
+                          <p className="text-small text-ink-mid">
+                            {tutor.total_reviews} değerlendirme
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                    <div className="space-y-3">
+                      {reviews.map((review) => (
+                        <ReviewCard key={review.id} review={review} />
+                      ))}
+                    </div>
+                    {isFetchingNextPage && (
+                      <div className="space-y-3">
+                        <ReviewSkeletonCard />
+                      </div>
+                    )}
+                    {hasNextPage && (
+                      <div
+                        ref={reviewsLoadMoreRef}
+                        className="h-1"
+                        aria-hidden="true"
+                      />
+                    )}
+                  </>
+                )}
+              </div>
+            </section>
+
+            {/* Supplementary — kept out of the four required sections
+              (profil/aksiyon kartı → tanıtım videosu → verdiği dersler →
+              müsaitlik → değerlendirmeler) so their order stays unbroken. */}
+            {(tutor.teaching_attributes ?? []).length > 0 && (
+              <section className="mt-10">
+                <h2 className="text-h3-m font-medium md:text-h3">
+                  Ders Anlatım Özellikleri
+                </h2>
+                <p className="mt-1 text-sm text-ink-mid">
+                  Hoca tarafından seçilen özellikler
+                </p>
+                <Separator className="mt-2" />
+                <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                  {(tutor.teaching_attributes ?? []).map((attribute) => (
+                    <div
+                      key={attribute.code}
+                      className="rounded-card border border-line bg-white p-4"
+                    >
+                      <p className="text-body font-medium">{attribute.name}</p>
+                      <p className="mt-1.5 text-small text-ink-mid">
+                        {attribute.description}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
           </div>
-        </DialogContent>
-      </Dialog>
-      <Dialog open={isPhotoPreviewOpen} onOpenChange={setIsPhotoPreviewOpen}>
-        <DialogContent
-          showClose={false}
-          className="fixed z-[60] w-[calc(100vw-2rem)] max-w-2xl overflow-hidden border-0 bg-transparent p-0 shadow-none"
-        >
-          <DialogTitle className="sr-only">
-            {tutor.name} {tutor.surname} profil fotoğrafı
-          </DialogTitle>
-          <DialogDescription className="sr-only">
-            Hoca profil fotoğrafının büyük önizlemesi.
-          </DialogDescription>
-          <DialogClose asChild>
-            <button
-              type="button"
-              className="absolute right-3 top-3 z-10 rounded-full bg-background/90 p-2 text-foreground shadow-sm transition-colors hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-              aria-label="Fotoğraf önizlemesini kapat"
-            >
-              <X className="h-5 w-5" />
-            </button>
-          </DialogClose>
-          <img
-            src={tutorPhotoUrl}
-            alt={`${tutor.name} ${tutor.surname}`}
-            className="max-h-[80vh] w-full rounded-xl bg-muted object-contain"
-          />
-        </DialogContent>
-      </Dialog>
+        </div>
+
+        <MessageRequestModal
+          tutor={tutor}
+          isOpen={isRequestModalOpen}
+          onClose={() => setIsRequestModalOpen(false)}
+          onSuccess={(messageRequest) => {
+            setIsRequestModalOpen(false);
+            toast.success("Mesajın gönderildi.");
+            if (messageRequest.conversation_id) {
+              router.push(`/messages/${messageRequest.conversation_id}`);
+            }
+          }}
+        />
+        <BookingModal
+          tutor={tutor}
+          isOpen={bookingModalMode !== null}
+          isTrial={bookingModalMode === "trial"}
+          onClose={() => setBookingModalMode(null)}
+          learningContext={learningContext}
+          onSuccess={() => {
+            setBookingComplete(true);
+            setBookingModalMode(null);
+            queryClient.invalidateQueries({ queryKey: ["tutor", id] });
+            toast.success("Ücretsiz deneme dersi isteğin gönderildi.");
+          }}
+        />
+        <Dialog open={isReportOpen} onOpenChange={setIsReportOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogTitle>Hocayı şikâyet et</DialogTitle>
+            <DialogDescription>
+              Şikâyetin yalnızca inceleme ekibimiz tarafından görülür. Küfür
+              veya aşağılayıcı ifade kullanma.
+            </DialogDescription>
+            <div className="space-y-4 pt-2">
+              <label
+                className="block text-label text-ink"
+                htmlFor="tutor-report-reason"
+              >
+                Şikâyet nedeni
+              </label>
+              <select
+                id="tutor-report-reason"
+                value={reportReason}
+                onChange={(event) =>
+                  setReportReason(event.target.value as TutorReportReason)
+                }
+                className="flex h-10 w-full rounded-input border border-line bg-white px-3 py-2 text-body focus-visible:border-ink focus-visible:outline-none"
+              >
+                <optgroup label="Profil hakkında">
+                  <option value="inappropriate_photo">
+                    Uygunsuz profil fotoğrafı
+                  </option>
+                  <option value="inappropriate_profile_text">
+                    Profilinde uygunsuz/küfürlü ifade
+                  </option>
+                  <option value="misleading_profile">
+                    Yanıltıcı profil bilgisi
+                  </option>
+                  <option value="excessive_price">Fahiş fiyat</option>
+                  <option value="other">Diğer</option>
+                </optgroup>
+                {hasTakenLesson && (
+                  <optgroup label="Ders hakkında">
+                    <option value="inappropriate_conduct">
+                      Derste uygunsuz davranış
+                    </option>
+                    <option value="harassment">Taciz veya zorbalık</option>
+                    <option value="lesson_not_delivered">
+                      Dersi işlemedi / derse gelmedi
+                    </option>
+                  </optgroup>
+                )}
+              </select>
+              <label
+                className="block text-label text-ink"
+                htmlFor="tutor-report-description"
+              >
+                Açıklama{" "}
+                <span className="font-normal text-ink-mid">(isteğe bağlı)</span>
+              </label>
+              <textarea
+                id="tutor-report-description"
+                value={reportDescription}
+                onChange={(event) => setReportDescription(event.target.value)}
+                maxLength={2000}
+                placeholder="İncelememize yardımcı olacak bilgileri paylaş."
+                className="min-h-28 w-full rounded-input border border-line bg-white px-3 py-2 text-body focus-visible:border-ink focus-visible:outline-none"
+              />
+              {reportError && (
+                <p className="text-small text-error">{reportError}</p>
+              )}
+              <div className="flex justify-end gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsReportOpen(false)}
+                >
+                  Vazgeç
+                </Button>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  onClick={submitTutorReport}
+                  disabled={isSubmittingReport}
+                >
+                  {isSubmittingReport ? "Gönderiliyor..." : "Şikâyeti gönder"}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+        <Dialog open={isPhotoPreviewOpen} onOpenChange={setIsPhotoPreviewOpen}>
+          <DialogContent
+            showClose={false}
+            className="fixed z-[60] w-[calc(100vw-2rem)] max-w-2xl overflow-hidden border-0 bg-transparent p-0 shadow-none"
+          >
+            <DialogTitle className="sr-only">
+              {tutor.name} {tutor.surname} profil fotoğrafı
+            </DialogTitle>
+            <DialogDescription className="sr-only">
+              Hoca profil fotoğrafının büyük önizlemesi.
+            </DialogDescription>
+            <DialogClose asChild>
+              <button
+                type="button"
+                className="absolute right-3 top-3 z-10 rounded-pill bg-white p-2 text-ink shadow-float transition-colors duration-[--duration-state] hover:bg-paper focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2"
+                aria-label="Fotoğraf önizlemesini kapat"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </DialogClose>
+            <img
+              src={tutorPhotoUrl}
+              alt={`${tutor.name} ${tutor.surname}`}
+              className="max-h-[80vh] w-full rounded-card bg-paper object-contain"
+            />
+          </DialogContent>
+        </Dialog>
+      </div>
     </div>
   );
 }
