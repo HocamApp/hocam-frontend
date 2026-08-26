@@ -1,69 +1,79 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import {
-  NOTIFICATION_TONE_CLASS,
-  getNotificationAppearance,
-} from "./notificationAppearance";
+import { getNotificationAppearance } from "./notificationAppearance";
 import { formatRelativeTime } from "@/lib/utils";
 
-const toneOf = (type: string, related = "") =>
-  getNotificationAppearance(type, related).tone;
+const iconOf = (type: string, related = "") =>
+  getNotificationAppearance(type, related).icon;
+const colorOf = (type: string, related = "") =>
+  getNotificationAppearance(type, related).color;
 
 describe("notification appearance", () => {
-  it("keeps the error tone for actual failures only", () => {
-    // --error is a saturated brick and reads as a heavy brown block at tile
-    // size. It belongs to things that are broken, and to nothing else.
-    for (const type of [
-      "technical_failure",
-      "trust_safety_flag",
-      "coaching_sla_breach",
-    ]) {
-      assert.equal(toneOf(type), "error", type);
-    }
+  it("uses the reference's own icon and colour for each family", () => {
+    assert.deepEqual(getNotificationAppearance("message"), {
+      icon: "💬",
+      color: "#FF3D71",
+    });
+    assert.deepEqual(getNotificationAppearance("coaching_purchase"), {
+      icon: "💸",
+      color: "#00C9A7",
+    });
+    assert.deepEqual(getNotificationAppearance("lesson_request"), {
+      icon: "👤",
+      color: "#FFB800",
+    });
+    assert.deepEqual(getNotificationAppearance("booking_reminder"), {
+      icon: "🗞️",
+      color: "#1E86FF",
+    });
   });
 
-  it("treats a cancellation as status, not as a failure", () => {
-    // A lesson that did not go ahead is a state change. DESIGN.md has no
-    // warning hue and says warnings use ink, which is the same answer.
+  it("puts the problem icon on things that did not happen", () => {
+    // Listed before the coaching and booking rules on purpose: a dispute is
+    // also a coaching type and a cancellation is also a booking one.
     for (const type of [
       "booking_cancelled",
       "lesson_request_declined",
       "coaching_dispute_opened",
+      "coaching_sla_breach",
       "coaching_report_overdue",
       "student_absence_reported",
-      "tutor_auto_hidden",
+      "technical_failure",
+      "trust_safety_flag",
     ]) {
-      assert.equal(toneOf(type), "ink", type);
+      assert.equal(iconOf(type), "⚠️", type);
     }
   });
 
-  it("keeps money on gold and confirmations on success", () => {
-    assert.equal(toneOf("coaching_purchase"), "gold");
-    assert.equal(toneOf("period_refund"), "gold");
-    assert.equal(toneOf("coaching_tutor_earning"), "gold");
-    // "learning" contains "earning". This was gold with a wallet on it until a
-    // grid of every type made it visible.
-    assert.equal(toneOf("learning_plan_proposed"), "ink");
-
-    assert.equal(toneOf("booking_confirmed"), "success");
-    assert.equal(toneOf("lesson_request_accepted"), "success");
-    // The dispute rule is listed first, so it wins over "resolved".
-    assert.equal(toneOf("coaching_dispute_resolved"), "ink");
+  it("marks confirmations, and lets a resolved dispute stay a dispute", () => {
+    assert.equal(iconOf("booking_confirmed"), "✅");
+    assert.equal(iconOf("lesson_request_accepted"), "✅");
+    assert.equal(iconOf("booking_completed"), "✅");
+    // The dispute rule runs first, so "resolved" does not steal it.
+    assert.equal(iconOf("coaching_dispute_resolved"), "⚠️");
   });
 
-  it("gives conversation the one hue reserved for it", () => {
-    assert.equal(toneOf("message"), "pink");
-    assert.equal(toneOf("message_request"), "pink");
-    assert.equal(toneOf("conversation"), "pink");
-    // Some rows carry the relation but not the type.
-    assert.equal(toneOf("something_new", "conversation"), "pink");
+  it("does not read 'learning' as 'earning'", () => {
+    // This was money, with a banknote on it, until every type was rendered in
+    // a grid and the collision became visible.
+    assert.equal(iconOf("learning_plan_proposed"), "🗞️");
+    assert.equal(iconOf("coaching_tutor_earning"), "💸");
   });
 
-  it("never invents a colour outside the system", () => {
-    // The reference design used four hues this palette does not own. Every
-    // tone here has to resolve to a class built from existing tokens.
-    const allowed = new Set(Object.keys(NOTIFICATION_TONE_CLASS));
+  it("matches on the relation when the type alone does not say", () => {
+    assert.equal(iconOf("something_new", "conversation"), "💬");
+    assert.equal(iconOf("something_new", "lesson_request"), "👤");
+  });
+
+  it("falls back to the event pair rather than rendering nothing", () => {
+    // The backend adds types every release; an unmapped one must still draw.
+    const { icon, color } = getNotificationAppearance("some_future_event");
+    assert.equal(icon, "🗞️");
+    assert.equal(color, "#1E86FF");
+  });
+
+  it("never returns an empty icon or colour for any known type", () => {
     const everyBackendType = [
       "booking", "booking_awaiting_confirmation", "booking_cancelled",
       "booking_completed", "booking_confirmed", "booking_disputed",
@@ -77,15 +87,9 @@ describe("notification appearance", () => {
       "tutor_leaving", "tutor_profile",
     ];
     for (const type of everyBackendType) {
-      assert.ok(allowed.has(toneOf(type)), `${type} produced an unknown tone`);
+      assert.ok(iconOf(type).length > 0, `${type} has no icon`);
+      assert.match(colorOf(type), /^#[0-9A-F]{6}$/i, `${type} has no colour`);
     }
-  });
-
-  it("falls back rather than rendering nothing for an unknown type", () => {
-    // The backend adds types every release; an unmapped one must still draw.
-    const { icon, tone } = getNotificationAppearance("some_future_event");
-    assert.ok(icon);
-    assert.equal(tone, "ink");
   });
 });
 
@@ -93,7 +97,7 @@ describe("formatRelativeTime", () => {
   const ago = (ms: number) => new Date(Date.now() - ms).toISOString();
 
   it("answers in minutes, which is the whole point", () => {
-    // formatRelativeDate calls both of these "Bugün", which is the right grain
+    // formatRelativeDate calls all of these "Bugün", which is the right grain
     // for a review and the wrong one for a feed.
     assert.equal(formatRelativeTime(ago(30_000)), "az önce");
     assert.equal(formatRelativeTime(ago(4 * 60_000)), "4 dk önce");

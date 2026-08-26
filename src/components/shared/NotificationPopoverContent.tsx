@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Bell, X } from "@phosphor-icons/react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence } from "framer-motion";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/hooks/useAuth";
 import { formatRelativeTime } from "@/lib/utils";
@@ -13,10 +13,9 @@ import {
   markNotificationRead,
   deleteNotification,
 } from "@/lib/notificationsApi";
-import {
-  NOTIFICATION_TONE_CLASS,
-  getNotificationAppearance,
-} from "@/components/shared/notificationAppearance";
+import { getNotificationAppearance } from "@/components/shared/notificationAppearance";
+import { AnimatedListItem } from "@/components/ui/animated-list";
+import { cn } from "@/lib/utils";
 import type { Notification, NotificationSummary } from "@/types/api";
 
 function getNotificationHref(n: Notification, role?: string): string | null {
@@ -165,59 +164,34 @@ export function NotificationPopoverContent() {
   }
 
   return (
-    /* `AnimatePresence` and `layout` are the useful half of the reference
-       component. Its interval that reveals one child at a time and loops is
-       demo behaviour — on a real list it would drip-feed notifications on a
-       timer and start over. What is kept is the part that communicates state:
-       delete a row and the rest close the gap instead of teleporting. */
-    /* No padding and no surface of its own: the popover's chrome is off, so
-       these cards float directly and the shell that used to sit behind them
-       was a box drawn around a box. */
-    <div className="max-h-[420px] space-y-2 overflow-y-auto overflow-x-hidden">
+    <div className="max-h-[440px] space-y-4 overflow-y-auto overflow-x-hidden p-1">
       <AnimatePresence>
-        {items.map((n: Notification, cardIndex: number) => {
-          const { icon: Icon, tone } = getNotificationAppearance(
+        {items.map((n: Notification) => {
+          const { icon, color } = getNotificationAppearance(
             n.type,
             n.related_object_type,
           );
           const body = getNotificationBody(n);
           return (
-            /* The spring is the one from the supplied component — stiffness
-               350, damping 40, which is damped enough to settle rather than
-               wobble. What is not taken is its interval: that reveals one child
-               at a time and then loops, which on a real list would drip-feed
-               notifications on a timer and start over.
-               Staggered by index so the stack reads as arriving in order.
-               Capped at five steps, or a long list would still be animating
-               after the reader has finished with it. */
-            <motion.div
-              key={n.id}
-              layout
-              initial={{ opacity: 0, y: -12, scale: 0.96 }}
-              animate={{
-                opacity: 1,
-                y: 0,
-                scale: 1,
-                transition: {
-                  type: "spring",
-                  stiffness: 350,
-                  damping: 40,
-                  delay: Math.min(cardIndex, 5) * 0.05,
-                },
-              }}
-              exit={{ opacity: 0, scale: 0.96, height: 0, marginTop: 0 }}
-              transition={{ type: "spring", stiffness: 350, damping: 40 }}
-            >
-              <div
+            /* The animation from the supplied component, item for item: scale
+               0 to 1 on a 350/40 spring, and `layout` so deleting one closes
+               the gap. Its `AnimatedList` wrapper is not used — that reveals
+               one child at a time on an interval and then loops, which is
+               right for a marketing demo and would drip-feed real
+               notifications on a timer. */
+            <AnimatedListItem key={n.id}>
+              <figure
                 role="button"
                 tabIndex={0}
-                /* These carry the shadow now. The popover's own panel is gone,
-                   so each card is the floating surface rather than a row
-                   inside one — which is exactly when DESIGN.md allows a
-                   shadow. Focus moves the border to ink instead of taking the
-                   browser's blue default, which is not a colour this palette
-                   owns. */
-                className="group flex w-full items-start gap-3 rounded-card border border-line bg-surface p-3 text-left shadow-float transition-colors duration-[--duration-state] hover:border-ink focus-visible:border-ink focus-visible:outline-none"
+                className={cn(
+                  "relative mx-auto min-h-fit w-full max-w-[400px] cursor-pointer overflow-hidden rounded-2xl p-4",
+                  "transition-all duration-200 ease-in-out hover:scale-[103%]",
+                  // The rows are focusable, and Radix focuses the first one on
+                  // open. Without this it takes the browser's blue default.
+                  "outline-none focus-visible:ring-2 focus-visible:ring-black/15",
+                  "bg-white [box-shadow:0_0_0_1px_rgba(0,0,0,.03),0_2px_4px_rgba(0,0,0,.05),0_12px_24px_rgba(0,0,0,.05)]",
+                  "transform-gpu dark:bg-transparent dark:backdrop-blur-md dark:[border:1px_solid_rgba(255,255,255,.1)] dark:[box-shadow:0_-20px_80px_-20px_#ffffff1f_inset]",
+                )}
                 onClick={() => handleNotificationClick(n)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" || e.key === " ") {
@@ -226,44 +200,41 @@ export function NotificationPopoverContent() {
                   }
                 }}
               >
-                {/* 14px inside the 20px card, following the nesting
-                    subtraction rule. */}
-                <span
-                  className={`flex size-10 shrink-0 items-center justify-center rounded-[14px] ${NOTIFICATION_TONE_CLASS[tone]}`}
-                  aria-hidden
-                >
-                  <Icon className="size-5" weight="regular" />
-                </span>
-
-                <div className="min-w-0 flex-1 overflow-hidden">
-                  <p className="flex flex-wrap items-baseline gap-x-1.5 text-body font-medium leading-snug text-ink">
-                    <span className="break-words [overflow-wrap:anywhere]">
-                      {n.title}
-                    </span>
-                    <span className="text-small font-normal text-ink-mid">
-                      · {formatRelativeTime(n.created_at)}
-                    </span>
-                  </p>
-                  {body && (
-                    <p className="mt-0.5 line-clamp-2 break-words text-small text-ink-mid [overflow-wrap:anywhere]">
-                      {body}
-                    </p>
-                  )}
+                <div className="flex flex-row items-center gap-3">
+                  <div
+                    className="flex size-10 shrink-0 items-center justify-center rounded-2xl"
+                    style={{ backgroundColor: color }}
+                  >
+                    <span className="text-lg">{icon}</span>
+                  </div>
+                  <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+                    <figcaption className="flex flex-wrap items-baseline font-medium dark:text-white">
+                      <span className="text-sm sm:text-base">{n.title}</span>
+                      <span className="mx-1">·</span>
+                      <span className="shrink-0 text-xs text-gray-500">
+                        {formatRelativeTime(n.created_at)}
+                      </span>
+                    </figcaption>
+                    {body && (
+                      <p className="line-clamp-2 text-sm font-normal text-gray-600 dark:text-white/60">
+                        {body}
+                      </p>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    aria-label="Bildirimi sil"
+                    className="shrink-0 rounded-full p-1 text-gray-400 transition-colors hover:text-gray-700 dark:hover:text-white"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      deleteMutation.mutate(n.id);
+                    }}
+                  >
+                    <X className="size-4" />
+                  </button>
                 </div>
-
-                <button
-                  type="button"
-                  aria-label="Bildirimi sil"
-                  className="shrink-0 rounded-input p-1 text-line transition-colors duration-[--duration-state] hover:text-error focus-visible:text-error group-hover:text-ink-mid"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    deleteMutation.mutate(n.id);
-                  }}
-                >
-                  <X className="size-4" />
-                </button>
-              </div>
-            </motion.div>
+              </figure>
+            </AnimatedListItem>
           );
         })}
       </AnimatePresence>
