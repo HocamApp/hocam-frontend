@@ -2,10 +2,15 @@
  * Scoped design tokens + component classes for the Yemeksepeti-inspired
  * homepage experiment.
  *
- * Everything is namespaced under `.ys-root` so the experiment cannot leak into
- * the rest of the Hocam app. The token values mirror the ones read off the
- * captured page so the layout lands close to the reference; swapping them for
- * Hocam's own palette is the intended next step.
+ * The `--ys-*` tokens now live on `:root` rather than on `.ys-root`. They used
+ * to be namespaced so the experiment could not leak, but the navbar and footer
+ * built here are becoming the shell for every page, so the tokens they read
+ * have to resolve everywhere. Every value points at a DESIGN.md token that
+ * globals.css already declares on `:root`, so promoting them shadows nothing.
+ *
+ * What stays on `.ys-root` is only what *paints*: the page colour and
+ * background. Those must not go global — `background-color: var(--paper)` on
+ * `:root` would repaint all 80-odd app pages and override `body`.
  */
 
 /*
@@ -20,7 +25,7 @@
  * palette at three hues plus neutrals, and a fourth is where it starts reading
  * as rainbow, so those three now resolve to gold.
  */
-.ys-root {
+:root {
   --ys-brand-primary: var(--pink);
   --ys-interaction-primary: var(--pink);
   --ys-interaction-primary-hover: var(--pink-deep);
@@ -59,7 +64,10 @@
      page reads as dirt instead of shadow. */
   --ys-elevation-low: var(--shadow-float);
   --ys-max-width: 1440px;
+}
 
+/* Paint, not tokens — deliberately still scoped. */
+.ys-root {
   color: var(--ys-neutral-primary);
   /* The page is paper, not white. That value difference is how in-flow
      surfaces separate, so a pure white page does not merely look plainer, it

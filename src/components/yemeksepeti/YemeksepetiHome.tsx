@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import "@/styles/yemeksepeti.css";
 import { YsEntryDialog } from "./YsEntryDialog";
 import { YsFooter } from "./YsFooter";
 import { YsHeroIntro } from "./YsHeroIntro";

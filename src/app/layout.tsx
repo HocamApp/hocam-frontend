@@ -1,6 +1,13 @@
 import type { Metadata, Viewport } from "next";
 import { Poppins } from "next/font/google";
 import "./globals.css";
+/* After globals.css, and that order is load-bearing rather than incidental:
+   `.ys-from-md` has to beat Tailwind's `hidden`, which only works if this
+   sheet is emitted after the utility layer. It sits here rather than in a
+   component because the navbar and footer it styles are becoming the shell
+   for every page, and a component-level import would only ship the sheet on
+   the routes that happen to render that component. */
+import "@/styles/yemeksepeti.css";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/providers/AuthProvider";
 import { QueryProvider } from "@/providers/QueryProvider";
