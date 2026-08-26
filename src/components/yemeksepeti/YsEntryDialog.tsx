@@ -97,7 +97,7 @@ export function YsEntryDialog() {
         data-ys-entry-promo
         showClose={false}
         overlayClassName="z-[110]"
-        className="z-[110] w-[calc(100dvw-1rem)] max-w-[calc(100dvw-1rem)] gap-0 overflow-hidden rounded-modal border-line bg-white p-0 text-ink sm:max-w-[420px]"
+        className="z-[110] w-[calc(100dvw-1rem)] max-w-[calc(100dvw-1rem)] gap-0 overflow-hidden rounded-modal border-line bg-surface p-0 text-ink sm:max-w-[420px]"
       >
         {/* One idea, one number, one button. The earlier draft explained the
             whole trial policy here; nobody reads a paragraph in a promo, and
@@ -132,7 +132,7 @@ export function YsEntryDialog() {
           </DialogClose>
         </div>
 
-        <div className="bg-white px-7 pb-6 pt-5 text-center">
+        <div className="bg-surface px-7 pb-6 pt-5 text-center">
           <DialogDescription className="text-sm leading-6 text-ink-mid">
             Seçtiğin hocayla tanış, ücret ödeme. Devam edersen paketlerde %
             {MAX_PACKAGE_DISCOUNT_PERCENT}&apos;a varan avantaj.

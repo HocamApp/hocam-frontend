@@ -187,7 +187,7 @@ export function YsNavbar({ startCoachmark = true }: Props) {
   return (
     <section
       data-app-header
-      className="sticky top-0 z-50 flex w-full flex-col bg-white"
+      className="sticky top-0 z-50 flex w-full flex-col bg-surface"
       style={{ boxShadow: "var(--ys-elevation-low)" }}
     >
       <a

@@ -223,7 +223,7 @@ function TutorCardDefault({
                   src={tutor.profile_picture || undefined}
                   alt={`${tutor.name} ${tutor.surname}`}
                 />
-                <AvatarFallback className="bg-ink text-lg font-medium text-white">
+                <AvatarFallback className="bg-ink text-lg font-medium text-paper">
                   {getInitials(tutor.name, tutor.surname)}
                 </AvatarFallback>
               </Avatar>
@@ -379,7 +379,7 @@ function TutorCardLarge({
                   src={tutor.profile_picture || undefined}
                   alt={`${tutor.name} ${tutor.surname}`}
                 />
-                <AvatarFallback className="rounded-xl bg-ink text-3xl font-medium text-white">
+                <AvatarFallback className="rounded-xl bg-ink text-3xl font-medium text-paper">
                   {getInitials(tutor.name, tutor.surname)}
                 </AvatarFallback>
               </Avatar>
@@ -414,7 +414,7 @@ function TutorCardLarge({
           </p>
           <div className="mt-2 flex flex-wrap gap-1.5">
             {coachingLabel && (
-              <Badge className="border-transparent bg-ink text-xs text-white">
+              <Badge className="border-transparent bg-ink text-xs text-paper">
                 {coachingLabel}
               </Badge>
             )}
@@ -480,7 +480,7 @@ function TutorCardLarge({
           <div className="mt-auto flex flex-col gap-2 pt-3">
             <Link
               href={tutorHref}
-              className="rounded-pill bg-ink px-4 py-2 text-center text-sm font-semibold text-white transition-colors duration-[--duration-state] hover:bg-pink"
+              className="rounded-pill bg-ink px-4 py-2 text-center text-sm font-semibold text-paper transition-colors duration-[--duration-state] hover:bg-pink"
             >
               Profili Gör <ArrowRight className="ml-1 inline h-4 w-4" />
             </Link>

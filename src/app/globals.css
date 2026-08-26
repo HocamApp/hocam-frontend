@@ -82,6 +82,10 @@
     --ink: #02171a;
     --ink-mid: #5c6b6d;
     --line: #e6dddd;
+    /* The in-flow card surface, as a token rather than Tailwind's literal
+       `bg-white`. DESIGN.md separates surfaces by value plus a hairline, and a
+       literal white cannot participate in that once there are two themes. */
+    --surface: #ffffff;
     --success: #1c7a55;
     /* --success at 14% over white, precomputed. Tailwind cannot inject an
        alpha into a var that holds a hex, and a calendar's available day needs
@@ -142,7 +146,45 @@
     }
   }
 
+  /*
+   * Dark theme, derived rather than invented.
+   *
+   * DESIGN.md has no dark mode and does not list one as an open decision, but
+   * it does state the principle the light theme rests on: in-flow surfaces
+   * separate by value plus a hairline, never by shadow. Inverted, that gives
+   * the whole palette — a dark canvas, a card one value step above it, a
+   * hairline one step above that. It is also what Material's elevation-by-tint
+   * and Linear's surface ramp arrive at, so this is the industry default
+   * reached through our own rule rather than borrowed.
+   *
+   * Values are chosen, not sampled:
+   *
+   * --paper is --ink's hue held at 8% lightness with the saturation pulled
+   * down. Pure black would break the same elevation system a pure white page
+   * breaks in light mode: there would be nothing left below the card to
+   * separate it from.
+   *
+   * --ink is paper-toned rather than pure white. #FFFFFF text on a dark
+   * canvas is the classic halation complaint, and the light theme's own text
+   * is not pure black either.
+   *
+   * --ink-mid had to move furthest. #5C6B6D is a secondary on paper and
+   * nearly invisible on a dark canvas; #9BAAAC measures about 7.4:1 against
+   * the new --paper, comfortably past the 4.5:1 floor.
+   *
+   * --pink and --gold are untouched. Both are saturated enough to hold on
+   * dark, and both are used as surfaces with their own ink on top, so
+   * changing them would break pairings that already work.
+   */
   .dark {
+    --paper: #0f1719;
+    --surface: #182225;
+    --line: #2a3639;
+    --ink: #ece6e6;
+    --ink-mid: #9baaac;
+    /* --success at 14% over the dark surface, same construction as light. */
+    --success-soft: #17332b;
+
     --background: 222 47% 11%;
     --foreground: 214 32% 91%;
     --card: 220 37% 14%;

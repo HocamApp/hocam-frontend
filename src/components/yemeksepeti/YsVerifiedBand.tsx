@@ -40,9 +40,12 @@ export function YsVerifiedBand() {
           edilir.
         </p>
 
+        {/* White, not --surface: the band is pink in both themes, so this is
+            an inverted primary rather than a card. Its ink is the literal
+            light-theme value for the same reason. */}
         <Link
           href="/hocalar-nasil-dogrulaniyor"
-          className="mt-8 inline-flex h-11 items-center rounded-pill bg-white px-[34px] text-body font-semibold text-ink transition-colors duration-[--duration-state] hover:bg-paper"
+          className="mt-8 inline-flex h-11 items-center rounded-pill bg-white px-[34px] text-body font-semibold text-[#02171a] transition-colors duration-[--duration-state] hover:bg-[#f2ecec]"
         >
           Nasıl doğruluyoruz?
         </Link>

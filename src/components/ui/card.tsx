@@ -13,7 +13,7 @@ const Card = React.forwardRef<
          shadow on it is a lie about its physics — that lie is what looks
          cheap. In-flow surfaces separate by value plus a hairline: white on
          paper, 1px line. Shadows are for things that genuinely float. */
-      "rounded-card border border-line bg-white text-card-foreground",
+      "rounded-card border border-line bg-surface text-card-foreground",
       className
     )}
     {...props}

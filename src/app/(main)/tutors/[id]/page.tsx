@@ -656,7 +656,7 @@ export default function TutorProfilePage({
                       alt={`${tutor.name} ${tutor.surname}`}
                       className="object-cover object-center"
                     />
-                    <AvatarFallback className="bg-ink text-2xl font-medium text-white md:text-4xl lg:text-5xl">
+                    <AvatarFallback className="bg-ink text-2xl font-medium text-paper md:text-4xl lg:text-5xl">
                       {getInitials(tutor.name, tutor.surname)}
                     </AvatarFallback>
                   </Avatar>
@@ -666,7 +666,7 @@ export default function TutorProfilePage({
                 // there's no focusable control that opens an empty dialog.
                 <div className="shrink-0 self-start rounded-card md:row-span-2">
                   <Avatar className="h-28 w-28 sm:h-36 sm:w-36 md:h-44 md:w-44 lg:h-56 lg:w-56 xl:h-64 xl:w-64">
-                    <AvatarFallback className="bg-ink text-2xl font-medium text-white md:text-4xl lg:text-5xl">
+                    <AvatarFallback className="bg-ink text-2xl font-medium text-paper md:text-4xl lg:text-5xl">
                       {getInitials(tutor.name, tutor.surname)}
                     </AvatarFallback>
                   </Avatar>
@@ -838,7 +838,7 @@ export default function TutorProfilePage({
                   {isAuthenticated && isStudent && !isOwnProfile && (
                     <>
                       {tutor.is_bookable === false && (
-                        <div className="rounded-input border border-ink bg-white p-3 text-small text-ink">
+                        <div className="rounded-input border border-ink bg-surface p-3 text-small text-ink">
                           Bu hoca şu anda yeni öğrenci kabul etmiyor. Profilini
                           inceleyebilir veya daha sonra tekrar kontrol
                           edebilirsin.
@@ -985,7 +985,7 @@ export default function TutorProfilePage({
                       <PopoverContent align="end" className="w-64 p-3">
                         <div className="space-y-3">
                           <div className="flex items-start gap-3">
-                            <div className="flex size-9 shrink-0 items-center justify-center rounded-pill bg-ink text-white">
+                            <div className="flex size-9 shrink-0 items-center justify-center rounded-pill bg-ink text-paper">
                               <Check className="h-4 w-4 motion-safe:animate-message-pop" />
                             </div>
                             <div className="min-w-0">
@@ -1235,7 +1235,7 @@ export default function TutorProfilePage({
                   {(tutor.teaching_attributes ?? []).map((attribute) => (
                     <div
                       key={attribute.code}
-                      className="rounded-card border border-line bg-white p-4"
+                      className="rounded-card border border-line bg-surface p-4"
                     >
                       <p className="text-body font-medium">{attribute.name}</p>
                       <p className="mt-1.5 text-small text-ink-mid">
@@ -1294,7 +1294,7 @@ export default function TutorProfilePage({
                 onChange={(event) =>
                   setReportReason(event.target.value as TutorReportReason)
                 }
-                className="flex h-10 w-full rounded-input border border-line bg-white px-3 py-2 text-body focus-visible:border-ink focus-visible:outline-none"
+                className="flex h-10 w-full rounded-input border border-line bg-surface px-3 py-2 text-body focus-visible:border-ink focus-visible:outline-none"
               >
                 <optgroup label="Profil hakkında">
                   <option value="inappropriate_photo">
@@ -1334,7 +1334,7 @@ export default function TutorProfilePage({
                 onChange={(event) => setReportDescription(event.target.value)}
                 maxLength={2000}
                 placeholder="İncelememize yardımcı olacak bilgileri paylaş."
-                className="min-h-28 w-full rounded-input border border-line bg-white px-3 py-2 text-body focus-visible:border-ink focus-visible:outline-none"
+                className="min-h-28 w-full rounded-input border border-line bg-surface px-3 py-2 text-body focus-visible:border-ink focus-visible:outline-none"
               />
               {reportError && (
                 <p className="text-small text-error">{reportError}</p>
@@ -1373,7 +1373,7 @@ export default function TutorProfilePage({
             <DialogClose asChild>
               <button
                 type="button"
-                className="absolute right-3 top-3 z-10 rounded-pill bg-white p-2 text-ink shadow-float transition-colors duration-[--duration-state] hover:bg-paper focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2"
+                className="absolute right-3 top-3 z-10 rounded-pill bg-surface p-2 text-ink shadow-float transition-colors duration-[--duration-state] hover:bg-paper focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2"
                 aria-label="Fotoğraf önizlemesini kapat"
               >
                 <X className="h-5 w-5" />

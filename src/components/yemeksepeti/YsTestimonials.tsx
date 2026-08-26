@@ -81,7 +81,7 @@ const SECOND_ROW = TESTIMONIALS.slice(TESTIMONIALS.length / 2);
 
 function ReviewCard({ quote, name, credential, photo }: Testimonial) {
   return (
-    <Card className="group/card h-full w-[16.5rem] shrink-0 sm:w-[21rem] cursor-default border-line bg-white p-5 shadow-none transition-colors duration-[--duration-state] hover:border-ink hover:bg-ink">
+    <Card className="group/card h-full w-[16.5rem] shrink-0 sm:w-[21rem] cursor-default border-line bg-surface p-5 shadow-none transition-colors duration-[--duration-state] hover:border-ink hover:bg-ink">
       <CardContent className="flex h-full flex-col gap-3 p-0">
         <div className="flex flex-row items-center gap-3">
           <Image

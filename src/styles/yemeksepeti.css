@@ -40,6 +40,8 @@
   --ys-neutral-divider: var(--line);
   --ys-neutral-surface: var(--paper);
   --ys-neutral-strong: var(--ink);
+  /* Text on pink, and only that. Surfaces use --surface, which follows
+     the theme; this one must not. */
   --ys-white: #fff;
 
 
@@ -91,27 +93,6 @@
  * Known gap: Radix portals (Select dropdown, mobile Sheet, Tooltip) mount on
  * <body>, outside this scope, so they still follow `.dark`.
  */
-.ys-root {
-  --background: 0 0% 100%;
-  --foreground: 222.2 84% 4.9%;
-  --card: 0 0% 100%;
-  --card-foreground: 222.2 84% 4.9%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 222.2 84% 4.9%;
-  --primary: 222.2 47.4% 11.2%;
-  --primary-foreground: 210 40% 98%;
-  --secondary: 350 20% 97%;
-  --secondary-foreground: 222.2 47.4% 11.2%;
-  --muted: 350 20% 97%;
-  --muted-foreground: 350 8% 46%;
-  --accent: 350 20% 97%;
-  --accent-foreground: 222.2 47.4% 11.2%;
-  --destructive: 0 72% 51%;
-  --destructive-foreground: 210 40% 98%;
-  --border: 350 15% 91%;
-  --input: 350 15% 91%;
-  --ring: 222.2 84% 4.9%;
-}
 
 /* ---------------------------------------------------------------- layout -- */
 
@@ -176,7 +157,7 @@
 }
 
 .ys-btn--secondary {
-  background-color: var(--ys-white);
+  background-color: var(--surface);
   color: var(--ys-neutral-primary);
   border: 1px solid var(--ys-neutral-border);
 }
@@ -207,7 +188,7 @@
 }
 
 .ys-icon-btn--contained {
-  background-color: var(--ys-white);
+  background-color: var(--surface);
   box-shadow: 0 1px 4px rgb(0 0 0 / 16%);
 }
 
@@ -309,7 +290,7 @@
 
 /* A selected tab keeps its plate white — only unselected tabs light up. */
 .ys-tab[data-selected="true"]:hover {
-  background-color: var(--ys-white);
+  background-color: var(--surface);
 }
 
 .ys-tab[data-selected="true"]:hover::after {
@@ -452,7 +433,7 @@
   width: 100%;
   height: 100%;
   border-radius: var(--ys-radius-pill);
-  background-color: var(--ys-white);
+  background-color: var(--surface);
   box-shadow: 0 1px 3px rgb(2 23 26 / 8%);
   animation: ys-fav-press var(--ys-fav-cycle) cubic-bezier(0.22, 0.1, 0.1, 1) infinite;
 }

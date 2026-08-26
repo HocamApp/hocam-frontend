@@ -237,7 +237,7 @@ export function YsTutorDirectory() {
                action in a region, and a sort toggle is not it. */
                 variant="outline"
                 data-selected={chip.active || undefined}
-                className="shrink-0 data-[selected]:border-ink data-[selected]:bg-ink data-[selected]:text-white"
+                className="shrink-0 data-[selected]:border-ink data-[selected]:bg-ink data-[selected]:text-paper"
                 onClick={() =>
                   handleFiltersChange({ ...filters, ...chip.next })
                 }

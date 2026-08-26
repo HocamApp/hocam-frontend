@@ -28,7 +28,7 @@ const buttonVariants = cva(
         default: "bg-pink text-white hover:bg-pink-deep",
         /* Secondary: transparent until hover, then it fills solid and the
            text inverts. */
-        outline: "border border-ink bg-transparent text-ink hover:bg-ink hover:text-white",
+        outline: "border border-ink bg-transparent text-ink hover:bg-ink hover:text-paper",
         /* Tertiary: no container at all. Dismissals, back, cancel. */
         ghost: "text-ink hover:bg-paper",
         /* Tutor-side actions only, and never beside a pink button: both are

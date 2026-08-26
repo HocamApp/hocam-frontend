@@ -29,6 +29,7 @@ const config: Config = {
           mid: "var(--ink-mid)",
         },
         line: "var(--line)",
+        surface: "var(--surface)",
         success: "var(--success)",
         "success-soft": "var(--success-soft)",
         error: "var(--error)",
