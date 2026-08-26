@@ -32,3 +32,14 @@ export const CANCELLATION_FREE_HOURS = 12;
 
 /** apps/payments/services.py PACKAGE_GRACE_PERIOD_DAYS. */
 export const PACKAGE_GRACE_DAYS = 14;
+
+/**
+ * The highest YKS rank a tutor can register with, formatted the Turkish way
+ * (period as the thousands separator).
+ *
+ * Enforced, not aspirational: `app/(main)/tutor/setup/page.tsx` rejects
+ * anything outside 1 to 15000 with "Sıralama 1-15000 arasında olmalıdır", and
+ * the input carries the same max. That is what makes "ilk 15.000" a statement
+ * about the product rather than a claim about it.
+ */
+export const MAX_TUTOR_YKS_RANK = "15.000";

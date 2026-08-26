@@ -4,9 +4,9 @@ import { useCallback, useState } from "react";
 import "@/styles/yemeksepeti.css";
 import { YsEntryDialog } from "./YsEntryDialog";
 import { YsFooter } from "./YsFooter";
+import { YsHeroBand } from "./YsHeroBand";
 import { YsHomeFaq } from "./YsHomeFaq";
 import { YsNavbar } from "./YsNavbar";
-import { YsAppBanner, YsSignupBanner } from "./YsPromoBanners";
 import { YsTestimonials } from "./YsTestimonials";
 import { YsTutorDirectory } from "./YsTutorDirectory";
 import { YsUniversityStrip } from "./YsUniversityStrip";
@@ -35,13 +35,14 @@ export function YemeksepetiHome() {
       />
 
       <main id="ys-main-content" className="flex-1">
-        {/* The promo blocks span the full shell: the filter sidebar now lives
-            below them, inside the directory, rather than beside them. */}
+        {/* Outside the shell on purpose: a diagonal band is full bleed, and
+            `.ys-shell` would cap it at 1440px and inset it by its padding. It
+            opens its own shell for the text. */}
+        <YsHeroBand />
+
         <div className="ys-shell pb-12">
-          <YsSignupBanner />
-          <YsAppBanner />
-          {/* Where the campaign lane used to be: it carried Yemeksepeti's own
-              restaurant deals, which we have no equivalent of. */}
+          {/* Directly under the band: the band makes the claim, these logos
+              are the evidence for it. */}
           <YsUniversityStrip />
           <YsTutorDirectory search={search} />
           {/* Between the directory and the FAQ: proof after browsing, before the

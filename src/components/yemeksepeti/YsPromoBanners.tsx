@@ -1,33 +1,7 @@
 "use client";
 
-import { Cursor, ForkKnife, HandPointing, Heart, QrCode } from "@phosphor-icons/react";
+import { Cursor, HandPointing, Heart } from "@phosphor-icons/react";
 
-import { AppStoreBadge, GooglePlayBadge } from "@/components/ui/store-badges";
-
-export function YsSignupBanner() {
-  return (
-    <div
-      className="mt-16 md:mt-24 flex items-center justify-between overflow-hidden rounded-card"
-      style={{ background: "var(--pink-pale)" }}
-    >
-      <div className="flex flex-col items-start gap-4 p-6">
-        <h1 className="text-2xl font-semibold leading-[1.3125] md:text-[2rem]">
-          İlk siparişinizde ücretsiz teslimat için kaydolun
-        </h1>
-        <button type="button" className="ys-btn ys-btn--primary ys-btn--small">
-          Üye ol
-        </button>
-      </div>
-      <div
-        className="hidden h-[160px] w-[220px] shrink-0 items-center justify-center sm:flex"
-        style={{ background: "var(--ys-brand-highlight-1)" }}
-        aria-hidden
-      >
-        <ForkKnife className="h-16 w-16" style={{ color: "var(--ys-interaction-primary)" }} />
-      </div>
-    </div>
-  );
-}
 
 /**
  * The "save your favourites" banner.
@@ -94,45 +68,3 @@ export function YsFavouritesBanner() {
   );
 }
 
-export function YsAppBanner() {
-  return (
-    <section className="mt-16 md:mt-24">
-      {/* A white in-flow surface on paper, separated by a hairline. It was a
-          full-bleed slab of the old green accent; mapping that onto gold made
-          it worse, because gold at this scale sits directly against the pink
-          bands above and below it and the two vibrate. Gold is a badge-scale
-          surface here, not a section. */}
-      <div className="flex items-center justify-between gap-8 rounded-card border border-line bg-white p-6">
-        <div className="flex items-center gap-6">
-          <div
-            className="hidden h-[104px] w-[104px] shrink-0 items-center justify-center rounded-card border border-line sm:flex"
-            aria-hidden
-          >
-            <QrCode className="h-16 w-16" style={{ color: "var(--ys-neutral-strong)" }} />
-          </div>
-          <div>
-            <div className="mb-4">
-              <div className="text-lg font-normal leading-[1.555]">
-                Size özel kampanyalar ve çok daha fazlası{" "}
-                <span className="font-bold" style={{ color: "var(--pink)" }}>
-                  Mobil uygulamamız
-                </span>{" "}
-                ile
-              </div>
-              <div className="text-xs" style={{ color: "var(--ys-neutral-secondary)" }}>
-                Yemekten market ürünlerine ve fazlasına özel fırsatlar Yemeksepeti&apos;nde
-              </div>
-            </div>
-            {/* The real badges, same as the footer. Two different
-                approximations of a store badge on one page is worse than
-                either of them. Both stay inert until the apps exist. */}
-            <div className="flex flex-wrap gap-2">
-              <AppStoreBadge />
-              <GooglePlayBadge />
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}

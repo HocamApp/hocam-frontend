@@ -594,6 +594,34 @@
   }
 }
 
+/* ----------------------------------------------------------- hero band -- */
+
+/*
+ * The diagonal band, DESIGN.md's primary section device: full bleed, no
+ * container, no border, no shadow. The colour change is the separation.
+ *
+ * The cut is `clamp(20px, 4vw, 56px)` rather than a fixed pixel value, and
+ * that is the whole reason it survives small screens: a flat 46px slice on a
+ * 375px phone is proportionally more than twice the angle it cuts on desktop,
+ * so a fixed number reads as a gentle tilt on a laptop and a wedge on a
+ * handset.
+ *
+ * Direction stays the same everywhere it is used. Alternating the angle down a
+ * page stops reading as structure and starts reading as decoration.
+ */
+.ys-band {
+  --ys-band-cut: clamp(20px, 4vw, 56px);
+
+  background-color: var(--pink);
+  color: var(--ys-white);
+  clip-path: polygon(
+    0 0,
+    100% var(--ys-band-cut),
+    100% 100%,
+    0 calc(100% - var(--ys-band-cut))
+  );
+}
+
 /* ---------------------------------------------------------------- footer -- */
 
 .ys-footer-link {
