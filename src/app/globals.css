@@ -91,6 +91,26 @@
     --success-soft: #e0ece7;
     --error: #b33a24;
 
+    /*
+     * App header height, as one source rather than a number copied into every
+     * page that has to subtract it.
+     *
+     * Five places were doing that subtraction by hand with a literal 64px or
+     * 3.5rem, which was survivable while the header was one row and never
+     * changed. It is about to become two rows, and a stale copy in
+     * /messages is a clipped composer rather than a cosmetic drift.
+     *
+     * The navbar reads these back for its own row heights, so the token is
+     * the cause of the height and not a description of it — that is what
+     * stops it going stale the next time someone edits the tab strip.
+     *
+     * These are today's values on purpose. The measured two-row number
+     * arrives with the navbar that produces it.
+     */
+    --app-header-row-1-h: 3.5rem;
+    --app-header-row-2-h: 0px;
+    --app-header-h: var(--app-header-row-1-h);
+
     /* Off the Tailwind grid on purpose: 6, 8, 12, 16 and 24 are all
        reachable by typing a stock utility, so landing on one means
        inheriting a default rather than choosing a value. The larger effect
@@ -107,6 +127,16 @@
        over warm off-white reads as dirt. */
     --shadow-float: 0 8px 24px rgb(2 23 26 / 10%), 0 1px 3px rgb(2 23 26 / 6%);
     --duration-state: 120ms;
+  }
+
+  /* The header is taller from `md` up. Kept in a media query rather than a
+     Tailwind breakpoint variant because the consumers are `calc()` inside
+     arbitrary values, and those cannot ask a utility what the current
+     breakpoint is. 768px is Tailwind's own `md`, matched by hand. */
+  @media (min-width: 768px) {
+    :root {
+      --app-header-row-1-h: 4rem;
+    }
   }
 
   .dark {

@@ -420,7 +420,7 @@ function TutorProfileEditContent() {
 
   return (
     <div className="min-h-screen bg-muted/20 pb-28 lg:pb-12">
-      <div className="relative z-40 border-b bg-background lg:sticky lg:top-16">
+      <div className="relative z-40 border-b bg-background lg:sticky lg:top-[var(--app-header-h)]">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-4">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">

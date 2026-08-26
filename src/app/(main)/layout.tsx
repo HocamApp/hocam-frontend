@@ -17,7 +17,7 @@ export default function MainLayout({
       <PresenceHeartbeat />
       <TutorActivationGate />
       <MainLayoutShell>
-        <main className="min-h-[calc(100vh-64px)] flex-1">{children}</main>
+        <main id="ys-main-content" className="min-h-[calc(100vh-var(--app-header-h))] flex-1">{children}</main>
         <Footer />
       </MainLayoutShell>
     </>

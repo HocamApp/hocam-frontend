@@ -51,7 +51,7 @@ export function MainLayoutShell({ children }: MainLayoutShellProps) {
           useStudentDashboardSurface &&
             "[&>footer]:bg-white [&>main]:bg-white",
           showMobileNavigation &&
-            "pb-[calc(4rem+env(safe-area-inset-bottom))] [&>main]:min-h-[calc(100dvh_-_3.5rem_-_4rem_-_env(safe-area-inset-bottom))] md:pb-0 md:[&>main]:min-h-[calc(100vh-64px)]"
+            "pb-[calc(4rem+env(safe-area-inset-bottom))] [&>main]:min-h-[calc(100dvh_-_var(--app-header-h)_-_4rem_-_env(safe-area-inset-bottom))] md:pb-0 md:[&>main]:min-h-[calc(100vh-var(--app-header-h))]"
         )}
       >
         {children}

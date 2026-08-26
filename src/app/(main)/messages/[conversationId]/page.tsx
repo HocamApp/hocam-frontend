@@ -296,7 +296,7 @@ function ConversationContent({
         : null;
 
   return (
-    <div className="flex h-[calc(100dvh_-_3.5rem_-_4rem_-_env(safe-area-inset-bottom))] w-full min-w-0 overflow-hidden md:h-[calc(100vh-64px)]">
+    <div className="flex h-[calc(100dvh_-_var(--app-header-h)_-_4rem_-_env(safe-area-inset-bottom))] w-full min-w-0 overflow-hidden md:h-[calc(100vh-var(--app-header-h))]">
       <aside className="hidden w-80 shrink-0 flex-col overflow-y-auto border-r md:flex">
         <header className="shrink-0 border-b p-4">
           <h1 className="text-xl font-semibold">Mesajlar</h1>
