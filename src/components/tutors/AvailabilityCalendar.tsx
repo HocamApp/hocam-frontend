@@ -77,13 +77,13 @@ export function AvailabilityCalendar({ availability, bookings = [], editable = t
             numberOfMonths={1}
             modifiers={{ available: availableDates, closed: closedDates, booked: bookedDates }}
             modifiersClassNames={{
-              available: "[&>button]:border [&>button]:border-success [&>button]:text-ink",
+              available: "[&>button]:bg-success [&>button]:font-medium [&>button]:text-white [&>button]:hover:bg-success/90",
               closed: "[&>button]:border [&>button]:border-error [&>button]:text-error [&>button]:line-through",
               booked: "[&>button]:after:absolute [&>button]:after:bottom-1 [&>button]:after:size-1 [&>button]:after:rounded-full [&>button]:after:bg-pink",
             }}
           />
           <div className="mt-3 flex flex-wrap gap-3 text-xs text-ink-mid" aria-label="Takvim açıklaması">
-            <span className="flex items-center gap-1"><i className="size-2 rounded-pill border border-success" /> Müsait</span>
+            <span className="flex items-center gap-1"><i className="size-2 rounded-pill bg-success" /> Müsait</span>
             <span className="flex items-center gap-1"><i className="size-2 rounded-pill bg-error" /> Kapalı</span>
             <span className="flex items-center gap-1"><i className="size-2 rounded-pill bg-pink" /> Rezervasyon</span>
           </div>
