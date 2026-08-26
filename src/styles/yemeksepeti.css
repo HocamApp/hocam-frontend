@@ -232,9 +232,11 @@
   flex: none;
   align-items: center;
   justify-content: center;
-  /* Fills the row rather than setting it, so the header height token
-     stays the cause of the geometry instead of a copy of it. */
-  height: 100%;
+  /* Reads the row token directly rather than `height: 100%`. The row is a
+     flex container with `align-items: center`, so the strip inside it shrinks
+     to its content and a percentage resolved against 21px instead of 56 —
+     which pulled the selected underline up against the label. */
+  height: var(--app-header-row-2-h);
   padding: 0 var(--ys-space-sm);
   border-radius: var(--ys-radius-mini);
   color: var(--ys-neutral-secondary);
