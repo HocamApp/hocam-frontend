@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/form";
 import { cn } from "@/lib/utils";
 import { GlassInputWrapper } from "@/components/auth/AuthSplitScreen";
+import { AydinlatmaMetniPreview } from "@/components/privacy/AydinlatmaMetniPreview";
 import {
   Dialog,
   DialogContent,
@@ -86,9 +87,11 @@ export function RegisterForm({
   const [verificationCode, setVerificationCode] = useState("");
   const [isConfirming, setIsConfirming] = useState(false);
   const [noticeOpen, setNoticeOpen] = useState(false);
+  const [noticeLoaded, setNoticeLoaded] = useState(false);
   const [noticeViewed, setNoticeViewed] = useState(false);
   const [noticeAcknowledged, setNoticeAcknowledged] = useState(false);
   const authHandledByFormRef = useRef(false);
+  const handleNoticeReady = useCallback(() => setNoticeLoaded(true), []);
 
   const form = useForm<RegisterFormValues>({
     defaultValues: {
@@ -561,19 +564,18 @@ export function RegisterForm({
               Metin bilgilendirme amaçlıdır; açık rıza talebi değildir.
             </DialogDescription>
           </DialogHeader>
-          <iframe
-            src="/kvkk/aydinlatma-metni"
-            title="KVKK Aydınlatma Metni"
-            className="min-h-0 flex-1 bg-white"
-          />
+          <div className="min-h-0 flex-1 overflow-y-auto bg-background">
+            <AydinlatmaMetniPreview onReady={handleNoticeReady} />
+          </div>
           <DialogFooter className="shrink-0 border-t p-4 sm:space-x-0">
             <button
               type="button"
+              disabled={!noticeLoaded}
               onClick={() => {
                 setNoticeViewed(true);
                 setNoticeOpen(false);
               }}
-              className="rounded-xl bg-primary px-5 py-3 text-sm font-medium text-primary-foreground"
+              className="rounded-xl bg-primary px-5 py-3 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-50"
             >
               Metni görüntüledim
             </button>
