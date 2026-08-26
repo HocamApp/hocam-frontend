@@ -31,8 +31,8 @@ const MESSAGE: NotificationAppearance = { icon: "💬", color: "#FF3D71" };
 const EVENT: NotificationAppearance = { icon: "🗞️", color: "#1E86FF" };
 
 /* Two more in the same register, for cases the reference does not cover. */
-const CONFIRMED: NotificationAppearance = { icon: "✅", color: "#22C55E" };
-const PROBLEM: NotificationAppearance = { icon: "⚠️", color: "#FF5630" };
+const CONFIRMED: NotificationAppearance = { icon: "👍", color: "#22C55E" };
+const PROBLEM: NotificationAppearance = { icon: "🚨", color: "#FF5630" };
 
 type Rule = {
   match: (type: string, relatedObjectType: string) => boolean;

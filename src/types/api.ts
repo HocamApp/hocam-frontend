@@ -908,6 +908,12 @@ export interface Conversation {
     avatar_url?: string | null;
   };
   unread_count?: number;
+  latest_message?: {
+    preview: string;
+    created_at: string;
+    sender_id: string;
+    kind: "text" | "image" | "file" | "voice" | "deleted";
+  } | null;
   tutor_profile?: TutorProfile | null;
   is_blocked: boolean;
   coaching_purchase_id?: string | null;

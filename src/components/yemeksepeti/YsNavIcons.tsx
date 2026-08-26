@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 
 import { NotificationMark } from "@/components/shared/NotificationMark";
 import { NotificationPopoverContent } from "@/components/shared/NotificationPopoverContent";
+import { MessagesPanel } from "@/components/messaging/MessagesPanel";
 import {
   Popover,
   PopoverContent,
@@ -46,7 +47,7 @@ export function YsNavIcons({
     queryFn: fetchNotificationSummary,
     refetchInterval: isPageVisible ? 30_000 : false,
   });
-  const hasUnread = summary?.has_unread ?? false;
+  const unreadCount = summary?.unread_count ?? 0;
 
   const active = getActiveYsNavItem(YS_UTILITY_ITEMS, pathname, searchParams);
 
@@ -58,6 +59,15 @@ export function YsNavIcons({
       {YS_UTILITY_ITEMS.map((item: YsNavItem) => {
         const Icon = item.icon;
         const isActive = active === item;
+        if (item.href === "/messages") {
+          return (
+            <MessagesPanel
+              key={item.href}
+              icon={Icon}
+              isActive={isActive}
+            />
+          );
+        }
         return (
           <Link
             key={item.href}
@@ -77,16 +87,19 @@ export function YsNavIcons({
             <button
               type="button"
               className="ys-icon-btn"
-              aria-label={YS_NOTIFICATIONS_LABEL}
+              aria-label={
+                unreadCount > 0
+                  ? `${YS_NOTIFICATIONS_LABEL}, ${unreadCount} okunmamış`
+                  : YS_NOTIFICATIONS_LABEL
+              }
             >
               <YsNotificationsIcon className="h-5 w-5" />
             </button>
           </PopoverTrigger>
-          {/* Only lights when there is something unread. A permanently lit
-              badge is misinformation, not decoration. */}
+          {/* The count overlaps the bell; the bell itself stays uncontained. */}
           <NotificationMark
-            hasUnread={hasUnread}
-            className="absolute right-1 top-1"
+            unreadCount={unreadCount}
+            className="absolute -right-1 -top-1"
           />
         </span>
         <PopoverContent align="end" className="w-[min(24rem,calc(100vw-1.5rem))] border-none bg-transparent p-0 shadow-none">

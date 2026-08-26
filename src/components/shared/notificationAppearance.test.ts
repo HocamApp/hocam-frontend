@@ -1,13 +1,41 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
+import * as React from "react";
+import { createElement, type ComponentType } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
 
+import { NotificationMark } from "./NotificationMark";
 import { getNotificationAppearance } from "./notificationAppearance";
 import { formatRelativeTime } from "@/lib/utils";
+
+(globalThis as typeof globalThis & { React: typeof React }).React = React;
+
+const CountAwareNotificationMark = NotificationMark as ComponentType<{
+  unreadCount: number;
+}>;
+const renderMark = (unreadCount: number) =>
+  renderToStaticMarkup(
+    createElement(CountAwareNotificationMark, { unreadCount }),
+  );
 
 const iconOf = (type: string, related = "") =>
   getNotificationAppearance(type, related).icon;
 const colorOf = (type: string, related = "") =>
   getNotificationAppearance(type, related).color;
+
+describe("NotificationMark", () => {
+  it("renders nothing when there are no unread notifications", () => {
+    assert.equal(renderMark(0), "");
+  });
+
+  it("shows the unread notification count", () => {
+    assert.match(renderMark(2), />2<\/span>/);
+  });
+
+  it("caps a three-digit count at 99+", () => {
+    assert.match(renderMark(128), />99\+<\/span>/);
+  });
+});
 
 describe("notification appearance", () => {
   it("uses the reference's own icon and colour for each family", () => {
@@ -42,16 +70,16 @@ describe("notification appearance", () => {
       "technical_failure",
       "trust_safety_flag",
     ]) {
-      assert.equal(iconOf(type), "⚠️", type);
+      assert.equal(iconOf(type), "🚨", type);
     }
   });
 
   it("marks confirmations, and lets a resolved dispute stay a dispute", () => {
-    assert.equal(iconOf("booking_confirmed"), "✅");
-    assert.equal(iconOf("lesson_request_accepted"), "✅");
-    assert.equal(iconOf("booking_completed"), "✅");
+    assert.equal(iconOf("booking_confirmed"), "👍");
+    assert.equal(iconOf("lesson_request_accepted"), "👍");
+    assert.equal(iconOf("booking_completed"), "👍");
     // The dispute rule runs first, so "resolved" does not steal it.
-    assert.equal(iconOf("coaching_dispute_resolved"), "⚠️");
+    assert.equal(iconOf("coaching_dispute_resolved"), "🚨");
   });
 
   it("does not read 'learning' as 'earning'", () => {

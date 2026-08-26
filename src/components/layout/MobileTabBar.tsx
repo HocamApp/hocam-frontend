@@ -151,8 +151,8 @@ export function MobileTabBar() {
             <span className="relative">
               <Icon className="h-5 w-5" aria-hidden="true" />
               <NotificationMark
-                hasUnread={summary?.has_unread ?? false}
-                className="absolute -right-2.5 -top-2"
+                unreadCount={summary?.unread_count ?? 0}
+                className="absolute -right-3 -top-2.5"
               />
             </span>
             <span>{descriptor.title}</span>

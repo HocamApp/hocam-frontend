@@ -89,7 +89,7 @@ export function AnimatedNavbarLinks() {
     enabled: isAuthenticated,
     refetchInterval: isPageVisible ? 30_000 : false,
   });
-  const hasUnread = summary?.has_unread ?? false;
+  const unreadCount = summary?.unread_count ?? 0;
 
   if (isLoading || !isAuthenticated) return null;
 
@@ -107,8 +107,8 @@ export function AnimatedNavbarLinks() {
         <span className="relative inline-flex">
           <PopoverTrigger asChild>{node}</PopoverTrigger>
           <NotificationMark
-            hasUnread={hasUnread}
-            className="absolute right-0.5 top-0.5"
+            unreadCount={unreadCount}
+            className="absolute -right-1 -top-1"
           />
         </span>
         <PopoverContent align="end" className="w-80 p-0">

@@ -2,11 +2,11 @@
 
 import Link from "next/link";
 import { Conversation } from "@/types";
-import { formatDate } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ParticipantAvatar } from "@/components/messaging/ParticipantAvatar";
 import { cn } from "@/lib/utils";
+import { formatConversationActivity } from "./conversationPresentation";
 
 interface ConversationListProps {
   conversations: Conversation[];
@@ -28,9 +28,10 @@ function ConversationRow({
   const displayName =
     conversation.other_participant?.display_name ||
     `Konuşma #${conversation.id.slice(-6).toUpperCase()}`;
-  const created = conversation.created_at
-    ? formatDate(conversation.created_at)
-    : "";
+  const activityTime = formatConversationActivity(
+    conversation.latest_message?.created_at ?? conversation.created_at,
+  );
+  const preview = conversation.latest_message?.preview ?? "Henüz mesaj yok";
   const unreadCount = conversation.unread_count ?? 0;
   const profileHref = conversation.tutor_profile
     ? `/tutors/${conversation.tutor_profile.id}`
@@ -39,7 +40,7 @@ function ConversationRow({
   return (
     <div
       className={cn(
-        "relative flex w-full cursor-pointer items-center gap-3 border-b p-4 transition-colors hover:bg-muted/60",
+        "relative flex w-full cursor-pointer items-center gap-3 border-b px-4 py-3.5 transition-colors hover:bg-muted/60",
         isSelected ? "bg-muted" : "bg-transparent"
       )}
     >
@@ -73,18 +74,21 @@ function ConversationRow({
             avatarUrl={conversation.other_participant?.avatar_url}
           />
         )}
+      </div>
+      <div className="pointer-events-none min-w-0 flex-1 text-left">
+        <p className="truncate text-sm font-semibold text-foreground">{displayName}</p>
+        <p className="mt-0.5 truncate text-xs text-muted-foreground">{preview}</p>
+      </div>
+      <div className="pointer-events-none flex shrink-0 flex-col items-end gap-1.5 self-stretch pt-0.5">
+        <span className="text-[11px] text-muted-foreground">{activityTime}</span>
         {unreadCount > 0 && (
           <span
-            className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold text-primary-foreground"
+            className="flex h-5 min-w-5 items-center justify-center rounded-full bg-foreground px-1.5 text-[10px] font-semibold text-background"
             aria-label={`${unreadCount} okunmamış`}
           >
             {unreadCount > 99 ? "99+" : unreadCount}
           </span>
         )}
-      </div>
-      <div className="pointer-events-none min-w-0 flex-1 text-left">
-        <p className="truncate text-sm font-medium">{displayName}</p>
-        <p className="text-xs text-muted-foreground">{created}</p>
       </div>
     </div>
   );
