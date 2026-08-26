@@ -1783,6 +1783,105 @@ export function coachingEarningStatusCopy(status: CoachingEarningStatus | string
   return copy[status] ?? "Kazanç durumu inceleniyor";
 }
 
+/**
+ * Turkish for the Faz-8 dispute vocabulary.
+ *
+ * The API hands these back as bare codes, and the complaint screens were
+ * printing them straight into the UI — a student picking a complaint reason was
+ * choosing between "scope_deficient" and "message_sla". Wording is taken from
+ * the backend TextChoices, which the master spec (§31.2, §31.5, §32) matches
+ * word for word.
+ *
+ * Every accessor below falls back to neutral Turkish rather than to the raw
+ * code: an unknown code is a deploy-skew problem, and echoing it at the user is
+ * the bug being fixed here, not a useful diagnostic.
+ */
+export const COACHING_DISPUTE_CATEGORY_LABEL: Record<string, string> = {
+  tutor_no_show: "Öğretmen görüşmeye katılmadı",
+  message_sla: "Mesajıma süresinde yanıt verilmedi",
+  program_absent: "Çalışma programı hazırlanmadı",
+  report_absent: "Rapor hazırlanmadı",
+  scope_deficient: "Hizmet açıklanan kapsamda sunulmadı",
+  technical: "Teknik sorun",
+  inappropriate_behavior: "Uygunsuz davranış",
+  other: "Diğer",
+};
+
+export function coachingDisputeCategoryLabel(category: string): string {
+  return COACHING_DISPUTE_CATEGORY_LABEL[category] ?? "Diğer konu";
+}
+
+export const COACHING_DISPUTE_STATUS_LABEL: Record<string, string> = {
+  waiting_review: "İnceleme bekliyor",
+  under_review: "İnceleniyor",
+  needs_more_info: "Ek bilgi gerekli",
+  awaiting_student_choice: "Öğrenci seçimi bekleniyor",
+  resolved: "Çözüldü",
+  closed: "Kapandı",
+};
+
+export function coachingDisputeStatusLabel(status: string): string {
+  return COACHING_DISPUTE_STATUS_LABEL[status] ?? "Durum güncelleniyor";
+}
+
+export const COACHING_DISPUTE_MERIT_LABEL: Record<string, string> = {
+  student_upheld: "Öğrenci lehine",
+  tutor_upheld: "Öğretmen lehine",
+  partial: "Kısmi",
+};
+
+export function coachingDisputeMeritLabel(merit: string): string {
+  return COACHING_DISPUTE_MERIT_LABEL[merit] ?? "Sonuç paylaşılmadı";
+}
+
+export const COACHING_DISPUTE_REMEDY_LABEL: Record<string, string> = {
+  reschedule: "Yeniden görüşme",
+  period_refund: "İlgili dönem iadesi",
+  terminate_remaining: "Kalan koçluğu sonlandır",
+};
+
+/**
+ * Unlike the others this one labels a *button*. Hiding an unknown remedy would
+ * strand a student on an option the server is offering, so it stays clickable
+ * under a generic label.
+ */
+export function coachingDisputeRemedyLabel(remedy: string): string {
+  return COACHING_DISPUTE_REMEDY_LABEL[remedy] ?? "Diğer çözüm seçeneği";
+}
+
+export const COACHING_EVIDENCE_SCAN_STATE_LABEL: Record<string, string> = {
+  pending: "Güvenlik taraması sürüyor",
+  active: "Kullanılabilir",
+  scan_unavailable: "Tarama tamamlanamadı",
+  rejected: "Güvenlik taramasında reddedildi",
+};
+
+export function coachingEvidenceScanStateLabel(state: string): string {
+  return COACHING_EVIDENCE_SCAN_STATE_LABEL[state] ?? "Durum bilinmiyor";
+}
+
+/**
+ * The first five were duplicated as page-local consts on three screens; this is
+ * that same wording, in one importable place. The rest fill the gaps those
+ * copies never covered.
+ */
+export const COACHING_SERVICE_STATUS_LABEL: Record<string, string> = {
+  pending_tutor_acceptance: "Öğretmen yanıtı bekleniyor",
+  accepted_awaiting_payment: "Ödeme doğrulaması bekleniyor",
+  accepted_awaiting_schedule: "Saat seçimi bekleniyor",
+  active: "Aktif",
+  cancellation_pending: "İptal işleniyor",
+  cancelled: "İptal edildi",
+  paused_by_platform: "Platform tarafından duraklatıldı",
+  rejected: "Öğretmen kabul etmedi",
+  completed: "Tamamlandı",
+  refunded: "İade edildi",
+};
+
+export function coachingServiceStatusLabel(status: string): string {
+  return COACHING_SERVICE_STATUS_LABEL[status] ?? "Durum güncelleniyor";
+}
+
 export const COACHING_FAZ8_QUERY_KEYS = {
   studentDisputes: () => ["coaching-disputes", "student"] as const,
   studentDispute: (disputeId: string) => ["coaching-dispute", "student", disputeId] as const,

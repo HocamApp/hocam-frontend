@@ -83,6 +83,31 @@ export interface AdminAction {
   created_at: string;
 }
 
+export interface AdminTutorVerification {
+  id: string;
+  tutor_id: string;
+  tutor_name: string;
+  account_email: string;
+  university_email: string;
+  university: string;
+  department: string;
+  declared_yks_rank: number;
+  status: "pending" | "approved" | "rejected";
+  security_status: "not_scanned" | "safe" | "qa_bypass" | "legacy_reviewed";
+  security_report: Record<string, unknown>;
+  submitted_at: string;
+  reviewed_at: string | null;
+  rejection_reason_code: string;
+  rejection_reason: string;
+  documents_deleted_at: string | null;
+  preview_available: { student_id: boolean; yks_result: boolean };
+}
+
+export interface AdminTutorVerificationList {
+  results: AdminTutorVerification[];
+  rejection_reasons: Array<{ value: string; label: string }>;
+}
+
 export interface AdminCoachingQaScenario {
   id: string;
   status: "active" | "completed" | "cancelled";
@@ -925,6 +950,7 @@ export interface CoachingResponseSla {
 
 export interface MessageAttachment {
   id: string;
+  /** "voice" is read-only history: voice messaging can no longer be created. */
   kind: "image" | "file" | "voice";
   original_name: string;
   mime_type: string;
@@ -1182,13 +1208,23 @@ export interface BusyInterval {
 export interface TutorVerification {
   id: string;
   tutor: string;
-  student_id_document: string;
-  yks_result_document: string;
   university_email: string;
   status: "pending" | "approved" | "rejected";
+  security_status: "not_scanned" | "safe" | "qa_bypass" | "legacy_reviewed";
   submitted_at: string;
   reviewed_at: string | null;
+  documents_deleted_at: string | null;
   rejection_reason?: string;
+}
+
+export interface UniversityEmailVerification {
+  status: "not_started" | "code_sent" | "verified" | "review_required" | "under_review";
+  email: string | null;
+  verified_at?: string | null;
+  audience?: "student" | "institutional";
+  detail?: string;
+  reason?: string;
+  submitted_at?: string;
 }
 
 export interface ApiError {

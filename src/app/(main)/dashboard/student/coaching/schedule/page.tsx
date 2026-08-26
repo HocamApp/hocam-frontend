@@ -187,14 +187,6 @@ function ActiveScheduleView() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Koçluk Görüşmelerim</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Koçluğun planlandı. Görüşmelerini aşağıda görebilir, gerekirse yeniden
-          planlayabilirsin.
-        </p>
-      </div>
-
       {data?.recurring_slots && data.recurring_slots.length > 0 ? (
         <Card>
           <CardContent className="space-y-3 pt-6">

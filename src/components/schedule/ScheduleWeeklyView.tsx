@@ -119,7 +119,7 @@ export function ScheduleWeeklyView({
 
       {/* md+: the seven-column grid */}
       <div className="hidden overflow-x-auto pb-1 md:block">
-        <div className="grid grid-cols-7 gap-2 lg:min-w-[880px]">
+        <div className="grid min-w-[820px] grid-cols-7 gap-1.5 lg:min-w-[980px] lg:gap-2">
           {days.map((date, index) => {
             const dayEvents = eventsForDay(date);
             const isToday = isSameDay(date, today);
@@ -131,7 +131,7 @@ export function ScheduleWeeklyView({
                 key={toDateKey(date)}
                 aria-label={longDayLabel(date)}
                 className={cn(
-                  "min-h-[15rem] rounded-2xl border bg-card p-2",
+                  "min-h-[15rem] rounded-2xl border bg-card p-1.5 lg:p-2",
                   isToday && "border-brand-300 bg-brand-50/40 dark:bg-brand-900/20"
                 )}
               >

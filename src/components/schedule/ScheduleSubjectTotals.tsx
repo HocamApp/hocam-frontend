@@ -2,8 +2,10 @@
 
 import { BookOpen, Clock } from "lucide-react";
 
+import { cn } from "@/lib/utils";
 import type { ScheduleSubjectStat } from "@/types";
 import { formatMinutes } from "./scheduleDates";
+import { subjectAccent } from "./scheduleTheme";
 
 interface ScheduleSubjectTotalsProps {
   stats?: ScheduleSubjectStat[];
@@ -44,16 +46,22 @@ export function ScheduleSubjectTotals({ stats, isLoading }: ScheduleSubjectTotal
 
   return (
     <div className="-mx-1 flex snap-x gap-3 overflow-x-auto px-1 pb-2 [scrollbar-width:thin]">
-      {stats.map((stat) => (
+      {stats.map((stat) => {
+        // ScheduleSubjectStat carries the subject *name*, which is what
+        // subjectAccent keys on — so these cards and the calendar agree on a
+        // subject's colour by construction rather than by being kept in sync.
+        const accent = subjectAccent(stat.subject);
+        return (
         <div
           key={stat.subject}
           className="w-52 shrink-0 snap-start rounded-2xl border border-border bg-card p-4"
         >
-          <div className="mb-2 flex h-8 w-8 items-center justify-center rounded-xl bg-brand-50 text-brand-600 dark:bg-brand-900/40 dark:text-brand-200">
+          <div className={cn("mb-2 flex h-8 w-8 items-center justify-center rounded-xl", accent.chip)}>
             <BookOpen className="h-4 w-4" aria-hidden />
           </div>
-          <p className="truncate font-semibold" title={stat.subject}>
-            {stat.subject}
+          <p className="flex min-w-0 items-center gap-1.5 font-semibold" title={stat.subject}>
+            <span className={cn("h-1.5 w-1.5 shrink-0 rounded-full", accent.dot)} aria-hidden />
+            <span className="truncate">{stat.subject}</span>
           </p>
           <p className="mt-1 flex items-center gap-1.5 text-sm text-muted-foreground">
             <Clock className="h-3.5 w-3.5" aria-hidden />
@@ -66,7 +74,8 @@ export function ScheduleSubjectTotals({ stats, isLoading }: ScheduleSubjectTotal
             {formatMinutes(stat.completed_study_minutes)}
           </p>
         </div>
-      ))}
+        );
+      })}
     </div>
   );
 }

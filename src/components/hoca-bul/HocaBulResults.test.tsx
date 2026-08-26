@@ -119,7 +119,10 @@ describe("HocaBulResultsView", () => {
     assert.equal(screen.getAllByText("Matematik dersinde uyum").length, 2);
     assert.ok(screen.getByText("Bu hoca seçtiğin bütçe aralığının üzerinde."));
     assert.equal(screen.queryByText(/99|%|yapay zek/i), null);
-    assert.equal(screen.getAllByLabelText("Doğrulanmış hoca").length, 1);
+    // The verification tick was removed from every student-facing surface
+    // (every tutor on the platform is verified before they can teach, so a
+    // per-card mark carried no information) — see TutorCard/HocaBulResultCard.
+    assert.equal(screen.queryAllByLabelText("Doğrulanmış hoca").length, 0);
     assert.equal(screen.getByRole("link", { name: /Ads Soyad profilini gör/i }).getAttribute("href"), "/tutors/s");
     const editControl = screen.getByRole("link", { name: "Tercihlerimi düzenle" });
     assert.equal(editControl.getAttribute("href"), "/hoca-bul?adim=kontrol&kaynak=sonuclar");

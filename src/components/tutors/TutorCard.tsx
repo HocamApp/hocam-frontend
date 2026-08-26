@@ -1,15 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Award, Star } from "lucide-react";
+import { ArrowRight, Award, Sparkles, TrendingUp } from "lucide-react";
 import { TutorProfile } from "@/types";
-import { formatLessonCount, formatPrice, formatRating } from "@/lib/utils";
+import { cn, formatLessonCount, formatPrice, formatRating } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { TutorPresenceBadge } from "@/components/tutors/TutorPresenceBadge";
 import { FavoriteButton } from "@/components/tutors/FavoriteButton";
-import { VerifiedTutorMark } from "@/components/tutors/VerifiedTutorMark";
 import { recordDiscoveryEvent } from "@/lib/discovery";
 
 function getInitials(name: string, surname: string): string {
@@ -44,7 +43,8 @@ type LearningContextQuery = {
 function buildTutorHref(
   tutorId: string,
   learningContext?: LearningContextQuery | null,
-  discoveryImpressionId?: string | null
+  discoveryImpressionId?: string | null,
+  intent?: TutorHrefIntent | null
 ): string {
   const params = new URLSearchParams();
   if (learningContext) {
@@ -56,8 +56,54 @@ function buildTutorHref(
     params.set("learning_topic_id", learningContext.learning_topic_id);
   }
   if (discoveryImpressionId) params.set("discovery_impression_id", discoveryImpressionId);
+  if (intent) params.set("intent", intent);
   const query = params.toString();
   return `/tutors/${tutorId}${query ? `?${query}` : ""}`;
+}
+
+/** The profile page reads `?intent=trial` and decides real eligibility there. */
+type TutorHrefIntent = "trial";
+
+/** Preply shows "Booked 65 times recently". We have no booking-velocity field,
+ *  so the line is derived from lesson/review volume and simply omitted when
+ *  the tutor has not earned it — no filler copy. */
+function tutorPopularityLabel(tutor: TutorProfile): string | null {
+  const lessons = tutor.completed_lessons_count ?? 0;
+  if (lessons >= 100) {
+    return `Çok tercih ediliyor · ${formatLessonCount(lessons)} ders verdi`;
+  }
+  if (lessons >= 30) return "Öğrenciler arasında popüler";
+  // Deliberately no "new tutor" fallback: today every tutor is under the
+  // threshold, so it printed the same line on every card in the list — filler,
+  // not signal. The line appears only once a tutor has earned it.
+  return null;
+}
+
+/** Bios run from ~100 to ~600 characters. Trimmed in JS rather than with
+ *  `line-clamp`, because a `-webkit-box` does not wrap around a float: it
+ *  would pin the bio to the narrow strip beside the portrait and leave the
+ *  space under it empty. Plain text flows beside the photo and then under it. */
+function truncateBio(bio: string, maxLength = 260): string {
+  const text = bio.trim();
+  if (text.length <= maxLength) return text;
+  const cut = text.slice(0, maxLength);
+  const lastSpace = cut.lastIndexOf(" ");
+  return `${(lastSpace > maxLength * 0.6 ? cut.slice(0, lastSpace) : cut).replace(/[.,;:!?]$/, "")}…`;
+}
+
+function PresenceDot({ isOnline }: { isOnline: boolean }) {
+  const label = isOnline ? "Çevrim içi" : "Çevrim dışı";
+  return (
+    <span
+      role="img"
+      aria-label={label}
+      title={label}
+      className={cn(
+        "absolute -bottom-1 -right-1 h-5 w-5 rounded-md border-2 border-background",
+        isOnline ? "bg-emerald-500" : "bg-muted-foreground/40"
+      )}
+    />
+  );
 }
 
 function useTutorCardData(tutor: TutorProfile) {
@@ -160,7 +206,6 @@ function TutorCardDefault({
                 </AvatarFallback>
               </Avatar>
               {tutor.is_online && <span className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-background bg-emerald-500" aria-label="Çevrim içi" />}
-              <VerifiedTutorMark verified={tutor.is_verified} className="absolute -right-1 -top-1 rounded-full border-2 border-background" />
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex min-w-0 items-center gap-1">
@@ -252,10 +297,10 @@ function TutorCardDefault({
   );
 }
 
-// Wider "photo left / details middle / price+CTA right" row, closer to the
-// reference the tutor-search competitors use. Falls back to a stacked
-// (photo+info block, then price+CTA block) layout below the `sm` breakpoint
-// so it still holds up in the single mobile column.
+// Photo-left / details-middle / price+CTA-right row. The information order
+// follows the tutor-marketplace convention (identity -> trust line -> tags ->
+// bio -> numbers -> CTA); below `sm` the three zones stack so it still holds up
+// in the single mobile column.
 function TutorCardLarge({
   tutor,
   isFavorite,
@@ -264,118 +309,158 @@ function TutorCardLarge({
   learningContext,
   discoveryImpressionId,
 }: TutorCardProps) {
-  const { visibleSubjects, remainingCount, completedLessonsLabel } = useTutorCardData(tutor);
+  const { visibleSubjects, remainingCount } = useTutorCardData(tutor);
   const tutorHref = buildTutorHref(tutor.id, learningContext, discoveryImpressionId);
+  const trialHref = buildTutorHref(tutor.id, learningContext, discoveryImpressionId, "trial");
+
+  // Both flags are tutor-global and present on the cached list response. Real
+  // per-student trial eligibility (no prior booking with this tutor + monthly
+  // quota) lives only on the uncached detail endpoint, so the card never
+  // promises a *free* lesson — it just opens the flow, and
+  // /tutors/[id] decides. `=== true` rather than `!== false`: a missing field
+  // must hide the button, never reveal one the backend has not allowed.
+  const showTrialCta = tutor.accepts_trial_lessons === true && tutor.is_bookable === true;
+
+  const coachingLabel = tutor.offers_free_coaching
+    ? "Ücretsiz koçluk"
+    : tutor.offers_coaching
+    ? "Koçluk"
+    : null;
+
+  const popularityLabel = tutorPopularityLabel(tutor);
+
+  // Value-over-label stat columns. Anything the tutor has no data for drops
+  // out rather than rendering a zero.
+  const stats = [
+    tutor.total_reviews > 0
+      ? { value: `${formatRating(tutor.rating)} ★`, label: `${tutor.total_reviews} yorum` }
+      : null,
+    { value: formatLessonCount(tutor.completed_lessons_count ?? 0), label: "verilen ders" },
+    tutor.yks_rank > 0
+      ? { value: `İlk ${formatYksRank(tutor.yks_rank)}`, label: "YKS sıralaması" }
+      : null,
+  ].filter((stat): stat is { value: string; label: string } => stat !== null);
 
   return (
     <Card
       data-discovery-tutor-id={discoveryImpressionId ? tutor.id : undefined}
       data-discovery-impression-id={discoveryImpressionId || undefined}
-      className="relative h-full min-w-0 overflow-visible border-t-2 border-t-transparent transition-all duration-200 hover:z-10 hover:-translate-y-0.5 hover:border-t-primary hover:shadow-lg sm:min-h-[250px]"
+      className="relative h-full min-w-0 overflow-visible transition-all duration-200 hover:z-10 hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-lg sm:min-h-[320px]"
     >
-      <CardContent className="flex h-full flex-col gap-4 p-4 sm:flex-row sm:p-5">
-        <Link href={tutorHref} className="flex min-w-0 flex-1 cursor-pointer gap-3">
-          <div className="flex shrink-0 flex-col items-center gap-1.5">
-            <div className="relative h-28 w-28 sm:h-36 sm:w-32">
-              <Avatar className="h-28 w-28 rounded-2xl sm:h-36 sm:w-32">
+      <CardContent className="flex h-full flex-col gap-4 p-4 sm:flex-row sm:gap-5 sm:p-6">
+        <Link href={tutorHref} className="block min-w-0 flex-1 cursor-pointer">
+          <div className="float-left mb-2 mr-4 h-28 w-28 sm:h-40 sm:w-40">
+            <div className="relative h-full w-full">
+              <Avatar className="h-full w-full rounded-xl">
                 <AvatarImage
-                  className="rounded-2xl object-cover"
+                  className="rounded-xl object-cover"
                   src={tutor.profile_picture || undefined}
                   alt={`${tutor.name} ${tutor.surname}`}
                 />
-                <AvatarFallback className="rounded-2xl bg-primary/10 text-2xl font-medium text-primary">
+                <AvatarFallback className="rounded-xl bg-primary/10 text-3xl font-medium text-primary">
                   {getInitials(tutor.name, tutor.surname)}
                 </AvatarFallback>
               </Avatar>
-              <VerifiedTutorMark verified={tutor.is_verified} className="absolute -right-1.5 -top-1.5 rounded-full border-2 border-background bg-primary text-primary-foreground" />
-            </div>
-            <div className="flex items-center gap-x-1 text-xs">
-              {tutor.total_reviews > 0 ? (
-                <>
-                  <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" aria-hidden />
-                  <span className="font-medium">{formatRating(tutor.rating)}</span>
-                  <span className="text-muted-foreground">({tutor.total_reviews})</span>
-                </>
-              ) : (
-                <span className="text-muted-foreground">Yeni</span>
-              )}
+              <PresenceDot isOnline={tutor.is_online} />
             </div>
           </div>
 
-          <div className="min-w-0 flex-1 space-y-2 pr-14 sm:pr-0">
-            <p className="truncate text-xl font-semibold">
+          <div className="flex items-start justify-between gap-3">
+            <p className="min-w-0 truncate text-xl font-semibold">
               {tutor.name} {tutor.surname}
             </p>
-            <p className="truncate text-base text-muted-foreground">
-              {tutor.university} · {tutor.department}
-            </p>
-            <div className="flex flex-wrap items-center gap-2">
-              <StatusBadges
-                tutor={tutor}
-                showPresence={false}
-                showNewTutorBadge={false}
-                showLaunchProgram={false}
-                showBookable={false}
+            {onToggleFavorite && (
+              <FavoriteButton
+                className="-mr-2 -mt-1.5"
+                tutorId={tutor.id}
+                isFavorite={isFavorite ?? false}
+                isPending={favoritePending ?? false}
+                onToggle={(tutorId) => {
+                  void recordDiscoveryEvent(
+                    discoveryImpressionId, tutorId,
+                    isFavorite ? "favorite_removed" : "favorite_added"
+                  );
+                  onToggleFavorite(tutorId);
+                }}
               />
-            </div>
-            <div className="flex flex-wrap gap-1.5">
-              {visibleSubjects.map((sub) => (
-                <Badge key={sub.id} variant="outline" className="text-sm">
-                  {sub.name}
-                </Badge>
-              ))}
-              {remainingCount > 0 && (
-                <span className="text-sm text-muted-foreground">+{remainingCount} daha</span>
-              )}
-              {(tutor.teaching_attributes ?? []).slice(0, 2).map((attribute) => (
-                <Badge key={attribute.code} variant="secondary" className="text-sm">
-                  {attribute.name}
-                </Badge>
-              ))}
-            </div>
-            {tutor.bio && (
-              <p className="line-clamp-4 text-sm leading-6 text-muted-foreground">{tutor.bio}</p>
             )}
           </div>
+          {/* Full school and department, wrapped rather than truncated — where
+              the tutor studies is a primary trust signal here. */}
+          <p className="mt-1 text-xs font-medium leading-5 text-foreground/80">
+            {tutor.university} · {tutor.department}
+          </p>
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {coachingLabel && (
+              <Badge
+                variant="outline"
+                className="gap-1 border-brand-200 bg-brand-50 text-xs text-brand-700 dark:border-brand-800 dark:bg-brand-900/40 dark:text-brand-200"
+              >
+                <Sparkles className="h-3 w-3 shrink-0" aria-hidden />
+                {coachingLabel}
+              </Badge>
+            )}
+            {visibleSubjects.map((sub) => (
+              <Badge key={sub.id} variant="outline" className="text-xs">
+                {sub.name}
+              </Badge>
+            ))}
+            {remainingCount > 0 && (
+              <span className="self-center text-xs text-muted-foreground">
+                +{remainingCount} daha
+              </span>
+            )}
+          </div>
+          {/* Clears the portrait so the tutor's own words start at the card's
+              left edge and run the full width, rather than in the gutter. */}
+          {tutor.bio && (
+            <p className="clear-left pt-3 text-sm leading-6 text-foreground/90">
+              {truncateBio(tutor.bio)}
+            </p>
+          )}
+          {popularityLabel && (
+            <p className="clear-left mt-2 flex items-center gap-1.5 text-xs font-medium text-brand-600 dark:text-brand-300">
+              <TrendingUp className="h-3.5 w-3.5 shrink-0" aria-hidden />
+              <span className="truncate">{popularityLabel}</span>
+            </p>
+          )}
         </Link>
 
-        <div className="flex items-center justify-between gap-4 rounded-xl border bg-gradient-to-br from-primary/[0.07] via-background to-amber-50/60 p-4 sm:w-52 sm:shrink-0 sm:flex-col sm:items-stretch sm:justify-center sm:gap-4 sm:text-right">
-          <div className="min-w-0">
-            <div className="flex items-center gap-2 sm:justify-between">
-              <Link href={tutorHref} className="min-w-0 cursor-pointer">
-                <span className="text-xl font-semibold">{formatPrice(tutor.hourly_price)}</span>
-                <span className="ml-1 text-base text-muted-foreground">/40 dk</span>
-              </Link>
-              {onToggleFavorite && (
-                <FavoriteButton
-                  tutorId={tutor.id}
-                  isFavorite={isFavorite ?? false}
-                  isPending={favoritePending ?? false}
-                  onToggle={(tutorId) => {
-                    void recordDiscoveryEvent(
-                      discoveryImpressionId, tutorId,
-                      isFavorite ? "favorite_removed" : "favorite_added"
-                    );
-                    onToggleFavorite(tutorId);
-                  }}
-                />
-              )}
-            </div>
-            <Link href={tutorHref} className="block cursor-pointer">
-              <p className="mt-1 text-sm text-muted-foreground">{completedLessonsLabel}</p>
-            </Link>
-            <p className="mt-2 text-xs leading-5 text-muted-foreground sm:text-left">
-              Paket seçeneklerini ve müsait saatleri profilde incele.
-            </p>
-          </div>
+        {/* Deliberately not a boxed panel: a plain column separated by a rule,
+            so price -> numbers -> CTA reads as one vertical flow. */}
+        <div className="flex flex-col gap-3 border-t pt-4 sm:w-44 sm:shrink-0 sm:border-l sm:border-t-0 sm:pl-4 sm:pt-0">
+          <Link href={tutorHref} className="min-w-0 cursor-pointer">
+            <p className="text-3xl font-bold leading-none">{formatPrice(tutor.hourly_price)}</p>
+            <p className="mt-1.5 text-sm text-muted-foreground">40 dk ders</p>
+          </Link>
 
-          <div className="flex shrink-0 items-center gap-1.5 sm:w-full sm:flex-col sm:items-stretch">
+          {/* Stacked, not columnar: the rail is too narrow for three labels
+              side by side and they truncated. Values carry the weight, labels
+              stay quiet — the reader scans the numbers first. */}
+          <dl className="space-y-1.5">
+            {stats.map((stat) => (
+              <div key={stat.label} className="min-w-0">
+                <dd className="truncate text-lg font-bold leading-tight">{stat.value}</dd>
+                <dt className="truncate text-xs leading-4 text-muted-foreground">{stat.label}</dt>
+              </div>
+            ))}
+          </dl>
+
+          <div className="mt-auto flex flex-col gap-2 pt-3">
             <Link
               href={tutorHref}
-              className="rounded-md bg-primary px-4 py-2.5 text-center text-base font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+              className="rounded-md bg-primary px-4 py-2 text-center text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
             >
-              Profili Gör <ArrowRight className="ml-1 inline h-3.5 w-3.5" />
+              Profili Gör <ArrowRight className="ml-1 inline h-4 w-4" />
             </Link>
+            {showTrialCta && (
+              <Link
+                href={trialHref}
+                className="rounded-md border px-4 py-2 text-center text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
+              >
+                Deneme Dersi Al
+              </Link>
+            )}
           </div>
         </div>
       </CardContent>

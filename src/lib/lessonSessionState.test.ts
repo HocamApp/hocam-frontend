@@ -5,6 +5,7 @@ import {
   computeServerOffsetMs,
   earlyEndFromSessionState,
   formatDuration,
+  formatJoinCountdown,
   isEarlyEndVersionStale,
   LOW_TIME_WARNING_MS,
   serverNowMs,
@@ -120,5 +121,41 @@ describe("early-end version reconciliation", () => {
       early_end_request: serverState,
     };
     assert.deepEqual(earlyEndFromSessionState(state), serverState);
+  });
+});
+
+describe("formatJoinCountdown", () => {
+  const MINUTE = 60_000;
+  const HOUR = 60 * MINUTE;
+
+  it("reports the room as open once the join time has passed", () => {
+    assert.deepEqual(formatJoinCountdown(-5 * MINUTE), { mode: "open" });
+    assert.deepEqual(formatJoinCountdown(0), { mode: "open" });
+  });
+
+  it("keeps a live M:SS clock under an hour", () => {
+    assert.deepEqual(formatJoinCountdown(45_000), { mode: "soon", label: "0:45" });
+    assert.deepEqual(formatJoinCountdown(12 * MINUTE), { mode: "soon", label: "12:00" });
+  });
+
+  it("switches to hours and minutes later the same day", () => {
+    assert.deepEqual(formatJoinCountdown(3 * HOUR + 5 * MINUTE), {
+      mode: "today",
+      label: "3 saat 5 dakika",
+    });
+  });
+
+  it("drops a zero component instead of writing it out", () => {
+    assert.deepEqual(formatJoinCountdown(2 * HOUR), { mode: "today", label: "2 saat" });
+    assert.deepEqual(formatJoinCountdown(48 * HOUR), { mode: "later", label: "2 gün" });
+  });
+
+  // The bug this exists for: 15 hours out used to render as "904:43".
+  it("never renders a far-off lesson as a minute count", () => {
+    assert.deepEqual(formatJoinCountdown(15 * HOUR + 4 * MINUTE), {
+      mode: "today",
+      label: "15 saat 4 dakika",
+    });
+    assert.deepEqual(formatJoinCountdown(40 * HOUR), { mode: "later", label: "1 gün 16 saat" });
   });
 });

@@ -6,6 +6,7 @@ import { Message } from "@/types";
 import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { fetchMessageAttachmentAccess } from "@/lib/messagingApi";
+import { PrivateImageAttachment } from "./PrivateImageAttachment";
 
 interface MessageBubbleProps {
   message: Message;
@@ -40,6 +41,15 @@ export function MessageBubble({
 }: MessageBubbleProps) {
   const isDeleted = message.is_deleted;
   const reply = message.reply_to ?? null;
+  // Precedence: an active private image attachment always wins over the legacy
+  // public image_url.  Historical rows that have not been remediated yet still
+  // fall back to image_url, so both states render correctly during migration.
+  const privateImageAttachment =
+    message.attachment &&
+    message.attachment.kind === "image" &&
+    message.attachment.storage_state === "active"
+      ? message.attachment
+      : null;
   const [isImagePreviewOpen, setIsImagePreviewOpen] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [voiceSource, setVoiceSource] = useState<string | null>(null);
@@ -130,7 +140,13 @@ export function MessageBubble({
                 </span>
               </button>
             )}
-            {message.image_url && (
+            {privateImageAttachment ? (
+              <PrivateImageAttachment
+                attachmentId={privateImageAttachment.id}
+                originalName={privateImageAttachment.original_name}
+                isOwnMessage={isOwnMessage}
+              />
+            ) : message.image_url ? (
               <>
                 <button
                   type="button"
@@ -160,12 +176,15 @@ export function MessageBubble({
                   </DialogContent>
                 </Dialog>
               </>
-            )}
+            ) : null}
             {message.message_text && (
               <p className="whitespace-pre-wrap break-words text-sm leading-relaxed [overflow-wrap:anywhere]">
                 {message.message_text}
               </p>
             )}
+            {/* Voice messaging was removed as a feature. Historical voice
+                attachments stay playable so old conversations are not broken;
+                no new one can be created. */}
             {message.attachment?.kind === "voice" ? (
               <div className={cn("mt-2 min-w-0 rounded-lg border px-3 py-2", isOwnMessage ? "border-primary-foreground/30 bg-primary-foreground/10" : "bg-background/60")}>
                 <div className="mb-1 flex min-w-0 items-center gap-2 text-xs">
@@ -186,7 +205,7 @@ export function MessageBubble({
                   </div>
                 )}
               </div>
-            ) : message.attachment && (
+            ) : message.attachment && !privateImageAttachment && (
               <button type="button" onClick={downloadAttachment} disabled={isDownloading} className={cn("mt-2 flex max-w-full items-center gap-2 rounded-lg border px-3 py-2 text-left text-xs", isOwnMessage ? "border-primary-foreground/30 bg-primary-foreground/10" : "bg-background/60")}>
                 {message.attachment.kind === "image" ? <ImageIcon className="h-4 w-4 shrink-0" /> : <FileText className="h-4 w-4 shrink-0" />}
                 <span className="min-w-0 flex-1 truncate">{message.attachment.original_name}</span>

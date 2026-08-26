@@ -1,20 +1,28 @@
 "use client";
 
-import Link from "next/link";
-import { Check, Lock, Pencil, Trash2, Video } from "lucide-react";
+import { Check, Lock, Pencil, Trash2 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import type { ScheduleEvent } from "@/types";
-import { endTimeLabel } from "./scheduleDates";
-import { isPersonal, lessonStatusLabel, toneForEvent } from "./scheduleTheme";
+import { endTimeLabel, formatMinutes } from "./scheduleDates";
+import { shortEventLabel } from "./eventLabels";
+import { dayHueForEvent, isPersonal, lessonStatusLabel, toneForEvent } from "./scheduleTheme";
+
+/**
+ * How much room the card has, which decides what it can afford to say.
+ *
+ * "compact" — a week column or a split day cluster, ~100px. Two lines.
+ * "full"    — the detail dialog and the mobile day list. Three lines.
+ * "expanded" — a full-width day row. Three lines plus a right-hand meta column.
+ */
+type ScheduleEventDensity = "compact" | "full" | "expanded";
 
 interface ScheduleEventCardProps {
   event: ScheduleEvent;
   onToggleCompleted?: (event: ScheduleEvent, completed: boolean) => void;
   onEdit?: (event: ScheduleEvent) => void;
   onDelete?: (event: ScheduleEvent) => void;
-  /** "full" for the daily view, "compact" for a weekly column cell. */
-  density?: "full" | "compact";
+  density?: ScheduleEventDensity;
   /** Let the title wrap instead of truncating — for the detail dialog, which
    * is the one place with room to show a long note in full. */
   wrapText?: boolean;
@@ -28,11 +36,14 @@ function CompletionCheckbox({
   onChange,
   disabled,
   withLabel,
+  onLight,
 }: {
   checked: boolean;
   onChange: (next: boolean) => void;
   disabled?: boolean;
   withLabel: boolean;
+  /** Pale day-view body: white-on-dark styling would be invisible there. */
+  onLight?: boolean;
 }) {
   return (
     <button
@@ -47,17 +58,26 @@ function CompletionCheckbox({
       }}
       className={cn(
         "flex shrink-0 items-center gap-1.5 rounded-lg px-1.5 py-1 text-[11px] font-medium transition-colors",
-        "hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70",
+        "focus-visible:outline-none focus-visible:ring-2",
+        onLight
+          ? "hover:bg-black/5 focus-visible:ring-ring dark:hover:bg-white/10"
+          : "hover:bg-white/15 focus-visible:ring-white/70",
         disabled && "opacity-60"
       )}
     >
       <span
         className={cn(
-          "flex h-4 w-4 items-center justify-center rounded border-2 border-white/70",
-          checked && "bg-white"
+          "flex h-4 w-4 items-center justify-center rounded border-2",
+          onLight ? "border-current opacity-90" : "border-white/70",
+          checked && (onLight ? "bg-current" : "bg-white")
         )}
       >
-        {checked && <Check className="h-3 w-3 text-slate-900" strokeWidth={3} />}
+        {checked && (
+          <Check
+            className={cn("h-3 w-3", onLight ? "text-background" : "text-slate-900")}
+            strokeWidth={3}
+          />
+        )}
       </span>
       {withLabel && <span>Tamamlandı</span>}
     </button>
@@ -68,6 +88,11 @@ function CompletionCheckbox({
  * One event on the calendar. Personal study blocks get a checkbox plus edit and
  * delete; lessons and coaching are read-only and say so with a lock, because a
  * student must never mistake a booked lesson for something they added.
+ *
+ * The card carries no "join lesson" affordance. The schedule is where a student
+ * reads their week; joining lives on the panel, next to the rest of the
+ * pre-lesson context. A join button here cost ~84px of un-shrinkable width in a
+ * ~100px week column, which is what starved the title down to one character.
  */
 export function ScheduleEventCard({
   event,
@@ -84,117 +109,208 @@ export function ScheduleEventCard({
   const KindIcon = tone.icon;
   const personal = isPersonal(event);
   const compact = density === "compact";
-  // A week column is ~120px wide; a full "18:00 - 19:30 · Onaylandı" line just
+  const expanded = density === "expanded";
+
+  // A week column is ~100px wide; a full "18:00 - 19:30 · Onaylandı" line just
   // truncates there, so the compact card keeps the start time only.
   const timeRange = compact
     ? event.local_time
     : `${event.local_time} - ${endTimeLabel(event.local_time, event.duration_minutes)}`;
-  // In a ~120px week column the composed "Matematik · Soru Çözümü" title spends
-  // its whole width on the subject and truncates before the type is readable.
-  // The student's own note, or just the subject, says more in the same space;
-  // the composed form stays in the full-width views.
-  const displayTitle =
-    compact && personal
-      ? event.block_title?.trim() || event.subject?.name || event.title
-      : event.title;
+  const displayTitle = compact ? shortEventLabel(event) : event.title;
+
+  // Only personal blocks have controls. A read-only lesson renders no action
+  // column at all, so nothing reserves width the text could have used.
+  //
+  // In a week cell even the personal controls are too much: the checkbox plus
+  // edit and delete reserve ~48px of a ~130px card and truncate the title back
+  // down to "20:00 N...". Ticking is the one thing worth doing from the grid;
+  // editing and deleting stay in the day view and the detail dialog.
+  const showEdit = Boolean(onEdit) && !compact;
+  const showDelete = Boolean(onDelete) && !compact;
+  // At compact density the checkbox moves inline (see below), so the whole
+  // right-hand column disappears and reserves nothing.
+  const hasActions = !compact && personal && Boolean(onToggleCompleted || showEdit || showDelete);
+  const statusLabel = personal ? null : lessonStatusLabel(event.status);
+
+  // The day view paints a pale body and puts the saturated colour in a fixed
+  // 4px bar, so a two-hour block carries no more loud pixels than a 30-minute
+  // one. Everywhere else the chip height is constant and the tone can fill it.
+  const dayHue = expanded ? dayHueForEvent(event) : null;
 
   return (
     <div
       style={style}
       className={cn(
-        "flex min-w-0 gap-2 overflow-hidden rounded-2xl border px-3 py-2 shadow-md",
-        tone.card,
+        "relative flex min-w-0 overflow-hidden border",
+        compact
+          ? "gap-1.5 rounded-xl px-2 py-1.5 shadow-sm"
+          : "gap-2 rounded-2xl py-2 shadow-md",
+        expanded ? "pl-4 pr-3" : !compact && "px-3",
+        dayHue ? dayHue.dayCard : tone.card,
         pending && "opacity-60",
         className
       )}
     >
+      {dayHue && (
+        <span
+          className={cn("absolute inset-y-0 left-0 w-1", dayHue.dot)}
+          aria-hidden
+        />
+      )}
       <div className="min-w-0 flex-1">
-        <p className={cn("truncate text-[10px] font-semibold uppercase tracking-wide", tone.label)}>
-          <span className="inline-flex items-center gap-1">
-            <KindIcon className="h-2.5 w-2.5" aria-hidden />
-            {tone.kindLabel}
-            {!personal && (
-              <>
-                <Lock className="h-2.5 w-2.5" aria-hidden />
-                {/* The lock is decorative, so the read-only fact has to be
-                    said in text or a screen reader never learns it. */}
-                <span className="sr-only">, salt okunur</span>
-              </>
+        {expanded ? (
+          // One line across the full width of a day row: time, then the full
+          // composed title, then the category pushed out to the right.
+          <p className="flex min-w-0 items-baseline gap-2">
+            <span className="shrink-0 text-sm font-semibold tabular-nums">{timeRange}</span>
+            <span title={event.title} className="min-w-0 flex-1 truncate text-sm font-semibold">
+              {displayTitle}
+            </span>
+            <span
+              className={cn(
+                "inline-flex shrink-0 items-center gap-1 text-[10px] font-semibold uppercase tracking-wide",
+                dayHue ? dayHue.label : tone.label
+              )}
+            >
+              <KindIcon className="h-2.5 w-2.5" aria-hidden />
+              {/* The words go first when there is room; the icon and the lock
+                  stay at every width, so the read-only signal never drops. */}
+              <span className="hidden sm:inline">{tone.kindLabel}</span>
+              {!personal && (
+                <>
+                  <Lock className="h-2.5 w-2.5" aria-hidden />
+                  <span className="sr-only">, salt okunur</span>
+                </>
+              )}
+            </span>
+          </p>
+        ) : compact ? (
+          // Time first: it is what a student scans a week for, and it is the
+          // one field short enough to survive at any column width.
+          <p className="flex min-w-0 items-baseline gap-1.5">
+            <span className="shrink-0 text-[11px] font-semibold tabular-nums">
+              {event.local_time}
+            </span>
+            <span title={event.title} className="min-w-0 flex-1 truncate text-xs font-semibold">
+              {displayTitle}
+            </span>
+          </p>
+        ) : null}
+
+        {/* The expanded row above already carries the category, the icon and
+            the lock. Rendering this block as well and hiding it with a class
+            left the ", salt okunur" note in the DOM twice, so a screen reader
+            announced it twice. */}
+        {!expanded && (
+        <div className={cn("flex min-w-0 items-center gap-1", compact && "justify-between")}>
+          <p
+            className={cn(
+              "min-w-0 truncate text-[10px] font-semibold",
+              // Uppercase plus letter-spacing is what pushed "Hocam Dersi" past
+              // the edge of a week cell; the wide treatment stays where there
+              // is room for it.
+              compact ? "tracking-tight" : "uppercase tracking-wide",
+              tone.label
             )}
-          </span>
-        </p>
-        <p
-          // Truncated everywhere the card is narrow; the native tooltip is the
-          // only way to read a long note without opening the edit dialog.
-          title={event.title}
-          className={cn(
-            "font-semibold",
-            wrapText ? "break-words" : "truncate",
-            compact ? "text-xs" : "text-sm"
+          >
+            <span className="inline-flex items-center gap-1">
+              <KindIcon className="h-2.5 w-2.5" aria-hidden />
+              {tone.kindLabel}
+              {!personal && (
+                <>
+                  <Lock className="h-2.5 w-2.5" aria-hidden />
+                  {/* The lock is decorative, so the read-only fact has to be
+                      said in text or a screen reader never learns it. */}
+                  <span className="sr-only">, salt okunur</span>
+                </>
+              )}
+            </span>
+          </p>
+
+          {/* In a week cell the checkbox rides the kind-label line rather than
+              a column of its own, so the title above it gets the full width. */}
+          {compact && personal && onToggleCompleted && (
+            <CompletionCheckbox
+              checked={Boolean(event.completed)}
+              disabled={pending}
+              withLabel={false}
+              onChange={(next) => onToggleCompleted(event, next)}
+            />
           )}
-        >
-          {displayTitle}
-        </p>
-        <p className={cn("truncate tabular-nums", compact ? "text-[10px]" : "text-xs")}>
-          {timeRange}
-          {!personal && !compact && ` · ${lessonStatusLabel(event.status)}`}
-        </p>
+        </div>
+        )}
+
+        {!compact && !expanded && (
+          <>
+            <p
+              // Truncated everywhere the card is narrow; the native tooltip is
+              // the only way to read a long note without opening the dialog.
+              title={event.title}
+              className={cn("text-sm font-semibold", wrapText ? "break-words" : "truncate")}
+            >
+              {displayTitle}
+            </p>
+            <p className="truncate text-xs tabular-nums">
+              {timeRange}
+              {statusLabel && ` · ${statusLabel}`}
+            </p>
+          </>
+        )}
       </div>
 
-      <div className="flex shrink-0 flex-col items-end justify-between gap-1">
-        {personal && onToggleCompleted && (
-          <CompletionCheckbox
-            checked={Boolean(event.completed)}
-            disabled={pending}
-            withLabel={!compact}
-            onChange={(next) => onToggleCompleted(event, next)}
-          />
-        )}
+      {expanded && (
+        // A full-width day row is ~1000px; without this the whole right half
+        // was empty while the text crowded into the left edge.
+        <div className="flex shrink-0 flex-col items-end justify-center gap-1 text-right">
+          <span className="text-xs font-medium tabular-nums opacity-80">
+            {formatMinutes(event.duration_minutes)}
+          </span>
+          {statusLabel && (
+            <span className="rounded-full bg-black/5 px-2 py-0.5 text-[10px] font-semibold dark:bg-white/10">
+              {statusLabel}
+            </span>
+          )}
+        </div>
+      )}
 
-        {!personal && event.room_url && event.source === "booking" && (
-          <Link
-            href={`/session/${event.id}`}
-            className="inline-flex items-center gap-1 rounded-lg bg-brand-500 px-2 py-1 text-[11px] font-semibold text-white hover:bg-brand-600"
-          >
-            <Video className="h-3 w-3" aria-hidden />
-            Derse git
-          </Link>
-        )}
-        {!personal && event.room_url && event.source === "coaching" && (
-          <Link
-            href={`/session/coaching/${event.id}`}
-            className="inline-flex items-center gap-1 rounded-lg bg-indigo-500 px-2 py-1 text-[11px] font-semibold text-white hover:bg-indigo-600"
-          >
-            <Video className="h-3 w-3" aria-hidden />
-            Görüşmeye git
-          </Link>
-        )}
+      {hasActions && (
+        <div className="flex shrink-0 flex-col items-end justify-between gap-1">
+          {onToggleCompleted && (
+            <CompletionCheckbox
+              checked={Boolean(event.completed)}
+              disabled={pending}
+              withLabel
+              onLight={expanded}
+              onChange={(next) => onToggleCompleted(event, next)}
+            />
+          )}
 
-        {personal && (onEdit || onDelete) && (
-          <div className="flex items-center gap-0.5">
-            {onEdit && (
-              <button
-                type="button"
-                aria-label="Çalışmayı düzenle"
-                onClick={() => onEdit(event)}
-                className="rounded-md p-1 hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
-              >
-                <Pencil className="h-3.5 w-3.5" />
-              </button>
-            )}
-            {onDelete && (
-              <button
-                type="button"
-                aria-label="Çalışmayı sil"
-                onClick={() => onDelete(event)}
-                className="rounded-md p-1 hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-              </button>
-            )}
-          </div>
-        )}
-      </div>
+          {(showEdit || showDelete) && (
+            <div className="flex items-center gap-0.5">
+              {showEdit && onEdit && (
+                <button
+                  type="button"
+                  aria-label="Çalışmayı düzenle"
+                  onClick={() => onEdit(event)}
+                  className={cn("rounded-md p-1 focus-visible:outline-none focus-visible:ring-2", expanded ? "hover:bg-black/5 focus-visible:ring-ring dark:hover:bg-white/10" : "hover:bg-white/20 focus-visible:ring-white/70")}
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                </button>
+              )}
+              {showDelete && onDelete && (
+                <button
+                  type="button"
+                  aria-label="Çalışmayı sil"
+                  onClick={() => onDelete(event)}
+                  className={cn("rounded-md p-1 focus-visible:outline-none focus-visible:ring-2", expanded ? "hover:bg-black/5 focus-visible:ring-ring dark:hover:bg-white/10" : "hover:bg-white/20 focus-visible:ring-white/70")}
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

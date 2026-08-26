@@ -2,7 +2,13 @@
 
 import { useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { fetchVerification, submitVerification } from "@/lib/dashboardApi";
+import {
+  confirmUniversityEmailCode,
+  fetchUniversityEmailVerification,
+  fetchVerification,
+  requestUniversityEmailCode,
+  submitVerification,
+} from "@/lib/dashboardApi";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,20 +17,24 @@ import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { cn, formatDate } from "@/lib/utils";
 import { Clock, CheckCircle, XCircle } from "lucide-react";
 
-const ACCEPTED_DOCUMENT_TYPES = [
+const STUDENT_ID_DOCUMENT_TYPES = [
   "image/jpeg",
   "image/png",
-  "image/webp",
   "application/pdf",
 ];
+const YKS_DOCUMENT_TYPES = ["application/pdf"];
 const MAX_DOCUMENT_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB
 
 // Shared by both the click-to-browse <input onChange> and the drag-and-drop
 // handler so there is exactly one place a file can be rejected, with one
 // message, regardless of how it arrived.
-function validateDocumentFile(file: File): string | null {
-  if (!ACCEPTED_DOCUMENT_TYPES.includes(file.type)) {
-    return "Desteklenmeyen dosya türü. JPEG, PNG, WEBP veya PDF yükleyin.";
+function validateDocumentFile(
+  file: File,
+  acceptedTypes: readonly string[],
+  acceptedTypeMessage: string
+): string | null {
+  if (!acceptedTypes.includes(file.type)) {
+    return acceptedTypeMessage;
   }
   if (file.size > MAX_DOCUMENT_SIZE_BYTES) {
     return "Dosya çok büyük. En fazla 10 MB yükleyebilirsiniz.";
@@ -35,6 +45,9 @@ function validateDocumentFile(file: File): string | null {
 export function VerificationForm() {
   const queryClient = useQueryClient();
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [universityEmail, setUniversityEmail] = useState("");
+  const [emailCode, setEmailCode] = useState("");
+  const [emailError, setEmailError] = useState<string | null>(null);
 
   const { data: verification, isLoading } = useQuery({
     queryKey: ["verification"],
@@ -47,6 +60,33 @@ export function VerificationForm() {
         throw error;
       }
     },
+  });
+  const { data: emailProof, isLoading: emailProofLoading } = useQuery({
+    queryKey: ["university-email-verification"],
+    queryFn: fetchUniversityEmailVerification,
+  });
+
+  const emailRequestMutation = useMutation({
+    mutationFn: requestUniversityEmailCode,
+    onSuccess: (result) => {
+      queryClient.setQueryData(["university-email-verification"], result);
+      setEmailError(null);
+      if (result.status === "review_required" || result.status === "under_review") {
+        toast.info("E-posta uzantın admin incelemesine alındı.");
+      } else {
+        toast.success("Doğrulama kodu üniversite e-postana gönderildi.");
+      }
+    },
+    onError: (error: unknown) => setEmailError(apiErrorMessage(error, "Kod gönderilemedi.")),
+  });
+  const emailConfirmMutation = useMutation({
+    mutationFn: confirmUniversityEmailCode,
+    onSuccess: (result) => {
+      queryClient.setQueryData(["university-email-verification"], result);
+      setEmailError(null);
+      toast.success("Üniversite e-postan doğrulandı.");
+    },
+    onError: (error: unknown) => setEmailError(apiErrorMessage(error, "Kod doğrulanamadı.")),
   });
 
   const submitMutation = useMutation({
@@ -83,21 +123,33 @@ export function VerificationForm() {
     const formData = new FormData(form);
     const studentIdFile = formData.get("student_id_document") as File | null;
     const yksFile = formData.get("yks_result_document") as File | null;
-    const email = (formData.get("university_email") as string)?.trim();
 
-    if (!studentIdFile?.size || !yksFile?.size || !email) {
-      setSubmitError("Tüm alanları doldurun ve her iki belgeyi yükleyin.");
+    if (!studentIdFile?.size || !yksFile?.size) {
+      setSubmitError("Her iki belgeyi de yükleyin.");
+      return;
+    }
+    const studentIdError = validateDocumentFile(
+      studentIdFile,
+      STUDENT_ID_DOCUMENT_TYPES,
+      "Öğrenci kimliği için JPEG, PNG veya PDF yükleyin."
+    );
+    const yksError = validateDocumentFile(
+      yksFile,
+      YKS_DOCUMENT_TYPES,
+      "YKS sonucu için ÖSYM'den indirdiğiniz orijinal PDF'i yükleyin."
+    );
+    if (studentIdError || yksError) {
+      setSubmitError(studentIdError || yksError);
       return;
     }
 
     const payload = new FormData();
     payload.append("student_id_document", studentIdFile);
     payload.append("yks_result_document", yksFile);
-    payload.append("university_email", email);
     submitMutation.mutate(payload);
   };
 
-  if (isLoading) {
+  if (isLoading || emailProofLoading) {
     return <p className="text-sm text-muted-foreground">Yükleniyor...</p>;
   }
 
@@ -112,6 +164,11 @@ export function VerificationForm() {
               Belgeleriniz yöneticilerimiz tarafından inceleniyor. Bu süreç
               genellikle 1-2 iş günü sürer.
             </p>
+            {verification.security_status === "safe" && (
+              <p className="mt-2 text-xs text-muted-foreground">
+                Dosya güvenlik kontrolü tamamlandı; incelemede yalnızca güvenli önizlemeler açılır.
+              </p>
+            )}
             <p className="mt-2 text-xs text-muted-foreground">
               Başvuru tarihi: {formatDate(verification.submitted_at)}
             </p>
@@ -137,7 +194,7 @@ export function VerificationForm() {
     );
   }
 
-  if (verification?.status === "rejected") {
+  if (verification?.status === "rejected" && emailProof?.status === "verified") {
     return (
       <div className="space-y-6">
         <div className="rounded-lg border border-red-200 bg-red-50/50 p-6 dark:border-red-800 dark:bg-red-950/30">
@@ -163,13 +220,108 @@ export function VerificationForm() {
     );
   }
 
+  if (emailProof?.status !== "verified") {
+    return (
+      <div className="space-y-5 rounded-lg border p-5">
+        {verification?.status === "rejected" && (
+          <div className="rounded-lg border border-red-200 bg-red-50/50 p-4 dark:border-red-800 dark:bg-red-950/30">
+            <p className="font-medium">Önceki başvurun tamamlanamadı</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {verification.rejection_reason || "Yeniden başvurmak için üniversite e-postanı doğrula."}
+            </p>
+          </div>
+        )}
+        <div>
+          <h2 className="text-lg font-semibold">Üniversite e-postanı doğrula</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Profilindeki üniversiteye ait e-posta adresine tek kullanımlık kod göndereceğiz.
+            Bu adım yalnızca bu kurumsal gelen kutusuna erişebildiğini kanıtlar.
+          </p>
+          <p className="mt-2 text-xs text-muted-foreground">
+            Bu süreçte işlenen veriler ve saklama süreleri için{" "}
+            <a href="/kvkk/hoca-dogrulama" className="font-medium text-primary underline">
+              Hoca Doğrulama Aydınlatma Metni
+            </a>
+            ’ni inceleyebilirsin.
+          </p>
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="university-email-proof">Üniversite e-postası</Label>
+          <Input
+            id="university-email-proof"
+            type="email"
+            value={universityEmail}
+            onChange={(event) => setUniversityEmail(event.target.value)}
+            placeholder="isim@universite.edu.tr"
+            autoComplete="email"
+            disabled={emailRequestMutation.isPending}
+          />
+          <p className="text-xs text-muted-foreground">
+            Alan adı profilindeki üniversiteyle eşleşmelidir. Adresin listede yoksa destek ekibi alan adını inceleyebilir.
+          </p>
+          <Button
+            type="button"
+            variant="outline"
+            disabled={emailRequestMutation.isPending || !universityEmail.trim()}
+            onClick={() => emailRequestMutation.mutate(universityEmail.trim())}
+          >
+            {emailRequestMutation.isPending ? "Kod gönderiliyor..." : emailProof?.status === "code_sent" ? "Kodu yeniden gönder" : "Kod gönder"}
+          </Button>
+        </div>
+        {emailProof?.status === "code_sent" && (
+          <div className="space-y-2 rounded-lg bg-muted/50 p-4">
+            <Label htmlFor="university-email-code">6 haneli kod</Label>
+            <Input
+              id="university-email-code"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              value={emailCode}
+              onChange={(event) => setEmailCode(event.target.value.replace(/\D/g, "").slice(0, 6))}
+              placeholder="000000"
+            />
+            <p className="text-xs text-muted-foreground">Kod {emailProof.email} adresine gönderildi ve 10 dakika geçerlidir.</p>
+            <Button
+              type="button"
+              disabled={emailConfirmMutation.isPending || emailCode.length !== 6}
+              onClick={() => emailConfirmMutation.mutate(emailCode)}
+            >
+              {emailConfirmMutation.isPending ? "Doğrulanıyor..." : "E-postayı doğrula"}
+            </Button>
+          </div>
+        )}
+        {(emailProof?.status === "review_required" || emailProof?.status === "under_review") && (
+          <div className="rounded-lg border border-amber-200 bg-amber-50/70 p-4 text-sm dark:border-amber-900 dark:bg-amber-950/20">
+            <p className="font-medium">E-posta uzantın incelemeye alındı</p>
+            <p className="mt-1 text-muted-foreground">
+              {emailProof.email} otomatik listede bulunamadı. Hesabın reddedilmedi;
+              admin ekibi üniversite uzantısını kontrol edecek. Farklı bir üniversite
+              adresin varsa yukarıdan tekrar deneyebilirsin.
+            </p>
+          </div>
+        )}
+        {emailError && <ErrorMessage message={emailError} />}
+      </div>
+    );
+  }
+
   return (
-    <VerificationUploadForm
-      onSubmit={handleSubmit}
-      submitMutation={submitMutation}
-      submitError={submitError}
-    />
+    <div className="space-y-5">
+      <div className="flex items-start gap-3 rounded-lg border border-emerald-200 bg-emerald-50/60 p-4 dark:border-emerald-900 dark:bg-emerald-950/20">
+        <CheckCircle className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
+        <div><p className="font-medium">Üniversite e-postası doğrulandı</p><p className="text-sm text-muted-foreground">{emailProof.email}</p></div>
+      </div>
+      <VerificationUploadForm onSubmit={handleSubmit} submitMutation={submitMutation} submitError={submitError} />
+    </div>
   );
+}
+
+function apiErrorMessage(error: unknown, fallback: string): string {
+  const data = (error as { response?: { data?: unknown } }).response?.data;
+  if (!data || typeof data !== "object") return fallback;
+  const body = data as Record<string, unknown>;
+  const fieldError = Object.values(body).find((value) => Array.isArray(value) && value[0]);
+  if (Array.isArray(fieldError) && fieldError[0]) return String(fieldError[0]);
+  return typeof body.detail === "string" ? body.detail : fallback;
 }
 
 function VerificationUploadForm({
@@ -186,8 +338,11 @@ function VerificationUploadForm({
       <div>
         <h2 className="text-lg font-semibold">Hesabını Doğrula</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Öğrenci kimliğin, YKS sonuç belgen ve üniversite e-posta adresinle
-          hesabını doğrula. Onaylanan hocalar daha fazla öğrenciye ulaşır.
+          Üniversite e-postan doğrulandı. Şimdi öğrenci kimliğini ve YKS sonuç
+          belgeni incelemeye gönder.
+        </p>
+        <p className="mt-2 text-xs text-muted-foreground">
+          Belgeler özel alanda tutulur; inceleme sonrasında saklama süresi dolunca silinir.
         </p>
       </div>
 
@@ -197,28 +352,18 @@ function VerificationUploadForm({
           name="student_id_document"
           label="Öğrenci Kimliği"
           helperText="Öğrenci kimlik kartınızın fotoğrafı veya taraması"
+          acceptedTypes={STUDENT_ID_DOCUMENT_TYPES}
+          acceptedTypeMessage="Öğrenci kimliği için JPEG, PNG veya PDF yükleyin."
         />
 
         <FileDropInput
           id="yks_result_document"
           name="yks_result_document"
           label="YKS Sonuç Belgesi"
-          helperText="YKS sonuç belgenizin ekran görüntüsü veya PDF'i"
+          helperText="ÖSYM AİS'ten indirdiğiniz orijinal sonuç PDF'i (ekran görüntüsü değil)"
+          acceptedTypes={YKS_DOCUMENT_TYPES}
+          acceptedTypeMessage="YKS sonucu için ÖSYM'den indirdiğiniz orijinal PDF'i yükleyin."
         />
-
-        <div className="space-y-2">
-          <Label htmlFor="university_email">Üniversite E-postası</Label>
-          <Input
-            id="university_email"
-            name="university_email"
-            type="email"
-            placeholder="isim@universite.edu.tr"
-            required
-          />
-          <p className="text-xs text-muted-foreground">
-            .edu.tr uzantılı üniversite e-postanız
-          </p>
-        </div>
 
         {submitError && <ErrorMessage message={submitError} />}
 
@@ -239,11 +384,15 @@ function FileDropInput({
   name,
   label,
   helperText,
+  acceptedTypes,
+  acceptedTypeMessage,
 }: {
   id: string;
   name: string;
   label: string;
   helperText: string;
+  acceptedTypes: readonly string[];
+  acceptedTypeMessage: string;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragActive, setIsDragActive] = useState(false);
@@ -256,7 +405,7 @@ function FileDropInput({
       setFileName(null);
       return;
     }
-    const validationError = validateDocumentFile(file);
+    const validationError = validateDocumentFile(file, acceptedTypes, acceptedTypeMessage);
     if (validationError) {
       setError(validationError);
       setFileName(null);
@@ -312,7 +461,7 @@ function FileDropInput({
           id={id}
           name={name}
           type="file"
-          accept="image/jpeg,image/png,image/webp,application/pdf"
+          accept={acceptedTypes.join(",")}
           required
           onChange={handleChange}
         />

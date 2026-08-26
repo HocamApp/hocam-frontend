@@ -76,6 +76,15 @@ export function formatDateLocal(d: Date): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
+/**
+ * Lesson dispute categories — used by BookingCard for booking.dispute_category.
+ *
+ * Not the coaching vocabulary: coaching disputes have their own, larger set
+ * (message_sla, program_absent, report_absent, scope_deficient, …) with
+ * different codes for the same idea — "technical" there, "technical_issue"
+ * here. Use coachingDisputeCategoryLabel from @/lib/coachingApi for those;
+ * routing them through this map falls through to the raw code for most of them.
+ */
 const DISPUTE_CATEGORY_LABELS: Record<string, string> = {
   tutor_no_show: "Hocanın derse katılmaması",
   technical_issue: "Teknik sorun",

@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { AxiosError } from "axios";
-import { FileAudio, ImageIcon, Mic, Paperclip, Reply, Send, Square, X } from "lucide-react";
+import { ImageIcon, Paperclip, Reply, Send, X } from "lucide-react";
 import { Message } from "@/types";
 import { sendMessage } from "@/lib/messagingApi";
 import { formatImageSize, prepareMessageImage } from "@/lib/messageImage";
@@ -41,10 +41,6 @@ export function MessageInput({
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const recorderRef = useRef<MediaRecorder | null>(null);
-  const recorderChunksRef = useRef<Blob[]>([]);
-  const recorderTimeoutRef = useRef<number | null>(null);
-  const [isRecording, setIsRecording] = useState(false);
 
   const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -101,39 +97,6 @@ export function MessageInput({
     setInputError(null);
   };
 
-  const stopRecording = () => {
-    if (recorderTimeoutRef.current) window.clearTimeout(recorderTimeoutRef.current);
-    recorderTimeoutRef.current = null;
-    recorderRef.current?.stop();
-  };
-
-  const startRecording = async () => {
-    if (isRecording || disabled) return;
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const preferredType = MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm" : undefined;
-      const recorder = new MediaRecorder(stream, preferredType ? { mimeType: preferredType } : undefined);
-      recorderChunksRef.current = [];
-      recorder.ondataavailable = (event) => { if (event.data.size) recorderChunksRef.current.push(event.data); };
-      recorder.onstop = () => {
-        stream.getTracks().forEach((track) => track.stop());
-        const type = recorder.mimeType || "audio/webm";
-        const extension = type.includes("ogg") ? "ogg" : type.includes("mp4") ? "m4a" : "webm";
-        const blob = new Blob(recorderChunksRef.current, { type });
-        if (blob.size) setSelectedAttachment(new File([blob], `sesli-mesaj.${extension}`, { type }));
-        setIsRecording(false);
-      };
-      recorderRef.current = recorder;
-      recorder.start();
-      setIsRecording(true);
-      // This is a recorder UX/resource cap only — not a server-side voice
-      // entitlement. The backend authoritatively validates bytes/container.
-      recorderTimeoutRef.current = window.setTimeout(stopRecording, 5 * 60 * 1000);
-    } catch {
-      setInputError("Mikrofon açılamadı. Ses dosyası eklemeyi deneyebilirsin.");
-    }
-  };
-
   const handleSubmit = async () => {
     const trimmed = text.trim();
     if ((!trimmed && !selectedImage && !selectedAttachment) || isSubmitting || isPreparingImage || disabled) return;
@@ -147,7 +110,9 @@ export function MessageInput({
         image: selectedImage ?? undefined,
         attachment: selectedAttachment ?? undefined,
         attachment_kind: selectedAttachment
-          ? selectedAttachment.type.startsWith("audio/") ? "voice" : selectedAttachment.type.startsWith("image/") ? "image" : "file"
+          ? selectedAttachment.type.startsWith("image/")
+            ? "image"
+            : "file"
           : undefined,
         reply_to: replyTo?.id,
       });
@@ -210,8 +175,6 @@ export function MessageInput({
   useEffect(() => {
     return () => {
       onTypingChange?.(false);
-      if (recorderTimeoutRef.current) window.clearTimeout(recorderTimeoutRef.current);
-      recorderRef.current?.stream.getTracks().forEach((track) => track.stop());
     };
   }, [onTypingChange]);
 
@@ -282,7 +245,7 @@ export function MessageInput({
         />
         <input
           type="file"
-          accept="image/jpeg,image/png,image/gif,image/webp,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.presentationml.presentation,audio/webm,audio/ogg,audio/mp4,audio/mpeg,.m4a,.mp3"
+          accept="image/jpeg,image/png,image/gif,image/webp,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.presentationml.presentation"
           hidden
           onChange={handleAttachmentSelect}
           id={`attachment-${conversationId}`}
@@ -305,11 +268,8 @@ export function MessageInput({
             <ImageIcon className="h-4 w-4" />
           )}
         </Button>
-        <Button type="button" size="icon" variant="ghost" onClick={() => document.getElementById(`attachment-${conversationId}`)?.click()} disabled={isSubmitting || disabled} aria-label="Dosya veya ses ekle">
+        <Button type="button" size="icon" variant="ghost" onClick={() => document.getElementById(`attachment-${conversationId}`)?.click()} disabled={isSubmitting || disabled} aria-label="Dosya ekle">
           <Paperclip className="h-4 w-4" />
-        </Button>
-        <Button type="button" size="icon" variant={isRecording ? "destructive" : "ghost"} onClick={isRecording ? stopRecording : startRecording} disabled={isSubmitting || disabled} aria-label={isRecording ? "Ses kaydını bitir" : "Ses kaydı başlat"}>
-          {isRecording ? <Square className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
         </Button>
         <Textarea
           ref={textareaRef}
@@ -355,7 +315,7 @@ export function MessageInput({
       </div>
       {selectedAttachment && (
         <div className="flex items-center gap-2 px-4 pb-3 text-xs text-muted-foreground">
-          {selectedAttachment.type.startsWith("audio/") ? <FileAudio className="h-4 w-4" /> : <Paperclip className="h-4 w-4" />}
+          <Paperclip className="h-4 w-4" />
           <span className="truncate">{selectedAttachment.name}</span>
           <button type="button" onClick={() => setSelectedAttachment(null)} className="underline">Kaldır</button>
         </div>

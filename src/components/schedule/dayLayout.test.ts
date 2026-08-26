@@ -141,4 +141,35 @@ describe("day layout", () => {
   it("handles an empty day", () => {
     assert.deepEqual(layoutDayEvents([]), []);
   });
+
+  // A card is never drawn shorter than MIN_CARD_HEIGHT, so a 30-minute block
+  // eats 52.5 minutes of canvas. Packing on real minutes called these two
+  // non-overlapping and gave both the full width; they then covered each other
+  // by ~19px on screen.
+  it("splits back-to-back short blocks that would overlap once drawn", () => {
+    const result = layoutOf([event("first", "18:00", 30), event("second", "18:30", 30)]);
+
+    assert.deepEqual(result, [
+      ["first", 0, 2],
+      ["second", 1, 2],
+    ]);
+  });
+
+  it("still gives touching full-length lessons the whole width", () => {
+    const result = layoutOf([event("first", "18:00", 60), event("second", "19:00", 60)]);
+
+    assert.deepEqual(result, [
+      ["first", 0, 1],
+      ["second", 0, 1],
+    ]);
+  });
+
+  it("does not widen a short block that has real air after it", () => {
+    const result = layoutOf([event("short", "18:00", 30), event("later", "19:00", 60)]);
+
+    assert.deepEqual(result, [
+      ["short", 0, 1],
+      ["later", 0, 1],
+    ]);
+  });
 });

@@ -3,7 +3,7 @@
  * a tutor's availability (backend allows this without auth).
  */
 import api from "./api";
-import { AvailabilityRule, TutorLaunchProgram, TutorVerification } from "@/types";
+import { AvailabilityRule, TutorLaunchProgram, TutorVerification, UniversityEmailVerification } from "@/types";
 
 export async function fetchAvailability(): Promise<AvailabilityRule[]> {
   const response = await api.get<AvailabilityRule[]>("/availability/");
@@ -51,6 +51,21 @@ export async function submitVerification(
     formData,
     { headers: { "Content-Type": "multipart/form-data" } }
   );
+  return response.data;
+}
+
+export async function fetchUniversityEmailVerification(): Promise<UniversityEmailVerification> {
+  const response = await api.get<UniversityEmailVerification>("/tutor-verification/university-email/");
+  return response.data;
+}
+
+export async function requestUniversityEmailCode(email: string): Promise<UniversityEmailVerification> {
+  const response = await api.post<UniversityEmailVerification>("/tutor-verification/university-email/request/", { email });
+  return response.data;
+}
+
+export async function confirmUniversityEmailCode(code: string): Promise<UniversityEmailVerification> {
+  const response = await api.post<UniversityEmailVerification>("/tutor-verification/university-email/confirm/", { code });
   return response.data;
 }
 

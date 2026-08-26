@@ -9,7 +9,6 @@ import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import { FavoriteButton } from "@/components/tutors/FavoriteButton";
-import { VerifiedTutorMark } from "@/components/tutors/VerifiedTutorMark";
 import { trackHocaBul } from "@/lib/hocaBulAnalytics";
 import { caveatTexts, reasonTexts } from "@/lib/hocaBulResults";
 import { formatLessonCount, formatPrice, formatRating } from "@/lib/utils";
@@ -109,12 +108,9 @@ export function HocaBulResultCard({
             <div className="min-w-0 flex-1">
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
-                  <div className="flex min-w-0 items-center gap-1">
-                    <h2 className="truncate text-lg font-semibold text-foreground sm:text-xl">
-                      {tutor.name} {tutor.surname}
-                    </h2>
-                    <VerifiedTutorMark verified={tutor.is_verified} />
-                  </div>
+                  <h2 className="truncate text-lg font-semibold text-foreground sm:text-xl">
+                    {tutor.name} {tutor.surname}
+                  </h2>
                   <p className="mt-0.5 text-sm text-muted-foreground">
                     {tutor.university} · {tutor.department}
                   </p>

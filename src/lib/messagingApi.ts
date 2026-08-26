@@ -101,7 +101,8 @@ export interface SendMessagePayload {
   message_text?: string;
   image?: File;
   attachment?: File;
-  attachment_kind?: "image" | "file" | "voice";
+  /** Voice messaging was removed; only image and file attachments may be sent. */
+  attachment_kind?: "image" | "file";
   reply_to?: string;
 }
 
