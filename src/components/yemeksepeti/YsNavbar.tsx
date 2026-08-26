@@ -266,7 +266,10 @@ export function YsNavbar({ startCoachmark = true }: Props) {
       </header>
 
       <div
-        className="ys-shell flex items-center gap-4 border-t"
+        /* Hidden on phones: MobileTabBar already carries these destinations
+           at the bottom of the screen, and running both would put the same
+           menu in two places at once. */
+        className="ys-shell hidden items-center gap-4 border-t md:flex"
         style={{
           height: "var(--app-header-row-2-h)",
           borderColor: "var(--ys-neutral-divider)",

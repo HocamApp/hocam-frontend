@@ -104,14 +104,12 @@
      * the cause of the height and not a description of it — that is what
      * stops it going stale the next time someone edits the tab strip.
      *
-     * The navbar renders both rows at every width for now; the strip is
-     * hidden on phones in a later commit, and this sum follows it there.
+     * Below md the tab strip is hidden — the bottom tab bar already carries
+     * navigation on a phone — so the header is row 1 alone there.
      */
     --app-header-row-1-h: 3.5rem;
     --app-header-row-2-h: 3.5rem;
-    --app-header-h: calc(
-      var(--app-header-row-1-h) + var(--app-header-row-2-h)
-    );
+    --app-header-h: var(--app-header-row-1-h);
 
     /* Off the Tailwind grid on purpose: 6, 8, 12, 16 and 24 are all
        reachable by typing a stock utility, so landing on one means
@@ -138,6 +136,9 @@
   @media (min-width: 768px) {
     :root {
       --app-header-row-1-h: 4rem;
+      --app-header-h: calc(
+        var(--app-header-row-1-h) + var(--app-header-row-2-h)
+      );
     }
   }
 
