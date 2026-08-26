@@ -37,6 +37,6 @@ export default function DashboardPage() {
   }
 
   // Fallback if role is missing (e.g. old token)
-  router.replace("/tutors");
+  router.replace("/");
   return null;
 }

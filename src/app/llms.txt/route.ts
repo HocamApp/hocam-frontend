@@ -17,7 +17,7 @@ export function GET() {
     "## Temel sayfalar",
     "",
     `- [YKS online özel ders](${SITE_URL}/yks-ozel-ders): TYT ve AYT için doğrulanmış hocaları karşılaştırma ve ders modelini tanıma sayfası.`,
-    `- [Doğrulanmış hocaları incele](${SITE_URL}/tutors): Ders, sınav türü, uygunluk, fiyat ve YKS sıralaması gibi ölçütlerle hoca arama ve karşılaştırma sayfası.`,
+    `- [Doğrulanmış hocaları incele](${SITE_URL}/): Ders, sınav türü, uygunluk, fiyat ve YKS sıralaması gibi ölçütlerle hoca arama ve karşılaştırma sayfası.`,
     `- [TYT Matematik özel ders](${SITE_URL}/yks/tyt/matematik-ozel-ders): TYT Matematik dersi veren doğrulanmış hocalar.`,
     `- [AYT Matematik özel ders](${SITE_URL}/yks/ayt/matematik-ozel-ders): AYT Matematik dersi veren doğrulanmış hocalar.`,
     `- [Hocam nasıl çalışır?](${SITE_URL}/nasil-calisir): Hoca arama, profil karşılaştırma ve online ders adımları.`,
