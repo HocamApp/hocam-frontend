@@ -38,7 +38,7 @@ export default function AydinlatmaMetniPage() {
 
       <div className="mt-6 rounded-lg border bg-muted/40 p-4 text-sm leading-6">
         Bu metin seni bilgilendirir, senden onay istemez. Onayın gereken
-        durumlarda ayrıca ve açıkça sorarız. Onaylarını{" "}
+        durumlarda ayrıca ve açıkça sorarız. Daha önce verdiğin onayları{" "}
         <Link href="/profile/gizlilik" className="text-primary underline">
           Gizlilik ve Verilerim
         </Link>{" "}
@@ -50,8 +50,10 @@ export default function AydinlatmaMetniPage() {
           <p>
             HOCAM, YKS’ye hazırlanan öğrencilerle doğrulanmış üniversite
             öğrencisi öğretmenleri buluşturan çevrimiçi bir özel ders
-            platformudur. Bu platformda işlenen kişisel veriler bakımından veri
-            sorumlusu HOCAM’dır.
+            platformudur. Platform işletmecisinin tam yasal kimliği ve
+            tebligata elverişli adresi işletme kuruluş işlemleri tamamlandıktan
+            sonra bu bölümde yayımlanacaktır. Bu sürede kişisel veri
+            başvuruları için kvkk@hocamozelders.com adresi kullanılır.
           </p>
         </Section>
 
@@ -90,12 +92,18 @@ export default function AydinlatmaMetniPage() {
             güvende tutmak ve işleyişe dair sana bilgi vermek için.
           </p>
           <p>
-            Öğretmen profilinin herkese açık gösterilmesi, öğrenme takibi, sana
-            özel öneriler, yapay zekâ asistanı ve tanıtım e-postaları{" "}
-            <strong>yalnızca açık rızanla</strong> yapılır. Bu onayları
-            istediğin an geri alabilirsin. Rızaya dayanmayan işlemler
-            (sözleşmenin ifası, mali kayıt saklama) onayından bağımsız devam
-            eder.
+            Hesap, rezervasyon, ders, zorunlu bildirim ve ödeme işlemleri;
+            sözleşmenin kurulması veya ifası, hukuki yükümlülük, bir hakkın
+            tesisi ve meşru menfaat gibi KVKK’nın 5. maddesindeki uygun işleme
+            şartlarına dayanır. Açık rıza, başka bir işleme şartının yerine
+            veya hizmetin zorunlu koşulu olarak kullanılmaz.
+          </p>
+          <p>
+            Onaya bağlı keşif analitiği yalnızca aktif tercihinle çalışır.
+            Öğrenme profillemesi, dış hizmete veri gönderen yapay zekâ işleme
+            ve ticari tanıtım iletileri için hukuki ve operasyonel koşullar
+            tamamlanmadan bu işlemler etkinleştirilmez. Yeni açık rıza toplama,
+            her faaliyet için doğru hukuki dayanak doğrulanana kadar kapalıdır.
           </p>
         </Section>
 
@@ -107,24 +115,26 @@ export default function AydinlatmaMetniPage() {
           <p>
             Hizmet sağlayıcılarımız: Railway (uygulama ve veri tabanı),
             Supabase (belge ve görsel depolama), Vercel (web sitesi), 8x8/JaaS
-            (görüntülü ders), Google (Google ile giriş ve yapay zekâ asistanı),
-            Resend (e-posta). Ayrıca kanunen talep edilmesi halinde yetkili
-            kurumlarla.
+            (görüntülü ders), Google (Google ile giriş; ayrıca etkinleştirilmesi
+            halinde yapay zekâ asistanı) ve Resend (e-posta). Ayrıca kanunen
+            talep edilmesi halinde yetkili kurumlarla.
           </p>
         </Section>
 
         <Section title="5. Yurt dışına aktarım">
           <p>
-            Yukarıdaki sağlayıcıların sunucuları Türkiye dışındadır, bu nedenle
-            verilerin yurt dışına aktarılır.
+            Yukarıdaki sağlayıcıların bazı altyapı, destek ve alt-işleyenleri
+            Türkiye dışında olabilir; bu hizmetler kullanıldığında verilerin
+            yurt dışındaki altyapıya aktarılabilir veya oradan erişilebilir.
           </p>
           <p>
             KVKK’nın 9. maddesi bu aktarımlar için uygun güvenceler öngörür.
-            Sağlayıcılarımızla imzalanacak <strong>standart sözleşmelerin
-            hazırlık süreci devam etmektedir</strong>; tamamlandığında
-            sözleşmeler Kişisel Verileri Koruma Kurulu’na bildirilecek ve bu
-            sayfa güncellenecektir. Süreç tamamlanmadan bu konuda kesin bir
-            beyanda bulunmuyoruz.
+            Her hizmetteki gerçek aktarım zinciri, taraf rolleri, ülke veya
+            region ve uygulanabilir mekanizma doğrulanmaktadır. Standart
+            sözleşme ancak ilgili akış için uygun yöntem olarak seçilirse doğru
+            taraf modülüyle imzalanır ve süresinde Kurul’a bildirilir. Bu
+            doğrulama tamamlanmadan kesin bir uygunluk veya mekanizma beyanında
+            bulunmuyor ve dışa veri gönderen yeni özellikleri açmıyoruz.
           </p>
         </Section>
 
@@ -154,27 +164,28 @@ export default function AydinlatmaMetniPage() {
             talep etme haklarına sahipsin.
           </p>
           <p>
-            Başvurunu{" "}
+            Başvurunu her zaman kvkk@hocamozelders.com adresine; çevrimiçi kanal
+            etkinse ayrıca{" "}
             <Link href="/profile/gizlilik" className="text-primary underline">
               Gizlilik ve Verilerim
             </Link>{" "}
-            sayfasından veya kvkk@hocamozelders.com adresinden iletebilirsin.
-            En geç 30 gün içinde cevaplarız. Cevabımızı yetersiz bulursan
-            Kişisel Verileri Koruma Kurulu’na şikâyette bulunabilirsin.
+            sayfasından iletebilirsin. En geç 30 gün içinde cevaplarız.
+            Cevabımızı yetersiz bulursan Kişisel Verileri Koruma Kurulu’na
+            şikâyette bulunabilirsin.
           </p>
         </Section>
 
         <Section title="8. 18 yaşından küçüksen">
           <p>
-            Rızana dayalı özellikler için velinin veya vasinin onayı gerekir.
-            Kayıt sırasında doğum tarihini sorar, 18 yaşından küçüksen velinin
-            e-postası üzerinden onayını alırız.
+            Çocuk kullanıcıların hesap sahipliği, yaş tespiti ve veli/vasi
+            doğrulama yöntemi hukuki inceleme altındadır. Bu yöntem
+            kesinleşmeden yeni veli/vasi onayı toplanmaz ve buna bağlı isteğe
+            bağlı özellikler açılmaz.
           </p>
           <p>
-            Veli onayı alınmadan öğrenme takibi, öneri sistemi, yapay zekâ
-            asistanı ve tanıtım e-postaları senin için kapalı kalır;{" "}
-            <strong>ders alma ve mesajlaşma çalışmaya devam eder.</strong> Velin
-            senin adına tüm haklarını kullanabilir.
+            Dersin yürütülmesi ve bunun için gerekli mesajlaşma gibi temel
+            işlevler korunur. Velin veya vasin, yetkisini doğruladıktan sonra
+            senin adına KVKK kapsamındaki hakları kullanabilir.
           </p>
         </Section>
 

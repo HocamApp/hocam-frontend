@@ -58,6 +58,7 @@ function loadGisScript(): Promise<void> {
 interface GoogleSignInButtonProps {
   onCredential: (credential: string) => void;
   text?: "signin_with" | "signup_with" | "continue_with";
+  disabled?: boolean;
 }
 
 /**
@@ -68,6 +69,7 @@ interface GoogleSignInButtonProps {
 export function GoogleSignInButton({
   onCredential,
   text = "continue_with",
+  disabled = false,
 }: GoogleSignInButtonProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [loadFailed, setLoadFailed] = useState(false);
@@ -81,6 +83,7 @@ export function GoogleSignInButton({
       : configuredClientId;
 
   useEffect(() => {
+    if (disabled) return;
     if (!clientId || !containerRef.current) return;
     let cancelled = false;
     let resizeTimer: number | undefined;
@@ -130,7 +133,19 @@ export function GoogleSignInButton({
       window.clearTimeout(resizeTimer);
       window.removeEventListener("resize", handleResize);
     };
-  }, [clientId, onCredential, text]);
+  }, [clientId, disabled, onCredential, text]);
+
+  if (disabled) {
+    return (
+      <button
+        type="button"
+        disabled
+        className="min-h-11 w-full rounded-full border border-white/10 bg-white/5 text-sm font-medium text-neutral-500"
+      >
+        Google ile kaydol
+      </button>
+    );
+  }
 
   if (!clientId) {
     return (
