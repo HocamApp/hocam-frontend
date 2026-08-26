@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { useEffect, useMemo, useState } from "react";
@@ -72,7 +73,50 @@ function TutorCardSkeleton() {
   );
 }
 
+/**
+ * Suspense boundary, and it has to be here rather than at the call site.
+ *
+ * The body reads `useSearchParams`, which opts its whole route into dynamic
+ * rendering unless it is suspended — the production build fails outright with
+ * `missing-suspense-with-csr-bailout` rather than degrading. Putting the
+ * boundary beside the hook keeps the rest of the homepage prerenderable
+ * instead of taking the hero, band and FAQ down with it.
+ *
+ * The fallback is the heading plus a grid of the real card skeletons, so the
+ * prerendered shell has the same shape as the resolved page.
+ */
 export function YsTutorDirectory() {
+  return (
+    <Suspense fallback={<DirectoryFallback />}>
+      <DirectoryBody />
+    </Suspense>
+  );
+}
+
+function DirectoryFallback() {
+  return (
+    <section className="mt-16 md:mt-24" aria-labelledby="ys-tutor-list-title">
+      <h2
+        id="ys-tutor-list-title"
+        className="mb-6 text-2xl font-semibold leading-[1.3125] md:text-[2rem]"
+      >
+        Hocalar
+      </h2>
+      <div
+        aria-busy
+        aria-label="Hocalar yükleniyor"
+        role="status"
+        className="grid grid-cols-1 gap-6 md:grid-cols-2"
+      >
+        {Array.from({ length: PAGE_SIZE }).map((_, index) => (
+          <TutorCardSkeleton key={index} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function DirectoryBody() {
   /* Read rather than received. The search box lives in the header, which is
      rendered by a layout and has no path down to this component — so the URL
      carries the term between them. It also survives a reload and a back

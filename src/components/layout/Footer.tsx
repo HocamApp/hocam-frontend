@@ -1,5 +1,19 @@
 "use client";
 
+/*
+ * NO LONGER MOUNTED.
+ *
+ * The application shell is `YsNavbar` + `YsFooter`, rendered by
+ * `src/app/(main)/layout.tsx`. Nothing imports this file any more.
+ *
+ * Kept rather than deleted while the new shell settles: this is the only
+ * remaining description of the pre-rebrand navigation, and `navItems.ts` —
+ * which it and `MobileTabBar` share — is still the source of truth for the
+ * mobile bottom bar. Delete this, `AnimatedNavbarLinks.tsx` and `Footer.tsx`
+ * together, and only once the mobile bar has been moved off `navItems.ts`
+ * too.
+ */
+
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
