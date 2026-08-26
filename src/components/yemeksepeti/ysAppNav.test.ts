@@ -102,4 +102,32 @@ describe("ys app nav", () => {
       );
     }
   });
+
+  /**
+   * Asks a running server, because source cannot answer this.
+   *
+   * The first public strip linked to `/rehber` and `/cikmis-sorular`. Both look
+   * like ordinary routes in the tree — the second even has its own `page.tsx` —
+   * and both return 404: one has no page of its own, the other is gated. A
+   * filesystem check would have caught one of the two and passed the other.
+   *
+   * Skipped rather than failed when nothing is listening, so the suite stays
+   * runnable without a server. Point it elsewhere with YS_NAV_BASE_URL.
+   */
+  it("links only to pages a signed-out visitor actually gets", async (t) => {
+    const base = process.env.YS_NAV_BASE_URL ?? "http://localhost:3000";
+    try {
+      await fetch(base, { signal: AbortSignal.timeout(2000) });
+    } catch {
+      return t.skip(`no server on ${base}`);
+    }
+
+    for (const tab of YS_PUBLIC_TABS) {
+      const res = await fetch(`${base}${tab.href}`, { redirect: "manual" });
+      assert.ok(
+        res.status < 400,
+        `${tab.label} -> ${tab.href} returned ${res.status}`,
+      );
+    }
+  });
 });

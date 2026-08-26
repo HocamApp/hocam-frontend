@@ -53,12 +53,20 @@ type Flags = {
   packageRequestsEnabled: boolean;
 };
 
-/** Left strip for a signed-out visitor. Every destination is public. */
+/**
+ * Left strip for a signed-out visitor.
+ *
+ * Every href here is checked against a live server in the test below, not
+ * merely eyeballed. The first draft pointed at `/rehber` and
+ * `/cikmis-sorular`; the first has no page of its own (only
+ * `/rehber/online-ozel-ders-ucretleri` exists) and the second is gated, so
+ * both returned 404 from a tab that looked perfectly reasonable in source.
+ */
 export const YS_PUBLIC_TABS: YsNavItem[] = [
   { label: "Hocalar", href: "/", icon: GraduationCap, exact: true },
   { label: "Nasıl Çalışır", href: "/nasil-calisir", icon: Question },
-  { label: "YKS Rehberi", href: "/rehber", icon: Path },
-  { label: "Çıkmış Sorular", href: "/cikmis-sorular", icon: FileText },
+  { label: "Doğrulama", href: "/hocalar-nasil-dogrulaniyor", icon: FileText },
+  { label: "Başarı Hikayeleri", href: "/basari-hikayeleri", icon: Path },
 ];
 
 /** Right-hand icon cluster. Notifications is a popover, not a route. */
