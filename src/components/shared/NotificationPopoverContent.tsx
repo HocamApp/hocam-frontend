@@ -3,15 +3,20 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { X } from "lucide-react";
+import { Bell, X } from "@phosphor-icons/react";
+import { AnimatePresence, motion } from "framer-motion";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/hooks/useAuth";
-import { formatRelativeDate } from "@/lib/utils";
+import { formatRelativeTime } from "@/lib/utils";
 import {
   fetchNotifications,
   markNotificationRead,
   deleteNotification,
 } from "@/lib/notificationsApi";
+import {
+  NOTIFICATION_TONE_CLASS,
+  getNotificationAppearance,
+} from "@/components/shared/notificationAppearance";
 import type { Notification, NotificationSummary } from "@/types/api";
 
 function getNotificationHref(n: Notification, role?: string): string | null {
@@ -125,9 +130,16 @@ export function NotificationPopoverContent() {
 
   if (isLoading) {
     return (
-      <div className="space-y-3 p-4">
-        <Skeleton className="h-10 w-full" />
-        <Skeleton className="h-10 w-full" />
+      <div className="space-y-2 p-3">
+        {[0, 1, 2].map((row) => (
+          <div key={row} className="flex items-center gap-3 rounded-card p-3">
+            <Skeleton className="size-10 shrink-0 rounded-[14px]" />
+            <div className="min-w-0 flex-1 space-y-2">
+              <Skeleton className="h-4 w-2/3" />
+              <Skeleton className="h-3 w-1/2" />
+            </div>
+          </div>
+        ))}
       </div>
     );
   }
@@ -142,63 +154,94 @@ export function NotificationPopoverContent() {
 
   if (items.length === 0) {
     return (
-      <div className="p-4 text-center text-sm text-muted-foreground">
-        Bildirim yok
+      <div className="flex flex-col items-center gap-2 px-6 py-10 text-center">
+        <Bell className="size-8 text-ink-mid" weight="regular" aria-hidden />
+        <p className="text-body font-medium text-ink">Yeni bildirim yok</p>
+        <p className="text-small text-ink-mid">
+          Ders ve mesaj hareketlerin burada görünür.
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="divide-y">
-      {items.map((n: Notification) => (
-        <div
-          key={n.id}
-          role="button"
-          tabIndex={0}
-          className="flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/50"
-          onClick={() => handleNotificationClick(n)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.preventDefault();
-              handleNotificationClick(n);
-            }
-          }}
-        >
-          <span
-            className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${
-              n.is_read ? "bg-transparent" : "bg-blue-500"
-            }`}
-          />
-          <div className="min-w-0 flex-1 overflow-hidden">
-            <p
-              className={`break-words text-sm leading-snug [overflow-wrap:anywhere] ${
-                n.is_read ? "font-normal" : "font-semibold"
-              }`}
+    /* `AnimatePresence` and `layout` are the useful half of the reference
+       component. Its interval that reveals one child at a time and loops is
+       demo behaviour — on a real list it would drip-feed notifications on a
+       timer and start over. What is kept is the part that communicates state:
+       delete a row and the rest close the gap instead of teleporting. */
+    <div className="max-h-[420px] overflow-y-auto p-2">
+      <AnimatePresence initial={false}>
+        {items.map((n: Notification) => {
+          const { icon: Icon, tone } = getNotificationAppearance(
+            n.type,
+            n.related_object_type,
+          );
+          const body = getNotificationBody(n);
+          return (
+            <motion.div
+              key={n.id}
+              layout
+              exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+              transition={{ duration: 0.18, ease: "easeOut" }}
+              className="mb-2 last:mb-0"
             >
-              {n.title}
-            </p>
-            {getNotificationBody(n) && (
-              <p className="mt-0.5 line-clamp-2 break-words text-xs text-muted-foreground [overflow-wrap:anywhere]">
-                {getNotificationBody(n)}
-              </p>
-            )}
-            <p className="mt-1 text-xs text-muted-foreground">
-              {formatRelativeDate(n.created_at)}
-            </p>
-          </div>
-          <button
-            type="button"
-            aria-label="Bildirimi sil"
-            className="shrink-0 rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
-            onClick={(e) => {
-              e.stopPropagation();
-              deleteMutation.mutate(n.id);
-            }}
-          >
-            <X className="h-3.5 w-3.5" />
-          </button>
-        </div>
-      ))}
+              <div
+                role="button"
+                tabIndex={0}
+                /* Hairline and a surface, no shadow: the popover floats, the
+                   rows inside it sit in its flow. Hover moves the border to
+                   ink, the same state every other surface here uses. */
+                className="group flex w-full items-start gap-3 rounded-card border border-line bg-surface p-3 text-left transition-colors duration-[--duration-state] hover:border-ink"
+                onClick={() => handleNotificationClick(n)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    handleNotificationClick(n);
+                  }
+                }}
+              >
+                {/* 14px inside the 20px card, following the nesting
+                    subtraction rule. */}
+                <span
+                  className={`flex size-10 shrink-0 items-center justify-center rounded-[14px] ${NOTIFICATION_TONE_CLASS[tone]}`}
+                  aria-hidden
+                >
+                  <Icon className="size-5" weight="regular" />
+                </span>
+
+                <div className="min-w-0 flex-1 overflow-hidden">
+                  <p className="flex flex-wrap items-baseline gap-x-1.5 text-body font-medium leading-snug text-ink">
+                    <span className="break-words [overflow-wrap:anywhere]">
+                      {n.title}
+                    </span>
+                    <span className="text-small font-normal text-ink-mid">
+                      · {formatRelativeTime(n.created_at)}
+                    </span>
+                  </p>
+                  {body && (
+                    <p className="mt-0.5 line-clamp-2 break-words text-small text-ink-mid [overflow-wrap:anywhere]">
+                      {body}
+                    </p>
+                  )}
+                </div>
+
+                <button
+                  type="button"
+                  aria-label="Bildirimi sil"
+                  className="shrink-0 rounded-input p-1 text-line transition-colors duration-[--duration-state] hover:text-error focus-visible:text-error group-hover:text-ink-mid"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    deleteMutation.mutate(n.id);
+                  }}
+                >
+                  <X className="size-4" />
+                </button>
+              </div>
+            </motion.div>
+          );
+        })}
+      </AnimatePresence>
     </div>
   );
 }

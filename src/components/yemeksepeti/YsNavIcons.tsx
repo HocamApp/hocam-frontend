@@ -89,7 +89,7 @@ export function YsNavIcons({
             className="absolute right-1 top-1"
           />
         </span>
-        <PopoverContent align="end" className="w-80 p-0">
+        <PopoverContent align="end" className="w-[min(24rem,calc(100vw-1.5rem))] p-0">
           <NotificationPopoverContent />
         </PopoverContent>
       </Popover>

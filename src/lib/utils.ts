@@ -107,6 +107,29 @@ export function formatDisputeCategory(category: string): string {
 
 // Format a date as a Turkish relative string ("2 gün önce", "1 hafta önce", etc.)
 // Falls back to formatDate for dates older than a year.
+/**
+ * Minute-granular relative time, for surfaces where "Bugün" is not an answer.
+ *
+ * A notification that arrived four minutes ago and one that arrived nine hours
+ * ago both read as "Bugün" through `formatRelativeDate`, which is the right
+ * grain for a review and the wrong one for a feed you check to see what just
+ * happened. Past a day it hands back to `formatRelativeDate` rather than
+ * counting hours forever.
+ */
+export function formatRelativeTime(dateString: string): string {
+  const parsed = new Date(dateString).getTime();
+  if (Number.isNaN(parsed)) return "";
+
+  const minutes = Math.floor((Date.now() - parsed) / 60_000);
+  if (minutes < 1) return "az önce";
+  if (minutes < 60) return `${minutes} dk önce`;
+
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} sa önce`;
+
+  return formatRelativeDate(dateString);
+}
+
 export function formatRelativeDate(dateString: string): string {
   const days = Math.floor(
     (Date.now() - new Date(dateString).getTime()) / 86_400_000
