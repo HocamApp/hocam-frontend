@@ -4,7 +4,13 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { GraduationCap, X } from "@phosphor-icons/react";
 
-import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useAuth } from "@/hooks/useAuth";
 import { getLocalStorage } from "@/lib/safeStorage";
 import { markEntryPromoSeen, shouldShowEntryPromo } from "@/lib/homeEntryPromo";
@@ -37,7 +43,18 @@ import { MAX_PACKAGE_DISCOUNT_PERCENT, TRIAL_MINUTES } from "./ysHomeFacts";
 /** Long enough for the page to paint first, short enough to still read as a greeting. */
 const OPEN_DELAY_MS = 700;
 
-export function YsEntryDialog({ onResolved }: { onResolved: () => void }) {
+/**
+ * Fired once this dialog has decided whether to open, so the navbar's coachmark
+ * knows when the overlay is out of its way.
+ *
+ * A window event rather than a callback because the two now live in different
+ * trees: the dialog is rendered by the page, the navbar by the layout above it,
+ * and there is no prop path between them. `src/lib/api.ts` decouples the
+ * session-expiry dialog the same way.
+ */
+export const YS_ENTRY_PROMO_RESOLVED_EVENT = "hocam:ys-entry-promo-resolved";
+
+export function YsEntryDialog() {
   const { isAuthenticated } = useAuth();
   const [open, setOpen] = useState(false);
   const resolvedRef = useRef(false);
@@ -45,8 +62,8 @@ export function YsEntryDialog({ onResolved }: { onResolved: () => void }) {
   const resolve = useCallback(() => {
     if (resolvedRef.current) return;
     resolvedRef.current = true;
-    onResolved();
-  }, [onResolved]);
+    window.dispatchEvent(new CustomEvent(YS_ENTRY_PROMO_RESOLVED_EVENT));
+  }, []);
 
   useEffect(() => {
     // Signed-in visitors are not the audience — "Ücretsiz kaydol" is nonsense
@@ -90,7 +107,9 @@ export function YsEntryDialog({ onResolved }: { onResolved: () => void }) {
             className="pointer-events-none absolute -left-4 -top-4 size-28 rotate-[-12deg] text-white/10"
             aria-hidden
           />
-          <p className="relative text-xs font-bold tracking-[0.22em] text-white/70">HOCAM</p>
+          <p className="relative text-xs font-bold tracking-[0.22em] text-white/70">
+            HOCAM
+          </p>
 
           <DialogTitle className="relative mt-4 text-[2.5rem] font-extrabold leading-[1.05] tracking-tight text-white">
             İlk ders
@@ -99,7 +118,9 @@ export function YsEntryDialog({ onResolved }: { onResolved: () => void }) {
           </DialogTitle>
 
           <p className="relative mt-5 inline-flex items-baseline gap-2 rounded-pill bg-white px-5 py-2 text-pink">
-            <span className="text-3xl font-extrabold leading-none">{TRIAL_MINUTES}</span>
+            <span className="text-3xl font-extrabold leading-none">
+              {TRIAL_MINUTES}
+            </span>
             <span className="text-sm font-bold">dakika</span>
           </p>
 
