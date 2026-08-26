@@ -29,15 +29,15 @@ export function YsVerifiedBand() {
       aria-labelledby="ys-band-title"
     >
       <div className="ys-shell">
-        <h2 id="ys-band-title" className="max-w-[18ch] text-h1-m font-bold md:text-h1">
+        <h2 id="ys-band-title" className="max-w-[13ch] text-h1-m font-bold md:text-h1">
           Belgesi olmayan kimse ders veremez
         </h2>
 
-        {/* The three documents are the TutorVerification fields, and the
-            dashboard stays closed until an admin approves them. */}
-        <p className="mt-4 max-w-[52ch] text-body-l text-white/[0.88]">
+        {/* The three documents are the TutorVerification fields. The sentence
+            that used to follow this one only restated the heading. */}
+        <p className="mt-4 max-w-[44ch] text-body-l text-white/[0.88]">
           Öğrenci kimliği, YKS sonuç belgesi ve üniversite e-posta adresi tek tek kontrol
-          edilir. Doğrulama tamamlanmadan hiçbir hoca ders vermeye başlayamaz.
+          edilir.
         </p>
 
         <Link

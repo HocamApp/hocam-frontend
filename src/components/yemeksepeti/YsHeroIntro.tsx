@@ -8,9 +8,11 @@ import Link from "next/link";
  * second column. The yellow chip and the sample tutor card the mock had beside
  * it are deliberately not here.
  *
- * The padding is what keeps the diagonal band below it out of the first
- * screen. Trim it and the band climbs back up under the navbar, which is the
- * arrangement this replaced.
+ * The bottom padding is measured, not chosen. The band below has to start at
+ * 723px the way it does in the mock, and our navbar is 45px taller than the
+ * mock's single row — so the hero gives back what the navbar took. Trim it and
+ * the band's heading rises into the first screen, where the mock shows only
+ * the cut.
  *
  * Both buttons say "hoca" rather than "öğretmen". Everything else on the page
  * does — the nav tab, the directory heading, the footer's own "Hoca ol" link
@@ -18,7 +20,7 @@ import Link from "next/link";
  */
 export function YsHeroIntro() {
   return (
-    <section className="py-16 md:py-24" aria-labelledby="ys-hero-title">
+    <section className="py-16 md:pb-[90px] md:pt-24" aria-labelledby="ys-hero-title">
       <h1 id="ys-hero-title" className="text-display-m md:text-display">
         Dünün öğrencisi,
         <br />
