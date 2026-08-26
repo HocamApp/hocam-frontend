@@ -8,7 +8,7 @@ import {
   Student,
   Target,
   Wallet,
-  Warning,
+  WarningCircle,
 } from "@phosphor-icons/react";
 
 /**
@@ -60,8 +60,27 @@ type Rule = {
 
 const RULES: Rule[] = [
   {
-    // Anything that went wrong, before the coaching rule can claim the
-    // disputes and the booking rule can claim the cancellations.
+    /*
+     * Genuine failures only — the platform could not do its job.
+     *
+     * `--error` is a saturated brick and at 40px it reads as a heavy brown
+     * block, which is the right weight for something broken and much too heavy
+     * for a lesson that simply did not go ahead. DESIGN.md draws the same line
+     * from the other direction: error is for "field errors, failures", and
+     * "warnings use ink". So this list is short on purpose.
+     */
+    match: (type) =>
+      type === "technical_failure" ||
+      type === "trust_safety_flag" ||
+      type.includes("sla_breach"),
+    appearance: { icon: WarningCircle, tone: "error" },
+  },
+  {
+    /*
+     * Things that did not happen, or need attention. A cancelled lesson, a
+     * declined request, an open dispute: all status, none of them a failure of
+     * the product. Ink, per the doc's own rule that there is no warning hue.
+     */
     match: (type) =>
       type.includes("dispute") ||
       type.includes("sla") ||
@@ -69,11 +88,10 @@ const RULES: Rule[] = [
       type.includes("declined") ||
       type.includes("overdue") ||
       type.includes("absence") ||
-      type === "technical_failure" ||
-      type === "trust_safety_flag" ||
       type === "tutor_auto_hidden" ||
+      type === "tutor_leaving" ||
       type === "message_request_blocked",
-    appearance: { icon: Warning, tone: "error" },
+    appearance: { icon: WarningCircle, tone: "ink" },
   },
   {
     match: (type) =>
@@ -84,11 +102,17 @@ const RULES: Rule[] = [
     appearance: { icon: CheckCircle, tone: "success" },
   },
   {
-    // Money, which is the one thing gold is for outside the YKS rank.
+    /*
+     * Money, which is the one thing gold is for outside the YKS rank.
+     *
+     * `_earning` rather than `earning`: "learning_plan_proposed" contains the
+     * bare substring and was being painted gold with a wallet on it. Caught by
+     * rendering every type in a grid, not by reading the predicate.
+     */
     match: (type) =>
       type.includes("refund") ||
       type.includes("purchase") ||
-      type.includes("earning"),
+      type.includes("_earning"),
     appearance: { icon: Wallet, tone: "gold" },
   },
   {

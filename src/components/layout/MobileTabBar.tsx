@@ -162,7 +162,7 @@ export function MobileTabBar() {
           side="top"
           align="end"
           sideOffset={8}
-          className="w-[min(20rem,calc(100vw-1rem))] p-0"
+          className="w-[min(20rem,calc(100vw-1rem))] border-none bg-transparent p-0 shadow-none"
         >
           {descriptor.id === "notifications" && <NotificationPopoverContent />}
         </PopoverContent>

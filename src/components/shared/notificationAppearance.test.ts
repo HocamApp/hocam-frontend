@@ -11,21 +11,30 @@ const toneOf = (type: string, related = "") =>
   getNotificationAppearance(type, related).tone;
 
 describe("notification appearance", () => {
-  it("sends anything that went wrong to the error tone", () => {
-    // Listed before the coaching and booking rules on purpose: a dispute is a
-    // coaching type and a cancellation is a booking type, so a naive
-    // family-first ordering would paint both as ordinary.
+  it("keeps the error tone for actual failures only", () => {
+    // --error is a saturated brick and reads as a heavy brown block at tile
+    // size. It belongs to things that are broken, and to nothing else.
     for (const type of [
-      "coaching_dispute_opened",
-      "booking_cancelled",
-      "coaching_sla_breach",
-      "lesson_request_declined",
-      "coaching_report_overdue",
-      "student_absence_reported",
       "technical_failure",
       "trust_safety_flag",
+      "coaching_sla_breach",
     ]) {
       assert.equal(toneOf(type), "error", type);
+    }
+  });
+
+  it("treats a cancellation as status, not as a failure", () => {
+    // A lesson that did not go ahead is a state change. DESIGN.md has no
+    // warning hue and says warnings use ink, which is the same answer.
+    for (const type of [
+      "booking_cancelled",
+      "lesson_request_declined",
+      "coaching_dispute_opened",
+      "coaching_report_overdue",
+      "student_absence_reported",
+      "tutor_auto_hidden",
+    ]) {
+      assert.equal(toneOf(type), "ink", type);
     }
   });
 
@@ -33,10 +42,14 @@ describe("notification appearance", () => {
     assert.equal(toneOf("coaching_purchase"), "gold");
     assert.equal(toneOf("period_refund"), "gold");
     assert.equal(toneOf("coaching_tutor_earning"), "gold");
+    // "learning" contains "earning". This was gold with a wallet on it until a
+    // grid of every type made it visible.
+    assert.equal(toneOf("learning_plan_proposed"), "ink");
 
     assert.equal(toneOf("booking_confirmed"), "success");
     assert.equal(toneOf("lesson_request_accepted"), "success");
-    assert.equal(toneOf("coaching_dispute_resolved"), "error"); // dispute wins
+    // The dispute rule is listed first, so it wins over "resolved".
+    assert.equal(toneOf("coaching_dispute_resolved"), "ink");
   });
 
   it("gives conversation the one hue reserved for it", () => {
