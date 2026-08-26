@@ -1,6 +1,6 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -77,8 +77,15 @@ export function YsTutorDirectory() {
      rendered by a layout and has no path down to this component — so the URL
      carries the term between them. It also survives a reload and a back
      button, which the old prop never did. */
+  const router = useRouter();
   const searchParams = useSearchParams();
   const search = searchParams.get("search") ?? undefined;
+  /* Favourites is a view of this same list rather than a page of its own, and
+     it is client-side: the favourites endpoint returns the tutors directly, so
+     there is nothing to page or filter server-side. Same URL contract the old
+     /tutors screen used, so an existing `?favorites=1` link still means what
+     it meant. */
+  const showFavorites = searchParams.get("favorites") === "1";
 
   const [filters, setFilters] = useState<TutorFiltersType>({});
   const [page, setPage] = useState(1);
@@ -119,7 +126,13 @@ export function YsTutorDirectory() {
     staleTime: Infinity,
   });
 
-  const { favoriteIds, toggle, isFavoritePending } = useFavorites();
+  const {
+    favorites,
+    favoriteIds,
+    toggle,
+    isFavoritePending,
+    isLoading: favoritesLoading,
+  } = useFavorites();
 
   /* `isLoading` alone only covers the very first fetch — `placeholderData`
      keeps the previous page on screen for every filter change after that, so
@@ -128,12 +141,20 @@ export function YsTutorDirectory() {
      controls", which is exactly when the placeholder belongs.
      Held back 200ms either way: a cached turn resolves faster than that, and
      a one-frame flash reads as a glitch rather than as progress. */
-  const isResolving = isLoading || isPlaceholderData;
+  const isResolving = showFavorites
+    ? favoritesLoading
+    : isLoading || isPlaceholderData;
   const showSkeleton = useDelayedVisible(isResolving);
 
   const defaultOrdering = defaultTutorOrdering(effectiveFilters);
-  const results = tutors?.results ?? [];
-  const totalPages = Math.max(1, Math.ceil((tutors?.count ?? 0) / PAGE_SIZE));
+  const results = showFavorites
+    ? favorites.map((favorite) => favorite.tutor)
+    : (tutors?.results ?? []);
+  // The favourites list arrives whole, so paging it would be a control that
+  // never has a second page to move to.
+  const totalPages = showFavorites
+    ? 1
+    : Math.max(1, Math.ceil((tutors?.count ?? 0) / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
   const hasActiveFilters = Object.values(effectiveFilters).some(
     (value) => (value ?? "") !== "",
@@ -297,7 +318,7 @@ export function YsTutorDirectory() {
               aria-busy
               aria-label="Hocalar yükleniyor"
               role="status"
-              className={`grid grid-cols-1 gap-6 ${filtersOpen ? "" : "md:grid-cols-2"}`}
+              className={`grid grid-cols-1 gap-6 ${filtersOpen && !showFavorites ? "" : "md:grid-cols-2"}`}
             >
               {Array.from({ length: PAGE_SIZE }).map((_, index) => (
                 <TutorCardSkeleton key={index} />
@@ -305,7 +326,20 @@ export function YsTutorDirectory() {
             </div>
           )}
 
+          {showEmptyState && showFavorites && (
+            <EmptyState
+              title="Henüz favori hocan yok"
+              description="Beğendiğin hocaları kartlarındaki kalbe dokunarak buraya kaydedebilirsin."
+              action={
+                <Button variant="outline" onClick={() => router.push("/")}>
+                  Hocaları keşfet
+                </Button>
+              }
+            />
+          )}
+
           {showEmptyState &&
+            !showFavorites &&
             (hasActiveFilters ? (
               <EmptyState
                 title="Hoca bulunamadı"
@@ -326,7 +360,7 @@ export function YsTutorDirectory() {
           {!showSkeleton && !error && results.length > 0 && (
             <>
               <div
-                className={`grid grid-cols-1 gap-6 ${filtersOpen ? "" : "md:grid-cols-2"}`}
+                className={`grid grid-cols-1 gap-6 ${filtersOpen && !showFavorites ? "" : "md:grid-cols-2"}`}
               >
                 {results.map((tutor) => (
                   <TutorCard
