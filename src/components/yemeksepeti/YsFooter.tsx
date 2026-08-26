@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   InstagramLogo,
   LinkedinLogo,
@@ -114,6 +115,12 @@ function FooterLink({ entry }: { entry: FooterEntry }) {
 }
 
 export function YsFooter() {
+  const pathname = usePathname();
+  const isMessagesRoute =
+    pathname === "/messages" || pathname.startsWith("/messages/");
+
+  if (isMessagesRoute) return null;
+
   const hasSocialLinks = SOCIAL_LINKS.some((social) => social.href);
 
   return (
