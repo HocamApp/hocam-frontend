@@ -77,7 +77,7 @@ export function AvailabilityCalendar({ availability, bookings = [], editable = t
             numberOfMonths={1}
             modifiers={{ available: availableDates, closed: closedDates, booked: bookedDates }}
             modifiersClassNames={{
-              available: "[&>button]:bg-success [&>button]:font-medium [&>button]:text-white [&>button]:hover:bg-success/90",
+              available: "[&>button]:bg-success-soft [&>button]:font-medium [&>button]:text-ink",
               closed: "[&>button]:border [&>button]:border-error [&>button]:text-error [&>button]:line-through",
               booked: "[&>button]:after:absolute [&>button]:after:bottom-1 [&>button]:after:size-1 [&>button]:after:rounded-full [&>button]:after:bg-pink",
             }}

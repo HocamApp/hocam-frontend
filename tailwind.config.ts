@@ -30,6 +30,7 @@ const config: Config = {
         },
         line: "var(--line)",
         success: "var(--success)",
+        "success-soft": "var(--success-soft)",
         error: "var(--error)",
 
         background: "hsl(var(--background))",

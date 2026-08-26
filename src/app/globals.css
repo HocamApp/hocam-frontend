@@ -83,6 +83,12 @@
     --ink-mid: #5c6b6d;
     --line: #e6dddd;
     --success: #1c7a55;
+    /* --success at 14% over white, precomputed. Tailwind cannot inject an
+       alpha into a var that holds a hex, and a calendar's available day needs
+       a fill soft enough to sit under a whole grid of them without shouting.
+       It lands in the same lightness family as --line, so it belongs on this
+       paper rather than reading as a highlighter. */
+    --success-soft: #e0ece7;
     --error: #b33a24;
 
     /* Off the Tailwind grid on purpose: 6, 8, 12, 16 and 24 are all
