@@ -15,6 +15,9 @@ import {
 export interface GoogleAuthPayload {
   credential: string;
   role?: "student" | "tutor";
+  notice_code?: string;
+  notice_version?: string;
+  notice_acknowledged?: true;
 }
 
 export async function googleAuth(

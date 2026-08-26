@@ -55,8 +55,6 @@ export function LoginForm({
   const { isAuthenticated, isLoading, setAuth, user } = useAuth();
   const [generalError, setGeneralError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
-  const [pendingCredential, setPendingCredential] = useState<string | null>(null);
-  const [googleLoading, setGoogleLoading] = useState(false);
   const authHandledByFormRef = useRef(false);
 
   const form = useForm<LoginFormValues>({
@@ -142,54 +140,25 @@ export function LoginForm({
   const handleGoogleCredential = useCallback(
     async (credential: string) => {
       setGeneralError(null);
-      setGoogleLoading(true);
       try {
         const resp = await googleAuth({ credential });
-        if ("needs_role" in resp && forcedGoogleRole) {
-          const completed = await googleAuth({ credential, role: forcedGoogleRole });
-          if ("needs_role" in completed) {
-            setGeneralError("Google hesabı oluşturulamadı. Lütfen tekrar deneyin.");
+        if ("needs_role" in resp) {
+          // New Google accounts must go through RegisterForm so the current
+          // KVKK notice is displayed and acknowledged before account creation.
+          if (onCreateAccount) {
+            onCreateAccount();
           } else {
-            await finishAuthSuccess(completed);
+            const roleQuery = forcedGoogleRole ? `?role=${forcedGoogleRole}` : "";
+            router.push(`/register${roleQuery}`);
           }
-        } else if ("needs_role" in resp) {
-          // New user — collect a role, then retry with the same credential.
-          setPendingCredential(credential);
         } else {
           await finishAuthSuccess(resp);
         }
       } catch {
         setGeneralError("Google ile giriş başarısız oldu. Lütfen tekrar deneyin.");
-      } finally {
-        setGoogleLoading(false);
       }
     },
-    [finishAuthSuccess, forcedGoogleRole]
-  );
-
-  const handleGoogleRoleChoice = useCallback(
-    async (role: "student" | "tutor") => {
-      if (!pendingCredential) return;
-      setGeneralError(null);
-      setGoogleLoading(true);
-      try {
-        const resp = await googleAuth({ credential: pendingCredential, role });
-        if ("needs_role" in resp) {
-          setGeneralError("Hesap oluşturulamadı. Lütfen tekrar deneyin.");
-          setPendingCredential(null);
-          return;
-        }
-        await finishAuthSuccess(resp);
-      } catch {
-        setGeneralError(
-          "Google ile giriş başarısız oldu. Bağlantının süresi dolmuş olabilir, tekrar deneyin."
-        );
-        setPendingCredential(null);
-      } finally {
-        setGoogleLoading(false);
-      }
-    },
-    [pendingCredential, finishAuthSuccess]
+    [finishAuthSuccess, forcedGoogleRole, onCreateAccount, router]
   );
 
   if (isLoading) {
@@ -325,33 +294,10 @@ export function LoginForm({
       </div>
 
       <div className="animate-element animate-delay-800">
-        {pendingCredential ? (
-          <div className="space-y-3">
-            <p className="text-center text-sm text-neutral-300">
-              Devam etmek için hesap türünü seç
-            </p>
-            <div className="flex gap-3">
-              <button
-                type="button"
-                disabled={googleLoading}
-                onClick={() => handleGoogleRoleChoice("student")}
-                className="flex-1 rounded-2xl border border-white/15 bg-white/5 py-3 text-sm font-medium text-white transition-colors hover:bg-white/10 disabled:opacity-60"
-              >
-                Öğrenciyim
-              </button>
-              <button
-                type="button"
-                disabled={googleLoading}
-                onClick={() => handleGoogleRoleChoice("tutor")}
-                className="flex-1 rounded-2xl border border-white/15 bg-white/5 py-3 text-sm font-medium text-white transition-colors hover:bg-white/10 disabled:opacity-60"
-              >
-                Hocayım
-              </button>
-            </div>
-          </div>
-        ) : (
-          <GoogleSignInButton onCredential={handleGoogleCredential} text="continue_with" />
-        )}
+        <GoogleSignInButton
+          onCredential={handleGoogleCredential}
+          text="continue_with"
+        />
       </div>
 
       <p className="animate-element animate-delay-900 text-center text-sm text-neutral-400">

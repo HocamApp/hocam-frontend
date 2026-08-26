@@ -168,6 +168,9 @@ export interface RegisterRequest {
   password: string;
   password_confirm: string;
   role: "student" | "tutor";
+  notice_code: string;
+  notice_version: string;
+  notice_acknowledged: true;
 }
 
 export interface RegisterStartResponse {

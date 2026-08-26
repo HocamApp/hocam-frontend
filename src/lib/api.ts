@@ -21,6 +21,7 @@ const PUBLIC_AUTH_PATHS = new Set([
   "/auth/register/confirm/",
   "/auth/password-reset/",
   "/auth/password-reset-confirm/",
+  "/privacy/notices/registration/",
 ]);
 
 // Public authentication requests must never inherit a stale user or admin

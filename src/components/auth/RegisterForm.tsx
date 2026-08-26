@@ -29,6 +29,10 @@ import { cn } from "@/lib/utils";
 import { GlassInputWrapper } from "@/components/auth/AuthSplitScreen";
 import { AydinlatmaMetniPreview } from "@/components/privacy/AydinlatmaMetniPreview";
 import {
+  fetchRegistrationNotice,
+  type RegistrationNoticeConfig,
+} from "@/lib/privacyApi";
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -87,11 +91,27 @@ export function RegisterForm({
   const [verificationCode, setVerificationCode] = useState("");
   const [isConfirming, setIsConfirming] = useState(false);
   const [noticeOpen, setNoticeOpen] = useState(false);
+  const [noticeConfig, setNoticeConfig] = useState<RegistrationNoticeConfig | null>(null);
+  const [noticeConfigFailed, setNoticeConfigFailed] = useState(false);
   const [noticeLoaded, setNoticeLoaded] = useState(false);
   const [noticeViewed, setNoticeViewed] = useState(false);
   const [noticeAcknowledged, setNoticeAcknowledged] = useState(false);
   const authHandledByFormRef = useRef(false);
   const handleNoticeReady = useCallback(() => setNoticeLoaded(true), []);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchRegistrationNotice()
+      .then((config) => {
+        if (!cancelled) setNoticeConfig(config);
+      })
+      .catch(() => {
+        if (!cancelled) setNoticeConfigFailed(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const form = useForm<RegisterFormValues>({
     defaultValues: {
@@ -123,7 +143,7 @@ export function RegisterForm({
 
   const onSubmit = async (data: RegisterFormValues) => {
     setGeneralError(null);
-    if (!noticeAcknowledged) {
+    if (!noticeAcknowledged || !noticeConfig) {
       setGeneralError(
         "Kayıt olmak için KVKK Aydınlatma Metni’ni görüntüleyip bilgilendirildiğini onaylamalısın."
       );
@@ -143,6 +163,9 @@ export function RegisterForm({
       const res = await registerUser({
         ...parsed.data,
         role: parsed.data.role as "student" | "tutor",
+        notice_code: noticeConfig.code,
+        notice_version: noticeConfig.version,
+        notice_acknowledged: true,
       });
       if ("requires_verification" in res) {
         setPendingEmail(res.email);
@@ -219,7 +242,7 @@ export function RegisterForm({
   const handleGoogleCredential = useCallback(
     async (credential: string) => {
       setGeneralError(null);
-      if (!noticeAcknowledged) {
+      if (!noticeAcknowledged || !noticeConfig) {
         setGeneralError(
           "Google ile kayıt olmak için önce KVKK Aydınlatma Metni’ni görüntüleyip bilgilendirildiğini onaylamalısın."
         );
@@ -229,17 +252,33 @@ export function RegisterForm({
         form.getValues("role") === "tutor" ? "tutor" : "student"
       );
       try {
-        const resp = await googleAuth({ credential, role: selectedRole });
+        const resp = await googleAuth({
+          credential,
+          role: selectedRole,
+          notice_code: noticeConfig.code,
+          notice_version: noticeConfig.version,
+          notice_acknowledged: true,
+        });
         if ("needs_role" in resp) {
           setGeneralError("Kayıt tamamlanamadı. Lütfen tekrar deneyin.");
           return;
         }
         await completeAuth(resp);
-      } catch {
-        setGeneralError("Google ile kayıt başarısız oldu. Lütfen tekrar deneyin.");
+      } catch (error) {
+        if (
+          axios.isAxiosError(error) &&
+          error.response?.status === 400 &&
+          error.response?.data?.notice_version
+        ) {
+          setGeneralError(
+            "KVKK Aydınlatma Metni güncellendi. Lütfen sayfayı yenileyip güncel metni inceleyin."
+          );
+        } else {
+          setGeneralError("Google ile kayıt başarısız oldu. Lütfen tekrar deneyin.");
+        }
       }
     },
-    [completeAuth, form, lockedRole, noticeAcknowledged]
+    [completeAuth, form, lockedRole, noticeAcknowledged, noticeConfig]
   );
 
   if (isLoading) {
@@ -494,8 +533,9 @@ export function RegisterForm({
           <div className="space-y-3 rounded-2xl border border-white/10 bg-white/[0.04] p-4">
             <button
               type="button"
+              disabled={!noticeConfig}
               onClick={() => setNoticeOpen(true)}
-              className="text-left text-sm font-medium text-white underline underline-offset-4"
+              className="text-left text-sm font-medium text-white underline underline-offset-4 disabled:cursor-not-allowed disabled:text-neutral-500"
             >
               KVKK Aydınlatma Metni’ni görüntüle
             </button>
@@ -519,7 +559,9 @@ export function RegisterForm({
               </span>
             </label>
             <p id="kvkk-acknowledgement-help" className="text-xs leading-5 text-neutral-500">
-              Bu kutu açık rıza değildir. Metni görüntüledikten sonra etkinleşir.
+              {noticeConfigFailed
+                ? "Aydınlatma Metni bilgisi alınamadı. Kayıt için sayfayı yenileyin."
+                : "Bu kutu açık rıza değildir. Metni görüntüledikten sonra etkinleşir."}
             </p>
           </div>
 
@@ -565,7 +607,12 @@ export function RegisterForm({
             </DialogDescription>
           </DialogHeader>
           <div className="min-h-0 flex-1 overflow-y-auto bg-background">
-            <AydinlatmaMetniPreview onReady={handleNoticeReady} />
+            {noticeConfig && (
+              <AydinlatmaMetniPreview
+                noticeUrl={noticeConfig.url}
+                onReady={handleNoticeReady}
+              />
+            )}
           </div>
           <DialogFooter className="shrink-0 border-t p-4 sm:space-x-0">
             <button
