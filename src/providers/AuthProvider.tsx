@@ -8,6 +8,7 @@ import {
   ReactNode,
 } from "react";
 import Cookies from "js-cookie";
+import { AUTH_TOKEN_MAX_AGE_DAYS } from "@/lib/browserStorageInventory";
 import { User } from "@/types";
 import { fetchMe } from "@/lib/authApi";
 import { IMPERSONATION_ENDED_EVENT } from "@/lib/api";
@@ -130,7 +131,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     Cookies.remove("admin_impersonation_token");
     Cookies.set("auth_token", nextToken, {
-      expires: 7, // days
+      expires: AUTH_TOKEN_MAX_AGE_DAYS,
       // Not HttpOnly (js-cookie can't set that) — documented architectural
       // limitation. These at least block plaintext transmission and
       // cross-site sends of the cookie itself.
