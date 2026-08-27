@@ -270,7 +270,7 @@ function NextLessonCard({ booking }: { booking: Booking }) {
           </div>
         </div>
         <div className="mt-8 flex flex-col gap-3 border-t border-line pt-6 sm:flex-row sm:items-center">
-          <Button asChild size="lg">
+          <Button asChild size="lg" className="text-white hover:text-white">
             <Link href="/profile/lessons?tab=upcoming">Dersi görüntüle</Link>
           </Button>
           <Button asChild variant="outline" size="lg" className="justify-start">
