@@ -213,18 +213,8 @@
 
 /* ------------------------------------------------------------------ tabs -- */
 
-/*
- * Rebuilt from the captured page's own tab rules, gesture for gesture:
- *
- *   idle     no underline, muted text
- *   hover    a 30px pill springs out from the centre + a faint grey plate
- *   selected the same pill, held at full width
- *
- * The spring is the reference's `--bdsMotionEasingBounce`. Animating `width`
- * with an overshoot easing is not what you'd reach for from scratch, but the
- * whole point of this page is to match that motion — a transform-based
- * substitute reads visibly different at the ends of the sweep.
- */
+/* The underline grows from its centre with a transform, keeping the tab row
+   still and the interaction calm in both themes. */
 
 .ys-tab {
   position: relative;
@@ -259,15 +249,14 @@
   position: absolute;
   bottom: 0;
   left: 50%;
-  transform: translateX(-50%);
-  width: 0;
+  width: 100%;
+  transform: translateX(-50%) scaleX(0);
+  transform-origin: center;
   height: 4px;
   border-radius: 20px;
   opacity: 0;
   background-color: var(--ys-neutral-strong);
-  transition:
-    width 150ms cubic-bezier(0.35, 0.12, 0.14, 1.42),
-    opacity 150ms cubic-bezier(0.35, 0.12, 0.14, 1.42);
+  transition: transform 150ms ease-out, opacity 150ms ease-out;
 }
 
 .ys-tab:hover {
@@ -276,7 +265,7 @@
 }
 
 .ys-tab:hover::after {
-  width: 30px;
+  transform: translateX(-50%) scaleX(0.35);
   opacity: 1;
 }
 
@@ -285,9 +274,9 @@
 }
 
 .ys-tab[data-selected="true"]::after {
-  width: 100%;
+  transform: translateX(-50%) scaleX(1);
   opacity: 1;
-  transition: width 200ms cubic-bezier(0.35, 0.12, 0.14, 1.42);
+  transition: transform 200ms ease-out, opacity 150ms ease-out;
 }
 
 /* A selected tab keeps its plate white — only unselected tabs light up. */
@@ -296,7 +285,7 @@
 }
 
 .ys-tab[data-selected="true"]:hover::after {
-  width: 100%;
+  transform: translateX(-50%) scaleX(1);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -658,6 +647,13 @@
   font-size: 0.75rem;
   font-weight: 600;
   text-shadow: 0 1px 2px rgb(0 0 0 / 35%);
+}
+
+/* The marquee clips itself instead of painting a pale overlay above the
+ * cards, so dark-mode text and hover states keep their real contrast. */
+.ys-marquee-mask {
+  -webkit-mask-image: linear-gradient(to right, transparent, black 7%, black 93%, transparent);
+  mask-image: linear-gradient(to right, transparent, black 7%, black 93%, transparent);
 }
 
 /*

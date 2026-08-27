@@ -76,15 +76,15 @@ export function AnimatedSearchBar({
         expandedOffset={50}
         classNames={{
           trigger:
-            "border border-input bg-muted/80 text-foreground ring-ring/30 hover:bg-accent focus-visible:ring-ring focus-visible:ring-offset-background",
+            "border border-line bg-surface text-ink ring-ring/30 hover:bg-paper focus-visible:ring-ring focus-visible:ring-offset-background",
           input: "text-foreground placeholder:text-muted-foreground",
           /* The trigger is overridden to a light pill above, so the clear
              button needs dark-on-light rather than GooeyInput's own
              light-on-dark default. */
-          clear: "text-muted-foreground hover:bg-foreground/10 hover:text-foreground",
+          clear: "text-ink-mid hover:bg-paper hover:text-ink",
           bubbleSurface:
             tone === "brand"
-              ? "border border-brand-600 bg-brand-600 text-white ring-brand-600/30 dark:border-brand-500 dark:bg-brand-500"
+              ? "border border-pink bg-pink text-white ring-pink/30"
               : undefined,
         }}
       />

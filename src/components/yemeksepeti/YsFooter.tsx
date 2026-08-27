@@ -124,12 +124,12 @@ export function YsFooter() {
   const hasSocialLinks = SOCIAL_LINKS.some((social) => social.href);
 
   return (
-    <footer className="mt-16 md:mt-24 border-t" style={{ borderColor: "var(--ys-neutral-divider)" }}>
+    <footer className="mt-16 border-t border-line bg-paper text-ink md:mt-24">
       <div className="ys-shell py-10">
         <div className="grid grid-cols-2 gap-x-6 gap-y-8 md:grid-cols-4 lg:grid-cols-5">
           {FOOTER_COLUMNS.map((column) => (
             <div key={column.heading}>
-              <h4 className="mb-3 text-sm font-semibold">{column.heading}</h4>
+              <h4 className="mb-3 text-sm font-semibold text-ink">{column.heading}</h4>
               <ul className="space-y-2">
                 {column.entries.map((entry) => (
                   <li key={entry.label}>
@@ -141,7 +141,7 @@ export function YsFooter() {
           ))}
 
           <div className="col-span-2 md:col-span-4 lg:col-span-1">
-            <h4 className="mb-3 text-sm font-semibold">Hocam mobilde</h4>
+            <h4 className="mb-3 text-sm font-semibold text-ink">Hocam mobilde</h4>
             <p className="ys-footer-text mb-3 block">Mobil uygulama yakında.</p>
             {/* Deliberately inert: there is no Hocam app yet. Both badges
                 become real anchors the moment they are handed an href. */}
@@ -152,10 +152,7 @@ export function YsFooter() {
           </div>
         </div>
 
-        <div
-          className="mt-10 flex flex-col gap-6 border-t pt-6 md:flex-row md:items-start md:justify-between"
-          style={{ borderColor: "var(--ys-neutral-divider)" }}
-        >
+        <div className="mt-10 flex flex-col gap-6 border-t border-line pt-6 md:flex-row md:items-start md:justify-between">
           <div className="min-w-0">
             <div className="flex items-center gap-3">
               <BrandMark size="sm" />

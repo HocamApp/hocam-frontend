@@ -4,34 +4,34 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --background: 0 38% 97%;
+    --foreground: 186 86% 5%;
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 186 86% 5%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    --popover-foreground: 186 86% 5%;
+    --primary: 341 100% 49%;
+    --primary-foreground: 0 0% 100%;
     /* Neutrals warmed from cool blue (hue 210-222) toward the brand hue
        (352) at very low saturation, so the brand ramp above can blend
        into surfaces instead of only sitting on top of them. --background,
        --card, and --primary are deliberately untouched — pure white stays
        pure white, and --primary at 11% lightness has an imperceptible hue
        either way, so no CTA on the site moves. */
-    --secondary: 350 20% 97%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 350 20% 97%;
-    --muted-foreground: 350 8% 46%;
-    --accent: 350 20% 97%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --secondary: 0 38% 97%;
+    --secondary-foreground: 186 86% 5%;
+    --muted: 0 38% 97%;
+    --muted-foreground: 183 8% 39%;
+    --accent: 0 38% 97%;
+    --accent-foreground: 186 86% 5%;
     /* Deepened from 60.2% lightness so error states stay visually distinct
        from the brand ramp — same red family, ~8deg hue apart, was nearly
        indistinguishable at matching lightness. */
-    --destructive: 0 72% 51%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 350 15% 91%;
-    --input: 350 15% 91%;
-    --ring: 222.2 84% 4.9%;
+    --destructive: 9 66% 42%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 16% 88%;
+    --input: 0 16% 88%;
+    --ring: 186 86% 5%;
     --radius: 0.5rem;
     /* Brand ramp. Was anchored to the old logo coral #FE4059; the logo has
        since been recoloured to DESIGN.md's --pink (#FA0050), so this ramp no
@@ -86,6 +86,7 @@
        `bg-white`. DESIGN.md separates surfaces by value plus a hairline, and a
        literal white cannot participate in that once there are two themes. */
     --surface: #ffffff;
+    --skeleton: #ede6e6;
     --success: #1c7a55;
     /* --success at 14% over white, precomputed. Tailwind cannot inject an
        alpha into a var that holds a hex, and a calendar's available day needs
@@ -212,37 +213,37 @@
     --paper: #0f1719;
     --surface: #182225;
     --line: #2a3639;
+    --skeleton: #344246;
     --ink: #ece6e6;
     --ink-mid: #9baaac;
     /* --success at 14% over the dark surface, same construction as light. */
     --success-soft: #17332b;
 
-
-    --background: 222 47% 11%;
-    --foreground: 214 32% 91%;
-    --card: 220 37% 14%;
-    --card-foreground: 214 32% 91%;
-    --popover: 219 36% 16%;
-    --popover-foreground: 214 32% 91%;
-    --primary: 213 94% 68%;
-    --primary-foreground: 222 47% 11%;
+    --background: 192 25% 8%;
+    --foreground: 0 14% 91%;
+    --card: 193 21% 12%;
+    --card-foreground: 0 14% 91%;
+    --popover: 193 21% 12%;
+    --popover-foreground: 0 14% 91%;
+    --primary: 341 100% 49%;
+    --primary-foreground: 0 0% 100%;
     /* Same warming as light mode, same low-saturation discipline, applied
        to the existing dark lightness bands (hue rotated to 352, saturation
        brought down to roughly the same 20%/8%/15% bands light mode uses —
        lightness is untouched so the surfaces stay exactly as dark).
        --background, --card, --popover, and --primary stay untouched, same
        reasoning as light mode. */
-    --secondary: 350 20% 22%;
-    --secondary-foreground: 214 32% 91%;
-    --muted: 350 20% 20%;
-    --muted-foreground: 350 8% 65%;
-    --accent: 350 20% 24%;
-    --accent-foreground: 214 32% 91%;
-    --destructive: 0 63% 45%;
-    --destructive-foreground: 210 40% 96%;
-    --border: 350 15% 27%;
-    --input: 350 15% 27%;
-    --ring: 213 94% 68%;
+    --secondary: 193 21% 12%;
+    --secondary-foreground: 0 14% 91%;
+    --muted: 192 15% 19%;
+    --muted-foreground: 186 9% 64%;
+    --accent: 192 15% 19%;
+    --accent-foreground: 0 14% 91%;
+    --destructive: 9 66% 42%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 192 15% 19%;
+    --input: 192 15% 19%;
+    --ring: 0 14% 91%;
   }
 }
 
@@ -258,7 +259,8 @@
     width: 0;
   }
   body {
-    @apply bg-background text-foreground;
+    background-color: var(--paper);
+    color: var(--ink);
   }
 }
 
@@ -306,15 +308,33 @@
   animation: slide-right 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
-.animate-delay-100 { animation-delay: 0.1s; }
-.animate-delay-200 { animation-delay: 0.2s; }
-.animate-delay-300 { animation-delay: 0.3s; }
-.animate-delay-400 { animation-delay: 0.4s; }
-.animate-delay-500 { animation-delay: 0.5s; }
-.animate-delay-600 { animation-delay: 0.6s; }
-.animate-delay-700 { animation-delay: 0.7s; }
-.animate-delay-800 { animation-delay: 0.8s; }
-.animate-delay-900 { animation-delay: 0.9s; }
+.animate-delay-100 {
+  animation-delay: 0.1s;
+}
+.animate-delay-200 {
+  animation-delay: 0.2s;
+}
+.animate-delay-300 {
+  animation-delay: 0.3s;
+}
+.animate-delay-400 {
+  animation-delay: 0.4s;
+}
+.animate-delay-500 {
+  animation-delay: 0.5s;
+}
+.animate-delay-600 {
+  animation-delay: 0.6s;
+}
+.animate-delay-700 {
+  animation-delay: 0.7s;
+}
+.animate-delay-800 {
+  animation-delay: 0.8s;
+}
+.animate-delay-900 {
+  animation-delay: 0.9s;
+}
 
 @media (prefers-reduced-motion: reduce) {
   .animate-element,

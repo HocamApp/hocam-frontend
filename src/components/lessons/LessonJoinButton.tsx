@@ -8,6 +8,9 @@ import { Button, type ButtonProps } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 
+const waitingClasses =
+  "border-line bg-paper text-ink-mid hover:bg-paper hover:text-ink-mid disabled:border-line disabled:bg-paper disabled:text-ink-mid disabled:opacity-100";
+
 export const EARLY_JOIN_MINUTES = 15;
 
 interface LessonJoinButtonProps {
@@ -73,7 +76,7 @@ export function LessonJoinButton({
       <Button
         size={size}
         variant="outline"
-        className={cn("text-foreground", className)}
+        className={cn(waitingClasses, className)}
         disabled
       >
         Ders sona erdi
@@ -86,7 +89,7 @@ export function LessonJoinButton({
       <Button
         size={size}
         variant="outline"
-        className={cn("text-foreground", className)}
+        className={cn(waitingClasses, className)}
         disabled
       >
         Ders aktif değil
@@ -102,7 +105,7 @@ export function LessonJoinButton({
         variant="outline"
         aria-disabled="true"
         className={cn(
-          "cursor-not-allowed text-foreground opacity-60 hover:text-foreground",
+          "cursor-not-allowed border-line bg-paper text-ink-mid hover:bg-paper hover:text-ink-mid",
           className
         )}
         onClick={() =>
@@ -123,7 +126,7 @@ export function LessonJoinButton({
       <Button
         size={size}
         variant="outline"
-        className={cn("text-foreground", className)}
+        className={cn(waitingClasses, className)}
         disabled
       >
         Oda hazırlanıyor
@@ -133,7 +136,7 @@ export function LessonJoinButton({
 
   if (canJoin) {
     return (
-      <Button asChild size={size} variant={variant} className={className}>
+      <Button asChild size={size} variant={variant} className={cn("bg-pink text-white hover:bg-pink-deep", className)}>
         <Link href={`/session/${bookingId}`}>
           <Video className="mr-2 h-4 w-4" />
           {label}
@@ -149,7 +152,7 @@ export function LessonJoinButton({
       variant="outline"
       aria-disabled="true"
       className={cn(
-        "cursor-not-allowed text-foreground opacity-60 hover:text-foreground",
+        "cursor-not-allowed border-line bg-paper text-ink-mid hover:bg-paper hover:text-ink-mid",
         className
       )}
       onClick={() =>

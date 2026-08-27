@@ -44,29 +44,28 @@ function SupportContent() {
 
   return (
     <>
-      <div className="mx-auto w-full max-w-5xl px-4 py-8 sm:py-10">
+      <div className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6 sm:py-14">
         {/* Header */}
-        <div className="flex items-start gap-3">
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+        <div className="flex items-start gap-4">
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[var(--radius-input)] bg-gold text-gold-ink">
             <LifeBuoy className="h-6 w-6" />
           </span>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-foreground">
-              Destek
+            <p className="text-label uppercase tracking-[0.14em] text-ink-mid">Destek merkezi</p>
+            <h1 className="mt-1 text-h1-m text-ink sm:text-h1">
+              Sorununu anlat, birlikte çözelim
             </h1>
-            <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-              Hocam destek merkezine hoş geldiniz. Aşağıdan bir destek talebi
-              oluşturabilir, taleplerinizin durumunu takip edebilir ve platform
-              kurallarını inceleyebilirsiniz. Talepleriniz destek ekibi tarafından
-              incelenir ve en kısa sürede yanıtlanır.
+            <p className="mt-3 max-w-2xl text-body text-ink-mid">
+              Destek talebi oluştur, önceki taleplerini takip et veya platform
+              kurallarında aradığın cevabı bul.
             </p>
           </div>
         </div>
 
-        <div className="mt-8 grid items-start gap-10 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] lg:gap-10">
+        <div className="mt-10 grid items-start gap-8 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:gap-10">
           {/* Ticket form + list */}
           <div className="min-w-0 space-y-6">
-            <Card id="support-request-form" ref={formRef} className="scroll-mt-24">
+            <Card id="support-request-form" ref={formRef} className="scroll-mt-24 rounded-[var(--radius-card)] border-[var(--line)] bg-[var(--surface)]">
               <CardHeader>
                 <CardTitle className="text-lg">Destek talebi oluştur</CardTitle>
               </CardHeader>
@@ -87,13 +86,13 @@ function SupportContent() {
             <SupportTicketList />
           </div>
 
-          <aside className="min-w-0">
+          <aside className="min-w-0 rounded-[var(--radius-card)] border border-[var(--line)] bg-[var(--surface)] p-5 sm:p-6">
             <SupportAccordionSection
               layout="stacked"
-              className="border-t-0 py-0 pb-8"
+              className="border-t-0 py-0"
               heading={
                 <h2 className="text-xl font-semibold tracking-tight text-foreground">
-                  Yardım & kurallar
+                  Yardım ve kurallar
                 </h2>
               }
               value={openHelpSection}

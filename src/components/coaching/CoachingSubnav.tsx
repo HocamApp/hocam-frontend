@@ -9,7 +9,7 @@ import {
   SquaresFour,
   UserPlus,
   UsersThree,
-} from "@phosphor-icons/react";
+} from "@phosphor-icons/react/ssr";
 
 import { cn } from "@/lib/utils";
 

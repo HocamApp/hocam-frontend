@@ -32,6 +32,7 @@ import { ProfileSummary } from "@/components/profile/ProfileSummary";
 import { AvatarEditor } from "@/components/profile/AvatarEditor";
 import { StudentLearningProfile } from "@/components/profile/StudentLearningProfile";
 import { TutorVideoSection } from "@/components/profile/TutorVideoSection";
+import { ReferralInviteCard } from "@/components/profile/ReferralInviteCard";
 
 function getInitials(name: string, surname: string): string {
   return ((name.trim()[0] || "") + (surname.trim()[0] || "")).toUpperCase();
@@ -184,7 +185,7 @@ function ProfileContent() {
   }
 
   const identitySummary = (
-    <Card>
+    <Card className="rounded-card border border-line bg-surface">
       <CardContent className="pt-6">
         <ProfileSummary
           fullName={fullName}
@@ -233,9 +234,12 @@ function ProfileContent() {
 
   return (
     <div className="mx-auto w-full min-w-0 max-w-6xl overflow-x-clip px-4 py-8 sm:py-10">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">Profilim</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+      <div className="mb-8 max-w-3xl">
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-ink-mid">
+          HESAP VE ÖĞRENME
+        </p>
+        <h1 className="mt-2 text-4xl font-bold tracking-tight text-ink">Profilim</h1>
+        <p className="mt-2 text-base leading-7 text-ink-mid">
           {isTutor
             ? "Hesap bilgilerini ve hoca ayarlarını buradan yönet."
             : "Öğrenme geçmişini ve hesap bilgilerini bir arada gör."}
@@ -245,7 +249,7 @@ function ProfileContent() {
       {isTutor ? (
         <div className="space-y-6 lg:space-y-8">
           {identitySummary}
-          <Card>
+          <Card className="rounded-card border border-line bg-surface">
             <CardHeader><SectionCardTitle className="text-base">Bildirimler</SectionCardTitle></CardHeader>
             <CardContent>
               <ProfileToggleRow
@@ -256,7 +260,7 @@ function ProfileContent() {
               <p className="mt-2 px-2 text-xs text-muted-foreground">Bu tercih proaktif bildirimleri etkiler; rapor, destek ve SLA durumları panelinde görünmeye devam eder.</p>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="rounded-card border border-line bg-surface">
             <CardHeader>
               <SectionCardTitle className="text-base">Hoca Bilgileri</SectionCardTitle>
             </CardHeader>
@@ -314,7 +318,8 @@ function ProfileContent() {
       ) : (
         <div className="space-y-6 lg:space-y-8">
           {identitySummary}
-          <Card>
+          <ReferralInviteCard />
+          <Card className="rounded-card border border-line bg-surface">
             <CardHeader><SectionCardTitle className="text-base">Bildirimler</SectionCardTitle></CardHeader>
             <CardContent>
               <ProfileToggleRow

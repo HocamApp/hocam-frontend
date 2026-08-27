@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { Plus } from "lucide-react";
+import { Plus } from "@phosphor-icons/react";
 
 import { useIsMobile } from "@/hooks/useMediaQuery";
 import { cn } from "@/lib/utils";
@@ -69,7 +69,7 @@ export function PaymentMethodSelector({
   return (
     <div
       className={cn(
-        "w-full max-w-md rounded-xl border bg-card p-5 text-card-foreground shadow-sm",
+        "w-full max-w-md rounded-[var(--radius-card)] border border-[var(--line)] bg-[var(--surface)] p-5 text-ink",
         className
       )}
     >
@@ -80,7 +80,7 @@ export function PaymentMethodSelector({
         <button
           type="button"
           onClick={onActionClick}
-          className="inline-flex items-center gap-1.5 text-sm font-medium text-primary transition-colors hover:text-primary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          className="inline-flex min-h-11 items-center gap-1.5 rounded-pill px-3 text-sm font-medium text-ink transition-colors hover:bg-paper focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         >
           <Plus className="h-4 w-4" />
           {actionText}
@@ -109,16 +109,16 @@ export function PaymentMethodSelector({
                 }
               }}
               className={cn(
-                "flex cursor-pointer items-center rounded-lg border p-4 transition-all duration-300 hover:bg-muted/50 active:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                "flex min-h-20 cursor-pointer items-center rounded-[var(--radius-input)] border bg-paper p-4 transition-colors duration-[--duration-state] hover:border-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
                 isSelected
-                  ? "border-primary shadow-[0_0_0_2px_hsl(var(--primary))]"
-                  : "border-border"
+                  ? "border-ink ring-2 ring-ink"
+                  : "border-[var(--line)]"
               )}
               role="radio"
               aria-checked={isSelected}
               tabIndex={0}
             >
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted text-foreground">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--radius-input)] bg-gold text-gold-ink">
                 {method.icon}
               </div>
               <div className="ml-4 min-w-0 flex-1">
@@ -130,7 +130,7 @@ export function PaymentMethodSelector({
               <div
                 className={cn(
                   "ml-4 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2",
-                  isSelected ? "border-primary" : "border-border"
+                  isSelected ? "border-ink" : "border-[var(--line)]"
                 )}
               >
                 <AnimatePresence>
@@ -139,7 +139,7 @@ export function PaymentMethodSelector({
                       initial={reduceMotion ? false : { scale: 0 }}
                       animate={{ scale: 1 }}
                       exit={reduceMotion ? undefined : { scale: 0 }}
-                      className="h-3 w-3 rounded-full bg-primary"
+                      className="h-3 w-3 rounded-full bg-ink"
                     />
                   )}
                 </AnimatePresence>

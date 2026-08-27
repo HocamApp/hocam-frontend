@@ -398,7 +398,7 @@ function SecurityContent() {
   }
 
   return (
-    <div className="mx-auto w-full min-w-0 max-w-3xl overflow-x-clip px-4 py-8 sm:py-10">
+    <div className="mx-auto w-full min-w-0 max-w-5xl overflow-x-clip px-4 py-10 sm:px-6 sm:py-14">
       <div className="mb-8">
         <Button variant="ghost" size="sm" asChild className="-ml-3 mb-3">
           <Link href="/profile">
@@ -407,14 +407,14 @@ function SecurityContent() {
           </Link>
         </Button>
         <div className="flex min-w-0 items-start gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
+          <div className="flex h-11 w-11 items-center justify-center rounded-full border border-[var(--gold-ink)]/20 bg-[var(--gold)] text-[var(--gold-ink)]">
             <ShieldCheck className="h-5 w-5" />
           </div>
           <div className="min-w-0">
-            <h1 className="text-2xl font-bold tracking-tight text-foreground">
+            <h1 className="text-3xl font-bold tracking-tight text-[var(--ink)] sm:text-4xl">
               Güvenlik Ayarları
             </h1>
-            <p className="mt-1 text-sm text-muted-foreground">
+            <p className="mt-2 text-base text-[var(--ink-mid)]">
               Hesap e-postanızı, şifrenizi ve oturum kontrollerinizi yönetin.
             </p>
           </div>
@@ -422,7 +422,7 @@ function SecurityContent() {
       </div>
 
       <div className="space-y-6">
-        <Card>
+        <Card className="rounded-[var(--radius-card)] border-[var(--line)] bg-[var(--surface)]">
           <CardHeader>
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div className="min-w-0">
@@ -431,7 +431,14 @@ function SecurityContent() {
                   {data?.email}
                 </p>
               </div>
-              <Badge variant={data?.is_email_verified ? "default" : "secondary"}>
+              <Badge
+                variant="outline"
+                className={
+                  data?.is_email_verified
+                    ? "border-[var(--success)] text-[var(--success)]"
+                    : "border-[var(--gold-ink)]/20 bg-[var(--gold)] text-[var(--gold-ink)]"
+                }
+              >
                 {data?.is_email_verified
                   ? "Doğrulandı"
                   : data?.email_verification_enabled === false
@@ -446,8 +453,8 @@ function SecurityContent() {
               güvenlik bildirimleri için kullanılır.
             </p>
             {data?.is_email_verified ? (
-              <div className="flex items-start gap-3 rounded-lg border border-emerald-200/80 bg-emerald-50/60 p-3.5 text-sm dark:border-emerald-900/60 dark:bg-emerald-950/20">
-                <BadgeCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+              <div className="flex items-start gap-3 rounded-[var(--radius-input)] border border-[var(--success)]/25 bg-[var(--surface)] p-4 text-sm">
+                <BadgeCheck className="mt-0.5 h-4 w-4 shrink-0 text-[var(--success)]" />
                 <p className="leading-relaxed text-foreground">
                   E-postanız doğrulandı. Hassas hesap işlemleri için bu adresi
                   kullanacağız.
@@ -534,7 +541,7 @@ function SecurityContent() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="rounded-[var(--radius-card)] border-[var(--line)] bg-[var(--surface)]">
           <CardHeader>
             <CardTitle className="text-lg">Şifre ve oturumlar</CardTitle>
             <CardDescription>
@@ -577,7 +584,7 @@ function SecurityContent() {
             )}
 
             {showPasswordForm && data?.has_usable_password !== false && (
-              <div className="space-y-3 rounded-lg border bg-muted/30 p-4">
+              <div className="space-y-4 rounded-[var(--radius-input)] border border-[var(--line)] bg-[var(--paper)] p-5">
                 <div className="space-y-1.5">
                   <Label htmlFor="current-password">Mevcut şifre</Label>
                   <Input
@@ -656,7 +663,7 @@ function SecurityContent() {
         {isTutor ? (
           <TutorDeletionFlow accountEmail={accountEmail} />
         ) : !activeDeletion && deleteStep !== "scheduled" && !deletionFlowOpen ? (
-          <Card>
+          <Card className="rounded-[var(--radius-card)] border-[var(--line)] bg-[var(--surface)]">
             <CardHeader className="pb-3">
               <CardTitle className="text-lg">Hesap yönetimi</CardTitle>
               <CardDescription>
@@ -675,7 +682,7 @@ function SecurityContent() {
             </CardContent>
           </Card>
         ) : (
-        <Card ref={deletionPanelRef} className="scroll-mt-6 border-destructive/40">
+        <Card ref={deletionPanelRef} className="scroll-mt-6 rounded-[var(--radius-card)] border-[var(--error)]/40 bg-[var(--surface)]">
           <CardHeader>
             <div className="flex items-start justify-between gap-4">
               <div>
@@ -857,7 +864,7 @@ function SecurityContent() {
                   <Button
                     type="button"
                     variant="destructive"
-                    className="h-auto max-w-full whitespace-normal text-center"
+                    className="min-h-11 max-w-full rounded-[var(--radius-pill)] bg-[var(--error)] px-6 text-center text-white hover:bg-[var(--error)]/90"
                     onClick={handleStartDeletion}
                     disabled={!canDeleteAccount || deletingAccount}
                   >

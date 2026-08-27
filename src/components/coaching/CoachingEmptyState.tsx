@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { HourglassSimple, type Icon } from "@phosphor-icons/react";
+import { HourglassSimple } from "@phosphor-icons/react/ssr";
 
 import { CoachingStudioPanel } from "@/components/coaching/CoachingStudioPanel";
 import { COACHING_SECTION_TITLE_CLASS } from "@/components/coaching/CoachingSectionHeading";
@@ -14,7 +14,7 @@ export function CoachingEmptyState({
   steps,
   tone = "soft",
 }: {
-  icon?: Icon;
+  icon?: typeof HourglassSimple;
   title: string;
   description: string;
   context?: string;

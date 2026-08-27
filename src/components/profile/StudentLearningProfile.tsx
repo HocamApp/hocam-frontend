@@ -36,16 +36,26 @@ function Metric({
   value,
   detail,
   loading,
+  featured = false,
 }: {
   icon: React.ReactNode;
   label: string;
   value: string | number;
   detail: string;
   loading: boolean;
+  featured?: boolean;
 }) {
   return (
-    <div className="min-w-0 rounded-lg bg-muted/35 p-4">
-      <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+    <div
+      className={`min-w-0 rounded-input border border-line p-4 ${
+        featured ? "bg-gold text-gold-ink" : "bg-paper text-ink"
+      }`}
+    >
+      <div
+        className={`flex items-center gap-2 text-xs font-medium ${
+          featured ? "text-gold-ink/75" : "text-ink-mid"
+        }`}
+      >
         {icon}
         <span>{label}</span>
       </div>
@@ -56,8 +66,20 @@ function Metric({
         </div>
       ) : (
         <>
-          <p className="mt-2 text-2xl font-semibold tracking-tight text-foreground">{value}</p>
-          <p className="mt-1 text-xs leading-5 text-muted-foreground">{detail}</p>
+          <p
+            className={`mt-2 text-2xl font-semibold tracking-tight ${
+              featured ? "text-gold-ink" : "text-ink"
+            }`}
+          >
+            {value}
+          </p>
+          <p
+            className={`mt-1 text-xs leading-5 ${
+              featured ? "text-gold-ink/75" : "text-ink-mid"
+            }`}
+          >
+            {detail}
+          </p>
         </>
       )}
     </div>
@@ -98,6 +120,7 @@ export function StudentLearningProfile() {
                   : "Uzun vadeli öğrenme emeğin"
               }
               loading={learningQuery.isLoading}
+              featured
             />
             <Metric
               icon={<PackageCheck className="h-4 w-4" aria-hidden="true" />}
@@ -155,7 +178,7 @@ export function StudentLearningProfile() {
                   {tutor.profile_picture ? (
                     <AvatarImage src={tutor.profile_picture} alt={tutorName} />
                   ) : null}
-                  <AvatarFallback className="bg-primary/10 font-semibold text-primary">
+                  <AvatarFallback className="bg-gold font-semibold text-gold-ink">
                     {tutorInitials}
                   </AvatarFallback>
                 </Avatar>
@@ -166,7 +189,7 @@ export function StudentLearningProfile() {
                   </p>
                 </div>
               </div>
-              <dl className="mt-5 space-y-2 rounded-lg bg-muted/35 p-4 text-sm">
+              <dl className="mt-5 space-y-2 rounded-input border border-line bg-paper p-4 text-sm">
                 <div className="flex items-center justify-between gap-3">
                   <dt className="text-muted-foreground">Tamamlanan ders</dt>
                   <dd className="font-semibold">{tutor.completed_lessons}</dd>
@@ -222,8 +245,8 @@ export function StudentLearningProfile() {
           ) : (
             <ol className="space-y-3">
               {learning.top_subjects.map((subject, index) => (
-                <li key={subject.id} className="flex items-center gap-3 rounded-lg border p-3">
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
+                <li key={subject.id} className="flex items-center gap-3 rounded-input border border-line bg-paper p-3">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gold text-sm font-semibold text-gold-ink">
                     {index + 1}
                   </span>
                   <div className="min-w-0 flex-1">

@@ -83,20 +83,6 @@ function statusExplanation(status: Booking["status"]): string {
   return labels[status];
 }
 
-function SummaryCard({ icon, value, label, tone }: { icon: React.ReactNode; value: number; label: string; tone?: string }) {
-  return (
-    <div className="rounded-2xl border bg-card p-4 shadow-sm">
-      <div className="flex items-center gap-3">
-        <span className={cn("flex h-10 w-10 items-center justify-center rounded-xl bg-muted", tone)}>{icon}</span>
-        <div>
-          <p className="text-2xl font-semibold tracking-tight">{value}</p>
-          <p className="text-sm text-muted-foreground">{label}</p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export function StudentLessonsWorkspace() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -224,38 +210,53 @@ export function StudentLessonsWorkspace() {
     <div className="mx-auto w-full min-w-0 max-w-7xl overflow-x-clip px-4 py-8 sm:px-6 lg:px-8">
       <header className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-sm font-medium text-primary">Ders yönetimi</p>
-          <h1 className="mt-1 text-3xl font-semibold tracking-tight sm:text-4xl">Derslerim</h1>
-          <p className="mt-2 max-w-2xl text-muted-foreground">Yaklaşan derslerini takip et, bekleyen işlemleri tamamla ve geçmişine hızlıca ulaş.</p>
+          <p className="text-label uppercase tracking-[0.14em] text-ink-mid">Ders yönetimi</p>
+          <h1 className="mt-2 text-h1-m text-ink sm:text-h1">Derslerim</h1>
+          <p className="mt-3 max-w-2xl text-body text-ink-mid">Yaklaşan derslerini takip et, bekleyen işlemleri tamamla ve geçmişine hızlıca ulaş.</p>
         </div>
         <Button asChild size="lg"><Link href="/tutors"><CalendarDays className="mr-2 h-4 w-4" />Yeni ders planla</Link></Button>
       </header>
 
-      <section aria-label="Ders özeti" className="mt-7 grid gap-3 sm:grid-cols-3">
-        <SummaryCard icon={<CalendarDays className="h-5 w-5" />} value={groups.upcoming.length} label="Yaklaşan ders" tone="bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300" />
-        <SummaryCard icon={<AlertCircle className="h-5 w-5" />} value={groups.actions.length} label="İşlem gerekiyor" tone="bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300" />
-        <SummaryCard icon={<CheckCircle2 className="h-5 w-5" />} value={completedThisMonth} label="Bu ay tamamlanan" tone="bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300" />
+      <section aria-label="Ders özeti" className="mt-7 grid overflow-hidden rounded-[var(--radius-card)] border border-[var(--line)] bg-[var(--surface)] lg:grid-cols-[minmax(0,1.35fr)_minmax(0,.65fr)]">
+        <div className="flex items-center gap-4 p-5 sm:p-6">
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[var(--radius-input)] bg-gold text-gold-ink"><CalendarDays className="h-5 w-5" /></span>
+          <div>
+            <p className="text-3xl font-semibold tabular-nums text-ink">{groups.upcoming.length}</p>
+            <p className="text-small text-ink-mid">Yaklaşan ders</p>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 border-t border-[var(--line)] bg-[var(--paper)] lg:border-l lg:border-t-0">
+          <div className="flex items-center gap-3 border-r border-[var(--line)] p-4 sm:p-5">
+            <AlertCircle className="h-5 w-5 shrink-0 text-pink" />
+            <div><p className="text-xl font-semibold tabular-nums text-ink">{groups.actions.length}</p><p className="text-xs text-ink-mid">İşlem gereken</p></div>
+          </div>
+          <div className="flex items-center gap-3 p-4 sm:p-5">
+            <CheckCircle2 className="h-5 w-5 shrink-0 text-success" />
+            <div><p className="text-xl font-semibold tabular-nums text-ink">{completedThisMonth}</p><p className="text-xs text-ink-mid">Bu ay tamamlanan</p></div>
+          </div>
+        </div>
       </section>
 
       {nextLesson && (
-        <section className="mt-6 overflow-hidden rounded-3xl border bg-gradient-to-br from-slate-950 to-slate-800 p-5 text-white shadow-lg sm:p-7">
+        <section className="mt-6 overflow-hidden rounded-[var(--radius-card)] border border-ink bg-ink p-5 text-paper sm:p-7">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-300">Sıradaki dersin</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-paper/70">Sıradaki dersin</p>
               <div className="mt-4 flex items-center gap-4">
-                <ParticipantAvatar name={tutorName(nextLesson)} avatarUrl={nextLesson.tutor.profile_picture} className="h-14 w-14 border-2 border-white/20" />
-                <div><h2 className="text-xl font-semibold sm:text-2xl">{nextLesson.subject.name}</h2><p className="mt-1 text-slate-300">{tutorName(nextLesson)}</p></div>
+                <ParticipantAvatar name={tutorName(nextLesson)} avatarUrl={nextLesson.tutor.profile_picture} className="h-14 w-14 border-2 border-paper/20" />
+                <div><h2 className="text-xl font-semibold sm:text-2xl">{nextLesson.subject.name}</h2><p className="mt-1 text-paper/70">{tutorName(nextLesson)}</p></div>
               </div>
             </div>
             <div className="grid gap-3 sm:grid-cols-[auto_auto] sm:items-center">
-              <div className="rounded-2xl bg-white/10 px-4 py-3 text-sm backdrop-blur"><p className="font-medium">{formatDate(nextLesson.start_time)}</p><p className="mt-1 text-slate-300">{formatTime(nextLesson.start_time)} · {nextLesson.duration_minutes} dakika</p></div>
+              <div className="rounded-[var(--radius-input)] bg-gold px-4 py-3 text-sm text-gold-ink"><p className="font-semibold">{formatDate(nextLesson.start_time)}</p><p className="mt-1 tabular-nums text-gold-ink/75">{formatTime(nextLesson.start_time)} · {nextLesson.duration_minutes} dakika</p></div>
               <LessonJoinButton
                 bookingId={nextLesson.id}
                 startTime={nextLesson.start_time}
                 durationMinutes={nextLesson.duration_minutes}
                 status={nextLesson.status}
                 roomUrl={nextLesson.room_url}
-                variant="secondary"
+                variant="default"
+                className="bg-pink text-white hover:bg-pink-deep"
               />
             </div>
           </div>
@@ -269,7 +270,7 @@ export function StudentLessonsWorkspace() {
               {(Object.keys(TAB_LABELS) as LessonTab[]).map((tab) => <TabsTrigger key={tab} value={tab}>{TAB_LABELS[tab]} <span className="ml-1.5 rounded-full bg-background/70 px-1.5 text-xs">{groups[tab].length}</span></TabsTrigger>)}
             </TabsList>
           </Tabs>
-          <div className="flex rounded-lg border bg-muted/40 p-1" aria-label="Görünüm seçimi">
+          <div className="flex rounded-[var(--radius-input)] border border-[var(--line)] bg-[var(--paper)] p-1" aria-label="Görünüm seçimi">
             <Button size="sm" variant={view === "list" ? "secondary" : "ghost"} onClick={() => { setView("list"); setVisibleCount(PAGE_SIZE); }}><LayoutList className="mr-1.5 h-4 w-4" />Liste</Button>
             <Button size="sm" variant={view === "calendar" ? "secondary" : "ghost"} onClick={() => { setView("calendar"); setVisibleCount(PAGE_SIZE); }}><CalendarDays className="mr-1.5 h-4 w-4" />Takvim</Button>
           </div>
@@ -281,7 +282,7 @@ export function StudentLessonsWorkspace() {
         </div>
 
         <div className={cn("mt-6 grid gap-6", view === "calendar" && "lg:grid-cols-[320px_minmax(0,1fr)]")}>
-          {view === "calendar" && <div className="h-fit rounded-2xl border bg-card p-3 shadow-sm"><Calendar mode="single" selected={selectedDate} onSelect={(date) => { setSelectedDate(date); setVisibleCount(PAGE_SIZE); }} modifiers={{ hasLesson: lessonDates }} modifiersClassNames={{ hasLesson: "[&>button]:font-semibold [&>button]:text-primary [&>button]:after:absolute [&>button]:after:bottom-1 [&>button]:after:h-1 [&>button]:after:w-1 [&>button]:after:rounded-full [&>button]:after:bg-primary" }} className="mx-auto" /><Button variant="ghost" className="mt-2 w-full" disabled={!selectedDate} onClick={() => { setSelectedDate(undefined); setVisibleCount(PAGE_SIZE); }}>{selectedDate ? "Tüm tarihleri göster" : `${calendarBookings.length} dersi gösteriyor`}</Button></div>}
+          {view === "calendar" && <div className="h-fit rounded-[var(--radius-card)] border border-[var(--line)] bg-[var(--surface)] p-3"><Calendar mode="single" selected={selectedDate} onSelect={(date) => { setSelectedDate(date); setVisibleCount(PAGE_SIZE); }} modifiers={{ hasLesson: lessonDates }} modifiersClassNames={{ hasLesson: "[&>button]:font-semibold [&>button]:text-primary [&>button]:after:absolute [&>button]:after:bottom-1 [&>button]:after:h-1 [&>button]:after:w-1 [&>button]:after:rounded-full [&>button]:after:bg-primary" }} className="mx-auto" /><Button variant="ghost" className="mt-2 w-full" disabled={!selectedDate} onClick={() => { setSelectedDate(undefined); setVisibleCount(PAGE_SIZE); }}>{selectedDate ? "Tüm tarihleri göster" : `${calendarBookings.length} dersi gösteriyor`}</Button></div>}
           <div>
             {visible.length === 0 ? (
               <div className="rounded-2xl border border-dashed px-6 py-14 text-center"><History className="mx-auto h-9 w-9 text-muted-foreground/60" /><h2 className="mt-4 font-semibold">Bu görünümde ders yok</h2><p className="mt-1 text-sm text-muted-foreground">Arama veya filtreleri temizleyebilir, yeni bir ders planlayabilirsin.</p><Button asChild variant="outline" className="mt-5"><Link href="/tutors">Hoca bul<ArrowRight className="ml-2 h-4 w-4" /></Link></Button></div>

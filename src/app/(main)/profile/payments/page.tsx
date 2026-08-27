@@ -2,12 +2,8 @@
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Check, Copy } from "lucide-react";
-import { toast } from "sonner";
 import { RouteGuard } from "@/components/shared/RouteGuard";
 import { ProfileScreen } from "@/components/profile/ProfileScreen";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { PACKAGE_HISTORY_EMPTY_DESCRIPTION } from "@/lib/paymentHistoryCopy";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
@@ -17,11 +13,7 @@ import {
   isPastPackage,
   PackagePurchaseCard,
 } from "@/components/payments/PackagePurchaseCard";
-import {
-  fetchPackagePurchases,
-  fetchPaymentHistory,
-  fetchReferralInfo,
-} from "@/lib/paymentsApi";
+import { fetchPackagePurchases, fetchPaymentHistory } from "@/lib/paymentsApi";
 import {
   creditActivityLabel,
   isMonetaryPaymentEntry,
@@ -94,8 +86,8 @@ function PackageActivity({
             <span
               className={`w-fit rounded-full px-2 py-0.5 text-xs font-semibold tabular-nums ${
                 entry.credit_delta > 0
-                  ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
-                  : "bg-muted text-muted-foreground"
+                  ? "text-[var(--success)]"
+                  : "text-[var(--ink-mid)]"
               }`}
             >
               {entry.credit_delta > 0 ? "+" : ""}
@@ -247,94 +239,17 @@ function PaymentHistorySection() {
       {monetaryEntries.map((entry) => (
         <div
           key={entry.id}
-          className="flex flex-col items-start gap-2 rounded-lg border px-3 py-3 md:flex-row md:items-center md:justify-between md:py-2"
+          className="flex flex-col items-start gap-3 rounded-[var(--radius-card)] border border-[var(--line)] bg-[var(--surface)] p-5 md:flex-row md:items-center md:justify-between"
         >
           <div className="min-w-0">
             <p className="text-sm font-medium">{entryLabel(entry)}</p>
             <p className="text-xs text-muted-foreground">{formatDate(entry.created_at)}</p>
           </div>
           <div className="text-left text-sm md:text-right">
-            <p className="font-medium">{formatPrice(entry.amount)}</p>
+            <p className="font-semibold tabular-nums text-[var(--ink)]">{formatPrice(entry.amount)}</p>
           </div>
         </div>
       ))}
-    </div>
-  );
-}
-
-function ReferralSection() {
-  const { data, isLoading, isError } = useQuery({
-    queryKey: ["referral-info"],
-    queryFn: fetchReferralInfo,
-  });
-  const [copied, setCopied] = useState(false);
-
-  if (isLoading) {
-    return (
-      <div className="py-8">
-        <LoadingSpinner />
-      </div>
-    );
-  }
-  if (isError || !data) {
-    return <ErrorMessage message="Referans bilgin yüklenemedi. Lütfen tekrar deneyin." />;
-  }
-
-  const handleCopy = async () => {
-    try {
-      let copied = false;
-      if (navigator.clipboard?.writeText) {
-        try {
-          await navigator.clipboard.writeText(data.referral_url);
-          copied = true;
-        } catch {
-          copied = false;
-        }
-      }
-      if (!copied) {
-        const textarea = document.createElement("textarea");
-        textarea.value = data.referral_url;
-        textarea.setAttribute("readonly", "");
-        textarea.style.position = "fixed";
-        textarea.style.top = "-9999px";
-        document.body.appendChild(textarea);
-        textarea.select();
-        copied = document.execCommand("copy");
-        document.body.removeChild(textarea);
-        if (!copied) {
-          throw new Error("Clipboard fallback failed");
-        }
-      }
-      setCopied(true);
-      toast.success("Referans linki kopyalandı.");
-      setTimeout(() => setCopied(false), 1600);
-    } catch {
-      toast.error("Kopyalanamadı. Linki alandan elle kopyalayabilirsin.");
-    }
-  };
-
-  return (
-    <div className="rounded-lg border p-3 text-sm">
-      <p className="text-muted-foreground">
-        Arkadaşlarını Hocam&apos;a davet et. Referans ödülleri yakında aktif olacak.
-      </p>
-      <div className="mt-2 flex flex-wrap items-center gap-2">
-        <code className="rounded bg-muted px-2 py-1 font-medium">{data.referral_code}</code>
-        <Button type="button" variant="outline" size="sm" onClick={handleCopy}>
-          {copied ? (
-            <Check className="mr-1.5 h-3.5 w-3.5" />
-          ) : (
-            <Copy className="mr-1.5 h-3.5 w-3.5" />
-          )}
-          {copied ? "Kopyalandı" : "Linki kopyala"}
-        </Button>
-      </div>
-      <Input
-        value={data.referral_url}
-        readOnly
-        aria-label="Referans linki"
-        className="mt-2 h-8 text-xs"
-      />
     </div>
   );
 }
@@ -343,20 +258,22 @@ function PaymentsContent() {
   return (
     <ProfileScreen
       title="Ödemeler"
-      description="Paketlerin, ödeme geçmişin ve referans kodun."
+      description="Paketlerini ve ödeme hareketlerini tek yerde incele."
     >
-      <div className="space-y-8">
+      <div className="space-y-12">
         <section>
-          <h2 className="mb-3 text-lg font-semibold">Paketlerim</h2>
+          <div className="mb-5">
+            <h2 className="text-xl font-bold text-[var(--ink)]">Paketlerim</h2>
+            <p className="mt-1 text-sm text-[var(--ink-mid)]">Ders haklarını, tutarları ve paket durumlarını takip et.</p>
+          </div>
           <PackagesSection />
         </section>
         <section>
-          <h2 className="mb-3 text-lg font-semibold">Ödeme geçmişi</h2>
+          <div className="mb-5">
+            <h2 className="text-xl font-bold text-[var(--ink)]">Ödeme geçmişi</h2>
+            <p className="mt-1 text-sm text-[var(--ink-mid)]">Onaylanan ödemelerin ve iadelerin burada görünür.</p>
+          </div>
           <PaymentHistorySection />
-        </section>
-        <section>
-          <h2 className="mb-3 text-lg font-semibold">Referans kodu</h2>
-          <ReferralSection />
         </section>
       </div>
     </ProfileScreen>

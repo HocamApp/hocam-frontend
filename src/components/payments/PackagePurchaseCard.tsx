@@ -71,10 +71,10 @@ export function PackagePurchaseCard({
     <>
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="min-w-0">
-          <p className="font-medium">
+          <p className="text-base font-bold text-[var(--ink)]">
             {purchase.tutor.name} {purchase.tutor.surname}
           </p>
-          <p className="text-sm text-muted-foreground">{purchase.plan.name}</p>
+          <p className="mt-0.5 text-sm text-[var(--ink-mid)]">{purchase.plan.name}</p>
         </div>
         <span className="flex items-center gap-2">
           <StatusBadge status={purchase.status} type="packagePurchase" />
@@ -88,26 +88,26 @@ export function PackagePurchaseCard({
           )}
         </span>
       </div>
-      <div className="mt-3 grid min-w-0 grid-cols-2 gap-x-4 gap-y-1.5 text-sm sm:grid-cols-4">
+      <div className="mt-5 grid min-w-0 grid-cols-2 gap-x-5 gap-y-4 border-t border-[var(--line)] pt-4 text-sm sm:grid-cols-4">
         <div className="min-w-0">
           <p className="text-xs text-muted-foreground">Ders hakkı</p>
-          <p className="font-medium tabular-nums">
+          <p className="mt-1 font-semibold tabular-nums text-[var(--ink)]">
             {purchase.remaining_credits} / {purchase.total_credits}
           </p>
         </div>
         <div className="min-w-0">
           <p className="text-xs text-muted-foreground">Toplam tutar</p>
-          <p className="break-words font-medium">{formatPrice(purchase.total_price)}</p>
+          <p className="mt-1 break-words font-semibold tabular-nums text-[var(--ink)]">{formatPrice(purchase.total_price)}</p>
         </div>
         <div className="min-w-0">
           <p className="text-xs text-muted-foreground">Talep tarihi</p>
-          <p className="break-words font-medium">{formatDate(purchase.created_at)}</p>
+          <p className="mt-1 break-words font-semibold tabular-nums text-[var(--ink)]">{formatDate(purchase.created_at)}</p>
         </div>
         <div className="min-w-0">
           <p className="text-xs text-muted-foreground">
             {expiry ? "Süre sonu" : "Onay tarihi"}
           </p>
-          <p className="break-words font-medium">
+          <p className="mt-1 break-words font-semibold tabular-nums text-[var(--ink)]">
             {expiry
               ? formatDate(expiry.termEndDate.toISOString())
               : purchase.paid_at
@@ -117,7 +117,7 @@ export function PackagePurchaseCard({
         </div>
       </div>
       {expiry?.isInGrace && (
-        <p className="mt-2.5 rounded-md border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-xs text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-100">
+        <p className="mt-4 rounded-[var(--radius-input)] border border-[var(--gold-ink)]/20 bg-[var(--gold)] px-3 py-2 text-xs text-[var(--gold-ink)]">
           Paket süren doldu. Kalan derslerini kullanmak için son{" "}
           <span className="font-medium">{expiry.graceDaysLeft} gün</span>.
         </p>
@@ -129,21 +129,21 @@ export function PackagePurchaseCard({
   );
 
   return (
-    <div className="overflow-hidden rounded-lg border">
+    <div className="overflow-hidden rounded-[var(--radius-card)] border border-[var(--line)] bg-[var(--surface)] text-[var(--ink)]">
       {onToggle ? (
         <button
           type="button"
-          className="w-full p-3 text-left transition-colors hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+          className="w-full p-5 text-left transition-colors hover:bg-[var(--paper)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--ink)] sm:p-6"
           aria-expanded={isExpanded}
           onClick={onToggle}
         >
           {summary}
         </button>
       ) : (
-        <div className="p-3">{summary}</div>
+        <div className="p-5 sm:p-6">{summary}</div>
       )}
       {onToggle && isExpanded && details && (
-        <div className="border-t bg-muted/20 p-3">{details}</div>
+        <div className="border-t border-[var(--line)] bg-[var(--paper)] p-5 sm:p-6">{details}</div>
       )}
     </div>
   );

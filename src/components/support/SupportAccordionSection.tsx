@@ -39,7 +39,7 @@ export function SupportAccordionSection({
   return (
     <section
       className={cn(
-        "border-t border-border/70",
+        "border-t border-[var(--line)]",
         layout === "split" ? "mt-10 py-12 md:py-16" : "py-8",
         className
       )}
@@ -67,14 +67,14 @@ export function SupportAccordionSection({
               value={item.id}
               id={item.anchorId}
               className={cn(
-                "border-dotted",
+                "border-[var(--line)]",
                 item.anchorId && "scroll-mt-24"
               )}
             >
-              <AccordionTrigger className="cursor-pointer text-base hover:no-underline">
+              <AccordionTrigger className="min-h-12 cursor-pointer text-left text-base text-ink hover:no-underline">
                 {item.title}
               </AccordionTrigger>
-              <AccordionContent className="text-muted-foreground">
+              <AccordionContent className="text-ink-mid">
                 {item.content}
               </AccordionContent>
             </AccordionItem>

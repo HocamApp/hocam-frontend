@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { ArrowLeft } from "@phosphor-icons/react";
+import { ArrowLeft } from "@phosphor-icons/react/ssr";
 
 import { cn } from "@/lib/utils";
 import { CoachingSubnav } from "./CoachingSubnav";

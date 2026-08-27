@@ -81,7 +81,7 @@ const SECOND_ROW = TESTIMONIALS.slice(TESTIMONIALS.length / 2);
 
 function ReviewCard({ quote, name, credential, photo }: Testimonial) {
   return (
-    <Card className="group/card h-full w-[16.5rem] shrink-0 sm:w-[21rem] cursor-default border-line bg-surface p-5 shadow-none transition-colors duration-[--duration-state] hover:border-ink hover:bg-ink">
+    <Card className="group/card h-full w-[16.5rem] shrink-0 cursor-default border-line bg-surface p-5 shadow-none transition-colors duration-[--duration-state] hover:border-ink hover:bg-ink sm:w-[21rem]">
       <CardContent className="flex h-full flex-col gap-3 p-0">
         <div className="flex flex-row items-center gap-3">
           <Image
@@ -92,15 +92,15 @@ function ReviewCard({ quote, name, credential, photo }: Testimonial) {
             className="size-11 shrink-0 rounded-full object-cover"
           />
           <div className="min-w-0">
-            <p className="text-sm font-semibold text-ink transition-colors duration-[--duration-state] group-hover/card:text-white">
+            <p className="text-sm font-semibold text-ink transition-colors duration-[--duration-state] group-hover/card:text-paper">
               {name}
             </p>
-            <p className="text-xs text-ink-mid transition-colors duration-[--duration-state] group-hover/card:text-white/75">
+            <p className="text-xs text-ink-mid transition-colors duration-[--duration-state] group-hover/card:text-paper/75">
               {credential}
             </p>
           </div>
         </div>
-        <p className="text-[15px] leading-6 text-ink transition-colors duration-[--duration-state] group-hover/card:text-white">
+        <p className="text-[15px] leading-6 text-ink transition-colors duration-[--duration-state] group-hover/card:text-paper">
           {quote}
         </p>
       </CardContent>
@@ -110,16 +110,16 @@ function ReviewCard({ quote, name, credential, photo }: Testimonial) {
 
 export function YsTestimonials() {
   return (
-    <section className="mt-16 md:mt-24 overflow-hidden rounded-card bg-pink-pale py-16 md:py-24">
+    <section className="mt-16 overflow-hidden rounded-card border border-line bg-paper py-16 md:mt-24 md:py-24">
       <div className="mx-auto max-w-2xl space-y-2 px-4 text-center">
-        <h2 className="text-3xl font-bold tracking-tight">Hocalar ve Öğrencilerden</h2>
-        <p className="text-base" style={{ color: "var(--ys-neutral-secondary)" }}>
+        <h2 className="text-3xl font-bold tracking-tight text-ink">Hocalar ve Öğrencilerden</h2>
+        <p className="text-base text-ink-mid">
           Hocam&apos;da ders veren hocalar ve ders alan öğrenciler, kendi deneyimlerini
           anlatıyor.
         </p>
       </div>
 
-      <div className="relative mt-8 flex w-full flex-col items-center justify-center">
+      <div className="ys-marquee-mask relative mt-8 flex w-full flex-col items-center justify-center">
         <Marquee pauseOnHover className="[--duration:38s]">
           {FIRST_ROW.map((item) => (
             <ReviewCard key={item.name} {...item} />
@@ -131,11 +131,6 @@ export function YsTestimonials() {
           ))}
         </Marquee>
 
-        {/* Fades to the section tint, not to white — the cards must look like
-            they slide under the edge, not into a different surface. Narrow on
-            phones, where a proportional fade would cover a third of the row. */}
-        <div className="pointer-events-none absolute inset-y-0 left-0 w-10 bg-gradient-to-r from-pink-pale sm:w-1/6" />
-        <div className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-pink-pale sm:w-1/6" />
       </div>
     </section>
   );
