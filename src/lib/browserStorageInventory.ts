@@ -73,9 +73,9 @@ export const BROWSER_STORAGE_INVENTORY: readonly BrowserStorageEntry[] = [
     required: true,
   },
   {
-    name: "hocam-theme, hocam-interface-language, hocam:tutor-filters-open, jitsi_tutorial_nudge_dismissed_v1",
+    name: "hocam-theme, hocam-interface-language, hocam:tutor-filters-open, jitsi_tutorial_nudge_dismissed_v1, hocam_sensitive_data_guidance_seen",
     kind: "Yerel depolama",
-    purpose: "Tema, dil, filtre paneli ve eğitim ipucu gibi arayüz tercihlerini hatırlar.",
+    purpose: "Tema, dil, filtre paneli ve daha önce gösterilmiş yardımcı metinler gibi arayüz tercihlerini hatırlar.",
     provider: "HOCAM",
     duration: "Tarayıcı verileri silinene veya tercih değiştirilene kadar",
     category: "Tercih",

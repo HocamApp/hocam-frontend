@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
+import { SensitiveDataGuidance } from "@/components/privacy/SensitiveDataGuidance";
 import { createSupportTicket } from "@/lib/supportApi";
 import type { SupportTicketCategory } from "@/types/api";
 import { CATEGORY_LABELS, CATEGORY_OPTIONS } from "./supportContent";
@@ -145,6 +146,7 @@ export function SupportTicketForm({ preset }: SupportTicketFormProps) {
           maxLength={5000}
           aria-invalid={!!errors.message}
         />
+        <SensitiveDataGuidance />
         {errors.message && (
           <p className="text-xs text-destructive">{errors.message}</p>
         )}
