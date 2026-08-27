@@ -12,6 +12,14 @@ Object.defineProperty(globalThis, "self", {
   value: window,
   configurable: true,
 });
+Object.defineProperty(globalThis, "requestAnimationFrame", {
+  value: (callback: FrameRequestCallback) => setTimeout(() => callback(Date.now()), 0),
+  configurable: true,
+});
+Object.defineProperty(globalThis, "cancelAnimationFrame", {
+  value: (handle: number) => clearTimeout(handle),
+  configurable: true,
+});
 
 const plans: PackagePlan[] = [2, 3, 4, 5, 6].map((lessonsPerWeek) => ({
   id: `plan-${lessonsPerWeek}`,
@@ -93,11 +101,34 @@ test("expands private package controls and benefits inside the selected plan", (
   fireEvent.click(screen.getByRole("button", { name: "Mevcut ders hakkını kullan" }));
   assert.equal(creditUses, 1);
 
+  const trialButton = screen.getByRole("button", { name: "Dersi planla" });
+  assert.ok(trialButton.className.includes("hover:bg-[var(--checkout-control)]"));
+  assert.ok(trialButton.className.includes("hover:text-[var(--checkout-on-control)]"));
+
   assert.ok(screen.getByRole("button", { name: "Planları karşılaştır" }));
   for (const count of [2, 3, 4, 5, 6]) {
     assert.ok(screen.getByRole("button", { name: `${count} ders` }));
   }
   assert.equal(screen.queryByRole("button", { name: "1 ders" }), null);
+});
+
+test("keeps the full comparison table inside a bounded scroll area", () => {
+  render(
+    <CheckoutProductPicker
+      basePrice={1000}
+      weeklyPlans={plans}
+      lessonsPerWeek={2}
+      durationDays={90}
+      onLessonsPerWeekChange={() => {}}
+      onDurationDaysChange={() => {}}
+    />
+  );
+
+  fireEvent.click(screen.getByRole("button", { name: "Planları karşılaştır" }));
+  const dialog = screen.getByRole("dialog", { name: "Planları karşılaştır" });
+  assert.ok(dialog.className.includes("flex"));
+  assert.ok(dialog.className.includes("flex-col"));
+  assert.ok(dialog.querySelector(".min-h-0.overflow-y-auto"));
 });
 
 test("uses the approved concise descriptions for future plans", () => {

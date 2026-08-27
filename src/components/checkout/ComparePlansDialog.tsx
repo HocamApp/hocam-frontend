@@ -54,7 +54,7 @@ export function ComparePlansDialog({
       <DialogContent
         showClose={false}
         data-checkout-palette={palette}
-        className="checkout-dialog-theme h-[100dvh] max-h-[100dvh] w-screen max-w-none gap-0 overflow-hidden rounded-none border-0 border-[var(--checkout-soft-line)] p-0 sm:h-auto sm:max-h-[88dvh] sm:w-[calc(100vw-2rem)] sm:max-w-5xl sm:rounded-modal sm:border"
+        className="checkout-dialog-theme flex h-[100dvh] max-h-[100dvh] w-screen max-w-none flex-col gap-0 overflow-hidden rounded-none border-0 border-[var(--checkout-soft-line)] p-0 sm:h-auto sm:max-h-[92dvh] sm:w-[calc(100vw-2rem)] sm:max-w-5xl sm:rounded-modal sm:border"
       >
         <DialogHeader className="border-b border-[var(--checkout-soft-line)] bg-[var(--checkout-header-surface)] px-5 py-5 pr-14 text-left text-[var(--checkout-header-ink)] sm:px-7">
           <DialogTitle className="text-2xl tracking-tight">Planları karşılaştır</DialogTitle>

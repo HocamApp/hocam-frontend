@@ -16,7 +16,7 @@ export function TrialLessonOffer({
       <Button
         variant="outline"
         size="sm"
-        className="h-8 rounded-pill border-[var(--checkout-control)] bg-transparent px-3 text-xs text-[var(--checkout-nighttime)] transition-colors duration-[--duration-state] hover:bg-[var(--checkout-muted-surface)]"
+        className="h-8 rounded-pill border-[var(--checkout-control)] bg-transparent px-3 text-xs text-[var(--checkout-nighttime)] transition-colors duration-[--duration-state] hover:bg-[var(--checkout-control)] hover:text-[var(--checkout-on-control)]"
         onClick={onSelect}
       >
         Dersi planla
