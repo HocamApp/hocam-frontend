@@ -7,12 +7,13 @@ const testimonials = readFileSync("src/components/yemeksepeti/YsTestimonials.tsx
 const footer = readFileSync("src/components/yemeksepeti/YsFooter.tsx", "utf8");
 const themeCss = readFileSync("src/styles/yemeksepeti.css", "utf8");
 
-test("favorites banner declares a readable ink pair", () => {
-  assert.match(promo, /bg-gold text-gold-ink/);
-  assert.match(promo, /text-gold-ink/);
+test("favorites banner uses the soft pink campaign surface", () => {
+  assert.match(promo, /var\(--pink-pale\)/);
+  assert.doesNotMatch(promo, /bg-gold/);
 });
 
-test("testimonials use explicit contrast and no painted edge gradient", () => {
+test("testimonials use the soft pink section surface and explicit contrast", () => {
+  assert.match(testimonials, /bg-pink-pale/);
   assert.match(testimonials, /text-ink/);
   assert.match(testimonials, /group-hover\/card:text-paper/);
   assert.doesNotMatch(testimonials, /bg-gradient-to-[lr]/);

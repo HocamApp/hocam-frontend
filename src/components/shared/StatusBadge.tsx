@@ -29,7 +29,7 @@ const PACKAGE_PURCHASE_LABELS: Record<string, string> = {
 
 const BOOKING_STYLES: Record<string, string> = {
   pending: "border-amber-500 text-amber-700 dark:border-amber-400 dark:text-amber-300",
-  confirmed: "border-blue-500 text-blue-700 dark:border-blue-400 dark:text-blue-300",
+  confirmed: "border-gold bg-gold text-gold-ink",
   in_progress: "border-sky-500 text-sky-700 dark:border-sky-400 dark:text-sky-300",
   awaiting_confirmation: "border-amber-500 text-amber-700 dark:border-amber-400 dark:text-amber-300",
   completed: "border-green-500 text-green-700 dark:border-green-400 dark:text-green-300",

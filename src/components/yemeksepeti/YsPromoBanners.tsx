@@ -15,14 +15,15 @@ import { Cursor, HandPointing, Heart } from "@phosphor-icons/react";
 export function YsFavouritesBanner() {
   return (
     <div
-      className="relative h-full overflow-hidden rounded-card bg-gold text-gold-ink"
+      className="relative h-full overflow-hidden rounded-card"
+      style={{ background: "var(--pink-pale)" }}
     >
       {/* One heart, low and to the right, at the brand pink barely turned on.
           There were two, sized for a full-width band, and they used a token
           that now resolves to the same pink-pale as the surface behind them —
           so they were both oversized and invisible. */}
       <Heart
-        className="pointer-events-none absolute -bottom-10 -right-8 size-40 text-gold-ink/10"
+        className="pointer-events-none absolute -bottom-10 -right-8 size-40 text-[rgb(250_0_80_/_0.07)]"
         weight="fill"
         aria-hidden
       />
@@ -55,7 +56,7 @@ export function YsFavouritesBanner() {
         </div>
 
         <div className="flex min-w-0 flex-col items-start justify-center">
-          <h2 className="text-lg font-bold leading-snug text-gold-ink">
+          <h2 className="text-lg font-bold leading-snug text-ink">
             Favori hocalarının listesini oluştur
           </h2>
 

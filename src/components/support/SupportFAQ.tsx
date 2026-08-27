@@ -69,14 +69,11 @@ export function SupportFAQ({
       className={className}
       heading={
         <>
-          <p className={isStacked ? "text-xs font-medium text-primary" : "text-sm font-medium text-primary"}>
-            Sorularının cevapları
-          </p>
           <h2
             className={
               isStacked
-                ? "mt-2 text-xl font-semibold tracking-tight text-foreground"
-                : "mt-3 text-2xl font-semibold tracking-tight text-foreground"
+                ? "text-xl font-semibold tracking-tight text-foreground"
+                : "text-2xl font-semibold tracking-tight text-foreground"
             }
           >
             Sıkça Sorulan Sorular

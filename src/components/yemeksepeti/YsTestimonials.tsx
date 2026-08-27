@@ -110,7 +110,7 @@ function ReviewCard({ quote, name, credential, photo }: Testimonial) {
 
 export function YsTestimonials() {
   return (
-    <section className="mt-16 overflow-hidden rounded-card border border-line bg-paper py-16 md:mt-24 md:py-24">
+    <section className="mt-16 overflow-hidden rounded-card bg-pink-pale py-16 md:mt-24 md:py-24">
       <div className="mx-auto max-w-2xl space-y-2 px-4 text-center">
         <h2 className="text-3xl font-bold tracking-tight text-ink">Hocalar ve Öğrencilerden</h2>
         <p className="text-base text-ink-mid">

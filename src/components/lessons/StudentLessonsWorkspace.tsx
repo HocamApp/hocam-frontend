@@ -214,12 +214,12 @@ export function StudentLessonsWorkspace() {
           <h1 className="mt-2 text-h1-m text-ink sm:text-h1">Derslerim</h1>
           <p className="mt-3 max-w-2xl text-body text-ink-mid">Yaklaşan derslerini takip et, bekleyen işlemleri tamamla ve geçmişine hızlıca ulaş.</p>
         </div>
-        <Button asChild size="lg"><Link href="/tutors"><CalendarDays className="mr-2 h-4 w-4" />Yeni ders planla</Link></Button>
+        <Button asChild size="lg" className="bg-pink text-white hover:bg-pink-deep"><Link href="/tutors"><CalendarDays className="mr-2 h-4 w-4" />Yeni ders planla</Link></Button>
       </header>
 
       <section aria-label="Ders özeti" className="mt-7 grid overflow-hidden rounded-[var(--radius-card)] border border-[var(--line)] bg-[var(--surface)] lg:grid-cols-[minmax(0,1.35fr)_minmax(0,.65fr)]">
         <div className="flex items-center gap-4 p-5 sm:p-6">
-          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[var(--radius-input)] bg-gold text-gold-ink"><CalendarDays className="h-5 w-5" /></span>
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[var(--radius-input)] bg-pink-pale text-pink"><CalendarDays className="h-5 w-5" /></span>
           <div>
             <p className="text-3xl font-semibold tabular-nums text-ink">{groups.upcoming.length}</p>
             <p className="text-small text-ink-mid">Yaklaşan ders</p>
@@ -238,17 +238,17 @@ export function StudentLessonsWorkspace() {
       </section>
 
       {nextLesson && (
-        <section className="mt-6 overflow-hidden rounded-[var(--radius-card)] border border-ink bg-ink p-5 text-paper sm:p-7">
+        <section aria-label="Sıradaki ders" className="mt-6 overflow-hidden rounded-[var(--radius-card)] border border-[var(--line)] bg-[var(--surface)] p-5 sm:p-7">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-paper/70">Sıradaki dersin</p>
+              <p className="text-small font-medium text-ink-mid">Sıradaki dersin</p>
               <div className="mt-4 flex items-center gap-4">
-                <ParticipantAvatar name={tutorName(nextLesson)} avatarUrl={nextLesson.tutor.profile_picture} className="h-14 w-14 border-2 border-paper/20" />
-                <div><h2 className="text-xl font-semibold sm:text-2xl">{nextLesson.subject.name}</h2><p className="mt-1 text-paper/70">{tutorName(nextLesson)}</p></div>
+                <ParticipantAvatar name={tutorName(nextLesson)} avatarUrl={nextLesson.tutor.profile_picture} className="h-14 w-14 border border-[var(--line)]" />
+                <div><h2 className="text-xl font-semibold text-ink sm:text-2xl">{nextLesson.subject.name}</h2><p className="mt-1 text-ink-mid">{tutorName(nextLesson)}</p></div>
               </div>
             </div>
             <div className="grid gap-3 sm:grid-cols-[auto_auto] sm:items-center">
-              <div className="rounded-[var(--radius-input)] bg-gold px-4 py-3 text-sm text-gold-ink"><p className="font-semibold">{formatDate(nextLesson.start_time)}</p><p className="mt-1 tabular-nums text-gold-ink/75">{formatTime(nextLesson.start_time)} · {nextLesson.duration_minutes} dakika</p></div>
+              <div className="rounded-[var(--radius-input)] border border-[var(--line)] bg-[var(--paper)] px-4 py-3 text-sm text-ink"><p className="font-semibold">{formatDate(nextLesson.start_time)}</p><p className="mt-1 tabular-nums text-ink-mid">{formatTime(nextLesson.start_time)} · {nextLesson.duration_minutes} dakika</p></div>
               <LessonJoinButton
                 bookingId={nextLesson.id}
                 startTime={nextLesson.start_time}
