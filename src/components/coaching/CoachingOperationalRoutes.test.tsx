@@ -9,10 +9,22 @@ const ROUTES = [
   ["src/app/(main)/dashboard/tutor/coaching/reports/page.tsx", "tutor"],
   ["src/app/(main)/dashboard/tutor/coaching/complaints/page.tsx", "tutor"],
   ["src/app/(main)/dashboard/tutor/coaching/time-requests/page.tsx", "tutor"],
-  ["src/app/(main)/dashboard/tutor/coaching/reschedule-requests/page.tsx", "tutor"],
-  ["src/app/(main)/dashboard/tutor/coaching/service-periods/[servicePeriodId]/program/page.tsx", "tutor"],
-  ["src/app/(main)/dashboard/tutor/coaching/sessions/[id]/prepare/page.tsx", "tutor"],
-  ["src/app/(main)/dashboard/tutor/coaching/sessions/[id]/report/page.tsx", "tutor"],
+  [
+    "src/app/(main)/dashboard/tutor/coaching/reschedule-requests/page.tsx",
+    "tutor",
+  ],
+  [
+    "src/app/(main)/dashboard/tutor/coaching/service-periods/[servicePeriodId]/program/page.tsx",
+    "tutor",
+  ],
+  [
+    "src/app/(main)/dashboard/tutor/coaching/sessions/[id]/prepare/page.tsx",
+    "tutor",
+  ],
+  [
+    "src/app/(main)/dashboard/tutor/coaching/sessions/[id]/report/page.tsx",
+    "tutor",
+  ],
   ["src/app/(main)/dashboard/student/coaching/page.tsx", "student"],
   ["src/app/(main)/dashboard/student/coaching/upcoming/page.tsx", "student"],
   ["src/app/(main)/dashboard/student/coaching/program/page.tsx", "student"],
@@ -25,20 +37,40 @@ describe("Coaching operational route shells", () => {
   it("keeps every operational page inside a location-aware Coaching shell", () => {
     for (const [file, audience] of ROUTES) {
       const source = readFileSync(resolve(process.cwd(), file), "utf8");
-      assert.match(source, /<CoachingPageShell/, `${file} must use the Coaching shell`);
-      assert.match(source, /currentHref=/, `${file} must identify its Coaching location`);
-      assert.match(source, new RegExp(`audience=["']${audience}["']`), `${file} must use the ${audience} subnav`);
+      assert.match(
+        source,
+        /<CoachingPageShell/,
+        `${file} must use the Coaching shell`,
+      );
+      assert.match(
+        source,
+        /currentHref=/,
+        `${file} must identify its Coaching location`,
+      );
+      assert.match(
+        source,
+        new RegExp(`audience=["']${audience}["']`),
+        `${file} must use the ${audience} subnav`,
+      );
     }
   });
 
   // The shell already renders the page h1. A second one inside it — or a
-  // heading that reaches for font-bold when everything else is font-semibold —
+  // heading that reaches for font-bold when everything else is font-medium,
   // is what made the type appear to jump between tabs.
   it("leaves the page title to the shell and keeps one heading weight", () => {
     for (const [file] of ROUTES) {
       const source = readFileSync(resolve(process.cwd(), file), "utf8");
-      assert.doesNotMatch(source, /<h1[\s>]/, `${file} must not render its own h1`);
-      assert.doesNotMatch(source, /font-bold/, `${file} must use font-semibold like the rest`);
+      assert.doesNotMatch(
+        source,
+        /<h1[\s>]/,
+        `${file} must not render its own h1`,
+      );
+      assert.doesNotMatch(
+        source,
+        /font-bold/,
+        `${file} must use the shared heading scale`,
+      );
     }
   });
 
@@ -62,16 +94,57 @@ describe("Coaching operational route shells", () => {
     for (const file of COMPLAINT_ROUTES) {
       const source = readFileSync(resolve(process.cwd(), file), "utf8");
       for (const pattern of RAW) {
-        assert.doesNotMatch(source, pattern, `${file} still renders ${pattern} unlabelled`);
+        assert.doesNotMatch(
+          source,
+          pattern,
+          `${file} still renders ${pattern} unlabelled`,
+        );
       }
     }
   });
 
   it("uses the composed empty-state component instead of generic record-not-found UI", () => {
-    const EMPTY_ROUTES = ROUTES.filter(([file]) => !file.includes("sessions/") && !file.includes("service-periods/") && !file.endsWith("/upcoming/page.tsx"));
+    const EMPTY_ROUTES = ROUTES.filter(
+      ([file]) =>
+        !file.includes("sessions/") &&
+        !file.includes("service-periods/") &&
+        !file.endsWith("/upcoming/page.tsx"),
+    );
     for (const [file] of EMPTY_ROUTES) {
       const source = readFileSync(resolve(process.cwd(), file), "utf8");
-      assert.match(source, /CoachingEmptyState|<EmptyState/, `${file} must use the Coaching empty state`);
+      assert.match(
+        source,
+        /CoachingEmptyState|<EmptyState/,
+        `${file} must use the Coaching empty state`,
+      );
+    }
+  });
+
+  it("keeps the shared coaching surface inside the DESIGN.md vocabulary", () => {
+    const sharedFiles = [
+      "src/components/coaching/CoachingPageShell.tsx",
+      "src/components/coaching/CoachingSubnav.tsx",
+      "src/components/coaching/CoachingEmptyState.tsx",
+      "src/components/coaching/CoachingStudioPanel.tsx",
+    ];
+    const banned = [
+      /lucide-react/,
+      /Sparkles/,
+      /gradient/,
+      /backdrop-blur/,
+      /shadow-(?:sm|md|lg|xl|2xl)|shadow-\[/,
+      /border-dashed/,
+    ];
+
+    for (const file of sharedFiles) {
+      const source = readFileSync(resolve(process.cwd(), file), "utf8");
+      for (const pattern of banned) {
+        assert.doesNotMatch(
+          source,
+          pattern,
+          `${file} still contains ${pattern}`,
+        );
+      }
     }
   });
 });

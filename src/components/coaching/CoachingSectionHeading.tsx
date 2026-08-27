@@ -15,10 +15,10 @@ import { cn } from "@/lib/utils";
  * 24px CardTitle default that made the program tab shout.
  */
 export const COACHING_SECTION_TITLE_CLASS =
-  "text-lg font-semibold tracking-[-0.02em] sm:text-xl";
+  "text-[1.375rem] font-medium leading-[1.3] tracking-[-0.01em] text-ink";
 
 export const COACHING_SUBSECTION_TITLE_CLASS =
-  "text-sm font-semibold tracking-[-0.01em] sm:text-base";
+  "text-body font-medium leading-[1.4] text-ink";
 
 type CoachingSectionHeadingProps = {
   children: ReactNode;
@@ -42,7 +42,9 @@ export function CoachingSectionHeading({
 }: CoachingSectionHeadingProps) {
   const Tag = as ?? (level === "section" ? "h2" : "h3");
   const titleClass =
-    level === "section" ? COACHING_SECTION_TITLE_CLASS : COACHING_SUBSECTION_TITLE_CLASS;
+    level === "section"
+      ? COACHING_SECTION_TITLE_CLASS
+      : COACHING_SUBSECTION_TITLE_CLASS;
 
   return (
     <div className={cn("flex items-start justify-between gap-3", className)}>
@@ -51,7 +53,9 @@ export function CoachingSectionHeading({
           {children}
         </Tag>
         {description ? (
-          <p className="mt-1 text-sm leading-5 text-muted-foreground">{description}</p>
+          <p className="mt-2 text-small leading-[1.5] text-ink-mid">
+            {description}
+          </p>
         ) : null}
       </div>
       {actions ? <div className="shrink-0">{actions}</div> : null}

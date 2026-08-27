@@ -66,7 +66,7 @@ export function AcceptanceRequestCard({
           </div>
           <div className="flex flex-wrap gap-2">
             {request.includes_coaching ? (
-              <Badge variant="outline" className="border-border bg-muted/35 text-muted-foreground">
+              <Badge variant="outline" className="text-ink-mid">
                 Çalışma koçluğu dahil
               </Badge>
             ) : null}

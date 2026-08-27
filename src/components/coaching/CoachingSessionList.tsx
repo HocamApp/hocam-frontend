@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
+import { CalendarBlank } from "@phosphor-icons/react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
+import { CoachingLoadingState } from "@/components/coaching/CoachingLoadingState";
 import { RescheduleDialog } from "@/components/coaching/RescheduleDialog";
 import { CoachingEmptyState } from "@/components/coaching/CoachingEmptyState";
 import { fetchCoachingSessions } from "@/lib/coachingApi";
@@ -34,15 +35,18 @@ export function CoachingSessionList() {
   });
 
   if (isLoading) {
-    return (
-      <div className="flex min-h-[8rem] items-center justify-center">
-        <LoadingSpinner />
-      </div>
-    );
+    return <CoachingLoadingState rows={3} />;
   }
 
   if (sessions.length === 0) {
-    return <CoachingEmptyState title="Henüz görüşme oluşturulmadı" description="Düzenli koçluk saatlerin onaylandığında planlanan görüşmeler burada görünür." steps={["Koçluk saatin belirlenir", "Görüşme takvimine eklenir"]} />;
+    return (
+      <CoachingEmptyState
+        icon={CalendarBlank}
+        title="Henüz görüşmen oluşturulmadı"
+        description="Düzenli koçluk saatlerin onaylandığında planlanan görüşmeler burada görünür."
+        steps={["Koçluk saatin belirlenir", "Görüşme takvimine eklenir"]}
+      />
+    );
   }
 
   const now = Date.now();
@@ -53,36 +57,52 @@ export function CoachingSessionList() {
         const isFuture = new Date(session.scheduled_start).getTime() > now;
         const canReschedule = isFuture && session.status === "scheduled";
         return (
-          <Card key={session.id}>
-            <CardContent className="flex items-center justify-between gap-3 py-3">
+          <Card key={session.id} className="text-ink">
+            <CardContent className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <p className="text-sm font-medium">
+                <p className="text-body font-medium tabular-nums">
                   {session.sequence_number}. görüşme ·{" "}
                   {new Date(session.scheduled_start).toLocaleString("tr-TR", {
                     dateStyle: "medium",
                     timeStyle: "short",
                   })}
                 </p>
-                <Badge variant="secondary" className="mt-1">
+                <Badge
+                  variant="outline"
+                  className="mt-2 border-line bg-transparent text-ink"
+                >
                   {STATUS_LABEL[session.status] ?? session.status}
                 </Badge>
                 {session.report_overdue && session.report_due_at ? (
-                  <p className="mt-1 text-xs text-destructive">
-                    Görüşme raporu gecikti. Son zaman: {new Date(session.report_due_at).toLocaleString("tr-TR", { dateStyle: "medium", timeStyle: "short" })}
+                  <p className="mt-2 text-small text-error">
+                    Görüşme raporu gecikti. Son zaman:{" "}
+                    {new Date(session.report_due_at).toLocaleString("tr-TR", {
+                      dateStyle: "medium",
+                      timeStyle: "short",
+                    })}
                   </p>
                 ) : null}
                 {session.complaint_eligible ? (
-                  <Link href="/support" className="mt-1 inline-block text-xs font-medium text-primary underline">
+                  <Link
+                    href="/support"
+                    className="mt-2 inline-block text-small font-medium text-pink underline underline-offset-4"
+                  >
                     Eksik rapor için desteğe başvur
                   </Link>
                 ) : null}
-                {!session.complaint_eligible && session.complaint_eligible_at ? (
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Eksik rapor desteği {new Date(session.complaint_eligible_at).toLocaleString("tr-TR", { dateStyle: "medium", timeStyle: "short" })} itibarıyla kullanılabilir.
+                {!session.complaint_eligible &&
+                session.complaint_eligible_at ? (
+                  <p className="mt-2 text-small text-ink-mid">
+                    Eksik rapor desteği{" "}
+                    {new Date(session.complaint_eligible_at).toLocaleString(
+                      "tr-TR",
+                      { dateStyle: "medium", timeStyle: "short" },
+                    )}{" "}
+                    itibarıyla kullanılabilir.
                   </p>
                 ) : null}
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 {JOINABLE_STATUSES.has(session.status) && (
                   <Button size="sm" asChild>
                     <Link href={`/session/coaching/${session.id}`}>Katıl</Link>

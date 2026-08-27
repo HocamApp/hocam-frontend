@@ -50,9 +50,9 @@ describe("RevenuePreviewCard", () => {
     };
     render(<RevenuePreviewCard preview={preview} />);
 
-    assert.ok(screen.getByText("₺799,00"));
+    assert.ok(screen.getByText("799,00 ₺"));
     assert.equal(screen.queryByText("dört-hafta-net"), null);
-    assert.ok(screen.getByText("₺940,00"));
+    assert.ok(screen.getByText("940,00 ₺"));
     assert.ok(screen.getByText("4 görüşme"));
     assert.ok(screen.getByRole("region", { name: "Sunucu hesaplamalı kazanç tahmini" }));
     assert.ok(screen.getByText("Öğrencinin koçluk toplamı"));

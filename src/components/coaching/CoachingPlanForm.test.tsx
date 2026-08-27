@@ -15,10 +15,13 @@ const setupConfig: CoachingSetupConfig = {
   exam_groups: ["YKS", "DGS", "KPSS"],
   session_duration_minutes: 30,
   lesson_price_minor: 107000,
-  lesson_price_display: "1.070,00 ₺",
+  // Deliberately not the minor value. The component must compute
+  // from *_minor; if it ever echoes the server string instead, the
+  // negative assertion below is what catches it.
+  lesson_price_display: "9.999,99 ₺",
   max_price_ratio_percent: 72,
   price_cap_minor: 77040,
-  price_cap_display: "770,40 ₺",
+  price_cap_display: "8.888,88 ₺",
   commission_bps: 1234,
   frequency_options: [
     {
@@ -63,17 +66,17 @@ describe("CoachingPlanForm", () => {
 
   it("explains the dynamic lesson-price cap without hardcoding 75 percent", () => {
     render(form("price"));
-    assert.ok(screen.getByText(/₺1\.070,00/));
+    assert.ok(screen.getByText(/1\.070,00\s₺/));
     assert.ok(screen.getByText(/%72/));
-    assert.ok(screen.getByText(/₺770,40/));
+    assert.ok(screen.getByText(/770,40\s₺/));
     assert.equal(screen.queryByText(/%75/), null);
   });
 
   it("formats setup money from canonical minor values", () => {
     render(form("price"));
-    assert.ok(screen.getByText("₺1.070,00"));
-    assert.ok(screen.getByText("₺770,40"));
-    assert.equal(screen.queryByText("1.070,00 ₺"), null);
+    assert.ok(screen.getByText("1.070,00 ₺"));
+    assert.ok(screen.getByText("770,40 ₺"));
+    assert.equal(screen.queryByText("9.999,99 ₺"), null);
   });
 
   it("offers only the server-provided canonical Coaching exams", () => {
