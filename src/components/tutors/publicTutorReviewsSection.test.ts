@@ -71,8 +71,12 @@ describe("public tutor profile — reviews section is otherwise intact", () => {
     assert.ok(publicPage.includes("fetchNextPage"));
   });
 
-  it("keeps the fallback rating summary for tutors without a summary payload", () => {
-    assert.ok(publicPage.includes("{tutor.total_reviews} değerlendirme"));
+  it("does not reintroduce an overall rating fallback inside the reviews section", () => {
+    const reviewsSection = publicPage.slice(
+      publicPage.indexOf("{/* Section 4 — Reviews */}"),
+      publicPage.indexOf("{/* Supplementary — kept out", publicPage.indexOf("{/* Section 4 — Reviews */}"))
+    );
+    assert.equal(reviewsSection.includes("{tutor.total_reviews} değerlendirme"), false);
   });
 
   it("renders the reviews exactly once", () => {
@@ -81,17 +85,35 @@ describe("public tutor profile — reviews section is otherwise intact", () => {
       ["<ReviewSummary", 1],
       ["<ReviewCard", 1],
     ] as const) {
-      const hits = publicPage.split(needle).length - 1;
+      const hits =
+        needle === ">Değerlendirmeler<"
+          ? (publicPage.match(/>\s*Değerlendirmeler\s*</g) ?? []).length
+          : publicPage.split(needle).length - 1;
       assert.equal(hits, expected, `${needle} rendered ${hits} times`);
     }
   });
 
   it("keeps the section order: availability before reviews", () => {
-    const availability = publicPage.indexOf(">Müsaitlik<");
-    const reviews = publicPage.indexOf(">Değerlendirmeler<");
+    const availability = publicPage.search(/>\s*Müsaitlik\s*</);
+    const reviews = publicPage.search(/>\s*Değerlendirmeler\s*</);
     assert.ok(availability > 0);
     assert.ok(reviews > 0);
     assert.ok(availability < reviews);
+  });
+});
+
+describe("public tutor profile — subject labels", () => {
+  it("does not repeat generic TYT/AYT chips below the YKS rank", () => {
+    const rankStart = publicPage.indexOf("{tutor.yks_rank > 0 && (");
+    const bioStart = publicPage.indexOf("{tutor.bio && (", rankStart);
+    const rankArea = publicPage.slice(rankStart, bioStart);
+
+    assert.equal(rankArea.includes("subjectGroups.map"), false);
+  });
+
+  it("keeps detailed subject chips in the reservation card", () => {
+    assert.ok(publicPage.includes("{subjectLabels.map((subject) => ("));
+    assert.ok(publicPage.includes("{subject.label}"));
   });
 });
 

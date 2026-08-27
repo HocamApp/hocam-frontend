@@ -718,18 +718,6 @@ export default function TutorProfilePage({
                     </span>
                   </div>
                 )}
-                {subjectGroups.length > 0 && (
-                  <div className="mt-2 flex flex-wrap gap-1">
-                    {subjectGroups.map((g) => (
-                      <span
-                        key={g.exam}
-                        className="inline-flex items-center rounded-pill border border-line px-3 py-1 text-label text-ink"
-                      >
-                        {g.exam}
-                      </span>
-                    ))}
-                  </div>
-                )}
               </div>
               {tutor.bio && (
                 <p className="col-span-2 max-w-prose text-body md:col-span-1 md:col-start-2">
@@ -1177,24 +1165,12 @@ export default function TutorProfilePage({
                 )}
                 {!reviewsLoading && reviews.length > 0 && (
                   <>
-                    {reviewSummary ? (
+                    {reviewSummary && (
                       <div className="mb-6">
                         {/* Per-subject scores live in the header rating popover
                           only — rendering them again here duplicated the same
                           information further down the same page. */}
                         <ReviewSummary summary={reviewSummary} />
-                      </div>
-                    ) : (
-                      <div className="mb-6 flex items-baseline gap-4">
-                        <span className="text-h1-m font-bold">
-                          {formatRating(tutor.rating)}
-                        </span>
-                        <div>
-                          <Stars rating={tutor.rating} />
-                          <p className="text-small text-ink-mid">
-                            {tutor.total_reviews} değerlendirme
-                          </p>
-                        </div>
                       </div>
                     )}
                     <div className="space-y-3">
