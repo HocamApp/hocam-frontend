@@ -14,88 +14,108 @@
   --checkout-black: #000000;
 
   /* Compatibility aliases for small, non-compositional controls. */
-  --checkout-nighttime: var(--checkout-charcoal);
-  --checkout-evergreen: var(--checkout-forest);
+  --checkout-nighttime: #02171a;
+  --checkout-evergreen: #02171a;
   --checkout-clearway: var(--checkout-white);
-  --checkout-dulline: var(--checkout-cream);
-  --checkout-switchback: var(--checkout-yellow);
+  --checkout-dulline: #fbf6f6;
+  --checkout-switchback: #ffffff;
 
-  /* Option 01 is the neutral fallback, not a finalized product theme. */
-  --checkout-page-surface: var(--checkout-cream);
-  --checkout-page-ink: var(--checkout-charcoal);
+  /* Option 01 is the Hocam design-system treatment. */
+  --checkout-page-surface: #fbf6f6;
+  --checkout-page-ink: #02171a;
   --checkout-header-surface: var(--checkout-white);
-  --checkout-header-ink: var(--checkout-charcoal);
-  --checkout-accent: var(--checkout-forest);
-  --checkout-left-surface: var(--checkout-cream);
-  --checkout-left-ink: var(--checkout-charcoal);
-  --checkout-right-surface: var(--checkout-mint);
-  --checkout-right-ink: var(--checkout-charcoal);
-  --checkout-private: var(--checkout-yellow);
-  --checkout-private-ink: var(--checkout-charcoal);
+  --checkout-header-ink: #02171a;
+  --checkout-accent: #fa0050;
+  --checkout-left-surface: #fbf6f6;
+  --checkout-left-ink: #02171a;
+  --checkout-right-surface: #fce5f1;
+  --checkout-right-ink: #02171a;
+  --checkout-private: #ffd100;
+  --checkout-private-ink: #4a3b00;
   --checkout-private-body: var(--checkout-white);
-  --checkout-private-body-ink: var(--checkout-charcoal);
-  --checkout-group: var(--checkout-cyan);
-  --checkout-group-ink: var(--checkout-charcoal);
-  --checkout-pro: var(--checkout-forest);
+  --checkout-private-body-ink: #02171a;
+  --checkout-group: #ffffff;
+  --checkout-group-ink: #02171a;
+  --checkout-pro: #02171a;
   --checkout-pro-ink: var(--checkout-white);
-  --checkout-feature-surface: var(--checkout-mint);
-  --checkout-feature-ink: var(--checkout-charcoal);
-  --checkout-muted-surface: var(--checkout-cream);
-  --checkout-control: var(--checkout-forest);
-  --checkout-control-strong: var(--checkout-charcoal);
+  --checkout-card-surface: var(--checkout-white);
+  --checkout-feature-surface: #ffffff;
+  --checkout-feature-ink: #02171a;
+  --checkout-muted-surface: #fbf6f6;
+  --checkout-control: #02171a;
+  --checkout-control-strong: #fa0050;
   --checkout-on-control: var(--checkout-white);
   --checkout-duration-surface: var(--checkout-white);
-  --checkout-duration-ink: var(--checkout-charcoal);
-  --checkout-selected-duration: var(--checkout-yellow);
-  --checkout-selected-duration-ink: var(--checkout-charcoal);
+  --checkout-duration-ink: #02171a;
+  --checkout-selected-duration: #ffffff;
+  --checkout-selected-duration-ink: #02171a;
   --checkout-duration-control: var(--checkout-control);
-  --checkout-advantage: var(--checkout-yellow);
-  --checkout-advantage-ink: var(--checkout-charcoal);
-  --checkout-discount: var(--checkout-forest);
-  --checkout-cta: var(--checkout-forest);
-  --checkout-cta-hover: var(--checkout-charcoal);
+  --checkout-advantage: #ffd100;
+  --checkout-advantage-ink: #4a3b00;
+  --checkout-discount: #1c7a55;
+  --checkout-cta: #fa0050;
+  --checkout-cta-hover: #d70f64;
   --checkout-on-cta: var(--checkout-white);
   --checkout-promo-surface: var(--checkout-white);
-  --checkout-promo-ink: var(--checkout-charcoal);
-  --checkout-dialog-surface: var(--checkout-cream);
-  --checkout-dialog-ink: var(--checkout-charcoal);
-  --checkout-compare-private: var(--checkout-yellow);
-  --checkout-compare-private-ink: var(--checkout-charcoal);
-  --checkout-compare-group: var(--checkout-cyan);
-  --checkout-compare-group-ink: var(--checkout-charcoal);
-  --checkout-compare-pro: var(--checkout-forest);
+  --checkout-promo-ink: #02171a;
+  --checkout-dialog-surface: #ffffff;
+  --checkout-dialog-ink: #02171a;
+  --checkout-compare-private: #ffd100;
+  --checkout-compare-private-ink: #4a3b00;
+  --checkout-compare-group: #ffffff;
+  --checkout-compare-group-ink: #02171a;
+  --checkout-compare-pro: #02171a;
   --checkout-compare-pro-ink: var(--checkout-white);
-  --checkout-soft-line: color-mix(in srgb, currentColor 18%, transparent);
+  --checkout-soft-line: #e6dddd;
 }
 
-/* 01 — Garden Split */
+/* 01 — Hocam Design */
 [data-checkout-palette="01"] {
-  --checkout-page-surface: #f5f4ec;
+  --checkout-page-surface: #fbf6f6;
+  --checkout-page-ink: #02171a;
   --checkout-header-surface: #ffffff;
-  --checkout-accent: #366b37;
-  --checkout-left-surface: #f5f4ec;
-  --checkout-right-surface: color-mix(in srgb, #f5f4ec 88%, #343633);
-  --checkout-private: color-mix(in srgb, #efcc5e 82%, #ffffff);
+  --checkout-header-ink: #02171a;
+  --checkout-accent: #fa0050;
+  --checkout-left-surface: #fbf6f6;
+  --checkout-left-ink: #02171a;
+  --checkout-right-surface: #fce5f1;
+  --checkout-right-ink: #02171a;
+  --checkout-private: #ffd100;
+  --checkout-private-ink: #4a3b00;
   --checkout-private-body: #ffffff;
-  --checkout-group: #8cd5e9;
-  --checkout-pro: #c2ecad;
-  --checkout-pro-ink: #343633;
+  --checkout-private-body-ink: #02171a;
+  --checkout-group: #ffffff;
+  --checkout-group-ink: #02171a;
+  --checkout-pro: #02171a;
+  --checkout-pro-ink: #ffffff;
+  --checkout-card-surface: #ffffff;
   --checkout-feature-surface: #ffffff;
-  --checkout-control: #343633;
-  --checkout-duration-surface: #f5f4ec;
+  --checkout-feature-ink: #02171a;
+  --checkout-muted-surface: #fbf6f6;
+  --checkout-control: #02171a;
+  --checkout-control-strong: #fa0050;
+  --checkout-duration-surface: #ffffff;
+  --checkout-duration-ink: #02171a;
   --checkout-selected-duration: #ffffff;
-  --checkout-duration-control: #343633;
-  --checkout-advantage: #efcc5e;
-  --checkout-advantage-ink: #343633;
-  --checkout-cta: #343633;
-  --checkout-cta-hover: #000000;
+  --checkout-selected-duration-ink: #02171a;
+  --checkout-duration-control: #02171a;
+  --checkout-advantage: #ffd100;
+  --checkout-advantage-ink: #4a3b00;
+  --checkout-discount: #1c7a55;
+  --checkout-cta: #fa0050;
+  --checkout-cta-hover: #d70f64;
   --checkout-on-cta: #ffffff;
   --checkout-promo-surface: #ffffff;
-  --checkout-dialog-surface: #f5f4ec;
-  --checkout-compare-private: color-mix(in srgb, #efcc5e 82%, #ffffff);
-  --checkout-compare-private-ink: #343633;
-  --checkout-compare-group: #8cd5e9;
-  --checkout-compare-pro: #366b37;
+  --checkout-promo-ink: #02171a;
+  --checkout-dialog-surface: #ffffff;
+  --checkout-dialog-ink: #02171a;
+  --checkout-compare-private: #ffd100;
+  --checkout-compare-private-ink: #4a3b00;
+  --checkout-compare-group: #ffffff;
+  --checkout-compare-group-ink: #02171a;
+  --checkout-compare-pro: #02171a;
+  --checkout-compare-pro-ink: #ffffff;
+  --checkout-switchback: #ffffff;
 }
 
 /* 02 — Cyan Studio */
@@ -354,15 +374,15 @@
 }
 
 .checkout-plan-bar {
-  border-color: color-mix(in srgb, currentColor 28%, transparent);
+  border-color: var(--checkout-soft-line);
 }
 
 .checkout-plan-bar-pro {
-  border-color: color-mix(in srgb, currentColor 48%, transparent);
+  border-color: var(--checkout-pro);
 }
 
 .checkout-duration-card {
-  border-color: color-mix(in srgb, var(--checkout-duration-ink) 20%, transparent);
+  border-color: var(--checkout-soft-line);
   background: var(--checkout-duration-surface);
   color: var(--checkout-duration-ink);
 }
@@ -372,7 +392,10 @@
   border-width: 2px;
   background: var(--checkout-selected-duration);
   color: var(--checkout-selected-duration-ink);
-  box-shadow: 0 10px 24px -22px color-mix(in srgb, var(--checkout-charcoal) 55%, transparent);
+}
+
+.checkout-duration-card:hover {
+  border-color: var(--checkout-duration-control);
 }
 
 .checkout-duration-advantage {

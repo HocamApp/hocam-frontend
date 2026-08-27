@@ -1,6 +1,11 @@
 "use client";
 
-import { Check, GraduationCap, Sparkles, Users } from "lucide-react";
+import {
+  ChalkboardTeacher,
+  ChartLineUp,
+  UsersThree,
+  type Icon,
+} from "@phosphor-icons/react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -60,14 +65,14 @@ export function CheckoutProductPicker({
         <div className="space-y-2">
           <FuturePlanBar
             tone="group"
-            icon={Users}
+            icon={UsersThree}
             title="Küçük Grup"
             description="2–4 öğrenciyle, kişi başı daha avantajlı canlı dersler."
           />
 
           <section
             aria-label="Seçili plan: Birebir Özel Ders"
-            className="overflow-hidden rounded-xl border-2 border-[var(--checkout-control)] bg-[var(--checkout-private-body)] text-[var(--checkout-private-body-ink)]"
+            className="overflow-hidden rounded-card border-2 border-[var(--checkout-control)] bg-[var(--checkout-private-body)] text-[var(--checkout-private-body-ink)]"
           >
             <button
               type="button"
@@ -75,7 +80,7 @@ export function CheckoutProductPicker({
               aria-pressed="true"
               className="flex w-full items-center gap-3 bg-[var(--checkout-private)] px-4 py-2 text-left text-[var(--checkout-private-ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--checkout-control)]"
             >
-              <GraduationCap className="size-5 shrink-0" aria-hidden="true" />
+              <ChalkboardTeacher className="size-5 shrink-0" weight="fill" aria-hidden="true" />
               <span className="min-w-0 flex-1">
                 <span className="block font-bold">Birebir Özel Ders</span>
                 <span className="block text-xs leading-4 opacity-80 sm:text-sm">
@@ -119,7 +124,7 @@ export function CheckoutProductPicker({
                         disabled={!enabled}
                         onClick={() => onLessonsPerWeekChange(count)}
                         className={cn(
-                          "min-h-9 rounded-lg border border-[var(--checkout-soft-line)] bg-[var(--checkout-muted-surface)] px-1 text-xs font-bold text-[var(--checkout-nighttime)] transition duration-200 hover:-translate-y-0.5 hover:border-[var(--checkout-control)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--checkout-control)] focus-visible:ring-offset-2 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-35 sm:text-sm",
+                          "min-h-9 rounded-input border border-[var(--checkout-soft-line)] bg-[var(--checkout-muted-surface)] px-1 text-xs font-bold text-[var(--checkout-nighttime)] transition-colors duration-[--duration-state] hover:border-[var(--checkout-control)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--checkout-control)] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-35 sm:text-sm",
                           selected &&
                             "border-[var(--checkout-control)] bg-[var(--checkout-control)] text-[var(--checkout-on-control)]"
                         )}
@@ -133,7 +138,7 @@ export function CheckoutProductPicker({
 
               <section
                 aria-labelledby="private-features-title"
-                className="rounded-lg border border-[var(--checkout-soft-line)] bg-[var(--checkout-feature-surface)] p-3 text-[var(--checkout-feature-ink)]"
+                className="rounded-[8px] border border-[var(--checkout-soft-line)] bg-[var(--checkout-feature-surface)] p-3 text-[var(--checkout-feature-ink)]"
               >
                 <h2
                   id="private-features-title"
@@ -144,7 +149,7 @@ export function CheckoutProductPicker({
                 <ul className="mt-2 grid gap-x-5 gap-y-1 sm:grid-cols-2">
                   {PRIVATE_FEATURES.map((feature) => (
                     <li key={feature} className="flex items-start gap-2 text-xs leading-4 sm:text-[0.8125rem]">
-                      <Check className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
+                      <span className="mt-[0.45rem] h-px w-3 shrink-0 bg-current" aria-hidden="true" />
                       <span>{feature}</span>
                     </li>
                   ))}
@@ -155,7 +160,7 @@ export function CheckoutProductPicker({
               (trialLessonsRemaining > 0 && onBookTrial) ? (
                 <div className="space-y-1.5 border-t border-[var(--checkout-soft-line)] pt-2.5">
                   {paidRemainingCredits != null && paidRemainingCredits > 0 && onUseCredits && (
-                    <div className="flex min-h-14 flex-col gap-2 rounded-lg bg-[var(--checkout-muted-surface)] px-3 py-2 sm:flex-row sm:items-center">
+                    <div className="flex min-h-14 flex-col gap-2 rounded-input bg-[var(--checkout-muted-surface)] px-3 py-2 sm:flex-row sm:items-center">
                       <p className="min-w-0 flex-1 text-sm font-semibold">
                         {paidRemainingCredits} ders hakkın kullanılabilir
                       </p>
@@ -182,7 +187,7 @@ export function CheckoutProductPicker({
 
           <FuturePlanBar
             tone="pro"
-            icon={Sparkles}
+            icon={ChartLineUp}
             title="Hocam Pro"
             description="Soru desteği, haftalık koçluk ve gelişim takibiyle güçlendirilmiş birebir plan."
           />
@@ -192,7 +197,7 @@ export function CheckoutProductPicker({
           <ComparePlansDialog palette={palette}>
             <Button
               variant="outline"
-              className="h-8 rounded-full border-[var(--checkout-control)] bg-transparent px-4 text-xs font-bold text-[var(--checkout-left-ink)] hover:bg-[var(--checkout-private-body)]"
+              className="h-8 rounded-pill border-[var(--checkout-control)] bg-transparent px-4 text-xs font-bold text-[var(--checkout-left-ink)] hover:bg-[var(--checkout-control)] hover:text-[var(--checkout-on-control)]"
             >
               Planları karşılaştır
             </Button>
@@ -209,7 +214,7 @@ function FuturePlanBar({
   description,
   tone,
 }: {
-  icon: typeof Users;
+  icon: Icon;
   title: string;
   description: string;
   tone: "group" | "pro";
@@ -218,26 +223,26 @@ function FuturePlanBar({
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <span className="block rounded-xl focus-within:ring-2 focus-within:ring-[var(--checkout-control)] focus-within:ring-offset-2">
+        <span className="block rounded-card focus-within:ring-2 focus-within:ring-[var(--checkout-control)] focus-within:ring-offset-2">
           <button
             type="button"
             aria-disabled="true"
             aria-label={`${title} — Yakında`}
             className={cn(
-              "checkout-plan-bar flex min-h-14 w-full cursor-not-allowed items-center gap-3 rounded-xl border px-4 py-2 text-left",
+              "checkout-plan-bar flex min-h-14 w-full cursor-not-allowed items-center gap-3 rounded-card border px-4 py-2 text-left",
               isPro
                 ? "checkout-plan-bar-pro bg-[var(--checkout-pro)] text-[var(--checkout-pro-ink)]"
                 : "checkout-plan-bar-group bg-[var(--checkout-group)] text-[var(--checkout-group-ink)]"
             )}
           >
-            <Icon className="size-5 shrink-0" aria-hidden="true" />
+            <Icon className="size-5 shrink-0" weight="regular" aria-hidden="true" />
             <span className="min-w-0 flex-1">
               <span className="block font-bold">{title}</span>
               <span className="block text-xs leading-4 opacity-75 sm:text-sm">{description}</span>
             </span>
             <Badge
               className={cn(
-                "rounded-md border px-2 py-0.5 text-[0.65rem] font-extrabold uppercase tracking-wide",
+                "rounded-pill border px-2 py-0.5 text-[0.65rem] font-bold uppercase tracking-wide",
                 isPro
                   ? "border-current bg-transparent text-current"
                   : "border-current bg-transparent text-current"

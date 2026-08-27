@@ -3,13 +3,14 @@
 import type { FormEvent, KeyboardEvent } from "react";
 import Link from "next/link";
 import {
-  CheckCircle2,
-  ChevronDown,
+  CaretDown,
+  CaretUp,
+  CheckCircle,
+  CircleNotch,
   Clock,
-  Loader2,
   ShieldCheck,
-  TicketPercent,
-} from "lucide-react";
+  Ticket,
+} from "@phosphor-icons/react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -176,12 +177,12 @@ export function CheckoutSummary({
           <p className="mt-1 text-xs opacity-65">Haftada {lessonsPerWeek} ders</p>
         </div>
         <div className="flex min-w-0 items-center gap-2.5 text-right">
-          <Avatar className="size-9 rounded-lg">
+          <Avatar className="size-9 rounded-input">
             <AvatarImage
               src={tutor.profile_picture || undefined}
               alt={`${tutor.name} ${tutor.surname}`}
             />
-            <AvatarFallback className="rounded-lg bg-[var(--checkout-control)] text-xs font-bold text-[var(--checkout-on-control)]">
+            <AvatarFallback className="rounded-input bg-[var(--checkout-control)] text-xs font-bold text-[var(--checkout-on-control)]">
               {initials(tutor)}
             </AvatarFallback>
           </Avatar>
@@ -212,7 +213,7 @@ export function CheckoutSummary({
               <div
                 key={plan.id}
                 data-selected={selected}
-                className="checkout-duration-card overflow-hidden rounded-lg border transition duration-200"
+                className="checkout-duration-card overflow-hidden rounded-card border transition-colors duration-[--duration-state]"
               >
                 <button
                   type="button"
@@ -222,7 +223,7 @@ export function CheckoutSummary({
                   tabIndex={selected ? 0 : -1}
                   onClick={() => onDurationDaysChange(days)}
                   onKeyDown={(event) => handleDurationKeyDown(event, index)}
-                  className="flex w-full items-center gap-3 px-3 py-2.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--checkout-duration-control)] active:translate-y-px"
+                  className="flex w-full items-center gap-3 px-3 py-2.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--checkout-duration-control)]"
                 >
                   <span
                     className={cn(
@@ -238,13 +239,13 @@ export function CheckoutSummary({
                     <span className="flex flex-wrap items-center gap-2">
                       <span className="text-sm font-bold sm:text-base">{formatPlanDuration(days)}</span>
                       {days === MOST_POPULAR_DURATION_DAYS && (
-                        <Badge className="rounded-md bg-[var(--checkout-duration-control)] text-[0.65rem] text-white hover:bg-[var(--checkout-duration-control)]">
+                        <Badge className="rounded-pill bg-[var(--checkout-duration-control)] text-[0.65rem] text-white hover:bg-[var(--checkout-duration-control)]">
                           En popüler
                         </Badge>
                       )}
                     </span>
                     {optionPricing.discountPercent > 0 && (
-                      <span className="checkout-duration-advantage mt-1 inline-flex rounded px-1.5 py-0.5 text-xs font-bold leading-none">
+                      <span className="checkout-duration-advantage mt-1 inline-flex rounded-pill px-1.5 py-0.5 text-xs font-bold leading-none">
                         %{optionPricing.discountPercent} fiyat avantajı
                       </span>
                     )}
@@ -253,19 +254,17 @@ export function CheckoutSummary({
                     <span className="block text-sm font-bold sm:text-base">{formatLessonAmount(cardUnit)}</span>
                     <span className="block text-xs opacity-55">/ ders</span>
                   </span>
-                  <ChevronDown
-                    className={cn(
-                      "size-4 shrink-0 opacity-55 transition-transform duration-200 motion-reduce:transition-none",
-                      selected && "rotate-180"
-                    )}
-                    aria-hidden="true"
-                  />
+                  {selected ? (
+                    <CaretUp className="size-4 shrink-0 opacity-55" weight="regular" aria-hidden="true" />
+                  ) : (
+                    <CaretDown className="size-4 shrink-0 opacity-55" weight="regular" aria-hidden="true" />
+                  )}
                 </button>
 
                 {selected && (
                   <div
                     id={`duration-details-${days}`}
-                    className="border-t border-[var(--checkout-soft-line)] bg-[var(--checkout-selected-duration)] px-3 py-2.5 text-xs text-[var(--checkout-selected-duration-ink)] motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-top-1 sm:text-sm"
+                    className="border-t border-[var(--checkout-soft-line)] bg-[var(--checkout-selected-duration)] px-3 py-2.5 text-xs text-[var(--checkout-selected-duration-ink)] sm:text-sm"
                   >
                     <dl className="space-y-1.5 tabular-nums">
                       <SummaryRow
@@ -300,7 +299,7 @@ export function CheckoutSummary({
       </section>
 
       {durations.length === 0 && (
-        <div className="mt-4 rounded-xl border border-dashed border-[var(--checkout-evergreen)] p-4 text-sm">
+        <div className="mt-4 rounded-card border border-[var(--checkout-soft-line)] bg-white p-4 text-sm">
           Bu haftalık ders sayısı için sunulan bir paket bulunmuyor.
         </div>
       )}
@@ -357,7 +356,7 @@ export function CheckoutSummary({
       )}
 
       {coachingUnavailableMessage && (
-        <div className="mt-3 rounded-xl border border-dashed border-[var(--checkout-evergreen)] p-3 text-xs">
+        <div className="mt-3 rounded-card border border-[var(--checkout-soft-line)] bg-white p-3 text-xs">
           <p className="font-bold">Çalışma koçluğu şu anda eklenemiyor</p>
           <p className="mt-1 opacity-70">
             {coachingUnavailableMessage} Aşağıdaki tutar yalnız ders paketini kapsıyor.
@@ -366,7 +365,7 @@ export function CheckoutSummary({
       )}
 
       {coachingPriceChanged && (
-        <div className="mt-3 rounded-xl border border-destructive/40 bg-destructive/5 p-3 text-xs">
+        <div className="mt-3 rounded-card border border-error bg-white p-3 text-xs">
           <p className="font-bold text-destructive">Koçluk fiyatı değişti</p>
           <p className="mt-1 opacity-70">
             Öğretmen sen bu sayfadayken koçluk ücretini güncelledi. Yukarıdaki
@@ -377,7 +376,7 @@ export function CheckoutSummary({
             type="button"
             size="sm"
             variant="outline"
-            className="mt-2.5 rounded-lg"
+            className="mt-2.5 rounded-pill"
             onClick={onAcceptNewCoachingPrice}
           >
             Yeni tutarı onaylıyorum
@@ -386,7 +385,7 @@ export function CheckoutSummary({
       )}
 
       {coachingBlockedMessage && (
-        <div className="mt-3 rounded-xl border border-destructive/40 bg-destructive/5 p-3 text-xs">
+        <div className="mt-3 rounded-card border border-error bg-white p-3 text-xs">
           <p className="font-bold text-destructive">Çalışma koçluğu bu talebe eklenemedi</p>
           <p className="mt-1 opacity-70">
             {coachingBlockedMessage} Aşağıdaki tutar yalnız ders paketini
@@ -398,9 +397,9 @@ export function CheckoutSummary({
 
       <div className="mt-3 space-y-2.5">
         {pendingForSelectedPlan ? (
-          <div className="rounded-xl bg-[var(--checkout-switchback)] p-4 text-center text-[var(--checkout-nighttime)]">
+          <div className="rounded-card border border-[var(--checkout-soft-line)] bg-[var(--checkout-switchback)] p-4 text-center text-[var(--checkout-nighttime)]">
             <p className="flex items-center justify-center gap-2 text-sm font-bold">
-              <Clock className="size-4" aria-hidden="true" /> Bekleyen paket talebin var
+              <Clock className="size-4" weight="regular" aria-hidden="true" /> Bekleyen paket talebin var
             </p>
             <p className="mt-1.5 text-xs leading-5">Bu plan için yeniden talep oluşturamazsın.</p>
             <Button
@@ -415,7 +414,7 @@ export function CheckoutSummary({
         ) : (
           <>
             {otherPendingPlanName && (
-              <p className="rounded-xl bg-[var(--checkout-switchback)] px-3 py-2.5 text-xs leading-5">
+              <p className="rounded-card border border-[var(--checkout-soft-line)] bg-[var(--checkout-switchback)] px-3 py-2.5 text-xs leading-5">
                 Bu hoca için başka bir bekleyen talebin var ({otherPendingPlanName}).
               </p>
             )}
@@ -424,7 +423,7 @@ export function CheckoutSummary({
               <span className="text-xl font-extrabold tabular-nums">{displayedTotal}</span>
             </div>
             <Button
-              className="hidden h-11 w-full rounded-lg bg-[var(--checkout-cta)] text-base font-extrabold text-[var(--checkout-on-cta)] hover:bg-[var(--checkout-cta-hover)] lg:inline-flex"
+              className="hidden h-11 w-full rounded-pill bg-[var(--checkout-cta)] text-base font-bold text-[var(--checkout-on-cta)] hover:bg-[var(--checkout-cta-hover)] lg:inline-flex"
               onClick={onPurchaseCta}
               disabled={purchaseBlocked}
             >
@@ -438,9 +437,9 @@ export function CheckoutSummary({
           </>
         )}
         {paidRemainingCredits !== null && paidRemainingCredits > 0 && (
-          <div className="rounded-xl bg-[var(--checkout-switchback)] p-3 text-center text-xs leading-5 text-[var(--checkout-nighttime)]">
+          <div className="rounded-card border border-[var(--checkout-soft-line)] bg-[var(--checkout-switchback)] p-3 text-center text-xs leading-5 text-[var(--checkout-nighttime)]">
             <p className="flex items-center justify-center gap-1.5 font-bold">
-              <CheckCircle2 className="size-4 shrink-0" aria-hidden="true" />
+              <CheckCircle className="size-4 shrink-0" weight="regular" aria-hidden="true" />
               Bu hocada kullanılabilir {paidRemainingCredits} ders hakkın var
             </p>
             <Button
@@ -457,7 +456,7 @@ export function CheckoutSummary({
 
       <div className="mt-3 border-y border-[var(--checkout-soft-line)] py-3 text-xs leading-4">
         <p className="flex items-center gap-2 font-bold">
-          <ShieldCheck className="size-4 text-[var(--checkout-control)]" aria-hidden="true" />
+          <ShieldCheck className="size-4 text-[var(--checkout-control)]" weight="regular" aria-hidden="true" />
           Tek seferlik paket · otomatik yenilenmez
         </p>
         <p className="mt-1 opacity-70">
@@ -476,7 +475,7 @@ export function CheckoutSummary({
 
       <section aria-labelledby="promo-title" className="mt-3">
         <div className="flex items-center gap-2">
-          <TicketPercent className="size-4 text-[var(--checkout-control)]" aria-hidden="true" />
+          <Ticket className="size-4 text-[var(--checkout-control)]" weight="regular" aria-hidden="true" />
           <h2 id="promo-title" className="text-sm font-bold">İndirim kodu</h2>
         </div>
         <form onSubmit={submitPromo} className="mt-2 flex gap-2">
@@ -487,16 +486,16 @@ export function CheckoutSummary({
             aria-label="İndirim kodu"
             autoComplete="off"
             disabled={busy}
-            className="h-9 rounded-lg border-[var(--checkout-soft-line)] bg-[var(--checkout-promo-surface)] text-[var(--checkout-promo-ink)]"
+            className="h-9 rounded-input border-[var(--checkout-soft-line)] bg-[var(--checkout-promo-surface)] text-[var(--checkout-promo-ink)]"
           />
           <Button
             type="submit"
             variant="outline"
-            className="h-9 rounded-lg border-[var(--checkout-control)] bg-transparent px-4 text-[var(--checkout-nighttime)]"
+            className="h-9 rounded-pill border-[var(--checkout-control)] bg-transparent px-4 text-[var(--checkout-nighttime)] hover:bg-[var(--checkout-control)] hover:text-[var(--checkout-on-control)]"
             disabled={busy || !promoCode.trim()}
           >
             {promoStatus === "loading" ? (
-              <Loader2 className="size-4 animate-spin" aria-label="Kod doğrulanıyor" />
+              <CircleNotch className="size-4 animate-spin" weight="regular" aria-label="Kod doğrulanıyor" />
             ) : (
               "Uygula"
             )}
@@ -532,7 +531,7 @@ export function CheckoutSummary({
               <span className="font-extrabold tabular-nums">{displayedTotal}</span>
             </div>
             <Button
-              className="h-11 w-full rounded-lg bg-[var(--checkout-cta)] font-extrabold text-[var(--checkout-on-cta)] hover:bg-[var(--checkout-cta-hover)]"
+              className="h-11 w-full rounded-pill bg-[var(--checkout-cta)] font-bold text-[var(--checkout-on-cta)] hover:bg-[var(--checkout-cta-hover)]"
               onClick={onPurchaseCta}
               disabled={purchaseBlocked}
             >

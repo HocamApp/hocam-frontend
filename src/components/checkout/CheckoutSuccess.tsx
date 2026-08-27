@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Check, Clock } from "lucide-react";
+import { CheckCircle, Clock } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -18,10 +18,10 @@ interface PurchaseSuccessProps {
  * moved yet and activation timing is not promised here. */
 export function CheckoutPurchaseSuccess({ purchase, tutorId }: PurchaseSuccessProps) {
   return (
-    <Card className="mx-auto max-w-lg">
+    <Card className="mx-auto max-w-lg rounded-card border-[var(--checkout-soft-line)] bg-[var(--checkout-card-surface)] shadow-none">
       <CardContent className="space-y-4 pt-6 text-center">
-        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-amber-500/10">
-          <Clock className="h-6 w-6 text-amber-600 dark:text-amber-400" />
+        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-pill bg-[var(--checkout-advantage)] text-[var(--checkout-advantage-ink)]">
+          <Clock className="h-6 w-6" weight="regular" aria-hidden="true" />
         </div>
         <div>
           <h2 className="text-lg font-semibold">Paket talebin oluşturuldu</h2>
@@ -74,15 +74,15 @@ export function CheckoutPurchaseSuccess({ purchase, tutorId }: PurchaseSuccessPr
         </dl>
 
         <p className="text-xs text-muted-foreground">
-          Tek seferlik ödeme — paket otomatik yenilenmez. Kartından anlık ödeme
+          Tek seferlik ödeme. Paket otomatik yenilenmez. Kartından anlık ödeme
           alınmaz.
         </p>
 
         <div className="grid gap-2 sm:grid-cols-2">
-          <Button asChild>
+          <Button className="rounded-pill bg-[var(--checkout-cta)] text-[var(--checkout-on-cta)] hover:bg-[var(--checkout-cta-hover)]" asChild>
             <Link href="/profile/payments">Paketlerimi görüntüle</Link>
           </Button>
-          <Button variant="outline" asChild>
+          <Button variant="outline" className="rounded-pill" asChild>
             <Link href={`/tutors/${tutorId}`}>Hoca profiline dön</Link>
           </Button>
         </div>
@@ -98,10 +98,10 @@ interface BookingSuccessProps {
 /** Shown after a trial or package-credit booking is created via BookingModal. */
 export function CheckoutBookingSuccess({ tutorId }: BookingSuccessProps) {
   return (
-    <Card className="mx-auto max-w-lg">
+    <Card className="mx-auto max-w-lg rounded-card border-[var(--checkout-soft-line)] bg-[var(--checkout-card-surface)] shadow-none">
       <CardContent className="space-y-4 pt-6 text-center">
-        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-green-500/10">
-          <Check className="h-6 w-6 text-green-600 dark:text-green-400" />
+        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-pill bg-[var(--checkout-muted-surface)] text-[var(--checkout-control)]">
+          <CheckCircle className="h-6 w-6" weight="regular" aria-hidden="true" />
         </div>
         <div>
           <h2 className="text-lg font-semibold">Rezervasyonun oluşturuldu</h2>
@@ -110,10 +110,10 @@ export function CheckoutBookingSuccess({ tutorId }: BookingSuccessProps) {
           </p>
         </div>
         <div className="grid gap-2 sm:grid-cols-2">
-          <Button asChild>
+          <Button className="rounded-pill bg-[var(--checkout-cta)] text-[var(--checkout-on-cta)] hover:bg-[var(--checkout-cta-hover)]" asChild>
             <Link href="/dashboard/student">Rezervasyonlarımı gör</Link>
           </Button>
-          <Button variant="outline" asChild>
+          <Button variant="outline" className="rounded-pill" asChild>
             <Link href={`/tutors/${tutorId}`}>Hoca profiline dön</Link>
           </Button>
         </div>

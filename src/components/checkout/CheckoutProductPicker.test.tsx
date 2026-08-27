@@ -51,6 +51,7 @@ test("shows the active private plan and readable disabled future plans", () => {
   assert.equal(group.getAttribute("aria-disabled"), "true");
   assert.equal(pro.getAttribute("aria-disabled"), "true");
   assert.equal(screen.getAllByText("Yakında").length, 2);
+  assert.equal(document.querySelectorAll("svg.lucide").length, 0);
 
   const planButtons = screen.getAllByRole("button").filter((button) =>
     /Küçük Grup|Birebir Özel Ders|Hocam Pro/.test(button.getAttribute("aria-label") ?? button.textContent ?? "")
@@ -84,6 +85,7 @@ test("expands private package controls and benefits inside the selected plan", (
   assert.ok(privatePlan.textContent?.includes("Seçtiğin hocayla canlı birebir ders"));
   const featureList = privatePlan.querySelector('[aria-labelledby="private-features-title"] ul');
   assert.equal(featureList?.querySelectorAll("li").length, 4);
+  assert.equal(featureList?.querySelectorAll("svg").length, 0);
   assert.ok(!privatePlan.textContent?.includes("2 hafta–6 ay paket süresi"));
   assert.ok(!privatePlan.textContent?.includes("Toplam ders hakkı"));
   assert.ok(!privatePlan.textContent?.includes("Paket süresine göre ders başına fiyat avantajı"));

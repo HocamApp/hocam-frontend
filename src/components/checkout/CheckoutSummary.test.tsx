@@ -66,6 +66,7 @@ test("renders duration choices as a single-select accordion in the decision rail
   );
 
   assert.ok(screen.getByRole("radiogroup", { name: "Paket süresi" }));
+  assert.equal(document.querySelectorAll("svg.lucide").length, 0);
   const selected = screen.getByRole("radio", { name: /3 Ay/ }) as HTMLButtonElement;
   assert.equal(selected.getAttribute("aria-checked"), "true");
   const selectedDetailsId = selected.getAttribute("aria-describedby");
@@ -121,7 +122,7 @@ test("applies and removes a promotion with inline status", () => {
   assert.equal(applyCount, 1);
   assert.equal(removeCount, 1);
   assert.ok(screen.getByRole("status").textContent?.includes("uygulandı"));
-  assert.ok(screen.getByText("-₺4.032"));
+  assert.ok(screen.getByText("-4.032 ₺"));
 });
 
 test("places the primary decision before trust copy and promotion controls", () => {

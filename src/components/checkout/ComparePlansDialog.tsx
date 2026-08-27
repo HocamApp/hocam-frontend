@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { Clock3, X } from "lucide-react";
+import { Clock, X } from "@phosphor-icons/react";
 import {
   Dialog,
   DialogClose,
@@ -54,14 +54,14 @@ export function ComparePlansDialog({
       <DialogContent
         showClose={false}
         data-checkout-palette={palette}
-        className="checkout-dialog-theme h-[100dvh] max-h-[100dvh] w-screen max-w-none gap-0 overflow-hidden rounded-none border-0 border-[var(--checkout-soft-line)] p-0 sm:h-auto sm:max-h-[88dvh] sm:w-[calc(100vw-2rem)] sm:max-w-5xl sm:rounded-2xl sm:border"
+        className="checkout-dialog-theme h-[100dvh] max-h-[100dvh] w-screen max-w-none gap-0 overflow-hidden rounded-none border-0 border-[var(--checkout-soft-line)] p-0 sm:h-auto sm:max-h-[88dvh] sm:w-[calc(100vw-2rem)] sm:max-w-5xl sm:rounded-modal sm:border"
       >
         <DialogHeader className="border-b border-[var(--checkout-soft-line)] bg-[var(--checkout-header-surface)] px-5 py-5 pr-14 text-left text-[var(--checkout-header-ink)] sm:px-7">
           <DialogTitle className="text-2xl tracking-tight">Planları karşılaştır</DialogTitle>
           <DialogDescription>Bugün kullanabileceğin özellikleri ve üzerinde çalıştığımız planları birlikte gör.</DialogDescription>
         </DialogHeader>
-        <DialogClose aria-label="Karşılaştırmayı kapat" className="absolute right-4 top-4 rounded-md p-2 opacity-65 transition-colors hover:bg-[var(--checkout-dulline)] hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--checkout-evergreen)]">
-          <X className="size-4" aria-hidden="true" />
+        <DialogClose aria-label="Karşılaştırmayı kapat" className="absolute right-4 top-4 rounded-pill p-2 opacity-65 transition-colors duration-[--duration-state] hover:bg-[var(--checkout-dulline)] hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--checkout-evergreen)]">
+          <X className="size-5" weight="regular" aria-hidden="true" />
         </DialogClose>
 
         <div className="min-h-0 flex-1 overflow-y-auto px-4 py-5 sm:px-7">
@@ -69,16 +69,16 @@ export function ComparePlansDialog({
             <table className="w-full table-fixed border-separate border-spacing-0 text-left text-sm">
               <thead className="sticky top-0 z-10 bg-[var(--checkout-dialog-surface)]">
                 <tr>
-                  <th className="w-[31%] border-b py-4 pr-4 font-semibold">Özellik</th>
+                  <th className="w-[31%] border-b border-[var(--checkout-soft-line)] py-4 pr-4 font-semibold">Özellik</th>
                   {(Object.keys(PLAN_LABELS) as PlanKey[]).map((key) => (
                     <th
                       key={key}
                       data-plan={key}
-                      className="checkout-compare-plan-head border-b px-3 py-4 font-semibold"
+                      className="checkout-compare-plan-head border-b border-[var(--checkout-soft-line)] px-3 py-4 font-semibold"
                     >
-                      <span className="inline-flex rounded-md px-2 py-1">{PLAN_LABELS[key]}</span>
+                      <span className="inline-flex rounded-pill border border-[var(--checkout-soft-line)] px-3 py-1">{PLAN_LABELS[key]}</span>
                       {key !== "private" && (
-                        <Badge className="checkout-compare-badge ml-2 rounded-md border bg-transparent text-current hover:bg-transparent">
+                        <Badge className="checkout-compare-badge ml-2 rounded-pill border bg-transparent text-current hover:bg-transparent">
                           Yakında
                         </Badge>
                       )}
@@ -89,7 +89,7 @@ export function ComparePlansDialog({
               <tbody>
                 {rows.map((row) => (
                   <tr key={row.feature}>
-                    <th className="border-b py-4 pr-4 font-medium">{row.feature}</th>
+                    <th className="border-b border-[var(--checkout-soft-line)] py-4 pr-4 font-medium">{row.feature}</th>
                     {(Object.keys(PLAN_LABELS) as PlanKey[]).map((key) => (
                       <td key={key} className="border-b border-[var(--checkout-soft-line)] px-3 py-4 opacity-70">
                         <PlannedValue value={row[key]} />
@@ -119,12 +119,12 @@ export function ComparePlansDialog({
                 {key !== "private" && (
                   <Badge
                     data-plan={key}
-                    className="checkout-compare-mobile-badge mb-3 rounded-md border bg-transparent hover:bg-transparent"
+                    className="checkout-compare-mobile-badge mb-3 rounded-pill border bg-transparent hover:bg-transparent"
                   >
                     Planlanan · Yakında
                   </Badge>
                 )}
-                <dl className="divide-y">
+                <dl className="divide-y divide-[var(--checkout-soft-line)]">
                   {rows.map((row) => (
                     <div key={row.feature} className="grid grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] gap-4 py-3.5 text-sm">
                       <dt className="font-medium">{row.feature}</dt>
@@ -145,7 +145,7 @@ function PlannedValue({ value }: { value: string }) {
   const planned = value.includes("Planlanan") || value === "Yakında";
   return (
     <span className="inline-flex items-center gap-1.5">
-      {planned && <Clock3 className="size-3.5 shrink-0" aria-hidden="true" />}
+      {planned && <Clock className="size-3.5 shrink-0" weight="regular" aria-hidden="true" />}
       {value}
     </span>
   );

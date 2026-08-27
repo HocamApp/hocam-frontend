@@ -20,7 +20,7 @@ export function CheckoutShell({
       {header}
       <main
         id="checkout-content"
-        className="grid min-h-[calc(100dvh-4.625rem)] lg:grid-cols-[minmax(0,3fr)_minmax(26rem,2fr)]"
+        className="grid min-h-[calc(100dvh-var(--app-header-row-1-h))] lg:grid-cols-[minmax(0,3fr)_minmax(26rem,2fr)]"
       >
         <section
           aria-label="Ders planı"
