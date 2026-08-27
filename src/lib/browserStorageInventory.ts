@@ -1,3 +1,5 @@
+import { COOKIE_AUTH_ENABLED } from "@/lib/authMode";
+
 export const AUTH_TOKEN_MAX_AGE_DAYS = 7;
 
 export type BrowserStorageKind =
@@ -30,9 +32,11 @@ export interface BrowserStorageEntry {
  */
 export const BROWSER_STORAGE_INVENTORY: readonly BrowserStorageEntry[] = [
   {
-    name: "auth_token",
+    name: COOKIE_AUTH_ENABLED ? "hocam_auth" : "auth_token",
     kind: "Çerez",
-    purpose: "Giriş oturumunu doğrular ve hesabın açık kalmasını sağlar.",
+    purpose: COOKIE_AUTH_ENABLED
+      ? "Giriş oturumunu doğrular. Secure ve HttpOnly olduğu için tarayıcı JavaScript’i bu değeri okuyamaz."
+      : "Giriş oturumunu doğrular ve hesabın açık kalmasını sağlar.",
     provider: "HOCAM",
     duration: `${AUTH_TOKEN_MAX_AGE_DAYS} gün`,
     category: "Zorunlu",
