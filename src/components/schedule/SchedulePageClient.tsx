@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { CaretLeft, CaretRight, Plus } from "@phosphor-icons/react";
 
 import { Button } from "@/components/ui/button";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
@@ -208,8 +208,8 @@ export function SchedulePageClient() {
       <header className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight">Çalışma Programım</h1>
-            <p className="text-sm text-muted-foreground">
+            <h1 className="text-h2-m md:text-h2">Çalışma Programım</h1>
+            <p className="mt-1 text-body text-ink-mid">
               Derslerin, koçluk görüşmelerin ve kendi çalışmaların tek takvimde.
             </p>
           </div>
@@ -221,7 +221,7 @@ export function SchedulePageClient() {
               it announces a contract the widget does not honour. aria-pressed
               says the same thing honestly for a third of the code. */}
           <div
-            className="inline-flex rounded-full border border-border bg-card p-1"
+            className="inline-flex rounded-full border border-line bg-surface p-1"
             role="group"
             aria-label="Takvim görünümü"
           >
@@ -232,10 +232,13 @@ export function SchedulePageClient() {
                 aria-pressed={view === tab.value}
                 onClick={() => changeView(tab.value)}
                 className={cn(
-                  "rounded-full px-4 py-1.5 text-sm font-medium transition-colors",
+                  // Solid ink when selected, per the chip rule. It was pink,
+                  // which put two pink pills in one row and made the view
+                  // switch compete with "Çalışma Ekle" for the same attention.
+                  "rounded-pill px-4 py-1.5 text-body font-medium transition-colors duration-[--duration-state]",
                   view === tab.value
-                    ? "bg-brand-500 text-white"
-                    : "text-muted-foreground hover:text-foreground"
+                    ? "bg-ink text-paper"
+                    : "text-ink-mid hover:text-ink"
                 )}
               >
                 {tab.label}
@@ -250,9 +253,9 @@ export function SchedulePageClient() {
               aria-label="Önceki"
               onClick={() => setAnchor(shiftAnchor(view, anchor, -1))}
             >
-              <ChevronLeft className="h-4 w-4" />
+              <CaretLeft className="size-4" />
             </Button>
-            <span className="min-w-[10rem] text-center text-sm font-medium tabular-nums">
+            <span className="min-w-[10rem] text-center text-body font-medium tabular-nums text-ink">
               {rangeLabel(view, anchor)}
             </span>
             <Button
@@ -261,7 +264,7 @@ export function SchedulePageClient() {
               aria-label="Sonraki"
               onClick={() => setAnchor(shiftAnchor(view, anchor, 1))}
             >
-              <ChevronRight className="h-4 w-4" />
+              <CaretRight className="size-4" />
             </Button>
             <Button variant="ghost" size="sm" onClick={() => setAnchor(todayLocal())}>
               Bugün
@@ -269,7 +272,7 @@ export function SchedulePageClient() {
             {/* Sits with the range controls rather than up by the title: this
                 is the row the student is already working in. */}
             <Button onClick={openCreate} className="ml-1 shrink-0">
-              <Plus className="mr-1.5 h-4 w-4" aria-hidden />
+              <Plus className="mr-1.5 size-4" aria-hidden />
               Çalışma Ekle
             </Button>
           </div>
@@ -286,7 +289,7 @@ export function SchedulePageClient() {
         isLoading={progressQuery.isLoading}
       />
 
-      <section className="rounded-2xl border border-border bg-card p-3 sm:p-4">
+      <section className="rounded-card border border-line bg-surface p-3 sm:p-4">
         {calendarQuery.isLoading ? (
           <div className="flex min-h-[16rem] items-center justify-center">
             <LoadingSpinner />
@@ -331,7 +334,7 @@ export function SchedulePageClient() {
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-lg font-semibold tracking-tight">Derslere göre çalışma</h2>
+        <h2 className="text-h3-m font-medium md:text-h3">Derslere göre çalışma</h2>
         <ScheduleSubjectTotals
           stats={progressQuery.data?.subject_stats}
           isLoading={progressQuery.isLoading}

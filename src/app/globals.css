@@ -96,6 +96,38 @@
     --error: #b33a24;
 
     /*
+     * Subject colours for the study calendar.
+     *
+     * Not part of DESIGN.md's palette, and deliberately not made from it
+     * either. The calendar needs colour to do a job the brand palette cannot:
+     * telling Matematik from Tarih at a glance across a week. Three hues plus
+     * neutrals cannot carry six subjects.
+     *
+     * Derived rather than picked. The brand occupies four points on the hue
+     * wheel — pink 341, gold 49, success 156, error 9 — so these sit in the
+     * gaps between them, each at least 28 degrees from the nearest, so a
+     * subject block can never be mistaken for a CTA, a rank badge or an error.
+     * Every one clears 4.5:1 with white text (measured 6.0 to 8.5), and the
+     * closest pair is 35 deltaE apart, which is comfortably distinguishable.
+     *
+     * The numbers are checked in scheduleTheme.test.ts. Change one and that
+     * test tells you what it broke.
+     *
+     * The same six serve both themes. A dark override was written first, on
+     * the assumption that a mid-tone fill would sink into the dark canvas;
+     * measuring it showed the opposite. These separate from #0f1719 by 2.1 to
+     * 3.0, which is more than a surface needs, while lifting them dropped
+     * white text on zeytin and turkuaz to 3.9 — under the floor, on the text
+     * that sits on top of them. The assumption cost the thing that mattered.
+     */
+    --subject-1: #1f5fa6; /* mavi     */
+    --subject-2: #4a3e9e; /* lacivert */
+    --subject-3: #87306f; /* erguvan  */
+    --subject-4: #4f6b1e; /* zeytin   */
+    --subject-5: #0f6e74; /* turkuaz  */
+    --subject-6: #54524f; /* grafit   */
+
+    /*
      * App header height, as one source rather than a number copied into every
      * page that has to subtract it.
      *
@@ -184,6 +216,7 @@
     --ink-mid: #9baaac;
     /* --success at 14% over the dark surface, same construction as light. */
     --success-soft: #17332b;
+
 
     --background: 222 47% 11%;
     --foreground: 214 32% 91%;

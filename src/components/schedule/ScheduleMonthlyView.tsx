@@ -90,14 +90,14 @@ export function ScheduleMonthlyView({
           {WEEKDAY_LABELS.map((label) => (
             <div
               key={label}
-              className="px-2 text-center text-xs font-semibold text-muted-foreground"
+              className="px-2 text-center text-xs font-semibold text-ink-mid"
             >
               {label}
             </div>
           ))}
         </div>
 
-        <div className="grid grid-cols-7 overflow-hidden rounded-2xl border border-border">
+        <div className="grid grid-cols-7 overflow-hidden rounded-card border border-line">
           {days.map((date, index) => {
             const key = toDateKey(date);
             const dayEvents = byDay.get(key) ?? [];
@@ -111,19 +111,19 @@ export function ScheduleMonthlyView({
               <div
                 key={key}
                 className={cn(
-                  "min-h-[6.5rem] border-b border-r border-border p-1.5",
+                  "min-h-[6.5rem] border-b border-r border-line p-1.5",
                   index % 7 === 6 && "border-r-0",
                   index >= 35 && "border-b-0",
-                  isOutside && "bg-muted/40"
+                  isOutside && "bg-paper"
                 )}
               >
                 <button
                   type="button"
                   onClick={() => onSelectDay(date)}
                   className={cn(
-                    "mb-1 flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold tabular-nums transition-colors hover:bg-muted",
-                    isToday && "bg-brand-500 text-white hover:bg-brand-600",
-                    isOutside && !isToday && "text-muted-foreground"
+                    "mb-1 flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold tabular-nums transition-colors hover:bg-paper",
+                    isToday && "bg-pink text-white hover:bg-pink",
+                    isOutside && !isToday && "text-ink-mid"
                   )}
                   aria-label={`${date.getDate()} gününü aç`}
                 >
@@ -136,7 +136,7 @@ export function ScheduleMonthlyView({
                     // The composed title spends a ~96px cell on its first word.
                     // The time plus the subject is what makes the cell scannable.
                     const struck = event.completed
-                      ? "text-muted-foreground line-through"
+                      ? "text-ink-mid line-through"
                       : undefined;
                     return (
                       <button
@@ -144,13 +144,13 @@ export function ScheduleMonthlyView({
                         type="button"
                         onClick={() => onSelectEvent(event)}
                         title={event.title}
-                        className="flex w-full min-w-0 items-center gap-1 rounded-md px-1 py-0.5 text-left text-[11px] hover:bg-muted"
+                        className="flex w-full min-w-0 items-center gap-1 rounded-input px-1 py-0.5 text-left text-[11px] hover:bg-paper"
                       >
                         <span
                           className={cn("h-1.5 w-1.5 shrink-0 rounded-full", tone.dot)}
                           aria-hidden
                         />
-                        <span className={cn("shrink-0 tabular-nums text-muted-foreground", struck)}>
+                        <span className={cn("shrink-0 tabular-nums text-ink-mid", struck)}>
                           {event.local_time}
                         </span>
                         <span className={cn("truncate", struck)}>{shortEventLabel(event)}</span>
@@ -170,7 +170,7 @@ export function ScheduleMonthlyView({
                           : `${longDayLabel(date)}: ${hidden} etkinlik daha göster`
                       }
                       onClick={() => toggleDay(key)}
-                      className="w-full rounded-md px-1 py-0.5 text-left text-[11px] font-medium text-brand-600 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      className="w-full rounded-input px-1 py-0.5 text-left text-[11px] font-medium text-pink hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     >
                       {expanded ? "Daha az göster" : `+${hidden} tane daha`}
                     </button>

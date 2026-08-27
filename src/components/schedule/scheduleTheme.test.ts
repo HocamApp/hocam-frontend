@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
 // Read the real palette rather than a hand-copied hex table, so a hue added
 // later is measured with the same numbers Tailwind will actually emit.
@@ -98,23 +99,15 @@ describe("subject hues", () => {
 
   // Re-colours every uncurated subject on every student's calendar if changed.
   it("pins the fallback ring order", () => {
+    // Order is the hash's output, so changing it re-colours every uncurated
+    // subject a student already recognises.
     assert.deepEqual(FALLBACK_HUE_RING, [
-      "blue",
-      "violet",
-      "teal",
-      "rose",
-      "orange",
-      "cyan",
-      "purple",
-      "green",
-      "fuchsia",
-      "amber",
-      "sky",
-      "pink",
-      "lime",
-      "stone",
-      "emerald",
-      "slate",
+      "mavi",
+      "lacivert",
+      "erguvan",
+      "zeytin",
+      "turkuaz",
+      "grafit",
     ]);
   });
 
@@ -129,10 +122,10 @@ describe("subject hues", () => {
   });
 });
 
-// The day view trades the filled body for a pale one plus a fixed 4px bar, so
-// that a two-hour block does not carry three times the ink of a 40-minute one.
-// What it must not trade away is any of the pale-body contrast.
-describe("day-view surfaces stay pale whatever the duration", () => {
+// The day view trades the filled body for the plain surface plus a fixed 4px
+// edge, so a two-hour block does not carry three times the ink of a 40-minute
+// one. What it must not trade away is the edge that identifies it.
+describe("day-view surfaces stay plain whatever the duration", () => {
   const cases: [string, ScheduleEvent][] = [
     ["lesson", lesson("Matematik")],
     ["subject-less lesson", lesson(null)],
@@ -141,16 +134,17 @@ describe("day-view surfaces stay pale whatever the duration", () => {
   ];
 
   cases.forEach(([name, event]) => {
-    it(`${name} gets a tinted body and a saturated bar`, () => {
+    it(`${name} gets a plain body and a coloured edge`, () => {
       const hue = dayHueForEvent(event);
 
+      // The day view stopped tinting the body at all. A two-hour block used to
+      // carry three times the ink of a forty-minute one purely because it was
+      // bigger; the colour lives in a fixed 4px edge now, so duration changes
+      // the height and nothing else.
       assert.doesNotMatch(hue.dayCard, /text-white/, `${name} is still a solid fill`);
-      // -200, not -50: at -50 the body separates from the page by about 1.05
-      // and a two-hour block reads as an empty outline instead of booked time.
-      assert.match(hue.dayCard, /^bg-[a-z]+-200(\s|$)/, `${name} is not a -200 body`);
-      assert.match(hue.dayCard, /border-[a-z]+-300/, `${name} has no delineating border`);
-      // The bar is where the colour lives now, so it has to be saturated.
-      assert.match(hue.dot, /-500$/, `${name} has no saturated bar colour`);
+      assert.match(hue.dayCard, /bg-surface/, `${name} is not on the plain surface`);
+      assert.match(hue.dayCard, /border-l-4/, `${name} has no edge`);
+      assert.match(hue.dot, /bg-\[var\(--subject-\d\)\]|bg-pink/, `${name} has no bar colour`);
     });
   });
 
@@ -167,19 +161,23 @@ describe("day-view surfaces stay pale whatever the duration", () => {
 // The product rule, enforced rather than only documented: a booked lesson must
 // never be drawable as something the student typed in.
 describe("a lesson never looks like a personal block", () => {
-  it("draws lessons outlined and tinted, whatever the subject", () => {
+  // The distinction moved from tint-depth to fill-versus-outline, which is the
+  // part that has to keep working: a solid block is the student's own, a
+  // surface with a coloured edge is something scheduled for them.
+  it("draws every lesson as a surface with a coloured edge", () => {
     ["Matematik", "Felsefe", "Astronomi", "Tarih-1"].forEach((name) => {
       const tone = toneForEvent(lesson(name));
-      assert.match(tone.card, /border-/, `${name} lost its border`);
-      assert.match(tone.card, /bg-[a-z]+-50\b/, `${name} is not a -50 tint`);
+      assert.match(tone.card, /bg-surface/, `${name} lost its surface`);
+      assert.match(tone.card, /border-l-4/, `${name} lost its edge`);
       assert.doesNotMatch(tone.card, /text-white/, `${name} reads as a solid fill`);
       assert.equal(tone.kindLabel, "Hocam Dersi");
     });
   });
 
-  it("falls back to the brand tint when a lesson has no subject", () => {
+  it("falls back to the brand edge when a lesson has no subject", () => {
     const tone = toneForEvent(lesson(null));
-    assert.match(tone.card, /bg-brand-50/);
+    assert.match(tone.card, /border-pink/);
+    assert.match(tone.card, /bg-surface/);
     assert.equal(tone.kindLabel, "Hocam Dersi");
   });
 
@@ -187,12 +185,14 @@ describe("a lesson never looks like a personal block", () => {
     Object.entries(STUDY_TONES_FOR_TEST).forEach(([type, tone]) => {
       assert.match(tone.card, /text-white/, `${type} is not filled`);
       assert.match(tone.card, /border-transparent/, `${type} kept a border`);
+      assert.match(tone.card, /--subject-\d/, `${type} is off-palette`);
     });
   });
 
-  it("keeps coaching on indigo", () => {
+  it("keeps coaching on its own colour, outlined like a lesson", () => {
     const tone = toneForEvent({ ...lesson(null), source: "coaching" });
-    assert.match(tone.card, /indigo/);
+    assert.match(tone.card, /--subject-2/);
+    assert.match(tone.card, /bg-surface/);
     assert.equal(tone.kindLabel, "Koçluk Görüşmesi");
   });
 });
@@ -200,75 +200,91 @@ describe("a lesson never looks like a personal block", () => {
 /**
  * Contrast, measured rather than asserted in a comment.
  *
- * The palette steps are read back out of the class strings and looked up in
- * Tailwind's own colours, so a hue added later without checking its contrast
- * fails here instead of shipping. The dark surface is the -950/50 tint
- * composited over --card (220 37% 14%), which is what the viewer actually sees.
+ * The palette is six literal hex values in globals.css, so this reads them out
+ * of the stylesheet rather than trusting a copy kept here. A colour edited
+ * there without checking fails here instead of shipping.
+ *
+ * Three things are checked, and they are the three that make a categorical
+ * palette work: every fill is legible under white text, no two are close
+ * enough to be confused, and none of them sits near a brand colour where it
+ * could be mistaken for a CTA, a rank badge or an error.
  */
-const TAILWIND_COLORS = tailwindColors as unknown as Record<string, Record<number, string>>;
+const CSS = readFileSync(
+  new URL("../../app/globals.css", import.meta.url),
+  "utf8",
+);
 
-describe("subject hue contrast", () => {
-  const CARD_DARK = hslToRgb(220, 37, 14);
+function token(name: string): string {
+  const match = CSS.match(new RegExp(`--${name}:\\s*(#[0-9a-fA-F]{6})`));
+  assert.ok(match, `${name} not found in globals.css`);
+  return match[1];
+}
 
-  function hslToRgb(h: number, s: number, l: number): number[] {
-    const sat = s / 100;
-    const light = l / 100;
-    const a = sat * Math.min(light, 1 - light);
-    const f = (n: number) => {
-      const k = (n + h / 30) % 12;
-      return light - a * Math.max(-1, Math.min(Math.min(k - 3, 9 - k), 1));
-    };
-    return [f(0), f(8), f(4)];
-  }
+const rgb = (hex: string) =>
+  [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
 
-  function hexToRgb(hex: string): number[] {
-    return [1, 3, 5].map((index) => parseInt(hex.slice(index, index + 2), 16) / 255);
-  }
+function relLum(hex: string): number {
+  const [r, g, b] = rgb(hex).map((c) => {
+    const v = c / 255;
+    return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
+  });
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
 
-  function luminance(rgb: number[]): number {
-    const [r, g, b] = rgb.map((channel) =>
-      channel <= 0.03928 ? channel / 12.92 : Math.pow((channel + 0.055) / 1.055, 2.4)
-    );
-    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
-  }
+function contrast(a: string, b: string): number {
+  const [hi, lo] = [relLum(a), relLum(b)].sort((x, y) => y - x);
+  return (hi + 0.05) / (lo + 0.05);
+}
 
-  function contrast(a: number[], b: number[]): number {
-    const first = luminance(a);
-    const second = luminance(b);
-    const [hi, lo] = first > second ? [first, second] : [second, first];
-    return (hi + 0.05) / (lo + 0.05);
-  }
+function lab(hex: string): [number, number, number] {
+  const [r, g, b] = rgb(hex).map((c) => {
+    const v = c / 255;
+    return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
+  });
+  const x = (r * 0.4124 + g * 0.3576 + b * 0.1805) / 0.95047;
+  const y = r * 0.2126 + g * 0.7152 + b * 0.0722;
+  const z = (r * 0.0193 + g * 0.1192 + b * 0.9505) / 1.08883;
+  const f = (t: number) => (t > 0.008856 ? Math.cbrt(t) : 7.787 * t + 16 / 116);
+  return [116 * f(y) - 16, 500 * (f(x) - f(y)), 200 * (f(y) - f(z))];
+}
 
-  function over(foreground: number[], alpha: number, background: number[]): number[] {
-    return foreground.map((channel, index) => channel * alpha + background[index] * (1 - alpha));
-  }
+const deltaE = (a: string, b: string) =>
+  Math.hypot(...lab(a).map((v, i) => v - lab(b)[i]));
 
-  function step(hue: string, shade: number): number[] {
-    const palette = TAILWIND_COLORS[hue];
-    assert.ok(palette?.[shade], `tailwind has no ${hue}-${shade}`);
-    return hexToRgb(palette[shade]);
-  }
+const SUBJECT_IDS = [1, 2, 3, 4, 5, 6] as const;
 
-  Object.values(SUBJECT_HUES).forEach((hue) => {
-    it(`${hue.id} clears AA in both themes`, () => {
-      const tintLight = step(hue.id, 50);
-      const tintDark = over(step(hue.id, 950), 0.5, CARD_DARK);
-
-      const lightBody = contrast(step(hue.id, 900), tintLight);
-      const lightLabel = contrast(step(hue.id, 800), tintLight);
-      const darkBody = contrast(step(hue.id, 100), tintDark);
-      const darkLabel = contrast(step(hue.id, 300), tintDark);
-
-      assert.ok(lightBody >= 4.5, `${hue.id} light body ${lightBody.toFixed(2)}`);
-      assert.ok(lightLabel >= 4.5, `${hue.id} light label ${lightLabel.toFixed(2)}`);
-      assert.ok(darkBody >= 4.5, `${hue.id} dark body ${darkBody.toFixed(2)}`);
-      assert.ok(darkLabel >= 4.5, `${hue.id} dark label ${darkLabel.toFixed(2)}`);
-    });
+describe("subject palette", () => {
+  it("is legible under white text", () => {
+    for (const n of SUBJECT_IDS) {
+      const value = token(`subject-${n}`);
+      assert.ok(
+        contrast(value, "#ffffff") >= 4.5,
+        `--subject-${n} (${value}) is ${contrast(value, "#ffffff").toFixed(2)}:1 on white`,
+      );
+    }
   });
 
-  it("uses the -800 label step, which -700 could not clear with headroom", () => {
-    Object.values(SUBJECT_HUES).forEach((hue) => {
-      assert.match(hue.label, new RegExp(`text-${hue.id}-800\\b`));
-    });
+  it("keeps every pair far enough apart to tell them apart", () => {
+    // 25 is the working floor for "two fills a student can distinguish at chip
+    // size". The closest pair as written is about 35.
+    for (const a of SUBJECT_IDS) {
+      for (const b of SUBJECT_IDS) {
+        if (a >= b) continue;
+        const d = deltaE(token(`subject-${a}`), token(`subject-${b}`));
+        assert.ok(d >= 25, `subject-${a} and subject-${b} are only ${d.toFixed(1)} apart`);
+      }
+    }
+  });
+
+  it("never strays close to a brand colour", () => {
+    // A subject block that reads as the pink CTA or the gold rank badge is
+    // worse than one that is hard to tell from another subject.
+    const brand = ["pink", "gold", "success", "error"] as const;
+    for (const n of SUBJECT_IDS) {
+      for (const name of brand) {
+        const d = deltaE(token(`subject-${n}`), token(name));
+        assert.ok(d >= 25, `subject-${n} is only ${d.toFixed(1)} from --${name}`);
+      }
+    }
   });
 });

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { CalendarX, Repeat } from "lucide-react";
+import { CalendarX, Repeat } from "@phosphor-icons/react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -86,12 +86,12 @@ export function DeleteStudyBlockDialog({
               type="button"
               disabled={isSubmitting}
               onClick={() => confirm("this_occurrence")}
-              className="flex w-full items-start gap-3 rounded-xl border border-border p-3 text-left transition-colors hover:border-brand-300 hover:bg-brand-50/50 disabled:opacity-60 dark:hover:bg-brand-900/20"
+              className="flex w-full items-start gap-3 rounded-card border border-line p-3 text-left transition-colors hover:border-brand-300 hover:bg-brand-50/50 disabled:opacity-60 dark:hover:bg-brand-900/20"
             >
               <CalendarX className="mt-0.5 h-4 w-4 shrink-0 text-brand-500" aria-hidden />
               <span>
                 <span className="block text-sm font-medium">Sadece bu hafta</span>
-                <span className="block text-xs text-muted-foreground">
+                <span className="block text-xs text-ink-mid">
                   {occurrenceLabel} günündeki çalışma kaldırılır, seri devam eder.
                 </span>
               </span>
@@ -101,12 +101,12 @@ export function DeleteStudyBlockDialog({
               type="button"
               disabled={isSubmitting}
               onClick={() => confirm("series")}
-              className="flex w-full items-start gap-3 rounded-xl border border-border p-3 text-left transition-colors hover:border-destructive/50 hover:bg-destructive/5 disabled:opacity-60"
+              className="flex w-full items-start gap-3 rounded-card border border-line p-3 text-left transition-colors hover:border-destructive/50 hover:bg-destructive/5 disabled:opacity-60"
             >
               <Repeat className="mt-0.5 h-4 w-4 shrink-0 text-destructive" aria-hidden />
               <span>
                 <span className="block text-sm font-medium">Tüm seriyi bitir</span>
-                <span className="block text-xs text-muted-foreground">
+                <span className="block text-xs text-ink-mid">
                   Bugünden itibaren tekrarlamaz. Geçmiş haftalar programında kalır.
                 </span>
               </span>

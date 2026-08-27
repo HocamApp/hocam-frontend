@@ -94,11 +94,11 @@ export function ScheduleWeeklyView({
           onSelect={setSelectedDayIndex}
           getCount={(date) => eventsForDay(date).length}
         />
-        <p className="mb-2 mt-3 text-xs font-medium text-muted-foreground">
+        <p className="mb-2 mt-3 text-xs font-medium text-ink-mid">
           {longDayLabel(selectedDate)}
         </p>
         {selectedEvents.length === 0 ? (
-          <p className="rounded-xl border border-dashed p-4 text-center text-xs text-muted-foreground">
+          <p className="rounded-card border border-line p-4 text-center text-xs text-ink-mid">
             Bu gün boş.
           </p>
         ) : (
@@ -131,25 +131,25 @@ export function ScheduleWeeklyView({
                 key={toDateKey(date)}
                 aria-label={longDayLabel(date)}
                 className={cn(
-                  "min-h-[15rem] rounded-2xl border bg-card p-1.5 lg:p-2",
+                  "min-h-[15rem] rounded-card border bg-surface p-1.5 lg:p-2",
                   isToday && "border-brand-300 bg-brand-50/40 dark:bg-brand-900/20"
                 )}
               >
                 <div className="mb-2 flex items-center justify-between px-1">
-                  <span className="text-xs font-semibold text-muted-foreground">
+                  <span className="text-xs font-semibold text-ink-mid">
                     {WEEKDAY_LABELS[index]}
                   </span>
                   <span
                     className={cn(
                       "flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold tabular-nums",
-                      isToday && "bg-brand-500 text-white"
+                      isToday && "bg-pink text-white"
                     )}
                   >
                     {date.getDate()}
                   </span>
                 </div>
                 {dayEvents.length === 0 ? (
-                  <p className="pt-6 text-center text-[11px] text-muted-foreground">
+                  <p className="pt-6 text-center text-[11px] text-ink-mid">
                     Boş
                   </p>
                 ) : (

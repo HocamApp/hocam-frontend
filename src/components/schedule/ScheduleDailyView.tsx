@@ -111,7 +111,7 @@ export function ScheduleDailyView({
           <div
             key={hour}
             style={{ top: index * HOUR_HEIGHT }}
-            className="absolute right-0 -translate-y-1/2 text-right text-[11px] tabular-nums text-muted-foreground"
+            className="absolute right-0 -translate-y-1/2 text-right text-[11px] tabular-nums text-ink-mid"
           >
             {String(hour).padStart(2, "0")}:00
           </div>
@@ -123,7 +123,7 @@ export function ScheduleDailyView({
           <div
             key={hour}
             style={{ top: index * HOUR_HEIGHT }}
-            className="absolute inset-x-0 border-t border-border/60"
+            className="absolute inset-x-0 border-t border-line/60"
           />
         ))}
 
@@ -133,14 +133,14 @@ export function ScheduleDailyView({
             className="absolute inset-x-0 z-10 flex items-center"
             aria-hidden
           >
-            <span className="h-2 w-2 rounded-full bg-brand-500" />
-            <span className="h-px flex-1 bg-brand-500" />
-            <span className="h-2 w-2 rounded-full bg-brand-500" />
+            <span className="h-2 w-2 rounded-full bg-pink" />
+            <span className="h-px flex-1 bg-pink" />
+            <span className="h-2 w-2 rounded-full bg-pink" />
           </div>
         )}
 
         {dayEvents.length === 0 && (
-          <p className="absolute inset-x-0 top-1/2 -translate-y-1/2 text-center text-sm text-muted-foreground">
+          <p className="absolute inset-x-0 top-1/2 -translate-y-1/2 text-center text-sm text-ink-mid">
             Bu gün için planlanmış bir şey yok.
           </p>
         )}

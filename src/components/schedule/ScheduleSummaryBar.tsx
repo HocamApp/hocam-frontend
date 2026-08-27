@@ -25,7 +25,7 @@ export function ScheduleSummaryBar({
 }: ScheduleSummaryBarProps) {
   if (isLoading || !completion) {
     return (
-      <div className="h-14 animate-pulse rounded-2xl border border-border bg-muted/50" />
+      <div className="h-14 animate-skeleton-pulse rounded-card border border-line bg-[#EDE6E6]" />
     );
   }
 
@@ -33,7 +33,7 @@ export function ScheduleSummaryBar({
 
   if (total === 0) {
     return (
-      <div className="rounded-2xl border border-dashed border-border px-4 py-3 text-sm text-muted-foreground">
+      <div className="rounded-card border border-line bg-surface px-4 py-3 text-sm text-ink-mid">
         {/* The calendar below already offers the "+ Çalışma Ekle" prompt when
             it is empty; this line only states the week's numbers. */}
         {weekLabel ? `${weekLabel} haftasında` : "Bu hafta"} planlanmış çalışma yok.
@@ -42,16 +42,16 @@ export function ScheduleSummaryBar({
   }
 
   return (
-    <div className="rounded-2xl border border-border bg-card px-4 py-3">
+    <div className="rounded-card border border-line bg-surface px-4 py-3">
       <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
         <p className="text-sm font-medium">
           Bu haftaki planının{" "}
-          <span className="font-semibold text-brand-600 dark:text-brand-300">
+          <span className="font-semibold text-pink">
             %{percentage}
           </span>
           &apos;i tamamlandı
         </p>
-        <p className="text-xs tabular-nums text-muted-foreground">
+        <p className="text-xs tabular-nums text-ink-mid">
           {/* Named explicitly: in the monthly view the calendar shows a whole
               month while these numbers only ever describe one week, and an
               unlabelled "bu hafta" reads as whatever the grid is showing. */}
@@ -59,9 +59,9 @@ export function ScheduleSummaryBar({
           {completed} / {total} çalışma
         </p>
       </div>
-      <div className="mt-2 h-2 overflow-hidden rounded-full bg-muted">
+      <div className="mt-2 h-2 overflow-hidden rounded-full bg-paper">
         <div
-          className={cn("h-full rounded-full bg-brand-500 transition-[width]")}
+          className={cn("h-full rounded-full bg-pink transition-[width]")}
           style={{ width: `${percentage}%` }}
           role="progressbar"
           aria-valuenow={percentage}

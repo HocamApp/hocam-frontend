@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Lock, Pencil, Trash2 } from "lucide-react";
+import { Check, Lock, PencilSimple, Trash } from "@phosphor-icons/react";
 
 import { cn } from "@/lib/utils";
 import type { ScheduleEvent } from "@/types";
@@ -57,7 +57,7 @@ function CompletionCheckbox({
         onChange(!checked);
       }}
       className={cn(
-        "flex shrink-0 items-center gap-1.5 rounded-lg px-1.5 py-1 text-[11px] font-medium transition-colors",
+        "flex shrink-0 items-center gap-1.5 rounded-input px-1.5 py-1 text-[11px] font-medium transition-colors",
         "focus-visible:outline-none focus-visible:ring-2",
         onLight
           ? "hover:bg-black/5 focus-visible:ring-ring dark:hover:bg-white/10"
@@ -143,8 +143,8 @@ export function ScheduleEventCard({
       className={cn(
         "relative flex min-w-0 overflow-hidden border",
         compact
-          ? "gap-1.5 rounded-xl px-2 py-1.5 shadow-sm"
-          : "gap-2 rounded-2xl py-2 shadow-md",
+          ? "gap-1.5 rounded-card px-2 py-1.5"
+          : "gap-2 rounded-card py-2",
         expanded ? "pl-4 pr-3" : !compact && "px-3",
         dayHue ? dayHue.dayCard : tone.card,
         pending && "opacity-60",
@@ -266,7 +266,7 @@ export function ScheduleEventCard({
             {formatMinutes(event.duration_minutes)}
           </span>
           {statusLabel && (
-            <span className="rounded-full bg-black/5 px-2 py-0.5 text-[10px] font-semibold dark:bg-white/10">
+            <span className="rounded-pill border border-current/30 px-2 py-0.5 text-[10px] font-semibold">
               {statusLabel}
             </span>
           )}
@@ -292,9 +292,9 @@ export function ScheduleEventCard({
                   type="button"
                   aria-label="Çalışmayı düzenle"
                   onClick={() => onEdit(event)}
-                  className={cn("rounded-md p-1 focus-visible:outline-none focus-visible:ring-2", expanded ? "hover:bg-black/5 focus-visible:ring-ring dark:hover:bg-white/10" : "hover:bg-white/20 focus-visible:ring-white/70")}
+                  className={cn("rounded-input p-1 focus-visible:outline-none focus-visible:ring-2", expanded ? "hover:bg-black/5 focus-visible:ring-ring dark:hover:bg-white/10" : "hover:bg-white/20 focus-visible:ring-white/70")}
                 >
-                  <Pencil className="h-3.5 w-3.5" />
+                  <PencilSimple className="h-3.5 w-3.5" />
                 </button>
               )}
               {showDelete && onDelete && (
@@ -302,9 +302,9 @@ export function ScheduleEventCard({
                   type="button"
                   aria-label="Çalışmayı sil"
                   onClick={() => onDelete(event)}
-                  className={cn("rounded-md p-1 focus-visible:outline-none focus-visible:ring-2", expanded ? "hover:bg-black/5 focus-visible:ring-ring dark:hover:bg-white/10" : "hover:bg-white/20 focus-visible:ring-white/70")}
+                  className={cn("rounded-input p-1 focus-visible:outline-none focus-visible:ring-2", expanded ? "hover:bg-black/5 focus-visible:ring-ring dark:hover:bg-white/10" : "hover:bg-white/20 focus-visible:ring-white/70")}
                 >
-                  <Trash2 className="h-3.5 w-3.5" />
+                  <Trash className="h-3.5 w-3.5" />
                 </button>
               )}
             </div>
