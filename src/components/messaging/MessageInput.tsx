@@ -12,6 +12,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { SymbolPicker } from "@/components/messaging/SymbolPicker";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { SensitiveDataGuidance } from "@/components/privacy/SensitiveDataGuidance";
+
+const MESSAGE_GUIDANCE_SEEN_KEY = "hocam_sensitive_data_guidance_seen";
 
 interface MessageInputProps {
   conversationId: string;
@@ -39,8 +42,17 @@ export function MessageInput({
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [selectedAttachment, setSelectedAttachment] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [showPrivacyGuidance, setShowPrivacyGuidance] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    try {
+      setShowPrivacyGuidance(localStorage.getItem(MESSAGE_GUIDANCE_SEEN_KEY) !== "true");
+    } catch {
+      setShowPrivacyGuidance(true);
+    }
+  }, []);
 
   const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -123,6 +135,12 @@ export function MessageInput({
       setPreviewUrl(null);
       onCancelReply?.();
       onMessageSent(newMessage);
+      if (showPrivacyGuidance) {
+        try {
+          localStorage.setItem(MESSAGE_GUIDANCE_SEEN_KEY, "true");
+        } catch {}
+        setShowPrivacyGuidance(false);
+      }
       // Success-only feedback — never plays on a failed send.
       playSendSound();
     } catch (err) {
@@ -235,6 +253,7 @@ export function MessageInput({
           {inputError}
         </div>
       )}
+      {showPrivacyGuidance && <SensitiveDataGuidance className="px-4 pt-3" />}
       <div className="flex min-w-0 items-end gap-2 p-3 sm:p-4">
         <input
           type="file"

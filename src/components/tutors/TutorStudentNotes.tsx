@@ -15,6 +15,7 @@ import { fetchTutorLessonTopicCheckIns } from "@/lib/learningApi";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
+import { SensitiveDataGuidance } from "@/components/privacy/SensitiveDataGuidance";
 
 export function TutorStudentNotes({ studentId, compact = false }: { studentId: string; compact?: boolean }) {
   const queryClient = useQueryClient();
@@ -87,7 +88,7 @@ export function TutorStudentNotes({ studentId, compact = false }: { studentId: s
           ))}
         </div>
       )}
-      <div className="space-y-2 border-t pt-3"><Textarea value={draft} onChange={(e) => setDraft(e.target.value)} maxLength={1000} placeholder="Öğrenciyle ilgili kalıcı bir not ekle…" className="min-h-20" /><Button size="sm" onClick={() => createMutation.mutate({ student: studentId, content: draft.trim() })} disabled={!draft.trim() || createMutation.isPending}><Plus className="mr-2 h-4 w-4" />Not ekle</Button></div>
+      <div className="space-y-2 border-t pt-3"><Textarea value={draft} onChange={(e) => setDraft(e.target.value)} maxLength={1000} placeholder="Öğrenciyle ilgili kalıcı bir not ekle…" className="min-h-20" /><SensitiveDataGuidance /><Button size="sm" onClick={() => createMutation.mutate({ student: studentId, content: draft.trim() })} disabled={!draft.trim() || createMutation.isPending}><Plus className="mr-2 h-4 w-4" />Not ekle</Button></div>
     </section>
   );
 }

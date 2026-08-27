@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
+import { SensitiveDataGuidance } from "@/components/privacy/SensitiveDataGuidance";
 import {
   COACHING_FAZ6_QUERY_KEYS,
   COACHING_SESSION_QUERY_KEYS,
@@ -295,6 +296,7 @@ export function CoachingReportWizard({ sessionId }: { sessionId: string }) {
         <CardHeader>
           <CardTitle>Görüşme raporu</CardTitle>
           <p className="text-sm text-muted-foreground">Taslağı adım adım kaydedebilir, sonrasında immutable bir revizyon olarak yayınlayabilirsin.</p>
+          <SensitiveDataGuidance />
           <ol className="grid grid-cols-5 gap-1 pt-2 text-center text-xs text-muted-foreground" aria-label="Rapor adımları">
             {STEPS.map((label, index) => <li key={label} className={index === step ? "rounded bg-primary px-1 py-2 font-medium text-primary-foreground" : "rounded bg-muted px-1 py-2"}>{index + 1}. {label}</li>)}
           </ol>

@@ -17,6 +17,7 @@ import {
 import { RouteGuard } from "@/components/shared/RouteGuard";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { SensitiveDataGuidance } from "@/components/privacy/SensitiveDataGuidance";
 import { Badge } from "@/components/ui/badge";
 import { TypingIndicator } from "@/components/messaging/TypingIndicator";
 import { AssistantMessageContent } from "@/components/ai/AssistantMessageContent";
@@ -283,6 +284,7 @@ function AIPageContent() {
                 <Send className="h-4 w-4" />
               </Button>
             </div>
+            <SensitiveDataGuidance className="mt-1.5" />
           </form>
         </section>
 

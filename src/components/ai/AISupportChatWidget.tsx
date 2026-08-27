@@ -8,6 +8,7 @@ import { TypingIndicator } from "@/components/messaging/TypingIndicator";
 import { AssistantMessageContent } from "@/components/ai/AssistantMessageContent";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { SensitiveDataGuidance } from "@/components/privacy/SensitiveDataGuidance";
 import { AIChatRequest, AIChatResponse, AIIntent, sendAIChatMessage } from "@/lib/aiAssistantApi";
 import { setTheme, type Theme } from "@/lib/theme";
 import { cn } from "@/lib/utils";
@@ -358,6 +359,7 @@ export function AISupportChatWidget({
                 <Send className="h-4 w-4" />
               </Button>
             </div>
+            <SensitiveDataGuidance className="mt-1.5" />
           </form>
         </section>
       )}
