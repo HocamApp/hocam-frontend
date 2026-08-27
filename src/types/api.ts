@@ -154,8 +154,9 @@ export interface AdminMonitorResponse {
 }
 
 export interface AuthResponse {
-  token: string;
+  token?: string;
   user: User;
+  auth_mode?: "disabled" | "dual" | "enforced";
 }
 
 export interface LoginRequest {
@@ -485,8 +486,9 @@ export interface LearningContext {
 }
 
 export interface GoogleAuthSuccess {
-  token: string;
+  token?: string;
   user: User;
+  auth_mode?: "disabled" | "dual" | "enforced";
 }
 
 export interface GoogleAuthNeedsRole {

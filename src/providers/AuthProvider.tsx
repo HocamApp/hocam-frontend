@@ -9,15 +9,19 @@ import {
 } from "react";
 import Cookies from "js-cookie";
 import { AUTH_TOKEN_MAX_AGE_DAYS } from "@/lib/browserStorageInventory";
+import {
+  COOKIE_AUTH_ENABLED,
+  sessionStateToken,
+} from "@/lib/authMode";
 import { User } from "@/types";
 import { fetchMe } from "@/lib/authApi";
-import { IMPERSONATION_ENDED_EVENT } from "@/lib/api";
+import { IMPERSONATION_ENDED_EVENT, migrateLegacyAuthToken } from "@/lib/api";
 import { queryClient } from "@/lib/queryClient";
 
 interface AuthContextType {
   user: User | null;
   token: string | null;
-  setAuth: (user: User, token: string) => void;
+  setAuth: (user: User, token?: string) => void;
   clearAuth: () => void;
   updateUser: (user: User) => void;
   isLoading: boolean;
@@ -66,14 +70,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const rehydrate = async () => {
       const storedToken = Cookies.get("auth_token");
 
-      if (!storedToken) {
+      if (!COOKIE_AUTH_ENABLED && !storedToken) {
         setIsLoading(false);
         return;
       }
 
       const cachedUser = readCachedUser();
       if (cachedUser) {
-        setToken(storedToken);
+        setToken(sessionStateToken(storedToken));
         setUser(cachedUser);
         // Do not mount account-specific queries with an unverified, short-lived
         // impersonation token after refresh. fetchMe either restores the target
@@ -84,24 +88,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       try {
+        if (COOKIE_AUTH_ENABLED && storedToken) {
+          await migrateLegacyAuthToken(storedToken);
+          Cookies.remove("auth_token");
+        }
         const freshUser = await fetchMe();
         if (cachedUser && cachedUser.id !== freshUser.id) {
           queryClient.clear();
         }
-        setToken(storedToken);
+        setToken(sessionStateToken(storedToken));
         setUser(freshUser);
         localStorage.setItem("auth_user", JSON.stringify(freshUser));
       } catch {
         // The API interceptor owns confirmed 401 session expiry. A temporary
         // network or server failure during refresh must not destroy a valid
         // seven-day browser session.
-        const tokenStillAvailable = Cookies.get("auth_token");
+        const tokenStillAvailable = COOKIE_AUTH_ENABLED
+          ? Boolean(cachedUser)
+          : Boolean(Cookies.get("auth_token"));
         if (!tokenStillAvailable) {
           localStorage.removeItem("auth_user");
           setToken(null);
           setUser(null);
         } else {
-          setToken(tokenStillAvailable);
+          setToken(sessionStateToken(storedToken));
           setUser(cachedUser);
         }
       } finally {
@@ -126,18 +136,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener(IMPERSONATION_ENDED_EVENT, restoreAdmin);
   }, []);
 
-  const setAuth = (nextUser: User, nextToken: string) => {
-    const identityChanged = user?.id !== nextUser.id || token !== nextToken;
+  const setAuth = (nextUser: User, nextToken?: string) => {
+    const nextSessionToken = sessionStateToken(nextToken);
+    if (!nextSessionToken) {
+      throw new Error("Authentication response did not include a token.");
+    }
+    const identityChanged =
+      user?.id !== nextUser.id || token !== nextSessionToken;
 
     Cookies.remove("admin_impersonation_token");
-    Cookies.set("auth_token", nextToken, {
-      expires: AUTH_TOKEN_MAX_AGE_DAYS,
-      // Not HttpOnly (js-cookie can't set that) — documented architectural
-      // limitation. These at least block plaintext transmission and
-      // cross-site sends of the cookie itself.
-      secure: window.location.protocol === "https:",
-      sameSite: "strict",
-    });
+    if (COOKIE_AUTH_ENABLED) {
+      Cookies.remove("auth_token");
+    } else {
+      Cookies.set("auth_token", nextSessionToken, {
+        expires: AUTH_TOKEN_MAX_AGE_DAYS,
+        secure: window.location.protocol === "https:",
+        sameSite: "strict",
+      });
+    }
     localStorage.setItem("auth_user", JSON.stringify(nextUser));
 
     // React Query is shared across the app and caches account-specific data for
@@ -148,7 +164,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       queryClient.clear();
     }
 
-    setToken(nextToken);
+    setToken(nextSessionToken);
     setUser(nextUser);
   };
 
