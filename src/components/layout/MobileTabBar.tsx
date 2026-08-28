@@ -151,8 +151,8 @@ export function MobileTabBar() {
             <span className="relative">
               <Icon className="h-5 w-5" aria-hidden="true" />
               <NotificationMark
-                hasUnread={summary?.has_unread ?? false}
-                className="absolute -right-2.5 -top-2"
+                unreadCount={summary?.unread_count ?? 0}
+                className="absolute -right-3 -top-2.5"
               />
             </span>
             <span>{descriptor.title}</span>
@@ -162,7 +162,7 @@ export function MobileTabBar() {
           side="top"
           align="end"
           sideOffset={8}
-          className="w-[min(20rem,calc(100vw-1rem))] p-0"
+          className="w-[min(20rem,calc(100vw-1rem))] border-none bg-transparent p-0 shadow-none"
         >
           {descriptor.id === "notifications" && <NotificationPopoverContent />}
         </PopoverContent>

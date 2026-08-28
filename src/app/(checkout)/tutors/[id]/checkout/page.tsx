@@ -503,20 +503,20 @@ export default function TutorCheckoutPage({
             <CheckoutBookingSuccess tutorId={tutorId} />
           ) : plansLoading ? (
             <div className="space-y-4" aria-label="Paket seçenekleri yükleniyor">
-              <Skeleton className="h-24 rounded-2xl" />
-              <Skeleton className="h-52 rounded-2xl" />
-              <Skeleton className="h-24 rounded-2xl" />
+              <Skeleton className="h-24 rounded-card" />
+              <Skeleton className="h-52 rounded-card" />
+              <Skeleton className="h-24 rounded-card" />
             </div>
           ) : plansError ? (
-            <div className="rounded-2xl border p-6">
+            <div className="rounded-card border border-[var(--checkout-soft-line)] bg-[var(--checkout-card-surface)] p-6">
               <ErrorMessage message="Paket seçenekleri yüklenemedi." />
-              <Button variant="outline" className="mt-4 rounded-xl" onClick={() => refetchPlans()}>Tekrar dene</Button>
+              <Button variant="outline" className="mt-4 rounded-pill" onClick={() => refetchPlans()}>Tekrar dene</Button>
             </div>
           ) : weeklyPlans.length === 0 ? (
-            <div className="rounded-2xl border border-dashed p-8 text-center">
+            <div className="rounded-card border border-[var(--checkout-soft-line)] bg-[var(--checkout-card-surface)] p-8 text-center">
               <h2 className="font-semibold">Bu hoca için açık paket bulunmuyor</h2>
               <p className="mt-2 text-sm text-muted-foreground">Hoca profilinden diğer ders seçeneklerini inceleyebilirsin.</p>
-              <Button variant="outline" className="mt-5 rounded-xl" asChild><Link href={`/tutors/${tutorId}`}>Hoca profiline dön</Link></Button>
+              <Button variant="outline" className="mt-5 rounded-pill" asChild><Link href={`/tutors/${tutorId}`}>Hoca profiline dön</Link></Button>
             </div>
           ) : (
             <CheckoutProductPicker

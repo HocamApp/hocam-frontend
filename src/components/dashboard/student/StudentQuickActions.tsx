@@ -25,7 +25,7 @@ export function StudentQuickActions({ emphasizeFindTutor = false }: StudentQuick
         Hızlı erişim
       </h2>
       <Button asChild variant="ghost" size="sm" className="w-full justify-start">
-        <Link href="/tutors?favorites=1">
+        <Link href="/favoriler">
           <Heart className="mr-2 h-4 w-4" aria-hidden="true" />
           Hocalarım
         </Link>

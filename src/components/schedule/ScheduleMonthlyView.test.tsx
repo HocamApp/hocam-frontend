@@ -59,6 +59,12 @@ function renderMonth(
 }
 
 describe("month chips", () => {
+  it("exposes a labelled month grid", () => {
+    renderMonth([lesson("only", "10:00")]);
+
+    assert.ok(screen.getByRole("grid", { name: "Aylık takvim" }));
+  });
+
   it("shows the time and the subject, not the composed title", () => {
     renderMonth([lesson("only", "10:00")]);
 

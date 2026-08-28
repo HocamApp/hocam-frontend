@@ -66,6 +66,7 @@ test("renders duration choices as a single-select accordion in the decision rail
   );
 
   assert.ok(screen.getByRole("radiogroup", { name: "Paket süresi" }));
+  assert.equal(document.querySelectorAll("svg.lucide").length, 0);
   const selected = screen.getByRole("radio", { name: /3 Ay/ }) as HTMLButtonElement;
   assert.equal(selected.getAttribute("aria-checked"), "true");
   const selectedDetailsId = selected.getAttribute("aria-describedby");
@@ -121,7 +122,7 @@ test("applies and removes a promotion with inline status", () => {
   assert.equal(applyCount, 1);
   assert.equal(removeCount, 1);
   assert.ok(screen.getByRole("status").textContent?.includes("uygulandı"));
-  assert.ok(screen.getByText("-₺4.032"));
+  assert.ok(screen.getByText("-4.032 ₺"));
 });
 
 test("places the primary decision before trust copy and promotion controls", () => {
@@ -188,13 +189,17 @@ test("uses canonical minor values and one TRY convention for a Coaching bundle",
         discount_percent: 16,
         commission_bps: 1500,
         unit_price_minor: 94000,
-        unit_price_display: "940,00 ₺",
+        // The *_display strings are deliberately wrong here. Both spellings
+        // of an amount now agree, so a fixture that repeated the real number
+        // could no longer tell "computed from minor units" apart from
+        // "echoed the server's string".
+        unit_price_display: "111,11 ₺",
         subtotal_price_minor: 1128000,
-        subtotal_price_display: "11.280,00 ₺",
+        subtotal_price_display: "222,22 ₺",
         discount_amount_minor: 0,
-        discount_amount_display: "0,00 ₺",
+        discount_amount_display: "333,33 ₺",
         total_price_minor: 1128000,
-        total_price_display: "11.280,00 ₺",
+        total_price_display: "444,44 ₺",
         platform_fee_minor: 169200,
         tutor_net_minor: 958800,
         is_free: false,
@@ -203,10 +208,10 @@ test("uses canonical minor values and one TRY convention for a Coaching bundle",
     />
   );
 
-  assert.ok(screen.getByText("₺24.000,00"));
-  assert.ok(screen.getByText("-₺3.840,00"));
-  assert.ok(screen.getByText(/12 görüşme × ₺940,00/));
-  assert.equal(screen.getAllByText("₺11.280,00").length, 2);
-  assert.equal(screen.getAllByText("₺31.440,00").length, 2);
-  assert.equal(screen.queryByText("11.280,00 ₺"), null);
+  assert.ok(screen.getByText("24.000,00 ₺"));
+  assert.ok(screen.getByText("-3.840,00 ₺"));
+  assert.ok(screen.getByText(/12 görüşme × 940,00\s₺/));
+  assert.equal(screen.getAllByText("11.280,00 ₺").length, 2);
+  assert.equal(screen.getAllByText("31.440,00 ₺").length, 2);
+  assert.equal(screen.queryByText("444,44 ₺"), null);
 });

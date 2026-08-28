@@ -3,15 +3,19 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { X } from "lucide-react";
+import { Bell, X } from "@phosphor-icons/react";
+import { AnimatePresence } from "framer-motion";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/hooks/useAuth";
-import { formatRelativeDate } from "@/lib/utils";
+import { formatRelativeTime } from "@/lib/utils";
 import {
   fetchNotifications,
   markNotificationRead,
   deleteNotification,
 } from "@/lib/notificationsApi";
+import { getNotificationAppearance } from "@/components/shared/notificationAppearance";
+import { AnimatedListItem } from "@/components/ui/animated-list";
+import { cn } from "@/lib/utils";
 import type { Notification, NotificationSummary } from "@/types/api";
 
 function getNotificationHref(n: Notification, role?: string): string | null {
@@ -125,9 +129,16 @@ export function NotificationPopoverContent() {
 
   if (isLoading) {
     return (
-      <div className="space-y-3 p-4">
-        <Skeleton className="h-10 w-full" />
-        <Skeleton className="h-10 w-full" />
+      <div className="space-y-2 p-3">
+        {[0, 1, 2].map((row) => (
+          <div key={row} className="flex items-center gap-3 rounded-card p-3">
+            <Skeleton className="size-10 shrink-0 rounded-[14px]" />
+            <div className="min-w-0 flex-1 space-y-2">
+              <Skeleton className="h-4 w-2/3" />
+              <Skeleton className="h-3 w-1/2" />
+            </div>
+          </div>
+        ))}
       </div>
     );
   }
@@ -142,63 +153,91 @@ export function NotificationPopoverContent() {
 
   if (items.length === 0) {
     return (
-      <div className="p-4 text-center text-sm text-muted-foreground">
-        Bildirim yok
+      <div className="flex flex-col items-center gap-2 px-6 py-10 text-center">
+        <Bell className="size-8 text-ink-mid" weight="regular" aria-hidden />
+        <p className="text-body font-medium text-ink">Yeni bildirim yok</p>
+        <p className="text-small text-ink-mid">
+          Ders ve mesaj hareketlerin burada görünür.
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="divide-y">
-      {items.map((n: Notification) => (
-        <div
-          key={n.id}
-          role="button"
-          tabIndex={0}
-          className="flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/50"
-          onClick={() => handleNotificationClick(n)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.preventDefault();
-              handleNotificationClick(n);
-            }
-          }}
-        >
-          <span
-            className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${
-              n.is_read ? "bg-transparent" : "bg-blue-500"
-            }`}
-          />
-          <div className="min-w-0 flex-1 overflow-hidden">
-            <p
-              className={`break-words text-sm leading-snug [overflow-wrap:anywhere] ${
-                n.is_read ? "font-normal" : "font-semibold"
-              }`}
-            >
-              {n.title}
-            </p>
-            {getNotificationBody(n) && (
-              <p className="mt-0.5 line-clamp-2 break-words text-xs text-muted-foreground [overflow-wrap:anywhere]">
-                {getNotificationBody(n)}
-              </p>
-            )}
-            <p className="mt-1 text-xs text-muted-foreground">
-              {formatRelativeDate(n.created_at)}
-            </p>
-          </div>
-          <button
-            type="button"
-            aria-label="Bildirimi sil"
-            className="shrink-0 rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
-            onClick={(e) => {
-              e.stopPropagation();
-              deleteMutation.mutate(n.id);
-            }}
-          >
-            <X className="h-3.5 w-3.5" />
-          </button>
-        </div>
-      ))}
+    <div className="max-h-[440px] space-y-4 overflow-y-auto overflow-x-hidden p-1">
+      <AnimatePresence>
+        {items.map((n: Notification) => {
+          const { icon, color } = getNotificationAppearance(
+            n.type,
+            n.related_object_type,
+          );
+          const body = getNotificationBody(n);
+          return (
+            /* The animation from the supplied component, item for item: scale
+               0 to 1 on a 350/40 spring, and `layout` so deleting one closes
+               the gap. Its `AnimatedList` wrapper is not used — that reveals
+               one child at a time on an interval and then loops, which is
+               right for a marketing demo and would drip-feed real
+               notifications on a timer. */
+            <AnimatedListItem key={n.id}>
+              <figure
+                role="button"
+                tabIndex={0}
+                className={cn(
+                  "relative mx-auto min-h-fit w-full max-w-[400px] cursor-pointer overflow-hidden rounded-2xl p-4",
+                  "transition-all duration-200 ease-in-out hover:scale-[103%]",
+                  // The rows are focusable, and Radix focuses the first one on
+                  // open. Without this it takes the browser's blue default.
+                  "outline-none focus-visible:ring-2 focus-visible:ring-black/15",
+                  "bg-white [box-shadow:0_0_0_1px_rgba(0,0,0,.03),0_2px_4px_rgba(0,0,0,.05),0_12px_24px_rgba(0,0,0,.05)]",
+                  "transform-gpu dark:bg-transparent dark:backdrop-blur-md dark:[border:1px_solid_rgba(255,255,255,.1)] dark:[box-shadow:0_-20px_80px_-20px_#ffffff1f_inset]",
+                )}
+                onClick={() => handleNotificationClick(n)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    handleNotificationClick(n);
+                  }
+                }}
+              >
+                <div className="flex flex-row items-center gap-3">
+                  <div
+                    className="flex size-10 shrink-0 items-center justify-center rounded-2xl"
+                    style={{ backgroundColor: color }}
+                  >
+                    <span className="text-lg">{icon}</span>
+                  </div>
+                  <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+                    <figcaption className="flex flex-wrap items-baseline font-medium dark:text-white">
+                      <span className="text-sm sm:text-base">{n.title}</span>
+                      <span className="mx-1">·</span>
+                      <span className="shrink-0 text-xs text-gray-500">
+                        {formatRelativeTime(n.created_at)}
+                      </span>
+                    </figcaption>
+                    {body && (
+                      <p className="line-clamp-2 text-sm font-normal text-gray-600 dark:text-white/60">
+                        {body}
+                      </p>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    aria-label="Bildirimi sil"
+                    className="shrink-0 rounded-full p-1 text-gray-400 transition-colors hover:text-gray-700 dark:hover:text-white"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      deleteMutation.mutate(n.id);
+                    }}
+                  >
+                    <X className="size-4" />
+                  </button>
+                </div>
+              </figure>
+            </AnimatedListItem>
+          );
+        })}
+      </AnimatePresence>
     </div>
   );
 }

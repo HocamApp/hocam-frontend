@@ -3,10 +3,10 @@ import type { HTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
 
 const TONE_CLASS = {
-  plain: "border-border/70 bg-card",
-  soft: "border-border/60 bg-muted/35",
-  accent: "border-primary/15 bg-primary/[0.055]",
-  dark: "border-foreground/10 bg-foreground text-background",
+  plain: "border-line bg-surface",
+  soft: "border-line bg-surface",
+  accent: "border-ink bg-surface",
+  dark: "border-ink bg-ink text-paper",
 } as const;
 
 export function CoachingStudioPanel({
@@ -18,11 +18,7 @@ export function CoachingStudioPanel({
 }) {
   return (
     <div
-      className={cn(
-        "rounded-[1.5rem] border shadow-[0_18px_50px_-38px_hsl(var(--foreground)/0.38)]",
-        TONE_CLASS[tone],
-        className
-      )}
+      className={cn("rounded-card border", TONE_CLASS[tone], className)}
       {...props}
     />
   );

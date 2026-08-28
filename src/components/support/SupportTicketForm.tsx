@@ -103,7 +103,7 @@ export function SupportTicketForm({ preset }: SupportTicketFormProps) {
           value={category}
           onValueChange={(v) => setCategory(v as SupportTicketCategory)}
         >
-          <SelectTrigger id="support-category" aria-invalid={!!errors.category}>
+          <SelectTrigger id="support-category" aria-invalid={!!errors.category} className="h-11 rounded-[var(--radius-input)] border-[var(--line)] bg-[var(--surface)] text-base">
             <SelectValue placeholder="Kategori seçin" />
           </SelectTrigger>
           <SelectContent>
@@ -128,6 +128,7 @@ export function SupportTicketForm({ preset }: SupportTicketFormProps) {
           placeholder="Talebinizi kısaca özetleyin"
           maxLength={255}
           aria-invalid={!!errors.subject}
+          className="h-11 rounded-[var(--radius-input)] border-[var(--line)] bg-[var(--surface)] text-base"
         />
         {errors.subject && (
           <p className="text-xs text-destructive">{errors.subject}</p>
@@ -144,6 +145,7 @@ export function SupportTicketForm({ preset }: SupportTicketFormProps) {
           rows={5}
           maxLength={5000}
           aria-invalid={!!errors.message}
+          className="min-h-36 rounded-[var(--radius-input)] border-[var(--line)] bg-[var(--surface)] text-base"
         />
         {errors.message && (
           <p className="text-xs text-destructive">{errors.message}</p>
@@ -152,7 +154,7 @@ export function SupportTicketForm({ preset }: SupportTicketFormProps) {
 
       {submitError && <ErrorMessage message={submitError} />}
 
-      <Button type="submit" disabled={mutation.isPending} className="w-full sm:w-auto">
+      <Button type="submit" disabled={mutation.isPending} className="h-11 w-full sm:w-auto">
         {mutation.isPending ? (
           <span
             className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent"

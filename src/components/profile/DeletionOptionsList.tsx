@@ -88,12 +88,12 @@ export function DeletionOptionsList({
       )}
 
       {warnings.length > 0 && (
-        <div className="rounded-lg border bg-muted/30 p-4">
+        <div className="rounded-[var(--radius-input)] border border-[var(--gold-ink)]/20 bg-[var(--gold)] p-4 text-[var(--gold-ink)]">
           <div className="flex items-start gap-2 text-sm font-medium text-foreground">
             <Info className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
             Devam etmeden önce gözden geçirin:
           </div>
-          <ul className="mt-3 space-y-3 text-sm text-muted-foreground">
+          <ul className="mt-3 space-y-3 text-sm text-[var(--gold-ink)]/80">
             {warnings.map((issue) => (
               <li key={issue.code}>
                 <p>{issue.message}</p>

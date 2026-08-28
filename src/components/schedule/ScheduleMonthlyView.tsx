@@ -85,19 +85,20 @@ export function ScheduleMonthlyView({
 
   return (
     <div className="overflow-x-auto">
-      <div className="min-w-[760px]">
+      <div className="min-w-[760px]" role="grid" aria-label="Aylık takvim">
         <div className="grid grid-cols-7 gap-px pb-2">
           {WEEKDAY_LABELS.map((label) => (
             <div
               key={label}
-              className="px-2 text-center text-xs font-semibold text-muted-foreground"
+              role="columnheader"
+              className="px-2 text-center text-xs font-semibold text-ink-mid"
             >
               {label}
             </div>
           ))}
         </div>
 
-        <div className="grid grid-cols-7 overflow-hidden rounded-2xl border border-border">
+        <div className="grid grid-cols-7 overflow-hidden rounded-card border border-line">
           {days.map((date, index) => {
             const key = toDateKey(date);
             const dayEvents = byDay.get(key) ?? [];
@@ -110,20 +111,22 @@ export function ScheduleMonthlyView({
             return (
               <div
                 key={key}
+                role="gridcell"
+                aria-label={longDayLabel(date)}
                 className={cn(
-                  "min-h-[6.5rem] border-b border-r border-border p-1.5",
+                  "min-h-[7.25rem] border-b border-r border-line p-1.5 transition-[background-color,border-color] duration-[--duration-state] hover:bg-paper/60 motion-reduce:transition-none",
                   index % 7 === 6 && "border-r-0",
                   index >= 35 && "border-b-0",
-                  isOutside && "bg-muted/40"
+                  isOutside && "bg-paper"
                 )}
               >
                 <button
                   type="button"
                   onClick={() => onSelectDay(date)}
                   className={cn(
-                    "mb-1 flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold tabular-nums transition-colors hover:bg-muted",
-                    isToday && "bg-brand-500 text-white hover:bg-brand-600",
-                    isOutside && !isToday && "text-muted-foreground"
+                    "mb-1 flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold tabular-nums transition-colors hover:bg-paper",
+                    isToday && "bg-pink text-white hover:bg-pink",
+                    isOutside && !isToday && "text-ink-mid"
                   )}
                   aria-label={`${date.getDate()} gününü aç`}
                 >
@@ -135,25 +138,33 @@ export function ScheduleMonthlyView({
                     const tone = toneForEvent(event);
                     // The composed title spends a ~96px cell on its first word.
                     // The time plus the subject is what makes the cell scannable.
-                    const struck = event.completed
-                      ? "text-muted-foreground line-through"
-                      : undefined;
+                    const struck = event.completed ? "line-through opacity-75" : undefined;
                     return (
                       <button
                         key={`${event.source}-${event.id}-${event.occurrence_date ?? ""}`}
                         type="button"
                         onClick={() => onSelectEvent(event)}
                         title={event.title}
-                        className="flex w-full min-w-0 items-center gap-1 rounded-md px-1 py-0.5 text-left text-[11px] hover:bg-muted"
+                        // Same filled block as the week and day views, at chip
+                        // scale: a month cell reads as a calendar when the
+                        // events in it are coloured blocks rather than a list
+                        // of dots. Hover lifts it the way the card does.
+                        className={cn(
+                          "group block w-full min-w-0 origin-left rounded-input px-1.5 py-0.5 text-left text-[11px] font-medium",
+                          "transform-gpu transition-[transform,box-shadow] duration-[--duration-state]",
+                          "hover:z-20 hover:scale-[1.03] hover:shadow-lg",
+                          "motion-reduce:transition-none motion-reduce:hover:scale-100",
+                          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                          tone.card,
+                          struck
+                        )}
                       >
-                        <span
-                          className={cn("h-1.5 w-1.5 shrink-0 rounded-full", tone.dot)}
-                          aria-hidden
-                        />
-                        <span className={cn("shrink-0 tabular-nums text-muted-foreground", struck)}>
-                          {event.local_time}
+                        <span className="flex min-w-0 items-center gap-1">
+                          <span className="shrink-0 tabular-nums opacity-90">
+                            {event.local_time}
+                          </span>
+                          <span className="truncate">{shortEventLabel(event)}</span>
                         </span>
-                        <span className={cn("truncate", struck)}>{shortEventLabel(event)}</span>
                       </button>
                     );
                   })}
@@ -170,7 +181,7 @@ export function ScheduleMonthlyView({
                           : `${longDayLabel(date)}: ${hidden} etkinlik daha göster`
                       }
                       onClick={() => toggleDay(key)}
-                      className="w-full rounded-md px-1 py-0.5 text-left text-[11px] font-medium text-brand-600 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      className="w-full rounded-input px-1 py-0.5 text-left text-[11px] font-medium text-pink hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     >
                       {expanded ? "Daha az göster" : `+${hidden} tane daha`}
                     </button>

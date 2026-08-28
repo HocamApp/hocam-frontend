@@ -73,11 +73,11 @@ describe("an empty week", () => {
 });
 
 describe("a week with work in it", () => {
-  it("still marks the individual empty days", () => {
+  it("uses one labelled time grid without repeating empty labels", () => {
     renderWeek([occurrence("2026-08-17")]);
 
-    // Six other days in the desktop grid, each with its own "Boş".
-    assert.equal(screen.queryAllByText("Boş").length, 6);
+    assert.ok(screen.getByRole("grid", { name: "Haftalık takvim" }));
+    assert.equal(screen.queryAllByText("Boş").length, 0);
   });
 
   it("wraps each day in a labelled landmark so a reader can skip by day", () => {

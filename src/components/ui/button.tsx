@@ -6,22 +6,47 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+    /*
+   * Pills, and the single highest-leverage line in the rebrand: buttons appear
+   * on every screen, and shadcn's 6px default is the most recognisable tell in
+   * the whole system.
+   *
+   * `transition-colors` at 120ms and nothing else. No transform, no shadow, no
+   * scale. The lift-on-hover pattern is both a generic tell and an
+   * accessibility liability, since it needs its own prefers-reduced-motion
+   * escape hatch; a colour change needs no exception and degrades to nothing.
+   *
+   * Disabled is a neutral fill rather than a faded brand colour. A washed-out
+   * pink reads as a rendering bug rather than a state.
+   */
+  "inline-flex items-center justify-center whitespace-nowrap rounded-pill font-medium ring-offset-background transition-colors duration-[--duration-state] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:border-transparent disabled:bg-line disabled:text-ink-mid",
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90",
-        destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
-        outline: "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
-        secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
-        ghost: "hover:bg-accent hover:text-accent-foreground",
-        link: "text-primary underline-offset-4 hover:underline",
+        /* Primary. One per screen region. Was navy — DESIGN.md removes the
+           blue outright to hold the palette at three hues. */
+        default: "bg-pink text-white hover:bg-pink-deep",
+        /* Secondary: transparent until hover, then it fills solid and the
+           text inverts. */
+        outline: "border border-ink bg-transparent text-ink hover:bg-ink hover:text-paper",
+        /* Tertiary: no container at all. Dismissals, back, cancel. */
+        ghost: "text-ink hover:bg-paper",
+        /* Tutor-side actions only, and never beside a pink button: both are
+           fully saturated and large adjacent areas visually vibrate. */
+        gold: "bg-gold text-gold-ink hover:brightness-95",
+        destructive: "bg-error text-white hover:brightness-95",
+        secondary: "bg-paper text-ink hover:bg-line",
+        link: "text-pink underline-offset-4 hover:underline",
       },
       size: {
-        default: "h-10 px-4 py-2",
-        sm: "h-9 rounded-md px-3",
-        lg: "h-11 rounded-md px-8",
-        icon: "h-10 w-10",
+        /* Padding, not height, carries the size. Pills need horizontal room,
+           and Turkish runs 15 to 20% longer than English for the same
+           meaning, so the label needs the slack. Heights stay where they are
+           because they are already at an accessible touch target. */
+        default: "h-10 px-7 text-[0.9375rem]",
+        sm: "h-9 px-[22px] text-small",
+        lg: "h-11 px-[34px] text-body",
+        icon: "h-10 w-10 px-0",
       },
     },
     defaultVariants: {

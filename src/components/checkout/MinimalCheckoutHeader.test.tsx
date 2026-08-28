@@ -28,5 +28,7 @@ test("aligns the back control and brand without a decorative header band", async
 
   assert.ok(back.classList.contains("size-10"));
   assert.ok(brand.classList.contains("h-10"));
+  assert.ok(header.firstElementChild?.nextElementSibling?.className.includes("h-[var(--app-header-row-1-h)]"));
+  assert.ok(!back.className.includes("translate"));
   assert.equal(header.querySelector(":scope > div[aria-hidden='true']"), null);
 });

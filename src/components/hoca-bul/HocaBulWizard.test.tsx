@@ -677,9 +677,9 @@ describe("P3B question screens", () => {
     await clickContinue();
 
     await screen.findByRole("heading", { name: "Ders başına bütçen ne kadar?" });
-    assert.ok(screen.getByRole("radio", { name: "Ekonomik ₺300’ye kadar / 40 dk" }));
-    assert.ok(screen.getByRole("radio", { name: "Dengeli ₺400 – ₺700 / 40 dk" }));
-    assert.ok(screen.getByRole("radio", { name: "Premium ₺900 ve üzeri / 40 dk" }));
+    assert.ok(screen.getByRole("radio", { name: "Ekonomik 300 ₺’ye kadar / 40 dk" }));
+    assert.ok(screen.getByRole("radio", { name: "Dengeli 400 ₺ – 700 ₺ / 40 dk" }));
+    assert.ok(screen.getByRole("radio", { name: "Premium 900 ₺ ve üzeri / 40 dk" }));
     assert.equal(screen.getByRole("button", { name: /Devam et/ }).hasAttribute("disabled"), true);
     fireEvent.click(screen.getByRole("radio", { name: /Dengeli/ }));
     assert.equal(screen.getByRole("button", { name: /Devam et/ }).hasAttribute("disabled"), false);
@@ -706,7 +706,7 @@ describe("P3C review and completion boundary", () => {
     assert.equal(sections.length, 7);
     assert.ok(screen.getByRole("heading", { level: 2, name: "Zorluk" }));
     assert.ok(screen.getByText("Konu temellerim eksik"));
-    assert.ok(screen.getByText("₺400 – ₺700 / 40 dk"));
+    assert.ok(screen.getByText("400 ₺ – 700 ₺ / 40 dk"));
     assert.equal(document.body.textContent?.includes("grade_12"), false);
     assert.ok(screen.getByText("8 / 8"));
   });

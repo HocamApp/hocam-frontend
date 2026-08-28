@@ -19,11 +19,11 @@ describe("CoachingEmptyState", () => {
         steps={["Talep kabul edilir", "Görüşme zamanı belirlenir"]}
         tone="accent"
         action={<button>Takvime dön</button>}
-      />
+      />,
     );
     assert.ok(screen.getByRole("heading", { name: "Yaklaşan görüşme yok" }));
     assert.ok(screen.getByText("Planlanan bir görüşme burada görünür."));
-    assert.ok(screen.getByLabelText("Boş durum görseli"));
+    assert.ok(screen.getByLabelText("Boş durum simgesi"));
     assert.ok(screen.getByRole("list", { name: "Bu alanda izleyeceğin akış" }));
     assert.ok(screen.getByText("Talep kabul edilir"));
     assert.equal(screen.getAllByTestId("coaching-empty-actions").length, 1);

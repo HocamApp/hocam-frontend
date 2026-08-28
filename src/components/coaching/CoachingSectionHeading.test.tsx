@@ -24,7 +24,11 @@ describe("coaching section heading", () => {
   });
 
   it("drops to an h3 at the subsection scale", () => {
-    render(<CoachingSectionHeading level="subsection">Kanıtlar</CoachingSectionHeading>);
+    render(
+      <CoachingSectionHeading level="subsection">
+        Kanıtlar
+      </CoachingSectionHeading>,
+    );
 
     const heading = screen.getByRole("heading", { level: 3 });
     assert.equal(heading.className, COACHING_SUBSECTION_TITLE_CLASS);
@@ -39,19 +43,24 @@ describe("coaching section heading", () => {
   });
 
   it("keeps one weight and one scale across both levels", () => {
-    [COACHING_SECTION_TITLE_CLASS, COACHING_SUBSECTION_TITLE_CLASS].forEach((scale) => {
-      assert.match(scale, /font-semibold/);
-      assert.doesNotMatch(scale, /font-bold/);
-      // text-2xl is the CardTitle default that made the program tab shout.
-      assert.doesNotMatch(scale, /text-2xl/);
-    });
+    [COACHING_SECTION_TITLE_CLASS, COACHING_SUBSECTION_TITLE_CLASS].forEach(
+      (scale) => {
+        assert.match(scale, /font-medium/);
+        assert.doesNotMatch(scale, /font-bold/);
+        // text-2xl is the CardTitle default that made the program tab shout.
+        assert.doesNotMatch(scale, /text-2xl/);
+      },
+    );
   });
 
   it("renders a description and actions when given them", () => {
     render(
-      <CoachingSectionHeading description="Kısa açıklama" actions={<button>Ekle</button>}>
+      <CoachingSectionHeading
+        description="Kısa açıklama"
+        actions={<button>Ekle</button>}
+      >
         Programım
-      </CoachingSectionHeading>
+      </CoachingSectionHeading>,
     );
 
     assert.ok(screen.getByText("Kısa açıklama"));

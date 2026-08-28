@@ -11,7 +11,7 @@ export const revalidate = 3_600;
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const pages: MetadataRoute.Sitemap = [
     {
-      url: absoluteUrl("/tutors"),
+      url: absoluteUrl("/"),
       changeFrequency: "daily",
       priority: 1,
     },
@@ -39,6 +39,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   } catch {
     // Keep the stable tutor directory discoverable during a transient API
     // outage; the dynamic profile URLs return on the next revalidation.
+    // The directory itself is "/" now — submitting the old /tutors would be
+    // advertising a URL that only redirects.
   }
 
   return pages;

@@ -6,7 +6,6 @@ import React from "react";
 import { cleanup, render, screen } from "@testing-library/react";
 
 import type { ScheduleEvent } from "@/types";
-import { HOUR_HEIGHT } from "./dayLayout";
 import { ScheduleDailyView } from "./ScheduleDailyView";
 
 after(() => window.close());
@@ -47,58 +46,56 @@ function renderDay(events: ScheduleEvent[]) {
   );
 }
 
-describe("daily view geometry", () => {
-  // A 30-minute block is 32px of real time but is never drawn shorter than
-  // 56px, so two back-to-back ones used to be given the full width each and
-  // then painted on top of one another.
-  it("splits back-to-back short blocks into side-by-side columns", () => {
-    const { container } = renderDay([block("ilk", "18:00", 30), block("ikinci", "18:30", 30)]);
+describe("the daily grid", () => {
+  it("exposes the time rail as a labelled daily calendar", () => {
+    renderDay([block("tek", "18:00", 60)]);
 
-    const cards = Array.from(container.querySelectorAll<HTMLElement>(".absolute.z-\\[5\\]"));
-    assert.equal(cards.length, 2);
-
-    const lefts = cards.map((card) => card.style.left);
-    assert.notEqual(lefts[0], lefts[1], "both cards were placed in the same column");
-    cards.forEach((card) => assert.match(card.style.width, /calc\(50% - 0\.25rem\)/));
+    assert.ok(screen.getByRole("grid", { name: "Günlük takvim" }));
   });
 
-  it("gives a lone block the full width and no reserved gutter", () => {
-    const { container } = renderDay([block("tek", "18:00", 60)]);
+  // An 01:58 lesson used to be drawn at its exact minute offset and sized by
+  // its duration, so it straddled the 02:00 rule. A block belongs to the row
+  // for the hour it starts in, between two rules and never across one.
+  it("puts a block in the row for the hour it starts in", () => {
+    renderDay([block("gec", "01:58", 40)]);
 
-    const card = container.querySelector<HTMLElement>(".absolute.z-\\[5\\]");
-    assert.ok(card);
-    assert.equal(card.style.left, "0%");
-    assert.match(card.style.width, /calc\(100% - 0px\)/);
+    const cell = screen.getByText("gec").closest("[role='gridcell']");
+    assert.ok(cell);
+    const row = cell.parentElement;
+    assert.ok(row?.textContent?.startsWith("01:00"), `landed in ${row?.textContent}`);
   });
 
-  // The hour labels are boundaries, closing hour included, so there is one more
-  // label than there are rows. Sizing the canvas by the label count left a
-  // permanently empty hour at the bottom.
-  it("spans one row per hour, not one per boundary label", () => {
-    const { container } = renderDay([block("tek", "18:00", 60)]);
+  it("stacks two blocks that share an hour instead of hiding one", () => {
+    renderDay([block("ilk", "18:00", 30), block("ikinci", "18:30", 30)]);
 
-    // hourWindow crops to 17:00–20:00 for an 18:00–19:00 block.
-    const canvas = container.querySelector<HTMLElement>(".relative.flex-1");
-    assert.ok(canvas);
-    assert.equal(canvas.style.height, `${3 * HOUR_HEIGHT}px`);
-    assert.equal(screen.getAllByText(/^\d\d:00$/).length, 4);
+    const cells = [
+      screen.getByText("ilk").closest("[role='gridcell']"),
+      screen.getByText("ikinci").closest("[role='gridcell']"),
+    ];
+    assert.equal(cells[0], cells[1], "the two blocks are not in the same hour row");
   });
 
-  // A day spanning 09:00 to 23:00 is 1024px of grid. Before this the container
-  // was overflow-hidden, so the page carried it: reaching the evening block
-  // scrolled the header and the view switch off screen, and the two blocks
-  // could never be visible together.
+  it("draws one row per hour in the window, not one per boundary label", () => {
+    renderDay([block("tek", "18:00", 60)]);
+
+    // visibleHourWindow crops to 17:00–20:00 for an 18:00–19:00 block, which
+    // is three rows: 17, 18 and 19.
+    assert.equal(screen.getAllByRole("row").length, 3);
+    assert.equal(screen.getAllByText(/^\d\d:00$/).length, 3);
+  });
+
+  // A day spanning 09:00 to 23:00 is fifteen rows. Before this the page
+  // carried them: reaching the evening block scrolled the header and the view
+  // switch off screen, and the two blocks could never be visible together.
   it("scrolls inside its own box rather than growing the page", () => {
     const { container } = renderDay([block("sabah", "09:00", 60), block("gece", "23:00", 60)]);
 
     const scroller = container.firstElementChild as HTMLElement;
     assert.match(scroller.className, /overflow-y-auto/);
     assert.match(scroller.className, /max-h-/);
-    assert.doesNotMatch(scroller.className, /overflow-hidden/);
 
     // 08:00–24:00 once the window pads each end.
-    const canvas = container.querySelector<HTMLElement>(".relative.flex-1");
-    assert.equal(canvas?.style.height, `${16 * HOUR_HEIGHT}px`);
+    assert.equal(screen.getAllByRole("row").length, 16);
   });
 
   it("still says when a day is empty", () => {

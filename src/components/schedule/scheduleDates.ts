@@ -157,3 +157,29 @@ export function formatMinutes(total: number): string {
   if (minutes === 0) return `${hours}s`;
   return `${hours}s ${minutes}dk`;
 }
+
+/**
+ * The hours a timed grid actually draws.
+ *
+ * Cropped to the events plus an hour of air. Anchoring to a fixed 08:00–22:00
+ * would leave a lesson at 00:30 sitting above twenty empty rows.
+ */
+export function visibleHourWindow(
+  events: { local_time: string; duration_minutes: number }[],
+  fallback = { start: 8, end: 22 }
+): { start: number; end: number } {
+  if (events.length === 0) return fallback;
+
+  let start = 24;
+  let end = 0;
+  events.forEach((event) => {
+    const startMinutes = timeToMinutes(event.local_time);
+    start = Math.min(start, Math.floor(startMinutes / 60));
+    end = Math.max(end, Math.ceil((startMinutes + event.duration_minutes) / 60));
+  });
+
+  return {
+    start: Math.max(0, start - 1),
+    end: Math.min(24, Math.max(end + 1, start + 2)),
+  };
+}

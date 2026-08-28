@@ -44,10 +44,10 @@ export function CoachingChoiceCard({
       disabled={disabled}
       onClick={onSelect}
       className={cn(
-        "w-full rounded-xl border p-4 text-left transition-colors",
+        "w-full rounded-card border border-[var(--checkout-soft-line)] bg-[var(--checkout-card-surface)] p-4 text-left transition-colors duration-[--duration-state]",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-        selected && "border-primary bg-primary/5 ring-1 ring-primary",
-        !selected && !disabled && "hover:bg-muted/40",
+        selected && "border-[var(--checkout-control)] ring-1 ring-[var(--checkout-control)]",
+        !selected && !disabled && "hover:border-[var(--checkout-control)]",
         disabled && "cursor-not-allowed opacity-60"
       )}
     >
@@ -83,9 +83,7 @@ export function CoachingChoiceCard({
               <ul className="space-y-1 text-sm">
                 {INCLUDED.map((item) => (
                   <li key={item} className="flex items-start gap-2">
-                    <span aria-hidden="true" className="text-primary">
-                      ✓
-                    </span>
+                    <span aria-hidden="true" className="mt-[0.65em] h-px w-3 shrink-0 bg-current" />
                     <span>{item}</span>
                   </li>
                 ))}

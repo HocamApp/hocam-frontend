@@ -40,7 +40,7 @@ export function TutorJourneyAside({
             </div>
           </div>
 
-          <div className="mt-4 flex gap-3 rounded-2xl bg-white p-4 text-slate-900 shadow-sm">
+          <div className="mt-4 flex gap-3 rounded-2xl bg-surface p-4 text-slate-900 shadow-sm">
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
               <Sparkles className="h-4 w-4" />
             </span>

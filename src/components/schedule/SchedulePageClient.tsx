@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { CaretLeft, CaretRight, Plus } from "@phosphor-icons/react";
 
 import { Button } from "@/components/ui/button";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
@@ -26,7 +26,6 @@ import { eventKey } from "./eventIdentity";
 import { ScheduleDailyView } from "./ScheduleDailyView";
 import { ScheduleEventDetailDialog } from "./ScheduleEventDetailDialog";
 import { ScheduleMonthlyView } from "./ScheduleMonthlyView";
-import { ScheduleSubjectTotals } from "./ScheduleSubjectTotals";
 import { ScheduleSummaryBar } from "./ScheduleSummaryBar";
 import { ScheduleWeeklyView } from "./ScheduleWeeklyView";
 import { StudyBlockFormDialog } from "./StudyBlockFormDialog";
@@ -204,24 +203,28 @@ export function SchedulePageClient() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-5 px-4 py-6 sm:px-6">
-      <header className="space-y-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="mx-auto w-full max-w-[1440px] space-y-5 px-4 py-6 sm:px-6 lg:py-8">
+      <header className="space-y-5">
+        <div>
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight">Çalışma Programım</h1>
-            <p className="text-sm text-muted-foreground">
+            <h1 className="text-h2-m md:text-h2">Çalışma Programım</h1>
+            <p className="mt-1 text-body text-ink-mid">
               Derslerin, koçluk görüşmelerin ve kendi çalışmaların tek takvimde.
             </p>
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-3">
+        <div
+          role="toolbar"
+          aria-label="Takvim araçları"
+          className="flex flex-col gap-3 rounded-card border border-line bg-surface p-2 shadow-soft lg:flex-row lg:items-center lg:justify-between"
+        >
           {/* Plain buttons rather than a tablist: the ARIA tabs pattern also
               requires a linked tabpanel and arrow-key navigation, and half of
               it announces a contract the widget does not honour. aria-pressed
               says the same thing honestly for a third of the code. */}
           <div
-            className="inline-flex rounded-full border border-border bg-card p-1"
+            className="inline-flex w-full rounded-pill bg-paper p-1 sm:w-auto"
             role="group"
             aria-label="Takvim görünümü"
           >
@@ -232,10 +235,13 @@ export function SchedulePageClient() {
                 aria-pressed={view === tab.value}
                 onClick={() => changeView(tab.value)}
                 className={cn(
-                  "rounded-full px-4 py-1.5 text-sm font-medium transition-colors",
+                  // Solid ink when selected, per the chip rule. It was pink,
+                  // which put two pink pills in one row and made the view
+                  // switch compete with "Çalışma Ekle" for the same attention.
+                  "flex-1 rounded-pill px-4 py-2 text-body font-medium transition-[background-color,color] duration-[--duration-state] motion-reduce:transition-none sm:flex-none",
                   view === tab.value
-                    ? "bg-brand-500 text-white"
-                    : "text-muted-foreground hover:text-foreground"
+                    ? "bg-ink text-paper"
+                    : "text-ink-mid hover:text-ink"
                 )}
               >
                 {tab.label}
@@ -243,52 +249,38 @@ export function SchedulePageClient() {
             ))}
           </div>
 
-          {/* Laid out as two groups that wrap: on a 375px screen the arrows,
-              the range label, "Bugün" and "Çalışma Ekle" add up to ~466px in
-              343px of content, and as one non-wrapping row they pushed the
-              whole page sideways. */}
-          <div className="flex w-full flex-wrap items-center gap-1 sm:w-auto">
-            {/* Full width below sm so the actions drop to their own line: with
-                a flex-1 basis of 0 the label just squeezed instead, and
-                "17 – 23 Ağustos" broke across three lines. */}
-            <div className="flex w-full min-w-0 items-center gap-1 sm:w-auto">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="shrink-0"
-                aria-label="Önceki"
-                onClick={() => setAnchor(shiftAnchor(view, anchor, -1))}
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              {/* The fixed 10rem keeps the label from jittering as the range
-                  text changes width, which only matters where there is room
-                  for it; below sm it takes what is left of the row instead. */}
-              <span className="min-w-0 flex-1 text-center text-sm font-medium tabular-nums sm:min-w-[10rem] sm:flex-none">
-                {rangeLabel(view, anchor)}
-              </span>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="shrink-0"
-                aria-label="Sonraki"
-                onClick={() => setAnchor(shiftAnchor(view, anchor, 1))}
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
-
-            <div className="flex items-center gap-1">
-              <Button variant="ghost" size="sm" onClick={() => setAnchor(todayLocal())}>
-                Bugün
-              </Button>
-              {/* Sits with the range controls rather than up by the title: this
-                  is the row the student is already working in. */}
-              <Button onClick={openCreate} className="ml-1 shrink-0">
-                <Plus className="mr-1.5 h-4 w-4" aria-hidden />
-                Çalışma Ekle
-              </Button>
-            </div>
+          <div className="flex flex-wrap items-center justify-between gap-1 sm:flex-nowrap lg:justify-end">
+            <Button
+              variant="outline"
+              size="icon"
+              aria-label="Önceki"
+              onClick={() => setAnchor(shiftAnchor(view, anchor, -1))}
+            >
+              <CaretLeft className="size-4" />
+            </Button>
+            <span className="min-w-[10rem] text-center text-body font-medium tabular-nums text-ink">
+              {rangeLabel(view, anchor)}
+            </span>
+            <Button
+              variant="outline"
+              size="icon"
+              aria-label="Sonraki"
+              onClick={() => setAnchor(shiftAnchor(view, anchor, 1))}
+            >
+              <CaretRight className="size-4" />
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => setAnchor(todayLocal())}>
+              Bugün
+            </Button>
+            {/* Sits with the range controls rather than up by the title: this
+                is the row the student is already working in. */}
+            <Button
+              onClick={openCreate}
+              className="ml-1 shrink-0 bg-pink text-white hover:bg-pink/90 hover:text-white"
+            >
+              <Plus className="mr-1.5 size-4" aria-hidden />
+              Çalışma Ekle
+            </Button>
           </div>
         </div>
       </header>
@@ -303,7 +295,7 @@ export function SchedulePageClient() {
         isLoading={progressQuery.isLoading}
       />
 
-      <section className="rounded-2xl border border-border bg-card p-3 sm:p-4">
+      <section className="rounded-[28px] border border-line bg-surface p-2 shadow-soft sm:p-4">
         {calendarQuery.isLoading ? (
           <div className="flex min-h-[16rem] items-center justify-center">
             <LoadingSpinner />
@@ -345,14 +337,6 @@ export function SchedulePageClient() {
             }}
           />
         )}
-      </section>
-
-      <section className="space-y-3">
-        <h2 className="text-lg font-semibold tracking-tight">Derslere göre çalışma</h2>
-        <ScheduleSubjectTotals
-          stats={progressQuery.data?.subject_stats}
-          isLoading={progressQuery.isLoading}
-        />
       </section>
 
       <StudyBlockFormDialog

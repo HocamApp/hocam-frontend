@@ -28,7 +28,7 @@ describe("CoachingOfferCard", () => {
     );
 
     assert.ok(screen.getByText("Haftada 1 · 30 dakika"));
-    assert.ok(screen.getByText("₺250,00"));
+    assert.ok(screen.getByText("250,00 ₺"));
     assert.ok(screen.getByText("YKS"));
     assert.ok(screen.getByText("DGS"));
     assert.ok(screen.getByRole("heading", { name: "Planlı çalış, ilerlemeni görünür kıl" }));

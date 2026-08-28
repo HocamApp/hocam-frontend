@@ -1,0 +1,668 @@
+/*
+ * Scoped design tokens + component classes for the Yemeksepeti-inspired
+ * homepage experiment.
+ *
+ * The `--ys-*` tokens now live on `:root` rather than on `.ys-root`. They used
+ * to be namespaced so the experiment could not leak, but the navbar and footer
+ * built here are becoming the shell for every page, so the tokens they read
+ * have to resolve everywhere. Every value points at a DESIGN.md token that
+ * globals.css already declares on `:root`, so promoting them shadows nothing.
+ *
+ * What stays on `.ys-root` is only what *paints*: the page colour and
+ * background. Those must not go global — `background-color: var(--paper)` on
+ * `:root` would repaint all 80-odd app pages and override `body`.
+ */
+
+/*
+ * The `--ys-*` names are kept so every call site does not have to change at
+ * once, but each one now points at a DESIGN.md token. The pink needed no
+ * work: `#fa0050` was already the value the design doc arrived at
+ * independently, since both trace back to the same rebrand palette.
+ *
+ * What did change: the neutrals moved off `#333`/`#1a1a1a` onto `--ink`, the
+ * page surface moved off pure white onto `--paper`, the radius steps moved off
+ * 8/12/16 onto 10/20/28, and the green deal trio is gone. DESIGN.md caps the
+ * palette at three hues plus neutrals, and a fourth is where it starts reading
+ * as rainbow, so those three now resolve to gold.
+ */
+:root {
+  --ys-brand-primary: var(--pink);
+  --ys-interaction-primary: var(--pink);
+  --ys-interaction-primary-hover: var(--pink-deep);
+  --ys-interaction-primary-feedback: var(--pink-pale);
+  --ys-brand-highlight: var(--pink-pale);
+  --ys-brand-highlight-1: var(--pink-pale);
+
+  --ys-neutral-primary: var(--ink);
+  --ys-neutral-secondary: var(--ink-mid);
+  --ys-neutral-inactive: var(--ink-mid);
+  --ys-neutral-border: var(--line);
+  --ys-neutral-divider: var(--line);
+  --ys-neutral-surface: var(--paper);
+  --ys-neutral-strong: var(--ink);
+  /* Text on pink, and only that. Surfaces use --surface, which follows
+     the theme; this one must not. */
+  --ys-white: #fff;
+
+
+  --ys-radius-base: var(--radius-input);
+  --ys-radius-media: var(--radius-input);
+  --ys-radius-edge: var(--radius-card);
+  --ys-radius-field: var(--radius-input);
+  --ys-radius-pill: var(--radius-pill);
+  --ys-radius-mini: var(--radius-input);
+
+  --ys-space-xxxs: 2px;
+  --ys-space-xxs: 4px;
+  --ys-space-xs: 8px;
+  --ys-space-st: 12px;
+  --ys-space-sm: 16px;
+  --ys-space-md: 24px;
+  --ys-space-lg: 32px;
+  --ys-space-xl: 48px;
+  --ys-space-xxl: 64px;
+
+  /* Ink-tinted rather than pure black: rgba(0,0,0,..) over a warm off-white
+     page reads as dirt instead of shadow. */
+  --ys-elevation-low: var(--shadow-float);
+  --ys-max-width: 1440px;
+}
+
+/* Paint, not tokens — deliberately still scoped. */
+.ys-root {
+  color: var(--ys-neutral-primary);
+  /* The page is paper, not white. That value difference is how in-flow
+     surfaces separate, so a pure white page does not merely look plainer, it
+     removes the only thing holding the elevation system up. */
+  background-color: var(--paper);
+}
+
+/*
+ * Aydınlık shadcn token'ları, `.ys-root` kapsamında yeniden tanımlanıyor.
+ *
+ * Source of truth: `src/app/globals.css` `:root`. This is a deliberate copy,
+ * not a fork — keep the two in sync, and delete this block the moment `/`
+ * grows a real theme story.
+ *
+ * Why it exists: `THEME_INIT_SCRIPT` puts `.dark` on <html> from
+ * localStorage["hocam-theme"], which darkens --card/--foreground/--border.
+ * `.ys-root` paints a hardcoded white page, so without this the visitor
+ * would get dark tutor cards and dark Select triggers floating on a white
+ * page. The `--brand-*` ramp is theme-shared and deliberately not repeated.
+ *
+ * Known gap: Radix portals (Select dropdown, mobile Sheet, Tooltip) mount on
+ * <body>, outside this scope, so they still follow `.dark`.
+ */
+
+/* ---------------------------------------------------------------- layout -- */
+
+.ys-shell {
+  width: 100%;
+  max-width: var(--ys-max-width);
+  margin: 0 auto;
+  padding: 0 var(--ys-space-sm);
+}
+
+@media (min-width: 960px) {
+  .ys-shell {
+    padding: 0 var(--ys-space-lg);
+  }
+}
+
+@media (min-width: 1264px) {
+  .ys-shell {
+    padding: 0 var(--ys-space-xxl);
+  }
+}
+
+/* --------------------------------------------------------------- buttons -- */
+
+.ys-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ys-space-xs);
+  /* Pill, not the shared base radius: --ys-radius-base also feeds inputs,
+     and DESIGN.md wants those at 10px while buttons go fully round. */
+  border-radius: var(--radius-pill);
+  font-weight: 600;
+  white-space: nowrap;
+  transition:
+    background-color 150ms cubic-bezier(0.22, 0.1, 0.1, 1),
+    color 150ms cubic-bezier(0.22, 0.1, 0.1, 1),
+    border-color 150ms cubic-bezier(0.22, 0.1, 0.1, 1);
+}
+
+.ys-btn--small {
+  height: 32px;
+  padding: 0 var(--ys-space-st);
+  font-size: 0.875rem;
+  line-height: 1.571;
+}
+
+.ys-btn--regular {
+  height: 40px;
+  padding: 0 var(--ys-space-sm);
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.ys-btn--primary {
+  background-color: var(--ys-interaction-primary);
+  color: var(--ys-white);
+}
+
+.ys-btn--primary:hover {
+  background-color: var(--ys-interaction-primary-hover);
+}
+
+.ys-btn--secondary {
+  background-color: var(--surface);
+  color: var(--ys-neutral-primary);
+  border: 1px solid var(--ys-neutral-border);
+}
+
+.ys-btn--secondary:hover {
+  background-color: var(--ys-neutral-surface);
+  color: var(--ys-neutral-strong);
+}
+
+.ys-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--ys-radius-pill);
+  color: var(--ys-neutral-primary);
+  transition: background-color 150ms cubic-bezier(0.22, 0.1, 0.1, 1);
+}
+
+.ys-icon-btn:hover {
+  background-color: var(--ys-neutral-surface);
+}
+
+.ys-icon-btn:disabled {
+  color: var(--ys-neutral-inactive);
+  cursor: not-allowed;
+}
+
+.ys-icon-btn--contained {
+  background-color: var(--surface);
+  box-shadow: 0 1px 4px rgb(0 0 0 / 16%);
+}
+
+/*
+ * Responsive display helpers.
+ *
+ * This stylesheet is injected after Tailwind's utilities, so `.ys-btn` and
+ * `.ys-icon-btn` would win over `hidden` / `md:inline-flex` at equal
+ * specificity. This helper keeps the breakpoint behaviour inside the same
+ * cascade layer instead of fighting it. Never pass a `.ys-*` class to a
+ * shadcn component — that is what keeps the two systems from colliding.
+ */
+.ys-from-md {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .ys-from-md {
+    display: inline-flex;
+  }
+}
+
+/* ------------------------------------------------------------------ tabs -- */
+
+/* The underline grows from its centre with a transform, keeping the tab row
+   still and the interaction calm in both themes. */
+
+.ys-tab {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  /* Reads the row token directly rather than `height: 100%`. The row is a
+     flex container with `align-items: center`, so the strip inside it shrinks
+     to its content and a percentage resolved against 21px instead of 56 —
+     which pulled the selected underline up against the label. */
+  height: var(--app-header-row-2-h);
+  padding: 0 var(--ys-space-sm);
+  border-radius: var(--ys-radius-mini);
+  color: var(--ys-neutral-secondary);
+  font-size: 0.875rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    color 150ms cubic-bezier(0.22, 0.1, 0.1, 1),
+    background-color 150ms cubic-bezier(0.22, 0.1, 0.1, 1);
+}
+
+.ys-tab__icon {
+  margin-right: var(--ys-space-xs);
+  flex: none;
+}
+
+.ys-tab::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 100%;
+  transform: translateX(-50%) scaleX(0);
+  transform-origin: center;
+  height: 4px;
+  border-radius: 20px;
+  opacity: 0;
+  background-color: var(--ys-neutral-strong);
+  transition: transform 150ms ease-out, opacity 150ms ease-out;
+}
+
+.ys-tab:hover {
+  color: var(--ys-neutral-strong);
+  background-color: var(--ys-neutral-surface);
+}
+
+.ys-tab:hover::after {
+  transform: translateX(-50%) scaleX(0.35);
+  opacity: 1;
+}
+
+.ys-tab[data-selected="true"] {
+  color: var(--ys-neutral-strong);
+}
+
+.ys-tab[data-selected="true"]::after {
+  transform: translateX(-50%) scaleX(1);
+  opacity: 1;
+  transition: transform 200ms ease-out, opacity 150ms ease-out;
+}
+
+/* A selected tab keeps its plate white — only unselected tabs light up. */
+.ys-tab[data-selected="true"]:hover {
+  background-color: var(--surface);
+}
+
+.ys-tab[data-selected="true"]:hover::after {
+  transform: translateX(-50%) scaleX(1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ys-tab,
+  .ys-tab::after {
+    transition: none;
+  }
+}
+
+/* -------------------------------------------------------------- coachmark -- */
+
+/*
+ * The little dark bubble the reference floats under its header controls: it
+ * drifts in on its own, sits for a few seconds and fades out again.
+ *
+ * Two positioning constraints, both deliberate:
+ *   - it hangs *below* its anchor with the arrow pointing back up at it, and
+ *   - it is pushed left of the anchor's own edge so the account icons sitting
+ *     directly underneath stay visible. The arrow, not the bubble body, is
+ *     what marks the anchor.
+ * Overlapping the tab row is expected — it is a floating hint, and the
+ * reference overlaps its own tabs the same way.
+ *
+ * Only opacity and transform animate, so the bubble never reflows the header.
+ */
+
+.ys-coachmark {
+  /* Its own breakpoint rather than `.ys-from-md`: that helper sets
+     `inline-flex`, which would turn the sentence and its <strong> into two
+     separate flex items and stop the text wrapping. */
+  display: none;
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 160px;
+  z-index: 40;
+  width: max-content;
+  max-width: 280px;
+  padding: var(--ys-space-st) var(--ys-space-sm);
+  border-radius: var(--ys-radius-media);
+  background-color: var(--ys-neutral-primary);
+  color: var(--ys-white);
+  font-size: 0.875rem;
+  font-weight: 400;
+  line-height: 1.5;
+  text-align: left;
+  white-space: normal;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgb(0 0 0 / 18%);
+  transform-origin: top right;
+  animation: ys-coachmark-in 260ms cubic-bezier(0.22, 0.1, 0.1, 1) both;
+}
+
+/* Same 45deg-rotated square the reference uses for its tooltip arrows. */
+.ys-coachmark::after {
+  content: "";
+  position: absolute;
+  top: -5px;
+  right: 26px;
+  width: 12px;
+  height: 12px;
+  border-top-left-radius: 2px;
+  background-color: var(--ys-neutral-primary);
+  transform: rotate(45deg);
+}
+
+.ys-coachmark[data-leaving="true"] {
+  animation: ys-coachmark-out 200ms cubic-bezier(0.52, 0, 1, 1) both;
+}
+
+@media (min-width: 768px) {
+  .ys-coachmark {
+    display: block;
+  }
+}
+
+@keyframes ys-coachmark-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes ys-coachmark-out {
+  from {
+    opacity: 1;
+    transform: none;
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ys-coachmark,
+  .ys-coachmark[data-leaving="true"] {
+    animation: none;
+  }
+}
+
+
+/* ---------------------------------------------------- favourites banner -- */
+
+/*
+ * The little "click the heart" demo, rebuilt from the reference banner: a
+ * pointer drifts in, turns into a pointing hand, presses, and the heart fills.
+ * Then it lets go and leaves, and the loop restarts.
+ *
+ * One shared cycle length drives four elements, so they stay in step no matter
+ * how the timings are retuned — change `--ys-fav-cycle` and the whole gesture
+ * scales with it. Only transform and opacity animate; nothing here reflows.
+ *
+ * Purely decorative, so the markup is aria-hidden and reduced motion drops
+ * straight to the end state (filled heart, no cursor) rather than looping.
+ */
+
+.ys-fav-demo {
+  --ys-fav-cycle: 4.2s;
+  position: relative;
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+}
+
+.ys-fav-demo__disc {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  border-radius: var(--ys-radius-pill);
+  background-color: var(--surface);
+  box-shadow: 0 1px 3px rgb(2 23 26 / 8%);
+  animation: ys-fav-press var(--ys-fav-cycle) cubic-bezier(0.22, 0.1, 0.1, 1) infinite;
+}
+
+.ys-fav-demo__heart {
+  position: absolute;
+  color: var(--ys-interaction-primary);
+}
+
+/* The filled heart sits on top of the outline and fades in on the press. */
+.ys-fav-demo__heart--fill {
+  animation: ys-fav-fill var(--ys-fav-cycle) cubic-bezier(0.22, 0.1, 0.1, 1) infinite;
+}
+
+.ys-fav-demo__cursor {
+  position: absolute;
+  /* Tucked inside the disc rather than hanging off its corner, so the
+     fingertip lands on the heart instead of pressing the rim beside it. */
+  right: 4px;
+  bottom: 4px;
+  color: var(--ys-neutral-strong);
+  animation: ys-fav-travel var(--ys-fav-cycle) cubic-bezier(0.22, 0.1, 0.1, 1) infinite;
+}
+
+.ys-fav-demo__pointer {
+  position: absolute;
+  inset: 0;
+}
+
+.ys-fav-demo__pointer--arrow {
+  animation: ys-fav-arrow var(--ys-fav-cycle) linear infinite;
+}
+
+.ys-fav-demo__pointer--hand {
+  animation: ys-fav-hand var(--ys-fav-cycle) linear infinite;
+}
+
+@keyframes ys-fav-travel {
+  0% {
+    opacity: 0;
+    transform: translate(26px, 22px);
+  }
+  10% {
+    opacity: 1;
+  }
+  28% {
+    opacity: 1;
+    transform: translate(0, 0);
+  }
+  34% {
+    transform: translate(0, 3px) scale(0.9);
+  }
+  42%,
+  74% {
+    transform: translate(0, 0) scale(1);
+  }
+  92%,
+  100% {
+    opacity: 0;
+    transform: translate(26px, 22px);
+  }
+}
+
+/* Hard swaps rather than a cross-fade: two cursors ghosting through each
+   other looks like a rendering bug, not like a cursor changing shape. */
+@keyframes ys-fav-arrow {
+  0%,
+  20% {
+    opacity: 1;
+  }
+  20.01%,
+  76% {
+    opacity: 0;
+  }
+  76.01%,
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes ys-fav-hand {
+  0%,
+  20% {
+    opacity: 0;
+  }
+  20.01%,
+  76% {
+    opacity: 1;
+  }
+  76.01%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes ys-fav-fill {
+  0%,
+  33% {
+    opacity: 0;
+    transform: scale(0.55);
+  }
+  40% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+  46%,
+  70% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  78%,
+  100% {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+}
+
+@keyframes ys-fav-press {
+  0%,
+  32% {
+    transform: scale(1);
+  }
+  36% {
+    transform: scale(0.92);
+  }
+  44% {
+    transform: scale(1.07);
+  }
+  52%,
+  100% {
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ys-fav-demo__disc,
+  .ys-fav-demo__heart--fill,
+  .ys-fav-demo__cursor,
+  .ys-fav-demo__pointer {
+    animation: none;
+  }
+
+  .ys-fav-demo__heart--fill {
+    opacity: 1;
+  }
+
+  .ys-fav-demo__cursor {
+    display: none;
+  }
+}
+
+/* ----------------------------------------------------------- hero band -- */
+
+/*
+ * The diagonal band, DESIGN.md's primary section device: full bleed, no
+ * container, no border, no shadow. The colour change is the separation.
+ *
+ * The cut is `clamp(20px, 4vw, 56px)` rather than a fixed pixel value, and
+ * that is the whole reason it survives small screens: a flat 46px slice on a
+ * 375px phone is proportionally more than twice the angle it cuts on desktop,
+ * so a fixed number reads as a gentle tilt on a laptop and a wedge on a
+ * handset.
+ *
+ * Direction stays the same everywhere it is used. Alternating the angle down a
+ * page stops reading as structure and starts reading as decoration.
+ */
+.ys-band {
+  --ys-band-cut: clamp(20px, 4vw, 56px);
+
+  background-color: var(--pink);
+  color: var(--ys-white);
+  clip-path: polygon(
+    0 0,
+    100% var(--ys-band-cut),
+    100% 100%,
+    0 calc(100% - var(--ys-band-cut))
+  );
+}
+
+/* ---------------------------------------------------------------- footer -- */
+
+.ys-footer-link {
+  color: var(--ys-neutral-secondary);
+  font-size: 0.875rem;
+  line-height: 1.571;
+}
+
+/* Same colour and size as a footer link, but inert: these label things the
+   product does not have a page for yet, so they must not invite a click. */
+.ys-footer-text {
+  color: var(--ys-neutral-secondary);
+  font-size: 0.875rem;
+  line-height: 1.571;
+}
+
+.ys-footer-link:hover {
+  color: var(--ys-neutral-primary);
+  text-decoration: underline;
+}
+
+/* --------------------------------------------------- placeholder imagery -- */
+
+/*
+ * No Yemeksepeti photography, logo or campaign art is bundled with this
+ * experiment. Tiles render a deterministic gradient derived from the mock
+ * record's `hue` instead.
+ */
+.ys-placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  padding: var(--ys-space-st);
+  background-image: linear-gradient(
+    135deg,
+    hsl(var(--ys-hue) 70% 62%) 0%,
+    hsl(calc(var(--ys-hue) + 18) 68% 46%) 100%
+  );
+  color: var(--ys-white);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-shadow: 0 1px 2px rgb(0 0 0 / 35%);
+}
+
+/* The marquee clips itself instead of painting a pale overlay above the
+ * cards, so dark-mode text and hover states keep their real contrast. */
+.ys-marquee-mask {
+  -webkit-mask-image: linear-gradient(to right, transparent, black 7%, black 93%, transparent);
+  mask-image: linear-gradient(to right, transparent, black 7%, black 93%, transparent);
+}
+
+/*
+ * The entry promo is portalled outside `.ys-root`, and `DialogContent`'s
+ * zoom/slide classes carry no `motion-safe:` guard. This reaches it because
+ * the stylesheet is a global import.
+ */
+@media (prefers-reduced-motion: reduce) {
+  [data-ys-entry-promo] {
+    animation: none;
+  }
+}

@@ -9,7 +9,11 @@ const Card = React.forwardRef<
   <div
     ref={ref}
     className={cn(
-      "rounded-lg border bg-card text-card-foreground shadow-sm",
+      /* No shadow. A card does not float, it sits in the document flow, and a
+         shadow on it is a lie about its physics — that lie is what looks
+         cheap. In-flow surfaces separate by value plus a hairline: white on
+         paper, 1px line. Shadows are for things that genuinely float. */
+      "rounded-card border border-line bg-surface text-card-foreground",
       className
     )}
     {...props}

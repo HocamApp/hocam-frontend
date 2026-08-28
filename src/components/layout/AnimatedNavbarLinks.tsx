@@ -1,5 +1,19 @@
 "use client";
 
+/*
+ * NO LONGER MOUNTED.
+ *
+ * The application shell is `YsNavbar` + `YsFooter`, rendered by
+ * `src/app/(main)/layout.tsx`. Nothing imports this file any more.
+ *
+ * Kept rather than deleted while the new shell settles: this is the only
+ * remaining description of the pre-rebrand navigation, and `navItems.ts` —
+ * which it and `MobileTabBar` share — is still the source of truth for the
+ * mobile bottom bar. Delete this, `AnimatedNavbarLinks.tsx` and `Footer.tsx`
+ * together, and only once the mobile bar has been moved off `navItems.ts`
+ * too.
+ */
+
 import * as React from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
@@ -75,7 +89,7 @@ export function AnimatedNavbarLinks() {
     enabled: isAuthenticated,
     refetchInterval: isPageVisible ? 30_000 : false,
   });
-  const hasUnread = summary?.has_unread ?? false;
+  const unreadCount = summary?.unread_count ?? 0;
 
   if (isLoading || !isAuthenticated) return null;
 
@@ -93,8 +107,8 @@ export function AnimatedNavbarLinks() {
         <span className="relative inline-flex">
           <PopoverTrigger asChild>{node}</PopoverTrigger>
           <NotificationMark
-            hasUnread={hasUnread}
-            className="absolute right-0.5 top-0.5"
+            unreadCount={unreadCount}
+            className="absolute -right-1 -top-1"
           />
         </span>
         <PopoverContent align="end" className="w-80 p-0">
@@ -136,8 +150,8 @@ export function AnimatedNavbarLinks() {
       selected={activeIndex >= 0 ? activeIndex : null}
       onChange={handleChange}
       tabletCompact
-      activeColor="text-brand-700 dark:text-brand-200"
-      activeBackground="bg-brand-50 dark:bg-brand-900"
+      activeColor="text-ink"
+      activeBackground="bg-paper"
       className="w-max flex-nowrap rounded-xl sm:w-auto"
     />
   );

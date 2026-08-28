@@ -146,7 +146,7 @@ export function BookingCard({
 
   return (
     <>
-    <Card id={id} className={className}>
+    <Card id={id} className={cn("overflow-hidden rounded-[var(--radius-card)] border-[var(--line)] bg-[var(--surface)]", className)}>
       <CardContent className="p-4">
         <div className="flex items-start justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3">
@@ -216,8 +216,8 @@ export function BookingCard({
 
         <div
           className={cn(
-            "flex flex-wrap items-center gap-2",
-            hasActions ? "mt-4 border-t pt-3" : "mt-3"
+          "flex flex-wrap items-center gap-2",
+          hasActions ? "mt-4 border-t border-[var(--line)] pt-3" : "mt-3"
           )}
         >
           {currentUserRole === "tutor" && (

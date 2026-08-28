@@ -7,7 +7,10 @@ import { cleanup, render, screen } from "@testing-library/react";
 
 import { CoachingPageShell } from "./CoachingPageShell";
 
-Object.defineProperty(globalThis, "self", { value: window, configurable: true });
+Object.defineProperty(globalThis, "self", {
+  value: window,
+  configurable: true,
+});
 
 after(() => window.close());
 afterEach(cleanup);
@@ -22,14 +25,16 @@ describe("CoachingPageShell", () => {
         parentLabel="Çalışma koçluğu"
       >
         <p>Sayfa içeriği</p>
-      </CoachingPageShell>
+      </CoachingPageShell>,
     );
 
     assert.equal(screen.getAllByRole("heading", { level: 1 }).length, 1);
     assert.ok(screen.getByRole("navigation", { name: "Sayfa yolu" }));
     assert.equal(
-      screen.getByRole("link", { name: "Çalışma koçluğu" }).getAttribute("href"),
-      "/dashboard/tutor/coaching"
+      screen
+        .getByRole("link", { name: "Çalışma koçluğu" })
+        .getAttribute("href"),
+      "/dashboard/tutor/coaching",
     );
     assert.ok(screen.getByText("Görüşmeler için ayırdığın saatleri düzenle."));
   });
@@ -45,7 +50,7 @@ describe("CoachingPageShell", () => {
         audience="tutor"
       >
         <p>Görüşme içeriği</p>
-      </CoachingPageShell>
+      </CoachingPageShell>,
     );
 
     const navigation = screen.getByRole("navigation", {
@@ -58,7 +63,25 @@ describe("CoachingPageShell", () => {
     assert.ok(navigation.contains(currentLink));
     assert.equal(currentLink.getAttribute("aria-current"), "page");
     assert.ok(screen.getByText("Koçlukta konumun"));
-    assert.ok(screen.getByLabelText("Diğer koçluk bölümleri için yatay kaydır"));
+  });
+
+  it("leaves the page's one main landmark to the app shell", () => {
+    // Every Coaching route renders inside (main)/layout.tsx, which already
+    // provides <main id="ys-main-content">. This shell used to add a second
+    // one inside it, which makes the primary landmark ambiguous and gives
+    // "skip to content" two places to land.
+    const { container } = render(
+      <CoachingPageShell
+        title="Koçluk müsaitliği"
+        description="Görüşmeler için ayırdığın saatleri düzenle."
+        parentHref="/dashboard/tutor/coaching"
+        parentLabel="Çalışma koçluğu"
+      >
+        <p>Sayfa içeriği</p>
+      </CoachingPageShell>,
+    );
+
+    assert.equal(container.querySelectorAll("main").length, 0);
   });
 
   it("uses compact mobile chrome without changing the desktop scale", () => {
@@ -70,11 +93,17 @@ describe("CoachingPageShell", () => {
         parentLabel="Koçluk ana sayfası"
       >
         <p>Karar içeriği</p>
-      </CoachingPageShell>
+      </CoachingPageShell>,
     );
 
-    assert.match(screen.getByTestId("coaching-shell-stack").className, /space-y-4/);
-    assert.match(screen.getByTestId("coaching-page-header").className, /p-4/);
-    assert.match(screen.getByTestId("coaching-page-header").className, /sm:p-7/);
+    assert.match(
+      screen.getByTestId("coaching-shell-stack").className,
+      /space-y-6/,
+    );
+    assert.match(screen.getByTestId("coaching-page-header").className, /p-6/);
+    assert.match(
+      screen.getByTestId("coaching-page-header").className,
+      /sm:p-8/,
+    );
   });
 });

@@ -128,9 +128,9 @@ describe("option adapters keep server values verbatim", () => {
       ],
     });
     assert.deepEqual(adapted, [
-      { value: "balanced", label: "Dengeli", detail: "₺400 – ₺700 / 40 dk" },
-      { value: "premium", label: "Premium", detail: "₺900 ve üzeri / 40 dk" },
-      { value: "economical", label: "Ekonomik", detail: "₺250’ye kadar / 40 dk" },
+      { value: "balanced", label: "Dengeli", detail: "400 ₺ – 700 ₺ / 40 dk" },
+      { value: "premium", label: "Premium", detail: "900 ₺ ve üzeri / 40 dk" },
+      { value: "economical", label: "Ekonomik", detail: "250 ₺’ye kadar / 40 dk" },
       { value: "flexible", label: "Fiyat konusunda esneğim", detail: "Tüm fiyat aralıklarını değerlendir" },
       { value: "balanced", label: "Belirsiz" },
     ]);
@@ -220,7 +220,7 @@ describe("review rows", () => {
     assert.equal(rows.find((row) => row.stepId === "zorluk")?.label, "Zorluk");
     assert.equal(
       rows.find((row) => row.stepId === "butce")?.detail,
-      "₺400 – ₺700 / 40 dk"
+      "400 ₺ – 700 ₺ / 40 dk"
     );
   });
 

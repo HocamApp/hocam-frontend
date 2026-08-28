@@ -49,11 +49,17 @@ describe("AcceptanceRequestCard", () => {
     assert.ok(screen.getByText(/24 ders/));
     assert.ok(screen.getByText(/Haftada 1 görüşme/));
     assert.ok(screen.getByText(/12 görüşme/));
-    assert.ok(screen.getByText("₺23.520,00"));
+    assert.ok(screen.getByText("23.520,00 ₺"));
     assert.ok(screen.getByText(/9\.600,00/));
-    assert.match(screen.getByText("Çalışma koçluğu dahil").className, /text-muted-foreground/);
-    assert.doesNotMatch(screen.getByText("Çalışma koçluğu dahil").className, /bg-primary/);
-    assert.match(screen.getByText("Öğretmen yanıtı bekleniyor").className, /bg-primary/);
+    // The two chips sit side by side and must not compete: the add-on is a
+    // fact about the request, the status is the thing the tutor acts on. The
+    // assertion is on the construction rather than one hex-bearing class,
+    // because the solid fill is what carries the emphasis.
+    const addOn = screen.getByText("Çalışma koçluğu dahil").className;
+    const status = screen.getByText("Öğretmen yanıtı bekleniyor").className;
+    assert.match(addOn, /text-ink-mid/);
+    assert.match(addOn, /bg-transparent/);
+    assert.match(status, /bg-ink|bg-pink/);
     assert.ok(screen.getByRole("heading", { name: "Birlikte değerlendirilecek talep" }));
     assert.equal(screen.queryByText(/bundle/i), null);
   });

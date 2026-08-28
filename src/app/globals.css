@@ -4,36 +4,40 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --background: 0 38% 97%;
+    --foreground: 186 86% 5%;
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 186 86% 5%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    --popover-foreground: 186 86% 5%;
+    --primary: 341 100% 49%;
+    --primary-foreground: 0 0% 100%;
     /* Neutrals warmed from cool blue (hue 210-222) toward the brand hue
        (352) at very low saturation, so the brand ramp above can blend
        into surfaces instead of only sitting on top of them. --background,
        --card, and --primary are deliberately untouched — pure white stays
        pure white, and --primary at 11% lightness has an imperceptible hue
        either way, so no CTA on the site moves. */
-    --secondary: 350 20% 97%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 350 20% 97%;
-    --muted-foreground: 350 8% 46%;
-    --accent: 350 20% 97%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --secondary: 0 38% 97%;
+    --secondary-foreground: 186 86% 5%;
+    --muted: 0 38% 97%;
+    --muted-foreground: 183 8% 39%;
+    --accent: 0 38% 97%;
+    --accent-foreground: 186 86% 5%;
     /* Deepened from 60.2% lightness so error states stay visually distinct
        from the brand ramp — same red family, ~8deg hue apart, was nearly
        indistinguishable at matching lightness. */
-    --destructive: 0 72% 51%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 350 15% 91%;
-    --input: 350 15% 91%;
-    --ring: 222.2 84% 4.9%;
+    --destructive: 9 66% 42%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 16% 88%;
+    --input: 0 16% 88%;
+    --ring: 186 86% 5%;
     --radius: 0.5rem;
-    /* Brand ramp (logo color #FE4059 = brand-500, exact). A palette scale,
+    /* Brand ramp. Was anchored to the old logo coral #FE4059; the logo has
+       since been recoloured to DESIGN.md's --pink (#FA0050), so this ramp no
+       longer matches the mark and is kept only for the 83 pages that have not
+       been rebranded yet. New work uses --pink / --pink-deep / --pink-pale.
+       A palette scale,
        not a semantic surface token like --background — defined once and
        shared by both themes. Which step to reach for inverts per theme:
        light surfaces use low numbers (50-200) for tints and high numbers
@@ -52,34 +56,194 @@
     --brand-700: 352 83% 43%;
     --brand-800: 352 75% 37%;
     --brand-900: 352 69% 30%;
+
+    /* ---------------------------------------------------------------------
+       Brand tokens, from DESIGN.md. Raw hex rather than the HSL triplets
+       above, because these are read as `var(--paper)` directly instead of
+       being wrapped in hsl() by Tailwind's shadcn bridge.
+
+       Each value carries its reason in DESIGN.md. The two that get broken
+       most often by accident:
+
+       --gold is a surface and never a text colour. #FFD100 on #FBF6F6 is
+       about 1.6:1, far under the 4.5:1 floor. It fills a shape and
+       --gold-ink sits on it.
+
+       --error leans orange on purpose. At the brand pink an error message
+       is indistinguishable from a promotion; #B33A24 sits roughly 30deg
+       away, which is enough to read as a different category at a glance.
+       --------------------------------------------------------------------- */
+    --pink: #fa0050;
+    --pink-deep: #d70f64;
+    --pink-pale: #fce5f1;
+    --gold: #ffd100;
+    --gold-ink: #4a3b00;
+    --paper: #fbf6f6;
+    --ink: #02171a;
+    --ink-mid: #5c6b6d;
+    --line: #e6dddd;
+    /* The in-flow card surface, as a token rather than Tailwind's literal
+       `bg-white`. DESIGN.md separates surfaces by value plus a hairline, and a
+       literal white cannot participate in that once there are two themes. */
+    --surface: #ffffff;
+    --skeleton: #ede6e6;
+    --success: #1c7a55;
+    /* --success at 14% over white, precomputed. Tailwind cannot inject an
+       alpha into a var that holds a hex, and a calendar's available day needs
+       a fill soft enough to sit under a whole grid of them without shouting.
+       It lands in the same lightness family as --line, so it belongs on this
+       paper rather than reading as a highlighter. */
+    --success-soft: #e0ece7;
+    --error: #b33a24;
+
+    /*
+     * Subject colours for the study calendar.
+     *
+     * Not part of DESIGN.md's palette, and deliberately not made from it
+     * either. The calendar needs colour to do a job the brand palette cannot:
+     * telling Matematik from Tarih at a glance across a week. Three hues plus
+     * neutrals cannot carry six subjects.
+     *
+     * Derived rather than picked. The brand occupies four points on the hue
+     * wheel — pink 341, gold 49, success 156, error 9 — so these sit in the
+     * gaps between them, each at least 28 degrees from the nearest, so a
+     * subject block can never be mistaken for a CTA, a rank badge or an error.
+     * Every one clears 4.5:1 with white text (measured 6.0 to 8.5), and the
+     * closest pair is 35 deltaE apart, which is comfortably distinguishable.
+     *
+     * The numbers are checked in scheduleTheme.test.ts. Change one and that
+     * test tells you what it broke.
+     *
+     * The same six serve both themes. A dark override was written first, on
+     * the assumption that a mid-tone fill would sink into the dark canvas;
+     * measuring it showed the opposite. These separate from #0f1719 by 2.1 to
+     * 3.0, which is more than a surface needs, while lifting them dropped
+     * white text on zeytin and turkuaz to 3.9 — under the floor, on the text
+     * that sits on top of them. The assumption cost the thing that mattered.
+     */
+    --subject-1: #1f5fa6; /* mavi     */
+    --subject-2: #4a3e9e; /* lacivert */
+    --subject-3: #87306f; /* erguvan  */
+    --subject-4: #4f6b1e; /* zeytin   */
+    --subject-5: #0f6e74; /* turkuaz  */
+    --subject-6: #54524f; /* grafit   */
+
+    /*
+     * App header height, as one source rather than a number copied into every
+     * page that has to subtract it.
+     *
+     * Five places were doing that subtraction by hand with a literal 64px or
+     * 3.5rem, which was survivable while the header was one row and never
+     * changed. It is about to become two rows, and a stale copy in
+     * /messages is a clipped composer rather than a cosmetic drift.
+     *
+     * The navbar reads these back for its own row heights, so the token is
+     * the cause of the height and not a description of it — that is what
+     * stops it going stale the next time someone edits the tab strip.
+     *
+     * Below md the tab strip is hidden — the bottom tab bar already carries
+     * navigation on a phone — so the header is row 1 alone there.
+     */
+    --app-header-row-1-h: 3.5rem;
+    --app-header-row-2-h: 3.5rem;
+    --app-header-h: var(--app-header-row-1-h);
+
+    /* Off the Tailwind grid on purpose: 6, 8, 12, 16 and 24 are all
+       reachable by typing a stock utility, so landing on one means
+       inheriting a default rather than choosing a value. The larger effect
+       is contrast across the scale — a 10px input beside a pill button
+       beside a 20px card reads as designed. Uniformity is the tell. */
+    --radius-input: 10px;
+    --radius-card: 20px;
+    --radius-modal: 28px;
+    --radius-pill: 999px;
+
+    /* Two layers: a diffused drop and a tight contact shadow. The contact
+       layer is what stops a floating surface looking like it hovers three
+       feet above the page. Ink-tinted, never pure black — rgba(0,0,0,..)
+       over warm off-white reads as dirt. */
+    --shadow-float: 0 8px 24px rgb(2 23 26 / 10%), 0 1px 3px rgb(2 23 26 / 6%);
+    --duration-state: 120ms;
   }
 
+  /* The header is taller from `md` up. Kept in a media query rather than a
+     Tailwind breakpoint variant because the consumers are `calc()` inside
+     arbitrary values, and those cannot ask a utility what the current
+     breakpoint is. 768px is Tailwind's own `md`, matched by hand. */
+  @media (min-width: 768px) {
+    :root {
+      --app-header-row-1-h: 4rem;
+      --app-header-h: calc(
+        var(--app-header-row-1-h) + var(--app-header-row-2-h)
+      );
+    }
+  }
+
+  /*
+   * Dark theme, derived rather than invented.
+   *
+   * DESIGN.md has no dark mode and does not list one as an open decision, but
+   * it does state the principle the light theme rests on: in-flow surfaces
+   * separate by value plus a hairline, never by shadow. Inverted, that gives
+   * the whole palette — a dark canvas, a card one value step above it, a
+   * hairline one step above that. It is also what Material's elevation-by-tint
+   * and Linear's surface ramp arrive at, so this is the industry default
+   * reached through our own rule rather than borrowed.
+   *
+   * Values are chosen, not sampled:
+   *
+   * --paper is --ink's hue held at 8% lightness with the saturation pulled
+   * down. Pure black would break the same elevation system a pure white page
+   * breaks in light mode: there would be nothing left below the card to
+   * separate it from.
+   *
+   * --ink is paper-toned rather than pure white. #FFFFFF text on a dark
+   * canvas is the classic halation complaint, and the light theme's own text
+   * is not pure black either.
+   *
+   * --ink-mid had to move furthest. #5C6B6D is a secondary on paper and
+   * nearly invisible on a dark canvas; #9BAAAC measures about 7.4:1 against
+   * the new --paper, comfortably past the 4.5:1 floor.
+   *
+   * --pink and --gold are untouched. Both are saturated enough to hold on
+   * dark, and both are used as surfaces with their own ink on top, so
+   * changing them would break pairings that already work.
+   */
   .dark {
-    --background: 222 47% 11%;
-    --foreground: 214 32% 91%;
-    --card: 220 37% 14%;
-    --card-foreground: 214 32% 91%;
-    --popover: 219 36% 16%;
-    --popover-foreground: 214 32% 91%;
-    --primary: 213 94% 68%;
-    --primary-foreground: 222 47% 11%;
+    --paper: #0f1719;
+    --surface: #182225;
+    --line: #2a3639;
+    --skeleton: #344246;
+    --ink: #ece6e6;
+    --ink-mid: #9baaac;
+    /* --success at 14% over the dark surface, same construction as light. */
+    --success-soft: #17332b;
+
+    --background: 192 25% 8%;
+    --foreground: 0 14% 91%;
+    --card: 193 21% 12%;
+    --card-foreground: 0 14% 91%;
+    --popover: 193 21% 12%;
+    --popover-foreground: 0 14% 91%;
+    --primary: 341 100% 49%;
+    --primary-foreground: 0 0% 100%;
     /* Same warming as light mode, same low-saturation discipline, applied
        to the existing dark lightness bands (hue rotated to 352, saturation
        brought down to roughly the same 20%/8%/15% bands light mode uses —
        lightness is untouched so the surfaces stay exactly as dark).
        --background, --card, --popover, and --primary stay untouched, same
        reasoning as light mode. */
-    --secondary: 350 20% 22%;
-    --secondary-foreground: 214 32% 91%;
-    --muted: 350 20% 20%;
-    --muted-foreground: 350 8% 65%;
-    --accent: 350 20% 24%;
-    --accent-foreground: 214 32% 91%;
-    --destructive: 0 63% 45%;
-    --destructive-foreground: 210 40% 96%;
-    --border: 350 15% 27%;
-    --input: 350 15% 27%;
-    --ring: 213 94% 68%;
+    --secondary: 193 21% 12%;
+    --secondary-foreground: 0 14% 91%;
+    --muted: 192 15% 19%;
+    --muted-foreground: 186 9% 64%;
+    --accent: 192 15% 19%;
+    --accent-foreground: 0 14% 91%;
+    --destructive: 9 66% 42%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 192 15% 19%;
+    --input: 192 15% 19%;
+    --ring: 0 14% 91%;
   }
 }
 
@@ -95,7 +259,8 @@
     width: 0;
   }
   body {
-    @apply bg-background text-foreground;
+    background-color: var(--paper);
+    color: var(--ink);
   }
 }
 
@@ -143,15 +308,33 @@
   animation: slide-right 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
-.animate-delay-100 { animation-delay: 0.1s; }
-.animate-delay-200 { animation-delay: 0.2s; }
-.animate-delay-300 { animation-delay: 0.3s; }
-.animate-delay-400 { animation-delay: 0.4s; }
-.animate-delay-500 { animation-delay: 0.5s; }
-.animate-delay-600 { animation-delay: 0.6s; }
-.animate-delay-700 { animation-delay: 0.7s; }
-.animate-delay-800 { animation-delay: 0.8s; }
-.animate-delay-900 { animation-delay: 0.9s; }
+.animate-delay-100 {
+  animation-delay: 0.1s;
+}
+.animate-delay-200 {
+  animation-delay: 0.2s;
+}
+.animate-delay-300 {
+  animation-delay: 0.3s;
+}
+.animate-delay-400 {
+  animation-delay: 0.4s;
+}
+.animate-delay-500 {
+  animation-delay: 0.5s;
+}
+.animate-delay-600 {
+  animation-delay: 0.6s;
+}
+.animate-delay-700 {
+  animation-delay: 0.7s;
+}
+.animate-delay-800 {
+  animation-delay: 0.8s;
+}
+.animate-delay-900 {
+  animation-delay: 0.9s;
+}
 
 @media (prefers-reduced-motion: reduce) {
   .animate-element,

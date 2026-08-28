@@ -238,7 +238,7 @@ export function TutorDeletionFlow({ accountEmail }: TutorDeletionFlowProps) {
   // of offboarding actions that must resolve before the profile can go live.
   if (cancelResult) {
     return (
-      <Card className="border-destructive/40">
+      <Card className="rounded-[var(--radius-card)] border-[var(--error)]/40 bg-[var(--surface)]">
         <CardHeader>
           <CardTitle className="text-lg text-destructive">Hesabı sil</CardTitle>
           <CardDescription>Silme işlemi iptal edildi.</CardDescription>
@@ -295,7 +295,7 @@ export function TutorDeletionFlow({ accountEmail }: TutorDeletionFlowProps) {
   // Offboarding in progress (just started or returning to the page).
   if (step === "status" || activeStatus) {
     return (
-      <Card className="border-destructive/40">
+      <Card className="rounded-[var(--radius-card)] border-[var(--error)]/40 bg-[var(--surface)]">
         <CardHeader>
           <CardTitle className="text-lg text-destructive">Hesabı sil</CardTitle>
           <CardDescription>Kapanış süreci devam ediyor.</CardDescription>
@@ -325,7 +325,7 @@ export function TutorDeletionFlow({ accountEmail }: TutorDeletionFlowProps) {
 
   if (!flowOpen) {
     return (
-      <Card>
+      <Card className="rounded-[var(--radius-card)] border-[var(--line)] bg-[var(--surface)]">
         <CardHeader className="pb-3">
           <CardTitle className="text-lg">Hesap yönetimi</CardTitle>
           <CardDescription>
@@ -375,7 +375,7 @@ export function TutorDeletionFlow({ accountEmail }: TutorDeletionFlowProps) {
   }
 
   return (
-    <Card ref={flowRef} className="scroll-mt-6 border-destructive/40">
+    <Card ref={flowRef} className="scroll-mt-6 rounded-[var(--radius-card)] border-[var(--error)]/40 bg-[var(--surface)]">
       <CardHeader>
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -441,7 +441,7 @@ export function TutorDeletionFlow({ accountEmail }: TutorDeletionFlowProps) {
                 variant="outline"
                 onClick={handleStartPrecheck}
                 disabled={busy}
-                className="flex-1 border-destructive/60 text-destructive hover:bg-destructive/10 hover:text-destructive"
+              className="flex-1 rounded-[var(--radius-pill)] border-[var(--error)]/60 text-[var(--error)] hover:bg-[var(--paper)] hover:text-[var(--error)]"
               >
                 <Trash2 className="mr-2 h-4 w-4" aria-hidden="true" />
                 Kalıcı silmeye devam et
@@ -517,6 +517,7 @@ export function TutorDeletionFlow({ accountEmail }: TutorDeletionFlowProps) {
               variant="destructive"
               onClick={handleRequestOtp}
               disabled={!canConfirm || busy}
+              className="min-h-11 rounded-[var(--radius-pill)] bg-[var(--error)] px-6 text-white hover:bg-[var(--error)]/90"
             >
               <Trash2 className="mr-2 h-4 w-4" aria-hidden="true" />
               Hesabı kalıcı olarak sil

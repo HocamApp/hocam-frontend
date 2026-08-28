@@ -540,9 +540,9 @@ export function ProfileMenu() {
       </PopoverContent>
     </Popover>
     <Dialog open={paymentDialogOpen} onOpenChange={handlePaymentDialogChange}>
-      <DialogContent className="w-[calc(100dvw-1rem)] max-w-[calc(100dvw-1rem)] sm:max-w-xl">
+      <DialogContent className="w-[calc(100dvw-1rem)] max-w-[calc(100dvw-1rem)] rounded-[var(--radius-modal)] border-[var(--line)] bg-[var(--surface)] p-5 sm:max-w-xl sm:p-7">
         <DialogHeader>
-          <DialogTitle>Ödeme Yöntemleri</DialogTitle>
+          <DialogTitle className="text-h2-m text-ink">Ödeme Yöntemleri</DialogTitle>
           <DialogDescription>
             Hocam&apos;da ödeme yöntemi yönetimi için hazırlanan ön arayüz.
             Gerçek kart bilgisi alınmaz.
@@ -562,7 +562,7 @@ export function ProfileMenu() {
           {paymentNotice ? (
             <p
               role="status"
-              className="rounded-lg border border-border bg-muted/50 px-3 py-2 text-sm text-muted-foreground"
+              className="rounded-[var(--radius-input)] border border-[var(--line)] bg-gold px-3 py-2 text-sm text-gold-ink"
             >
               {paymentNotice}
             </p>

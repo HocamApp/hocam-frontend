@@ -14,7 +14,7 @@ export const CHECKOUT_PALETTES = [
 export type CheckoutPalette = (typeof CHECKOUT_PALETTES)[number];
 
 export const CHECKOUT_PALETTE_NAMES: Record<CheckoutPalette, string> = {
-  "01": "Garden Split",
+  "01": "Hocam Design",
   "02": "Cyan Studio",
   "03": "Mint Ledger",
   "04": "Charcoal Frame",
