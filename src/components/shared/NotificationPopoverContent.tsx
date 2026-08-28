@@ -153,7 +153,13 @@ export function NotificationPopoverContent() {
 
   if (items.length === 0) {
     return (
-      <div className="flex flex-col items-center gap-2 px-6 py-10 text-center">
+      /* The popover itself is transparent: with notifications in it, each row
+         is its own white card and the page showing between them is the point.
+         Empty, there are no cards, so the text sat directly on whatever
+         happened to be underneath. This state brings its own surface — the
+         one floating-panel treatment from DESIGN.md, since a popover is a
+         thing that genuinely floats. */
+      <div className="flex flex-col items-center gap-2 rounded-card border border-line bg-surface px-6 py-10 text-center shadow-float">
         <Bell className="size-8 text-ink-mid" weight="regular" aria-hidden />
         <p className="text-body font-medium text-ink">Yeni bildirim yok</p>
         <p className="text-small text-ink-mid">
