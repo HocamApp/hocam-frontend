@@ -54,6 +54,10 @@ export function ConsentSettings() {
         toast.error("Bu onay için önce velinin onayı gerekiyor.");
         return;
       }
+      if (status === 503) {
+        toast.error("Yeni onay toplama hukuki inceleme tamamlanana kadar kapalı.");
+        return;
+      }
       toast.error("Onay kaydedilemedi. Tekrar dener misin?");
     },
   });
@@ -85,11 +89,22 @@ export function ConsentSettings() {
   }
 
   const items = consentCopyForRole(user?.role);
-  const needsBirthDate = data.birth_date === null;
+  const visibleItems = data.collection_enabled
+    ? items
+    : items.filter((item) => data.consents[item.purpose] ?? false);
+  const needsBirthDate = data.collection_enabled && data.birth_date === null;
   const isMinor = data.is_minor === true;
 
   return (
     <div className="space-y-8">
+      {!data.collection_enabled && (
+        <section className="rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm leading-6 dark:border-amber-800 dark:bg-amber-950/40">
+          Yeni açık rıza toplama, her işlemin doğru hukuki dayanağı bağımsız
+          olarak doğrulanana kadar kapalıdır. Daha önce verdiğin bir onay varsa
+          aşağıdan geri alabilirsin.
+        </section>
+      )}
+
       {needsBirthDate && (
         <section className="rounded-lg border border-amber-300 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950/40">
           <div className="flex items-start gap-3">
@@ -122,7 +137,7 @@ export function ConsentSettings() {
         </section>
       )}
 
-      {isMinor && (
+      {data.guardian_approval_enabled && isMinor && (
         <section className="rounded-lg border p-4">
           <div className="flex items-start gap-3">
             <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
@@ -157,7 +172,12 @@ export function ConsentSettings() {
       )}
 
       <section className="space-y-4">
-        {items.map((item) => {
+        {!data.collection_enabled && visibleItems.length === 0 && (
+          <p className="rounded-lg border p-4 text-sm text-muted-foreground">
+            Geri alınabilecek etkin bir açık rıza kaydın bulunmuyor.
+          </p>
+        )}
+        {visibleItems.map((item) => {
           const granted = data.consents[item.purpose] ?? false;
           const guardianGated =
             data.guardian_required_purposes.includes(item.purpose) && isMinor;
@@ -196,7 +216,11 @@ export function ConsentSettings() {
                         granted: true,
                       })
                     }
-                    disabled={granted || consentMutation.isPending}
+                    disabled={
+                      granted ||
+                      !data.collection_enabled ||
+                      consentMutation.isPending
+                    }
                   >
                     <Check className="mr-1 h-4 w-4" />
                     Onay ver

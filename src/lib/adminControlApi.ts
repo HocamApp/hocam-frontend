@@ -1,6 +1,6 @@
 import Cookies from "js-cookie";
 import api from "./api";
-import type { AdminCoachingQaScenario, AdminMonitorResponse, AdminMonitoredBooking, AdminMonitoredPackage, User } from "@/types";
+import type { AdminCoachingQaScenario, AdminMonitorResponse, AdminMonitoredBooking, AdminMonitoredPackage, AdminTutorVerification, AdminTutorVerificationList, User } from "@/types";
 
 function storeImpersonationToken(token: string, expiresAt: string) {
   Cookies.set("admin_impersonation_token", token, {
@@ -12,6 +12,41 @@ function storeImpersonationToken(token: string, expiresAt: string) {
 
 export async function fetchAdminMonitor(): Promise<AdminMonitorResponse> {
   const { data } = await api.get<AdminMonitorResponse>("/admin-control/monitor/");
+  return data;
+}
+
+export async function fetchAdminTutorVerifications(
+  status?: "pending" | "approved" | "rejected"
+): Promise<AdminTutorVerificationList> {
+  const { data } = await api.get<AdminTutorVerificationList>("/admin-control/tutor-verifications/", {
+    params: status ? { status } : undefined,
+  });
+  return data;
+}
+
+export async function decideAdminTutorVerification(
+  id: string,
+  payload: {
+    status: "approved" | "rejected";
+    rejection_reason_code?: string;
+    rejection_reason?: string;
+  }
+): Promise<AdminTutorVerification> {
+  const { data } = await api.post<AdminTutorVerification>(
+    `/admin-control/tutor-verifications/${id}/decision/`,
+    payload
+  );
+  return data;
+}
+
+export async function fetchAdminTutorVerificationPreview(
+  id: string,
+  documentType: "student_id" | "yks_result"
+): Promise<Blob> {
+  const { data } = await api.get<Blob>(
+    `/admin-control/tutor-verifications/${id}/preview/${documentType}/`,
+    { responseType: "blob" }
+  );
   return data;
 }
 

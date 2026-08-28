@@ -44,6 +44,10 @@ mock.module("@/lib/messageImage", {
 let MessageInput: typeof import("./MessageInput").MessageInput;
 
 before(async () => {
+  Object.defineProperty(globalThis, "localStorage", {
+    configurable: true,
+    value: window.localStorage,
+  });
   // jsdom here has no rAF; the composer refocuses through it after a send.
   if (typeof globalThis.requestAnimationFrame !== "function") {
     (globalThis as unknown as { requestAnimationFrame: unknown }).requestAnimationFrame = (
@@ -76,6 +80,7 @@ before(async () => {
 after(() => window.close());
 afterEach(cleanup);
 beforeEach(() => {
+  localStorage.clear();
   sendCalls.length = 0;
   getUserMediaCalls = 0;
   mediaRecorderConstructed = 0;
@@ -138,6 +143,24 @@ describe("voice messaging removal", () => {
     assert.equal(sendCalls.length, 1);
     assert.equal(sendCalls[0].message_text, "Merhaba hocam");
     assert.equal(sendCalls[0].attachment_kind, undefined);
+    assert.equal(
+      screen.queryByText(/T\.C\. kimlik numarası/),
+      null
+    );
+    assert.equal(
+      localStorage.getItem("hocam_sensitive_data_guidance_seen"),
+      "true"
+    );
+  });
+
+  it("shows the privacy guidance only until the first successful message", async () => {
+    const firstRender = renderInput();
+    assert.ok(await screen.findByText(/T\.C\. kimlik numarası/));
+    firstRender.unmount();
+
+    localStorage.setItem("hocam_sensitive_data_guidance_seen", "true");
+    renderInput();
+    assert.equal(screen.queryByText(/T\.C\. kimlik numarası/), null);
   });
 
   it("classifies a selected file attachment as file, never voice", async () => {

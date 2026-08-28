@@ -14,6 +14,12 @@ const DOCUMENTS = [
       "Hangi verilerini, neden işlediğimizi, kimlerle paylaştığımızı ve haklarını anlatır.",
   },
   {
+    href: "/kvkk/hoca-dogrulama",
+    title: "Hoca Doğrulama Aydınlatma Metni",
+    description:
+      "Üniversite e-postası, öğrenci belgesi ve YKS belgesinin nasıl incelendiğini ve ne kadar saklandığını anlatır.",
+  },
+  {
     href: "/kvkk/cerez-politikasi",
     title: "Çerez Politikası",
     description:
@@ -60,7 +66,7 @@ export default function KvkkIndexPage() {
       </ul>
 
       <div className="mt-10 rounded-lg border bg-muted/40 p-4 text-sm leading-6">
-        Onaylarını yönetmek veya KVKK 11. madde kapsamında başvuru yapmak için{" "}
+        Mevcut onaylarını geri almak ve çevrimiçi başvuru kanalının durumunu görmek için{" "}
         <Link href="/profile/gizlilik" className="text-primary underline">
           Gizlilik ve Verilerim
         </Link>{" "}

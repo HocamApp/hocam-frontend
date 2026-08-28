@@ -83,6 +83,31 @@ export interface AdminAction {
   created_at: string;
 }
 
+export interface AdminTutorVerification {
+  id: string;
+  tutor_id: string;
+  tutor_name: string;
+  account_email: string;
+  university_email: string;
+  university: string;
+  department: string;
+  declared_yks_rank: number;
+  status: "pending" | "approved" | "rejected";
+  security_status: "not_scanned" | "safe" | "qa_bypass" | "legacy_reviewed";
+  security_report: Record<string, unknown>;
+  submitted_at: string;
+  reviewed_at: string | null;
+  rejection_reason_code: string;
+  rejection_reason: string;
+  documents_deleted_at: string | null;
+  preview_available: { student_id: boolean; yks_result: boolean };
+}
+
+export interface AdminTutorVerificationList {
+  results: AdminTutorVerification[];
+  rejection_reasons: Array<{ value: string; label: string }>;
+}
+
 export interface AdminCoachingQaScenario {
   id: string;
   status: "active" | "completed" | "cancelled";
@@ -129,8 +154,9 @@ export interface AdminMonitorResponse {
 }
 
 export interface AuthResponse {
-  token: string;
+  token?: string;
   user: User;
+  auth_mode?: "disabled" | "dual" | "enforced";
 }
 
 export interface LoginRequest {
@@ -143,6 +169,9 @@ export interface RegisterRequest {
   password: string;
   password_confirm: string;
   role: "student" | "tutor";
+  notice_code: string;
+  notice_version: string;
+  notice_acknowledged: true;
 }
 
 export interface RegisterStartResponse {
@@ -457,8 +486,9 @@ export interface LearningContext {
 }
 
 export interface GoogleAuthSuccess {
-  token: string;
+  token?: string;
   user: User;
+  auth_mode?: "disabled" | "dual" | "enforced";
 }
 
 export interface GoogleAuthNeedsRole {

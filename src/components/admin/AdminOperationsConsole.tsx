@@ -16,6 +16,7 @@ import {
   ChevronsUpDown,
   Clock3,
   CreditCard,
+  FileCheck2,
   GraduationCap,
   PackagePlus,
   RefreshCw,
@@ -34,6 +35,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { TutorVerificationReviewPanel } from "@/components/admin/TutorVerificationReviewPanel";
 import { useAuth } from "@/hooks/useAuth";
 import {
   activateAdminCoachingQaNoCharge,
@@ -53,7 +55,7 @@ import {
 import { cn, formatPrice } from "@/lib/utils";
 import type { AdminTestAccount } from "@/types";
 
-type AdminTab = "overview" | "accounts" | "bookings" | "packages" | "audit";
+type AdminTab = "overview" | "verifications" | "accounts" | "bookings" | "packages" | "audit";
 type AccountRoleFilter = "all" | "student" | "tutor";
 type AccountScopeFilter = "all" | "test" | "real" | "active" | "inactive";
 
@@ -90,6 +92,8 @@ const actionLabels: Record<string, string> = {
   tutor_test_settings_updated: "Hoca test ayarı değiştirildi",
   coaching_qa_started: "Koçluk QA akışı başlatıldı",
   coaching_qa_no_charge_activated: "Ücretsiz Koçluk QA hakkı açıldı",
+  verification_approved: "Hoca doğrulaması onaylandı",
+  verification_rejected: "Hoca doğrulaması reddedildi",
 };
 
 const coachingPhaseLabels: Record<string, string> = {
@@ -467,8 +471,9 @@ export function AdminOperationsConsole() {
       </div>
 
       <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as AdminTab)}>
-        <TabsList className="grid h-auto w-full grid-cols-2 gap-1 p-1 sm:grid-cols-5">
+        <TabsList className="grid h-auto w-full grid-cols-2 gap-1 p-1 sm:grid-cols-3 lg:grid-cols-6">
           <TabsTrigger value="overview"><Activity className="mr-2 h-4 w-4" />Genel</TabsTrigger>
+          <TabsTrigger value="verifications"><FileCheck2 className="mr-2 h-4 w-4" />Belge kontrolü</TabsTrigger>
           <TabsTrigger value="accounts"><Users className="mr-2 h-4 w-4" />Hesaplar</TabsTrigger>
           <TabsTrigger value="bookings" className="relative"><Clock3 className="mr-2 h-4 w-4" />Rezervasyonlar{pendingBookings > 0 && <span className="ml-2 rounded-full bg-amber-500 px-1.5 text-[10px] text-white">{pendingBookings}</span>}</TabsTrigger>
           <TabsTrigger value="packages" className="relative"><CreditCard className="mr-2 h-4 w-4" />Paketler{pendingPackages > 0 && <span className="ml-2 rounded-full bg-amber-500 px-1.5 text-[10px] text-white">{pendingPackages}</span>}</TabsTrigger>
@@ -640,6 +645,10 @@ export function AdminOperationsConsole() {
               </CardContent>
             </Card>
           </div>
+        </TabsContent>
+
+        <TabsContent value="verifications" className="pt-4">
+          <TutorVerificationReviewPanel />
         </TabsContent>
 
         <TabsContent value="accounts" className="pt-4">

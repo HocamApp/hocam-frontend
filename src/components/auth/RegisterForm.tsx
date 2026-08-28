@@ -27,6 +27,19 @@ import {
 } from "@/components/ui/form";
 import { cn } from "@/lib/utils";
 import { GlassInputWrapper } from "@/components/auth/AuthSplitScreen";
+import { AydinlatmaMetniPreview } from "@/components/privacy/AydinlatmaMetniPreview";
+import {
+  fetchRegistrationNotice,
+  type RegistrationNoticeConfig,
+} from "@/lib/privacyApi";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const registerSchema = z
   .object({
@@ -77,7 +90,28 @@ export function RegisterForm({
   const [pendingEmail, setPendingEmail] = useState<string | null>(null);
   const [verificationCode, setVerificationCode] = useState("");
   const [isConfirming, setIsConfirming] = useState(false);
+  const [noticeOpen, setNoticeOpen] = useState(false);
+  const [noticeConfig, setNoticeConfig] = useState<RegistrationNoticeConfig | null>(null);
+  const [noticeConfigFailed, setNoticeConfigFailed] = useState(false);
+  const [noticeLoaded, setNoticeLoaded] = useState(false);
+  const [noticeViewed, setNoticeViewed] = useState(false);
+  const [noticeAcknowledged, setNoticeAcknowledged] = useState(false);
   const authHandledByFormRef = useRef(false);
+  const handleNoticeReady = useCallback(() => setNoticeLoaded(true), []);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchRegistrationNotice()
+      .then((config) => {
+        if (!cancelled) setNoticeConfig(config);
+      })
+      .catch(() => {
+        if (!cancelled) setNoticeConfigFailed(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const form = useForm<RegisterFormValues>({
     defaultValues: {
@@ -109,6 +143,12 @@ export function RegisterForm({
 
   const onSubmit = async (data: RegisterFormValues) => {
     setGeneralError(null);
+    if (!noticeAcknowledged || !noticeConfig) {
+      setGeneralError(
+        "Kayıt olmak için KVKK Aydınlatma Metni’ni görüntüleyip bilgilendirildiğini onaylamalısın."
+      );
+      return;
+    }
     const parsed = registerSchema.safeParse(data);
     if (!parsed.success) {
       const err = parsed.error.flatten();
@@ -123,6 +163,9 @@ export function RegisterForm({
       const res = await registerUser({
         ...parsed.data,
         role: parsed.data.role as "student" | "tutor",
+        notice_code: noticeConfig.code,
+        notice_version: noticeConfig.version,
+        notice_acknowledged: true,
       });
       if ("requires_verification" in res) {
         setPendingEmail(res.email);
@@ -199,21 +242,43 @@ export function RegisterForm({
   const handleGoogleCredential = useCallback(
     async (credential: string) => {
       setGeneralError(null);
+      if (!noticeAcknowledged || !noticeConfig) {
+        setGeneralError(
+          "Google ile kayıt olmak için önce KVKK Aydınlatma Metni’ni görüntüleyip bilgilendirildiğini onaylamalısın."
+        );
+        return;
+      }
       const selectedRole = lockedRole ?? (
         form.getValues("role") === "tutor" ? "tutor" : "student"
       );
       try {
-        const resp = await googleAuth({ credential, role: selectedRole });
+        const resp = await googleAuth({
+          credential,
+          role: selectedRole,
+          notice_code: noticeConfig.code,
+          notice_version: noticeConfig.version,
+          notice_acknowledged: true,
+        });
         if ("needs_role" in resp) {
           setGeneralError("Kayıt tamamlanamadı. Lütfen tekrar deneyin.");
           return;
         }
         await completeAuth(resp);
-      } catch {
-        setGeneralError("Google ile kayıt başarısız oldu. Lütfen tekrar deneyin.");
+      } catch (error) {
+        if (
+          axios.isAxiosError(error) &&
+          error.response?.status === 400 &&
+          error.response?.data?.notice_version
+        ) {
+          setGeneralError(
+            "KVKK Aydınlatma Metni güncellendi. Lütfen sayfayı yenileyip güncel metni inceleyin."
+          );
+        } else {
+          setGeneralError("Google ile kayıt başarısız oldu. Lütfen tekrar deneyin.");
+        }
       }
     },
-    [completeAuth, form, lockedRole]
+    [completeAuth, form, lockedRole, noticeAcknowledged, noticeConfig]
   );
 
   if (isLoading) {
@@ -465,9 +530,44 @@ export function RegisterForm({
             )}
           />
 
+          <div className="space-y-3 rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+            <button
+              type="button"
+              disabled={!noticeConfig}
+              onClick={() => setNoticeOpen(true)}
+              className="text-left text-sm font-medium text-white underline underline-offset-4 disabled:cursor-not-allowed disabled:text-neutral-500"
+            >
+              KVKK Aydınlatma Metni’ni görüntüle
+            </button>
+            <label
+              className={cn(
+                "flex items-start gap-3 text-xs leading-5",
+                noticeViewed ? "text-neutral-300" : "text-neutral-500"
+              )}
+            >
+              <input
+                type="checkbox"
+                checked={noticeAcknowledged}
+                disabled={!noticeViewed}
+                onChange={(event) => setNoticeAcknowledged(event.target.checked)}
+                className="mt-1 h-4 w-4 shrink-0 accent-white disabled:cursor-not-allowed"
+                aria-describedby="kvkk-acknowledgement-help"
+              />
+              <span>
+                KVKK Aydınlatma Metni’ni görüntüledim ve kişisel verilerimin
+                işlenmesi hakkında bilgilendirildim.
+              </span>
+            </label>
+            <p id="kvkk-acknowledgement-help" className="text-xs leading-5 text-neutral-500">
+              {noticeConfigFailed
+                ? "Aydınlatma Metni bilgisi alınamadı. Kayıt için sayfayı yenileyin."
+                : "Bu kutu açık rıza değildir. Metni görüntüledikten sonra etkinleşir."}
+            </p>
+          </div>
+
           <button
             type="submit"
-            disabled={form.formState.isSubmitting}
+            disabled={form.formState.isSubmitting || !noticeAcknowledged}
             className="animate-element animate-delay-700 w-full rounded-2xl bg-white py-4 font-medium text-neutral-950 transition-colors hover:bg-white/90 disabled:opacity-70"
           >
             {form.formState.isSubmitting ? (
@@ -492,7 +592,43 @@ export function RegisterForm({
         </span>
       </div>
 
-      <GoogleSignInButton onCredential={handleGoogleCredential} text="signup_with" />
+      <GoogleSignInButton
+        onCredential={handleGoogleCredential}
+        text="signup_with"
+        disabled={!noticeAcknowledged}
+      />
+
+      <Dialog open={noticeOpen} onOpenChange={setNoticeOpen}>
+        <DialogContent className="flex h-[min(90dvh,760px)] w-[calc(100dvw-1rem)] max-w-4xl flex-col overflow-hidden p-0">
+          <DialogHeader className="shrink-0 border-b px-6 py-5 pr-12 text-left">
+            <DialogTitle>KVKK Aydınlatma Metni</DialogTitle>
+            <DialogDescription>
+              Metin bilgilendirme amaçlıdır; açık rıza talebi değildir.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="min-h-0 flex-1 overflow-y-auto bg-background">
+            {noticeConfig && (
+              <AydinlatmaMetniPreview
+                noticeUrl={noticeConfig.url}
+                onReady={handleNoticeReady}
+              />
+            )}
+          </div>
+          <DialogFooter className="shrink-0 border-t p-4 sm:space-x-0">
+            <button
+              type="button"
+              disabled={!noticeLoaded}
+              onClick={() => {
+                setNoticeViewed(true);
+                setNoticeOpen(false);
+              }}
+              className="rounded-xl bg-primary px-5 py-3 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Metni görüntüledim
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <p className="animate-element animate-delay-800 text-center text-sm text-neutral-400">
         Zaten hesabın var mı?{" "}

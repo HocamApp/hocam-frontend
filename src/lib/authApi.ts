@@ -15,6 +15,9 @@ import {
 export interface GoogleAuthPayload {
   credential: string;
   role?: "student" | "tutor";
+  notice_code?: string;
+  notice_version?: string;
+  notice_acknowledged?: true;
 }
 
 export async function googleAuth(
@@ -89,9 +92,8 @@ export interface ChangePasswordPayload {
 
 /**
  * Change password for the already-authenticated user. The backend rotates the
- * auth token (single-token DRF auth) — callers must adopt the returned token
- * via AuthProvider's setAuth so the current session stays logged in while any
- * other session using the old token is signed out.
+ * underlying DRF token and refreshes the HttpOnly cookie when cookie mode is
+ * active. Header mode still returns the replacement token.
  */
 export async function changePassword(
   data: ChangePasswordPayload
@@ -123,8 +125,8 @@ export async function sendPresenceHeartbeat(): Promise<void> {
 }
 
 /**
- * Invalidate the user's auth token on the backend (single-token DRF auth), which
- * signs out every device using it. Caller must clear the local cookie afterwards.
+ * Invalidate the user's auth token on the backend, which signs out every device
+ * using it. Cookie mode also expires the HttpOnly authentication cookie.
  */
 export async function logoutAllSessions(): Promise<void> {
   await api.post("/auth/logout-all/");
