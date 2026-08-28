@@ -72,7 +72,7 @@ describe("getNavDescriptors", () => {
         kind: "route",
         title: "Favoriler",
         icon: "Heart",
-        href: "/tutors?favorites=1",
+        href: "/favoriler",
         mobilePlacement: "overflow",
       },
     ]);

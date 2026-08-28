@@ -4,11 +4,11 @@ import { describe, it } from "node:test";
 // Read the real palette rather than a hand-copied hex table, so a hue added
 // later is measured with the same numbers Tailwind will actually emit.
 import tailwindColors from "tailwindcss/colors.js";
+import { GraduationCap } from "@phosphor-icons/react";
 
 import type { ScheduleEvent } from "@/types";
 import {
   CURATED_SUBJECT_HUES,
-  dayHueForEvent,
   FALLBACK_HUE_RING,
   SUBJECT_HUES,
   STUDY_TONES_FOR_TEST,
@@ -122,62 +122,34 @@ describe("subject hues", () => {
   });
 });
 
-// The day view trades the filled body for the plain surface plus a fixed 4px
-// edge, so a two-hour block does not carry three times the ink of a 40-minute
-// one. What it must not trade away is the edge that identifies it.
-describe("day-view surfaces stay plain whatever the duration", () => {
-  const cases: [string, ScheduleEvent][] = [
-    ["lesson", lesson("Matematik")],
-    ["subject-less lesson", lesson(null)],
-    ["coaching", { ...lesson(null), source: "coaching" }],
-    ["study block", { ...lesson(null), source: "study_block", block_type: "deneme" }],
-  ];
-
-  cases.forEach(([name, event]) => {
-    it(`${name} gets a plain body and a coloured edge`, () => {
-      const hue = dayHueForEvent(event);
-
-      // The day view stopped tinting the body at all. A two-hour block used to
-      // carry three times the ink of a forty-minute one purely because it was
-      // bigger; the colour lives in a fixed 4px edge now, so duration changes
-      // the height and nothing else.
-      assert.doesNotMatch(hue.dayCard, /text-white/, `${name} is still a solid fill`);
-      assert.match(hue.dayCard, /bg-surface/, `${name} is not on the plain surface`);
-      assert.match(hue.dayCard, /border-l-4/, `${name} has no edge`);
-      assert.match(hue.dot, /bg-\[var\(--subject-\d\)\]|bg-pink/, `${name} has no bar colour`);
-    });
-  });
-
-  it("gives each study block type its own bar colour", () => {
-    const types = ["konu_anlatim", "soru_cozumu", "deneme", "custom"] as const;
-    const bars = types.map(
-      (block_type) => dayHueForEvent({ ...lesson(null), source: "study_block", block_type }).dot
-    );
-
-    assert.equal(new Set(bars).size, types.length, "two block types share a bar colour");
-  });
-});
-
 // The product rule, enforced rather than only documented: a booked lesson must
 // never be drawable as something the student typed in.
 describe("a lesson never looks like a personal block", () => {
-  // The distinction moved from tint-depth to fill-versus-outline, which is the
-  // part that has to keep working: a solid block is the student's own, a
-  // surface with a coloured edge is something scheduled for them.
-  it("draws every lesson as a surface with a coloured edge", () => {
+  // Every event is a solid fill now, so fill style no longer carries the
+  // distinction. These are the carriers that replaced it, and each has to keep
+  // working on its own: the icon, the wording, and — asserted in the card
+  // tests rather than here — the absence of a checkbox.
+  it("draws every lesson as a solid subject fill", () => {
     ["Matematik", "Felsefe", "Astronomi", "Tarih-1"].forEach((name) => {
       const tone = toneForEvent(lesson(name));
-      assert.match(tone.card, /bg-surface/, `${name} lost its surface`);
-      assert.match(tone.card, /border-l-4/, `${name} lost its edge`);
-      assert.doesNotMatch(tone.card, /text-white/, `${name} reads as a solid fill`);
+      assert.match(tone.card, /text-white/, `${name} is not filled`);
+      assert.match(tone.card, /border-transparent/, `${name} kept a border`);
+      assert.doesNotMatch(tone.card, /bg-surface/, `${name} is still outlined`);
       assert.equal(tone.kindLabel, "Hocam Dersi");
     });
   });
 
-  it("falls back to the brand edge when a lesson has no subject", () => {
+  it("keeps the lesson mark on every hue", () => {
+    ["Matematik", "Felsefe", "Astronomi", null].forEach((name) => {
+      const tone = toneForEvent(lesson(name));
+      assert.equal(tone.icon, GraduationCap, `${name} lost the lesson icon`);
+    });
+  });
+
+  it("falls back to the brand fill when a lesson has no subject", () => {
     const tone = toneForEvent(lesson(null));
-    assert.match(tone.card, /border-pink/);
-    assert.match(tone.card, /bg-surface/);
+    assert.match(tone.card, /bg-pink/);
+    assert.match(tone.card, /text-white/);
     assert.equal(tone.kindLabel, "Hocam Dersi");
   });
 
@@ -189,10 +161,15 @@ describe("a lesson never looks like a personal block", () => {
     });
   });
 
-  it("keeps coaching on its own colour, outlined like a lesson", () => {
+  it("gives each study block type its own colour", () => {
+    const fills = Object.values(STUDY_TONES_FOR_TEST).map((tone) => tone.card);
+    assert.equal(new Set(fills).size, fills.length, "two block types share a fill");
+  });
+
+  it("keeps coaching on its own colour, filled like a lesson", () => {
     const tone = toneForEvent({ ...lesson(null), source: "coaching" });
     assert.match(tone.card, /--subject-2/);
-    assert.match(tone.card, /bg-surface/);
+    assert.match(tone.card, /text-white/);
     assert.equal(tone.kindLabel, "Koçluk Görüşmesi");
   });
 });

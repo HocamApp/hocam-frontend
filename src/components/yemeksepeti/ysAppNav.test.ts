@@ -48,12 +48,13 @@ describe("ys app nav", () => {
     assert.equal(labelOf("/dashboard/student/coaching/program"), "Koçluk");
   });
 
-  it("treats favourites as its own view of the root route", () => {
-    // Both live at "/", so without the query arbitration the two would tie and
-    // the directory tab would stay lit while the reader is in favourites.
+  it("gives favourites a route of its own rather than a view of the root", () => {
+    // It used to be "/?favorites=1", which tied with the Hocalar tab and had
+    // to be arbitrated by hand. The legacy link still renders the saved list,
+    // and while it does the directory tab must not stay lit.
     assert.equal(labelOf("/", favourites), null);
     assert.equal(
-      getActiveYsNavItem(YS_UTILITY_ITEMS, "/", favourites)?.label,
+      getActiveYsNavItem(YS_UTILITY_ITEMS, "/favoriler", noParams)?.label,
       "Favoriler",
     );
     assert.equal(getActiveYsNavItem(YS_UTILITY_ITEMS, "/", noParams), null);

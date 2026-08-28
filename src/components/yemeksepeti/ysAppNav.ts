@@ -72,7 +72,7 @@ export const YS_PUBLIC_TABS: YsNavItem[] = [
 /** Right-hand icon cluster. Notifications is a popover, not a route. */
 export const YS_UTILITY_ITEMS: YsNavItem[] = [
   { label: "Mesajlar", href: "/messages", icon: ChatCircle },
-  { label: "Favoriler", href: "/?favorites=1", icon: Heart },
+  { label: "Favoriler", href: "/favoriler", icon: Heart },
 ];
 
 export const YS_NOTIFICATIONS_LABEL = "Bildirimler";
@@ -121,23 +121,28 @@ export function getYsAppTabs(role: YsNavRole, flags: Flags): YsNavItem[] {
  * Longest match wins, which is what stops `/dashboard/tutor` lighting up while
  * you are inside `/dashboard/tutor/coaching`.
  *
- * Ported from `getNavRouteMatchLength` in navItems.ts. The favourites rule is
- * the same idea as the old `?favorites=1` handling: the query makes it a
- * different view of the same route, so it has to be arbitrated separately or
- * the two would tie.
+ * Ported from `getNavRouteMatchLength` in navItems.ts.
+ *
+ * Favourites needs no special case any more. It used to be `/?favorites=1` —
+ * a query-string view of the Hocalar route, which tied with it and had to be
+ * arbitrated by hand. It is `/favoriler` now, an ordinary path that the
+ * longest-match rule below settles on its own.
  */
 export function ysNavMatchLength(
   item: YsNavItem,
   pathname: string,
   searchParams: Pick<URLSearchParams, "get">,
 ): number {
-  const isFavoritesView =
+  // `/?favorites=1` still renders the favourites list on the homepage for any
+  // link that predates /favoriler, and while it does the Hocalar tab must not
+  // read as active — the reader is not looking at the directory.
+  const isLegacyFavoritesView =
     pathname === "/" && searchParams.get("favorites") === "1";
 
-  if (item.href === "/?favorites=1")
-    return isFavoritesView ? item.href.length : -1;
   if (item.exact)
-    return pathname === item.href && !isFavoritesView ? item.href.length : -1;
+    return pathname === item.href && !isLegacyFavoritesView
+      ? item.href.length
+      : -1;
 
   const [hrefPath] = item.href.split("?");
   return [hrefPath, ...(item.activePrefixes ?? [])].reduce(

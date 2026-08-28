@@ -87,7 +87,7 @@ const studentDescriptors: NavDescriptor[] = [
     kind: "route",
     title: "Favoriler",
     icon: "Heart",
-    href: "/tutors?favorites=1",
+    href: "/favoriler",
     mobilePlacement: "overflow",
   },
 ];
@@ -243,8 +243,12 @@ export function getNavDescriptors(
 
 /**
  * Returns the length of the most specific matched path for a route, or -1 when
- * it is inactive. The favorites query is intentionally treated as a distinct
- * view from the ordinary tutors route.
+ * it is inactive.
+ *
+ * Favourites lives at `/favoriler` and needs no special case of its own. The
+ * one that remains covers the legacy `/tutors?favorites=1` link, which still
+ * renders the saved list: while it does, the ordinary Dersler entry must not
+ * read as active.
  */
 export function getNavRouteMatchLength(
   descriptor: NavDescriptor,
@@ -256,8 +260,10 @@ export function getNavRouteMatchLength(
   const isFavoritesView =
     pathname === "/tutors" && searchParams.get("favorites") === "1";
 
-  if (descriptor.href === "/tutors?favorites=1") {
-    return isFavoritesView ? descriptor.href.length : -1;
+  if (descriptor.href === "/favoriler") {
+    return isFavoritesView || pathname === "/favoriler"
+      ? descriptor.href.length
+      : -1;
   }
   if (descriptor.href === "/tutors" && isFavoritesView) return -1;
 

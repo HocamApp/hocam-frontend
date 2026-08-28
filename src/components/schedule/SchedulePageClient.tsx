@@ -26,7 +26,6 @@ import { eventKey } from "./eventIdentity";
 import { ScheduleDailyView } from "./ScheduleDailyView";
 import { ScheduleEventDetailDialog } from "./ScheduleEventDetailDialog";
 import { ScheduleMonthlyView } from "./ScheduleMonthlyView";
-import { ScheduleSubjectTotals } from "./ScheduleSubjectTotals";
 import { ScheduleSummaryBar } from "./ScheduleSummaryBar";
 import { ScheduleWeeklyView } from "./ScheduleWeeklyView";
 import { StudyBlockFormDialog } from "./StudyBlockFormDialog";
@@ -204,9 +203,9 @@ export function SchedulePageClient() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-5 px-4 py-6 sm:px-6">
-      <header className="space-y-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="mx-auto w-full max-w-[1440px] space-y-5 px-4 py-6 sm:px-6 lg:py-8">
+      <header className="space-y-5">
+        <div>
           <div>
             <h1 className="text-h2-m md:text-h2">Çalışma Programım</h1>
             <p className="mt-1 text-body text-ink-mid">
@@ -215,13 +214,17 @@ export function SchedulePageClient() {
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-3">
+        <div
+          role="toolbar"
+          aria-label="Takvim araçları"
+          className="flex flex-col gap-3 rounded-card border border-line bg-surface p-2 shadow-soft lg:flex-row lg:items-center lg:justify-between"
+        >
           {/* Plain buttons rather than a tablist: the ARIA tabs pattern also
               requires a linked tabpanel and arrow-key navigation, and half of
               it announces a contract the widget does not honour. aria-pressed
               says the same thing honestly for a third of the code. */}
           <div
-            className="inline-flex rounded-full border border-line bg-surface p-1"
+            className="inline-flex w-full rounded-pill bg-paper p-1 sm:w-auto"
             role="group"
             aria-label="Takvim görünümü"
           >
@@ -235,7 +238,7 @@ export function SchedulePageClient() {
                   // Solid ink when selected, per the chip rule. It was pink,
                   // which put two pink pills in one row and made the view
                   // switch compete with "Çalışma Ekle" for the same attention.
-                  "rounded-pill px-4 py-1.5 text-body font-medium transition-colors duration-[--duration-state]",
+                  "flex-1 rounded-pill px-4 py-2 text-body font-medium transition-[background-color,color] duration-[--duration-state] motion-reduce:transition-none sm:flex-none",
                   view === tab.value
                     ? "bg-ink text-paper"
                     : "text-ink-mid hover:text-ink"
@@ -246,9 +249,9 @@ export function SchedulePageClient() {
             ))}
           </div>
 
-          <div className="flex items-center gap-1">
+          <div className="flex flex-wrap items-center justify-between gap-1 sm:flex-nowrap lg:justify-end">
             <Button
-              variant="ghost"
+              variant="outline"
               size="icon"
               aria-label="Önceki"
               onClick={() => setAnchor(shiftAnchor(view, anchor, -1))}
@@ -259,7 +262,7 @@ export function SchedulePageClient() {
               {rangeLabel(view, anchor)}
             </span>
             <Button
-              variant="ghost"
+              variant="outline"
               size="icon"
               aria-label="Sonraki"
               onClick={() => setAnchor(shiftAnchor(view, anchor, 1))}
@@ -271,7 +274,10 @@ export function SchedulePageClient() {
             </Button>
             {/* Sits with the range controls rather than up by the title: this
                 is the row the student is already working in. */}
-            <Button onClick={openCreate} className="ml-1 shrink-0">
+            <Button
+              onClick={openCreate}
+              className="ml-1 shrink-0 bg-pink text-white hover:bg-pink/90 hover:text-white"
+            >
               <Plus className="mr-1.5 size-4" aria-hidden />
               Çalışma Ekle
             </Button>
@@ -289,7 +295,7 @@ export function SchedulePageClient() {
         isLoading={progressQuery.isLoading}
       />
 
-      <section className="rounded-card border border-line bg-surface p-3 sm:p-4">
+      <section className="rounded-[28px] border border-line bg-surface p-2 shadow-soft sm:p-4">
         {calendarQuery.isLoading ? (
           <div className="flex min-h-[16rem] items-center justify-center">
             <LoadingSpinner />
@@ -331,14 +337,6 @@ export function SchedulePageClient() {
             }}
           />
         )}
-      </section>
-
-      <section className="space-y-3">
-        <h2 className="text-h3-m font-medium md:text-h3">Derslere göre çalışma</h2>
-        <ScheduleSubjectTotals
-          stats={progressQuery.data?.subject_stats}
-          isLoading={progressQuery.isLoading}
-        />
       </section>
 
       <StudyBlockFormDialog

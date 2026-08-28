@@ -175,11 +175,11 @@ describe("lessons and coaching are read-only", () => {
     assert.equal(screen.queryByLabelText("Çalışmayı sil"), null);
   });
 
-  // In the day view the pale body is the same for both kinds, so the lock and
-  // the checkbox are the only things left saying which is which. They have to
-  // survive that density.
+  // Both kinds are drawn as solid fills now, so the lock and the checkbox are
+  // the only things left saying which is which. They have to survive the
+  // narrow density too, where the words drop out.
   it("still separates a lesson from a study block once the fill stops doing it", () => {
-    const { unmount } = render(<ScheduleEventCard event={lesson()} density="expanded" />);
+    const { unmount } = render(<ScheduleEventCard event={lesson()} density="compact" />);
     assert.ok(screen.getByText(", salt okunur"));
     assert.equal(screen.queryByRole("checkbox"), null);
     unmount();
@@ -187,7 +187,7 @@ describe("lessons and coaching are read-only", () => {
     render(
       <ScheduleEventCard
         event={studyBlock()}
-        density="expanded"
+        density="compact"
         onToggleCompleted={() => {}}
       />
     );

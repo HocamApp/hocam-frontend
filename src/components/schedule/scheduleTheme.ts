@@ -13,16 +13,21 @@ import type { ScheduleEvent, StudyBlockType } from "@/types";
 /**
  * The visual language of the calendar.
  *
- * The one rule the product cares about: a real Hocam lesson must never look
- * like something the student typed in. Lessons and coaching are drawn as
- * surfaces with a coloured left edge and a lock; personal study blocks are a
- * solid fill with a checkbox. Colour alone is not the signal — the fill style,
- * the lock and the checkbox all carry it, so it survives colour-blindness and
- * greyscale.
+ * Every event is one shape: a solid subject-coloured surface with white text.
+ * A calendar reads as a calendar when the blocks are blocks; the outlined
+ * treatment lessons used to get made a booked lesson look like an empty slot
+ * with a stripe next to it.
  *
- * Lessons are additionally tinted per subject (see SUBJECT_HUES) so a week of
- * Matematik and Felsefe does not read as one undifferentiated block. The hue
- * varies; the outlined-tinted *treatment* never does.
+ * The one rule the product cares about still holds: a real Hocam lesson must
+ * never look like something the student typed in. Fill style no longer carries
+ * that, so the other three carriers do, and each of them survives greyscale
+ * and colour-blindness on its own:
+ *   - the graduation cap or the coaching lock in the kind label
+ *   - the "Hocam Dersi" / "Koçluk Görüşmesi" wording itself
+ *   - the absence of a checkbox, an edit button and a delete button
+ *
+ * Lessons are tinted per subject (see SUBJECT_HUES) so a week of Matematik and
+ * Felsefe does not read as one undifferentiated block.
  */
 
 export type ScheduleTone = {
@@ -110,16 +115,6 @@ export type SubjectHue = {
   dot: string;
   /** Icon tile on the subject-totals cards. Solid, white glyph. */
   chip: string;
-  /**
-   * Outline, for anything the student did not schedule themselves.
-   *
-   * A lesson must never be able to look like a block the student typed in —
-   * that distinction predates this palette and is the reason there is no path
-   * from a booking to a solid fill. It used to be carried by a paler tint of
-   * the same hue; it is carried by fill-versus-outline now, which survives at
-   * any size and does not need a second colour to say it.
-   */
-  dayCard: string;
 };
 
 /**
@@ -146,7 +141,6 @@ export const SUBJECT_HUES: Record<SubjectHueId, SubjectHue> = {
     label: "text-white/90",
     dot: "bg-[var(--subject-1)]",
     chip: "bg-[var(--subject-1)] text-white",
-    dayCard: "bg-surface text-ink border-[var(--subject-1)] border-l-4",
   },
   lacivert: {
     id: "lacivert",
@@ -154,7 +148,6 @@ export const SUBJECT_HUES: Record<SubjectHueId, SubjectHue> = {
     label: "text-white/90",
     dot: "bg-[var(--subject-2)]",
     chip: "bg-[var(--subject-2)] text-white",
-    dayCard: "bg-surface text-ink border-[var(--subject-2)] border-l-4",
   },
   erguvan: {
     id: "erguvan",
@@ -162,7 +155,6 @@ export const SUBJECT_HUES: Record<SubjectHueId, SubjectHue> = {
     label: "text-white/90",
     dot: "bg-[var(--subject-3)]",
     chip: "bg-[var(--subject-3)] text-white",
-    dayCard: "bg-surface text-ink border-[var(--subject-3)] border-l-4",
   },
   zeytin: {
     id: "zeytin",
@@ -170,7 +162,6 @@ export const SUBJECT_HUES: Record<SubjectHueId, SubjectHue> = {
     label: "text-white/90",
     dot: "bg-[var(--subject-4)]",
     chip: "bg-[var(--subject-4)] text-white",
-    dayCard: "bg-surface text-ink border-[var(--subject-4)] border-l-4",
   },
   turkuaz: {
     id: "turkuaz",
@@ -178,7 +169,6 @@ export const SUBJECT_HUES: Record<SubjectHueId, SubjectHue> = {
     label: "text-white/90",
     dot: "bg-[var(--subject-5)]",
     chip: "bg-[var(--subject-5)] text-white",
-    dayCard: "bg-surface text-ink border-[var(--subject-5)] border-l-4",
   },
   grafit: {
     id: "grafit",
@@ -186,7 +176,6 @@ export const SUBJECT_HUES: Record<SubjectHueId, SubjectHue> = {
     label: "text-white/90",
     dot: "bg-[var(--subject-6)]",
     chip: "bg-[var(--subject-6)] text-white",
-    dayCard: "bg-surface text-ink border-[var(--subject-6)] border-l-4",
   },
 };
 
@@ -324,85 +313,29 @@ export function subjectAccent(name: string | null | undefined): { dot: string; c
   return { dot: hue.dot, chip: hue.chip };
 }
 
-/**
- * Day-view surfaces.
- *
- * The week and month grids give every event the same height, so a saturated
- * fill costs the same ink whatever the duration. The day view does not: height
- * is proportional to time, so the -700 fill that reads as a neat chip at 40
- * minutes becomes a slab at two hours — the same paint over three times the
- * area. Visual weight is area times saturation, and only one of those is
- * supposed to mean anything.
- *
- * So the day view decouples them, the way the calendars that solved this
- * already do: the saturated colour lives in a fixed-width bar down the left
- * edge and the body is a pale tint. A four-hour block and a half-hour one then
- * carry the same amount of loud pixels.
- *
- * The rule this must not break is that a lesson never looks like something the
- * student typed in. Fill style stops carrying that here, so the lock, the
- * graduation cap and the checkbox do — which is where the real signal always
- * was; the comment at the top of this file lists the fill as one of three
- * carriers, not the only one.
- */
-const STUDY_BLOCK_HUES: Record<StudyBlockType, SubjectHueId> = {
-  konu_anlatim: "mavi",
-  soru_cozumu: "zeytin",
-  deneme: "erguvan",
-  custom: "grafit",
-};
-
-/* Coaching keeps its own colour rather than borrowing a subject's: it is not
-   a subject, and a student with a coach sees it every week. */
-const COACHING_HUE: SubjectHue = {
-  id: "lacivert",
-  card: "bg-[var(--subject-2)] text-white border-transparent",
-  label: "text-white/90",
-  dot: "bg-[var(--subject-2)]",
-  chip: "bg-[var(--subject-2)] text-white",
-  dayCard: "bg-surface text-ink border-[var(--subject-2)] border-l-4",
-};
-
-/* A lesson with no subject on it. Pink, because a lesson is the product, and
-   outlined like every other lesson. */
-const BRAND_HUE: SubjectHue = {
-  id: "grafit",
-  card: "bg-pink text-white border-transparent",
-  label: "text-white/90",
-  dot: "bg-pink",
-  chip: "bg-pink text-white",
-  dayCard: "bg-surface text-ink border-pink border-l-4",
-};
-
-/** The pale body (`card`) and saturated left bar (`dot`) for a day-view block. */
-export function dayHueForEvent(event: ScheduleEvent): SubjectHue {
-  if (event.source === "coaching") return COACHING_HUE;
-  if (event.source === "booking") return subjectHue(event.subject?.name) ?? BRAND_HUE;
-  return SUBJECT_HUES[STUDY_BLOCK_HUES[event.block_type ?? "custom"]];
-}
-
-/** Lesson colour for a subject-less booking. Outlined, like every lesson. */
+/** Lesson colour for a subject-less booking. Pink, because a lesson is the
+    product and pink is what the product is drawn in. */
 const LESSON_TONE: ScheduleTone = {
   icon: GraduationCap,
-  card: "bg-surface text-ink border-pink border-l-4",
+  card: "bg-pink text-white border-transparent",
   dot: "bg-pink",
-  label: "text-ink-mid",
+  label: "text-white/90",
   kindLabel: "Hocam Dersi",
 };
 
 const COACHING_TONE: ScheduleTone = {
   icon: Lock,
-  card: "bg-surface text-ink border-[var(--subject-2)] border-l-4",
+  card: "bg-[var(--subject-2)] text-white border-transparent",
   dot: "bg-[var(--subject-2)]",
-  label: "text-ink-mid",
+  label: "text-white/90",
   kindLabel: "Koçluk Görüşmesi",
 };
 
 /**
  * A lesson keeps the graduation cap, the "Hocam Dersi" label and the lock no
- * matter which hue it draws — only the tint moves. There is no path here that
- * can hand a booking a solid fill, which is what keeps a lesson from ever
- * looking like a block the student typed in.
+ * matter which hue it draws — only the colour moves. Those three, plus the
+ * missing checkbox, are what keep a lesson from reading as a block the student
+ * typed in now that both are filled.
  */
 export function lessonTone(subjectName: string | null | undefined): ScheduleTone {
   const hue = subjectHue(subjectName);
@@ -410,12 +343,9 @@ export function lessonTone(subjectName: string | null | undefined): ScheduleTone
   return {
     icon: GraduationCap,
     kindLabel: "Hocam Dersi",
-    // `dayCard`, not `card`: the outline is what says "someone else put this
-    // in your week". Handing a booking `card` would give it a solid fill and
-    // make it indistinguishable from the student's own block.
-    card: hue.dayCard,
+    card: hue.card,
     dot: hue.dot,
-    label: "text-ink-mid",
+    label: hue.label,
   };
 }
 

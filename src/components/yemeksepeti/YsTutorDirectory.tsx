@@ -3,7 +3,7 @@
 import { Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { SidebarSimple } from "@phosphor-icons/react";
 
@@ -15,6 +15,10 @@ import {
   type TutorFilters as TutorFiltersType,
 } from "@/lib/tutorsApi";
 import { defaultTutorOrdering } from "@/lib/tutorDirectory";
+import {
+  filterFavoriteTutors,
+  sortFavoriteTutors,
+} from "@/lib/favoriteTutorFiltering";
 import { useDelayedVisible } from "@/hooks/useDelayedVisible";
 import { useFavorites } from "@/hooks/useFavorites";
 import { TutorCard } from "@/components/tutors/TutorCard";
@@ -85,22 +89,32 @@ function TutorCardSkeleton() {
  * The fallback is the heading plus a grid of the real card skeletons, so the
  * prerendered shell has the same shape as the resolved page.
  */
-export function YsTutorDirectory() {
+export function YsTutorDirectory({ favoritesOnly = false }: DirectoryProps = {}) {
   return (
-    <Suspense fallback={<DirectoryFallback />}>
-      <DirectoryBody />
+    <Suspense fallback={<DirectoryFallback favoritesOnly={favoritesOnly} />}>
+      <DirectoryBody favoritesOnly={favoritesOnly} />
     </Suspense>
   );
 }
 
-function DirectoryFallback() {
+type DirectoryProps = {
+  /**
+   * The favourites route. Same list, same controls, but the saved tutors are
+   * the whole population rather than a view of it — so there is no promo for
+   * a feature the reader is already using, and no search box in the header
+   * pointing at a different page's results.
+   */
+  favoritesOnly?: boolean;
+};
+
+function DirectoryFallback({ favoritesOnly }: DirectoryProps) {
   return (
     <section className="mt-16 md:mt-24" aria-labelledby="ys-tutor-list-title">
       <h2
         id="ys-tutor-list-title"
         className="mb-6 text-2xl font-semibold leading-[1.3125] md:text-[2rem]"
       >
-        Hocalar
+        {favoritesOnly ? "Favori Hocalarım" : "Hocalar"}
       </h2>
       <div
         aria-busy
@@ -116,7 +130,7 @@ function DirectoryFallback() {
   );
 }
 
-function DirectoryBody() {
+function DirectoryBody({ favoritesOnly = false }: DirectoryProps) {
   /* Read rather than received. The search box lives in the header, which is
      rendered by a layout and has no path down to this component — so the URL
      carries the term between them. It also survives a reload and a back
@@ -129,7 +143,7 @@ function DirectoryBody() {
      there is nothing to page or filter server-side. Same URL contract the old
      /tutors screen used, so an existing `?favorites=1` link still means what
      it meant. */
-  const showFavorites = searchParams.get("favorites") === "1";
+  const showFavorites = favoritesOnly || searchParams.get("favorites") === "1";
 
   const [filters, setFilters] = useState<TutorFiltersType>({});
   const [page, setPage] = useState(1);
@@ -138,6 +152,32 @@ function DirectoryBody() {
      preference would defeat that. No hydration effect, so no open/close
      flash on first paint either. */
   const [filtersOpen, setFiltersOpen] = useState(false);
+
+  /* Paging used to jump to the top of the document, which on the homepage is
+     the hero — three sections above the list the reader was actually working
+     in, so every page turn cost them a scroll back down. It lands on the
+     heading instead, just under the sticky header, and only when the reader
+     asked for a new page. Scrolling stays free in both directions from
+     there. */
+  const listRef = useRef<HTMLElement>(null);
+  const scrollListIntoView = useCallback(() => {
+    const section = listRef.current;
+    if (!section) return;
+    const header =
+      document.querySelector<HTMLElement>("[data-app-header]")?.offsetHeight ?? 0;
+    // 32px of air under the sticky header, not 12. At 12 the heading landed
+    // almost touching the header and the first row of cards read as if it
+    // were part of the chrome.
+    const top = section.getBoundingClientRect().top + window.scrollY - header - 32;
+    window.scrollTo({
+      top: Math.max(0, top),
+      // A page turn is a jump the reader asked for; smoothing it means the
+      // new rows arrive before the scroll does.
+      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+        ? "auto"
+        : "smooth",
+    });
+  }, []);
 
   /* The navbar owns the search term, so it is merged in here rather than
      living in `filters`. Feeding it through `defaultTutorOrdering` is what
@@ -191,15 +231,27 @@ function DirectoryBody() {
   const showSkeleton = useDelayedVisible(isResolving);
 
   const defaultOrdering = defaultTutorOrdering(effectiveFilters);
-  const results = showFavorites
-    ? favorites.map((favorite) => favorite.tutor)
-    : (tutors?.results ?? []);
-  // The favourites list arrives whole, so paging it would be a control that
-  // never has a second page to move to.
+
+  /* The favourites endpoint takes no filters and no page — it returns the
+     saved tutors whole. So the filter panel and the sort chips are answered
+     here rather than by the server, and the list is paged locally once it is
+     longer than a screenful. */
+  const favoriteResults = useMemo(() => {
+    if (!showFavorites) return [];
+    const tutorsOnly = favorites.map((favorite) => favorite.tutor);
+    return sortFavoriteTutors(
+      filterFavoriteTutors(tutorsOnly, effectiveFilters),
+      effectiveFilters.ordering,
+    );
+  }, [showFavorites, favorites, effectiveFilters]);
+
   const totalPages = showFavorites
-    ? 1
+    ? Math.max(1, Math.ceil(favoriteResults.length / PAGE_SIZE))
     : Math.max(1, Math.ceil((tutors?.count ?? 0) / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
+  const results = showFavorites
+    ? favoriteResults.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
+    : (tutors?.results ?? []);
   const hasActiveFilters = Object.values(effectiveFilters).some(
     (value) => (value ?? "") !== "",
   );
@@ -253,7 +305,16 @@ function DirectoryBody() {
   ];
 
   return (
-    <section className="mt-16 md:mt-24" aria-labelledby="ys-tutor-list-title">
+    <section
+      ref={listRef}
+      /* The top margin separates the list from the university strip above it
+         on the homepage. The favourites page has nothing above it and sets
+         its own rhythm, so it opts out rather than cancelling this with a
+         negative margin — two margins that collapse into each other, which is
+         how the heading ended up flush against the header. */
+      className={`${favoritesOnly ? "" : "mt-16 md:mt-24"} scroll-mt-[calc(var(--app-header-h)+2rem)]`}
+      aria-labelledby="ys-tutor-list-title"
+    >
       {/* Heading and sort controls on the left, the favourites promo taking
           the room they leave on the right. The promo used to be a full-width
           band of its own between two other bands, which gave the page three
@@ -268,7 +329,7 @@ function DirectoryBody() {
             id="ys-tutor-list-title"
             className="mb-4 text-2xl font-semibold leading-[1.3125] md:text-[2rem]"
           >
-            Hocalar
+            {favoritesOnly ? "Favori Hocalarım" : "Hocalar"}
           </h2>
 
           {/* No bottom padding: it was 4px of scrollbar room, and it put the
@@ -313,9 +374,13 @@ function DirectoryBody() {
           </div>
         </div>
 
-        <div className="min-[1400px]:w-[340px] min-[1400px]:shrink-0">
-          <YsFavouritesBanner />
-        </div>
+        {/* Nothing to sell on the favourites page: the reader is already
+            using the feature the banner explains. */}
+        {!favoritesOnly && (
+          <div className="min-[1400px]:w-[340px] min-[1400px]:shrink-0">
+            <YsFavouritesBanner />
+          </div>
+        )}
       </div>
 
       {/* The sidebar column animates from 0 to 16rem. That 16rem is coupled to
@@ -362,7 +427,7 @@ function DirectoryBody() {
               aria-busy
               aria-label="Hocalar yükleniyor"
               role="status"
-              className={`grid grid-cols-1 gap-6 ${filtersOpen && !showFavorites ? "" : "md:grid-cols-2"}`}
+              className={`grid grid-cols-1 gap-6 ${filtersOpen ? "" : "md:grid-cols-2"}`}
             >
               {Array.from({ length: PAGE_SIZE }).map((_, index) => (
                 <TutorCardSkeleton key={index} />
@@ -371,15 +436,27 @@ function DirectoryBody() {
           )}
 
           {showEmptyState && showFavorites && (
-            <EmptyState
-              title="Henüz favori hocan yok"
-              description="Beğendiğin hocaları kartlarındaki kalbe dokunarak buraya kaydedebilirsin."
-              action={
-                <Button variant="outline" onClick={() => router.push("/")}>
-                  Hocaları keşfet
-                </Button>
-              }
-            />
+            favorites.length > 0 ? (
+              <EmptyState
+                title="Bu filtrelere uyan favorin yok"
+                description="Favorilerin duruyor, sadece bu filtrelerin hiçbiriyle eşleşmiyor."
+                action={
+                  <Button variant="outline" onClick={handleClear}>
+                    Filtreleri Temizle
+                  </Button>
+                }
+              />
+            ) : (
+              <EmptyState
+                title="Henüz favori hocan yok"
+                description="Beğendiğin hocaları kartlarındaki kalbe dokunarak buraya kaydedebilirsin."
+                action={
+                  <Button variant="outline" onClick={() => router.push("/")}>
+                    Hocaları keşfet
+                  </Button>
+                }
+              />
+            )
           )}
 
           {showEmptyState &&
@@ -404,7 +481,7 @@ function DirectoryBody() {
           {!showSkeleton && !error && results.length > 0 && (
             <>
               <div
-                className={`grid grid-cols-1 gap-6 ${filtersOpen && !showFavorites ? "" : "md:grid-cols-2"}`}
+                className={`grid grid-cols-1 gap-6 ${filtersOpen ? "" : "md:grid-cols-2"}`}
               >
                 {results.map((tutor) => (
                   <TutorCard
@@ -426,7 +503,7 @@ function DirectoryBody() {
                     maxVisiblePages={5}
                     onPageChange={(nextPage) => {
                       setPage(nextPage);
-                      window.scrollTo({ top: 0, behavior: "smooth" });
+                      scrollListIntoView();
                     }}
                   />
                 </div>

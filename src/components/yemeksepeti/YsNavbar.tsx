@@ -281,17 +281,22 @@ export function YsNavbar({ startCoachmark = true }: Props) {
           <TabStrip items={tabs} active={activeTab} />
         )}
 
-        {/* The directory's search, promoted to the header. It sits left of the
-            icons rather than centred: the icons anchor the row's right edge,
-            and splitting them apart reads worse than letting search lean on
-            them. Commits to the URL, so it works from any page. */}
-        <AnimatedSearchBar
-          className="hidden shrink-0 py-2 md:block"
-          tone="neutral"
-          value={searchDraft}
-          onChange={setSearchDraft}
-          onCommit={commitSearch}
-        />
+        {/* The directory's search, promoted to the header — and only on the
+            route that has a directory to search. It used to ride every page:
+            typing into it from the schedule or a dashboard navigated the
+            reader to the homepage, which is a box that looks like it filters
+            what is on screen and does not. It sits left of the icons rather
+            than centred: the icons anchor the row's right edge, and splitting
+            them apart reads worse than letting search lean on them. */}
+        {isHome && (
+          <AnimatedSearchBar
+            className="hidden shrink-0 py-2 md:block"
+            tone="neutral"
+            value={searchDraft}
+            onChange={setSearchDraft}
+            onCommit={commitSearch}
+          />
+        )}
 
         {mode === "app" && (
           <YsNavIcons pathname={pathname} searchParams={searchParams} />
