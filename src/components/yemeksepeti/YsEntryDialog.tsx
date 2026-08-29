@@ -211,6 +211,9 @@ export function YsEntryDialog() {
             bekliyor.
           </DialogDescription>
 
+          {/* One action. Declining is the X in the corner, plus Escape and the
+              scrim, which Radix already wires — a second "no" button underneath
+              the CTA only gave the offer a competitor. */}
           <Link
             href="/register"
             onClick={dismiss}
@@ -218,10 +221,6 @@ export function YsEntryDialog() {
           >
             Ücretsiz dersini ayarla
           </Link>
-
-          <DialogClose className="mt-3 w-full text-small text-ink-mid transition-colors duration-[--duration-state] hover:text-ink">
-            Şimdi değil
-          </DialogClose>
         </div>
       </DialogContent>
     </Dialog>
