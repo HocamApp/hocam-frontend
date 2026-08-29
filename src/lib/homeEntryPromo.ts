@@ -23,6 +23,26 @@ import { readJson, writeJson, type StorageLike } from "@/lib/safeStorage";
 export const HOME_ENTRY_PROMO_KEY = "hocam:home-entry-promo:v1";
 export const HOME_ENTRY_PROMO_TTL_DAYS = 30;
 
+/**
+ * When the promo is allowed to open.
+ *
+ * It used to be 700ms after paint, which is an interstitial: it lands before
+ * the visitor has seen the page it is interrupting, so the only thing they can
+ * do with it is close it. The three signals below are the conventional ones,
+ * and the promo opens on whichever arrives first.
+ *
+ * - **Dwell.** Twelve seconds is long enough to have read the headline and
+ *   started on the first tutor cards.
+ * - **Scroll depth.** A quarter of the page says the same thing sooner for
+ *   someone who scrolls straight down.
+ * - **Exit intent.** The pointer leaving through the top of the window is the
+ *   classic "about to close the tab" tell. Desktop only: there is no such
+ *   gesture on a touch screen, and the mobile imitations fire on scroll-up,
+ *   which is just scrolling.
+ */
+export const HOME_ENTRY_PROMO_DWELL_MS = 12_000;
+export const HOME_ENTRY_PROMO_SCROLL_RATIO = 0.25;
+
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 type DismissalRecord = { dismissedAt: number };
