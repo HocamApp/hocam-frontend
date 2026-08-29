@@ -15,6 +15,7 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { getLocalStorage } from "@/lib/safeStorage";
 import {
+  HOME_ENTRY_PROMO_CONSENT_GRACE_MS,
   HOME_ENTRY_PROMO_DWELL_MS,
   HOME_ENTRY_PROMO_SCROLL_RATIO,
   markEntryPromoSeen,
@@ -33,10 +34,11 @@ import { MAX_PACKAGE_DISCOUNT_PERCENT, TRIAL_MINUTES } from "./ysHomeFacts";
  * first. The old 700ms timer put it in front of a page the visitor had not
  * seen yet, which leaves closing it as the only sensible response.
  *
- * **It waits for the consent card.** `DiscoveryConsentBanner` is a legal
- * choice and this is a marketing one; stacking them puts two overlays on the
- * screen at once and buries the one that matters. This holds until that card
- * has gone.
+ * **It defers to the consent card, but not forever.** `DiscoveryConsentBanner`
+ * is a legal choice and this is a marketing one, so the promo waits for it.
+ * The wait is capped: that card has no scrim, so a visitor can read the page
+ * without ever answering it, and an unbounded wait would mean the promo never
+ * appeared for them at all.
  *
  * **It reads no themed token.** Radix portals to `<body>`, outside `.ys-root`,
  * so the content inherits the `.dark` class the theme script may have set and
@@ -85,9 +87,11 @@ export function YsEntryDialog() {
 
     let fired = false;
     let consentWatcher: MutationObserver | null = null;
+    let consentGraceTimer: number | undefined;
 
     const cleanUp = () => {
       window.clearTimeout(dwellTimer);
+      window.clearTimeout(consentGraceTimer);
       window.removeEventListener("scroll", onScroll);
       document.removeEventListener("mouseout", onMouseOut);
       consentWatcher?.disconnect();
@@ -119,6 +123,7 @@ export function YsEntryDialog() {
         if (!document.querySelector(CONSENT_CARD_SELECTOR)) show();
       });
       consentWatcher.observe(document.body, { childList: true, subtree: true });
+      consentGraceTimer = window.setTimeout(show, HOME_ENTRY_PROMO_CONSENT_GRACE_MS);
     };
 
     const onScroll = () => {
