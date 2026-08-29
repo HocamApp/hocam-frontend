@@ -17,11 +17,12 @@ import { YS_CAMPUS_ITEMS } from "./ysCampusGallery";
  * is a 7/5 split rather than 6/6, per the layout rule: the heavier column
  * carries the type.
  *
- * The bottom padding is measured, not chosen. The band below has to start at
- * 723px the way it does in the mock, and our navbar is 45px taller than the
- * mock's single row — so the hero gives back what the navbar took. Trim it and
- * the band's heading rises into the first screen, where the mock shows only
- * the cut.
+ * The bottom padding is measured rather than chosen. It was set so the band
+ * started at 723px the way it does in the mock, giving back the 45px our
+ * navbar takes over the mock's single row. The directory sits under the hero
+ * now and the band has moved below it, so the number no longer lands on the
+ * band — it is kept because it is still the distance that puts the first row
+ * of tutor cards at the fold rather than half above it.
  *
  * Both buttons say "hoca" rather than "öğretmen". Everything else on the page
  * does — the nav tab, the directory heading, the footer's own "Hoca ol" link

@@ -15,6 +15,14 @@ export function YemeksepetiHome() {
         <YsHeroIntro />
       </div>
 
+      {/* The directory comes straight after the hero. A visitor who arrives
+            on this page came to look at tutors, and the band, the logo strip
+            and the testimonials were three screens of argument in front of
+            the thing they came for. */}
+      <div className="ys-shell">
+        <YsTutorDirectory />
+      </div>
+
       {/* Outside the shell on purpose: a diagonal band is full bleed, and
             `.ys-shell` would cap it at 1440px and inset it by its padding. It
             opens its own shell for the text. */}
@@ -26,9 +34,7 @@ export function YemeksepetiHome() {
         {/* Directly under the band: the band makes the claim, these logos
               are the evidence for it. */}
         <YsUniversityStrip />
-        <YsTutorDirectory />
-        {/* Between the directory and the FAQ: proof after browsing, before the
-              objections the FAQ answers. */}
+        {/* Then proof, then the objections the FAQ answers. */}
         <YsTestimonials />
         <YsHomeFaq />
       </div>
