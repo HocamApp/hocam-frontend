@@ -3,6 +3,7 @@ import type {
   Subject,
   TutorProfile,
 } from "@/types";
+import { applyDemoTutorPresentation } from "./demoTutorPresentation";
 
 export const SITE_URL = "https://www.hocamozelders.com";
 export const SITE_NAME = "Hocam";
@@ -50,10 +51,10 @@ function normalizeTutorsResponse(
       count: data.length,
       next: null,
       previous: null,
-      results: data,
+      results: data.map(applyDemoTutorPresentation),
     };
   }
-  return data;
+  return { ...data, results: data.results.map(applyDemoTutorPresentation) };
 }
 
 export async function fetchPublicTutors(
@@ -91,7 +92,9 @@ export async function fetchPublicTutor(
     const tutor = await fetchJson<TutorProfile>(
       `/tutors/${encodeURIComponent(id)}/`
     );
-    return tutor.is_public && tutor.is_verified ? tutor : null;
+    return tutor.is_public && tutor.is_verified
+      ? applyDemoTutorPresentation(tutor)
+      : null;
   } catch {
     return null;
   }

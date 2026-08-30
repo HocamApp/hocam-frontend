@@ -212,7 +212,7 @@ function TutorCardDefault({
          not float, so a shadow on it is a lie about its physics, and the lift
          needs its own prefers-reduced-motion escape hatch. The hairline going
          to ink says the same thing in 120ms and degrades to nothing. */
-      className="relative h-full min-w-0 overflow-visible border-line transition-colors duration-[--duration-state] hover:border-ink"
+      className="relative h-full min-w-0 overflow-visible border-line transition-colors duration-[var(--duration-state)] hover:border-ink"
     >
       <CardContent className="p-0">
         <Link href={tutorHref} className="block cursor-pointer">
@@ -367,7 +367,7 @@ function TutorCardLarge({
     <Card
       data-discovery-tutor-id={discoveryImpressionId ? tutor.id : undefined}
       data-discovery-impression-id={discoveryImpressionId || undefined}
-      className="relative h-full min-w-0 overflow-visible border-line transition-colors duration-[--duration-state] hover:border-ink sm:min-h-[320px]"
+      className="relative h-full min-w-0 overflow-visible border-line transition-colors duration-[var(--duration-state)] hover:border-ink sm:min-h-[320px]"
     >
       <CardContent className="flex h-full flex-col gap-4 p-4 sm:flex-row sm:gap-5 sm:p-6">
         <Link href={tutorHref} className="block min-w-0 flex-1 cursor-pointer">
@@ -480,7 +480,7 @@ function TutorCardLarge({
           <div className="mt-auto flex flex-col gap-2 pt-3">
             <Link
               href={tutorHref}
-              className="rounded-pill bg-ink px-4 py-2 text-center text-sm font-semibold text-paper transition-colors duration-[--duration-state] hover:bg-pink"
+              className="rounded-pill bg-ink px-4 py-2 text-center text-sm font-semibold text-paper transition-colors duration-[var(--duration-state)] hover:bg-pink"
             >
               Profili Gör <ArrowRight className="ml-1 inline h-4 w-4" />
             </Link>
