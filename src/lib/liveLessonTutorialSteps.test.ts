@@ -13,9 +13,10 @@ import {
 } from "./liveLessonTutorialSteps";
 
 describe("tutorial step registry", () => {
-  it("has 10 unique ids in registry order", () => {
-    assert.equal(TUTORIAL_STEP_IDS.length, 10);
-    assert.equal(new Set(TUTORIAL_STEP_IDS).size, 10);
+  it("has 9 unique ids in registry order and excludes the removed live-question step", () => {
+    assert.equal(TUTORIAL_STEP_IDS.length, 9);
+    assert.equal(new Set(TUTORIAL_STEP_IDS).size, 9);
+    assert.equal(TUTORIAL_STEP_IDS.includes("live-question" as never), false);
     assert.deepEqual(
       TUTORIAL_STEPS.map((step) => step.id),
       TUTORIAL_STEP_IDS
@@ -58,9 +59,9 @@ describe("tutorial step registry", () => {
     );
     if (!fs.existsSync(backendFile)) return;
     const source = fs.readFileSync(backendFile, "utf-8");
-    for (const id of TUTORIAL_STEP_IDS) {
-      assert.ok(source.includes(`"${id}"`), `backend missing step id: ${id}`);
-    }
+    const tuple = source.match(/TUTORIAL_STEP_IDS = \(([\s\S]*?)\n\)/)?.[1] ?? "";
+    const backendIds = Array.from(tuple.matchAll(/"([^"]+)"/g), (match) => match[1]);
+    assert.deepEqual(backendIds, TUTORIAL_STEP_IDS);
   });
 });
 
@@ -102,7 +103,7 @@ describe("tutorial progress state", () => {
   });
 
   it("allStepsCompleted requires every canonical step", () => {
-    const partial = seedFromServer(TUTORIAL_STEP_IDS.slice(0, 9), null);
+    const partial = seedFromServer(TUTORIAL_STEP_IDS.slice(0, 8), null);
     assert.equal(allStepsCompleted(partial), false);
     const full = seedFromServer([...TUTORIAL_STEP_IDS], null);
     assert.equal(allStepsCompleted(full), true);

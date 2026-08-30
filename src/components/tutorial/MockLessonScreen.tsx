@@ -1,16 +1,15 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useReducedMotion } from "framer-motion";
 import {
-  FileQuestion,
-  MonitorUp,
-  PencilRuler,
-  StickyNote,
+  Monitor,
+  Note,
+  PencilSimple,
   Timer,
-  UploadCloud,
-  Video,
-} from "lucide-react";
+  UploadSimple,
+  VideoCamera,
+} from "@phosphor-icons/react";
 
 import {
   DEFAULT_VIDEO_QUALITY_LEVEL,
@@ -20,7 +19,6 @@ import { TutorialStep, TutorialStepId } from "@/lib/liveLessonTutorialSteps";
 import { MockChatMessage, MockChatPane } from "./MockChatPane";
 import { MockJitsiToolbar } from "./MockJitsiToolbar";
 import { MockQualityDialog } from "./MockQualityDialog";
-import { MockQuestionPanel, MockQuestionPhase } from "./MockQuestionPanel";
 
 // KEEP IN SYNC: the control bar below replicates the live lesson header in
 // src/app/session/[bookingId]/page.tsx (lines ~673-780). If a control is
@@ -49,9 +47,6 @@ export function MockLessonScreen({ activeStep, onStepAction }: MockLessonScreenP
   const [replySent, setReplySent] = useState(false);
   const [screenSharing, setScreenSharing] = useState(false);
   const [whiteboardOpen, setWhiteboardOpen] = useState(false);
-  const whiteboardWasOpened = useRef(false);
-  const [questionPanelOpen, setQuestionPanelOpen] = useState(false);
-  const [questionPhase, setQuestionPhase] = useState<MockQuestionPhase>("idle");
   const [notesOpen, setNotesOpen] = useState(false);
   const [qualityDialogOpen, setQualityDialogOpen] = useState(false);
   const [quality, setQuality] = useState<VideoQualityLevel>(
@@ -94,6 +89,17 @@ export function MockLessonScreen({ activeStep, onStepAction }: MockLessonScreenP
     if (quality === "audio-only") setCamOn(false);
   }, [quality]);
 
+  // Each tutorial step starts from a clean stage. This also guarantees that
+  // forward/back navigation cannot carry a panel from the previous lesson
+  // tool into the next explanation.
+  useEffect(() => {
+    setChatOpen(false);
+    setNotesOpen(false);
+    setWhiteboardOpen(false);
+    setQualityDialogOpen(false);
+    setScreenSharing(false);
+  }, [stepId]);
+
   const minutes = String(Math.floor(remainingSeconds / 60)).padStart(2, "0");
   const seconds = String(remainingSeconds % 60).padStart(2, "0");
 
@@ -108,37 +114,43 @@ export function MockLessonScreen({ activeStep, onStepAction }: MockLessonScreenP
     if (stepId === "chat") onStepAction("chat");
   };
 
-  const handleToggleWhiteboard = () => {
-    setWhiteboardOpen((open) => {
-      const next = !open;
-      if (next) {
-        whiteboardWasOpened.current = true;
-      } else if (whiteboardWasOpened.current && stepId === "whiteboard") {
-        onStepAction("whiteboard");
-      }
-      return next;
-    });
+  const handleToggleChat = () => {
+    const next = !chatOpen;
+    setChatOpen(next);
+    if (next) {
+      setNotesOpen(false);
+      setWhiteboardOpen(false);
+      setQualityDialogOpen(false);
+    }
   };
 
-  // Stable identity: the fake countdown re-renders this component every
-  // second, and MockQuestionPanel's scripted timer effect depends on this
-  // callback — a fresh function each render would reset that timer forever.
-  const handleQuestionPhase = useCallback(
-    (phase: MockQuestionPhase) => {
-      setQuestionPhase(phase);
-      if (phase === "done" && stepId === "live-question") {
-        onStepAction("live-question");
-      }
-    },
-    [stepId, onStepAction]
-  );
+  const handleToggleWhiteboard = () => {
+    const next = !whiteboardOpen;
+    setWhiteboardOpen(next);
+    if (next) {
+      setChatOpen(false);
+      setNotesOpen(false);
+      setQualityDialogOpen(false);
+      if (stepId === "whiteboard") onStepAction("whiteboard");
+    }
+  };
 
   const handleToggleNotes = () => {
-    setNotesOpen((open) => {
-      const next = !open;
-      if (next && stepId === "materials") onStepAction("materials");
-      return next;
-    });
+    const next = !notesOpen;
+    setNotesOpen(next);
+    if (next) {
+      setChatOpen(false);
+      setWhiteboardOpen(false);
+      setQualityDialogOpen(false);
+      if (stepId === "materials") onStepAction("materials");
+    }
+  };
+
+  const handleOpenQuality = () => {
+    setChatOpen(false);
+    setNotesOpen(false);
+    setWhiteboardOpen(false);
+    setQualityDialogOpen(true);
   };
 
   const handleSelectQuality = (level: VideoQualityLevel) => {
@@ -149,40 +161,28 @@ export function MockLessonScreen({ activeStep, onStepAction }: MockLessonScreenP
   };
 
   const controlButtonClass =
-    "inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded border border-white/20 px-3 py-1 text-xs transition-colors hover:bg-white/10";
+    "inline-flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-pill border border-line bg-surface px-3 text-xs font-medium text-ink transition-colors duration-[var(--duration-state)] hover:bg-paper";
+  const activeScreenShareButtonClass =
+    "inline-flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-pill border border-success bg-success px-3 text-xs font-semibold text-white transition-colors duration-[var(--duration-state)] hover:brightness-95";
 
   return (
-    <div className="flex h-full flex-col bg-black text-white">
+    <div className="flex h-full flex-col bg-paper text-ink">
       {/* --- Host control bar replica (KEEP IN SYNC — see note above) --- */}
-      <div className="flex items-center gap-2 bg-gray-900 px-4 py-2 text-sm text-white">
-        <span className="min-w-0 flex-1 truncate font-medium">
+      <div className="flex min-h-14 items-center gap-3 border-b border-line bg-paper px-4 py-2 text-sm text-ink">
+        <span className="min-w-0 flex-1 truncate font-semibold tracking-[-0.01em]">
           Matematik — Canlı Ders
-          <span className="ml-2 rounded bg-white/10 px-1.5 py-0.5 text-[10px] font-normal uppercase tracking-wide text-gray-300">
+          <span className="ml-2 rounded-pill border border-line px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-ink-mid">
             Temsilî
           </span>
         </span>
         <div className="flex min-w-0 items-center gap-2 overflow-x-auto scrollbar-none">
           <span
             data-tutorial-target="control-timer"
-            className="inline-flex shrink-0 items-center gap-1.5 rounded border border-white/20 px-2.5 py-1 font-mono text-xs tabular-nums"
+            className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-pill border border-line bg-surface px-3 text-xs font-medium tabular-nums text-ink"
           >
             <Timer className="h-3.5 w-3.5" aria-hidden="true" />
             {minutes}:{seconds}
           </span>
-          <button
-            type="button"
-            data-tutorial-target="control-question"
-            tabIndex={isTabbable("control-question") ? 0 : -1}
-            onClick={() => setQuestionPanelOpen((open) => !open)}
-            aria-expanded={questionPanelOpen}
-            className={controlButtonClass}
-          >
-            <FileQuestion className="h-3.5 w-3.5" aria-hidden="true" />
-            Canlı soru
-            {questionPhase !== "idle" && (
-              <span className="h-1.5 w-1.5 rounded-full bg-sky-300" aria-hidden="true" />
-            )}
-          </button>
           <button
             type="button"
             data-tutorial-target="control-notes"
@@ -191,7 +191,7 @@ export function MockLessonScreen({ activeStep, onStepAction }: MockLessonScreenP
             aria-expanded={notesOpen}
             className={controlButtonClass}
           >
-            <StickyNote className="h-3.5 w-3.5" aria-hidden="true" />
+            <Note className="h-4 w-4" aria-hidden="true" />
             Öğrenci notları
           </button>
           <button
@@ -201,12 +201,12 @@ export function MockLessonScreen({ activeStep, onStepAction }: MockLessonScreenP
             onClick={() => setScreenSharing((sharing) => !sharing)}
             className={
               screenSharing
-                ? `${controlButtonClass} border-emerald-300 bg-emerald-500 text-white hover:bg-emerald-600`
+                ? activeScreenShareButtonClass
                 : controlButtonClass
             }
             aria-pressed={screenSharing}
           >
-            <MonitorUp className="h-3.5 w-3.5" aria-hidden="true" />
+            <Monitor className="h-4 w-4" aria-hidden="true" />
             {screenSharing ? "Paylaşımı durdur" : "Ekran paylaş"}
           </button>
           <button
@@ -216,17 +216,17 @@ export function MockLessonScreen({ activeStep, onStepAction }: MockLessonScreenP
             onClick={handleToggleWhiteboard}
             className={controlButtonClass}
           >
-            <PencilRuler className="h-3.5 w-3.5" aria-hidden="true" />
+            <PencilSimple className="h-4 w-4" aria-hidden="true" />
             Tahtayı aç/kapat
           </button>
           <button
             type="button"
             data-tutorial-target="control-quality"
             tabIndex={isTabbable("control-quality") ? 0 : -1}
-            onClick={() => setQualityDialogOpen(true)}
+            onClick={handleOpenQuality}
             className={controlButtonClass}
           >
-            <Video className="h-3.5 w-3.5" aria-hidden="true" />
+            <VideoCamera className="h-4 w-4" aria-hidden="true" />
             Görüntü ayarı
           </button>
           <button
@@ -241,7 +241,7 @@ export function MockLessonScreen({ activeStep, onStepAction }: MockLessonScreenP
             type="button"
             data-tutorial-target="control-leave"
             tabIndex={-1}
-            className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded border border-red-500/50 bg-red-500/20 px-3 py-1 text-xs font-medium text-red-100 transition-colors hover:bg-red-500/30"
+            className="inline-flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-pill border border-error bg-transparent px-3 text-xs font-medium text-ink transition-colors duration-[var(--duration-state)] hover:bg-error hover:text-white"
           >
             Görüşmeden ayrıl
           </button>
@@ -252,9 +252,9 @@ export function MockLessonScreen({ activeStep, onStepAction }: MockLessonScreenP
       <div className="relative flex min-h-0 flex-1">
         <div className="relative flex min-w-0 flex-1 items-center justify-center p-4">
           {whiteboardOpen ? (
-            <div className="flex h-full w-full animate-in fade-in zoom-in-95 flex-col items-center justify-center rounded-lg bg-gray-100 text-gray-500 duration-200 motion-reduce:animate-none">
-              <PencilRuler className="mb-2 h-8 w-8" aria-hidden="true" />
-              <p className="text-sm font-medium text-gray-600">Beyaz tahta açık</p>
+            <div className="flex h-full w-full animate-in fade-in flex-col items-center justify-center rounded-card border border-line bg-surface text-ink-mid duration-200 motion-reduce:animate-none">
+              <PencilSimple className="mb-2 h-8 w-8" aria-hidden="true" />
+              <p className="text-sm font-medium text-ink">Beyaz tahta açık</p>
               <p className="mt-1 max-w-xs text-center text-xs">
                 Gerçek derste çizim araçları tahtanın kendi menüsünde görünür;
                 öğrenci de bu tahtaya çizebilir.
@@ -282,8 +282,8 @@ export function MockLessonScreen({ activeStep, onStepAction }: MockLessonScreenP
               />
             </div>
           )}
-          <span className="pointer-events-none absolute bottom-16 left-1/2 -translate-x-1/2 text-[10px] uppercase tracking-widest text-white/25">
-            Temsilî görüntü — gerçek ders değildir
+          <span className="pointer-events-none absolute bottom-16 left-1/2 -translate-x-1/2 text-[10px] uppercase tracking-widest text-ink-mid">
+            Temsilî görüntü, gerçek ders değildir
           </span>
           {/* Jitsi-native toolbar replica */}
           <div className="absolute bottom-3 left-1/2 z-10 -translate-x-1/2">
@@ -293,7 +293,7 @@ export function MockLessonScreen({ activeStep, onStepAction }: MockLessonScreenP
               chatOpen={chatOpen}
               onToggleMic={handleToggleMic}
               onToggleCam={() => setCamOn((on) => !on)}
-              onToggleChat={() => setChatOpen((open) => !open)}
+              onToggleChat={handleToggleChat}
               activeTargets={targets}
             />
           </div>
@@ -306,9 +306,6 @@ export function MockLessonScreen({ activeStep, onStepAction }: MockLessonScreenP
             onSendReply={handleSendReply}
             replySent={replySent}
           />
-        )}
-        {questionPanelOpen && (
-          <MockQuestionPanel phase={questionPhase} onPhaseChange={handleQuestionPhase} />
         )}
         {notesOpen && <MockNotesPanel />}
       </div>
@@ -341,23 +338,23 @@ function ParticipantTile({
   reducedMotion: boolean;
 }) {
   return (
-    <div className="relative flex min-h-[140px] items-center justify-center overflow-hidden rounded-lg bg-gray-800">
-      <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-gray-700 text-xl font-semibold text-gray-200">
+    <div className="relative flex min-h-[140px] items-center justify-center overflow-hidden rounded-card border border-line bg-surface">
+      <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-paper text-xl font-semibold text-ink">
         {speaking && !reducedMotion && (
           <span
             aria-hidden="true"
-            className="absolute inset-0 animate-ping rounded-full bg-sky-400/25 [animation-duration:1.8s]"
+            className="absolute inset-0 animate-ping rounded-full bg-pink/20 [animation-duration:1.8s]"
           />
         )}
         {initials}
       </div>
-      <span className="absolute bottom-2 left-2 rounded bg-black/50 px-1.5 py-0.5 text-[11px] text-gray-200">
+      <span className="absolute bottom-2 left-2 rounded-input bg-ink px-2 py-1 text-[11px] text-paper">
         {name}
         {muted && " · mikrofon kapalı"}
         {cameraOff && " · kamera kapalı"}
       </span>
       {sharing && (
-        <span className="absolute right-2 top-2 rounded bg-sky-500/90 px-1.5 py-0.5 text-[10px] font-medium text-white">
+        <span className="absolute right-2 top-2 rounded-pill bg-success px-2 py-1 text-[10px] font-medium text-white">
           Ekran paylaşılıyor
         </span>
       )}
@@ -369,21 +366,21 @@ function ParticipantTile({
 function MockNotesPanel() {
   return (
     <aside
-      className="pointer-events-auto z-[60] flex w-72 shrink-0 flex-col gap-3 border-l border-white/10 bg-gray-900 p-3"
+      className="pointer-events-auto z-[60] flex w-72 shrink-0 flex-col gap-3 border-l border-line bg-surface p-4"
       aria-label="Öğrenci notları (temsilî)"
     >
-      <div className="text-xs font-medium text-gray-300">Özel Notlarım · Ayşe</div>
+      <div className="text-xs font-semibold text-ink">Özel Notlarım · Ayşe</div>
       <textarea
         placeholder="Bu öğrenciyle ilgili notların… (yalnızca sana görünür)"
-        className="h-24 w-full resize-none rounded-md border border-white/15 bg-gray-800 p-2 text-xs text-white placeholder:text-gray-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
+        className="h-24 w-full resize-none rounded-input border border-line bg-paper p-3 text-xs text-ink placeholder:text-ink-mid focus:outline-none focus:ring-2 focus:ring-pink"
       />
-      <div className="rounded-md border border-dashed border-white/20 p-3 text-center">
-        <UploadCloud className="mx-auto mb-1 h-5 w-5 text-gray-400" aria-hidden="true" />
-        <p className="text-[11px] text-gray-400">
+      <div className="rounded-input border border-dashed border-line p-3 text-center">
+        <UploadSimple className="mx-auto mb-1 h-5 w-5 text-ink-mid" aria-hidden="true" />
+        <p className="text-[11px] text-ink-mid">
           Materyaller: PDF, görsel veya sunum yükle.
         </p>
-        <p className="mt-1 text-[10px] text-gray-500">
-          Eğitimde yükleme simüle edilir — dosyalar öğrenciye otomatik görünmez.
+        <p className="mt-1 text-[10px] text-ink-mid">
+          Eğitimde yükleme simüle edilir. Dosyalar öğrenciye otomatik görünmez.
         </p>
       </div>
     </aside>

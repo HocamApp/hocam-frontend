@@ -41,3 +41,12 @@ test("body renders on the design-system paper canvas", () => {
   assert.match(globals, /body\s*{[\s\S]*?background-color:\s*var\(--paper\)/);
   assert.match(globals, /body\s*{[\s\S]*?color:\s*var\(--ink\)/);
 });
+
+test("fixed light surfaces keep readable ink tokens in both themes", () => {
+  const root = cssBlock(":root");
+  const dark = cssBlock(".dark");
+
+  assert.match(root, /--ink-on-light:\s*#02171a/);
+  assert.match(root, /--ink-mid-on-light:\s*#5c6b6d/);
+  assert.doesNotMatch(dark, /--ink(?:-mid)?-on-light:/);
+});

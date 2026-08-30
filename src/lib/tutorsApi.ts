@@ -10,6 +10,11 @@ import {
   TutorTeachingAttribute,
   TutorSavedSearch,
 } from "@/types";
+import {
+  applyDemoTutorPresentation,
+  applyDemoTutorReviewPresentation,
+  applyDemoTutorReviewSummaryPresentation,
+} from "./demoTutorPresentation";
 
 export interface CreateTutorProfilePayload {
   name: string;
@@ -79,9 +84,14 @@ function normalizeTutorsResponse(
   data: PaginatedResponse<TutorProfile> | TutorProfile[]
 ): PaginatedResponse<TutorProfile> {
   if (Array.isArray(data)) {
-    return { count: data.length, next: null, previous: null, results: data };
+    return {
+      count: data.length,
+      next: null,
+      previous: null,
+      results: data.map(applyDemoTutorPresentation),
+    };
   }
-  return data;
+  return { ...data, results: data.results.map(applyDemoTutorPresentation) };
 }
 
 export async function fetchTutors(
@@ -117,7 +127,7 @@ export async function fetchTutorEducationOptions(): Promise<TutorEducationOption
 
 export async function fetchTutorById(id: string): Promise<TutorProfile> {
   const response = await api.get<TutorProfile>(`/tutors/${id}/`);
-  return response.data;
+  return applyDemoTutorPresentation(response.data);
 }
 
 export async function fetchTutorSavedSearches(): Promise<TutorSavedSearch[]> {
@@ -150,7 +160,9 @@ export async function fetchTutorReviews(tutorId: string): Promise<Review[]> {
   const response = await api.get<PaginatedResponse<Review>>(
     `/tutors/${tutorId}/reviews/?page_size=100`
   );
-  return response.data.results;
+  return response.data.results.map((review, index) =>
+    applyDemoTutorReviewPresentation(tutorId, review, index)
+  );
 }
 
 export async function fetchTutorReviewsPage(
@@ -160,7 +172,12 @@ export async function fetchTutorReviewsPage(
   const response = await api.get<PaginatedResponse<Review>>(
     `/tutors/${tutorId}/reviews/?page=${page}`
   );
-  return response.data;
+  return {
+    ...response.data,
+    results: response.data.results.map((review, index) =>
+      applyDemoTutorReviewPresentation(tutorId, review, index)
+    ),
+  };
 }
 
 export async function fetchTutorSubjectRatings(
@@ -178,7 +195,7 @@ export async function fetchTutorReviewSummary(
   const response = await api.get<TutorReviewSummary>(
     `/tutors/${tutorId}/review-summary/`
   );
-  return response.data;
+  return applyDemoTutorReviewSummaryPresentation(tutorId, response.data);
 }
 
 export async function fetchMyTutorProfile(): Promise<TutorProfile> {

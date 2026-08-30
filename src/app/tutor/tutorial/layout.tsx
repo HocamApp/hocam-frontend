@@ -11,8 +11,7 @@ export default function TutorTutorialLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // Full-screen dark canvas, no navbar — mirrors the live-lesson layout in
-  // src/app/session/[bookingId]/layout.tsx so the tutorial feels like the
-  // real lesson screen.
-  return <div className="flex h-dvh-safe flex-col bg-black">{children}</div>;
+  // Full-screen canvas, no navbar — the lesson mock owns its ink workspace,
+  // while loading/completion states stay on the product paper surface.
+  return <div className="flex h-dvh-safe flex-col bg-paper">{children}</div>;
 }

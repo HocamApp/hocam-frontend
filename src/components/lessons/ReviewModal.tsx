@@ -22,20 +22,11 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { createReview } from "@/lib/reviewsApi";
-import { REVIEW_CRITERIA } from "@/lib/reviewCriteria";
 import { formatRating } from "@/lib/utils";
 import { Booking } from "@/types";
 
-const criterionSchema = z
-  .number()
-  .min(1, "Lütfen tüm değerlendirme başlıklarını puanla.")
-  .max(5);
-
 const reviewSchema = z.object({
-  clarity_rating: criterionSchema,
-  preparation_rating: criterionSchema,
-  progress_rating: criterionSchema,
-  confidence_rating: criterionSchema,
+  rating: z.number().min(1, "Lütfen derse puan ver.").max(5),
   comment: z
     .string()
     .max(800, "Yorum en fazla 800 karakter olabilir")
@@ -45,10 +36,7 @@ const reviewSchema = z.object({
 type ReviewFormValues = z.infer<typeof reviewSchema>;
 
 const EMPTY_FORM: ReviewFormValues = {
-  clarity_rating: 0,
-  preparation_rating: 0,
-  progress_rating: 0,
-  confidence_rating: 0,
+  rating: 0,
   comment: "",
 };
 
@@ -94,8 +82,6 @@ function StarInput({
   );
 }
 
-// Playful reaction that mirrors the running average — purely cosmetic, never
-// sent to the API (rating is still computed server-side from the criteria).
 const RATING_REACTIONS: { max: number; emoji: string; label: string }[] = [
   { max: 1.5, emoji: "😕", label: "Daha iyisini hak ediyorsun" },
   { max: 2.5, emoji: "🙂", label: "Fena değil" },
@@ -123,30 +109,16 @@ export function ReviewModal({
   });
 
   const commentLength = form.watch("comment")?.length ?? 0;
-  const criteriaValues = form.watch([
-    "clarity_rating",
-    "preparation_rating",
-    "progress_rating",
-    "confidence_rating",
-  ]);
-  const allRated = criteriaValues.every((value) => value >= 1);
-  const computedRating = allRated
-    ? criteriaValues.reduce((sum, value) => sum + value, 0) / 4
-    : null;
-  const reaction = reactionFor(computedRating);
+  const rating = form.watch("rating");
+  const reaction = reactionFor(rating >= 1 ? rating : null);
 
   const onSubmit = async (data: ReviewFormValues) => {
     setSubmitError(null);
     const parsed = reviewSchema.safeParse(data);
     if (!parsed.success) {
       const err = parsed.error.flatten();
-      REVIEW_CRITERIA.forEach(({ field }) => {
-        if (err.fieldErrors[field]) {
-          form.setError(field, {
-            message: "Lütfen tüm değerlendirme başlıklarını puanla.",
-          });
-        }
-      });
+      if (err.fieldErrors.rating)
+        form.setError("rating", { message: err.fieldErrors.rating[0] });
       if (err.fieldErrors.comment)
         form.setError("comment", { message: err.fieldErrors.comment[0] });
       return;
@@ -155,10 +127,7 @@ export function ReviewModal({
     try {
       await createReview({
         booking: booking.id,
-        clarity_rating: parsed.data.clarity_rating,
-        preparation_rating: parsed.data.preparation_rating,
-        progress_rating: parsed.data.progress_rating,
-        confidence_rating: parsed.data.confidence_rating,
+        rating: parsed.data.rating,
         comment: parsed.data.comment ?? "",
       });
       onSuccess();
@@ -186,36 +155,32 @@ export function ReviewModal({
               Dersi değerlendir ✨
             </DialogTitle>
             <DialogDescription className="text-brand-50">
-              {booking.subject.name} · Bu değerlendirme hocanın profilindeki
-              ders ve kriter puanlarına yansır.
+              {booking.subject.name} · Puanın ve yorumun hocanın profilindeki
+              değerlendirmelere yansır.
             </DialogDescription>
           </DialogHeader>
         </div>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-2">
-            {REVIEW_CRITERIA.map(({ field: fieldName, label, question, icon: Icon }) => (
-              <FormField
-                key={fieldName}
-                control={form.control}
-                name={fieldName}
-                render={({ field }) => (
-                  <FormItem className="rounded-xl border bg-gradient-to-br from-brand-50/60 to-transparent p-3">
-                    <FormLabel className="flex items-center gap-1.5 text-brand-800">
-                      <Icon className="h-4 w-4 text-brand-500" />
-                      {label}
-                    </FormLabel>
-                    <p className="text-xs text-muted-foreground">{question}</p>
-                    <FormControl>
-                      <StarInput
-                        value={field.value || 0}
-                        onChange={field.onChange}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            ))}
+            <FormField
+              control={form.control}
+              name="rating"
+              render={({ field }) => (
+                <FormItem className="rounded-xl border bg-gradient-to-br from-brand-50/60 to-transparent p-3">
+                  <FormLabel className="text-brand-800">Genel puan</FormLabel>
+                  <p className="text-xs text-muted-foreground">
+                    Bu dersi genel olarak nasıl değerlendirirsin?
+                  </p>
+                  <FormControl>
+                    <StarInput
+                      value={field.value || 0}
+                      onChange={field.onChange}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <div className="flex items-center gap-3 rounded-xl border border-brand-200 bg-gradient-to-br from-brand-50 to-amber-50 p-3">
               <span className="text-3xl" aria-hidden>
@@ -223,12 +188,12 @@ export function ReviewModal({
               </span>
               <div>
                 <p className="text-sm font-semibold text-brand-800">
-                  {computedRating !== null
-                    ? `${formatRating(computedRating)} / 5 — ${reaction?.label}`
-                    : "Tüm kriterleri puanlayınca puan burada belirir"}
+                  {rating >= 1
+                    ? `${formatRating(rating)} / 5 — ${reaction?.label}`
+                    : "Puanını seçince burada görünür"}
                 </p>
                 <p className="mt-0.5 text-xs text-muted-foreground">
-                  Ders puanı, dört kriterin ortalamasıyla otomatik hesaplanır.
+                  Bu puan hocanın genel değerlendirmesine eklenir.
                 </p>
               </div>
             </div>

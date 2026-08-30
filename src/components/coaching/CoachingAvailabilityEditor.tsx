@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CalendarDays, Clock3, Plus, Trash2 } from "lucide-react";
+import { CalendarBlank, Clock, Plus, Trash } from "@phosphor-icons/react";
 
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -68,22 +68,22 @@ export function CoachingAvailabilityEditor({
       <CoachingStudioPanel className="overflow-hidden">
         <div className="grid gap-6 p-5 sm:p-6 lg:grid-cols-[minmax(0,0.8fr)_minmax(32rem,1.2fr)] lg:items-end">
           <div className="max-w-xl">
-            <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-              <CalendarDays className="h-5 w-5" aria-hidden="true" />
+            <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-input bg-gold text-gold-ink">
+              <CalendarBlank className="h-5 w-5" aria-hidden="true" />
             </div>
             <h2 className="text-lg font-semibold tracking-tight">Koçluk saatlerini ekle</h2>
             <p className="mt-1 text-sm leading-6 text-muted-foreground">
               Bu saatler yalnız 30 dakikalık koçluk görüşmeleri için kullanılır; normal ders müsaitliğin buraya aktarılmaz.
             </p>
           </div>
-          <form onSubmit={handleAdd} className="grid gap-3 rounded-[1.25rem] bg-muted/45 p-4 sm:grid-cols-2 lg:grid-cols-4 lg:items-end">
+          <form onSubmit={handleAdd} className="grid gap-3 rounded-card border border-line bg-paper p-4 sm:grid-cols-2 lg:grid-cols-4 lg:items-end">
             <div>
               <Label htmlFor="coaching-day">Gün</Label>
               <select
                 id="coaching-day"
                 value={dayOfWeek}
                 onChange={(event) => setDayOfWeek(Number(event.target.value))}
-                className="mt-1 h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                className="mt-1 h-10 w-full rounded-input border border-line bg-surface px-3 text-sm text-ink"
               >
                 {DAYS.map((day) => (
                   <option key={day.value} value={day.value}>
@@ -98,7 +98,7 @@ export function CoachingAvailabilityEditor({
                 id="coaching-start"
                 value={startTime}
                 onChange={(event) => setStartTime(event.target.value)}
-                className="mt-1 h-10 w-full rounded-md border border-input bg-background px-3 text-sm tabular-nums"
+                className="mt-1 h-10 w-full rounded-input border border-line bg-surface px-3 text-sm tabular-nums text-ink"
               >
                 {COACHING_TIME_OPTIONS.map((time) => (
                   <option key={time} value={time}>{time}</option>
@@ -111,7 +111,7 @@ export function CoachingAvailabilityEditor({
                 id="coaching-end"
                 value={endTime}
                 onChange={(event) => setEndTime(event.target.value)}
-                className="mt-1 h-10 w-full rounded-md border border-input bg-background px-3 text-sm tabular-nums"
+                className="mt-1 h-10 w-full rounded-input border border-line bg-surface px-3 text-sm tabular-nums text-ink"
               >
                 {COACHING_TIME_OPTIONS.map((time) => (
                   <option key={time} value={time}>{time}</option>
@@ -124,8 +124,8 @@ export function CoachingAvailabilityEditor({
             </Button>
           </form>
         </div>
-        <div className="border-t border-border/70 bg-muted/25 px-5 py-3 sm:px-6">
-          <p className="text-xs text-muted-foreground">
+        <div className="border-t border-line bg-paper px-5 py-3 sm:px-6">
+          <p className="text-xs text-ink-mid">
             Aralıklar otomatik olarak 30 dakikalık koçluk slotlarına bölünür.
             Çakışan aralıklar kabul edilmez; bitişik aralıklar (19.00–20.00 ve
             20.00–21.00) kullanılabilir.
@@ -142,7 +142,7 @@ export function CoachingAvailabilityEditor({
           {byDay.map((day) => (
             <article
               key={day.value}
-              className="min-h-36 rounded-[1.25rem] border border-border/70 bg-card p-4 shadow-[0_14px_38px_-34px_hsl(var(--foreground)/0.42)]"
+              className="min-h-36 rounded-card border border-line bg-surface p-4"
             >
               <div className="flex items-center justify-between gap-3">
                 <h3 className="font-semibold">{day.label}</h3>
@@ -152,7 +152,7 @@ export function CoachingAvailabilityEditor({
               </div>
               {day.windows.length === 0 ? (
                 <div className="mt-5 flex items-center gap-2 text-sm text-muted-foreground">
-                  <Clock3 className="h-4 w-4" aria-hidden="true" />
+                  <Clock className="h-4 w-4" aria-hidden="true" />
                   Henüz saat eklenmedi.
                 </div>
               ) : (
@@ -160,7 +160,7 @@ export function CoachingAvailabilityEditor({
                   {day.windows.map((window) => (
                     <li
                       key={window.id}
-                      className="flex items-center justify-between rounded-xl bg-muted/55 py-1.5 pl-3 pr-1 text-sm tabular-nums"
+                      className="flex items-center justify-between rounded-input border border-line bg-paper py-1.5 pl-3 pr-1 text-sm tabular-nums"
                     >
                       <span>{window.start_time.slice(0, 5)}–{window.end_time.slice(0, 5)}</span>
                       <Button
@@ -171,7 +171,7 @@ export function CoachingAvailabilityEditor({
                         disabled={isMutating}
                         className="h-8 w-8"
                       >
-                        <Trash2 className="h-4 w-4" aria-hidden="true" />
+                        <Trash className="h-4 w-4" aria-hidden="true" />
                         <span className="sr-only">
                           {day.label} {window.start_time.slice(0, 5)} aralığını sil
                         </span>
@@ -186,7 +186,7 @@ export function CoachingAvailabilityEditor({
       </section>
 
       {windows.length === 0 ? (
-        <div className="rounded-[1.25rem] border border-dashed border-border bg-muted/30 px-5 py-4 text-sm leading-6 text-muted-foreground">
+        <div className="rounded-card border border-line bg-paper px-5 py-4 text-sm leading-6 text-ink-mid">
           <strong className="font-semibold text-foreground">Henüz koçluk müsaitliğin yok.</strong>{" "}
           Koçluk saatlerin normal ders saatlerinden ayrıdır. Müsaitlik eklemeden planını yayınlayamazsın.
         </div>

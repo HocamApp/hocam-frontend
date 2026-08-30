@@ -1,7 +1,7 @@
 "use client";
 
 import { type RefObject } from "react";
-import { Loader2 } from "lucide-react";
+import { SpinnerGap } from "@phosphor-icons/react";
 import {
   Dialog,
   DialogContent,
@@ -52,7 +52,7 @@ export function VideoQualityDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="w-[calc(100dvw-2rem)] max-w-md rounded-xl"
+        className="w-[calc(100dvw-2rem)] max-w-md rounded-modal border-line bg-surface p-6 text-ink shadow-float sm:p-7"
         onCloseAutoFocus={(event) => {
           if (triggerRef?.current) {
             event.preventDefault();
@@ -60,15 +60,17 @@ export function VideoQualityDialog({
           }
         }}
       >
-        <DialogHeader>
-          <DialogTitle>Görüntü ayarı</DialogTitle>
-          <DialogDescription>
+        <DialogHeader className="gap-2 text-left">
+          <DialogTitle className="text-xl font-bold tracking-[-0.02em]">
+            Görüntü ayarı
+          </DialogTitle>
+          <DialogDescription className="text-sm leading-6 text-ink-mid">
             Bağlantına göre görüntü kalitesini ayarla.
           </DialogDescription>
         </DialogHeader>
 
         {!roomReady ? (
-          <p className="rounded-lg bg-muted p-3 text-sm text-muted-foreground">
+          <p className="rounded-input border border-line bg-paper p-3 text-sm text-ink-mid">
             Ders odası hazır olduğunda görüntü ayarını değiştirebilirsin.
           </p>
         ) : (
@@ -84,13 +86,13 @@ export function VideoQualityDialog({
               }
               disabled={isApplying}
             />
-            <div className="flex justify-between gap-1 text-[11px] text-muted-foreground">
+            <div className="flex justify-between gap-1 text-[11px] text-ink-mid">
               {VIDEO_QUALITY_LEVELS.map((option) => (
                 <span
                   key={option.level}
                   className={`flex-1 text-center leading-tight ${
                     option.level === selectedLevel
-                      ? "font-medium text-foreground"
+                      ? "font-medium text-ink"
                       : ""
                   }`}
                 >
@@ -103,7 +105,7 @@ export function VideoQualityDialog({
             <p className="min-h-[1.25rem] text-sm" aria-live="polite">
               <span className="font-medium">{selectedOption.label}</span>
               {selectedOption.description && (
-                <span className="ml-1 text-amber-600 dark:text-amber-400">
+                <span className="ml-1 text-error">
                   {selectedOption.description}
                 </span>
               )}
@@ -111,8 +113,8 @@ export function VideoQualityDialog({
 
             <div className="min-h-[1.25rem] text-xs" aria-live="polite">
               {isApplying && (
-                <span className="inline-flex items-center gap-1.5 text-muted-foreground">
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+                <span className="inline-flex items-center gap-1.5 text-ink-mid">
+                  <SpinnerGap className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
                   Görüntü ayarı uygulanıyor…
                 </span>
               )}

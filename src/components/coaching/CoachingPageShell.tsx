@@ -52,12 +52,12 @@ export function CoachingPageShell({
       >
         <header
           data-testid="coaching-page-header"
-          className="rounded-card border border-line bg-surface p-6 sm:p-8"
+          className="overflow-hidden rounded-modal bg-ink p-6 text-white dark:bg-[var(--ink-on-light)] sm:p-8"
         >
           <nav aria-label="Sayfa yolu">
             <Link
               href={parentHref}
-              className="inline-flex min-h-10 items-center gap-2 text-small font-medium text-ink-mid transition-colors duration-[--duration-state] hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2"
+              className="inline-flex min-h-10 items-center gap-2 text-small font-medium text-white/70 transition-colors duration-[var(--duration-state)] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-ink"
             >
               <ArrowLeft
                 aria-hidden="true"
@@ -70,14 +70,14 @@ export function CoachingPageShell({
           <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div className="max-w-3xl">
               {eyebrow ? (
-                <p className="text-label font-medium uppercase tracking-[0.12em] text-ink-mid">
+                <p className="text-label font-medium text-white/65">
                   {eyebrow}
                 </p>
               ) : null}
-              <h1 className="mt-2 text-[1.875rem] font-bold leading-[1.05] tracking-[-0.02em] text-ink sm:text-[2.75rem]">
+              <h1 className="mt-2 max-w-[20ch] text-[1.875rem] font-bold leading-[1.05] tracking-[-0.02em] text-white text-balance sm:text-[2.75rem]">
                 {title}
               </h1>
-              <p className="mt-3 max-w-2xl text-body leading-[1.6] text-ink-mid">
+              <p className="mt-3 max-w-2xl text-body leading-[1.6] text-white/72 text-pretty">
                 {description}
               </p>
             </div>

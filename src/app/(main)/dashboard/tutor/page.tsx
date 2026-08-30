@@ -78,7 +78,6 @@ import { AvailabilityCalendar } from "@/components/tutors/AvailabilityCalendar";
 import { TutorStudentPrivateWorkspace } from "@/components/tutors/TutorStudentPrivateWorkspace";
 import { VerifiedTutorMark } from "@/components/tutors/VerifiedTutorMark";
 import { ReviewCard } from "@/components/tutors/ReviewCard";
-import { ReviewSummary } from "@/components/tutors/ReviewSummary";
 import { SubjectRatingBreakdown } from "@/components/tutors/SubjectRatingBreakdown";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { AnimatedTabs } from "@/components/ui/animated-tabs";
@@ -1428,7 +1427,6 @@ function TutorDashboardContent() {
           ) : (
             tutorReviewSummary && (
               <div className="space-y-6">
-                <ReviewSummary summary={tutorReviewSummary} />
                 <SubjectRatingBreakdown subjectRatings={tutorReviewSummary.subject_ratings} />
                 {tutorReviews.length === 0 ? (
                   <EmptyState

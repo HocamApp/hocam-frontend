@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { toast } from "sonner";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { BookOpenText } from "@phosphor-icons/react";
 import { useAuth } from "@/hooks/useAuth";
 import { fetchMe } from "@/lib/authApi";
 import {
@@ -18,13 +19,7 @@ import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Form,
   FormControl,
@@ -232,24 +227,15 @@ export default function TutorSetupPage() {
     : "Ders ücretini sen belirlersin. Öğrenciler talep göndermeden önce ücreti profilinde açıkça görür.";
 
   return (
-    <div className="mx-auto grid max-w-6xl gap-6 px-4 py-8 lg:grid-cols-[minmax(0,1.65fr)_minmax(300px,0.75fr)] lg:items-start lg:py-10">
-      <Card className="overflow-hidden rounded-3xl border-brand-100 shadow-sm dark:border-brand-900">
-        <CardHeader>
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand-600 dark:text-brand-300">
-            Profil bilgileri
-          </p>
-          <CardTitle className="text-2xl sm:text-3xl">Öğrenciler seni tanısın</CardTitle>
-          <CardDescription>
-            Temel bilgilerini bir kez ekle; verdiğin dersleri, ücretini ve profil detaylarını daha sonra panelinden güncelleyebilirsin.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+    <div className="mx-auto grid max-w-[1200px] gap-6 px-4 py-8 sm:px-6 lg:grid-cols-[minmax(0,7fr)_minmax(300px,5fr)] lg:items-start lg:py-12">
+      <Card className="overflow-hidden rounded-card border-line bg-surface shadow-none">
+        <CardContent className="p-6 sm:p-8">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               {generalError && <ErrorMessage message={generalError} />}
 
               {/* Name + Surname */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-4 sm:grid-cols-2">
                 <FormField
                   control={form.control}
                   name="name"
@@ -334,9 +320,23 @@ export default function TutorSetupPage() {
                   </FormItem>
                 )}
               />
+              <div
+                data-testid="education-support-note"
+                className="flex gap-3 rounded-input border border-line bg-paper p-4"
+              >
+                <BookOpenText
+                  aria-hidden="true"
+                  className="mt-0.5 h-5 w-5 shrink-0 text-ink"
+                  weight="regular"
+                />
+                <p className="text-small leading-[1.6] text-ink-mid">
+                  Üniversite ve bölüm seçenekleri YÖK Atlas verileriyle
+                  desteklenir; listede yoksa kendi bilgini ekleyebilirsin.
+                </p>
+              </div>
 
               {/* YKS Rank + Hourly Price */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-4 sm:grid-cols-2">
                 <FormField
                   control={form.control}
                   name="yks_rank"
@@ -417,10 +417,10 @@ export default function TutorSetupPage() {
                               type="button"
                               onClick={() => toggleSubject(s.id)}
                               className={cn(
-                                "rounded-full border px-3 py-1 text-sm transition-colors",
+                                "rounded-pill border px-3 py-1.5 text-small transition-colors duration-[var(--duration-state)]",
                                 selectedSubjectIds.includes(s.id)
-                                  ? "border-primary bg-primary text-primary-foreground"
-                                  : "border-border hover:bg-muted"
+                                  ? "border-pink bg-pink text-white"
+                                  : "border-line bg-transparent text-ink hover:border-ink"
                               )}
                             >
                               {s.name}
@@ -452,7 +452,8 @@ export default function TutorSetupPage() {
 
               <Button
                 type="submit"
-                className="h-12 w-full bg-brand-600 text-white hover:bg-brand-700 dark:bg-brand-500 dark:hover:bg-brand-400"
+                size="lg"
+                className="w-full bg-pink text-white hover:bg-pink-deep dark:bg-pink dark:text-white dark:hover:bg-pink-deep disabled:bg-line disabled:text-ink-mid dark:disabled:bg-line dark:disabled:text-ink-mid"
                 disabled={form.formState.isSubmitting}
               >
                 {form.formState.isSubmitting ? (
@@ -474,7 +475,7 @@ export default function TutorSetupPage() {
       <TutorJourneyAside
         eyebrow="Hocam’a hoş geldin"
         title={profileProgress === 100 ? "Profilin hazır görünüyor!" : "Profilin adım adım şekilleniyor."}
-        description="Kısa ve net bir profil, öğrencilerin seni daha hızlı anlamasına yardımcı olur. Her tamamlanan alan ilerlemeni anında artırır."
+        description="Temel bilgilerini, verdiğin dersleri ve anlatım tarzını tek seferde ekle."
         progress={profileProgress}
         progressLabel={`${profileCompletedCount}/5 profil bölümü hazır`}
         fact={priceFact}

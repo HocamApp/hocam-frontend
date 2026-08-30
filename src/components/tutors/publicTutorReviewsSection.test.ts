@@ -33,12 +33,11 @@ describe("public tutor profile — duplicate subject rating block", () => {
     assert.equal(publicPage.includes("SubjectRatingBreakdown"), false);
   });
 
-  it("keeps the per-subject scores reachable through the header popover", () => {
+  it("keeps the per-subject scores reachable through the reservation card popover", () => {
     assert.ok(publicPage.includes("function RatingSummaryPopover"));
     assert.ok(publicPage.includes("subjectRatings"));
-    // Rendered next to the header rating and inside the sticky action card.
     const usages = publicPage.match(/<RatingSummaryPopover/g) ?? [];
-    assert.equal(usages.length, 2);
+    assert.equal(usages.length, 1);
   });
 
   it("leaves the popover's hover, focus, blur, and escape handling untouched", () => {
@@ -56,9 +55,10 @@ describe("public tutor profile — duplicate subject rating block", () => {
 });
 
 describe("public tutor profile — reviews section is otherwise intact", () => {
-  it("still renders the review summary", () => {
-    assert.ok(publicPage.includes("<ReviewSummary summary={reviewSummary} />"));
-    assert.ok(publicPage.includes('import { ReviewSummary }'));
+  it("keeps the heading and comments but removes criteria summaries", () => {
+    assert.equal(publicPage.includes("<ReviewSummary summary={reviewSummary} />"), false);
+    assert.equal(publicPage.includes('import { ReviewSummary }'), false);
+    assert.ok(publicPage.match(/>\s*Değerlendirmeler\s*</));
   });
 
   it("still renders the review list", () => {
@@ -82,7 +82,7 @@ describe("public tutor profile — reviews section is otherwise intact", () => {
   it("renders the reviews exactly once", () => {
     for (const [needle, expected] of [
       [">Değerlendirmeler<", 1],
-      ["<ReviewSummary", 1],
+      ["<ReviewSummary", 0],
       ["<ReviewCard", 1],
     ] as const) {
       const hits =
@@ -99,6 +99,22 @@ describe("public tutor profile — reviews section is otherwise intact", () => {
     assert.ok(availability > 0);
     assert.ok(reviews > 0);
     assert.ok(availability < reviews);
+  });
+});
+
+describe("public tutor profile — rating placement", () => {
+  it("shows the overall rating only inside the reservation card", () => {
+    const usages = publicPage.match(/<RatingSummaryPopover/g) ?? [];
+    assert.equal(usages.length, 1);
+  });
+
+  it("keeps the sticky card below the full application header", () => {
+    assert.ok(
+      publicPage.includes(
+        'className="lg:sticky lg:top-[calc(var(--app-header-h)+2rem)]"'
+      )
+    );
+    assert.equal(publicPage.includes('className="lg:sticky lg:top-24"'), false);
   });
 });
 
@@ -130,6 +146,21 @@ describe("SubjectRatingBreakdown component", () => {
       "utf8"
     );
     assert.ok(component.includes("export function SubjectRatingBreakdown"));
+  });
+});
+
+describe("tutor dashboard — criteria summaries", () => {
+  it("does not render the four criteria tiles", () => {
+    assert.equal(
+      tutorDashboard.includes("<ReviewSummary summary={tutorReviewSummary} />"),
+      false
+    );
+    assert.equal(
+      tutorDashboard.includes(
+        'import { ReviewSummary } from "@/components/tutors/ReviewSummary";'
+      ),
+      false
+    );
   });
 });
 

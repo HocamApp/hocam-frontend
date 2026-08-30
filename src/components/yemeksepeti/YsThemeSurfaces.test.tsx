@@ -9,12 +9,15 @@ const themeCss = readFileSync("src/styles/yemeksepeti.css", "utf8");
 
 test("favorites banner uses the soft pink campaign surface", () => {
   assert.match(promo, /var\(--pink-pale\)/);
+  assert.match(promo, /dark:text-\[var\(--ink-on-light\)\]/);
   assert.doesNotMatch(promo, /bg-gold/);
 });
 
 test("testimonials use the soft pink section surface and explicit contrast", () => {
   assert.match(testimonials, /bg-pink-pale/);
   assert.match(testimonials, /text-ink/);
+  assert.match(testimonials, /dark:text-\[var\(--ink-on-light\)\]/);
+  assert.match(testimonials, /dark:text-\[var\(--ink-mid-on-light\)\]/);
   assert.match(testimonials, /group-hover\/card:text-paper/);
   assert.doesNotMatch(testimonials, /bg-gradient-to-[lr]/);
 });

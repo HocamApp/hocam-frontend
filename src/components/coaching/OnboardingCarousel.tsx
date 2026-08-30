@@ -34,10 +34,10 @@ export function OnboardingCarousel({
       <CarouselContent>
         {slides.map((slide) => (
           <CarouselItem key={slide.id}>
-            <Card className="h-full">
+            <Card className="h-full rounded-card border-line bg-surface shadow-none">
               <CardContent className="space-y-3 pt-6">
-                <h3 className="text-lg font-semibold">{slide.title}</h3>
-                <p className="text-sm leading-relaxed text-muted-foreground">
+                <h3 className="text-xl font-bold text-balance text-ink">{slide.title}</h3>
+                <p className="max-w-[70ch] text-sm leading-relaxed text-ink-mid">
                   {slide.body}
                 </p>
               </CardContent>

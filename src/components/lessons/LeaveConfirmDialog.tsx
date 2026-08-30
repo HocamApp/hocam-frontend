@@ -45,7 +45,7 @@ export function LeaveConfirmDialog({
     >
       <DialogContent
         showClose={false}
-        className="w-[calc(100dvw-2rem)] max-w-md rounded-xl"
+        className="w-[calc(100dvw-2rem)] max-w-md rounded-modal border-line bg-surface p-6 text-ink shadow-float sm:p-7"
         onOpenAutoFocus={(event) => {
           event.preventDefault();
           cancelRef.current?.focus();
@@ -57,18 +57,21 @@ export function LeaveConfirmDialog({
           }
         }}
       >
-        <DialogHeader>
-          <DialogTitle>Görüşmeden ayrılmak istiyor musunuz?</DialogTitle>
-          <DialogDescription>
+        <DialogHeader className="gap-2 text-left">
+          <DialogTitle className="text-xl font-bold tracking-[-0.02em]">
+            Görüşmeden ayrılmak istiyor musunuz?
+          </DialogTitle>
+          <DialogDescription className="text-sm leading-6 text-ink-mid">
             Ayrılırsanız canlı dersten çıkarsınız.
           </DialogDescription>
         </DialogHeader>
 
-        <DialogFooter className="gap-2 sm:space-x-0">
+        <DialogFooter className="mt-2 gap-3 sm:space-x-0">
           <Button
             ref={cancelRef}
             type="button"
             variant="outline"
+            className="min-w-32"
             onClick={onCancel}
             disabled={isLeaving}
           >
@@ -77,6 +80,7 @@ export function LeaveConfirmDialog({
           <Button
             type="button"
             variant="destructive"
+            className="min-w-44"
             onClick={onConfirm}
             disabled={isLeaving}
           >

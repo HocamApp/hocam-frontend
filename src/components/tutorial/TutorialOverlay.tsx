@@ -96,7 +96,7 @@ interface TutorialOverlayProps {
 }
 
 /**
- * Darkens the whole screen except animated holes over the spotlighted
+ * Softens the whole screen except animated holes over the spotlighted
  * controls. Hole movement animates via CSS transitions on the SVG geometry
  * properties (x/y/width/height are CSS-animatable per SVG2) — deliberately
  * not framer-motion, whose SVG attribute springs proved unreliable here.
@@ -140,27 +140,25 @@ export function TutorialOverlay({ rects, shielded }: TutorialOverlayProps) {
         <rect
           width="100%"
           height="100%"
-          fill="rgb(0 0 0)"
-          opacity={0.72}
+          fill="var(--tutorial-overlay)"
           mask={`url(#${maskId})`}
           style={
             reducedMotion ? undefined : { transition: "opacity 0.2s ease-out" }
           }
         />
-        {rects.map((rect, index) => (
+        {union && (
           <rect
-            key={`ring-${index}`}
-            x={rect.x}
-            y={rect.y}
-            width={rect.width}
-            height={rect.height}
+            x={union.x}
+            y={union.y}
+            width={union.width}
+            height={union.height}
             rx={10}
             fill="none"
-            stroke="rgb(56 189 248)"
+            stroke="var(--tutorial-spotlight-ring)"
             strokeWidth={2}
             style={geometryTransition}
           />
-        ))}
+        )}
       </svg>
       {shielded && <ClickShields hole={union} />}
     </>

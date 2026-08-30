@@ -114,16 +114,16 @@ export function LiveLessonTutorial({ replay }: LiveLessonTutorialProps) {
 
   if (!isReady) {
     return (
-      <div className="flex h-full flex-col items-center justify-center gap-4 text-white">
+      <div className="flex h-full flex-col items-center justify-center gap-4 text-ink">
         {loadError ? (
           <>
-            <p className="text-sm text-gray-300">
+            <p className="max-w-md text-center text-sm text-ink-mid">
               Eğitim ilerlemen yüklenemedi. Bağlantını kontrol edip tekrar dene.
             </p>
             <button
               type="button"
               onClick={() => retryLoad()}
-              className="rounded-md bg-sky-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-sky-400"
+              className="rounded-pill bg-pink px-4 py-2 text-sm font-bold text-white transition-colors duration-state hover:bg-pink-deep"
             >
               Tekrar dene
             </button>
@@ -164,7 +164,7 @@ export function LiveLessonTutorial({ replay }: LiveLessonTutorialProps) {
             completeError ? (
               <div
                 role="alert"
-                className="mt-3 rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-2 text-xs text-red-200"
+                className="mt-3 rounded-input border border-error bg-surface px-3 py-2 text-xs text-error"
               >
                 Tamamlama isteği gönderilemedi. İlerlemen kayıtlı — tekrar
                 denemek güvenli.
@@ -179,16 +179,19 @@ export function LiveLessonTutorial({ replay }: LiveLessonTutorialProps) {
       )}
 
       {exitDialogOpen && (
-        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/60 p-4">
+        <div
+          className="fixed inset-0 z-[80] flex items-center justify-center p-4 backdrop-blur-[2px]"
+          style={{ backgroundColor: "var(--tutorial-overlay)" }}
+        >
           <div
             role="alertdialog"
             aria-labelledby="tutorial-exit-title"
-            className="w-full max-w-sm rounded-xl border border-white/10 bg-gray-900 p-5 text-white shadow-2xl"
+            className="w-full max-w-sm rounded-modal border border-line bg-surface p-6 text-ink shadow-float"
           >
             <h2 id="tutorial-exit-title" className="text-base font-semibold">
               Eğitimden çıkılsın mı?
             </h2>
-            <p className="mt-2 text-sm text-gray-300">
+            <p className="mt-2 text-sm leading-relaxed text-ink-mid">
               {replay
                 ? "Tekrar izlemeyi istediğin zaman Profil sayfandan açabilirsin."
                 : "İlerlemen kaydedildi — geri döndüğünde kaldığın adımdan devam edersin."}
@@ -198,14 +201,14 @@ export function LiveLessonTutorial({ replay }: LiveLessonTutorialProps) {
                 type="button"
                 autoFocus
                 onClick={() => setExitDialogOpen(false)}
-                className="rounded-md border border-white/15 px-3 py-1.5 text-sm text-gray-200 transition-colors hover:bg-white/10"
+                className="rounded-pill border border-ink px-4 py-2 text-sm font-semibold text-ink transition-colors duration-state hover:bg-paper"
               >
                 Eğitime dön
               </button>
               <button
                 type="button"
                 onClick={() => router.replace(exitHref)}
-                className="rounded-md bg-red-500/90 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-red-500"
+                className="rounded-pill bg-error px-4 py-2 text-sm font-bold text-white transition-colors duration-state hover:opacity-90"
               >
                 Çık
               </button>
@@ -223,19 +226,15 @@ function SummaryChecklist({ completedAll }: { completedAll: boolean }) {
   );
   return (
     <ul className="mt-3 space-y-1.5" aria-label="Öğrenilen konular">
-      {items.map((item, index) => (
+      {items.map((item) => (
         <li
           key={item.id}
-          className="flex items-center gap-2 text-xs text-gray-200"
-          style={{
-            animation: `tutorial-check-in 0.3s ease-out both`,
-            animationDelay: `${index * 90}ms`,
-          }}
+          className="flex items-center gap-2 text-xs text-ink-mid"
         >
           <span
             aria-hidden="true"
             className={`flex h-4 w-4 items-center justify-center rounded-full text-[10px] ${
-              completedAll ? "bg-emerald-500 text-white" : "bg-white/15 text-white/60"
+              completedAll ? "bg-success text-white" : "bg-line text-ink-mid"
             }`}
           >
             ✓
@@ -243,23 +242,6 @@ function SummaryChecklist({ completedAll }: { completedAll: boolean }) {
           {item.title}
         </li>
       ))}
-      <style jsx>{`
-        @keyframes tutorial-check-in {
-          from {
-            opacity: 0;
-            transform: translateY(4px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        @media (prefers-reduced-motion: reduce) {
-          li {
-            animation: none !important;
-          }
-        }
-      `}</style>
     </ul>
   );
 }

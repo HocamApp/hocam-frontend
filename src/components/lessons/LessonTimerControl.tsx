@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Clock3 } from "lucide-react";
+import { Clock } from "@phosphor-icons/react";
 import { formatDuration } from "@/lib/lessonSessionState";
 
 interface LessonTimerControlProps {
@@ -62,15 +62,15 @@ export function LessonTimerControl({
       type="button"
       onClick={toggle}
       aria-label={ariaLabel}
-      className={`inline-flex shrink-0 items-center gap-1.5 rounded border px-2 py-1 text-xs tabular-nums transition-colors ${
+      className={`inline-flex h-9 shrink-0 items-center gap-1.5 rounded-pill border px-3 text-xs font-medium tabular-nums transition-colors duration-[--duration-state] ${
         showOvertime
-          ? "border-red-500/50 bg-red-500/20 text-red-200"
+          ? "border-error bg-error text-white"
           : isLowTime && !showElapsed
-            ? "border-amber-500/50 bg-amber-500/20 text-amber-200"
-            : "border-white/20 bg-white/5 text-slate-200 hover:bg-white/10"
+            ? "border-gold bg-gold text-gold-ink"
+            : "border-line bg-surface text-ink hover:bg-paper"
       }`}
     >
-      <Clock3 className="h-3.5 w-3.5" aria-hidden="true" />
+      <Clock className="h-4 w-4" aria-hidden="true" />
       {showOvertime ? "Süre doldu" : `${prefix} ${formatDuration(value)}`}
     </button>
   );

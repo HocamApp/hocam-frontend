@@ -107,10 +107,8 @@ describe("ys app nav", () => {
   /**
    * Asks a running server, because source cannot answer this.
    *
-   * The first public strip linked to `/rehber` and `/cikmis-sorular`. Both look
-   * like ordinary routes in the tree — the second even has its own `page.tsx` —
-   * and both return 404: one has no page of its own, the other is gated. A
-   * filesystem check would have caught one of the two and passed the other.
+   * Earlier public-strip drafts linked to routes that existed only partially
+   * or were gated. A filesystem check alone could not prove visitor access.
    *
    * Skipped rather than failed when nothing is listening, so the suite stays
    * runnable without a server. Point it elsewhere with YS_NAV_BASE_URL.
