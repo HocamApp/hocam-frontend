@@ -1,6 +1,6 @@
 "use client";
 
-import { Check } from "lucide-react";
+import { Check } from "@phosphor-icons/react";
 
 import {
   VIDEO_QUALITY_LEVELS,
@@ -34,10 +34,10 @@ export function MockQualityDialog({
         role="dialog"
         aria-modal="true"
         aria-label="Görüntü ayarı (temsilî)"
-        className="w-full max-w-sm rounded-xl border border-white/10 bg-gray-900 p-4 text-white shadow-2xl"
+        className="w-full max-w-sm rounded-modal border border-line bg-surface p-6 text-ink shadow-float"
       >
-        <h3 className="text-sm font-semibold">Görüntü ayarı</h3>
-        <p className="mt-1 text-xs text-gray-400">
+        <h3 className="text-xl font-bold tracking-[-0.02em]">Görüntü ayarı</h3>
+        <p className="mt-1 text-sm leading-6 text-ink-mid">
           Performans ve görüntü kalitesi arasındaki dengeyi seç.
         </p>
         <div className="mt-3 space-y-1.5">
@@ -48,22 +48,22 @@ export function MockQualityDialog({
                 key={option.level}
                 type="button"
                 onClick={() => onSelect(option.level)}
-                className={`flex w-full items-center justify-between rounded-lg border px-3 py-2 text-left text-xs transition-colors ${
+                className={`flex w-full items-center justify-between rounded-input border px-3 py-2.5 text-left text-xs transition-colors duration-[var(--duration-state)] ${
                   isSelected
-                    ? "border-sky-500 bg-sky-500/15 text-white"
-                    : "border-white/10 text-gray-200 hover:bg-white/5"
+                    ? "border-pink bg-pink text-white"
+                    : "border-line bg-surface text-ink hover:bg-paper"
                 }`}
               >
                 <span>
                   <span className="block font-medium">{option.label}</span>
                   {option.description && (
-                    <span className="mt-0.5 block text-[11px] text-amber-300">
+                    <span className={`mt-0.5 block text-[11px] ${isSelected ? "text-white" : "text-error"}`}>
                       {option.description}
                     </span>
                   )}
                 </span>
                 {isSelected && (
-                  <Check className="h-4 w-4 shrink-0 text-sky-300" aria-hidden="true" />
+                  <Check className="h-4 w-4 shrink-0 text-white" aria-hidden="true" />
                 )}
               </button>
             );
@@ -73,7 +73,7 @@ export function MockQualityDialog({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-md border border-white/15 px-3 py-1.5 text-xs text-gray-200 transition-colors hover:bg-white/10"
+            className="h-9 rounded-pill border border-ink px-5 text-xs font-medium text-ink transition-colors duration-[var(--duration-state)] hover:bg-ink hover:text-paper"
           >
             Kapat
           </button>

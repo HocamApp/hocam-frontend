@@ -4,7 +4,14 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { useParams, useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { FileQuestion, MonitorUp, PencilRuler, StickyNote, Video, WifiOff, X } from "lucide-react";
+import {
+  Monitor,
+  Note,
+  PencilSimple,
+  VideoCamera,
+  WifiSlash,
+  X,
+} from "@phosphor-icons/react";
 import { toast } from "sonner";
 import {
   fetchBookings,
@@ -55,9 +62,6 @@ import { EarlyEndRequestDialog } from "@/components/lessons/EarlyEndRequestDialo
 import { LeaveConfirmDialog } from "@/components/lessons/LeaveConfirmDialog";
 import { TeacherVideoControl } from "@/components/lessons/TeacherVideoControl";
 import type { Booking } from "@/types";
-import { LessonQuestionPanel } from "@/components/questions/LessonQuestionPanel";
-import { LessonQuestionInvitationDialog } from "@/components/questions/LessonQuestionInvitationDialog";
-import { useLessonQuestionSession } from "@/components/questions/useLessonQuestionSession";
 import { TutorStudentPrivateWorkspace } from "@/components/tutors/TutorStudentPrivateWorkspace";
 
 const EARLY_JOIN_MINUTES = 15;
@@ -127,41 +131,41 @@ function LessonWaitingRoom({
   }, [showsLiveClock]);
 
   return (
-    <div className="relative flex flex-1 overflow-hidden bg-slate-950 text-white">
+    <div className="relative flex flex-1 overflow-hidden bg-paper text-ink">
       <div className="relative mx-auto flex w-full max-w-4xl flex-1 flex-col items-center justify-center px-6 py-10 text-center">
-        <div className="mb-8 flex h-44 w-44 items-center justify-center rounded-full border border-white/10 bg-white/5">
-          <div className="lesson-waiting-ring flex h-32 w-32 items-center justify-center rounded-full border border-sky-300/40">
-            <Video className="h-10 w-10 text-sky-200" aria-hidden="true" />
+        <div className="mb-8 flex h-36 w-36 items-center justify-center rounded-full border border-line bg-surface">
+          <div className="flex h-24 w-24 items-center justify-center rounded-full bg-pink-pale">
+            <VideoCamera className="h-9 w-9 text-pink" aria-hidden="true" />
           </div>
         </div>
 
-        <p className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-sm text-slate-300">
+        <p className="inline-flex items-center gap-2 rounded-pill border border-line bg-surface px-4 py-2 text-sm text-ink-mid">
           Ders odası {EARLY_JOIN_MINUTES} dakika kala açılır
         </p>
         <h1 className="mt-5 text-3xl font-semibold tracking-tight sm:text-5xl">
           Birazdan derse gireceksin
         </h1>
-        <p className="mt-4 max-w-2xl text-sm leading-6 text-slate-300 sm:text-base">
+        <p className="mt-4 max-w-2xl text-sm leading-6 text-ink-mid sm:text-base">
           {booking.subject.name} dersi {tutorName ? `${tutorName} ile ` : ""}
           {formatDate(booking.start_time)} tarihinde başlayacak. Oda açılana kadar
           burada sakin bir bekleme ekranı gösteriyoruz.
         </p>
 
-        <div className="mt-8 rounded-lg border border-white/10 bg-white/5 px-6 py-4">
+        <div className="mt-8 rounded-card border border-line bg-surface px-7 py-5">
           {countdown.mode === "later" ? (
             // A day or more out, a countdown is noise; the date is the answer.
             <>
-              <p className="text-xs uppercase tracking-[0.18em] text-slate-400">
+              <p className="text-xs font-medium uppercase tracking-[0.18em] text-ink-mid">
                 Ders başlangıcı
               </p>
               <p className="mt-2 text-2xl font-semibold">
                 {formatDate(booking.start_time)} · {startClock}
               </p>
-              <p className="mt-1 text-sm text-slate-400">{countdown.label} kaldı</p>
+              <p className="mt-1 text-sm text-ink-mid">{countdown.label} kaldı</p>
             </>
           ) : (
             <>
-              <p className="text-xs uppercase tracking-[0.18em] text-slate-400">
+              <p className="text-xs font-medium uppercase tracking-[0.18em] text-ink-mid">
                 Odaya girişe kalan
               </p>
               <p
@@ -182,42 +186,19 @@ function LessonWaitingRoom({
             onClick={() => window.location.reload()}
             disabled={timeToJoin > 0}
           >
-            <Video className="mr-2 h-4 w-4" />
+            <VideoCamera className="mr-2 h-4 w-4" />
             Derse Katıl
           </Button>
           <Button
             variant="outline"
             onClick={onBack}
-            className="border-white/20 bg-transparent text-white hover:bg-white/10 hover:text-white"
+            className="border-ink bg-transparent text-ink hover:bg-ink hover:text-paper"
           >
             Geri dön
           </Button>
         </div>
       </div>
 
-      <style jsx>{`
-        .lesson-waiting-ring {
-          animation: waiting-pulse 2.8s ease-in-out infinite;
-        }
-
-        @keyframes waiting-pulse {
-          0%,
-          100% {
-            box-shadow: 0 0 0 0 rgba(125, 211, 252, 0.22);
-            transform: scale(1);
-          }
-          50% {
-            box-shadow: 0 0 0 24px rgba(125, 211, 252, 0);
-            transform: scale(1.04);
-          }
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-          .lesson-waiting-ring {
-            animation: none;
-          }
-        }
-      `}</style>
     </div>
   );
 }
@@ -231,12 +212,12 @@ function LessonEndedScreen({
 }) {
   const isAwaitingConfirmation = booking.status === "awaiting_confirmation";
   return (
-    <div className="flex flex-1 flex-col items-center justify-center gap-4 bg-slate-950 px-6 py-10 text-center text-white">
-      <div className="flex h-16 w-16 items-center justify-center rounded-full border border-white/10 bg-white/5">
-        <Video className="h-7 w-7 text-sky-200" aria-hidden="true" />
+    <div className="flex flex-1 flex-col items-center justify-center gap-4 bg-paper px-6 py-10 text-center text-ink">
+      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-pink-pale">
+        <VideoCamera className="h-7 w-7 text-pink" aria-hidden="true" />
       </div>
       <h1 className="text-2xl font-semibold">Ders sona erdi</h1>
-      <p className="max-w-md text-sm text-slate-300">
+      <p className="max-w-md text-sm text-ink-mid">
         {isAwaitingConfirmation
           ? "Ders tamamlandı olarak işaretlendi. Panelindeki onay kartından dersi onaylayabilir veya bir sorun bildirebilirsin."
           : "Bu ders artık aktif değil. Detayları panelinden görebilirsin."}
@@ -323,7 +304,6 @@ function SessionContent() {
   const announceTimeoutRef = useRef<number | null>(null);
 
   const reconnectTimeoutRef = useRef<number | null>(null);
-  const questionButtonRef = useRef<HTMLButtonElement>(null);
   const qualityButtonRef = useRef<HTMLButtonElement>(null);
   const endButtonRef = useRef<HTMLButtonElement>(null);
   const leaveButtonRef = useRef<HTMLButtonElement>(null);
@@ -380,12 +360,6 @@ function SessionContent() {
   const sessionEnded =
     sessionEndedFromBooking ||
     Boolean(liveStatus && ENDED_STATUSES.has(liveStatus));
-
-  const questionSession = useLessonQuestionSession({
-    bookingId,
-    enabled: inSession && !sessionEnded,
-    isStudent,
-  });
 
   // Countdown driven by the drift-corrected server clock.
   const startTimeIso = session.state?.start_time ?? booking?.start_time;
@@ -724,19 +698,19 @@ function SessionContent() {
   const selectedQuality = pendingQuality ?? confirmedQuality;
 
   return (
-    <div className="flex flex-1 flex-col">
+    <div className="flex min-h-0 flex-1 flex-col bg-ink">
       {connectionStatus === "interrupted" && (
-        <div className="flex items-center justify-center gap-2 bg-red-600 px-4 py-1.5 text-center text-xs font-medium text-white">
-          <WifiOff className="h-3.5 w-3.5" aria-hidden="true" />
+        <div className="flex items-center justify-center gap-2 bg-error px-4 py-2 text-center text-xs font-medium text-white">
+          <WifiSlash className="h-4 w-4" aria-hidden="true" />
           Bağlantı koptu. Yeniden bağlanmaya çalışılıyor...
         </div>
       )}
       {isTutor && isScreenSharing && (
         <div
-          className="flex items-center justify-center gap-2 bg-emerald-600 px-4 py-1.5 text-center text-xs font-semibold text-white"
+          className="flex items-center justify-center gap-2 bg-success px-4 py-2 text-center text-xs font-semibold text-white"
           role="status"
         >
-          <MonitorUp className="h-3.5 w-3.5" aria-hidden="true" />
+          <Monitor className="h-4 w-4" aria-hidden="true" />
           Ekranın şu anda öğrenciyle paylaşılıyor
         </div>
       )}
@@ -745,8 +719,8 @@ function SessionContent() {
           src/components/tutorial/MockLessonScreen.tsx — mirror any control
           added/renamed/restyled here so the tutorial keeps teaching the real
           interface. */}
-      <div className="flex items-center gap-2 bg-gray-900 px-4 py-2 text-sm text-white">
-        <span className="min-w-0 flex-1 truncate font-medium">
+      <div className="flex min-h-14 items-center gap-3 border-b border-white/15 bg-ink px-4 py-2 text-sm text-paper sm:px-5">
+        <span className="min-w-0 flex-1 truncate font-semibold tracking-[-0.01em]">
           {booking ? `${booking.subject.name} — Canlı Ders` : "Canlı Ders"}
         </span>
 
@@ -760,62 +734,45 @@ function SessionContent() {
               isOvertime={countdown.isOvertime}
             />
           )}
-          <button
-            ref={questionButtonRef}
-            onClick={() =>
-              questionSession.panelOpen
-                ? questionSession.closePanel()
-                : questionSession.openPanel()
-            }
-            className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded border border-white/20 px-3 py-1 text-xs transition-colors hover:bg-white/10"
-            aria-expanded={questionSession.panelOpen}
-            aria-controls="lesson-question-panel"
-          >
-            <FileQuestion className="h-3.5 w-3.5" aria-hidden="true" />
-            Canlı soru
-            {questionSession.state?.active_question && (
-              <span className="h-1.5 w-1.5 rounded-full bg-sky-300" aria-label="Aktif soru var" />
-            )}
-          </button>
           {isTutor && booking && (
             <button
               onClick={() => setNotesPanelOpen((open) => !open)}
-              className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded border border-white/20 px-3 py-1 text-xs transition-colors hover:bg-white/10"
+              className="inline-flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-pill border border-line bg-surface px-3 text-xs font-medium text-ink transition-colors duration-[--duration-state] hover:bg-paper"
               aria-expanded={notesPanelOpen}
             >
-              <StickyNote className="h-3.5 w-3.5" aria-hidden="true" />
+              <Note className="h-4 w-4" aria-hidden="true" />
               Öğrenci notları
             </button>
           )}
           {isTutor && (
             <button
               onClick={handleToggleScreenShare}
-              className={`inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded border px-3 py-1 text-xs font-medium transition-colors ${
+              className={`inline-flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-pill border px-3 text-xs font-medium transition-colors duration-[--duration-state] ${
                 isScreenSharing
-                  ? "border-emerald-300 bg-emerald-500 text-white hover:bg-emerald-600"
-                  : "border-white/20 hover:bg-white/10"
+                  ? "border-success bg-success text-white"
+                  : "border-line bg-surface text-ink hover:bg-paper"
               }`}
               aria-pressed={isScreenSharing}
             >
-              <MonitorUp className="h-3.5 w-3.5" aria-hidden="true" />
+              <Monitor className="h-4 w-4" aria-hidden="true" />
               {getScreenShareButtonLabel(isScreenSharing)}
             </button>
           )}
           {isTutor && (
             <button
               onClick={handleToggleWhiteboard}
-              className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded border border-white/20 px-3 py-1 text-xs transition-colors hover:bg-white/10"
+              className="inline-flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-pill border border-line bg-surface px-3 text-xs font-medium text-ink transition-colors duration-[--duration-state] hover:bg-paper"
             >
-              <PencilRuler className="h-3.5 w-3.5" aria-hidden="true" />
+              <PencilSimple className="h-4 w-4" aria-hidden="true" />
               Tahtayı aç/kapat
             </button>
           )}
           <button
             ref={qualityButtonRef}
             onClick={() => setQualityDialogOpen(true)}
-            className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded border border-white/20 px-3 py-1 text-xs transition-colors hover:bg-white/10"
+            className="inline-flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-pill border border-line bg-surface px-3 text-xs font-medium text-ink transition-colors duration-[--duration-state] hover:bg-paper"
           >
-            <Video className="h-3.5 w-3.5" aria-hidden="true" />
+            <VideoCamera className="h-4 w-4" aria-hidden="true" />
             Görüntü ayarı
           </button>
           {isStudent && whiteboardVisible && (
@@ -830,20 +787,20 @@ function SessionContent() {
               ref={endButtonRef}
               onClick={handleRequestEnd}
               disabled={session.requestEnd.isPending || cooldownActive}
-              className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded border border-white/20 px-3 py-1 text-xs transition-colors hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-pill border border-line bg-surface px-3 text-xs font-medium text-ink transition-colors duration-[--duration-state] hover:bg-paper disabled:cursor-not-allowed disabled:opacity-50"
             >
               Dersi bitir
             </button>
           )}
           {isTutor && isEndPending && (
             <>
-              <span className="inline-flex shrink-0 items-center rounded border border-amber-500/40 bg-amber-500/10 px-2 py-1 text-xs text-amber-200">
+              <span className="inline-flex h-9 shrink-0 items-center rounded-pill bg-gold px-3 text-xs font-medium text-gold-ink">
                 Öğrencinin onayı bekleniyor
               </span>
               <button
                 onClick={handleCancelEnd}
                 disabled={session.cancel.isPending}
-                className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded border border-white/20 px-3 py-1 text-xs transition-colors hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
+                className="inline-flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-pill border border-line bg-surface px-3 text-xs font-medium text-ink transition-colors duration-[--duration-state] hover:bg-paper disabled:cursor-not-allowed disabled:opacity-50"
               >
                 İsteği iptal et
               </button>
@@ -852,14 +809,14 @@ function SessionContent() {
           <button
             ref={leaveButtonRef}
             onClick={() => setLeaveDialogOpen(true)}
-            className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded border border-red-500/50 bg-red-500/20 px-3 py-1 text-xs font-medium text-red-100 transition-colors hover:bg-red-500/30"
+            className="inline-flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-pill border border-error bg-transparent px-3 text-xs font-medium text-white transition-colors duration-[--duration-state] hover:bg-error"
           >
             Görüşmeden ayrıl
           </button>
         </div>
       </div>
 
-      <div className="relative flex min-h-0 flex-1">
+      <div className="relative flex min-h-0 flex-1 bg-ink">
         <div className="min-w-0 flex-1">
           <JitsiMeeting
           key={jitsiKey}
@@ -873,7 +830,7 @@ function SessionContent() {
             SHOW_JITSI_WATERMARK: false,
             SHOW_BRAND_WATERMARK: false,
             SHOW_POWERED_BY: false,
-            DEFAULT_BACKGROUND: "#111827",
+            DEFAULT_BACKGROUND: "#02171A",
             // Legacy fallback for connection-quality tile icon suppression.
             // Modern JaaS releases read configOverwrite.connectionIndicators,
             // but older tenants still honor this interface_config key.
@@ -991,15 +948,8 @@ function SessionContent() {
           }}
           />
         </div>
-        {booking && questionSession.panelOpen && (
-          <LessonQuestionPanel
-            booking={booking}
-            session={questionSession}
-            onClose={questionSession.closePanel}
-          />
-        )}
         {booking && isTutor && notesPanelOpen && (
-          <aside className="absolute inset-y-3 right-3 z-20 w-[min(24rem,calc(100%-1.5rem))] overflow-y-auto rounded-xl border bg-background p-3 shadow-2xl">
+          <aside className="absolute inset-y-3 right-3 z-20 w-[min(24rem,calc(100%-1.5rem))] overflow-y-auto rounded-card border border-line bg-surface p-4 text-ink shadow-float">
             <div className="mb-2 flex items-center justify-between gap-2 px-1">
               <p className="text-sm font-medium">{booking.student.display_name || booking.student.email}</p>
               <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setNotesPanelOpen(false)} aria-label="Not panelini kapat">
@@ -1037,17 +987,9 @@ function SessionContent() {
           onContinue={handleContinueEnd}
           isSubmitting={session.respond.isPending}
           hasError={session.respond.isError}
-          returnFocusRef={questionButtonRef}
+          returnFocusRef={endButtonRef}
         />
       )}
-
-      <LessonQuestionInvitationDialog
-        open={questionSession.invitationOpen && !isEndPending}
-        question={questionSession.state?.active_question ?? null}
-        returnFocusRef={questionButtonRef}
-        onAccept={questionSession.acceptInvitation}
-        onDismiss={questionSession.dismissInvitation}
-      />
     </div>
   );
 }

@@ -813,7 +813,7 @@ export interface LessonSessionState {
   early_end_request: EarlyEndRequestState;
 }
 
-export type LessonArtifactKind = "whiteboard" | "solved_question" | "material";
+export type LessonArtifactKind = "whiteboard" | "material";
 
 export interface LessonArtifact {
   id: string;

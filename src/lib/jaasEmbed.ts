@@ -6,7 +6,7 @@
  * byte-identical (Faz 5 Final Revision §14: smallest possible diff to
  * lesson code). Coaching gets its own small config here instead of reusing
  * the lesson one, because coaching has no whiteboard/teacher-video toggle,
- * no live-question toolbar button, and no classroom-bulk-moderation needs
+ * no classroom question controls, and no classroom-bulk-moderation needs
  * — importing the lesson config would drag in UI affordances coaching
  * never uses. The handful of genuinely universal flags (no
  * recording/transcription, locked display name, single-timer, suppressed

@@ -43,7 +43,7 @@ export function TutorialNudgeBanner() {
       <div className="min-w-0 flex-1">
         <p className="text-sm font-medium">Yeni: Canlı ders kullanım eğitimi yayında</p>
         <p className="mt-0.5 text-sm text-muted-foreground">
-          Ders ekranındaki araçları 5 dakikada tazele — canlı soru, tahta ve ders
+          Ders ekranındaki araçları 5 dakikada tazele — ekran paylaşımı, tahta ve ders
           bitirme akışları dahil. Hesabın etkilenmez.
         </p>
       </div>

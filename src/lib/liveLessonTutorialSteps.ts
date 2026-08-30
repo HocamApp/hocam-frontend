@@ -2,8 +2,9 @@
 //
 // KEEP IN SYNC: mirrors the backend tuple in
 // Hocam_backend/apps/tutors/tutorial.py (TUTORIAL_STEP_IDS). Both sides are
-// locked by unit tests; changing the flow means changing both files together
-// and bumping JITSI_TUTORIAL_REQUIRED_VERSION on the backend.
+// locked by unit tests; changing the flow means changing both files together.
+// Removing a retired step does not bump JITSI_TUTORIAL_REQUIRED_VERSION, so
+// tutors who already completed the tutorial are not required to repeat it.
 
 export type TutorialStepId =
   | "welcome"
@@ -11,7 +12,6 @@ export type TutorialStepId =
   | "chat"
   | "screen-share"
   | "whiteboard"
-  | "live-question"
   | "materials"
   | "timer-quality"
   | "end-vs-leave"
@@ -23,7 +23,6 @@ export const TUTORIAL_STEP_IDS: TutorialStepId[] = [
   "chat",
   "screen-share",
   "whiteboard",
-  "live-question",
   "materials",
   "timer-quality",
   "end-vs-leave",
@@ -92,17 +91,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     body: "Tahtayı yalnızca sen açıp kapatabilirsin; açıkken öğrenci de çizebilir. Çizim araçları tahtanın kendi menüsünden gelir.",
     targets: ["control-whiteboard"],
     kind: "try",
-    tryHint: "Deneyin: Tahtayı açın, sonra tekrar kapatın.",
-    ctaLabel: "Devam",
-  },
-  {
-    id: "live-question",
-    title: "Canlı soru",
-    body: "Bir soruyu öğrencinle paylaş, cevabını canlı takip et. Doğru cevap ve çözüm yalnızca sana görünür — istediğinde öğrenciye açarsın.",
-    note: "Öğrenci paneli kendisi açamaz — soruyu her zaman sen paylaşırsın.",
-    targets: ["control-question"],
-    kind: "try",
-    tryHint: "Deneyin: Soruyu paylaşın, öğrencinin cevabını görün, doğru cevabı gösterip gizleyin.",
+    tryHint: "Deneyin: Tahtayı açın ve çalışma alanını inceleyin.",
     ctaLabel: "Devam",
   },
   {
