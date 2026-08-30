@@ -45,6 +45,10 @@ const PRIVATE_FEATURES = [
   "Haftada 2–6 ders seçimi",
 ] as const;
 
+// Product visibility decision: keep the future plan mechanics implemented but
+// do not disclose them before launch. See docs/product/HOCAM_PRO_AND_GROUP_PRODUCT_VISION.md.
+const FUTURE_CHECKOUT_PLANS_VISIBLE = false;
+
 export function CheckoutProductPicker({
   weeklyPlans,
   lessonsPerWeek,
@@ -63,12 +67,14 @@ export function CheckoutProductPicker({
         </p>
 
         <div className="space-y-2">
-          <FuturePlanBar
-            tone="group"
-            icon={UsersThree}
-            title="Küçük Grup"
-            description="2–4 öğrenciyle, kişi başı daha avantajlı canlı dersler."
-          />
+          {FUTURE_CHECKOUT_PLANS_VISIBLE ? (
+            <FuturePlanBar
+              tone="group"
+              icon={UsersThree}
+              title="Küçük Grup"
+              description="2–4 öğrenciyle, kişi başı daha avantajlı canlı dersler."
+            />
+          ) : null}
 
           <section
             aria-label="Seçili plan: Birebir Özel Ders"
@@ -185,24 +191,28 @@ export function CheckoutProductPicker({
             </div>
           </section>
 
-          <FuturePlanBar
-            tone="pro"
-            icon={ChartLineUp}
-            title="Hocam Pro"
-            description="Soru desteği, haftalık koçluk ve gelişim takibiyle güçlendirilmiş birebir plan."
-          />
+          {FUTURE_CHECKOUT_PLANS_VISIBLE ? (
+            <FuturePlanBar
+              tone="pro"
+              icon={ChartLineUp}
+              title="Hocam Pro"
+              description="Soru desteği, haftalık koçluk ve gelişim takibiyle güçlendirilmiş birebir plan."
+            />
+          ) : null}
         </div>
 
-        <div className="mt-2">
-          <ComparePlansDialog palette={palette}>
-            <Button
-              variant="outline"
-              className="h-8 rounded-pill border-[var(--checkout-control)] bg-transparent px-4 text-xs font-bold text-[var(--checkout-left-ink)] hover:bg-[var(--checkout-control)] hover:text-[var(--checkout-on-control)]"
-            >
-              Planları karşılaştır
-            </Button>
-          </ComparePlansDialog>
-        </div>
+        {FUTURE_CHECKOUT_PLANS_VISIBLE ? (
+          <div className="mt-2">
+            <ComparePlansDialog palette={palette}>
+              <Button
+                variant="outline"
+                className="h-8 rounded-pill border-[var(--checkout-control)] bg-transparent px-4 text-xs font-bold text-[var(--checkout-left-ink)] hover:bg-[var(--checkout-control)] hover:text-[var(--checkout-on-control)]"
+              >
+                Planları karşılaştır
+              </Button>
+            </ComparePlansDialog>
+          </div>
+        ) : null}
       </div>
     </TooltipProvider>
   );

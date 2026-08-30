@@ -6,6 +6,7 @@ import React from "react";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 
 import { CheckoutProductPicker } from "./CheckoutProductPicker";
+import { ComparePlansDialog } from "./ComparePlansDialog";
 import type { PackagePlan } from "@/types";
 
 Object.defineProperty(globalThis, "self", {
@@ -37,7 +38,7 @@ const plans: PackagePlan[] = [2, 3, 4, 5, 6].map((lessonsPerWeek) => ({
 
 afterEach(() => cleanup());
 
-test("shows the active private plan and readable disabled future plans", () => {
+test("shows only the active private plan while future products are hidden", () => {
   render(
     <CheckoutProductPicker
       basePrice={1000}
@@ -54,19 +55,17 @@ test("shows the active private plan and readable disabled future plans", () => {
   );
 
   assert.ok(screen.getByText("Birebir Özel Ders"));
-  const group = screen.getByRole("button", { name: /Küçük Grup/ }) as HTMLButtonElement;
-  const pro = screen.getByRole("button", { name: /Hocam Pro/ }) as HTMLButtonElement;
-  assert.equal(group.getAttribute("aria-disabled"), "true");
-  assert.equal(pro.getAttribute("aria-disabled"), "true");
-  assert.equal(screen.getAllByText("Yakında").length, 2);
+  assert.ok(!screen.queryByText("Küçük Grup"));
+  assert.ok(!screen.queryByText("Hocam Pro"));
+  assert.ok(!screen.queryByText("Planları karşılaştır"));
+  assert.ok(!screen.queryByText("Yakında"));
   assert.equal(document.querySelectorAll("svg.lucide").length, 0);
 
   const planButtons = screen.getAllByRole("button").filter((button) =>
     /Küçük Grup|Birebir Özel Ders|Hocam Pro/.test(button.getAttribute("aria-label") ?? button.textContent ?? "")
   );
-  assert.match(planButtons[0]?.textContent ?? "", /Küçük Grup/);
-  assert.match(planButtons[1]?.textContent ?? "", /Birebir Özel Ders/);
-  assert.match(planButtons[2]?.textContent ?? "", /Hocam Pro/);
+  assert.equal(planButtons.length, 1);
+  assert.match(planButtons[0]?.textContent ?? "", /Birebir Özel Ders/);
 });
 
 test("expands private package controls and benefits inside the selected plan", () => {
@@ -105,7 +104,6 @@ test("expands private package controls and benefits inside the selected plan", (
   assert.ok(trialButton.className.includes("hover:bg-[var(--checkout-control)]"));
   assert.ok(trialButton.className.includes("hover:text-[var(--checkout-on-control)]"));
 
-  assert.ok(screen.getByRole("button", { name: "Planları karşılaştır" }));
   for (const count of [2, 3, 4, 5, 6]) {
     assert.ok(screen.getByRole("button", { name: `${count} ders` }));
   }
@@ -114,14 +112,9 @@ test("expands private package controls and benefits inside the selected plan", (
 
 test("keeps the full comparison table inside a bounded scroll area", () => {
   render(
-    <CheckoutProductPicker
-      basePrice={1000}
-      weeklyPlans={plans}
-      lessonsPerWeek={2}
-      durationDays={90}
-      onLessonsPerWeekChange={() => {}}
-      onDurationDaysChange={() => {}}
-    />
+    <ComparePlansDialog>
+      <button type="button">Planları karşılaştır</button>
+    </ComparePlansDialog>
   );
 
   fireEvent.click(screen.getByRole("button", { name: "Planları karşılaştır" }));
@@ -129,24 +122,4 @@ test("keeps the full comparison table inside a bounded scroll area", () => {
   assert.ok(dialog.className.includes("flex"));
   assert.ok(dialog.className.includes("flex-col"));
   assert.ok(dialog.querySelector(".min-h-0.overflow-y-auto"));
-});
-
-test("uses the approved concise descriptions for future plans", () => {
-  render(
-    <CheckoutProductPicker
-      basePrice={1000}
-      weeklyPlans={plans}
-      lessonsPerWeek={2}
-      durationDays={90}
-      onLessonsPerWeekChange={() => {}}
-      onDurationDaysChange={() => {}}
-    />
-  );
-
-  assert.ok(screen.getByText("2–4 öğrenciyle, kişi başı daha avantajlı canlı dersler."));
-  assert.ok(
-    screen.getByText(
-      "Soru desteği, haftalık koçluk ve gelişim takibiyle güçlendirilmiş birebir plan."
-    )
-  );
 });
