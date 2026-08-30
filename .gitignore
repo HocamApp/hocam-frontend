@@ -14,3 +14,6 @@ tsconfig.tsbuildinfo
 
 # Raw local third-party design references (Udemy/Refero captures) — do not commit
 docs/design/product-home/references/
+
+# Impeccable writes a local hook cache next to the source it watches.
+.impeccable/

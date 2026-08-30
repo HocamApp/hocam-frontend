@@ -13,6 +13,18 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 const NOW = Date.UTC(2026, 7, 24);
 
 describe("homeEntryPromo", () => {
+  // The key is versioned so a redraw can retire the old dismissals. A visitor
+  // who closed the previous dialog decided about a different one.
+  it("reads a versioned key", () => {
+    assert.match(HOME_ENTRY_PROMO_KEY, /:v\d+$/);
+  });
+
+  it("ignores a dismissal stored under an older version", () => {
+    const storage = createMemoryStorage();
+    storage.setItem("hocam:home-entry-promo:v1", JSON.stringify({ dismissedAt: NOW }));
+    assert.equal(shouldShowEntryPromo(storage, NOW), true);
+  });
+
   it("shows on a first visit", () => {
     assert.equal(shouldShowEntryPromo(createMemoryStorage(), NOW), true);
   });

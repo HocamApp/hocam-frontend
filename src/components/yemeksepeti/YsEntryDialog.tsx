@@ -1,8 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
-import { GraduationCap, X } from "@phosphor-icons/react";
+import { X } from "@phosphor-icons/react";
 
 import {
   Dialog,
@@ -13,26 +14,37 @@ import {
 } from "@/components/ui/dialog";
 import { useAuth } from "@/hooks/useAuth";
 import { getLocalStorage } from "@/lib/safeStorage";
-import { markEntryPromoSeen, shouldShowEntryPromo } from "@/lib/homeEntryPromo";
+import {
+  HOME_ENTRY_PROMO_CONSENT_GRACE_MS,
+  HOME_ENTRY_PROMO_DWELL_MS,
+  HOME_ENTRY_PROMO_SCROLL_RATIO,
+  markEntryPromoSeen,
+  shouldShowEntryPromo,
+} from "@/lib/homeEntryPromo";
 
 import { MAX_PACKAGE_DISCOUNT_PERCENT, TRIAL_MINUTES } from "./ysHomeFacts";
 
 /**
  * The first-visit promo.
  *
- * Three things about it are load-bearing:
+ * Four things about it are load-bearing:
+ *
+ * **It opens on engagement, not on arrival.** See the constants in
+ * `homeEntryPromo.ts`: dwell, scroll depth or exit intent, whichever comes
+ * first. The old 700ms timer put it in front of a page the visitor had not
+ * seen yet, which leaves closing it as the only sensible response.
+ *
+ * **It defers to the consent card, but not forever.** `DiscoveryConsentBanner`
+ * is a legal choice and this is a marketing one, so the promo waits for it.
+ * The wait is capped: that card has no scrim, so a visitor can read the page
+ * without ever answering it, and an unbounded wait would mean the promo never
+ * appeared for them at all.
  *
  * **It reads no themed token.** Radix portals to `<body>`, outside `.ys-root`,
  * so the content inherits the `.dark` class the theme script may have set and
- * `--ys-*` does not resolve at all. Everything here is painted with literal
- * neutrals and the `--brand-*` ramp, which lives in `:root` and is not
- * overridden by `.dark`. A shadcn `Button` inside would silently drag
- * `--primary` back in, so the CTA is styled by hand.
- *
- * **The consent card out-ranks it.** `DiscoveryConsentBanner` sits at
- * `z-[120]`, above this dialog's 110, and shows for anonymous visitors. It is
- * a corner card rather than a modal, so the two do not fight for the middle —
- * but a legal choice stays clickable over a marketing one.
+ * `--ys-*` does not resolve at all. Everything here is painted with the design
+ * system's own tokens, which live in `:root`. A shadcn `Button` inside would
+ * silently drag `--primary` back in, so the CTA is styled by hand.
  *
  * **It reports when it is done.** The navbar coachmark fires at 900ms and would
  * otherwise live and die underneath this overlay; `onResolved` starts its
@@ -40,8 +52,8 @@ import { MAX_PACKAGE_DISCOUNT_PERCENT, TRIAL_MINUTES } from "./ysHomeFacts";
  * decides not to open at all.
  */
 
-/** Long enough for the page to paint first, short enough to still read as a greeting. */
-const OPEN_DELAY_MS = 700;
+/** The consent card, which out-ranks this one. */
+const CONSENT_CARD_SELECTOR = '[aria-label="Gizlilik tercihi"]';
 
 /**
  * Fired once this dialog has decided whether to open, so the navbar's coachmark
@@ -73,8 +85,69 @@ export function YsEntryDialog() {
       return;
     }
 
-    const timer = setTimeout(() => setOpen(true), OPEN_DELAY_MS);
-    return () => clearTimeout(timer);
+    let fired = false;
+    let consentWatcher: MutationObserver | null = null;
+    let consentGraceTimer: number | undefined;
+
+    const cleanUp = () => {
+      window.clearTimeout(dwellTimer);
+      window.clearTimeout(consentGraceTimer);
+      window.removeEventListener("scroll", onScroll);
+      document.removeEventListener("mouseout", onMouseOut);
+      consentWatcher?.disconnect();
+      consentWatcher = null;
+    };
+
+    const show = () => {
+      setOpen(true);
+      cleanUp();
+    };
+
+    /* Held back while the privacy card is on screen, and released the moment
+       it leaves. Watching the DOM rather than asking the consent API keeps
+       this dialog free of a second network call it would only use to decide
+       when to appear. */
+    const fire = () => {
+      if (fired) return;
+      fired = true;
+      window.clearTimeout(dwellTimer);
+      window.removeEventListener("scroll", onScroll);
+      document.removeEventListener("mouseout", onMouseOut);
+
+      if (!document.querySelector(CONSENT_CARD_SELECTOR)) {
+        show();
+        return;
+      }
+
+      consentWatcher = new MutationObserver(() => {
+        if (!document.querySelector(CONSENT_CARD_SELECTOR)) show();
+      });
+      consentWatcher.observe(document.body, { childList: true, subtree: true });
+      consentGraceTimer = window.setTimeout(show, HOME_ENTRY_PROMO_CONSENT_GRACE_MS);
+    };
+
+    const onScroll = () => {
+      const scrollable = document.documentElement.scrollHeight - window.innerHeight;
+      if (scrollable <= 0) return;
+      if (window.scrollY / scrollable >= HOME_ENTRY_PROMO_SCROLL_RATIO) fire();
+    };
+
+    /* Exit intent. `relatedTarget` is null when the pointer leaves the window
+       rather than moving to another element, and a negative clientY means it
+       left through the top, where the tab bar and the address bar are. */
+    const onMouseOut = (event: MouseEvent) => {
+      if (event.relatedTarget === null && event.clientY <= 0) fire();
+    };
+
+    const dwellTimer = window.setTimeout(fire, HOME_ENTRY_PROMO_DWELL_MS);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    // Coarse pointers have no exit gesture; the mobile imitations fire on a
+    // fast scroll up, which is just scrolling.
+    if (window.matchMedia("(pointer: fine)").matches) {
+      document.addEventListener("mouseout", onMouseOut);
+    }
+
+    return cleanUp;
   }, [isAuthenticated, resolve]);
 
   const dismiss = useCallback(() => {
@@ -97,58 +170,57 @@ export function YsEntryDialog() {
         data-ys-entry-promo
         showClose={false}
         overlayClassName="z-[110]"
-        className="z-[110] w-[calc(100dvw-1rem)] max-w-[calc(100dvw-1rem)] gap-0 overflow-hidden rounded-modal border-line bg-surface p-0 text-ink sm:max-w-[420px]"
+        className="z-[110] w-[calc(100dvw-1.5rem)] max-w-[calc(100dvw-1.5rem)] gap-0 overflow-hidden rounded-modal border-line bg-surface p-0 text-ink sm:max-w-[400px]"
       >
-        {/* One idea, one number, one button. The earlier draft explained the
-            whole trial policy here; nobody reads a paragraph in a promo, and
-            the detail already lives in the FAQ further down the page. */}
-        <div className="relative overflow-hidden bg-pink px-7 pb-8 pt-7 text-center text-white">
-          <GraduationCap
-            className="pointer-events-none absolute -left-4 -top-4 size-28 rotate-[-12deg] text-white/10"
-            aria-hidden
+        {/* The illustration is the panel's background, sitting on paper rather
+            than on white so it reads as a picture rather than as an image
+            dropped into the card. It is line art with a transparent ground,
+            and it stays black: the drawn families are not recoloured. */}
+        <div className="relative bg-paper">
+          <Image
+            src="/images/home/entry-promo-illustration.png"
+            alt=""
+            width={1200}
+            height={900}
+            priority={false}
+            className="h-auto w-full select-none"
           />
-          <p className="relative text-xs font-bold tracking-[0.22em] text-white/70">
-            HOCAM
-          </p>
-
-          <DialogTitle className="relative mt-4 text-[2.5rem] font-extrabold leading-[1.05] tracking-tight text-white">
-            İlk ders
-            <br />
-            ücretsiz
-          </DialogTitle>
-
-          <p className="relative mt-5 inline-flex items-baseline gap-2 rounded-pill bg-white px-5 py-2 text-pink">
-            <span className="text-3xl font-extrabold leading-none">
-              {TRIAL_MINUTES}
-            </span>
-            <span className="text-sm font-bold">dakika</span>
-          </p>
 
           <DialogClose
             aria-label="Kapat"
-            className="absolute right-3 top-3 inline-flex size-9 items-center justify-center rounded-full text-white/80 outline-none transition-colors hover:bg-white/15 hover:text-white focus-visible:ring-2 focus-visible:ring-white/70"
+            className="absolute right-3 top-3 inline-flex size-9 items-center justify-center rounded-pill bg-surface text-ink-mid outline-none transition-colors duration-[--duration-state] hover:bg-ink hover:text-paper focus-visible:ring-2 focus-visible:ring-ring"
           >
             <X className="size-4" />
           </DialogClose>
         </div>
 
-        <div className="bg-surface px-7 pb-6 pt-5 text-center">
-          <DialogDescription className="text-sm leading-6 text-ink-mid">
-            Seçtiğin hocayla tanış, ücret ödeme. Devam edersen paketlerde %
-            {MAX_PACKAGE_DISCOUNT_PERCENT}&apos;a varan avantaj.
+        <div className="border-t border-line px-7 pb-7 pt-6">
+          {/* Gold is the offer colour, and this is the offer. Solid fill with
+              --gold-ink on top, which is the only way gold carries text. */}
+          <p className="inline-flex items-center rounded-pill bg-gold px-3 py-1 text-label font-medium text-gold-ink">
+            {TRIAL_MINUTES} dakika ücretsiz
+          </p>
+
+          <DialogTitle className="mt-4 text-h2-m font-bold tracking-[-0.015em] text-ink">
+            İlk dersin bizden
+          </DialogTitle>
+
+          <DialogDescription className="mt-3 text-body leading-6 text-ink-mid">
+            Seçtiğin hocayla tanış, dersi beğenmezsen ücret ödeme. Devam edersen
+            paketlerde %{MAX_PACKAGE_DISCOUNT_PERCENT}&apos;a varan avantaj seni
+            bekliyor.
           </DialogDescription>
 
+          {/* One action. Declining is the X in the corner, plus Escape and the
+              scrim, which Radix already wires — a second "no" button underneath
+              the CTA only gave the offer a competitor. */}
           <Link
             href="/register"
             onClick={dismiss}
-            className="mt-5 flex h-12 w-full items-center justify-center rounded-pill bg-pink text-base font-bold text-white transition-colors duration-[--duration-state] hover:bg-pink-deep"
+            className="mt-6 flex h-12 w-full items-center justify-center rounded-pill bg-pink text-body font-semibold text-white transition-colors duration-[--duration-state] hover:bg-pink-deep"
           >
-            Hemen başla
+            Ücretsiz dersini ayarla
           </Link>
-
-          <DialogClose className="mt-3 text-sm text-ink-mid transition-colors duration-[--duration-state] hover:text-ink">
-            Şimdi değil
-          </DialogClose>
         </div>
       </DialogContent>
     </Dialog>
