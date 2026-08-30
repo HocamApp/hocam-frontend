@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Check } from "lucide-react";
+import { Check } from "@phosphor-icons/react";
 
 import { CoachingGuard } from "@/components/coaching/CoachingGuard";
 import { CoachingPageShell } from "@/components/coaching/CoachingPageShell";
@@ -97,11 +97,11 @@ function OnboardingContent() {
 
   if (state.is_completed) {
     return (
-      <Card>
+      <Card className="rounded-card border-line bg-surface shadow-none">
         <CardContent className="space-y-4 pt-6 text-center">
-          <Check className="mx-auto h-10 w-10 text-primary" aria-hidden="true" />
-          <h2 className="text-lg font-semibold">Koçluk tanıtımı tamamlandı</h2>
-          <p className="text-sm text-muted-foreground">
+          <Check className="mx-auto h-10 w-10 text-success" weight="bold" aria-hidden="true" />
+          <h2 className="text-xl font-bold text-ink">Koçluk tanıtımı tamamlandı</h2>
+          <p className="text-sm text-ink-mid">
             Artık koçluk teklifini oluşturabilir ve müsaitliğini belirleyebilirsin.
           </p>
           <Button onClick={() => router.push("/dashboard/tutor/coaching/plan?step=frequency")}>
@@ -127,10 +127,10 @@ function OnboardingContent() {
               key={step}
               aria-current={isCurrent ? "step" : undefined}
               className={cn(
-                "rounded-full border px-3 py-1 text-xs font-medium",
-                isCurrent && "border-primary bg-primary/5 text-primary",
-                isDone && "border-primary/40 text-muted-foreground",
-                !isCurrent && !isDone && "text-muted-foreground"
+                "rounded-pill border px-3 py-1.5 text-xs font-semibold",
+                isCurrent && "border-pink bg-pink text-white",
+                isDone && "border-success bg-success-soft text-success",
+                !isCurrent && !isDone && "border-line bg-surface text-ink-mid"
               )}
             >
               {index + 1}. {STEP_LABELS[step] ?? step}
@@ -155,7 +155,7 @@ function OnboardingContent() {
 
       {stepKey === "control_questions" ? (
         <section className="space-y-4">
-          <p className="text-sm text-muted-foreground">
+          <p className="max-w-[70ch] text-sm leading-6 text-ink-mid">
             Kısa bir hatırlatma turu: amaç puan vermek değil, hizmet düzenini birlikte netleştirmek. Yanıtını istediğin kadar düzeltebilirsin.
           </p>
           <OnboardingControlQuestions
@@ -171,7 +171,7 @@ function OnboardingContent() {
             Sözleşmeye geç
           </Button>
           {!state.all_control_questions_correct ? (
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-ink-mid">
               Devam etmek için bütün soruları doğru cevaplaman gerekiyor.
             </p>
           ) : null}
@@ -180,18 +180,18 @@ function OnboardingContent() {
 
       {stepKey === "contract" ? (
         <section className="space-y-4">
-          <Card>
+          <Card className="rounded-card border-line bg-surface shadow-none">
             <CardContent className="pt-6">
               <h2 className="text-lg font-semibold">
                 Koçluk sözleşmesi
                 {state.contract ? (
-                  <span className="ml-2 text-xs font-normal text-muted-foreground">
+                  <span className="ml-2 text-xs font-normal text-ink-mid">
                     v{state.contract.version}
                   </span>
                 ) : null}
               </h2>
-              <div className="mt-4 max-h-96 overflow-y-auto rounded-md border bg-muted/30 p-4">
-                <pre className="whitespace-pre-wrap font-sans text-xs leading-relaxed text-muted-foreground">
+              <div className="mt-4 max-h-96 overflow-y-auto rounded-input border border-line bg-paper p-4">
+                <pre className="whitespace-pre-wrap font-sans text-xs leading-relaxed text-ink-mid">
                   {state.contract?.text}
                 </pre>
               </div>
@@ -200,7 +200,7 @@ function OnboardingContent() {
 
           {state.has_accepted_current_contract ? (
             <div className="space-y-3">
-              <p className="flex items-center gap-2 text-sm text-primary">
+              <p className="flex items-center gap-2 text-sm font-semibold text-success">
                 <Check className="h-4 w-4" aria-hidden="true" />
                 Güncel sözleşmeyi kabul ettin.
               </p>
@@ -221,10 +221,10 @@ function OnboardingContent() {
 
       {stepKey === "plan" ? (
         <section className="space-y-4">
-          <Card>
+          <Card className="rounded-card border-line bg-surface shadow-none">
             <CardContent className="space-y-3 pt-6">
               <h2 className="text-lg font-semibold">Son adım</h2>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-ink-mid">
                 Tanıtımı tamamladığında koçluk teklifini oluşturabilir,
                 müsaitliğini ve kapasiteni belirleyebilirsin.
               </p>

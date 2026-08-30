@@ -1,13 +1,13 @@
 import Image from "next/image";
-import { Sparkles } from "lucide-react";
+import { BookOpenText } from "@phosphor-icons/react/ssr";
 
 interface TutorJourneyAsideProps {
-  eyebrow: string;
+  eyebrow?: string;
   title: string;
   description: string;
   progress: number;
   progressLabel: string;
-  fact: string;
+  fact?: string;
 }
 
 export function TutorJourneyAside({
@@ -19,42 +19,61 @@ export function TutorJourneyAside({
   fact,
 }: TutorJourneyAsideProps) {
   return (
-    <aside className="overflow-hidden rounded-3xl bg-gradient-to-br from-brand-600 via-brand-600 to-brand-700 text-white shadow-lg shadow-brand-600/10 lg:sticky lg:top-24">
-      <div className="relative isolate px-6 py-6 sm:px-8 lg:min-h-[760px] lg:py-8">
-        <div className="absolute -right-16 -top-20 h-48 w-48 rounded-full bg-white/10 blur-2xl" />
-        <div className="relative z-10">
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand-100">{eyebrow}</p>
-          <h2 className="mt-3 text-2xl font-bold leading-tight sm:text-3xl">{title}</h2>
-          <p className="mt-3 max-w-md text-sm leading-6 text-brand-50">{description}</p>
+    <aside className="self-start overflow-hidden rounded-modal border border-line bg-surface lg:sticky lg:top-[calc(var(--app-header-h)+24px)]">
+      <div className="bg-pink px-6 py-7 text-white sm:px-8">
+        {eyebrow && (
+          <p className="text-label font-medium text-white/80">{eyebrow}</p>
+        )}
+        <h2 className={`${eyebrow ? "mt-3" : ""} text-[1.75rem] font-bold leading-[1.12] tracking-[-0.02em] text-balance sm:text-[2rem]`}>
+          {title}
+        </h2>
+        <p className="mt-4 max-w-[36rem] text-body leading-[1.6] text-white/85 text-pretty">
+          {description}
+        </p>
+      </div>
 
-          <div className="mt-6 rounded-2xl border border-white/20 bg-white/10 p-4 backdrop-blur-sm">
-            <div className="flex items-center justify-between gap-3 text-sm">
-              <span className="font-medium">{progressLabel}</span>
-              <span className="font-bold">%{progress}</span>
-            </div>
-            <div className="mt-3 h-2 overflow-hidden rounded-full bg-black/15">
-              <div
-                className="h-full rounded-full bg-[#ffd51f] transition-[width] duration-500 ease-out"
-                style={{ width: `${progress}%` }}
-              />
-            </div>
+      <div className="space-y-5 p-6 sm:p-8">
+        <div>
+          <div className="flex items-center justify-between gap-3 text-small">
+            <span className="font-medium text-ink">{progressLabel}</span>
+            <span className="font-bold tabular-nums text-ink">%{progress}</span>
           </div>
-
-          <div className="mt-4 flex gap-3 rounded-2xl bg-surface p-4 text-slate-900 shadow-sm">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
-              <Sparkles className="h-4 w-4" />
-            </span>
-            <p className="text-sm leading-5">{fact}</p>
+          <div
+            role="progressbar"
+            aria-label="Profil ilerlemesi"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={progress}
+            className="mt-3 h-2 overflow-hidden rounded-pill bg-line"
+          >
+            <div
+              className="h-full rounded-pill bg-pink transition-[width] duration-[var(--duration-state)]"
+              style={{ width: `${progress}%` }}
+            />
           </div>
         </div>
 
+        {fact && (
+          <div className="flex gap-3 border-t border-line pt-5">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-pill bg-paper text-ink">
+              <BookOpenText aria-hidden="true" className="h-5 w-5" weight="regular" />
+            </span>
+            <p className="text-small leading-[1.6] text-ink-mid text-pretty">{fact}</p>
+          </div>
+        )}
+      </div>
+
+      <div className="relative min-h-64 overflow-hidden bg-gold px-6 pt-5 sm:min-h-72 sm:px-8">
+        <p className="relative z-10 max-w-[20rem] text-xl font-bold leading-[1.25] tracking-[-0.01em] text-gold-ink sm:text-2xl">
+          Her adım, öğrencinin seni daha doğru tanımasına yardım eder.
+        </p>
         <Image
-          src="/images/onboarding/hocam-corner-guide.webp"
-          alt="Panelin köşesinden adımları gösteren Hocam maskotu"
-          width={884}
-          height={888}
+          src="/images/onboarding/tutor-journey-guide.png"
+          alt="Öğretmen yolculuğunu anlatan çizim"
+          width={1200}
+          height={1200}
           priority
-          className="absolute bottom-0 right-0 z-0 hidden w-64 translate-x-6 translate-y-4 drop-shadow-2xl lg:block"
+          className="absolute -bottom-20 -right-12 w-72 opacity-90 mix-blend-multiply sm:w-80"
         />
       </div>
     </aside>

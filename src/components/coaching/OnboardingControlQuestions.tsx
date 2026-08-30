@@ -1,7 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { CheckCircle2, RotateCcw, ShieldCheck } from "lucide-react";
+import {
+  ArrowCounterClockwise,
+  CheckCircle,
+  ShieldCheck,
+} from "@phosphor-icons/react";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -22,10 +26,10 @@ export function OnboardingControlQuestions({
   const nextIndex = questions.findIndex((question) => answers[question.id]?.is_correct !== true);
   if (nextIndex < 0) {
     return (
-      <Card className="overflow-hidden rounded-[1.35rem] border-emerald-200 bg-emerald-50/70 shadow-none">
-        <CardContent className="flex items-center gap-4 p-5 text-sm text-emerald-950 sm:p-6">
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white/75"><CheckCircle2 aria-hidden className="h-5 w-5" /></span>
-          <div><p className="font-semibold">Hızlı kontrol tamamlandı.</p><p className="mt-1 text-emerald-900/80">Sözleşme adımına geçebilirsin.</p></div>
+      <Card className="overflow-hidden rounded-card border-success bg-success-soft shadow-none">
+        <CardContent className="flex items-center gap-4 p-5 text-sm text-ink sm:p-6">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-input bg-surface text-success"><CheckCircle aria-hidden className="h-5 w-5" weight="fill" /></span>
+          <div><p className="font-bold">Hızlı kontrol tamamlandı.</p><p className="mt-1 text-ink-mid">Sözleşme adımına geçebilirsin.</p></div>
         </CardContent>
       </Card>
     );
@@ -45,21 +49,21 @@ export function OnboardingControlQuestions({
   };
 
   return (
-    <Card className="overflow-hidden rounded-[1.35rem] border-foreground/15 shadow-sm">
+    <Card className="overflow-hidden rounded-card border-line bg-surface shadow-none">
       <CardContent className="p-0">
-        <div className="border-b bg-primary/[0.045] px-5 py-4 sm:px-6">
+        <div className="border-b border-line bg-paper px-5 py-4 sm:px-6">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-background text-primary"><ShieldCheck className="h-5 w-5" aria-hidden="true" /></span>
+              <span className="flex h-10 w-10 items-center justify-center rounded-input bg-gold text-gold-ink"><ShieldCheck className="h-5 w-5" aria-hidden="true" /></span>
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">Hızlı kontrol</p>
-                <p className="mt-1 text-sm text-muted-foreground">Kuralı doğru anladığından emin olalım.</p>
+                <p className="text-sm font-bold text-ink">Hızlı kontrol</p>
+                <p className="mt-1 text-sm text-ink-mid">Kuralı doğru anladığından emin olalım.</p>
               </div>
             </div>
             <span className="text-xs font-semibold tabular-nums">{activeIndex + 1} / {questions.length}</span>
           </div>
-          <div role="progressbar" aria-label="Hızlı kontrol ilerlemesi" aria-valuemin={0} aria-valuemax={questions.length} aria-valuenow={activeIndex + 1} className="mt-4 h-1.5 overflow-hidden rounded-full bg-background">
-            <div className="h-full rounded-full bg-primary transition-[width] motion-reduce:transition-none" style={{ width: `${((activeIndex + 1) / questions.length) * 100}%` }} />
+          <div role="progressbar" aria-label="Hızlı kontrol ilerlemesi" aria-valuemin={0} aria-valuemax={questions.length} aria-valuenow={activeIndex + 1} className="mt-4 h-1.5 overflow-hidden rounded-full bg-line">
+            <div className="h-full rounded-full bg-pink transition-[width] motion-reduce:transition-none" style={{ width: `${((activeIndex + 1) / questions.length) * 100}%` }} />
           </div>
         </div>
         <fieldset className="space-y-4 p-5 sm:p-6">
@@ -71,10 +75,10 @@ export function OnboardingControlQuestions({
                 <label
                   key={option.value}
                   className={cn(
-                    "flex min-h-14 cursor-pointer items-center gap-3 rounded-xl border p-3 text-sm transition-colors",
-                    selected && isCorrect && "border-emerald-600 bg-emerald-50 text-emerald-950",
-                    selected && isWrong && "border-amber-500 bg-amber-50 text-amber-950",
-                    !selected && "hover:bg-muted/50"
+                    "flex min-h-14 cursor-pointer items-center gap-3 rounded-input border border-line bg-surface p-3 text-sm text-ink transition-colors duration-state",
+                    selected && isCorrect && "border-success bg-success-soft",
+                    selected && isWrong && "border-error bg-paper text-error",
+                    !selected && "hover:bg-paper"
                   )}
                 >
                   <input
@@ -84,17 +88,17 @@ export function OnboardingControlQuestions({
                     checked={selected}
                     disabled={pendingQuestionId === question.id}
                     onChange={() => handleSelect(option.value)}
-                    className="h-4 w-4 accent-foreground"
+                    className="h-4 w-4 accent-pink"
                   />
                   <span>{option.label}</span>
-                  {selected && isCorrect ? <CheckCircle2 aria-label="Doğru" className="ml-auto h-4 w-4 text-emerald-700" /> : null}
+                  {selected && isCorrect ? <CheckCircle aria-label="Doğru" className="ml-auto h-4 w-4 text-success" weight="fill" /> : null}
                 </label>
               );
             })}
           </div>
           {isWrong ? (
-            <div className="flex gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-950" role="status">
-              <RotateCcw aria-hidden className="mt-1 h-4 w-4 shrink-0" />
+            <div className="flex gap-3 rounded-input border border-error bg-paper p-4 text-sm leading-6 text-error" role="status">
+              <ArrowCounterClockwise aria-hidden className="mt-1 h-4 w-4 shrink-0" />
               <p>{explanation || "İlgili açıklamayı yeniden gözden geçirip başka bir seçenek deneyebilirsin."}</p>
             </div>
           ) : null}

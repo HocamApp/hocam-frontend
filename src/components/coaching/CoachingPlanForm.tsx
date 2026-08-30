@@ -97,7 +97,7 @@ export function CoachingPlanForm({
   };
 
   return (
-    <div className="space-y-5 motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-right-2 motion-safe:duration-200">
+    <div className="space-y-6">
       {error ? <ErrorMessage message={error} /> : null}
 
       {currentStep === "frequency" ? (
@@ -107,7 +107,7 @@ export function CoachingPlanForm({
         >
           <fieldset>
             <legend className="sr-only">Görüşme düzeni</legend>
-            <div className="grid gap-3 lg:grid-cols-3">
+            <div className="grid gap-3 lg:grid-cols-[1.08fr_0.96fr_0.96fr]">
               {setupConfig.frequency_options.map((option) => {
                 const selected = frequency === option.value;
                 return (
@@ -117,21 +117,21 @@ export function CoachingPlanForm({
                     aria-pressed={selected}
                     onClick={() => setFrequency(option.value)}
                     className={cn(
-                      "relative rounded-2xl border-2 p-5 text-left transition-[border-color,background-color,box-shadow] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                      "relative rounded-card border p-5 text-left transition-colors duration-[var(--duration-state)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2",
                       selected
-                        ? "border-primary bg-primary/[0.055] shadow-[0_16px_40px_-34px_hsl(var(--primary)/0.7)]"
-                        : "border-border/70 bg-card hover:border-foreground/25 hover:bg-muted/20"
+                        ? "border-pink bg-surface"
+                        : "border-line bg-surface hover:border-ink"
                     )}
                   >
                     <span className="flex items-center justify-between gap-3">
                       <span className="block text-lg font-semibold">{option.label}</span>
                       {selected ? (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-primary px-2.5 py-1 text-[11px] font-semibold text-primary-foreground">
+                        <span className="inline-flex items-center gap-1 rounded-pill bg-pink px-2.5 py-1 text-[11px] font-semibold text-white">
                           <Check aria-hidden="true" className="h-3 w-3" />
                           Seçili düzen
                         </span>
                       ) : (
-                        <span aria-hidden="true" className="h-5 w-5 rounded-full border-2 border-border" />
+                        <span aria-hidden="true" className="h-5 w-5 rounded-pill border border-line" />
                       )}
                     </span>
                     <span className="mt-3 grid gap-1.5 text-xs text-muted-foreground">
@@ -156,12 +156,12 @@ export function CoachingPlanForm({
           title="Koçluk görüşme fiyatın"
           description="Koçluk, 40 dakikalık ders fiyatına bağlı bir ek hizmettir. Fiyat kuralı ve tavan sunucudaki güncel ayardan gelir."
         >
-          <div className="grid gap-3 sm:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-[0.9fr_0.9fr_1.2fr]">
             <PolicyValue label="40 dk ders fiyatın" value={formatTryMinor(setupConfig.lesson_price_minor)} />
             <PolicyValue label="Koçluk fiyat tavanı" value={`%${setupConfig.max_price_ratio_percent}`} />
             <PolicyValue label="Girebileceğin en yüksek fiyat" value={formatTryMinor(setupConfig.price_cap_minor)} />
           </div>
-          <div className="rounded-2xl border border-primary/15 bg-primary/[0.04] p-4 sm:p-5">
+          <div className="rounded-card border border-line bg-paper p-4 sm:p-5">
           <div className="max-w-sm">
             <Label htmlFor="coaching-price">Görüşme başına fiyat (₺)</Label>
             <Input
@@ -191,7 +191,7 @@ export function CoachingPlanForm({
         >
           <fieldset>
             <legend className="sr-only">Hedef sınav grupları</legend>
-            <div className="grid gap-3 md:grid-cols-3">
+            <div className="grid gap-3 md:grid-cols-[1.08fr_0.96fr_0.96fr]">
               {setupConfig.exam_groups.filter(isCoachingExamGroup).map((exam) => {
                 const selected = examTypes.includes(exam);
                 return (
@@ -202,19 +202,19 @@ export function CoachingPlanForm({
                     aria-pressed={selected}
                     onClick={() => toggleExamType(exam)}
                     className={cn(
-                      "relative min-h-40 rounded-2xl border-2 p-5 text-left transition-[border-color,background-color,box-shadow] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                      "relative min-h-40 rounded-card border p-5 text-left transition-colors duration-[var(--duration-state)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2",
                       selected
-                        ? "border-primary bg-primary/[0.055] shadow-[0_16px_40px_-34px_hsl(var(--primary)/0.7)]"
-                        : "border-border/70 bg-card hover:border-foreground/25 hover:bg-muted/20"
+                        ? "border-pink bg-surface"
+                        : "border-line bg-surface hover:border-ink"
                     )}
                   >
                     <span className="flex items-start justify-between gap-3">
-                      <span className="inline-flex h-10 w-10 items-center justify-center rounded-full border bg-background">
+                      <span className="inline-flex h-10 w-10 items-center justify-center rounded-pill border border-line bg-paper">
                         <Target aria-hidden="true" className="h-4 w-4" />
                       </span>
                       <span className={cn(
-                        "inline-flex h-7 items-center gap-1 rounded-full px-2.5 text-[11px] font-semibold",
-                        selected ? "bg-primary text-primary-foreground" : "border bg-background text-muted-foreground"
+                        "inline-flex h-7 items-center gap-1 rounded-pill px-2.5 text-[11px] font-semibold",
+                        selected ? "bg-pink text-white" : "border border-line bg-transparent text-ink-mid"
                       )}>
                         {selected ? <Check aria-hidden="true" className="h-3 w-3" /> : null}
                         {selected ? "Seçildi" : "Seç"}
@@ -238,7 +238,7 @@ export function CoachingPlanForm({
           description="Nasıl bir çalışma düzeni kurduğunu sade ve somut biçimde anlat. Bu alan isteğe bağlıdır."
         >
           <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_16rem]">
-          <div className="rounded-2xl border bg-background p-4 sm:p-5">
+          <div className="rounded-card border border-line bg-surface p-4 sm:p-5">
             <Label htmlFor="coaching-description">Kısa açıklama</Label>
             <Textarea
               id="coaching-description"
@@ -253,7 +253,7 @@ export function CoachingPlanForm({
               {description.length}/{DESCRIPTION_MAX}. Platform dışı iletişim, sınırsız destek veya sınav sonucu garantisi gibi vaatler kullanma.
             </p>
           </div>
-          <aside className="rounded-2xl border border-primary/15 bg-primary/[0.04] p-4 text-sm">
+          <aside className="rounded-card border border-line bg-paper p-4 text-sm">
             <p className="font-semibold">İyi bir açıklama ne söyler?</p>
             <ul className="mt-3 space-y-2 text-xs leading-5 text-muted-foreground">
               <li>· Nasıl bir çalışma düzeni kurduğunu</li>
@@ -311,11 +311,11 @@ export function CoachingPlanForm({
 
 function StepCard({ title, description, children }: { title: string; description: string; children: React.ReactNode }) {
   return (
-    <Card>
-      <CardContent className="space-y-6 p-5 sm:p-7">
+    <Card className="rounded-card border-line bg-surface shadow-none">
+      <CardContent className="space-y-6 p-5 sm:p-8">
         <div className="max-w-2xl">
-          <h2 className="text-2xl font-semibold tracking-[-0.03em]">{title}</h2>
-          <p className="mt-2 text-sm leading-6 text-muted-foreground">{description}</p>
+          <h2 className="text-[1.75rem] font-bold leading-[1.15] tracking-[-0.015em] text-ink text-balance">{title}</h2>
+          <p className="mt-3 text-body leading-[1.6] text-ink-mid text-pretty">{description}</p>
         </div>
         {children}
       </CardContent>

@@ -106,4 +106,22 @@ describe("CoachingPageShell", () => {
       /sm:p-8/,
     );
   });
+
+  it("uses the shared ink editorial header instead of a generic white card", () => {
+    render(
+      <CoachingPageShell
+        title="Koçluk teklifini hazırla"
+        description="Sekiz adımda ilerle."
+        parentHref="/dashboard/tutor/coaching"
+        parentLabel="Koçluk ana sayfası"
+      >
+        <p>Karar içeriği</p>
+      </CoachingPageShell>,
+    );
+
+    const header = screen.getByTestId("coaching-page-header");
+    assert.match(header.className, /bg-ink/);
+    assert.match(header.className, /dark:bg-\[var\(--ink-on-light\)\]/);
+    assert.doesNotMatch(header.className, /bg-surface/);
+  });
 });

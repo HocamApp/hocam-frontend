@@ -1,12 +1,13 @@
 import Link from "next/link";
 import {
   ArrowUpRight,
-  CircleCheck,
-  CircleDashed,
+  CheckCircle,
+  Circle,
   Info,
+  type Icon as PhosphorIcon,
   Radio,
-  UsersRound,
-} from "lucide-react";
+  UsersThree,
+} from "@phosphor-icons/react";
 
 import { Button } from "@/components/ui/button";
 import type { CoachingDerivedStatus } from "@/lib/coachingPresentation";
@@ -58,7 +59,7 @@ export function CoachingStatusCard({ status }: { status: CoachingDerivedStatus }
             </p>
             <div className="mt-3 flex items-center gap-3">
               <span className={cn("inline-flex h-11 w-11 items-center justify-center rounded-full border", ready ? "border-background/15 bg-background/10" : "border-primary/15 bg-background")}>
-                {ready ? <CircleCheck aria-hidden="true" className="h-5 w-5" /> : <CircleDashed aria-hidden="true" className="h-5 w-5" />}
+                {ready ? <CheckCircle aria-hidden="true" className="h-5 w-5" weight="fill" /> : <Circle aria-hidden="true" className="h-5 w-5" />}
               </span>
               <h2 className="text-2xl font-semibold tracking-[-0.035em] sm:text-3xl">
                 {ready ? "Koçluk düzenin hazır" : "Sıradaki adımı tamamla"}
@@ -81,8 +82,8 @@ export function CoachingStatusCard({ status }: { status: CoachingDerivedStatus }
 
           <dl className={cn("grid gap-px overflow-hidden rounded-2xl border sm:grid-cols-3 lg:grid-cols-1", ready ? "border-background/15 bg-background/10" : "border-border/70 bg-border/60")}>
             <StatusRow icon={Radio} label="Yayın" value={STATUS_LABELS.publication[status.publication]} ready={ready} />
-            <StatusRow icon={UsersRound} label="Öğrenci kabulü" value={STATUS_LABELS.intake[status.intake]} ready={ready} />
-            <StatusRow icon={CircleCheck} label="Kapasite" value={STATUS_LABELS.capacity[status.capacity]} ready={ready} />
+            <StatusRow icon={UsersThree} label="Öğrenci kabulü" value={STATUS_LABELS.intake[status.intake]} ready={ready} />
+            <StatusRow icon={CheckCircle} label="Kapasite" value={STATUS_LABELS.capacity[status.capacity]} ready={ready} />
           </dl>
         </div>
       </CoachingStudioPanel>
@@ -91,7 +92,7 @@ export function CoachingStatusCard({ status }: { status: CoachingDerivedStatus }
         <section
           role="region"
           aria-label="Platform durumu"
-          className="flex gap-3 rounded-2xl border border-sky-200/80 bg-sky-50/90 p-4 text-sm leading-6 text-sky-950 shadow-sm dark:border-sky-900 dark:bg-sky-950/30 dark:text-sky-100"
+          className="flex gap-3 rounded-card border border-line bg-surface p-4 text-sm leading-6 text-ink"
         >
           <Info aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0" />
           <div>
@@ -110,14 +111,14 @@ function StatusRow({
   value,
   ready,
 }: {
-  icon: typeof Info;
+  icon: PhosphorIcon;
   label: string;
   value: string;
   ready: boolean;
 }) {
   return (
-    <div className={cn("flex items-center justify-between gap-4 p-4", ready ? "bg-foreground/80" : "bg-card")}>
-      <dt className={cn("flex items-center gap-2 text-xs font-medium", ready ? "text-background/55" : "text-muted-foreground")}>
+    <div className={cn("flex items-center justify-between gap-4 p-4", ready ? "bg-ink" : "bg-surface")}>
+      <dt className={cn("flex items-center gap-2 text-xs font-medium", ready ? "text-white/60" : "text-ink-mid")}>
         <Icon aria-hidden="true" className="h-3.5 w-3.5" />
         {label}
       </dt>

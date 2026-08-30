@@ -164,7 +164,7 @@ export function CoachingSubnav({
                 href={href}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "inline-flex min-h-10 shrink-0 items-center gap-2 rounded-pill px-4 text-small font-medium transition-colors duration-[--duration-state] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2",
+                  "inline-flex min-h-10 shrink-0 items-center gap-2 rounded-pill px-4 text-small font-medium transition-colors duration-[var(--duration-state)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2",
                   active
                     ? "bg-ink text-paper"
                     : "text-ink-mid hover:bg-paper hover:text-ink",

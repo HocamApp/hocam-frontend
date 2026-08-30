@@ -4,7 +4,7 @@ import { Suspense, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ClipboardList } from "lucide-react";
+import { ClipboardText } from "@phosphor-icons/react";
 import { toast } from "sonner";
 
 import { CoachingAvailabilitySection } from "@/components/coaching/CoachingAvailabilitySection";
@@ -151,7 +151,7 @@ function PlanContent() {
   if (!onboardingQuery.data?.is_completed) {
     return (
       <CoachingEmptyState
-        icon={ClipboardList}
+        icon={ClipboardText}
         title="Önce kısa tanıtımı tamamla"
         description="Koçluk teklifini oluşturmadan önce hizmet düzenini gözden geçirmen, hızlı kontrol sorularını yanıtlaman ve sözleşmeyi kabul etmen gerekiyor."
         actions={
@@ -226,11 +226,11 @@ function PlanContent() {
         <div className="space-y-5">
           {error ? <ErrorMessage message={error} /> : null}
           <CoachingStatusCard status={status} />
-          <Card>
+          <Card className="rounded-card border-line bg-surface shadow-none">
             <CardContent className="space-y-4 p-5 sm:p-6">
               <div>
                 <h2 className="text-lg font-semibold">Yayın ve öğrenci kabulü</h2>
-                <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                <p className="mt-1 text-sm leading-6 text-ink-mid">
                   Teklifin yayında olması, öğrenci kabulünün açık olması, kapasite ve platform genelindeki satış durumu birbirinden bağımsızdır.
                 </p>
               </div>

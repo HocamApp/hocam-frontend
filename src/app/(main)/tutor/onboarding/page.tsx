@@ -4,13 +4,13 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Camera, CheckCircle2, Circle, Clock, PartyPopper } from "lucide-react";
+import { Camera, CheckCircle, Circle, Clock, Confetti } from "@phosphor-icons/react";
 import { useAuth } from "@/hooks/useAuth";
 import { fetchMyTutorProfile, uploadTutorProfilePicture } from "@/lib/tutorsApi";
 import { fetchVerification } from "@/lib/dashboardApi";
 import { VerificationForm } from "@/components/tutors/VerificationForm";
 import { RouteGuard } from "@/components/shared/RouteGuard";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -152,12 +152,11 @@ function TutorOnboardingContent() {
   ];
   const completeCount = steps.filter((step) => step.complete || step.waiting).length;
   const progress = Math.round((completeCount / steps.length) * 100);
-  const activeStep = steps.find((step) => step.active || step.waiting);
   const journeyCopy = !profileComplete
     ? {
         title: "Öğrencilerin seni tanıyacağı profili oluşturalım.",
         description: "Temel bilgilerini, verdiğin dersleri ve anlatım tarzını tek seferde ekle.",
-        fact: "Üniversite ve bölüm seçenekleri YÖK Atlas verileriyle desteklenir; listede yoksa kendi bilgini ekleyebilirsin.",
+        fact: undefined,
       }
     : !photoComplete
       ? {
@@ -174,7 +173,7 @@ function TutorOnboardingContent() {
         : !tutorialComplete
           ? {
               title: "Son kontrol: ders ekranını tanı.",
-              description: "Kısa rehber kamera, tahta, canlı soru ve ders bitirme araçlarını uygulamalı gösterir.",
+              description: "Kısa rehber kamera, ekran paylaşımı, tahta ve ders bitirme araçlarını uygulamalı gösterir.",
               fact: "Canlı ders eğitimi yaklaşık 5 dakika sürer ve kaldığın yerden devam edebilirsin.",
             }
           : !verificationApproved
@@ -190,54 +189,35 @@ function TutorOnboardingContent() {
               };
 
   return (
-    <div className="mx-auto grid max-w-6xl gap-6 px-4 py-8 lg:grid-cols-[minmax(0,1.65fr)_minmax(300px,0.75fr)] lg:items-start lg:py-10">
-      <Card className="overflow-hidden rounded-3xl border-brand-100 shadow-sm dark:border-brand-900">
-        <CardHeader>
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand-600 dark:text-brand-300">
-            {activeStep ? `Sıradaki: ${activeStep.title}` : "Profilin hazır"}
-          </p>
-          <CardTitle className="text-2xl sm:text-3xl">Hoca hesabını tamamla</CardTitle>
-          <CardDescription>
-            Her adım kısa ve nettir. Tamamladıkça ilerlemen anında güncellenir.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-8">
-          <div>
-            <div className="mb-2 flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">{completeCount}/{steps.length} adım tamamlandı</span>
-              <span className="font-semibold text-brand-700 dark:text-brand-200">%{progress}</span>
-            </div>
-            <div className="h-2.5 overflow-hidden rounded-full bg-brand-50 dark:bg-brand-900/40">
-              <div className="h-full rounded-full bg-brand-600 transition-[width] duration-500 ease-out dark:bg-brand-400" style={{ width: `${progress}%` }} />
-            </div>
-          </div>
-
+    <div className="mx-auto grid max-w-[1200px] gap-6 px-4 py-8 sm:px-6 lg:grid-cols-[minmax(0,7fr)_minmax(300px,5fr)] lg:items-start lg:py-12">
+      <Card className="overflow-hidden rounded-card border-line bg-surface shadow-none">
+        <CardContent className="space-y-8 p-6 sm:p-8">
           <ol className="space-y-3">
             {steps.map((step, index) => (
               <li
                 key={step.title}
                 className={cn(
-                  "rounded-2xl border px-4 py-3 transition-colors",
-                  step.active && "border-brand-300 bg-brand-50/70 dark:border-brand-700 dark:bg-brand-900/20",
-                  step.waiting && "border-amber-200 bg-amber-50/70 dark:border-amber-800 dark:bg-amber-950/20",
-                  step.complete && "border-emerald-100 bg-emerald-50/40 dark:border-emerald-900 dark:bg-emerald-950/10"
+                  "rounded-input border border-line bg-surface px-4 py-4 transition-colors duration-[var(--duration-state)]",
+                  step.active && "border-pink",
+                  step.waiting && "border-gold bg-gold text-gold-ink",
+                  step.complete && "border-success bg-success-soft"
                 )}
               >
                 <div className="flex gap-3">
                   {step.complete ? (
-                    <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-green-600" />
+                    <CheckCircle className="mt-0.5 h-5 w-5 shrink-0 text-success" weight="fill" />
                   ) : step.waiting ? (
-                    <Clock className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
+                    <Clock className="mt-0.5 h-5 w-5 shrink-0 text-gold-ink" />
                   ) : step.active ? (
-                    <Clock className="mt-0.5 h-5 w-5 shrink-0 text-brand-600 dark:text-brand-300" />
+                    <Clock className="mt-0.5 h-5 w-5 shrink-0 text-pink" />
                   ) : (
                     <Circle className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" />
                   )}
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-3">
                       <p className="font-medium">{index + 1}. {step.title}</p>
-                      {step.waiting && <span className="text-xs font-medium text-amber-700 dark:text-amber-300">İncelemede</span>}
-                      {step.complete && <span className="text-xs font-medium text-emerald-700 dark:text-emerald-300">Tamamlandı</span>}
+                      {step.waiting && <span className="text-xs font-medium text-gold-ink">İncelemede</span>}
+                      {step.complete && <span className="text-xs font-medium text-success">Tamamlandı</span>}
                     </div>
                     <p className="text-sm text-muted-foreground">{step.description}</p>
                   </div>
@@ -250,7 +230,7 @@ function TutorOnboardingContent() {
             <Button asChild className="h-12 w-full bg-brand-600 text-white hover:bg-brand-700 dark:bg-brand-500 dark:hover:bg-brand-400"><Link href="/tutor/setup">Profilini oluşturmaya başla</Link></Button>
           )}
           {profileComplete && !photoComplete && (
-            <div className="space-y-4 rounded-lg border p-5">
+            <div className="space-y-4 rounded-card border border-line bg-paper p-5">
               <div className="flex items-center gap-4">
                 <Avatar className="h-16 w-16">
                   <AvatarFallback className="bg-primary/10 text-lg font-semibold text-primary">
@@ -293,11 +273,11 @@ function TutorOnboardingContent() {
             </div>
           )}
           {profileComplete && photoComplete && verificationSubmitted && !tutorialComplete && (
-            <div className="flex flex-col gap-3 rounded-lg border p-5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-3 rounded-card border border-line bg-paper p-5 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="font-medium">Canlı ders eğitimini tamamla</p>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Ders ekranındaki araçları (kamera, tahta, canlı soru, ders bitirme)
+                  Ders ekranındaki araçları (kamera, ekran paylaşımı, tahta, ders bitirme)
                   kısa ve interaktif bir rehberle öğren. Bitirmeden hesabın öğrencilere açılmaz.
                 </p>
               </div>
@@ -307,8 +287,8 @@ function TutorOnboardingContent() {
             </div>
           )}
           {setupComplete && (
-            <div className="rounded-lg border border-green-200 bg-green-50 p-5 text-center dark:border-green-900/60 dark:bg-green-950/30">
-              <PartyPopper className="mx-auto mb-2 h-8 w-8 text-green-600" />
+            <div className="rounded-card border border-success bg-success-soft p-5 text-center">
+              <Confetti className="mx-auto mb-2 h-8 w-8 text-success" />
               <p className="font-semibold">Hoca hesabın tamamlandı</p>
               <p className="mt-1 text-sm text-muted-foreground">
                 Artık öğrenciler seni görebilir ve ders ayırtabilir.
@@ -318,7 +298,6 @@ function TutorOnboardingContent() {
         </CardContent>
       </Card>
       <TutorJourneyAside
-        eyebrow="Hocam hoca yolculuğu"
         title={journeyCopy.title}
         description={journeyCopy.description}
         progress={progress}

@@ -1,6 +1,6 @@
 "use client";
 
-import { Gauge, Users } from "lucide-react";
+import { Gauge, Users } from "@phosphor-icons/react";
 
 import { CoachingStudioPanel } from "@/components/coaching/CoachingStudioPanel";
 import type { CoachingCapacityDetail } from "@/lib/coachingApi";
@@ -25,22 +25,22 @@ export function CapacityPreviewCard({
     <CoachingStudioPanel className="overflow-hidden" role="region" aria-label="Koçluk kapasitesi">
       <div className="grid gap-6 p-5 sm:p-6 lg:grid-cols-[minmax(0,0.72fr)_minmax(28rem,1.28fr)]">
         <div>
-          <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+          <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-input bg-gold text-gold-ink">
             <Gauge className="h-5 w-5" aria-hidden="true" />
           </div>
-          <h2 className="text-lg font-semibold">Kapasite</h2>
-          <p className="mt-2 text-sm leading-6 text-muted-foreground">
+          <h2 className="text-xl font-bold text-ink">Kapasite</h2>
+          <p className="mt-2 text-sm leading-6 text-ink-mid">
             Sunucu, ayrı koçluk müsaitliğindeki 30 dakikalık saatleri seçtiğin görüşme düzenine göre kapasiteye çevirir.
           </p>
-          <div className="mt-5 inline-flex items-center gap-2 text-sm font-medium">
-            <span className={`h-2 w-2 rounded-full ${capacity.can_accept_new_student ? "bg-emerald-500" : "bg-muted-foreground"}`} />
+          <div className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-ink">
+            <span className={`h-2 w-2 rounded-full ${capacity.can_accept_new_student ? "bg-success" : "bg-ink-mid"}`} />
             {capacity.can_accept_new_student
               ? "Yeni öğrenci alınabilir"
               : "Yeni öğrenci alımı kapalı"}
           </div>
         </div>
 
-        <div className="space-y-5 rounded-[1.25rem] bg-muted/40 p-4 sm:p-5">
+        <div className="space-y-5 rounded-card border border-line bg-paper p-4 sm:p-5">
           <dl className="grid gap-3 sm:grid-cols-2">
             <CapacityValue value={`${capacity.weekly_slot_count} haftalık slot`} label="Müsaitliğinden oluşan" />
             <CapacityValue value={`${capacity.theoretical_capacity} öğrenci teorik sınırı`} label="Görüşme düzenine göre" />
@@ -50,16 +50,16 @@ export function CapacityPreviewCard({
 
           {capacity.theoretical_capacity > 0 ? (
             <div className="space-y-4" aria-label="Kapasite kullanımı">
-              <CapacityBar label="Seçili kapasite" percent={selectedPercent} className="bg-foreground" />
-              <CapacityBar label="Aktif öğrenci yükü" percent={activePercent} className="bg-primary" />
+              <CapacityBar label="Seçili kapasite" percent={selectedPercent} className="bg-ink" />
+              <CapacityBar label="Aktif öğrenci yükü" percent={activePercent} className="bg-pink" />
             </div>
           ) : null}
         </div>
       </div>
 
       {capacity.weekly_slot_count === 0 ? (
-        <div className="border-t border-border/70 bg-muted/25 px-5 py-4 sm:px-6">
-          <p className="flex items-start gap-2 text-sm text-muted-foreground">
+        <div className="border-t border-line bg-paper px-5 py-4 sm:px-6">
+          <p className="flex items-start gap-2 text-sm text-ink-mid">
             <Users className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
             Koçluk müsaitliğin yok, bu yüzden kullanılabilir koçluk slotun da
             yok. Koçluk saatlerin normal ders saatlerinden ayrıdır.
@@ -72,9 +72,9 @@ export function CapacityPreviewCard({
 
 function CapacityValue({ value, label }: { value: string; label: string }) {
   return (
-    <div className="rounded-xl border border-border/70 bg-background/75 p-3">
-      <dt className="text-xs text-muted-foreground">{label}</dt>
-      <dd className="mt-1 font-semibold tabular-nums">{value}</dd>
+    <div className="rounded-input border border-line bg-surface p-3">
+      <dt className="text-xs text-ink-mid">{label}</dt>
+      <dd className="mt-1 font-bold tabular-nums text-ink">{value}</dd>
     </div>
   );
 }
@@ -82,11 +82,11 @@ function CapacityValue({ value, label }: { value: string; label: string }) {
 function CapacityBar({ label, percent, className }: { label: string; percent: number; className: string }) {
   return (
     <div className="space-y-2">
-      <div className="flex justify-between text-xs text-muted-foreground">
+      <div className="flex justify-between text-xs text-ink-mid">
         <span>{label}</span>
         <span className="tabular-nums">%{percent}</span>
       </div>
-      <div className="h-2 overflow-hidden rounded-full bg-background">
+      <div className="h-2 overflow-hidden rounded-full bg-line">
         <div className={`h-full rounded-full ${className}`} style={{ width: `${percent}%` }} />
       </div>
     </div>
