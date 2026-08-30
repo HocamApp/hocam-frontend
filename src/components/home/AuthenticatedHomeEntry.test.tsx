@@ -71,9 +71,6 @@ before(async () => {
   mock.module("@/lib/paymentsApi", {
     namedExports: { fetchPackagePurchases: async () => [] },
   });
-  mock.module("@/lib/questionsApi", {
-    namedExports: { fetchQuestionMetadata: async () => ({ enabled: true }) },
-  });
   mock.module("@/lib/homeAnalytics", {
     namedExports: { trackHomeEvent: () => {} },
   });

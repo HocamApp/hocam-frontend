@@ -42,6 +42,13 @@ describe("student dashboard — DESIGN.md contract", () => {
     assert.equal(/group-hover:(?:translate|scale|rotate)/.test(source), false);
   });
 
+  it("keeps the pending-package icon legible on its fixed light surface in Night mode", () => {
+    assert.match(
+      source,
+      /rounded-input bg-ink text-white dark:bg-\[var\(--ink-on-light\)\]/,
+    );
+  });
+
   it("keeps every dashboard action and data-backed surface", () => {
     for (const behavior of [
       '<Link href="/profile/lessons?tab=upcoming">Dersi görüntüle</Link>',

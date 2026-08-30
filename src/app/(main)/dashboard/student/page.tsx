@@ -407,7 +407,7 @@ function CreditSummary({
     return (
       <section className="rounded-card border border-line bg-surface p-6">
         <div className="flex items-start gap-4">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-input bg-ink text-white"><Clock className="size-5" weight="regular" aria-hidden="true" /></span>
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-input bg-ink text-white dark:bg-[var(--ink-on-light)]"><Clock className="size-5" weight="regular" aria-hidden="true" /></span>
           <div>
             <p className="text-body font-medium text-ink">Paket talebin inceleniyor</p>
             <p className="mt-1 text-small text-ink-mid">Senden ek bir işlem beklenmiyor.</p>

@@ -3,7 +3,6 @@ import {
   ProfileMeResponse,
   ProfileStudent,
   StudentLearningProfileSummary,
-  StudentQuestionPerformance,
   UserPreferences,
 } from "@/types";
 
@@ -20,13 +19,6 @@ export async function fetchProfileMe(): Promise<ProfileMeResponse> {
 export async function fetchStudentLearningProfile(): Promise<StudentLearningProfileSummary> {
   const response = await api.get<StudentLearningProfileSummary>(
     "/profile/learning-summary/"
-  );
-  return response.data;
-}
-
-export async function fetchStudentQuestionPerformance(): Promise<StudentQuestionPerformance> {
-  const response = await api.get<StudentQuestionPerformance>(
-    "/profile/question-performance/"
   );
   return response.data;
 }

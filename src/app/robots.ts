@@ -11,7 +11,6 @@ export default function robots(): MetadataRoute.Robots {
         "/admin-control",
         "/ai",
         "/checkout",
-        "/cikmis-sorular",
         "/dashboard",
         "/forgot-password",
         "/hoca-bul",

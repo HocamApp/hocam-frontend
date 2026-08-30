@@ -3,7 +3,6 @@ import api from "./api";
 import {
   LessonRequest,
   Booking,
-  BookingQuestion,
   BusyInterval,
   LessonArtifact,
   LessonSessionState,
@@ -181,15 +180,6 @@ export async function fetchBookingArtifacts(
 ): Promise<LessonArtifact[]> {
   const response = await api.get<LessonArtifact[]>(
     `/bookings/${bookingId}/artifacts/`
-  );
-  return response.data;
-}
-
-export async function fetchBookingQuestions(
-  bookingId: string
-): Promise<BookingQuestion[]> {
-  const response = await api.get<BookingQuestion[]>(
-    `/bookings/${bookingId}/questions/`
   );
   return response.data;
 }

@@ -827,104 +827,6 @@ export interface LessonArtifact {
   created_at: string;
 }
 
-export interface SolvableQuestion {
-  id: string;
-  exam_type: "TYT" | "AYT" | "YDT";
-  exam_year: number;
-  subject: Subject | null;
-  topic: {
-    id: string;
-    title: string;
-    exam_type: string;
-    subject_name: string;
-  } | null;
-  source_book: string;
-  original_question_number: string;
-  prompt: string;
-  choices: Array<{ key: string; text?: string; image_url?: string }>;
-  question_image_url: string;
-  difficulty: "easy" | "medium" | "hard";
-  attribution: string;
-  source_url: string;
-}
-
-export interface QuestionAttemptResult {
-  attempt_id: string;
-  selected_choice: string;
-  is_correct: boolean | null;
-  correct_choice: string;
-  answer: string;
-  solution_url: string;
-  needs_review: boolean;
-}
-
-export interface QuestionMetadata {
-  enabled: boolean;
-  mebi_enabled: boolean;
-  exam_types: Array<"TYT" | "AYT" | "YDT">;
-  years: number[];
-  difficulties: Array<{ value: "easy" | "medium" | "hard"; label: string }>;
-  subjects: Subject[];
-  topics: Array<{
-    id: string;
-    title: string;
-    exam_type: string;
-    subject_name: string;
-  }>;
-}
-
-export interface LessonQuestionState {
-  active_question: SolvableQuestion | null;
-  /** Whether the student may see the correct choice (not the detailed solution). */
-  answer_revealed_to_student: boolean;
-  /** @deprecated Backend alias that mirrors `answer_revealed_to_student`. */
-  solution_revealed: boolean;
-  /** Correct choice — only populated for the student once revealed. */
-  correct_choice: string;
-  /** Last answer the student consciously submitted for the active question. */
-  student_answer: string;
-  student_answer_at: string | null;
-  version: number;
-  updated_at: string | null;
-  // Teacher-only fields — present exclusively in the tutor's payload, absent
-  // from the student's response entirely (see backend role-based serializer).
-  teacher_correct_choice?: string;
-  teacher_answer?: string;
-  teacher_explanation?: string;
-  teacher_solution_url?: string;
-}
-
-export interface QuestionFilters {
-  exam_type?: string;
-  year?: string;
-  subject?: string;
-  topic?: string;
-  difficulty?: string;
-  page?: number;
-  page_size?: number;
-}
-
-export interface LessonQuestionStateUpdate {
-  question_id?: string | null;
-  answer_revealed_to_student?: boolean;
-  /** @deprecated Alias of `answer_revealed_to_student`. */
-  solution_revealed?: boolean;
-}
-
-export interface LessonQuestionAnswerInput {
-  selected_choice: string;
-  question_id: string;
-  version: number;
-}
-
-export interface BookingQuestion {
-  id: string;
-  booking: string;
-  question: SolvableQuestion;
-  order: number;
-  created_at: string;
-}
-
 export interface Conversation {
   id: string;
   lesson_request: string;
@@ -1342,22 +1244,6 @@ export interface StudentLearningProfileSummary {
   active_packages: number;
   most_studied_tutor: MostStudiedTutor | null;
   top_subjects: LearningProfileSubject[];
-}
-
-export interface QuestionPerformanceSubject {
-  id: string;
-  name: string;
-  exam_type: string;
-  attempt_count: number;
-  accuracy_percent: number;
-}
-
-export interface StudentQuestionPerformance {
-  total_attempts: number;
-  correct_attempts: number;
-  incorrect_attempts: number;
-  accuracy_percent: number | null;
-  top_subject: QuestionPerformanceSubject | null;
 }
 
 export type ParticipantRole = "tutor" | "student";
