@@ -172,10 +172,9 @@ export function YsEntryDialog() {
         overlayClassName="z-[110]"
         className="z-[110] w-[calc(100dvw-1.5rem)] max-w-[calc(100dvw-1.5rem)] gap-0 overflow-hidden rounded-modal border-line bg-surface p-0 text-ink sm:max-w-[400px]"
       >
-        {/* The illustration is the panel's background, sitting on paper rather
-            than on white so it reads as a picture rather than as an image
-            dropped into the card. It is line art with a transparent ground,
-            and it stays black: the drawn families are not recoloured. */}
+        {/* The illustration is transparent line art. Its black strokes stay
+            untouched in light mode and invert in dark mode so they retain
+            enough contrast against the themed paper surface. */}
         <div className="relative bg-paper">
           <Image
             src="/images/home/entry-promo-illustration.png"
@@ -183,7 +182,7 @@ export function YsEntryDialog() {
             width={1200}
             height={900}
             priority={false}
-            className="h-auto w-full select-none"
+            className="h-auto w-full select-none dark:invert"
           />
 
           <DialogClose

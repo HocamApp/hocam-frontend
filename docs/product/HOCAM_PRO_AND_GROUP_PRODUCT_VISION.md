@@ -1,7 +1,7 @@
 # Hocam Pro ve Küçük Grup ürün vizyonu
 
 > **Durum:** Product vision — implementation deferred  
-> **Son güncelleme:** 1 Ağustos 2026
+> **Son güncelleme:** 29 Ağustos 2026
 
 ## 1. Yönetici özeti ve ürün ailesi
 
@@ -11,7 +11,11 @@ Hocam ürün ailesi üç öğrenme biçimini aynı çatı altında sunmayı hede
 2. **Küçük Grup:** Aynı hocayla 2–4 öğrencinin ortak programda çalışacağı gelecek ürün.
 3. **Hocam Pro:** Birebir dersi soru desteği, koçluk ve gelişim takibiyle genişletecek gelecek ürün.
 
-Checkout yalnız Birebir Özel Ders için satın alınabilir fiyat ve paket talebi gösterir. Küçük Grup ve Hocam Pro, ürün yönünü anlatmak için görünür fakat `Yakında` ve seçilemez durumdadır.
+Checkout yalnız Birebir Özel Ders için satın alınabilir fiyat ve paket talebi gösterir. Küçük Grup ve Hocam Pro lansmana kadar kullanıcı arayüzünde tamamen gizlidir; `Yakında` etiketi, plan kartları ve karşılaştırma girişi gösterilmez.
+
+### Geçici görünürlük kararı
+
+Küçük Grup, Hocam Pro ve plan karşılaştırma mekanikleri kod tabanında korunur; silinmez veya ürün kapsamından çıkarılmaz. Checkout görünürlüğü `src/components/checkout/CheckoutProductPicker.tsx` içindeki `FUTURE_CHECKOUT_PLANS_VISIBLE` kararıyla kapalıdır. Ürünlerden biri gerçekten kullanıma açılmadan bu karar değiştirilmez ve arayüzde ön duyuru yapılmaz. Açılış sırasında planların fiyat, kapasite, güvenlik ve operasyon koşulları yeniden doğrulanmalı; ardından görünürlük kontrollü olarak etkinleştirilmelidir.
 
 ## 2. Aktif Birebir ürün
 
@@ -160,11 +164,12 @@ Sonraki fazlar ayrı ürün, finans, güvenlik, backend, frontend ve operasyon p
 
 ## 20. Karar günlüğü
 
-- 1 Ağustos 2026: Birebir aktif; Küçük Grup ve Hocam Pro görünür fakat seçilemez `Yakında` planlarıdır.
+- 1 Ağustos 2026: Birebir aktif; Küçük Grup ve Hocam Pro görünür fakat seçilemez `Yakında` planları olarak tasarlandı.
 - 1 Ağustos 2026: Gelecek özellikler aktif checkmark yerine `Planlanan` olarak gösterilir.
 - 1 Ağustos 2026: Küçük Grup 2–4 öğrencidir.
 - 1 Ağustos 2026: Karma süreli grup üyeliği reddedildi; ortak süre, sıklık ve program zorunludur.
 - 1 Ağustos 2026: Pro talep avantajı kabul garantisi değil, öncelikli değerlendirmedir.
+- 29 Ağustos 2026: Ön duyurudan vazgeçildi. Küçük Grup, Hocam Pro ve plan karşılaştırma girişi lansmana kadar tamamen gizlenecek; mevcut mekanikler kodda korunacaktır.
 
 ## 21. Uygulanmayacak veya reddedilen fikirler
 

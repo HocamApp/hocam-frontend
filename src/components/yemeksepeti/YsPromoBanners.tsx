@@ -56,7 +56,7 @@ export function YsFavouritesBanner() {
         </div>
 
         <div className="flex min-w-0 flex-col items-start justify-center">
-          <h2 className="text-lg font-bold leading-snug text-ink">
+          <h2 className="text-lg font-bold leading-snug text-ink dark:text-[var(--ink-on-light)]">
             Favori hocalarının listesini oluştur
           </h2>
 

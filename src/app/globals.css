@@ -81,6 +81,12 @@
     --paper: #fbf6f6;
     --ink: #02171a;
     --ink-mid: #5c6b6d;
+    /* Fixed light campaign surfaces (pink-pale, white, and ink hero cards)
+       must keep their original foreground pairing when the surrounding app
+       switches to Night mode. These tokens intentionally stay outside the
+       theme override below. */
+    --ink-on-light: #02171a;
+    --ink-mid-on-light: #5c6b6d;
     --line: #e6dddd;
     /* The in-flow card surface, as a token rather than Tailwind's literal
        `bg-white`. DESIGN.md separates surfaces by value plus a hairline, and a
@@ -164,6 +170,11 @@
        over warm off-white reads as dirt. */
     --shadow-float: 0 8px 24px rgb(2 23 26 / 10%), 0 1px 3px rgb(2 23 26 / 6%);
     --duration-state: 120ms;
+    /* Tutorial spotlight dims with translucent ink. A paper-coloured veil
+       bleaches the simulated lesson and destroys the very context the
+       walkthrough is meant to teach. */
+    --tutorial-overlay: rgb(2 23 26 / 34%);
+    --tutorial-spotlight-ring: var(--ink);
   }
 
   /* The header is taller from `md` up. Kept in a media query rather than a
@@ -218,6 +229,7 @@
     --ink-mid: #9baaac;
     /* --success at 14% over the dark surface, same construction as light. */
     --success-soft: #17332b;
+    --tutorial-overlay: rgb(2 8 10 / 46%);
 
     --background: 192 25% 8%;
     --foreground: 0 14% 91%;

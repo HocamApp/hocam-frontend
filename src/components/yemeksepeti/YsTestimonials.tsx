@@ -112,8 +112,8 @@ export function YsTestimonials() {
   return (
     <section className="mt-16 overflow-hidden rounded-card bg-pink-pale py-16 md:mt-24 md:py-24">
       <div className="mx-auto max-w-2xl space-y-2 px-4 text-center">
-        <h2 className="text-3xl font-bold tracking-tight text-ink">Hocalar ve Öğrencilerden</h2>
-        <p className="text-base text-ink-mid">
+        <h2 className="text-3xl font-bold tracking-tight text-ink dark:text-[var(--ink-on-light)]">Hocalar ve Öğrencilerden</h2>
+        <p className="text-base text-ink-mid dark:text-[var(--ink-mid-on-light)]">
           Hocam&apos;da ders veren hocalar ve ders alan öğrenciler, kendi deneyimlerini
           anlatıyor.
         </p>
