@@ -37,7 +37,6 @@ import { resolveProfileImageUrl } from "@/lib/profileImages";
 import { buildTutorSubjectLabels } from "@/lib/tutorSubjectLabels";
 import { formatLessonCount, formatPrice, formatRating } from "@/lib/utils";
 import { ReviewCard } from "@/components/tutors/ReviewCard";
-import { ReviewSummary } from "@/components/tutors/ReviewSummary";
 import { TutorPresenceBadge } from "@/components/tutors/TutorPresenceBadge";
 import { AvailabilityCalendar } from "@/components/tutors/AvailabilityCalendar";
 import { TutorCoachingSection } from "@/components/tutors/TutorCoachingSection";
@@ -685,21 +684,10 @@ export default function TutorProfilePage({
                     lastSeenAt={tutor.last_seen_at}
                   />
                 </div>
-                {tutor.total_reviews > 0 && (
-                  <div className="mt-2 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-sm">
-                    <RatingSummaryPopover
-                      rating={tutor.rating}
-                      totalReviews={tutor.total_reviews}
-                      subjectRatings={subjectRatings}
-                    />
-                    <span className="text-ink-mid">
-                      ({tutor.total_reviews} değerlendirme)
-                    </span>
-                    <span className="text-ink-mid">·</span>
-                    <span className="text-ink-mid">
-                      {completedLessonsLabel}
-                    </span>
-                  </div>
+                {(tutor.completed_lessons_count ?? 0) > 0 && (
+                  <p className="mt-2 text-sm text-ink-mid">
+                    {completedLessonsLabel}
+                  </p>
                 )}
                 {/* The rank is the achievement the whole product is built on, so
                   it takes the gold surface here as it does on the tutor card,
@@ -734,7 +722,7 @@ export default function TutorProfilePage({
             ref={bookingRailRef}
             className="mt-8 scroll-mt-24 lg:col-start-2 lg:row-start-1 lg:row-end-3 lg:mt-0"
           >
-            <Card className="lg:sticky lg:top-24">
+            <Card className="lg:sticky lg:top-[calc(var(--app-header-h)+2rem)]">
               <CardContent className="pt-6 space-y-4">
                 {/* Price + lesson duration */}
                 <div>
@@ -1165,14 +1153,6 @@ export default function TutorProfilePage({
                 )}
                 {!reviewsLoading && reviews.length > 0 && (
                   <>
-                    {reviewSummary && (
-                      <div className="mb-6">
-                        {/* Per-subject scores live in the header rating popover
-                          only — rendering them again here duplicated the same
-                          information further down the same page. */}
-                        <ReviewSummary summary={reviewSummary} />
-                      </div>
-                    )}
                     <div className="space-y-3">
                       {reviews.map((review) => (
                         <ReviewCard key={review.id} review={review} />

@@ -2,15 +2,10 @@
 
 import { Review } from "@/types";
 import { formatDate, formatRating, formatRelativeDate } from "@/lib/utils";
-import { REVIEW_CRITERIA } from "@/lib/reviewCriteria";
 import { Card, CardContent } from "@/components/ui/card";
 import { RatingStars } from "@/components/tutors/RatingStars";
 
 export function ReviewCard({ review }: { review: Review }) {
-  const hasCriteria = REVIEW_CRITERIA.every(
-    ({ field }) => typeof review[field] === "number" && review[field] >= 1
-  );
-
   return (
     <Card>
       <CardContent className="pt-4">
@@ -37,14 +32,6 @@ export function ReviewCard({ review }: { review: Review }) {
           )}
         </div>
         {review.comment && <p className="mt-2 text-body">{review.comment}</p>}
-        {hasCriteria && (
-          <p className="mt-3 text-small text-ink-mid">
-            {REVIEW_CRITERIA.map(
-              ({ field, shortLabel }) =>
-                `${shortLabel} ${formatRating(review[field])}`
-            ).join(" · ")}
-          </p>
-        )}
       </CardContent>
     </Card>
   );
