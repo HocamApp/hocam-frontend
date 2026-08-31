@@ -465,10 +465,10 @@ export function CheckoutSummary({
         <p className="mt-1 opacity-70">
           Paket yalnız {tutor.name} {tutor.surname} ile geçerlidir.{" "}
           <Link
-            href="/support#odeme-ve-iade"
+            href="/iptal-ve-iade"
             className="font-semibold underline underline-offset-2 hover:text-[var(--checkout-control)]"
           >
-            İade politikası
+            İptal ve iade koşulları
           </Link>
         </p>
       </div>
