@@ -3,6 +3,7 @@
 import { YsEntryDialog } from "./YsEntryDialog";
 import { YsHeroIntro } from "./YsHeroIntro";
 import { YsHomeFaq } from "./YsHomeFaq";
+import { YsHowItWorks } from "./YsHowItWorks";
 import { YsTestimonials } from "./YsTestimonials";
 import { YsTutorDirectory } from "./YsTutorDirectory";
 import { YsUniversityStrip } from "./YsUniversityStrip";
@@ -34,7 +35,9 @@ export function YemeksepetiHome() {
         {/* Directly under the band: the band makes the claim, these logos
               are the evidence for it. */}
         <YsUniversityStrip />
-        {/* Then proof, then the objections the FAQ answers. */}
+        <YsHowItWorks />
+        {/* The journey explains the product, then social proof and the FAQ
+              answer whether that product is worth trying. */}
         <YsTestimonials />
         <YsHomeFaq />
       </div>
