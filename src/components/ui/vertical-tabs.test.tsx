@@ -100,6 +100,19 @@ function activeTab() {
   return screen.getAllByRole("tab").find((tab) => tab.getAttribute("aria-selected") === "true");
 }
 
+function progressBar() {
+  const progress = document.querySelector<HTMLElement>(".vertical-tabs-progress");
+  assert.ok(progress);
+  return progress;
+}
+
+function completeProgress() {
+  fireEvent(
+    progressBar(),
+    new window.Event("webkitAnimationEnd", { bubbles: true }),
+  );
+}
+
 function observerEntry(
   target: Element,
   isIntersecting: boolean,
@@ -167,77 +180,68 @@ describe("VerticalTabs", () => {
 
     act(() => fireEvent.keyDown(tabs[0], { key: "ArrowUp" }));
     assert.equal(activeTab(), tabs[2]);
-    assert.equal(screen.getByRole("tabpanel").firstElementChild?.getAttribute("data-direction"), "backward");
+    assert.equal(screen.getByRole("tabpanel").querySelector("[data-direction]")?.getAttribute("data-direction"), "backward");
 
     act(() => fireEvent.keyDown(tabs[2], { key: "ArrowDown" }));
     assert.equal(activeTab(), tabs[0]);
-    assert.equal(screen.getByRole("tabpanel").firstElementChild?.getAttribute("data-direction"), "forward");
+    assert.equal(screen.getByRole("tabpanel").querySelector("[data-direction]")?.getAttribute("data-direction"), "forward");
   });
 
-  it("advances on the autoplay interval and wraps to the first item", (context) => {
-    context.mock.timers.enable({ apis: ["setInterval"] });
+  it("uses the progress completion as the single autoplay clock and wraps", () => {
     renderTabs();
 
-    act(() => context.mock.timers.tick(1_000));
+    act(() => completeProgress());
     assert.equal(activeTab()?.textContent?.includes("İkinci adım"), true);
 
-    act(() => context.mock.timers.tick(2_000));
-    assert.equal(activeTab()?.textContent?.includes("Birinci adım"), true);
-    act(() => cleanup());
-  });
-
-  it("restarts a full autoplay interval after a manual selection", (context) => {
-    context.mock.timers.enable({ apis: ["setInterval"] });
-    renderTabs();
-
-    act(() => context.mock.timers.tick(800));
-    act(() => fireEvent.click(screen.getByRole("tab", { name: /İkinci adım/ })));
-    act(() => context.mock.timers.tick(800));
-    assert.equal(activeTab()?.textContent?.includes("İkinci adım"), true);
-
-    act(() => context.mock.timers.tick(200));
+    act(() => completeProgress());
     assert.equal(activeTab()?.textContent?.includes("Üçüncü adım"), true);
-    act(() => cleanup());
-  });
 
-  it("restarts autoplay when the active tab is selected again", (context) => {
-    context.mock.timers.enable({ apis: ["setInterval"] });
-    renderTabs();
-
-    act(() => context.mock.timers.tick(800));
-    act(() => fireEvent.click(screen.getByRole("tab", { name: /Birinci adım/ })));
-    act(() => context.mock.timers.tick(800));
+    act(() => completeProgress());
     assert.equal(activeTab()?.textContent?.includes("Birinci adım"), true);
-
-    act(() => context.mock.timers.tick(200));
-    assert.equal(activeTab()?.textContent?.includes("İkinci adım"), true);
-    act(() => cleanup());
   });
 
-  it("pauses autoplay while hovered or keyboard focus is inside", (context) => {
-    context.mock.timers.enable({ apis: ["setInterval"] });
+  it("restarts the progress clock after a manual selection", () => {
+    renderTabs();
+    const firstProgress = progressBar();
+
+    act(() => fireEvent.click(screen.getByRole("tab", { name: /İkinci adım/ })));
+    const restartedProgress = progressBar();
+
+    assert.notEqual(restartedProgress, firstProgress);
+    assert.equal(restartedProgress.style.getPropertyValue("--vertical-tabs-duration"), "1000ms");
+    assert.equal(activeTab()?.textContent?.includes("İkinci adım"), true);
+
+    act(() => completeProgress());
+    assert.equal(activeTab()?.textContent?.includes("Üçüncü adım"), true);
+  });
+
+  it("restarts progress when the active tab is selected again", () => {
+    renderTabs();
+    const firstProgress = progressBar();
+
+    act(() => fireEvent.click(screen.getByRole("tab", { name: /Birinci adım/ })));
+    const restartedProgress = progressBar();
+
+    assert.notEqual(restartedProgress, firstProgress);
+    act(() => completeProgress());
+    assert.equal(activeTab()?.textContent?.includes("İkinci adım"), true);
+  });
+
+  it("keeps progress running while hovered or a clicked tab retains focus", () => {
     renderTabs();
     const region = screen.getByRole("region", { name: "Nasıl işler" });
 
     act(() => fireEvent.mouseEnter(region));
-    const pausedProgress = region.querySelector<HTMLElement>(".vertical-tabs-progress");
-    assert.ok(pausedProgress);
-    assert.equal(pausedProgress.style.animationPlayState, "paused");
-    act(() => context.mock.timers.tick(2_000));
-    assert.equal(activeTab()?.textContent?.includes("Birinci adım"), true);
+    assert.equal(progressBar().style.animationPlayState, "running");
 
-    act(() => fireEvent.mouseLeave(region));
-    act(() => context.mock.timers.tick(1_000));
-    assert.equal(activeTab()?.textContent?.includes("İkinci adım"), true);
+    act(() => screen.getByRole("tab", { name: /Birinci adım/ }).focus());
+    assert.equal(progressBar().style.animationPlayState, "running");
 
-    act(() => fireEvent.focusIn(region));
-    act(() => context.mock.timers.tick(2_000));
+    act(() => completeProgress());
     assert.equal(activeTab()?.textContent?.includes("İkinci adım"), true);
-    act(() => cleanup());
   });
 
-  it("pauses autoplay while off-screen or the document is hidden", (context) => {
-    context.mock.timers.enable({ apis: ["setInterval"] });
+  it("pauses the progress clock while off-screen or the document is hidden", () => {
     renderTabs();
     const region = screen.getByRole("region", { name: "Nasıl işler" });
 
@@ -247,7 +251,8 @@ describe("VerticalTabs", () => {
         {} as IntersectionObserver,
       );
     });
-    act(() => context.mock.timers.tick(2_000));
+    assert.equal(progressBar().style.animationPlayState, "paused");
+    act(() => completeProgress());
     assert.equal(activeTab()?.textContent?.includes("Birinci adım"), true);
 
     act(() => {
@@ -258,21 +263,19 @@ describe("VerticalTabs", () => {
     });
     documentHidden = true;
     act(() => fireEvent(document, new window.Event("visibilitychange")));
-    act(() => context.mock.timers.tick(2_000));
+    assert.equal(progressBar().style.animationPlayState, "paused");
+    act(() => completeProgress());
     assert.equal(activeTab()?.textContent?.includes("Birinci adım"), true);
-    act(() => cleanup());
   });
 
-  it("disables autoplay when reduced motion is requested", (context) => {
-    context.mock.timers.enable({ apis: ["setInterval"] });
+  it("disables autoplay when reduced motion is requested", () => {
     reduceMotion = true;
     renderTabs();
 
-    act(() => context.mock.timers.tick(5_000));
+    act(() => completeProgress());
     assert.equal(activeTab()?.textContent?.includes("Birinci adım"), true);
 
     act(() => fireEvent.click(screen.getByRole("tab", { name: /İkinci adım/ })));
     assert.ok(within(screen.getByRole("tabpanel")).getByRole("img", { name: "İkinci ekran" }));
-    act(() => cleanup());
   });
 });

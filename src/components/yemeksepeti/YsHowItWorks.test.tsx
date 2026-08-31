@@ -105,4 +105,13 @@ describe("YsHowItWorks", () => {
       assert.ok(image.getAttribute("src")?.includes(filename));
     }
   });
+
+  it("preloads every product screenshot before the first transition", () => {
+    render(<YsHowItWorks />);
+
+    const preloadImages = document.querySelectorAll(
+      "[data-vertical-tabs-preload] img[loading='eager']",
+    );
+    assert.equal(preloadImages.length, 4);
+  });
 });

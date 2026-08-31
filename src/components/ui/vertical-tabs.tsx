@@ -1,7 +1,6 @@
 "use client";
 
 import Image from "next/image";
-import { AnimatePresence, motion } from "framer-motion";
 import {
   useCallback,
   useEffect,
@@ -47,8 +46,6 @@ export function VerticalTabs({
   const [activeIndex, setActiveIndex] = useState(0);
   const [selectionEpoch, setSelectionEpoch] = useState(0);
   const [direction, setDirection] = useState(1);
-  const [pointerInside, setPointerInside] = useState(false);
-  const [focusInside, setFocusInside] = useState(false);
   const [isInView, setIsInView] = useState(true);
   const [documentVisible, setDocumentVisible] = useState(true);
 
@@ -90,41 +87,20 @@ export function VerticalTabs({
 
   const autoplayPaused =
     Boolean(reduceMotion) ||
-    pointerInside ||
-    focusInside ||
     !isInView ||
     !documentVisible ||
     items.length < 2;
 
-  useEffect(() => {
-    if (autoplayPaused) return;
-
-    const interval = setInterval(() => {
-      setDirection(1);
-      setActiveIndex((current) => (current + 1) % items.length);
-    }, autoplayMs);
-
-    return () => clearInterval(interval);
-  }, [activeIndex, autoplayMs, autoplayPaused, items.length, selectionEpoch]);
+  const advance = useCallback(() => {
+    setDirection(1);
+    setActiveIndex((current) => (current + 1) % items.length);
+  }, [items.length]);
 
   if (items.length === 0) return null;
 
   const safeActiveIndex = Math.min(activeIndex, items.length - 1);
-  const activeItem = items[safeActiveIndex];
   const tabId = (index: number) => `${headingId}-tab-${index}`;
   const panelId = `${headingId}-panel`;
-  const imageVariants = {
-    enter: (nextDirection: number) =>
-      reduceMotion
-        ? { opacity: 1, y: "0%" }
-        : { opacity: 0, y: nextDirection > 0 ? "-100%" : "100%" },
-    center: { opacity: 1, y: "0%", zIndex: 1 },
-    exit: (nextDirection: number) =>
-      reduceMotion
-        ? { opacity: 1, y: "0%" }
-        : { opacity: 0, y: nextDirection > 0 ? "100%" : "-100%", zIndex: 0 },
-  };
-
   const onTabKeyDown = (event: KeyboardEvent<HTMLButtonElement>, index: number) => {
     let nextIndex: number | null = null;
     let nextDirection: number | undefined;
@@ -151,14 +127,6 @@ export function VerticalTabs({
     <section
       ref={sectionRef}
       aria-labelledby={headingId}
-      onMouseEnter={() => setPointerInside(true)}
-      onMouseLeave={() => setPointerInside(false)}
-      onFocusCapture={() => setFocusInside(true)}
-      onBlurCapture={(event) => {
-        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
-          setFocusInside(false);
-        }
-      }}
       className={cn("w-full", className)}
     >
       <div className="grid grid-cols-1 gap-x-16 gap-y-8 lg:grid-cols-12 lg:gap-y-12">
@@ -179,34 +147,35 @@ export function VerticalTabs({
           aria-labelledby={tabId(safeActiveIndex)}
           className="relative aspect-[16/9] min-w-0 overflow-hidden rounded-modal border border-line bg-surface lg:col-span-7 lg:col-start-6 lg:row-start-2"
         >
-          <AnimatePresence initial={false} custom={direction} mode="popLayout">
-            <motion.div
-              key={activeItem.id}
-              custom={direction}
-              data-direction={direction > 0 ? "forward" : "backward"}
-              variants={imageVariants}
-              initial="enter"
-              animate="center"
-              exit="exit"
-              transition={
-                reduceMotion
-                  ? { duration: 0 }
-                  : {
-                      y: { type: "spring", stiffness: 260, damping: 32 },
-                      opacity: { duration: 0.4 },
-                    }
-              }
-              className="absolute inset-0"
-            >
-              <Image
-                src={activeItem.imageSrc}
-                alt={activeItem.imageAlt}
-                fill
-                sizes="(min-width: 1024px) 58vw, (min-width: 768px) 100vw, 100vw"
-                className="object-contain"
-              />
-            </motion.div>
-          </AnimatePresence>
+          <div
+            data-vertical-tabs-preload
+            className="absolute inset-0"
+          >
+            {items.map((item, index) => {
+              const isActive = index === safeActiveIndex;
+              return (
+                <div
+                  key={item.id}
+                  aria-hidden={!isActive}
+                  data-active={isActive ? "true" : "false"}
+                  data-travel={direction > 0 ? "forward" : "backward"}
+                  data-direction={
+                    isActive ? (direction > 0 ? "forward" : "backward") : undefined
+                  }
+                  className="vertical-tabs-image-layer absolute inset-0"
+                >
+                  <Image
+                    src={item.imageSrc}
+                    alt={isActive ? item.imageAlt : ""}
+                    fill
+                    loading="eager"
+                    sizes="(min-width: 1024px) 58vw, (min-width: 768px) 100vw, 100vw"
+                    className="object-contain"
+                  />
+                </div>
+              );
+            })}
+          </div>
         </div>
 
         <div
@@ -233,18 +202,21 @@ export function VerticalTabs({
                 onClick={() => selectItem(index)}
                 onKeyDown={(event) => onTabKeyDown(event, index)}
                 className={cn(
-                  "group relative flex w-full items-start gap-4 border-t border-line py-5 pl-5 pr-2 text-left outline-none first:border-t-0 md:py-6",
+                  "group relative flex w-full items-start gap-4 border-t border-line py-5 pl-5 pr-2 text-left outline-none first:border-t-0 md:py-6 lg:h-36",
                   "focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-4 focus-visible:ring-offset-paper",
                 )}
               >
                 <span
                   aria-hidden
-                  className="absolute bottom-0 left-0 top-0 w-px bg-line"
+                  className="absolute bottom-0 left-0 top-0 w-[2px] bg-line"
                 >
                   {isActive ? (
                     <span
                       key={`${item.id}-${activeIndex}-${selectionEpoch}`}
-                      className="vertical-tabs-progress block h-full w-px origin-top bg-ink"
+                      className="vertical-tabs-progress block h-full w-[2px] origin-top bg-ink"
+                      onAnimationEnd={() => {
+                        if (!autoplayPaused) advance();
+                      }}
                       style={
                         {
                           "--vertical-tabs-duration": `${autoplayMs}ms`,
@@ -268,24 +240,14 @@ export function VerticalTabs({
                   >
                     {item.title}
                   </span>
-                  <AnimatePresence initial={false} mode="wait">
-                    {isActive ? (
-                      <motion.span
-                        key={`${item.id}-description`}
-                        initial={reduceMotion ? false : { opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: "auto" }}
-                        exit={reduceMotion ? { opacity: 0 } : { opacity: 0, height: 0 }}
-                        transition={
-                          reduceMotion
-                            ? { duration: 0 }
-                            : { duration: 0.3, ease: [0.23, 1, 0.32, 1] }
-                        }
-                        className="mt-2 block max-w-md overflow-hidden text-base font-normal leading-[1.6] text-ink-mid"
-                      >
-                        {item.description}
-                      </motion.span>
-                    ) : null}
-                  </AnimatePresence>
+                  {isActive ? (
+                    <span
+                      key={`${item.id}-description`}
+                      className="vertical-tabs-description-enter mt-2 block max-w-md text-base font-normal leading-[1.6] text-ink-mid"
+                    >
+                      {item.description}
+                    </span>
+                  ) : null}
                 </span>
               </button>
             );

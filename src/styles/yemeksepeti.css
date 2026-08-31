@@ -81,6 +81,32 @@
    component freezes the line where it is instead of hiding or restarting it. */
 .vertical-tabs-progress {
   animation: vertical-tabs-progress var(--vertical-tabs-duration) linear both;
+  will-change: transform;
+}
+
+.vertical-tabs-image-layer {
+  opacity: 0;
+  pointer-events: none;
+  transform: translate3d(0, 24px, 0);
+  transition:
+    opacity 320ms cubic-bezier(0.23, 1, 0.32, 1),
+    transform 420ms cubic-bezier(0.23, 1, 0.32, 1);
+  will-change: opacity, transform;
+  backface-visibility: hidden;
+}
+
+.vertical-tabs-image-layer[data-travel="backward"] {
+  transform: translate3d(0, -24px, 0);
+}
+
+.vertical-tabs-image-layer[data-active="true"] {
+  z-index: 1;
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+}
+
+.vertical-tabs-description-enter {
+  animation: vertical-tabs-description-in 160ms linear both;
 }
 
 @keyframes vertical-tabs-progress {
@@ -92,10 +118,25 @@
   }
 }
 
+@keyframes vertical-tabs-description-in {
+  from {
+    opacity: 0;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .vertical-tabs-progress {
+  .vertical-tabs-progress,
+  .vertical-tabs-description-enter {
     animation: none;
+  }
+
+  .vertical-tabs-progress {
     transform: scaleY(1);
+  }
+
+  .vertical-tabs-image-layer {
+    transition: none;
+    transform: none;
   }
 }
 
