@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -14,11 +15,17 @@ import {
   fetchTutors,
   type TutorFilters as TutorFiltersType,
 } from "@/lib/tutorsApi";
+import {
+  ANONYMOUS_PAGE_LIMIT,
+  isGatedPage,
+  signupUrlForGatedPage,
+} from "@/lib/anonymousBrowsing";
 import { defaultTutorOrdering } from "@/lib/tutorDirectory";
 import {
   filterFavoriteTutors,
   sortFavoriteTutors,
 } from "@/lib/favoriteTutorFiltering";
+import { useAuth } from "@/hooks/useAuth";
 import { useDelayedVisible } from "@/hooks/useDelayedVisible";
 import { useFavorites } from "@/hooks/useFavorites";
 import { TutorCard } from "@/components/tutors/TutorCard";
@@ -137,6 +144,13 @@ function DirectoryBody({ favoritesOnly = false }: DirectoryProps) {
      button, which the old prop never did. */
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { isAuthenticated } = useAuth();
+  /* Back to the directory with the reader's filters intact, not to a bare
+     "/". Register already knows how to honour returnUrl. */
+  const returnUrl = useMemo(() => {
+    const query = searchParams.toString();
+    return query ? `/?${query}` : "/";
+  }, [searchParams]);
   const search = searchParams.get("search") ?? undefined;
   /* Favourites is a view of this same list rather than a page of its own, and
      it is client-side: the favourites endpoint returns the tutors directly, so
@@ -495,6 +509,26 @@ function DirectoryBody({ favoritesOnly = false }: DirectoryProps) {
                 ))}
               </div>
 
+              {/* Said before it is enforced. A meter that only announces
+                  itself at the moment it blocks you reads as a trap; this
+                  line appears on the last free page, while the reader still
+                  has somewhere to go. */}
+              {!isAuthenticated && totalPages > ANONYMOUS_PAGE_LIMIT &&
+                currentPage === ANONYMOUS_PAGE_LIMIT && (
+                  <div className="mt-8 flex flex-col items-center gap-3 text-center">
+                    <p className="text-body text-ink-mid">
+                      İlk {ANONYMOUS_PAGE_LIMIT} sayfayı hesapsız görebiliyorsun.
+                      Kalan hocalar için ücretsiz hesap aç.
+                    </p>
+                    <Link
+                      href={signupUrlForGatedPage(returnUrl)}
+                      className="ys-btn ys-btn--primary ys-btn--regular"
+                    >
+                      Ücretsiz hesap aç
+                    </Link>
+                  </div>
+                )}
+
               {totalPages > 1 && (
                 <div className="mt-8 flex justify-center overflow-x-auto">
                   <SlidingPagination
@@ -502,6 +536,14 @@ function DirectoryBody({ favoritesOnly = false }: DirectoryProps) {
                     currentPage={currentPage}
                     maxVisiblePages={5}
                     onPageChange={(nextPage) => {
+                      // The meter: a signed-out visitor gets two pages, then
+                      // the third page turn is the ask. Routing rather than
+                      // opening a dialog, because what they are being sent to
+                      // is a real page with its own URL and back button.
+                      if (isGatedPage(nextPage, isAuthenticated)) {
+                        router.push(signupUrlForGatedPage(returnUrl));
+                        return;
+                      }
                       setPage(nextPage);
                       scrollListIntoView();
                     }}

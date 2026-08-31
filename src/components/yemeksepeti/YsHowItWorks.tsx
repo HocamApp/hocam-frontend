@@ -3,19 +3,22 @@ import {
   type VerticalTabItem,
 } from "@/components/ui/vertical-tabs";
 
+import { YsJourneyHeading } from "./YsJourneyHeading";
+import { JOURNEY_SECTION_ID } from "./ysAppNav";
+
 const JOURNEY_STEPS: VerticalTabItem[] = [
   {
     id: "01",
     title: "Hocanı bul",
     description:
-      "İstediğin dersi ve üniversite ile filtrele, hocaları karşılaştır, sana uygun olanı seç.",
+      "İstediğin dersi veya üniversiteyi filtrele, hocaları karşılaştır, sana uygun olanı seç.",
     imageSrc: "/images/how-it-works/01-tutor-list.png",
     imageAlt: "Hoca listesindeki filtreler ve hoca kartları",
   },
   {
     id: "02",
     title: "Deneme dersiyle tanış",
-    description: "İlk dersi ücretsiz dene, tarzını beğendiğinden emin ol.",
+    description: "İlk dersini ücretsiz dene, hocanı beğendiğinden emin ol.",
     imageSrc: "/images/how-it-works/02-nazli-profile.png",
     imageAlt: "Nazlı Koç'un hoca profili",
   },
@@ -36,20 +39,40 @@ const JOURNEY_STEPS: VerticalTabItem[] = [
   },
 ];
 
+/**
+ * The journey sits on its own full-bleed band.
+ *
+ * DESIGN.md separates sections by colour, not by containers: a band, no
+ * border, no shadow, no wrapper. Section padding is the documented rhythm,
+ * 96 desktop and 64 mobile.
+ *
+ * `--surface` rather than `--pink-pale`, because the testimonials directly
+ * underneath already own the one permitted pale-pink section surface and two
+ * pale bands in a row stop separating anything. White on paper is the same
+ * value step the cards use, held at section scale, and it is themed, so
+ * Night mode gets #182225 for free where a fixed campaign surface would have
+ * needed pinned ink.
+ *
+ * Gold and pink were both tried here and rejected. Gold cannot carry white
+ * type at all (1.46:1) and its compliant pairing is `--gold-ink`; pink can
+ * (4.05:1) but would have made this the page's second full-bleed pink band,
+ * against a 20 to 30% budget. A themed neutral needs neither exception.
+ */
 export function YsHowItWorks() {
   return (
-    <VerticalTabs
-      className="mt-16 md:mt-24"
-      heading={
-        <>
-          <span className="block">Hocanı bul.</span>
-          {" "}
-          <span className="block">Gerisi kolay.</span>
-        </>
-      }
-      intro="Sana uygun hocayı filtrele, ücretsiz deneme dersiyle tanış, paketini seç. Hocam’ın platformu üzerinden, tek tıkla derse katıl."
-      items={JOURNEY_STEPS}
-      autoplayMs={5_000}
-    />
+    <div
+      id={JOURNEY_SECTION_ID}
+      /* The sticky header would otherwise cover the heading when the nav
+         scrolls here. */
+      className="scroll-mt-[calc(var(--app-header-h)+24px)] bg-surface py-16 md:py-24"
+    >
+      <div className="ys-shell">
+        <VerticalTabs
+          heading={<YsJourneyHeading />}
+          items={JOURNEY_STEPS}
+          autoplayMs={5_000}
+        />
+      </div>
+    </div>
   );
 }

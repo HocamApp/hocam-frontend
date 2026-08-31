@@ -30,6 +30,9 @@ const config: Config = {
         },
         line: "var(--line)",
         surface: "var(--surface)",
+        /* The skeleton fill, one step darker than --line and themed. Older
+           components hardcode #EDE6E6, which is this token's light value. */
+        skeleton: "var(--skeleton)",
         success: "var(--success)",
         "success-soft": "var(--success-soft)",
         error: "var(--error)",

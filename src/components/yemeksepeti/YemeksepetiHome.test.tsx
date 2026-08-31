@@ -10,18 +10,44 @@ import { YsHowItWorks } from "./YsHowItWorks";
 import { YsTestimonials } from "./YsTestimonials";
 import { YsUniversityStrip } from "./YsUniversityStrip";
 
+type Wrapper = ReactElement<{ className?: string; children?: React.ReactNode }>;
+
+function wrappers(home: Wrapper): Wrapper[] {
+  return React.Children.toArray(home.props.children).filter(
+    (child): child is Wrapper => React.isValidElement(child),
+  );
+}
+
+function sectionsOf(wrapper: Wrapper): unknown[] {
+  return React.Children.toArray(wrapper.props.children)
+    .filter((child): child is ReactElement => React.isValidElement(child))
+    .map((child) => child.type);
+}
+
 test("places the how-it-works journey between university proof and testimonials", () => {
-  const home = YemeksepetiHome() as ReactElement<{ children: React.ReactNode }>;
-  const sections = React.Children.toArray(home.props.children) as ReactElement[];
-  const proofShell = sections.find(
-    (section) => section.props?.className === "ys-shell pb-12",
+  const home = YemeksepetiHome() as Wrapper;
+  const order = wrappers(home)
+    .flatMap(sectionsOf)
+    .filter((type) =>
+      [YsUniversityStrip, YsHowItWorks, YsTestimonials, YsHomeFaq].includes(
+        type as never,
+      ),
+    );
+
+  assert.deepEqual(order, [
+    YsUniversityStrip,
+    YsHowItWorks,
+    YsTestimonials,
+    YsHomeFaq,
+  ]);
+});
+
+test("keeps the journey band outside the shell so its surface runs full bleed", () => {
+  const home = YemeksepetiHome() as Wrapper;
+  const journeyWrapper = wrappers(home).find((wrapper) =>
+    sectionsOf(wrapper).includes(YsHowItWorks),
   );
 
-  assert.ok(proofShell, "homepage proof shell is missing");
-  const proofSections = React.Children.toArray(proofShell.props.children) as ReactElement[];
-
-  assert.deepEqual(
-    proofSections.map((section) => section.type),
-    [YsUniversityStrip, YsHowItWorks, YsTestimonials, YsHomeFaq],
-  );
+  assert.ok(journeyWrapper, "journey wrapper is missing");
+  assert.doesNotMatch(journeyWrapper.props.className ?? "", /ys-shell/);
 });

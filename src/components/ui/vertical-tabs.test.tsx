@@ -89,7 +89,6 @@ function renderTabs(autoplayMs = 1_000) {
   return render(
     <VerticalTabs
       heading={<span>Nasıl işler</span>}
-      intro="Kısa tanıtım"
       items={ITEMS}
       autoplayMs={autoplayMs}
     />,

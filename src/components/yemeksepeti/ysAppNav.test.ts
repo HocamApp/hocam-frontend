@@ -1,7 +1,11 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
+import { readFileSync } from "node:fs";
+
 import {
+  FAQ_SECTION_ID,
+  JOURNEY_SECTION_ID,
   YS_PUBLIC_TABS,
   YS_UTILITY_ITEMS,
   getActiveYsNavItem,
@@ -89,6 +93,25 @@ describe("ys app nav", () => {
       off.map((t) => t.label),
       ["Hocalar", "Panelim"],
     );
+  });
+
+  it("points the two section tabs at ids that exist on the homepage", () => {
+    // The tabs scroll rather than navigate, so a renamed id would fail
+    // silently: the click would preventDefault, find nothing, and do nothing.
+    const journey = readFileSync("src/components/yemeksepeti/YsHowItWorks.tsx", "utf8");
+    const faq = readFileSync("src/components/yemeksepeti/YsHomeFaq.tsx", "utf8");
+
+    assert.match(journey, /id=\{JOURNEY_SECTION_ID\}/);
+    assert.match(faq, /id=\{FAQ_SECTION_ID\}/);
+
+    const hrefs = YS_PUBLIC_TABS.map((tab) => tab.href);
+    assert.ok(hrefs.includes(`/#${JOURNEY_SECTION_ID}`));
+    assert.ok(hrefs.includes(`/#${FAQ_SECTION_ID}`));
+  });
+
+  it("drops the routes the strip used to send visitors away to", () => {
+    const labels = YS_PUBLIC_TABS.map((tab) => tab.label);
+    assert.deepEqual(labels, ["Hocalar", "Nasıl Çalışır", "Merak Edilenler"]);
   });
 
   it("keeps every signed-out destination anonymously reachable", () => {

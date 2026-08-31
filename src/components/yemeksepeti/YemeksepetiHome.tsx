@@ -31,11 +31,20 @@ export function YemeksepetiHome() {
         <YsVerifiedBand />
       </div>
 
-      <div className="ys-shell pb-12">
+      <div className="ys-shell">
         {/* Directly under the band: the band makes the claim, these logos
               are the evidence for it. */}
         <YsUniversityStrip />
+      </div>
+
+      {/* Outside the shell for the same reason the verified band is: the
+            journey owns a full-bleed surface band, and a shell would cap it
+            at 1440px and inset it. It opens its own shell inside. */}
+      <div className="mt-16 md:mt-24">
         <YsHowItWorks />
+      </div>
+
+      <div className="ys-shell pb-12">
         {/* The journey explains the product, then social proof and the FAQ
               answer whether that product is worth trying. */}
         <YsTestimonials />
