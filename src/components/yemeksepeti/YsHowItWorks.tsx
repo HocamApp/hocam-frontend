@@ -44,7 +44,7 @@ export function YsHowItWorks() {
         <>
           <span className="block">Hocanı bul.</span>
           {" "}
-          <span className="block italic">Gerisi kolay.</span>
+          <span className="block">Gerisi kolay.</span>
         </>
       }
       intro="Sana uygun hocayı filtrele, ücretsiz deneme dersiyle tanış, paketini seç. Hocam’ın platformu üzerinden, tek tıkla derse katıl."

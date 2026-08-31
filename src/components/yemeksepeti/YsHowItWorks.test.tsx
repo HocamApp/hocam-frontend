@@ -3,7 +3,7 @@ import "@/test/setupDom";
 import assert from "node:assert/strict";
 import { after, afterEach, describe, it } from "node:test";
 import React from "react";
-import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 
 import { YsHowItWorks } from "./YsHowItWorks";
 
@@ -40,7 +40,7 @@ Object.defineProperty(globalThis, "IntersectionObserver", {
   configurable: true,
 });
 
-afterEach(() => cleanup());
+afterEach(() => act(() => cleanup()));
 after(() => window.close());
 
 describe("YsHowItWorks", () => {
@@ -70,10 +70,19 @@ describe("YsHowItWorks", () => {
     );
   });
 
+  it("keeps the heading upright and on the design-system H2 scale", () => {
+    render(<YsHowItWorks />);
+
+    const heading = screen.getByRole("heading", { level: 2 });
+    assert.equal(heading.querySelector(".italic"), null);
+    assert.equal(heading.classList.contains("text-2xl"), true);
+    assert.equal(heading.classList.contains("lg:text-[32px]"), true);
+  });
+
   it("keeps the approved free-trial promise verbatim", () => {
     render(<YsHowItWorks />);
 
-    fireEvent.click(screen.getByRole("tab", { name: /Deneme dersiyle tanış/ }));
+    act(() => fireEvent.click(screen.getByRole("tab", { name: /Deneme dersiyle tanış/ })));
 
     assert.ok(
       screen.getByText("İlk dersi ücretsiz dene, tarzını beğendiğinden emin ol."),
@@ -91,7 +100,7 @@ describe("YsHowItWorks", () => {
     ] as const;
 
     for (const [tabName, alt, filename] of expected) {
-      fireEvent.click(screen.getByRole("tab", { name: new RegExp(tabName) }));
+      act(() => fireEvent.click(screen.getByRole("tab", { name: new RegExp(tabName) })));
       const image = within(screen.getByRole("tabpanel")).getByRole("img", { name: alt });
       assert.ok(image.getAttribute("src")?.includes(filename));
     }

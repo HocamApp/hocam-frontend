@@ -220,6 +220,9 @@ describe("VerticalTabs", () => {
     const region = screen.getByRole("region", { name: "Nasıl işler" });
 
     act(() => fireEvent.mouseEnter(region));
+    const pausedProgress = region.querySelector<HTMLElement>(".vertical-tabs-progress");
+    assert.ok(pausedProgress);
+    assert.equal(pausedProgress.style.animationPlayState, "paused");
     act(() => context.mock.timers.tick(2_000));
     assert.equal(activeTab()?.textContent?.includes("Birinci adım"), true);
 

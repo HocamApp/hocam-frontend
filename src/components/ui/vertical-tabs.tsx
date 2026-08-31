@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   useCallback,
   useEffect,
@@ -112,6 +113,17 @@ export function VerticalTabs({
   const activeItem = items[safeActiveIndex];
   const tabId = (index: number) => `${headingId}-tab-${index}`;
   const panelId = `${headingId}-panel`;
+  const imageVariants = {
+    enter: (nextDirection: number) =>
+      reduceMotion
+        ? { opacity: 1, y: "0%" }
+        : { opacity: 0, y: nextDirection > 0 ? "-100%" : "100%" },
+    center: { opacity: 1, y: "0%", zIndex: 1 },
+    exit: (nextDirection: number) =>
+      reduceMotion
+        ? { opacity: 1, y: "0%" }
+        : { opacity: 0, y: nextDirection > 0 ? "100%" : "-100%", zIndex: 0 },
+  };
 
   const onTabKeyDown = (event: KeyboardEvent<HTMLButtonElement>, index: number) => {
     let nextIndex: number | null = null;
@@ -152,7 +164,7 @@ export function VerticalTabs({
       <div className="grid grid-cols-1 gap-x-16 gap-y-8 lg:grid-cols-12 lg:gap-y-12">
         <h2
           id={headingId}
-          className="text-[40px] font-bold leading-[0.98] tracking-[-0.03em] text-ink md:text-[44px] lg:col-span-5 lg:row-start-1"
+          className="text-2xl font-bold leading-[1.15] tracking-[-0.015em] text-ink lg:col-span-5 lg:row-start-1 lg:text-[32px]"
         >
           {heading}
         </h2>
@@ -167,19 +179,34 @@ export function VerticalTabs({
           aria-labelledby={tabId(safeActiveIndex)}
           className="relative aspect-[16/9] min-w-0 overflow-hidden rounded-modal border border-line bg-surface lg:col-span-7 lg:col-start-6 lg:row-start-2"
         >
-          <div
-            key={activeItem.id}
-            data-direction={direction > 0 ? "forward" : "backward"}
-            className="vertical-tabs-panel-enter absolute inset-0"
-          >
-            <Image
-              src={activeItem.imageSrc}
-              alt={activeItem.imageAlt}
-              fill
-              sizes="(min-width: 1024px) 58vw, (min-width: 768px) 100vw, 100vw"
-              className="object-contain"
-            />
-          </div>
+          <AnimatePresence initial={false} custom={direction} mode="popLayout">
+            <motion.div
+              key={activeItem.id}
+              custom={direction}
+              data-direction={direction > 0 ? "forward" : "backward"}
+              variants={imageVariants}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              transition={
+                reduceMotion
+                  ? { duration: 0 }
+                  : {
+                      y: { type: "spring", stiffness: 260, damping: 32 },
+                      opacity: { duration: 0.4 },
+                    }
+              }
+              className="absolute inset-0"
+            >
+              <Image
+                src={activeItem.imageSrc}
+                alt={activeItem.imageAlt}
+                fill
+                sizes="(min-width: 1024px) 58vw, (min-width: 768px) 100vw, 100vw"
+                className="object-contain"
+              />
+            </motion.div>
+          </AnimatePresence>
         </div>
 
         <div
@@ -214,13 +241,14 @@ export function VerticalTabs({
                   aria-hidden
                   className="absolute bottom-0 left-0 top-0 w-px bg-line"
                 >
-                  {isActive && !autoplayPaused ? (
+                  {isActive ? (
                     <span
                       key={`${item.id}-${activeIndex}-${selectionEpoch}`}
                       className="vertical-tabs-progress block h-full w-px origin-top bg-ink"
                       style={
                         {
                           "--vertical-tabs-duration": `${autoplayMs}ms`,
+                          animationPlayState: autoplayPaused ? "paused" : "running",
                         } as CSSProperties
                       }
                     />
@@ -240,13 +268,24 @@ export function VerticalTabs({
                   >
                     {item.title}
                   </span>
-                  {isActive ? (
-                    <span
-                      className="vertical-tabs-description-enter mt-2 block max-w-md text-base font-normal leading-[1.6] text-ink-mid"
-                    >
-                      {item.description}
-                    </span>
-                  ) : null}
+                  <AnimatePresence initial={false} mode="wait">
+                    {isActive ? (
+                      <motion.span
+                        key={`${item.id}-description`}
+                        initial={reduceMotion ? false : { opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={reduceMotion ? { opacity: 0 } : { opacity: 0, height: 0 }}
+                        transition={
+                          reduceMotion
+                            ? { duration: 0 }
+                            : { duration: 0.3, ease: [0.23, 1, 0.32, 1] }
+                        }
+                        className="mt-2 block max-w-md overflow-hidden text-base font-normal leading-[1.6] text-ink-mid"
+                      >
+                        {item.description}
+                      </motion.span>
+                    ) : null}
+                  </AnimatePresence>
                 </span>
               </button>
             );
