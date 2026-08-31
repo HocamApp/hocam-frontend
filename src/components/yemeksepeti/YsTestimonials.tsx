@@ -6,18 +6,21 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Marquee } from "@/components/ui/marquee";
 
 /**
- * "Hocalar ve Öğrencilerden" — two marquee rows running in opposite
- * directions, both pausing on hover.
+ * "Hocalar ve Öğrencilerden" — one marquee row, pausing on hover.
  *
  * The quotes, names and credentials come from the Framer site verbatim. Do not
  * reword them; they are attributed to real people. For the same reason the
  * body is never clamped — half a testimonial misrepresents whoever said it.
  *
- * Colour follows the reference's logic rather than its palette: the section
- * sits on a faint brand tint and the cards are plain white, so they separate
- * by tone alone. Hover fills the card with `--ink` — the reference's yellow,
- * translated through DESIGN.md, where a filled hover is a colour change and
- * never a lift.
+ * Everyone rides the single row: the second row was a split of the same six
+ * people, not extra ones, so merging them loses no voice.
+ *
+ * Colour: the section sits on `--paper`, the page's own surface, and the cards
+ * are `--surface` with a hairline, which is DESIGN.md's in-flow separation by
+ * value. Hover fills the card with `--gold` and puts `--gold-ink` on it, the
+ * reference's yellow kept literally this time, plus the `.ys-sheen` overlay
+ * so the fill is satin rather than a paint chip. A filled hover is a colour
+ * change and never a lift.
  */
 
 type Testimonial = {
@@ -76,13 +79,13 @@ const TESTIMONIALS: Testimonial[] = [
   },
 ];
 
-const FIRST_ROW = TESTIMONIALS.slice(0, TESTIMONIALS.length / 2);
-const SECOND_ROW = TESTIMONIALS.slice(TESTIMONIALS.length / 2);
-
 function ReviewCard({ quote, name, credential, photo }: Testimonial) {
   return (
-    <Card className="group/card h-full w-[16.5rem] shrink-0 cursor-default border-line bg-surface p-5 shadow-none transition-colors duration-[--duration-state] hover:border-ink hover:bg-ink sm:w-[21rem]">
-      <CardContent className="flex h-full flex-col gap-3 p-0">
+    <Card className="group/card relative isolate h-full w-[16.5rem] shrink-0 cursor-default overflow-hidden border-line bg-surface p-5 shadow-none transition-colors duration-[--duration-state] hover:border-gold hover:bg-gold sm:w-[21rem]">
+      {/* The sheen, painted under the content and above the fill. Decorative
+          and inert: it carries no meaning and takes no pointer events. */}
+      <span aria-hidden className="ys-sheen pointer-events-none absolute inset-0 -z-10" />
+      <CardContent className="relative flex h-full flex-col gap-3 p-0">
         <div className="flex flex-row items-center gap-3">
           <Image
             src={photo}
@@ -92,15 +95,15 @@ function ReviewCard({ quote, name, credential, photo }: Testimonial) {
             className="size-11 shrink-0 rounded-full object-cover"
           />
           <div className="min-w-0">
-            <p className="text-sm font-semibold text-ink transition-colors duration-[--duration-state] group-hover/card:text-paper">
+            <p className="text-sm font-semibold text-ink transition-colors duration-[--duration-state] group-hover/card:text-gold-ink">
               {name}
             </p>
-            <p className="text-xs text-ink-mid transition-colors duration-[--duration-state] group-hover/card:text-paper/75">
+            <p className="text-xs text-ink-mid transition-colors duration-[--duration-state] group-hover/card:text-[rgb(74_59_0_/_78%)]">
               {credential}
             </p>
           </div>
         </div>
-        <p className="text-[15px] leading-6 text-ink transition-colors duration-[--duration-state] group-hover/card:text-paper">
+        <p className="text-[15px] leading-6 text-ink transition-colors duration-[--duration-state] group-hover/card:text-gold-ink">
           {quote}
         </p>
       </CardContent>
@@ -110,10 +113,10 @@ function ReviewCard({ quote, name, credential, photo }: Testimonial) {
 
 export function YsTestimonials() {
   return (
-    <section className="mt-16 overflow-hidden rounded-card bg-pink-pale py-16 md:mt-24 md:py-24">
+    <section className="mt-16 overflow-hidden rounded-card bg-paper py-16 md:mt-24 md:py-24">
       <div className="mx-auto max-w-2xl space-y-2 px-4 text-center">
-        <h2 className="text-3xl font-bold tracking-tight text-ink dark:text-[var(--ink-on-light)]">Hocalar ve Öğrencilerden</h2>
-        <p className="text-base text-ink-mid dark:text-[var(--ink-mid-on-light)]">
+        <h2 className="text-3xl font-bold tracking-tight text-ink">Hocalar ve Öğrencilerden</h2>
+        <p className="text-base text-ink-mid">
           Hocam&apos;da ders veren hocalar ve ders alan öğrenciler, kendi deneyimlerini
           anlatıyor.
         </p>
@@ -121,16 +124,10 @@ export function YsTestimonials() {
 
       <div className="ys-marquee-mask relative mt-8 flex w-full flex-col items-center justify-center">
         <Marquee pauseOnHover className="[--duration:38s]">
-          {FIRST_ROW.map((item) => (
+          {TESTIMONIALS.map((item) => (
             <ReviewCard key={item.name} {...item} />
           ))}
         </Marquee>
-        <Marquee reverse pauseOnHover className="[--duration:38s]">
-          {SECOND_ROW.map((item) => (
-            <ReviewCard key={item.name} {...item} />
-          ))}
-        </Marquee>
-
       </div>
     </section>
   );

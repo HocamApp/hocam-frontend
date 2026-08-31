@@ -75,7 +75,12 @@ export function YsHeroIntro() {
             paper between the type and the first card; a negative margin moves
             the box rather than the ring inside it, so the front card comes
             closer without being cut off by its own frame. */}
-        <div className="relative -mx-4 h-[300px] overflow-hidden sm:-mx-6 sm:h-[340px] lg:mx-0 lg:-ml-20 lg:h-[360px] xl:-ml-32">
+        {/* The bleed follows `.ys-shell`'s own padding, which steps at 960 and
+            1264 rather than at Tailwind's breakpoints. `sm:-mx-6` used to pull
+            24px out of a shell that still had 16px of padding between 640 and
+            960, and those 8px per side were the page's horizontal scroll at
+            tablet widths. */}
+        <div className="relative -mx-4 h-[300px] overflow-hidden sm:h-[340px] min-[960px]:-mx-8 lg:mx-0 lg:-ml-20 lg:h-[360px] xl:-ml-32">
           {/* Scaled rather than re-measured per breakpoint: perspective already
               magnifies the front card by about a third, so a phone gets a card
               wider than the screen at the desktop size. One transform keeps

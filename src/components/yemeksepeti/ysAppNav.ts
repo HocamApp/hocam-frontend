@@ -3,13 +3,12 @@ import {
   Bell,
   CalendarBlank,
   ChatCircle,
+  ChatCircleDots,
   ClipboardText,
   Compass,
-  FileText,
   GraduationCap,
   Heart,
-  Path,
-  Question,
+  ListNumbers,
   SquaresFour,
 } from "@phosphor-icons/react";
 
@@ -27,6 +26,14 @@ import {
  *
  * Delete `navItems.ts` and its test only once the old navbar is gone for good.
  */
+
+/**
+ * The homepage sections the public tabs scroll to. Exported so the sections
+ * and the nav cannot drift apart: a renamed id here fails the nav test rather
+ * than silently scrolling nowhere.
+ */
+export const JOURNEY_SECTION_ID = "nasil-calisir";
+export const FAQ_SECTION_ID = "merak-edilenler";
 
 export type YsNavRole = "student" | "tutor";
 
@@ -62,9 +69,15 @@ type Flags = {
  */
 export const YS_PUBLIC_TABS: YsNavItem[] = [
   { label: "Hocalar", href: "/", icon: GraduationCap, exact: true },
-  { label: "Nasıl Çalışır", href: "/nasil-calisir", icon: Question },
-  { label: "Doğrulama", href: "/hocalar-nasil-dogrulaniyor", icon: FileText },
-  { label: "Başarı Hikayeleri", href: "/basari-hikayeleri", icon: Path },
+  // Both of these are places on this page, not pages of their own. A visitor
+  // who wants to know how it works is one scroll away from the answer, and
+  // sending them to a separate route made them come back to start over.
+  //
+  // The icons say what the destination is rather than decorating it:
+  // numbered steps for a four-step journey, a conversation for the questions
+  // people actually ask. The old circled question mark said neither.
+  { label: "Nasıl Çalışır", href: `/#${JOURNEY_SECTION_ID}`, icon: ListNumbers },
+  { label: "Merak Edilenler", href: `/#${FAQ_SECTION_ID}`, icon: ChatCircleDots },
 ];
 
 /** Right-hand icon cluster. Notifications is a popover, not a route. */

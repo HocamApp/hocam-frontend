@@ -7,6 +7,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { AnimatedSearchBar } from "@/components/tutors/AnimatedSearchBar";
 import { BrandMark } from "@/components/brand/BrandMark";
 import { ProfileMenu } from "@/components/profile/ProfileMenu";
+import { StreakIndicator } from "@/components/profile/StreakIndicator";
 import { useAuth } from "@/hooks/useAuth";
 import { useCoachingFlag } from "@/hooks/useCoachingFlag";
 import { useScheduleFlag } from "@/hooks/useScheduleFlag";
@@ -40,6 +41,29 @@ type Props = {
   startCoachmark?: boolean;
 };
 
+/**
+ * Scroll to a homepage section instead of loading a route.
+ *
+ * The tab is still a real `<a href="/#id">`, so a middle click, a cmd-click
+ * and a copied link all keep working, and a visitor on another route follows
+ * it as a normal navigation. Only the same-page case is intercepted, because
+ * that is the one the browser would answer with an instant jump.
+ *
+ * `prefers-reduced-motion` drops the smoothing rather than the scroll: the
+ * destination is the point, the glide is not.
+ */
+function scrollToSection(hash: string) {
+  const target = document.getElementById(hash);
+  if (!target) return false;
+
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  target.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
+  // Keep the address bar honest without a second jump: replaceState does not
+  // move the viewport the way assigning location.hash would.
+  window.history.replaceState(null, "", `#${hash}`);
+  return true;
+}
+
 function TabStrip({
   items,
   active,
@@ -47,11 +71,16 @@ function TabStrip({
   items: YsNavItem[];
   active: YsNavItem | null;
 }) {
+  const pathname = usePathname();
+
   return (
     <div className="scrollbar-none flex min-w-0 flex-1 overflow-x-auto">
       {items.map((item) => {
         const Icon = item.icon;
         const isActive = active === item;
+        const [itemPath, itemHash] = item.href.split("#");
+        const isSamePageAnchor =
+          Boolean(itemHash) && (itemPath === "/" ? pathname === "/" : pathname === itemPath);
         return (
           /* Link, not a button with router.push: middle-click, cmd-click and
              hover preview come free, and none of them do with a handler. */
@@ -61,6 +90,10 @@ function TabStrip({
             className="ys-tab"
             data-selected={isActive}
             aria-current={isActive ? "page" : undefined}
+            onClick={(event) => {
+              if (!isSamePageAnchor || event.metaKey || event.ctrlKey || event.shiftKey) return;
+              if (scrollToSection(itemHash)) event.preventDefault();
+            }}
           >
             {/* Outline by default, filled when active. The weight change is
                 what carries the state, which is why the tab needs no accent
@@ -222,16 +255,19 @@ export function YsNavbar({ startCoachmark = true }: Props) {
             <>
               <Link
                 href="/login"
-                className="ys-btn ys-btn--secondary ys-btn--small"
+                className="ys-btn ys-btn--secondary ys-btn--regular"
               >
-                Giriş Yap
+                Giriş yap
               </Link>
               <div className="relative">
+                {/* `sen`, like the rest of the site: "kaydolun" was the one
+                    place the header slipped into `siz`. The label says what
+                    the click does — you register — and why you would. */}
                 <Link
                   href="/register"
-                  className="ys-btn ys-btn--primary ys-btn--small ys-from-md"
+                  className="ys-btn ys-btn--primary ys-btn--regular ys-from-md"
                 >
-                  Ücretsiz deneme dersi için kaydolun
+                  Ücretsiz dersini almak için kaydol
                 </Link>
 
                 {nudge !== "hidden" && (
@@ -261,7 +297,18 @@ export function YsNavbar({ startCoachmark = true }: Props) {
           {/* Renders null when signed out, so it needs no guard of its own.
               It stays in row 1 because row 2 is hidden on phones and the
               account has to remain reachable there. */}
-          {mode !== "loading" && <ProfileMenu />}
+          {mode !== "loading" && (
+            <>
+              {/* Left of the avatar, and hidden below md: on a phone this row
+                  is already carrying the logo, the account and the auth
+                  actions. The badge renders null for tutors, for a signed-out
+                  visitor and for a streak of zero. */}
+              <span className="hidden md:inline-flex">
+                <StreakIndicator />
+              </span>
+              <ProfileMenu />
+            </>
+          )}
         </div>
       </header>
 

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 
+import { FAQ_SECTION_ID } from "./ysAppNav";
 import {
   SupportAccordionSection,
   type SupportAccordionSectionItem,
@@ -141,7 +142,7 @@ export { YS_HOME_FAQ_ITEMS };
 
 export function YsHomeFaq() {
   return (
-    <div id="sikca-sorulan-sorular" className="scroll-mt-24 [&>section]:mt-16 [&>section]:py-0 md:[&>section]:mt-24">
+    <div id={FAQ_SECTION_ID} className="scroll-mt-[calc(var(--app-header-h)+24px)] [&>section]:mt-16 [&>section]:py-0 md:[&>section]:mt-24">
       <SupportAccordionSection
         layout="split"
         items={YS_HOME_FAQ_ITEMS}
@@ -151,7 +152,7 @@ export function YsHomeFaq() {
              accordion, which is what the link is doing down there. */
           <div>
             <h2 className="text-2xl font-bold leading-[1.333] tracking-tight">
-              Sıkça Sorulan Sorular
+              Merak Edilenler
             </h2>
             <Link href="/nasil-calisir" className={`mt-4 inline-flex ${faqLinkClass}`}>
               Ders sürecinin tamamını oku

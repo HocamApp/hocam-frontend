@@ -1,6 +1,5 @@
 "use client";
 
-import { Highlight } from "@/components/ui/hero-highlight";
 import { Marquee } from "@/components/ui/marquee";
 
 /**
@@ -89,7 +88,10 @@ export function YsUniversityStrip() {
         className="text-center text-lg font-semibold"
         style={{ color: "var(--ys-neutral-strong)" }}
       >
-        <Highlight>Hocalarımızın</Highlight> öğrencisi olduğu üniversiteler.
+        {/* Plain type. The animated pink marker under "Hocalarımızın" was a
+            decorative sweep on a line that is already doing its job, and
+            DESIGN.md only permits motion that reports system state. */}
+        Hocalarımızın öğrencisi olduğu üniversiteler.
       </p>
 
       <div className="relative mt-6">

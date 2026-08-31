@@ -24,7 +24,6 @@ export type VerticalTabItem = {
 
 export type VerticalTabsProps = {
   heading: ReactNode;
-  intro: ReactNode;
   items: readonly VerticalTabItem[];
   autoplayMs?: number;
   className?: string;
@@ -34,7 +33,6 @@ const DEFAULT_AUTOPLAY_MS = 5_000;
 
 export function VerticalTabs({
   heading,
-  intro,
   items,
   autoplayMs = DEFAULT_AUTOPLAY_MS,
   className,
@@ -130,22 +128,31 @@ export function VerticalTabs({
       className={cn("w-full", className)}
     >
       <div className="grid grid-cols-1 gap-x-16 gap-y-8 lg:grid-cols-12 lg:gap-y-12">
+        {/* The heading runs the full width and centres, which DESIGN.md
+            reserves for heroes and section headers. It also holds the
+            rotating word on one line at every breakpoint: in the narrow
+            five-column slot it used to wrap, and the pill dropped to a
+            second line and back as the word changed length. */}
         <h2
           id={headingId}
-          className="text-2xl font-bold leading-[1.15] tracking-[-0.015em] text-ink lg:col-span-5 lg:row-start-1 lg:text-[32px]"
+          // Display, pulled one step down: 36/56 rather than DESIGN.md's
+          // 40/64, since the full display size started shouting once the
+          // heading took the whole row. Tracking and line height stay at
+          // the display values.
+          className="text-center text-[36px] font-bold leading-[0.95] tracking-[-0.03em] text-ink lg:col-span-12 lg:row-start-1 lg:text-[56px]"
         >
           {heading}
         </h2>
-
-        <div className="max-w-xl text-lg leading-[1.6] text-ink-mid lg:col-span-7 lg:col-start-6 lg:row-start-1 lg:self-end">
-          {intro}
-        </div>
 
         <div
           id={panelId}
           role="tabpanel"
           aria-labelledby={tabId(safeActiveIndex)}
-          className="relative aspect-[16/9] min-w-0 overflow-hidden rounded-modal border border-line bg-surface lg:col-span-7 lg:col-start-6 lg:row-start-2"
+          // The screenshots' own ratio, not 16/9. At 16/9 they were letterboxed
+          // inside the panel, and the paper bars read as a gap between the
+          // product UI and the frame, as if the navbar were floating on a
+          // pink margin rather than running edge to edge.
+          className="relative aspect-[2880/1645] min-w-0 overflow-hidden rounded-modal border border-line bg-paper lg:col-span-7 lg:col-start-6 lg:row-start-2"
         >
           <div
             data-vertical-tabs-preload
@@ -170,7 +177,11 @@ export function VerticalTabs({
                     fill
                     loading="eager"
                     sizes="(min-width: 1024px) 58vw, (min-width: 768px) 100vw, 100vw"
-                    className="object-contain"
+                    // Cover, not contain: the four screenshots differ by a
+                    // few pixels in height, and contain would reopen a
+                    // sub-pixel bar on the ones that do not match the panel
+                    // exactly. Cover trims at most 0.3px instead.
+                    className="object-cover"
                   />
                 </div>
               );
@@ -202,7 +213,7 @@ export function VerticalTabs({
                 onClick={() => selectItem(index)}
                 onKeyDown={(event) => onTabKeyDown(event, index)}
                 className={cn(
-                  "group relative flex w-full items-start gap-4 border-t border-line py-5 pl-5 pr-2 text-left outline-none first:border-t-0 md:py-6 lg:h-36",
+                  "group relative flex w-full items-start gap-3 border-t border-line py-3 pl-4 pr-2 text-left outline-none first:border-t-0 md:py-4 lg:min-h-[112px]",
                   "focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-4 focus-visible:ring-offset-paper",
                 )}
               >

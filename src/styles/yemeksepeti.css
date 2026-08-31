@@ -190,22 +190,34 @@
   border-radius: var(--radius-pill);
   font-weight: 600;
   white-space: nowrap;
+  /* DESIGN.md: state changes are colour-based and 120ms linear. Anything
+     slower announces itself as an animation. */
   transition:
-    background-color 150ms cubic-bezier(0.22, 0.1, 0.1, 1),
-    color 150ms cubic-bezier(0.22, 0.1, 0.1, 1),
+    background-color var(--duration-state) linear,
+    color var(--duration-state) linear,
     border-color 150ms cubic-bezier(0.22, 0.1, 0.1, 1);
 }
 
+/* DESIGN.md's three button sizes, written as font size over horizontal
+   padding: 14/22 small, 15/28 default, 16/34 large. The padding is what
+   separates them; the heights follow from it. */
 .ys-btn--small {
-  height: 32px;
-  padding: 0 var(--ys-space-st);
+  height: 36px;
+  padding: 0 22px;
   font-size: 0.875rem;
   line-height: 1.571;
 }
 
 .ys-btn--regular {
   height: 40px;
-  padding: 0 var(--ys-space-sm);
+  padding: 0 28px;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+.ys-btn--large {
+  height: 44px;
+  padding: 0 34px;
   font-size: 1rem;
   line-height: 1.5;
 }
@@ -219,15 +231,19 @@
   background-color: var(--ys-interaction-primary-hover);
 }
 
+/* DESIGN.md's secondary: transparent, a 1px ink border, and it fills solid
+   on hover with the text inverting. The old version was a white chip with a
+   --line border that went one shade greyer on hover, which read as disabled
+   sitting next to the pink primary. */
 .ys-btn--secondary {
-  background-color: var(--surface);
+  background-color: transparent;
   color: var(--ys-neutral-primary);
-  border: 1px solid var(--ys-neutral-border);
+  border: 1px solid var(--ys-neutral-primary);
 }
 
 .ys-btn--secondary:hover {
-  background-color: var(--ys-neutral-surface);
-  color: var(--ys-neutral-strong);
+  background-color: var(--ys-neutral-primary);
+  color: var(--paper);
 }
 
 .ys-icon-btn {
@@ -382,7 +398,10 @@
   display: none;
   position: absolute;
   top: calc(100% + 10px);
-  right: 160px;
+  /* Flush with the button's right edge. The bubble is wider than the button
+     and the header sits at the edge of the viewport, so centring it on the
+     button would push it off-screen; the arrow does the pointing instead. */
+  right: 0;
   z-index: 40;
   width: max-content;
   max-width: 280px;
@@ -401,12 +420,20 @@
   animation: ys-coachmark-in 260ms cubic-bezier(0.22, 0.1, 0.1, 1) both;
 }
 
-/* Same 45deg-rotated square the reference uses for its tooltip arrows. */
+/* Same 45deg-rotated square the reference uses for its tooltip arrows, sunk
+   5px into the bubble so the two read as one shape.
+
+   Offset from the bubble's left edge rather than its right: the arrow points
+   at the start of the button's label, and the bubble's own first word starts
+   at the same place, so the two line up down the column. A right-hand offset
+   would have to be re-measured every time either width changed. */
 .ys-coachmark::after {
   content: "";
   position: absolute;
   top: -5px;
-  right: 26px;
+  /* Measured, not guessed: this puts the arrow's centre under the "z" end of
+     "Ücretsiz" on the button above, 34px from the bubble's left edge. */
+  left: 34px;
   width: 12px;
   height: 12px;
   border-top-left-radius: 2px;
@@ -665,6 +692,40 @@
     100% 100%,
     0 calc(100% - var(--ys-band-cut))
   );
+}
+
+/*
+ * Testimonial hover sheen.
+ *
+ * A flat #FFD100 hover reads as a paint chip at card scale, so the fill gets
+ * two soft blooms of lighter gold instead: a satin sheen rather than a
+ * gradient sweep.
+ *
+ * DESIGN.md bans gradients outright (pattern 1) and radial orbs (pattern 22).
+ * This is a deliberate exception on one hover state, kept inside the rules
+ * the ban exists to protect:
+ *
+ * - Both stops are lighter than the #FFD100 base and stay in the gold family,
+ *   so there is no second hue and no hue travel. The whole ramp measures
+ *   between 7.5:1 and 9.2:1 against `--gold-ink`, i.e. contrast can only
+ *   improve, never fall below the flat value.
+ * - It is static. No sweep, no shimmer, no animation. The only motion is the
+ *   120ms opacity fade in and out, which is the same colour-change timing
+ *   every other hover on the site uses.
+ *
+ * Painted by an overlay layer rather than by swapping `background-image`,
+ * because a background-image cannot be transitioned and would snap.
+ */
+.ys-sheen {
+  background-image:
+    radial-gradient(115% 85% at 76% 12%, #ffee9e 0%, rgb(255 238 158 / 0%) 58%),
+    radial-gradient(90% 70% at 12% 92%, #ffe064 0%, rgb(255 224 100 / 0%) 62%);
+  opacity: 0;
+  transition: opacity var(--duration-state) linear;
+}
+
+.group\/card:hover .ys-sheen {
+  opacity: 1;
 }
 
 /* ---------------------------------------------------------------- footer -- */

@@ -47,13 +47,11 @@ describe("YsHowItWorks", () => {
   it("presents the four-step Hocam journey with the approved copy", () => {
     render(<YsHowItWorks />);
 
-    assert.ok(screen.getByRole("heading", { name: "Hocanı bul. Gerisi kolay." }));
     assert.ok(
-      screen.getByText(
-        "Sana uygun hocayı filtrele, ücretsiz deneme dersiyle tanış, paketini seç. Hocam’ın platformu üzerinden, tek tıkla derse katıl.",
-      ),
+      screen.getByRole("heading", {
+        name: /Sen sadece seç, gün belirle, derse gir, öğren\./,
+      }),
     );
-
     for (const title of [
       "Hocanı bul",
       "Deneme dersiyle tanış",
@@ -65,18 +63,29 @@ describe("YsHowItWorks", () => {
 
     assert.ok(
       screen.getByText(
-        "İstediğin dersi ve üniversite ile filtrele, hocaları karşılaştır, sana uygun olanı seç.",
+        "İstediğin dersi veya üniversiteyi filtrele, hocaları karşılaştır, sana uygun olanı seç.",
       ),
     );
   });
 
-  it("keeps the heading upright and on the design-system H2 scale", () => {
+  it("keeps the heading upright and on the design-system display scale", () => {
     render(<YsHowItWorks />);
 
     const heading = screen.getByRole("heading", { level: 2 });
     assert.equal(heading.querySelector(".italic"), null);
-    assert.equal(heading.classList.contains("text-2xl"), true);
-    assert.equal(heading.classList.contains("lg:text-[32px]"), true);
+    // The rotating word carries the four steps in the order the tablist
+    // below repeats them, and one stable sentence covers all four for
+    // assistive tech rather than a heading that rewrites itself.
+    assert.match(
+      heading.querySelector(".sr-only")?.textContent ?? "",
+      /^Sen sadece seç, gün belirle, derse gir, öğren\.$/,
+    );
+    assert.equal(heading.classList.contains("text-[36px]"), true);
+    assert.equal(heading.classList.contains("lg:text-[56px]"), true);
+    // Display size without the tightening is the clearest "nobody adjusted
+    // this" signal Poppins can give.
+    assert.equal(heading.classList.contains("tracking-[-0.03em]"), true);
+    assert.equal(heading.classList.contains("leading-[0.95]"), true);
   });
 
   it("keeps the approved free-trial promise verbatim", () => {
@@ -85,7 +94,7 @@ describe("YsHowItWorks", () => {
     act(() => fireEvent.click(screen.getByRole("tab", { name: /Deneme dersiyle tanış/ })));
 
     assert.ok(
-      screen.getByText("İlk dersi ücretsiz dene, tarzını beğendiğinden emin ol."),
+      screen.getByText("İlk dersini ücretsiz dene, hocanı beğendiğinden emin ol."),
     );
   });
 
