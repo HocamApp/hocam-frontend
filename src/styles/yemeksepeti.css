@@ -77,6 +77,62 @@
   background-color: var(--paper);
 }
 
+/* The homepage journey uses motion only to explain a state change: the next
+   product screen enters from the direction of travel and the hairline records
+   the five-second interval. Both stop completely for reduced-motion users. */
+.vertical-tabs-panel-enter[data-direction="forward"] {
+  animation: vertical-tabs-enter-forward 340ms cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+
+.vertical-tabs-panel-enter[data-direction="backward"] {
+  animation: vertical-tabs-enter-backward 340ms cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+
+.vertical-tabs-description-enter {
+  animation: vertical-tabs-description-in 180ms linear both;
+}
+
+.vertical-tabs-progress {
+  animation: vertical-tabs-progress var(--vertical-tabs-duration) linear both;
+}
+
+@keyframes vertical-tabs-enter-forward {
+  from {
+    opacity: 0;
+    transform: translateY(10%);
+  }
+}
+
+@keyframes vertical-tabs-enter-backward {
+  from {
+    opacity: 0;
+    transform: translateY(-10%);
+  }
+}
+
+@keyframes vertical-tabs-description-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes vertical-tabs-progress {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vertical-tabs-panel-enter,
+  .vertical-tabs-description-enter,
+  .vertical-tabs-progress {
+    animation: none;
+  }
+}
+
 /*
  * Aydınlık shadcn token'ları, `.ys-root` kapsamında yeniden tanımlanıyor.
  *
