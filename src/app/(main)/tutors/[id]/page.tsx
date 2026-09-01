@@ -14,14 +14,16 @@ import {
   ChatText,
   Check,
   Copy,
-  Flag,
+  Export,
+  Heart,
   PlayCircle,
-  ShareNetwork,
+  SealCheck,
+  SealWarning,
   X,
 } from "@phosphor-icons/react";
 import { RankMark } from "@/components/brand/marks";
 import { useFavorites } from "@/hooks/useFavorites";
-import { FavoriteButton } from "@/components/tutors/FavoriteButton";
+import { TutorActionButton } from "@/components/tutors/TutorActionButton";
 import {
   createTutorReport,
   fetchTutorById,
@@ -856,13 +858,6 @@ export default function TutorProfilePage({
                               >
                                 Deneme Dersi Al
                               </Button>
-                              <div className="space-y-1 text-center text-xs text-ink-mid">
-                                <p>Uygun değilse sorun yok.</p>
-                                <p>
-                                  Bu ay {trialLessonsRemaining} ücretsiz deneme
-                                  hakkın kaldı.
-                                </p>
-                              </div>
                             </div>
                           ) : (
                             <TutorCheckoutCta
@@ -884,6 +879,37 @@ export default function TutorProfilePage({
                     </>
                   )}
 
+                  {/* The reassurance a reader wants right after a booking
+                      button, in a box rather than as two lines of grey small
+                      print. It sits under whichever CTA rendered, because the
+                      free-trial allowance is a fact about the reader, not
+                      about which button this tutor happens to show.
+
+                      --success-soft is DESIGN.md's tinted surface with an
+                      approved foreground, and it is themed, so Night mode
+                      needs no pinned ink. */}
+                  {isAuthenticated &&
+                    isStudent &&
+                    !isOwnProfile &&
+                    trialLessonsRemaining > 0 && (
+                      <div className="flex items-start gap-2 rounded-input bg-success-soft p-3 text-left">
+                        <SealCheck
+                          className="mt-0.5 h-5 w-5 shrink-0 text-success"
+                          weight="fill"
+                          aria-hidden
+                        />
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-ink">
+                            Uymadı mı, sorun değil.
+                          </p>
+                          <p className="mt-0.5 text-sm text-ink-mid">
+                            Bu ay {trialLessonsRemaining} ücretsiz deneme hakkın
+                            kaldı.
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
                   {isAuthenticated && isStudent && !isOwnProfile && (
                     <Button
                       type="button"
@@ -903,60 +929,57 @@ export default function TutorProfilePage({
                     </Button>
                   )}
 
-                  {/* Secondary icon actions: favorite, report, share */}
-                  <div className="flex items-center justify-center gap-1">
-                    <FavoriteButton
-                      tutorId={tutor.id}
-                      isFavorite={favoriteIds.has(tutor.id)}
-                      isPending={isFavoritePending(tutor.id)}
-                      onToggle={(tutorId) => {
+                  {/* Save, report, share. Three equal boxes rather than three
+                      loose glyphs: at ghost-icon size they read as decoration
+                      sitting under two full-width buttons, and half of them
+                      had no visible name at all. Each one names itself in a
+                      tooltip that opens downwards, away from the CTA above. */}
+                  <div className="grid grid-cols-3 gap-2">
+                    <TutorActionButton
+                      icon={Heart}
+                      label={
+                        favoriteIds.has(tutor.id)
+                          ? "Listemden çıkar"
+                          : "Listeme kaydet"
+                      }
+                      pressed={favoriteIds.has(tutor.id)}
+                      disabled={isFavoritePending(tutor.id)}
+                      onClick={() => {
+                        if (!isAuthenticated) {
+                          router.push("/login");
+                          return;
+                        }
                         void recordDiscoveryEvent(
                           discoveryImpressionId,
-                          tutorId,
-                          favoriteIds.has(tutorId)
+                          tutor.id,
+                          favoriteIds.has(tutor.id)
                             ? "favorite_removed"
                             : "favorite_added",
                         );
-                        toggle(tutorId);
+                        toggle(tutor.id);
                       }}
                     />
-                    {isAuthenticated && isStudent && !isOwnProfile && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="size-8 text-ink-mid hover:text-error"
-                        aria-label="Hocayı şikâyet et"
-                        title="Hocayı şikâyet et"
+                    {isAuthenticated && isStudent && !isOwnProfile ? (
+                      <TutorActionButton
+                        icon={SealWarning}
+                        label="Hocayı şikâyet et"
                         onClick={() => setIsReportOpen(true)}
-                      >
-                        <Flag className="h-5 w-5" />
-                      </Button>
+                      />
+                    ) : (
+                      <span aria-hidden />
                     )}
                     <Popover
                       open={isSharePreviewOpen}
                       onOpenChange={setIsSharePreviewOpen}
                     >
                       <PopoverTrigger asChild>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8"
-                          aria-label={
-                            shareCopied
-                              ? "Profil bağlantısı kopyalandı"
-                              : "Profili paylaş"
+                        <TutorActionButton
+                          icon={shareCopied ? Check : Export}
+                          label={
+                            shareCopied ? "Bağlantı kopyalandı" : "Hocayı paylaş"
                           }
-                          title={shareCopied ? "Kopyalandı" : "Profili paylaş"}
                           onClick={handleShare}
-                        >
-                          {shareCopied ? (
-                            <Check className="h-5 w-5 motion-safe:animate-message-pop" />
-                          ) : (
-                            <ShareNetwork className="h-5 w-5 transition-transform duration-200" />
-                          )}
-                        </Button>
+                        />
                       </PopoverTrigger>
                       <PopoverContent align="end" className="w-64 p-3">
                         <div className="space-y-3">
