@@ -9,7 +9,11 @@ export const metadata = {
 
 export default function CerezPolitikasiPage() {
   return (
-    <main className="mx-auto max-w-3xl px-4 py-12">
+    /* w-full matters here: the shell is a flex item, and `mx-auto` on a flex
+       item turns off the cross-axis stretch, so without an explicit width the
+       column shrink-to-fits around the 900px inventory table below and the
+       whole page scrolls sideways on a phone. */
+    <main className="mx-auto w-full max-w-3xl px-4 py-12">
       <h1 className="text-3xl font-bold">Çerez Politikası</h1>
       <p className="mt-2 text-sm text-muted-foreground">
         Sürüm v1.1 · 26 Ağustos 2026
@@ -81,7 +85,7 @@ export default function CerezPolitikasiPage() {
           <p>
             Onaya bağlı çerezleri istediğin an kapatabilirsin; kapatmak açmak
             kadar kolaydır ve sitenin temel işlevlerini etkilemez. Tercihini{" "}
-            <Link href="/profile/gizlilik" className="text-primary underline">
+            <Link href="/profile/gizlilik" className="inline-flex min-h-6 items-center text-primary underline">
               Gizlilik ve Verilerim
             </Link>{" "}
             sayfasından yönetebilirsin.
@@ -95,10 +99,10 @@ export default function CerezPolitikasiPage() {
       </div>
 
       <div className="mt-12 flex flex-wrap gap-4 text-sm">
-        <Link href="/kvkk/aydinlatma-metni" className="text-primary underline">
+        <Link href="/kvkk/aydinlatma-metni" className="inline-flex min-h-6 items-center text-primary underline">
           Aydınlatma Metni
         </Link>
-        <Link href="/" className="text-primary underline">
+        <Link href="/" className="inline-flex min-h-6 items-center text-primary underline">
           Hocam’a dön
         </Link>
       </div>

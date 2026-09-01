@@ -4,7 +4,7 @@ export const metadata = { title: "Öğrenci Gelişim Kayıtları Aydınlatma Met
 
 export default function StudentProgressNoticePage() {
   return (
-    <main className="mx-auto max-w-3xl px-4 py-12">
+    <main className="mx-auto w-full max-w-3xl px-4 py-12">
       <h1 className="text-3xl font-bold">Öğrenci Gelişim Kayıtları Aydınlatma Metni</h1>
       <p className="mt-4 text-muted-foreground">
         Bu kayıt özelliği, hukuki değerlendirme tamamlanıp yalnızca açıkça seçilmiş pilot
@@ -60,7 +60,7 @@ export default function StudentProgressNoticePage() {
         </section>
       </div>
 
-      <Link href="/" className="mt-8 inline-block text-sm font-medium text-primary underline">
+      <Link href="/" className="mt-8 inline-flex min-h-6 items-center text-sm font-medium text-primary underline">
         Hocam’a dön
       </Link>
     </main>

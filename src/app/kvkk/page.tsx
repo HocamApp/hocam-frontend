@@ -41,7 +41,7 @@ const DOCUMENTS = [
 
 export default function KvkkIndexPage() {
   return (
-    <main className="mx-auto max-w-3xl px-4 py-12">
+    <main className="mx-auto w-full max-w-3xl px-4 py-12">
       <h1 className="text-3xl font-bold">KVKK ve Gizlilik</h1>
       <p className="mt-3 text-muted-foreground">
         Verilerini nasıl kullandığımızı gizlemeye çalışmıyoruz. Aşağıdaki
@@ -67,7 +67,7 @@ export default function KvkkIndexPage() {
 
       <div className="mt-10 rounded-lg border bg-muted/40 p-4 text-sm leading-6">
         Mevcut onaylarını geri almak ve çevrimiçi başvuru kanalının durumunu görmek için{" "}
-        <Link href="/profile/gizlilik" className="text-primary underline">
+        <Link href="/profile/gizlilik" className="inline-flex min-h-6 items-center text-primary underline">
           Gizlilik ve Verilerim
         </Link>{" "}
         sayfasına gidebilir, ya da kvkk@hocamozelders.com adresine

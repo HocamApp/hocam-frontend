@@ -11,7 +11,7 @@ export default function PrivacySettingsPage() {
     <main className="mx-auto max-w-3xl px-4 py-10">
       <Link
         href="/profile"
-        className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+        className="inline-flex min-h-6 items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
       >
         <ArrowLeft className="h-4 w-4" />
         Profilime dön

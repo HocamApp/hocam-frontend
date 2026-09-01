@@ -26,7 +26,13 @@ export function PublicSeoBreadcrumbs({
                 {item.label}
               </span>
             ) : (
-              <Link className="hover:text-foreground" href={item.href}>
+              /* min-h-6: a breadcrumb is a row of destinations rather than a
+                 link inside a sentence, so WCAG 2.2's 24px floor applies and
+                 a 14px line box measures 20. */
+              <Link
+                className="inline-flex min-h-6 items-center hover:text-foreground"
+                href={item.href}
+              >
                 {item.label}
               </Link>
             )}
@@ -149,7 +155,10 @@ export function PublicSeoInfoCard({
         {href && linkLabel && (
           <Link
             href={href}
-            className="mt-5 inline-flex items-center text-sm font-medium text-primary hover:underline"
+            /* min-h-6: WCAG 2.2's 24px target floor. The line box of a 14px
+               link is 20, and this one is a card action rather than a link
+               inside a sentence, so the exemption does not cover it. */
+            className="mt-5 inline-flex min-h-6 items-center text-sm font-medium text-primary hover:underline"
           >
             {linkLabel}
             <ArrowRight className="ml-1.5 h-4 w-4" aria-hidden="true" />

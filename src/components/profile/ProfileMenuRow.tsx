@@ -80,14 +80,22 @@ export function ProfileToggleRow({
         aria-label={label}
         disabled={disabled}
         onClick={() => onChange(!checked)}
-        className={cn(
-          "relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors disabled:cursor-not-allowed disabled:opacity-50",
-          checked ? "bg-primary" : "bg-muted-foreground/30"
-        )}
+        /* 36x24 target with a 20px track drawn inside it. The switch looks
+           the same; what changed is that the thing you tap now meets WCAG
+           2.2's 24px floor, which a bare 20px stripe did not. */
+        className="group relative inline-flex h-6 w-9 shrink-0 items-center disabled:cursor-not-allowed disabled:opacity-50"
       >
         <span
+          aria-hidden
           className={cn(
-            "inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform",
+            "absolute inset-x-0 inset-y-0.5 rounded-full transition-colors",
+            checked ? "bg-primary" : "bg-muted-foreground/30"
+          )}
+        />
+        <span
+          aria-hidden
+          className={cn(
+            "relative inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform",
             checked ? "translate-x-4" : "translate-x-0.5"
           )}
         />

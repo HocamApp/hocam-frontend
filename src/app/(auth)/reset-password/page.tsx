@@ -196,7 +196,7 @@ function ResetPasswordContent() {
                           type={showPassword ? "text" : "password"}
                           autoComplete="new-password"
                           placeholder="Yeni şifreni gir"
-                          className="w-full rounded-2xl bg-transparent p-4 pr-12 text-base text-white placeholder:text-neutral-500 focus:outline-none lg:text-sm"
+                          className="w-full rounded-2xl bg-transparent p-4 pr-12 text-base text-white placeholder:text-neutral-500 focus:outline-none"
                         />
                         <button
                           type="button"
@@ -236,7 +236,7 @@ function ResetPasswordContent() {
                           type={showPasswordConfirm ? "text" : "password"}
                           autoComplete="new-password"
                           placeholder="Yeni şifreni tekrar gir"
-                          className="w-full rounded-2xl bg-transparent p-4 pr-12 text-base text-white placeholder:text-neutral-500 focus:outline-none lg:text-sm"
+                          className="w-full rounded-2xl bg-transparent p-4 pr-12 text-base text-white placeholder:text-neutral-500 focus:outline-none"
                         />
                         <button
                           type="button"

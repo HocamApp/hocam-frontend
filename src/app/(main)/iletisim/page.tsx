@@ -69,7 +69,7 @@ export default function ContactPage() {
               <p className="mt-2 flex-1 text-sm leading-6 text-muted-foreground">{body}</p>
               <Link
                 href={action.href}
-                className="mt-4 text-sm font-semibold text-brand-700 underline-offset-2 hover:underline dark:text-brand-300"
+                className="mt-4 inline-flex min-h-6 items-center text-sm font-semibold text-brand-700 underline-offset-2 hover:underline dark:text-brand-300"
               >
                 {action.label}
               </Link>
