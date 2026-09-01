@@ -272,7 +272,10 @@ function TutorCardDefault({
         </Link>
 
         <div className="border-t px-4 py-3">
-          <Link href={tutorHref} className="block min-w-0 cursor-pointer">
+          {/* min-h-6: the rating row is a link of its own, and a 14px line box
+              is 20px tall — under WCAG 2.2's 24px target floor, which a card
+              row does not get an exemption from. */}
+          <Link href={tutorHref} className="block min-h-6 min-w-0 cursor-pointer">
             <div className="flex min-w-0 flex-wrap items-center gap-x-1 text-sm">
               {tutor.total_reviews > 0 ? (
                 <>

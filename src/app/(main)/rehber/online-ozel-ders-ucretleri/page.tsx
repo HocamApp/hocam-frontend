@@ -82,7 +82,7 @@ function PriceSummaryCard({
       )}
       <Link
         href={href}
-        className="mt-5 inline-flex text-sm font-medium text-primary hover:underline"
+        className="mt-5 inline-flex min-h-6 items-center text-sm font-medium text-primary hover:underline"
       >
         İlgili hocaları incele
       </Link>

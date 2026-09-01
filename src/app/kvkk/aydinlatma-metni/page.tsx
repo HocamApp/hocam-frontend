@@ -28,7 +28,7 @@ function Section({
 
 export default function AydinlatmaMetniPage() {
   return (
-    <main className="mx-auto max-w-3xl px-4 py-12">
+    <main className="mx-auto w-full max-w-3xl px-4 py-12">
       <h1 className="text-3xl font-bold">
         Kişisel Verilerin Korunması Hakkında Aydınlatma Metni
       </h1>
@@ -39,7 +39,7 @@ export default function AydinlatmaMetniPage() {
       <div className="mt-6 rounded-lg border bg-muted/40 p-4 text-sm leading-6">
         Bu metin seni bilgilendirir, senden onay istemez. Onayın gereken
         durumlarda ayrıca ve açıkça sorarız. Daha önce verdiğin onayları{" "}
-        <Link href="/profile/gizlilik" className="text-primary underline">
+        <Link href="/profile/gizlilik" className="inline-flex min-h-6 items-center text-primary underline">
           Gizlilik ve Verilerim
         </Link>{" "}
         sayfasından yönetebilirsin.
@@ -166,7 +166,7 @@ export default function AydinlatmaMetniPage() {
           <p>
             Başvurunu her zaman kvkk@hocamozelders.com adresine; çevrimiçi kanal
             etkinse ayrıca{" "}
-            <Link href="/profile/gizlilik" className="text-primary underline">
+            <Link href="/profile/gizlilik" className="inline-flex min-h-6 items-center text-primary underline">
               Gizlilik ve Verilerim
             </Link>{" "}
             sayfasından iletebilirsin. En geç 30 gün içinde cevaplarız.
@@ -209,16 +209,16 @@ export default function AydinlatmaMetniPage() {
       </div>
 
       <div className="mt-12 flex flex-wrap gap-4 text-sm">
-        <Link href="/kvkk/cerez-politikasi" className="text-primary underline">
+        <Link href="/kvkk/cerez-politikasi" className="inline-flex min-h-6 items-center text-primary underline">
           Çerez Politikası
         </Link>
-        <Link href="/kvkk/analitik" className="text-primary underline">
+        <Link href="/kvkk/analitik" className="inline-flex min-h-6 items-center text-primary underline">
           Analitik Aydınlatma Metni
         </Link>
-        <Link href="/kvkk/hoca-dogrulama" className="text-primary underline">
+        <Link href="/kvkk/hoca-dogrulama" className="inline-flex min-h-6 items-center text-primary underline">
           Hoca Doğrulama Aydınlatma Metni
         </Link>
-        <Link href="/" className="text-primary underline">
+        <Link href="/" className="inline-flex min-h-6 items-center text-primary underline">
           Hocam’a dön
         </Link>
       </div>

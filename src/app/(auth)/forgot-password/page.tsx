@@ -186,7 +186,7 @@ export default function ForgotPasswordPage() {
                         type="email"
                         autoComplete="email"
                         placeholder="ornek@email.com"
-                        className="w-full rounded-2xl bg-transparent p-4 text-base text-white placeholder:text-neutral-500 focus:outline-none lg:text-sm"
+                        className="w-full rounded-2xl bg-transparent p-4 text-base text-white placeholder:text-neutral-500 focus:outline-none"
                       />
                     </GlassInputWrapper>
                   </FormControl>

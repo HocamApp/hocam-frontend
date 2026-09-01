@@ -5,7 +5,7 @@ export const metadata = { title: "Analitik Aydınlatma Metni" };
 
 export default function AnalyticsNoticePage() {
   return (
-    <main className="mx-auto max-w-3xl px-4 py-12">
+    <main className="mx-auto w-full max-w-3xl px-4 py-12">
       <h1 className="text-3xl font-bold">Analitik Aydınlatma Metni</h1>
       <p className="mt-4 text-muted-foreground">Bu özellik hukuki onay tamamlanana kadar üretimde kapalıdır.</p>
       <div className="mt-8 space-y-5 text-sm leading-7">
@@ -14,7 +14,7 @@ export default function AnalyticsNoticePage() {
         <section><h2 className="font-semibold">Tercihini değiştirme</h2><p>Onay vermemek uygulamanın temel işlevlerini etkilemez. Hesap ve gizlilik ayarlarından onayını geri çekebilirsin.</p></section>
       </div>
       <div className="mt-8"><DiscoveryConsentControls /></div>
-      <Link href="/" className="mt-8 inline-block text-sm font-medium text-primary underline">Hocam’a dön</Link>
+      <Link href="/" className="mt-8 inline-flex min-h-6 items-center text-sm font-medium text-primary underline">Hocam’a dön</Link>
     </main>
   );
 }

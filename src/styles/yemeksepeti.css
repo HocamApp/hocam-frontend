@@ -730,7 +730,13 @@
 
 /* ---------------------------------------------------------------- footer -- */
 
+/* WCAG 2.2 §2.5.8 wants 24px of target, and a 14px link in a stacked list
+   measures 22. The exemption for links inside a sentence does not apply to a
+   footer column: these are a list of destinations, not prose. */
 .ys-footer-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
   color: var(--ys-neutral-secondary);
   font-size: 0.875rem;
   line-height: 1.571;
@@ -739,6 +745,9 @@
 /* Same colour and size as a footer link, but inert: these label things the
    product does not have a page for yet, so they must not invite a click. */
 .ys-footer-text {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
   color: var(--ys-neutral-secondary);
   font-size: 0.875rem;
   line-height: 1.571;

@@ -434,7 +434,7 @@ export function RegisterForm({
                       type="email"
                       autoComplete="email"
                       placeholder="E-posta adresini gir"
-                      className="w-full rounded-2xl bg-transparent p-4 text-base text-white placeholder:text-neutral-500 focus:outline-none lg:text-sm"
+                      className="w-full rounded-2xl bg-transparent p-4 text-base text-white placeholder:text-neutral-500 focus:outline-none"
                     />
                   </GlassInputWrapper>
                 </FormControl>
@@ -459,7 +459,7 @@ export function RegisterForm({
                         type={showPassword ? "text" : "password"}
                         autoComplete="new-password"
                         placeholder="Şifreni gir"
-                        className="w-full rounded-2xl bg-transparent p-4 pr-12 text-base text-white placeholder:text-neutral-500 focus:outline-none lg:text-sm"
+                        className="w-full rounded-2xl bg-transparent p-4 pr-12 text-base text-white placeholder:text-neutral-500 focus:outline-none"
                       />
                       <button
                         type="button"
@@ -497,7 +497,7 @@ export function RegisterForm({
                         type={showPasswordConfirm ? "text" : "password"}
                         autoComplete="new-password"
                         placeholder="Şifreni tekrar gir"
-                        className="w-full rounded-2xl bg-transparent p-4 pr-12 text-base text-white placeholder:text-neutral-500 focus:outline-none lg:text-sm"
+                        className="w-full rounded-2xl bg-transparent p-4 pr-12 text-base text-white placeholder:text-neutral-500 focus:outline-none"
                       />
                       <button
                         type="button"
@@ -535,7 +535,7 @@ export function RegisterForm({
               type="button"
               disabled={!noticeConfig}
               onClick={() => setNoticeOpen(true)}
-              className="text-left text-sm font-medium text-white underline underline-offset-4 disabled:cursor-not-allowed disabled:text-neutral-500"
+              className="inline-flex min-h-6 items-center text-left text-sm font-medium text-white underline underline-offset-4 disabled:cursor-not-allowed disabled:text-neutral-500"
             >
               KVKK Aydınlatma Metni’ni görüntüle
             </button>

@@ -18,7 +18,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 export default function TutorVerificationNoticePage() {
   return (
-    <main className="mx-auto max-w-3xl px-4 py-12">
+    <main className="mx-auto w-full max-w-3xl px-4 py-12">
       <h1 className="text-3xl font-bold">Hoca Doğrulama Süreci Aydınlatma Metni</h1>
       <p className="mt-2 text-sm text-muted-foreground">Sürüm {VERSION} · {UPDATED_AT}</p>
       <div className="mt-6 rounded-lg border bg-muted/40 p-4 text-sm leading-6">
@@ -106,7 +106,7 @@ export default function TutorVerificationNoticePage() {
         </Section>
       </div>
 
-      <a href="/kvkk" className="mt-10 inline-block text-sm font-medium text-primary underline">
+      <a href="/kvkk" className="mt-10 inline-flex min-h-6 items-center text-sm font-medium text-primary underline">
         Tüm KVKK metinleri
       </a>
     </main>
