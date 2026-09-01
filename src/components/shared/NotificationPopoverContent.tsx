@@ -36,6 +36,13 @@ function getNotificationHref(n: Notification, role?: string): string | null {
     return role === "tutor" ? "/dashboard/tutor" : "/dashboard/student";
   }
 
+  // The unanswered-request nudge exists to send the student back to the
+  // directory, so that is where it goes. The request itself has no screen of
+  // its own — it is a row in a conversation that has not started yet.
+  if (n.related_object_type === "message_request") {
+    return "/";
+  }
+
   return null;
 }
 

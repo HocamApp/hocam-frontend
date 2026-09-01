@@ -74,7 +74,19 @@ export default async function TutorProfileLayout({
   if (!tutor) return children;
 
   const queryClient = new QueryClient();
-  queryClient.setQueryData(["tutor", params.id], tutor);
+  // Seeded as already stale, on purpose.
+  //
+  // This fetch is anonymous — it runs on the server for metadata and JSON-LD,
+  // with no student's token — so it carries none of the per-student fields the
+  // profile needs: trial_lesson_eligible, trial_lessons_remaining, and the
+  // rest. Seeded fresh, it satisfied the client's five-minute staleTime and
+  // the browser never asked again, so a signed-in student was shown the
+  // signed-out answer: no free-trial CTA, no allowance box.
+  //
+  // updatedAt: 0 keeps the instant first paint and the SEO payload while
+  // marking the entry stale, so the client refetches on mount with the token
+  // and replaces it with the reader's own copy.
+  queryClient.setQueryData(["tutor", params.id], tutor, { updatedAt: 0 });
 
   const name = tutorFullName(tutor);
   const description = tutorSeoDescription(tutor);

@@ -141,4 +141,14 @@ describe("formatRelativeTime", () => {
   it("returns empty rather than NaN for an unparseable date", () => {
     assert.equal(formatRelativeTime("not-a-date"), "");
   });
+
+  it("gives the unanswered-request nudge the message icon, not a new one", () => {
+    // It is a message that did not get answered, so it belongs to the message
+    // family. Pinned because the rule matches on a substring: renaming the
+    // backend type to something without "message_" would silently repaint it.
+    assert.deepEqual(
+      getNotificationAppearance("message_request_unanswered", "message_request"),
+      getNotificationAppearance("message", "conversation"),
+    );
+  });
 });
