@@ -14,6 +14,7 @@ const phoneWidth = Number(process.env.MESSAGES_TEST_WIDTH ?? 375);
 const messageCount = Number(process.env.MESSAGES_TEST_COUNT ?? 24);
 const browserName = process.env.MESSAGES_TEST_BROWSER ?? "chromium";
 const withDeletionBanner = process.env.MESSAGES_TEST_DELETION_BANNER === "1";
+const failedDraft = "Başarısız gönderimde taslak korunmalı";
 const outputDir = `screenshots/messages-viewport/${browserName}-${phoneWidth}-${messageCount}`;
 const user = { id: "viewport-student", email: "viewport@example.invalid", role: "student", is_email_verified: true };
 const conversation = {
@@ -74,6 +75,17 @@ try {
     else if (path.endsWith("/profile/me/")) data = { user, first_name: "Test", last_name: "Öğrenci", avatar_url: null };
     else if (path.endsWith("/conversations/")) data = [conversation];
     else if (path.endsWith(`/conversations/${conversation.id}/`)) data = conversation;
+    else if (path.endsWith("/messages/") && route.request().method() === "POST") {
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      const payload = route.request().postDataJSON();
+      if (payload.message_text === failedDraft) {
+        return route.fulfill({ status: 503, json: { detail: "Local test failure" } });
+      }
+      const sent = { id: `sent-${messages.length}`, sender: user.id, message_text: payload.message_text,
+        created_at: "2026-09-02T12:00:00Z", read_at: null, reply_to: null, is_deleted: false, attachment: null };
+      messages.push(sent);
+      data = sent;
+    }
     else if (path.endsWith("/messages/")) data = messages;
     else if (path.endsWith("/typing/")) data = { is_typing: false };
     else if (path.endsWith("/summary/")) data = { unread_count: 0, has_unread: false };
@@ -101,6 +113,15 @@ try {
     ? await page.getByRole("link", { name: "Güvenlik ayarlarından yönetin" }).evaluate((link) => link.parentElement!.parentElement!.getBoundingClientRect().bottom)
     : 56;
   assert.equal(closed.header.top, closedHeaderTop, "The conversation must not cover the account deletion warning");
+  // Safari's address bars can expand/collapse before typing. The keyboard
+  // may later dismiss to 650, not the largest height (750) seen on this route.
+  for (const height of [750, 650]) {
+    await page.evaluate((nextHeight) => {
+      Object.assign(visualViewport!, { height: nextHeight });
+      visualViewport!.dispatchEvent(new Event("resize"));
+    }, height);
+    await page.evaluate(() => new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
+  }
   // Safari can retain a layout viewport taller than the visible area. Emulate
   // that outer page overflow without changing the real chat's CSS or geometry.
   await page.addStyleTag({ content: "body > div { min-height: 900px; }" });
@@ -109,7 +130,23 @@ try {
   assert.equal(attemptedScroll.scrollY, 0, "The outer page must not pan the composer away from the tab bar");
   assert.equal(attemptedScroll.header.top, closedHeaderTop);
 
-  await page.locator("textarea").focus();
+  await page.locator("textarea").tap();
+  await page.waitForTimeout(30);
+  const focusStart = await measure(page);
+  assert.equal(focusStart.header.top, 0, "Typing layout must be ready on focus, before the keyboard starts resizing");
+  assert.equal(focusStart.nav, null, "Navigation must not toggle midway through keyboard animation");
+  // Viewport properties can change between Safari events. Every painted frame,
+  // not just the final 350ms-delayed snapshot, must track the same chat layout.
+  for (const height of [610, 560, 510, 490, 430]) {
+    await page.evaluate((nextHeight) => {
+      Object.assign(visualViewport!, { height: nextHeight, offsetTop: 0 });
+      // Intentionally no resize event: sample during the focus animation.
+    }, height);
+    await page.evaluate(() => new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
+    const frame = await measure(page);
+    assert.equal(frame.header.top, 0, `Header must not jump at height ${height}`);
+    assert.ok(Math.abs(frame.composer.bottom - height) < 2, `Composer must track transition frame ${height}`);
+  }
   await page.evaluate(() => {
     Object.assign(visualViewport!, { height: 350, offsetTop: 120 });
     visualViewport!.dispatchEvent(new Event("resize"));
@@ -125,6 +162,17 @@ try {
   assert.ok(open.list.height >= 100, "Messages must retain a usable scroll region");
   assert.ok(Number.parseFloat(open.inputFont) >= 16, "Input must not trigger iOS focus zoom");
 
+  // Pan is relative to the current layout viewport, not the largest visible
+  // height seen earlier (750). Safari can retain a taller layout viewport.
+  await page.setViewportSize({ width: phoneWidth, height: 850 });
+  await page.evaluate(() => {
+    Object.assign(visualViewport!, { offsetTop: 440 });
+    visualViewport!.dispatchEvent(new Event("scroll"));
+  });
+  await page.evaluate(() => new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
+  assert.equal((await measure(page)).composer.bottom, 790, "Pan must use the current layout viewport bounds");
+  await page.setViewportSize({ width: phoneWidth, height: 650 });
+
   // Typing and an offset-only pan must not move the composer off the keyboard.
   await page.locator("textarea").fill("Birinci satır\nİkinci satır\nÜçüncü satır");
   await page.evaluate(() => {
@@ -138,10 +186,39 @@ try {
   assert.equal(panned.scrollY, 0, "Typing must not scroll the outer document");
   assert.ok(panned.input.height > 42, "Multiline input must grow within the composer");
 
+  await page.locator("textarea").fill("Gönderirken klavye açık kalmalı");
+  await page.evaluate(() => {
+    (window as any).__composerBlurs = 0;
+    document.querySelector("textarea")!.addEventListener("blur", () => (window as any).__composerBlurs++);
+  });
+  await page.getByRole("button", { name: "Gönder", exact: true }).tap();
+  await page.waitForTimeout(80);
+  assert.equal(await page.locator("textarea").evaluate((input) => document.activeElement === input && !(input as HTMLTextAreaElement).disabled), true,
+    "Sending must keep the mobile textarea focused and enabled throughout the request");
+  await page.waitForFunction(() => document.querySelector("textarea")!.value === "", undefined, { timeout: 3000 });
+  assert.equal(await page.evaluate(() => (window as any).__composerBlurs), 0, "Sending must not close/reopen the keyboard");
+
+  await page.locator("textarea").fill(failedDraft);
+  await page.getByRole("button", { name: "Gönder", exact: true }).tap();
+  await page.getByRole("alert").filter({ hasText: "Mesaj gönderilemedi" }).waitFor();
+  assert.equal(await page.locator("textarea").inputValue(), failedDraft, "A failed request must preserve the draft");
+  assert.equal(await page.locator("textarea").evaluate((input) => document.activeElement === input), true,
+    "Failure feedback must not dismiss the keyboard");
+  assert.equal(await page.evaluate(() => (window as any).__composerBlurs), 0);
+
+  await page.locator("textarea").fill("Kullanıcı klavyeyi kendisi kapattı");
+  await page.getByRole("button", { name: "Gönder", exact: true }).tap();
+  await page.locator("textarea").blur();
+  await page.waitForFunction(() => document.querySelector("textarea")!.value === "");
+  await page.evaluate(() => new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
+  assert.equal(await page.locator("textarea").evaluate((input) => document.activeElement === input), false,
+    "A delayed response must not reopen a keyboard the user deliberately dismissed");
+
   for (let cycle = 0; cycle < 3; cycle++) {
     await page.locator("textarea").blur();
     await page.evaluate(() => {
-      Object.assign(visualViewport!, { height: 650, offsetTop: 0 });
+      // Safari may restore height before clearing the old keyboard pan.
+      Object.assign(visualViewport!, { height: 650, offsetTop: 240 });
       visualViewport!.dispatchEvent(new Event("resize"));
     });
     await page.waitForTimeout(100);
@@ -149,6 +226,7 @@ try {
     assert.ok(restored.nav);
     assert.ok(Math.abs(restored.composer.bottom - restored.nav.top) < 2, "Keyboard dismissal must not leave an empty gap");
     assert.equal(restored.header.top, closedHeaderTop);
+    await page.evaluate(() => { Object.assign(visualViewport!, { offsetTop: 0 }); });
     await page.locator("textarea").focus();
     await page.evaluate(() => {
       Object.assign(visualViewport!, { height: 350, offsetTop: 0 });
@@ -176,7 +254,7 @@ try {
   assert.equal(desktop.workspace.height, 680, "Desktop retains its existing workspace height");
   assert.equal(await page.locator("body").evaluate((el) => getComputedStyle(el).position), "static", "Desktop must not be scroll-locked");
   await page.screenshot({ path: `${outputDir}/desktop.png` });
-  console.log("PASS: keyboard resize/pan, multiline draft, 3 reopen cycles, inbox navigation, desktop geometry");
+  console.log("PASS: keyboard transition frames, resize/pan, send focus, failed draft, deliberate blur, 3 reopen cycles, inbox navigation, desktop geometry");
   await page.setViewportSize({ width: phoneWidth, height: 650 });
   await page.goto(`${baseURL}/login`, { waitUntil: "domcontentloaded" });
   await page.locator(".mobile-messages-shell").waitFor({ state: "detached" });
