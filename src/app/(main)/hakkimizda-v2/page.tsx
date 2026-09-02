@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import AboutSection1 from "@/components/ui/about-section-1";
+import { AboutPrinciples } from "@/components/about/AboutPrinciples";
+import { AboutInvitation } from "@/components/about/AboutInvitation";
 
 import { Check } from "@phosphor-icons/react/dist/ssr";
 import styles from "./page.module.css";
@@ -88,6 +90,8 @@ export default function AboutV2Page() {
           })}
         </Timeline>
       </section>
+      <AboutPrinciples />
+      <AboutInvitation />
     </article>
   );
 }
