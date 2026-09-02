@@ -3,24 +3,17 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { DotsThree, X, type Icon } from "@phosphor-icons/react";
 
 import { useAuth } from "@/hooks/useAuth";
 import { useCoachingFlag } from "@/hooks/useCoachingFlag";
+import { useIsMobile } from "@/hooks/useMediaQuery";
 import { useScheduleFlag } from "@/hooks/useScheduleFlag";
 import { useTutorAcceptanceConfig } from "@/hooks/useTutorAcceptanceConfig";
-import { usePageVisibility } from "@/hooks/usePageVisibility";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { NotificationMark } from "@/components/shared/NotificationMark";
-import { NotificationPopoverContent } from "@/components/shared/NotificationPopoverContent";
-import { fetchNotificationSummary } from "@/lib/notificationsApi";
 import { cn } from "@/lib/utils";
 import {
-  YS_NOTIFICATIONS_LABEL,
   YS_UTILITY_ITEMS,
-  YsNotificationsIcon,
   getActiveYsNavItem,
   getYsAppTabs,
   type YsNavItem,
@@ -28,6 +21,22 @@ import {
 
 const itemClassName =
   "relative flex min-h-11 min-w-0 flex-col items-center justify-center gap-0.5 px-1 text-[10px] font-medium leading-tight text-ink-mid transition-colors duration-[--duration-state]";
+
+/**
+ * The fourth slot is a destination people return to daily, so it is worth a
+ * permanent tab rather than a trip through the overflow menu. Notifications
+ * used to sit here; they moved up beside the avatar, where a bell belongs.
+ */
+const FEATURED_HREFS = ["/schedule", "/dashboard/tutor/requests"];
+
+/**
+ * A 10px label under a 20px icon has room for one word. The accessible name
+ * stays the full one, so a screen reader still hears "Çalışma Programım".
+ */
+const BAR_LABELS: Record<string, string> = {
+  "/schedule": "Programım",
+  "/dashboard/tutor/requests": "Talepler",
+};
 
 type MobileIconProps = {
   Icon: Icon;
@@ -61,19 +70,18 @@ export function MobileTabBar() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { isAuthenticated, isTutor, isLoading } = useAuth();
-  const isPageVisible = usePageVisibility();
+  const isMobile = useIsMobile();
   const [isMoreOpen, setIsMoreOpen] = React.useState(false);
-  const [isNotificationsOpen, setIsNotificationsOpen] = React.useState(false);
 
   const { enabled: coachingEnabled } = useCoachingFlag();
   const scheduleEnabled = useScheduleFlag();
   const { showPackageRequests } = useTutorAcceptanceConfig();
-  const { data: summary } = useQuery({
-    queryKey: ["notification-summary"],
-    queryFn: fetchNotificationSummary,
-    enabled: isAuthenticated,
-    refetchInterval: isPageVisible ? 30_000 : false,
-  });
+
+  // The bar itself is `md:hidden`, but the drawer renders in a portal outside
+  // it. Without this it would survive a rotation into tablet width.
+  React.useEffect(() => {
+    if (isMobile === false) setIsMoreOpen(false);
+  }, [isMobile]);
 
   if (isLoading || !isAuthenticated) return null;
 
@@ -84,10 +92,18 @@ export function MobileTabBar() {
   });
   const messages = YS_UTILITY_ITEMS.find((item) => item.href === "/messages");
   const primaryRoutes = appTabs.slice(0, 2);
-  const overflowRoutes = [
+  const secondaryRoutes = [
     ...appTabs.slice(2),
     ...YS_UTILITY_ITEMS.filter((item) => item.href !== "/messages"),
   ];
+  // Whatever is promoted to the bar leaves the drawer: the same destination in
+  // two places at once is how the old bar ended up with a duplicate programme.
+  const featuredRoute =
+    secondaryRoutes.find((item) => FEATURED_HREFS.includes(item.href)) ??
+    secondaryRoutes[0];
+  const overflowRoutes = secondaryRoutes.filter(
+    (item) => item.href !== featuredRoute?.href,
+  );
   const allRoutes = [...appTabs, ...YS_UTILITY_ITEMS];
   const activeRoute = getActiveYsNavItem(allRoutes, pathname, searchParams);
   const hasActiveOverflowRoute = overflowRoutes.some(
@@ -106,7 +122,7 @@ export function MobileTabBar() {
         className={cn(itemClassName, isActive && "text-ink")}
       >
         <MobileIcon Icon={item.icon} active={isActive} />
-        <span>{item.label}</span>
+        <span>{BAR_LABELS[item.href] ?? item.label}</span>
       </Link>
     );
   };
@@ -120,32 +136,7 @@ export function MobileTabBar() {
       >
         {primaryRoutes.map(renderRoute)}
         {messages && renderRoute(messages)}
-
-        <Popover open={isNotificationsOpen} onOpenChange={setIsNotificationsOpen}>
-          <PopoverTrigger asChild>
-            <button
-              type="button"
-              aria-label={YS_NOTIFICATIONS_LABEL}
-              className={cn(itemClassName, isNotificationsOpen && "text-ink")}
-            >
-              <MobileIcon Icon={YsNotificationsIcon} active={isNotificationsOpen}>
-                <NotificationMark
-                  unreadCount={summary?.unread_count ?? 0}
-                  className="absolute -right-1 -top-1"
-                />
-              </MobileIcon>
-              <span>{YS_NOTIFICATIONS_LABEL}</span>
-            </button>
-          </PopoverTrigger>
-          <PopoverContent
-            side="top"
-            align="end"
-            sideOffset={8}
-            className="w-[min(20rem,calc(100vw-1rem))] border-none bg-transparent p-0 shadow-none"
-          >
-            <NotificationPopoverContent />
-          </PopoverContent>
-        </Popover>
+        {featuredRoute && renderRoute(featuredRoute)}
 
         <DialogPrimitive.Root open={isMoreOpen} onOpenChange={setIsMoreOpen}>
           <DialogPrimitive.Trigger asChild>
@@ -160,10 +151,13 @@ export function MobileTabBar() {
             </button>
           </DialogPrimitive.Trigger>
           <DialogPrimitive.Portal>
-            <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-ink/40" />
+            <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-ink/40 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
             <DialogPrimitive.Content
               aria-describedby={undefined}
-              className="fixed inset-x-0 bottom-0 z-50 max-h-[80dvh] overflow-y-auto rounded-t-modal border border-b-0 border-line bg-surface pb-[env(safe-area-inset-bottom)] text-ink shadow-float focus:outline-none"
+              /* A vertical drawer off the right edge. The bottom sheet it
+                 replaces put a horizontal row of destinations under the thumb
+                 that was already on the bar, which read as a second bar. */
+              className="fixed inset-y-0 right-0 z-50 flex w-[min(19rem,85vw)] flex-col overflow-y-auto border-l border-line bg-surface pb-[env(safe-area-inset-bottom)] text-ink shadow-float focus:outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right"
             >
               <div className="flex min-h-16 items-center justify-between border-b border-line px-5">
                 <DialogPrimitive.Title className="text-lg font-bold">
@@ -171,7 +165,7 @@ export function MobileTabBar() {
                 </DialogPrimitive.Title>
                 <DialogPrimitive.Close
                   aria-label="Kapat"
-                  className="inline-flex h-11 w-11 items-center justify-center rounded-pill text-ink transition-colors duration-[--duration-state] hover:bg-paper"
+                  className="-mr-3 inline-flex h-11 w-11 items-center justify-center rounded-pill text-ink transition-colors duration-[--duration-state] hover:bg-paper"
                 >
                   <X size={20} weight="regular" aria-hidden="true" />
                 </DialogPrimitive.Close>

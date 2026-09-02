@@ -200,11 +200,22 @@ export function StudentLearningProfile() {
                 </div>
               </dl>
               {tutor.is_bookable ? (
+                // Two separate defects in one row of buttons:
+                //
+                // `flex-1` in this column layout zeroes the flex basis, so the
+                // buttons collapsed to the height of their own text. min-height
+                // is a floor flex cannot argue with, and lands the phone on the
+                // 44px target; `sm`'s 36px stays right on the desktop card.
+                //
+                // `!text-white` because tailwind-merge does not know this
+                // design system's named type scale, files `text-small` under
+                // text *colour*, and drops the variant's `text-white` — which
+                // left ink text on a pink pill. Same workaround as BookingModal.
                 <div className="mt-auto flex flex-col gap-2 pt-5 sm:flex-row lg:flex-col xl:flex-row">
-                  <Button asChild variant="outline" size="sm" className="flex-1">
+                  <Button asChild variant="outline" size="sm" className="max-md:min-h-11 flex-1">
                     <Link href={`/tutors/${tutor.id}`}>Profili görüntüle</Link>
                   </Button>
-                  <Button asChild size="sm" className="flex-1">
+                  <Button asChild size="sm" className="!text-white max-md:min-h-11 flex-1">
                     <Link href={`/tutors/${tutor.id}/checkout`}>Yeni ders planla</Link>
                   </Button>
                 </div>

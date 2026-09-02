@@ -84,8 +84,12 @@ export function ScheduleMonthlyView({
   }
 
   return (
-    <div className="overflow-x-auto">
-      <div className="min-w-[760px]" role="grid" aria-label="Aylık takvim">
+    /* The 760px grid is what a month of chips needs to stay readable, but it
+       is twice a phone's width, so the month was permanently side-scrolled.
+       Below md the seven days fit the screen and the chips give way to dots —
+       the same trade the phone's own calendar makes. */
+    <div className="md:overflow-x-auto">
+      <div className="md:min-w-[760px]" role="grid" aria-label="Aylık takvim">
         <div className="grid grid-cols-7 gap-px pb-2">
           {WEEKDAY_LABELS.map((label) => (
             <div
@@ -115,6 +119,7 @@ export function ScheduleMonthlyView({
                 aria-label={longDayLabel(date)}
                 className={cn(
                   "min-h-[7.25rem] border-b border-r border-line p-1.5 transition-[background-color,border-color] duration-[--duration-state] hover:bg-paper/60 motion-reduce:transition-none",
+                  "max-md:min-h-[3.25rem] max-md:p-1",
                   index % 7 === 6 && "border-r-0",
                   index >= 35 && "border-b-0",
                   isOutside && "bg-paper"
@@ -125,6 +130,7 @@ export function ScheduleMonthlyView({
                   onClick={() => onSelectDay(date)}
                   className={cn(
                     "mb-1 flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold tabular-nums transition-colors hover:bg-paper",
+                    "max-md:mx-auto max-md:mb-0.5 max-md:h-7 max-md:w-7",
                     isToday && "bg-pink text-white hover:bg-pink",
                     isOutside && !isToday && "text-ink-mid"
                   )}
@@ -133,7 +139,28 @@ export function ScheduleMonthlyView({
                   {date.getDate()}
                 </button>
 
-                <div id={`month-day-${key}`} className="space-y-1">
+                {/* Phones: three dots and a count stand in for the chips. The
+                    day number opens the day, which is where the detail is. */}
+                <div className="flex flex-wrap items-center justify-center gap-0.5 md:hidden">
+                  {dayEvents.slice(0, 3).map((event) => (
+                    <span
+                      key={`dot-${event.source}-${event.id}-${event.occurrence_date ?? ""}`}
+                      aria-hidden="true"
+                      className={cn(
+                        "h-1.5 w-1.5 rounded-full",
+                        toneForEvent(event).dot,
+                        event.completed && "opacity-40",
+                      )}
+                    />
+                  ))}
+                  {dayEvents.length > 3 && (
+                    <span className="text-[9px] font-semibold leading-none text-ink-mid">
+                      +{dayEvents.length - 3}
+                    </span>
+                  )}
+                </div>
+
+                <div id={`month-day-${key}`} className="space-y-1 max-md:hidden">
                   {visibleEvents.map((event) => {
                     const tone = toneForEvent(event);
                     // The composed title spends a ~96px cell on its first word.

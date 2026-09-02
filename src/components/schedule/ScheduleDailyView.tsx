@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef } from "react";
 
+import { useIsMobile } from "@/hooks/useMediaQuery";
 import { cn } from "@/lib/utils";
 import type { ScheduleEvent } from "@/types";
 import { ScheduleEventCard } from "./ScheduleEventCard";
@@ -15,6 +16,12 @@ import {
 
 /** One hour row. Tall enough to hold a card without the card being stretched. */
 export const HOUR_ROW_HEIGHT = 80;
+/**
+ * On a phone the same 80px row turns a working evening into three screens of
+ * scrolling. A card still fits at 56 — it is the empty half of a quiet hour
+ * that goes.
+ */
+export const MOBILE_HOUR_ROW_HEIGHT = 56;
 
 interface ScheduleDailyViewProps {
   day: Date;
@@ -77,6 +84,8 @@ export function ScheduleDailyView({
   // carry that scrolled the header, the view switch and the progress bar off
   // screen to reach the evening. The grid scrolls inside its own box instead.
   const scrollRef = useRef<HTMLDivElement>(null);
+  const isMobile = useIsMobile();
+  const rowHeight = isMobile ? MOBILE_HOUR_ROW_HEIGHT : HOUR_ROW_HEIGHT;
   useEffect(() => {
     const container = scrollRef.current;
     if (!container) return;
@@ -89,10 +98,10 @@ export function ScheduleDailyView({
         : dayEvents.length > 0
           ? Math.floor(timeToMinutes(dayEvents[0].local_time) / 60)
           : start;
-    container.scrollTop = Math.max(0, (anchorHour - start) * HOUR_ROW_HEIGHT);
+    container.scrollTop = Math.max(0, (anchorHour - start) * rowHeight);
     // Re-anchor when the day changes, not on every tick of the clock.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dayKey]);
+  }, [dayKey, rowHeight]);
 
   if (dayEvents.length === 0) {
     return (
@@ -119,14 +128,14 @@ export function ScheduleDailyView({
             role="row"
             className="flex border-b border-line last:border-b-0"
           >
-            <div className="w-14 shrink-0 border-r border-line p-2 text-[11px] tabular-nums text-ink-mid sm:w-20 sm:p-3 sm:text-xs">
+            <div className="w-14 shrink-0 border-r border-line p-2 text-[11px] tabular-nums text-ink-mid max-md:w-11 max-md:p-1.5 max-md:text-[10px] sm:w-20 sm:p-3 sm:text-xs">
               {String(hour).padStart(2, "0")}:00
             </div>
             <div
               role="gridcell"
-              style={{ minHeight: HOUR_ROW_HEIGHT }}
+              style={{ minHeight: rowHeight }}
               className={cn(
-                "flex-1 space-y-2 p-2",
+                "flex-1 space-y-2 p-2 max-md:space-y-1 max-md:p-1",
                 isToday && hour === currentHour && "bg-brand-50/40 dark:bg-brand-900/15"
               )}
             >

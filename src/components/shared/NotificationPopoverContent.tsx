@@ -57,7 +57,18 @@ function getNotificationBody(n: Notification): string | null {
   return n.body || null;
 }
 
-export function NotificationPopoverContent() {
+type NotificationPopoverContentProps = {
+  /**
+   * Called after a row navigates. The desktop cluster leaves its popover open
+   * because the destination replaces the page under it anyway; the mobile
+   * dropdown covers the header it hangs from, so it has to dismiss itself.
+   */
+  onNavigate?: () => void;
+};
+
+export function NotificationPopoverContent({
+  onNavigate,
+}: NotificationPopoverContentProps = {}) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { user } = useAuth();
@@ -156,6 +167,7 @@ export function NotificationPopoverContent() {
     if (!n.is_read) markReadMutation.mutate(n.id);
     const href = getNotificationHref(n, user?.role);
     if (href) router.push(href);
+    onNavigate?.();
   };
 
   if (items.length === 0) {

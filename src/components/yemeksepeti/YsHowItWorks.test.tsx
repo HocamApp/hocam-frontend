@@ -88,7 +88,7 @@ describe("YsHowItWorks", () => {
     assert.equal(heading.classList.contains("leading-[0.95]"), true);
   });
 
-  it("keeps the rotating mobile heading in one stable two-row layout", () => {
+  it("keeps the mobile heading in two rows while the pill follows the current word width", () => {
     render(<YsHowItWorks />);
 
     const heading = screen.getByRole("heading", { level: 2 });
@@ -102,7 +102,8 @@ describe("YsHowItWorks", () => {
     assert.equal(visualLayout.classList.contains("md:flex-row"), true);
     assert.equal(visualLayout.classList.contains("flex-wrap"), false);
     assert.ok(rotatingPill);
-    assert.equal(rotatingPill.classList.contains("w-[17rem]"), true);
+    assert.equal(rotatingPill.classList.contains("w-[17rem]"), false);
+    assert.equal(rotatingPill.classList.contains("w-auto"), true);
     assert.equal(rotatingPill.classList.contains("md:w-auto"), true);
   });
 

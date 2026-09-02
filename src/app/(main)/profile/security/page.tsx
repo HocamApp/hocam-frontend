@@ -46,6 +46,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 
 function formatLastSeen(value: string | null): string {
   if (!value) return "Henüz kayıt yok";
@@ -407,7 +408,7 @@ function SecurityContent() {
           </Link>
         </Button>
         <div className="flex min-w-0 items-start gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-full border border-[var(--gold-ink)]/20 bg-[var(--gold)] text-[var(--gold-ink)]">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[var(--gold-ink)]/20 bg-[var(--gold)] text-[var(--gold-ink)] max-md:shrink-0 max-md:border-transparent max-md:bg-[var(--ink)] max-md:text-white">
             <ShieldCheck className="h-5 w-5" />
           </div>
           <div className="min-w-0">
@@ -433,11 +434,15 @@ function SecurityContent() {
               </div>
               <Badge
                 variant="outline"
-                className={
+                className={cn(
+                  /* The column layout below sm stretches its children, which
+                     turned a two-word status into a full-bleed gold band. The
+                     badge is a label, so it takes only the width it needs. */
+                  "max-md:self-start max-md:w-fit",
                   data?.is_email_verified
                     ? "border-[var(--success)] text-[var(--success)]"
-                    : "border-[var(--gold-ink)]/20 bg-[var(--gold)] text-[var(--gold-ink)]"
-                }
+                    : "border-[var(--gold-ink)]/20 bg-[var(--gold)] text-[var(--gold-ink)] max-md:border-[var(--line)] max-md:bg-transparent max-md:text-[var(--ink)]"
+                )}
               >
                 {data?.is_email_verified
                   ? "Doğrulandı"
