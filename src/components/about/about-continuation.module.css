@@ -108,18 +108,24 @@
   justify-self: start;
   gap: 12px;
   min-height: 48px;
-  padding: 16px 32px;
+  max-width: 100%;
+  padding: 16px 20px;
+  border: 1px solid currentColor;
   border-radius: var(--radius-pill, 999px);
-  background: var(--pink);
-  color: #fff;
-  font-size: 16px;
+  background: transparent;
+  color: var(--pink-deep);
+  font-size: 14px;
   font-weight: 500;
   line-height: 1.5;
-  transition: background-color 120ms linear;
+  transition: color 120ms linear;
 }
 
 .contact:hover {
-  background: var(--pink-deep);
+  color: var(--ink);
+}
+
+.contact > svg {
+  flex-shrink: 0;
 }
 
 .contact:focus-visible {
@@ -153,17 +159,22 @@
     padding-block: 96px;
   }
 
+  .contact {
+    padding-inline: 32px;
+    font-size: 16px;
+  }
+}
+
+@media (min-width: 1024px) {
   .invitationGrid {
-    grid-template-columns: minmax(0, 8fr) minmax(0, 4fr);
+    grid-template-columns: minmax(0, 1fr) auto;
     gap: 64px;
   }
 
   .contact {
     justify-self: end;
   }
-}
 
-@media (min-width: 1024px) {
   .feature {
     gap: 24px;
     padding: 32px;
