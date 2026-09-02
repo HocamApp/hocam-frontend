@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 
 interface VisualViewportState {
   height: number | null;
@@ -9,6 +10,7 @@ interface VisualViewportState {
 }
 
 const KEYBOARD_HEIGHT_THRESHOLD = 150;
+const FOCUS_TRANSITION_MS = 700;
 
 /** Tracks the portion of the page that is actually visible above a mobile
  * keyboard. `dvh` still follows the layout viewport on iOS Safari, while the
@@ -22,35 +24,77 @@ export function useVisualViewport(): VisualViewportState {
   const baselineHeight = useRef(0);
 
   useEffect(() => {
+    let frame = 0;
+    let trackUntil = 0;
+    const viewport = window.visualViewport;
+    const isEditing = () => window.matchMedia("(max-width: 767px)").matches &&
+      Boolean(document.activeElement?.matches("textarea:not(:disabled), input:not(:disabled):not([type=file]):not([type=checkbox]):not([type=radio]), [contenteditable=true]"));
+
     const update = () => {
-      const height = window.visualViewport?.height ?? window.innerHeight;
+      const height = viewport?.height ?? window.innerHeight;
+      const editing = isEditing();
       if (baselineHeight.current === 0 || height > baselineHeight.current) {
-        baselineHeight.current = height;
+        baselineHeight.current = editing
+          ? Math.max(height, document.documentElement.clientHeight)
+          : height;
       }
-      setState({
+      const isKeyboardOpen = editing || baselineHeight.current - height >= KEYBOARD_HEIGHT_THRESHOLD;
+      const layoutHeight = document.documentElement.clientHeight || baselineHeight.current;
+      // Safari can restore height before clearing the old pan. Closed layout
+      // always starts at zero, even if expanded address bars mean its height
+      // is smaller than the historical maximum. Clamp open-layout pan too.
+      const offsetTop = isKeyboardOpen
+        ? Math.max(0, Math.min(viewport?.offsetTop ?? 0, layoutHeight - height))
+        : 0;
+      const next = {
         height,
-        offsetTop: window.visualViewport?.offsetTop ?? 0,
-        isKeyboardOpen:
-          baselineHeight.current - height >= KEYBOARD_HEIGHT_THRESHOLD,
-      });
+        offsetTop,
+        isKeyboardOpen,
+      };
+      setState((previous) => previous.height === next.height &&
+        previous.offsetTop === next.offsetTop && previous.isKeyboardOpen === next.isKeyboardOpen
+        ? previous : next);
     };
 
+    const tick = () => {
+      frame = 0;
+      // Commit paired resize/pan measurements before paint, not in a later
+      // React render after Safari has already moved the visible viewport.
+      flushSync(update);
+      if (performance.now() < trackUntil) frame = window.requestAnimationFrame(tick);
+    };
+    const schedule = () => {
+      if (!frame) frame = window.requestAnimationFrame(tick);
+    };
+    const trackFocusTransition = () => {
+      // WebKit can update viewport properties between/delayed resize events.
+      // Poll only around focus transitions, never as a permanent animation loop.
+      trackUntil = performance.now() + FOCUS_TRANSITION_MS;
+      schedule();
+    };
     const resetBaseline = () => {
       baselineHeight.current = 0;
-      update();
+      trackFocusTransition();
     };
 
     update();
-    window.addEventListener("resize", update);
+    window.addEventListener("resize", schedule);
+    window.addEventListener("scroll", schedule);
     window.addEventListener("orientationchange", resetBaseline);
-    window.visualViewport?.addEventListener("resize", update);
-    window.visualViewport?.addEventListener("scroll", update);
+    document.addEventListener("focusin", trackFocusTransition);
+    document.addEventListener("focusout", trackFocusTransition);
+    viewport?.addEventListener("resize", schedule);
+    viewport?.addEventListener("scroll", schedule);
 
     return () => {
-      window.removeEventListener("resize", update);
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener("resize", schedule);
+      window.removeEventListener("scroll", schedule);
       window.removeEventListener("orientationchange", resetBaseline);
-      window.visualViewport?.removeEventListener("resize", update);
-      window.visualViewport?.removeEventListener("scroll", update);
+      document.removeEventListener("focusin", trackFocusTransition);
+      document.removeEventListener("focusout", trackFocusTransition);
+      viewport?.removeEventListener("resize", schedule);
+      viewport?.removeEventListener("scroll", schedule);
     };
   }, []);
 

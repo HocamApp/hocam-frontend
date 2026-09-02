@@ -113,7 +113,7 @@ beforeEach(() => {
 
 afterEach(() => cleanup());
 
-test("mobile conversation follows the visible viewport when the iOS keyboard opens", () => {
+test("mobile conversation follows the visible viewport when the iOS keyboard opens", async () => {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
@@ -134,6 +134,7 @@ test("mobile conversation follows the visible viewport when the iOS keyboard ope
     visualViewport.height = 320;
     visualViewport.dispatchEvent(new Event("resize"));
   });
+  await act(async () => { await new Promise((resolve) => requestAnimationFrame(resolve)); });
 
   assert.equal(
     workspace.style.getPropertyValue("--conversation-viewport-height"),
@@ -145,6 +146,7 @@ test("mobile conversation follows the visible viewport when the iOS keyboard ope
     visualViewport.offsetTop = 120;
     visualViewport.dispatchEvent(new Event("scroll"));
   });
+  await act(async () => { await new Promise((resolve) => requestAnimationFrame(resolve)); });
   assert.equal(
     workspace.style.getPropertyValue("--conversation-viewport-top"),
     "120px",
@@ -153,9 +155,10 @@ test("mobile conversation follows the visible viewport when the iOS keyboard ope
 
   act(() => {
     visualViewport.height = 568;
-    visualViewport.offsetTop = 0;
+    visualViewport.offsetTop = 120;
     visualViewport.dispatchEvent(new Event("resize"));
   });
+  await act(async () => { await new Promise((resolve) => requestAnimationFrame(resolve)); });
   assert.equal(workspace.dataset.keyboard, "closed");
   assert.equal(workspace.style.getPropertyValue("--conversation-viewport-top"), "0px");
 });

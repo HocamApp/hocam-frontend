@@ -13,6 +13,7 @@ import { SymbolPicker } from "@/components/messaging/SymbolPicker";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { SensitiveDataGuidance } from "@/components/privacy/SensitiveDataGuidance";
+import { useIsMobile } from "@/hooks/useMediaQuery";
 
 const MESSAGE_GUIDANCE_SEEN_KEY = "hocam_sensitive_data_guidance_seen";
 
@@ -35,6 +36,7 @@ export function MessageInput({
   onCancelReply,
   onTypingChange,
 }: MessageInputProps) {
+  const isMobile = useIsMobile();
   const [text, setText] = useState("");
   const [inputError, setInputError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -86,7 +88,7 @@ export function MessageInput({
   const focusTextarea = () => {
     if (disabled) return;
     requestAnimationFrame(() => {
-      textareaRef.current?.focus();
+      textareaRef.current?.focus({ preventScroll: true });
     });
   };
 
@@ -162,7 +164,9 @@ export function MessageInput({
       );
     } finally {
       setIsSubmitting(false);
-      focusTextarea();
+      // Mobile keeps focus throughout sending. Refocusing after the network
+      // response would reopen a keyboard the user may have deliberately closed.
+      if (!isMobile) focusTextarea();
     }
   };
 
@@ -295,12 +299,13 @@ export function MessageInput({
           placeholder="Mesajınızı yazın..."
           value={text}
           onChange={(e) => {
+            if (isSubmitting) return;
             setText(e.target.value);
             setInputError(null);
           }}
           onKeyDown={handleKeyDown}
           rows={1}
-          disabled={isSubmitting || disabled}
+          disabled={disabled || (!isMobile && isSubmitting)}
           className={cn(
             "min-h-[40px] min-w-0 max-h-[120px] resize-none overflow-y-auto break-words [overflow-wrap:anywhere]"
           )}
@@ -312,6 +317,13 @@ export function MessageInput({
         <Button
           type="button"
           size="icon"
+          onMouseDown={(event) => {
+            if (isMobile && document.activeElement === textareaRef.current) {
+              // Cancel focus transfer, not the touch/pointer gesture: WebKit
+              // can suppress the resulting click when pointerdown is canceled.
+              event.preventDefault();
+            }
+          }}
           onClick={handleSubmit}
           disabled={
             (!text.trim() && !selectedImage && !selectedAttachment) ||

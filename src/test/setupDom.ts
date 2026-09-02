@@ -42,6 +42,17 @@ Object.defineProperties(globalThis, {
   ResizeObserver: { value: TestResizeObserver, configurable: true },
 });
 
+Object.defineProperties(dom.window, {
+  requestAnimationFrame: { value: globalThis.requestAnimationFrame, configurable: true },
+  cancelAnimationFrame: { value: globalThis.cancelAnimationFrame, configurable: true },
+  matchMedia: {
+    configurable: true,
+    value: (media: string) => Object.assign(new dom.window.EventTarget(), {
+      media, matches: false, onchange: null, addListener() {}, removeListener() {},
+    }),
+  },
+});
+
 Object.defineProperty(globalThis, "IS_REACT_ACT_ENVIRONMENT", {
   value: true,
   configurable: true,
