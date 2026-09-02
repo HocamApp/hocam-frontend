@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import AboutSection1 from "@/components/ui/about-section-1";
 
-import { AboutSection, AboutShell } from "@/components/about/AboutSection";
+import { Check } from "@phosphor-icons/react/dist/ssr";
+import styles from "./page.module.css";
 import {
   Timeline,
   TimelineContent,
@@ -11,21 +12,7 @@ import {
   TimelineLine,
 } from "@/components/ui/timeline";
 
-/**
- * A richer take on the About page, kept beside the existing `/hakkimizda`
- * rather than replacing it so the two can be compared before anything on the
- * live site moves.
- *
- * Noindex on purpose: while both pages exist they would compete for the same
- * query. Drop the robots block when this one takes over.
- *
- * The story is the founders' own; the mission, vision and values are written
- * from what the product actually does. There is deliberately no statistics
- * band — the reference page this borrows its shape from leads with "212.000+
- * öğrenci", and Hocam has no such number to show. Inventing one is the single
- * easiest way to make a page like this dishonest.
- */
-
+// Keep the preview page out of search results until it replaces /hakkimizda.
 export const metadata: Metadata = {
   title: "Hakkımızda",
   description:
@@ -42,7 +29,7 @@ const TIMELINE = [
   {
     period: "Lise yılları",
     title: "Mersin Eyüp Aygar Fen Lisesi",
-    body: "Aynı okulda tanıştık, aynı sınavlara birlikte hazırlandık. O yıllarda gördük ki bir öğrencinin nereye gideceğini çoğu zaman kapasitesi değil, hangi hocaya ulaşabildiği belirliyor.",
+    body: "Aynı okulda tanıştık, aynı sınavlara birlikte hazırlandık. İhtiyacımıza uygun bir hocaya ulaşmanın sınava hazırlık sürecini ne kadar değiştirdiğini o yıllarda gördük.",
     status: "done" as const,
   },
   {
@@ -69,48 +56,38 @@ export default function AboutV2Page() {
   return (
     <article className="pb-10">
       <AboutSection1 />
-      <AboutShell>
-        <AboutSection
-          eyebrow="HİKAYEMİZ"
-          title="Hocam'ın tohumları nerede atıldı?"
-          lede="Üç kurucu, aynı sıralarda başlayan ve aynı soruda birleşen bir yol."
-        >
-          <Timeline>
-            {TIMELINE.map((item, index) => {
-              const done = item.status === "done";
-              const upcoming = item.status === "upcoming";
-              const isLast = index === TIMELINE.length - 1;
+      <section className={styles.story} aria-labelledby="about-foundations">
+        <header className={styles.header}>
+          <h2 id="about-foundations" className={styles.title}>Hocam&apos;ın temelleri nerede atıldı?</h2>
+          <p className={styles.lede}>Üç kurucu, aynı sıralarda başlayan ve aynı soruda birleşen bir yol.</p>
+        </header>
+        <Timeline>
+          {TIMELINE.map((item, index) => {
+            const done = item.status === "done";
+            const current = item.status === "current";
+            const upcoming = item.status === "upcoming";
 
-              return (
-                <TimelineItem key={item.period} status={done ? "done" : "default"}>
-                  <TimelineHeading
-                    className={`line-clamp-none whitespace-normal text-lg font-semibold ${
-                      upcoming ? "text-muted-foreground" : "text-foreground"
-                    }`}
-                  >
-                    {item.title}
-                  </TimelineHeading>
-
-                  <TimelineDot
-                    status={done ? "done" : item.status === "current" ? "current" : "default"}
-                    className={upcoming ? "border-dashed opacity-60" : undefined}
-                  />
-
-                  {!isLast && <TimelineLine done={done} />}
-
-                  <TimelineContent className={upcoming ? "opacity-70" : undefined}>
-                    <span className="text-sm font-bold text-brand-700 dark:text-brand-300">
-                      {item.period}
-                    </span>
-                    <p className="mt-1.5 max-w-2xl leading-7">{item.body}</p>
-                  </TimelineContent>
-                </TimelineItem>
-              );
-            })}
-          </Timeline>
-        </AboutSection>
-
-      </AboutShell>
+            return (
+              <TimelineItem key={item.period} className={styles.item}>
+                <TimelineHeading className={`${styles.stepTitle} ${upcoming ? styles.upcomingTitle : ""}`}>
+                  {item.title}
+                </TimelineHeading>
+                <TimelineDot
+                  status="custom"
+                  customIcon={done ? <Check size={12} weight="regular" aria-hidden="true" /> : <span className={current ? styles.currentCenter : undefined} />}
+                  className={`${styles.dot} ${done ? styles.doneDot : current ? styles.currentDot : styles.upcomingDot}`}
+                  aria-label={done ? "Tamamlandı" : current ? "Şu an" : "Hedef"}
+                />
+                {index < TIMELINE.length - 1 && <TimelineLine className={`${styles.line} ${done ? styles.doneLine : ""}`} />}
+                <TimelineContent className={styles.content}>
+                  <span className={styles.period}>{item.period}</span>
+                  <p className={styles.body}>{item.body}</p>
+                </TimelineContent>
+              </TimelineItem>
+            );
+          })}
+        </Timeline>
+      </section>
     </article>
   );
 }

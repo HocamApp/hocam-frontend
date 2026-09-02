@@ -95,6 +95,7 @@
 
 .portraits {
   display: grid;
+  align-items: center;
   grid-template-columns: minmax(0, 1fr);
   gap: 32px;
   margin-top: 48px;
@@ -103,15 +104,19 @@
 .portrait {
   width: 100%;
   max-width: 320px;
-  aspect-ratio: 4 / 5;
   margin: 0 auto;
 }
 
 .cutout {
   position: relative;
   width: 100%;
-  height: 100%;
   overflow: hidden;
+}
+
+.photo {
+  display: block;
+  width: 100%;
+  height: auto;
 }
 
 @media (min-width: 768px) {
