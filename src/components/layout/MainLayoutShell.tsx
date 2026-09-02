@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { MobileTabBar } from "@/components/layout/MobileTabBar";
@@ -44,17 +44,39 @@ export function MainLayoutShell({ children }: MainLayoutShellProps) {
   const isMessagesPath = pathname === "/messages" || pathname.startsWith("/messages/");
   const reserveMobileNavigation = showMobileNavigation && !isMessagesPath;
   const useStudentDashboardSurface = pathname === "/dashboard/student";
+  const shellRef = useRef<HTMLDivElement>(null);
+  const [messagesTop, setMessagesTop] = useState<number | null>(null);
+
+  useEffect(() => {
+    const shell = shellRef.current;
+    if (!isMessagesPath || !shell) return;
+    // Include in-flow account warnings above main, not just the navbar token.
+    // The flex shell resizes when an asynchronously loaded banner appears.
+    const measure = () => setMessagesTop(shell.getBoundingClientRect().top);
+    measure();
+    const observer = typeof ResizeObserver !== "undefined" ? new ResizeObserver(measure) : null;
+    observer?.observe(shell);
+    window.addEventListener("resize", measure);
+    return () => {
+      observer?.disconnect();
+      window.removeEventListener("resize", measure);
+    };
+  }, [isMessagesPath, pendingVerification]);
 
   if (pendingVerification) return null;
 
   return (
     <>
       <div
+        ref={shellRef}
+        style={isMessagesPath && messagesTop !== null
+          ? { "--conversation-page-top": `${messagesTop}px` } as React.CSSProperties
+          : undefined}
         className={cn(
           "flex flex-1 flex-col md:contents",
           useStudentDashboardSurface &&
             "[&>footer]:bg-white [&>main]:bg-white",
-          isMessagesPath && "[&>main]:min-h-0",
+          isMessagesPath && "mobile-messages-shell [&>main]:min-h-0",
           reserveMobileNavigation &&
             "pb-[calc(4rem+env(safe-area-inset-bottom))] [&>main]:min-h-[calc(100dvh_-_var(--app-header-h)_-_4rem_-_env(safe-area-inset-bottom))] md:pb-0 md:[&>main]:min-h-[calc(100vh-var(--app-header-h))]"
         )}
