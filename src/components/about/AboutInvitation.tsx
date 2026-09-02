@@ -1,4 +1,4 @@
-import { EnvelopeSimple } from "@phosphor-icons/react/dist/ssr";
+import { AboutContactButton } from "./AboutContactButton";
 
 import styles from "./about-continuation.module.css";
 
@@ -15,10 +15,7 @@ export function AboutInvitation() {
             duymak isteriz.
           </p>
         </div>
-        <a className={styles.contact} href="mailto:iletisim@hocamozelders.com">
-          <EnvelopeSimple size={20} weight="regular" aria-hidden="true" />
-          <span>iletisim@hocamozelders.com</span>
-        </a>
+        <AboutContactButton />
       </div>
     </section>
   );
