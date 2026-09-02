@@ -88,6 +88,24 @@ describe("YsHowItWorks", () => {
     assert.equal(heading.classList.contains("leading-[0.95]"), true);
   });
 
+  it("keeps the rotating mobile heading in one stable two-row layout", () => {
+    render(<YsHowItWorks />);
+
+    const heading = screen.getByRole("heading", { level: 2 });
+    const visualLayout = heading.querySelector(
+      "span[aria-hidden='true'] > span",
+    );
+    const rotatingPill = visualLayout?.querySelector(".bg-pink");
+
+    assert.ok(visualLayout);
+    assert.equal(visualLayout.classList.contains("flex-col"), true);
+    assert.equal(visualLayout.classList.contains("md:flex-row"), true);
+    assert.equal(visualLayout.classList.contains("flex-wrap"), false);
+    assert.ok(rotatingPill);
+    assert.equal(rotatingPill.classList.contains("w-[17rem]"), true);
+    assert.equal(rotatingPill.classList.contains("md:w-auto"), true);
+  });
+
   it("keeps the approved free-trial promise verbatim", () => {
     render(<YsHowItWorks />);
 

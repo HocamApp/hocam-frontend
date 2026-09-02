@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { ResponsiveSelect } from "@/components/ui/responsive-select";
 
 // Matches the 30-minute slot grid BookingModal.tsx's getSlotsForDay already
 // uses for booking-time selection, for consistency across the app.
@@ -40,17 +34,15 @@ export function TimeSelect({
   id,
 }: TimeSelectProps) {
   return (
-    <Select value={value} onValueChange={onChange} disabled={disabled}>
-      <SelectTrigger id={id} className={className}>
-        <SelectValue placeholder={placeholder} />
-      </SelectTrigger>
-      <SelectContent>
-        {TIME_OPTIONS.map((t) => (
-          <SelectItem key={t} value={t}>
-            {t}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+    <ResponsiveSelect
+      id={id}
+      label="Saat"
+      value={value}
+      onValueChange={onChange}
+      disabled={disabled}
+      placeholder={placeholder}
+      className={className}
+      options={TIME_OPTIONS.map((time) => ({ value: time, label: time }))}
+    />
   );
 }

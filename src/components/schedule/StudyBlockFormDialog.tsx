@@ -14,13 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { ResponsiveSelect } from "@/components/ui/responsive-select";
 import { TimeSelect } from "@/components/ui/time-select";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { fetchSubjects } from "@/lib/tutorsApi";
@@ -148,38 +142,31 @@ export function StudyBlockFormDialog({
         <form className="space-y-4" onSubmit={handleSubmit}>
           <div className="space-y-2">
             <Label htmlFor="study-block-type">Çalışma türü</Label>
-            <Select
+            <ResponsiveSelect
+              id="study-block-type"
+              label="Çalışma türü"
               value={blockType}
               onValueChange={(value) => setBlockType(value as StudyBlockType)}
-            >
-              <SelectTrigger id="study-block-type">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {STUDY_BLOCK_TYPE_OPTIONS.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              options={STUDY_BLOCK_TYPE_OPTIONS}
+            />
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="study-block-subject">Ders</Label>
-            <Select value={subjectId} onValueChange={setSubjectId}>
-              <SelectTrigger id="study-block-subject">
-                <SelectValue placeholder="Ders seç" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={NO_SUBJECT}>Ders seçme (genel çalışma)</SelectItem>
-                {(subjects ?? []).map((subject) => (
-                  <SelectItem key={subject.id} value={subject.id}>
-                    {subject.name} · {subject.exam_type}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <ResponsiveSelect
+              id="study-block-subject"
+              label="Ders"
+              value={subjectId}
+              onValueChange={setSubjectId}
+              placeholder="Ders seç"
+              options={[
+                { value: NO_SUBJECT, label: "Ders seçme (genel çalışma)" },
+                ...(subjects ?? []).map((subject) => ({
+                  value: subject.id,
+                  label: `${subject.name} · ${subject.exam_type}`,
+                })),
+              ]}
+            />
           </div>
 
           <div className="space-y-2">
@@ -212,37 +199,30 @@ export function StudyBlockFormDialog({
 
           <div className="space-y-2">
             <Label htmlFor="study-block-duration">Süre</Label>
-            <Select
+            <ResponsiveSelect
+              id="study-block-duration"
+              label="Süre"
               value={String(duration)}
               onValueChange={(value) => setDuration(Number(value))}
-            >
-              <SelectTrigger id="study-block-duration">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {durationOptions(duration).map((minutes) => (
-                  <SelectItem key={minutes} value={String(minutes)}>
-                    {minutes} dakika
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              options={durationOptions(duration).map((minutes) => ({
+                value: String(minutes),
+                label: `${minutes} dakika`,
+              }))}
+            />
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="study-block-repeat">Tekrar</Label>
-            <Select
+            <ResponsiveSelect
+              id="study-block-repeat"
+              label="Tekrar"
               value={repeats ? "weekly" : "none"}
               onValueChange={(value) => setRepeats(value === "weekly")}
-            >
-              <SelectTrigger id="study-block-repeat">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">Sadece bu hafta</SelectItem>
-                <SelectItem value="weekly">Her hafta tekrarla</SelectItem>
-              </SelectContent>
-            </Select>
+              options={[
+                { value: "none", label: "Sadece bu hafta" },
+                { value: "weekly", label: "Her hafta tekrarla" },
+              ]}
+            />
           </div>
 
           {errorMessage && <ErrorMessage message={errorMessage} />}

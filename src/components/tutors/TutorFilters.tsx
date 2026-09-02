@@ -10,16 +10,10 @@ import {
   priceTupleToFilters,
   filtersToPriceTuple,
 } from "@/components/tutors/PriceRangeSlider";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { ResponsiveSelect } from "@/components/ui/responsive-select";
 import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import type { TutorFilters as TutorFiltersType } from "@/lib/tutorsApi";
 import type { Subject } from "@/types";
 import { getSubjectOptionsForExam, isSubjectValidForExam } from "@/lib/subjects";
@@ -106,7 +100,9 @@ function FilterPanelContent({
     <div className="flex flex-col gap-4">
       <div className="space-y-2">
         <Label>Sınav</Label>
-        <Select
+        <ResponsiveSelect
+          label="Sınav"
+          nativeUntil="lg"
           value={(filters.exam_type ?? "") || "__all__"}
           onValueChange={(v) => {
             const exam_type = v === "__all__" ? "" : v;
@@ -116,44 +112,39 @@ function FilterPanelContent({
             onFiltersChange({ ...filters, exam_type, subject, topic: "" });
           }}
           disabled={isLoading}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Tüm sınavlar" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="__all__">Tüm sınavlar</SelectItem>
-            <SelectItem value="TYT">TYT</SelectItem>
-            <SelectItem value="AYT">AYT</SelectItem>
-            <SelectItem value="DGS">DGS</SelectItem>
-            <SelectItem value="KPSS">KPSS</SelectItem>
-          </SelectContent>
-        </Select>
+          options={[
+            { value: "__all__", label: "Tüm sınavlar" },
+            { value: "TYT", label: "TYT" },
+            { value: "AYT", label: "AYT" },
+            { value: "DGS", label: "DGS" },
+            { value: "KPSS", label: "KPSS" },
+          ]}
+        />
       </div>
 
       <div className="space-y-2">
         <Label>Ders</Label>
-        <Select
+        <ResponsiveSelect
+          label="Ders"
+          nativeUntil="lg"
           value={(filters.subject ?? "") || "__all__"}
           onValueChange={(v) => onFiltersChange({ ...filters, subject: v === "__all__" ? "" : v, topic: "" })}
           disabled={isLoading}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Tüm dersler" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="__all__">Tüm dersler</SelectItem>
-            {subjectOptions.map((s) => (
-              <SelectItem key={s.id} value={s.name}>
-                {s.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          options={[
+            { value: "__all__", label: "Tüm dersler" },
+            ...subjectOptions.map((subject) => ({
+              value: subject.name,
+              label: subject.name,
+            })),
+          ]}
+        />
       </div>
 
       <div className="space-y-2">
         <Label>Müfredat konusu</Label>
-        <Select
+        <ResponsiveSelect
+          label="Müfredat konusu"
+          nativeUntil="lg"
           value={(filters.topic ?? "") || "__all__"}
           onValueChange={(value) => {
             const topic = learningTopics.find((item) => item.id === value);
@@ -164,38 +155,33 @@ function FilterPanelContent({
             });
           }}
           disabled={isLoading}
-        >
-          <SelectTrigger><SelectValue placeholder="Tüm konular" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="__all__">Tüm konular</SelectItem>
-            {learningTopics
+          options={[
+            { value: "__all__", label: "Tüm konular" },
+            ...learningTopics
               .filter((topic) => !filters.exam_type || topic.exam_type === filters.exam_type)
               .filter((topic) => !filters.subject || topic.subject_name === filters.subject)
-              .map((topic) => (
-                <SelectItem key={topic.id} value={topic.id}>
-                  {topic.exam_type} · {topic.subject_name} · {topic.title}
-                </SelectItem>
-              ))}
-          </SelectContent>
-        </Select>
+              .map((topic) => ({
+                value: topic.id,
+                label: `${topic.exam_type} · ${topic.subject_name} · ${topic.title}`,
+              })),
+          ]}
+        />
       </div>
 
       <div className="space-y-2">
         <Label>Minimum puan</Label>
-        <Select
+        <ResponsiveSelect
+          label="Minimum puan"
+          nativeUntil="lg"
           value={(filters.min_rating ?? "") || "__all__"}
           onValueChange={(v) => onFiltersChange({ ...filters, min_rating: v === "__all__" ? "" : v })}
           disabled={isLoading}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Tümü" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="__all__">Tümü</SelectItem>
-            <SelectItem value="4">4+</SelectItem>
-            <SelectItem value="4.5">4.5+</SelectItem>
-          </SelectContent>
-        </Select>
+          options={[
+            { value: "__all__", label: "Tümü" },
+            { value: "4", label: "4+" },
+            { value: "4.5", label: "4.5+" },
+          ]}
+        />
       </div>
 
       <Accordion type="single" collapsible className="-my-2">
@@ -240,75 +226,82 @@ function FilterPanelContent({
 
       <div className="space-y-2">
         <Label>YKS sıralaması</Label>
-        <Select
+        <ResponsiveSelect
+          label="YKS sıralaması"
+          nativeUntil="lg"
           value={(filters.yks_rank_max ?? "") || "__all__"}
           onValueChange={(v) => onFiltersChange({ ...filters, yks_rank_max: v === "__all__" ? "" : v })}
           disabled={isLoading}
-        >
-          <SelectTrigger><SelectValue placeholder="Tümü" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="__all__">Tümü</SelectItem>
-            <SelectItem value="1000">İlk 1.000</SelectItem>
-            <SelectItem value="5000">İlk 5.000</SelectItem>
-            <SelectItem value="10000">İlk 10.000</SelectItem>
-            <SelectItem value="15000">İlk 15.000</SelectItem>
-          </SelectContent>
-        </Select>
+          options={[
+            { value: "__all__", label: "Tümü" },
+            { value: "1000", label: "İlk 1.000" },
+            { value: "5000", label: "İlk 5.000" },
+            { value: "10000", label: "İlk 10.000" },
+            { value: "15000", label: "İlk 15.000" },
+          ]}
+        />
       </div>
 
       <div className="space-y-2">
         <Label>Üniversite</Label>
-        <Select
+        <ResponsiveSelect
+          label="Üniversite"
+          nativeUntil="lg"
           value={(filters.university ?? "") || "__all__"}
           onValueChange={(v) => onFiltersChange({ ...filters, university: v === "__all__" ? "" : v })}
           disabled={isLoading}
-        >
-          <SelectTrigger><SelectValue placeholder="Popülerden seç" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="__all__">Popülerden seç</SelectItem>
-            {universityOptions.map((university) => <SelectItem key={university} value={university}>{university}</SelectItem>)}
-          </SelectContent>
-        </Select>
+          options={[
+            { value: "__all__", label: "Popülerden seç" },
+            ...universityOptions.map((university) => ({
+              value: university,
+              label: university,
+            })),
+          ]}
+        />
       </div>
 
       <div className="space-y-2">
         <Label>Uygunluk günü</Label>
-        <Select
+        <ResponsiveSelect
+          label="Uygunluk günü"
+          nativeUntil="lg"
           value={(filters.availability_day ?? "") || "__all__"}
           onValueChange={(v) => onFiltersChange({ ...filters, availability_day: v === "__all__" ? "" : v, availability_time: v === "__all__" ? "" : filters.availability_time })}
           disabled={isLoading}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Tümü" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="__all__">Herhangi bir gün</SelectItem>
-            <SelectItem value="0">Pazartesi</SelectItem><SelectItem value="1">Salı</SelectItem>
-            <SelectItem value="2">Çarşamba</SelectItem><SelectItem value="3">Perşembe</SelectItem>
-            <SelectItem value="4">Cuma</SelectItem><SelectItem value="5">Cumartesi</SelectItem>
-            <SelectItem value="6">Pazar</SelectItem>
-          </SelectContent>
-        </Select>
+          options={[
+            { value: "__all__", label: "Herhangi bir gün" },
+            { value: "0", label: "Pazartesi" },
+            { value: "1", label: "Salı" },
+            { value: "2", label: "Çarşamba" },
+            { value: "3", label: "Perşembe" },
+            { value: "4", label: "Cuma" },
+            { value: "5", label: "Cumartesi" },
+            { value: "6", label: "Pazar" },
+          ]}
+        />
       </div>
 
       <div className="space-y-2">
         <Label>Uygunluk saati</Label>
-        <Select
+        <ResponsiveSelect
+          label="Uygunluk saati"
+          nativeUntil="lg"
           value={(filters.availability_time ?? "") || "__all__"}
           onValueChange={(v) => onFiltersChange({ ...filters, availability_time: v === "__all__" ? "" : v })}
           disabled={isLoading || !filters.availability_day}
-        >
-          <SelectTrigger><SelectValue placeholder="Önce gün seç" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="__all__">Herhangi bir saat</SelectItem>
-            {["08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00", "22:00"].map((time) => <SelectItem key={time} value={time}>{time}</SelectItem>)}
-          </SelectContent>
-        </Select>
+          placeholder="Önce gün seç"
+          options={[
+            { value: "__all__", label: "Herhangi bir saat" },
+            ...["08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00", "22:00"].map((time) => ({ value: time, label: time })),
+          ]}
+        />
       </div>
 
       <div className="space-y-2">
         <Label>Çalışma koçluğu</Label>
-        <Select
+        <ResponsiveSelect
+          label="Çalışma koçluğu"
+          nativeUntil="lg"
           value={
             filters.free_coaching === "true"
               ? "free"
@@ -324,55 +317,47 @@ function FilterPanelContent({
             })
           }
           disabled={isLoading}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Tümü" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="__all__">Tümü</SelectItem>
-            <SelectItem value="any">Koçluk sunanlar</SelectItem>
-            <SelectItem value="free">Ücretsiz koçluk sunanlar</SelectItem>
-          </SelectContent>
-        </Select>
+          options={[
+            { value: "__all__", label: "Tümü" },
+            { value: "any", label: "Koçluk sunanlar" },
+            { value: "free", label: "Ücretsiz koçluk sunanlar" },
+          ]}
+        />
       </div>
 
       <div className="space-y-2">
         <Label>Platform durumu</Label>
-        <Select
+        <ResponsiveSelect
+          label="Platform durumu"
+          nativeUntil="lg"
           value={(filters.online ?? "") || "__all__"}
           onValueChange={(v) => onFiltersChange({ ...filters, online: v === "__all__" ? "" : v })}
           disabled={isLoading}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Tümü" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="__all__">Tümü</SelectItem>
-            <SelectItem value="true">Sadece çevrim içi</SelectItem>
-          </SelectContent>
-        </Select>
+          options={[
+            { value: "__all__", label: "Tümü" },
+            { value: "true", label: "Sadece çevrim içi" },
+          ]}
+        />
       </div>
 
       <div className="space-y-2">
         <Label>Sıralama</Label>
-        <Select
+        <ResponsiveSelect
+          label="Sıralama"
+          nativeUntil="lg"
           value={filters.ordering ?? defaultOrdering}
           onValueChange={(v) => onFiltersChange({ ...filters, ordering: v || defaultOrdering })}
           disabled={isLoading}
-        >
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="relevance">En alakalı</SelectItem>
-            <SelectItem value="rating">En yüksek puan</SelectItem>
-            <SelectItem value="price">En uygun fiyat</SelectItem>
-            <SelectItem value="-price">En yüksek fiyat</SelectItem>
-            <SelectItem value="yks_rank">En iyi YKS sıralaması</SelectItem>
-            <SelectItem value="-yks_rank">YKS sıralaması: yüksekten</SelectItem>
-            <SelectItem value="newest">En yeni</SelectItem>
-          </SelectContent>
-        </Select>
+          options={[
+            { value: "relevance", label: "En alakalı" },
+            { value: "rating", label: "En yüksek puan" },
+            { value: "price", label: "En uygun fiyat" },
+            { value: "-price", label: "En yüksek fiyat" },
+            { value: "yks_rank", label: "En iyi YKS sıralaması" },
+            { value: "-yks_rank", label: "YKS sıralaması: yüksekten" },
+            { value: "newest", label: "En yeni" },
+          ]}
+        />
       </div>
 
       {showClearButton && hasActiveFilters && (
@@ -450,6 +435,9 @@ export function TutorFilters({
           <SheetContent side="bottom" className="flex max-h-[85vh] flex-col rounded-t-2xl p-0">
             <SheetHeader className="border-b p-6">
               <SheetTitle>Filtreler</SheetTitle>
+              <SheetDescription className="sr-only">
+                Hoca sonuçlarını sınav, ders, konu ve diğer ölçütlere göre filtrele.
+              </SheetDescription>
             </SheetHeader>
             <div className="flex-1 overflow-y-auto px-6 py-5">
               <FilterPanelContent

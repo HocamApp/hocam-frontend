@@ -3,12 +3,12 @@ import "@/test/setupDom";
 import assert from "node:assert/strict";
 import { afterEach, before, test, mock } from "node:test";
 import React from "react";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 mock.module("next/navigation", {
   namedExports: {
-    usePathname: () => "/home",
+    usePathname: () => "/",
     useSearchParams: () => new URLSearchParams(),
   },
 });
@@ -59,16 +59,20 @@ before(async () => {
 
 afterEach(() => cleanup());
 
-test("student mobile navigation distributes its five visible items across the full bar", () => {
+function renderMobileTabBar() {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
 
-  render(
+  return render(
     <QueryClientProvider client={queryClient}>
       <MobileTabBar />
     </QueryClientProvider>,
   );
+}
+
+test("student mobile navigation exposes five distinct primary destinations across the full bar", () => {
+  renderMobileTabBar();
 
   const nav = screen.getByRole("navigation", { name: "Mobil ana menü" });
   assert.equal(nav.children.length, 5);
@@ -76,4 +80,41 @@ test("student mobile navigation distributes its five visible items across the fu
     (nav as HTMLElement).style.gridTemplateColumns,
     "repeat(5, minmax(0, 1fr))",
   );
+
+  assert.deepEqual(
+    Array.from(nav.children).map((item) => item.getAttribute("aria-label")),
+    ["Hocalar", "Panelim", "Mesajlar", "Bildirimler", "Daha Fazla"],
+  );
+  assert.equal(screen.queryByRole("link", { name: "Ana Sayfa" }), null);
+  assert.equal(screen.getByRole("link", { name: "Hocalar" }).getAttribute("href"), "/");
+});
+
+test("student mobile navigation uses filled active icons and regular inactive icons", () => {
+  renderMobileTabBar();
+
+  assert.equal(
+    screen
+      .getByRole("link", { name: "Hocalar" })
+      .querySelector("svg")
+      ?.getAttribute("data-icon-weight"),
+    "fill",
+  );
+  assert.equal(
+    screen
+      .getByRole("link", { name: "Panelim" })
+      .querySelector("svg")
+      ?.getAttribute("data-icon-weight"),
+    "regular",
+  );
+});
+
+test("Daha Fazla opens secondary student destinations in a bottom sheet", () => {
+  renderMobileTabBar();
+
+  fireEvent.click(screen.getByRole("button", { name: "Daha Fazla" }));
+
+  const sheet = screen.getByRole("dialog", { name: "Daha Fazla" });
+  assert.ok(within(sheet).getByRole("link", { name: "Çalışma Programım" }));
+  assert.ok(within(sheet).getByRole("link", { name: "Favoriler" }));
+  assert.equal(within(sheet).queryByRole("link", { name: "Panelim" }), null);
 });
