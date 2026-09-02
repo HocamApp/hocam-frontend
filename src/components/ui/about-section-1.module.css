@@ -5,12 +5,6 @@
   color: var(--ink);
 }
 
-.definitions {
-  position: absolute;
-  width: 0;
-  height: 0;
-  overflow: hidden;
-}
 
 .container {
   max-width: 1200px;
@@ -103,20 +97,42 @@
 
 .portrait {
   width: 100%;
-  max-width: 320px;
+  max-width: 256px;
   margin: 0 auto;
 }
 
-.cutout {
+.frame {
   position: relative;
   width: 100%;
   overflow: hidden;
+  border-radius: var(--radius-card, 20px);
 }
 
 .photo {
   display: block;
   width: 100%;
   height: auto;
+}
+
+.caption {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 16px;
+  color: var(--ink-mid);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: 0.01em;
+  text-align: center;
+}
+
+.founderName {
+  font-size: 16px;
+}
+
+.portrait[data-caption-pending] .caption {
+  opacity: 0;
 }
 
 @media (min-width: 768px) {
@@ -136,13 +152,14 @@
   }
 
   .portrait {
-    max-width: none;
+    max-width: 288px;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .hero .word,
-  .hero .portrait,
+  .hero [data-portrait-image],
+  .hero .caption,
   .hero [data-about-description],
   .hero [data-about-action] {
     opacity: 1 !important;
