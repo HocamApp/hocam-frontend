@@ -10,10 +10,11 @@ export type CalendarProps = React.ComponentProps<typeof DayPicker> & {
   /** "default" (size-9 cells, ~36px) is used everywhere. "lg" (size-14,
    * ~56px) is for a single-month calendar that has the horizontal space
    * two size-9 months used to occupy — currently only AvailabilityCalendar.
+   * "responsive" keeps those large cells from widening a phone viewport.
    * Shared with other, width-constrained calendars (e.g. the sidebar
    * calendar in StudentLessonsWorkspace), so this is a variant rather than
    * a global size bump. */
-  size?: "default" | "lg";
+  size?: "default" | "lg" | "responsive";
 };
 
 export function Calendar({
@@ -23,9 +24,24 @@ export function Calendar({
   size = "default",
   ...props
 }: CalendarProps) {
-  const cell = size === "lg" ? "size-14" : "size-9";
-  const dayTextSize = size === "lg" ? "text-base" : "text-sm";
-  const weekdayTextSize = size === "lg" ? "text-sm" : "text-xs";
+  const cell =
+    size === "lg"
+      ? "size-14"
+      : size === "responsive"
+        ? "size-9 sm:size-14"
+        : "size-9";
+  const dayTextSize =
+    size === "lg"
+      ? "text-base"
+      : size === "responsive"
+        ? "text-sm sm:text-base"
+        : "text-sm";
+  const weekdayTextSize =
+    size === "lg"
+      ? "text-sm"
+      : size === "responsive"
+        ? "text-xs sm:text-sm"
+        : "text-xs";
   return (
     <DayPicker
       showOutsideDays={showOutsideDays}

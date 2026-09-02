@@ -59,6 +59,10 @@ export function MessageRequestModal({
   onSuccess,
 }: MessageRequestModalProps) {
   const [generalError, setGeneralError] = useState<string | null>(null);
+  const [dialogViewport, setDialogViewport] = useState<{
+    height: number;
+    center: number;
+  } | null>(null);
 
   const tutorName = [tutor.name, tutor.surname].filter(Boolean).join(" ").trim();
   const firstName = tutor.name?.trim() || tutorName;
@@ -85,6 +89,28 @@ export function MessageRequestModal({
   useEffect(() => {
     if (isOpen) form.reset({ message: greeting });
   }, [isOpen, greeting, form]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const updateDialogViewport = () => {
+      const viewport = window.visualViewport;
+      const height = viewport?.height ?? window.innerHeight;
+      const offsetTop = viewport?.offsetTop ?? 0;
+      setDialogViewport({ height, center: offsetTop + height / 2 });
+    };
+
+    updateDialogViewport();
+    window.addEventListener("resize", updateDialogViewport);
+    window.visualViewport?.addEventListener("resize", updateDialogViewport);
+    window.visualViewport?.addEventListener("scroll", updateDialogViewport);
+
+    return () => {
+      window.removeEventListener("resize", updateDialogViewport);
+      window.visualViewport?.removeEventListener("resize", updateDialogViewport);
+      window.visualViewport?.removeEventListener("scroll", updateDialogViewport);
+    };
+  }, [isOpen]);
 
   const messageLength = form.watch("message")?.length ?? 0;
 
@@ -144,7 +170,17 @@ export function MessageRequestModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <DialogContent className="gap-0 p-6 sm:max-w-[420px] sm:p-8">
+      <DialogContent
+        className="box-border max-h-[calc(100dvh-1rem)] gap-0 overflow-y-auto overscroll-contain p-6 sm:max-w-[420px] sm:p-8"
+        style={
+          dialogViewport
+            ? {
+                maxHeight: `calc(${dialogViewport.height}px - 1rem)`,
+                top: `${dialogViewport.center}px`,
+              }
+            : undefined
+        }
+      >
         {/* Face, name, one line of why. The old copy spent three sentences
             explaining what a message is, then put a four-line example in the
             placeholder — a wall of text in front of a text box people already
