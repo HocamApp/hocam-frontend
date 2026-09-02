@@ -1,67 +1,66 @@
-"use client";
+import {
+  Compass,
+  GraduationCap,
+  UserFocus,
+  VideoCamera,
+} from "@phosphor-icons/react/dist/ssr";
 
 import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
+  MAX_TUTOR_YKS_RANK,
+  TRIAL_MINUTES,
+} from "@/components/yemeksepeti/ysHomeFacts";
 
 import styles from "./about-continuation.module.css";
 
-const PRINCIPLES = [
+const DIFFERENCES = [
   {
-    id: "trust",
-    title: "Belgeye dayanan güven",
-    summary: "Kiminle çalışacağını bil.",
+    id: "rank",
+    icon: GraduationCap,
+    title: `İlk ${MAX_TUTOR_YKS_RANK}’e giren hocalar`,
     description:
-      "Hocaların YKS sıralaması ve öğrenci bilgileri, gönderilen belgeler üzerinden incelenir. Profilleri bu bilgilerle birlikte görür, hocanı daha yakından tanıyarak karar verirsin.",
+      `Hocam’da yalnızca YKS’de ilk ${MAX_TUTOR_YKS_RANK}’e giren üniversiteliler ders verir. Sıralamaları ve öğrencilik bilgileri belgelerle doğrulanır.`,
   },
   {
     id: "choice",
-    title: "Kendi ihtiyacına göre seçim",
-    summary: "Önceliklerini sen belirle.",
+    icon: UserFocus,
+    title: "Hocanı tanı, kendin seç",
     description:
-      "Aradığın ders, üniversite, sıralama ve ücret bilgileri bir arada. Hocaları kendi önceliklerine göre karşılaştırabilir, sana uygun profilleri inceleyebilirsin.",
+      "Hocaların profillerini incele, eğitimlerini ve derslerini karşılaştır. Tanıştıktan sonra kiminle devam edeceğine sen karar ver.",
   },
   {
-    id: "continuity",
-    title: "Bir arada yürüyen süreç",
-    summary: "Dersin etrafındaki işler de kolaylaşsın.",
+    id: "trial",
+    icon: VideoCamera,
+    title: "Tanışma dersi ücretsiz",
     description:
-      "Ders planın, hocanla mesajların ve online ders odan aynı hesabında. Derslerini ve iletişimini buradan takip ederek çalışmana zaman ayırabilirsin.",
+      `Deneme dersi sunan hocalarla ${TRIAL_MINUTES} dakika ücretsiz görüş. Aklındaki soruları sor, anlatımını tanı; ders paketi almadan önce sana uygun olup olmadığını gör.`,
+  },
+  {
+    id: "coaching",
+    icon: Compass,
+    title: "Ders hocan, aynı zamanda koçun",
+    description:
+      "Koçluk sunan bir hocayla çalıştığında, ders paketine koçluğu da ekleyebilirsin. Çalışma planını ve denemelerini, derslerde seni tanıyan aynı hocayla değerlendirirsin.",
   },
 ] as const;
 
 export function AboutPrinciples() {
   return (
     <section className={styles.approach} aria-labelledby="about-principles">
-      <div className={styles.approachGrid}>
-        <header className={styles.introduction}>
-          <p className={styles.eyebrow}>Yaklaşımımız</p>
-          <h2 className={styles.title} id="about-principles">
-            Karar senin.<br />Bilgiler açık.
-          </h2>
-          <p className={styles.lede}>
-            Her öğrencinin aradığı destek farklı. Hocam&apos;ı, sana uygun hocayı
-            kendi önceliklerinle seçebilmen için geliştiriyoruz.
-          </p>
-        </header>
-        <Accordion type="single" defaultValue="trust" collapsible className={styles.accordion}>
-          {PRINCIPLES.map((principle) => (
-            <AccordionItem key={principle.id} value={principle.id} className={styles.item}>
-              <AccordionTrigger className={styles.trigger}>
-                <span>
-                  <span className={styles.principleTitle}>{principle.title}</span>
-                  <span className={styles.summary}>{principle.summary}</span>
-                </span>
-              </AccordionTrigger>
-              <AccordionContent className={styles.content}>
-                <p>{principle.description}</p>
-              </AccordionContent>
-            </AccordionItem>
+      <div className={styles.differences}>
+        <h2 className={`${styles.title} ${styles.differencesTitle}`} id="about-principles">
+          Hocam’ı farklı kılan ne?
+        </h2>
+        <ul className={styles.featureGrid}>
+          {DIFFERENCES.map(({ id, icon: Icon, title, description }) => (
+            <li key={id} className={styles.feature}>
+              <Icon className={styles.featureIcon} size={28} weight="regular" aria-hidden="true" />
+              <div>
+                <h3 className={styles.featureTitle}>{title}</h3>
+                <p className={styles.featureDescription}>{description}</p>
+              </div>
+            </li>
           ))}
-        </Accordion>
+        </ul>
       </div>
     </section>
   );
