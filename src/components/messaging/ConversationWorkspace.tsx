@@ -38,6 +38,7 @@ import {
 } from "@/components/ui/dialog";
 import { Message } from "@/types";
 import { buildThreadItems } from "@/components/messaging/threadPresentation";
+import { useVisualViewport } from "@/hooks/useVisualViewport";
 
 const CONVERSATIONS_REFETCH_INTERVAL_MS = 60_000;
 const MESSAGES_REFETCH_INTERVAL_MS = 15_000;
@@ -63,7 +64,8 @@ export function ConversationWorkspace({
   const queryClient = useQueryClient();
   const { isAuthenticated, isTutor, user } = useAuth();
   const isPageVisible = usePageVisibility();
-  const bottomRef = useRef<HTMLDivElement>(null);
+  const visualViewport = useVisualViewport();
+  const messageAreaRef = useRef<HTMLDivElement>(null);
   const sentIdsRef = useRef<Set<string>>(new Set());
   const seenServerIdsRef = useRef<Set<string>>(new Set());
   const arrivingIdsRef = useRef<Set<string>>(new Set());
@@ -168,8 +170,16 @@ export function ConversationWorkspace({
   const threadItems = useMemo(() => buildThreadItems(allMessages), [allMessages]);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    const messageArea = messageAreaRef.current;
+    if (messageArea) messageArea.scrollTop = messageArea.scrollHeight;
   }, [allMessages, isOtherTyping]);
+
+  useEffect(() => {
+    if (layout === "page" && visualViewport.height !== null) {
+      const messageArea = messageAreaRef.current;
+      if (messageArea) messageArea.scrollTop = messageArea.scrollHeight;
+    }
+  }, [layout, visualViewport.height]);
 
   useEffect(() => {
     if (!isAuthenticated || !conversationId || !isPageVisible) return;
@@ -250,11 +260,22 @@ export function ConversationWorkspace({
 
   return (
     <div
+      data-keyboard={visualViewport.isKeyboardOpen ? "open" : "closed"}
+      style={
+        layout === "page" && visualViewport.height !== null
+          ? ({
+              "--conversation-viewport-height": `${visualViewport.height}px`,
+              "--conversation-mobile-nav-height": visualViewport.isKeyboardOpen
+                ? "0px"
+                : "calc(4rem + env(safe-area-inset-bottom))",
+            } as React.CSSProperties)
+          : undefined
+      }
       className={cn(
         "flex w-full min-w-0 overflow-hidden",
         layout === "panel"
           ? "h-full"
-          : "h-[calc(100dvh_-_var(--app-header-h)_-_4rem_-_env(safe-area-inset-bottom))] md:h-[calc(100vh-var(--app-header-h))]",
+          : "conversation-page-viewport",
       )}
     >
       <aside
@@ -430,6 +451,7 @@ export function ConversationWorkspace({
 
         {/* Messages area */}
         <div
+          ref={messageAreaRef}
           className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto bg-background p-3 sm:p-4"
         >
           {messagesLoading && (
@@ -477,7 +499,7 @@ export function ConversationWorkspace({
                 )
               )}
               {isOtherTyping && <TypingIndicator name={headerTitle} />}
-              <div ref={bottomRef} />
+              <div />
             </div>
           )}
         </div>

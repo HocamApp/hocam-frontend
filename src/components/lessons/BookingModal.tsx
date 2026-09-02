@@ -508,7 +508,7 @@ export function BookingModal({
                         className={cn(
                           "w-16 shrink-0 rounded-lg border px-3 py-2 text-center text-sm transition-colors",
                           disabled && "cursor-not-allowed opacity-50",
-                          selected && "bg-primary text-primary-foreground border-primary",
+                          selected && "border-primary bg-primary text-white",
                           !selected && !disabled && "border-border hover:bg-muted"
                         )}
                       >
@@ -543,7 +543,10 @@ export function BookingModal({
                         type="button"
                         variant={selectedTime === slot ? "default" : "outline"}
                         size="sm"
-                        className="w-full min-w-0"
+                        className={cn(
+                          "w-full min-w-0",
+                          selectedTime === slot && "!text-white"
+                        )}
                         onClick={() => setSelectedTime(slot)}
                       >
                         {slot}

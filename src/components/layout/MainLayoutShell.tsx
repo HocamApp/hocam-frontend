@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { MobileTabBar } from "@/components/layout/MobileTabBar";
 import { EarlySupporterWelcome } from "@/components/shared/EarlySupporterWelcome";
 import { useAuth } from "@/hooks/useAuth";
+import { useVisualViewport } from "@/hooks/useVisualViewport";
 import { fetchMyTutorProfile } from "@/lib/tutorsApi";
 import { cn } from "@/lib/utils";
 
@@ -19,6 +20,7 @@ export function MainLayoutShell({ children }: MainLayoutShellProps) {
   const { isAuthenticated, isLoading, isTutor, isAdmin, isImpersonating, user } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
+  const { isKeyboardOpen } = useVisualViewport();
   const isOnboardingPath = pathname.startsWith("/tutor/setup") || pathname.startsWith("/tutor/onboarding") || pathname.startsWith("/profile");
   const profileQuery = useQuery({
     queryKey: ["tutor-me"],
@@ -39,6 +41,8 @@ export function MainLayoutShell({ children }: MainLayoutShellProps) {
   }, [pendingVerification, router]);
 
   const showMobileNavigation = !isLoading && isAuthenticated;
+  const isMessagesPath = pathname === "/messages" || pathname.startsWith("/messages/");
+  const reserveMobileNavigation = showMobileNavigation && !isMessagesPath;
   const useStudentDashboardSurface = pathname === "/dashboard/student";
 
   if (pendingVerification) return null;
@@ -50,7 +54,8 @@ export function MainLayoutShell({ children }: MainLayoutShellProps) {
           "flex flex-1 flex-col md:contents",
           useStudentDashboardSurface &&
             "[&>footer]:bg-white [&>main]:bg-white",
-          showMobileNavigation &&
+          isMessagesPath && "[&>main]:min-h-0",
+          reserveMobileNavigation &&
             "pb-[calc(4rem+env(safe-area-inset-bottom))] [&>main]:min-h-[calc(100dvh_-_var(--app-header-h)_-_4rem_-_env(safe-area-inset-bottom))] md:pb-0 md:[&>main]:min-h-[calc(100vh-var(--app-header-h))]"
         )}
       >
@@ -65,7 +70,7 @@ export function MainLayoutShell({ children }: MainLayoutShellProps) {
           !pendingVerification
         }
       />
-      {showMobileNavigation && <MobileTabBar />}
+      {showMobileNavigation && !(isMessagesPath && isKeyboardOpen) && <MobileTabBar />}
     </>
   );
 }

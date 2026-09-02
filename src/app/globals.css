@@ -396,3 +396,23 @@
     opacity: 1 !important;
   }
 }
+
+/* A mobile conversation owns its visible height: the composer remains pinned
+   above iOS's software keyboard, and the fixed tab bar is reserved exactly
+   once. Desktop keeps the existing app-header calculation unchanged. */
+.conversation-page-viewport {
+  --conversation-viewport-height: 100dvh;
+  --conversation-mobile-nav-height: calc(
+    4rem + env(safe-area-inset-bottom)
+  );
+  height: calc(
+    var(--conversation-viewport-height) - var(--app-header-h) -
+      var(--conversation-mobile-nav-height)
+  );
+}
+
+@media (min-width: 768px) {
+  .conversation-page-viewport {
+    height: calc(100vh - var(--app-header-h));
+  }
+}

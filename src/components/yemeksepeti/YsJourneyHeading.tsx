@@ -73,7 +73,10 @@ export function YsJourneyHeading() {
 
       <span aria-hidden className="block">
         <LayoutGroup>
-          <motion.span className="flex flex-wrap items-center justify-center gap-x-3 gap-y-2" layout>
+          <motion.span
+            className="flex flex-col items-center justify-center gap-x-3 gap-y-2 md:flex-row"
+            layout
+          >
             <motion.span layout transition={SPRING}>
               Sen sadece
             </motion.span>
@@ -81,7 +84,7 @@ export function YsJourneyHeading() {
             <motion.span
               layout
               transition={SPRING}
-              className="inline-flex items-center gap-2 overflow-hidden rounded-card bg-pink px-4 py-1 text-white md:gap-3 md:px-5 md:py-2"
+              className="inline-flex w-[17rem] max-w-full items-center justify-center gap-2 overflow-hidden rounded-card bg-pink px-4 py-1 text-white md:w-auto md:max-w-none md:gap-3 md:px-5 md:py-2"
             >
               <TextRotate
                 texts={[...LABELS]}

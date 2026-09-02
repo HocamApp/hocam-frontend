@@ -19,8 +19,27 @@ Object.defineProperties(globalThis, {
   CustomEvent: { value: dom.window.CustomEvent, configurable: true },
   MutationObserver: { value: dom.window.MutationObserver, configurable: true },
   NodeFilter: { value: dom.window.NodeFilter, configurable: true },
+  DocumentFragment: { value: dom.window.DocumentFragment, configurable: true },
   getComputedStyle: { value: dom.window.getComputedStyle.bind(dom.window), configurable: true },
   File: { value: dom.window.File, configurable: true },
+});
+
+class TestResizeObserver {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+
+Object.defineProperties(globalThis, {
+  requestAnimationFrame: {
+    value: (callback: FrameRequestCallback) => dom.window.setTimeout(callback, 0),
+    configurable: true,
+  },
+  cancelAnimationFrame: {
+    value: (id: number) => dom.window.clearTimeout(id),
+    configurable: true,
+  },
+  ResizeObserver: { value: TestResizeObserver, configurable: true },
 });
 
 Object.defineProperty(globalThis, "IS_REACT_ACT_ENVIRONMENT", {
