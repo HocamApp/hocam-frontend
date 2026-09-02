@@ -265,6 +265,7 @@ export function ConversationWorkspace({
         layout === "page" && visualViewport.height !== null
           ? ({
               "--conversation-viewport-height": `${visualViewport.height}px`,
+              "--conversation-viewport-top": `${visualViewport.offsetTop}px`,
               "--conversation-mobile-nav-height": visualViewport.isKeyboardOpen
                 ? "0px"
                 : "calc(4rem + env(safe-area-inset-bottom))",

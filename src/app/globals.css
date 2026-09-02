@@ -406,9 +406,50 @@
     4rem + env(safe-area-inset-bottom)
   );
   height: calc(
-    var(--conversation-viewport-height) - var(--app-header-h) -
+    var(--conversation-viewport-height) - var(--conversation-page-top, var(--app-header-h)) -
       var(--conversation-mobile-nav-height)
   );
+}
+
+@media (max-width: 767px) {
+  /* A chat scrolls its message list, never the page behind it. In particular,
+     iOS keeps the layout viewport tall while the keyboard reduces the visual
+     viewport. Leaving the body scrollable lets focus pan the whole thread. */
+  html:has(.mobile-messages-shell) {
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
+
+  body:has(.mobile-messages-shell) {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
+
+  .conversation-page-viewport {
+    position: fixed;
+    inset-inline: 0;
+    top: calc(var(--conversation-viewport-top, 0px) + var(--conversation-page-top, var(--app-header-h)));
+    z-index: 40;
+    background: var(--paper);
+  }
+
+  /* While typing, the conversation's own back/header row replaces the site
+     header. offsetTop follows Safari focus-panning as well as keyboard resize. */
+  .conversation-page-viewport[data-keyboard="open"] {
+    top: var(--conversation-viewport-top, 0px);
+    height: var(--conversation-viewport-height);
+  }
+
+  body:has(.conversation-page-viewport[data-keyboard="open"]) [data-app-header] {
+    visibility: hidden;
+  }
+
+  .conversation-page-viewport section > .overflow-y-auto {
+    overscroll-behavior-y: contain;
+  }
 }
 
 @media (min-width: 768px) {

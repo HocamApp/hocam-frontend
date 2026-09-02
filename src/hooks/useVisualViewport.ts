@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 
 interface VisualViewportState {
   height: number | null;
+  offsetTop: number;
   isKeyboardOpen: boolean;
 }
 
@@ -15,6 +16,7 @@ const KEYBOARD_HEIGHT_THRESHOLD = 150;
 export function useVisualViewport(): VisualViewportState {
   const [state, setState] = useState<VisualViewportState>({
     height: null,
+    offsetTop: 0,
     isKeyboardOpen: false,
   });
   const baselineHeight = useRef(0);
@@ -27,6 +29,7 @@ export function useVisualViewport(): VisualViewportState {
       }
       setState({
         height,
+        offsetTop: window.visualViewport?.offsetTop ?? 0,
         isKeyboardOpen:
           baselineHeight.current - height >= KEYBOARD_HEIGHT_THRESHOLD,
       });

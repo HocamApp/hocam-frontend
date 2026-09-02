@@ -100,6 +100,7 @@ beforeEach(() => {
     },
   });
   visualViewport.height = 568;
+  visualViewport.offsetTop = 0;
   Object.defineProperty(window, "innerHeight", {
     configurable: true,
     value: 568,
@@ -139,6 +140,24 @@ test("mobile conversation follows the visible viewport when the iOS keyboard ope
     "320px",
   );
   assert.equal(workspace.dataset.keyboard, "open");
+
+  act(() => {
+    visualViewport.offsetTop = 120;
+    visualViewport.dispatchEvent(new Event("scroll"));
+  });
+  assert.equal(
+    workspace.style.getPropertyValue("--conversation-viewport-top"),
+    "120px",
+    "Safari's offset-only pan must update positioning without a resize",
+  );
+
+  act(() => {
+    visualViewport.height = 568;
+    visualViewport.offsetTop = 0;
+    visualViewport.dispatchEvent(new Event("resize"));
+  });
+  assert.equal(workspace.dataset.keyboard, "closed");
+  assert.equal(workspace.style.getPropertyValue("--conversation-viewport-top"), "0px");
 });
 
 test("aligning the latest message never scrolls the outer document", async () => {
