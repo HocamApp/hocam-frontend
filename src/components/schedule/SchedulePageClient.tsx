@@ -239,6 +239,7 @@ export function SchedulePageClient() {
                   // which put two pink pills in one row and made the view
                   // switch compete with "Çalışma Ekle" for the same attention.
                   "flex-1 rounded-pill px-4 py-2 text-body font-medium transition-[background-color,color] duration-[--duration-state] motion-reduce:transition-none sm:flex-none",
+                  "max-md:px-3 max-md:py-1.5 max-md:text-small",
                   view === tab.value
                     ? "bg-ink text-paper"
                     : "text-ink-mid hover:text-ink"
@@ -249,7 +250,9 @@ export function SchedulePageClient() {
             ))}
           </div>
 
-          <div className="flex flex-wrap items-center justify-between gap-1 sm:flex-nowrap lg:justify-end">
+          {/* Below sm this used to wrap, which gave "Çalışma Ekle" a full-width
+              row of its own and pushed the calendar itself off the fold. */}
+          <div className="flex flex-nowrap items-center justify-between gap-1 lg:justify-end">
             <Button
               variant="outline"
               size="icon"
@@ -258,7 +261,7 @@ export function SchedulePageClient() {
             >
               <CaretLeft className="size-4" />
             </Button>
-            <span className="min-w-[10rem] text-center text-body font-medium tabular-nums text-ink">
+            <span className="min-w-[10rem] text-center text-body font-medium tabular-nums text-ink max-md:min-w-0 max-md:flex-1 max-md:truncate max-md:text-small">
               {rangeLabel(view, anchor)}
             </span>
             <Button
@@ -269,17 +272,26 @@ export function SchedulePageClient() {
             >
               <CaretRight className="size-4" />
             </Button>
-            <Button variant="ghost" size="sm" onClick={() => setAnchor(todayLocal())}>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="max-md:px-2"
+              onClick={() => setAnchor(todayLocal())}
+            >
               Bugün
             </Button>
             {/* Sits with the range controls rather than up by the title: this
                 is the row the student is already working in. */}
             <Button
               onClick={openCreate}
-              className="ml-1 shrink-0 bg-pink text-white hover:bg-pink/90 hover:text-white"
+              aria-label="Çalışma Ekle"
+              className="ml-1 shrink-0 bg-pink text-white hover:bg-pink/90 hover:text-white max-md:h-11 max-md:w-11 max-md:px-0"
             >
-              <Plus className="mr-1.5 size-4" aria-hidden />
-              Çalışma Ekle
+              <Plus className="mr-1.5 size-4 max-md:mr-0 max-md:size-5" aria-hidden />
+              {/* The row has to stay on one line on a phone, and a plus in a
+                  pink pill beside a calendar is not ambiguous. The name is
+                  still on the button for anyone who cannot see it. */}
+              <span className="max-md:sr-only">Çalışma Ekle</span>
             </Button>
           </div>
         </div>

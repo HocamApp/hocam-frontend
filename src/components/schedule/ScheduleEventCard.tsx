@@ -134,7 +134,9 @@ export function ScheduleEventCard({
         // has to sit flush between two hour rules reads as a floating tag
         // rather than a slot in a calendar.
         "rounded-input",
-        compact ? "gap-1.5 px-2 py-1" : "gap-2 px-3 py-2",
+        // A phone's day column is ~300px wide; the desktop card's padding is
+        // most of what makes a 40-minute block look like a poster there.
+        compact ? "gap-1.5 px-2 py-1" : "gap-2 px-3 py-2 max-md:gap-1.5 max-md:px-2 max-md:py-1",
         tone.card,
         pending && "opacity-60",
         className

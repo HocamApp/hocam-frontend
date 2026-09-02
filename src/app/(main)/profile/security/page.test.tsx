@@ -386,6 +386,42 @@ describe("Güvenlik sayfası — OTP ve planlama", () => {
 });
 
 describe("Güvenlik sayfası — kullanıcı odaklı güvenlik metinleri", () => {
+  it("mobil başlık simgesini nötr tutarken masaüstü altın rengini korur", async () => {
+    await renderLoadedPage();
+
+    const heading = screen.getByRole("heading", { name: "Güvenlik Ayarları" });
+    const iconShell = heading.parentElement?.previousElementSibling;
+    assert.ok(iconShell);
+    assert.equal(iconShell.classList.contains("max-md:bg-[var(--ink)]"), true);
+    assert.equal(iconShell.classList.contains("max-md:text-white"), true);
+    assert.equal(iconShell.classList.contains("max-md:shrink-0"), true);
+    assert.equal(iconShell.classList.contains("bg-[var(--gold)]"), true);
+  });
+
+  for (const [verified, enabled, label] of [
+    [false, true, "Doğrulanmadı"],
+    [true, true, "Doğrulandı"],
+    [false, false, "Geçici olarak kapalı"],
+  ] as const) {
+    it(`mobil ${label} durumu satıra yayılmayan kompakt bir etikettir`, async () => {
+      securitySettingsResponse = {
+        ...securitySettingsResponse,
+        is_email_verified: verified,
+        email_verification_enabled: enabled,
+      };
+      await renderLoadedPage();
+
+      const badge = screen.getByText(label);
+      assert.equal(badge.classList.contains("max-md:self-start"), true);
+      assert.equal(badge.classList.contains("max-md:w-fit"), true);
+      if (!verified) {
+        assert.equal(badge.classList.contains("max-md:bg-transparent"), true);
+        assert.equal(badge.classList.contains("max-md:text-[var(--ink)]"), true);
+        assert.equal(badge.classList.contains("bg-[var(--gold)]"), true);
+      }
+    });
+  }
+
   it("teknik oturum metnini kaldırır ve doğal güvenlik yönlendirmesini gösterir", async () => {
     await renderLoadedPage();
 

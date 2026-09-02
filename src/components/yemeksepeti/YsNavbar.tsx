@@ -6,10 +6,12 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { AnimatedSearchBar } from "@/components/tutors/AnimatedSearchBar";
 import { BrandMark } from "@/components/brand/BrandMark";
+import { MobileNotificationsBell } from "@/components/shared/MobileNotificationsBell";
 import { ProfileMenu } from "@/components/profile/ProfileMenu";
 import { StreakIndicator } from "@/components/profile/StreakIndicator";
 import { useAuth } from "@/hooks/useAuth";
 import { useCoachingFlag } from "@/hooks/useCoachingFlag";
+import { useIsMobile } from "@/hooks/useMediaQuery";
 import { useScheduleFlag } from "@/hooks/useScheduleFlag";
 import { useTutorAcceptanceConfig } from "@/hooks/useTutorAcceptanceConfig";
 
@@ -144,6 +146,7 @@ export function YsNavbar({ startCoachmark = true }: Props) {
   const { isLoading, isAuthenticated, isTutor, isAdmin, isImpersonating } =
     useAuth();
   const { enabled: coachingEnabled } = useCoachingFlag();
+  const isMobile = useIsMobile();
   const scheduleEnabled = useScheduleFlag();
   const { showPackageRequests } = useTutorAcceptanceConfig();
 
@@ -306,6 +309,9 @@ export function YsNavbar({ startCoachmark = true }: Props) {
               <span className="hidden md:inline-flex">
                 <StreakIndicator />
               </span>
+              {/* Phones only: on md+ the same bell lives in row 2, and two of
+                  them would be two places to check the same thing. */}
+              {mode === "app" && isMobile === true && <MobileNotificationsBell />}
               <ProfileMenu />
             </>
           )}
@@ -345,7 +351,7 @@ export function YsNavbar({ startCoachmark = true }: Props) {
           />
         )}
 
-        {mode === "app" && (
+        {mode === "app" && isMobile !== true && (
           <YsNavIcons pathname={pathname} searchParams={searchParams} />
         )}
       </div>
