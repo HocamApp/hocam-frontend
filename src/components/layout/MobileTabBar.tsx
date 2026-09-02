@@ -105,6 +105,8 @@ export function MobileTabBar() {
       searchParams
     )
   );
+  const visibleItemCount =
+    primaryDescriptors.length + (overflowDescriptors.length > 0 ? 1 : 0);
 
   const renderRouteButton = (descriptor: NavRouteDescriptor) => {
     const Icon = iconByName[descriptor.icon];
@@ -174,7 +176,10 @@ export function MobileTabBar() {
     <div className="fixed bottom-0 left-0 right-0 z-50 border-t bg-background/95 backdrop-blur pb-[env(safe-area-inset-bottom)] md:hidden">
       <nav
         aria-label="Mobil ana menü"
-        className="grid h-16 grid-cols-6 items-center px-1"
+        className="grid h-16 items-center px-1"
+        style={{
+          gridTemplateColumns: `repeat(${visibleItemCount}, minmax(0, 1fr))`,
+        }}
       >
         {primaryDescriptors.map((descriptor) =>
           descriptor.kind === "route"

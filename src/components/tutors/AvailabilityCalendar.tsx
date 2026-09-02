@@ -67,7 +67,7 @@ export function AvailabilityCalendar({ availability, bookings = [], editable = t
         <CardContent className="p-3">
           <Calendar
             mode="single"
-            size="lg"
+            size="responsive"
             selected={selectedDate}
             onSelect={(date) => date && setSelectedDate(date)}
             defaultMonth={today}
