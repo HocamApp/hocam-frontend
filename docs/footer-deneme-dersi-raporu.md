@@ -73,8 +73,8 @@ Kullanıcının sağladığı **Thank You X Pack** içinden dört siyah çizgi i
 
 | Sayfa | Kaynak görsel | Yerleşim ve amaç |
 | --- | --- | --- |
-| Ders süreci | `Day 48.PNG` | Bilgisayarla çalışan figür, başlığın yanında çevrim içi öğrenmeyi destekler. |
-| Hoca doğrulama | `Day 31 (2).png` | İnceleyen gözler, belge incelemesini anlatan başlığın yanında. |
+| Ders süreci | `Day 37.PNG` | Hareketli bilgisayar figürü, başlığın yanında çevrim içi öğrenmeyi destekler. |
+| Hoca doğrulama | `Day 49.PNG` | Büyüteçle inceleyen figür, belge incelemesini anlatan başlığın yanında. |
 | Ücretsiz deneme dersi | `Day 31 (3).png` | Selamlaşan eller, ilk derse giden adımlar bölümünün solunda. |
 | İletişim | `Day 47.PNG` | Mektup çizimi, giriş metninin yanında. Form ve ortalanmış destek kartı yerini korur. |
 

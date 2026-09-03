@@ -5,8 +5,8 @@ These are unchanged copies of the supplied transparent PNG artwork. Next Image h
 
 | File | Original filename | Use |
 | --- | --- | --- |
-| lesson.png | Day 48.PNG | Lesson process hero |
-| review.png | Day 31 (2).png | Tutor verification hero |
+| lesson.png | Day 37.PNG | Lesson process hero |
+| review.png | Day 49.PNG | Tutor verification hero |
 | meet.png | Day 31 (3).png | Free trial booking steps |
 | message.png | Day 47.PNG | Contact introduction |
 
