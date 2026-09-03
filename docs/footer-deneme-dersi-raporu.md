@@ -61,7 +61,7 @@ Tasarım kaynağı kullanıcının verdiği `Hocam_Design_System_Logo_System_Add
 
 ## Yayın ve yerel önizleme
 
-Önce backend `codex/yks-liste-filtresi` dalı merge edilip yayınlanmalı; ardından frontend `codex/footer-deneme-dersi` dalı yayınlanmalıdır. YKS birleşik filtresi backend yayınına bağlıdır. Yeni migration veya ortam değişkeni yoktur.
+Backend PR #144, `83041122b917db04927e7e511fd6cb04ec6903b7` merge commit'iyle birleştirildi. Railway yayını `3895e877-4db4-4527-b0fe-ffdc771c8b8b`, **NEEDS_APPROVAL** durumundadır. YKS birleşik filtresi bu yayının onaylanıp tamamlanmasına bağlıdır. Frontend PR #218 açık kalır. Yeni migration veya ortam değişkeni yoktur.
 
 Mevcut API CORS politikası `localhost:3000` adresine izin verir, `localhost:3107` adresine izin vermez. Bu çalışma üretim CORS ayarını değiştirmedi. Bu nedenle listeyi gerçek API ile doğrulamak için aynı frontend ayrıca **http://localhost:3000** adresinde çalıştırıldı. Deneme sayfası **http://localhost:3000/ucretsiz-deneme-dersi** üzerinden incelenebilir. 3107 önizlemesi de açık tutuldu.
 
@@ -81,3 +81,11 @@ Kullanıcının sağladığı **Thank You X Pack** içinden dört siyah çizgi i
 Kaynak PNG dosyaları `src/assets/illustrations/` altında aynen saklanır. `PublicPageIllustration`, Next Image ile ekran boyutuna uygun görsel sunar; en-boy oranını korur, görsel alanını yükleme öncesinde ayırır. Mobilde en fazla 240 px, masaüstünde en fazla 400 px kullanılır; deneme bölümündeki çizim 280 px ile sınırlandırılır. İlk ekrandaki görseller öncelikli, aşağıdaki deneme görseli lazy yüklenir. Görsellerin anlattığı bilgi bitişik metinde bulunduğu için dekoratif olarak işaretlenir. Yeni animasyon veya bağımlılık eklenmedi.
 
 Doğrulama: lint, TypeScript ve production build geçti. Dört sayfa 375/768/1440 px genişliklerinde tarayıcıdan kontrol edildi: 12 görünümde görseller yüklendi, yatay taşma veya JavaScript sayfa hatası görülmedi. Masaüstü ve mobil ekran görüntüleri gözden geçirildi. Deneme akışındaki seçimler ve açılır sorular, iletişim formunun etkin alanları ve destek bağlantısı kontrol edildi. Bu görsel çalışma sırasında gerçek e-posta gönderilmedi; formun backend akışı değiştirilmedi.
+
+## Footer filtreleri: hata incelemesi ve düzeltme
+
+- Canlı API, aynı kontrol sırasında TYT için 31, AYT için 42 sonuç döndürürken desteklemediği `exam_type=YKS` için 0 döndürdü. Yerel frontend de canlı API'ye bağlandığından bu boş sonuç ekranda görünüyordu. Backend düzeltmesi birleştirildi; Railway'in yayın onayı kullanıcıdan bekleniyor. Onay engelini aşmak için alternatif bir yayın yolu kullanılmadı.
+- “En alakalı” bir sıralama seçeneğidir. Önceden yalnız arama metni, ders veya konu seçildiğinde gösteriliyordu. Bu nedenle footer'dan Matematik seçimiyle gelince görünürken yalnız TYT sınav filtresi seçildiğinde kayboluyordu. Artık tüm giriş yollarında aynı sıralama seçenekleri gösterilir. Masaüstünde satır gerektiğinde sarılır; seçili seçenek gizlenmez.
+- Kullanıcı sıralama seçmediyse mevcut varsayılan korunur: ders/konu/metin aramasında alaka, diğer durumlarda puan. Kullanıcı seçimi URL'de korunur.
+- Backend'in 6 sınav/ders API testi ve frontend'in 7 URL/filtre testi tekrar geçti. Build, lint ve TypeScript kontrolü başarılıdır. YKS için canlı sonuç doğrulaması Railway onayı tamamlandıktan sonra yapılmalıdır.
+- Canlı API ile tarayıcı kontrolünde footer ve mobil filtre seçimi TYT Matematik için aynı 8, AYT Matematik için aynı 11 sonucu aynı sırayla döndürdü. Ders filtresi kaldırıldığında ve sayfa yenilendiğinde “En alakalı” seçimi görünür kaldı. Bu sayılar kontrol anına aittir.

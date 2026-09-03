@@ -207,10 +207,8 @@ function DirectoryBody({ favoritesOnly = false }: DirectoryProps) {
     return () => { cancelled = true; };
   }, [searchParams]);
 
-  /* The navbar owns the search term, so it is merged in here rather than
-     living in `filters`. Feeding it through `defaultTutorOrdering` is what
-     makes the "En alakalı" chip appear once there is something to be
-     relevant to. */
+  // The navbar owns the search term; include it in both the query and the
+  // default ordering, regardless of how the visitor reached the list.
   const effectiveFilters = useMemo<TutorFiltersType>(
     () => (search ? { ...filters, search } : filters),
     [filters, search],
@@ -299,15 +297,11 @@ function DirectoryBody({ favoritesOnly = false }: DirectoryProps) {
      radios, "Çevrim içi" is a toggle, and nothing here is separate state —
      selection is derived from `filters`. */
   const chips = [
-    ...(defaultOrdering === "relevance"
-      ? [
-          {
-            label: "◎ En alakalı",
-            active: (filters.ordering ?? defaultOrdering) === "relevance",
-            next: { ordering: "relevance" },
-          },
-        ]
-      : []),
+    {
+      label: "En alakalı",
+      active: (filters.ordering ?? defaultOrdering) === "relevance",
+      next: { ordering: "relevance" },
+    },
     {
       label: "En yüksek puan",
       active: (filters.ordering ?? defaultOrdering) === "rating",
@@ -365,11 +359,9 @@ function DirectoryBody({ favoritesOnly = false }: DirectoryProps) {
             </p>
           )}
 
-          {/* No bottom padding: it was 4px of scrollbar room, and it put the
-              promo's lower edge 4px past the chips it is meant to line up
-              with. Above 1400 the chips do not overflow, and below it the
-              promo stacks anyway. */}
-          <div className="flex gap-2 overflow-x-auto">
+          {/* Desktop wraps all sort options beside the favourites panel;
+              mobile keeps the horizontally scrollable row. */}
+          <div className="flex gap-2 overflow-x-auto lg:flex-wrap">
             <Button
               type="button"
               size="sm"
