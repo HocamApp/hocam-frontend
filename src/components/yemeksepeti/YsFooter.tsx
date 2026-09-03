@@ -10,6 +10,8 @@ import {
   type Icon,
 } from "@phosphor-icons/react";
 
+import { FAQ_SECTION_ID } from "./ysAppNav";
+
 import { BrandMark } from "@/components/brand/BrandMark";
 import { AppStoreBadge, GooglePlayBadge } from "@/components/ui/store-badges";
 
@@ -20,7 +22,7 @@ import { AppStoreBadge, GooglePlayBadge } from "@/components/ui/store-badges";
  *
  * 1. **An entry is only a link if the destination exists and an anonymous
  *    visitor can reach it.** Headings the product will eventually need but does
- *    not have yet (Blog, Kariyer, İletişim, Kullanım Koşulları, Mesafeli Satış,
+ *    not have yet (Kariyer, Kullanım Koşulları, Mesafeli Satış,
  *    İptal ve İade) render as plain text rather than links to nowhere.
  *    `/support` exists but is auth-gated, so linking it here would bounce an
  *    anonymous reader to `/login` — it is deliberately absent.
@@ -51,19 +53,16 @@ const FOOTER_COLUMNS: FooterColumn[] = [
     entries: [
       { label: "Ders süreci", href: "/nasil-calisir" },
       { label: "Hoca doğrulama", href: "/hocalar-nasil-dogrulaniyor" },
-      { label: "Online özel ders ücretleri", href: "/rehber/online-ozel-ders-ucretleri" },
-      { label: "Sıkça sorulan sorular", href: "#sikca-sorulan-sorular" },
+      { label: "Sıkça sorulan sorular", href: `/#${FAQ_SECTION_ID}` },
     ],
   },
   {
     heading: "Hocam",
     entries: [
       { label: "Hakkımızda", href: "/hakkimizda-v2" },
-      { label: "Başarı hikayeleri", href: "/basari-hikayeleri" },
       { label: "İletişim", href: "/iletisim" },
       { label: "Hoca ol", href: "/register?role=tutor" },
       { label: "Giriş yap", href: "/login" },
-      { label: "Blog" },
       { label: "Kariyer" },
     ],
   },
@@ -129,7 +128,7 @@ export function YsFooter() {
         <div className="grid grid-cols-2 gap-x-6 gap-y-8 md:grid-cols-4 lg:grid-cols-5">
           {FOOTER_COLUMNS.map((column) => (
             <div key={column.heading}>
-              <h4 className="mb-3 text-sm font-semibold text-ink">{column.heading}</h4>
+              <h4 className="mb-3 text-sm font-bold text-ink">{column.heading}</h4>
               <ul className="space-y-2">
                 {column.entries.map((entry) => (
                   <li key={entry.label}>
@@ -141,7 +140,7 @@ export function YsFooter() {
           ))}
 
           <div className="col-span-2 md:col-span-4 lg:col-span-1">
-            <h4 className="mb-3 text-sm font-semibold text-ink">Hocam mobilde</h4>
+            <h4 className="mb-3 text-sm font-bold text-ink">Hocam mobilde</h4>
             <p className="ys-footer-text mb-3 block">Mobil uygulama yakında.</p>
             {/* Deliberately inert: there is no Hocam app yet. Both badges
                 become real anchors the moment they are handed an href. */}

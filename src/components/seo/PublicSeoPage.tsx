@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Check } from "lucide-react";
+import { ArrowRight, Check } from "@phosphor-icons/react/dist/ssr";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -16,13 +16,13 @@ export function PublicSeoBreadcrumbs({
   items: ReadonlyArray<BreadcrumbItem>;
 }) {
   return (
-    <nav aria-label="Sayfa yolu" className="text-sm text-muted-foreground">
+    <nav aria-label="Sayfa yolu" className="text-sm text-ink-mid">
       <ol className="flex flex-wrap items-center gap-2">
         {items.map((item, index) => (
           <li key={item.href} className="flex items-center gap-2">
             {index > 0 && <span aria-hidden="true">/</span>}
             {index === items.length - 1 ? (
-              <span aria-current="page" className="text-foreground">
+              <span aria-current="page" className="text-ink">
                 {item.label}
               </span>
             ) : (
@@ -30,7 +30,7 @@ export function PublicSeoBreadcrumbs({
                  link inside a sentence, so WCAG 2.2's 24px floor applies and
                  a 14px line box measures 20. */
               <Link
-                className="inline-flex min-h-6 items-center hover:text-foreground"
+                className="inline-flex min-h-6 items-center hover:text-ink"
                 href={item.href}
               >
                 {item.label}
@@ -59,20 +59,20 @@ export function PublicSeoHero({
   children?: React.ReactNode;
 }) {
   return (
-    <header className="overflow-hidden rounded-3xl border bg-gradient-to-br from-primary/5 via-background to-violet-500/5 px-5 py-10 sm:px-10 sm:py-14 lg:px-14">
-      <p className="text-sm font-semibold tracking-wide text-primary">
+    <header className="py-8 md:py-12">
+      <p className="text-[13px] font-medium text-ink-mid">
         {eyebrow}
       </p>
-      <h1 className="mt-3 max-w-4xl text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
+      <h1 className="mt-4 max-w-4xl text-4xl font-bold leading-[1.15] tracking-[-0.02em] text-ink sm:text-5xl">
         {title}
       </h1>
-      <p className="mt-5 max-w-3xl text-base leading-7 text-muted-foreground sm:text-lg">
+      <p className="mt-6 max-w-3xl text-lg leading-[1.6] text-ink-mid">
         {description}
       </p>
       {(primaryAction || secondaryAction) && (
         <div className="mt-7 flex flex-col gap-3 sm:flex-row">
           {primaryAction && (
-            <Button asChild size="lg">
+            <Button asChild size="lg" className="text-base text-white">
               <Link href={primaryAction.href}>
                 {primaryAction.label}
                 <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
@@ -103,13 +103,13 @@ export function PublicSeoSection({
   className?: string;
 }) {
   return (
-    <section className={cn("py-10 sm:py-14", className)}>
+    <section className={cn("py-16 md:py-24", className)}>
       <div className="max-w-3xl">
-        <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+        <h2 className="text-2xl font-bold leading-[1.15] tracking-[-0.015em] text-ink sm:text-[32px]">
           {title}
         </h2>
         {intro && (
-          <p className="mt-3 text-base leading-7 text-muted-foreground">
+          <p className="mt-3 text-base leading-7 text-ink-mid">
             {intro}
           </p>
         )}
@@ -127,9 +127,9 @@ export function PublicSeoStat({
   label: string;
 }) {
   return (
-    <div className="rounded-2xl border bg-background/80 px-5 py-4">
-      <p className="text-2xl font-semibold text-foreground">{value}</p>
-      <p className="mt-1 text-sm text-muted-foreground">{label}</p>
+    <div className="rounded-[20px] border bg-background/80 px-5 py-4">
+      <p className="text-2xl font-medium text-ink">{value}</p>
+      <p className="mt-1 text-sm text-ink-mid">{label}</p>
     </div>
   );
 }
@@ -146,10 +146,10 @@ export function PublicSeoInfoCard({
   linkLabel?: string;
 }) {
   return (
-    <Card className="h-full rounded-2xl">
+    <Card className="h-full rounded-[20px] border-line bg-[var(--surface)] shadow-none">
       <CardContent className="flex h-full flex-col p-6">
-        <h3 className="text-lg font-semibold">{title}</h3>
-        <div className="mt-3 flex-1 text-sm leading-6 text-muted-foreground">
+        <h3 className="text-[19px] font-medium leading-[1.3] md:text-[22px]">{title}</h3>
+        <div className="mt-3 flex-1 text-base leading-[1.6] text-ink-mid">
           {children}
         </div>
         {href && linkLabel && (
@@ -179,7 +179,7 @@ export function PublicSeoChecklist({
       {items.map((item) => (
         <li
           key={item}
-          className="flex gap-3 rounded-xl border bg-card px-4 py-3 text-sm leading-6"
+          className="flex gap-3 rounded-[20px] border bg-[var(--surface)] px-4 py-3 text-base leading-[1.6]"
         >
           <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
             <Check className="h-3.5 w-3.5" aria-hidden="true" />
@@ -197,11 +197,11 @@ export function PublicSeoFaq({
   items: ReadonlyArray<{ question: string; answer: React.ReactNode }>;
 }) {
   return (
-    <div className="divide-y rounded-2xl border bg-card px-5 sm:px-7">
+    <div className="divide-y rounded-[20px] border bg-[var(--surface)] px-5 sm:px-7">
       {items.map((item) => (
         <div key={item.question} className="py-6">
-          <h3 className="font-semibold">{item.question}</h3>
-          <div className="mt-2 text-sm leading-6 text-muted-foreground">
+          <h3 className="text-[19px] font-medium leading-[1.3]">{item.question}</h3>
+          <div className="mt-2 text-base leading-[1.6] text-ink-mid">
             {item.answer}
           </div>
         </div>

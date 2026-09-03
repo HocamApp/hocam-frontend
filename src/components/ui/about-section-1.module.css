@@ -1,0 +1,169 @@
+.hero {
+  position: relative;
+  padding: 64px 24px 0;
+  background: var(--paper);
+  color: var(--ink);
+}
+
+
+.container {
+  max-width: 1200px;
+  margin-inline: auto;
+}
+
+.introduction {
+  max-width: 800px;
+  margin-inline: auto;
+  text-align: center;
+}
+
+.eyebrow {
+  margin: 0 0 24px;
+  color: var(--ink-mid);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: 0.01em;
+}
+
+.heading {
+  margin: 0 0 24px;
+  font-size: 40px;
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+}
+
+.words {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  column-gap: 0.25em;
+}
+
+.wordClip {
+  display: inline-flex;
+  overflow: hidden;
+  /* Leave room for İ, ş and ğ without opening up the visual line spacing. */
+  padding-block: 0.14em;
+  margin-block: -0.14em;
+}
+
+.word {
+  display: inline-block;
+}
+
+.description {
+  max-width: 60ch;
+  margin: 0 auto 32px;
+  color: var(--ink-mid);
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 1.6;
+}
+
+.action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 48px;
+  padding: 16px 32px;
+  border-radius: var(--radius-pill, 999px);
+  background: var(--pink);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.5;
+  transition: background-color 120ms linear;
+}
+
+.action:hover {
+  background: var(--pink-deep);
+}
+
+.action:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 4px;
+}
+
+.portraits {
+  display: grid;
+  align-items: center;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 32px;
+  margin-top: 48px;
+}
+
+.portrait {
+  width: 100%;
+  max-width: 256px;
+  margin: 0 auto;
+}
+
+.frame {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  border-radius: var(--radius-card, 20px);
+}
+
+.photo {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.caption {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 16px;
+  color: var(--ink-mid);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: 0.01em;
+  text-align: center;
+}
+
+.founderName {
+  font-size: 16px;
+}
+
+.portrait[data-caption-pending] .caption {
+  opacity: 0;
+}
+
+@media (min-width: 768px) {
+  .hero {
+    padding-top: 128px;
+  }
+
+  .heading {
+    font-size: 64px;
+    line-height: 1.05;
+  }
+
+  .portraits {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 24px;
+    margin-top: 64px;
+  }
+
+  .portrait {
+    max-width: 288px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero .word,
+  .hero [data-portrait-image],
+  .hero .caption,
+  .hero [data-about-description],
+  .hero [data-about-action] {
+    opacity: 1 !important;
+    transform: none !important;
+    filter: none !important;
+  }
+}

@@ -1481,3 +1481,16 @@ export interface StudyBlockPayload {
   duration_minutes: number;
   recurrence: StudyBlockRecurrence;
 }
+
+
+export interface ContactMessageRequest {
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone: string;
+  user_type: "student" | "parent" | "tutor" | "institution" | "other";
+  source: "social" | "google" | "recommendation" | "other" | "";
+  message: string;
+  privacy_acknowledged: boolean;
+  website: string;
+}

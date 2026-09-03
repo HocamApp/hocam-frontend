@@ -13,7 +13,6 @@ export const PUBLIC_SEO_ROUTES = [
   "/yks/ayt/matematik-ozel-ders",
   "/nasil-calisir",
   "/hocalar-nasil-dogrulaniyor",
-  "/rehber/online-ozel-ders-ucretleri",
   "/hakkimizda",
 ] as const;
 

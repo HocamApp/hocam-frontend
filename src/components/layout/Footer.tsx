@@ -59,12 +59,6 @@ export function Footer() {
             >
               Hoca Doğrulama
             </Link>
-            <Link
-              href="/rehber/online-ozel-ders-ucretleri"
-              className="hover:text-primary"
-            >
-              Ders Ücretleri
-            </Link>
             <Link href="/hakkimizda" className="hover:text-primary">
               Hakkımızda
             </Link>

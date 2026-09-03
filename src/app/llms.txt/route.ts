@@ -22,7 +22,6 @@ export function GET() {
     `- [AYT Matematik özel ders](${SITE_URL}/yks/ayt/matematik-ozel-ders): AYT Matematik dersi veren doğrulanmış hocalar.`,
     `- [Hocam nasıl çalışır?](${SITE_URL}/nasil-calisir): Hoca arama, profil karşılaştırma ve online ders adımları.`,
     `- [Hocalar nasıl doğrulanıyor?](${SITE_URL}/hocalar-nasil-dogrulaniyor): Hoca doğrulamasında kullanılan bilgiler ve gizlilik sınırı.`,
-    `- [Online özel ders ücretleri](${SITE_URL}/rehber/online-ozel-ders-ucretleri): Herkese açık profillerdeki güncel 40 dakikalık ders ücretlerinin özeti ve yöntemi.`,
     `- [Hocam hakkında](${SITE_URL}/hakkimizda): Hocam'ın kapsamı ve doğrulanmış hoca pazaryeri modeli.`,
     "",
     "## Kapsam",
