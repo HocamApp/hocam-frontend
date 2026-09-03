@@ -10,6 +10,8 @@ import {
   type Icon,
 } from "@phosphor-icons/react";
 
+import { tutorListHref } from "@/lib/tutorDirectoryLinks";
+
 import { FAQ_SECTION_ID } from "./ysAppNav";
 
 import { BrandMark } from "@/components/brand/BrandMark";
@@ -22,7 +24,7 @@ import { AppStoreBadge, GooglePlayBadge } from "@/components/ui/store-badges";
  *
  * 1. **An entry is only a link if the destination exists and an anonymous
  *    visitor can reach it.** Headings the product will eventually need but does
- *    not have yet (Kariyer, Kullanım Koşulları, Mesafeli Satış,
+ *    not have yet (Kullanım Koşulları, Mesafeli Satış,
  *    İptal ve İade) render as plain text rather than links to nowhere.
  *    `/support` exists but is auth-gated, so linking it here would bounce an
  *    anonymous reader to `/login` — it is deliberately absent.
@@ -41,11 +43,11 @@ const FOOTER_COLUMNS: FooterColumn[] = [
   {
     heading: "Hocam'ı keşfet",
     entries: [
-      { label: "Hoca dizini", href: "/tutors" },
-      { label: "YKS özel ders", href: "/yks-ozel-ders" },
-      { label: "TYT Matematik özel ders", href: "/yks/tyt/matematik-ozel-ders" },
-      { label: "AYT Matematik özel ders", href: "/yks/ayt/matematik-ozel-ders" },
-      { label: "Ücretsiz deneme dersi", href: "/register" },
+      { label: "Hoca Listesi", href: tutorListHref() },
+      { label: "YKS özel ders", href: tutorListHref({ exam_type: "YKS" }) },
+      { label: "TYT Matematik özel ders", href: tutorListHref({ exam_type: "TYT", subject: "Matematik" }) },
+      { label: "AYT Matematik özel ders", href: tutorListHref({ exam_type: "AYT", subject: "Matematik" }) },
+      { label: "Ücretsiz deneme dersi", href: "/ucretsiz-deneme-dersi" },
     ],
   },
   {
@@ -62,8 +64,6 @@ const FOOTER_COLUMNS: FooterColumn[] = [
       { label: "Hakkımızda", href: "/hakkimizda-v2" },
       { label: "İletişim", href: "/iletisim" },
       { label: "Hoca ol", href: "/register?role=tutor" },
-      { label: "Giriş yap", href: "/login" },
-      { label: "Kariyer" },
     ],
   },
   {

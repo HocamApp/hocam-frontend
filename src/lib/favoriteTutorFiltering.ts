@@ -71,18 +71,14 @@ export function filterFavoriteTutors(
   return tutors.filter((tutor) => {
     if (filters.search && !matchesSearch(tutor, filters.search)) return false;
 
-    if (filters.subject) {
-      const hasSubject = tutor.subjects.some(
-        (subject) => subject.name === filters.subject,
+    if (filters.subject || filters.exam_type) {
+      const matchesSubject = tutor.subjects.some(subject =>
+        (!filters.subject || subject.name === filters.subject) &&
+        (!filters.exam_type || (filters.exam_type === "YKS"
+          ? ["TYT", "AYT"].includes(subject.exam_type)
+          : subject.exam_type === filters.exam_type)),
       );
-      if (!hasSubject) return false;
-    }
-
-    if (filters.exam_type) {
-      const hasExam = tutor.subjects.some(
-        (subject) => subject.exam_type === filters.exam_type,
-      );
-      if (!hasExam) return false;
+      if (!matchesSubject) return false;
     }
 
     if (filters.university && tutor.university !== filters.university) {

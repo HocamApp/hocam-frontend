@@ -114,6 +114,7 @@ function FilterPanelContent({
           disabled={isLoading}
           options={[
             { value: "__all__", label: "Tüm sınavlar" },
+            { value: "YKS", label: "YKS (TYT ve AYT)" },
             { value: "TYT", label: "TYT" },
             { value: "AYT", label: "AYT" },
             { value: "DGS", label: "DGS" },
@@ -158,7 +159,7 @@ function FilterPanelContent({
           options={[
             { value: "__all__", label: "Tüm konular" },
             ...learningTopics
-              .filter((topic) => !filters.exam_type || topic.exam_type === filters.exam_type)
+              .filter((topic) => !filters.exam_type || (filters.exam_type === "YKS" ? ["TYT", "AYT"].includes(topic.exam_type) : topic.exam_type === filters.exam_type))
               .filter((topic) => !filters.subject || topic.subject_name === filters.subject)
               .map((topic) => ({
                 value: topic.id,
