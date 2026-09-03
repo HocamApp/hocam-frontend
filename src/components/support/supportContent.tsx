@@ -96,7 +96,7 @@ export const HELP_SECTIONS: HelpSection[] = [
     title: "Ödeme ve iade bilgilendirmesi",
     anchorId: "odeme-ve-iade",
     items: [
-      "İptal ve iade kuralları /iptal-ve-iade sayfasında yayımlanmıştır; bu bölüm yalnızca özetidir.",
+      "Bağlayıcı iptal ve iade koşulları, herkese açık İptal ve İade Koşulları sayfasında yer alır; bu bölüm yalnızca kısa bir özettir.",
       "Şu anda platform üzerinde otomatik ödeme veya iade işlemi bulunmamaktadır.",
       "Ödeme ile ilgili talepleriniz destek ekibi tarafından manuel olarak incelenir.",
       "İade veya ücret anlaşmazlıklarında lütfen detaylı bir destek talebi oluşturun.",

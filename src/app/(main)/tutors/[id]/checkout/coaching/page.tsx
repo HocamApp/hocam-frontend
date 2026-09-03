@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { use, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -260,11 +260,12 @@ function CoachingChoiceContent({ tutorId }: { tutorId: string }) {
 export default function CoachingChoicePage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
+  const { id } = use(params);
   return (
     <RouteGuard requireRole="student">
-      <CoachingChoiceContent tutorId={params.id} />
+      <CoachingChoiceContent tutorId={id} />
     </RouteGuard>
   );
 }

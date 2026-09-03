@@ -1,17 +1,19 @@
 "use client";
 
+import { use } from "react";
 import { ConversationWorkspace } from "@/components/messaging/ConversationWorkspace";
 import { RouteGuard } from "@/components/shared/RouteGuard";
 
 export default function ConversationPage({
   params,
 }: {
-  params: { conversationId: string };
+  params: Promise<{ conversationId: string }>;
 }) {
+  const { conversationId } = use(params);
   return (
     <RouteGuard requireAuth>
       <ConversationWorkspace
-        conversationId={params.conversationId}
+        conversationId={conversationId}
         layout="page"
       />
     </RouteGuard>

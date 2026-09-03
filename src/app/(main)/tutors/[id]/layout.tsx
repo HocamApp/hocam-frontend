@@ -16,13 +16,14 @@ import {
 
 type TutorLayoutProps = Readonly<{
   children: React.ReactNode;
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }>;
 
 export async function generateMetadata({
   params,
 }: TutorLayoutProps): Promise<Metadata> {
-  const tutor = await fetchPublicTutor(params.id);
+  const { id } = await params;
+  const tutor = await fetchPublicTutor(id);
   if (!tutor) {
     return {
       title: "Hoca Profili",
@@ -70,7 +71,8 @@ export default async function TutorProfileLayout({
   children,
   params,
 }: TutorLayoutProps) {
-  const tutor = await fetchPublicTutor(params.id);
+  const { id } = await params;
+  const tutor = await fetchPublicTutor(id);
   if (!tutor) return children;
 
   const queryClient = new QueryClient();
@@ -86,7 +88,7 @@ export default async function TutorProfileLayout({
   // updatedAt: 0 keeps the instant first paint and the SEO payload while
   // marking the entry stale, so the client refetches on mount with the token
   // and replaces it with the reader's own copy.
-  queryClient.setQueryData(["tutor", params.id], tutor, { updatedAt: 0 });
+  queryClient.setQueryData(["tutor", id], tutor, { updatedAt: 0 });
 
   const name = tutorFullName(tutor);
   const description = tutorSeoDescription(tutor);

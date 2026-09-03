@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { use, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -78,9 +78,9 @@ function learningContextFromSearchParams(
 export default function TutorCheckoutPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
-  const tutorId = params.id;
+  const tutorId = use(params).id;
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();

@@ -11,6 +11,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { consentCopyForRole } from "@/lib/consentCopy";
 import {
   fetchConsentState,
+  revokeGuardianApproval,
   startGuardianApproval,
   submitBirthDate,
   updateConsent,
@@ -82,6 +83,15 @@ export function ConsentSettings() {
       setGuardianEmail("");
     },
     onError: () => toast.error("Onay e-postası gönderilemedi."),
+  });
+
+  const guardianRevokeMutation = useMutation({
+    mutationFn: revokeGuardianApproval,
+    onSuccess: () => {
+      void invalidate();
+      toast.success("Veli onayı ve buna bağlı izinler geri alındı.");
+    },
+    onError: () => toast.error("Veli onayı geri alınamadı."),
   });
 
   if (isLoading || !data) {
@@ -168,6 +178,39 @@ export function ConsentSettings() {
               </div>
             </div>
           </div>
+        </section>
+      )}
+
+      {data.guardian_approvals.length > 0 && (
+        <section className="space-y-3 rounded-lg border p-4">
+          <div>
+            <h3 className="font-semibold">Etkin veli onayları</h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Bir veli onayı geri alındığında ona bağlı isteğe bağlı izinler de
+              hemen kapanır.
+            </p>
+          </div>
+          {data.guardian_approvals.map((approval) => (
+            <div
+              key={approval.id}
+              className="flex flex-wrap items-center justify-between gap-3 rounded-md bg-muted/50 p-3"
+            >
+              <div className="text-sm">
+                <p className="font-medium">{approval.guardian_email}</p>
+                <p className="text-xs text-muted-foreground">
+                  {approval.purposes.length} izin için doğrulandı
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={guardianRevokeMutation.isPending}
+                onClick={() => guardianRevokeMutation.mutate(approval.id)}
+              >
+                Veli onayını geri al
+              </Button>
+            </div>
+          ))}
         </section>
       )}
 

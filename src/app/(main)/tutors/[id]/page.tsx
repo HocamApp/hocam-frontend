@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type FocusEvent } from "react";
+import { use, useEffect, useRef, useState, type FocusEvent } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
@@ -372,9 +372,9 @@ function ReviewSkeletonCard() {
 export default function TutorProfilePage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
-  const id = params.id;
+  const id = use(params).id;
   const router = useRouter();
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();

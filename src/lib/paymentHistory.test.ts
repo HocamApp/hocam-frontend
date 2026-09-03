@@ -67,7 +67,7 @@ describe("payment history presentation", () => {
           credit_delta: 2,
         })
       ),
-      "2 ders hakkı iade edildi"
+      "2 ders hakkı geri verildi"
     );
   });
 });

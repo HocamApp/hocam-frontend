@@ -22,6 +22,13 @@ export interface ConsentState {
   is_minor: boolean | null;
   guardian_required_purposes: ConsentPurpose[];
   consents: Record<ConsentPurpose, boolean>;
+  guardian_approvals: Array<{
+    id: string;
+    guardian_email: string;
+    purposes: ConsentPurpose[];
+    verified_at: string;
+    expires_at: string;
+  }>;
 }
 
 export interface RegistrationNoticeConfig {
@@ -98,6 +105,13 @@ export async function verifyGuardianApproval(
   const { data } = await api.post("/privacy/guardian-approval/verify/", {
     token,
   });
+  return data;
+}
+
+export async function revokeGuardianApproval(
+  id: string,
+): Promise<{ id: string; revoked: true }> {
+  const { data } = await api.post("/privacy/guardian-approval/revoke/", { id });
   return data;
 }
 

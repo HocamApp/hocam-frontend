@@ -11,7 +11,7 @@
 
 import Link from "next/link";
 
-import { LegalDoc, Section, SellerIdentityBlock } from "@/components/legal/LegalDoc";
+import { CommerceStatusNotice, LegalDoc, Section, SellerIdentityBlock } from "@/components/legal/LegalDoc";
 import {
   CANCELLATION_FREE_HOURS,
   PACKAGE_GRACE_DAYS,
@@ -23,8 +23,8 @@ export const metadata = {
     "HOCAM ders paketlerinde cayma hakkı, ders iptali ve ücret iadesinin nasıl işlediği.",
 };
 
-const VERSION = "v1.0";
-const UPDATED_AT = "31 Ağustos 2026";
+const VERSION = "v1.1";
+const UPDATED_AT = "3 Eylül 2026";
 
 export default function IptalVeIadePage() {
   return (
@@ -41,6 +41,7 @@ export default function IptalVeIadePage() {
         </p>
       }
     >
+      <CommerceStatusNotice />
       <Section title="1. Tek bir dersin iptali">
         <p>
           Planlanmış bir dersi, ders saatinden en az {CANCELLATION_FREE_HOURS}{" "}
@@ -53,10 +54,10 @@ export default function IptalVeIadePage() {
           öğrenciye ayıramamış olmasındandır.
         </p>
         <p>
-          Eğitmen derse katılmazsa veya teknik bir sorun nedeniyle ders
-          yapılamazsa ders hakkın iade edilir. Böyle bir durumda dersi
-          uyuşmazlık olarak bildirebilirsin; bildirim incelenene kadar dersin
-          otomatik olarak tamamlanmış sayılması durur.
+          Eğitmen derse katılmazsa ders hakkın paketine geri verilir. Teknik
+          sorunlarda olayın tarafı ve etkisi incelenir; uygun sonuç ders hakkı,
+          telafi hakkı veya ücret iadesi yükümlülüğü olabilir. İnceleme
+          tamamlanana kadar sonuç, gerçekleşmiş banka iadesi olarak gösterilmez.
         </p>
       </Section>
 
@@ -66,12 +67,14 @@ export default function IptalVeIadePage() {
           içinde, gerekçe göstermeden cayma hakkını kullanabilirsin.
         </p>
         <p>
-          Bu süre içinde hiç ders kullanmadıysan ödediğin tutarın tamamı iade
-          edilir. Ders kullandıysan, kullanılan derslerin bedeli mahsup edilir
-          ve kalan tutar iade edilir.
+          Bu süre içinde hiç ders kullanmadıysan ödediğin tutarın tamamı için
+          iade süreci başlatılır. Ders kullandıysan mevcut ürün hesabı,
+          kullanılan ders sayısını satın alımda gerçekten uygulanan indirimli
+          birim fiyatla çarpar; bu tutar toplamdan düşülür. Zorunlu tüketici
+          hakları farklı bir sonuç gerektiriyorsa onlar uygulanır.
         </p>
         <p>
-          İade, cayma bildiriminin bize ulaşmasından itibaren{" "}
+          Uygulanabilir cayma hakkındaki iade, bildirimin bize ulaşmasından itibaren{" "}
           <strong>14 gün</strong> içinde, ödemeyi yaptığın yöntemle yapılır.
           İade için senden herhangi bir masraf alınmaz.
         </p>
@@ -82,7 +85,10 @@ export default function IptalVeIadePage() {
           Cayma süresi geçtikten sonra, kullanılmamış ders hakları için iade
           talebinde bulunabilirsin. Bu talepler bireysel olarak incelenir;
           eğitmenin hizmeti sunamaması, uzun süreli teknik sorunlar ve benzeri
-          durumlarda kullanılmamış derslerin bedeli iade edilir.
+          durumlarda kullanılmamış dersler için ücret iadesi yükümlülüğü
+          doğabilir. Talebin alınması veya iç kaydın açılması, paranın bankana
+          döndüğü anlamına gelmez; sonuç ödeme sağlayıcısı doğrulamasından sonra
+          bildirilir.
         </p>
         <p>
           Paket süresi ve ardından gelen {PACKAGE_GRACE_DAYS} günlük planlama

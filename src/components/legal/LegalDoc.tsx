@@ -13,6 +13,7 @@ import Link from "next/link";
 import {
   IDENTITY_PUBLISHED,
   KVKK_CONTACT_EMAIL,
+  PAYMENTS_LIVE,
   sellerIdentityRows,
 } from "@/lib/sellerIdentity";
 
@@ -28,6 +29,20 @@ export function Section({
       <h2 className="text-xl font-semibold">{title}</h2>
       <div className="space-y-3 text-sm leading-7">{children}</div>
     </section>
+  );
+}
+
+export function CommerceStatusNotice() {
+  if (PAYMENTS_LIVE) return null;
+  return (
+    <div className="rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm leading-6 dark:border-amber-800 dark:bg-amber-950/40">
+      <p className="font-semibold">Ödeme altyapısı henüz kullanıma açık değil.</p>
+      <p className="mt-1">
+        Şu anda oluşturulan paket talebi karttan ücret çekmez; ödeme alınmadığı
+        için banka iadesi de doğmaz. Aşağıdaki hükümler, ödeme altyapısı
+        açıldıktan sonra kurulacak ücretli sözleşmeler için hazırlanan taslaktır.
+      </p>
+    </div>
   );
 }
 

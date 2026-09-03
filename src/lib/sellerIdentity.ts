@@ -58,6 +58,9 @@ export const KVKK_CONTACT_EMAIL = "kvkk@hocamozelders.com";
 export const PLATFORM_NAME = "HOCAM";
 export const PLATFORM_DOMAIN = "hocamozelders.com";
 
+/** Truthful launch state: no card processor or automatic bank refund is live. */
+export const PAYMENTS_LIVE = false;
+
 /** Rows for the identity table, in the order the Yönetmelik lists them. */
 export function sellerIdentityRows(): { label: string; value: string }[] {
   const rows = [

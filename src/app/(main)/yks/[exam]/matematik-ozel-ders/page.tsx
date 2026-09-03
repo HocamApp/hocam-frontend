@@ -65,12 +65,13 @@ export function generateStaticParams() {
   return [{ exam: "tyt" }, { exam: "ayt" }];
 }
 
-export function generateMetadata({
+export async function generateMetadata({
   params,
 }: {
-  params: { exam: string };
-}): Metadata {
-  const config = getExamPage(params.exam);
+  params: Promise<{ exam: string }>;
+}): Promise<Metadata> {
+  const { exam } = await params;
+  const config = getExamPage(exam);
   if (!config) {
     return {
       title: "Matematik Özel Ders",
@@ -90,9 +91,10 @@ export const revalidate = 3_600;
 export default async function MathematicsPrivateLessonPage({
   params,
 }: {
-  params: { exam: string };
+  params: Promise<{ exam: string }>;
 }) {
-  const config = getExamPage(params.exam);
+  const { exam } = await params;
+  const config = getExamPage(exam);
   if (!config) notFound();
 
   const allTutors = await loadPublicTutors();

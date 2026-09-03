@@ -23,8 +23,8 @@ import { formatDate, formatPrice } from "@/lib/utils";
 import type { PaymentLedgerEntry } from "@/types";
 
 const ENTRY_TYPE_LABELS: Record<string, string> = {
-  package_purchase_paid: "Paket tutarı onaylandı",
-  package_refund_processed: "Paket iade kaydı işlendi",
+  package_purchase_paid: "Paket tahsilatı doğrulandı",
+  package_refund_processed: "İade yükümlülüğü kaydı işlendi",
 };
 
 function entryLabel(entry: PaymentLedgerEntry): string {
@@ -229,7 +229,7 @@ function PaymentHistorySection() {
     return (
       <EmptyState
         title="Henüz ödeme geçmişi yok"
-        description="Onaylanan paket tutarların ve iade kayıtların burada görünecek."
+        description="Ödeme sağlayıcısı doğrulamalı tahsilat ve iade sonuçların burada görünecek."
       />
     );
   }
@@ -271,7 +271,7 @@ function PaymentsContent() {
         <section>
           <div className="mb-5">
             <h2 className="text-xl font-bold text-[var(--ink)]">Ödeme geçmişi</h2>
-            <p className="mt-1 text-sm text-[var(--ink-mid)]">Onaylanan ödemelerin ve iadelerin burada görünür.</p>
+            <p className="mt-1 text-sm text-[var(--ink-mid)]">Yalnız ödeme sağlayıcısının doğruladığı tahsilat ve iade sonuçları burada görünür.</p>
           </div>
           <PaymentHistorySection />
         </section>

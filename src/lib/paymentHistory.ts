@@ -28,11 +28,11 @@ export function creditActivityLabel(entry: PaymentLedgerEntry): string {
     case "lesson_credit_used":
       return `${creditCount} ders hakkı kullanıldı`;
     case "lesson_credit_refunded":
-      return `${creditCount} ders hakkı iade edildi`;
+      return `${creditCount} ders hakkı geri verildi`;
     case "dispute_compensation_credit":
       return `${creditCount} telafi ders hakkı eklendi`;
     case "package_refund_processed":
-      return `${creditCount} ders hakkı paket iadesiyle kapatıldı`;
+      return `${creditCount} ders hakkı iade talebi kaydıyla kapatıldı`;
     default:
       return entry.credit_delta > 0
         ? `${creditCount} ders hakkı eklendi`

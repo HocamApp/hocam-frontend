@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { SellerIdentityBlock } from "@/components/legal/LegalDoc";
+
 export const metadata = {
   title: "Aydınlatma Metni",
   description:
@@ -8,8 +10,8 @@ export const metadata = {
 
 // Kept in sync with hocam-backend/docs/kvkk/01-genel-aydinlatma-metni.md.
 // The document is the source of truth; this page renders it.
-const VERSION = "v1.1";
-const UPDATED_AT = "23 Ağustos 2026";
+const VERSION = "v1.2";
+const UPDATED_AT = "3 Eylül 2026";
 
 function Section({
   title,
@@ -50,11 +52,9 @@ export default function AydinlatmaMetniPage() {
           <p>
             HOCAM, YKS’ye hazırlanan öğrencilerle doğrulanmış üniversite
             öğrencisi öğretmenleri buluşturan çevrimiçi bir özel ders
-            platformudur. Platform işletmecisinin tam yasal kimliği ve
-            tebligata elverişli adresi işletme kuruluş işlemleri tamamlandıktan
-            sonra bu bölümde yayımlanacaktır. Bu sürede kişisel veri
-            başvuruları için kvkk@hocamozelders.com adresi kullanılır.
+            platformudur.
           </p>
+          <SellerIdentityBlock />
         </Section>
 
         <Section title="2. Hangi verilerini işliyoruz">
@@ -68,7 +68,10 @@ export default function AydinlatmaMetniPage() {
             sıralama, tanıtım yazın, profil görselin, ders taleplerin ve
             rezervasyonların, öğretmeninle mesajların, çözdüğün sorular ve
             sonuçları, öğrenme hedeflerin, satın aldığın paketler ve ödeme
-            kayıtların, yaptığın değerlendirmeler.
+            kayıtların, yaptığın değerlendirmeler; çalışma programındaki ders,
+            tarih, saat, süre, tekrar ve tamamlanma kayıtların. Koçluk
+            kullanırsan program, görev, seans, katılım, rapor, not, ek,
+            şikâyet/uyuşmazlık ve bunların finansal sonuç kayıtları da işlenir.
           </p>
           <p>
             <strong>Öğretmensen:</strong> bunlara ek olarak üniversiten,
@@ -113,11 +116,17 @@ export default function AydinlatmaMetniPage() {
             gereken bilgilerini görür. Öğrenciler birbirinin verisini görmez.
           </p>
           <p>
-            Hizmet sağlayıcılarımız: Railway (uygulama ve veri tabanı),
+            Mevcut hizmet sağlayıcılarımız: Railway (uygulama ve veri tabanı),
             Supabase (belge ve görsel depolama), Vercel (web sitesi), 8x8/JaaS
             (görüntülü ders), Google (Google ile giriş; ayrıca etkinleştirilmesi
             halinde yapay zekâ asistanı) ve Resend (e-posta). Ayrıca kanunen
             talep edilmesi halinde yetkili kurumlarla.
+          </p>
+          <p>
+            PAYTR henüz bağlı değildir ve HOCAM şu anda kart verisi işlemez.
+            Ödeme hizmeti açılmadan önce PAYTR’nin rolü, aktarılan işlem
+            verileri, saklama süresi ve yurt dışı alt-işleyen zinciri bu metne
+            eklenecek; değişiklik yayımlanmadan sağlayıcıya veri gönderilmeyecektir.
           </p>
         </Section>
 
@@ -177,10 +186,12 @@ export default function AydinlatmaMetniPage() {
 
         <Section title="8. 18 yaşından küçüksen">
           <p>
-            Çocuk kullanıcıların hesap sahipliği, yaş tespiti ve veli/vasi
-            doğrulama yöntemi hukuki inceleme altındadır. Bu yöntem
-            kesinleşmeden yeni veli/vasi onayı toplanmaz ve buna bağlı isteğe
-            bağlı özellikler açılmaz.
+            Doğum tarihi yaş kapısında kullanılır; yaşı bilinmeyen hesaplar
+            veli gerektiren isteğe bağlı özelliklerde yetişkin kabul edilmez.
+            Veli/vasi e-posta bağlantısı, 7 günlük süre, oran sınırlama ve geri
+            alma akışı kodda hazırdır. Hesap sahipliği, 18 yaş eşiği ve bu
+            doğrulamanın hukuken yeterliliği kesinleşmeden üretimde yeni
+            veli/vasi onayı toplama ve bağlı özellikler kapalı tutulur.
           </p>
           <p>
             Dersin yürütülmesi ve bunun için gerekli mesajlaşma gibi temel

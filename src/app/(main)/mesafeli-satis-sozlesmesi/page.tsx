@@ -13,7 +13,7 @@
 
 import Link from "next/link";
 
-import { LegalDoc, Section, SellerIdentityBlock } from "@/components/legal/LegalDoc";
+import { CommerceStatusNotice, LegalDoc, Section, SellerIdentityBlock } from "@/components/legal/LegalDoc";
 import { PLATFORM_DOMAIN, PLATFORM_NAME } from "@/lib/sellerIdentity";
 import {
   CANCELLATION_FREE_HOURS,
@@ -27,8 +27,8 @@ export const metadata = {
     "HOCAM üzerinden satın alınan çevrim içi özel ders paketlerine ilişkin mesafeli satış sözleşmesi.",
 };
 
-const VERSION = "v1.0";
-const UPDATED_AT = "31 Ağustos 2026";
+const VERSION = "v1.1";
+const UPDATED_AT = "3 Eylül 2026";
 
 export default function MesafeliSatisSozlesmesiPage() {
   return (
@@ -39,7 +39,8 @@ export default function MesafeliSatisSozlesmesiPage() {
       currentHref="/mesafeli-satis-sozlesmesi"
       intro={
         <p>
-          Bu sözleşme, siparişini onayladığın anda kurulur. Siparişten önce{" "}
+          Ödeme altyapısı açıldığında bu sözleşme, ödeme yükümlülüğü açıkça
+          belirtilen siparişini onayladığın anda kurulur. Siparişten önce{" "}
           <Link href="/on-bilgilendirme-formu" className="text-primary underline">
             Ön Bilgilendirme Formu
           </Link>{" "}
@@ -47,6 +48,7 @@ export default function MesafeliSatisSozlesmesiPage() {
         </p>
       }
     >
+      <CommerceStatusNotice />
       <Section title="1. Taraflar">
         <p>
           <strong>SATICI</strong>
@@ -108,9 +110,10 @@ export default function MesafeliSatisSozlesmesiPage() {
           saat önce iptal edilirse ders hakkı pakete geri döner.
         </p>
         <p>
-          Eğitmenin derse katılmaması veya teknik bir aksaklık nedeniyle dersin
-          yapılamaması hâlinde ders hakkı ALICI’ya iade edilir; ALICI dersi
-          bildirim yoluyla uyuşmazlık olarak işaretleyebilir.
+          Eğitmenin derse katılmaması hâlinde ders hakkı ALICI’nın paketine geri
+          verilir. Teknik aksaklığın sonucu incelemeyle belirlenir; ders hakkı,
+          telafi hakkı veya ücret iadesi yükümlülüğü doğabilir. ALICI olayı
+          uyuşmazlık olarak bildirebilir.
         </p>
       </Section>
 

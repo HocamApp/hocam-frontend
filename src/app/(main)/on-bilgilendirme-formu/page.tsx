@@ -13,7 +13,7 @@
 
 import Link from "next/link";
 
-import { LegalDoc, Section, SellerIdentityBlock } from "@/components/legal/LegalDoc";
+import { CommerceStatusNotice, LegalDoc, Section, SellerIdentityBlock } from "@/components/legal/LegalDoc";
 import { PLATFORM_NAME } from "@/lib/sellerIdentity";
 import {
   CANCELLATION_FREE_HOURS,
@@ -27,8 +27,8 @@ export const metadata = {
     "HOCAM üzerinden satın alınan ders paketleri için Mesafeli Sözleşmeler Yönetmeliği uyarınca ön bilgilendirme formu.",
 };
 
-const VERSION = "v1.0";
-const UPDATED_AT = "31 Ağustos 2026";
+const VERSION = "v1.1";
+const UPDATED_AT = "3 Eylül 2026";
 
 export default function OnBilgilendirmeFormuPage() {
   return (
@@ -44,10 +44,13 @@ export default function OnBilgilendirmeFormuPage() {
           <Link href="/mesafeli-satis-sozlesmesi" className="text-primary underline">
             Mesafeli Satış Sözleşmesi
           </Link>{" "}
-          kurulmuş olur ve ödeme yükümlülüğü doğar.
+          metnini kabul edersin. Ödeme altyapısı kullanıma açıldığında, açıkça
+          “ödeme yükümlülüğü doğuran sipariş” olarak işaretlenen son onay ücretli
+          sözleşmeyi kurar.
         </p>
       }
     >
+      <CommerceStatusNotice />
       <Section title="1. Satıcı bilgileri">
         <SellerIdentityBlock />
       </Section>

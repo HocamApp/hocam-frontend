@@ -20,8 +20,8 @@ export const metadata = {
     "HOCAM platformunun kullanım koşulları: hesap açma, öğrenci ve eğitmen yükümlülükleri, içerik ve davranış kuralları.",
 };
 
-const VERSION = "v1.0";
-const UPDATED_AT = "31 Ağustos 2026";
+const VERSION = "v1.1";
+const UPDATED_AT = "3 Eylül 2026";
 
 export default function KullanimKosullariPage() {
   return (
