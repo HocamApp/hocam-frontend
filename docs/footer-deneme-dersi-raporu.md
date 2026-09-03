@@ -66,3 +66,18 @@ Tasarım kaynağı kullanıcının verdiği `Hocam_Design_System_Logo_System_Add
 Mevcut API CORS politikası `localhost:3000` adresine izin verir, `localhost:3107` adresine izin vermez. Bu çalışma üretim CORS ayarını değiştirmedi. Bu nedenle listeyi gerçek API ile doğrulamak için aynı frontend ayrıca **http://localhost:3000** adresinde çalıştırıldı. Deneme sayfası **http://localhost:3000/ucretsiz-deneme-dersi** üzerinden incelenebilir. 3107 önizlemesi de açık tutuldu.
 
 Ödeme, ders hakkı ve rezervasyon kuralları değiştirilmedi; deneme sayfası mevcut kuralları açıklar. Yeni hoca listesi sayfası yoktur.
+
+## Ek çalışma: dört sayfada illüstrasyonlar
+
+Kullanıcının sağladığı **Thank You X Pack** içinden dört siyah çizgi illüstrasyonu seçildi. `/Users/ardagg/Desktop/DESIGN.md` doğrultusunda mevcut kağıt zemin, Poppins ve pembe eylem renkleri korundu. Her sayfada bir görsel kullanıldı:
+
+| Sayfa | Kaynak görsel | Yerleşim ve amaç |
+| --- | --- | --- |
+| Ders süreci | `Day 48.PNG` | Bilgisayarla çalışan figür, başlığın yanında çevrim içi öğrenmeyi destekler. |
+| Hoca doğrulama | `Day 31 (2).png` | İnceleyen gözler, belge incelemesini anlatan başlığın yanında. |
+| Ücretsiz deneme dersi | `Day 31 (3).png` | Selamlaşan eller, ilk derse giden adımlar bölümünün solunda. |
+| İletişim | `Day 47.PNG` | Mektup çizimi, giriş metninin yanında. Form ve ortalanmış destek kartı yerini korur. |
+
+Kaynak PNG dosyaları `src/assets/illustrations/` altında aynen saklanır. `PublicPageIllustration`, Next Image ile ekran boyutuna uygun görsel sunar; en-boy oranını korur, görsel alanını yükleme öncesinde ayırır. Mobilde en fazla 240 px, masaüstünde en fazla 400 px kullanılır; deneme bölümündeki çizim 280 px ile sınırlandırılır. İlk ekrandaki görseller öncelikli, aşağıdaki deneme görseli lazy yüklenir. Görsellerin anlattığı bilgi bitişik metinde bulunduğu için dekoratif olarak işaretlenir. Yeni animasyon veya bağımlılık eklenmedi.
+
+Doğrulama: lint, TypeScript ve production build geçti. Dört sayfa 375/768/1440 px genişliklerinde tarayıcıdan kontrol edildi: 12 görünümde görseller yüklendi, yatay taşma veya JavaScript sayfa hatası görülmedi. Masaüstü ve mobil ekran görüntüleri gözden geçirildi. Deneme akışındaki seçimler ve açılır sorular, iletişim formunun etkin alanları ve destek bağlantısı kontrol edildi. Bu görsel çalışma sırasında gerçek e-posta gönderilmedi; formun backend akışı değiştirilmedi.

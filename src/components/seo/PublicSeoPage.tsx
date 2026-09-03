@@ -49,6 +49,7 @@ export function PublicSeoHero({
   description,
   primaryAction,
   secondaryAction,
+  illustration,
   children,
 }: {
   eyebrow: string;
@@ -56,37 +57,41 @@ export function PublicSeoHero({
   description: string;
   primaryAction?: { label: string; href: string };
   secondaryAction?: { label: string; href: string };
+  illustration?: React.ReactNode;
   children?: React.ReactNode;
 }) {
   return (
-    <header className="py-8 md:py-12">
-      <p className="text-[13px] font-medium text-ink-mid">
-        {eyebrow}
-      </p>
-      <h1 className="mt-4 max-w-4xl text-4xl font-bold leading-[1.15] tracking-[-0.02em] text-ink sm:text-5xl">
-        {title}
-      </h1>
-      <p className="mt-6 max-w-3xl text-lg leading-[1.6] text-ink-mid">
-        {description}
-      </p>
-      {(primaryAction || secondaryAction) && (
-        <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-          {primaryAction && (
-            <Button asChild size="lg" className="text-base text-white">
-              <Link href={primaryAction.href}>
-                {primaryAction.label}
-                <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
-              </Link>
-            </Button>
-          )}
-          {secondaryAction && (
-            <Button asChild size="lg" variant="outline">
-              <Link href={secondaryAction.href}>{secondaryAction.label}</Link>
-            </Button>
-          )}
-        </div>
-      )}
-      {children}
+    <header className={cn("py-8 md:py-12", illustration && "grid items-center gap-8 lg:grid-cols-[7fr_5fr] lg:gap-12")}>
+      <div className="min-w-0">
+        <p className="text-[13px] font-medium text-ink-mid">
+          {eyebrow}
+        </p>
+        <h1 className="mt-4 max-w-4xl text-4xl font-bold leading-[1.15] tracking-[-0.02em] text-ink sm:text-5xl">
+          {title}
+        </h1>
+        <p className="mt-6 max-w-3xl text-lg leading-[1.6] text-ink-mid">
+          {description}
+        </p>
+        {(primaryAction || secondaryAction) && (
+          <div className="mt-7 flex flex-col gap-3 sm:flex-row">
+            {primaryAction && (
+              <Button asChild size="lg" className="text-base text-white">
+                <Link href={primaryAction.href}>
+                  {primaryAction.label}
+                  <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
+                </Link>
+              </Button>
+            )}
+            {secondaryAction && (
+              <Button asChild size="lg" variant="outline">
+                <Link href={secondaryAction.href}>{secondaryAction.label}</Link>
+              </Button>
+            )}
+          </div>
+        )}
+        {children}
+      </div>
+      {illustration}
     </header>
   );
 }

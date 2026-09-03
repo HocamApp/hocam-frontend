@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PublicPageIllustration } from "@/components/shared/PublicPageIllustration";
 
 import { JsonLd } from "@/components/seo/JsonLd";
 import {
@@ -45,6 +46,7 @@ export default function TutorVerificationPage() {
         <div className="mt-6">
           <PublicSeoHero
             eyebrow="DOĞRULANMIŞ HOCA PROFİLLERİ"
+            illustration={<PublicPageIllustration kind="review" priority />}
             title="Herkese açık profilden önce belge incelemesi"
             description="Hoca adayları öğrenci kimliği, YKS sonuç belgesi ve .edu.tr uzantılı üniversite e-posta adresiyle doğrulama başvurusu yapar. Onay durumu herkese açık profilde doğrulama rozetiyle gösterilir."
             primaryAction={{ label: "Doğrulanmış hocaları gör", href: "/tutors" }}

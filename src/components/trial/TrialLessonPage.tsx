@@ -6,6 +6,7 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ArrowRight, Clock, Plus, VideoCamera } from "@phosphor-icons/react";
 import { MONTHLY_TRIAL_LIMIT, TRIAL_MINUTES } from "@/components/yemeksepeti/ysHomeFacts";
 import { tutorListHref } from "@/lib/tutorDirectoryLinks";
+import { PublicPageIllustration } from "@/components/shared/PublicPageIllustration";
 import styles from "./trial-lesson.module.css";
 
 const AGENDA = [
@@ -81,6 +82,7 @@ export function TrialLessonPage() {
             <p className={styles.eyebrow}>Nasıl çalışır?</p>
             <h2 id="trial-journey">İlk derse giden yol.</h2>
             <p className={styles.lede}>Seçtiğin hocadan müsait bir saat için talep oluştur. Onaydan sonra, ders zamanı Hocam’da buluşun.</p>
+            <div className={styles.journeyArtwork}><PublicPageIllustration kind="meet" /></div>
           </div>
           <ol className={styles.steps}>
             {STEPS.map((step, index) => (

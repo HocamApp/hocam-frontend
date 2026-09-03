@@ -26,6 +26,7 @@
 .track span { display: block; height: 100%; background: var(--pink); }
 .agendaNote { margin-top: 16px; color: var(--ink-mid); font-size: 14px; line-height: 1.5; }
 .journeyBand { padding-block: 64px; background: var(--pink-pale); }
+.journeyArtwork { max-width: 280px; margin: 24px auto 0; }
 .split { display: grid; gap: 48px; }
 .sectionIntro h2, .closing h2 { margin: 0; font-size: 24px; font-weight: 700; line-height: 1.15; letter-spacing: -.015em; }
 .steps { list-style: none; padding: 0; margin: 0; }

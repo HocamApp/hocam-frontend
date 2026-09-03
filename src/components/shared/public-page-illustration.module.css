@@ -1,0 +1,5 @@
+.artwork { width: 100%; max-width: 240px; margin-inline: auto; pointer-events: none; }
+.image { display: block; width: 100%; height: auto; object-fit: contain; }
+:global(.dark) .image { filter: invert(1); }
+@media (min-width: 768px) { .artwork { max-width: 320px; } }
+@media (min-width: 1024px) { .artwork { max-width: 400px; } }
