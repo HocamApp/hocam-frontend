@@ -55,11 +55,7 @@ const YS_HOME_FAQ_ITEMS: SupportAccordionSectionItem[] = [
         Standart ders {LESSON_MINUTES} dakikadır. Hoca profilinde gördüğün ücret bu{" "}
         {LESSON_MINUTES} dakikalık dersin ücretidir; ücreti her hoca kendisi belirler ve
         dilediğinde güncelleyebilir. Bu yüzden ders seçmeden önce ilgili profildeki güncel
-        değere bak. Listelenen ücretlerin aralığını ve medyanını{" "}
-        <Link href="/rehber/online-ozel-ders-ucretleri" className={faqLinkClass}>
-          ders ücretleri rehberinde
-        </Link>{" "}
-        karşılaştırabilirsin.
+        değere bak.
       </p>
     ),
   },

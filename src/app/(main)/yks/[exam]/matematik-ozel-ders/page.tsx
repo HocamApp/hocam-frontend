@@ -126,7 +126,7 @@ export default async function MathematicsPrivateLessonPage({
           }),
         ]}
       />
-      <article className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <article className="mx-auto w-full max-w-[1248px] px-6 py-16 text-ink md:py-24">
         <PublicSeoBreadcrumbs items={breadcrumbs} />
 
         <div className="mt-6">
@@ -210,7 +210,7 @@ export default async function MathematicsPrivateLessonPage({
           title="Karar vermeden önce bakabileceğin sayfalar"
           className="border-t"
         >
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-6 md:grid-cols-2">
             <PublicSeoInfoCard
               title="Ders süreci"
               href="/nasil-calisir"
@@ -226,14 +226,6 @@ export default async function MathematicsPrivateLessonPage({
             >
               Hocaların herkese açık profile geçmeden önce sunduğu bilgileri
               öğren.
-            </PublicSeoInfoCard>
-            <PublicSeoInfoCard
-              title="Ders ücretleri"
-              href="/rehber/online-ozel-ders-ucretleri"
-              linkLabel="Güncel aralığı gör"
-            >
-              Hocam&apos;da listelenen 40 dakikalık ders ücretlerinin güncel
-              aralığını ve medyanını gör.
             </PublicSeoInfoCard>
           </div>
         </PublicSeoSection>

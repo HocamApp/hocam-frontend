@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * Shared furniture for the story pages (`/hakkimizda-v2`, `/basari-hikayeleri`,
+ * Shared furniture for the story pages (`/hakkimizda-v2`,
  * `/iletisim`). Deliberately small — three section shells and a pill — so each
  * page stays readable and easy to redesign without unpicking an abstraction.
  *

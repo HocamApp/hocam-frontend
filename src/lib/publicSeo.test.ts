@@ -57,7 +57,6 @@ test("public SEO routes are unique and separated by search intent", () => {
     "/yks/ayt/matematik-ozel-ders",
     "/nasil-calisir",
     "/hocalar-nasil-dogrulaniyor",
-    "/rehber/online-ozel-ders-ucretleri",
     "/hakkimizda",
   ]);
 });

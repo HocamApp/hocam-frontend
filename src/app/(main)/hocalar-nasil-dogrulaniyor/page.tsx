@@ -39,7 +39,7 @@ export default function TutorVerificationPage() {
           breadcrumbJsonLd(breadcrumbs),
         ]}
       />
-      <article className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <article className="mx-auto w-full max-w-[1248px] px-6 py-16 text-ink md:py-24">
         <PublicSeoBreadcrumbs items={breadcrumbs} />
 
         <div className="mt-6">
@@ -73,7 +73,7 @@ export default function TutorVerificationPage() {
           title="Doğrulama durumu profilde nasıl görünür?"
           className="border-t"
         >
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-6 md:grid-cols-2 md:[&>*:last-child]:col-span-2">
             <PublicSeoInfoCard title="Başvuru">
               Hoca adayı gerekli bilgileri kendi hesabındaki doğrulama alanından
               gönderir.

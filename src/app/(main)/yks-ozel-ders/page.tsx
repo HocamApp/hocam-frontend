@@ -55,7 +55,7 @@ export default async function YksPrivateLessonPage() {
           }),
         ]}
       />
-      <article className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <article className="mx-auto w-full max-w-[1248px] px-6 py-16 text-ink md:py-24">
         <PublicSeoBreadcrumbs items={breadcrumbs} />
 
         <div className="mt-6">
@@ -206,14 +206,7 @@ export default async function YksPrivateLessonPage() {
                 answer: (
                   <>
                     Her hoca profilinde 40 dakikalık standart ders ücreti
-                    gösterilir. Güncel aralık ve hesaplama notları için{" "}
-                    <Link
-                      className="text-primary hover:underline"
-                      href="/rehber/online-ozel-ders-ucretleri"
-                    >
-                      ücret rehberini
-                    </Link>{" "}
-                    inceleyebilirsin.
+                    gösterilir. Ders paketlerini ve güncel ücretleri hocanın profilinden inceleyebilirsin.
                   </>
                 ),
               },

@@ -38,7 +38,7 @@ export default function HowItWorksPage() {
           breadcrumbJsonLd(breadcrumbs),
         ]}
       />
-      <article className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <article className="mx-auto w-full max-w-[1248px] px-6 py-16 text-ink md:py-24">
         <PublicSeoBreadcrumbs items={breadcrumbs} />
 
         <div className="mt-6">
@@ -83,14 +83,14 @@ export default function HowItWorksPage() {
             ].map((step) => (
               <li
                 key={step.number}
-                className="flex gap-4 rounded-2xl border bg-card p-6"
+                className="flex gap-4 rounded-[20px] border border-line bg-[var(--surface)] p-6"
               >
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-pink-pale text-sm font-medium text-ink-on-light">
                   {step.number}
                 </span>
                 <div>
-                  <h3 className="text-lg font-semibold">{step.title}</h3>
-                  <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                  <h3 className="text-[19px] font-medium leading-[1.3] md:text-[22px]">{step.title}</h3>
+                  <p className="mt-2 text-base leading-[1.6] text-ink-mid">
                     {step.text}
                   </p>
                 </div>
@@ -103,7 +103,7 @@ export default function HowItWorksPage() {
           title="Profil karşılaştırmasında kullanabileceğin bilgiler"
           className="border-t"
         >
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-6 md:grid-cols-2 md:[&>*:last-child]:col-span-2">
             <PublicSeoInfoCard title="Akademik bilgiler">
               Üniversite, bölüm, YKS sıralaması ve doğrulanmış profil rozeti
               birlikte gösterilir.

@@ -47,3 +47,12 @@ test("keeps the global footer on ordinary pages", async () => {
 
   assert.match(html, /^<footer/);
 });
+
+
+test("retired pages are absent and FAQ points to the homepage", async () => {
+  pathname = "/iletisim";
+  const { YsFooter } = await import("./YsFooter");
+  const html = renderToStaticMarkup(<YsFooter />);
+  assert.doesNotMatch(html, /online-ozel-ders-ucretleri|basari-hikayeleri|>Blog</);
+  assert.match(html, /href="\/#merak-edilenler"/);
+});
