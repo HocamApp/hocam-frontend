@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ChatsCircle, ShieldCheck } from "@phosphor-icons/react/dist/ssr";
+import { ChatsCircle } from "@phosphor-icons/react/dist/ssr";
 import { ContactSimpleForm } from "@/components/contact/ContactSimpleForm";
 import styles from "@/components/contact/contact.module.css";
 
@@ -26,12 +26,6 @@ export default function ContactPage() {
           <h2>Hesabınla ilgili bir konu mu?</h2>
           <p>Derslerin, rezervasyonların veya hesabın için destek merkezinden talep oluşturabilirsin.</p>
           <Link href="/support">Destek merkezine git</Link>
-        </div>
-        <div className={styles.channel}>
-          <ShieldCheck size={24} weight="regular" aria-hidden="true" />
-          <h2>Kişisel verilerinle ilgili talepler</h2>
-          <p>KVKK kapsamındaki başvurularını ilgili ekibimize doğrudan iletebilirsin.</p>
-          <a href="mailto:kvkk@hocamozelders.com">kvkk@hocamozelders.com</a>
         </div>
       </section>
     </article>
