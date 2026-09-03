@@ -20,10 +20,13 @@ import { AppStoreBadge, GooglePlayBadge } from "@/components/ui/store-badges";
  *
  * 1. **An entry is only a link if the destination exists and an anonymous
  *    visitor can reach it.** Headings the product will eventually need but does
- *    not have yet (Blog, Kariyer, İletişim, Kullanım Koşulları, Mesafeli Satış,
- *    İptal ve İade) render as plain text rather than links to nowhere.
- *    `/support` exists but is auth-gated, so linking it here would bounce an
- *    anonymous reader to `/login` — it is deliberately absent.
+ *    not have yet (Blog, Kariyer) render as plain text rather than links to
+ *    nowhere. `/support` exists but is auth-gated, so linking it here would
+ *    bounce an anonymous reader to `/login` — it is deliberately absent.
+ *
+ *    The four commerce documents were plain text under this rule until the
+ *    pages existed. They now do, they are public, and selling without them
+ *    reachable is its own problem — so they are links.
  * 2. **Nothing here claims a channel Hocam does not own.** There are no real
  *    social accounts yet, so the icons are decoration: no href, not focusable,
  *    hidden from assistive tech. Give a `SOCIAL_LINKS` entry an `href` and it
@@ -81,9 +84,10 @@ const FOOTER_COLUMNS: FooterColumn[] = [
 ];
 
 const LEGAL_ENTRIES: FooterEntry[] = [
-  { label: "Kullanım Koşulları" },
-  { label: "Mesafeli Satış Sözleşmesi" },
-  { label: "İptal ve İade Koşulları" },
+  { label: "Kullanım Koşulları", href: "/kullanim-kosullari" },
+  { label: "Ön Bilgilendirme Formu", href: "/on-bilgilendirme-formu" },
+  { label: "Mesafeli Satış Sözleşmesi", href: "/mesafeli-satis-sozlesmesi" },
+  { label: "İptal ve İade Koşulları", href: "/iptal-ve-iade" },
   { label: "KVKK başvuru: kvkk@hocamozelders.com", href: "mailto:kvkk@hocamozelders.com" },
 ];
 
