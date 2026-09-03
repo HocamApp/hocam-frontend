@@ -2,7 +2,7 @@
 
 import { Suspense } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -20,6 +20,7 @@ import {
   isGatedPage,
   signupUrlForGatedPage,
 } from "@/lib/anonymousBrowsing";
+import { directoryFilterQuery, readDirectoryFilters, TUTOR_LIST_ID } from "@/lib/tutorDirectoryLinks";
 import { defaultTutorOrdering } from "@/lib/tutorDirectory";
 import {
   filterFavoriteTutors,
@@ -43,12 +44,8 @@ import SlidingPagination from "@/components/ui/sliding-pagination";
  * owns the state around them. It deliberately carries *less* than
  * `TutorsPageClient`:
  *
- * - **No filter URL sync.** `TutorsPageClient` hardcodes `/tutors` in every
- *   `router.replace`, so reusing it here would navigate the visitor off the
- *   homepage on the first filter change. The subject/price/rating filters
- *   therefore stay local. The *search term* is the exception: it is committed
- *   from the header, which can be on any route, so the URL is the only place
- *   the two can meet.
+ * - **URL-backed filters.** Footer shortcuts and browser history share the
+ *   same filter state as the controls, without leaving the current route.
  * - **No discovery telemetry.** The directory-impression payload has no
  *   surface field, so homepage impressions would silently contaminate
  *   `/tutors` ranking measurement.
@@ -118,8 +115,8 @@ function DirectoryFallback({ favoritesOnly }: DirectoryProps) {
   return (
     <section className="mt-16 md:mt-24" aria-labelledby="ys-tutor-list-title">
       <h2
-        id="ys-tutor-list-title"
-        className="mb-6 text-2xl font-semibold leading-[1.3125] md:text-[2rem]"
+        id={TUTOR_LIST_ID}
+        className="mb-6 scroll-mt-[calc(var(--app-header-h)+2rem)] text-2xl font-semibold leading-[1.3125] md:text-[2rem]"
       >
         {favoritesOnly ? "Favori Hocalarım" : "Hocalar"}
       </h2>
@@ -143,6 +140,7 @@ function DirectoryBody({ favoritesOnly = false }: DirectoryProps) {
      carries the term between them. It also survives a reload and a back
      button, which the old prop never did. */
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const { isAuthenticated } = useAuth();
   /* Back to the directory with the reader's filters intact, not to a bare
@@ -159,7 +157,7 @@ function DirectoryBody({ favoritesOnly = false }: DirectoryProps) {
      it meant. */
   const showFavorites = favoritesOnly || searchParams.get("favorites") === "1";
 
-  const [filters, setFilters] = useState<TutorFiltersType>({});
+  const filters = useMemo(() => readDirectoryFilters(searchParams), [searchParams]);
   const [page, setPage] = useState(1);
   /* Starts closed on purpose, and deliberately does NOT read
      `hocam:tutor-filters-open` — inheriting the visitor's `/tutors`
@@ -193,10 +191,24 @@ function DirectoryBody({ favoritesOnly = false }: DirectoryProps) {
     });
   }, []);
 
-  /* The navbar owns the search term, so it is merged in here rather than
-     living in `filters`. Feeding it through `defaultTutorOrdering` is what
-     makes the "En alakalı" chip appear once there is something to be
-     relevant to. */
+  // Direct footer links land on the existing list, below the sticky header.
+  // Wait for font metrics before the initial jump; never animate a long trip
+  // through the hero just to reach the results the visitor requested.
+  useEffect(() => {
+    if (window.location.hash !== `#${TUTOR_LIST_ID}`) return;
+    let cancelled = false;
+    void document.fonts.ready.then(() => {
+      requestAnimationFrame(() => {
+        if (cancelled) return;
+        const heading = document.getElementById(TUTOR_LIST_ID);
+        heading?.scrollIntoView({ block: "start", behavior: "instant" });
+      });
+    });
+    return () => { cancelled = true; };
+  }, [searchParams]);
+
+  // The navbar owns the search term; include it in both the query and the
+  // default ordering, regardless of how the visitor reached the list.
   const effectiveFilters = useMemo<TutorFiltersType>(
     () => (search ? { ...filters, search } : filters),
     [filters, search],
@@ -205,7 +217,7 @@ function DirectoryBody({ favoritesOnly = false }: DirectoryProps) {
   // A new term should land the reader on the first page of its own results.
   useEffect(() => {
     setPage(1);
-  }, [search]);
+  }, [search, filters]);
 
   const {
     data: tutors,
@@ -274,28 +286,22 @@ function DirectoryBody({ favoritesOnly = false }: DirectoryProps) {
   const showEmptyState = !isResolving && !error && results.length === 0;
 
   const handleFiltersChange = (next: TutorFiltersType) => {
-    setFilters(next);
+    const query = directoryFilterQuery(searchParams.toString(), next);
+    router.replace(`${pathname}${query ? `?${query}` : ""}#${TUTOR_LIST_ID}`, { scroll: false });
     setPage(1);
   };
 
-  const handleClear = () => {
-    setFilters({});
-    setPage(1);
-  };
+  const handleClear = () => handleFiltersChange({});
 
   /* Same chip vocabulary as `/tutors`: the three ordering chips behave like
      radios, "Çevrim içi" is a toggle, and nothing here is separate state —
      selection is derived from `filters`. */
   const chips = [
-    ...(defaultOrdering === "relevance"
-      ? [
-          {
-            label: "◎ En alakalı",
-            active: (filters.ordering ?? defaultOrdering) === "relevance",
-            next: { ordering: "relevance" },
-          },
-        ]
-      : []),
+    {
+      label: "En alakalı",
+      active: (filters.ordering ?? defaultOrdering) === "relevance",
+      next: { ordering: "relevance" },
+    },
     {
       label: "En yüksek puan",
       active: (filters.ordering ?? defaultOrdering) === "rating",
@@ -340,17 +346,22 @@ function DirectoryBody({ favoritesOnly = false }: DirectoryProps) {
       <div className="mb-6 flex flex-col gap-6 min-[1400px]:flex-row min-[1400px]:items-stretch min-[1400px]:justify-between">
         <div className="min-w-0 min-[1400px]:flex-1">
           <h2
-            id="ys-tutor-list-title"
-            className="mb-4 text-2xl font-semibold leading-[1.3125] md:text-[2rem]"
+            id={TUTOR_LIST_ID}
+            className="mb-4 scroll-mt-[calc(var(--app-header-h)+2rem)] text-2xl font-semibold leading-[1.3125] md:text-[2rem]"
           >
             {favoritesOnly ? "Favori Hocalarım" : "Hocalar"}
           </h2>
 
-          {/* No bottom padding: it was 4px of scrollbar room, and it put the
-              promo's lower edge 4px past the chips it is meant to line up
-              with. Above 1400 the chips do not overflow, and below it the
-              promo stacks anyway. */}
-          <div className="flex gap-2 overflow-x-auto">
+          {(filters.exam_type || filters.subject) && (
+            <p className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-base text-ink-mid" aria-live="polite">
+              <span>{filters.exam_type === "YKS" ? "YKS · TYT ve AYT" : filters.exam_type}{filters.subject ? ` · ${filters.subject}` : ""} hocaları</span>
+              <button type="button" onClick={handleClear} className="min-h-11 underline underline-offset-4 text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4">Filtreleri temizle</button>
+            </p>
+          )}
+
+          {/* Desktop wraps all sort options beside the favourites panel;
+              mobile keeps the horizontally scrollable row. */}
+          <div className="flex gap-2 overflow-x-auto lg:flex-wrap">
             <Button
               type="button"
               size="sm"

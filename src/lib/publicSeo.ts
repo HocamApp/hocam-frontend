@@ -8,6 +8,7 @@ import {
 } from "@/lib/seo";
 
 export const PUBLIC_SEO_ROUTES = [
+  "/ucretsiz-deneme-dersi",
   "/yks-ozel-ders",
   "/yks/tyt/matematik-ozel-ders",
   "/yks/ayt/matematik-ozel-ders",

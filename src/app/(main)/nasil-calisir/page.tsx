@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PublicPageIllustration } from "@/components/shared/PublicPageIllustration";
 
 import { JsonLd } from "@/components/seo/JsonLd";
 import {
@@ -44,6 +45,7 @@ export default function HowItWorksPage() {
         <div className="mt-6">
           <PublicSeoHero
             eyebrow="HOCAM'DA DERS SÜRECİ"
+            illustration={<PublicPageIllustration kind="lesson" priority />}
             title="Hoca aramadan online derse kadar"
             description={description}
             primaryAction={{ label: "Hocaları incele", href: "/tutors" }}

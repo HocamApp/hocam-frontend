@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ChatsCircle } from "@phosphor-icons/react/dist/ssr";
 import { ContactSimpleForm } from "@/components/contact/ContactSimpleForm";
+import { PublicPageIllustration } from "@/components/shared/PublicPageIllustration";
 import styles from "@/components/contact/contact.module.css";
 
 export const metadata: Metadata = {
@@ -14,9 +15,12 @@ export default function ContactPage() {
   return (
     <article className={styles.page}>
       <header className={styles.header}>
-        <p className={styles.eyebrow}>İletişim</p>
-        <h1 className={styles.title}>Seni dinliyoruz.</h1>
-        <p className={styles.intro}>Aklındaki soruyu, önerini ya da iş birliği fikrini bizimle paylaş. Mesajın doğrudan Hocam ekibine ulaşsın.</p>
+        <div>
+          <p className={styles.eyebrow}>İletişim</p>
+          <h1 className={styles.title}>Seni dinliyoruz.</h1>
+          <p className={styles.intro}>Aklındaki soruyu, önerini ya da iş birliği fikrini bizimle paylaş. Mesajın doğrudan Hocam ekibine ulaşsın.</p>
+        </div>
+        <PublicPageIllustration kind="message" priority />
       </header>
       <ContactSimpleForm />
       <p className={styles.email}>Doğrudan yazmak istersen: <a href="mailto:iletisim@hocamozelders.com">iletisim@hocamozelders.com</a></p>

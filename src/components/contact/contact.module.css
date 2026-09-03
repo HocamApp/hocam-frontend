@@ -1,5 +1,5 @@
 .page { max-width: 1248px; margin-inline: auto; padding: 64px 24px 0; color: var(--ink); }
-.header { max-width: 760px; margin-inline: auto; text-align: center; }
+.header { display: grid; align-items: center; gap: 24px; max-width: 960px; margin-inline: auto; text-align: center; }
 .eyebrow { margin: 0 0 16px; color: var(--ink-mid); font-size: 13px; font-weight: 500; }
 .title { margin: 0; font-size: clamp(32px, 5vw, 48px); font-weight: 700; line-height: 1.15; letter-spacing: -.02em; text-wrap: balance; }
 .intro { max-width: 55ch; margin: 24px auto 0; color: var(--ink-mid); font-size: 18px; line-height: 1.6; }
@@ -39,3 +39,4 @@
 .channel a:focus-visible { outline: 2px solid var(--ink); outline-offset: 4px; }
 @media (min-width: 640px) { .fieldPair { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (min-width: 768px) { .page { padding-top: 96px; } .form { margin-top: 64px; } .channel { padding: 32px; } .channel h2 { font-size: 22px; } }
+@media (min-width: 1024px) { .header { grid-template-columns: 7fr 5fr; gap: 48px; text-align: left; } .intro { margin-inline: 0; } }

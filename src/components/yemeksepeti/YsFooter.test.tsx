@@ -56,3 +56,15 @@ test("retired pages are absent and FAQ points to the homepage", async () => {
   assert.doesNotMatch(html, /online-ozel-ders-ucretleri|basari-hikayeleri|>Blog</);
   assert.match(html, /href="\/#merak-edilenler"/);
 });
+
+test("footer shortcuts land on the filtered home directory and trial guide", async () => {
+  pathname = "/iletisim";
+  const { YsFooter } = await import("./YsFooter");
+  const html = renderToStaticMarkup(<YsFooter />);
+  assert.doesNotMatch(html, /Kariyer|Giriş yap|Hoca dizini/);
+  assert.match(html, /href="\/#ys-tutor-list-title"[^>]*>Hoca Listesi</);
+  assert.match(html, /href="\/\?exam_type=YKS#ys-tutor-list-title"/);
+  assert.match(html, /href="\/\?subject=Matematik&amp;exam_type=TYT#ys-tutor-list-title"/);
+  assert.match(html, /href="\/\?subject=Matematik&amp;exam_type=AYT#ys-tutor-list-title"/);
+  assert.match(html, /href="\/ucretsiz-deneme-dersi"/);
+});

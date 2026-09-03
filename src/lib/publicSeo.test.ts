@@ -52,6 +52,7 @@ function tutor({
 test("public SEO routes are unique and separated by search intent", () => {
   assert.equal(new Set(PUBLIC_SEO_ROUTES).size, PUBLIC_SEO_ROUTES.length);
   assert.deepEqual(PUBLIC_SEO_ROUTES, [
+    "/ucretsiz-deneme-dersi",
     "/yks-ozel-ders",
     "/yks/tyt/matematik-ozel-ders",
     "/yks/ayt/matematik-ozel-ders",

@@ -21,7 +21,9 @@ export function getSubjectOptionsForExam(
   examType?: string
 ): Subject[] {
   const visibleSubjects = getVisibleSubjects(subjects);
-  const scopedSubjects = isExamType(examType)
+  const scopedSubjects = examType === "YKS"
+    ? visibleSubjects.filter((subject) => ["TYT", "AYT"].includes(subject.exam_type))
+    : isExamType(examType)
     ? visibleSubjects.filter((subject) => subject.exam_type === examType)
     : visibleSubjects;
 

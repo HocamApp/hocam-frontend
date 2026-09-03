@@ -148,3 +148,12 @@ describe("ordering the favourites list", () => {
     assert.deepEqual(ids(list), ids(original));
   });
 });
+
+it("matches exam and subject on the same row, including the YKS group", () => {
+  const list = [
+    tutor({ id: "mixed", subjects: [{ id: "a", name: "Fizik", exam_type: "TYT" }, { id: "b", name: "Matematik", exam_type: "KPSS" }] }),
+    tutor({ id: "match", subjects: [{ id: "c", name: "Matematik", exam_type: "AYT" }] }),
+  ];
+  assert.deepEqual(ids(filterFavoriteTutors(list, { exam_type: "YKS", subject: "Matematik" })), ["match"]);
+  assert.deepEqual(ids(filterFavoriteTutors(list, { exam_type: "TYT", subject: "Matematik" })), []);
+});
