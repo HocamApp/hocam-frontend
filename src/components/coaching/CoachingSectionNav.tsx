@@ -53,27 +53,22 @@ const GROUPS = [
 export function CoachingSectionNav() {
   return (
     /*
-      The page's second band, and --pink-pale's one permitted job: a large
-      section background, never a fill on anything smaller. Straight edges —
-      the diagonal stays on the landing page.
-
-      The negative bottom margin cancels the shell stack's own bottom padding.
-      A band is the last surface before the footer, and a strip of paper under
-      it reads as the band having stopped short rather than as the section
-      ending.
+      An ordinary section on the page's own surface. It was a full-bleed pale
+      band, which made a list of navigation links the loudest thing on the
+      overview — louder than the status panel above it. The heading is enough
+      separation for a set of links.
     */
     <section
       aria-labelledby="coaching-sections-title"
-      className="band-full-bleed -mb-16 bg-band-pale py-16 sm:-mb-24 sm:py-24"
+      className="space-y-4"
     >
-      <div className="mx-auto w-full max-w-7xl space-y-4 px-4 sm:px-6">
-        <div>
-          <h2 id="coaching-sections-title" className="text-h2-m sm:text-h2">Koçluk alanların</h2>
-          <p className="mt-1 text-small text-ink-mid">Yapmak istediğin işe göre devam et.</p>
-        </div>
-        {/* 2+1 and then a full-width band, never three equal columns — the
-            feature-card row is the layout tell DESIGN.md rules out. */}
-        <div className="grid gap-4 lg:grid-cols-3 lg:items-start">
+      <div>
+        <h2 id="coaching-sections-title" className="text-h2-m sm:text-h2">Koçluk alanların</h2>
+        <p className="mt-1 text-small text-ink-mid">Yapmak istediğin işe göre devam et.</p>
+      </div>
+      {/* 2+1 and then a full-width row, never three equal columns — the
+          feature-card row is the layout tell DESIGN.md rules out. */}
+      <div className="grid gap-4 lg:grid-cols-3 lg:items-start">
           {GROUPS.map((group) => (
             <CoachingStudioPanel key={group.title} tone={group.tone} className={cn("p-5 sm:p-6", group.className)}>
               <h3 className="text-h3">{group.title}</h3>
@@ -99,7 +94,6 @@ export function CoachingSectionNav() {
               </div>
             </CoachingStudioPanel>
           ))}
-        </div>
       </div>
     </section>
   );

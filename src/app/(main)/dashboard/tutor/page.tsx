@@ -1000,53 +1000,47 @@ function TutorDashboardContent() {
   }
 
   return (
-    <div className="w-full">
-      <div className="mx-auto w-full min-w-0 max-w-6xl overflow-x-clip px-4 pt-8">
-        <TutorialNudgeBanner />
-      </div>
+    <div className="mx-auto w-full min-w-0 max-w-6xl px-4 pb-16 pt-8 sm:pb-24">
+      <TutorialNudgeBanner />
       {/*
-        A full-bleed band, and the page's colour at the point a tutor lands on
-        it. Sections separate by colour rather than by nesting another bordered
-        box, so this is a strip of a different surface with no border, no
-        shadow and no wrapper.
+        No band behind the greeting. A band exists to separate one section from
+        another by colour, and the top of Panom is not a section: it is the
+        page beginning. Wrapping the first thing a tutor sees in its own
+        coloured strip made an entrance out of something that only has to
+        introduce the rest of the surface, and it put the loudest value on the
+        screen above the cards that actually carry the work.
 
-        Pale, not ink. A dark slab reads as the heaviest thing on the screen
-        and then has to be answered by every surface under it; --pink-pale is
-        the palette's one large section surface and carries brand without
-        taking the page over. Straight edges: the diagonal is the landing
-        page's device and does not follow the user into the product.
+        The greeting itself is unchanged.
       */}
-      <header className="band-full-bleed bg-band-pale py-10 sm:py-14">
-        <div className="mx-auto flex w-full min-w-0 max-w-6xl items-start gap-4 px-4 sm:items-center">
-          <Avatar className="h-12 w-12 shrink-0 border border-line">
-            {profile.profile_picture ? (
-              <AvatarImage
-                src={profile.profile_picture}
-                alt={`${profile.name} ${profile.surname}`}
-              />
-            ) : null}
-            <AvatarFallback className="bg-ink text-body font-medium text-paper">
-              {getInitials(profile.name, profile.surname)}
-            </AvatarFallback>
-          </Avatar>
-          <div>
-            {/* No emoji. DESIGN.md bans them outright, product copy included,
-                and a waving hand on a working panel is the clearest place that
-                rule earns its keep. No verified mark either: the one that was
-                here was Lucide's BadgeCheck, the scalloped Twitter rosette
-                DESIGN.md rules out by name, and a tutor does not need their own
-                verification restated to them on their own panel. */}
-            <h1 className="text-h2-m sm:text-h2">{getGreeting()}, {profile.name}</h1>
-            <p className="mt-1 text-small text-ink-mid">
-              {allTodayBookings.length > 0
-                ? `Bugün ${allTodayBookings.length} dersin var${nextBooking ? ` · İlki ${new Date(nextBooking.start_time).toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })}’da` : ""}.`
-                : "Bugün planlanmış dersin yok. Programını ve öğrencilerini buradan yönetebilirsin."}
-            </p>
-          </div>
+      <header className="mt-8 flex w-full min-w-0 items-start gap-4 sm:items-center">
+        <Avatar className="h-12 w-12 shrink-0 border border-line">
+          {profile.profile_picture ? (
+            <AvatarImage
+              src={profile.profile_picture}
+              alt={`${profile.name} ${profile.surname}`}
+            />
+          ) : null}
+          <AvatarFallback className="bg-ink text-body font-medium text-paper">
+            {getInitials(profile.name, profile.surname)}
+          </AvatarFallback>
+        </Avatar>
+        <div className="min-w-0">
+          {/* No emoji. DESIGN.md bans them outright, product copy included,
+              and a waving hand on a working panel is the clearest place that
+              rule earns its keep. No verified mark either: the one that was
+              here was Lucide's BadgeCheck, the scalloped Twitter rosette
+              DESIGN.md rules out by name, and a tutor does not need their own
+              verification restated to them on their own panel. */}
+          <h1 className="text-h2-m sm:text-h2">{getGreeting()}, {profile.name}</h1>
+          <p className="mt-1 text-small text-ink-mid">
+            {allTodayBookings.length > 0
+              ? `Bugün ${allTodayBookings.length} dersin var${nextBooking ? ` · İlki ${new Date(nextBooking.start_time).toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })}’da` : ""}.`
+              : "Bugün planlanmış dersin yok. Programını ve öğrencilerini buradan yönetebilirsin."}
+          </p>
         </div>
       </header>
 
-      <div className="mx-auto w-full min-w-0 max-w-6xl px-4 pb-16 pt-8 sm:pb-24 sm:pt-12">
+      <div className="mt-8 w-full min-w-0 sm:mt-12">
       {activeTab === "overview" ? (
         <div className="space-y-6">
       {/* No shadow on either branch below. These cards sit in the document
@@ -1201,13 +1195,11 @@ function TutorDashboardContent() {
         </CardContent>
       </Card>
 
-      {/* The page's second band, and --pink-pale's one legitimate job: a large
-          section background, never a fill on anything smaller. The diagonal
-          runs the same direction as the header band, and the negative bottom
-          margin cancels the content column's own padding so the band is the
-          last surface before the footer rather than stopping short of it. */}
-      <section className="band-full-bleed -mb-16 bg-band-pale py-16 sm:-mb-24 sm:py-24">
-        <div className="mx-auto w-full max-w-6xl px-4">
+      {/* An ordinary section on the page's own surface. It was a coloured
+          band, which made the quietest part of Panom — four links a tutor
+          opens once a month — the loudest thing after the greeting. The
+          heading is enough separation for content this ordinary. */}
+      <section>
         <div className="mb-3 flex items-end justify-between"><div><h2 className="text-h2-m sm:text-h2">Ayarlar ve görünürlük</h2><p className="mt-1 text-small text-ink-mid">Sık değişmeyen işletme ayarların.</p></div></div>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {[
@@ -1218,7 +1210,6 @@ function TutorDashboardContent() {
           ].map((item) => <Link key={item.title} href={item.href} className="group flex items-center gap-3 rounded-card border border-line bg-surface p-4 transition-colors duration-[var(--duration-state)] hover:border-ink"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-input border border-line bg-paper"><item.icon className="h-5 w-5" /></span><span className="min-w-0 flex-1"><strong className="block text-small font-medium">{item.title}</strong><span className="block truncate text-label text-ink-mid">{item.detail}</span></span>{/* Static. An arrow that slides on hover is decoration, and decoration does not get to move. */}<ArrowRight className="h-5 w-5 shrink-0 text-ink-mid" /></Link>)}
         </div>
         <div className="mt-3 text-right"><Button variant="ghost" size="sm" asChild><Link href="/dashboard/tutor/edit"><PencilSimple className="mr-2 h-5 w-5" />Profili düzenle</Link></Button></div>
-        </div>
       </section>
         </div>
       ) : (

@@ -293,6 +293,30 @@ export async function updateMyTutorProfile(
   return response.data;
 }
 
+/**
+ * Marketplace visibility, through the two endpoints that own it.
+ *
+ * `is_public` is also writable on `PATCH /tutors/me/` and on `PATCH
+ * /profile/me/`, and it is deliberately absent from `UpdateTutorProfilePayload`
+ * above so that it stays that way. Only `/tutor/profile/resume/` refuses to
+ * re-publish while an account-deletion request is open (409); the two PATCH
+ * paths would let a tutor mid-offboarding quietly reopen their storefront. One
+ * boolean with three doors is already the backend's problem — the frontend
+ * uses the one door that carries the guard.
+ *
+ * Neither endpoint returns the profile, only a message, so callers refresh
+ * `["tutor-me"]` themselves.
+ */
+export async function pauseTutorProfile(): Promise<{ detail: string }> {
+  const response = await api.post<{ detail: string }>("/tutor/profile/pause/", {});
+  return response.data;
+}
+
+export async function resumeTutorProfile(): Promise<{ detail: string }> {
+  const response = await api.post<{ detail: string }>("/tutor/profile/resume/", {});
+  return response.data;
+}
+
 export async function confirmTutorAvailability(): Promise<TutorProfile> {
   const response = await api.post<TutorProfile>("/tutors/me/availability/confirm/", {});
   return response.data;

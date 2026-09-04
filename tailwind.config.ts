@@ -23,10 +23,6 @@ const config: Config = {
           DEFAULT: "var(--gold)",
           ink: "var(--gold-ink)",
         },
-        /* The pale section band. A token, not `pink-pale` used directly:
-           --pink-pale is a fixed light value, and a band needs a Night
-           counterpart or everything sitting on it has to leave the theme. */
-        "band-pale": "var(--band-pale)",
         paper: "var(--paper)",
         ink: {
           DEFAULT: "var(--ink)",

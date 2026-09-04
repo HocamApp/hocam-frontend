@@ -26,6 +26,7 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { fetchProfileMe, updateProfileMe } from "@/lib/profileApi";
 import { fetchMyTutorProfile } from "@/lib/tutorsApi";
+import { useTutorVisibility } from "@/hooks/useTutorVisibility";
 import type { Theme } from "@/lib/theme";
 import type { ProfileStudent, ProfileTutor, UserPreferences } from "@/types";
 import {
@@ -114,6 +115,7 @@ export function ProfileMenu() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { user, isAuthenticated, logout } = useAuth();
+  const tutorVisibility = useTutorVisibility();
   const [open, setOpen] = useState(false);
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const [prefOverrides, setPrefOverrides] = useState<Partial<UserPreferences>>({});
@@ -437,14 +439,25 @@ export function ProfileMenu() {
               showChevron
               onClick={() => go("/profile/security")}
             />
-            {isTutor && (
-              <ProfileMenuRow
+            {/* This row used to navigate to `/profile#account-visibility`, an
+                anchor that does not exist anywhere in the app — it landed the
+                tutor at the top of /profile with nothing to do. It is now the
+                control itself, sharing its state with the header one on
+                desktop, where row 2 of the navbar is hidden on a phone. */}
+            {isTutor && tutorVisibility.isVerified && tutorVisibility.isPublic !== null && (
+              <ProfileToggleRow
                 icon={<Eye className="h-4 w-4" />}
-                label="Hesap görünürlüğü"
-                showChevron
-                onClick={() => go("/profile#account-visibility")}
+                label="Profilin yayında"
+                checked={tutorVisibility.isPublic}
+                disabled={tutorVisibility.isPending}
+                onChange={(next) => tutorVisibility.setVisible(next)}
               />
             )}
+            {isTutor && tutorVisibility.error ? (
+              <p className="px-2 pb-1.5 text-xs text-error">
+                {tutorVisibility.error}
+              </p>
+            ) : null}
             <ProfileMenuRow
               icon={<Download className="h-4 w-4" />}
               label="Verilerimi indir"

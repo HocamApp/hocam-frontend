@@ -76,19 +76,17 @@ describe("CoachingPageShell", () => {
         <p>İçerik</p>
       </CoachingPageShell>,
     );
-    const header = wide.querySelector('[data-testid="coaching-page-header"] > div');
+    const header = wide.querySelector('[data-testid="coaching-page-header"]');
     const stack = wide.querySelector('[data-testid="coaching-shell-stack"]');
 
     assert.match(header!.className, /max-w-7xl/);
     assert.match(stack!.className, /max-w-7xl/);
   });
 
-  it("separates the header by colour as a full-bleed band, with straight edges", () => {
-    // Sections separate by colour rather than by nesting another bordered
-    // box. Pale rather than ink: a dark slab is the heaviest thing on the
-    // screen and every surface under it then has to answer it. The diagonal
-    // cut belongs to the landing page and does not follow the user into the
-    // product.
+  it("puts the title on the page's own surface, not in a coloured band", () => {
+    // A band separates one section from another, and the top of a page is not
+    // a section. As a strip it also made the title the loudest thing on every
+    // coaching screen, above the panels carrying the actual work.
     render(
       <CoachingPageShell title="Koçluk teklifini hazırla">
         <p>Karar içeriği</p>
@@ -96,8 +94,8 @@ describe("CoachingPageShell", () => {
     );
 
     const header = screen.getByTestId("coaching-page-header");
-    assert.match(header.className, /band-full-bleed/);
-    assert.match(header.className, /bg-band-pale/);
+    assert.doesNotMatch(header.className, /band-full-bleed/);
+    assert.doesNotMatch(header.className, /bg-band-pale/);
     assert.doesNotMatch(header.className, /bg-ink/);
     assert.doesNotMatch(header.className, /band-cut/);
   });

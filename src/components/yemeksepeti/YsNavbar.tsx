@@ -9,6 +9,7 @@ import { BrandMark } from "@/components/brand/BrandMark";
 import { MobileNotificationsBell } from "@/components/shared/MobileNotificationsBell";
 import { ProfileMenu } from "@/components/profile/ProfileMenu";
 import { StreakIndicator } from "@/components/profile/StreakIndicator";
+import { TutorVisibilityControl } from "@/components/tutors/TutorVisibilityControl";
 import { useAuth } from "@/hooks/useAuth";
 import { useCoachingFlag } from "@/hooks/useCoachingFlag";
 import { useIsMobile } from "@/hooks/useMediaQuery";
@@ -349,6 +350,14 @@ export function YsNavbar({ startCoachmark = true }: Props) {
             onChange={setSearchDraft}
             onCommit={commitSearch}
           />
+        )}
+
+        {/* Left of the utility icons, which is the one piece of row 2 that is
+            empty on every route but the home page. It sits outside YsNavIcons
+            because that cluster is the same three destinations for everyone
+            and this is neither a destination nor everyone's. */}
+        {mode === "app" && isMobile !== true && isTutor && (
+          <TutorVisibilityControl />
         )}
 
         {mode === "app" && isMobile !== true && (
