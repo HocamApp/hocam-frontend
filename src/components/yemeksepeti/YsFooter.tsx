@@ -2,13 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  InstagramLogo,
-  LinkedinLogo,
-  XLogo,
-  YoutubeLogo,
-  type Icon,
-} from "@phosphor-icons/react";
+import { InstagramLogo, LinkedinLogo, type Icon } from "@phosphor-icons/react";
 
 import { getLegalDocument } from "@/lib/legalDocuments";
 import { tutorListHref } from "@/lib/tutorDirectoryLinks";
@@ -33,11 +27,11 @@ import { AppStoreBadge, GooglePlayBadge } from "@/components/ui/store-badges";
  *    ones a reader looks for by name. Slugs are listed explicitly rather than
  *    mapped over `LEGAL_DOCUMENTS` so the column cannot silently grow when a
  *    new document is registered.
- * 2. **Nothing here claims a channel Hocam does not own.** There are no real
- *    social accounts yet, so the icons are decoration: no href, not focusable,
- *    hidden from assistive tech. Give a `SOCIAL_LINKS` entry an `href` and it
- *    becomes a real anchor and the group stops being `aria-hidden` — that is
- *    the whole change needed when the accounts exist.
+ * 2. **Nothing here claims a channel Hocam does not own.** An account appears
+ *    in `SOCIAL_LINKS` only once it exists, so `href` is required. X and
+ *    YouTube icons used to sit here unlinked; they looked identical to the
+ *    live ones and swallowed the click, so they were removed rather than
+ *    dimmed.
  */
 
 type FooterEntry = { label: string; href?: string };
@@ -95,11 +89,11 @@ const LEGAL_ENTRIES: FooterEntry[] = [
   { label: "KVKK başvuru: iletisim@hocamozelders.com", href: "mailto:iletisim@hocamozelders.com" },
 ];
 
-const SOCIAL_LINKS: { id: string; label: string; Icon: Icon; href?: string }[] = [
-  { id: "instagram", label: "Instagram", Icon: InstagramLogo },
-  { id: "x", label: "X", Icon: XLogo },
-  { id: "youtube", label: "YouTube", Icon: YoutubeLogo },
-  { id: "linkedin", label: "LinkedIn", Icon: LinkedinLogo },
+const SOCIAL_LINKS: { id: string; label: string; Icon: Icon; href: string }[] = [
+  // The Instagram share link carried an `igsi` tracking parameter; the bare
+  // profile URL is the same destination without it.
+  { id: "instagram", label: "Instagram", Icon: InstagramLogo, href: "https://www.instagram.com/hocam.co" },
+  { id: "linkedin", label: "LinkedIn", Icon: LinkedinLogo, href: "https://www.linkedin.com/company/hocamozelders/" },
 ];
 
 function FooterLink({ entry }: { entry: FooterEntry }) {
@@ -128,8 +122,6 @@ export function YsFooter() {
     pathname === "/messages" || pathname.startsWith("/messages/");
 
   if (isMessagesRoute) return null;
-
-  const hasSocialLinks = SOCIAL_LINKS.some((social) => social.href);
 
   return (
     <footer className="mt-16 border-t border-line bg-paper text-ink md:mt-24">
@@ -183,25 +175,19 @@ export function YsFooter() {
             </ul>
           </div>
 
-          <div className="flex shrink-0 gap-2" aria-hidden={hasSocialLinks ? undefined : true}>
-            {SOCIAL_LINKS.map(({ id, label, Icon, href }) =>
-              href ? (
-                <a
-                  key={id}
-                  href={href}
-                  className="ys-icon-btn"
-                  aria-label={label}
-                  target="_blank"
-                  rel="noreferrer noopener"
-                >
-                  <Icon className="h-5 w-5" />
-                </a>
-              ) : (
-                <span key={id} className="ys-icon-btn">
-                  <Icon className="h-5 w-5" />
-                </span>
-              ),
-            )}
+          <div className="flex shrink-0 gap-2">
+            {SOCIAL_LINKS.map(({ id, label, Icon, href }) => (
+              <a
+                key={id}
+                href={href}
+                className="ys-icon-btn"
+                aria-label={label}
+                target="_blank"
+                rel="noreferrer noopener"
+              >
+                <Icon className="h-6 w-6" />
+              </a>
+            ))}
           </div>
         </div>
       </div>
