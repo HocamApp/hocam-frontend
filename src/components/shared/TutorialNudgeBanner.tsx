@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { GraduationCap, X } from "lucide-react";
+import { GraduationCap, X } from "@phosphor-icons/react";
 
 import { useAuth } from "@/hooks/useAuth";
 
@@ -38,19 +38,23 @@ export function TutorialNudgeBanner() {
   };
 
   return (
-    <div className="mb-6 flex flex-col gap-3 rounded-lg border border-sky-200 bg-sky-50 p-4 dark:border-sky-900/60 dark:bg-sky-950/30 sm:flex-row sm:items-center">
-      <GraduationCap className="h-5 w-5 shrink-0 text-sky-600 dark:text-sky-400" aria-hidden="true" />
+    /* Ink and hairline, not a sky-blue tint band. The palette runs on three
+       hues plus neutrals and blue is not one of them, so an announcement that
+       reaches for `sky-50` is adding a fourth colour to say something the page
+       already says structurally. */
+    <div className="mb-6 flex flex-col gap-3 rounded-card border border-line bg-surface p-4 sm:flex-row sm:items-center">
+      <GraduationCap className="h-5 w-5 shrink-0 text-ink" aria-hidden="true" weight="regular" />
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-medium">Yeni: Canlı ders kullanım eğitimi yayında</p>
-        <p className="mt-0.5 text-sm text-muted-foreground">
-          Ders ekranındaki araçları 5 dakikada tazele — ekran paylaşımı, tahta ve ders
+        <p className="text-small font-medium">Yeni: Canlı ders kullanım eğitimi yayında</p>
+        <p className="mt-0.5 text-small text-ink-mid">
+          Ders ekranındaki araçları 5 dakikada tazele: ekran paylaşımı, tahta ve ders
           bitirme akışları dahil. Hesabın etkilenmez.
         </p>
       </div>
       <div className="flex shrink-0 items-center gap-2">
         <Link
           href="/tutor/tutorial?replay=1"
-          className="rounded-md bg-sky-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-sky-500"
+          className="rounded-pill border border-ink px-[22px] py-1.5 text-small font-medium text-ink transition-colors duration-[var(--duration-state)] hover:bg-ink hover:text-paper"
         >
           Göz at
         </Link>
@@ -58,9 +62,9 @@ export function TutorialNudgeBanner() {
           type="button"
           onClick={dismiss}
           aria-label="Duyuruyu kapat"
-          className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-sky-100 dark:hover:bg-sky-900/40"
+          className="rounded-pill p-1.5 text-ink-mid transition-colors duration-[var(--duration-state)] hover:bg-paper hover:text-ink"
         >
-          <X className="h-4 w-4" aria-hidden="true" />
+          <X className="h-4 w-4" aria-hidden="true" weight="regular" />
         </button>
       </div>
     </div>

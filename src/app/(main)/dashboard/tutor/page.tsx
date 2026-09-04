@@ -258,27 +258,25 @@ function StatTile({
   isLoading?: boolean;
 }) {
   return (
-    <Card>
-      <CardContent className="flex items-center gap-3 p-4">
-        {/* Outline on paper, not a pale brand tint carrying brand-coloured
-            text. That tint is the single most recognisable generated-dashboard
-            construction there is, and DESIGN.md bans it everywhere. */}
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-input border border-line bg-paper text-ink">
-          {icon}
-        </div>
-        <div className="min-w-0">
-          <p className="text-label text-ink-mid">{label}</p>
-          {isLoading ? (
-            <Skeleton className="mt-1 h-7 w-14" />
-          ) : (
-            /* Tabular figures. These stack in a column of tiles and have to
-               align down it, which proportional digits will not do. */
-            <p className="text-h3 font-bold leading-tight tabular-nums">{value}</p>
-          )}
-          <p className="truncate text-label text-ink-mid">{detail}</p>
-        </div>
-      </CardContent>
-    </Card>
+    <div className="flex items-center gap-3 border-t border-line p-4 first:border-t-0 sm:border-l sm:border-t-0 sm:first:border-l-0">
+      {/* Outline on paper, not a pale brand tint carrying brand-coloured text.
+          That tint is the single most recognisable generated-dashboard
+          construction there is, and DESIGN.md bans it everywhere. */}
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-input border border-line bg-paper text-ink">
+        {icon}
+      </div>
+      <div className="min-w-0">
+        <p className="text-label text-ink-mid">{label}</p>
+        {isLoading ? (
+          <Skeleton className="mt-1 h-7 w-14" />
+        ) : (
+          /* Tabular figures. These sit in a row and repeat down the page, and
+             proportional digits will not line up in either direction. */
+          <p className="text-h3 font-bold leading-tight tabular-nums">{value}</p>
+        )}
+        <p className="truncate text-label text-ink-mid">{detail}</p>
+      </div>
+    </div>
   );
 }
 
@@ -1132,7 +1130,7 @@ function TutorDashboardContent() {
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1.35fr)_minmax(320px,.65fr)]">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 p-6 pb-3">
+          <CardHeader className="flex flex-col items-start justify-between gap-2 space-y-0 p-6 pb-3 sm:flex-row sm:items-center">
             <div><CardTitle className="text-h3">Bugünkü programın</CardTitle><p className="mt-1 text-small text-ink-mid">Sıradaki derslerine hızlıca göz at.</p></div>
             <Button variant="ghost" size="sm" onClick={() => router.push("/dashboard/tutor?tab=bookings")}>Tüm dersler <ArrowRight className="ml-2 h-5 w-5" /></Button>
           </CardHeader>
@@ -1155,7 +1153,7 @@ function TutorDashboardContent() {
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 p-6 pb-3">
+          <CardHeader className="flex flex-col items-start justify-between gap-2 space-y-0 p-6 pb-3 sm:flex-row sm:items-center">
             <div><CardTitle className="text-h3">Öğrencilerin</CardTitle><p className="mt-1 text-small text-ink-mid tabular-nums">{studentRoster.length} aktif öğrenci</p></div>
             <Button variant="ghost" size="icon" aria-label="Tüm öğrenciler" onClick={() => router.push("/dashboard/tutor?tab=students")}><ArrowRight className="h-5 w-5" /></Button>
           </CardHeader>
@@ -1389,15 +1387,15 @@ function TutorDashboardContent() {
             </div>
           )}
           {!earningsError && earningsLoading && (
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {[1, 2, 3].map((i) => (
-                <Skeleton key={i} className="h-28 w-full rounded-card" />
-              ))}
-            </div>
+            <Skeleton className="h-[6.5rem] w-full rounded-card" />
           )}
           {!earningsError && !earningsLoading && earnings && (
             <>
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {/* One banded surface, the same construction as the overview
+                  strip. Three equal cards in a row is the feature-row tell
+                  DESIGN.md rules out; bands inside a single card carry the
+                  same three numbers without it. */}
+              <Card className="grid grid-cols-1 sm:grid-cols-3">
                 <StatTile
                   icon={<Wallet className="h-5 w-5" />}
                   label="Son 7 Gün"
@@ -1416,7 +1414,7 @@ function TutorDashboardContent() {
                   value={earnings.lifetime.lesson_count}
                   detail="tamamlanan ders"
                 />
-              </div>
+              </Card>
               <div className="mt-4 rounded-input border border-line bg-paper p-3 text-label text-ink-mid">
                 Bu sekme yalnızca tamamladığın ders sayısını gösterir. Platform henüz bir ödeme
                 sağlayıcısına bağlı olmadığı için burada gerçek bir kazanç/ödeme bakiyesi

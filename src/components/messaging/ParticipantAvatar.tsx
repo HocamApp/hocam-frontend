@@ -38,7 +38,10 @@ export function ParticipantAvatar({
       {avatarUrl ? (
         <AvatarImage src={avatarUrl} alt={name} className="object-cover" />
       ) : null}
-      <AvatarFallback className="bg-gradient-to-br from-primary/15 to-primary/30 text-sm font-semibold text-primary">
+      {/* Solid fill with inverted text, not a brand-tinted gradient. A pale
+          fill carrying same-family text is the banned badge construction, and
+          the gradient on top of it is banned in its own right. */}
+      <AvatarFallback className="bg-ink text-small font-medium text-paper">
         {getInitials(name)}
       </AvatarFallback>
     </Avatar>
