@@ -226,7 +226,7 @@ function ActiveScheduleView() {
 export default function CoachingSchedulePage() {
   return (
     <RouteGuard requireRole="student">
-      <CoachingPageShell title="Koçluk saatlerim" description="Öğretmenin ayrı koçluk müsaitliğinden düzenli görüşme saatlerini seç veya mevcut saat değişikliklerini yönet." parentHref="/dashboard/student/coaching" parentLabel="Çalışma koçluğum" eyebrow="Planlama" width="narrow" currentHref="/dashboard/student/coaching/upcoming" audience="student"><ScheduleContent /></CoachingPageShell>
+      <CoachingPageShell title="Koçluk saatlerim" width="narrow" currentHref="/dashboard/student/coaching/upcoming" audience="student"><ScheduleContent /></CoachingPageShell>
     </RouteGuard>
   );
 }

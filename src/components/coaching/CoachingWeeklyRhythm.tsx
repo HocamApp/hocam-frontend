@@ -65,10 +65,7 @@ export function CoachingWeeklyRhythm({ metrics }: { metrics: CoachingMetricValue
     <CoachingStudioPanel className="overflow-hidden p-5 sm:p-7">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-label uppercase tracking-[0.16em] text-pink">
-            Güncel akış
-          </p>
-          <h2 className="mt-1 text-h3">Haftanın ritmi</h2>
+          <h2 className="text-h3">Haftanın ritmi</h2>
           <p className="mt-2 max-w-2xl text-small text-ink-mid">
             Öğrencilerin, görüşmelerin ve bekleyen işlerin tek bakışta.
           </p>

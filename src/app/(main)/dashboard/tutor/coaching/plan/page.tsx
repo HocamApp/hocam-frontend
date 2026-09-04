@@ -261,10 +261,6 @@ export default function CoachingPlanPage() {
     <CoachingGuard>
       <CoachingPageShell
         title="Koçluk teklifini hazırla"
-        description="Görüşme düzeninden yayınlamaya kadar sekiz adımda ilerle. Koçluk müsaitliği ders müsaitliğinden ayrıdır ve kapasite bu saatlerden hesaplanır."
-        parentHref="/dashboard/tutor/coaching"
-        parentLabel="Koçluk ana sayfası"
-        eyebrow="Teklif kurulumu"
         width="wide"
         currentHref="/dashboard/tutor/coaching/plan"
         audience="tutor"

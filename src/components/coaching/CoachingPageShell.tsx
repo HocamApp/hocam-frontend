@@ -1,16 +1,10 @@
 import type { ReactNode } from "react";
-import Link from "next/link";
-import { ArrowLeft } from "@phosphor-icons/react/ssr";
 
 import { cn } from "@/lib/utils";
 import { CoachingSubnav } from "./CoachingSubnav";
 
 type CoachingPageShellProps = {
   title: string;
-  description: string;
-  parentHref: string;
-  parentLabel: string;
-  eyebrow?: string;
   actions?: ReactNode;
   width?: "narrow" | "default" | "wide";
   currentHref?: string;
@@ -26,10 +20,6 @@ const WIDTH_CLASS = {
 
 export function CoachingPageShell({
   title,
-  description,
-  parentHref,
-  parentLabel,
-  eyebrow,
   actions,
   width = "default",
   currentHref,
@@ -43,58 +33,32 @@ export function CoachingPageShell({
        and a page offering two makes "skip to content" ambiguous. */
     <div className="text-ink">
       {/*
-        A full-bleed band, and the page's colour at the point a tutor enters
-        it. Sections separate by colour rather than by nesting another
-        bordered box, so the header is a strip of a different surface with no
-        border, no shadow and no wrapper.
+        The band carries the page title and nothing else.
 
-        Pale, not ink. A dark slab reads as the heaviest thing on the screen
-        and then has to be answered by every surface under it; --pink-pale is
-        the palette's one large section surface and carries brand without
-        taking the page over. Straight edges: the diagonal is the landing
-        page's device and does not follow the user into the product.
+        The breadcrumb, the eyebrow and the standfirst that used to sit here
+        are gone. The tab strip immediately below is the navigation and the
+        location indicator at once, so a back link and a category label above
+        it were saying a third and fourth time what the highlighted tab
+        already says. The standfirst restated the title in a longer sentence.
+
+        Pale, not ink: --pink-pale is the palette's one large section surface
+        and carries brand without taking the page over. Straight edges, since
+        the diagonal belongs to the landing page.
       */}
       <header
         data-testid="coaching-page-header"
-        className="band-full-bleed bg-band-pale py-16 sm:py-24"
+        className="band-full-bleed bg-band-pale py-10 sm:py-14"
       >
         <div
           className={cn(
-            "mx-auto w-full px-4 sm:px-6",
+            "mx-auto flex w-full flex-col gap-4 px-4 sm:flex-row sm:items-end sm:justify-between sm:px-6",
             WIDTH_CLASS[width],
           )}
         >
-          <nav aria-label="Sayfa yolu">
-            <Link
-              href={parentHref}
-              className="inline-flex min-h-10 items-center gap-2 text-small font-medium text-ink-mid transition-colors duration-[var(--duration-state)] hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2"
-            >
-              <ArrowLeft aria-hidden="true" className="h-5 w-5" weight="regular" />
-              {parentLabel}
-            </Link>
-          </nav>
-          {/* 7/5, not 6/6. Asymmetry is the default for content sections; true
-              centring is reserved for the hero and section headers. */}
-          <div className="mt-4 grid gap-6 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:items-end">
-            <div>
-              {eyebrow ? (
-                /* Ink-mid, not pink. A pale surface carrying saturated text of
-                   its own hue is the tint construction DESIGN.md bans, and a
-                   pink-pale band with pink type on it is that pattern at
-                   section scale. */
-                <p className="text-label uppercase tracking-[0.16em] text-ink-mid">
-                  {eyebrow}
-                </p>
-              ) : null}
-              <h1 className="mt-2 max-w-[20ch] text-[1.875rem] font-bold leading-[1.05] tracking-[-0.02em] text-balance sm:text-[2.75rem]">
-                {title}
-              </h1>
-              <p className="mt-3 max-w-2xl text-[1rem] leading-[1.6] text-ink-mid text-pretty">
-                {description}
-              </p>
-            </div>
-            {actions ? <div className="shrink-0 lg:justify-self-end">{actions}</div> : null}
-          </div>
+          <h1 className="max-w-[20ch] text-[1.875rem] font-bold leading-[1.05] tracking-[-0.02em] text-balance sm:text-[2.75rem]">
+            {title}
+          </h1>
+          {actions ? <div className="shrink-0">{actions}</div> : null}
         </div>
       </header>
 

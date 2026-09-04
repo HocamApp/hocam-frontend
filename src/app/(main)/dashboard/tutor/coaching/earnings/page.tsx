@@ -21,10 +21,6 @@ export default function TutorCoachingEarningsPage() {
     <CoachingRecordGuard>
       <CoachingPageShell
         title="Koçluk kazançları"
-        description="Koçluk hizmetlerinden oluşan platform içi kazanç kayıtlarını finansal durumlarıyla birlikte incele."
-        parentHref="/dashboard/tutor/coaching"
-        parentLabel="Koçluk ana sayfası"
-        eyebrow="Kazançlar"
         width="wide"
         currentHref="/dashboard/tutor/coaching/earnings"
         audience="tutor"

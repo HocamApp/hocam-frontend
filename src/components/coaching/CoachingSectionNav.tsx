@@ -68,11 +68,7 @@ export function CoachingSectionNav() {
     >
       <div className="mx-auto w-full max-w-7xl space-y-4 px-4 sm:px-6">
         <div>
-          {/* Ink-mid, not pink. A pale surface carrying saturated text of its
-              own hue is the tint construction DESIGN.md bans, and a pink-pale
-              band with pink type on it is that pattern at section scale. */}
-          <p className="text-label uppercase tracking-[0.16em] text-ink-mid">Çalışma alanların</p>
-          <h2 id="coaching-sections-title" className="mt-1 text-h2-m sm:text-h2">Koçluk alanların</h2>
+          <h2 id="coaching-sections-title" className="text-h2-m sm:text-h2">Koçluk alanların</h2>
           <p className="mt-1 text-small text-ink-mid">Yapmak istediğin işe göre devam et.</p>
         </div>
         {/* 2+1 and then a full-width band, never three equal columns — the

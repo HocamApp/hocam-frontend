@@ -112,7 +112,7 @@ function RescheduleRequestsContent() {
 export default function CoachingRescheduleRequestsPage() {
   return (
     <CoachingGuard>
-      <CoachingPageShell title="Görüşme değişiklik talepleri" description="Öğrencinin koçluk görüşmesi için istediği tarih değişikliklerini mevcut hak ve durum bilgisiyle değerlendir." parentHref="/dashboard/tutor/coaching/students" parentLabel="Koçluk öğrencilerim" eyebrow="Planlama" width="narrow" currentHref="/dashboard/tutor/coaching/reschedule-requests" audience="tutor"><RescheduleRequestsContent /></CoachingPageShell>
+      <CoachingPageShell title="Görüşme değişiklik talepleri" width="wide" currentHref="/dashboard/tutor/coaching/reschedule-requests" audience="tutor"><RescheduleRequestsContent /></CoachingPageShell>
     </CoachingGuard>
   );
 }

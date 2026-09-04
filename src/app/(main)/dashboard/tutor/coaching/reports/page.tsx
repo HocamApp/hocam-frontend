@@ -25,5 +25,5 @@ function TutorReportsContent() {
 }
 
 export default function TutorCoachingReportsPage() {
-  return <CoachingGuard><CoachingPageShell title="Görüşme raporları" description="Taslak, yayınlanan ve revizyon bekleyen koçluk raporlarını yönet." parentHref="/dashboard/tutor/coaching" parentLabel="Koçluk ana sayfası" eyebrow="Raporlar" width="narrow" currentHref="/dashboard/tutor/coaching/reports" audience="tutor"><TutorReportsContent /></CoachingPageShell></CoachingGuard>;
+  return <CoachingGuard><CoachingPageShell title="Görüşme raporları" width="wide" currentHref="/dashboard/tutor/coaching/reports" audience="tutor"><TutorReportsContent /></CoachingPageShell></CoachingGuard>;
 }

@@ -59,17 +59,18 @@ export function CoachingStatusCard({ status }: { status: CoachingDerivedStatus }
         {/* 7/5, the default split for a content section. */}
         <div className="grid gap-8 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:items-end">
           <div>
-            <p className="text-[0.8125rem] font-medium uppercase leading-[1.4] tracking-[0.18em] text-pink">
-              Teklif durumu
-            </p>
+            {/* No eyebrow above this. The tab strip already says which part
+                of coaching you are in, and a small capitalised label repeating
+                the section name is the third thing on the page saying it. The
+                lockup below is the state, and the heading is the sentence.
 
-            {/* Gold is a surface with --gold-ink on it, never a text colour,
+                Gold is a surface with --gold-ink on it, never a text colour,
                 and its subject is achievement: a published, running coaching
                 offer is exactly that. Until it is running there is nothing to
                 celebrate, so the same slot goes to an outline with no fill. */}
             <span
               className={cn(
-                "mt-3 inline-flex items-center gap-2 rounded-pill px-4 py-1.5 text-[0.8125rem] font-medium leading-[1.4] tracking-[0.01em]",
+                "inline-flex items-center gap-2 rounded-pill px-4 py-1.5 text-[0.8125rem] font-medium leading-[1.4] tracking-[0.01em]",
                 ready
                   ? "bg-gold text-gold-ink"
                   : "border border-line text-ink-mid",
