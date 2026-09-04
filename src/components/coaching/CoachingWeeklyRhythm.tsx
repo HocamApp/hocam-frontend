@@ -74,9 +74,12 @@ export function CoachingWeeklyRhythm({ metrics }: { metrics: CoachingMetricValue
           </p>
         </div>
         {!allZero && knownValues.length ? (
-          /* Outline, not a tint chip. A pale fill carrying same-family text is
-             the generated-dashboard badge DESIGN.md bans outright. */
-          <p className="rounded-pill border border-line px-3 py-1.5 text-label text-ink-mid">
+          /* The sticker: a solid pill rotated a couple of degrees. Static
+             rotation, never animated. It reads handmade and slightly
+             irreverent, which is the right register for this audience, and
+             past four degrees it stops looking intentional and starts looking
+             like a CSS mistake. One per section, and this is the page's. */
+          <p className="-rotate-[2.5deg] rounded-pill bg-ink px-4 py-1.5 text-label text-paper tabular-nums">
             Şu an ilgilenmen gereken {attentionCount} iş var.
           </p>
         ) : null}

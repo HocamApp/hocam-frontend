@@ -79,20 +79,23 @@
     --gold: #ffd100;
     --gold-ink: #4a3b00;
     --paper: #fbf6f6;
-    /* The secondary text tone for anything sitting ON an ink surface — the
-       dark status panel, the coaching header, any inverted band.
+    /* Text on a permanently ink surface: the coaching header band, and any
+       other band that stays dark in both themes.
 
-       It exists because the brand tokens are raw hex rather than the
-       `<alpha-value>` triplet form Tailwind needs, so `text-paper/65` compiles
-       to nothing at all: the class is silently dropped and the text renders at
-       full paper, losing the hierarchy it was written to create. A real token
-       is also the more honest answer — a measured value beats an opacity that
-       lands wherever the backdrop happens to put it.
+       Fixed, not themed. A band whose whole job is to separate a section by
+       colour cannot invert with the theme — flipped to cream in Night mode it
+       stops being the darkest thing on the page and starts being the
+       brightest, which is the opposite of what the band was placed to do. It
+       sits with --ink-on-light above, for the same reason.
 
-       #9BAAAC on --ink measures about 7.5:1, and the pairing inverts with the
-       theme below, because an ink surface becomes the light one in Night mode
-       while its text becomes the dark one. */
-    --paper-mid: #9baaac;
+       They are tokens rather than `text-paper/65` because the brand values are
+       raw hex rather than the `<alpha-value>` triplet form Tailwind needs, so
+       an opacity modifier on them compiles to nothing at all and the class is
+       silently dropped. A measured value beats an opacity that lands wherever
+       the backdrop happens to put it: #9BAAAC on #02171A measures about
+       7.5:1. */
+    --on-ink: #fbf6f6;
+    --on-ink-mid: #9baaac;
     --ink: #02171a;
     --ink-mid: #5c6b6d;
     /* Fixed light campaign surfaces (pink-pale, white, and ink hero cards)
@@ -189,6 +192,16 @@
        walkthrough is meant to teach. */
     --tutorial-overlay: rgb(2 23 26 / 34%);
     --tutorial-spotlight-ring: var(--ink);
+
+    /* The pale section band (DESIGN.md's one remaining job for --pink-pale:
+       a large section background, never a fill on anything smaller).
+
+       It is a token rather than `bg-pink-pale` directly because --pink-pale is
+       a fixed light value with no Night counterpart. Used raw, a pale pink
+       band would stay pale while every surface sitting on it went dark, and
+       the panels inside would have to abandon the themed tokens to survive it.
+       A token lets the band flip and the children stay ordinary. */
+    --band-pale: #fce5f1;
   }
 
   /* The header is taller from `md` up. Kept in a media query rather than a
@@ -241,12 +254,14 @@
     --skeleton: #344246;
     --ink: #ece6e6;
     --ink-mid: #9baaac;
-    /* Inverted with the surface: bg-ink is the light one here, so its
-       secondary text is the light theme's --ink-mid. */
-    --paper-mid: #5c6b6d;
     /* --success at 14% over the dark surface, same construction as light. */
     --success-soft: #17332b;
     --tutorial-overlay: rgb(2 8 10 / 46%);
+    /* The band's Night value: --ink's hue pulled toward the brand pink at very
+       low saturation, one step above --paper and off --surface's cooler
+       green-grey, so the band still reads as a different material from both
+       the page under it and the cards on it. */
+    --band-pale: #1b1417;
 
     --background: 192 25% 8%;
     --foreground: 0 14% 91%;
@@ -473,4 +488,45 @@
   .conversation-page-viewport {
     height: calc(100vh - var(--app-header-h));
   }
+}
+
+
+/* ------------------------------------------------------------------ bands --
+ *
+ * DESIGN.md §7, device 01. Sections separate by colour as full-bleed bands,
+ * not by nesting another bordered box: the colour change is the separation.
+ *
+ * `.ys-band` in yemeksepeti.css already ships this cut, but it hardcodes the
+ * pink fill and slants both edges at once, which is right for a marketing hero
+ * and wrong for an app section that has to sit against the one above it. These
+ * two carry the cut and nothing else, so the fill is an ordinary utility.
+ *
+ * The angle is `clamp(20px, 4vw, 56px)`, never a fixed pixel value: a flat
+ * 46px slice on a 375px phone is proportionally more than twice the angle it
+ * cuts on a desktop, so one number reads as a gentle tilt on a laptop and a
+ * wedge on a handset.
+ *
+ * Both slanted edges descend left to right, matching `.ys-band`. Direction
+ * stays the same down the whole page — alternating it stops reading as
+ * structure and starts reading as decoration.
+ */
+.band-cut-bottom {
+  --band-cut: clamp(20px, 4vw, 56px);
+
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 0 calc(100% - var(--band-cut)));
+}
+
+.band-cut-top {
+  --band-cut: clamp(20px, 4vw, 56px);
+
+  clip-path: polygon(0 0, 100% var(--band-cut), 100% 100%, 0 100%);
+}
+
+/* Full bleed from inside a max-width container. Safe here because scrollbars
+   are removed globally at the top of this file, so `100vw` and the visible
+   viewport are the same number and the usual overflow this trick causes cannot
+   happen. */
+.band-full-bleed {
+  margin-inline: calc(50% - 50vw);
+  width: 100vw;
 }

@@ -23,12 +23,20 @@ const config: Config = {
           DEFAULT: "var(--gold)",
           ink: "var(--gold-ink)",
         },
-        paper: {
-          DEFAULT: "var(--paper)",
-          /* Secondary text on an ink surface. Not `paper` at an opacity —
-             these tokens are raw hex, so Tailwind drops `text-paper/65`
-             entirely rather than compiling it. */
-          mid: "var(--paper-mid)",
+        /* The pale section band. A token, not `pink-pale` used directly:
+           --pink-pale is a fixed light value, and a band needs a Night
+           counterpart or everything sitting on it has to leave the theme. */
+        "band-pale": "var(--band-pale)",
+        paper: "var(--paper)",
+        /* The permanently dark band and the text that sits on it. Fixed in
+           both themes: a band that inverts stops separating the section it
+           was placed to separate. Not `paper` at an opacity either — these
+           tokens are raw hex, so Tailwind drops `text-paper/65` rather than
+           compiling it. */
+        "ink-fixed": "var(--ink-on-light)",
+        "on-ink": {
+          DEFAULT: "var(--on-ink)",
+          mid: "var(--on-ink-mid)",
         },
         ink: {
           DEFAULT: "var(--ink)",

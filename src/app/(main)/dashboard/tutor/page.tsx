@@ -1000,21 +1000,32 @@ function TutorDashboardContent() {
   }
 
   return (
-    <div className="w-full py-8">
-      <div className="mx-auto w-full min-w-0 max-w-6xl overflow-x-clip px-4">
+    <div className="w-full">
+      <div className="mx-auto w-full min-w-0 max-w-6xl overflow-x-clip px-4 pt-8">
         <TutorialNudgeBanner />
       </div>
-      <div className="mx-auto w-full min-w-0 max-w-6xl overflow-x-clip px-4">
-      <header className="mb-8 flex items-center gap-4">
-        <div className="flex items-center gap-4">
-          <Avatar className="h-12 w-12 border border-line">
+      {/*
+        A full-bleed band with a diagonal cut, not a greeting floating on the
+        page background. DESIGN.md separates sections by colour rather than by
+        containers, and the diagonal is the device that does it. The card below
+        then overlaps the band's edge, which builds depth structurally instead
+        of with the drop shadow the elevation rules rule out.
+
+        The band's fill and its text are the fixed tokens, never the themed
+        ones: a band that inverts in Night mode stops being the darkest thing
+        on the page and starts being the brightest, which is the opposite of
+        the job it was placed to do.
+      */}
+      <header className="band-cut-bottom bg-ink-fixed pt-10 text-on-ink sm:pt-14">
+        <div className="mx-auto flex w-full min-w-0 max-w-6xl items-start gap-4 px-4 pb-[calc(4rem+var(--band-cut))] sm:items-center">
+          <Avatar className="h-12 w-12 shrink-0 border border-on-ink-mid">
             {profile.profile_picture ? (
               <AvatarImage
                 src={profile.profile_picture}
                 alt={`${profile.name} ${profile.surname}`}
               />
             ) : null}
-            <AvatarFallback className="bg-ink text-body font-medium text-paper">
+            <AvatarFallback className="bg-on-ink text-body font-medium text-ink-fixed">
               {getInitials(profile.name, profile.surname)}
             </AvatarFallback>
           </Avatar>
@@ -1026,7 +1037,7 @@ function TutorDashboardContent() {
                 DESIGN.md rules out by name, and a tutor does not need their own
                 verification restated to them on their own panel. */}
             <h1 className="text-h2-m sm:text-h2">{getGreeting()}, {profile.name}</h1>
-            <p className="mt-1 text-small text-ink-mid">
+            <p className="mt-1 text-small text-on-ink-mid">
               {allTodayBookings.length > 0
                 ? `Bugün ${allTodayBookings.length} dersin var${nextBooking ? ` · İlki ${new Date(nextBooking.start_time).toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })}’da` : ""}.`
                 : "Bugün planlanmış dersin yok. Programını ve öğrencilerini buradan yönetebilirsin."}
@@ -1034,9 +1045,12 @@ function TutorDashboardContent() {
           </div>
         </div>
       </header>
-      </div>
 
-      <div className="mx-auto w-full min-w-0 max-w-6xl overflow-x-clip px-4">
+      {/* Device 04, overlap: the content column breaks upward across the band
+          boundary. It earns its place because it creates depth without a
+          shadow, doing structurally what a drop shadow would otherwise do
+          visually. One per page, and this is it. */}
+      <div className="relative mx-auto -mt-12 w-full min-w-0 max-w-6xl px-4 pb-16 sm:-mt-16 sm:pb-24">
       {activeTab === "overview" ? (
         <div className="space-y-6">
       {/* No shadow on either branch below. These cards sit in the document
@@ -1191,8 +1205,14 @@ function TutorDashboardContent() {
         </CardContent>
       </Card>
 
-      <section>
-        <div className="mb-3 flex items-end justify-between"><div><h2 className="text-h3">Ayarlar ve görünürlük</h2><p className="mt-1 text-small text-ink-mid">Sık değişmeyen işletme ayarların.</p></div></div>
+      {/* The page's second band, and --pink-pale's one legitimate job: a large
+          section background, never a fill on anything smaller. The diagonal
+          runs the same direction as the header band, and the negative bottom
+          margin cancels the content column's own padding so the band is the
+          last surface before the footer rather than stopping short of it. */}
+      <section className="band-full-bleed band-cut-top -mb-16 bg-band-pale pb-16 pt-[calc(4rem+var(--band-cut))] sm:-mb-24 sm:pb-24 sm:pt-[calc(6rem+var(--band-cut))]">
+        <div className="mx-auto w-full max-w-6xl px-4">
+        <div className="mb-3 flex items-end justify-between"><div><h2 className="text-h2-m sm:text-h2">Ayarlar ve görünürlük</h2><p className="mt-1 text-small text-ink-mid">Sık değişmeyen işletme ayarların.</p></div></div>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {[
             { title: "Müsaitlik", detail: availabilityLoading ? "Yükleniyor" : availability.length ? `${availabilityDays.length} gün · ${availability.length} zaman aralığı` : "Henüz eklenmedi", icon: CalendarDots, href: "/dashboard/tutor?tab=availability" },
@@ -1202,6 +1222,7 @@ function TutorDashboardContent() {
           ].map((item) => <Link key={item.title} href={item.href} className="group flex items-center gap-3 rounded-card border border-line bg-surface p-4 transition-colors duration-[var(--duration-state)] hover:border-ink"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-input border border-line bg-paper"><item.icon className="h-5 w-5" /></span><span className="min-w-0 flex-1"><strong className="block text-small font-medium">{item.title}</strong><span className="block truncate text-label text-ink-mid">{item.detail}</span></span>{/* Static. An arrow that slides on hover is decoration, and decoration does not get to move. */}<ArrowRight className="h-5 w-5 shrink-0 text-ink-mid" /></Link>)}
         </div>
         <div className="mt-3 text-right"><Button variant="ghost" size="sm" asChild><Link href="/dashboard/tutor/edit"><PencilSimple className="mr-2 h-5 w-5" />Profili düzenle</Link></Button></div>
+        </div>
       </section>
         </div>
       ) : (

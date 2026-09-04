@@ -36,83 +36,85 @@ const STATUS_LABELS = {
 export function CoachingStatusCard({ status }: { status: CoachingDerivedStatus }) {
   const ready = status.readiness === "complete";
   const published = status.publication === "published";
+  const action = status.nextAction ?? {
+    label: "Öğrenci görünümünü aç",
+    href: "/dashboard/tutor/coaching/preview",
+  };
 
   return (
     <div className="space-y-3">
-      {/* The oversized decorative ring that used to sit behind this panel is
-          gone: a soft radial shape carrying no meaning is exactly the kind of
-          ornament DESIGN.md rules out. The panel separates by value and a
-          hairline, which is all it needs to. */}
+      {/*
+        A white surface, not a second dark slab. The page already spends its
+        ink on the header band, and DESIGN.md gives ink a job there: sections
+        separate by colour, so repeating the darkest value one section later
+        spends the contrast twice and leaves the page reading black-and-white.
+        Here the state is carried by the gold lockup and the pink action, which
+        is what those two colours are for.
+      */}
       <CoachingStudioPanel
-        tone={ready ? "dark" : "accent"}
         role="region"
         aria-label="Koçluk hizmet durumu"
         className="overflow-hidden p-6 sm:p-8"
       >
-        <div className="grid gap-8 lg:grid-cols-[minmax(0,1.25fr)_minmax(20rem,0.75fr)] lg:items-end">
+        {/* 7/5, the default split for a content section. */}
+        <div className="grid gap-8 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:items-end">
           <div>
-            <p
-              /* The Label step spelled out rather than `text-label`:
-                 tailwind-merge cannot tell a custom `text-*` size from a custom
-                 `text-*` colour, so inside a cn() that also sets a colour the
-                 size class is dropped. An arbitrary length is unambiguous. */
-              className={cn(
-                "text-[0.8125rem] font-medium uppercase leading-[1.4] tracking-[0.18em]",
-                ready ? "text-paper-mid" : "text-pink"
-              )}
-            >
+            <p className="text-[0.8125rem] font-medium uppercase leading-[1.4] tracking-[0.18em] text-pink">
               Teklif durumu
             </p>
-            <div className="mt-3 flex items-center gap-3">
-              <span
-                className={cn(
-                  "inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-pill border",
-                  ready ? "border-paper-mid bg-transparent" : "border-line bg-paper"
-                )}
-              >
-                {/* Outline for a step still open, filled once it is done. The
-                    weight change is the state; no colour chip is needed. */}
-                {ready ? (
-                  <CheckCircle aria-hidden="true" className="h-6 w-6" weight="fill" />
-                ) : (
-                  <Circle aria-hidden="true" className="h-6 w-6" weight="regular" />
-                )}
-              </span>
-              <h2 className="text-h2-m sm:text-h2">
-                {ready ? "Koçluk düzenin hazır" : "Sıradaki adımı tamamla"}
-              </h2>
-            </div>
-            <p
+
+            {/* Gold is a surface with --gold-ink on it, never a text colour,
+                and its subject is achievement: a published, running coaching
+                offer is exactly that. Until it is running there is nothing to
+                celebrate, so the same slot goes to an outline with no fill. */}
+            <span
               className={cn(
-                "mt-3 max-w-xl text-[1rem] leading-[1.6]",
-                ready ? "text-paper-mid" : "text-ink-mid"
+                "mt-3 inline-flex items-center gap-2 rounded-pill px-4 py-1.5 text-[0.8125rem] font-medium leading-[1.4] tracking-[0.01em]",
+                ready
+                  ? "bg-gold text-gold-ink"
+                  : "border border-line text-ink-mid",
               )}
             >
+              {/* Outline for a step still open, filled once it is done. The
+                  weight change carries the state on its own. */}
+              {ready ? (
+                <CheckCircle aria-hidden="true" className="h-4 w-4" weight="fill" />
+              ) : (
+                <Circle aria-hidden="true" className="h-4 w-4" weight="regular" />
+              )}
+              {ready ? "Koçluğun yayında" : "Kurulum sürüyor"}
+            </span>
+
+            <h2 className="mt-3 text-h2-m sm:text-h2">
+              {ready ? "Koçluk düzenin hazır" : "Sıradaki adımı tamamla"}
+            </h2>
+            <p className="mt-3 max-w-xl text-[1rem] leading-[1.6] text-ink-mid">
               {published
                 ? "Teklifin öğrenci görünümünde yerini aldı. Öğrenci kabulü ve kapasiteyi buradan takip edebilirsin."
                 : "Koçluk teklifinin öğrenciye açılması için yalnız sana bağlı olan sıradaki kurulumu tamamla."}
             </p>
-            {status.nextAction ? (
-              <Button asChild variant={ready ? "secondary" : "default"} className="mt-6">
-                <Link href={status.nextAction.href}>
-                  {status.nextAction.label}
-                  <ArrowUpRight aria-hidden="true" className="ml-2 h-5 w-5" weight="regular" />
-                </Link>
-              </Button>
-            ) : null}
+            {/* The page's one primary action, and the one place pink is
+                load-bearing rather than decorative.
+
+                deriveCoachingStatus returns no nextAction once the setup is
+                complete, which left this region with no way forward at all on
+                the one state a working tutor sees every day. The healthy state
+                keeps the slot and points at the student view, which is the
+                thing a tutor with a running offer actually wants to check. */}
+            <Button asChild className="mt-6">
+              <Link href={action.href}>
+                {action.label}
+                <ArrowUpRight aria-hidden="true" className="ml-2 h-5 w-5" weight="regular" />
+              </Link>
+            </Button>
           </div>
 
           {/* 10px inside the panel's 20px corner: inner radius is the outer
               radius minus the inset, so nested corners stay concentric. */}
-          <dl
-            className={cn(
-              "grid gap-px overflow-hidden rounded-input border sm:grid-cols-3 lg:grid-cols-1",
-              ready ? "border-paper-mid bg-paper-mid" : "border-line bg-line"
-            )}
-          >
-            <StatusRow icon={Radio} label="Yayın" value={STATUS_LABELS.publication[status.publication]} ready={ready} />
-            <StatusRow icon={UsersThree} label="Öğrenci kabulü" value={STATUS_LABELS.intake[status.intake]} ready={ready} />
-            <StatusRow icon={CheckCircle} label="Kapasite" value={STATUS_LABELS.capacity[status.capacity]} ready={ready} />
+          <dl className="grid gap-px overflow-hidden rounded-input border border-line bg-line sm:grid-cols-3 lg:grid-cols-1">
+            <StatusRow icon={Radio} label="Yayın" value={STATUS_LABELS.publication[status.publication]} />
+            <StatusRow icon={UsersThree} label="Öğrenci kabulü" value={STATUS_LABELS.intake[status.intake]} />
+            <StatusRow icon={CheckCircle} label="Kapasite" value={STATUS_LABELS.capacity[status.capacity]} />
           </dl>
         </div>
       </CoachingStudioPanel>
@@ -138,21 +140,14 @@ function StatusRow({
   icon: Icon,
   label,
   value,
-  ready,
 }: {
   icon: PhosphorIcon;
   label: string;
   value: string;
-  ready: boolean;
 }) {
   return (
-    <div className={cn("flex items-center justify-between gap-4 p-4", ready ? "bg-ink" : "bg-surface")}>
-      <dt
-        className={cn(
-          "flex items-center gap-2 text-[0.8125rem] font-medium leading-[1.4] tracking-[0.01em]",
-          ready ? "text-paper-mid" : "text-ink-mid"
-        )}
-      >
+    <div className="flex items-center justify-between gap-4 bg-surface p-4">
+      <dt className="flex items-center gap-2 text-[0.8125rem] font-medium leading-[1.4] tracking-[0.01em] text-ink-mid">
         <Icon aria-hidden="true" className="h-4 w-4" weight="regular" />
         {label}
       </dt>
