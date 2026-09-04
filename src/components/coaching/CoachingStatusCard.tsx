@@ -1,13 +1,13 @@
 import Link from "next/link";
+import { type Icon as PhosphorIcon } from "@phosphor-icons/react";
 import {
   ArrowUpRight,
   CheckCircle,
   Circle,
   Info,
-  type Icon as PhosphorIcon,
   Radio,
   UsersThree,
-} from "@phosphor-icons/react";
+} from "@phosphor-icons/react/ssr";
 
 import { Button } from "@/components/ui/button";
 import type { CoachingDerivedStatus } from "@/lib/coachingPresentation";
@@ -39,33 +39,55 @@ export function CoachingStatusCard({ status }: { status: CoachingDerivedStatus }
 
   return (
     <div className="space-y-3">
+      {/* The oversized decorative ring that used to sit behind this panel is
+          gone: a soft radial shape carrying no meaning is exactly the kind of
+          ornament DESIGN.md rules out. The panel separates by value and a
+          hairline, which is all it needs to. */}
       <CoachingStudioPanel
         tone={ready ? "dark" : "accent"}
         role="region"
         aria-label="Koçluk hizmet durumu"
-        className="relative isolate overflow-hidden p-6 sm:p-8"
+        className="overflow-hidden p-6 sm:p-8"
       >
-        <div
-          aria-hidden="true"
-          className={cn(
-            "absolute -right-14 -top-16 -z-10 h-52 w-52 rounded-full border-[32px] opacity-40",
-            ready ? "border-background/10" : "border-primary/10"
-          )}
-        />
         <div className="grid gap-8 lg:grid-cols-[minmax(0,1.25fr)_minmax(20rem,0.75fr)] lg:items-end">
           <div>
-            <p className={cn("text-xs font-semibold uppercase tracking-[0.18em]", ready ? "text-background/60" : "text-primary")}>
+            <p
+              /* The Label step spelled out rather than `text-label`:
+                 tailwind-merge cannot tell a custom `text-*` size from a custom
+                 `text-*` colour, so inside a cn() that also sets a colour the
+                 size class is dropped. An arbitrary length is unambiguous. */
+              className={cn(
+                "text-[0.8125rem] font-medium uppercase leading-[1.4] tracking-[0.18em]",
+                ready ? "text-paper-mid" : "text-pink"
+              )}
+            >
               Teklif durumu
             </p>
             <div className="mt-3 flex items-center gap-3">
-              <span className={cn("inline-flex h-11 w-11 items-center justify-center rounded-full border", ready ? "border-background/15 bg-background/10" : "border-primary/15 bg-background")}>
-                {ready ? <CheckCircle aria-hidden="true" className="h-5 w-5" weight="fill" /> : <Circle aria-hidden="true" className="h-5 w-5" />}
+              <span
+                className={cn(
+                  "inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-pill border",
+                  ready ? "border-paper-mid bg-transparent" : "border-line bg-paper"
+                )}
+              >
+                {/* Outline for a step still open, filled once it is done. The
+                    weight change is the state; no colour chip is needed. */}
+                {ready ? (
+                  <CheckCircle aria-hidden="true" className="h-6 w-6" weight="fill" />
+                ) : (
+                  <Circle aria-hidden="true" className="h-6 w-6" weight="regular" />
+                )}
               </span>
-              <h2 className="text-2xl font-semibold tracking-[-0.035em] sm:text-3xl">
+              <h2 className="text-h2-m sm:text-h2">
                 {ready ? "Koçluk düzenin hazır" : "Sıradaki adımı tamamla"}
               </h2>
             </div>
-            <p className={cn("mt-3 max-w-xl text-sm leading-6", ready ? "text-background/65" : "text-muted-foreground")}>
+            <p
+              className={cn(
+                "mt-3 max-w-xl text-[1rem] leading-[1.6]",
+                ready ? "text-paper-mid" : "text-ink-mid"
+              )}
+            >
               {published
                 ? "Teklifin öğrenci görünümünde yerini aldı. Öğrenci kabulü ve kapasiteyi buradan takip edebilirsin."
                 : "Koçluk teklifinin öğrenciye açılması için yalnız sana bağlı olan sıradaki kurulumu tamamla."}
@@ -74,13 +96,20 @@ export function CoachingStatusCard({ status }: { status: CoachingDerivedStatus }
               <Button asChild variant={ready ? "secondary" : "default"} className="mt-6">
                 <Link href={status.nextAction.href}>
                   {status.nextAction.label}
-                  <ArrowUpRight aria-hidden="true" className="ml-2 h-4 w-4" />
+                  <ArrowUpRight aria-hidden="true" className="ml-2 h-5 w-5" weight="regular" />
                 </Link>
               </Button>
             ) : null}
           </div>
 
-          <dl className={cn("grid gap-px overflow-hidden rounded-2xl border sm:grid-cols-3 lg:grid-cols-1", ready ? "border-background/15 bg-background/10" : "border-border/70 bg-border/60")}>
+          {/* 10px inside the panel's 20px corner: inner radius is the outer
+              radius minus the inset, so nested corners stay concentric. */}
+          <dl
+            className={cn(
+              "grid gap-px overflow-hidden rounded-input border sm:grid-cols-3 lg:grid-cols-1",
+              ready ? "border-paper-mid bg-paper-mid" : "border-line bg-line"
+            )}
+          >
             <StatusRow icon={Radio} label="Yayın" value={STATUS_LABELS.publication[status.publication]} ready={ready} />
             <StatusRow icon={UsersThree} label="Öğrenci kabulü" value={STATUS_LABELS.intake[status.intake]} ready={ready} />
             <StatusRow icon={CheckCircle} label="Kapasite" value={STATUS_LABELS.capacity[status.capacity]} ready={ready} />
@@ -92,12 +121,12 @@ export function CoachingStatusCard({ status }: { status: CoachingDerivedStatus }
         <section
           role="region"
           aria-label="Platform durumu"
-          className="flex gap-3 rounded-card border border-line bg-surface p-4 text-sm leading-6 text-ink"
+          className="flex gap-3 rounded-card border border-line bg-surface p-4 text-small text-ink"
         >
-          <Info aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0" />
+          <Info aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0" weight="regular" />
           <div>
-            <p className="font-semibold">Platform bilgisi</p>
-            <p className="mt-0.5">{status.platformMessage}</p>
+            <p className="font-medium">Platform bilgisi</p>
+            <p className="mt-0.5 text-ink-mid">{status.platformMessage}</p>
           </div>
         </section>
       ) : null}
@@ -118,11 +147,16 @@ function StatusRow({
 }) {
   return (
     <div className={cn("flex items-center justify-between gap-4 p-4", ready ? "bg-ink" : "bg-surface")}>
-      <dt className={cn("flex items-center gap-2 text-xs font-medium", ready ? "text-white/60" : "text-ink-mid")}>
-        <Icon aria-hidden="true" className="h-3.5 w-3.5" />
+      <dt
+        className={cn(
+          "flex items-center gap-2 text-[0.8125rem] font-medium leading-[1.4] tracking-[0.01em]",
+          ready ? "text-paper-mid" : "text-ink-mid"
+        )}
+      >
+        <Icon aria-hidden="true" className="h-4 w-4" weight="regular" />
         {label}
       </dt>
-      <dd className="text-right text-sm font-semibold">{value}</dd>
+      <dd className="text-right text-small font-medium">{value}</dd>
     </div>
   );
 }

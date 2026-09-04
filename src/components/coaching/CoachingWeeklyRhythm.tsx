@@ -1,39 +1,51 @@
 import Link from "next/link";
-import { CalendarDays, ClipboardCheck, UserPlus, UsersRound } from "lucide-react";
+import {
+  CalendarBlank,
+  ClipboardText,
+  UserPlus,
+  UsersThree,
+} from "@phosphor-icons/react/ssr";
 
 import { buildMetricShare } from "@/lib/coachingVisuals";
 import { cn } from "@/lib/utils";
 import type { CoachingMetricValues } from "./CoachingMetricGrid";
 import { CoachingStudioPanel } from "./CoachingStudioPanel";
 
+/*
+ * Segment fills come off the brand palette rather than Tailwind's amber/rose
+ * steps. DESIGN.md holds the site at three hues plus neutrals, and a bar whose
+ * fourth colour is a stock utility is the rainbow tell it exists to prevent.
+ * Gold reads here as a surface with no text on it, which is the only way gold
+ * is ever allowed to appear.
+ */
 const ITEMS = [
   {
     key: "activeStudents",
     label: "Aktif öğrenci",
     href: "/dashboard/tutor/coaching/students",
-    icon: UsersRound,
-    segment: "bg-foreground",
+    icon: UsersThree,
+    segment: "bg-ink",
   },
   {
     key: "upcomingSessions",
     label: "Yaklaşan görüşme",
     href: "/dashboard/tutor/coaching/upcoming",
-    icon: CalendarDays,
-    segment: "bg-primary",
+    icon: CalendarBlank,
+    segment: "bg-pink",
   },
   {
     key: "pendingReports",
     label: "Rapor bekleyen",
     href: "/dashboard/tutor/coaching/reports",
-    icon: ClipboardCheck,
-    segment: "bg-amber-400",
+    icon: ClipboardText,
+    segment: "bg-gold",
   },
   {
     key: "pendingRequests",
     label: "Yeni talep",
     href: "/dashboard/tutor/coaching/requests",
     icon: UserPlus,
-    segment: "bg-rose-300",
+    segment: "bg-ink-mid",
   },
 ] as const;
 
@@ -53,31 +65,36 @@ export function CoachingWeeklyRhythm({ metrics }: { metrics: CoachingMetricValue
     <CoachingStudioPanel className="overflow-hidden p-5 sm:p-7">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">
+          <p className="text-label uppercase tracking-[0.16em] text-pink">
             Güncel akış
           </p>
-          <h2 className="mt-1 text-2xl font-semibold tracking-[-0.03em]">Haftanın ritmi</h2>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
+          <h2 className="mt-1 text-h3">Haftanın ritmi</h2>
+          <p className="mt-2 max-w-2xl text-small text-ink-mid">
             Öğrencilerin, görüşmelerin ve bekleyen işlerin tek bakışta.
           </p>
         </div>
         {!allZero && knownValues.length ? (
-          <p className="rounded-full bg-muted px-3 py-1.5 text-xs font-semibold text-muted-foreground">
+          /* Outline, not a tint chip. A pale fill carrying same-family text is
+             the generated-dashboard badge DESIGN.md bans outright. */
+          <p className="rounded-pill border border-line px-3 py-1.5 text-label text-ink-mid">
             Şu an ilgilenmen gereken {attentionCount} iş var.
           </p>
         ) : null}
       </div>
 
+      {/* A hairline on the empty block, not a dashed one: the shared coaching
+          surface holds one border treatment, so an empty state reads as the
+          same material as a full one, just without content in it yet. */}
       {allZero ? (
-        <div className="mt-6 rounded-2xl border border-dashed border-primary/20 bg-primary/[0.045] p-5 sm:p-6">
-          <p className="font-semibold">Koçluk akışın burada şekillenecek</p>
-          <p className="mt-1 max-w-xl text-sm leading-6 text-muted-foreground">
+        <div className="mt-6 rounded-input border border-line bg-paper p-5 sm:p-6">
+          <p className="font-medium">Koçluk akışın burada şekillenecek</p>
+          <p className="mt-1 max-w-xl text-small text-ink-mid">
             Yeni öğrenciler, yaklaşan görüşmeler ve rapor işleri oluştuğunda bu alan haftalık çalışma ritmini gösterecek.
           </p>
         </div>
       ) : (
         <div className="mt-6">
-          <div className="flex h-2.5 w-full overflow-hidden rounded-full bg-muted" aria-hidden="true">
+          <div className="flex h-2.5 w-full overflow-hidden rounded-pill bg-line" aria-hidden="true">
             {ITEMS.map((item, index) => {
               const share = shares[index];
               return share && share > 0 ? (
@@ -99,17 +116,20 @@ export function CoachingWeeklyRhythm({ metrics }: { metrics: CoachingMetricValue
                   key={key}
                   href={href}
                   aria-label={share === null ? undefined : `${label}: %${Math.round(share)} pay`}
-                  className="group rounded-2xl border border-transparent bg-muted/45 p-4 transition-colors hover:border-border hover:bg-muted/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  /* Hover moves the hairline to ink and nothing else. No lift,
+                     no shadow, no fill swap: colour-only state at 120ms needs
+                     no prefers-reduced-motion escape hatch. */
+                  className="group rounded-input border border-line bg-surface p-4 transition-colors duration-[var(--duration-state)] hover:border-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2"
                 >
                   <span className="flex items-center justify-between gap-3">
-                    <Icon aria-hidden="true" className="h-4 w-4 text-muted-foreground transition-colors group-hover:text-foreground" />
+                    <Icon aria-hidden="true" className="h-5 w-5 text-ink-mid transition-colors duration-[var(--duration-state)] group-hover:text-ink" weight="regular" />
                     {value === null ? (
-                      <span className="text-xs font-medium text-muted-foreground">Şu anda görüntülenemiyor</span>
+                      <span className="text-label text-ink-mid">Şu anda görüntülenemiyor</span>
                     ) : (
-                      <span className="text-2xl font-semibold tabular-nums">{value}</span>
+                      <span className="text-h3 font-bold tabular-nums">{value}</span>
                     )}
                   </span>
-                  <span className="mt-3 block text-xs font-semibold text-muted-foreground">{label}</span>
+                  <span className="mt-3 block text-label text-ink-mid">{label}</span>
                 </Link>
               );
             })}

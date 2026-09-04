@@ -23,7 +23,13 @@ const config: Config = {
           DEFAULT: "var(--gold)",
           ink: "var(--gold-ink)",
         },
-        paper: "var(--paper)",
+        paper: {
+          DEFAULT: "var(--paper)",
+          /* Secondary text on an ink surface. Not `paper` at an opacity —
+             these tokens are raw hex, so Tailwind drops `text-paper/65`
+             entirely rather than compiling it. */
+          mid: "var(--paper-mid)",
+        },
         ink: {
           DEFAULT: "var(--ink)",
           mid: "var(--ink-mid)",

@@ -5,22 +5,29 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import axios from "axios";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+/*
+ * Phosphor at `regular`, not Lucide. Lucide is recognisable less for its
+ * shapes than for its default — 24px at a 2px stroke, shipped untouched by
+ * shadcn — and against Poppins' relatively light stems a 2px icon wins the
+ * line it sits on. Phosphor `regular` is already 1.5px, so the pairing lands
+ * with no per-component override.
+ */
 import {
-  AlertCircle,
   ArrowLeft,
   ArrowRight,
+  ArrowSquareOut,
   BookOpen,
-  Calendar,
-  CalendarDays,
-  ExternalLink,
+  CalendarBlank,
+  CalendarDots,
+  ChatCircle,
   Info,
-  MessageCircle,
-  Pencil,
+  PencilSimple,
   Star,
-  Users,
-  Video,
+  UsersThree,
+  VideoCamera,
   Wallet,
-} from "lucide-react";
+  WarningCircle,
+} from "@phosphor-icons/react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import {
@@ -253,17 +260,22 @@ function StatTile({
   return (
     <Card>
       <CardContent className="flex items-center gap-3 p-4">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+        {/* Outline on paper, not a pale brand tint carrying brand-coloured
+            text. That tint is the single most recognisable generated-dashboard
+            construction there is, and DESIGN.md bans it everywhere. */}
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-input border border-line bg-paper text-ink">
           {icon}
         </div>
         <div className="min-w-0">
-          <p className="text-sm text-muted-foreground">{label}</p>
+          <p className="text-label text-ink-mid">{label}</p>
           {isLoading ? (
             <Skeleton className="mt-1 h-7 w-14" />
           ) : (
-            <p className="text-2xl font-semibold leading-tight">{value}</p>
+            /* Tabular figures. These stack in a column of tiles and have to
+               align down it, which proportional digits will not do. */
+            <p className="text-h3 font-bold leading-tight tabular-nums">{value}</p>
           )}
-          <p className="truncate text-xs text-muted-foreground">{detail}</p>
+          <p className="truncate text-label text-ink-mid">{detail}</p>
         </div>
       </CardContent>
     </Card>
@@ -299,23 +311,25 @@ function StudentRosterCard({
           onSelect(student.id);
         }
       }}
-      className="cursor-pointer transition-colors hover:bg-muted/40"
+      /* Hover moves the hairline to ink. No fill, no lift, no shadow:
+         colour-only state at 120ms needs no reduced-motion exception. */
+      className="cursor-pointer transition-colors duration-[var(--duration-state)] hover:border-ink"
     >
       <CardContent className="flex items-start gap-3 p-4">
         <Avatar className="h-10 w-10 shrink-0">
           {student.avatar_url ? (
             <AvatarImage src={student.avatar_url} alt={name} />
           ) : null}
-          <AvatarFallback className="bg-primary/10 text-sm font-semibold text-primary">
+          <AvatarFallback className="bg-ink text-small font-medium text-paper">
             {getInitials(firstName, lastName)}
           </AvatarFallback>
         </Avatar>
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <p className="truncate font-semibold">{name}</p>
+              <p className="truncate font-medium">{name}</p>
               {student.display_name && (
-                <p className="truncate text-sm text-muted-foreground">{student.email}</p>
+                <p className="truncate text-small text-ink-mid">{student.email}</p>
               )}
             </div>
             <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
@@ -331,9 +345,9 @@ function StudentRosterCard({
               )}
             </div>
           </div>
-          <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-muted-foreground">
+          <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-small text-ink-mid">
             <span className="inline-flex items-center gap-1.5">
-              <Calendar className="h-3.5 w-3.5" aria-hidden="true" />
+              <CalendarBlank className="h-4 w-4" aria-hidden="true" />
               {lastCompletedAt
                 ? `Son ders: ${formatDate(lastCompletedAt)}`
                 : "Henüz ders tamamlanmadı"}
@@ -349,10 +363,12 @@ function StudentRosterCard({
 function DashboardSkeleton() {
   return (
     <div className="space-y-6">
-      <Skeleton className="h-40 w-full rounded-lg" />
+      {/* The skeleton mirrors the real surface's geometry, card radius
+          included. A generic stack of bars is its own kind of default. */}
+      <Skeleton className="h-40 w-full rounded-card" />
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
         {[1, 2, 3, 4].map((i) => (
-          <Skeleton key={i} className="h-28 w-full rounded-lg" />
+          <Skeleton key={i} className="h-28 w-full rounded-card" />
         ))}
       </div>
     </div>
@@ -435,18 +451,18 @@ function LearningProgressConfirmModal({
         </DialogHeader>
 
         <div className="space-y-5">
-          <div className="rounded-lg border bg-muted/40 p-3 text-sm">
+          <div className="rounded-input border border-line bg-paper p-3 text-small">
             <p>
-              <span className="text-muted-foreground">Öğrenci:</span>{" "}
+              <span className="text-ink-mid">Öğrenci:</span>{" "}
               {booking.student.email}
             </p>
             <p>
-              <span className="text-muted-foreground">Ders:</span>{" "}
+              <span className="text-ink-mid">Ders:</span>{" "}
               {booking.subject.name}
             </p>
             {milestoneTitle && (
               <p>
-                <span className="text-muted-foreground">Milestone:</span>{" "}
+                <span className="text-ink-mid">Milestone:</span>{" "}
                 {milestoneTitle}
               </p>
             )}
@@ -562,14 +578,14 @@ function StudentDetailDialog({
         <DialogHeader>
           <div className="flex items-center gap-3">
             <Avatar className="h-10 w-10 shrink-0">
-              <AvatarFallback className="bg-primary/10 text-sm font-semibold text-primary">
+              <AvatarFallback className="bg-ink text-small font-medium text-paper">
                 {getInitials(firstName, lastName)}
               </AvatarFallback>
             </Avatar>
             <div className="min-w-0">
               <DialogTitle className="truncate">{name}</DialogTitle>
               {student.display_name && (
-                <p className="truncate text-sm text-muted-foreground">{student.email}</p>
+                <p className="truncate text-small text-ink-mid">{student.email}</p>
               )}
             </div>
           </div>
@@ -994,23 +1010,26 @@ function TutorDashboardContent() {
       <div className="mx-auto w-full min-w-0 max-w-6xl overflow-x-clip px-4">
       <header className="mb-8 flex items-center gap-4">
         <div className="flex items-center gap-4">
-          <Avatar className="h-12 w-12 border border-border/70">
+          <Avatar className="h-12 w-12 border border-line">
             {profile.profile_picture ? (
               <AvatarImage
                 src={profile.profile_picture}
                 alt={`${profile.name} ${profile.surname}`}
               />
             ) : null}
-            <AvatarFallback className="bg-muted text-base font-semibold text-foreground">
+            <AvatarFallback className="bg-ink text-body font-medium text-paper">
               {getInitials(profile.name, profile.surname)}
             </AvatarFallback>
           </Avatar>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-semibold tracking-tight">{getGreeting()}, {profile.name} 👋</h1>
+              {/* No emoji. DESIGN.md bans them outright, product copy
+                  included, and a waving hand on a working panel is the
+                  clearest place that rule earns its keep. */}
+              <h1 className="text-h2-m sm:text-h2">{getGreeting()}, {profile.name}</h1>
               <VerifiedTutorMark verified={profile.is_verified} />
             </div>
-            <p className="mt-1 text-sm text-muted-foreground">
+            <p className="mt-1 text-small text-ink-mid">
               {allTodayBookings.length > 0
                 ? `Bugün ${allTodayBookings.length} dersin var${nextBooking ? ` · İlki ${new Date(nextBooking.start_time).toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })}’da` : ""}.`
                 : "Bugün planlanmış dersin yok. Programını ve öğrencilerini buradan yönetebilirsin."}
@@ -1023,33 +1042,38 @@ function TutorDashboardContent() {
       <div className="mx-auto w-full min-w-0 max-w-6xl overflow-x-clip px-4">
       {activeTab === "overview" ? (
         <div className="space-y-6">
+      {/* No shadow on either branch below. These cards sit in the document
+          flow rather than floating above it, and a drop shadow on one is a lie
+          about its physics. They separate from the paper by value plus a
+          hairline, which is what the Card primitive already does. */}
       {nextBooking ? (
-        <Card className="overflow-hidden border-border bg-card shadow-sm">
+        <Card className="overflow-hidden">
           <CardContent className="p-6 sm:p-8">
             <div className="grid items-center gap-6 md:grid-cols-[minmax(0,1fr)_auto]">
               <div className="flex min-w-0 items-center gap-4">
                 <ParticipantAvatar
                   name={nextBookingStudentName}
                   avatarUrl={nextBooking.student.avatar_url}
-                  className="h-16 w-16 shrink-0 rounded-xl"
+                  className="h-16 w-16 shrink-0 rounded-input"
                 />
                 <div className="min-w-0">
-                  <p className="text-sm font-medium text-muted-foreground">
-                    Sıradaki dersin
-                  </p>
-                  <p className="mt-1 truncate text-2xl font-semibold tracking-tight">{nextBooking.subject.name}</p>
-                  <p className="mt-1 truncate text-base text-muted-foreground">{nextBookingStudentName} · {nextBooking.duration_minutes} dk</p>
+                  <p className="text-label text-ink-mid">Sıradaki dersin</p>
+                  <p className="mt-1 truncate text-h3">{nextBooking.subject.name}</p>
+                  <p className="mt-1 truncate text-body text-ink-mid">{nextBookingStudentName} · {nextBooking.duration_minutes} dk</p>
                 </div>
               </div>
-              <div className="flex min-w-[150px] flex-col rounded-xl border bg-muted/20 px-5 py-4 md:items-end">
-                <span className="text-sm font-medium text-muted-foreground">{nextBookingCountdown}</span>
-                <span className="mt-1 text-3xl font-semibold tracking-tight">
+              {/* 10px inside the card's 20px corner. Inner radius is the
+                  outer radius minus the inset, so nested corners stay
+                  concentric instead of drifting off-centre. */}
+              <div className="flex min-w-[150px] flex-col rounded-input border border-line bg-paper px-5 py-4 md:items-end">
+                <span className="text-label text-ink-mid">{nextBookingCountdown}</span>
+                <span className="mt-1 text-h2-m tabular-nums">
                   {new Date(nextBooking.start_time).toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })}
                 </span>
-                <span className="mt-1 text-xs text-muted-foreground">{formatDate(nextBooking.start_time)}</span>
+                <span className="mt-1 text-label text-ink-mid">{formatDate(nextBooking.start_time)}</span>
               </div>
             </div>
-            <div className="mt-6 flex flex-wrap items-center gap-3 border-t pt-5">
+            <div className="mt-6 flex flex-wrap items-center gap-3 border-t border-line pt-5">
               {nextBooking.room_url &&
               canJoinLesson(
                 nextBooking.start_time,
@@ -1058,7 +1082,7 @@ function TutorDashboardContent() {
               ) ? (
                 <Button asChild size="lg">
                   <a href={`/session/${nextBooking.id}`}>
-                    <Video className="mr-2 h-4 w-4" />
+                    <VideoCamera className="mr-2 h-5 w-5" />
                     Derse Katıl
                   </a>
                 </Button>
@@ -1071,11 +1095,11 @@ function TutorDashboardContent() {
               )}
               <Button asChild variant="outline">
                 <Link href={nextBookingConversationId ? `/messages/${nextBookingConversationId}` : "/messages"}>
-                  <MessageCircle className="mr-2 h-4 w-4" />
+                  <ChatCircle className="mr-2 h-5 w-5" />
                   Öğrenciye Mesaj
                 </Link>
               </Button>
-              <div className="ml-auto hidden items-center gap-2 text-sm text-muted-foreground sm:flex">
+              <div className="ml-auto hidden items-center gap-2 text-small text-ink-mid sm:flex">
                 <StatusBadge status={nextBooking.status} type="booking" />
                 <span>{paymentLabel(nextBooking)}</span>
               </div>
@@ -1083,42 +1107,46 @@ function TutorDashboardContent() {
           </CardContent>
         </Card>
       ) : (
-        <Card className="border-border shadow-sm">
+        <Card>
           <CardContent className="flex flex-col items-start justify-between gap-5 p-6 sm:flex-row sm:items-center sm:p-8">
             <div>
-              <p className="text-sm font-medium text-muted-foreground">Sıradaki dersin</p>
-              <h2 className="mt-2 text-2xl font-semibold tracking-tight">Takvimin şu anda sakin</h2>
-              <p className="mt-2 max-w-xl text-sm text-muted-foreground">Müsaitlik saatlerini güncel tutarak öğrencilerin sana uygun zamanlardan rezervasyon yapmasını sağlayabilirsin.</p>
+              <p className="text-label text-ink-mid">Sıradaki dersin</p>
+              <h2 className="mt-2 text-h2-m sm:text-h2">Takvimin şu anda sakin</h2>
+              <p className="mt-2 max-w-xl text-small text-ink-mid">Müsaitlik saatlerini güncel tutarak öğrencilerin sana uygun zamanlardan rezervasyon yapmasını sağlayabilirsin.</p>
             </div>
             <Button onClick={() => router.push("/dashboard/tutor?tab=availability")}>Müsaitliği düzenle</Button>
           </CardContent>
         </Card>
       )}
 
+      {/* Ink, not amber. There is no warning hue in the palette: a fifth
+          colour is where it starts reading as rainbow, and everything usually
+          labelled a warning is either a real error or, as here, a neutral
+          system message. The ink border carries the weight instead. */}
       {pendingActionBookings.length > 0 && (
-        <button type="button" onClick={() => router.push("/dashboard/tutor?tab=bookings")} className="flex w-full items-center justify-between gap-4 rounded-xl border border-amber-200 bg-amber-50/70 px-5 py-4 text-left transition-colors hover:bg-amber-50">
-          <span className="flex items-center gap-3"><AlertCircle className="h-5 w-5 text-amber-700" /><span><strong className="block text-sm">{pendingActionBookings.length} işlem seni bekliyor</strong><span className="text-sm text-muted-foreground">Onay, itiraz veya ders ilerlemesi gerektiren kayıtlarını kontrol et.</span></span></span>
-          <ArrowRight className="h-4 w-4 shrink-0" />
+        <button type="button" onClick={() => router.push("/dashboard/tutor?tab=bookings")} className="flex w-full items-center justify-between gap-4 rounded-card border border-ink bg-surface px-5 py-4 text-left transition-colors duration-[var(--duration-state)] hover:bg-paper">
+          <span className="flex items-center gap-3"><WarningCircle className="h-5 w-5 shrink-0 text-ink" weight="fill" /><span><strong className="block text-small font-medium">{pendingActionBookings.length} işlem seni bekliyor</strong><span className="text-small text-ink-mid">Onay, itiraz veya ders ilerlemesi gerektiren kayıtlarını kontrol et.</span></span></span>
+          <ArrowRight className="h-5 w-5 shrink-0" />
         </button>
       )}
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1.35fr)_minmax(320px,.65fr)]">
-        <Card className="border-border shadow-sm">
+        <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 p-6 pb-3">
-            <div><CardTitle className="text-xl">Bugünkü programın</CardTitle><p className="mt-1 text-sm text-muted-foreground">Sıradaki derslerine hızlıca göz at.</p></div>
-            <Button variant="ghost" size="sm" onClick={() => router.push("/dashboard/tutor?tab=bookings")}>Tüm dersler <ArrowRight className="ml-2 h-4 w-4" /></Button>
+            <div><CardTitle className="text-h3">Bugünkü programın</CardTitle><p className="mt-1 text-small text-ink-mid">Sıradaki derslerine hızlıca göz at.</p></div>
+            <Button variant="ghost" size="sm" onClick={() => router.push("/dashboard/tutor?tab=bookings")}>Tüm dersler <ArrowRight className="ml-2 h-5 w-5" /></Button>
           </CardHeader>
           <CardContent className="p-6 pt-2">
             {bookingsLoading ? <Skeleton className="h-48 w-full" /> : todayBookings.length === 0 ? (
-              <div className="rounded-xl border border-dashed px-5 py-10 text-center"><CalendarDays className="mx-auto h-6 w-6 text-muted-foreground" /><p className="mt-3 font-medium">Bugün dersin yok</p><p className="mt-1 text-sm text-muted-foreground">Yaklaşan tüm derslerini takvimden görebilirsin.</p></div>
+              <div className="rounded-input border border-line bg-paper px-5 py-10 text-center"><CalendarDots className="mx-auto h-8 w-8 text-ink-mid" /><p className="mt-3 text-h3">Bugün dersin yok</p><p className="mt-1 text-small text-ink-mid">Yaklaşan tüm derslerini takvimden görebilirsin.</p></div>
             ) : (
-              <div className="divide-y">
+              <div className="divide-y divide-line">
                 {todayBookings.map((booking) => {
                   const studentName = booking.student.display_name || booking.student.email;
                   return <button key={booking.id} type="button" onClick={() => router.push(`/dashboard/tutor?tab=bookings&${HIGHLIGHT_PARAM}=${booking.id}`)} className="flex w-full items-center gap-4 py-4 text-left first:pt-2 last:pb-0">
-                    <ParticipantAvatar name={studentName} avatarUrl={booking.student.avatar_url} className="h-11 w-11 shrink-0 rounded-lg" />
-                    <span className="min-w-0 flex-1"><strong className="block truncate text-sm">{booking.subject.name}</strong><span className="mt-0.5 block truncate text-sm text-muted-foreground">{studentName}</span></span>
-                    <span className="text-right"><strong className="block text-sm">{new Date(booking.start_time).toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })}</strong><span className="text-xs text-muted-foreground">{booking.duration_minutes} dk</span></span>
+                    <ParticipantAvatar name={studentName} avatarUrl={booking.student.avatar_url} className="h-11 w-11 shrink-0 rounded-input" />
+                    <span className="min-w-0 flex-1"><strong className="block truncate text-small font-medium">{booking.subject.name}</strong><span className="mt-0.5 block truncate text-small text-ink-mid">{studentName}</span></span>
+                    <span className="text-right"><strong className="block text-small font-medium tabular-nums">{new Date(booking.start_time).toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })}</strong><span className="text-label text-ink-mid tabular-nums">{booking.duration_minutes} dk</span></span>
                   </button>;
                 })}
               </div>
@@ -1126,21 +1154,21 @@ function TutorDashboardContent() {
           </CardContent>
         </Card>
 
-        <Card className="border-border shadow-sm">
+        <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 p-6 pb-3">
-            <div><CardTitle className="text-xl">Öğrencilerin</CardTitle><p className="mt-1 text-sm text-muted-foreground">{studentRoster.length} aktif öğrenci</p></div>
-            <Button variant="ghost" size="icon" aria-label="Tüm öğrenciler" onClick={() => router.push("/dashboard/tutor?tab=students")}><ArrowRight className="h-4 w-4" /></Button>
+            <div><CardTitle className="text-h3">Öğrencilerin</CardTitle><p className="mt-1 text-small text-ink-mid tabular-nums">{studentRoster.length} aktif öğrenci</p></div>
+            <Button variant="ghost" size="icon" aria-label="Tüm öğrenciler" onClick={() => router.push("/dashboard/tutor?tab=students")}><ArrowRight className="h-5 w-5" /></Button>
           </CardHeader>
           <CardContent className="p-6 pt-2">
             {bookingsLoading ? <Skeleton className="h-48 w-full" /> : studentRoster.length === 0 ? (
-              <div className="rounded-xl border border-dashed px-4 py-10 text-center"><Users className="mx-auto h-6 w-6 text-muted-foreground" /><p className="mt-3 font-medium">Henüz öğrencin yok</p><p className="mt-1 text-sm text-muted-foreground">İlk rezervasyonun geldiğinde burada göreceksin.</p></div>
+              <div className="rounded-input border border-line bg-paper px-4 py-10 text-center"><UsersThree className="mx-auto h-8 w-8 text-ink-mid" /><p className="mt-3 text-h3">Henüz öğrencin yok</p><p className="mt-1 text-small text-ink-mid">İlk rezervasyonun geldiğinde burada göreceksin.</p></div>
             ) : (
-              <div className="divide-y">
+              <div className="divide-y divide-line">
                 {studentRoster.slice(0, 3).map((entry) => {
                   const name = entry.student.display_name || entry.student.email;
                   return <button key={entry.student.id} type="button" onClick={() => setSelectedStudentId(entry.student.id)} className="flex w-full items-center gap-3 py-4 text-left first:pt-2 last:pb-0">
                     <ParticipantAvatar name={name} avatarUrl={entry.student.avatar_url} className="h-10 w-10 shrink-0" />
-                    <span className="min-w-0 flex-1"><strong className="block truncate text-sm">{name}</strong><span className="mt-0.5 block text-xs text-muted-foreground">{entry.upcomingLessons > 0 ? `${entry.upcomingLessons} yaklaşan ders` : `${entry.totalLessons} toplam ders`}</span></span>
+                    <span className="min-w-0 flex-1"><strong className="block truncate text-small font-medium">{name}</strong><span className="mt-0.5 block text-label text-ink-mid">{entry.upcomingLessons > 0 ? `${entry.upcomingLessons} yaklaşan ders` : `${entry.totalLessons} toplam ders`}</span></span>
                     {entry.totalCredits > 0 && <Badge variant="secondary" className="shrink-0">{entry.remainingCredits}/{entry.totalCredits}</Badge>}
                   </button>;
                 })}
@@ -1150,37 +1178,41 @@ function TutorDashboardContent() {
         </Card>
       </div>
 
-      <Card className="border-border shadow-sm">
+      {/* One banded surface rather than three separate cards side by side.
+          Three equal cards in a row is the feature-row tell DESIGN.md rules
+          out; divided bands inside a single card say the same thing without
+          it. */}
+      <Card>
         <CardContent className="grid gap-0 p-0 sm:grid-cols-3">
-          <button type="button" onClick={() => router.push("/dashboard/tutor?tab=earnings")} className="flex items-center gap-4 px-6 py-5 text-left transition-colors hover:bg-muted/30 sm:border-r">
-            <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted"><BookOpen className="h-5 w-5" /></span><span><span className="block text-2xl font-semibold">{earnings?.last_30_days.lesson_count ?? 0}</span><span className="text-sm text-muted-foreground">Bu ay tamamlanan ders</span></span>
+          <button type="button" onClick={() => router.push("/dashboard/tutor?tab=earnings")} className="flex items-center gap-4 px-6 py-5 text-left transition-colors duration-[var(--duration-state)] hover:bg-paper sm:border-r sm:border-line">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-input border border-line bg-paper"><BookOpen className="h-5 w-5" /></span><span><span className="block text-h3 font-bold tabular-nums">{earnings?.last_30_days.lesson_count ?? 0}</span><span className="text-small text-ink-mid">Bu ay tamamlanan ders</span></span>
           </button>
-          <button type="button" onClick={() => router.push("/dashboard/tutor?tab=students")} className="flex items-center gap-4 border-t px-6 py-5 text-left transition-colors hover:bg-muted/30 sm:border-r sm:border-t-0">
-            <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted"><Users className="h-5 w-5" /></span><span><span className="block text-2xl font-semibold">{studentRoster.length}</span><span className="text-sm text-muted-foreground">Aktif öğrenci</span></span>
+          <button type="button" onClick={() => router.push("/dashboard/tutor?tab=students")} className="flex items-center gap-4 border-t border-line px-6 py-5 text-left transition-colors duration-[var(--duration-state)] hover:bg-paper sm:border-r sm:border-t-0">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-input border border-line bg-paper"><UsersThree className="h-5 w-5" /></span><span><span className="block text-h3 font-bold tabular-nums">{studentRoster.length}</span><span className="text-small text-ink-mid">Aktif öğrenci</span></span>
           </button>
-          <button type="button" onClick={() => router.push("/dashboard/tutor?tab=reviews")} className="flex items-center gap-4 border-t px-6 py-5 text-left transition-colors hover:bg-muted/30 sm:border-t-0">
-            <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted"><Star className="h-5 w-5" /></span><span><span className="block text-2xl font-semibold">{tutorReviewSummary ? formatRating(tutorReviewSummary.overall_rating) : "—"}</span><span className="text-sm text-muted-foreground">{tutorReviewSummary?.review_count ?? 0} değerlendirme</span></span>
+          <button type="button" onClick={() => router.push("/dashboard/tutor?tab=reviews")} className="flex items-center gap-4 border-t border-line px-6 py-5 text-left transition-colors duration-[var(--duration-state)] hover:bg-paper sm:border-t-0">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-input border border-line bg-paper"><Star className="h-5 w-5" weight="fill" /></span><span><span className="block text-h3 font-bold tabular-nums">{tutorReviewSummary ? formatRating(tutorReviewSummary.overall_rating) : "—"}</span><span className="text-small text-ink-mid tabular-nums">{tutorReviewSummary?.review_count ?? 0} değerlendirme</span></span>
           </button>
         </CardContent>
       </Card>
 
       <section>
-        <div className="mb-3 flex items-end justify-between"><div><h2 className="text-lg font-semibold">Ayarlar ve görünürlük</h2><p className="mt-1 text-sm text-muted-foreground">Sık değişmeyen işletme ayarların.</p></div></div>
+        <div className="mb-3 flex items-end justify-between"><div><h2 className="text-h3">Ayarlar ve görünürlük</h2><p className="mt-1 text-small text-ink-mid">Sık değişmeyen işletme ayarların.</p></div></div>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {[
-            { title: "Müsaitlik", detail: availabilityLoading ? "Yükleniyor" : availability.length ? `${availabilityDays.length} gün · ${availability.length} zaman aralığı` : "Henüz eklenmedi", icon: CalendarDays, href: "/dashboard/tutor?tab=availability" },
+            { title: "Müsaitlik", detail: availabilityLoading ? "Yükleniyor" : availability.length ? `${availabilityDays.length} gün · ${availability.length} zaman aralığı` : "Henüz eklenmedi", icon: CalendarDots, href: "/dashboard/tutor?tab=availability" },
             { title: "Paketlerim", detail: packageOffersLoading ? "Yükleniyor" : `${activePackageCount} aktif paket`, icon: Wallet, href: "/dashboard/tutor?tab=packages" },
             { title: "Değerlendirmeler", detail: `${tutorReviewSummary?.review_count ?? 0} öğrenci yorumu`, icon: Star, href: "/dashboard/tutor?tab=reviews" },
-            { title: "Public profil", detail: "Öğrencilerin gördüğü sayfa", icon: ExternalLink, href: `/tutors/${profile.id}` },
-          ].map((item) => <Link key={item.title} href={item.href} className="group flex items-center gap-3 rounded-xl border bg-card p-4 transition-colors hover:bg-muted/30"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted"><item.icon className="h-5 w-5" /></span><span className="min-w-0 flex-1"><strong className="block text-sm">{item.title}</strong><span className="block truncate text-xs text-muted-foreground">{item.detail}</span></span><ArrowRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" /></Link>)}
+            { title: "Public profil", detail: "Öğrencilerin gördüğü sayfa", icon: ArrowSquareOut, href: `/tutors/${profile.id}` },
+          ].map((item) => <Link key={item.title} href={item.href} className="group flex items-center gap-3 rounded-card border border-line bg-surface p-4 transition-colors duration-[var(--duration-state)] hover:border-ink"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-input border border-line bg-paper"><item.icon className="h-5 w-5" /></span><span className="min-w-0 flex-1"><strong className="block text-small font-medium">{item.title}</strong><span className="block truncate text-label text-ink-mid">{item.detail}</span></span>{/* Static. An arrow that slides on hover is decoration, and decoration does not get to move. */}<ArrowRight className="h-5 w-5 shrink-0 text-ink-mid" /></Link>)}
         </div>
-        <div className="mt-3 text-right"><Button variant="ghost" size="sm" asChild><Link href="/dashboard/tutor/edit"><Pencil className="mr-2 h-4 w-4" />Profili düzenle</Link></Button></div>
+        <div className="mt-3 text-right"><Button variant="ghost" size="sm" asChild><Link href="/dashboard/tutor/edit"><PencilSimple className="mr-2 h-5 w-5" />Profili düzenle</Link></Button></div>
       </section>
         </div>
       ) : (
         <div>
-          <Button variant="ghost" className="mb-5 -ml-3" onClick={() => router.push("/dashboard/tutor")}><ArrowLeft className="mr-2 h-4 w-4" />Panoya dön</Button>
-          <div className="mb-5"><h2 className="text-2xl font-semibold tracking-tight">Hoca yönetim merkezi</h2><p className="mt-1 text-sm text-muted-foreground">Derslerini, öğrencilerini ve profil ayarlarını ayrıntılı yönet.</p></div>
+          <Button variant="ghost" className="mb-5 -ml-3" onClick={() => router.push("/dashboard/tutor")}><ArrowLeft className="mr-2 h-5 w-5" />Panoya dön</Button>
+          <div className="mb-5"><h2 className="text-h2-m sm:text-h2">Hoca yönetim merkezi</h2><p className="mt-1 text-small text-ink-mid">Derslerini, öğrencilerini ve profil ayarlarını ayrıntılı yönet.</p></div>
       <Tabs value={activeTab} onValueChange={(value) => router.push(`/dashboard/tutor?tab=${value}`)}>
         <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] overflow-x-auto pb-1">
           <AnimatedTabs
@@ -1194,7 +1226,7 @@ function TutorDashboardContent() {
         <TabsContent value="bookings" id="tutor-tabpanel-bookings" aria-labelledby="tutor-tab-bookings" className="mt-6">
           {bookingsError && (
             <div className="flex flex-col items-center gap-3 py-10 text-center">
-              <p className="text-sm text-muted-foreground">Rezervasyonlar yüklenemedi.</p>
+              <p className="text-small text-ink-mid">Rezervasyonlar yüklenemedi.</p>
               <Button variant="outline" size="sm" onClick={() => refetchBookings()}>
                 Tekrar Dene
               </Button>
@@ -1203,15 +1235,15 @@ function TutorDashboardContent() {
           {!bookingsError && bookingsLoading && (
             <div className="space-y-3">
               {[1, 2, 3].map((i) => (
-                <Skeleton key={i} className="h-40 w-full rounded-lg" />
+                <Skeleton key={i} className="h-40 w-full rounded-card" />
               ))}
             </div>
           )}
           {!bookingsError && !bookingsLoading && (
             <>
               <div className="mb-2 flex items-center gap-2">
-                <h3 className="text-sm font-semibold">Aktif Rezervasyonlar</h3>
-                <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                <h3 className="text-h3">Aktif Rezervasyonlar</h3>
+                <span className="rounded-pill border border-line px-2.5 py-0.5 text-label text-ink-mid tabular-nums">
                   {activeBookings.length}
                 </span>
               </div>
@@ -1259,8 +1291,8 @@ function TutorDashboardContent() {
               )}
 
               <div className="mb-2 mt-6 flex items-center gap-2">
-                <h3 className="text-sm font-semibold">Geçmiş Dersler</h3>
-                <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                <h3 className="text-h3">Geçmiş Dersler</h3>
+                <span className="rounded-pill border border-line px-2.5 py-0.5 text-label text-ink-mid tabular-nums">
                   {pastBookings.length}
                 </span>
               </div>
@@ -1306,7 +1338,7 @@ function TutorDashboardContent() {
         <TabsContent value="students" id="tutor-tabpanel-students" aria-labelledby="tutor-tab-students" className="mt-6">
           {bookingsError && (
             <div className="flex flex-col items-center gap-3 py-10 text-center">
-              <p className="text-sm text-muted-foreground">Öğrenciler yüklenemedi.</p>
+              <p className="text-small text-ink-mid">Öğrenciler yüklenemedi.</p>
               <Button variant="outline" size="sm" onClick={() => refetchBookings()}>
                 Tekrar Dene
               </Button>
@@ -1315,15 +1347,15 @@ function TutorDashboardContent() {
           {!bookingsError && bookingsLoading && (
             <div className="space-y-3">
               {[1, 2, 3].map((i) => (
-                <Skeleton key={i} className="h-20 w-full rounded-lg" />
+                <Skeleton key={i} className="h-20 w-full rounded-card" />
               ))}
             </div>
           )}
           {!bookingsError && !bookingsLoading && (
             <>
               <div className="mb-2 flex items-center gap-2">
-                <h3 className="text-sm font-semibold">Öğrencilerim</h3>
-                <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                <h3 className="text-h3">Öğrencilerim</h3>
+                <span className="rounded-pill border border-line px-2.5 py-0.5 text-label text-ink-mid tabular-nums">
                   {studentRoster.length}
                 </span>
               </div>
@@ -1350,7 +1382,7 @@ function TutorDashboardContent() {
         <TabsContent value="earnings" id="tutor-tabpanel-earnings" aria-labelledby="tutor-tab-earnings" className="mt-6">
           {earningsError && (
             <div className="flex flex-col items-center gap-3 py-10 text-center">
-              <p className="text-sm text-muted-foreground">Kazançlar yüklenemedi.</p>
+              <p className="text-small text-ink-mid">Kazançlar yüklenemedi.</p>
               <Button variant="outline" size="sm" onClick={() => refetchEarnings()}>
                 Tekrar Dene
               </Button>
@@ -1359,7 +1391,7 @@ function TutorDashboardContent() {
           {!earningsError && earningsLoading && (
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
               {[1, 2, 3].map((i) => (
-                <Skeleton key={i} className="h-28 w-full rounded-lg" />
+                <Skeleton key={i} className="h-28 w-full rounded-card" />
               ))}
             </div>
           )}
@@ -1385,7 +1417,7 @@ function TutorDashboardContent() {
                   detail="tamamlanan ders"
                 />
               </div>
-              <div className="mt-4 rounded-lg border bg-muted/40 p-3 text-xs text-muted-foreground">
+              <div className="mt-4 rounded-input border border-line bg-paper p-3 text-label text-ink-mid">
                 Bu sekme yalnızca tamamladığın ders sayısını gösterir. Platform henüz bir ödeme
                 sağlayıcısına bağlı olmadığı için burada gerçek bir kazanç/ödeme bakiyesi
                 görüntülenmiyor.
@@ -1407,7 +1439,7 @@ function TutorDashboardContent() {
             />
           ) : reviewsTabError || reviewSummaryError ? (
             <div className="flex flex-col items-center gap-3 py-10 text-center">
-              <p className="text-sm text-muted-foreground">Değerlendirmeler yüklenemedi.</p>
+              <p className="text-small text-ink-mid">Değerlendirmeler yüklenemedi.</p>
               <Button
                 variant="outline"
                 size="sm"
@@ -1421,8 +1453,8 @@ function TutorDashboardContent() {
             </div>
           ) : reviewsTabLoading || reviewSummaryLoading ? (
             <div className="space-y-4">
-              <Skeleton className="h-32 w-full rounded-lg" />
-              <Skeleton className="h-40 w-full rounded-lg" />
+              <Skeleton className="h-32 w-full rounded-card" />
+              <Skeleton className="h-40 w-full rounded-card" />
             </div>
           ) : (
             tutorReviewSummary && (
@@ -1462,11 +1494,11 @@ function TutorDashboardContent() {
             <TutorLaunchProgramCard />
           )}
           <div>
-            <h3 className="mb-2 text-sm font-semibold">Önümüzdeki 14 Gün</h3>
+            <h3 className="mb-2 text-h3">Önümüzdeki 14 Gün</h3>
             {availabilityLoading || bookingsLoading ? (
               <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-7">
                 {Array.from({ length: 7 }).map((_, i) => (
-                  <Skeleton key={i} className="h-28 w-full rounded-lg" />
+                  <Skeleton key={i} className="h-28 w-full rounded-card" />
                 ))}
               </div>
             ) : (
@@ -1478,22 +1510,22 @@ function TutorDashboardContent() {
         <TabsContent value="packages" id="tutor-tabpanel-packages" aria-labelledby="tutor-tab-packages" className="mt-6 space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h3 className="text-sm font-semibold">Sunduğun Paketler</h3>
-              <p className="mt-1 text-sm text-muted-foreground">
+              <h3 className="text-h3">Sunduğun Paketler</h3>
+              <p className="mt-1 text-small text-ink-mid">
                 Öğrencilerin gördüğü paketler ve tahmini net kazancın. Düzenlemek için
                 paket editörünü kullan.
               </p>
             </div>
             <Button variant="outline" size="sm" asChild>
               <Link href="/dashboard/tutor/packages">
-                <Pencil className="mr-2 h-3.5 w-3.5" />
+                <PencilSimple className="mr-2 h-4 w-4" />
                 Paketleri düzenle
               </Link>
             </Button>
           </div>
 
-          <div className="flex items-start gap-2 rounded-lg border bg-muted/40 p-3 text-xs text-muted-foreground">
-            <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
+          <div className="flex items-start gap-2 rounded-input border border-line bg-paper p-3 text-label text-ink-mid">
+            <Info className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
             <p>
               Buradaki komisyon ve net kazanç rakamları tahminidir. Hocam şu anda hiçbir
               ödemeden komisyon kesmiyor — gösterilen tutarlar gerçek bir ödeme taahhüdü ya
@@ -1503,7 +1535,7 @@ function TutorDashboardContent() {
 
           {packageOffersError && (
             <div className="flex flex-col items-center gap-3 py-10 text-center">
-              <p className="text-sm text-muted-foreground">Paketler yüklenemedi.</p>
+              <p className="text-small text-ink-mid">Paketler yüklenemedi.</p>
               <Button variant="outline" size="sm" onClick={() => refetchPackageOffers()}>
                 Tekrar Dene
               </Button>
@@ -1511,18 +1543,18 @@ function TutorDashboardContent() {
           )}
           {!packageOffersError && packageOffersLoading && (
             <div className="space-y-4">
-              <Skeleton className="h-9 w-full max-w-md rounded-full" />
+              <Skeleton className="h-9 w-full max-w-md rounded-pill" />
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-4">
                 {[1, 2, 3, 4].map((i) => (
-                  <Skeleton key={i} className="h-32 w-full rounded-lg" />
+                  <Skeleton key={i} className="h-32 w-full rounded-card" />
                 ))}
               </div>
             </div>
           )}
           {!packageOffersError && !packageOffersLoading && packageOffers && (
-            <section className="rounded-xl border bg-card p-4 shadow-sm sm:p-5">
+            <section className="rounded-card border border-line bg-surface p-4 sm:p-5">
               <div>
-                <p className="text-sm font-medium">Haftada ders sayısı</p>
+                <p className="text-label">Haftada ders sayısı</p>
                 <div
                   className="mt-2 flex flex-wrap gap-2"
                   role="group"
@@ -1534,10 +1566,16 @@ function TutorDashboardContent() {
                       type="button"
                       aria-pressed={selectedPackageFrequency === count}
                       onClick={() => setSelectedPackageFrequency(count)}
+                      /* Outline by default, solid ink when selected. The
+                         Small step is spelled as an arbitrary length because
+                         tailwind-merge cannot tell a custom `text-*` size from
+                         a custom `text-*` colour and drops the size when the
+                         selected branch sets one. */
                       className={cn(
-                        "rounded-full border px-4 py-1.5 text-sm font-medium transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-                        selectedPackageFrequency === count &&
-                          "border-primary bg-primary text-primary-foreground hover:bg-primary"
+                        "rounded-pill border px-4 py-1.5 text-[0.875rem] font-medium leading-[1.5] transition-colors duration-[var(--duration-state)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2",
+                        selectedPackageFrequency === count
+                          ? "border-ink bg-ink text-paper"
+                          : "border-line bg-transparent text-ink hover:border-ink"
                       )}
                     >
                       {count} ders
@@ -1547,7 +1585,7 @@ function TutorDashboardContent() {
               </div>
 
               <div className="mt-5">
-                <p className="text-sm font-medium">Paket süresi</p>
+                <p className="text-label">Paket süresi</p>
                 <div
                   className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-4"
                   role="group"
@@ -1573,7 +1611,7 @@ function TutorDashboardContent() {
                       <div
                         key={days}
                         className={cn(
-                          "relative rounded-lg border p-3 pt-4 text-left",
+                          "relative rounded-input border border-line p-3 pt-4 text-left",
                           notOffered && "opacity-50"
                         )}
                       >
@@ -1582,7 +1620,7 @@ function TutorDashboardContent() {
                         )}
                         <p className="font-medium">{formatPlanDuration(days)}</p>
                         {notOffered ? (
-                          <p className="mt-2 text-xs text-muted-foreground">
+                          <p className="mt-2 text-label text-ink-mid">
                             Bu paketi sunmuyorsun.
                           </p>
                         ) : (
@@ -1592,30 +1630,35 @@ function TutorDashboardContent() {
                                 %{pricing!.discountPercent} avantaj
                               </Badge>
                             )}
-                            <p className="mt-2 text-sm font-semibold">
+                            <p className="mt-2 text-small font-medium tabular-nums">
                               {formatPrice(pricing!.discountedPerLesson)}
-                              <span className="font-normal text-muted-foreground"> / ders</span>
+                              <span className="font-normal text-ink-mid"> / ders</span>
                               {pricing!.discountPercent > 0 && (
-                                <span className="ml-1.5 text-xs font-normal text-muted-foreground line-through">
+                                <span className="ml-1.5 text-label font-normal text-ink-mid line-through">
                                   {formatPrice(pricing!.basePerLesson)}
                                 </span>
                               )}
                             </p>
-                            <p className="text-xs text-muted-foreground">
+                            <p className="text-label text-ink-mid tabular-nums">
                               {pricing!.lessonCount} ders
                             </p>
-                            <dl className="mt-3 space-y-1 border-t pt-2 text-xs">
+                            {/* The semantic pair, not Tailwind's rose and
+                                emerald steps. Two hues carry meaning here and
+                                both are already in the palette; a third and
+                                fourth green-red family is where it starts
+                                reading as rainbow. */}
+                            <dl className="mt-3 space-y-1 border-t border-line pt-2 text-label">
                               <div className="flex justify-between gap-3">
-                                <dt className="text-muted-foreground">
+                                <dt className="text-ink-mid">
                                   Tahmini komisyon (%{packageCommissionRate * 100})
                                 </dt>
-                                <dd className="text-rose-700 dark:text-rose-300">
+                                <dd className="text-error tabular-nums">
                                   -{formatPrice(commission)}
                                 </dd>
                               </div>
-                              <div className="flex justify-between gap-3 font-semibold">
+                              <div className="flex justify-between gap-3 font-medium">
                                 <dt>Tahmini net kazancın</dt>
-                                <dd className="text-emerald-700 dark:text-emerald-300">
+                                <dd className="text-success tabular-nums">
                                   {formatPrice(net)}
                                 </dd>
                               </div>

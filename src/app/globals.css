@@ -79,6 +79,20 @@
     --gold: #ffd100;
     --gold-ink: #4a3b00;
     --paper: #fbf6f6;
+    /* The secondary text tone for anything sitting ON an ink surface — the
+       dark status panel, the coaching header, any inverted band.
+
+       It exists because the brand tokens are raw hex rather than the
+       `<alpha-value>` triplet form Tailwind needs, so `text-paper/65` compiles
+       to nothing at all: the class is silently dropped and the text renders at
+       full paper, losing the hierarchy it was written to create. A real token
+       is also the more honest answer — a measured value beats an opacity that
+       lands wherever the backdrop happens to put it.
+
+       #9BAAAC on --ink measures about 7.5:1, and the pairing inverts with the
+       theme below, because an ink surface becomes the light one in Night mode
+       while its text becomes the dark one. */
+    --paper-mid: #9baaac;
     --ink: #02171a;
     --ink-mid: #5c6b6d;
     /* Fixed light campaign surfaces (pink-pale, white, and ink hero cards)
@@ -227,6 +241,9 @@
     --skeleton: #344246;
     --ink: #ece6e6;
     --ink-mid: #9baaac;
+    /* Inverted with the surface: bg-ink is the light one here, so its
+       secondary text is the light theme's --ink-mid. */
+    --paper-mid: #5c6b6d;
     /* --success at 14% over the dark surface, same construction as light. */
     --success-soft: #17332b;
     --tutorial-overlay: rgb(2 8 10 / 46%);
