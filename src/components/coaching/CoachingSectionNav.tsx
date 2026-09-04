@@ -53,25 +53,25 @@ const GROUPS = [
 export function CoachingSectionNav() {
   return (
     /*
-      The page's second band, and --pink-pale's one legitimate job: a large
-      section background. It never fills a badge, a chip or an avatar, and if
-      it cannot earn this single use it leaves the palette entirely.
+      The page's second band, and --pink-pale's one permitted job: a large
+      section background, never a fill on anything smaller. Straight edges —
+      the diagonal stays on the landing page.
 
-      The diagonal runs the same direction as the header band above it, and the
-      cut eats into the top edge, so the top padding carries an extra
-      --band-cut on top of the section rhythm.
+      The negative bottom margin cancels the shell stack's own bottom padding.
+      A band is the last surface before the footer, and a strip of paper under
+      it reads as the band having stopped short rather than as the section
+      ending.
     */
     <section
       aria-labelledby="coaching-sections-title"
-      /* The negative bottom margin cancels the shell stack's own bottom
-         padding. A band is the page's last surface before the footer, and a
-         strip of paper under it reads as the band having stopped short rather
-         than as the section ending. */
-      className="band-full-bleed band-cut-top -mb-16 bg-band-pale pb-16 pt-[calc(4rem+var(--band-cut))] sm:-mb-24 sm:pb-24 sm:pt-[calc(6rem+var(--band-cut))]"
+      className="band-full-bleed -mb-16 bg-band-pale py-16 sm:-mb-24 sm:py-24"
     >
       <div className="mx-auto w-full max-w-7xl space-y-4 px-4 sm:px-6">
         <div>
-          <p className="text-label uppercase tracking-[0.16em] text-pink">Çalışma alanların</p>
+          {/* Ink-mid, not pink. A pale surface carrying saturated text of its
+              own hue is the tint construction DESIGN.md bans, and a pink-pale
+              band with pink type on it is that pattern at section scale. */}
+          <p className="text-label uppercase tracking-[0.16em] text-ink-mid">Çalışma alanların</p>
           <h2 id="coaching-sections-title" className="mt-1 text-h2-m sm:text-h2">Koçluk alanların</h2>
           <p className="mt-1 text-small text-ink-mid">Yapmak istediğin işe göre devam et.</p>
         </div>

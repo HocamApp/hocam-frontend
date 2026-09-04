@@ -28,16 +28,6 @@ const config: Config = {
            counterpart or everything sitting on it has to leave the theme. */
         "band-pale": "var(--band-pale)",
         paper: "var(--paper)",
-        /* The permanently dark band and the text that sits on it. Fixed in
-           both themes: a band that inverts stops separating the section it
-           was placed to separate. Not `paper` at an opacity either — these
-           tokens are raw hex, so Tailwind drops `text-paper/65` rather than
-           compiling it. */
-        "ink-fixed": "var(--ink-on-light)",
-        "on-ink": {
-          DEFAULT: "var(--on-ink)",
-          mid: "var(--on-ink-mid)",
-        },
         ink: {
           DEFAULT: "var(--ink)",
           mid: "var(--ink-mid)",

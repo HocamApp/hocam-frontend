@@ -79,23 +79,6 @@
     --gold: #ffd100;
     --gold-ink: #4a3b00;
     --paper: #fbf6f6;
-    /* Text on a permanently ink surface: the coaching header band, and any
-       other band that stays dark in both themes.
-
-       Fixed, not themed. A band whose whole job is to separate a section by
-       colour cannot invert with the theme — flipped to cream in Night mode it
-       stops being the darkest thing on the page and starts being the
-       brightest, which is the opposite of what the band was placed to do. It
-       sits with --ink-on-light above, for the same reason.
-
-       They are tokens rather than `text-paper/65` because the brand values are
-       raw hex rather than the `<alpha-value>` triplet form Tailwind needs, so
-       an opacity modifier on them compiles to nothing at all and the class is
-       silently dropped. A measured value beats an opacity that lands wherever
-       the backdrop happens to put it: #9BAAAC on #02171A measures about
-       7.5:1. */
-    --on-ink: #fbf6f6;
-    --on-ink-mid: #9baaac;
     --ink: #02171a;
     --ink-mid: #5c6b6d;
     /* Fixed light campaign surfaces (pink-pale, white, and ink hero cards)
@@ -491,41 +474,18 @@
 }
 
 
-/* ------------------------------------------------------------------ bands --
+/* ------------------------------------------------------------------ band --
  *
- * DESIGN.md §7, device 01. Sections separate by colour as full-bleed bands,
- * not by nesting another bordered box: the colour change is the separation.
+ * Sections separate by colour: a full-bleed strip of a different surface, no
+ * border, no shadow, no wrapper around it. The colour change is the
+ * separation, and that is also the structural reason a page built this way
+ * never ends up as a grid of nested boxes.
  *
- * `.ys-band` in yemeksepeti.css already ships this cut, but it hardcodes the
- * pink fill and slants both edges at once, which is right for a marketing hero
- * and wrong for an app section that has to sit against the one above it. These
- * two carry the cut and nothing else, so the fill is an ordinary utility.
- *
- * The angle is `clamp(20px, 4vw, 56px)`, never a fixed pixel value: a flat
- * 46px slice on a 375px phone is proportionally more than twice the angle it
- * cuts on a desktop, so one number reads as a gentle tilt on a laptop and a
- * wedge on a handset.
- *
- * Both slanted edges descend left to right, matching `.ys-band`. Direction
- * stays the same down the whole page — alternating it stops reading as
- * structure and starts reading as decoration.
+ * Straight edges. The diagonal cut belongs to the landing page and stays
+ * there — `.ys-band` in yemeksepeti.css owns it. Inside the product the angle
+ * is decoration laid over a structure that already reads, and a signature
+ * repeated on every screen stops being a signature.
  */
-.band-cut-bottom {
-  --band-cut: clamp(20px, 4vw, 56px);
-
-  clip-path: polygon(0 0, 100% 0, 100% 100%, 0 calc(100% - var(--band-cut)));
-}
-
-.band-cut-top {
-  --band-cut: clamp(20px, 4vw, 56px);
-
-  clip-path: polygon(0 0, 100% var(--band-cut), 100% 100%, 0 100%);
-}
-
-/* Full bleed from inside a max-width container. Safe here because scrollbars
-   are removed globally at the top of this file, so `100vw` and the visible
-   viewport are the same number and the usual overflow this trick causes cannot
-   happen. */
 .band-full-bleed {
   margin-inline: calc(50% - 50vw);
   width: 100vw;

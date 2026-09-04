@@ -1005,27 +1005,27 @@ function TutorDashboardContent() {
         <TutorialNudgeBanner />
       </div>
       {/*
-        A full-bleed band with a diagonal cut, not a greeting floating on the
-        page background. DESIGN.md separates sections by colour rather than by
-        containers, and the diagonal is the device that does it. The card below
-        then overlaps the band's edge, which builds depth structurally instead
-        of with the drop shadow the elevation rules rule out.
+        A full-bleed band, and the page's colour at the point a tutor lands on
+        it. Sections separate by colour rather than by nesting another bordered
+        box, so this is a strip of a different surface with no border, no
+        shadow and no wrapper.
 
-        The band's fill and its text are the fixed tokens, never the themed
-        ones: a band that inverts in Night mode stops being the darkest thing
-        on the page and starts being the brightest, which is the opposite of
-        the job it was placed to do.
+        Pale, not ink. A dark slab reads as the heaviest thing on the screen
+        and then has to be answered by every surface under it; --pink-pale is
+        the palette's one large section surface and carries brand without
+        taking the page over. Straight edges: the diagonal is the landing
+        page's device and does not follow the user into the product.
       */}
-      <header className="band-cut-bottom bg-ink-fixed pt-10 text-on-ink sm:pt-14">
-        <div className="mx-auto flex w-full min-w-0 max-w-6xl items-start gap-4 px-4 pb-[calc(4rem+var(--band-cut))] sm:items-center">
-          <Avatar className="h-12 w-12 shrink-0 border border-on-ink-mid">
+      <header className="band-full-bleed bg-band-pale py-10 sm:py-14">
+        <div className="mx-auto flex w-full min-w-0 max-w-6xl items-start gap-4 px-4 sm:items-center">
+          <Avatar className="h-12 w-12 shrink-0 border border-line">
             {profile.profile_picture ? (
               <AvatarImage
                 src={profile.profile_picture}
                 alt={`${profile.name} ${profile.surname}`}
               />
             ) : null}
-            <AvatarFallback className="bg-on-ink text-body font-medium text-ink-fixed">
+            <AvatarFallback className="bg-ink text-body font-medium text-paper">
               {getInitials(profile.name, profile.surname)}
             </AvatarFallback>
           </Avatar>
@@ -1037,7 +1037,7 @@ function TutorDashboardContent() {
                 DESIGN.md rules out by name, and a tutor does not need their own
                 verification restated to them on their own panel. */}
             <h1 className="text-h2-m sm:text-h2">{getGreeting()}, {profile.name}</h1>
-            <p className="mt-1 text-small text-on-ink-mid">
+            <p className="mt-1 text-small text-ink-mid">
               {allTodayBookings.length > 0
                 ? `Bugün ${allTodayBookings.length} dersin var${nextBooking ? ` · İlki ${new Date(nextBooking.start_time).toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })}’da` : ""}.`
                 : "Bugün planlanmış dersin yok. Programını ve öğrencilerini buradan yönetebilirsin."}
@@ -1046,11 +1046,7 @@ function TutorDashboardContent() {
         </div>
       </header>
 
-      {/* Device 04, overlap: the content column breaks upward across the band
-          boundary. It earns its place because it creates depth without a
-          shadow, doing structurally what a drop shadow would otherwise do
-          visually. One per page, and this is it. */}
-      <div className="relative mx-auto -mt-12 w-full min-w-0 max-w-6xl px-4 pb-16 sm:-mt-16 sm:pb-24">
+      <div className="mx-auto w-full min-w-0 max-w-6xl px-4 pb-16 pt-8 sm:pb-24 sm:pt-12">
       {activeTab === "overview" ? (
         <div className="space-y-6">
       {/* No shadow on either branch below. These cards sit in the document
@@ -1210,7 +1206,7 @@ function TutorDashboardContent() {
           runs the same direction as the header band, and the negative bottom
           margin cancels the content column's own padding so the band is the
           last surface before the footer rather than stopping short of it. */}
-      <section className="band-full-bleed band-cut-top -mb-16 bg-band-pale pb-16 pt-[calc(4rem+var(--band-cut))] sm:-mb-24 sm:pb-24 sm:pt-[calc(6rem+var(--band-cut))]">
+      <section className="band-full-bleed -mb-16 bg-band-pale py-16 sm:-mb-24 sm:py-24">
         <div className="mx-auto w-full max-w-6xl px-4">
         <div className="mb-3 flex items-end justify-between"><div><h2 className="text-h2-m sm:text-h2">Ayarlar ve görünürlük</h2><p className="mt-1 text-small text-ink-mid">Sık değişmeyen işletme ayarların.</p></div></div>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
