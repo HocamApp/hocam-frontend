@@ -22,6 +22,13 @@ export interface ConsentState {
   is_minor: boolean | null;
   guardian_required_purposes: ConsentPurpose[];
   consents: Record<ConsentPurpose, boolean>;
+  /**
+   * The published KVKK application address, from the backend's
+   * KVKK_PUBLIC_CONTACT_EMAIL. Read it from here rather than hardcoding it:
+   * the two drifted apart once already, and a legal page advertising a
+   * mailbox nobody reads is worse than no address at all.
+   */
+  contact_email: string;
 }
 
 export interface RegistrationNoticeConfig {

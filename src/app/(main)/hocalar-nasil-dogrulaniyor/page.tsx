@@ -1,51 +1,70 @@
 import Link from "next/link";
+import { Check, X } from "@phosphor-icons/react/dist/ssr";
+
 import { PublicPageIllustration } from "@/components/shared/PublicPageIllustration";
 
 import { JsonLd } from "@/components/seo/JsonLd";
 import {
-  PublicSeoBreadcrumbs,
   PublicSeoChecklist,
   PublicSeoFaq,
   PublicSeoHero,
-  PublicSeoInfoCard,
+  PublicSeoRows,
   PublicSeoSection,
 } from "@/components/seo/PublicSeoPage";
-import {
-  breadcrumbJsonLd,
-  publicPageMetadata,
-  publicWebPageJsonLd,
-} from "@/lib/publicSeo";
+import { publicPageMetadata, publicWebPageJsonLd } from "@/lib/publicSeo";
 
 const path = "/hocalar-nasil-dogrulaniyor" as const;
 const title = "Hocalar Nasıl Doğrulanıyor?";
 const description =
   "Hocam'da hocaların öğrenci kimliği, YKS sonuç belgesi ve üniversite e-posta adresiyle yaptığı doğrulama başvurusunu öğrenin.";
-const breadcrumbs = [
-  { label: "YKS özel ders", href: "/yks-ozel-ders" },
-  { label: "Hoca doğrulama", href: path },
-] as const;
-
 export const metadata = publicPageMetadata({
   title,
   description,
   path,
 });
 
+function DisclosureList({
+  title,
+  tone,
+  items,
+}: {
+  title: string;
+  tone: "shown" | "hidden";
+  items: ReadonlyArray<string>;
+}) {
+  const Icon = tone === "shown" ? Check : X;
+
+  return (
+    <div className="rounded-card border border-line bg-[var(--surface)] p-6">
+      <h3 className="text-[19px] font-medium leading-[1.3] text-ink">{title}</h3>
+      <ul className="mt-4 space-y-2.5">
+        {items.map((item) => (
+          <li
+            key={item}
+            className="flex items-start gap-3 text-base leading-[1.6] text-ink-mid"
+          >
+            <Icon
+              className="mt-[3px] h-4 w-4 shrink-0 text-ink"
+              weight="regular"
+              aria-hidden="true"
+            />
+            <span>{item}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 export default function TutorVerificationPage() {
   return (
     <>
       <JsonLd
-        data={[
-          publicWebPageJsonLd({ path, name: title, description }),
-          breadcrumbJsonLd(breadcrumbs),
-        ]}
+        data={[publicWebPageJsonLd({ path, name: title, description })]}
       />
       <article className="mx-auto w-full max-w-[1248px] px-6 py-16 text-ink md:py-24">
-        <PublicSeoBreadcrumbs items={breadcrumbs} />
-
-        <div className="mt-6">
+        <div>
           <PublicSeoHero
-            eyebrow="DOĞRULANMIŞ HOCA PROFİLLERİ"
             illustration={<PublicPageIllustration kind="review" priority />}
             title="Herkese açık profilden önce belge incelemesi"
             description="Hoca adayları öğrenci kimliği, YKS sonuç belgesi ve .edu.tr uzantılı üniversite e-posta adresiyle doğrulama başvurusu yapar. Onay durumu herkese açık profilde doğrulama rozetiyle gösterilir."
@@ -75,32 +94,59 @@ export default function TutorVerificationPage() {
           title="Doğrulama durumu profilde nasıl görünür?"
           className="border-t"
         >
-          <div className="grid gap-6 md:grid-cols-2 md:[&>*:last-child]:col-span-2">
-            <PublicSeoInfoCard title="Başvuru">
-              Hoca adayı gerekli bilgileri kendi hesabındaki doğrulama alanından
-              gönderir.
-            </PublicSeoInfoCard>
-            <PublicSeoInfoCard title="İnceleme">
-              Başvuru incelenirken durum hoca hesabında beklemede olarak
-              görünür.
-            </PublicSeoInfoCard>
-            <PublicSeoInfoCard title="Herkese açık profil">
-              Öğrenciler yalnızca doğrulanmış ve tamamlanmış hoca profillerini
-              dizinde görür.
-            </PublicSeoInfoCard>
-          </div>
+          <PublicSeoRows
+            ordered
+            items={[
+              {
+                title: "Başvuru",
+                body: "Hoca adayı gerekli bilgileri kendi hesabındaki doğrulama alanından gönderir.",
+              },
+              {
+                title: "İnceleme",
+                body: "Başvuru incelenirken durum hoca hesabında beklemede olarak görünür.",
+              },
+              {
+                title: "Herkese açık profil",
+                body: "Öğrenciler yalnızca doğrulanmış ve tamamlanmış hoca profillerini hoca listesinde görür.",
+              },
+            ]}
+          />
         </PublicSeoSection>
 
         <PublicSeoSection
-          title="Gizlilik sınırı"
-          intro="Doğrulama belgeleri profil içeriği değildir. Herkese açık sayfalarda belge görüntüleri, dosya adresleri, özel iletişim bilgileri veya yönetim inceleme notları yayınlanmaz."
+          title="Profilde ne görünür, ne görünmez?"
+          intro="Doğrulama için gönderilen belgeler profil içeriği değildir. Herkese açık sayfada yalnızca hoca seçerken işine yarayan bilgiler yer alır."
           className="border-t"
         >
-          <div className="rounded-2xl border bg-muted/30 p-6 text-sm leading-7 text-muted-foreground">
-            Herkese açık profil, öğrencinin hoca seçerken kullanacağı ad,
-            üniversite, bölüm, YKS sıralaması, ders alanları, bio, ücret ve
-            değerlendirme bilgilerini gösterir. Doğrulamada kullanılan özel
-            belgeler bu sayfaların dışında tutulur.
+          {/* The old version stated the same rule twice, once as an intro and
+              once inside a tinted box, without ever naming what falls on
+              either side of the line. Two columns answer the question the
+              heading asks. */}
+          <div className="grid gap-4 md:grid-cols-2 md:gap-6">
+            <DisclosureList
+              title="Profilde görünür"
+              tone="shown"
+              items={[
+                "Ad",
+                "Üniversite ve bölüm",
+                "YKS sıralaması",
+                "Ders alanları",
+                "Hocanın kendi yazdığı tanıtım",
+                "Ders ücreti",
+                "Tamamlanan derslerden gelen değerlendirmeler",
+              ]}
+            />
+            <DisclosureList
+              title="Profilde görünmez"
+              tone="hidden"
+              items={[
+                "Öğrenci kimliği ve YKS sonuç belgesi",
+                "Yüklenen dosyaların adresleri",
+                "Üniversite e-posta adresi",
+                "Özel iletişim bilgileri",
+                "Yönetim inceleme notları",
+              ]}
+            />
           </div>
         </PublicSeoSection>
 
@@ -134,7 +180,7 @@ export default function TutorVerificationPage() {
                       href="/tutors"
                       className="text-primary hover:underline"
                     >
-                      hoca dizininde
+                      hoca listesinde
                     </Link>{" "}
                     listelenir.
                   </>

@@ -1,63 +1,46 @@
 import Link from "next/link";
 
-export const metadata = {
-  title: "Aydınlatma Metni",
-  description:
-    "HOCAM’ın kişisel verilerini hangi amaçla işlediğini, kimlere aktardığını ve haklarını anlatan KVKK aydınlatma metni.",
-};
+import {
+  LegalArticle,
+  LegalDocHeader,
+  LegalNote,
+  LegalSection,
+} from "@/components/legal/LegalDocument";
+import { legalPageMetadata } from "@/lib/legalDocuments";
 
 // Kept in sync with hocam-backend/docs/kvkk/01-genel-aydinlatma-metni.md.
 // The document is the source of truth; this page renders it.
-const VERSION = "v1.1";
-const UPDATED_AT = "23 Ağustos 2026";
-
-function Section({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <section className="space-y-3">
-      <h2 className="text-xl font-semibold">{title}</h2>
-      <div className="space-y-3 text-sm leading-7">{children}</div>
-    </section>
-  );
-}
+export const metadata = legalPageMetadata("aydinlatma-metni");
 
 export default function AydinlatmaMetniPage() {
   return (
-    <main className="mx-auto w-full max-w-3xl px-4 py-12">
-      <h1 className="text-3xl font-bold">
-        Kişisel Verilerin Korunması Hakkında Aydınlatma Metni
-      </h1>
-      <p className="mt-2 text-sm text-muted-foreground">
-        Sürüm {VERSION} · {UPDATED_AT}
-      </p>
+    <LegalArticle>
+      <LegalDocHeader slug="aydinlatma-metni" />
 
-      <div className="mt-6 rounded-lg border bg-muted/40 p-4 text-sm leading-6">
+      <div className="mt-6">
+        <LegalNote>
         Bu metin seni bilgilendirir, senden onay istemez. Onayın gereken
         durumlarda ayrıca ve açıkça sorarız. Daha önce verdiğin onayları{" "}
-        <Link href="/profile/gizlilik" className="inline-flex min-h-6 items-center text-primary underline">
+        <Link href="/profile/gizlilik" className="inline-flex min-h-6 items-center font-medium text-ink underline underline-offset-2 transition-colors duration-[var(--duration-state)] hover:text-pink">
           Gizlilik ve Verilerim
         </Link>{" "}
         sayfasından yönetebilirsin.
+        </LegalNote>
       </div>
 
       <div className="mt-10 space-y-10">
-        <Section title="1. Kimiz">
+        <LegalSection title="1. Kimiz">
           <p>
             HOCAM, YKS’ye hazırlanan öğrencilerle doğrulanmış üniversite
             öğrencisi öğretmenleri buluşturan çevrimiçi bir özel ders
             platformudur. Platform işletmecisinin tam yasal kimliği ve
             tebligata elverişli adresi işletme kuruluş işlemleri tamamlandıktan
             sonra bu bölümde yayımlanacaktır. Bu sürede kişisel veri
-            başvuruları için kvkk@hocamozelders.com adresi kullanılır.
+            başvuruları için iletisim@hocamozelders.com adresi kullanılır.
           </p>
-        </Section>
+        </LegalSection>
 
-        <Section title="2. Hangi verilerini işliyoruz">
+        <LegalSection title="2. Hangi verilerini işliyoruz">
           <p>
             <strong>Herkes için:</strong> e-posta adresin, adın ve soyadın,
             hesap tercihlerin, bildirim ayarların, giriş ve işlem güvenliği
@@ -82,9 +65,9 @@ export default function AydinlatmaMetniPage() {
             Görüntülü derslerinin ses ve görüntü kaydını almıyoruz. Yalnızca
             derse kimin ne zaman katıldığını tutuyoruz.
           </p>
-        </Section>
+        </LegalSection>
 
-        <Section title="3. Neden işliyoruz">
+        <LegalSection title="3. Neden işliyoruz">
           <p>
             Hesabını oluşturmak, dersini gerçekleştirmek, ödeme ve iade
             işlemlerini yürütmek, faturaları kanunun zorunlu kıldığı süre
@@ -105,9 +88,9 @@ export default function AydinlatmaMetniPage() {
             tamamlanmadan bu işlemler etkinleştirilmez. Yeni açık rıza toplama,
             her faaliyet için doğru hukuki dayanak doğrulanana kadar kapalıdır.
           </p>
-        </Section>
+        </LegalSection>
 
-        <Section title="4. Kimlerle paylaşıyoruz">
+        <LegalSection title="4. Kimlerle paylaşıyoruz">
           <p>
             Ders ilişkisi kurduğun öğretmen veya öğrenci, yalnızca o ilişki için
             gereken bilgilerini görür. Öğrenciler birbirinin verisini görmez.
@@ -119,9 +102,9 @@ export default function AydinlatmaMetniPage() {
             halinde yapay zekâ asistanı) ve Resend (e-posta). Ayrıca kanunen
             talep edilmesi halinde yetkili kurumlarla.
           </p>
-        </Section>
+        </LegalSection>
 
-        <Section title="5. Yurt dışına aktarım">
+        <LegalSection title="5. Yurt dışına aktarım">
           <p>
             Yukarıdaki sağlayıcıların bazı altyapı, destek ve alt-işleyenleri
             Türkiye dışında olabilir; bu hizmetler kullanıldığında verilerin
@@ -136,9 +119,9 @@ export default function AydinlatmaMetniPage() {
             doğrulama tamamlanmadan kesin bir uygunluk veya mekanizma beyanında
             bulunmuyor ve dışa veri gönderen yeni özellikleri açmıyoruz.
           </p>
-        </Section>
+        </LegalSection>
 
-        <Section title="6. Ne kadar saklıyoruz">
+        <LegalSection title="6. Ne kadar saklıyoruz">
           <p>
             Hesap bilgilerin hesabın açık olduğu sürece; ders ve rezervasyon
             kayıtların 10 yıl; mesajların hesap kapanışından itibaren 1 yıl;
@@ -152,9 +135,9 @@ export default function AydinlatmaMetniPage() {
             ticaret mevzuatı gereği silme talebiyle kaldırılamaz. Süre dolduğunda
             veriler silinir, yok edilir veya anonim hale getirilir.
           </p>
-        </Section>
+        </LegalSection>
 
-        <Section title="7. Haklarım neler">
+        <LegalSection title="7. Haklarım neler">
           <p>
             Verilerinin işlenip işlenmediğini öğrenme, bilgi talep etme, amaca
             uygun kullanılıp kullanılmadığını öğrenme, aktarıldığı üçüncü
@@ -164,18 +147,18 @@ export default function AydinlatmaMetniPage() {
             talep etme haklarına sahipsin.
           </p>
           <p>
-            Başvurunu her zaman kvkk@hocamozelders.com adresine; çevrimiçi kanal
+            Başvurunu her zaman iletisim@hocamozelders.com adresine; çevrimiçi kanal
             etkinse ayrıca{" "}
-            <Link href="/profile/gizlilik" className="inline-flex min-h-6 items-center text-primary underline">
+            <Link href="/profile/gizlilik" className="inline-flex min-h-6 items-center font-medium text-ink underline underline-offset-2 transition-colors duration-[var(--duration-state)] hover:text-pink">
               Gizlilik ve Verilerim
             </Link>{" "}
             sayfasından iletebilirsin. En geç 30 gün içinde cevaplarız.
             Cevabımızı yetersiz bulursan Kişisel Verileri Koruma Kurulu’na
             şikâyette bulunabilirsin.
           </p>
-        </Section>
+        </LegalSection>
 
-        <Section title="8. 18 yaşından küçüksen">
+        <LegalSection title="8. 18 yaşından küçüksen">
           <p>
             Çocuk kullanıcıların hesap sahipliği, yaş tespiti ve veli/vasi
             doğrulama yöntemi hukuki inceleme altındadır. Bu yöntem
@@ -187,17 +170,17 @@ export default function AydinlatmaMetniPage() {
             işlevler korunur. Velin veya vasin, yetkisini doğruladıktan sonra
             senin adına KVKK kapsamındaki hakları kullanabilir.
           </p>
-        </Section>
+        </LegalSection>
 
-        <Section title="9. Özel nitelikli veriler">
+        <LegalSection title="9. Özel nitelikli veriler">
           <p>
             Sağlık, inanç, etnik köken gibi özel nitelikli verilerini toplamıyor
             ve istemiyoruz. Mesaj, destek talebi veya yapay zekâ asistanı gibi
             serbest yazı alanlarına bu tür bilgileri yazmamanı rica ederiz.
           </p>
-        </Section>
+        </LegalSection>
 
-        <Section title="10. Güvenlik">
+        <LegalSection title="10. Güvenlik">
           <p>
             Rol bazlı erişim denetimi, şifreleme, şifrelerin geri döndürülemez
             saklanması, belgelere yalnızca kısa süreli imzalı bağlantılarla
@@ -205,23 +188,24 @@ export default function AydinlatmaMetniPage() {
             uygularız. Bir ihlal yaşanırsa 72 saat içinde Kurul’a, sana ise en
             kısa sürede bildiririz.
           </p>
-        </Section>
+        </LegalSection>
       </div>
 
-      <div className="mt-12 flex flex-wrap gap-4 text-sm">
-        <Link href="/kvkk/cerez-politikasi" className="inline-flex min-h-6 items-center text-primary underline">
+
+      <div className="mt-10 flex flex-wrap gap-x-5 gap-y-2 border-t border-line pt-6 text-small">
+        <Link href="/kvkk/cerez-politikasi" className="inline-flex min-h-6 items-center font-medium text-ink underline underline-offset-2 transition-colors duration-[var(--duration-state)] hover:text-pink">
           Çerez Politikası
         </Link>
-        <Link href="/kvkk/analitik" className="inline-flex min-h-6 items-center text-primary underline">
+        <Link href="/kvkk/analitik" className="inline-flex min-h-6 items-center font-medium text-ink underline underline-offset-2 transition-colors duration-[var(--duration-state)] hover:text-pink">
           Analitik Aydınlatma Metni
         </Link>
-        <Link href="/kvkk/hoca-dogrulama" className="inline-flex min-h-6 items-center text-primary underline">
+        <Link href="/kvkk/hoca-dogrulama" className="inline-flex min-h-6 items-center font-medium text-ink underline underline-offset-2 transition-colors duration-[var(--duration-state)] hover:text-pink">
           Hoca Doğrulama Aydınlatma Metni
         </Link>
-        <Link href="/" className="inline-flex min-h-6 items-center text-primary underline">
+        <Link href="/" className="inline-flex min-h-6 items-center font-medium text-ink underline underline-offset-2 transition-colors duration-[var(--duration-state)] hover:text-pink">
           Hocam’a dön
         </Link>
       </div>
-    </main>
+    </LegalArticle>
   );
 }

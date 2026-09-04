@@ -149,7 +149,7 @@ export default async function MathematicsPrivateLessonPage({
                 label={
                   tutors.length > 0
                     ? `doğrulanmış ${config.examType} Matematik hocası`
-                    : "profiller hoca dizininden yükleniyor"
+                    : "profiller hoca listesinden yükleniyor"
                 }
               />
               <PublicSeoStat

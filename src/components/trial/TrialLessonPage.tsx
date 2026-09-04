@@ -57,7 +57,6 @@ function TrialAgenda() {
         </AnimatePresence>
       </div>
       <div className={styles.track} aria-hidden="true"><motion.span animate={{ width: `${step.progress}%` }} transition={{ duration: reducedMotion ? 0 : 0.45, ease: "easeInOut" }} /></div>
-      <p className={styles.agendaNote}>Bu akış bir öneri. {TRIAL_MINUTES} dakikayı hocanla ihtiyacına göre planlayabilirsin.</p>
     </div>
   );
 }
@@ -67,11 +66,9 @@ export function TrialLessonPage() {
     <article className={styles.page}>
       <section className={`${styles.shell} ${styles.hero}`} aria-labelledby="trial-title">
         <div className={styles.heroCopy}>
-          <p className={styles.eyebrow}>Ücretsiz deneme dersi</p>
           <h1 id="trial-title">Hocanı tanı.<br />Derse birlikte<br className={styles.desktopBreak} /> karar ver.</h1>
           <p className={styles.lede}>{TRIAL_MINUTES} dakika boyunca sorularını sor, bir konuya birlikte bak ve hocanın anlatımını tanı. Devam edip etmeyeceğine sonra karar ver.</p>
           <Link href={tutorListHref()} className={styles.primary}>Hoca listesine git <ArrowRight size={20} weight="regular" aria-hidden="true" /></Link>
-          <p className={styles.heroNote}>Ödeme veya paket hakkı gerekmez.</p>
         </div>
         <TrialAgenda />
       </section>
@@ -79,9 +76,7 @@ export function TrialLessonPage() {
       <section className={styles.journeyBand} aria-labelledby="trial-journey">
         <div className={`${styles.shell} ${styles.split}`}>
           <div className={styles.sectionIntro}>
-            <p className={styles.eyebrow}>Nasıl çalışır?</p>
             <h2 id="trial-journey">İlk derse giden yol.</h2>
-            <p className={styles.lede}>Seçtiğin hocadan müsait bir saat için talep oluştur. Onaydan sonra, ders zamanı Hocam’da buluşun.</p>
             <div className={styles.journeyArtwork}><PublicPageIllustration kind="meet" /></div>
           </div>
           <ol className={styles.steps}>
@@ -98,13 +93,7 @@ export function TrialLessonPage() {
       <section className={`${styles.shell} ${styles.rules}`} aria-labelledby="trial-rules">
         <div className={styles.split}>
           <div className={styles.sectionIntro}>
-            <p className={styles.eyebrow}>Deneme hakların</p>
             <h2 id="trial-rules">Bir ayda {MONTHLY_TRIAL_LIMIT} farklı<br />hocayla tanış.</h2>
-            <p className={styles.lede}>Her takvim ayında en fazla {MONTHLY_TRIAL_LIMIT} deneme talebi oluşturabilirsin. Her hocayla deneme hakkın bir kezdir.</p>
-            <div className={styles.allowance} aria-label={`Takvim ayı başına ${MONTHLY_TRIAL_LIMIT} deneme hakkı`}>
-              <div className={styles.allowanceSlots} aria-hidden="true">{Array.from({ length: MONTHLY_TRIAL_LIMIT }, (_, index) => <span key={index}>{index + 1}</span>)}</div>
-              <p>Her biri {TRIAL_MINUTES} dakika.<br /><strong>Her biri ücretsiz.</strong></p>
-            </div>
             <p className={styles.ruleNote}>Bekleyen talepler de limitten sayılır. İptal edilen veya süresi dolan talepler hakkını tüketmez.</p>
           </div>
           <div className={styles.faq}>

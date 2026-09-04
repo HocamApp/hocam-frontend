@@ -7,9 +7,21 @@ import { useAuth } from "@/hooks/useAuth";
 
 // Routes a not-yet-activated tutor may still use: setup/onboarding (incl. the
 // tutorial link target), their profile (required completion + account
-// settings) and support. Everything else redirects into onboarding until the
-// live-lesson tutorial is completed.
-const ALLOWED_PREFIXES = ["/tutor", "/support", "/profile"];
+// settings), support, and the published legal texts. Everything else
+// redirects into onboarding until the live-lesson tutorial is completed.
+//
+// The legal prefixes are not a convenience. VerificationForm links straight
+// at /kvkk/hoca-dogrulama, so gating it would hide the tutor verification
+// notice from the only population it is written for.
+const ALLOWED_PREFIXES = [
+  "/tutor",
+  "/support",
+  "/profile",
+  "/kvkk",
+  "/iptal-ve-iade",
+  "/kullanim-kosullari",
+  "/mesafeli-satis-sozlesmesi",
+];
 
 // Exact-segment match: "/tutor" must NOT allow "/tutors" (the public
 // marketplace listing lives there) or "/tutorabc" — only "/tutor" itself or

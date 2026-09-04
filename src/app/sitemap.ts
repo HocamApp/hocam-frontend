@@ -4,6 +4,7 @@ import {
   absoluteUrl,
   fetchAllPublicTutors,
 } from "@/lib/seo";
+import { LEGAL_DOCUMENTS } from "@/lib/legalDocuments";
 import { PUBLIC_SEO_ROUTES } from "@/lib/publicSeo";
 
 export const revalidate = 3_600;
@@ -24,6 +25,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
           : route.includes("matematik-ozel-ders")
             ? 0.9
             : 0.7,
+    })),
+    // Legal texts come from their own registry rather than
+    // PUBLIC_SEO_ROUTES: that list is search-intent landing pages, and its
+    // test asserts the array exactly.
+    ...LEGAL_DOCUMENTS.map((doc) => ({
+      url: absoluteUrl(doc.href),
+      lastModified: doc.updatedAtIso ? new Date(doc.updatedAtIso) : undefined,
+      changeFrequency: "yearly" as const,
+      priority: 0.3,
     })),
   ];
 

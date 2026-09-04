@@ -10,6 +10,7 @@ import {
   type Icon,
 } from "@phosphor-icons/react";
 
+import { getLegalDocument } from "@/lib/legalDocuments";
 import { tutorListHref } from "@/lib/tutorDirectoryLinks";
 
 import { FAQ_SECTION_ID } from "./ysAppNav";
@@ -23,11 +24,15 @@ import { AppStoreBadge, GooglePlayBadge } from "@/components/ui/store-badges";
  * Two rules shape what is in here:
  *
  * 1. **An entry is only a link if the destination exists and an anonymous
- *    visitor can reach it.** Headings the product will eventually need but does
- *    not have yet (Kullanım Koşulları, Mesafeli Satış,
- *    İptal ve İade) render as plain text rather than links to nowhere.
+ *    visitor can reach it.** Every legal text listed here now has a page, so
+ *    nothing in this footer is inert copy any more.
  *    `/support` exists but is auth-gated, so linking it here would bounce an
  *    anonymous reader to `/login` — it is deliberately absent.
+ * 3. **The legal column is a shortlist, not the index.** Every published legal
+ *    text is reachable from the sidebar on `/kvkk`; the five here are the
+ *    ones a reader looks for by name. Slugs are listed explicitly rather than
+ *    mapped over `LEGAL_DOCUMENTS` so the column cannot silently grow when a
+ *    new document is registered.
  * 2. **Nothing here claims a channel Hocam does not own.** There are no real
  *    social accounts yet, so the icons are decoration: no href, not focusable,
  *    hidden from assistive tech. Give a `SOCIAL_LINKS` entry an `href` and it
@@ -38,6 +43,12 @@ import { AppStoreBadge, GooglePlayBadge } from "@/components/ui/store-badges";
 type FooterEntry = { label: string; href?: string };
 
 type FooterColumn = { heading: string; entries: FooterEntry[] };
+
+/** Label and href straight from the registry, so titles cannot drift. */
+function legalEntry(slug: Parameters<typeof getLegalDocument>[0]): FooterEntry {
+  const doc = getLegalDocument(slug);
+  return { label: doc.navLabel ?? doc.title, href: doc.href };
+}
 
 const FOOTER_COLUMNS: FooterColumn[] = [
   {
@@ -67,23 +78,21 @@ const FOOTER_COLUMNS: FooterColumn[] = [
     ],
   },
   {
-    heading: "KVKK ve gizlilik",
+    heading: "Yasal Metinler",
     entries: [
+      // /kvkk redirects onto the aydınlatma metni, so a separate entry for
+      // that document would be a second link to the same page.
       { label: "KVKK ve Gizlilik", href: "/kvkk" },
-      { label: "Aydınlatma Metni", href: "/kvkk/aydinlatma-metni" },
-      { label: "Çerez Politikası", href: "/kvkk/cerez-politikasi" },
-      { label: "Analitik Aydınlatma Metni", href: "/kvkk/analitik" },
-      { label: "Öğrenci Gelişim Kayıtları", href: "/kvkk/ogrenci-gelisim-kayitlari" },
-      { label: "Veli Onayı", href: "/kvkk/veli-onayi" },
+      legalEntry("kullanim-kosullari"),
+      legalEntry("mesafeli-satis-sozlesmesi"),
+      legalEntry("cerez-politikasi"),
+      legalEntry("iptal-ve-iade"),
     ],
   },
 ];
 
 const LEGAL_ENTRIES: FooterEntry[] = [
-  { label: "Kullanım Koşulları" },
-  { label: "Mesafeli Satış Sözleşmesi" },
-  { label: "İptal ve İade Koşulları" },
-  { label: "KVKK başvuru: kvkk@hocamozelders.com", href: "mailto:kvkk@hocamozelders.com" },
+  { label: "KVKK başvuru: iletisim@hocamozelders.com", href: "mailto:iletisim@hocamozelders.com" },
 ];
 
 const SOCIAL_LINKS: { id: string; label: string; Icon: Icon; href?: string }[] = [

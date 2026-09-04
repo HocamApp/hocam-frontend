@@ -35,7 +35,7 @@ export function GuardianApprovalConfirm() {
           <p className="font-semibold">Onayınız kaydedildi.</p>
           <p>
             Bu onayı istediğiniz an geri alabilirsiniz. Geri almak için
-            kvkk@hocamozelders.com adresine yazmanız yeterli. Onayı geri
+            iletisim@hocamozelders.com adresine yazmanız yeterli. Onayı geri
             aldığınızda, bu onaya bağlı tüm izinler de birlikte kalkar.
           </p>
         </div>

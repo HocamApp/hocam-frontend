@@ -75,7 +75,7 @@ export default async function YksPrivateLessonPage() {
                 label={
                   tutors.length > 0
                     ? "doğrulanmış ve herkese açık hoca profili"
-                    : "hoca profilleri dizinde listeleniyor"
+                    : "hoca profilleri listeye yükleniyor"
                 }
               />
               <PublicSeoStat
@@ -155,7 +155,7 @@ export default async function YksPrivateLessonPage() {
         {featuredTutors.length > 0 && (
           <PublicSeoSection
             title="Doğrulanmış YKS hocaları"
-            intro="Aşağıdaki profiller herkese açık hoca dizininden alınır. Güncel ders alanı, ücret ve uygunluk için ilgili profili incele."
+            intro="Aşağıdaki profiller herkese açık hoca listesinden alınır. Güncel ders alanı, ücret ve uygunluk için ilgili profili incele."
             className="border-t"
           >
             <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">

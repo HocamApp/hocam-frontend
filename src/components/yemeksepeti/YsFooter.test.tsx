@@ -68,3 +68,34 @@ test("footer shortcuts land on the filtered home directory and trial guide", asy
   assert.match(html, /href="\/\?subject=Matematik&amp;exam_type=AYT#ys-tutor-list-title"/);
   assert.match(html, /href="\/ucretsiz-deneme-dersi"/);
 });
+
+test("every legal footer entry is a real link, none inert", async () => {
+  // Every published legal text stays reachable from the sidebar on /kvkk.
+  // The footer carries only the ones a reader looks for by name, and
+  // /kvkk/veli-onayi in particular must not be here: it is a token-gated
+  // confirmation flow, so a footer link lands every visitor on an error.
+  pathname = "/iletisim";
+  const { YsFooter } = await import("./YsFooter");
+  const html = renderToStaticMarkup(<YsFooter />);
+
+  assert.match(html, />Yasal Metinler</);
+  assert.doesNotMatch(html, /KVKK ve gizlilik/);
+
+  assert.match(html, /href="\/kvkk"/);
+  assert.match(html, /href="\/kullanim-kosullari"/);
+  assert.match(html, /href="\/mesafeli-satis-sozlesmesi"/);
+  assert.match(html, /href="\/kvkk\/cerez-politikasi"/);
+  assert.match(html, /href="\/iptal-ve-iade"/);
+
+  // /kvkk redirects onto the aydınlatma metni, so linking that document
+  // separately would put two links to the same page side by side.
+  assert.doesNotMatch(html, /href="\/kvkk\/aydinlatma-metni"/);
+
+  assert.doesNotMatch(html, /href="\/kvkk\/veli-onayi"/);
+  assert.doesNotMatch(html, /href="\/kvkk\/analitik"/);
+  assert.doesNotMatch(html, /href="\/kvkk\/ogrenci-gelisim-kayitlari"/);
+
+  // Nothing in the legal footer is inert copy any more.
+  assert.doesNotMatch(html, /<span[^>]*>Mesafeli Satış Sözleşmesi<\/span>/);
+  assert.doesNotMatch(html, /<span[^>]*>Kullanım Koşulları<\/span>/);
+});
