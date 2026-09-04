@@ -83,7 +83,6 @@ import { LessonMaterialsDialog } from "@/components/lessons/LessonMaterialsDialo
 import { ParticipantAvatar } from "@/components/messaging/ParticipantAvatar";
 import { AvailabilityCalendar } from "@/components/tutors/AvailabilityCalendar";
 import { TutorStudentPrivateWorkspace } from "@/components/tutors/TutorStudentPrivateWorkspace";
-import { VerifiedTutorMark } from "@/components/tutors/VerifiedTutorMark";
 import { ReviewCard } from "@/components/tutors/ReviewCard";
 import { SubjectRatingBreakdown } from "@/components/tutors/SubjectRatingBreakdown";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
@@ -1020,13 +1019,13 @@ function TutorDashboardContent() {
             </AvatarFallback>
           </Avatar>
           <div>
-            <div className="flex items-center gap-2">
-              {/* No emoji. DESIGN.md bans them outright, product copy
-                  included, and a waving hand on a working panel is the
-                  clearest place that rule earns its keep. */}
-              <h1 className="text-h2-m sm:text-h2">{getGreeting()}, {profile.name}</h1>
-              <VerifiedTutorMark verified={profile.is_verified} />
-            </div>
+            {/* No emoji. DESIGN.md bans them outright, product copy included,
+                and a waving hand on a working panel is the clearest place that
+                rule earns its keep. No verified mark either: the one that was
+                here was Lucide's BadgeCheck, the scalloped Twitter rosette
+                DESIGN.md rules out by name, and a tutor does not need their own
+                verification restated to them on their own panel. */}
+            <h1 className="text-h2-m sm:text-h2">{getGreeting()}, {profile.name}</h1>
             <p className="mt-1 text-small text-ink-mid">
               {allTodayBookings.length > 0
                 ? `Bugün ${allTodayBookings.length} dersin var${nextBooking ? ` · İlki ${new Date(nextBooking.start_time).toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })}’da` : ""}.`
@@ -1055,7 +1054,6 @@ function TutorDashboardContent() {
                   className="h-16 w-16 shrink-0 rounded-input"
                 />
                 <div className="min-w-0">
-                  <p className="text-label text-ink-mid">Sıradaki dersin</p>
                   <p className="mt-1 truncate text-h3">{nextBooking.subject.name}</p>
                   <p className="mt-1 truncate text-body text-ink-mid">{nextBookingStudentName} · {nextBooking.duration_minutes} dk</p>
                 </div>
@@ -1108,7 +1106,6 @@ function TutorDashboardContent() {
         <Card>
           <CardContent className="flex flex-col items-start justify-between gap-5 p-6 sm:flex-row sm:items-center sm:p-8">
             <div>
-              <p className="text-label text-ink-mid">Sıradaki dersin</p>
               <h2 className="mt-2 text-h2-m sm:text-h2">Takvimin şu anda sakin</h2>
               <p className="mt-2 max-w-xl text-small text-ink-mid">Müsaitlik saatlerini güncel tutarak öğrencilerin sana uygun zamanlardan rezervasyon yapmasını sağlayabilirsin.</p>
             </div>
