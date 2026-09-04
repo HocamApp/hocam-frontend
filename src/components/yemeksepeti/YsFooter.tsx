@@ -96,10 +96,12 @@ const LEGAL_ENTRIES: FooterEntry[] = [
 ];
 
 const SOCIAL_LINKS: { id: string; label: string; Icon: Icon; href?: string }[] = [
-  { id: "instagram", label: "Instagram", Icon: InstagramLogo },
+  // The share link carried an `igsi` tracking parameter; the bare profile URL
+  // is the same destination without it.
+  { id: "instagram", label: "Instagram", Icon: InstagramLogo, href: "https://www.instagram.com/hocam.co" },
   { id: "x", label: "X", Icon: XLogo },
   { id: "youtube", label: "YouTube", Icon: YoutubeLogo },
-  { id: "linkedin", label: "LinkedIn", Icon: LinkedinLogo },
+  { id: "linkedin", label: "LinkedIn", Icon: LinkedinLogo, href: "https://www.linkedin.com/company/hocamozelders/" },
 ];
 
 function FooterLink({ entry }: { entry: FooterEntry }) {
@@ -194,11 +196,14 @@ export function YsFooter() {
                   target="_blank"
                   rel="noreferrer noopener"
                 >
-                  <Icon className="h-5 w-5" />
+                  <Icon className="h-6 w-6" />
                 </a>
               ) : (
-                <span key={id} className="ys-icon-btn">
-                  <Icon className="h-5 w-5" />
+                /* No account yet: decoration, not a destination. The group is
+                   no longer aria-hidden now that two icons are real links, so
+                   the inert ones have to hide themselves. */
+                <span key={id} className="ys-icon-btn" aria-hidden="true">
+                  <Icon className="h-6 w-6" />
                 </span>
               ),
             )}

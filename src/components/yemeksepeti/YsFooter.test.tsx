@@ -99,3 +99,24 @@ test("every legal footer entry is a real link, none inert", async () => {
   assert.doesNotMatch(html, /<span[^>]*>Mesafeli Satış Sözleşmesi<\/span>/);
   assert.doesNotMatch(html, /<span[^>]*>Kullanım Koşulları<\/span>/);
 });
+
+test("only the social accounts that exist are links", async () => {
+  // Rule 2 in the footer docblock: nothing here claims a channel Hocam does
+  // not own. Instagram and LinkedIn are real; X and YouTube are decoration
+  // until an account exists, so they stay unlinked and hidden from assistive
+  // tech even though the group around them is now exposed.
+  pathname = "/iletisim";
+  const { YsFooter } = await import("./YsFooter");
+  const html = renderToStaticMarkup(<YsFooter />);
+
+  assert.match(html, /href="https:\/\/www\.instagram\.com\/hocam\.co"/);
+  assert.match(html, /href="https:\/\/www\.linkedin\.com\/company\/hocamozelders\/"/);
+  // The share URL's tracking parameter has no business in a footer link.
+  assert.doesNotMatch(html, /igsi=/);
+
+  assert.doesNotMatch(html, /href="[^"]*(twitter|x\.com|youtube)/i);
+  assert.match(html, /<span[^>]*aria-hidden="true"[^>]*>/);
+
+  // External links open away from the app and must not hand over the opener.
+  assert.match(html, /rel="noreferrer noopener"/);
+});
