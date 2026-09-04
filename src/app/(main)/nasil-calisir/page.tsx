@@ -3,27 +3,17 @@ import { PublicPageIllustration } from "@/components/shared/PublicPageIllustrati
 
 import { JsonLd } from "@/components/seo/JsonLd";
 import {
-  PublicSeoBreadcrumbs,
   PublicSeoFaq,
   PublicSeoHero,
-  PublicSeoInfoCard,
+  PublicSeoRows,
   PublicSeoSection,
 } from "@/components/seo/PublicSeoPage";
-import {
-  breadcrumbJsonLd,
-  publicPageMetadata,
-  publicWebPageJsonLd,
-} from "@/lib/publicSeo";
+import { publicPageMetadata, publicWebPageJsonLd } from "@/lib/publicSeo";
 
 const path = "/nasil-calisir" as const;
 const title = "Hocam Nasıl Çalışır?";
 const description =
   "Doğrulanmış hoca profillerini inceleme, ders seçimi, rezervasyon ve online ders sürecindeki temel adımları öğrenin.";
-const breadcrumbs = [
-  { label: "YKS özel ders", href: "/yks-ozel-ders" },
-  { label: "Nasıl çalışır?", href: path },
-] as const;
-
 export const metadata = publicPageMetadata({
   title,
   description,
@@ -34,17 +24,11 @@ export default function HowItWorksPage() {
   return (
     <>
       <JsonLd
-        data={[
-          publicWebPageJsonLd({ path, name: title, description }),
-          breadcrumbJsonLd(breadcrumbs),
-        ]}
+        data={[publicWebPageJsonLd({ path, name: title, description })]}
       />
       <article className="mx-auto w-full max-w-[1248px] px-6 py-16 text-ink md:py-24">
-        <PublicSeoBreadcrumbs items={breadcrumbs} />
-
-        <div className="mt-6">
+        <div>
           <PublicSeoHero
-            eyebrow="HOCAM'DA DERS SÜRECİ"
             illustration={<PublicPageIllustration kind="lesson" priority />}
             title="Hoca aramadan online derse kadar"
             description={description}
@@ -65,7 +49,7 @@ export default function HowItWorksPage() {
               {
                 number: "1",
                 title: "Ders ve hoca ara",
-                text: "Hoca dizininde sınav türü, ders, fiyat, YKS sıralaması, üniversite ve uygunluk filtrelerini kullan.",
+                text: "Hoca listesinde sınav türü, ders, fiyat, YKS sıralaması, üniversite ve uygunluk filtrelerini kullan.",
               },
               {
                 number: "2",
@@ -105,20 +89,22 @@ export default function HowItWorksPage() {
           title="Profil karşılaştırmasında kullanabileceğin bilgiler"
           className="border-t"
         >
-          <div className="grid gap-6 md:grid-cols-2 md:[&>*:last-child]:col-span-2">
-            <PublicSeoInfoCard title="Akademik bilgiler">
-              Üniversite, bölüm, YKS sıralaması ve doğrulanmış profil rozeti
-              birlikte gösterilir.
-            </PublicSeoInfoCard>
-            <PublicSeoInfoCard title="Ders bilgileri">
-              Hoca profilinde sınav türüne göre verdiği dersleri ve kendi
-              açıklamasını yayınlar.
-            </PublicSeoInfoCard>
-            <PublicSeoInfoCard title="Ders geçmişi">
-              Tamamlanan ders sayısı ve bu derslerden gelen öğrenci
-              değerlendirmeleri profilde yer alır.
-            </PublicSeoInfoCard>
-          </div>
+          <PublicSeoRows
+            items={[
+              {
+                title: "Akademik bilgiler",
+                body: "Üniversite, bölüm, YKS sıralaması ve doğrulanmış profil rozeti birlikte gösterilir.",
+              },
+              {
+                title: "Ders bilgileri",
+                body: "Hoca profilinde sınav türüne göre verdiği dersleri ve kendi açıklamasını yayınlar.",
+              },
+              {
+                title: "Ders geçmişi",
+                body: "Tamamlanan ders sayısı ve bu derslerden gelen öğrenci değerlendirmeleri profilde yer alır.",
+              },
+            ]}
+          />
         </PublicSeoSection>
 
         <PublicSeoSection
@@ -152,7 +138,7 @@ export default function HowItWorksPage() {
                       href="/tutors"
                       className="text-primary hover:underline"
                     >
-                      hoca dizinine
+                      hoca listesine
                     </Link>{" "}
                     geçebilirsin.
                   </>

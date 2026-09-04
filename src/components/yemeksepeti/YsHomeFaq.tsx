@@ -112,7 +112,7 @@ const YS_HOME_FAQ_ITEMS: SupportAccordionSectionItem[] = [
     content: (
       <p className="text-base leading-7">
         Hoca adayları öğrenci kimliği, YKS sonuç belgesi ve .edu.tr uzantılı üniversite e-posta
-        adresiyle başvurur. Dizinde yalnızca doğrulanmış ve yayına açık profiller listelenir.
+        adresiyle başvurur. Hoca listesinde yalnızca doğrulanmış ve yayına açık profiller listelenir.
         Doğrulamada kullanılan belgeler herkese açık profilde yayınlanmaz. Ayrıntıları{" "}
         <Link href="/hocalar-nasil-dogrulaniyor" className={faqLinkClass}>
           doğrulama sayfasında

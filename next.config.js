@@ -25,6 +25,20 @@ const nextConfig = {
     return [
       { source: "/tutors", destination: "/", permanent },
       { source: "/home", destination: "/", permanent },
+      /*
+       * /kvkk used to be an index page whose only content was a list of the
+       * same documents the sidebar already shows on every legal page, so
+       * arriving there meant reading the menu twice and clicking again.
+       * It now lands on the first document; the sidebar carries the rest.
+       *
+       * Not permanent even in production: the hub is a plausible thing to
+       * bring back, and a cached 308 would make that impossible.
+       */
+      {
+        source: "/kvkk",
+        destination: "/kvkk/aydinlatma-metni",
+        permanent: false,
+      },
     ];
   },
 

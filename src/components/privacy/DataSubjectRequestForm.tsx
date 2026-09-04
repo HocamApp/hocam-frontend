@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
+import { PrivacyNotice } from "@/components/privacy/PrivacyNotice";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -42,6 +43,10 @@ export function DataSubjectRequestForm() {
     queryKey: ["privacy", "consents"],
     queryFn: fetchConsentState,
   });
+  // The published address comes from the backend so the two cannot drift.
+  // The fallback only covers the request failing outright.
+  const contactEmail =
+    consentState?.contact_email ?? "iletisim@hocamozelders.com";
 
   const mutation = useMutation({
     mutationFn: () => submitDataSubjectRequest(requestType, message),
@@ -55,7 +60,7 @@ export function DataSubjectRequestForm() {
         ?.status;
       if (status === 503) {
         toast.error(
-          "Çevrimiçi kanal şu anda kullanılamıyor. Başvurunu kvkk@hocamozelders.com adresine gönderebilirsin.",
+          `Çevrimiçi kanal şu anda kullanılamıyor. Başvurunu ${contactEmail} adresine gönderebilirsin.`,
         );
         return;
       }
@@ -66,12 +71,12 @@ export function DataSubjectRequestForm() {
   return (
     <div className="space-y-6">
       {consentState?.request_channel_enabled ? (
-        <div className="space-y-3 rounded-lg border p-4">
+        <div className="space-y-4 rounded-card border border-line bg-surface p-5">
           <div className="space-y-2">
             {REQUEST_TYPES.map((option) => (
               <label
                 key={option.value}
-                className="flex cursor-pointer items-center gap-2 text-sm"
+                className="flex min-h-9 cursor-pointer items-center gap-2 text-small text-ink"
               >
                 <input
                   type="radio"
@@ -100,32 +105,32 @@ export function DataSubjectRequestForm() {
           </Button>
         </div>
       ) : (
-        <div className="rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm leading-6 dark:border-amber-800 dark:bg-amber-950/40">
-          Çevrimiçi başvuru kanalı henüz etkin değil. Başvurunu her zaman{" "}
+        <PrivacyNotice title="Çevrimiçi başvuru kanalı henüz etkin değil">
+          Başvurunu her zaman{" "}
           <a
-            href="mailto:kvkk@hocamozelders.com"
-            className="font-medium text-primary underline"
+            href={`mailto:${contactEmail}`}
+            className="font-medium text-ink underline underline-offset-2 transition-colors duration-[var(--duration-state)] hover:text-pink"
           >
-            kvkk@hocamozelders.com
+            {contactEmail}
           </a>{" "}
-          adresine gönderebilirsin.
-        </div>
+          adresine gönderebilirsin. En geç 30 gün içinde cevaplarız.
+        </PrivacyNotice>
       )}
 
       {requests && requests.length > 0 && (
         <div className="space-y-2">
-          <h3 className="text-sm font-semibold">Önceki başvurularım</h3>
+          <h3 className="text-body font-medium text-ink">Önceki başvurularım</h3>
           <ul className="space-y-2">
             {requests.map((request) => (
               <li
                 key={request.id}
-                className="flex flex-wrap items-center justify-between gap-2 rounded-md border px-3 py-2 text-sm"
+                className="flex flex-wrap items-center justify-between gap-2 rounded-input border border-line bg-surface px-4 py-3 text-small text-ink"
               >
                 <span>
                   {REQUEST_TYPES.find((t) => t.value === request.request_type)
                     ?.label ?? request.request_type}
                 </span>
-                <span className="text-muted-foreground">
+                <span className="tabular-nums text-ink-mid">
                   {STATUS_LABELS[request.status] ?? request.status} ·{" "}
                   {new Date(request.received_at).toLocaleDateString("tr-TR")}
                 </span>

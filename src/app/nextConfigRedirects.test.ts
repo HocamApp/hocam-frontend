@@ -23,7 +23,7 @@ const nextConfig = createRequire(import.meta.url)("../../next.config.js") as {
  * every checkout under it to the homepage.
  */
 describe("directory retirement redirects", () => {
-  it("retires exactly the two old directory routes", async () => {
+  it("retires exactly the old directory routes and the KVKK index", async () => {
     const redirects = await nextConfig.redirects();
     assert.deepEqual(
       redirects.map((r) => [
@@ -33,6 +33,7 @@ describe("directory retirement redirects", () => {
       [
         ["/tutors", "/"],
         ["/home", "/"],
+        ["/kvkk", "/kvkk/aydinlatma-metni"],
       ],
     );
   });
@@ -65,7 +66,10 @@ describe("directory retirement redirects", () => {
       // moves the retired URL's search value to the route that replaced it.
       process.env.VERCEL_ENV = "production";
       for (const redirect of await nextConfig.redirects()) {
-        assert.equal(redirect.permanent, true);
+        // /kvkk is the exception: the hub is a plausible thing to restore,
+        // and a cached 308 would make restoring it impossible.
+        const expected = redirect.source !== "/kvkk";
+        assert.equal(redirect.permanent, expected, redirect.source);
       }
     } finally {
       if (previous === undefined) delete process.env.VERCEL_ENV;

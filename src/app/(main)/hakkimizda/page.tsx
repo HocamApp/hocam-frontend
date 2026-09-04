@@ -54,7 +54,7 @@ export default function AboutHocamPage() {
         <PublicSeoSection title="Hocam'ın mevcut odağı">
           <div className="grid gap-4 md:grid-cols-3">
             <PublicSeoInfoCard title="YKS hazırlığı">
-              Hoca dizini, TYT ve AYT dersleri için online birebir destek arayan
+              Hoca listesi, TYT ve AYT dersleri için online birebir destek arayan
               öğrencilere odaklanır.
             </PublicSeoInfoCard>
             <PublicSeoInfoCard title="Doğrulanmış profiller">

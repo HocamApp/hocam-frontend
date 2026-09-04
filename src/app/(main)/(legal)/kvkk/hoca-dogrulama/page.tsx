@@ -1,36 +1,32 @@
-export const metadata = {
-  title: "Hoca Doğrulama Aydınlatma Metni",
-  description:
-    "Üniversite e-postası, öğrenci belgesi ve YKS sonuç belgesi doğrulamasında işlenen kişisel veriler.",
-};
+import {
+  LegalArticle,
+  LegalDocHeader,
+  LegalLink,
+  LegalNote,
+  LegalSection,
+} from "@/components/legal/LegalDocument";
+import { legalPageMetadata } from "@/lib/legalDocuments";
 
-const VERSION = "v1.0";
-const UPDATED_AT = "23 Ağustos 2026";
-
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <section className="space-y-3">
-      <h2 className="text-xl font-semibold">{title}</h2>
-      <div className="space-y-3 text-sm leading-7">{children}</div>
-    </section>
-  );
-}
+// Kept in sync with
+// hocam-backend/docs/kvkk/06-hoca-dogrulama-aydinlatma-metni.md.
+export const metadata = legalPageMetadata("hoca-dogrulama");
 
 export default function TutorVerificationNoticePage() {
   return (
-    <main className="mx-auto w-full max-w-3xl px-4 py-12">
-      <h1 className="text-3xl font-bold">Hoca Doğrulama Süreci Aydınlatma Metni</h1>
-      <p className="mt-2 text-sm text-muted-foreground">Sürüm {VERSION} · {UPDATED_AT}</p>
-      <div className="mt-6 rounded-lg border bg-muted/40 p-4 text-sm leading-6">
+    <LegalArticle>
+      <LegalDocHeader slug="hoca-dogrulama" />
+      <div className="mt-6">
+        <LegalNote>
         Bu metin, doğrulama bilgilerini göndermeden önce seni bilgilendirir; açık
         rıza veya genel işlem onayı değildir. Veri sorumlusu HOCAM’dır. İletişim:{" "}
-        <a href="mailto:kvkk@hocamozelders.com" className="text-primary underline">
-          kvkk@hocamozelders.com
-        </a>
+          <LegalLink href="mailto:iletisim@hocamozelders.com">
+            iletisim@hocamozelders.com
+          </LegalLink>
+        </LegalNote>
       </div>
 
       <div className="mt-10 space-y-10">
-        <Section title="Hangi veriler işlenir?">
+        <LegalSection title="Hangi veriler işlenir?">
           <p>
             Üniversiten, bölümün ve beyan ettiğin YKS sıralaman; üniversite e-posta
             adresin, kurumsal alan adı, doğrulama kodunun geri döndürülemez özeti,
@@ -47,9 +43,9 @@ export default function TutorVerificationNoticePage() {
             ve yetkili erişim kayıtları tutulur. Kodun açık değeri saklanmaz; belge
             ve üniversite e-postan herkese açık profilinde yayımlanmaz.
           </p>
-        </Section>
+        </LegalSection>
 
-        <Section title="Amaç, yöntem ve hukuki sebep">
+        <LegalSection title="Amaç, yöntem ve hukuki sebep">
           <p>
             Bu veriler üniversite gelen kutusu kontrolünü doğrulamak, beyan edilen
             kimlik/YKS bilgisini incelemek, sahte veya tekrarlanan başvuruları önlemek
@@ -60,9 +56,9 @@ export default function TutorVerificationNoticePage() {
             gereklilik ile m.5/2-f kapsamındaki platform güvenliğine ilişkin meşru
             menfaat şartlarına dayandırılır.
           </p>
-        </Section>
+        </LegalSection>
 
-        <Section title="Kimlere aktarılır?">
+        <LegalSection title="Kimlere aktarılır?">
           <p>
             E-posta gönderimi için Resend/SMTP, uygulama ve veri tabanı için Railway,
             özel belge depolaması için Supabase kullanılır. Belgeler yalnız gerekli
@@ -73,14 +69,14 @@ export default function TutorVerificationNoticePage() {
             Bu sağlayıcılar yurt dışında hizmet sunabilir. KVKK m.9 kapsamındaki
             aktarım güvencelerinin mevcut durumu ve devam eden standart sözleşme
             çalışması{" "}
-            <a href="/kvkk/aydinlatma-metni" className="text-primary underline">
+            <LegalLink href="/kvkk/aydinlatma-metni">
               genel aydınlatma metninde
-            </a>{" "}
+            </LegalLink>{" "}
             açıklanır.
           </p>
-        </Section>
+        </LegalSection>
 
-        <Section title="Ne kadar saklanır?">
+        <LegalSection title="Ne kadar saklanır?">
           <ul className="list-disc space-y-2 pl-5">
             <li>Ham belgeler ve güvenli önizlemeler onaydan sonra 7 gün içinde silinir.</li>
             <li>Reddedilen veya bekleyen başvurularda belge saklama üst sınırı 30 gündür.</li>
@@ -90,25 +86,26 @@ export default function TutorVerificationNoticePage() {
               önleme, denetim ve hakkın korunması için gerekli süreyle sınırlı tutulur.
             </li>
           </ul>
-        </Section>
+        </LegalSection>
 
-        <Section title="Hakların">
+        <LegalSection title="Hakların">
           <p>
             KVKK m.11 kapsamındaki bilgi, düzeltme, silme/yok etme, aktarım yapılan
             kişileri öğrenme, otomatik analiz sonucuna itiraz ve zarar giderimi
             taleplerini{" "}
-            <a href="/profile/gizlilik" className="text-primary underline">
+            <LegalLink href="/profile/gizlilik">
               Gizlilik ve Verilerim
-            </a>{" "}
-            alanından veya kvkk@hocamozelders.com adresinden iletebilirsin. Başvurular
+            </LegalLink>{" "}
+            alanından veya iletisim@hocamozelders.com adresinden iletebilirsin. Başvurular
             en geç 30 gün içinde cevaplanır.
           </p>
-        </Section>
+        </LegalSection>
       </div>
 
-      <a href="/kvkk" className="mt-10 inline-flex min-h-6 items-center text-sm font-medium text-primary underline">
-        Tüm KVKK metinleri
-      </a>
-    </main>
+
+      <div className="mt-10 flex flex-wrap gap-x-5 gap-y-2 border-t border-line pt-6 text-small">
+        <LegalLink href="/kvkk">Tüm KVKK metinleri</LegalLink>
+      </div>
+    </LegalArticle>
   );
 }

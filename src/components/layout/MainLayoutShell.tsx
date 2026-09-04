@@ -11,6 +11,31 @@ import { useVisualViewport } from "@/hooks/useVisualViewport";
 import { fetchMyTutorProfile } from "@/lib/tutorsApi";
 import { cn } from "@/lib/utils";
 
+/**
+ * Paths an unverified tutor may still open. Setup/onboarding and profile are
+ * the completion flow itself; the legal texts are here because
+ * VerificationForm links straight at /kvkk/hoca-dogrulama — bouncing an
+ * unverified tutor away from it would hide the verification notice from the
+ * only people who need to read it.
+ *
+ * Exact-segment matching, so "/profile" never swallows "/profiles".
+ */
+const GATE_EXEMPT_PREFIXES = [
+  "/tutor/setup",
+  "/tutor/onboarding",
+  "/profile",
+  "/kvkk",
+  "/iptal-ve-iade",
+  "/kullanim-kosullari",
+  "/mesafeli-satis-sozlesmesi",
+];
+
+export function isTutorGateExemptPath(pathname: string) {
+  return GATE_EXEMPT_PREFIXES.some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
+  );
+}
+
 interface MainLayoutShellProps {
   children: ReactNode;
 }
@@ -21,18 +46,18 @@ export function MainLayoutShell({ children }: MainLayoutShellProps) {
   const pathname = usePathname();
   const router = useRouter();
   const { isKeyboardOpen } = useVisualViewport();
-  const isOnboardingPath = pathname.startsWith("/tutor/setup") || pathname.startsWith("/tutor/onboarding") || pathname.startsWith("/profile");
+  const isGateExemptPath = isTutorGateExemptPath(pathname);
   const profileQuery = useQuery({
     queryKey: ["tutor-me"],
     queryFn: fetchMyTutorProfile,
-    enabled: isAuthenticated && isTutor && (!isAdmin || isImpersonating) && !isOnboardingPath,
+    enabled: isAuthenticated && isTutor && (!isAdmin || isImpersonating) && !isGateExemptPath,
     retry: false,
   });
   // Staff may have a tutor role in Django, but their primary account belongs in
   // the admin center. Only apply tutor onboarding checks while they are viewing
   // a tutor account through the explicit impersonation flow.
   const shouldCheckTutorOnboarding = isTutor && (!isAdmin || isImpersonating);
-  const pendingVerification = shouldCheckTutorOnboarding && !isOnboardingPath && (
+  const pendingVerification = shouldCheckTutorOnboarding && !isGateExemptPath && (
     user?.tutor_profile_id === null || Boolean(profileQuery.data && !profileQuery.data.is_verified)
   );
 

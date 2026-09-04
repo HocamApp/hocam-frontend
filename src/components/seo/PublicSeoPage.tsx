@@ -52,7 +52,7 @@ export function PublicSeoHero({
   illustration,
   children,
 }: {
-  eyebrow: string;
+  eyebrow?: string;
   title: string;
   description: string;
   primaryAction?: { label: string; href: string };
@@ -63,10 +63,12 @@ export function PublicSeoHero({
   return (
     <header className={cn("py-8 md:py-12", illustration && "grid items-center gap-8 lg:grid-cols-[7fr_5fr] lg:gap-12")}>
       <div className="min-w-0">
-        <p className="text-[13px] font-medium text-ink-mid">
-          {eyebrow}
-        </p>
-        <h1 className="mt-4 max-w-4xl text-4xl font-bold leading-[1.15] tracking-[-0.02em] text-ink sm:text-5xl">
+        {eyebrow ? (
+          <p className="text-label uppercase tracking-[0.08em] text-ink-mid">
+            {eyebrow}
+          </p>
+        ) : null}
+        <h1 className={cn("max-w-4xl text-h1-m tracking-[-0.02em] text-ink sm:text-h1", eyebrow && "mt-4")}>
           {title}
         </h1>
         <p className="mt-6 max-w-3xl text-lg leading-[1.6] text-ink-mid">
@@ -132,7 +134,7 @@ export function PublicSeoStat({
   label: string;
 }) {
   return (
-    <div className="rounded-[20px] border bg-background/80 px-5 py-4">
+    <div className="rounded-card border border-line bg-[var(--surface)] px-5 py-4">
       <p className="text-2xl font-medium text-ink">{value}</p>
       <p className="mt-1 text-sm text-ink-mid">{label}</p>
     </div>
@@ -151,9 +153,9 @@ export function PublicSeoInfoCard({
   linkLabel?: string;
 }) {
   return (
-    <Card className="h-full rounded-[20px] border-line bg-[var(--surface)] shadow-none">
+    <Card className="h-full rounded-card border-line bg-[var(--surface)] shadow-none transition-colors duration-[var(--duration-state)] ease-linear hover:border-ink">
       <CardContent className="flex h-full flex-col p-6">
-        <h3 className="text-[19px] font-medium leading-[1.3] md:text-[22px]">{title}</h3>
+        <h3 className="text-[19px] font-medium leading-[1.3] text-ink md:text-[22px]">{title}</h3>
         <div className="mt-3 flex-1 text-base leading-[1.6] text-ink-mid">
           {children}
         </div>
@@ -180,19 +182,79 @@ export function PublicSeoChecklist({
   items: ReadonlyArray<string>;
 }) {
   return (
-    <ul className="grid gap-3 sm:grid-cols-2">
-      {items.map((item) => (
+    /* One surface with hairline rows rather than a box per item. The old
+       version wrapped every line in its own bordered pill and marked it with
+       a tinted disc (`bg-primary/10 text-primary`) — the tint fill DESIGN.md
+       bans outright, and four floating pills read as a placeholder rather
+       than a list. */
+    <ul className="grid rounded-card border border-line bg-[var(--surface)] px-5 sm:grid-cols-2 sm:gap-x-10 sm:px-7">
+      {items.map((item, index) => (
         <li
           key={item}
-          className="flex gap-3 rounded-[20px] border bg-[var(--surface)] px-4 py-3 text-base leading-[1.6]"
+          className={cn(
+            "flex items-start gap-3 border-b border-line py-4 text-base leading-[1.6] last:border-b-0",
+            // In two columns the final row is the last two items, not the
+            // last one, so the rule under both of them has to go.
+            index >= items.length - 2 && "sm:border-b-0",
+          )}
         >
-          <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-            <Check className="h-3.5 w-3.5" aria-hidden="true" />
-          </span>
+          <Check
+            className="mt-[3px] h-4 w-4 shrink-0 text-ink"
+            weight="regular"
+            aria-hidden="true"
+          />
           <span>{item}</span>
         </li>
       ))}
     </ul>
+  );
+}
+
+/**
+ * Titled rows on one surface, separated by hairlines, with the title held in
+ * its own column on wide screens.
+ *
+ * Replaces the "two cards then one full-width card" grids these pages used
+ * for three-item groups. That shape came from DESIGN.md banning a row of
+ * three equal cards, but the workaround looked like a layout accident. Rows
+ * carry the same content with no orphan card, and an ordered list can number
+ * itself when the items are genuinely a sequence.
+ */
+export function PublicSeoRows({
+  items,
+  ordered = false,
+}: {
+  items: ReadonlyArray<{ title: string; body: React.ReactNode }>;
+  ordered?: boolean;
+}) {
+  const List = ordered ? "ol" : "ul";
+
+  return (
+    <List className="rounded-card border border-line bg-[var(--surface)] px-5 sm:px-7">
+      {items.map((item, index) => (
+        <li
+          key={item.title}
+          className="grid gap-x-10 gap-y-2 border-b border-line py-6 last:border-b-0 md:grid-cols-[5fr_7fr]"
+        >
+          <div className="flex items-baseline gap-3">
+            {ordered && (
+              <span
+                className="text-label tabular-nums text-ink-mid"
+                aria-hidden="true"
+              >
+                {String(index + 1).padStart(2, "0")}
+              </span>
+            )}
+            <h3 className="text-[19px] font-medium leading-[1.3] text-ink md:text-[22px]">
+              {item.title}
+            </h3>
+          </div>
+          <div className="max-w-[60ch] text-base leading-[1.6] text-ink-mid">
+            {item.body}
+          </div>
+        </li>
+      ))}
+    </List>
   );
 }
 
@@ -202,7 +264,7 @@ export function PublicSeoFaq({
   items: ReadonlyArray<{ question: string; answer: React.ReactNode }>;
 }) {
   return (
-    <div className="divide-y rounded-[20px] border bg-[var(--surface)] px-5 sm:px-7">
+    <div className="divide-y divide-line rounded-card border border-line bg-[var(--surface)] px-5 sm:px-7">
       {items.map((item) => (
         <div key={item.question} className="py-6">
           <h3 className="text-[19px] font-medium leading-[1.3]">{item.question}</h3>

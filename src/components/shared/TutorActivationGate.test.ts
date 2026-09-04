@@ -32,6 +32,16 @@ describe("TutorActivationGate.isAllowedPath", () => {
     assert.equal(isAllowedPath("/profiles"), false);
   });
 
+  it("allows the published legal texts", () => {
+    // An unverified tutor is exactly who /kvkk/hoca-dogrulama is written
+    // for — VerificationForm links straight at it. Gating it would hide the
+    // notice from its only audience.
+    assert.equal(isAllowedPath("/kvkk"), true);
+    assert.equal(isAllowedPath("/kvkk/hoca-dogrulama"), true);
+    assert.equal(isAllowedPath("/kvkk/aydinlatma-metni"), true);
+    assert.equal(isAllowedPath("/kvkkx"), false);
+  });
+
   it("blocks unrelated routes", () => {
     assert.equal(isAllowedPath("/dashboard/tutor"), false);
     assert.equal(isAllowedPath("/messages"), false);
