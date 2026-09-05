@@ -2,6 +2,7 @@ import type { Icon } from "@phosphor-icons/react";
 import {
   Bell,
   CalendarBlank,
+  ChartBar,
   ChatCircle,
   ChatCircleDots,
   ClipboardText,
@@ -10,6 +11,7 @@ import {
   Heart,
   ListNumbers,
   SquaresFour,
+  Users,
 } from "@phosphor-icons/react";
 
 /**
@@ -99,6 +101,14 @@ export function getYsAppTabs(role: YsNavRole, flags: Flags): YsNavItem[] {
       icon: SquaresFour,
     },
   ];
+
+  if (isTutor) {
+    tabs.push(
+      { label: "Sınıfım", href: "/dashboard/tutor/classroom", icon: Users },
+      { label: "Takvim", href: "/dashboard/tutor/calendar", icon: CalendarBlank },
+      { label: "İstatistiklerim", href: "/dashboard/tutor/statistics", icon: ChartBar },
+    );
+  }
 
   if (flags.coachingEnabled) {
     tabs.push({

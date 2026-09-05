@@ -103,3 +103,22 @@ test("signed-out and loading headers never expose the mobile notification contro
   view.rerender(<QueryClientProvider client={new QueryClient()}><YsNavbar /></QueryClientProvider>);
   assert.equal(screen.queryByRole("button", { name: /Bildirimler/ }), null);
 });
+
+
+test("desktop reveals its active tab by scrolling only the tab strip", () => {
+  isMobile = false;
+  const original = HTMLElement.prototype.getBoundingClientRect;
+  HTMLElement.prototype.getBoundingClientRect = function () {
+    if (this.classList.contains("scrollbar-none")) return { left: 0, right: 200, width: 200, top: 0, bottom: 56, height: 56, x: 0, y: 0, toJSON() {} };
+    if (this.getAttribute("aria-current") === "page") return { left: 250, right: 400, width: 150, top: 0, bottom: 56, height: 56, x: 250, y: 0, toJSON() {} };
+    return original.call(this);
+  };
+  try {
+    renderNavbar();
+    const tab = screen.getByRole("link", { name: "Çalışma Programım" });
+    assert.equal(tab.parentElement?.scrollLeft, 200);
+    assert.equal(document.documentElement.scrollTop, 0);
+  } finally {
+    HTMLElement.prototype.getBoundingClientRect = original;
+  }
+});

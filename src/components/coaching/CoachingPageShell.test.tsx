@@ -76,8 +76,8 @@ describe("CoachingPageShell", () => {
         <p>İçerik</p>
       </CoachingPageShell>,
     );
-    const header = wide.querySelector('[data-testid="coaching-page-header"]');
-    const stack = wide.querySelector('[data-testid="coaching-shell-stack"]');
+    const header = wide.querySelector('[data-testid="workspace-page-header"]');
+    const stack = wide.querySelector('[data-testid="workspace-shell-stack"]');
 
     assert.match(header!.className, /max-w-7xl/);
     assert.match(stack!.className, /max-w-7xl/);
@@ -93,7 +93,7 @@ describe("CoachingPageShell", () => {
       </CoachingPageShell>,
     );
 
-    const header = screen.getByTestId("coaching-page-header");
+    const header = screen.getByTestId("workspace-page-header");
     assert.doesNotMatch(header.className, /band-full-bleed/);
     assert.doesNotMatch(header.className, /bg-band-pale/);
     assert.doesNotMatch(header.className, /bg-ink/);

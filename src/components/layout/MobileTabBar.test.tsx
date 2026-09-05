@@ -163,14 +163,33 @@ test("disabled study schedule preserves five slots without exposing the guarded 
   assert.ok(screen.getByRole("link", { name: "Favoriler" }));
 });
 
-test("tutor navigation preserves package requests instead of exposing student schedule", () => {
+test("tutor navigation promotes the workspace and keeps other routes in More", () => {
   isTutor = true;
   showPackageRequests = true;
+  coachingEnabled = true;
   renderMobileTabBar();
+  const nav = screen.getByRole("navigation", { name: "Mobil ana menü" });
+  assert.deepEqual(Array.from(nav.children).map(item => item.getAttribute("aria-label")),
+    ["Panom", "Sınıfım", "Mesajlar", "Takvim", "Daha Fazla"]);
+  fireEvent.click(screen.getByRole("button", { name: "Daha Fazla" }));
+  const drawer = screen.getByRole("dialog");
+  assert.deepEqual(within(drawer).getAllByRole("link").map(item => item.textContent),
+    ["Hocalar", "İstatistiklerim", "Koçluk", "Paket Talepleri", "Favoriler"]);
   assert.equal(screen.queryByRole("link", { name: "Çalışma Programım" }), null);
-  assert.equal(screen.getByRole("link", { name: "Paket Talepleri" }).getAttribute("href"), "/dashboard/tutor/requests");
-  assert.equal(screen.getByRole("navigation").children.length, 5);
 });
+
+for (const [path, label] of [["classroom", "Sınıfım"], ["calendar", "Takvim"], ["statistics", "İstatistiklerim"]]) {
+  test(`tutor ${label} marks the correct mobile destination`, () => {
+    isTutor = true;
+    pathname = `/dashboard/tutor/${path}/detail`;
+    renderMobileTabBar();
+    const more = screen.getByRole("button", { name: "Daha Fazla" });
+    assert.equal(more.getAttribute("aria-current"), path === "statistics" ? "page" : null);
+    assert.equal(screen.getByRole("link", { name: "Panom" }).getAttribute("aria-current"), null);
+    if (path === "statistics") fireEvent.click(more);
+    assert.equal(screen.getByRole("link", { name: label }).getAttribute("aria-current"), "page");
+  });
+}
 
 test("choosing a secondary route dismisses the drawer", () => {
   renderMobileTabBar();
