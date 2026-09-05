@@ -46,6 +46,7 @@ import { fetchAvailability } from "@/lib/dashboardApi";
 import { fetchConversations } from "@/lib/messagingApi";
 import { confirmLearningActivity } from "@/lib/learningApi";
 import { TutorLaunchProgramCard } from "@/components/tutors/TutorLaunchProgramCard";
+import { TutorPerformanceSection } from "@/components/tutors/TutorPerformanceSection";
 import {
   fetchTutorEarnings,
   fetchTutorPackageOffers,
@@ -1194,6 +1195,12 @@ function TutorDashboardContent() {
           </button>
         </CardContent>
       </Card>
+
+      <TutorPerformanceSection
+        profile={profile}
+        availability={availability}
+        priceInsight={priceInsight ?? null}
+      />
 
       {/* An ordinary section on the page's own surface. It was a coloured
           band, which made the quietest part of Panom — four links a tutor

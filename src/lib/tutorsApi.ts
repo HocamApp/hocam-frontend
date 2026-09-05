@@ -9,6 +9,7 @@ import {
   TutorTeachingStyle,
   TutorTeachingAttribute,
   TutorSavedSearch,
+  TutorPerformance,
 } from "@/types";
 import {
   applyDemoTutorPresentation,
@@ -251,6 +252,24 @@ export interface TutorPriceInsight {
     | "same_exam_nearest_rank"
     | "insufficient_data";
   commission_rate_bps: number;
+}
+
+/**
+ * Reliability numbers for the signed-in tutor.
+ *
+ * Only carries what the client cannot work out for itself: the missed-lesson
+ * count needs cancellation attribution, and the reply rate needs every message
+ * in every thread. The other health metrics on the dashboard are derived from
+ * data it already holds, and asking the server to recompute them would be a
+ * second source of truth for the same values.
+ */
+export async function fetchTutorPerformance(
+  windowDays: number
+): Promise<TutorPerformance> {
+  const response = await api.get<TutorPerformance>(
+    `/tutors/me/performance/?window_days=${windowDays}`
+  );
+  return response.data;
 }
 
 export async function fetchTutorPriceInsight(
