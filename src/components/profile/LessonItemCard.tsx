@@ -1,7 +1,7 @@
 "use client";
 
 import { ReactNode } from "react";
-import { CalendarDays, Clock, User } from "lucide-react";
+import { CalendarBlank, Clock, User } from "@phosphor-icons/react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import StatusBadge from "@/components/shared/StatusBadge";
@@ -23,6 +23,7 @@ interface LessonItemCardProps {
   endTime?: string;
   status?: string;
   price?: number;
+  dateTimeLabels?: { date: string; time: string };
   actions?: ReactNode;
   meta?: ReactNode;
 }
@@ -37,6 +38,7 @@ export function LessonItemCard({
   status,
   price,
   actions,
+  dateTimeLabels,
   meta,
 }: LessonItemCardProps) {
   return (
@@ -44,28 +46,27 @@ export function LessonItemCard({
       <CardContent className="flex min-w-0 flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0 space-y-1.5">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="font-medium text-foreground">{subject.name}</span>
-            <Badge variant="secondary" className="text-xs">
+            <span className="font-medium text-ink">{subject.name}</span>
+            <Badge variant="outline" className="text-xs">
               {subject.exam_type}
             </Badge>
             {status && <StatusBadge status={status} type="booking" />}
           </div>
-          <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
-            <User className="h-3.5 w-3.5 shrink-0" />
+          <p className="flex items-center gap-1.5 text-sm text-ink-mid">
+            <User className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
             {participantRole === "tutor" ? "Hoca" : "Öğrenci"}: {participantName}
           </p>
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm tabular-nums text-ink-mid">
             <span className="flex items-center gap-1.5">
-              <CalendarDays className="h-3.5 w-3.5 shrink-0" />
-              {formatDate(startTime)}
+              <CalendarBlank className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+              {dateTimeLabels?.date ?? formatDate(startTime)}
             </span>
             <span className="flex items-center gap-1.5">
-              <Clock className="h-3.5 w-3.5 shrink-0" />
-              {formatTime(startTime)}
-              {endTime ? ` – ${formatTime(endTime)}` : ""}
+              <Clock className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+              {dateTimeLabels?.time ?? `${formatTime(startTime)}${endTime ? ` – ${formatTime(endTime)}` : ""}`}
             </span>
             {typeof price === "number" && (
-              <span className="font-medium text-foreground">{formatPrice(price)}</span>
+              <span className="font-medium text-ink">{formatPrice(price)}</span>
             )}
           </div>
           {meta}

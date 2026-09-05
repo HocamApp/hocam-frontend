@@ -1111,6 +1111,7 @@ export async function changeCoachingRecurringSlot(params: {
 // --- tutor side ------------------------------------------------------------
 
 export interface CoachingStudentRow {
+  student_id?: string;
   purchase_id: string;
   service_period_id: string | null;
   student_name: string;

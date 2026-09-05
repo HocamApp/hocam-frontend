@@ -4,6 +4,7 @@ import { ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import axios from "axios";
+import { getStudentRoster, bookingDateLabel, type StudentRosterEntry } from "@/lib/tutorClassroom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 /*
  * Phosphor at `regular`, not Lucide. Lucide is recognisable less for its
@@ -177,73 +178,6 @@ function formatLessonCountdown(startTime: string): string {
   return `Derse ${diffDays} gün kaldı`;
 }
 
-interface StudentRosterEntry {
-  student: Booking["student"];
-  totalLessons: number;
-  upcomingLessons: number;
-  lastCompletedAt: string | null;
-  remainingCredits: number;
-  totalCredits: number;
-}
-
-function getStudentRoster(
-  bookings: Booking[],
-  packagePurchases: PackagePurchase[] = []
-): StudentRosterEntry[] {
-  const roster = new Map<string, StudentRosterEntry>();
-
-  for (const booking of bookings) {
-    const status = (booking.status || "").toLowerCase();
-    if (status === "cancelled") continue;
-
-    const entry =
-      roster.get(booking.student.id) ??
-      ({
-        student: booking.student,
-        totalLessons: 0,
-        upcomingLessons: 0,
-        lastCompletedAt: null,
-        remainingCredits: 0,
-        totalCredits: 0,
-      } satisfies StudentRosterEntry);
-
-    entry.totalLessons += 1;
-    if (
-      (status === "pending" || status === "confirmed") &&
-      new Date(booking.start_time) > new Date()
-    ) {
-      entry.upcomingLessons += 1;
-    }
-    if (
-      status === "completed" &&
-      (!entry.lastCompletedAt ||
-        new Date(booking.start_time) > new Date(entry.lastCompletedAt))
-    ) {
-      entry.lastCompletedAt = booking.start_time;
-    }
-
-    roster.set(booking.student.id, entry);
-  }
-
-  // Only enriches students who already have a booking-derived roster entry —
-  // a student who bought a package but hasn't booked a lesson yet won't
-  // appear here, since the roster itself is seeded purely from bookings.
-  for (const purchase of packagePurchases) {
-    if (purchase.status !== "paid") continue;
-    const entry = roster.get(purchase.student.id);
-    if (!entry) continue;
-    entry.remainingCredits += purchase.remaining_credits;
-    entry.totalCredits += purchase.total_credits;
-  }
-
-  return Array.from(roster.values()).sort((a, b) => {
-    if (b.upcomingLessons !== a.upcomingLessons) {
-      return b.upcomingLessons - a.upcomingLessons;
-    }
-    return b.totalLessons - a.totalLessons;
-  });
-}
-
 function StatTile({
   icon,
   label,
@@ -347,10 +281,10 @@ function StudentRosterCard({
             <span className="inline-flex items-center gap-1.5">
               <CalendarBlank className="h-4 w-4" aria-hidden="true" />
               {lastCompletedAt
-                ? `Son ders: ${formatDate(lastCompletedAt)}`
+                ? `Son ders: ${bookingDateLabel(lastCompletedAt)}`
                 : "Henüz ders tamamlanmadı"}
             </span>
-            <span>{totalLessons} ders</span>
+            <span>{totalLessons} tamamlanan ders</span>
           </div>
         </div>
       </CardContent>
@@ -822,8 +756,8 @@ function TutorDashboardContent() {
   );
 
   const studentRoster = useMemo(
-    () => getStudentRoster(bookings ?? [], packagePurchases),
-    [bookings, packagePurchases]
+    () => getStudentRoster(bookings ?? [], packagePurchases, profile?.id ?? ""),
+    [bookings, packagePurchases, profile?.id]
   );
 
   const selectedStudentEntry = useMemo(

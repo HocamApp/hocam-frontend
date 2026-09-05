@@ -1510,3 +1510,15 @@ export interface ContactMessageRequest {
   privacy_acknowledged: boolean;
   website: string;
 }
+
+export interface TutorStudentContextFields {
+  goals: string;
+  difficult_topics: string;
+  resources: string;
+  study_preferences: string;
+}
+
+export interface TutorStudentContext extends TutorStudentContextFields {
+  student_id: string;
+  updated_at: string | null;
+}
