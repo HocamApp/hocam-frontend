@@ -51,11 +51,7 @@ export default function CoachingPreviewPage() {
     <CoachingGuard>
       <CoachingPageShell
         title="Öğrenci görünümü"
-        description="Koçluk teklifinin öğrenci profilinde nasıl anlatıldığını kontrol et. Bu sayfa salt okunurdur."
-        parentHref="/dashboard/tutor/coaching"
-        parentLabel="Koçluk ana sayfası"
-        eyebrow="Önizleme"
-        width="narrow"
+        width="wide"
         currentHref="/dashboard/tutor/coaching/preview"
         audience="tutor"
       >

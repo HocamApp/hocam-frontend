@@ -33,11 +33,7 @@ export default function CoachingAvailabilityPage() {
     <CoachingGuard>
       <CoachingPageShell
         title="Koçluk müsaitliği ve kapasite"
-        description="Bu saatler normal ders müsaitliğinden ayrıdır. Haftalık slot sayısı ve teorik kapasite yalnızca burada tanımladığın koçluk saatlerinden hesaplanır."
-        parentHref="/dashboard/tutor/coaching"
-        parentLabel="Koçluk ana sayfası"
-        eyebrow="Ayarlar"
-        width="narrow"
+        width="wide"
         currentHref="/dashboard/tutor/coaching/availability"
         audience="tutor"
       >

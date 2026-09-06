@@ -287,10 +287,6 @@ export default function StudentCoachingComplaintsPage() {
     <RouteGuard requireAuth requireRole="student">
       <CoachingPageShell
         title="Koçluk başvurularım"
-        description="Bir sorun olduğunda başvuru oluştur, paylaşılmış finansal durumu incele ve mevcut süreci takip et."
-        parentHref="/dashboard/student/coaching"
-        parentLabel="Çalışma koçluğum"
-        eyebrow="Başvurular"
         width="narrow"
         currentHref="/dashboard/student/coaching/complaints"
         audience="student"

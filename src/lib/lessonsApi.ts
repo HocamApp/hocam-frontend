@@ -60,7 +60,7 @@ export async function fetchBookings(): Promise<Booking[]> {
 }
 
 /**
- * Busy intervals (pending/confirmed bookings only) for a tutor within a date
+ * Busy intervals (blocking lessons, coaching and private time off) for a tutor within a date
  * range — used to hide already-booked slots in BookingModal. Deliberately
  * privacy-minimal: only start_time/end_time, per the backend contract.
  */

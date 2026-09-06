@@ -129,6 +129,8 @@ describe("Coaching operational route shells", () => {
       "src/components/coaching/CapacityPreviewCard.tsx",
       "src/components/coaching/RevenuePreviewCard.tsx",
       "src/components/coaching/CoachingStatusCard.tsx",
+      "src/components/coaching/CoachingSectionNav.tsx",
+      "src/components/coaching/CoachingWeeklyRhythm.tsx",
       "src/components/coaching/CoachingAvailabilityEditor.tsx",
       "src/components/coaching/CoachingSetupProgress.tsx",
       "src/components/coaching/OnboardingCarousel.tsx",

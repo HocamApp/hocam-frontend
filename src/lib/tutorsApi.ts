@@ -9,6 +9,7 @@ import {
   TutorTeachingStyle,
   TutorTeachingAttribute,
   TutorSavedSearch,
+  TutorPerformance,
 } from "@/types";
 import {
   applyDemoTutorPresentation,
@@ -253,6 +254,24 @@ export interface TutorPriceInsight {
   commission_rate_bps: number;
 }
 
+/**
+ * Reliability numbers for the signed-in tutor.
+ *
+ * Only carries what the client cannot work out for itself: the missed-lesson
+ * count needs cancellation attribution, and the reply rate needs every message
+ * in every thread. The other health metrics on the dashboard are derived from
+ * data it already holds, and asking the server to recompute them would be a
+ * second source of truth for the same values.
+ */
+export async function fetchTutorPerformance(
+  windowDays: number
+): Promise<TutorPerformance> {
+  const response = await api.get<TutorPerformance>(
+    `/tutors/me/performance/?window_days=${windowDays}`
+  );
+  return response.data;
+}
+
 export async function fetchTutorPriceInsight(
   subjectIds: string[]
 ): Promise<TutorPriceInsight> {
@@ -290,6 +309,30 @@ export async function updateMyTutorProfile(
   payload: UpdateTutorProfilePayload
 ): Promise<TutorProfile> {
   const response = await api.patch<TutorProfile>("/tutors/me/", payload);
+  return response.data;
+}
+
+/**
+ * Marketplace visibility, through the two endpoints that own it.
+ *
+ * `is_public` is also writable on `PATCH /tutors/me/` and on `PATCH
+ * /profile/me/`, and it is deliberately absent from `UpdateTutorProfilePayload`
+ * above so that it stays that way. Only `/tutor/profile/resume/` refuses to
+ * re-publish while an account-deletion request is open (409); the two PATCH
+ * paths would let a tutor mid-offboarding quietly reopen their storefront. One
+ * boolean with three doors is already the backend's problem — the frontend
+ * uses the one door that carries the guard.
+ *
+ * Neither endpoint returns the profile, only a message, so callers refresh
+ * `["tutor-me"]` themselves.
+ */
+export async function pauseTutorProfile(): Promise<{ detail: string }> {
+  const response = await api.post<{ detail: string }>("/tutor/profile/pause/", {});
+  return response.data;
+}
+
+export async function resumeTutorProfile(): Promise<{ detail: string }> {
+  const response = await api.post<{ detail: string }>("/tutor/profile/resume/", {});
   return response.data;
 }
 

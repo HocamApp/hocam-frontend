@@ -85,7 +85,7 @@ function UpcomingList() {
 export default function TutorCoachingUpcomingPage() {
   return (
     <CoachingGuard>
-      <CoachingPageShell title="Yaklaşan görüşmeler" description="Planlanan koçluk görüşmelerine hazırlan, katıl ve görüşme sonrası rapor akışını tamamla." parentHref="/dashboard/tutor/coaching" parentLabel="Koçluk ana sayfası" eyebrow="Takvim" width="narrow" currentHref="/dashboard/tutor/coaching/upcoming" audience="tutor"><UpcomingList /></CoachingPageShell>
+      <CoachingPageShell title="Yaklaşan görüşmeler" width="wide" currentHref="/dashboard/tutor/coaching/upcoming" audience="tutor"><UpcomingList /></CoachingPageShell>
     </CoachingGuard>
   );
 }

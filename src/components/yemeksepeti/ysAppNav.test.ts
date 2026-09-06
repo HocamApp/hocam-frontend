@@ -72,7 +72,7 @@ describe("ys app nav", () => {
     const tabs = getYsAppTabs("tutor", flags);
     assert.deepEqual(
       tabs.map((t) => t.label),
-      ["Hocalar", "Panom", "Koçluk", "Paket Talepleri"],
+      ["Hocalar", "Panom", "Sınıfım", "Takvim", "İstatistiklerim", "Koçluk", "Paket Talepleri"],
     );
     // Çalışma Programım is a student surface; RouteGuard would bounce a tutor
     // straight back off /schedule, so offering it would be a broken link.
@@ -153,3 +153,13 @@ describe("ys app nav", () => {
     }
   });
 });
+
+for (const [path, label] of [["classroom", "Sınıfım"], ["calendar", "Takvim"], ["statistics", "İstatistiklerim"]]) {
+  it(`selects ${label} independently of the student schedule flag`, () => {
+    const tabs = getYsAppTabs("tutor", { coachingEnabled: false, scheduleEnabled: false, packageRequestsEnabled: false });
+    assert.equal(labelOf(`/dashboard/tutor/${path}`, noParams, tabs), label);
+    assert.equal(labelOf(`/dashboard/tutor/${path}/detail`, noParams, tabs), label);
+    assert.equal(labelOf(`/dashboard/tutor/${path}-other`, noParams, tabs), "Panom");
+    assert.equal(tabs.some(item => item.label === "Koçluk" || item.label === "Paket Talepleri"), false);
+  });
+}

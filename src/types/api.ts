@@ -1008,6 +1008,22 @@ export interface PaymentLedgerEntry {
   booking: string | null;
 }
 
+/**
+ * The two health numbers only the server can produce.
+ *
+ * `rate` is null when there was nothing to measure — an unmeasured tutor is
+ * not a tutor scoring zero, and the two must not render the same.
+ */
+export interface TutorPerformance {
+  window_days: number;
+  missed_lessons: number;
+  reply_rate_24h: {
+    answered: number;
+    total: number;
+    rate: number | null;
+  };
+}
+
 export interface TutorEarningsPeriod {
   total: number;
   lesson_count: number;
@@ -1493,4 +1509,16 @@ export interface ContactMessageRequest {
   message: string;
   privacy_acknowledged: boolean;
   website: string;
+}
+
+export interface TutorStudentContextFields {
+  goals: string;
+  difficult_topics: string;
+  resources: string;
+  study_preferences: string;
+}
+
+export interface TutorStudentContext extends TutorStudentContextFields {
+  student_id: string;
+  updated_at: string | null;
 }

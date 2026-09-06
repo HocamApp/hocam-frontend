@@ -91,16 +91,21 @@ export function MobileTabBar() {
     scheduleEnabled,
   });
   const messages = YS_UTILITY_ITEMS.find((item) => item.href === "/messages");
-  const primaryRoutes = appTabs.slice(0, 2);
+  // Tutor destinations are selected by address, independently of desktop order.
+  const primaryRoutes = isTutor
+    ? ["/dashboard/tutor", "/dashboard/tutor/classroom"].flatMap(
+        (href) => appTabs.filter((item) => item.href === href),
+      )
+    : appTabs.slice(0, 2);
   const secondaryRoutes = [
-    ...appTabs.slice(2),
+    ...appTabs.filter((item) => !primaryRoutes.some((primary) => primary.href === item.href)),
     ...YS_UTILITY_ITEMS.filter((item) => item.href !== "/messages"),
   ];
   // Whatever is promoted to the bar leaves the drawer: the same destination in
   // two places at once is how the old bar ended up with a duplicate programme.
-  const featuredRoute =
-    secondaryRoutes.find((item) => FEATURED_HREFS.includes(item.href)) ??
-    secondaryRoutes[0];
+  const featuredRoute = isTutor
+    ? secondaryRoutes.find((item) => item.href === "/dashboard/tutor/calendar")
+    : secondaryRoutes.find((item) => FEATURED_HREFS.includes(item.href)) ?? secondaryRoutes[0];
   const overflowRoutes = secondaryRoutes.filter(
     (item) => item.href !== featuredRoute?.href,
   );

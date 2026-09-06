@@ -1,0 +1,187 @@
+import "@/test/setupDom";
+import assert from "node:assert/strict";
+import { afterEach, before, beforeEach, mock, test } from "node:test";
+import React from "react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import api from "@/lib/api";
+import type { Booking, TutorStudentContext, TutorStudentNote } from "@/types";
+
+let role = "tutor";
+let authenticated = true;
+let tab = "";
+const navigation: string[] = [];
+mock.module("next/navigation", { namedExports: { useRouter: () => ({ push: (url: string) => { navigation.push(url); }, replace: (url: string) => navigation.push(url) }), useSearchParams: () => new URLSearchParams(tab) } });
+mock.module("next/link", { defaultExport: ({ href, children, ...props }: React.ComponentProps<"a">) => <a href={String(href)} {...props}>{children}</a> });
+mock.module("@/hooks/useAuth", { namedExports: { useAuth: () => ({ user: { id: "tutor-user", role }, isAuthenticated: authenticated, isLoading: false, isStudent: role === "student", isTutor: role === "tutor", isAdmin: false, isImpersonating: false }) } });
+let List: React.ComponentType;
+let Detail: React.ComponentType<{ params: { studentId: string } }>;
+let ContextCard: React.ComponentType<{ studentId: string; tutorId: string }>;
+let Notes: React.ComponentType<{ studentId: string }>;
+before(async () => {
+  List = (await import("@/app/(main)/dashboard/tutor/classroom/page")).default;
+  Detail = (await import("@/app/(main)/dashboard/tutor/classroom/[studentId]/page")).default;
+  ContextCard = (await import("./TutorStudentContextCard")).TutorStudentContextCard;
+  Notes = (await import("./TutorStudentNotes")).TutorStudentNotes;
+});
+const seed: Booking = { id: "lesson-1", student: { id: "student-1", email: "ipek@example.com", display_name: "İpek Işık" }, tutor: { id: "tutor-profile", name: "Hoca", surname: "Bir" }, subject: { id: "math", name: "Matematik", exam_type: "TYT" }, start_time: "2099-09-06T00:15:00Z", duration_minutes: 40, status: "confirmed", price: 0, lesson_request: null, created_at: "2026-09-01T10:00:00Z" };
+const emptyContext = (student_id: string): TutorStudentContext => ({ student_id, goals: "", difficult_topics: "", resources: "", study_preferences: "", updated_at: null });
+let bookings: Booking[];
+let contexts: Record<string, TutorStudentContext>;
+let notes: TutorStudentNote[];
+let failure = "";
+let requests: Array<{ method: string; url: string; data: unknown }>;
+let client: QueryClient;
+beforeEach(() => {
+  role = "tutor"; authenticated = true; tab = ""; navigation.length = 0;
+  bookings = [seed]; contexts = {}; notes = []; failure = ""; requests = [];
+  client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity }, mutations: { retry: false } } });
+  api.defaults.adapter = async config => {
+    const url = config.url ?? "";
+    const method = config.method ?? "get";
+    const body = config.data ? JSON.parse(config.data) : undefined;
+    requests.push({ method, url, data: body });
+    if (failure && `${method} ${url}`.includes(failure)) throw new Error("test network failure");
+    let data: unknown = [];
+    if (url === "/tutors/me/") data = { id: "tutor-profile", is_verified: true, is_public: false };
+    else if (url === "/bookings/") data = bookings;
+    else if (url.includes("tutor-student-context/")) {
+      const id = url.split("/").filter(Boolean).at(-1)!;
+      if (method === "put") contexts[id] = { ...body, student_id: id, updated_at: "2026-09-05T12:00:00Z" };
+      data = contexts[id] ?? emptyContext(id);
+    } else if (url.includes("tutor-student-notes")) {
+      if (method === "post") notes.push({ id: "note-1", content: body.content, created_at: "2026-09-05T12:00:00Z", updated_at: "2026-09-05T12:00:00Z" } as TutorStudentNote);
+      if (method === "patch") notes[0] = { ...notes[0], content: body.content };
+      if (method === "delete") notes = [];
+      data = method === "post" || method === "patch" ? notes[0] : notes;
+    } else if (url === "/conversations/") data = [{ id: "thread-1", student: "student-1", tutor: "tutor-user", created_at: "2026-09-05T12:00:00Z", is_blocked: false }];
+    return { config, data, status: 200, statusText: "OK", headers: {} };
+  };
+});
+afterEach(() => { cleanup(); client.clear(); });
+const wrap = (node: React.ReactNode) => <QueryClientProvider client={client}>{node}</QueryClientProvider>;
+
+test("classroom lists real relationships, search and filters with one H1 and student link", async () => {
+  const { container } = render(wrap(<List />));
+  const link = await screen.findByRole("link", { name: /İpek Işık/ });
+  assert.equal(link.getAttribute("href"), "/dashboard/tutor/classroom/student-1");
+  assert.equal(screen.getAllByRole("heading", { level: 1 }).length, 1);
+  assert.equal(container.querySelectorAll("main").length, 0);
+  assert.ok(screen.getByText("0 tamamlanan ders"));
+  fireEvent.change(screen.getByRole("searchbox"), { target: { value: "ipek isik" } });
+  assert.ok(screen.getByRole("link", { name: /İpek Işık/ }));
+  fireEvent.click(screen.getByRole("button", { name: "Planlanmış dersi olmayanlar" }));
+  assert.ok(screen.getByText("Aramana uygun öğrenci bulunamadı"));
+  fireEvent.click(screen.getByRole("button", { name: "Filtreleri temizle" }));
+  assert.ok(screen.getByRole("link", { name: /İpek Işık/ }));
+});
+test("empty roster, request error and package failure are distinct", async () => {
+  bookings = [];
+  const first = render(wrap(<List />));
+  await screen.findByText("Henüz ders ilişkin olan bir öğrenci yok"); first.unmount(); client.clear();
+  failure = "get /bookings/";
+  const second = render(wrap(<List />));
+  await screen.findByRole("alert");
+  assert.equal(screen.queryByText("Henüz ders ilişkin olan bir öğrenci yok"), null);
+  second.unmount(); client.clear(); bookings = [seed]; failure = "package-purchases";
+  render(wrap(<List />));
+  await screen.findByText("Paket hakkı alınamadı");
+  assert.equal(screen.queryByText("0/0 paket hakkı"), null);
+});
+test("detail guards private queries for unrelated students", async () => {
+  render(wrap(<Detail params={{ studentId: "unrelated" }} />));
+  await screen.findByText("Bu öğrenciye erişemiyorsun veya ders ilişkin bulunmuyor.");
+  assert.ok(!requests.some(request => /tutor-student-(context|notes|materials)/.test(request.url)));
+});
+test("detail preserves tabs in URL and opens existing booking and conversation", async () => {
+  tab = "tab=lessons";
+  const rendered = render(wrap(<Detail params={{ studentId: "student-1" }} />));
+  await screen.findByRole("heading", { level: 1, name: "İpek Işık" });
+  assert.equal((await screen.findByRole("link", { name: "Mesajlar" })).getAttribute("href"), "/messages/thread-1");
+  assert.equal(screen.getByRole("link", { name: "Dersi aç" }).getAttribute("href"), "/dashboard/tutor?tab=bookings&highlightBooking=lesson-1");
+  assert.ok(screen.getByText("00:15 – 00:55"));
+  fireEvent.mouseDown(screen.getByRole("tab", { name: "Öğrenci bilgileri" }), { button: 0, ctrlKey: false });
+  assert.ok(navigation.at(-1)?.endsWith("?tab=information"));
+  tab = "tab=information"; rendered.rerender(wrap(<Detail params={{ studentId: "student-1" }} />));
+  await screen.findByRole("heading", { name: "Öğrenci bilgi kartı" });
+  assert.equal(screen.getAllByRole("heading", { level: 1 }).length, 1);
+});
+for (const audience of ["student", "anonymous"]) test(`both classroom routes reject ${audience}`, async () => {
+  role = audience; authenticated = audience !== "anonymous";
+  const first = render(wrap(<List />));
+  await waitFor(() => assert.equal(navigation.at(-1), audience === "student" ? "/dashboard/student" : "/login"));
+  assert.equal(requests.length, 0); first.unmount();
+  render(wrap(<Detail params={{ studentId: "student-1" }} />));
+  assert.equal(screen.queryByRole("heading"), null);
+  assert.equal(requests.length, 0);
+});
+test("context persists four fields, enforces limit, cancels and clears", async () => {
+  render(wrap(<ContextCard studentId="student-1" tutorId="tutor-profile" />));
+  fireEvent.click(await screen.findByRole("button", { name: "Düzenle" }));
+  const goal = screen.getByRole("textbox", { name: "Hedefler" });
+  assert.equal(goal.getAttribute("maxlength"), "1000");
+  fireEvent.change(goal, { target: { value: "İlk 10 bin\nDüzenli tekrar" } });
+  fireEvent.click(screen.getByRole("button", { name: "Kaydet" }));
+  await screen.findByText(/İlk 10 bin/);
+  assert.equal(contexts["student-1"].goals, "İlk 10 bin\nDüzenli tekrar");
+  assert.equal(Object.keys(requests.find(r => r.method === "put")!.data as object).length, 4);
+  fireEvent.click(screen.getByRole("button", { name: "Düzenle" }));
+  fireEvent.change(screen.getByRole("textbox", { name: "Hedefler" }), { target: { value: "Vazgeçilen" } });
+  fireEvent.click(screen.getByRole("button", { name: "Vazgeç" }));
+  assert.equal(screen.queryByText("Vazgeçilen"), null);
+  fireEvent.click(screen.getByRole("button", { name: "Düzenle" }));
+  fireEvent.change(screen.getByRole("textbox", { name: "Hedefler" }), { target: { value: "" } });
+  fireEvent.click(screen.getByRole("button", { name: "Kaydet" }));
+  await waitFor(() => assert.equal(contexts["student-1"].goals, ""));
+});
+test("context preserves failed draft and resets when student changes", async () => {
+  const view = render(wrap(<ContextCard studentId="student-1" tutorId="tutor-profile" />));
+  fireEvent.click(await screen.findByRole("button", { name: "Düzenle" }));
+  fireEvent.change(screen.getByRole("textbox", { name: "Hedefler" }), { target: { value: "Korunan hedef" } });
+  failure = "put /notifications/tutor-student-context";
+  fireEvent.click(screen.getByRole("button", { name: "Kaydet" }));
+  await screen.findByRole("alert");
+  assert.equal((screen.getByRole("textbox", { name: "Hedefler" }) as HTMLTextAreaElement).value, "Korunan hedef");
+  view.rerender(wrap(<ContextCard studentId="student-2" tutorId="tutor-profile" />));
+  fireEvent.click(await screen.findByRole("button", { name: "Düzenle" }));
+  assert.equal((screen.getByRole("textbox", { name: "Hedefler" }) as HTMLTextAreaElement).value, "");
+});
+test("notes support create edit delete, failure draft and student isolation", async () => {
+  const view = render(wrap(<Notes studentId="student-1" />));
+  await screen.findByText(/Bu öğrenci için henüz notun yok/);
+  fireEvent.change(screen.getByRole("textbox", { name: "Yeni özel not" }), { target: { value: "Son derste türev" } });
+  fireEvent.click(screen.getByRole("button", { name: "Not ekle" }));
+  await screen.findByText("Son derste türev");
+  fireEvent.click(screen.getByRole("button", { name: "Notu düzenle" }));
+  fireEvent.change(screen.getByRole("textbox", { name: "Notu düzenle" }), { target: { value: "Bir sonraki ders integral" } });
+  fireEvent.click(screen.getByRole("button", { name: "Kaydet" }));
+  await screen.findByText("Bir sonraki ders integral");
+  fireEvent.click(screen.getByRole("button", { name: "Notu sil" }));
+  await screen.findByText(/Bu öğrenci için henüz notun yok/);
+  failure = "post /notifications/tutor-student-notes";
+  fireEvent.change(screen.getByRole("textbox", { name: "Yeni özel not" }), { target: { value: "Taslak" } });
+  fireEvent.click(screen.getByRole("button", { name: "Not ekle" }));
+  await waitFor(() => assert.equal(screen.getByRole("button", { name: "Not ekle" }).hasAttribute("disabled"), false));
+  assert.equal((screen.getByRole("textbox", { name: "Yeni özel not" }) as HTMLTextAreaElement).value, "Taslak");
+  view.rerender(wrap(<Notes studentId="student-2" />));
+  assert.equal((screen.getByRole("textbox", { name: "Yeni özel not" }) as HTMLTextAreaElement).value, "");
+});
+test("note query failures show retry rather than an empty state", async () => {
+  failure = "get /notifications/tutor-student-notes";
+  render(wrap(<Notes studentId="student-1" />));
+  await screen.findByText("Özel notlar yüklenemedi.");
+  assert.equal(screen.queryByText(/Bu öğrenci için henüz notun yok/), null);
+  failure = "";
+  fireEvent.click(screen.getByRole("button", { name: "Özel notları yeniden yükle" }));
+  await screen.findByText(/Bu öğrenci için henüz notun yok/);
+});
+
+test("context read errors allow retry without presenting blank saved information", async () => {
+  failure = "get /notifications/tutor-student-context";
+  render(wrap(<ContextCard studentId="student-1" tutorId="tutor-profile" />));
+  await screen.findByRole("alert");
+  assert.equal(screen.queryByRole("button", { name: "Düzenle" }), null);
+  failure = "";
+  fireEvent.click(screen.getByRole("button", { name: "Yeniden dene" }));
+  await screen.findByRole("button", { name: "Düzenle" });
+});

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
@@ -9,6 +9,7 @@ import { BrandMark } from "@/components/brand/BrandMark";
 import { MobileNotificationsBell } from "@/components/shared/MobileNotificationsBell";
 import { ProfileMenu } from "@/components/profile/ProfileMenu";
 import { StreakIndicator } from "@/components/profile/StreakIndicator";
+import { TutorVisibilityControl } from "@/components/tutors/TutorVisibilityControl";
 import { useAuth } from "@/hooks/useAuth";
 import { useCoachingFlag } from "@/hooks/useCoachingFlag";
 import { useIsMobile } from "@/hooks/useMediaQuery";
@@ -74,9 +75,28 @@ function TabStrip({
   active: YsNavItem | null;
 }) {
   const pathname = usePathname();
+  const stripRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const strip = stripRef.current;
+    if (!strip) return;
+    // Only move this strip; scrollIntoView would also move the document.
+    const revealActive = () => {
+      const selected = strip.querySelector<HTMLElement>('[aria-current="page"]');
+      if (!selected) return;
+      const bounds = strip.getBoundingClientRect();
+      const item = selected.getBoundingClientRect();
+      if (item.left < bounds.left) strip.scrollLeft -= bounds.left - item.left;
+      else if (item.right > bounds.right) strip.scrollLeft += item.right - bounds.right;
+    };
+    revealActive();
+    const observer = typeof ResizeObserver !== "undefined" ? new ResizeObserver(revealActive) : null;
+    observer?.observe(strip);
+    return () => observer?.disconnect();
+  }, [active?.href, pathname]);
 
   return (
-    <div className="scrollbar-none flex min-w-0 flex-1 overflow-x-auto">
+    <div ref={stripRef} className="scrollbar-none flex min-w-0 flex-1 overflow-x-auto">
       {items.map((item) => {
         const Icon = item.icon;
         const isActive = active === item;
@@ -349,6 +369,14 @@ export function YsNavbar({ startCoachmark = true }: Props) {
             onChange={setSearchDraft}
             onCommit={commitSearch}
           />
+        )}
+
+        {/* Left of the utility icons, which is the one piece of row 2 that is
+            empty on every route but the home page. It sits outside YsNavIcons
+            because that cluster is the same three destinations for everyone
+            and this is neither a destination nor everyone's. */}
+        {mode === "app" && isMobile !== true && isTutor && (
+          <TutorVisibilityControl />
         )}
 
         {mode === "app" && isMobile !== true && (

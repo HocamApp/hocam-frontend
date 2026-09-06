@@ -2,7 +2,7 @@
 
 import React, { useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Download, ExternalLink, FileText, Loader2, Paperclip, Trash2, Upload } from "lucide-react";
+import { ArrowSquareOut, DownloadSimple, FileText, SpinnerGap, Paperclip, Trash, UploadSimple, WarningCircle } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -89,20 +89,21 @@ export function TutorStudentMaterialsView({
 }: TutorStudentMaterialsViewProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   return (
-    <section className="space-y-3 rounded-xl border bg-muted/20 p-4">
+    <section className="space-y-4 rounded-card border border-line bg-white p-4 text-ink sm:p-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex items-center gap-2">
-          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-            <Paperclip className="h-4 w-4" />
+          <span className="flex shrink-0 items-center justify-center">
+            <Paperclip size={24} aria-hidden="true" />
           </span>
           <div>
-            <h3 className="text-sm font-semibold">Materyaller</h3>
-            <p className="text-xs text-muted-foreground">Yalnızca sana görünür; öğrenciyle paylaşılmaz.</p>
+            <h3 className="text-base font-medium">Materyaller</h3>
+            <p className="text-xs text-ink-mid">Yalnızca sana görünür; öğrenciyle paylaşılmaz.</p>
           </div>
         </div>
         <input
           ref={inputRef}
           type="file"
+          aria-label="Özel materyal dosyası seç"
           className="sr-only"
           accept=".pdf,.jpg,.jpeg,.png,.webp,.docx,.pptx"
           disabled={isUploading}
@@ -113,75 +114,75 @@ export function TutorStudentMaterialsView({
           }}
         />
         <Button size="sm" variant="outline" disabled={isUploading} onClick={() => inputRef.current?.click()}>
-          {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
+          {isUploading ? <SpinnerGap size={20} className="mr-2 animate-spin" aria-hidden="true" /> : <UploadSimple size={20} className="mr-2" aria-hidden="true" />}
           Dosya ekle
         </Button>
       </div>
-      <p className="text-xs text-muted-foreground">PDF, JPG, PNG, WebP, DOCX veya PPTX · En fazla 25 MB</p>
+      <p className="text-xs text-ink-mid">PDF, JPG, PNG, WebP, DOCX veya PPTX · En fazla 25 MB</p>
       {isUploading && (
         <div className="space-y-1" aria-live="polite">
-          <div className="h-1.5 overflow-hidden rounded-full bg-muted">
-            <div className="h-full rounded-full bg-primary transition-[width]" style={{ width: uploadProgress + "%" }} />
+          <div className="h-2 overflow-hidden rounded-pill bg-line" role="progressbar" aria-label="Materyal yükleniyor" aria-valuemin={0} aria-valuemax={100} aria-valuenow={uploadProgress}>
+            <div className="h-full rounded-pill bg-ink transition-none" style={{ width: uploadProgress + "%" }} />
           </div>
-          <p className="text-xs text-muted-foreground">{"%" + uploadProgress + " yükleniyor"}</p>
+          <p className="text-xs tabular-nums text-ink-mid">{"%" + uploadProgress + " yükleniyor"}</p>
         </div>
       )}
       {isLoading ? (
-        <div className="space-y-2" data-testid="materials-loading">
+        <div className="space-y-2" data-testid="materials-loading" role="status" aria-label="Materyaller yükleniyor" aria-busy="true">
           <Skeleton className="h-16 w-full" />
           <Skeleton className="h-16 w-full" />
         </div>
       ) : isError ? (
-        <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm">
-          <p className="text-destructive">Materyaller yüklenemedi.</p>
+        <div className="rounded-input border border-error p-3 text-sm">
+          <p className="flex items-center gap-2 text-error" role="alert"><WarningCircle size={20} aria-hidden="true" />Materyaller yüklenemedi.</p>
           <Button size="sm" variant="outline" className="mt-2" onClick={onRetry}>Yeniden dene</Button>
         </div>
       ) : materials.length === 0 ? (
-        <p className="rounded-lg border border-dashed p-3 text-sm text-muted-foreground">
+        <p className="rounded-input border border-dashed border-line bg-paper p-3 text-sm text-ink-mid">
           Bu öğrenci için henüz materyal eklemedin.
         </p>
       ) : (
         <div className={cn("space-y-2", compact && "max-h-56 overflow-y-auto pr-1")}>
           {materials.map((material) => (
-            <article key={material.id} className="flex items-center gap-3 rounded-lg border bg-card p-3">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
-                <FileText className="h-4 w-4" />
+            <article key={material.id} className="flex flex-wrap items-center gap-3 rounded-input border border-line bg-white p-3">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-input bg-paper text-ink-mid">
+                <FileText size={20} aria-hidden="true" />
               </span>
-              <div className="min-w-0 flex-1">
+              <div className="min-w-0 flex-1 basis-40">
                 <p className="truncate text-sm font-medium" title={material.original_name}>{material.original_name}</p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs tabular-nums text-ink-mid">
                   {material.file_extension.toLocaleUpperCase("tr-TR")} · {formatMaterialSize(material.size_bytes)}
                 </p>
-                <p className="text-xs text-muted-foreground">{formatDate(material.created_at)}</p>
+                <p className="text-xs tabular-nums text-ink-mid">{formatDate(material.created_at)}</p>
               </div>
-              <div className="flex shrink-0 items-center gap-1">
-                <Button size="icon" variant="ghost" className="h-8 w-8" aria-label={material.original_name + " dosyasını aç"} onClick={() => onOpen(material)}>
-                  <ExternalLink className="h-4 w-4" />
+              <div className="flex flex-wrap items-center gap-2">
+                <Button size="sm" variant="ghost" className="px-3" aria-label={material.original_name + " dosyasını aç"} onClick={() => onOpen(material)}>
+                  <ArrowSquareOut size={20} className="mr-2" aria-hidden="true" />Aç
                 </Button>
-                <Button size="icon" variant="ghost" className="h-8 w-8" aria-label={material.original_name + " dosyasını indir"} onClick={() => onDownload(material)}>
-                  <Download className="h-4 w-4" />
+                <Button size="sm" variant="ghost" className="px-3" aria-label={material.original_name + " dosyasını indir"} onClick={() => onDownload(material)}>
+                  <DownloadSimple size={20} className="mr-2" aria-hidden="true" />İndir
                 </Button>
-                <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" aria-label={material.original_name + " dosyasını sil"} onClick={() => onRequestDelete(material)}>
-                  <Trash2 className="h-4 w-4" />
+                <Button size="sm" variant="ghost" className="px-3 text-error" disabled={isDeleting} aria-label={material.original_name + " dosyasını sil"} onClick={() => onRequestDelete(material)}>
+                  <Trash size={20} className="mr-2" aria-hidden="true" />Sil
                 </Button>
               </div>
             </article>
           ))}
         </div>
       )}
-      <Dialog open={Boolean(deletingMaterial)} onOpenChange={(open) => { if (!open) onCancelDelete(); }}>
-        <DialogContent className="sm:max-w-md">
+      <Dialog open={Boolean(deletingMaterial)} onOpenChange={(open) => { if (!open && !isDeleting) onCancelDelete(); }}>
+        <DialogContent className="rounded-modal border-line bg-white text-ink sm:max-w-md" showClose={!isDeleting}>
           <DialogHeader>
             <DialogTitle>Materyali sil?</DialogTitle>
             <DialogDescription>
-              <strong className="font-medium text-foreground">{deletingMaterial?.original_name}</strong> kalıcı olarak silinecek.{" "}
+              <strong className="font-medium text-ink">{deletingMaterial?.original_name}</strong> kalıcı olarak silinecek.{" "}
               <span>Bu işlem geri alınamaz.</span>
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={onCancelDelete} disabled={isDeleting}>Vazgeç</Button>
             <Button variant="destructive" onClick={() => deletingMaterial && onConfirmDelete(deletingMaterial)} disabled={isDeleting}>
-              {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {isDeleting && <SpinnerGap size={20} className="mr-2 animate-spin" aria-hidden="true" />}
               Evet, sil
             </Button>
           </DialogFooter>
@@ -191,7 +192,11 @@ export function TutorStudentMaterialsView({
   );
 }
 
-export function TutorStudentMaterials({ studentId, compact = false }: { studentId: string; compact?: boolean }) {
+export function TutorStudentMaterials(props: { studentId: string; compact?: boolean }) {
+  return <StudentMaterials key={props.studentId} {...props} />;
+}
+
+function StudentMaterials({ studentId, compact = false }: { studentId: string; compact?: boolean }) {
   const queryClient = useQueryClient();
   const queryKey = ["tutor-student-materials", studentId];
   const [uploadProgress, setUploadProgress] = useState(0);

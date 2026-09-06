@@ -408,6 +408,7 @@ const ERROR_MESSAGES: Record<string, string> = {
   slot_outside_coaching_availability:
     "Bu saat öğretmenin yayınlanmış koçluk müsaitliğinin dışında.",
   lesson_conflict: "Bu saat mevcut bir dersle çakışıyor.",
+  time_off_conflict: "Bu saat hoca tarafından kapatılmış. Başka bir saat seçebilirsin.",
   coaching_conflict: "Bu saat başka bir koçluk görüşmesiyle çakışıyor.",
   duplicate_slot: "Aynı gün ve saat iki kez seçilemez.",
   frequency_slot_count_mismatch: "Seçilmesi gereken saat sayısı planınla uyuşmuyor.",
@@ -1111,6 +1112,7 @@ export async function changeCoachingRecurringSlot(params: {
 // --- tutor side ------------------------------------------------------------
 
 export interface CoachingStudentRow {
+  student_id?: string;
   purchase_id: string;
   service_period_id: string | null;
   student_name: string;

@@ -7,6 +7,8 @@ import type {
   TutorStudentMaterialAccess,
   TutorStudentMaterialDeleteResult,
   TutorStudentNote,
+  TutorStudentContext,
+  TutorStudentContextFields,
 } from "@/types/api";
 
 export async function fetchNotificationSummary(): Promise<NotificationSummary> {
@@ -91,4 +93,14 @@ export async function fetchTutorStudentMaterialAccess(
 export async function deleteTutorStudentMaterial(id: string): Promise<TutorStudentMaterialDeleteResult> {
   const response = await api.delete(`/notifications/tutor-student-materials/${id}/`);
   return response.status === 202 ? { status: "delete_pending" } : { status: "deleted" };
+}
+
+export async function fetchTutorStudentContext(studentId: string): Promise<TutorStudentContext> {
+  const { data } = await api.get<TutorStudentContext>(`/notifications/tutor-student-context/${studentId}/`);
+  return data;
+}
+
+export async function saveTutorStudentContext(studentId: string, fields: TutorStudentContextFields): Promise<TutorStudentContext> {
+  const { data } = await api.put<TutorStudentContext>(`/notifications/tutor-student-context/${studentId}/`, fields);
+  return data;
 }

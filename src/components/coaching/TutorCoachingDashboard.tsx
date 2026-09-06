@@ -14,10 +14,6 @@ export function TutorCoachingDashboard({
   return (
     <CoachingPageShell
       title="Çalışma koçluğu"
-      description="Teklifini, öğrencilerini ve haftalık koçluk akışını tek yerden yönet."
-      parentHref="/dashboard/tutor"
-      parentLabel="Öğretmen paneli"
-      eyebrow="Koçluk merkezi"
       width="wide"
       currentHref="/dashboard/tutor/coaching"
       audience="tutor"

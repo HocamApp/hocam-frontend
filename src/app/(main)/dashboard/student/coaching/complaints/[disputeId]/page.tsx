@@ -36,4 +36,4 @@ function Detail() {
   </div>;
 }
 
-export default function StudentCoachingComplaintDetailPage() { return <RouteGuard requireAuth requireRole="student"><CoachingPageShell title="Koçluk başvurusu" description="Başvuru durumunu, kanıtlarını ve sunucu tarafından açılan çözüm seçeneklerini takip et." parentHref="/dashboard/student/coaching/complaints" parentLabel="Koçluk başvurularım" eyebrow="Başvuru detayı" width="narrow" currentHref="/dashboard/student/coaching/complaints" audience="student"><Detail /></CoachingPageShell></RouteGuard>; }
+export default function StudentCoachingComplaintDetailPage() { return <RouteGuard requireAuth requireRole="student"><CoachingPageShell title="Koçluk başvurusu" width="narrow" currentHref="/dashboard/student/coaching/complaints" audience="student"><Detail /></CoachingPageShell></RouteGuard>; }

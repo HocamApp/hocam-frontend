@@ -185,7 +185,7 @@ function NextLessonPreview({
           </p>
           <Button asChild className="mt-6 rounded-xl">
             <Link
-              href="/dashboard/tutor?tab=availability"
+              href="/dashboard/tutor/calendar"
               onClick={() =>
                 trackHomeEvent("tutor_home_action_clicked", {
                   action: "availability",
@@ -681,7 +681,7 @@ export function TutorAuthenticatedHome() {
               </Button>
               <Button asChild size="lg" variant="outline" className="rounded-xl">
                 <Link
-                  href="/dashboard/tutor?tab=availability"
+                  href="/dashboard/tutor/calendar"
                   onClick={() =>
                     trackHomeEvent("tutor_home_action_clicked", {
                       action: "availability",
@@ -785,7 +785,7 @@ export function TutorAuthenticatedHome() {
                   ? "Panondan haftalık müsaitliğini kontrol edebilirsin."
                   : availabilitySummary
               }
-              href="/dashboard/tutor?tab=availability"
+              href="/dashboard/tutor/calendar"
               action="Saatleri düzenle"
               analyticsAction="availability"
             />
@@ -829,7 +829,7 @@ export function TutorAuthenticatedHome() {
                 Müsaitlik saatlerini güncel tutarak yeni rezervasyonlara hazır olabilirsin.
               </p>
               <Button asChild variant="link" className="mt-2">
-                <Link href="/dashboard/tutor?tab=availability">Takvimi düzenle</Link>
+                <Link href="/dashboard/tutor/calendar">Takvimi düzenle</Link>
               </Button>
             </div>
           )}
@@ -844,7 +844,7 @@ export function TutorAuthenticatedHome() {
               headingId="tutor-home-students-title"
               title="Öğrencilerinle ritmi sürdür"
               description="Aktif öğrencilerinin ders yoğunluğunu gör ve iletişime kaldığın yerden devam et."
-              href="/dashboard/tutor?tab=students"
+              href="/dashboard/tutor/classroom"
               action="Tüm öğrencileri gör"
             />
             <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
@@ -934,7 +934,7 @@ export function TutorAuthenticatedHome() {
                   </div>
                 </div>
                 <Button asChild variant="ghost" className="mt-5 w-fit px-0 text-primary hover:bg-transparent hover:underline">
-                  <Link href="/dashboard/tutor?tab=earnings">
+                  <Link href="/dashboard/tutor/statistics?tab=income&period=30">
                     Ders geçmişini gör
                     <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
                   </Link>
@@ -960,7 +960,7 @@ export function TutorAuthenticatedHome() {
                   ? `Genel puanın ${profile.rating.toLocaleString("tr-TR", { maximumFractionDigits: 1 })}. Öğrencilerinin geri bildirimlerini incele.`
                   : "İlk değerlendirmelerin geldiğinde güçlü yönlerini burada takip edebilirsin."
               }
-              href="/dashboard/tutor?tab=reviews"
+              href="/dashboard/tutor/statistics?tab=reviews&period=90"
               action="Değerlendirmeleri gör"
               analyticsAction="reviews"
             />

@@ -4,8 +4,9 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ArrowLeft, ArrowRight } from "lucide-react";
+import { ArrowLeft, ArrowRight } from "@phosphor-icons/react";
 
+import { WorkspacePageShell } from "@/components/layout/WorkspacePageShell";
 import { RouteGuard } from "@/components/shared/RouteGuard";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
@@ -164,35 +165,36 @@ function TutorPackagesContent() {
   };
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-8">
-      <div className="mb-6 flex items-center gap-3">
+    <WorkspacePageShell
+      title="Paketlerim"
+      width="narrow"
+      actions={
         <Button type="button" variant="ghost" size="sm" onClick={() => router.push("/dashboard/tutor")}>
-          <ArrowLeft className="mr-1.5 h-4 w-4" aria-hidden />
-          Panele dön
+          <ArrowLeft className="mr-1.5 h-4 w-4" weight="bold" aria-hidden />
+          Panoma dön
         </Button>
-      </div>
-
-      <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">Paketlerim</h1>
-      <p className="mt-1 text-sm text-muted-foreground">
+      }
+    >
+      <p className="max-w-2xl text-small text-ink-mid">
         Hangi paketleri sunduğunu, süresini ve indirimini buradan belirle.
       </p>
 
-      <ol className="mt-6 flex items-center gap-2 text-sm" aria-label="Adımlar">
+      <ol className="flex max-w-full items-center gap-2 overflow-x-auto pb-1 text-small" aria-label="Adımlar">
         {([1, 2, 3] as const).map((s, index) => (
-          <li key={s} className="flex items-center gap-2">
-            {index > 0 && <span className="h-px w-6 bg-border" aria-hidden />}
+          <li key={s} className="flex shrink-0 items-center gap-2">
+            {index > 0 && <span className="h-px w-6 bg-line" aria-hidden />}
             <span
               className={cn(
-                "flex items-center gap-1.5 rounded-full border px-3 py-1 font-medium",
+                "flex items-center gap-1.5 rounded-pill border px-3 py-1 font-medium",
                 step === s
-                  ? "border-primary bg-primary/10 text-primary"
-                  : "border-border text-muted-foreground"
+                  ? "border-pink bg-pink-pale text-ink"
+                  : "border-line bg-paper text-ink-mid"
               )}
             >
               <span
                 className={cn(
-                  "flex h-5 w-5 items-center justify-center rounded-full text-xs",
-                  step === s ? "bg-primary text-primary-foreground" : "bg-muted"
+                  "flex h-5 w-5 items-center justify-center rounded-pill text-xs",
+                  step === s ? "bg-pink text-ink" : "bg-surface text-ink-mid"
                 )}
               >
                 {s}
@@ -203,7 +205,7 @@ function TutorPackagesContent() {
         ))}
       </ol>
 
-      <div className="mt-6">
+      <div className="rounded-card border border-line bg-paper p-5 sm:p-6">
         {isLoading ? (
           <div className="flex justify-center py-16">
             <LoadingSpinner />
@@ -235,7 +237,7 @@ function TutorPackagesContent() {
       </div>
 
       {!isLoading && !error && offers && (
-        <div className="mt-8 flex items-center justify-between border-t pt-6">
+        <div className="flex items-center justify-between border-t border-line pt-6">
           <Button
             type="button"
             variant="outline"
@@ -251,7 +253,7 @@ function TutorPackagesContent() {
               disabled={step === 1 && selectedFrequencies.size === 0}
             >
               İleri
-              <ArrowRight className="ml-1.5 h-4 w-4" aria-hidden />
+              <ArrowRight className="ml-1.5 h-4 w-4" weight="bold" aria-hidden />
             </Button>
           ) : (
             <Button type="button" onClick={handleSave} disabled={isSaving}>
@@ -261,11 +263,11 @@ function TutorPackagesContent() {
         </div>
       )}
       {step === 1 && selectedFrequencies.size === 0 && (
-        <p className="mt-2 text-right text-xs text-muted-foreground">
+        <p className="text-right text-xs text-ink-mid">
           Devam etmek için en az bir sıklık seç.
         </p>
       )}
-    </div>
+    </WorkspacePageShell>
   );
 }
 
@@ -279,7 +281,7 @@ function StepFrequency({
   return (
     <div>
       <h2 className="text-lg font-semibold">Haftada kaç ders verebilirsin?</h2>
-      <p className="mt-1 text-sm text-muted-foreground">
+      <p className="mt-1 text-small text-ink-mid">
         Seçmediğin sıklıklara ait tüm paketler öğrencilere kapalı olur.
       </p>
       <div className="mt-4 flex flex-wrap gap-2" role="group" aria-label="Haftalık ders sıklığı">
@@ -292,8 +294,8 @@ function StepFrequency({
               aria-pressed={selected}
               onClick={() => onToggle(count)}
               className={cn(
-                "rounded-full border px-4 py-1.5 text-sm font-medium transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-                selected && "border-primary bg-primary text-primary-foreground hover:bg-primary"
+                "rounded-pill border border-line bg-paper px-4 py-1.5 text-small font-medium text-ink transition-colors hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink focus-visible:ring-offset-2",
+                selected && "border-pink bg-pink text-ink hover:bg-pink-deep"
               )}
             >
               Haftada {count}
@@ -326,13 +328,13 @@ function StepDurationsAndDiscount({
     <div className="space-y-6">
       <div>
         <h2 className="text-lg font-semibold">Süre ve indirim</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="mt-1 text-small text-ink-mid">
           Seçtiğin her sıklık için hangi paket sürelerini sunduğunu ve indirimini belirle.
         </p>
       </div>
       {frequencies.map((freq) => (
         <section key={freq}>
-          <h3 className="text-sm font-semibold text-foreground">Haftada {freq}</h3>
+          <h3 className="text-small font-semibold text-ink">Haftada {freq}</h3>
           <div className="mt-2 space-y-3">
             {(offersByFrequency.get(freq) ?? []).map((offer) => {
               const draft = drafts[offer.plan_id] ?? {
@@ -342,7 +344,7 @@ function StepDurationsAndDiscount({
               const discount = draft.discount_percent ?? offer.catalog_discount_percent;
               const pricing = calculatePackagePricing(tutorHourlyPrice, offer.lesson_count, discount);
               return (
-                <div key={offer.plan_id} className="space-y-3 rounded-lg border border-border p-3">
+                <div key={offer.plan_id} className="space-y-3 rounded-card border border-line bg-surface p-3">
                   <ProfileToggleRow
                     label={formatPlanDuration(offer.duration_days)}
                     checked={draft.is_offered}
@@ -351,14 +353,14 @@ function StepDurationsAndDiscount({
                   />
                   {draft.is_offered && (
                     <div className="space-y-2 pl-2">
-                      <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <div className="flex items-center justify-between text-xs text-ink-mid">
                         <span>
                           İndirim{" "}
-                          <span className="text-muted-foreground/70">
+                          <span className="text-ink-mid/70">
                             (katalog varsayılanı %{offer.catalog_discount_percent})
                           </span>
                         </span>
-                        <span className="font-medium text-foreground">%{discount}</span>
+                        <span className="font-medium text-ink">%{discount}</span>
                       </div>
                       <Slider
                         aria-label={`${planLabel(offer)} indirimi`}
@@ -369,9 +371,9 @@ function StepDurationsAndDiscount({
                         onValueChange={([value]) => setDraft(offer.plan_id, { discount_percent: value })}
                         disabled={isSaving}
                       />
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-xs text-ink-mid">
                         Öğrenci fiyatı:{" "}
-                        <span className="font-medium text-foreground">{formatPrice(pricing.total)}</span>{" "}
+                        <span className="font-medium text-ink">{formatPrice(pricing.total)}</span>{" "}
                         ({offer.lesson_count} ders)
                       </p>
                     </div>
@@ -398,11 +400,11 @@ function StepSummary({
   return (
     <div>
       <h2 className="text-lg font-semibold">Özet</h2>
-      <p className="mt-1 text-sm text-muted-foreground">
+      <p className="mt-1 text-small text-ink-mid">
         Öğrencilerin göreceği paketler ve fiyatları bunlar. Kaydet&apos;e basana kadar hiçbir şey değişmez.
       </p>
       {offeredPlans.length === 0 ? (
-        <p className="mt-4 rounded-lg border border-dashed p-5 text-center text-sm text-muted-foreground">
+        <p className="mt-4 rounded-card border border-dashed border-line bg-surface p-5 text-center text-small text-ink-mid">
           Şu an hiçbir paket sunmuyorsun — öğrenciler paket satın alamaz.
         </p>
       ) : (
@@ -416,11 +418,11 @@ function StepSummary({
             return (
               <div
                 key={offer.plan_id}
-                className="flex items-center justify-between gap-3 rounded-lg border border-border p-3"
+                className="flex items-center justify-between gap-3 rounded-card border border-line bg-surface p-3"
               >
                 <div className="min-w-0">
                   <p className="truncate font-medium">{planLabel(offer)}</p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-ink-mid">
                     {offer.lesson_count} ders · %{discount} indirim
                   </p>
                 </div>

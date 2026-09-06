@@ -244,11 +244,7 @@ export default function CoachingOnboardingPage() {
     <CoachingGuard>
       <CoachingPageShell
         title="Koçluk vermeye başla"
-        description="Çalışma koçluğu özel dersten farklı bir ek hizmettir. Kapsamı gözden geçir, hızlı kontrolü tamamla ve sözleşmeyi kabul et."
-        parentHref="/dashboard/tutor/coaching"
-        parentLabel="Koçluk ana sayfası"
-        eyebrow="Kısa tanıtım"
-        width="narrow"
+        width="wide"
         currentHref="/dashboard/tutor/coaching/onboarding"
         audience="tutor"
       >

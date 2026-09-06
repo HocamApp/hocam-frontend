@@ -3,7 +3,9 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Trash2 } from "lucide-react";
+import { Trash } from "@phosphor-icons/react";
+import Link from "next/link";
+import { istanbulToday, type TutorCalendarEvent } from "@/lib/tutorCalendar";
 import {
   fetchAvailability,
   createAvailabilityRule,
@@ -33,6 +35,8 @@ interface DayAvailabilityDialogProps {
   dayOfWeek: number;
   date: string;
   dayLabel: string;
+  calendarEvents?: TutorCalendarEvent[];
+  onChanged?: () => void;
 }
 
 export function DayAvailabilityDialog({
@@ -41,18 +45,21 @@ export function DayAvailabilityDialog({
   dayOfWeek,
   date,
   dayLabel,
+  calendarEvents = [],
+  onChanged,
 }: DayAvailabilityDialogProps) {
   const queryClient = useQueryClient();
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
   const [timeError, setTimeError] = useState<string | null>(null);
+  const [resetting, setResetting] = useState(false);
   const [mode, setMode] = useState<"date" | "weekly">("date");
 
   useEffect(() => {
-    if (open) setMode("date");
+    if (open) { setMode("date"); setStartTime(""); setEndTime(""); setTimeError(null); }
   }, [open, date]);
 
-  const { data: rules = [] } = useQuery({
+  const { data: rules = [], isPending: loading, isError, refetch } = useQuery({
     queryKey: ["availability"],
     queryFn: fetchAvailability,
     enabled: open,
@@ -65,32 +72,57 @@ export function DayAvailabilityDialog({
     .filter((rule) => !rule.is_unavailable)
     .sort((a, b) => (a.start_time || "").localeCompare(b.start_time || ""));
 
+  const refresh = () => {
+    for (const key of ["availability", "tutor-calendar", "tutor-busy-intervals", "tutor-availability"]) void queryClient.invalidateQueries({ queryKey: [key] });
+    onChanged?.();
+  };
+  const affectedLessons = (loading || isError ? [] : calendarEvents).filter((event) => {
+    if (!["pending", "confirmed", "in_progress"].includes(event.status) || event.source !== "booking") return false;
+    const dated = rules.filter((rule) => rule.specific_date === event.local_date);
+    const weekday = (new Date(`${event.local_date}T12:00:00`).getDay() + 6) % 7;
+    const effective = dated.length ? dated : rules.filter((rule) => !rule.specific_date && rule.day_of_week === weekday);
+    const [h, m] = event.local_time.split(":").map(Number);
+    const end = h * 60 + m + event.duration_minutes;
+    return !effective.some((rule) => {
+      if (rule.is_unavailable || !rule.start_time || !rule.end_time) return false;
+      const [eh, em] = rule.end_time.split(":").map(Number);
+      return rule.start_time.slice(0, 5) <= event.local_time.slice(0, 5) && eh * 60 + em >= end;
+    });
+  });
+  const resetDate = async () => {
+    setResetting(true); setTimeError(null);
+    try { for (const rule of dateRules) await deleteAvailabilityRule(rule.id); }
+    catch { setTimeError("Tarih istisnası tamamen kaldırılamadı. Kalan kayıtları kontrol edip yeniden dene."); }
+    finally { refresh(); setResetting(false); }
+  };
+
   const createMutation = useMutation({
     mutationFn: createAvailabilityRule,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["availability"] });
+      refresh();
       setStartTime("");
       setEndTime("");
       setTimeError(null);
       toast.success("Müsaitlik güncellendi.");
     },
     onError: () => {
-      toast.error("Müsaitlik güncellenemedi.");
+      setTimeError("Müsaitlik güncellenemedi. Yazdığın saatler korundu, yeniden deneyebilirsin.");
     },
   });
 
   const deleteMutation = useMutation({
     mutationFn: deleteAvailabilityRule,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["availability"] });
+      refresh();
       toast.success("Müsaitlik güncellendi.");
     },
     onError: () => {
-      toast.error("Müsaitlik güncellenemedi.");
+      setTimeError("Müsaitlik güncellenemedi. Yazdığın saatler korundu, yeniden deneyebilirsin.");
     },
   });
 
-  const isMutating = createMutation.isPending || deleteMutation.isPending;
+  const isMutating = createMutation.isPending || deleteMutation.isPending || resetting || loading || isError;
+  const dateIsPast = date < istanbulToday();
 
   const handleAdd = () => {
     setTimeError(null);
@@ -125,7 +157,7 @@ export function DayAvailabilityDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-h-[85dvh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{dayLabel} Müsaitliği</DialogTitle>
           <DialogDescription>
@@ -134,14 +166,16 @@ export function DayAvailabilityDialog({
         </DialogHeader>
 
         <div className="space-y-4">
-          <div className="grid grid-cols-2 rounded-lg bg-muted p-1">
-            <Button type="button" size="sm" variant={mode === "date" ? "default" : "ghost"} onClick={() => setMode("date")}>Yalnızca bu tarih</Button>
-            <Button type="button" size="sm" variant={mode === "weekly" ? "default" : "ghost"} onClick={() => setMode("weekly")}>Her hafta tekrarla</Button>
+          {loading && <p role="status" className="text-sm text-ink-mid">Müsaitlik yükleniyor…</p>}
+          {isError && <div role="alert" className="space-y-2 text-sm text-error"><p>Müsaitlik alınamadı.</p><Button variant="outline" onClick={() => void refetch()}>Yeniden dene</Button></div>}
+          <div className="grid grid-cols-2 rounded-input bg-paper p-1">
+            <Button type="button" size="sm" variant={mode === "date" ? "default" : "ghost"} disabled={isMutating} onClick={() => setMode("date")}>Yalnızca bu tarih</Button>
+            <Button type="button" size="sm" variant={mode === "weekly" ? "default" : "ghost"} disabled={isMutating} onClick={() => setMode("weekly")}>Her hafta tekrarla</Button>
           </div>
-          <p className="text-xs text-muted-foreground">{mode === "date" ? "Bu tarihteki kurallar haftalık düzenin yerini alır." : `${dayLabel.split(" ")[0]} günleri için tekrar eden düzen.`}</p>
-          {isClosed && <p className="rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive">Bu gün kapalı.</p>}
-          {dayRules.length === 0 ? (
-            <p className="rounded-md border border-dashed px-3 py-6 text-center text-sm text-muted-foreground">
+          <p className="text-xs text-ink-mid">{mode === "date" ? "Bu tarihteki kurallar haftalık düzenin yerini alır." : `${dayLabel.split(" ")[0]} günleri için tekrar eden düzen.`}</p>
+          {isClosed && <p className="rounded-input border border-error bg-white px-3 py-2 text-sm text-error">Bu gün kapalı.</p>}
+          {!loading && !isError && (dayRules.length === 0 ? (
+            <p className="rounded-input border border-dashed px-3 py-6 text-center text-sm text-ink-mid">
               Bu gün için henüz müsaitlik saati eklenmemiş.
             </p>
           ) : (
@@ -152,7 +186,7 @@ export function DayAvailabilityDialog({
                 return (
                   <div
                     key={rule.id}
-                    className="flex items-center gap-2 rounded-md border bg-muted/40 px-2 py-1.5 text-sm"
+                    className="flex items-center gap-2 rounded-input border bg-paper px-2 py-1.5 text-sm"
                   >
                     <span className="font-medium tabular-nums">
                       {start}–{end}
@@ -160,45 +194,50 @@ export function DayAvailabilityDialog({
                     <button
                       type="button"
                       onClick={() => deleteMutation.mutate(rule.id)}
-                      disabled={isMutating}
+                      disabled={isMutating || (mode === "date" && dateIsPast)}
                       aria-label={`${dayLabel} ${start}–${end} saatini sil`}
-                      className="text-muted-foreground transition-colors hover:text-destructive disabled:pointer-events-none disabled:opacity-50"
+                      className="text-ink-mid transition-colors hover:text-error disabled:pointer-events-none disabled:opacity-50"
                     >
-                      <Trash2 className="h-3.5 w-3.5" />
+                      <Trash className="h-3.5 w-3.5" />
                     </button>
                   </div>
                 );
               })}
             </div>
-          )}
+          ))}
+          {mode === "date" && dateRules.length > 0 && <Button variant="outline" disabled={isMutating || dateIsPast} onClick={() => void resetDate()}>Tarih istisnasını kaldır</Button>}
+          <p className="text-xs text-ink-mid">Müsaitlik değişiklikleri mevcut dersleri iptal etmez. Tarih istisnasını kaldırınca haftalık düzene dönülür.</p>
+          {affectedLessons.length > 0 && <div role="status" className="space-y-2 rounded-input border border-line p-3 text-sm text-ink"><p>Bu dönemde müsaitlik saatlerinin dışında kalan derslerin var:</p>{affectedLessons.map((event) => <Link key={event.id} className="block underline" href={`/dashboard/tutor?tab=bookings&highlightBooking=${event.id}`}>{event.local_date} {event.local_time} · {event.student.display_name}</Link>)}</div>}
 
           <div className="space-y-3 border-t pt-4">
             <p className="text-sm font-medium">Yeni saat ekle</p>
             <div className="flex flex-wrap items-end gap-3">
               <div className="space-y-1.5">
-                <Label className="text-xs">Başlangıç</Label>
+                <Label className="text-xs" htmlFor="availability-start">Başlangıç</Label>
                 <TimeSelect
+                  id="availability-start"
                   value={startTime}
                   onChange={setStartTime}
-                  disabled={isMutating}
+                  disabled={isMutating || (mode === "date" && dateIsPast)}
                   className="w-[130px]"
                 />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs">Bitiş</Label>
+                <Label className="text-xs" htmlFor="availability-end">Bitiş</Label>
                 <TimeSelect
+                  id="availability-end"
                   value={endTime}
                   onChange={setEndTime}
-                  disabled={isMutating}
+                  disabled={isMutating || (mode === "date" && dateIsPast)}
                   className="w-[130px]"
                 />
               </div>
-              <Button type="button" onClick={handleAdd} disabled={isMutating}>
+              <Button type="button" onClick={handleAdd} disabled={isMutating || (mode === "date" && dateIsPast)}>
                 Ekle
               </Button>
             </div>
-            {timeError && <p className="text-sm text-destructive">{timeError}</p>}
-            {mode === "date" && !isClosed && <Button type="button" variant="outline" className="border-destructive/40 text-destructive" onClick={handleCloseDay} disabled={isMutating}>Bu günü kapat</Button>}
+            {timeError && <p className="text-sm text-error">{timeError}</p>}
+            {mode === "date" && !isClosed && <Button type="button" variant="outline" className="border-error text-error" onClick={handleCloseDay} disabled={isMutating || (mode === "date" && dateIsPast)}>Bu günü kapat</Button>}
           </div>
         </div>
 

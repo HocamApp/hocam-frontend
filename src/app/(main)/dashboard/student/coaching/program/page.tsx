@@ -72,10 +72,6 @@ export default function StudentCoachingProgramPage() {
     <RouteGuard requireAuth requireRole="student">
       <CoachingPageShell
         title="Çalışma programım"
-        description="Öğretmeninle belirlediğin görevleri, hedefleri ve ilerleme durumunu takip et."
-        parentHref="/dashboard/student/coaching"
-        parentLabel="Çalışma koçluğum"
-        eyebrow="Program"
         width="narrow"
         currentHref="/dashboard/student/coaching/program"
         audience="student"
