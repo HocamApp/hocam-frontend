@@ -1,12 +1,13 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Calendar as CalendarIcon, Pencil } from "lucide-react";
+import { CalendarBlank as CalendarIcon, Pencil } from "@phosphor-icons/react";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import StatusBadge from "@/components/shared/StatusBadge";
 import { DayAvailabilityDialog } from "@/components/tutors/DayAvailabilityDialog";
+import { istanbulCalendarToday } from "@/lib/availability";
 import { formatDateLocal, jsDayToBackendDay } from "@/lib/utils";
 import type { AvailabilityRule, Booking } from "@/types";
 
@@ -27,11 +28,10 @@ export function AvailabilityCalendar({ availability, bookings = [], editable = t
   editable?: boolean;
   showBookings?: boolean;
 }) {
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date>(() => istanbulCalendarToday());
   const [isEditing, setIsEditing] = useState(false);
   const today = useMemo(() => {
-    const value = new Date();
-    value.setHours(0, 0, 0, 0);
+    const value = istanbulCalendarToday();
     return value;
   }, []);
   const planningEnd = useMemo(() => {
@@ -42,7 +42,7 @@ export function AvailabilityCalendar({ availability, bookings = [], editable = t
   const isPastSelectedDate = selectedDate < today;
   const selectedRules = dayRulesForDate(availability, selectedDate);
   const selectedBookings = bookings.filter(
-    (booking) => new Date(booking.start_time).toDateString() === selectedDate.toDateString()
+    (booking) => booking.start_time.slice(0, 10) === formatDateLocal(selectedDate)
   );
   const availableDates = useMemo(() => {
     const dates: Date[] = [];
@@ -58,7 +58,7 @@ export function AvailabilityCalendar({ availability, bookings = [], editable = t
     () => availability.filter((rule) => rule.is_unavailable && rule.specific_date).map((rule) => new Date(`${rule.specific_date}T00:00:00`)),
     [availability]
   );
-  const bookedDates = useMemo(() => bookings.filter((booking) => ["pending", "confirmed", "in_progress"].includes(booking.status)).map((booking) => new Date(booking.start_time)), [bookings]);
+  const bookedDates = useMemo(() => bookings.filter((booking) => ["pending", "confirmed", "in_progress"].includes(booking.status)).map((booking) => new Date(`${booking.start_time.slice(0, 10)}T00:00:00`)), [bookings]);
   const label = `${DAY_NAMES[jsDayToBackendDay(selectedDate.getDay())]} ${selectedDate.toLocaleDateString("tr-TR", { day: "numeric", month: "long" })}`;
 
   return (
@@ -107,7 +107,7 @@ export function AvailabilityCalendar({ availability, bookings = [], editable = t
               {selectedRules.map((rule) => <span key={rule.id} className="rounded-pill border border-line px-3 py-1 text-small tabular-nums text-ink">{rule.start_time?.slice(0, 5)}–{rule.end_time?.slice(0, 5)}</span>)}
             </div>
           )}
-          {showBookings && selectedBookings.length > 0 && <div className="space-y-2 border-t border-line pt-4"><p className="text-sm font-semibold">Dersler</p>{selectedBookings.map((booking) => <div key={booking.id} className="flex items-center justify-between gap-3 rounded-card border border-line p-3"><span className="text-sm font-medium">{new Date(booking.start_time).toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })} · {booking.student.display_name || booking.student.email}</span><StatusBadge status={booking.status} type="booking" /></div>)}</div>}
+          {showBookings && selectedBookings.length > 0 && <div className="space-y-2 border-t border-line pt-4"><p className="text-sm font-semibold">Dersler</p>{selectedBookings.map((booking) => <div key={booking.id} className="flex items-center justify-between gap-3 rounded-card border border-line p-3"><span className="text-sm font-medium">{booking.start_time.slice(11, 16)} · {booking.student.display_name || booking.student.email}</span><StatusBadge status={booking.status} type="booking" /></div>)}</div>}
           {editable && (isPastSelectedDate ? <p className="text-xs text-ink-mid">Geçmiş tarihler yalnızca görüntülenebilir.</p> : <p className="text-xs text-ink-mid"><Pencil className="mr-1 inline h-3 w-3" /> Takvimde bir gün seçerek o güne özel saat veya kapalı gün tanımlayabilirsin.</p>)}
         </CardContent>
       </Card>

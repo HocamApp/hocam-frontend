@@ -13,3 +13,10 @@ export function availabilityRulesOverlap(
     return sameScope && rule.start_time.slice(0, 5) < candidate.endTime && rule.end_time.slice(0, 5) > candidate.startTime;
   });
 }
+
+/** A display-only local Date whose calendar digits are today's Istanbul date. */
+export function istanbulCalendarToday(now = new Date()): Date {
+  const parts = new Intl.DateTimeFormat("en-CA", {timeZone:"Europe/Istanbul",year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(now);
+  const part = (type: string) => Number(parts.find((value) => value.type === type)!.value);
+  return new Date(part("year"), part("month") - 1, part("day"));
+}

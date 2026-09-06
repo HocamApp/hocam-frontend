@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/select";
 import { TimeSelect } from "@/components/ui/time-select";
 import { Label } from "@/components/ui/label";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash } from "@phosphor-icons/react";
 import { AvailabilityRule } from "@/types";
 import { toast } from "sonner";
 import { availabilityRulesOverlap } from "@/lib/availability";
@@ -48,7 +48,7 @@ export function AvailabilityEditor() {
   const [endTime, setEndTime] = useState("");
   const [timeError, setTimeError] = useState<string | null>(null);
 
-  const { data: rules = [], isLoading } = useQuery({
+  const { data: rules = [], isLoading, isError, refetch } = useQuery({
     queryKey: ["availability"],
     queryFn: fetchAvailability,
   });
@@ -57,6 +57,9 @@ export function AvailabilityEditor() {
     mutationFn: createAvailabilityRule,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["availability"] });
+      queryClient.invalidateQueries({ queryKey: ["tutor-calendar"] });
+      queryClient.invalidateQueries({ queryKey: ["tutor-availability"] });
+      queryClient.invalidateQueries({ queryKey: ["tutor-availability"] });
       setStartTime("");
       setEndTime("");
       setTimeError(null);
@@ -71,6 +74,9 @@ export function AvailabilityEditor() {
     mutationFn: deleteAvailabilityRule,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["availability"] });
+      queryClient.invalidateQueries({ queryKey: ["tutor-calendar"] });
+      queryClient.invalidateQueries({ queryKey: ["tutor-availability"] });
+      queryClient.invalidateQueries({ queryKey: ["tutor-availability"] });
       toast.success("Müsaitlik güncellendi.");
     },
     onError: () => {
@@ -78,7 +84,7 @@ export function AvailabilityEditor() {
     },
   });
 
-  const isMutating = createMutation.isPending || deleteMutation.isPending;
+  const isMutating = createMutation.isPending || deleteMutation.isPending || isLoading || isError;
 
   const handleAdd = () => {
     setTimeError(null);
@@ -107,33 +113,33 @@ export function AvailabilityEditor() {
   // within each day, earlier start_time first.
   const rulesByDay: AvailabilityRule[][] = DAY_NAMES.map((_, day) =>
     rules
-      .filter((r) => r.day_of_week === day)
+      .filter((r) => !r.specific_date && !r.is_unavailable && !!r.start_time && !!r.end_time && r.day_of_week === day)
       .sort((a, b) => a.start_time.localeCompare(b.start_time))
   );
 
   return (
     <div className="space-y-6">
-      <h2 className="text-lg font-semibold">Müsaitlik Saatleri</h2>
+      <h2 className="text-lg font-medium">Müsaitlik Saatleri</h2>
 
-      {isLoading ? (
-        <p className="text-sm text-muted-foreground">Yükleniyor...</p>
+      {isError ? (<div role="alert" className="space-y-2"><p className="text-sm text-error">Müsaitlik saatleri alınamadı.</p><Button variant="outline" onClick={() => void refetch()}>Tekrar dene</Button></div>) : isLoading ? (
+        <p className="text-sm text-ink-mid">Yükleniyor...</p>
       ) : (
         <>
-          {rules.length === 0 && (
-            <p className="rounded-md border border-dashed px-3 py-6 text-center text-sm text-muted-foreground">
+          {rulesByDay.every((day) => day.length === 0) && (
+            <p className="rounded-input border border-dashed px-3 py-6 text-center text-sm text-ink-mid">
               Henüz müsaitlik saati eklenmemiş.
             </p>
           )}
           <div className="grid grid-cols-1 gap-3 md:grid-cols-7">
           {DAY_NAMES.map((name, day) => (
             <div key={day} className="space-y-2">
-              <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              <div className="text-xs font-medium uppercase tracking-wide text-ink-mid">
                 <span className="md:hidden">{name}</span>
                 <span className="hidden md:inline">{DAY_ABBREVIATIONS[day]}</span>
               </div>
               <div className="flex flex-row flex-wrap gap-2 md:flex-col">
                 {rulesByDay[day].length === 0 ? (
-                  <span className="text-xs text-muted-foreground/60">—</span>
+                  <span className="text-xs text-ink-mid">—</span>
                 ) : (
                   rulesByDay[day].map((rule) => {
                     const start = formatTimeForInput(rule.start_time);
@@ -141,7 +147,7 @@ export function AvailabilityEditor() {
                     return (
                       <div
                         key={rule.id}
-                        className="flex w-fit items-center gap-2 rounded-md border bg-muted/40 px-2 py-1.5 text-xs md:w-full"
+                        className="flex w-fit items-center gap-2 rounded-input border border-line bg-paper px-2 py-1.5 text-xs md:w-full"
                       >
                         <span className="font-medium leading-tight tabular-nums">
                           <span className="block">{start}</span>
@@ -152,9 +158,9 @@ export function AvailabilityEditor() {
                           onClick={() => deleteMutation.mutate(rule.id)}
                           disabled={isMutating}
                           aria-label={`${name} ${start}–${end} saatini sil`}
-                          className="ml-auto shrink-0 text-muted-foreground transition-colors hover:text-destructive disabled:pointer-events-none disabled:opacity-50"
+                          className="ml-auto rounded-input focus-visible:outline focus-visible:outline-2 focus-visible:outline-ink shrink-0 text-ink-mid transition-colors hover:text-error disabled:pointer-events-none disabled:opacity-50"
                         >
-                          <Trash2 className="h-3.5 w-3.5" />
+                          <Trash className="h-3.5 w-3.5" />
                         </button>
                       </div>
                     );
@@ -167,7 +173,7 @@ export function AvailabilityEditor() {
         </>
       )}
 
-      <div className="space-y-3 border-t pt-4">
+      <div className="space-y-3 border-t border-line pt-4">
         <h3 className="text-sm font-medium">Yeni Saat Ekle</h3>
         <div className="flex flex-wrap items-end gap-3">
           <div className="space-y-1.5">
@@ -212,7 +218,7 @@ export function AvailabilityEditor() {
             Ekle
           </Button>
         </div>
-        {timeError && <p className="text-sm text-destructive">{timeError}</p>}
+        {timeError && <p className="text-sm text-error">{timeError}</p>}
       </div>
     </div>
   );

@@ -5,20 +5,22 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetchTutorAvailability } from "@/lib/dashboardApi";
 import { createBooking, fetchTutorBusyIntervals } from "@/lib/lessonsApi";
 import { fetchPackagePurchases } from "@/lib/paymentsApi";
-import type { Booking, TutorProfile, AvailabilityRule, BusyInterval } from "@/types";
+import type { Booking, TutorProfile } from "@/types";
 import {
   cn,
   formatDateLocal,
   formatPrice,
-  getNext14Days,
   jsDayToBackendDay,
 } from "@/lib/utils";
+import { istanbulCalendarToday } from "@/lib/availability";
+import { getSlotsForDay } from "@/lib/bookingSlots";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -30,75 +32,6 @@ const LESSON_BASE_MINUTES = 40;
 // Free trial lessons are always this length; the backend forces it
 // regardless of what's sent (apps/lessons/pricing.py TRIAL_DURATION_MINUTES).
 const TRIAL_DURATION_MINUTES = 20;
-
-// Busy interval timestamps follow the project's naive wall-clock convention
-// (see handleSubmit below): the YYYY-MM-DD/HH:mm digits ARE Turkey local time,
-// with no real timezone conversion applied by the backend. Parsing via
-// `new Date(iso)` would apply a spurious +3h shift on display; read the
-// digits directly instead, exactly like the rest of this file already does.
-function parseNaiveLocalDateTime(iso: string): { dateStr: string; minutes: number } {
-  const match = iso.match(/^(\d{4}-\d{2}-\d{2})T(\d{2}):(\d{2})/);
-  if (!match) return { dateStr: "", minutes: 0 };
-  const [, dateStr, hh, mm] = match;
-  return { dateStr, minutes: parseInt(hh, 10) * 60 + parseInt(mm, 10) };
-}
-
-// Parse "16:00" or "16:00:00" to minutes since midnight
-function parseTimeToMinutes(t: string): number {
-  const parts = t.trim().split(":");
-  const h = parseInt(parts[0] ?? "0", 10);
-  const m = parseInt(parts[1] ?? "0", 10);
-  return h * 60 + m;
-}
-
-function minutesToTimeStr(minutes: number): string {
-  const h = Math.floor(minutes / 60);
-  const m = minutes % 60;
-  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
-}
-
-// Generate 30-min slots for a day from availability rules. Exclude slots where
-// start + duration would exceed rule end, or where the candidate interval
-// overlaps an existing busy (pending/confirmed) booking on that exact date.
-function getSlotsForDay(
-  rules: AvailabilityRule[],
-  backendDay: number,
-  durationMinutes: number,
-  busyIntervals: BusyInterval[],
-  dateStr: string
-): string[] {
-  const dayRules = rules.filter((r) => r.day_of_week === backendDay);
-  if (dayRules.length === 0) return [];
-
-  // Only this exact calendar date's busy intervals, as local minutes-since-
-  // midnight. Bookings never cross midnight (backend-enforced), so comparing
-  // the start date's string is sufficient to scope busy intervals to this day.
-  const busyForDay = busyIntervals
-    .map((b) => ({
-      start: parseNaiveLocalDateTime(b.start_time),
-      end: parseNaiveLocalDateTime(b.end_time),
-    }))
-    .filter((b) => b.start.dateStr === dateStr)
-    .map((b) => ({ startMin: b.start.minutes, endMin: b.end.minutes }));
-
-  const slotSet = new Set<number>();
-  for (const r of dayRules) {
-    const startMin = parseTimeToMinutes(r.start_time);
-    const endMin = parseTimeToMinutes(r.end_time);
-    for (let m = startMin; m + durationMinutes <= endMin; m += 30) {
-      const candidateEnd = m + durationMinutes;
-      const overlapsBusy = busyForDay.some(
-        (b) => m < b.endMin && candidateEnd > b.startMin
-      );
-      if (!overlapsBusy) {
-        slotSet.add(m);
-      }
-    }
-  }
-  return Array.from(slotSet)
-    .sort((a, b) => a - b)
-    .map(minutesToTimeStr);
-}
 
 function translateApiError(message: string): string {
   if (message.includes("no availability on this day"))
@@ -169,7 +102,7 @@ export function BookingModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [step1Error, setStep1Error] = useState<string | null>(null);
 
-  const { data: availabilityRules = [] } = useQuery({
+  const { data: availabilityRules = [], isLoading: availabilityLoading, isError: availabilityError, refetch: refetchAvailability } = useQuery({
     queryKey: ["tutor-availability", tutor.id],
     queryFn: () => fetchTutorAvailability(String(tutor.id)),
     enabled: isOpen,
@@ -185,7 +118,11 @@ export function BookingModal({
   });
 
   // Same rolling 14-day window the date picker below already shows.
-  const next14Days = getNext14Days();
+  const next14Days = Array.from({length:14}, (_, offset) => {
+    const day = istanbulCalendarToday();
+    day.setDate(day.getDate() + offset);
+    return day;
+  });
   const busyRangeStart = formatDateLocal(next14Days[0]);
   const busyRangeEnd = formatDateLocal(next14Days[next14Days.length - 1]);
 
@@ -193,6 +130,7 @@ export function BookingModal({
     data: busyIntervals = [],
     isLoading: busyIntervalsLoading,
     isFetching: busyIntervalsFetching,
+    isError: busyIntervalsError,
     refetch: refetchBusyIntervals,
   } = useQuery({
     queryKey: ["tutor-busy-intervals", tutor.id, busyRangeStart, busyRangeEnd],
@@ -243,11 +181,11 @@ export function BookingModal({
     : "";
 
   const backendDayForDate = (d: Date) => jsDayToBackendDay(d.getDay());
-  const hasAvailabilityOnDay = (d: Date) =>
-    availabilityRules.some((r) => r.day_of_week === backendDayForDate(d));
+  const slotsUnavailable = availabilityLoading || availabilityError || busyIntervalsLoading || busyIntervalsError;
+  const hasAvailabilityOnDay = (d: Date) => !slotsUnavailable && getSlotsForDay(availabilityRules, backendDayForDate(d), selectedDuration, busyIntervals, formatDateLocal(d)).length > 0;
   const slotsForSelectedDay = useMemo(
     () =>
-      selectedDate && availabilityRules.length > 0 && !busyIntervalsLoading
+      selectedDate && availabilityRules.length > 0 && !slotsUnavailable
         ? getSlotsForDay(
             availabilityRules,
             backendDayForDate(selectedDate),
@@ -256,7 +194,7 @@ export function BookingModal({
             formatDateLocal(selectedDate)
           )
         : [],
-    [selectedDate, availabilityRules, busyIntervalsLoading, selectedDuration, busyIntervals]
+    [selectedDate, availabilityRules, slotsUnavailable, selectedDuration, busyIntervals]
   );
 
   useEffect(() => {
@@ -293,12 +231,12 @@ export function BookingModal({
   };
 
   const handleNextStep2 = () => {
-    if (!selectedDate || !selectedTime || busyIntervalsFetching) return;
+    if (!selectedDate || !selectedTime || busyIntervalsFetching || slotsUnavailable || !slotsForSelectedDay.includes(selectedTime)) return;
     setStep(3);
   };
 
   const handleSubmit = async () => {
-    if (!selectedDate || !selectedTime || !selectedSubjectId || busyIntervalsFetching) return;
+    if (!selectedDate || !selectedTime || !selectedSubjectId || busyIntervalsFetching || slotsUnavailable || !slotsForSelectedDay.includes(selectedTime)) return;
     if (!isTrial && !eligiblePackage && !usingTestCredit) {
       setApiError("Bu hocayla ders ayırtmak için kullanılabilir aktif bir paketin olmalı.");
       setStep(1);
@@ -404,6 +342,7 @@ export function BookingModal({
             {step === 2 && "Tarih ve Saat Seç"}
             {step === 3 && "Rezervasyonu Onayla"}
           </DialogTitle>
+          <DialogDescription className="sr-only">Ders konusunu ve İstanbul saatine göre müsait bir tarih seçerek rezervasyonunu tamamla.</DialogDescription>
         </DialogHeader>
         {isTrial && (
           <p className="mt-1 text-center text-xs font-medium text-primary">
@@ -491,8 +430,12 @@ export function BookingModal({
               {apiError && (
                 <ErrorMessage message={apiError} />
               )}
+              {(busyIntervalsError || availabilityError) && <div role="alert" className="space-y-2">
+                <p className="text-sm text-error">Müsait saatler alınamadı. Saat seçebilmek için tekrar dene.</p>
+                <Button variant="outline" onClick={() => { void refetchAvailability(); void refetchBusyIntervals(); }}>Tekrar dene</Button>
+              </div>}
               <div className="min-w-0 max-w-full">
-                <label className="text-sm font-medium">Tarih</label>
+                <label className="text-sm font-medium">Tarih</label><span className="ml-2 text-xs text-ink-mid">İstanbul saati</span>
                 <div className="mt-2 flex max-w-full gap-2 overflow-x-auto overscroll-x-contain pb-2">
                   {next14Days.map((d) => {
                     const disabled = !hasAvailabilityOnDay(d);
@@ -527,7 +470,7 @@ export function BookingModal({
                   <p className="mt-2 text-sm text-muted-foreground">
                     Önce bir tarih seçin
                   </p>
-                ) : busyIntervalsLoading || busyIntervalsFetching ? (
+                ) : busyIntervalsError || availabilityError ? (<p className="mt-2 text-sm text-error">Saatler doğrulanamadı.</p>) : availabilityLoading || busyIntervalsLoading || busyIntervalsFetching ? (
                   <p className="mt-2 text-sm text-muted-foreground">
                     Müsait saatler kontrol ediliyor...
                   </p>
@@ -674,7 +617,7 @@ export function BookingModal({
               <Button
                 className="w-full sm:w-auto"
                 onClick={handleNextStep2}
-                disabled={!selectedDate || !selectedTime || busyIntervalsFetching}
+                disabled={!selectedDate || !selectedTime || busyIntervalsFetching || slotsUnavailable}
               >
                 İleri →
               </Button>
@@ -697,7 +640,7 @@ export function BookingModal({
                   !selectedTime ||
                   !selectedSubjectId ||
                   isSubmitting ||
-                  busyIntervalsFetching
+                  busyIntervalsFetching || slotsUnavailable
                 }
               >
                 {isSubmitting ? "Gönderiliyor..." : "Rezervasyonu Tamamla"}

@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { CheckCircle, Circle } from "@phosphor-icons/react";
+import { ArrowRight, CheckCircle, Circle } from "@phosphor-icons/react";
 
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -56,7 +57,7 @@ export function TutorPerformanceSection({
 
   return (
     <section aria-labelledby="tutor-performance-title">
-      <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+      <div className="mb-3 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <h2 id="tutor-performance-title" className="text-h2-m sm:text-h2">
             Başarının anahtarları
@@ -65,6 +66,13 @@ export function TutorPerformanceSection({
             Bu sayıları hedefte tutmak yeni öğrenci almanı ve mevcutlarını
             tutmanı kolaylaştırır.
           </p>
+          <Link
+            href={`/dashboard/tutor/statistics?tab=overview&period=${windowDays}`}
+            className="mt-2 inline-flex items-center gap-1 text-small font-medium text-ink underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2"
+          >
+            Ayrıntıları gör
+            <ArrowRight className="h-4 w-4" aria-hidden="true" />
+          </Link>
         </div>
 
         {/* Plain buttons with aria-pressed, not tabs: nothing here has a
@@ -73,7 +81,7 @@ export function TutorPerformanceSection({
         <div
           role="group"
           aria-label="Dönem"
-          className="inline-flex w-full rounded-pill bg-paper p-1 sm:w-auto"
+          className="inline-flex w-full rounded-pill bg-paper p-1 lg:w-auto"
         >
           {WINDOWS.map((option) => {
             const selected = option.days === windowDays;
@@ -88,7 +96,7 @@ export function TutorPerformanceSection({
                    custom `text-*` colour, and drops the size on the branch
                    that sets one. */
                 className={cn(
-                  "flex-1 rounded-pill px-4 py-2 text-[0.875rem] font-medium leading-[1.5] transition-colors duration-[var(--duration-state)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2 sm:flex-none",
+                  "flex-1 rounded-pill px-4 py-2 text-[0.875rem] font-medium leading-[1.5] transition-colors duration-[var(--duration-state)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2 lg:flex-none",
                   selected ? "bg-ink text-paper" : "text-ink-mid hover:text-ink"
                 )}
               >

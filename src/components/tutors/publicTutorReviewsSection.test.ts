@@ -134,13 +134,8 @@ describe("public tutor profile — subject labels", () => {
 });
 
 describe("SubjectRatingBreakdown component", () => {
-  it("is still shipped for its other consumer, the tutor dashboard", () => {
-    assert.ok(
-      tutorDashboard.includes(
-        'import { SubjectRatingBreakdown } from "@/components/tutors/SubjectRatingBreakdown";'
-      )
-    );
-    assert.ok(tutorDashboard.includes("<SubjectRatingBreakdown"));
+  it("is no longer duplicated on the daily-focus tutor dashboard", () => {
+    assert.equal(tutorDashboard.includes("SubjectRatingBreakdown"), false);
     const component = readFileSync(
       path.join(process.cwd(), "src/components/tutors/SubjectRatingBreakdown.tsx"),
       "utf8"

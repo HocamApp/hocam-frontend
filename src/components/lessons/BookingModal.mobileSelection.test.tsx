@@ -15,6 +15,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import type { AvailabilityRule, TutorProfile } from "@/types";
 
+let busyFails = false;
+
 const availability: AvailabilityRule[] = Array.from({ length: 7 }, (_, day) => ({
   id: `availability-${day}`,
   tutor: "tutor-1",
@@ -35,7 +37,7 @@ mock.module("@/lib/lessonsApi", {
     createBooking: async () => {
       throw new Error("Booking submission is outside this visual-state test.");
     },
-    fetchTutorBusyIntervals: async () => [],
+    fetchTutorBusyIntervals: async () => { if (busyFails) throw new Error("offline"); return []; },
   },
 });
 
@@ -119,4 +121,20 @@ test("selected mobile date and time keep white text on the pink surface", async 
     assert.equal(selectedDateButton.classList.contains("text-white"), true);
     assert.equal(time.classList.contains("!text-white"), true);
   });
+});
+
+test("busy endpoint failure blocks date selection until retry succeeds", async () => {
+  busyFails = true;
+  const queryClient = new QueryClient({defaultOptions:{queries:{retry:false}}});
+  render(<QueryClientProvider client={queryClient}><BookingModal tutor={tutor} isOpen isTrial onClose={() => undefined} onSuccess={() => undefined} /></QueryClientProvider>);
+  fireEvent.click(screen.getByRole("button", {name:/Matematik/}));
+  fireEvent.click(screen.getByRole("button", {name:"İleri →"}));
+  await screen.findByRole("alert");
+  const dates = screen.getByText("Tarih").parentElement!;
+  assert.ok(Array.from(dates.querySelectorAll<HTMLButtonElement>("button")).every((button) => button.disabled));
+  assert.equal((screen.getByRole("button", {name:"İleri →"}) as HTMLButtonElement).disabled, true);
+  busyFails = false;
+  fireEvent.click(screen.getByRole("button", {name:"Tekrar dene"}));
+  await waitFor(() => assert.ok(Array.from(dates.querySelectorAll<HTMLButtonElement>("button")).some((button) => !button.disabled)));
+  queryClient.clear();
 });

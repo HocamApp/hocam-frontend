@@ -1,0 +1,10 @@
+import assert from "node:assert/strict";
+import { test } from "node:test";
+import { calendarDates, calendarRange, calendarEventHref, eventsForCalendarDay, istanbulToday, layoutCalendarEvents, shiftCalendarDate, validCalendarDate, type TutorCalendarEvent } from "./tutorCalendar";
+const event = (id:string,time:string,duration=40):TutorCalendarEvent => ({id,source:"booking",student:{id:"s",display_name:"Ada",avatar_url:null},local_date:"2026-09-06",local_time:time,duration_minutes:duration,status:"confirmed",subject:null,classroom_available:true});
+test("Istanbul midnight and strict dates do not depend on browser timezone",()=>{
+ for(const tz of ["UTC","America/New_York","Asia/Tokyo"]){const prior=process.env.TZ;process.env.TZ=tz;try{assert.equal(istanbulToday(new Date("2026-09-05T21:01:00Z")),"2026-09-06");assert.equal(validCalendarDate("2026-02-30"),false);assert.equal(validCalendarDate("2026-09-06"),true);assert.equal(calendarDates("2026-09-06","week")[0],"2026-08-31");}finally{process.env.TZ=prior;}}
+});
+test("calendar ranges include month overflow and navigation opens the next month",()=>{const days=calendarDates("2026-09-06","month");const range=calendarRange("2026-09-06","month");assert.equal(range.from,days[0]);assert.equal(range.to,days.at(-1));assert.equal(shiftCalendarDate("2026-01-31","month",1),"2026-02-01");});
+test("overlap columns and exact durations preserve adjacent intervals",()=>{const rows=layoutCalendarEvents([event("a","09:00",60),event("b","09:30",30),event("c","10:00",40)]);assert.deepEqual(rows.map(r=>[r.start,r.end,r.column,r.columns]),[[540,600,0,2],[570,600,1,2],[600,640,0,1]]);});
+test("cross-midnight coaching has a portion next day and canonical link",()=>{const row={...event("c","23:45",30),source:"coaching" as const,service_period_id:"period"};assert.equal(eventsForCalendarDay([row],"2026-09-07")[0].duration_minutes,15);assert.equal(eventsForCalendarDay([row],"2026-09-07")[0].local_time,"00:00");assert.equal(calendarEventHref(row),"/dashboard/tutor/coaching/service-periods/period/program");assert.equal(calendarEventHref(event("lesson","12:00")),"/dashboard/tutor?tab=bookings&highlightBooking=lesson");});

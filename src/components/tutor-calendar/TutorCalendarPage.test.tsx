@@ -1,0 +1,34 @@
+import "@/test/setupDom";
+import assert from "node:assert/strict";
+import { afterEach, before, beforeEach, mock, test } from "node:test";
+import React from "react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import api from "@/lib/api";
+import type { TutorCalendarResponse } from "@/lib/tutorCalendar";
+let role="tutor",authenticated=true,query="date=2099-09-12&view=day";
+const navigation:string[]=[];
+const router={push:(url:string)=>navigation.push(url),replace:(url:string)=>navigation.push(url)};
+mock.module("next/navigation",{namedExports:{useRouter:()=>router,usePathname:()=>"/dashboard/tutor/calendar",useSearchParams:()=>new URLSearchParams(query)}});
+mock.module("next/link",{defaultExport:({href,children,...props}:React.ComponentProps<"a">)=><a href={String(href)} {...props}>{children}</a>});
+mock.module("@/hooks/useAuth",{namedExports:{useAuth:()=>({user:{id:"t",role},isAuthenticated:authenticated,isLoading:false,isTutor:role==="tutor",isStudent:role==="student",isAdmin:false,isImpersonating:false})}});
+let Page:React.ComponentType;
+before(async()=>{Page=(await import("@/app/(main)/dashboard/tutor/calendar/page")).default;});
+let client:QueryClient,data:TutorCalendarResponse,fail:boolean,requests:number;
+beforeEach(()=>{
+ role="tutor";authenticated=true;query="date=2099-09-12&view=day";navigation.length=0;fail=false;requests=0;
+ client=new QueryClient({defaultOptions:{queries:{retry:false,gcTime:Infinity}}});
+ data={from:"2099-09-12",to:"2099-09-12",timezone:"Europe/Istanbul",events:[{source:"booking",id:"lesson",student:{id:"student",display_name:"Ada",avatar_url:null},local_date:"2099-09-12",local_time:"09:30",duration_minutes:40,status:"confirmed",subject:{id:"math",name:"Matematik",exam_type:"TYT"},classroom_available:true}],availability:[],time_off:[]};
+ api.defaults.adapter=async config=>{requests++;if(fail && config.url?.includes("/schedule/"))throw new Error("offline");return {config,data:config.url==="/tutors/me/"?{id:"tutor",is_verified:true,is_public:false}:data,status:200,statusText:"OK",headers:{}};};
+});
+afterEach(()=>{cleanup();client.clear();});
+const mount=()=>render(<QueryClientProvider client={client}><Page/></QueryClientProvider>);
+test("hidden verified tutor sees real calendar, one H1 and canonical details",async()=>{
+ const {container}=mount();const button=await screen.findByRole("button",{name:/09:30 Ada/});
+ assert.equal(container.querySelectorAll("h1").length,1);assert.equal(container.querySelectorAll("main").length,0);
+ fireEvent.click(button);assert.equal(screen.getByRole("link",{name:"Dersi aç"}).getAttribute("href"),"/dashboard/tutor?tab=bookings&highlightBooking=lesson");
+ assert.equal(screen.getByRole("link",{name:"Öğrenciyi aç"}).getAttribute("href"),"/dashboard/tutor/classroom/student");
+});
+test("URL view navigation and layer visibility",async()=>{mount();await screen.findByRole("button",{name:/09:30 Ada/});fireEvent.click(screen.getByRole("button",{name:"Ay"}));assert.ok(navigation.at(-1)?.includes("view=month"));fireEvent.click(screen.getByRole("checkbox",{name:"Dersler"}));assert.ok(screen.getByText("Bu dönemin kayıtları seçtiğin filtrelerle gizlendi."));assert.equal(screen.queryByRole("button",{name:/09:30 Ada/}),null);});
+test("load error and truly empty calendar are distinct",async()=>{fail=true;const first=mount();await screen.findByRole("alert");assert.equal(screen.queryByText(/Bu dönemde ders, müsaitlik/),null);first.unmount();client.clear();fail=false;data.events=[];mount();await screen.findByText(/Bu dönemde ders, müsaitlik/);assert.ok(screen.getByRole("region",{name:"Günlük takvim, tüm saatler"}));});
+for(const audience of ["student","anonymous"])test(`calendar rejects ${audience}`,async()=>{role=audience;authenticated=audience!=="anonymous";mount();await waitFor(()=>assert.equal(navigation.at(-1),audience==="student"?"/dashboard/student":"/login"));assert.equal(requests,0);});
