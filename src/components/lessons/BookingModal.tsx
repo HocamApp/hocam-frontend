@@ -25,6 +25,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { toBookingStartTime } from "@/lib/bookingTime";
 
 // Package credits always reserve one standard 40-minute lesson. Keep in sync
 // with apps/payments/services.py::PACKAGE_CREDIT_LESSON_MINUTES.
@@ -247,8 +248,9 @@ export function BookingModal({
     const [hours, minutes] = selectedTime.split(":").map(Number);
     const dt = new Date(selectedDate);
     dt.setHours(hours, minutes, 0, 0);
-    const pad = (n: number) => String(n).padStart(2, "0");
-    const start_time = `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}:00`;
+    // One writer for the whole app — see toBookingStartTime. This must stay a
+    // naive local string; an ISO instant with a Z moves the lesson.
+    const start_time = toBookingStartTime(dt);
 
     try {
       const booking = await createBooking({

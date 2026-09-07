@@ -7,6 +7,12 @@ import type { Booking } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { HorizontalDayPicker } from "@/components/shared/HorizontalDayPicker";
+import {
+  bookingDayKey,
+  bookingInstant,
+  bookingTimeLabel,
+  istanbulDayKey,
+} from "@/lib/bookingTime";
 
 const DAY_NAMES = ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"];
 
@@ -22,7 +28,7 @@ function BookingItem({ booking }: { booking: Booking }) {
   return (
     <div className="rounded-lg bg-muted/60 p-2">
       <p className="text-[11px] font-semibold tabular-nums">
-        {new Date(booking.start_time).toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })}
+        {bookingTimeLabel(booking.start_time)}
       </p>
       <p className="truncate text-[11px]">{booking.student.display_name || booking.student.email}</p>
       <p className="truncate text-[10px] text-muted-foreground">{booking.subject.name}</p>
@@ -48,8 +54,10 @@ export function TutorWeeklySchedule({ bookings, onEdit }: { bookings: Booking[];
   );
   const bookingsForDay = (date: Date) =>
     visibleBookings
-      .filter((booking) => new Date(booking.start_time).toDateString() === date.toDateString())
-      .sort((a, b) => +new Date(a.start_time) - +new Date(b.start_time));
+      // Grouped on the Istanbul calendar day, not the viewer's: a late
+      // evening lesson must not slide onto the previous day abroad.
+      .filter((booking) => bookingDayKey(booking.start_time) === istanbulDayKey(date))
+      .sort((a, b) => bookingInstant(a.start_time) - bookingInstant(b.start_time));
 
   const selectedDate = days[selectedDayIndex];
   const selectedDayBookings = bookingsForDay(selectedDate);

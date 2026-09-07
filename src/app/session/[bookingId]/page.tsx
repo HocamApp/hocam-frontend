@@ -63,6 +63,12 @@ import { LeaveConfirmDialog } from "@/components/lessons/LeaveConfirmDialog";
 import { TeacherVideoControl } from "@/components/lessons/TeacherVideoControl";
 import type { Booking } from "@/types";
 import { TutorStudentPrivateWorkspace } from "@/components/tutors/TutorStudentPrivateWorkspace";
+import {
+  bookingEndInstant,
+  bookingInstant,
+  bookingTimeLabel,
+} from "@/lib/bookingTime";
+import { serverNow } from "@/lib/serverClock";
 
 const EARLY_JOIN_MINUTES = 15;
 const HEARTBEAT_INTERVAL_MS = 60_000;
@@ -93,9 +99,7 @@ const JitsiMeeting = dynamic(
 );
 
 function scheduledEndTime(booking: Booking) {
-  return (
-    new Date(booking.start_time).getTime() + booking.duration_minutes * 60_000
-  );
+  return bookingEndInstant(booking.start_time, booking.duration_minutes);
 }
 
 function LessonWaitingRoom({
@@ -105,26 +109,24 @@ function LessonWaitingRoom({
   booking: Booking;
   onBack: () => void;
 }) {
-  const [now, setNow] = useState(() => Date.now());
-  // booking.start_time is a real ISO instant, unlike the schedule feature's
-  // local_date + local_time wall clocks — new Date(iso) is correct here and
-  // must not be "harmonised" with src/components/schedule/scheduleDates.ts.
-  const startAt = new Date(booking.start_time).getTime();
+  const [now, setNow] = useState(() => serverNow());
+  // `booking.start_time` is an Istanbul wall clock wearing a UTC label, NOT an
+  // instant — see src/lib/bookingTime.ts. `new Date(booking.start_time)` reads
+  // the Z at face value and puts the lesson three hours late, which is what
+  // used to hold this room shut until 20:45 for an 18:00 lesson.
+  const startAt = bookingInstant(booking.start_time);
   const joinAt = startAt - EARLY_JOIN_MINUTES * 60 * 1000;
   const timeToJoin = joinAt - now;
   const countdown = formatJoinCountdown(timeToJoin);
   const showsLiveClock = countdown.mode === "soon";
   const tutorName = `${booking.tutor.name} ${booking.tutor.surname}`.trim();
-  const startClock = new Date(booking.start_time).toLocaleTimeString("tr-TR", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  const startClock = bookingTimeLabel(booking.start_time);
 
   useEffect(() => {
     // A second-by-second tick only earns its keep while a M:SS clock is on
     // screen; further out, once a minute is plenty.
     const interval = window.setInterval(
-      () => setNow(Date.now()),
+      () => setNow(serverNow()),
       showsLiveClock ? 1000 : 30_000
     );
     return () => window.clearInterval(interval);
@@ -254,7 +256,7 @@ function SessionContent() {
     }
   }, [router, tutorProfileQuery.data, isTutor, user]);
 
-  const [now, setNow] = useState(() => Date.now());
+  const [now, setNow] = useState(() => serverNow());
   const [jitsiApi, setJitsiApi] = useState<JitsiApi | null>(null);
   const [connectionStatus, setConnectionStatus] = useState<
     "connected" | "interrupted"
@@ -324,8 +326,10 @@ function SessionContent() {
     if (!booking || !isStudent) return false;
     const status = (booking.status || "").toLowerCase();
     if (status !== "confirmed") return false;
-    const joinAt =
-      new Date(booking.start_time).getTime() - EARLY_JOIN_MINUTES * 60 * 1000;
+    const joinAt = bookingInstant(booking.start_time) - EARLY_JOIN_MINUTES * 60 * 1000;
+    // Display only: this suppresses a doomed token request and shows a waiting
+    // room. The server decides the real answer when the token is minted, and
+    // a browser clock that disagrees just gets a 403.
     return now < joinAt;
   }, [booking, now, isStudent]);
   const lessonWindowEnded = Boolean(booking && now >= scheduledEndTime(booking));
@@ -374,7 +378,7 @@ function SessionContent() {
   // Ticks once a second while in session (drives the countdown display).
   useEffect(() => {
     if (!inSession) return;
-    const interval = window.setInterval(() => setNow(Date.now()), 1000);
+    const interval = window.setInterval(() => setNow(serverNow()), 1000);
     return () => window.clearInterval(interval);
   }, [inSession]);
 

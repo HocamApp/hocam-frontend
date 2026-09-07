@@ -34,6 +34,7 @@ import { HomeTopicLinks } from "@/components/home/HomeTopicLinks";
 import { HomePromoStrip } from "@/components/home/HomePromoStrip";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { bookingInstant } from "@/lib/bookingTime";
 
 function ContinueCard({
   icon,
@@ -114,7 +115,7 @@ function ContinueCard({
 }
 
 function formatLessonDateTime(booking: Booking) {
-  const date = new Date(booking.start_time);
+  const date = new Date(bookingInstant(booking.start_time));
   return date.toLocaleString("tr-TR", {
     day: "numeric",
     month: "long",
@@ -130,12 +131,12 @@ function firstUpcomingBooking(bookings: Booking[]) {
       const status = booking.status.toLowerCase();
       return (
         status === "in_progress" ||
-        (status === "confirmed" && new Date(booking.start_time).getTime() > now)
+        (status === "confirmed" && bookingInstant(booking.start_time) > now)
       );
     })
     .sort(
       (a, b) =>
-        new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
+        bookingInstant(a.start_time) - bookingInstant(b.start_time)
     )[0];
 }
 

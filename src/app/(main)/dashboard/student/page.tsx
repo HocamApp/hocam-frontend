@@ -54,7 +54,7 @@ function formatTime(isoString: string): string {
 
 function sortByStart(bookings: Booking[]) {
   return [...bookings].sort(
-    (a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
+    (a, b) => bookingInstant(a.start_time) - bookingInstant(b.start_time)
   );
 }
 
@@ -108,7 +108,7 @@ function tutorName(booking: Booking): string {
 function weekLessonSummary(bookings: Booking[]): string {
   const weekEnd = Date.now() + 7 * DAY_MS;
   const count = bookings.filter(
-    (booking) => new Date(booking.start_time).getTime() <= weekEnd
+    (booking) => bookingInstant(booking.start_time) <= weekEnd
   ).length;
   if (count === 0) return "Sıradaki dersin hazır olduğunda burada olacak.";
   return `Önündeki 7 günde ${count} dersin var.`;
@@ -218,7 +218,7 @@ function EmptyStudentDashboard({
 }
 
 function UrgentLessonBanner({ booking }: { booking: Booking }) {
-  const countdown = useCountdownLabel(new Date(booking.start_time));
+  const countdown = useCountdownLabel(new Date(bookingInstant(booking.start_time)));
   return (
     <section aria-label="Yaklaşan ders bildirimi" className="flex flex-col gap-4 rounded-card border border-ink bg-surface p-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
       <div className="flex min-w-0 items-center gap-4">
@@ -427,7 +427,7 @@ function CreditSummary({
   const scheduledCount = bookings.filter((booking) =>
     booking.package_purchase === activePackage.id &&
     (booking.status === "confirmed" || booking.status === "in_progress") &&
-    new Date(booking.start_time).getTime() > Date.now()
+    bookingInstant(booking.start_time) > Date.now()
   ).length;
   const tutor = `${activePackage.tutor.name} ${activePackage.tutor.surname}`.trim();
 
@@ -489,7 +489,7 @@ function StudentDashboardContent() {
   const allBookings = bookingsQuery.data ?? [];
   const now = Date.now();
   const upcomingBookings = sortByStart(allBookings.filter((booking) => {
-    const start = new Date(booking.start_time).getTime();
+    const start = bookingInstant(booking.start_time);
     return booking.status === "in_progress" || (booking.status === "confirmed" && start > now);
   }));
   const nextLesson = upcomingBookings[0] ?? null;
@@ -520,7 +520,7 @@ function StudentDashboardContent() {
     !hasAccountActivity;
   const name = studentProfile?.name?.trim() || emailFirstName(user?.email);
   const avatarUrl = studentProfile?.avatar_url;
-  const isUrgentLesson = Boolean(nextLesson && (nextLesson.status === "in_progress" || new Date(nextLesson.start_time).getTime() - now <= URGENT_LESSON_WINDOW_MS));
+  const isUrgentLesson = Boolean(nextLesson && (nextLesson.status === "in_progress" || bookingInstant(nextLesson.start_time) - now <= URGENT_LESSON_WINDOW_MS));
 
   if (isEmptyAccount) {
     return <EmptyStudentDashboard name={name} avatarUrl={avatarUrl} />;

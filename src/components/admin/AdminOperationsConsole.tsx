@@ -54,6 +54,7 @@ import {
 } from "@/lib/adminControlApi";
 import { cn, formatPrice } from "@/lib/utils";
 import type { AdminTestAccount } from "@/types";
+import { toBookingStartTime } from "@/lib/bookingTime";
 
 type AdminTab = "overview" | "verifications" | "accounts" | "bookings" | "packages" | "audit";
 type AccountRoleFilter = "all" | "student" | "tutor";
@@ -627,7 +628,7 @@ export function AdminOperationsConsole() {
                   {selectedBookingTutor?.profile?.subjects?.map((subject) => <option key={subject.id} value={subject.id}>{subject.name}</option>)}
                 </select>
                 <Input type="datetime-local" value={startTime} min={minimumLocalLessonTime()} onChange={(event) => setStartTime(event.target.value)} />
-                <Button className="w-full" disabled={!bookingStudentId || !selectedBookingTutor?.profile || !subjectId || !startTime || addBooking.isPending} onClick={() => selectedBookingTutor?.profile && addBooking.mutate({ student_id: bookingStudentId, tutor_id: selectedBookingTutor.profile.id, subject_id: subjectId, start_time: new Date(startTime).toISOString() })}>
+                <Button className="w-full" disabled={!bookingStudentId || !selectedBookingTutor?.profile || !subjectId || !startTime || addBooking.isPending} onClick={() => selectedBookingTutor?.profile && addBooking.mutate({ student_id: bookingStudentId, tutor_id: selectedBookingTutor.profile.id, subject_id: subjectId, start_time: toBookingStartTime(new Date(startTime)) })}>
                   {addBooking.isPending ? "Konferans açılıyor…" : "Konferansı oluştur ve aç"}
                 </Button>
               </CardContent>

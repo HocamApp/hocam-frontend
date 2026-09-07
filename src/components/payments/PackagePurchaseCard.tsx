@@ -14,6 +14,7 @@ import {
 import { ParticipantAvatar } from "@/components/messaging/ParticipantAvatar";
 import { PackageRequestStatus } from "@/components/payments/PackageRequestStatus";
 import type { Booking, PackagePurchase } from "@/types";
+import { bookingInstant } from "@/lib/bookingTime";
 
 // Mirrors backend apps/payments/services.py PACKAGE_GRACE_PERIOD_DAYS — a
 // package stays bookable until paid_at + plan.duration_days + this grace
@@ -158,7 +159,7 @@ function formatTime(isoString: string) {
 
 function sortByStart(bookings: Booking[], direction: "asc" | "desc" = "asc") {
   return [...bookings].sort((a, b) => {
-    const difference = new Date(a.start_time).getTime() - new Date(b.start_time).getTime();
+    const difference = bookingInstant(a.start_time) - bookingInstant(b.start_time);
     return direction === "asc" ? difference : -difference;
   });
 }
@@ -325,12 +326,12 @@ export function PackageLearningDetailsSheet({
   const packageBookings = bookings.filter((booking) => booking.package_purchase === purchase.id);
   const upcomingBookings = sortByStart(
     packageBookings.filter(
-      (booking) => new Date(booking.start_time) > now && booking.status !== "cancelled"
+      (booking) => new Date(bookingInstant(booking.start_time)) > now && booking.status !== "cancelled"
     )
   );
   const pastBookings = sortByStart(
     packageBookings.filter(
-      (booking) => new Date(booking.start_time) <= now && booking.status !== "cancelled"
+      (booking) => new Date(bookingInstant(booking.start_time)) <= now && booking.status !== "cancelled"
     ),
     "desc"
   );

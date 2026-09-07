@@ -97,6 +97,28 @@ Note: `auth_token` is set with js-cookie (not HttpOnly). This means it's accessi
 
 Do not change messaging to WebSockets without an explicit plan. The polling is intentional.
 
+## Time model — read before touching any booking timestamp
+
+`booking.start_time` is **not an instant**. It is an Istanbul wall clock wearing
+a UTC label: an 18:00 lesson arrives as `"2026-09-09T18:00:00Z"` and really
+happens at `15:00Z`. `new Date(booking.start_time)` renders 21:00 and decides
+everything three hours late.
+
+Everything goes through `src/lib/bookingTime.ts`:
+
+- display — `bookingTimeLabel`, `bookingDateLabel`, `bookingDateTimeLabel`
+- logic — `bookingInstant`, `bookingHasStarted`, `bookingHasEnded`,
+  `bookingJoinWindowOpen`, `byBookingInstant`
+- calendar days — `bookingDayKey` / `istanbulDayKey`, never `toDateString()`
+- writing — `toBookingStartTime`, the only way to produce a `start_time`
+
+Countdowns run off `src/lib/serverClock.ts` (`serverNow()`), which corrects the
+browser clock toward the server. **The browser never grants access to a lesson**
+— it renders a hint, and the backend decides when the room token is requested.
+
+Contract and invariants: `Hocam_backend/docs/time-architecture.md`.
+Tests: `src/lib/bookingTime.test.ts`, `src/lib/bookingTimeLogic.test.ts`.
+
 ## Booking Flow (3-step modal)
 
 `BookingModal` in `components/lessons/`:

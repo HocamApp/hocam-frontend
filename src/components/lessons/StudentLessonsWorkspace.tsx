@@ -28,7 +28,12 @@ import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { bookingInstant, bookingTimeLabel } from "@/lib/bookingTime";
+import {
+  bookingDayKey,
+  bookingInstant,
+  bookingTimeLabel,
+  istanbulDayKey,
+} from "@/lib/bookingTime";
 import { confirmBooking, fetchBookings, getBookingErrorMessage, updateBookingStatus } from "@/lib/lessonsApi";
 import { fetchPendingReviews } from "@/lib/profileLessonsApi";
 import { cn, formatDate } from "@/lib/utils";
@@ -141,11 +146,11 @@ export function StudentLessonsWorkspace() {
   const now = Date.now();
 
   const groups = useMemo(() => {
-    const asc = (a: Booking, b: Booking) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime();
+    const asc = (a: Booking, b: Booking) => bookingInstant(a.start_time) - bookingInstant(b.start_time);
     const desc = (a: Booking, b: Booking) => -asc(a, b);
     return {
       upcoming: allBookings
-        .filter((item) => ["pending", "confirmed", "in_progress"].includes(item.status) && new Date(item.start_time).getTime() > now - 60 * 60 * 1000)
+        .filter((item) => ["pending", "confirmed", "in_progress"].includes(item.status) && bookingInstant(item.start_time) > now - 60 * 60 * 1000)
         .sort(asc),
       actions: allBookings
         .filter((item) => actionableIds.has(item.id) || reviewByBooking.has(item.id))
@@ -162,7 +167,7 @@ export function StudentLessonsWorkspace() {
   const nextLesson = groups.upcoming.find((item) => ["confirmed", "in_progress"].includes(item.status)) ?? null;
   const monthNow = new Date();
   const completedThisMonth = groups.history.filter((item) => {
-    const date = new Date(item.start_time);
+    const date = new Date(bookingInstant(item.start_time));
     return date.getMonth() === monthNow.getMonth() && date.getFullYear() === monthNow.getFullYear();
   }).length;
   const subjects = Array.from(new Map(allBookings.map((item) => [item.subject.id, item.subject])).values());
@@ -176,7 +181,7 @@ export function StudentLessonsWorkspace() {
   const lessonDates = Array.from(
     new Map(
       calendarBookings.map((item) => {
-        const date = new Date(item.start_time);
+        const date = new Date(bookingInstant(item.start_time));
         return [startOfDay(date), date];
       })
     ).values()
@@ -185,7 +190,7 @@ export function StudentLessonsWorkspace() {
     (item) =>
       view === "list" ||
       !selectedDate ||
-      startOfDay(new Date(item.start_time)) === startOfDay(selectedDate)
+      bookingDayKey(item.start_time) === istanbulDayKey(selectedDate)
   );
   const visible = filtered.slice(0, visibleCount);
   const remainingCount = Math.max(0, filtered.length - visibleCount);

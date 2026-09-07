@@ -21,7 +21,12 @@ import {
   Video,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { bookingDateTimeLabel } from "@/lib/bookingTime";
+import {
+  bookingDateTimeLabel,
+  bookingDayKey,
+  bookingInstant,
+  istanbulDayKey,
+} from "@/lib/bookingTime";
 import { fetchBookings } from "@/lib/lessonsApi";
 import { fetchAvailability } from "@/lib/dashboardApi";
 import { fetchConversations } from "@/lib/messagingApi";
@@ -51,14 +56,6 @@ const DAY_NAMES = [
 
 function formatLessonDateTime(startTime: string) {
   return bookingDateTimeLabel(startTime);
-}
-
-function isSameLocalDay(first: Date, second: Date) {
-  return (
-    first.getFullYear() === second.getFullYear() &&
-    first.getMonth() === second.getMonth() &&
-    first.getDate() === second.getDate()
-  );
 }
 
 function canJoinLesson(booking: Booking) {
@@ -398,7 +395,7 @@ function summarizeStudents(bookings: Booking[]): StudentSummary[] {
     current.totalLessons += 1;
     if (
       ["pending", "confirmed", "in_progress"].includes(booking.status) &&
-      new Date(booking.start_time).getTime() >= Date.now()
+      bookingInstant(booking.start_time) >= Date.now()
     ) {
       current.upcomingLessons += 1;
     }
@@ -488,7 +485,7 @@ export function TutorAuthenticatedHome() {
     () =>
       [...bookings]
         .filter((booking) => {
-          const start = new Date(booking.start_time).getTime();
+          const start = bookingInstant(booking.start_time);
           return (
             booking.status === "in_progress" ||
             (booking.status === "confirmed" && start > Date.now())
@@ -496,7 +493,7 @@ export function TutorAuthenticatedHome() {
         })
         .sort(
           (first, second) =>
-            new Date(first.start_time).getTime() - new Date(second.start_time).getTime()
+            bookingInstant(first.start_time) - bookingInstant(second.start_time)
         ),
     [bookings]
   );
@@ -506,7 +503,7 @@ export function TutorAuthenticatedHome() {
       bookings.filter((booking) => {
         if (
           booking.status === "pending" &&
-          new Date(booking.start_time).getTime() > Date.now()
+          bookingInstant(booking.start_time) > Date.now()
         ) {
           return true;
         }
@@ -535,7 +532,7 @@ export function TutorAuthenticatedHome() {
     [availability]
   );
   const todayLessonCount = upcomingBookings.filter((booking) =>
-    isSameLocalDay(new Date(booking.start_time), new Date())
+    bookingDayKey(booking.start_time) === istanbulDayKey(Date.now())
   ).length;
   const studentSummaries = useMemo(() => summarizeStudents(bookings), [bookings]);
 

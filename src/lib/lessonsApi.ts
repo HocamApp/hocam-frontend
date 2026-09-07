@@ -7,6 +7,7 @@ import {
   LessonArtifact,
   LessonSessionState,
 } from "@/types";
+import { syncServerClock } from "./serverClock";
 
 export interface LearningContextPayload {
   learning_goal_id?: string;
@@ -117,9 +118,17 @@ export interface SessionToken {
 export async function fetchSessionToken(
   bookingId: string
 ): Promise<SessionToken> {
+  const sentAt = Date.now();
   const response = await api.get<SessionToken>(
     `/bookings/${bookingId}/session-token/`
   );
+  // Every response carrying the server's clock corrects ours, so countdowns
+  // elsewhere in the app stop drifting too. This does not make the browser
+  // authoritative about anything — this very endpoint is the thing that
+  // decides whether the lesson may be joined.
+  if (response.data.server_time) {
+    syncServerClock(response.data.server_time, sentAt, Date.now());
+  }
   return response.data;
 }
 
@@ -141,10 +150,18 @@ export async function fetchLessonSessionState(
   const response = await api.get<LessonSessionState>(
     `/bookings/${bookingId}/session-state/`
   );
+  const localRequestEndMs = Date.now();
+  if (response.data.server_time) {
+    syncServerClock(
+      response.data.server_time,
+      localRequestStartMs,
+      localRequestEndMs
+    );
+  }
   return {
     state: response.data,
     localRequestStartMs,
-    localRequestEndMs: Date.now(),
+    localRequestEndMs,
   };
 }
 
