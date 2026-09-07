@@ -5,15 +5,9 @@ import { CalendarBlank, Clock, User } from "@phosphor-icons/react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import StatusBadge from "@/components/shared/StatusBadge";
-import { formatDate, formatPrice } from "@/lib/utils";
+import { formatPrice } from "@/lib/utils";
+import { bookingDateLabel, bookingTimeRangeLabel } from "@/lib/bookingTime";
 import type { ParticipantRole, Subject } from "@/types";
-
-function formatTime(iso: string): string {
-  return new Date(iso).toLocaleTimeString("tr-TR", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
 
 interface LessonItemCardProps {
   subject: Subject;
@@ -59,11 +53,11 @@ export function LessonItemCard({
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm tabular-nums text-ink-mid">
             <span className="flex items-center gap-1.5">
               <CalendarBlank className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-              {dateTimeLabels?.date ?? formatDate(startTime)}
+              {dateTimeLabels?.date ?? bookingDateLabel(startTime)}
             </span>
             <span className="flex items-center gap-1.5">
               <Clock className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-              {dateTimeLabels?.time ?? `${formatTime(startTime)}${endTime ? ` – ${formatTime(endTime)}` : ""}`}
+              {dateTimeLabels?.time ?? bookingTimeRangeLabel(startTime, endTime)}
             </span>
             {typeof price === "number" && (
               <span className="font-medium text-ink">{formatPrice(price)}</span>

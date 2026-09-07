@@ -1,5 +1,6 @@
 import type { Booking, Conversation, PackagePurchase } from "@/types";
 import type { CoachingStudentRow } from "@/lib/coachingApi";
+import { bookingInstant } from "@/lib/bookingTime";
 
 export const CLASSROOM_STATUSES: ReadonlySet<Booking["status"]> = new Set<Booking["status"]>([
   "confirmed", "in_progress", "awaiting_confirmation", "completed", "disputed",
@@ -17,31 +18,10 @@ export interface StudentRosterEntry {
   totalCredits: number;
 }
 
-/** Booking timestamps contain Istanbul wall time despite their UTC suffix.
- * Mirrors backend schedule.booking_local_slot; never use this for coaching UTC times.
- * Bookings use Turkey's permanent UTC+3 timezone (since 2016).
- */
-export function bookingInstant(value: string): number {
-  const wallTime = value.match(/^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})(?::(\d{2}))?/);
-  if (!wallTime) return NaN;
-  return Date.parse(`${wallTime[1]}T${wallTime[2]}:${wallTime[3] ?? "00"}+03:00`);
-}
-
-export function bookingDateLabel(value: string): string {
-  const instant = bookingInstant(value);
-  return Number.isFinite(instant) ? new Intl.DateTimeFormat("tr-TR", {
-    timeZone: "Europe/Istanbul", day: "numeric", month: "long", year: "numeric",
-  }).format(instant) : "Tarih bilgisi alınamadı";
-}
-
-export function bookingTimeLabel(value: string, duration?: number): string {
-  const instant = bookingInstant(value);
-  if (!Number.isFinite(instant)) return "Saat bilgisi alınamadı";
-  const format = new Intl.DateTimeFormat("tr-TR", {
-    timeZone: "Europe/Istanbul", hour: "2-digit", minute: "2-digit",
-  });
-  return format.format(instant) + (duration ? ` – ${format.format(instant + duration * 60_000)}` : "");
-}
+/** Booking wall-clock helpers now live in `@/lib/bookingTime`, the single
+ * place that decodes the mislabeled-UTC storage convention. Re-exported here
+ * so existing classroom call sites keep working. */
+export { bookingInstant, bookingDateLabel, bookingTimeLabel } from "@/lib/bookingTime";
 
 export function getStudentRoster(bookings: Booking[], purchases: PackagePurchase[], tutorId: string, now = Date.now()): StudentRosterEntry[] {
   const roster = new Map<string, StudentRosterEntry>();

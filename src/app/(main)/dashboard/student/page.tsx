@@ -17,6 +17,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useCountdownLabel } from "@/hooks/useCountdown";
+import { bookingInstant, bookingTimeLabel } from "@/lib/bookingTime";
 import { fetchBookings } from "@/lib/lessonsApi";
 import { fetchPackagePurchases } from "@/lib/paymentsApi";
 import { fetchProfileMe } from "@/lib/profileApi";
@@ -48,10 +49,7 @@ const RENEW_DAYS_THRESHOLD = 7;
 const RENEW_CREDITS_THRESHOLD = 2;
 
 function formatTime(isoString: string): string {
-  return new Date(isoString).toLocaleTimeString("tr-TR", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  return bookingTimeLabel(isoString);
 }
 
 function sortByStart(bookings: Booking[]) {
@@ -67,13 +65,14 @@ function startOfDay(date: Date): Date {
 }
 
 function formatLessonDay(startTime: string, long = false): string {
-  const date = new Date(startTime);
+  const date = new Date(bookingInstant(startTime));
   const diffDays = Math.round(
     (startOfDay(date).getTime() - startOfDay(new Date()).getTime()) / DAY_MS
   );
   if (diffDays === 0) return "Bugün";
   if (diffDays === 1) return "Yarın";
   return date.toLocaleDateString("tr-TR", {
+    timeZone: "Europe/Istanbul",
     weekday: long ? "long" : "short",
     day: "numeric",
     month: "long",
