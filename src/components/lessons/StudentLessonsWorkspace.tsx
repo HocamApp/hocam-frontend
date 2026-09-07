@@ -28,6 +28,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { bookingInstant, bookingTimeLabel } from "@/lib/bookingTime";
 import { confirmBooking, fetchBookings, getBookingErrorMessage, updateBookingStatus } from "@/lib/lessonsApi";
 import { fetchPendingReviews } from "@/lib/profileLessonsApi";
 import { cn, formatDate } from "@/lib/utils";
@@ -56,14 +57,12 @@ function tutorName(booking: Booking): string {
 }
 
 function formatTime(value: string): string {
-  return new Date(value).toLocaleTimeString("tr-TR", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  return bookingTimeLabel(value);
 }
 
 function monthLabel(value: string): string {
-  return new Date(value).toLocaleDateString("tr-TR", {
+  return new Date(bookingInstant(value)).toLocaleDateString("tr-TR", {
+    timeZone: "Europe/Istanbul",
     month: "long",
     year: "numeric",
   });

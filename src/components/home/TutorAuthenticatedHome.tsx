@@ -21,6 +21,7 @@ import {
   Video,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { bookingDateTimeLabel } from "@/lib/bookingTime";
 import { fetchBookings } from "@/lib/lessonsApi";
 import { fetchAvailability } from "@/lib/dashboardApi";
 import { fetchConversations } from "@/lib/messagingApi";
@@ -49,13 +50,7 @@ const DAY_NAMES = [
 ];
 
 function formatLessonDateTime(startTime: string) {
-  return new Date(startTime).toLocaleString("tr-TR", {
-    day: "numeric",
-    month: "long",
-    weekday: "long",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  return bookingDateTimeLabel(startTime);
 }
 
 function isSameLocalDay(first: Date, second: Date) {

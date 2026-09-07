@@ -8,7 +8,8 @@ import { LessonJoinButton } from "@/components/lessons/LessonJoinButton";
 import { ParticipantAvatar } from "@/components/messaging/ParticipantAvatar";
 import StatusBadge from "@/components/shared/StatusBadge";
 import { LessonTopicCheckInDialog } from "@/components/learning/LessonTopicCheckInDialog";
-import { cn, formatDate, formatDisputeCategory, formatPrice } from "@/lib/utils";
+import { cn, formatDisputeCategory, formatPrice } from "@/lib/utils";
+import { bookingDateLabel, bookingTimeLabel } from "@/lib/bookingTime";
 import type { Booking, LearningActivityStatus } from "@/types";
 import {
   Dialog,
@@ -34,13 +35,6 @@ interface BookingCardProps {
   isConfirmingLearning?: boolean;
   id?: string;
   className?: string;
-}
-
-function formatTime(isoString: string): string {
-  return new Date(isoString).toLocaleTimeString("tr-TR", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
 }
 
 function formatLearningActivityStatus(status: LearningActivityStatus): string {
@@ -173,11 +167,11 @@ export function BookingCard({
         <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-muted-foreground">
           <span className="inline-flex items-center gap-1.5">
             <Calendar className="h-3.5 w-3.5" aria-hidden="true" />
-            {formatDate(booking.start_time)}
+            {bookingDateLabel(booking.start_time)}
           </span>
           <span className="inline-flex items-center gap-1.5">
             <Clock3 className="h-3.5 w-3.5" aria-hidden="true" />
-            {formatTime(booking.start_time)} · {booking.duration_minutes} dk
+            {bookingTimeLabel(booking.start_time)} · {booking.duration_minutes} dk
           </span>
           <span className="inline-flex items-center gap-1.5">
             <Wallet className="h-3.5 w-3.5" aria-hidden="true" />
