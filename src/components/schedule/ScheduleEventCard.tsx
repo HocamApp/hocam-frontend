@@ -21,6 +21,7 @@ interface ScheduleEventCardProps {
   onToggleCompleted?: (event: ScheduleEvent, completed: boolean) => void;
   onEdit?: (event: ScheduleEvent) => void;
   onDelete?: (event: ScheduleEvent) => void;
+  onSelect?: () => void;
   density?: ScheduleEventDensity;
   /** Let the title wrap instead of truncating — for the detail dialog, which
    * is the one place with room to show a long note in full. */
@@ -89,6 +90,7 @@ export function ScheduleEventCard({
   onToggleCompleted,
   onEdit,
   onDelete,
+  onSelect,
   density = "full",
   wrapText = false,
   pending,
@@ -122,6 +124,14 @@ export function ScheduleEventCard({
   return (
     <div
       style={style}
+      role={onSelect ? "button" : undefined}
+      tabIndex={onSelect ? 0 : undefined}
+      onClick={onSelect}
+      onKeyDown={onSelect ? (event) => {
+        if (event.key !== "Enter" && event.key !== " ") return;
+        event.preventDefault();
+        onSelect();
+      } : undefined}
       className={cn(
         // The reference calendar this is drawn from lifts a block on hover:
         // it grows slightly, gains a shadow and rises above its neighbours.
@@ -138,6 +148,7 @@ export function ScheduleEventCard({
         // most of what makes a 40-minute block look like a poster there.
         compact ? "gap-1.5 px-2 py-1" : "gap-2 px-3 py-2 max-md:gap-1.5 max-md:px-2 max-md:py-1",
         tone.card,
+        onSelect && "cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
         pending && "opacity-60",
         className
       )}

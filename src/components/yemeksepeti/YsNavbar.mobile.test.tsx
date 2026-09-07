@@ -10,17 +10,19 @@ import type { Notification } from "@/types/api";
 let isMobile = true;
 let isAuthenticated = true;
 let isLoading = false;
+let isTutor = false;
+let pathname = "/schedule";
 let notifications: Notification[] = [];
 const pushed: string[] = [];
 const marked: string[] = [];
 
 mock.module("next/navigation", { namedExports: {
-  usePathname: () => "/schedule",
+  usePathname: () => pathname,
   useSearchParams: () => new URLSearchParams(),
   useRouter: () => ({ push: (href: string) => pushed.push(href) }),
 } });
 mock.module("next/link", { defaultExport: ({ href, children, ...props }: React.ComponentProps<"a">) => <a href={String(href)} {...props}>{children}</a> });
-mock.module("@/hooks/useAuth", { namedExports: { useAuth: () => ({ isAuthenticated, isLoading, isTutor: false, isAdmin: false, isImpersonating: false, user: { id: "student-1", role: "student", email: "student@example.com" } }) } });
+mock.module("@/hooks/useAuth", { namedExports: { useAuth: () => ({ isAuthenticated, isLoading, isTutor, isAdmin: false, isImpersonating: false, user: { id: "student-1", role: isTutor ? "tutor" : "student", email: "student@example.com" } }) } });
 mock.module("@/hooks/useMediaQuery", { namedExports: { useIsMobile: () => isMobile } });
 mock.module("@/hooks/useCoachingFlag", { namedExports: { useCoachingFlag: () => ({ enabled: true }) } });
 mock.module("@/hooks/useScheduleFlag", { namedExports: { useScheduleFlag: () => true } });
@@ -30,6 +32,7 @@ mock.module("@/components/brand/BrandMark", { namedExports: { BrandMark: () => <
 mock.module("@/components/profile/ProfileMenu", { namedExports: { ProfileMenu: () => isAuthenticated ? <button aria-label="Profil menüsü">Profil</button> : null } });
 mock.module("@/components/profile/StreakIndicator", { namedExports: { StreakIndicator: () => null } });
 mock.module("@/components/tutors/AnimatedSearchBar", { namedExports: { AnimatedSearchBar: () => null } });
+mock.module("@/components/tutors/TutorVisibilityControl", { namedExports: { TutorVisibilityControl: () => <button>Profilin yayında</button> } });
 mock.module("@/components/messaging/MessagesPanel", { namedExports: { MessagesPanel: () => null } });
 mock.module("@/lib/notificationsApi", { namedExports: {
   fetchNotificationSummary: async () => ({ has_unread: true, unread_count: 2 }),
@@ -44,6 +47,8 @@ beforeEach(() => {
   isMobile = true;
   isAuthenticated = true;
   isLoading = false;
+  isTutor = false;
+  pathname = "/schedule";
   notifications = [];
   pushed.length = 0;
   marked.length = 0;
@@ -92,6 +97,17 @@ test("desktop retains its existing notification cluster and no top-row bell", ()
   renderNavbar();
   assert.equal(within(screen.getByRole("banner")).queryByRole("button", { name: /Bildirimler/ }), null);
   assert.equal(screen.getAllByRole("button", { name: /Bildirimler/ }).length, 1);
+});
+
+test("desktop tutor visibility sits immediately before the profile menu in the top row", () => {
+  isMobile = false;
+  isTutor = true;
+  pathname = "/dashboard/tutor";
+  renderNavbar();
+  const header = screen.getByRole("banner");
+  const visibility = within(header).getByRole("button", { name: "Profilin yayında" });
+  assert.equal(visibility.nextElementSibling, within(header).getByRole("button", { name: "Profil menüsü" }));
+  assert.equal(screen.getAllByRole("button", { name: "Profilin yayında" }).length, 1);
 });
 
 test("signed-out and loading headers never expose the mobile notification control", () => {

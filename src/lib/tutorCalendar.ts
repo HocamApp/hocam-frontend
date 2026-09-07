@@ -1,5 +1,6 @@
 import api from "@/lib/api";
 import { addDays, monthGridDays, parseLocalDate, rangeForView, shiftAnchor, toDateKey, weekDays, timeToMinutes } from "@/components/schedule/scheduleDates";
+import type { ScheduleEvent } from "@/types";
 
 export type TutorCalendarView = "day" | "week" | "month";
 export interface TutorCalendarEvent {
@@ -10,7 +11,7 @@ export interface TutorCalendarEvent {
   local_time: string;
   duration_minutes: number;
   status: string;
-  subject: { id: string; name: string; exam_type: string } | null;
+  subject: ScheduleEvent["subject"];
   service_period_id?: string | null;
   classroom_available: boolean;
 }

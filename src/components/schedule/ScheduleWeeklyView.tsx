@@ -23,9 +23,11 @@ interface ScheduleWeeklyViewProps {
   anchor: Date;
   events: ScheduleEvent[];
   pendingKeys: Set<string>;
-  onToggleCompleted: (event: ScheduleEvent, completed: boolean) => void;
-  onEdit: (event: ScheduleEvent) => void;
-  onDelete: (event: ScheduleEvent) => void;
+  onToggleCompleted?: (event: ScheduleEvent, completed: boolean) => void;
+  onEdit?: (event: ScheduleEvent) => void;
+  onDelete?: (event: ScheduleEvent) => void;
+  onSelectEvent?: (event: ScheduleEvent) => void;
+  isEventSelectable?: (event: ScheduleEvent) => boolean;
 }
 
 /**
@@ -40,6 +42,8 @@ export function ScheduleWeeklyView({
   onToggleCompleted,
   onEdit,
   onDelete,
+  onSelectEvent,
+  isEventSelectable,
 }: ScheduleWeeklyViewProps) {
   const days = useMemo(() => weekDays(anchor), [anchor]);
   const today = new Date();
@@ -121,6 +125,7 @@ export function ScheduleWeeklyView({
                 onToggleCompleted={onToggleCompleted}
                 onEdit={onEdit}
                 onDelete={onDelete}
+                onSelect={onSelectEvent && (isEventSelectable?.(event) ?? true) ? () => onSelectEvent(event) : undefined}
               />
             ))}
           </div>
@@ -196,6 +201,7 @@ export function ScheduleWeeklyView({
                           onToggleCompleted={onToggleCompleted}
                           onEdit={onEdit}
                           onDelete={onDelete}
+                          onSelect={onSelectEvent && (isEventSelectable?.(event) ?? true) ? () => onSelectEvent(event) : undefined}
                         />
                       ))}
                     </div>

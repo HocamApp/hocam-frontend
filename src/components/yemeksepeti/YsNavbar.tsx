@@ -332,6 +332,9 @@ export function YsNavbar({ startCoachmark = true }: Props) {
               {/* Phones only: on md+ the same bell lives in row 2, and two of
                   them would be two places to check the same thing. */}
               {mode === "app" && isMobile === true && <MobileNotificationsBell />}
+              {mode === "app" && isMobile !== true && isTutor && (
+                <TutorVisibilityControl />
+              )}
               <ProfileMenu />
             </>
           )}
@@ -369,14 +372,6 @@ export function YsNavbar({ startCoachmark = true }: Props) {
             onChange={setSearchDraft}
             onCommit={commitSearch}
           />
-        )}
-
-        {/* Left of the utility icons, which is the one piece of row 2 that is
-            empty on every route but the home page. It sits outside YsNavIcons
-            because that cluster is the same three destinations for everyone
-            and this is neither a destination nor everyone's. */}
-        {mode === "app" && isMobile !== true && isTutor && (
-          <TutorVisibilityControl />
         )}
 
         {mode === "app" && isMobile !== true && (

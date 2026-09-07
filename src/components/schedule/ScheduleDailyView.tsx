@@ -27,9 +27,11 @@ interface ScheduleDailyViewProps {
   day: Date;
   events: ScheduleEvent[];
   pendingKeys: Set<string>;
-  onToggleCompleted: (event: ScheduleEvent, completed: boolean) => void;
-  onEdit: (event: ScheduleEvent) => void;
-  onDelete: (event: ScheduleEvent) => void;
+  onToggleCompleted?: (event: ScheduleEvent, completed: boolean) => void;
+  onEdit?: (event: ScheduleEvent) => void;
+  onDelete?: (event: ScheduleEvent) => void;
+  onSelectEvent?: (event: ScheduleEvent) => void;
+  isEventSelectable?: (event: ScheduleEvent) => boolean;
 }
 
 /**
@@ -52,6 +54,8 @@ export function ScheduleDailyView({
   onToggleCompleted,
   onEdit,
   onDelete,
+  onSelectEvent,
+  isEventSelectable,
 }: ScheduleDailyViewProps) {
   const dayKey = toDateKey(day);
   const dayEvents = useMemo(
@@ -147,6 +151,7 @@ export function ScheduleDailyView({
                   onToggleCompleted={onToggleCompleted}
                   onEdit={onEdit}
                   onDelete={onDelete}
+                  onSelect={onSelectEvent && (isEventSelectable?.(event) ?? true) ? () => onSelectEvent(event) : undefined}
                 />
               ))}
             </div>

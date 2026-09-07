@@ -23,10 +23,10 @@ test("orders next lesson then last completed, counts future confirmed only and e
   assert.equal(rows[0].remainingCredits, 3);
   assert.equal(rows[0].totalCredits, 8);
 });
-test("Turkish search, email search and scheduling filters", () => {
+test("Turkish name search excludes private email addresses and keeps scheduling filters", () => {
   const rows = getStudentRoster([booking("İpek Işık", "confirmed"), booking("Ayşe", "completed")], [], "tutor-1", now);
   assert.equal(filterStudentRoster(rows, "ipek isik", "all").length, 1);
-  assert.equal(filterStudentRoster(rows, "@example.com", "upcoming")[0].student.id, "İpek Işık");
+  assert.equal(filterStudentRoster(rows, "@example.com", "all").length, 0);
   assert.equal(filterStudentRoster(rows, "", "unscheduled")[0].student.id, "Ayşe");
   assert.equal(filterStudentRoster(rows, "yok", "all").length, 0);
 });

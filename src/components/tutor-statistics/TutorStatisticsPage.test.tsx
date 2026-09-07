@@ -35,7 +35,7 @@ const overview = {
   subjects: [{ id: "math", name: "Matematik", exam_type: "TYT", completed_count: 8, completed_minutes: 320 }],
   students: { relationships: 7, new: 2, activity: [{ period_start: "2026-08-08", new_students: 1 }] },
   reviews: { trend: [{ period_start: "2026-08-08", average: 4.75, count: 4 }], criteria: { clarity_rating: 5, preparation_rating: 4.5, progress_rating: 4.5, confidence_rating: 5 } },
-  reliability: { missed_lessons: 1, reply_rate_24h: { answered: 9, total: 10, rate: .9 }, cancellations: [{ reason: "student_cancelled", count: 2 }] },
+  reliability: { missed_lessons: 1, reply_rate_24h: { answered: 9, total: 10, rate: .9 }, cancellations: [{ reason: "student_cancelled", count: 2 }, { reason: "unknown", count: 75 }] },
   coaching: { summary: { total_sessions: 4, completed_sessions: 3, students: 2 }, activity: [{ period_start: "2026-08-08", completed_count: 1, completed_minutes: 30 }], statuses: [{ status: "completed", count: 3 }] },
 };
 const income = {
@@ -78,7 +78,14 @@ test("overview renders one H1, four honest metrics and accessible graph tables",
   assert.equal(screen.getByText("4,75").textContent, "4,75");
   assert.ok(screen.getByRole("img", { name: /Tamamlanan dersler grafiği/ }));
   assert.ok(screen.getByRole("table", { name: /Tamamlanan dersler verileri/ }));
+  assert.ok(screen.getAllByText("Tarih").length >= 1);
+  assert.ok(screen.getByText("Tamamlanan ders sayısı"));
   assert.ok(screen.getByText("Koçluk görünümü"));
+  assert.equal(screen.queryByText("Ayrı hizmet alanı"), null);
+  assert.equal(screen.queryByText("Koçluk görüşmeleri ders istatistiklerine eklenmeden ayrı hesaplanır."), null);
+  assert.equal(screen.queryByText("Nedeni bilinmiyor"), null);
+  assert.equal(screen.queryByText(/Ders ve koçluk etkinliğini zaman içinde incele/), null);
+  assert.equal(screen.queryByText(/· İstanbul$/), null);
   assert.equal(screen.queryByText(/toplam gelir/i), null);
 });
 

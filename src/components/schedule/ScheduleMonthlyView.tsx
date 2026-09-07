@@ -21,7 +21,8 @@ const MAX_CHIPS_PER_DAY = 3;
 interface ScheduleMonthlyViewProps {
   anchor: Date;
   events: ScheduleEvent[];
-  onSelectEvent: (event: ScheduleEvent) => void;
+  onSelectEvent?: (event: ScheduleEvent) => void;
+  isEventSelectable?: (event: ScheduleEvent) => boolean;
   onSelectDay: (day: Date) => void;
 }
 
@@ -38,6 +39,7 @@ export function ScheduleMonthlyView({
   anchor,
   events,
   onSelectEvent,
+  isEventSelectable,
   onSelectDay,
 }: ScheduleMonthlyViewProps) {
   const days = useMemo(() => monthGridDays(anchor), [anchor]);
@@ -166,34 +168,35 @@ export function ScheduleMonthlyView({
                     // The composed title spends a ~96px cell on its first word.
                     // The time plus the subject is what makes the cell scannable.
                     const struck = event.completed ? "line-through opacity-75" : undefined;
-                    return (
+                    const selectable = Boolean(onSelectEvent && (isEventSelectable?.(event) ?? true));
+                    const content = <span className="flex min-w-0 items-center gap-1">
+                      <span className="shrink-0 tabular-nums opacity-90">{event.local_time}</span>
+                      <span className="truncate">{shortEventLabel(event)}</span>
+                    </span>;
+                    const className = cn(
+                      "group block w-full min-w-0 origin-left rounded-input px-1.5 py-0.5 text-left text-[11px] font-medium",
+                      "transform-gpu transition-[transform,box-shadow] duration-[--duration-state]",
+                      "hover:z-20 hover:scale-[1.03] hover:shadow-lg",
+                      "motion-reduce:transition-none motion-reduce:hover:scale-100",
+                      selectable && "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                      tone.card,
+                      struck
+                    );
+                    return selectable ? (
                       <button
                         key={`${event.source}-${event.id}-${event.occurrence_date ?? ""}`}
                         type="button"
-                        onClick={() => onSelectEvent(event)}
+                        onClick={() => onSelectEvent?.(event)}
                         title={event.title}
                         // Same filled block as the week and day views, at chip
                         // scale: a month cell reads as a calendar when the
                         // events in it are coloured blocks rather than a list
                         // of dots. Hover lifts it the way the card does.
-                        className={cn(
-                          "group block w-full min-w-0 origin-left rounded-input px-1.5 py-0.5 text-left text-[11px] font-medium",
-                          "transform-gpu transition-[transform,box-shadow] duration-[--duration-state]",
-                          "hover:z-20 hover:scale-[1.03] hover:shadow-lg",
-                          "motion-reduce:transition-none motion-reduce:hover:scale-100",
-                          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                          tone.card,
-                          struck
-                        )}
+                        className={className}
                       >
-                        <span className="flex min-w-0 items-center gap-1">
-                          <span className="shrink-0 tabular-nums opacity-90">
-                            {event.local_time}
-                          </span>
-                          <span className="truncate">{shortEventLabel(event)}</span>
-                        </span>
+                        {content}
                       </button>
-                    );
+                    ) : <div key={`${event.source}-${event.id}-${event.occurrence_date ?? ""}`} title={event.title} className={className}>{content}</div>;
                   })}
                   {hidden > 0 && (
                     <button

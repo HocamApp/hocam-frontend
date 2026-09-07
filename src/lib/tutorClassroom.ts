@@ -88,7 +88,7 @@ export function filterStudentRoster(roster: StudentRosterEntry[], search: string
   const term = searchable(search.trim());
   return roster.filter((entry) =>
     (filter === "all" || (filter === "upcoming" ? entry.upcomingLessons > 0 : entry.upcomingLessons === 0)) &&
-    searchable(`${studentName(entry.student)} ${entry.student.email}`).includes(term));
+    searchable(studentName(entry.student)).includes(term));
 }
 
 export function studentConversation(conversations: Conversation[], studentId: string, tutorUserId: string): Conversation | undefined {
