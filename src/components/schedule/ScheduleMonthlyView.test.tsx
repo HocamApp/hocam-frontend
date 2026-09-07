@@ -34,6 +34,18 @@ function lesson(id: string, local_time: string, local_date = "2026-08-23"): Sche
   };
 }
 
+function availability(id: string, local_time: string, duration_minutes: number): ScheduleEvent {
+  return {
+    ...lesson(id, local_time),
+    source: "availability",
+    duration_minutes,
+    status: "available",
+    subject: null,
+    title: "Müsait",
+    room_url: "",
+  };
+}
+
 const TIMES = ["10:00", "10:40", "11:20", "12:00", "12:40"];
 const FIVE_ON_ONE_DAY = TIMES.map((time, index) => lesson(`lesson-${index}`, time));
 // The 42-day grids of August and September both contain 31 August, so the same
@@ -72,6 +84,19 @@ describe("month chips", () => {
     assert.ok(screen.getByText("Felsefe"));
     // The composed title stays as the tooltip, not as the visible label.
     assert.equal(screen.queryByText("Felsefe · Burak Çelik"), null);
+  });
+
+  it("turns availability into one calm day summary instead of repeated chips", () => {
+    renderMonth([
+      availability("morning", "12:00", 240),
+      availability("evening", "16:00", 240),
+    ]);
+
+    const day = screen.getByRole("gridcell", { name: /23 Ağustos/ });
+    assert.match(day.className, /bg-\[#DDE9E4\]/);
+    assert.equal(day.querySelectorAll("[data-availability-summary]").length, 1);
+    assert.ok(day.textContent?.includes("12:00–16:00, 16:00–20:00"));
+    assert.equal((day.textContent?.match(/Müsait/g) ?? []).length, 1);
   });
 });
 

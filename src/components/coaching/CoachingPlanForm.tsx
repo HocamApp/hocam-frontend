@@ -103,7 +103,7 @@ export function CoachingPlanForm({
       {currentStep === "frequency" ? (
         <StepCard
           title="Görüşme düzenin nasıl olsun?"
-          description="Bu seçim her öğrencinin ders paketi boyunca kaç koçluk görüşmesi alacağını belirler. Sayılar sunucudaki güncel paket modelinden gelir."
+          description="Bu seçim her öğrencinin ders paketi boyunca kaç koçluk görüşmesi alacağını belirler."
         >
           <fieldset>
             <legend className="sr-only">Görüşme düzeni</legend>

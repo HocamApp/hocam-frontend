@@ -44,8 +44,16 @@ describe("TutorCoachingDashboard", () => {
     const platformRegion = screen.getByRole("region", { name: "Platform durumu" });
     assert.ok(platformRegion.textContent?.includes("platform genelinde şu anda kapalı"));
     assert.ok(screen.getByRole("link", { name: /Yeni öğrenci talepleri/i }));
-    assert.ok(screen.getByRole("heading", { name: /Teklif ve ayarlar/i }));
-    assert.ok(screen.getByRole("link", { name: /Teklifini düzenle/i }));
+    assert.ok(screen.getByRole("heading", { name: "Koçluğu yürüt" }));
+    assert.equal(screen.queryByRole("heading", { name: /Koçluk alanların/i }), null);
+    assert.equal(screen.queryByRole("heading", { name: /Teklif ve ayarlar/i }), null);
+    assert.equal(screen.queryByRole("heading", { name: /Kayıtlar ve destek/i }), null);
+    assert.equal(screen.queryByText("Öğrenci kabulü"), null);
+    assert.equal(screen.queryByText("Kapasite"), null);
+    const publishedBadge = screen.getByText("Koçluğun yayında").closest("span");
+    assert.ok(publishedBadge);
+    assert.match(publishedBadge.className, /bg-gold/);
+    assert.match(publishedBadge.className, /text-white/);
     assert.equal(screen.queryByText(/bundle/i), null);
   });
 

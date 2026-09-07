@@ -62,6 +62,7 @@ describe("CoachingPlanForm", () => {
     assert.ok(screen.getByText("4 görüşme"));
     assert.ok(screen.getByText("24 haftada"));
     assert.ok(screen.getByText("24 görüşme"));
+    assert.equal(screen.queryByText(/Sayılar sunucudaki güncel paket modelinden gelir/), null);
   });
 
   it("explains the dynamic lesson-price cap without hardcoding 75 percent", () => {

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Inbox } from "lucide-react";
+import { BellRinging } from "@phosphor-icons/react";
 
 import { CoachingEmptyState } from "@/components/coaching/CoachingEmptyState";
 import { AcceptanceRequestCard } from "@/components/requests/AcceptanceRequestCard";
@@ -50,7 +50,7 @@ export function TutorAcceptanceRequestList({ surface }: { surface: "coaching" | 
   if (requests.length === 0) {
     return (
       <CoachingEmptyState
-        icon={Inbox}
+        icon={BellRinging}
         title={surface === "coaching" ? "Yeni koçluk talebin yok" : "Bekleyen ders paketi talebin yok"}
         description={
           surface === "coaching"

@@ -1,4 +1,4 @@
-import { ArrowDownToLine, CircleDollarSign, Info, Landmark, WalletCards } from "lucide-react";
+import { Bank, Coins, DownloadSimple, Info, Wallet } from "@phosphor-icons/react";
 
 import { CoachingEarningsChart } from "@/components/coaching/CoachingEarningsChart";
 import { CoachingStudioPanel } from "@/components/coaching/CoachingStudioPanel";
@@ -22,25 +22,23 @@ export function CoachingEarningsSummary({ summary }: { summary: CoachingTutorEar
 
   return (
     <div className="space-y-5">
-      <CoachingStudioPanel tone="dark" className="relative isolate overflow-hidden border-0">
-        <div aria-hidden className="absolute -right-20 -top-28 h-72 w-72 rounded-full border-[2rem] border-primary/15" />
-        <div aria-hidden className="absolute bottom-0 right-16 h-32 w-56 rounded-t-full bg-primary/10 blur-2xl" />
-        <div className="relative grid gap-7 p-6 sm:p-8 lg:grid-cols-[minmax(0,1.4fr)_minmax(18rem,0.6fr)] lg:items-end">
+      <CoachingStudioPanel role="region" aria-label="Koçluk kazanç özeti" className="overflow-hidden border-transparent bg-pink text-white">
+        <div className="grid gap-7 p-6 sm:p-8 lg:grid-cols-[minmax(0,1.4fr)_minmax(18rem,0.6fr)] lg:items-end">
           <div>
-            <div className="flex items-center gap-3 text-background/70">
-              <span className="flex h-11 w-11 items-center justify-center rounded-2xl border border-background/15 bg-background/10">
-                <WalletCards className="h-5 w-5" aria-hidden="true" />
+            <div className="flex items-center gap-3 text-white/75">
+              <span className="flex h-11 w-11 items-center justify-center rounded-input border border-white/30 bg-white/10">
+                <Wallet className="h-5 w-5" aria-hidden="true" weight="regular" />
               </span>
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.17em]">Çalışma koçluğu</p>
-                <h2 className="mt-1 text-lg font-semibold text-background">Koçluk kazanç cüzdanı</h2>
+                <h2 className="mt-1 text-lg font-semibold text-white">Koçluk kazanç cüzdanı</h2>
               </div>
             </div>
-            <p className="mt-8 text-sm text-background/65">Kazanç hesabına uygun</p>
-            <p className="mt-2 text-4xl font-semibold tracking-[-0.045em] text-background tabular-nums sm:text-5xl">
+            <p className="mt-8 text-sm text-white/75">Kazanç hesabına uygun</p>
+            <p className="mt-2 text-4xl font-semibold tracking-[-0.045em] text-white tabular-nums sm:text-5xl">
               {formatTryMinor(summary.eligible_unfunded_minor)}
             </p>
-            <p className="mt-3 max-w-xl text-sm leading-6 text-background/65">
+            <p className="mt-3 max-w-xl text-sm leading-6 text-white/75">
               Bu tutar bir banka bakiyesi veya çekilebilir tutar değildir; kullanılabilir ödeme fonu henüz doğrulanmamıştır.
             </p>
             <div className="mt-6 flex flex-col items-start gap-2">
@@ -50,17 +48,17 @@ export function CoachingEarningsSummary({ summary }: { summary: CoachingTutorEar
                 size="lg"
                 aria-disabled="true"
                 aria-describedby="coaching-withdrawal-unavailable"
-                className="cursor-not-allowed rounded-xl border border-background/15 bg-background/10 px-5 text-background shadow-none hover:bg-background/10 focus-visible:ring-background/70"
+                className="cursor-not-allowed border border-white/30 bg-white/10 px-5 text-white shadow-none hover:bg-white/10 focus-visible:ring-white"
               >
-                <ArrowDownToLine aria-hidden className="mr-2 h-4 w-4" />
+                <DownloadSimple aria-hidden className="mr-2 h-4 w-4" weight="regular" />
                 Parayı çek
               </Button>
-              <p id="coaching-withdrawal-unavailable" className="max-w-lg text-xs leading-5 text-background/55">
+              <p id="coaching-withdrawal-unavailable" className="max-w-lg text-xs leading-5 text-white/65">
                 Ödeme aktarımı, gerçek ödeme altyapısı etkinleştirildiğinde kullanılabilir.
               </p>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3 rounded-[1.25rem] border border-background/15 bg-background/[0.07] p-4 backdrop-blur-sm">
+          <div className="grid grid-cols-2 gap-3 rounded-input border border-white/30 bg-white/10 p-4">
             <HeroMetric label="Aylık değerlendirmede" value={formatTryMinor(summary.pending_minor)} />
             <HeroMetric label="Aylık kayıt" value={`${summary.payout_batches.length}`} />
           </div>
@@ -91,7 +89,7 @@ export function CoachingEarningsSummary({ summary }: { summary: CoachingTutorEar
           <div className="border-b border-border/60 bg-muted/30 p-5">
             <div className="flex items-center gap-3">
               <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-foreground text-background">
-                <Landmark className="h-4 w-4" aria-hidden="true" />
+                <Bank className="h-4 w-4" aria-hidden="true" weight="regular" />
               </span>
               <div>
                 <h2 className="font-semibold">Finansal görünüm</h2>
@@ -147,7 +145,7 @@ export function CoachingEarningsSummary({ summary }: { summary: CoachingTutorEar
               </div>
             ) : (
               <div className="mt-4 flex gap-3 rounded-[1.15rem] border border-dashed bg-muted/20 p-5 text-sm text-muted-foreground">
-                <CircleDollarSign aria-hidden className="h-5 w-5 shrink-0" />
+                <Coins aria-hidden className="h-5 w-5 shrink-0" weight="regular" />
                 <p>Henüz aylık kazanç kaydı oluşmadı.</p>
               </div>
             )}
@@ -165,8 +163,8 @@ export function CoachingEarningsSummary({ summary }: { summary: CoachingTutorEar
 function HeroMetric({ label, value }: { label: string; value: string }) {
   return (
     <div className="min-w-0">
-      <p className="text-[11px] leading-4 text-background/55">{label}</p>
-      <p className="mt-1 truncate text-lg font-semibold text-background tabular-nums">{value}</p>
+      <p className="text-[11px] leading-4 text-white/65">{label}</p>
+      <p className="mt-1 truncate text-lg font-semibold text-white tabular-nums">{value}</p>
     </div>
   );
 }
