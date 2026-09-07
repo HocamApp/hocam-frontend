@@ -14,6 +14,7 @@ import { fetchConversations } from "@/lib/messagingApi";
 import { fetchCoachingStudents } from "@/lib/coachingApi";
 import { bookingDateLabel, bookingInstant, bookingTimeLabel, studentCoaching, studentConversation, studentName, type StudentRosterEntry } from "@/lib/tutorClassroom";
 import type { Booking } from "@/types";
+import { serverNow } from "@/lib/serverClock";
 import { TutorStudentContextCard } from "./TutorStudentContextCard";
 import { TutorStudentNotes } from "./TutorStudentNotes";
 import { TutorStudentMaterials } from "./TutorStudentMaterials";
@@ -43,7 +44,7 @@ function StudentWorkspace({ entry, tutorId, tutorUserId, bookings, packagesState
   const coaching = useQuery({ queryKey: ["coaching-tutor-students"], queryFn: fetchCoachingStudents, enabled: coachingEnabled });
   const conversation = studentConversation(conversations.data ?? [], studentId, tutorUserId);
   const services = studentCoaching(coaching.data ?? [], studentId);
-  const now = Date.now();
+  const now = serverNow();
   const isUpcoming = (booking: Booking) => booking.status === "in_progress" || (booking.status === "confirmed" && bookingInstant(booking.start_time) > now);
   const upcoming = bookings.filter(isUpcoming).sort((a, b) => bookingInstant(a.start_time) - bookingInstant(b.start_time));
   const history = bookings.filter(booking => !isUpcoming(booking)).sort((a, b) => bookingInstant(b.start_time) - bookingInstant(a.start_time));

@@ -38,6 +38,8 @@ import { fetchBookings, getBookingErrorMessage, updateBookingStatus } from "@/li
 import { fetchConversations } from "@/lib/messagingApi";
 import { dashboardBookingGroups, dashboardCountdown, dashboardGreeting, resolveTutorDashboardRoute } from "@/lib/tutorDashboard";
 import { bookingDateLabel, bookingInstant, bookingTimeLabel } from "@/lib/tutorClassroom";
+import { bookingJoinWindowOpen } from "@/lib/bookingTime";
+import { serverNow } from "@/lib/serverClock";
 import { fetchMyTutorProfile, fetchTutorPriceInsight } from "@/lib/tutorsApi";
 import { cn } from "@/lib/utils";
 import type { Booking, ConfirmLearningActivityPayload, LearningLevel, TutorProgressResult } from "@/types";
@@ -48,13 +50,10 @@ function getInitials(name?: string, surname?: string): string {
   return `${name?.trim()[0] ?? ""}${surname?.trim()[0] ?? ""}`.toUpperCase() || "?";
 }
 
-function canJoinBooking(booking: Booking, now = Date.now()): boolean {
-  const start = bookingInstant(booking.start_time);
-  const end = start + booking.duration_minutes * 60_000;
+function canJoinBooking(booking: Booking, now = serverNow()): boolean {
   return Boolean(booking.room_url)
     && (booking.status === "confirmed" || booking.status === "in_progress")
-    && now >= start - 15 * 60_000
-    && now < end;
+    && bookingJoinWindowOpen(booking.start_time, booking.duration_minutes, now);
 }
 
 function getApiErrorMessage(error: unknown, fallback: string): string {

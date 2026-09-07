@@ -1,5 +1,6 @@
 import type { Booking } from "@/types";
 import { bookingInstant } from "@/lib/tutorClassroom";
+import { serverNow } from "@/lib/serverClock";
 
 export type TutorDashboardRoute =
   | { mode: "overview" }
@@ -40,7 +41,7 @@ function istanbulDay(instant: number): string {
   return `${value("year")}-${value("month")}-${value("day")}`;
 }
 
-export function dashboardGreeting(now = Date.now()): string {
+export function dashboardGreeting(now = serverNow()): string {
   const hour = Number(new Intl.DateTimeFormat("en-GB", {
     timeZone: "Europe/Istanbul",
     hour: "2-digit",
@@ -55,7 +56,7 @@ function byStart(first: Booking, second: Booking): number {
   return bookingInstant(first.start_time) - bookingInstant(second.start_time);
 }
 
-export function dashboardBookingGroups(bookings: Booking[], now = Date.now()) {
+export function dashboardBookingGroups(bookings: Booking[], now = serverNow()) {
   const active = bookings.filter(booking => {
     const future = bookingInstant(booking.start_time) > now;
     return (booking.status === "pending" && future)
@@ -83,7 +84,7 @@ export function dashboardBookingGroups(bookings: Booking[], now = Date.now()) {
   return { active, past, upcoming, today, next: upcoming[0] ?? null, pendingActions };
 }
 
-export function dashboardCountdown(startTime: string, now = Date.now()): string {
+export function dashboardCountdown(startTime: string, now = serverNow()): string {
   const startDay = istanbulDay(bookingInstant(startTime));
   const currentDay = istanbulDay(now);
   const start = Date.parse(`${startDay}T00:00:00Z`);

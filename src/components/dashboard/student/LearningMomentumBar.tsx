@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Booking, PackagePurchase, StudentGoal } from "@/types";
 import { bookingInstant } from "@/lib/bookingTime";
+import { serverNow } from "@/lib/serverClock";
 
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -32,7 +33,7 @@ function deriveMomentumSummary(
   const completedBookings = bookings.filter(
     (b) => (b.status || "").toLowerCase() === "completed"
   );
-  const now = Date.now();
+  const now = serverNow();
   const recentCompleted = completedBookings.filter(
     (b) => now - bookingInstant(b.start_time) <= SEVEN_DAYS_MS
   );
@@ -87,7 +88,7 @@ export function LearningMomentumBar({
   const momentum = activeGoal
     ? null
     : deriveMomentumSummary(bookings, activePackage, activePackageCompletedCount);
-  const now = Date.now();
+  const now = serverNow();
   const completedThisWeek = bookings.filter(
     (booking) =>
       booking.status === "completed" &&

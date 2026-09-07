@@ -25,7 +25,7 @@ import { RouteGuard } from "@/components/shared/RouteGuard";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { Button } from "@/components/ui/button";
-import { cn, formatDate } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import {
   audioOnlyFromEvent,
   checkJitsiCapabilities,
@@ -65,6 +65,7 @@ import type { Booking } from "@/types";
 import { TutorStudentPrivateWorkspace } from "@/components/tutors/TutorStudentPrivateWorkspace";
 import {
   bookingEndInstant,
+  bookingDateLabel,
   bookingInstant,
   bookingTimeLabel,
 } from "@/lib/bookingTime";
@@ -149,7 +150,7 @@ function LessonWaitingRoom({
         </h1>
         <p className="mt-4 max-w-2xl text-sm leading-6 text-ink-mid sm:text-base">
           {booking.subject.name} dersi {tutorName ? `${tutorName} ile ` : ""}
-          {formatDate(booking.start_time)} tarihinde başlayacak. Oda açılana kadar
+          {bookingDateLabel(booking.start_time)} tarihinde başlayacak. Oda açılana kadar
           burada sakin bir bekleme ekranı gösteriyoruz.
         </p>
 
@@ -161,7 +162,7 @@ function LessonWaitingRoom({
                 Ders başlangıcı
               </p>
               <p className="mt-2 text-2xl font-semibold">
-                {formatDate(booking.start_time)} · {startClock}
+                {bookingDateLabel(booking.start_time)} · {startClock}
               </p>
               <p className="mt-1 text-sm text-ink-mid">{countdown.label} kaldı</p>
             </>

@@ -17,7 +17,13 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useCountdownLabel } from "@/hooks/useCountdown";
-import { bookingInstant, bookingTimeLabel } from "@/lib/bookingTime";
+import {
+  bookingDayKey,
+  bookingInstant,
+  bookingTimeLabel,
+  istanbulDayKey,
+} from "@/lib/bookingTime";
+import { serverNow } from "@/lib/serverClock";
 import { fetchBookings } from "@/lib/lessonsApi";
 import { fetchPackagePurchases } from "@/lib/paymentsApi";
 import { fetchProfileMe } from "@/lib/profileApi";
@@ -58,16 +64,12 @@ function sortByStart(bookings: Booking[]) {
   );
 }
 
-function startOfDay(date: Date): Date {
-  const clone = new Date(date);
-  clone.setHours(0, 0, 0, 0);
-  return clone;
-}
-
 function formatLessonDay(startTime: string, long = false): string {
   const date = new Date(bookingInstant(startTime));
+  const lessonDay = bookingDayKey(startTime);
+  const today = istanbulDayKey(serverNow());
   const diffDays = Math.round(
-    (startOfDay(date).getTime() - startOfDay(new Date()).getTime()) / DAY_MS
+    (Date.parse(`${lessonDay}T00:00:00Z`) - Date.parse(`${today}T00:00:00Z`)) / DAY_MS
   );
   if (diffDays === 0) return "Bugün";
   if (diffDays === 1) return "Yarın";
@@ -96,7 +98,7 @@ function packageDaysLeft(purchase: PackagePurchase): number | null {
   const expiry = computePackageExpiry(purchase);
   if (!expiry) return null;
   if (expiry.isInGrace) return expiry.graceDaysLeft;
-  return Math.max(0, Math.ceil((expiry.termEndDate.getTime() - Date.now()) / DAY_MS));
+  return Math.max(0, Math.ceil((expiry.termEndDate.getTime() - serverNow()) / DAY_MS));
 }
 
 function tutorName(booking: Booking): string {
@@ -106,7 +108,7 @@ function tutorName(booking: Booking): string {
 }
 
 function weekLessonSummary(bookings: Booking[]): string {
-  const weekEnd = Date.now() + 7 * DAY_MS;
+  const weekEnd = serverNow() + 7 * DAY_MS;
   const count = bookings.filter(
     (booking) => bookingInstant(booking.start_time) <= weekEnd
   ).length;
@@ -427,7 +429,7 @@ function CreditSummary({
   const scheduledCount = bookings.filter((booking) =>
     booking.package_purchase === activePackage.id &&
     (booking.status === "confirmed" || booking.status === "in_progress") &&
-    bookingInstant(booking.start_time) > Date.now()
+    bookingInstant(booking.start_time) > serverNow()
   ).length;
   const tutor = `${activePackage.tutor.name} ${activePackage.tutor.surname}`.trim();
 
@@ -487,7 +489,7 @@ function StudentDashboardContent() {
   }, [profileQuery.data?.profile]);
 
   const allBookings = bookingsQuery.data ?? [];
-  const now = Date.now();
+  const now = serverNow();
   const upcomingBookings = sortByStart(allBookings.filter((booking) => {
     const start = bookingInstant(booking.start_time);
     return booking.status === "in_progress" || (booking.status === "confirmed" && start > now);
@@ -496,7 +498,11 @@ function StudentDashboardContent() {
   const followingLessons = upcomingBookings.slice(1, 4);
   const recentLessons = [...allBookings]
     .filter((booking) => booking.status === "completed")
-    .sort((a, b) => new Date(b.completed_at || b.start_time).getTime() - new Date(a.completed_at || a.start_time).getTime())
+    .sort((a, b) => {
+      const second = b.completed_at ? Date.parse(b.completed_at) : bookingInstant(b.start_time);
+      const first = a.completed_at ? Date.parse(a.completed_at) : bookingInstant(a.start_time);
+      return second - first;
+    })
     .slice(0, 3);
   const actionableBookings = actionableConfirmDisputeBookings(allBookings);
 

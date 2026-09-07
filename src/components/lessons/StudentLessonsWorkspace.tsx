@@ -34,6 +34,7 @@ import {
   bookingTimeLabel,
   istanbulDayKey,
 } from "@/lib/bookingTime";
+import { serverNow } from "@/lib/serverClock";
 import { confirmBooking, fetchBookings, getBookingErrorMessage, updateBookingStatus } from "@/lib/lessonsApi";
 import { fetchPendingReviews } from "@/lib/profileLessonsApi";
 import { cn, formatDate } from "@/lib/utils";
@@ -143,7 +144,7 @@ export function StudentLessonsWorkspace() {
     () => new Set(actionableConfirmDisputeBookings(allBookings).map((item) => item.id)),
     [allBookings]
   );
-  const now = Date.now();
+  const now = serverNow();
 
   const groups = useMemo(() => {
     const asc = (a: Booking, b: Booking) => bookingInstant(a.start_time) - bookingInstant(b.start_time);
@@ -165,10 +166,9 @@ export function StudentLessonsWorkspace() {
   }, [actionableIds, allBookings, now, reviewByBooking]);
 
   const nextLesson = groups.upcoming.find((item) => ["confirmed", "in_progress"].includes(item.status)) ?? null;
-  const monthNow = new Date();
+  const monthNow = istanbulDayKey(now).slice(0, 7);
   const completedThisMonth = groups.history.filter((item) => {
-    const date = new Date(bookingInstant(item.start_time));
-    return date.getMonth() === monthNow.getMonth() && date.getFullYear() === monthNow.getFullYear();
+    return bookingDayKey(item.start_time).startsWith(monthNow);
   }).length;
   const subjects = Array.from(new Map(allBookings.map((item) => [item.subject.id, item.subject])).values());
   const source = groups[activeTab];
@@ -181,7 +181,7 @@ export function StudentLessonsWorkspace() {
   const lessonDates = Array.from(
     new Map(
       calendarBookings.map((item) => {
-        const date = new Date(bookingInstant(item.start_time));
+        const date = new Date(`${bookingDayKey(item.start_time)}T00:00:00`);
         return [startOfDay(date), date];
       })
     ).values()

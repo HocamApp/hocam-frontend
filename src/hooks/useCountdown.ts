@@ -1,6 +1,19 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { serverNow } from "@/lib/serverClock";
+
+export function countdownLabel(target: Date | null): string | null {
+  if (!target) return null;
+  const diffMs = target.getTime() - serverNow();
+  if (diffMs <= 0) return null;
+
+  const totalMinutes = Math.ceil(diffMs / 60_000);
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  if (hours >= 1) return `${hours} saat ${minutes} dakika`;
+  return `${minutes} dakika`;
+}
 
 /**
  * Turkish countdown label ("X saat Y dakika") to a target Date, re-rendering
@@ -15,13 +28,5 @@ export function useCountdownLabel(target: Date | null): string | null {
     return () => clearInterval(id);
   }, [target]);
 
-  if (!target) return null;
-  const diffMs = target.getTime() - Date.now();
-  if (diffMs <= 0) return null;
-
-  const totalMinutes = Math.ceil(diffMs / 60_000);
-  const hours = Math.floor(totalMinutes / 60);
-  const minutes = totalMinutes % 60;
-  if (hours >= 1) return `${hours} saat ${minutes} dakika`;
-  return `${minutes} dakika`;
+  return countdownLabel(target);
 }

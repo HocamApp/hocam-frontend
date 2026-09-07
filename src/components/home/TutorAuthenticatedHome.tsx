@@ -27,6 +27,7 @@ import {
   bookingInstant,
   istanbulDayKey,
 } from "@/lib/bookingTime";
+import { serverNow } from "@/lib/serverClock";
 import { fetchBookings } from "@/lib/lessonsApi";
 import { fetchAvailability } from "@/lib/dashboardApi";
 import { fetchConversations } from "@/lib/messagingApi";
@@ -379,7 +380,7 @@ interface StudentSummary {
   conversationId?: string;
 }
 
-function summarizeStudents(bookings: Booking[]): StudentSummary[] {
+function summarizeStudents(bookings: Booking[], now = serverNow()): StudentSummary[] {
   const students = new Map<string, StudentSummary>();
 
   for (const booking of bookings) {
@@ -395,7 +396,7 @@ function summarizeStudents(bookings: Booking[]): StudentSummary[] {
     current.totalLessons += 1;
     if (
       ["pending", "confirmed", "in_progress"].includes(booking.status) &&
-      bookingInstant(booking.start_time) >= Date.now()
+      bookingInstant(booking.start_time) >= now
     ) {
       current.upcomingLessons += 1;
     }
@@ -472,6 +473,7 @@ export function TutorAuthenticatedHome() {
 
   const profile = profileQuery.data;
   const bookings = useMemo(() => bookingsQuery.data ?? [], [bookingsQuery.data]);
+  const now = serverNow();
   const availability = useMemo(
     () => availabilityQuery.data ?? [],
     [availabilityQuery.data]
@@ -488,14 +490,14 @@ export function TutorAuthenticatedHome() {
           const start = bookingInstant(booking.start_time);
           return (
             booking.status === "in_progress" ||
-            (booking.status === "confirmed" && start > Date.now())
+            (booking.status === "confirmed" && start > now)
           );
         })
         .sort(
           (first, second) =>
             bookingInstant(first.start_time) - bookingInstant(second.start_time)
         ),
-    [bookings]
+    [bookings, now]
   );
 
   const pendingActionCount = useMemo(
@@ -503,7 +505,7 @@ export function TutorAuthenticatedHome() {
       bookings.filter((booking) => {
         if (
           booking.status === "pending" &&
-          bookingInstant(booking.start_time) > Date.now()
+          bookingInstant(booking.start_time) > now
         ) {
           return true;
         }
@@ -513,7 +515,7 @@ export function TutorAuthenticatedHome() {
           booking.learning_context?.status === "pending_confirmation"
         );
       }).length,
-    [bookings]
+    [bookings, now]
   );
 
   const unreadMessageCount = (conversationsQuery.data ?? []).reduce(
@@ -532,9 +534,9 @@ export function TutorAuthenticatedHome() {
     [availability]
   );
   const todayLessonCount = upcomingBookings.filter((booking) =>
-    bookingDayKey(booking.start_time) === istanbulDayKey(Date.now())
+    bookingDayKey(booking.start_time) === istanbulDayKey(now)
   ).length;
-  const studentSummaries = useMemo(() => summarizeStudents(bookings), [bookings]);
+  const studentSummaries = useMemo(() => summarizeStudents(bookings, now), [bookings, now]);
 
   const readinessItems = [
     { label: "Profil fotoğrafı", ready: Boolean(profile?.profile_picture) },
