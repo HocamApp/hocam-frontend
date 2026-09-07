@@ -14,6 +14,8 @@ import {
 import { ParticipantAvatar } from "@/components/messaging/ParticipantAvatar";
 import { PackageRequestStatus } from "@/components/payments/PackageRequestStatus";
 import type { Booking, PackagePurchase } from "@/types";
+import { bookingDateLabel, bookingInstant, bookingTimeLabel } from "@/lib/bookingTime";
+import { serverNow } from "@/lib/serverClock";
 
 // Mirrors backend apps/payments/services.py PACKAGE_GRACE_PERIOD_DAYS — a
 // package stays bookable until paid_at + plan.duration_days + this grace
@@ -36,7 +38,7 @@ export function computePackageExpiry(purchase: PackagePurchase): PackageExpiry |
   const paidAt = new Date(purchase.paid_at).getTime();
   const termEndDate = new Date(paidAt + durationDays * DAY_MS);
   const hardExpiryDate = new Date(termEndDate.getTime() + PACKAGE_GRACE_PERIOD_DAYS * DAY_MS);
-  const now = Date.now();
+  const now = serverNow();
 
   return {
     termEndDate,
@@ -149,16 +151,9 @@ export function PackagePurchaseCard({
   );
 }
 
-function formatTime(isoString: string) {
-  return new Date(isoString).toLocaleTimeString("tr-TR", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
 function sortByStart(bookings: Booking[], direction: "asc" | "desc" = "asc") {
   return [...bookings].sort((a, b) => {
-    const difference = new Date(a.start_time).getTime() - new Date(b.start_time).getTime();
+    const difference = bookingInstant(a.start_time) - bookingInstant(b.start_time);
     return direction === "asc" ? difference : -difference;
   });
 }
@@ -184,10 +179,10 @@ function LessonTimeline({ title, bookings, emptyMessage }: {
                   <p className="font-medium">{booking.subject.name}</p>
                   <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
                     <span className="inline-flex items-center gap-1">
-                      <Calendar className="h-3.5 w-3.5" /> {formatDate(booking.start_time)}
+                      <Calendar className="h-3.5 w-3.5" /> {bookingDateLabel(booking.start_time)}
                     </span>
                     <span className="inline-flex items-center gap-1">
-                      <Clock3 className="h-3.5 w-3.5" /> {formatTime(booking.start_time)} · {booking.duration_minutes} dk
+                      <Clock3 className="h-3.5 w-3.5" /> {bookingTimeLabel(booking.start_time)} · {booking.duration_minutes} dk
                     </span>
                   </p>
                 </div>
@@ -321,16 +316,16 @@ export function PackageLearningDetailsSheet({
 }) {
   if (!purchase) return null;
 
-  const now = new Date();
+  const now = serverNow();
   const packageBookings = bookings.filter((booking) => booking.package_purchase === purchase.id);
   const upcomingBookings = sortByStart(
     packageBookings.filter(
-      (booking) => new Date(booking.start_time) > now && booking.status !== "cancelled"
+      (booking) => bookingInstant(booking.start_time) > now && booking.status !== "cancelled"
     )
   );
   const pastBookings = sortByStart(
     packageBookings.filter(
-      (booking) => new Date(booking.start_time) <= now && booking.status !== "cancelled"
+      (booking) => bookingInstant(booking.start_time) <= now && booking.status !== "cancelled"
     ),
     "desc"
   );

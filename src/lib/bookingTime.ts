@@ -40,6 +40,8 @@
  * `scheduled_local_date` / `scheduled_local_time`.
  */
 
+import { serverNow } from "./serverClock";
+
 /** Istanbul's fixed offset. Turkey dropped DST in 2016. */
 const ISTANBUL_OFFSET = "+03:00";
 
@@ -134,4 +136,144 @@ export function bookingDateTimeLabel(value: string): string {
   return Number.isFinite(instant)
     ? dateTimeFormatter.format(instant)
     : "Tarih bilgisi alınamadı";
+}
+
+/* ------------------------------------------------------------------------ *
+ * Business logic: comparing a booking against the clock
+ *
+ * The helpers above answer "what should this say". The ones below answer
+ * "has it happened yet", and they are the ones the three-hour bug lived in:
+ * `new Date(booking.start_time).getTime() <= Date.now()` compares an Istanbul
+ * wall clock against a real instant and is wrong by Istanbul's offset every
+ * single time.
+ *
+ * Every comparison of a booking against "now" in this app must go through
+ * these. They take `now` explicitly so a test can pass a fixed instant, and
+ * default to the server-corrected clock rather than the browser's own.
+ *
+ * None of this grants permission. The backend decides whether a lesson can be
+ * joined; these functions decide what the interface says while it waits.
+ * ------------------------------------------------------------------------ */
+
+
+/** Joining opens this many minutes before a lesson. Mirrors the backend's
+ *  `EARLY_JOIN_GRACE_MINUTES`; the backend's copy is the authoritative one. */
+export const EARLY_JOIN_GRACE_MINUTES = 15;
+
+/** The real instant a booking ends, from its start and duration in minutes. */
+export function bookingEndInstant(value: string, durationMinutes: number): number {
+  return bookingInstant(value) + durationMinutes * 60_000;
+}
+
+/** Milliseconds until the lesson starts. Negative once it has begun. */
+export function msUntilBooking(value: string, now: number = serverNow()): number {
+  return bookingInstant(value) - now;
+}
+
+/** Whether the lesson's start instant has passed. */
+export function bookingHasStarted(value: string, now: number = serverNow()): boolean {
+  const instant = bookingInstant(value);
+  return Number.isFinite(instant) && now >= instant;
+}
+
+/** Whether the lesson's scheduled end has passed. */
+export function bookingHasEnded(
+  value: string,
+  durationMinutes: number,
+  now: number = serverNow()
+): boolean {
+  const end = bookingEndInstant(value, durationMinutes);
+  return Number.isFinite(end) && now >= end;
+}
+
+/**
+ * Whether the join window is open, *for display only*.
+ *
+ * The button this gates is a hint. A student whose clock is wrong sees the
+ * wrong hint and then gets the right answer from the server the moment they
+ * press it — which is the correct division of labour, and why this function
+ * is safe to be approximate and unsafe to be trusted.
+ */
+export function bookingJoinWindowOpen(
+  value: string,
+  durationMinutes: number,
+  now: number = serverNow()
+): boolean {
+  const start = bookingInstant(value);
+  if (!Number.isFinite(start)) return false;
+  const opensAt = start - EARLY_JOIN_GRACE_MINUTES * 60_000;
+  return now >= opensAt && now < start + durationMinutes * 60_000;
+}
+
+/** Sort comparator for booking lists — ascending by real instant. */
+export function byBookingInstant(
+  a: { start_time: string },
+  b: { start_time: string }
+): number {
+  return bookingInstant(a.start_time) - bookingInstant(b.start_time);
+}
+
+/* ------------------------------------------------------------------------ *
+ * Calendar grouping
+ *
+ * "Which day is this lesson on" is a question about Istanbul's calendar, not
+ * the viewer's. Grouping on a browser-local `Date` puts a 00:30 Istanbul
+ * lesson on the previous day for anyone west of Turkey, and `toDateString()`
+ * comparisons quietly do exactly that.
+ * ------------------------------------------------------------------------ */
+
+const dayKeyFormatter = new Intl.DateTimeFormat("en-CA", {
+  timeZone: "Europe/Istanbul",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
+
+/** "2026-09-09" — an instant's Istanbul calendar day. */
+export function istanbulDayKey(instant: number | Date): string {
+  const ms = instant instanceof Date ? instant.getTime() : instant;
+  return Number.isFinite(ms) ? dayKeyFormatter.format(ms) : "";
+}
+
+/** "2026-09-09" — a booking's Istanbul calendar day, for grouping and filters. */
+export function bookingDayKey(value: string): string {
+  return istanbulDayKey(bookingInstant(value));
+}
+
+/* ------------------------------------------------------------------------ *
+ * Writing a booking
+ *
+ * There must be exactly one way to produce a `start_time`, or the table ends
+ * up holding two conventions at once — which is what happened: the booking
+ * modal posted a naive local string (stored space, correct) while the admin
+ * console posted `new Date(x).toISOString()`, a true instant with a `Z`. DRF
+ * accepts both, so admin-created lessons landed three hours away from
+ * student-created ones with nothing to mark them apart.
+ * ------------------------------------------------------------------------ */
+
+const wallClockParts = new Intl.DateTimeFormat("en-CA", {
+  timeZone: "Europe/Istanbul",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+  hour: "2-digit",
+  minute: "2-digit",
+  hourCycle: "h23",
+});
+
+/**
+ * The `start_time` string to POST for a lesson at this instant.
+ *
+ * Produces the naive Istanbul wall clock with no offset — `"2026-09-09T18:00:00"`
+ * — which the backend stores verbatim under the convention documented at the
+ * top of this file. Never send an `toISOString()` value: the trailing `Z` is
+ * taken at face value and moves the lesson.
+ *
+ * Reads the clock face via `Intl`, so an admin working from outside Turkey
+ * still books the Istanbul hour they saw on screen.
+ */
+export function toBookingStartTime(instant: number | Date): string {
+  const parts = wallClockParts.formatToParts(instant);
+  const get = (type: string) => parts.find((p) => p.type === type)?.value ?? "00";
+  return `${get("year")}-${get("month")}-${get("day")}T${get("hour")}:${get("minute")}:00`;
 }

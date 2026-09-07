@@ -3,6 +3,8 @@ import { ArrowRight, BookOpen, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Booking, PackagePurchase, StudentGoal } from "@/types";
+import { bookingInstant } from "@/lib/bookingTime";
+import { serverNow } from "@/lib/serverClock";
 
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -31,9 +33,9 @@ function deriveMomentumSummary(
   const completedBookings = bookings.filter(
     (b) => (b.status || "").toLowerCase() === "completed"
   );
-  const now = Date.now();
+  const now = serverNow();
   const recentCompleted = completedBookings.filter(
-    (b) => now - new Date(b.start_time).getTime() <= SEVEN_DAYS_MS
+    (b) => now - bookingInstant(b.start_time) <= SEVEN_DAYS_MS
   );
 
   if (recentCompleted.length > 0) {
@@ -50,7 +52,7 @@ function deriveMomentumSummary(
 
   if (completedBookings.length > 0) {
     const mostRecent = [...completedBookings].sort(
-      (a, b) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime()
+      (a, b) => bookingInstant(b.start_time) - bookingInstant(a.start_time)
     )[0];
     return {
       title: "Son çalıştığın konu",
@@ -86,11 +88,11 @@ export function LearningMomentumBar({
   const momentum = activeGoal
     ? null
     : deriveMomentumSummary(bookings, activePackage, activePackageCompletedCount);
-  const now = Date.now();
+  const now = serverNow();
   const completedThisWeek = bookings.filter(
     (booking) =>
       booking.status === "completed" &&
-      now - new Date(booking.start_time).getTime() <= SEVEN_DAYS_MS
+      now - bookingInstant(booking.start_time) <= SEVEN_DAYS_MS
   ).length;
 
   const progressPercent = activeGoal

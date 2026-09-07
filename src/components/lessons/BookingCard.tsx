@@ -9,7 +9,12 @@ import { ParticipantAvatar } from "@/components/messaging/ParticipantAvatar";
 import StatusBadge from "@/components/shared/StatusBadge";
 import { LessonTopicCheckInDialog } from "@/components/learning/LessonTopicCheckInDialog";
 import { cn, formatDisputeCategory, formatPrice } from "@/lib/utils";
-import { bookingDateLabel, bookingTimeLabel } from "@/lib/bookingTime";
+import {
+  bookingDateLabel,
+  bookingHasStarted,
+  bookingTimeLabel,
+  msUntilBooking,
+} from "@/lib/bookingTime";
 import type { Booking, LearningActivityStatus } from "@/types";
 import {
   Dialog,
@@ -80,15 +85,16 @@ export function BookingCard({
   const isAwaitingConfirmation = status === "awaiting_confirmation";
   const isCompleted = status === "completed";
   const isDisputed = status === "disputed";
-  const isPast = new Date(booking.start_time) <= new Date();
-  const isFuture = new Date(booking.start_time) > new Date();
+  const isPast = bookingHasStarted(booking.start_time);
+  const millisecondsUntilStart = msUntilBooking(booking.start_time);
+  const isFuture = Number.isFinite(millisecondsUntilStart) && millisecondsUntilStart > 0;
   const canCancel =
     currentUserRole === "student" &&
     (isPending || isConfirmed) &&
     isFuture;
   const isLateCancellation =
     isFuture &&
-    new Date(booking.start_time).getTime() - Date.now() < 12 * 60 * 60 * 1000;
+    millisecondsUntilStart < 12 * 60 * 60 * 1000;
   const requiresCancellationConfirmation =
     isLateCancellation &&
     (currentUserRole === "tutor" || Boolean(booking.package_purchase));

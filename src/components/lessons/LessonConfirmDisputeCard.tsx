@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button";
 import { confirmBooking } from "@/lib/lessonsApi";
 import { useCountdownLabel } from "@/hooks/useCountdown";
 import { DisputeDialog } from "./DisputeDialog";
-import { formatDate } from "@/lib/utils";
+import { bookingDateLabel } from "@/lib/bookingTime";
+import { serverNow } from "@/lib/serverClock";
 import type { Booking } from "@/types";
 
 // Mirrors backend apps/lessons/models.py AUTO_CONFIRM_HOURS and
@@ -21,7 +22,7 @@ function isTutorAbsenceDisputable(booking: Booking): boolean {
   if (!booking.completed_at) return false;
   const deadline =
     new Date(booking.completed_at).getTime() + WINDOW_HOURS * 3600_000;
-  return Date.now() < deadline;
+  return serverNow() < deadline;
 }
 
 export function actionableConfirmDisputeBookings(bookings: Booking[]): Booking[] {
@@ -84,7 +85,7 @@ function LessonConfirmDisputeRow({
               {booking.subject.name} · {tutorLabel}
             </p>
             <p className="mt-0.5 text-sm text-muted-foreground">
-              {formatDate(booking.start_time)}
+              {bookingDateLabel(booking.start_time)}
             </p>
 
             {isAwaitingConfirmation ? (

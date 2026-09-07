@@ -7,6 +7,12 @@ import { toast } from "sonner";
 import { Button, type ButtonProps } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
+import {
+  bookingEndInstant,
+  bookingInstant,
+  bookingJoinWindowOpen,
+} from "@/lib/bookingTime";
+import { serverNow } from "@/lib/serverClock";
 
 const waitingClasses =
   "border-line bg-paper text-ink-mid hover:bg-paper hover:text-ink-mid disabled:border-line disabled:bg-paper disabled:text-ink-mid disabled:opacity-100";
@@ -29,14 +35,11 @@ export function canJoinLesson(
   startTime: string,
   durationMinutes: number,
   status: string,
-  now = Date.now()
+  now = serverNow()
 ): boolean {
-  const startAt = new Date(startTime).getTime();
-  const endAt = startAt + durationMinutes * 60_000;
   return (
     (status === "confirmed" || status === "in_progress") &&
-    now >= startAt - EARLY_JOIN_MINUTES * 60_000 &&
-    now < endAt
+    bookingJoinWindowOpen(startTime, durationMinutes, now)
   );
 }
 
@@ -54,9 +57,9 @@ export function LessonJoinButton({
   const { user, isTutor } = useAuth();
   // Defense-in-depth only: the backend refuses the session token anyway.
   const tutorialBlocked = isTutor && user ? !user.jitsi_tutorial_completed : false;
-  const [now, setNow] = useState(() => Date.now());
-  const joinAt = new Date(startTime).getTime() - EARLY_JOIN_MINUTES * 60_000;
-  const endAt = new Date(startTime).getTime() + durationMinutes * 60_000;
+  const [now, setNow] = useState(() => serverNow());
+  const joinAt = bookingInstant(startTime) - EARLY_JOIN_MINUTES * 60_000;
+  const endAt = bookingEndInstant(startTime, durationMinutes);
   const isActive = status === "confirmed" || status === "in_progress";
   const canJoin =
     Boolean(roomUrl) &&
@@ -66,8 +69,8 @@ export function LessonJoinButton({
   useEffect(() => {
     if (now >= endAt) return;
     const nextBoundary = now < joinAt ? joinAt : endAt;
-    const delay = Math.min(Math.max(nextBoundary - Date.now() + 100, 100), 60_000);
-    const timeout = window.setTimeout(() => setNow(Date.now()), delay);
+    const delay = Math.min(Math.max(nextBoundary - serverNow() + 100, 100), 60_000);
+    const timeout = window.setTimeout(() => setNow(serverNow()), delay);
     return () => window.clearTimeout(timeout);
   }, [endAt, joinAt, now]);
 

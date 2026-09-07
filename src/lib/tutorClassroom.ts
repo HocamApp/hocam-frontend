@@ -1,6 +1,7 @@
 import type { Booking, Conversation, PackagePurchase } from "@/types";
 import type { CoachingStudentRow } from "@/lib/coachingApi";
 import { bookingInstant } from "@/lib/bookingTime";
+import { serverNow } from "@/lib/serverClock";
 
 export const CLASSROOM_STATUSES: ReadonlySet<Booking["status"]> = new Set<Booking["status"]>([
   "confirmed", "in_progress", "awaiting_confirmation", "completed", "disputed",
@@ -23,7 +24,7 @@ export interface StudentRosterEntry {
  * so existing classroom call sites keep working. */
 export { bookingInstant, bookingDateLabel, bookingTimeLabel } from "@/lib/bookingTime";
 
-export function getStudentRoster(bookings: Booking[], purchases: PackagePurchase[], tutorId: string, now = Date.now()): StudentRosterEntry[] {
+export function getStudentRoster(bookings: Booking[], purchases: PackagePurchase[], tutorId: string, now = serverNow()): StudentRosterEntry[] {
   const roster = new Map<string, StudentRosterEntry>();
   for (const booking of bookings) {
     if (booking.tutor.id !== tutorId || !CLASSROOM_STATUSES.has(booking.status)) continue;

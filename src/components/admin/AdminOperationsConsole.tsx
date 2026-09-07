@@ -54,6 +54,7 @@ import {
 } from "@/lib/adminControlApi";
 import { cn, formatPrice } from "@/lib/utils";
 import type { AdminTestAccount } from "@/types";
+import { bookingDateTimeLabel, toBookingStartTime } from "@/lib/bookingTime";
 
 type AdminTab = "overview" | "verifications" | "accounts" | "bookings" | "packages" | "audit";
 type AccountRoleFilter = "all" | "student" | "tutor";
@@ -112,6 +113,10 @@ const coachingPhaseLabels: Record<string, string> = {
 
 function displayName(account: AdminTestAccount) {
   return `${account.profile?.name ?? ""} ${account.profile?.surname ?? ""}`.trim() || account.email;
+}
+
+export function adminBookingDateTimeLabel(startTime: string) {
+  return bookingDateTimeLabel(startTime);
 }
 
 function normalize(value: string) {
@@ -627,7 +632,7 @@ export function AdminOperationsConsole() {
                   {selectedBookingTutor?.profile?.subjects?.map((subject) => <option key={subject.id} value={subject.id}>{subject.name}</option>)}
                 </select>
                 <Input type="datetime-local" value={startTime} min={minimumLocalLessonTime()} onChange={(event) => setStartTime(event.target.value)} />
-                <Button className="w-full" disabled={!bookingStudentId || !selectedBookingTutor?.profile || !subjectId || !startTime || addBooking.isPending} onClick={() => selectedBookingTutor?.profile && addBooking.mutate({ student_id: bookingStudentId, tutor_id: selectedBookingTutor.profile.id, subject_id: subjectId, start_time: new Date(startTime).toISOString() })}>
+                <Button className="w-full" disabled={!bookingStudentId || !selectedBookingTutor?.profile || !subjectId || !startTime || addBooking.isPending} onClick={() => selectedBookingTutor?.profile && addBooking.mutate({ student_id: bookingStudentId, tutor_id: selectedBookingTutor.profile.id, subject_id: subjectId, start_time: toBookingStartTime(new Date(startTime)) })}>
                   {addBooking.isPending ? "Konferans açılıyor…" : "Konferansı oluştur ve aç"}
                 </Button>
               </CardContent>
@@ -697,7 +702,7 @@ export function AdminOperationsConsole() {
                   <div key={booking.id} className="flex flex-col gap-3 p-4 xl:flex-row xl:items-center xl:justify-between">
                     <div>
                       <div className="flex flex-wrap items-center gap-2"><span className="font-medium">{displayName(booking.student)} → {displayName(booking.tutor)}</span><Badge variant="outline" className={statusBadgeClass(booking.status)}>{bookingStatusLabels[booking.status] ?? booking.status}</Badge>{booking.uses_test_credit && <Badge variant="secondary">TEST CREDIT</Badge>}{booking.package_purchase_id && <Badge variant="secondary">PAKET</Badge>}</div>
-                      <p className="mt-1 text-sm text-muted-foreground">{booking.subject.name} · {new Date(booking.start_time).toLocaleString("tr-TR")} · {booking.duration_minutes} dk</p>
+                      <p className="mt-1 text-sm text-muted-foreground">{booking.subject.name} · {adminBookingDateTimeLabel(booking.start_time)} · {booking.duration_minutes} dk</p>
                     </div>
                     <div className="flex flex-wrap gap-2">
                       {booking.status === "pending" && <Button size="sm" onClick={() => approve.mutate(booking.id)} disabled={approve.isPending}><CheckCircle2 className="mr-2 h-4 w-4" />Onayla</Button>}
