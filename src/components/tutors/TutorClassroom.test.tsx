@@ -68,8 +68,13 @@ test("classroom lists real relationships, search and filters with one H1 and stu
   assert.equal(screen.getAllByRole("heading", { level: 1 }).length, 1);
   assert.equal(container.querySelectorAll("main").length, 0);
   assert.ok(screen.getByText("0 tamamlanan ders"));
+  assert.equal(screen.queryByText("ipek@example.com"), null);
+  assert.equal(screen.getByRole("searchbox").getAttribute("placeholder"), "Öğrenci adıyla ara");
   fireEvent.change(screen.getByRole("searchbox"), { target: { value: "ipek isik" } });
   assert.ok(screen.getByRole("link", { name: /İpek Işık/ }));
+  fireEvent.change(screen.getByRole("searchbox"), { target: { value: "ipek@example.com" } });
+  assert.ok(screen.getByText("Aramana uygun öğrenci bulunamadı"));
+  fireEvent.click(screen.getByRole("button", { name: "Filtreleri temizle" }));
   fireEvent.click(screen.getByRole("button", { name: "Planlanmış dersi olmayanlar" }));
   assert.ok(screen.getByText("Aramana uygun öğrenci bulunamadı"));
   fireEvent.click(screen.getByRole("button", { name: "Filtreleri temizle" }));
@@ -97,6 +102,7 @@ test("detail preserves tabs in URL and opens existing booking and conversation",
   tab = "tab=lessons";
   const rendered = render(wrap(<Detail params={{ studentId: "student-1" }} />));
   await screen.findByRole("heading", { level: 1, name: "İpek Işık" });
+  assert.equal(screen.queryByText("ipek@example.com"), null);
   assert.equal((await screen.findByRole("link", { name: "Mesajlar" })).getAttribute("href"), "/messages/thread-1");
   assert.equal(screen.getByRole("link", { name: "Dersi aç" }).getAttribute("href"), "/dashboard/tutor?tab=bookings&highlightBooking=lesson-1");
   assert.ok(screen.getByText("00:15 – 00:55"));

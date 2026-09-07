@@ -51,7 +51,7 @@ function StudentWorkspace({ entry, tutorId, tutorUserId, bookings, packagesState
 
   return <WorkspacePageShell title={studentName(entry.student)} width="wide" actions={<Button variant="outline" asChild><Link href="/dashboard/tutor/classroom"><ArrowLeft className="mr-2 h-4 w-4" aria-hidden="true" />Sınıfıma dön</Link></Button>}>
     <section aria-label="Öğrenci özeti" className="space-y-4 rounded-card border border-line bg-surface p-4 sm:p-6">
-      <div className="flex flex-wrap items-center justify-between gap-4"><div className="flex min-w-0 items-center gap-3"><StudentAvatar student={entry.student} /><p className="min-w-0 break-all text-small text-ink-mid">{entry.student.email}</p></div>
+      <div className="flex flex-wrap items-center justify-between gap-4"><div className="flex min-w-0 items-center gap-3"><StudentAvatar student={entry.student} /><p className="min-w-0 break-words text-small font-medium">{studentName(entry.student)}</p></div>
         {conversations.isPending ? <p role="status" className="text-small text-ink-mid">Mesajlar yükleniyor…</p> : conversations.isError ? <Button variant="outline" size="sm" className="h-auto whitespace-normal py-2" onClick={() => void conversations.refetch()}>Mesajlar yüklenemedi, yeniden dene</Button> : conversation ? <Button variant="outline" asChild><Link href={`/messages/${conversation.id}`}><ChatCircle className="mr-2 h-5 w-5" aria-hidden="true" />Mesajlar</Link></Button> : <p className="text-small text-ink-mid">Bu öğrenciyle henüz mesajlaşma yok.</p>}
       </div>
       <div className="flex flex-wrap gap-x-6 gap-y-2 border-t border-line pt-4 text-small tabular-nums">

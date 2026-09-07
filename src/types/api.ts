@@ -1415,7 +1415,12 @@ export interface CreateSupportTicketPayload {
 // deliberately does not send an instant, because its three sources store time
 // three different ways (see apps/schedule/timezones.py).
 
-export type ScheduleEventSource = "booking" | "coaching" | "study_block";
+export type ScheduleEventSource =
+  | "booking"
+  | "coaching"
+  | "study_block"
+  | "availability"
+  | "time_off";
 
 export type StudyBlockType =
   | "konu_anlatim"

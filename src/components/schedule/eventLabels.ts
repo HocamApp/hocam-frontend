@@ -15,6 +15,8 @@ import type { ScheduleEvent } from "@/types";
  */
 export function shortEventLabel(event: ScheduleEvent): string {
   if (event.source === "coaching") return "Koçluk";
+  if (event.source === "availability") return "Müsait";
+  if (event.source === "time_off") return event.title;
   if (event.source === "study_block") {
     return event.block_title?.trim() || event.subject?.name || event.title;
   }

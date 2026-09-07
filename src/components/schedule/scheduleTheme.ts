@@ -1,6 +1,7 @@
 import {
   BookOpen,
   ClipboardText,
+  Clock,
   GraduationCap,
   Lock,
   Note,
@@ -331,6 +332,22 @@ const COACHING_TONE: ScheduleTone = {
   kindLabel: "Koçluk Görüşmesi",
 };
 
+const AVAILABILITY_TONE: ScheduleTone = {
+  icon: Clock,
+  card: "bg-success text-white border-transparent",
+  dot: "bg-success",
+  label: "text-white/90",
+  kindLabel: "Müsaitlik",
+};
+
+const TIME_OFF_TONE: ScheduleTone = {
+  icon: Lock,
+  card: "bg-ink text-paper border-transparent",
+  dot: "bg-ink",
+  label: "text-paper/90",
+  kindLabel: "Meşguliyet",
+};
+
 /**
  * A lesson keeps the graduation cap, the "Hocam Dersi" label and the lock no
  * matter which hue it draws — only the colour moves. Those three, plus the
@@ -352,6 +369,8 @@ export function lessonTone(subjectName: string | null | undefined): ScheduleTone
 export function toneForEvent(event: ScheduleEvent): ScheduleTone {
   if (event.source === "coaching") return COACHING_TONE;
   if (event.source === "booking") return lessonTone(event.subject?.name);
+  if (event.source === "availability") return AVAILABILITY_TONE;
+  if (event.source === "time_off") return TIME_OFF_TONE;
   return STUDY_TONES[event.block_type ?? "custom"];
 }
 
@@ -373,6 +392,8 @@ const LESSON_STATUS_LABELS: Record<string, string> = {
   student_no_show: "Katılmadın",
   tutor_no_show: "Hoca katılmadı",
   technical_failure: "Teknik sorun",
+  available: "",
+  busy: "",
 };
 
 export function lessonStatusLabel(status: string): string {

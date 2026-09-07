@@ -6,13 +6,35 @@ function chartDate(value: string) {
   return new Intl.DateTimeFormat("tr-TR", { day: "numeric", month: "short", timeZone: "UTC" }).format(new Date(`${value}T12:00:00Z`));
 }
 
-export function LineChart({ title, points, valueLabel }: { title: string; points: ChartPoint[]; valueLabel: (value: number) => string }) {
+export function LineChart({
+  title,
+  points,
+  valueLabel,
+  xAxisLabel,
+  yAxisLabel,
+  axisValueLabel = (value) => new Intl.NumberFormat("tr-TR", { maximumFractionDigits: 1 }).format(value),
+  maxValue,
+}: {
+  title: string;
+  points: ChartPoint[];
+  valueLabel: (value: number) => string;
+  xAxisLabel: string;
+  yAxisLabel: string;
+  axisValueLabel?: (value: number) => string;
+  maxValue?: number;
+}) {
   const available = points.filter((point): point is { label: string; value: number } => point.value !== null);
   if (!available.length) return <p className="py-10 text-center text-small text-ink-mid">Bu dönem için grafik verisi bulunmuyor.</p>;
-  const max = Math.max(1, ...available.map(point => point.value));
-  const width = 720, height = 220, left = 20, top = 16, bottom = 28;
-  const x = (index: number) => left + (index / Math.max(1, points.length - 1)) * (width - left * 2);
-  const y = (value: number) => top + (1 - value / max) * (height - top - bottom);
+  const max = Math.max(1, maxValue ?? 0, ...available.map(point => point.value));
+  const width = 760, height = 260, left = 88, right = 18, top = 16, bottom = 58;
+  const plotWidth = width - left - right;
+  const plotHeight = height - top - bottom;
+  const plotBottom = height - bottom;
+  const x = (index: number) => left + (index / Math.max(1, points.length - 1)) * plotWidth;
+  const y = (value: number) => top + (1 - value / max) * plotHeight;
+  const yTicks = Array.from({ length: 5 }, (_, index) => max * index / 4);
+  const xStep = Math.max(1, Math.ceil(Math.max(1, points.length - 1) / 4));
+  const xTickIndexes = points.map((_, index) => index).filter(index => index % xStep === 0 || index === points.length - 1);
   const segments: string[] = [];
   let open = false;
   points.forEach((point, index) => {
@@ -21,8 +43,14 @@ export function LineChart({ title, points, valueLabel }: { title: string; points
     open = true;
   });
   return <div className="overflow-x-auto pb-1">
-    <svg role="img" aria-label={`${title} grafiği`} viewBox={`0 0 ${width} ${height}`} className="h-[220px] min-w-[620px] w-full">
-      <line x1={left} y1={height-bottom} x2={width-left} y2={height-bottom} stroke="var(--line)" />
+    <svg role="img" aria-label={`${title} grafiği`} viewBox={`0 0 ${width} ${height}`} className="h-[260px] min-w-[680px] w-full">
+      <text x="16" y={top + plotHeight / 2} transform={`rotate(-90 16 ${top + plotHeight / 2})`} textAnchor="middle" fill="var(--ink-mid)" fontSize="11" fontWeight="600">{yAxisLabel}</text>
+      {yTicks.map((tick) => <g key={tick}>
+        <line x1={left} y1={y(tick)} x2={width-right} y2={y(tick)} stroke="var(--line)" strokeDasharray={tick === 0 ? undefined : "3 4"} />
+        <text x={left-9} y={y(tick)+4} textAnchor="end" fill="var(--ink-mid)" fontSize="10">{axisValueLabel(tick)}</text>
+      </g>)}
+      {xTickIndexes.map(index => <text key={points[index].label} x={x(index)} y={plotBottom+18} textAnchor={index === 0 ? "start" : index === points.length - 1 ? "end" : "middle"} fill="var(--ink-mid)" fontSize="10">{chartDate(points[index].label)}</text>)}
+      <text x={left + plotWidth / 2} y={height-5} textAnchor="middle" fill="var(--ink-mid)" fontSize="11" fontWeight="600">{xAxisLabel}</text>
       <path d={segments.join(" ")} fill="none" stroke="var(--pink)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
       {points.map((point, index) => point.value === null ? null : <g key={`${point.label}-${index}`}>
         <circle cx={x(index)} cy={y(point.value)} r="4" fill="var(--surface)" stroke="var(--pink)" strokeWidth="3" tabIndex={0} aria-label={`${chartDate(point.label)}: ${valueLabel(point.value)}`}><title>{`${chartDate(point.label)}: ${valueLabel(point.value)}`}</title></circle>

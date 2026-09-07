@@ -1,9 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRight, CheckCircle, Circle } from "@phosphor-icons/react";
+import { CheckCircle, Circle } from "@phosphor-icons/react";
 
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -66,13 +65,6 @@ export function TutorPerformanceSection({
             Bu sayıları hedefte tutmak yeni öğrenci almanı ve mevcutlarını
             tutmanı kolaylaştırır.
           </p>
-          <Link
-            href={`/dashboard/tutor/statistics?tab=overview&period=${windowDays}`}
-            className="mt-2 inline-flex items-center gap-1 text-small font-medium text-ink underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2"
-          >
-            Ayrıntıları gör
-            <ArrowRight className="h-4 w-4" aria-hidden="true" />
-          </Link>
         </div>
 
         {/* Plain buttons with aria-pressed, not tabs: nothing here has a

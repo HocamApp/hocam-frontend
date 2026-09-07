@@ -18,7 +18,7 @@ let TutorPerformanceSection: typeof import("./TutorPerformanceSection")["TutorPe
 before(async () => { TutorPerformanceSection = (await import("./TutorPerformanceSection")).TutorPerformanceSection; });
 afterEach(cleanup);
 
-test("performance detail link follows the selected period", async () => {
+test("performance period changes metrics without showing a redundant detail link", async () => {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(<QueryClientProvider client={client}><TutorPerformanceSection
     profile={{ id: "tutor", hourly_price: 500, rating: 5, total_reviews: 3, profile_score: 90 } as never}
@@ -28,9 +28,9 @@ test("performance detail link follows the selected period", async () => {
   const periodGroup = screen.getByRole("group", { name: "Dönem" });
   assert.match(periodGroup.className, /lg:w-auto/);
   assert.doesNotMatch(periodGroup.className, /sm:w-auto/);
-  const link = await screen.findByRole("link", { name: "Ayrıntıları gör" });
-  assert.equal(link.getAttribute("href"), "/dashboard/tutor/statistics?tab=overview&period=90");
+  await screen.findByText("Başarının anahtarları");
+  assert.equal(screen.queryByRole("link", { name: "Ayrıntıları gör" }), null);
   fireEvent.click(screen.getByRole("button", { name: "Son 30 gün" }));
-  assert.equal(link.getAttribute("href"), "/dashboard/tutor/statistics?tab=overview&period=30");
+  assert.equal(screen.getByRole("button", { name: "Son 30 gün" }).getAttribute("aria-pressed"), "true");
   client.clear();
 });

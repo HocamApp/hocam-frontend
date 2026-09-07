@@ -6,8 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import axios from "axios";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  ArrowLeft, ArrowRight, ArrowSquareOut, CalendarBlank, ChartBar,
-  ChatCircle, PencilSimple, Stack, Users, VideoCamera, WarningCircle,
+  ArrowLeft, ArrowRight, ChatCircle, VideoCamera, WarningCircle,
 } from "@phosphor-icons/react";
 import { toast } from "sonner";
 
@@ -197,18 +196,6 @@ function TutorDashboardContent() {
     </WorkspacePageShell>{dialogs}
   </>;
 
-  const workspaceLinks = [
-    { title: "Sınıfım", detail: "Öğrenciler ve ders bağlamı", href: "/dashboard/tutor/classroom", icon: Users },
-    { title: "Takvim", detail: "Dersler, müsaitlik ve meşguliyet", href: "/dashboard/tutor/calendar", icon: CalendarBlank },
-    { title: "İstatistiklerim", detail: "Performans, yorumlar ve gelir", href: "/dashboard/tutor/statistics", icon: ChartBar },
-  ];
-  const settingsLinks = [
-    { title: "Paketlerim", detail: "Paket ve indirim ayarları", href: "/dashboard/tutor/packages", icon: Stack },
-    { title: "Profili düzenle", detail: "Tanıtım ve ders bilgileri", href: "/dashboard/tutor/edit", icon: PencilSimple },
-    { title: "Öğrenci görünümü", detail: "Yayındaki profilini incele", href: `/tutors/${profileData.id}`, icon: ArrowSquareOut },
-  ];
-  const LinkGrid = ({ items }: { items: typeof workspaceLinks }) => <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{items.map(item => <Link key={item.title} href={item.href} className="flex min-w-0 items-center gap-3 rounded-card border border-line bg-surface p-4 transition-colors duration-[var(--duration-state)] hover:border-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-input border border-line bg-paper"><item.icon className="h-5 w-5" aria-hidden="true" /></span><span className="min-w-0 flex-1"><strong className="block text-small font-medium">{item.title}</strong><span className="block text-label text-ink-mid">{item.detail}</span></span><ArrowRight className="h-5 w-5 shrink-0 text-ink-mid" aria-hidden="true" /></Link>)}</div>;
-
   return <>
     <div className="mx-auto w-full min-w-0 max-w-6xl px-4 pb-20 pt-8 sm:pb-24">
       <TutorialNudgeBanner />
@@ -216,9 +203,7 @@ function TutorDashboardContent() {
       <div className="mt-8 space-y-8 sm:mt-12">
         {bookings.isError ? <div role="alert" className="rounded-card border border-line bg-surface p-6 sm:p-8"><h2 className="text-h2-m font-bold sm:text-h2">Ders programın yüklenemedi.</h2><p className="mt-2 max-w-xl text-small text-ink-mid">Sıradaki dersini ve bekleyen işlemlerini göstermek için program verisine ulaşmamız gerekiyor.</p><Button type="button" variant="outline" className="mt-5" onClick={() => void bookings.refetch()}>Yeniden dene</Button></div> : nextBooking ? <Card className="overflow-hidden"><CardContent className="p-6 sm:p-8"><div className="grid items-center gap-6 md:grid-cols-[minmax(0,1fr)_auto]"><div className="flex min-w-0 items-center gap-4"><ParticipantAvatar name={nextStudentName} avatarUrl={nextBooking.student.avatar_url} className="h-16 w-16 shrink-0 rounded-input" /><div className="min-w-0"><p className="truncate text-h3 font-medium">{nextBooking.subject.name}</p><p className="mt-1 truncate text-body text-ink-mid">{nextStudentName} · {nextBooking.duration_minutes} dk</p></div></div><div className="flex min-w-[150px] flex-col rounded-input border border-line bg-paper px-5 py-4 md:items-end"><span className="text-label text-ink-mid">{dashboardCountdown(nextBooking.start_time)}</span><span className="mt-1 text-h2-m font-bold tabular-nums">{bookingTimeLabel(nextBooking.start_time).split(" – ")[0]}</span><span className="mt-1 text-label text-ink-mid">{bookingDateLabel(nextBooking.start_time)}</span></div></div><div className="mt-6 flex flex-wrap items-center gap-3 border-t border-line pt-5">{canJoinBooking(nextBooking) ? <Button asChild size="lg"><a href={`/session/${nextBooking.id}`}><VideoCamera className="mr-2 h-5 w-5" aria-hidden="true" />Derse katıl</a></Button> : nextBooking.room_url ? <Button size="lg" variant="outline" disabled className="h-auto max-w-full whitespace-normal text-center">Derse katılım başlangıçtan 15 dakika önce açılır</Button> : <Badge variant="outline">Oda onaydan sonra oluşur</Badge>}<Button asChild variant="outline"><Link href={conversationId ? `/messages/${conversationId}` : "/messages"}><ChatCircle className="mr-2 h-5 w-5" aria-hidden="true" />Öğrenciye mesaj</Link></Button><div className="ml-auto hidden items-center gap-2 text-small text-ink-mid sm:flex"><StatusBadge status={nextBooking.status} type="booking" /><span>{paymentLabel(nextBooking)}</span></div></div></CardContent></Card> : <Card><CardContent className="flex flex-col items-start justify-between gap-5 p-6 sm:flex-row sm:items-center sm:p-8"><div><h2 className="text-h2-m font-bold sm:text-h2">Takvimin şu anda sakin</h2><p className="mt-2 max-w-xl text-small text-ink-mid">Müsaitlik saatlerini güncel tutarak yeni rezervasyonlara hazır olabilirsin.</p></div><Button asChild><Link href="/dashboard/tutor/calendar">Takvimi aç</Link></Button></CardContent></Card>}
         {groups.pendingActions.length > 0 && <Link href="/dashboard/tutor?tab=bookings" className="flex w-full items-center justify-between gap-4 rounded-card border border-ink bg-surface px-5 py-4 text-left transition-colors duration-[var(--duration-state)] hover:bg-paper focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2"><span className="flex min-w-0 items-start gap-3"><WarningCircle className="mt-0.5 h-5 w-5 shrink-0" weight="fill" aria-hidden="true" /><span><strong className="block text-small font-medium">{groups.pendingActions.length} işlem seni bekliyor</strong><span className="text-small text-ink-mid">Onay, itiraz veya ders ilerlemesi gerektiren kayıtlarını kontrol et.</span></span></span><ArrowRight className="h-5 w-5 shrink-0" aria-hidden="true" /></Link>}
-        <section aria-labelledby="workspace-links-title"><h2 id="workspace-links-title" className="mb-3 text-h2-m font-bold sm:text-h2">Çalışma alanların</h2><LinkGrid items={workspaceLinks} /></section>
         <TutorPerformanceSection profile={profileData} availability={availability.data ?? []} priceInsight={priceInsight.data ?? null} />
-        <section aria-labelledby="profile-links-title"><div className="mb-3"><h2 id="profile-links-title" className="text-h2-m font-bold sm:text-h2">Profil ve teklifler</h2><p className="mt-1 text-small text-ink-mid">Sık değişmeyen profil ve paket ayarların.</p></div><LinkGrid items={settingsLinks} /></section>
       </div>
     </div>{dialogs}
   </>;

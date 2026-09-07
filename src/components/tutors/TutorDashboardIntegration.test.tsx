@@ -28,7 +28,7 @@ mock.module("@/hooks/useHighlightTarget", { namedExports: {
   HIGHLIGHT_PARAM: "highlightBooking",
 } });
 mock.module("@/components/tutors/TutorPerformanceSection", { namedExports: {
-  TutorPerformanceSection: () => <section><h2>Başarının anahtarları</h2><a href="/dashboard/tutor/statistics?tab=overview&period=90">Ayrıntıları gör</a></section>,
+  TutorPerformanceSection: () => <section><h2>Başarının anahtarları</h2></section>,
 } });
 mock.module("@/components/ai/AISupportChatWidget", { namedExports: { AISupportChatWidget: () => null } });
 mock.module("@/components/lessons/BookingCard", { namedExports: {
@@ -96,14 +96,15 @@ beforeEach(() => {
 afterEach(() => { cleanup(); client.clear(); });
 const mount = () => render(<QueryClientProvider client={client}><Page /></QueryClientProvider>);
 
-test("Panom keeps daily focus and links to canonical workspaces", async () => {
+test("Panom keeps the daily focus without duplicating workspace and profile navigation", async () => {
   const { container } = mount();
   await screen.findByText("Matematik");
   assert.equal(container.querySelectorAll("h1").length, 1);
   assert.ok(screen.getByText("Başarının anahtarları"));
-  assert.equal(screen.getByRole("link", { name: /Sınıfım/ }).getAttribute("href"), "/dashboard/tutor/classroom");
-  assert.equal(screen.getByRole("link", { name: /Takvim/ }).getAttribute("href"), "/dashboard/tutor/calendar");
-  assert.equal(screen.getByRole("link", { name: /İstatistiklerim/ }).getAttribute("href"), "/dashboard/tutor/statistics");
+  assert.equal(screen.queryByText("Çalışma alanların"), null);
+  assert.equal(screen.queryByText("Profil ve teklifler"), null);
+  assert.equal(screen.queryByRole("link", { name: /Sınıfım/ }), null);
+  assert.equal(screen.queryByRole("link", { name: /Profili düzenle/ }), null);
   assert.equal(screen.queryByText("Bugünkü programın"), null);
   assert.equal(screen.queryByText("Öğrencilerin"), null);
   assert.equal(screen.queryByText("Hoca yönetim merkezi"), null);
