@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
-import { HourglassSimple } from "@phosphor-icons/react/ssr";
+import { CalendarDots } from "@phosphor-icons/react/ssr";
+import type { Icon as PhosphorIcon } from "@phosphor-icons/react";
 
 import { CoachingStudioPanel } from "@/components/coaching/CoachingStudioPanel";
 import { COACHING_SECTION_TITLE_CLASS } from "@/components/coaching/CoachingSectionHeading";
@@ -14,7 +15,7 @@ export function CoachingEmptyState({
   steps,
   tone = "soft",
 }: {
-  icon?: typeof HourglassSimple;
+  icon?: PhosphorIcon;
   title: string;
   description: string;
   context?: string;
@@ -23,7 +24,7 @@ export function CoachingEmptyState({
   steps?: readonly string[];
   tone?: "soft" | "accent";
 }) {
-  const EmptyIcon = Icon ?? HourglassSimple;
+  const EmptyIcon = Icon ?? CalendarDots;
   return (
     <CoachingStudioPanel tone={tone}>
       <div className="max-w-2xl p-6 sm:p-8">

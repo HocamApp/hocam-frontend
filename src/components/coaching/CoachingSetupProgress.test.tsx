@@ -26,6 +26,12 @@ describe("CoachingSetupProgress", () => {
     assert.equal(current.getAttribute("aria-current"), "step");
     assert.equal(current.getAttribute("href"), "?step=availability");
     assert.ok(screen.getByRole("link", { name: /Kapasite/ }));
+    const currentCaption = screen.getByText("Şu an buradasın");
+    assert.match(currentCaption.className, /bg-gold/);
+    assert.match(currentCaption.className, /text-white/);
+    const readyCaptions = screen.getAllByText("Hazır");
+    assert.ok(readyCaptions.length > 0);
+    assert.ok(readyCaptions.every(node => /bg-gold/.test(node.className) && /text-white/.test(node.className)));
   });
 
   it("does not expose locked capacity as an interactive link", () => {

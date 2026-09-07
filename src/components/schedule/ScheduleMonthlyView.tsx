@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { Clock } from "@phosphor-icons/react/ssr";
 
 import { EmptyState } from "@/components/shared/EmptyState";
 import { cn } from "@/lib/utils";
 import type { ScheduleEvent } from "@/types";
 import {
   WEEKDAY_LABELS,
+  endTimeLabel,
   isSameDay,
   longDayLabel,
   monthGridDays,
@@ -108,11 +110,16 @@ export function ScheduleMonthlyView({
           {days.map((date, index) => {
             const key = toDateKey(date);
             const dayEvents = byDay.get(key) ?? [];
+            const availabilityEvents = dayEvents.filter((event) => event.source === "availability");
+            const scheduledEvents = dayEvents.filter((event) => event.source !== "availability");
+            const availabilityTimes = availabilityEvents
+              .map((event) => `${event.local_time}–${endTimeLabel(event.local_time, event.duration_minutes)}`)
+              .join(", ");
             const isToday = isSameDay(date, today);
             const isOutside = date.getMonth() !== currentMonth;
-            const hidden = dayEvents.length - MAX_CHIPS_PER_DAY;
+            const hidden = scheduledEvents.length - MAX_CHIPS_PER_DAY;
             const expanded = expandedDays.has(key);
-            const visibleEvents = expanded ? dayEvents : dayEvents.slice(0, MAX_CHIPS_PER_DAY);
+            const visibleEvents = expanded ? scheduledEvents : scheduledEvents.slice(0, MAX_CHIPS_PER_DAY);
 
             return (
               <div
@@ -124,7 +131,8 @@ export function ScheduleMonthlyView({
                   "max-md:min-h-[3.25rem] max-md:p-1",
                   index % 7 === 6 && "border-r-0",
                   index >= 35 && "border-b-0",
-                  isOutside && "bg-paper"
+                  isOutside && "bg-paper",
+                  availabilityEvents.length > 0 && "bg-[#DDE9E4] hover:bg-[#DDE9E4]"
                 )}
               >
                 <button
@@ -144,7 +152,7 @@ export function ScheduleMonthlyView({
                 {/* Phones: three dots and a count stand in for the chips. The
                     day number opens the day, which is where the detail is. */}
                 <div className="flex flex-wrap items-center justify-center gap-0.5 md:hidden">
-                  {dayEvents.slice(0, 3).map((event) => (
+                  {scheduledEvents.slice(0, 3).map((event) => (
                     <span
                       key={`dot-${event.source}-${event.id}-${event.occurrence_date ?? ""}`}
                       aria-hidden="true"
@@ -155,14 +163,23 @@ export function ScheduleMonthlyView({
                       )}
                     />
                   ))}
-                  {dayEvents.length > 3 && (
+                  {scheduledEvents.length > 3 && (
                     <span className="text-[9px] font-semibold leading-none text-ink-mid">
-                      +{dayEvents.length - 3}
+                      +{scheduledEvents.length - 3}
                     </span>
                   )}
                 </div>
 
                 <div id={`month-day-${key}`} className="space-y-1 max-md:hidden">
+                  {availabilityTimes ? (
+                    <div data-availability-summary className="space-y-0.5 px-1 py-0.5 text-[10px] leading-4 text-ink">
+                      <span className="flex items-start gap-1 font-medium">
+                        <Clock aria-hidden="true" className="mt-0.5 h-3 w-3 shrink-0 text-success" weight="regular" />
+                        <span className="tabular-nums">{availabilityTimes}</span>
+                      </span>
+                      <span className="block pl-4 text-ink-mid">Müsait</span>
+                    </div>
+                  ) : null}
                   {visibleEvents.map((event) => {
                     const tone = toneForEvent(event);
                     // The composed title spends a ~96px cell on its first word.

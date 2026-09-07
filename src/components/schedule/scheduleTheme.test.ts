@@ -172,6 +172,13 @@ describe("a lesson never looks like a personal block", () => {
     assert.match(tone.card, /text-white/);
     assert.equal(tone.kindLabel, "Koçluk Görüşmesi");
   });
+
+  it("uses the light pistachio availability surface with dark text", () => {
+    const tone = toneForEvent({ ...lesson(null), source: "availability" });
+    assert.match(tone.card, /bg-\[#DDE9E4\]/);
+    assert.match(tone.card, /text-ink/);
+    assert.doesNotMatch(tone.card, /text-white/);
+  });
 });
 
 /**

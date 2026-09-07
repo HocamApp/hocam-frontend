@@ -50,7 +50,7 @@ export function LineChart({
         <text x={left-9} y={y(tick)+4} textAnchor="end" fill="var(--ink-mid)" fontSize="10">{axisValueLabel(tick)}</text>
       </g>)}
       {xTickIndexes.map(index => <text key={points[index].label} x={x(index)} y={plotBottom+18} textAnchor={index === 0 ? "start" : index === points.length - 1 ? "end" : "middle"} fill="var(--ink-mid)" fontSize="10">{chartDate(points[index].label)}</text>)}
-      <text x={left + plotWidth / 2} y={height-5} textAnchor="middle" fill="var(--ink-mid)" fontSize="11" fontWeight="600">{xAxisLabel}</text>
+      <text x={width / 2} y={height-5} textAnchor="middle" fill="var(--ink-mid)" fontSize="11" fontWeight="600">{xAxisLabel}</text>
       <path d={segments.join(" ")} fill="none" stroke="var(--pink)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
       {points.map((point, index) => point.value === null ? null : <g key={`${point.label}-${index}`}>
         <circle cx={x(index)} cy={y(point.value)} r="4" fill="var(--surface)" stroke="var(--pink)" strokeWidth="3" tabIndex={0} aria-label={`${chartDate(point.label)}: ${valueLabel(point.value)}`}><title>{`${chartDate(point.label)}: ${valueLabel(point.value)}`}</title></circle>

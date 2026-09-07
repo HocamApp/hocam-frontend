@@ -80,6 +80,11 @@ test("overview renders one H1, four honest metrics and accessible graph tables",
   assert.ok(screen.getByRole("table", { name: /Tamamlanan dersler verileri/ }));
   assert.ok(screen.getAllByText("Tarih").length >= 1);
   assert.ok(screen.getByText("Tamamlanan ders sayısı"));
+  assert.ok(screen.getByText("Ortalama puan"));
+  assert.equal(screen.queryByText("Ortalama puan (5 üzerinden)"), null);
+  const axisTitles = Array.from(container.querySelectorAll("svg text")).filter(node => node.textContent === "Tarih");
+  assert.ok(axisTitles.length > 0);
+  assert.ok(axisTitles.every(node => node.getAttribute("x") === "380"));
   assert.ok(screen.getByText("Koçluk görünümü"));
   assert.equal(screen.queryByText("Ayrı hizmet alanı"), null);
   assert.equal(screen.queryByText("Koçluk görüşmeleri ders istatistiklerine eklenmeden ayrı hesaplanır."), null);

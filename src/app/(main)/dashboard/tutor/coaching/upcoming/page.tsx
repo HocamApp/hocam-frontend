@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
+import { CalendarDots } from "@phosphor-icons/react";
 
 import { CoachingRecordGuard as CoachingGuard } from "@/components/coaching/CoachingGuard";
 import { CoachingEmptyState } from "@/components/coaching/CoachingEmptyState";
@@ -36,7 +37,7 @@ function UpcomingList() {
   }
 
   if (!sessions || sessions.length === 0) {
-    return <CoachingEmptyState title="Yaklaşan görüşme yok" description="Planlanan bir koçluk görüşmesi olduğunda tarihi, hazırlık alanı ve katılım bağlantısı burada görünür." steps={["Öğrenciyle düzenli saat belirlenir", "Görüşme öncesi hazırlık alanı açılır"]} tone="accent" />;
+    return <CoachingEmptyState icon={CalendarDots} title="Yaklaşan görüşme yok" description="Planlanan bir koçluk görüşmesi olduğunda tarihi, hazırlık alanı ve katılım bağlantısı burada görünür." tone="accent" />;
   }
 
   return (

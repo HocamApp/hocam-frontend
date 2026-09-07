@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { BookOpen, CalendarDots, ChalkboardTeacher, ChatCircle, Clock, CurrencyCircleDollar, Star, Users } from "@phosphor-icons/react";
+import { BookBookmark, BookOpen, CalendarDots, ChalkboardTeacher, ChartLineUp, ChatCircle, Clock, CurrencyCircleDollar, Timer, UserFocus, Users } from "@phosphor-icons/react";
 import { WorkspacePageShell } from "@/components/layout/WorkspacePageShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -43,7 +43,7 @@ function comparisonText(metric: ComparisonMetric) {
 
 function MetricCard({ label, value, detail, icon }: { label: string; value: string; detail: string; icon: React.ReactNode }) {
   return <article className="rounded-card border border-line bg-surface p-5">
-    <div className="flex items-center justify-between gap-3"><p className="text-small font-medium text-ink-mid">{label}</p><span className="text-pink">{icon}</span></div>
+    <div className="flex items-center justify-between gap-3"><p className="text-small font-medium text-ink-mid">{label}</p><span className="flex h-9 w-9 items-center justify-center rounded-input border border-line text-pink">{icon}</span></div>
     <p className="mt-4 break-words text-[1.625rem] font-bold leading-none tracking-tight tabular-nums sm:text-[2rem]">{value}</p>
     <p className="mt-3 text-caption text-ink-mid">{detail}</p>
   </article>;
@@ -55,10 +55,10 @@ function Overview({ data }: { data: TutorStatisticsResponse }) {
   const reviewAverage = data.summary.reviews.average;
   return <div className="space-y-6">
     <section aria-label="Genel göstergeler" className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-      <MetricCard label="Tamamlanan ders" value={String(data.summary.completed_lessons.current)} detail={comparisonText(data.summary.completed_lessons)} icon={<BookOpen size={22} aria-hidden="true" />} />
-      <MetricCard label="Planlanan ders süresi" value={`${data.summary.completed_minutes.current} dk`} detail={comparisonText(data.summary.completed_minutes)} icon={<Clock size={22} aria-hidden="true" />} />
-      <MetricCard label="Ders ilişkisi olan öğrenci" value={String(data.summary.students.current)} detail={comparisonText(data.summary.students)} icon={<Users size={22} aria-hidden="true" />} />
-      <MetricCard label="Dönem değerlendirmesi" value={reviewAverage === null ? "Veri yok" : new Intl.NumberFormat("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(reviewAverage)} detail={reviewAverage === null ? "Bu dönemde değerlendirme gelmedi" : `${data.summary.reviews.count} değerlendirme`} icon={<Star size={22} aria-hidden="true" />} />
+      <MetricCard label="Tamamlanan ders" value={String(data.summary.completed_lessons.current)} detail={comparisonText(data.summary.completed_lessons)} icon={<BookBookmark size={26} aria-hidden="true" weight="regular" />} />
+      <MetricCard label="Planlanan ders süresi" value={`${data.summary.completed_minutes.current} dk`} detail={comparisonText(data.summary.completed_minutes)} icon={<Timer size={26} aria-hidden="true" weight="regular" />} />
+      <MetricCard label="Ders ilişkisi olan öğrenci" value={String(data.summary.students.current)} detail={comparisonText(data.summary.students)} icon={<UserFocus size={26} aria-hidden="true" weight="regular" />} />
+      <MetricCard label="Dönem değerlendirmesi" value={reviewAverage === null ? "Veri yok" : new Intl.NumberFormat("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(reviewAverage)} detail={reviewAverage === null ? "Bu dönemde değerlendirme gelmedi" : `${data.summary.reviews.count} değerlendirme`} icon={<ChartLineUp size={26} aria-hidden="true" weight="regular" />} />
     </section>
 
     <ChartCard title="Tamamlanan dersler" description="Tamamlanan kayıtların planlanan süresi gösterilir; canlı bağlantı süresi değildir." action={<div role="group" aria-label="Ders grafiği ölçüsü" className="flex gap-1">{(["count", "minutes"] as const).map(mode => <Button key={mode} size="sm" variant="outline" aria-pressed={activityMode === mode} onClick={() => setActivityMode(mode)} className={activityMode === mode ? "border-ink bg-ink text-paper hover:bg-ink hover:text-paper" : "border-line"}>{mode === "count" ? "Ders" : "Dakika"}</Button>)}</div>}>
@@ -72,7 +72,7 @@ function Overview({ data }: { data: TutorStatisticsResponse }) {
 
     <div className="grid gap-6 lg:grid-cols-2">
       <ChartCard title="Öğrenci gelişimi" description={`${data.students.relationships} öğrenciyle ders ilişkisi · ${data.students.new} yeni öğrenci`}><LineChart title="Yeni öğrenciler" points={data.students.activity.map(row => ({ label: row.period_start, value: row.new_students }))} valueLabel={value => `${value} öğrenci`} xAxisLabel="Tarih" yAxisLabel="Yeni öğrenci sayısı" /></ChartCard>
-      <ChartCard title="Değerlendirme eğilimi" description={reviewAverage === null ? "Değerlendirme gelmediğinde sıfır çizgisi üretilmez." : `${data.summary.reviews.count} değerlendirme üzerinden.`}><LineChart title="Değerlendirme eğilimi" points={data.reviews.trend.map(row => ({ label: row.period_start, value: row.average }))} valueLabel={value => `${value.toFixed(2)} / 5`} xAxisLabel="Tarih" yAxisLabel="Ortalama puan (5 üzerinden)" maxValue={5} />
+      <ChartCard title="Değerlendirme eğilimi" description={reviewAverage === null ? "Değerlendirme gelmediğinde sıfır çizgisi üretilmez." : `${data.summary.reviews.count} değerlendirme üzerinden.`}><LineChart title="Değerlendirme eğilimi" points={data.reviews.trend.map(row => ({ label: row.period_start, value: row.average }))} valueLabel={value => `${value.toFixed(2)} / 5`} xAxisLabel="Tarih" yAxisLabel="Ortalama puan" maxValue={5} />
         <dl className="mt-5 grid grid-cols-2 gap-3 border-t border-line pt-5">{Object.entries(data.reviews.criteria).map(([key, value]) => <div key={key}><dt className="text-caption text-ink-mid">{criteriaLabels[key] ?? key}</dt><dd className="mt-1 font-semibold tabular-nums">{value === null ? "—" : `${value.toFixed(2)} / 5`}</dd></div>)}</dl>
       </ChartCard>
     </div>

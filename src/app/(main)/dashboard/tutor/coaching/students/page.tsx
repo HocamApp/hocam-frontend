@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
+import { UserPlus } from "@phosphor-icons/react";
 
 import { CoachingRecordGuard } from "@/components/coaching/CoachingGuard";
 import { CoachingEmptyState as EmptyState } from "@/components/coaching/CoachingEmptyState";
@@ -45,9 +46,9 @@ function StudentsContent() {
   if (students.length === 0) {
     return (
       <EmptyState
+        icon={UserPlus}
         title="Henüz koçluk öğrencin yok"
         description="Bir öğrenci koçluk talebini kabul edip ödemesi aktive olduğunda burada görünecek."
-        steps={["Birleşik talebi değerlendirirsin", "Aktif öğrenci çalışma alanına eklenir"]}
       />
     );
   }

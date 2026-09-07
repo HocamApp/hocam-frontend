@@ -334,9 +334,9 @@ const COACHING_TONE: ScheduleTone = {
 
 const AVAILABILITY_TONE: ScheduleTone = {
   icon: Clock,
-  card: "bg-success text-white border-transparent",
+  card: "bg-[#DDE9E4] text-ink border-transparent",
   dot: "bg-success",
-  label: "text-white/90",
+  label: "text-ink-mid",
   kindLabel: "Müsaitlik",
 };
 

@@ -103,7 +103,11 @@ export function CoachingSetupProgress({
                 <span className={cn("block text-xs font-semibold leading-4", !unlocked && "text-muted-foreground")}>
                   {STEP_LABELS[step]}
                 </span>
-                <span className="mt-0.5 block text-[10px] text-muted-foreground">
+                <span className={cn(
+                  "mt-0.5 inline-flex rounded-pill px-2 py-0.5 text-[10px]",
+                  (current || (unlocked && !complete)) ? "bg-gold text-white" : "text-muted-foreground",
+                  complete && !current && "text-success",
+                )}>
                   {current ? "Şu an buradasın" : complete ? "Tamamlandı" : unlocked ? "Hazır" : "Sırayla açılır"}
                 </span>
               </span>

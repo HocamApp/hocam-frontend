@@ -41,6 +41,10 @@ describe("CoachingEarningsSummary", () => {
     }} />);
 
     assert.ok(screen.getByRole("heading", { name: "Koçluk kazanç cüzdanı" }));
+    const wallet = screen.getByRole("region", { name: "Koçluk kazanç özeti" });
+    assert.match(wallet.className, /bg-pink/);
+    assert.match(wallet.className, /text-white/);
+    assert.doesNotMatch(wallet.className, /bg-ink/);
     assert.ok(screen.getAllByText("1.234,56 ₺").length >= 1);
     assert.ok(screen.getByRole("img", { name: "Aylık koçluk kazanç grafiği" }));
     assert.ok(screen.getByRole("region", { name: "Aylık kazanç grafiği kaydırma alanı" }));

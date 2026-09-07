@@ -1,37 +1,15 @@
 import Link from "next/link";
-import { type Icon as PhosphorIcon } from "@phosphor-icons/react";
 import {
   ArrowUpRight,
   CheckCircle,
   Circle,
   Info,
-  Radio,
-  UsersThree,
 } from "@phosphor-icons/react/ssr";
 
 import { Button } from "@/components/ui/button";
 import type { CoachingDerivedStatus } from "@/lib/coachingPresentation";
 import { cn } from "@/lib/utils";
 import { CoachingStudioPanel } from "./CoachingStudioPanel";
-
-const STATUS_LABELS = {
-  publication: {
-    missing: "Teklif oluşturulmadı",
-    draft: "Taslak",
-    published: "Yayında",
-  },
-  intake: {
-    not_applicable: "Henüz geçerli değil",
-    open: "Yeni öğrenciye açık",
-    closed: "Yeni öğrenciye kapalı",
-  },
-  capacity: {
-    unknown: "Kapasite bilinmiyor",
-    missing_availability: "Koçluk saati gerekli",
-    available: "Yeni öğrenci için yer var",
-    full: "Kapasite dolu",
-  },
-} as const;
 
 export function CoachingStatusCard({ status }: { status: CoachingDerivedStatus }) {
   const ready = status.readiness === "complete";
@@ -56,8 +34,7 @@ export function CoachingStatusCard({ status }: { status: CoachingDerivedStatus }
         aria-label="Koçluk hizmet durumu"
         className="overflow-hidden p-6 sm:p-8"
       >
-        {/* 7/5, the default split for a content section. */}
-        <div className="grid gap-8 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:items-end">
+        <div className="max-w-3xl">
           <div>
             {/* No eyebrow above this. The tab strip already says which part
                 of coaching you are in, and a small capitalised label repeating
@@ -72,7 +49,7 @@ export function CoachingStatusCard({ status }: { status: CoachingDerivedStatus }
               className={cn(
                 "inline-flex items-center gap-2 rounded-pill px-4 py-1.5 text-[0.8125rem] font-medium leading-[1.4] tracking-[0.01em]",
                 ready
-                  ? "bg-gold text-gold-ink"
+                  ? "bg-gold text-white"
                   : "border border-line text-ink-mid",
               )}
             >
@@ -91,7 +68,7 @@ export function CoachingStatusCard({ status }: { status: CoachingDerivedStatus }
             </h2>
             <p className="mt-3 max-w-xl text-[1rem] leading-[1.6] text-ink-mid">
               {published
-                ? "Teklifin öğrenci görünümünde yerini aldı. Öğrenci kabulü ve kapasiteyi buradan takip edebilirsin."
+                ? "Teklifin öğrenci görünümünde yerini aldı. Koçluk düzenini buradan sürdürebilirsin."
                 : "Koçluk teklifinin öğrenciye açılması için yalnız sana bağlı olan sıradaki kurulumu tamamla."}
             </p>
             {/* The page's one primary action, and the one place pink is
@@ -110,13 +87,6 @@ export function CoachingStatusCard({ status }: { status: CoachingDerivedStatus }
             </Button>
           </div>
 
-          {/* 10px inside the panel's 20px corner: inner radius is the outer
-              radius minus the inset, so nested corners stay concentric. */}
-          <dl className="grid gap-px overflow-hidden rounded-input border border-line bg-line sm:grid-cols-3 lg:grid-cols-1">
-            <StatusRow icon={Radio} label="Yayın" value={STATUS_LABELS.publication[status.publication]} />
-            <StatusRow icon={UsersThree} label="Öğrenci kabulü" value={STATUS_LABELS.intake[status.intake]} />
-            <StatusRow icon={CheckCircle} label="Kapasite" value={STATUS_LABELS.capacity[status.capacity]} />
-          </dl>
         </div>
       </CoachingStudioPanel>
 
@@ -133,26 +103,6 @@ export function CoachingStatusCard({ status }: { status: CoachingDerivedStatus }
           </div>
         </section>
       ) : null}
-    </div>
-  );
-}
-
-function StatusRow({
-  icon: Icon,
-  label,
-  value,
-}: {
-  icon: PhosphorIcon;
-  label: string;
-  value: string;
-}) {
-  return (
-    <div className="flex items-center justify-between gap-4 bg-surface p-4">
-      <dt className="flex items-center gap-2 text-[0.8125rem] font-medium leading-[1.4] tracking-[0.01em] text-ink-mid">
-        <Icon aria-hidden="true" className="h-4 w-4" weight="regular" />
-        {label}
-      </dt>
-      <dd className="text-right text-small font-medium">{value}</dd>
     </div>
   );
 }
