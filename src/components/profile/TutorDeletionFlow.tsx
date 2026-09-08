@@ -305,7 +305,7 @@ export function TutorDeletionFlow({ accountEmail }: TutorDeletionFlowProps) {
             <AlertTriangle className="h-4 w-4" />
             <AlertTitle>Kapanış süreci başladı.</AlertTitle>
             <AlertDescription>
-              Yaklaşan dersleriniz ve hakedişleriniz çözüldükten sonra
+              Yaklaşan dersleriniz ve gelirleriniz çözüldükten sonra
               hesabınız silinecek. Durumu bu sayfadan takip edebilirsiniz.
             </AlertDescription>
           </Alert>

@@ -26,13 +26,15 @@ export function LineChart({
   const available = points.filter((point): point is { label: string; value: number } => point.value !== null);
   if (!available.length) return <p className="py-10 text-center text-small text-ink-mid">Bu dönem için grafik verisi bulunmuyor.</p>;
   const max = Math.max(1, maxValue ?? 0, ...available.map(point => point.value));
-  const width = 760, height = 260, left = 88, right = 18, top = 16, bottom = 58;
+  const yTicks = Array.from({ length: 5 }, (_, index) => max * index / 4);
+  const formattedYTicks = yTicks.map(axisValueLabel);
+  const longestTickLength = Math.max(...formattedYTicks.map(label => Array.from(label).length));
+  const width = 760, height = 260, left = Math.max(88, 56 + longestTickLength * 6), right = 18, top = 16, bottom = 58;
   const plotWidth = width - left - right;
   const plotHeight = height - top - bottom;
   const plotBottom = height - bottom;
   const x = (index: number) => left + (index / Math.max(1, points.length - 1)) * plotWidth;
   const y = (value: number) => top + (1 - value / max) * plotHeight;
-  const yTicks = Array.from({ length: 5 }, (_, index) => max * index / 4);
   const xStep = Math.max(1, Math.ceil(Math.max(1, points.length - 1) / 4));
   const xTickIndexes = points.map((_, index) => index).filter(index => index % xStep === 0 || index === points.length - 1);
   const segments: string[] = [];
@@ -45,9 +47,9 @@ export function LineChart({
   return <div className="overflow-x-auto pb-1">
     <svg role="img" aria-label={`${title} grafiği`} viewBox={`0 0 ${width} ${height}`} className="h-[260px] min-w-[680px] w-full">
       <text x="16" y={top + plotHeight / 2} transform={`rotate(-90 16 ${top + plotHeight / 2})`} textAnchor="middle" fill="var(--ink-mid)" fontSize="11" fontWeight="600">{yAxisLabel}</text>
-      {yTicks.map((tick) => <g key={tick}>
+      {yTicks.map((tick, index) => <g key={tick}>
         <line x1={left} y1={y(tick)} x2={width-right} y2={y(tick)} stroke="var(--line)" strokeDasharray={tick === 0 ? undefined : "3 4"} />
-        <text x={left-9} y={y(tick)+4} textAnchor="end" fill="var(--ink-mid)" fontSize="10">{axisValueLabel(tick)}</text>
+        <text x={left-9} y={y(tick)+4} textAnchor="end" fill="var(--ink-mid)" fontSize="10">{formattedYTicks[index]}</text>
       </g>)}
       {xTickIndexes.map(index => <text key={points[index].label} x={x(index)} y={plotBottom+18} textAnchor={index === 0 ? "start" : index === points.length - 1 ? "end" : "middle"} fill="var(--ink-mid)" fontSize="10">{chartDate(points[index].label)}</text>)}
       <text x={width / 2} y={height-5} textAnchor="middle" fill="var(--ink-mid)" fontSize="11" fontWeight="600">{xAxisLabel}</text>

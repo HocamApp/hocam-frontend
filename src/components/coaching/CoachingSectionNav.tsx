@@ -10,8 +10,6 @@ import {
 import { CoachingStudioPanel } from "./CoachingStudioPanel";
 
 const GROUP = {
-  title: "Koçluğu yürüt",
-  description: "Öğrencilerinle haftalık çalışma düzenini ve görüşme akışını sürdür.",
   tone: "accent" as const,
   links: [
     { label: "Koçluk öğrencilerim", href: "/dashboard/tutor/coaching/students", icon: UsersThree },
@@ -29,11 +27,9 @@ export function CoachingSectionNav() {
       overview — louder than the status panel above it. The heading is enough
       separation for a set of links.
     */
-    <section aria-label="Koçluğu yürüt">
+    <section aria-label="Koçluk bağlantıları">
       <CoachingStudioPanel tone={GROUP.tone} className="p-5 sm:p-6">
-        <h2 className="text-h3">{GROUP.title}</h2>
-        <p className="mt-1 max-w-2xl text-small text-ink-mid">{GROUP.description}</p>
-        <div className="mt-5 grid gap-2 sm:grid-cols-2">
+        <div className="grid gap-2 sm:grid-cols-2">
           {GROUP.links.map(({ label, href, icon: Icon }) => (
             <Link
               key={href}

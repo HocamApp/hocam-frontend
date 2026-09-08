@@ -414,7 +414,7 @@ export function PricingSection({
           </dl>
           <p className="mt-3 flex items-start gap-2 text-xs leading-relaxed text-muted-foreground">
             <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
-            Bu yalnızca 40 dakikalık standart fiyat üzerinden tahmindir. Paket indirimi, vergi, ödeme sağlayıcı masrafı ve kesin hak ediş dahil değildir.
+            Bu yalnızca 40 dakikalık standart fiyat üzerinden tahmindir. Paket indirimi, vergi, ödeme sağlayıcı masrafı ve kesin gelir dahil değildir.
           </p>
         </div>
       )}

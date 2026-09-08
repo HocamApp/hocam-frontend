@@ -55,7 +55,8 @@ describe("CoachingEarningsSummary", () => {
     assert.ok(screen.getByText("950,00 ₺"));
     const withdrawal = screen.getByRole("button", { name: "Parayı çek" });
     assert.equal(withdrawal.getAttribute("aria-disabled"), "true");
-    assert.ok(screen.getByText("Ödeme aktarımı, gerçek ödeme altyapısı etkinleştirildiğinde kullanılabilir."));
+    assert.equal(screen.queryByText("Ödeme aktarımı, gerçek ödeme altyapısı etkinleştirildiğinde kullanılabilir."), null);
+    assert.equal(screen.queryByText("Bu tutar bir banka bakiyesi veya çekilebilir tutar değildir; kullanılabilir ödeme fonu henüz doğrulanmamıştır."), null);
   });
 
   it("keeps a finished zero chart without inventing monthly points or withdrawal", () => {

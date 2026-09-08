@@ -38,24 +38,17 @@ export function CoachingEarningsSummary({ summary }: { summary: CoachingTutorEar
             <p className="mt-2 text-4xl font-semibold tracking-[-0.045em] text-white tabular-nums sm:text-5xl">
               {formatTryMinor(summary.eligible_unfunded_minor)}
             </p>
-            <p className="mt-3 max-w-xl text-sm leading-6 text-white/75">
-              Bu tutar bir banka bakiyesi veya çekilebilir tutar değildir; kullanılabilir ödeme fonu henüz doğrulanmamıştır.
-            </p>
-            <div className="mt-6 flex flex-col items-start gap-2">
+            <div className="mt-6">
               <Button
                 type="button"
                 variant="secondary"
                 size="lg"
                 aria-disabled="true"
-                aria-describedby="coaching-withdrawal-unavailable"
                 className="cursor-not-allowed border border-white/30 bg-white/10 px-5 text-white shadow-none hover:bg-white/10 focus-visible:ring-white"
               >
                 <DownloadSimple aria-hidden className="mr-2 h-4 w-4" weight="regular" />
                 Parayı çek
               </Button>
-              <p id="coaching-withdrawal-unavailable" className="max-w-lg text-xs leading-5 text-white/65">
-                Ödeme aktarımı, gerçek ödeme altyapısı etkinleştirildiğinde kullanılabilir.
-              </p>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3 rounded-input border border-white/30 bg-white/10 p-4">

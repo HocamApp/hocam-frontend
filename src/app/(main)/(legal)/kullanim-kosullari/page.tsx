@@ -246,10 +246,10 @@ export default function TermsOfServicePage() {
             paketin kullanıma açılması, ödemenin teyit edilmesine bağlıdır.
           </p>
           <p>
-            HOCAM, sunduğu aracılık hizmeti karşılığında hoca hak edişinden{" "}
+            HOCAM, sunduğu aracılık hizmeti karşılığında hoca gelirinden{" "}
             <strong>%15</strong> oranında komisyon alır. Komisyon, öğrencinin
-            ödediği ders bedeli üzerinden hesaplanır ve hocaya kalan tutar hak
-            ediş olarak yansıtılır. Bu oranda yapılacak değişiklik, on sekizinci
+            ödediği ders bedeli üzerinden hesaplanır ve hocaya kalan tutar gelir
+            olarak yansıtılır. Bu oranda yapılacak değişiklik, on sekizinci
             maddedeki usule tabidir.
           </p>
           <p>

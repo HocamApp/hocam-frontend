@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { BookOpen, GraduationCap } from "lucide-react";
+import { BookOpen, GraduationCap } from "@phosphor-icons/react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -47,16 +47,9 @@ export function AcceptanceRequestCard({
   const isOpen = request.status === "pending";
 
   return (
-    <Card className="overflow-hidden rounded-[1.35rem] border-border/70 shadow-[0_18px_48px_-38px_hsl(var(--foreground)/0.4)]">
+    <Card className="overflow-hidden border-line">
       <CardContent className="space-y-5 p-0">
-        {request.includes_coaching ? (
-          <div className="border-b border-primary/10 bg-primary/[0.055] px-5 py-4 sm:px-6">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">Tek karar · iki hizmet</p>
-            <h3 className="mt-1 text-lg font-semibold tracking-tight">Birlikte değerlendirilecek talep</h3>
-            <p className="mt-1 max-w-2xl text-xs leading-5 text-muted-foreground">Ders paketi ve çalışma koçluğu tek talebin parçalarıdır. Kabul veya red kararı tamamına uygulanır.</p>
-          </div>
-        ) : null}
-        <div className="space-y-5 px-5 pb-5 sm:px-6 sm:pb-6">
+        <div className="space-y-5 p-5 sm:p-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <p className="text-base font-semibold">{studentName}</p>
@@ -65,62 +58,55 @@ export function AcceptanceRequestCard({
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
-            {request.includes_coaching ? (
-              <Badge variant="outline" className="text-ink-mid">
-                Çalışma koçluğu dahil
-              </Badge>
-            ) : null}
             <Badge variant={STATUS_VARIANT[request.status] ?? "secondary"}>
               {acceptanceStatusCopy(request.status)}
             </Badge>
           </div>
         </div>
 
-        <dl className="grid gap-3 text-sm sm:grid-cols-2">
-          <div className="rounded-[1.1rem] border bg-muted/20 p-4">
-            <dt className="flex items-center gap-2 font-medium"><BookOpen className="h-4 w-4 text-primary" aria-hidden="true" />Ders paketi</dt>
-            <dd className="mt-1 space-y-1 text-muted-foreground">
+        <dl className="divide-y divide-line overflow-hidden rounded-input border border-line text-small">
+          <div className="grid gap-2 p-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+            <dt className="flex items-center gap-2 font-medium"><BookOpen className="h-4 w-4 text-pink" aria-hidden="true" weight="regular" />Ders paketi</dt>
+            <dd className="flex flex-wrap gap-x-3 gap-y-1 text-ink-mid sm:justify-end">
               {request.package.lessons_per_week !== null &&
               request.package.duration_days !== null ? (
-                <p>
+                <span>
                   Haftada {request.package.lessons_per_week} ders ·{" "}
                   {formatPlanDuration(request.package.duration_days)}
-                </p>
-              ) : null}
-              <p>
-                {request.package.total_credits} ders ·{" "}
-                <span className="font-medium text-foreground">
-                  {formatTryMinor(request.package.total_price * 100)}
                 </span>
-              </p>
+              ) : null}
+              <span>
+                {request.package.total_credits} ders ·{" "}
+                <strong className="font-medium text-ink">
+                  {formatTryMinor(request.package.total_price * 100)}
+                </strong>
+              </span>
             </dd>
           </div>
           {request.coaching ? (
-            <div className="rounded-[1.1rem] border border-primary/15 bg-primary/[0.045] p-4">
-              <dt className="flex items-center gap-2 font-medium"><GraduationCap className="h-4 w-4 text-primary" aria-hidden="true" />Çalışma koçluğu ek hizmeti</dt>
-              <dd className="mt-1 space-y-1 text-muted-foreground">
-                <p>{coachingFrequencyLabel(request.coaching.frequency)}</p>
-                <p>
+            <div className="grid gap-2 p-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+              <dt className="flex items-center gap-2 font-medium"><GraduationCap className="h-4 w-4 text-pink" aria-hidden="true" weight="regular" />Çalışma koçluğu</dt>
+              <dd className="flex flex-wrap gap-x-3 gap-y-1 text-ink-mid sm:justify-end">
+                <span>{coachingFrequencyLabel(request.coaching.frequency)}</span>
+                <span>
                   {request.coaching.total_sessions} görüşme ·{" "}
-                  <span className="font-medium text-foreground">
+                  <strong className="font-medium text-ink">
                     {formatTryMinor(request.coaching.total_price_minor)}
-                  </span>
-                </p>
+                  </strong>
+                </span>
               </dd>
             </div>
           ) : null}
         </dl>
 
         {isOpen ? (
-          <p className="text-xs text-muted-foreground">
-            Yanıt süresi:{" "}
+          <time className="block text-caption text-ink-mid" dateTime={request.expires_at}>
             {new Date(request.expires_at).toLocaleString("tr-TR", {
               dateStyle: "medium",
               timeStyle: "short",
             })}
-            &apos;e kadar. Kabul etmen ödeme almaz; talep ödeme aktivasyonunu
-            bekler.
-          </p>
+            &apos;e kadar yanıtla
+          </time>
         ) : null}
 
         {isOpen ? (
@@ -176,7 +162,7 @@ export function AcceptanceRequestCard({
         ) : null}
 
         {request.status === "rejected" && request.rejection_note ? (
-          <p className="rounded-md bg-muted p-3 text-xs text-muted-foreground">
+          <p className="rounded-input border border-line p-3 text-caption text-ink-mid">
             Notun: {request.rejection_note}
           </p>
         ) : null}

@@ -34,6 +34,10 @@ describe("tutorial step registry", () => {
     }
   });
 
+  it("keeps the welcome step free of the redundant representative-screen note", () => {
+    assert.equal(TUTORIAL_STEPS.find((step) => step.id === "welcome")?.note, undefined);
+  });
+
   it("every spotlight target exists in the mock lesson screen markup", () => {
     const sources = [
       "src/components/tutorial/MockLessonScreen.tsx",

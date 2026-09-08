@@ -28,7 +28,8 @@ describe("CoachingWeeklyRhythm", () => {
     assert.ok(screen.getByRole("heading", { name: "Haftanın ritmi" }));
     assert.ok(screen.getByLabelText("Aktif öğrenci: %50 pay"));
     assert.ok(screen.getByLabelText("Yaklaşan görüşme: %25 pay"));
-    assert.ok(screen.getByText("Şu an ilgilenmen gereken 2 iş var."));
+    const attention = screen.getByText("Şu an ilgilenmen gereken 2 iş var.");
+    assert.doesNotMatch(attention.className, /rotate/);
   });
 
   it("uses a purposeful start state when every successful count is zero", () => {

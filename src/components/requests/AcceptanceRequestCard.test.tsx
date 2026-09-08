@@ -39,8 +39,8 @@ const bundledRequest: AcceptanceRequest = {
 };
 
 describe("AcceptanceRequestCard", () => {
-  it("shows the lesson package and Coaching add-on as one understandable request", () => {
-    render(<AcceptanceRequestCard request={bundledRequest} isPending={false} onRespond={() => undefined} />);
+  it("shows the two services without a promotional explanation block or duplicate badge", () => {
+    const { container } = render(<AcceptanceRequestCard request={bundledRequest} isPending={false} onRespond={() => undefined} />);
 
     assert.ok(screen.getByText("Deniz Yılmaz"));
     assert.ok(screen.getByText("Haftalık Ders Paketi"));
@@ -51,16 +51,20 @@ describe("AcceptanceRequestCard", () => {
     assert.ok(screen.getByText(/12 görüşme/));
     assert.ok(screen.getByText("23.520,00 ₺"));
     assert.ok(screen.getByText(/9\.600,00/));
-    // The two chips sit side by side and must not compete: the add-on is a
-    // fact about the request, the status is the thing the tutor acts on. The
-    // assertion is on the construction rather than one hex-bearing class,
-    // because the solid fill is what carries the emphasis.
-    const addOn = screen.getByText("Çalışma koçluğu dahil").className;
     const status = screen.getByText("Öğretmen yanıtı bekleniyor").className;
-    assert.match(addOn, /text-ink-mid/);
-    assert.match(addOn, /bg-transparent/);
     assert.match(status, /bg-ink|bg-pink/);
-    assert.ok(screen.getByRole("heading", { name: "Birlikte değerlendirilecek talep" }));
+    assert.equal(screen.queryByText("Tek karar · iki hizmet"), null);
+    assert.equal(screen.queryByRole("heading", { name: "Birlikte değerlendirilecek talep" }), null);
+    assert.equal(screen.queryByText("Ders paketi ve çalışma koçluğu tek talebin parçalarıdır. Kabul veya red kararı tamamına uygulanır."), null);
+    assert.equal(screen.queryByText("Çalışma koçluğu dahil"), null);
+    assert.doesNotMatch(container.firstElementChild?.className ?? "", /shadow/);
+    const lessonRow = screen.getByText("Ders paketi").closest("div");
+    const coachingRow = screen.getByText("Çalışma koçluğu").closest("div");
+    assert.ok(lessonRow);
+    assert.ok(coachingRow);
+    assert.doesNotMatch(lessonRow.className, /bg-muted|bg-primary/);
+    assert.doesNotMatch(coachingRow.className, /bg-muted|bg-primary/);
+    assert.equal(screen.queryByText(/Kabul etmen ödeme almaz/i), null);
     assert.equal(screen.queryByText(/bundle/i), null);
   });
 

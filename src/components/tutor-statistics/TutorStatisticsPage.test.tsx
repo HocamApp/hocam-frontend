@@ -5,6 +5,7 @@ import React from "react";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import api from "@/lib/api";
+import { LineChart } from "./StatisticsCharts";
 
 let role = "tutor";
 let authenticated = true;
@@ -92,26 +93,73 @@ test("overview renders one H1, four honest metrics and accessible graph tables",
   assert.equal(screen.queryByText(/Ders ve koçluk etkinliğini zaman içinde incele/), null);
   assert.equal(screen.queryByText(/· İstanbul$/), null);
   assert.equal(screen.queryByText(/toplam gelir/i), null);
+  assert.equal(screen.queryByText("Tamamlanan kayıtların planlanan süresi gösterilir; canlı bağlantı süresi değildir."), null);
+  assert.equal(screen.queryByText("Tamamlanan derslerin konu dağılımı."), null);
+  assert.equal(screen.queryByText("Seçili dönemde başlayan tüm ders kayıtları."), null);
+  assert.equal(screen.queryByText("7 öğrenciyle ders ilişkisi · 2 yeni öğrenci"), null);
+  assert.equal(screen.queryByText("4 değerlendirme üzerinden."), null);
+  assert.equal(screen.queryByText("Anlatım netliği"), null);
+  assert.equal(screen.queryByText("İptal nedenleri ve ders dışı mesajlara ilk 24 saatte verilen yanıtlar."), null);
+  assert.equal(screen.queryByText("9/10 ölçülen konuşma dönüşü"), null);
+  assert.equal(screen.queryByText("8 Ağustos 2026 – 6 Eylül 2026"), null);
 });
 
-test("income explains unavailable lesson earnings and keeps money categories separate", async () => {
+test("income keeps the financial records while removing explanatory copy and hakediş wording", async () => {
   query = "tab=income&period=30";
   mount();
   await screen.findAllByText("Ders paketi tutarları");
   assert.ok(screen.getByText("8.500,00 ₺"));
   assert.ok(screen.getByText("Henüz hesaplanamıyor"));
+  assert.ok(screen.getByText("Koçluk geliri"));
+  assert.ok(screen.getByText("Gelir ve ödeme durumu"));
+  assert.ok(screen.getByRole("img", { name: "Koçluk gelirleri grafiği" }));
   assert.ok(screen.getByText("Ödemeye hazır"));
   assert.equal(screen.queryByText(/genel toplam/i), null);
+  assert.equal(screen.queryByText("Koçluk finans akışı"), null);
+  assert.equal(screen.queryByText("Paket kayıtları oluşturulma tarihine ve güncel durumuna göre gösterilir."), null);
+  assert.equal(screen.queryByText("Hakediş, ödeme partisi ve ödenen tutar birbirinden ayrı gösterilir. Aynı hakediş bu başlıklar toplanarak yeniden sayılmaz."), null);
+  assert.equal(screen.queryByText(/hakediş/i), null);
+  assert.equal(screen.queryByText("3 paket kaydındaki tutar; tahsilat veya hoca ödemesi kanıtı değildir."), null);
+  assert.equal(screen.queryByText("Ders ödeme kaynağı gerçek hoca ödemesini ayırmadığı için tutar gösterilmiyor."), null);
+  assert.equal(screen.queryByText("Teslim edilen koçluk hizmetlerinden doğan hak; ödeme toplamı değildir."), null);
 });
 
-test("reviews tab shows private period feedback with criteria and pagination", async () => {
+test("line chart reserves enough gutter for long Turkish currency labels", () => {
+  const { container } = render(<>
+    <LineChart
+      title="Kısa değerler"
+      points={[{ label: "2026-08-08", value: 4 }]}
+      valueLabel={(value) => String(value)}
+      xAxisLabel="Tarih"
+      yAxisLabel="Ders"
+    />
+    <LineChart
+      title="Koçluk gelirleri"
+      points={[{ label: "2026-08-08", value: 1014000 }]}
+      valueLabel={(value) => `${value} ₺`}
+      axisValueLabel={(value) => `${value.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₺`}
+      xAxisLabel="Tarih"
+      yAxisLabel="Koçluk geliri"
+    />
+  </>);
+
+  const charts = container.querySelectorAll("svg");
+  const shortTick = Array.from(charts[0].querySelectorAll("text")).find((node) => node.textContent === "4");
+  const longestTick = Array.from(charts[1].querySelectorAll("text")).find((node) => node.textContent === "1.014.000,00 ₺");
+  assert.ok(shortTick);
+  assert.ok(longestTick);
+  assert.ok(Number(longestTick.getAttribute("x")) > Number(shortTick.getAttribute("x")));
+  assert.ok(Number(longestTick.getAttribute("x")) >= 130);
+});
+
+test("reviews tab keeps private period feedback, criteria and pagination", async () => {
   query = "tab=reviews&period=30";
   mount();
   await screen.findByText("Konuyu çok anlaşılır anlattı.");
   assert.ok(screen.getByText("Matematik · TYT"));
   assert.ok(screen.getByText("Anlatım netliği"));
   assert.ok(screen.getAllByText("5 / 5").length >= 1);
-  assert.ok(screen.getByText(/^26 değerlendirme/));
+  assert.equal(screen.queryByText("26 değerlendirme · yalnızca sana ait geri bildirimler"), null);
   fireEvent.click(screen.getByRole("button", { name: "Sonraki" }));
   assert.equal((await screen.findByText("Sayfa 2")).textContent, "Sayfa 2");
 });
