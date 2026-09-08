@@ -177,7 +177,7 @@ export const STATUS_LABELS: Record<string, string> = {
   completed: "Tamamlandı", disputed: "İnceleniyor", expired: "Süresi doldu",
   scheduled: "Planlandı", reschedule_requested: "Saat değişikliği bekliyor", awaiting_report: "Rapor bekliyor",
   student_no_show: "Öğrenci katılmadı", tutor_no_show: "Hoca katılmadı", technical_failure: "Teknik sorun",
-  eligible_unfunded: "Fonlanmamış hakediş", on_hold: "Beklemede", reversed: "Ters kayıt", ready: "Ödemeye hazır",
+  eligible_unfunded: "Fon bekleyen", on_hold: "Beklemede", reversed: "Ters kayıt", ready: "Ödemeye hazır",
 };
 
 export const CANCELLATION_LABELS: Record<string, string> = {

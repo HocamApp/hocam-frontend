@@ -52,7 +52,6 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     id: "welcome",
     title: "Canlı ders ekranına hoş geldin",
     body: "Bu kısa eğitimde ders ekranındaki araçları güvenle kullanmayı öğreneceksin. Eğitimi tamamladığında hesabın öğrencilere açılır.",
-    note: "Buradaki ekran temsilîdir — hiçbir işlem gerçek bir derse veya öğrenciye gitmez.",
     targets: [],
     kind: "intro",
     ctaLabel: "Başlayalım",

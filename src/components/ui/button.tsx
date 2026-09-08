@@ -44,8 +44,8 @@ const buttonVariants = cva(
            meaning, so the label needs the slack. Heights stay where they are
            because they are already at an accessible touch target. */
         default: "h-10 px-7 text-[0.9375rem]",
-        sm: "h-9 px-[22px] text-small",
-        lg: "h-11 px-[34px] text-body",
+        sm: "h-9 px-[22px] text-[0.875rem]",
+        lg: "h-11 px-[34px] text-[1rem]",
         icon: "h-10 w-10 px-0",
       },
     },

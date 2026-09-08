@@ -80,7 +80,7 @@ export default function TutorPrivacyNoticePage() {
             notlar, destek talepleri.
           </p>
           <p>
-            <strong>Finans:</strong> paket satışlarına bağlı hak ediş ve kredi
+            <strong>Finans:</strong> paket satışlarına bağlı gelir ve kredi
             kayıtları, iade talepleri, kampanya kayıtları.
           </p>
           <p>
@@ -104,7 +104,7 @@ export default function TutorPrivacyNoticePage() {
             Hesabını oluşturmak ve güvenliğini sağlamak; doğrulama başvurunu
             incelemek ve sahte başvuruları önlemek; profilini yayımlamak;
             derslerini planlamak ve yürütmek; öğrencilerle iletişimini mümkün
-            kılmak; hak edişini hesaplamak ve mali kayıtları kanunun zorunlu
+            kılmak; gelirini hesaplamak ve mali kayıtları kanunun zorunlu
             kıldığı süre boyunca saklamak; şikâyet ve uyuşmazlıkları incelemek;
             platformu güvende tutmak ve işleyişe dair sana bilgi vermek için.
           </p>
@@ -122,7 +122,7 @@ export default function TutorPrivacyNoticePage() {
           <p>
             <strong>Profilinin herkese açık yayımlanması açık rızana bağlıdır.</strong>{" "}
             Bu rızayı geri aldığında profilin listeden çıkarılır; mevcut
-            derslerin ve hak edişin etkilenmez. Açık rıza, başka bir işleme
+            derslerin ve gelirin etkilenmez. Açık rıza, başka bir işleme
             şartının yerine veya hizmetin zorunlu koşulu olarak kullanılmaz.
           </p>
         </LegalSection>

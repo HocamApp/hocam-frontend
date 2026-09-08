@@ -1,6 +1,5 @@
 import { CoachingMetricGrid, type CoachingMetricValues } from "./CoachingMetricGrid";
 import { CoachingPageShell } from "./CoachingPageShell";
-import { CoachingSectionNav } from "./CoachingSectionNav";
 import { CoachingStatusCard } from "./CoachingStatusCard";
 import type { CoachingDerivedStatus } from "@/lib/coachingPresentation";
 
@@ -20,7 +19,6 @@ export function TutorCoachingDashboard({
     >
       <CoachingStatusCard status={status} />
       <CoachingMetricGrid metrics={metrics} />
-      <CoachingSectionNav />
     </CoachingPageShell>
   );
 }

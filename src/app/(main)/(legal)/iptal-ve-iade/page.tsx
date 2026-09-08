@@ -86,7 +86,7 @@ export default function CancellationAndRefundPage() {
           <ul className="list-disc space-y-2 pl-5">
             <li>
               İptal öğrenci tarafından yapılmışsa, derse ayrılmış paket kredisi
-              iade edilmez ve ilgili ders öğretmenin hak edişine konu edilir.
+              iade edilmez ve ilgili ders öğretmenin gelirine konu edilir.
             </li>
             <li>
               İptal öğretmen tarafından yapılmışsa, paket kredisi öğrenciye
