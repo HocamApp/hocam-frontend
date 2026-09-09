@@ -104,8 +104,9 @@ test("the selected day and time keep white text on their filled surface", async 
   // dark. See the tailwind-merge note in the repo handover.
   const queryClient = renderModal();
 
-  const openDays = await screen.findAllByText(/^3 boş$/);
-  const day = openDays[0].closest("button");
+  // The day strip no longer prints how many hours are left, so pick the card
+  // by its date. Booking one lesson does not need a count of the rest.
+  const day = (await screen.findByText(String(Number(today.slice(8))))).closest("button");
   assert.ok(day);
   fireEvent.click(day);
 
@@ -119,13 +120,15 @@ test("the selected day and time keep white text on their filled surface", async 
   queryClient.clear();
 });
 
-test("a day with no free slot is offered as full rather than hidden", async () => {
+test("a day with nothing free says so instead of being a dead grey card", async () => {
   const queryClient = renderModal();
 
-  const full = await screen.findByText("Dolu");
-  const button = full.closest("button");
+  const unavailable = await screen.findByText("Müsait değil");
+  const button = unavailable.closest("button");
   assert.ok(button);
   assert.equal(button.disabled, true);
+  // The count is gone from the days that do have hours.
+  assert.equal(screen.queryByText(/boş$/), null);
   queryClient.clear();
 });
 
@@ -152,6 +155,37 @@ test("a failing slot fetch offers a retry instead of an empty calendar", async (
 
   slotsFail = false;
   fireEvent.click(screen.getByRole("button", { name: "Tekrar dene" }));
+  await screen.findByRole("button", { name: "09:00" });
+  queryClient.clear();
+});
+
+test("with more than one subject, the calendar waits for the subject", async () => {
+  // The complaint about this dialog and about the package schedule step was
+  // the same: the choice that has to be made sat in the quietest corner while
+  // everything else was already on screen.
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  render(
+    <QueryClientProvider client={queryClient}>
+      <BookingModal
+        tutor={{
+          ...tutor,
+          subjects: [
+            { id: "subject-1", name: "Matematik", exam_type: "TYT" },
+            { id: "subject-2", name: "Fizik", exam_type: "AYT" },
+          ],
+        }}
+        isOpen
+        isTrial
+        onClose={() => undefined}
+        onSuccess={() => undefined}
+      />
+    </QueryClientProvider>,
+  );
+
+  await screen.findByText("Hangi dersi alacaksın?");
+  assert.equal(screen.queryByRole("button", { name: "09:00" }), null);
+
+  fireEvent.click(screen.getByRole("button", { name: /Matematik/ }));
   await screen.findByRole("button", { name: "09:00" });
   queryClient.clear();
 });

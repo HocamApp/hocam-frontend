@@ -36,14 +36,15 @@ function initials(name: string, surname: string): string {
 }
 
 /**
- * The shared shell for both slot pickers: who the lesson is with and what it
- * costs on the left, the calendar on the right.
+ * The panel around the package schedule picker: who the lesson is with and
+ * what it costs on the left, the calendar on the right.
  *
- * One frame rather than two similar layouts, because picking a single trial
- * lesson and picking a package's weekly rhythm are the same decision at
- * different scales, and a student who has seen one should recognise the
- * other. Only the right-hand side differs: dates and times for one lesson,
- * weekdays and times for a term.
+ * It used to wrap the single-lesson picker too. That one dropped it: a free
+ * twenty-minute trial does not need a university, a lesson length, "video
+ * call" and a price of zero arranged around one small decision, and the
+ * booking dialog now says all of that in a sentence. Buying a three-month
+ * package is a large enough commitment to be worth the framing, so it keeps
+ * it here.
  */
 export function SlotPickerFrame({
   tutor,

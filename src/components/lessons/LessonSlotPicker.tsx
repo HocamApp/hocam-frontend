@@ -5,8 +5,8 @@ import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { fetchTutorSlots } from "@/lib/lessonsApi";
 import { cn } from "@/lib/utils";
-import type { Subject, TutorSlotDay } from "@/types";
-import { SlotPickerFrame, SlotStripSkeleton, type SlotPickerTutor } from "./SlotPickerFrame";
+import type { TutorSlotDay } from "@/types";
+import { SlotStripSkeleton, type SlotPickerTutor } from "./SlotPickerFrame";
 import {
   addDays,
   dayOfMonth,
@@ -31,32 +31,26 @@ interface LessonSlotPickerProps {
   durationMinutes: number;
   /** How far ahead to offer. The API caps a single request at 60 days. */
   rangeDays?: number;
-  subjects?: Subject[];
-  selectedSubjectId?: string;
-  onSubjectChange?: (subjectId: string) => void;
   value: SlotSelection | null;
   onChange: (value: SlotSelection | null) => void;
-  /** What this lesson costs the student: a price, a package credit, a trial. */
-  priceLabel: string;
-  /** One line under the meta list. The trial's "no payment needed" note. */
-  note?: string;
-  /** Shown above the tutor, e.g. "Ücretsiz Deneme Dersi". */
-  eyebrow?: string;
   enabled?: boolean;
 }
 
 const DEFAULT_RANGE_DAYS = 14;
 
 /**
- * Pick one lesson: a day, then a time.
+ * Pick one lesson: a day, then a time. Nothing else.
  *
- * Two things distinguish this from the three-step wizard it replaces. The
- * slot list comes from the server (`GET /tutors/<id>/slots/`), so it accounts
- * for the tutor's private time off and coaching sessions rather than only
- * their lessons — the browser could never see those, and offered slots the
- * API then refused. And every day in the window is shown with how many starts
- * it has left, so a student can see where the tutor is open without clicking
- * through empty days.
+ * The slot list comes from the server (`GET /tutors/<id>/slots/`), so it
+ * accounts for the tutor's private time off and coaching sessions rather than
+ * only their lessons — the browser could never see those, and offered slots
+ * the API then refused.
+ *
+ * Deliberately a bare calendar, not a two-column panel. A free trial is a
+ * twenty-minute introduction; surrounding it with the tutor's university, the
+ * lesson length, "video call" and a price of zero was a page of furniture
+ * around one small decision. Whoever renders this owns the framing, and the
+ * booking dialog keeps it to a single sentence.
  *
  * All times are Istanbul wall clock and are handled as strings throughout.
  * They are not instants; see `slotPickerFormat.ts`.
@@ -65,14 +59,8 @@ export function LessonSlotPicker({
   tutor,
   durationMinutes,
   rangeDays = DEFAULT_RANGE_DAYS,
-  subjects,
-  selectedSubjectId,
-  onSubjectChange,
   value,
   onChange,
-  priceLabel,
-  note,
-  eyebrow,
   enabled = true,
 }: LessonSlotPickerProps) {
   const start = useMemo(() => istanbulToday(), []);
@@ -113,17 +101,7 @@ export function LessonSlotPicker({
   const activeDay = days.find((day) => day.date === activeDate) ?? null;
 
   return (
-    <SlotPickerFrame
-      tutor={tutor}
-      durationMinutes={durationMinutes}
-      subjects={subjects}
-      selectedSubjectId={selectedSubjectId}
-      onSubjectChange={onSubjectChange}
-      priceLabel={priceLabel}
-      note={note}
-      eyebrow={eyebrow}
-    >
-      <>
+    <div className="min-w-0">
         <div className="flex items-baseline justify-between gap-3">
           <p className="text-label uppercase tracking-[0.08em] text-ink-mid">Gün seç</p>
           {activeDate && (
@@ -169,14 +147,12 @@ export function LessonSlotPicker({
                   <span className="block text-[1rem] font-medium tabular-nums">
                     {dayOfMonth(day.date)}
                   </span>
-                  <span
-                    className={cn(
-                      "block text-[0.6875rem] tabular-nums",
-                      active ? "text-white/70" : "text-ink-mid"
-                    )}
-                  >
-                    {open === 0 ? "Dolu" : `${open} boş`}
-                  </span>
+                  {/* How many hours are left is noise when only one is being
+                      booked. A day with none still needs a word, though —
+                      a greyed-out card with no explanation is a dead end. */}
+                  {open === 0 && (
+                    <span className="block text-[0.6875rem] text-ink-mid">Müsait değil</span>
+                  )}
                 </button>
               );
             })}
@@ -224,7 +200,6 @@ export function LessonSlotPicker({
             {longDateLabel(value.date)} · {value.time} – {endTimeLabel(value.time, durationMinutes)}
           </p>
         )}
-      </>
-    </SlotPickerFrame>
+    </div>
   );
 }

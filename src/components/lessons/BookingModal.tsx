@@ -125,6 +125,7 @@ export function BookingModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const durationMinutes = isTrial ? TRIAL_DURATION_MINUTES : LESSON_BASE_MINUTES;
+  const subjects = tutor.subjects ?? [];
 
   // Trial bookings never offer credit payment, so skip the fetch entirely
   // when isTrial — in practice this query is almost always already warm
@@ -140,7 +141,6 @@ export function BookingModal({
     // normal and trial bookings, so the fresh session must pick up whichever
     // mode is being opened via `isTrial`.
     if (isOpen) {
-      const subjects = tutor.subjects ?? [];
       setSelectedSubjectId(subjects.length === 1 ? String(subjects[0].id) : "");
       setSelection(null);
       setApiError(null);
@@ -169,13 +169,14 @@ export function BookingModal({
       ? "1 test kredisi kullanılacak"
       : "1 paket hakkı kullanılacak";
 
-  const note = isTrial
-    ? "Bu ücretsiz deneme dersi için ödeme veya paket hakkı gerekmez."
-    : usingTestCredit
-      ? "Bu QA dersi test kredisinden karşılanır; ödeme veya kazanç kaydı oluşturmaz."
-      : eligiblePackage
-        ? `${eligiblePackage.plan.name} · Kullanılabilir ${eligiblePackage.remaining_credits} / ${eligiblePackage.total_credits} ders hakkı`
-        : undefined;
+  // Only the cases that change what the student owes. The trial's "no payment
+  // needed" line is gone: the header already says the price is zero, and
+  // repeating it was the kind of reassurance that reads as filler.
+  const note = usingTestCredit
+    ? "Bu QA dersi test kredisinden karşılanır; ödeme veya kazanç kaydı oluşturmaz."
+    : eligiblePackage
+      ? `${eligiblePackage.plan.name} · Kullanılabilir ${eligiblePackage.remaining_credits} / ${eligiblePackage.total_credits} ders hakkı`
+      : undefined;
 
   const canSubmit =
     Boolean(selectedSubjectId) &&
@@ -288,8 +289,11 @@ export function BookingModal({
             <DialogTitle className="text-h3">
               {isTrial ? "Ücretsiz deneme dersi ayırt" : "Ders rezervasyonu yap"}
             </DialogTitle>
+            {/* One sentence carries what the sidebar used to: who, how long,
+                what it costs. A trial is a twenty-minute introduction, and it
+                did not need a panel of its own to say so. */}
             <DialogDescription className="text-[0.875rem] text-ink-mid">
-              Hocanın müsait olduğu bir gün ve saat seç.
+              {tutor.name} {tutor.surname} ile {durationMinutes} dakika · {priceLabel}
             </DialogDescription>
           </DialogHeader>
         </div>
@@ -304,26 +308,75 @@ export function BookingModal({
           {blockedForMissingPackage && (
             <ErrorMessage message="Bu hocayla ders ayırtmak için kullanılabilir aktif bir paketin olmalı." />
           )}
+          {note && (
+            <p className="rounded-input border border-line px-3 py-2 text-[0.8125rem] text-ink-mid">
+              {note}
+            </p>
+          )}
 
-          <LessonSlotPicker
-            tutor={tutor}
-            durationMinutes={durationMinutes}
-            subjects={tutor.subjects ?? []}
-            selectedSubjectId={selectedSubjectId}
-            onSubjectChange={(id) => {
-              setSelectedSubjectId(id);
-              setValidationError(null);
-            }}
-            value={selection}
-            onChange={(next) => {
-              setSelection(next);
-              setValidationError(null);
-            }}
-            priceLabel={priceLabel}
-            note={note}
-            eyebrow={isTrial ? "Ücretsiz deneme dersi" : undefined}
-            enabled={isOpen}
-          />
+          {subjects.length > 1 && (
+            <section>
+              <h3 className="text-[0.9375rem] font-medium text-ink">
+                Hangi dersi alacaksın?
+              </h3>
+              <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                {subjects.map((subject) => {
+                  const active = String(subject.id) === selectedSubjectId;
+                  return (
+                    <button
+                      key={String(subject.id)}
+                      type="button"
+                      aria-pressed={active}
+                      title={`${subject.name} ${subject.exam_type}`}
+                      onClick={() => {
+                        setSelectedSubjectId(String(subject.id));
+                        setValidationError(null);
+                      }}
+                      className={cn(
+                        "flex w-full min-w-0 items-center gap-2 overflow-hidden rounded-input border px-3 py-2.5 text-left text-[0.875rem] transition-colors duration-[120ms]",
+                        active
+                          ? "border-ink bg-ink text-white"
+                          : "border-line bg-surface text-ink hover:border-ink"
+                      )}
+                    >
+                      <span className="min-w-0 flex-1 truncate">{subject.name}</span>
+                      <span
+                        className={cn(
+                          "shrink-0 text-[0.6875rem]",
+                          active ? "text-white/70" : "text-ink-mid"
+                        )}
+                      >
+                        {subject.exam_type}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+          )}
+
+          {/* The calendar waits for the subject, the same way the package
+              schedule step does. Showing both at once put the choice that
+              must be made in the quietest corner of the dialog. */}
+          {selectedSubjectId && (
+            <section>
+              {subjects.length > 1 && (
+                <h3 className="mb-2 text-[0.9375rem] font-medium text-ink">
+                  Hangi gün ve saatte?
+                </h3>
+              )}
+              <LessonSlotPicker
+                tutor={tutor}
+                durationMinutes={durationMinutes}
+                value={selection}
+                onChange={(next) => {
+                  setSelection(next);
+                  setValidationError(null);
+                }}
+                enabled={isOpen}
+              />
+            </section>
+          )}
         </div>
 
         <div className="shrink-0 border-t border-line bg-surface px-6 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))] sm:pb-6">
@@ -341,7 +394,10 @@ export function BookingModal({
                 </>
               ) : (
                 <p className="text-ink-mid">
-                  {validationError ?? "Devam etmek için bir gün ve saat seç."}
+                  {validationError ??
+                    (selectedSubjectId
+                      ? "Devam etmek için bir gün ve saat seç."
+                      : "Önce bir ders konusu seç.")}
                 </p>
               )}
             </div>
