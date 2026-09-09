@@ -10,7 +10,6 @@ import { SlotStripSkeleton, type SlotPickerTutor } from "./SlotPickerFrame";
 import {
   addDays,
   dayOfMonth,
-  endTimeLabel,
   istanbulToday,
   longDateLabel,
   monthLabel,
@@ -102,12 +101,11 @@ export function LessonSlotPicker({
 
   return (
     <div className="min-w-0">
-        <div className="flex items-baseline justify-between gap-3">
-          <p className="text-label uppercase tracking-[0.08em] text-ink-mid">Gün seç</p>
-          {activeDate && (
-            <p className="text-[0.8125rem] tabular-nums text-ink-mid">{monthLabel(activeDate)}</p>
-          )}
-        </div>
+        {activeDate && (
+          <p className="text-right text-[0.8125rem] tabular-nums text-ink-mid">
+            {monthLabel(activeDate)}
+          </p>
+        )}
 
         {isError ? (
           <div role="alert" className="mt-3 space-y-3 rounded-card border border-line p-4">
@@ -133,35 +131,30 @@ export function LessonSlotPicker({
           <div className="mt-3 grid grid-cols-4 gap-2 sm:grid-cols-7">
             {days.map((day) => {
               const open = day.slots.length;
-              const active = day.date === activeDate;
+              const selected = day.date === value?.date;
               return (
                 <button
                   key={day.date}
                   type="button"
                   disabled={open === 0}
-                  aria-pressed={active}
+                  aria-pressed={selected}
+                  aria-label={
+                    open === 0
+                      ? `${shortWeekdayLabel(day.date)} ${dayOfMonth(day.date)} · Müsait değil`
+                      : undefined
+                  }
                   onClick={() => onChange({ date: day.date, time: "" })}
                   className={cn(
                     "min-w-0 rounded-input border px-2 py-2 text-center transition-colors duration-[120ms]",
                     open === 0 && "cursor-not-allowed border-line text-ink-mid opacity-60",
-                    // Which day is on screen is a view, not a commitment, so it
-                    // is marked by a border rather than a solid ink block. The
-                    // fill is reserved for the hour actually chosen.
-                    open > 0 && "bg-success-soft text-ink",
-                    open > 0 && !active && "border-line hover:border-ink",
-                    open > 0 && active && "border-ink"
+                    open > 0 && !selected && "border-line bg-success-soft text-ink hover:border-ink",
+                    open > 0 && selected && "border-pink bg-pink text-white"
                   )}
                 >
                   <span className="block text-[0.75rem]">{shortWeekdayLabel(day.date)}</span>
                   <span className="block text-[1rem] font-medium tabular-nums">
                     {dayOfMonth(day.date)}
                   </span>
-                  {/* How many hours are left is noise when only one is being
-                      booked. A day with none still needs a word, though —
-                      a greyed-out card with no explanation is a dead end. */}
-                  {open === 0 && (
-                    <span className="block text-[0.6875rem] text-ink-mid">Müsait değil</span>
-                  )}
                 </button>
               );
             })}
@@ -170,9 +163,9 @@ export function LessonSlotPicker({
 
         {activeDay && (
           <div className="mt-5 min-w-0">
-            <p className="text-label uppercase tracking-[0.08em] text-ink-mid">
+            <h3 className="text-h3-m font-medium text-ink">
               {longDateLabel(activeDay.date)} saatleri
-            </p>
+            </h3>
             {activeDay.slots.length === 0 ? (
               <p className="mt-3 text-[0.875rem] text-ink-mid">
                 Bu tarihte müsait saat yok. Yukarıdan başka bir gün seç.
@@ -204,11 +197,6 @@ export function LessonSlotPicker({
           </div>
         )}
 
-        {value?.time && (
-          <p className="mt-5 text-[0.875rem] tabular-nums text-ink">
-            {longDateLabel(value.date)} · {value.time} – {endTimeLabel(value.time, durationMinutes)}
-          </p>
-        )}
     </div>
   );
 }

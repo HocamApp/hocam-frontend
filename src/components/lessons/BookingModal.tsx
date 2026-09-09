@@ -15,9 +15,11 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toBookingStartTime } from "@/lib/bookingTime";
 import { LessonSlotPicker, type SlotSelection } from "./LessonSlotPicker";
 import { endTimeLabel, longDateLabel } from "./slotPickerFormat";
+import { ChalkboardTeacher, Star, TrendUp } from "@phosphor-icons/react";
 
 // Package credits always reserve one standard 40-minute lesson. Keep in sync
 // with apps/payments/services.py::PACKAGE_CREDIT_LESSON_MINUTES.
@@ -27,6 +29,37 @@ const LESSON_BASE_MINUTES = 40;
 const TRIAL_DURATION_MINUTES = 20;
 
 const GENERIC_BOOKING_ERROR = "Rezervasyon oluşturulamadı. Lütfen tekrar dene.";
+
+type BookingTrustSignal = {
+  icon: "trend" | "star" | "experience";
+  text: string;
+};
+
+function getBookingTrustSignal(tutor: TutorProfile): BookingTrustSignal | null {
+  const completedLessons = tutor.completed_lessons_count ?? 0;
+  if (completedLessons >= 100) {
+    return {
+      icon: "trend",
+      text: `Çok tercih ediliyor · ${completedLessons.toLocaleString("tr-TR")} ders verdi`,
+    };
+  }
+  if (tutor.total_reviews >= 10 && Number(tutor.rating) >= 4.8) {
+    return {
+      icon: "star",
+      text: `Öğrencilerden ${Number(tutor.rating).toLocaleString("tr-TR", {
+        minimumFractionDigits: 1,
+        maximumFractionDigits: 1,
+      })}/5 · ${tutor.total_reviews.toLocaleString("tr-TR")} yorum`,
+    };
+  }
+  if (completedLessons >= 30) {
+    return {
+      icon: "experience",
+      text: `${completedLessons.toLocaleString("tr-TR")} tamamlanan ders deneyimi`,
+    };
+  }
+  return null;
+}
 
 // The API answers with a mix of hand-written Turkish and raw framework
 // English, and the unmatched ones fall through to the user verbatim. Turkish
@@ -183,6 +216,14 @@ export function BookingModal({
     Boolean(selection?.time) &&
     !blockedForMissingPackage &&
     !isSubmitting;
+  const trustSignal = isTrial ? getBookingTrustSignal(tutor) : null;
+  const TrustSignalIcon = trustSignal
+    ? trustSignal.icon === "trend"
+      ? TrendUp
+      : trustSignal.icon === "star"
+        ? Star
+        : ChalkboardTeacher
+    : null;
 
   const handleSubmit = async () => {
     if (!selectedSubjectId) {
@@ -285,16 +326,36 @@ export function BookingModal({
         showClose
       >
         <div className="shrink-0 px-6 pt-6">
-          <DialogHeader>
-            <DialogTitle className="text-h3">
-              {isTrial ? "Ücretsiz deneme dersi ayırt" : "Ders rezervasyonu yap"}
-            </DialogTitle>
-            {/* One sentence carries what the sidebar used to: who, how long,
-                what it costs. A trial is a twenty-minute introduction, and it
-                did not need a panel of its own to say so. */}
-            <DialogDescription className="text-[0.875rem] text-ink-mid">
-              {tutor.name} {tutor.surname} ile {durationMinutes} dakika · {priceLabel}
-            </DialogDescription>
+          <DialogHeader className="pr-8 text-left">
+            {isTrial ? (
+              <div className="flex items-center gap-3">
+                <Avatar className="h-14 w-14 rounded-input">
+                  <AvatarImage
+                    src={tutor.profile_picture || undefined}
+                    alt={`${tutor.name} ${tutor.surname}`}
+                    className="object-cover"
+                  />
+                  <AvatarFallback className="rounded-input bg-ink font-medium text-white">
+                    {tutor.name.charAt(0)}{tutor.surname.charAt(0)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="min-w-0">
+                  <DialogTitle className="text-[1.1875rem] font-bold leading-[1.3] tracking-[-0.01em] sm:text-[1.375rem]">
+                    Ücretsiz deneme dersi ayırt
+                  </DialogTitle>
+                  <DialogDescription className="mt-1 text-[1rem] leading-[1.6] text-ink-mid">
+                    Seviyeni ve sana uygun çalışma planını konuşmak için.
+                  </DialogDescription>
+                </div>
+              </div>
+            ) : (
+              <>
+                <DialogTitle className="text-h3">Ders rezervasyonu yap</DialogTitle>
+                <DialogDescription className="text-[0.875rem] text-ink-mid">
+                  {tutor.name} {tutor.surname} ile {durationMinutes} dakika · {priceLabel}
+                </DialogDescription>
+              </>
+            )}
           </DialogHeader>
         </div>
 
@@ -316,7 +377,7 @@ export function BookingModal({
 
           {subjects.length > 1 && (
             <section>
-              <h3 className="text-[0.9375rem] font-medium text-ink">
+              <h3 className="text-h3-m font-medium text-ink">
                 Hangi dersi alacaksın?
               </h3>
               <div className="mt-2 grid gap-2 sm:grid-cols-2">
@@ -361,7 +422,7 @@ export function BookingModal({
           {selectedSubjectId && (
             <section>
               {subjects.length > 1 && (
-                <h3 className="mb-2 text-[0.9375rem] font-medium text-ink">
+                <h3 className="mb-2 text-h3-m font-medium text-ink">
                   Hangi gün ve saatte?
                 </h3>
               )}
@@ -380,6 +441,15 @@ export function BookingModal({
         </div>
 
         <div className="shrink-0 border-t border-line bg-surface px-6 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))] sm:pb-6">
+          {trustSignal && TrustSignalIcon && (
+            <p
+              data-booking-trust-signal
+              className="mb-3 flex items-center gap-2 text-[0.875rem] font-medium text-ink"
+            >
+              <TrustSignalIcon className="h-5 w-5 shrink-0" weight="regular" aria-hidden />
+              <span>{trustSignal.text}</span>
+            </p>
+          )}
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="min-w-0 text-[0.875rem]">
               {selection?.time ? (
@@ -403,7 +473,7 @@ export function BookingModal({
             </div>
             <Button
               type="button"
-              className="w-full sm:w-auto"
+              className="w-full duration-200 ease-out motion-reduce:transition-none sm:w-auto"
               onClick={handleSubmit}
               disabled={!canSubmit}
             >
