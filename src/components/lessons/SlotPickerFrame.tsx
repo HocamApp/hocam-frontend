@@ -149,14 +149,12 @@ function MetaRow({ icon, label }: { icon: ReactNode; label: string }) {
   );
 }
 
+/** Mirrors the day grid's geometry, not a generic row of bars. */
 export function SlotStripSkeleton({ count = 7 }: { count?: number }) {
   return (
-    <div className="mt-3 flex gap-2" aria-hidden>
+    <div className="mt-3 grid grid-cols-4 gap-2 sm:grid-cols-7" aria-hidden>
       {Array.from({ length: count }, (_, index) => (
-        <div
-          key={index}
-          className="h-[4.25rem] w-[4.5rem] shrink-0 animate-pulse rounded-input bg-skeleton"
-        />
+        <div key={index} className="h-[4.25rem] animate-pulse rounded-input bg-skeleton" />
       ))}
     </div>
   );

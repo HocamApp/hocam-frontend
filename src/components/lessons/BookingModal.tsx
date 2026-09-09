@@ -335,7 +335,7 @@ export function BookingModal({
                       className={cn(
                         "flex w-full min-w-0 items-center gap-2 overflow-hidden rounded-input border px-3 py-2.5 text-left text-[0.875rem] transition-colors duration-[120ms]",
                         active
-                          ? "border-ink bg-ink text-white"
+                        ? "border-gold bg-gold text-gold-ink"
                           : "border-line bg-surface text-ink hover:border-ink"
                       )}
                     >
@@ -343,7 +343,7 @@ export function BookingModal({
                       <span
                         className={cn(
                           "shrink-0 text-[0.6875rem]",
-                          active ? "text-white/70" : "text-ink-mid"
+                          active ? "text-gold-ink/70" : "text-ink-mid"
                         )}
                       >
                         {subject.exam_type}

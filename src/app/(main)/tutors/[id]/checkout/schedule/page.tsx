@@ -185,7 +185,7 @@ function ScheduleStepContent({ tutorId }: { tutorId: string }) {
                   className={cn(
                     "flex w-full min-w-0 items-center gap-2 overflow-hidden rounded-input border px-4 py-3 text-left text-[0.9375rem] transition-colors duration-[120ms]",
                     active
-                      ? "border-ink bg-ink text-white"
+                      ? "border-gold bg-gold text-gold-ink"
                       : "border-line bg-surface text-ink hover:border-ink"
                   )}
                 >
@@ -193,7 +193,7 @@ function ScheduleStepContent({ tutorId }: { tutorId: string }) {
                   <span
                     className={cn(
                       "shrink-0 text-[0.75rem]",
-                      active ? "text-white/70" : "text-ink-mid"
+                      active ? "text-gold-ink/70" : "text-ink-mid"
                     )}
                   >
                     {subject.exam_type}

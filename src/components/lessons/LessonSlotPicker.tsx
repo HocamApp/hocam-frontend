@@ -125,7 +125,12 @@ export function LessonSlotPicker({
             Bu hoca önümüzdeki {rangeDays} gün için müsaitlik eklememiş.
           </p>
         ) : (
-          <div className="mt-3 -mr-4 flex max-w-full gap-2 overflow-x-auto overscroll-x-contain pb-2 pr-4">
+          // A wrapping grid, not a horizontally scrolling strip. The strip
+          // could only be moved with a trackpad swipe: a mouse has no
+          // horizontal wheel, so on a desktop the days past the right edge
+          // were unreachable. Seven columns also line the weekdays up the way
+          // a calendar does, which the strip never did.
+          <div className="mt-3 grid grid-cols-4 gap-2 sm:grid-cols-7">
             {days.map((day) => {
               const open = day.slots.length;
               const active = day.date === activeDate;
@@ -137,10 +142,14 @@ export function LessonSlotPicker({
                   aria-pressed={active}
                   onClick={() => onChange({ date: day.date, time: "" })}
                   className={cn(
-                    "w-[4.5rem] shrink-0 rounded-input border px-2 py-2 text-center transition-colors duration-[120ms]",
+                    "min-w-0 rounded-input border px-2 py-2 text-center transition-colors duration-[120ms]",
                     open === 0 && "cursor-not-allowed border-line text-ink-mid opacity-60",
-                    open > 0 && !active && "border-line bg-success-soft text-ink hover:border-ink",
-                    active && "border-ink bg-ink text-white"
+                    // Which day is on screen is a view, not a commitment, so it
+                    // is marked by a border rather than a solid ink block. The
+                    // fill is reserved for the hour actually chosen.
+                    open > 0 && "bg-success-soft text-ink",
+                    open > 0 && !active && "border-line hover:border-ink",
+                    open > 0 && active && "border-ink"
                   )}
                 >
                   <span className="block text-[0.75rem]">{shortWeekdayLabel(day.date)}</span>

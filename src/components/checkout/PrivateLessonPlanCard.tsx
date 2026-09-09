@@ -51,7 +51,7 @@ export function PrivateLessonPlanCard({
   return (
     <section
       aria-label="Seçili plan: Birebir Özel Ders"
-      className="overflow-hidden rounded-card border-2 border-ink bg-surface text-ink"
+      className="overflow-hidden rounded-card border border-line bg-surface text-ink"
     >
       <div className="flex w-full items-center gap-3 bg-gold px-4 py-2 text-gold-ink">
         <ChalkboardTeacher className="size-5 shrink-0" weight="fill" />

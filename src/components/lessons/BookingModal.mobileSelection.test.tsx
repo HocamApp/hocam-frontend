@@ -97,11 +97,15 @@ function renderModal() {
   return queryClient;
 }
 
-test("the selected day and time keep white text on their filled surface", async () => {
-  // Regression guard with a specific cause: `cn()` drops a custom `text-*`
-  // size when a conditional `text-*` colour sits in the same call, so a
-  // selected control can silently lose its inverted text and end up dark on
-  // dark. See the tailwind-merge note in the repo handover.
+test("the chosen hour keeps white text on pink, and the day stays unfilled", async () => {
+  // Two things at once. The colour guard has a specific cause: `cn()` drops a
+  // custom `text-*` size when a conditional `text-*` colour sits in the same
+  // call, so a selected control can silently lose its inverted text and end up
+  // dark on dark. See the tailwind-merge note in the repo handover.
+  //
+  // And the day card must not be a solid block: which day is on screen is a
+  // view, not a commitment, so it is marked by a border. Filling it too made
+  // the screen a wall of black.
   const queryClient = renderModal();
 
   // The day strip no longer prints how many hours are left, so pick the card
@@ -114,9 +118,11 @@ test("the selected day and time keep white text on their filled surface", async 
   fireEvent.click(time);
 
   await waitFor(() => {
-    assert.equal(day.classList.contains("text-white"), true);
     assert.equal(time.classList.contains("text-white"), true);
+    assert.equal(time.classList.contains("bg-pink"), true);
   });
+  assert.equal(day.classList.contains("bg-ink"), false);
+  assert.equal(day.classList.contains("border-ink"), true);
   queryClient.clear();
 });
 

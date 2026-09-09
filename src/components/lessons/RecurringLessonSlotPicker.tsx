@@ -178,7 +178,10 @@ export function RecurringLessonSlotPicker({
           </p>
         ) : (
           <>
-            <div className="mt-3 -mr-4 flex max-w-full gap-2 overflow-x-auto overscroll-x-contain pb-2 pr-4">
+            {/* Seven fixed columns rather than a scrolling strip: there are
+                exactly seven weekdays, and a strip that needs a trackpad
+                swipe hides some of them from anyone using a mouse. */}
+            <div className="mt-3 grid grid-cols-4 gap-2 sm:grid-cols-7">
               {WEEKDAY_SHORT.map((label, weekday) => {
                 const open = byWeekday.get(weekday)?.length ?? 0;
                 const chosen = value.filter((slot) => slot.day_of_week === weekday).length;
@@ -191,27 +194,24 @@ export function RecurringLessonSlotPicker({
                     aria-pressed={active}
                     onClick={() => setActiveWeekday(weekday)}
                     className={cn(
-                      "w-[4.5rem] shrink-0 rounded-input border px-2 py-2 text-center transition-colors duration-[120ms]",
+                      "min-w-0 rounded-input border px-2 py-2 text-center transition-colors duration-[120ms]",
                       open === 0 && "cursor-not-allowed border-line text-ink-mid opacity-60",
-                      open > 0 && !active && "border-line bg-success-soft text-ink hover:border-ink",
-                      active && "border-ink bg-ink text-white"
+                      // A border, not a solid ink block: this says which day is
+                      // on screen, not which hour was picked.
+                      open > 0 && "bg-success-soft text-ink",
+                      open > 0 && !active && "border-line hover:border-ink",
+                      open > 0 && active && "border-ink"
                     )}
                   >
                     <span className="block text-[0.75rem]">{label}</span>
                     <span
-                      className={cn(
-                        "block text-[0.6875rem] tabular-nums",
-                        active ? "text-white/70" : "text-ink-mid"
-                      )}
+                      className="block text-[0.6875rem] tabular-nums text-ink-mid"
                     >
                       {open === 0 ? "Müsait değil" : `${open} saat`}
                     </span>
                     {chosen > 0 && (
                       <span
-                        className={cn(
-                          "mt-0.5 block text-[0.6875rem] tabular-nums",
-                          active ? "text-white" : "text-pink"
-                        )}
+                        className="mt-0.5 block text-[0.6875rem] tabular-nums text-pink"
                       >
                         {chosen} seçili
                       </span>
