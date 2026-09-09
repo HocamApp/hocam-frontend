@@ -1,31 +1,53 @@
 import type { Review, Subject, TutorProfile, TutorReviewSummary } from "@/types";
 
+/** What a demo override is allowed to change about a subject: the words on
+ * screen, never the identifier. `Subject.id` is a real database primary key
+ * that the booking form posts back to the API, so a made-up value here is
+ * not a presentation detail — it is an invalid write. An earlier version of
+ * this file spread synthetic `demo-*` ids over `tutor.subjects`, which made
+ * `POST /api/bookings/` fail for every demo tutor. Keeping the id out of
+ * this type is what stops that from being expressible again. */
+type SubjectLabel = Pick<Subject, "name" | "exam_type">;
+
 type TutorPresentationOverride = Pick<
   TutorProfile,
   "name" | "surname" | "profile_picture"
 > &
-  Partial<
-    Pick<
-      TutorProfile,
-      "university" | "department" | "yks_rank" | "bio" | "subjects"
-    >
-  >;
+  Partial<Pick<TutorProfile, "university" | "department" | "yks_rank" | "bio">> & {
+    subjects?: readonly SubjectLabel[];
+  };
 
-function subject(id: string, name: string, examType: Subject["exam_type"]): Subject {
-  return { id: `demo-${id}`, name, exam_type: examType };
+function label(name: string, examType: Subject["exam_type"]): SubjectLabel {
+  return { name, exam_type: examType };
 }
 
-const MATHS_AND_PHYSICS = [
-  subject("tyt-matematik", "Matematik", "TYT"),
-  subject("ayt-matematik", "Matematik", "AYT"),
-  subject("ayt-fizik", "Fizik", "AYT"),
+const MATHS_AND_PHYSICS: readonly SubjectLabel[] = [
+  label("Matematik", "TYT"),
+  label("Matematik", "AYT"),
+  label("Fizik", "AYT"),
 ];
 
-const MEDICINE = [
-  subject("tyt-biyoloji", "Biyoloji", "TYT"),
-  subject("ayt-biyoloji", "Biyoloji", "AYT"),
-  subject("ayt-kimya", "Kimya", "AYT"),
+const MEDICINE: readonly SubjectLabel[] = [
+  label("Biyoloji", "TYT"),
+  label("Biyoloji", "AYT"),
+  label("Kimya", "AYT"),
 ];
+
+/** Relabel the tutor's REAL subjects in place, positionally. The array the
+ * API returned decides both the length and every id; the override only
+ * supplies wording, and only as far as it reaches. A tutor with no subjects
+ * keeps none — inventing rows would put an unbookable option on screen. */
+function relabelSubjects(
+  real: TutorProfile["subjects"] | undefined,
+  labels: readonly SubjectLabel[] | undefined
+): TutorProfile["subjects"] {
+  if (!real?.length) return real ?? [];
+  if (!labels?.length) return real;
+  return real.map((subject, index) => {
+    const next = labels[index];
+    return next ? { ...subject, name: next.name, exam_type: next.exam_type } : subject;
+  });
+}
 
 const DEMO_REVIEW_COMMENTS: Readonly<Record<string, readonly string[]>> = {
   "d4c3fa5d-3b99-45b1-b964-7a496a3dc56b": [
@@ -88,7 +110,13 @@ const DEMO_TUTOR_OVERRIDES: Readonly<Record<string, TutorPresentationOverride>> 
 
 export function applyDemoTutorPresentation(tutor: TutorProfile): TutorProfile {
   const override = DEMO_TUTOR_OVERRIDES[tutor.id];
-  return override ? { ...tutor, ...override } : tutor;
+  if (!override) return tutor;
+  const { subjects: subjectLabels, ...rest } = override;
+  return {
+    ...tutor,
+    ...rest,
+    subjects: relabelSubjects(tutor.subjects, subjectLabels),
+  };
 }
 
 export function applyDemoTutorReviewPresentation(
@@ -97,13 +125,17 @@ export function applyDemoTutorReviewPresentation(
   index: number
 ): Review {
   const comments = DEMO_REVIEW_COMMENTS[tutorId];
-  const subjects = DEMO_TUTOR_OVERRIDES[tutorId]?.subjects;
-  if (!comments || !subjects?.length) return review;
+  const labels = DEMO_TUTOR_OVERRIDES[tutorId]?.subjects;
+  if (!comments || !labels?.length) return review;
 
+  const next = labels[index % labels.length];
   return {
     ...review,
     comment: comments[index % comments.length],
-    subject: subjects[index % subjects.length],
+    // The review's own subject row keeps its id; only the wording changes.
+    subject: review.subject
+      ? { ...review.subject, name: next.name, exam_type: next.exam_type }
+      : review.subject,
   };
 }
 
@@ -111,21 +143,19 @@ export function applyDemoTutorReviewSummaryPresentation(
   tutorId: string,
   summary: TutorReviewSummary
 ): TutorReviewSummary {
-  const subjects = DEMO_TUTOR_OVERRIDES[tutorId]?.subjects;
-  if (!subjects?.length) return summary;
+  const labels = DEMO_TUTOR_OVERRIDES[tutorId]?.subjects;
+  if (!labels?.length) return summary;
 
+  // Relabel the ratings that exist. The old version mapped over the override
+  // instead and synthesised a rating row per demo subject, which both invented
+  // ids and could report ratings for subjects the tutor has none for.
   return {
     ...summary,
-    subject_ratings: subjects.map((demoSubject, index) => {
-      const existing = summary.subject_ratings[index];
-      return existing
-        ? { ...existing, subject: demoSubject }
-        : {
-            subject: demoSubject,
-            average: summary.overall_rating,
-            count: summary.review_count,
-            percentage_of_reviews: summary.review_count > 0 ? 100 : 0,
-          };
+    subject_ratings: summary.subject_ratings.map((rating, index) => {
+      const next = labels[index];
+      return next
+        ? { ...rating, subject: { ...rating.subject, name: next.name, exam_type: next.exam_type } }
+        : rating;
     }),
   };
 }
