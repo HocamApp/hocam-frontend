@@ -8,6 +8,22 @@ import {
   applyDemoTutorReviewSummaryPresentation,
 } from "./demoTutorPresentation";
 
+// Real Subject rows carry real database UUIDs. The demo override may relabel
+// them but must never replace the id — see the SubjectLabel type.
+const REAL_SUBJECT_IDS = [
+  "11111111-1111-4111-8111-111111111111",
+  "22222222-2222-4222-8222-222222222222",
+  "33333333-3333-4333-8333-333333333333",
+];
+
+function realSubjects(): TutorProfile["subjects"] {
+  return REAL_SUBJECT_IDS.map((id, index) => ({
+    id,
+    name: `Gerçek Ders ${index + 1}`,
+    exam_type: "TYT" as const,
+  }));
+}
+
 function tutor(
   id: string,
   name: string,
@@ -19,6 +35,7 @@ function tutor(
     name,
     surname,
     profile_picture: profilePicture,
+    subjects: realSubjects(),
   } as TutorProfile;
 }
 
@@ -262,4 +279,52 @@ test("keeps review summary subject labels consistent with the demo profile", () 
     ["TYT Biyoloji", "AYT Biyoloji", "AYT Kimya"]
   );
   assert.equal(presented.criteria_ratings, summary.criteria_ratings);
+});
+
+test("never invents a subject id, because the booking form posts it back", () => {
+  // Regression: the override used to replace `subjects` wholesale with rows
+  // whose ids were strings like "demo-ayt-biyoloji". BookingModal posts the
+  // selected id as `subject` to POST /api/bookings/, where it is a UUID
+  // primary key, so every free-trial booking on a demo tutor failed.
+  const demoTutorIds = [
+    "d4c3fa5d-3b99-45b1-b964-7a496a3dc56b",
+    "728ab84a-01dd-47ad-8b4b-2aec211d0679",
+    "a017150a-81cd-4996-bbb3-776e71d7739f",
+    "dd612b39-0a51-4f59-994d-27792312a96b",
+  ];
+
+  for (const id of demoTutorIds) {
+    const presented = applyDemoTutorPresentation(tutor(id, "Ad", "Soyad", "old.jpg"));
+    assert.deepEqual(
+      presented.subjects.map((subject) => subject.id),
+      REAL_SUBJECT_IDS,
+      `${id} lost or rewrote its real subject ids`
+    );
+    for (const subject of presented.subjects) {
+      assert.ok(!String(subject.id).startsWith("demo-"), `${id} produced a synthetic subject id`);
+    }
+  }
+});
+
+test("shows no subjects rather than inventing them when the tutor has none", () => {
+  const bare = {
+    id: "a017150a-81cd-4996-bbb3-776e71d7739f",
+    name: "Onur",
+    surname: "Taş",
+    profile_picture: "old.jpg",
+    subjects: [],
+  } as unknown as TutorProfile;
+
+  assert.deepEqual(applyDemoTutorPresentation(bare).subjects, []);
+});
+
+test("relabels a review without touching its subject id", () => {
+  const presented = applyDemoTutorReviewPresentation(
+    "a017150a-81cd-4996-bbb3-776e71d7739f",
+    review(1),
+    1
+  );
+
+  assert.equal(presented.subject?.id, "old-subject");
+  assert.equal(`${presented.subject?.exam_type} ${presented.subject?.name}`, "AYT Biyoloji");
 });

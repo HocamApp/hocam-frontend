@@ -57,7 +57,35 @@ function translateApiError(message: string): string {
     return "Paket hakkı sadece 40 dakikalık derslerde kullanılabilir.";
   if (message.includes("is not active"))
     return "Bu paket henüz aktif değil.";
+  if (isTechnicalMessage(message)) return GENERIC_BOOKING_ERROR;
   return message;
+}
+
+const GENERIC_BOOKING_ERROR = "Rezervasyon oluşturulamadı. Lütfen tekrar dene.";
+
+// The API answers with a mix of hand-written Turkish and raw framework
+// English, and the unmatched ones fall through to the user verbatim. Turkish
+// copy is worth showing; a serializer's internal wording is not. A malformed
+// subject id, for instance, surfaced as “demo-ayt-biyoloji” is not a valid
+// UUID. inside the booking dialog.
+const TECHNICAL_MESSAGE_MARKERS = [
+  "is not a valid UUID",
+  "Incorrect type",
+  "Expected pk value",
+  "Invalid pk",
+  "object does not exist",
+  "This field is required",
+  "This field may not be null",
+  "A valid integer is required",
+  "Datetime has wrong format",
+  "Traceback",
+];
+
+function isTechnicalMessage(message: string): boolean {
+  const lowered = message.toLowerCase();
+  return TECHNICAL_MESSAGE_MARKERS.some((marker) =>
+    lowered.includes(marker.toLowerCase())
+  );
 }
 
 function getInitials(name: string, surname: string): string {
