@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { CalendarBlank, Clock, GlobeSimple, VideoCamera } from "@phosphor-icons/react";
+import { CalendarBlank, Clock, VideoCamera } from "@phosphor-icons/react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
@@ -36,14 +36,15 @@ function initials(name: string, surname: string): string {
 }
 
 /**
- * The shared shell for both slot pickers: who the lesson is with and what it
- * costs on the left, the calendar on the right.
+ * The panel around the package schedule picker: who the lesson is with and
+ * what it costs on the left, the calendar on the right.
  *
- * One frame rather than two similar layouts, because picking a single trial
- * lesson and picking a package's weekly rhythm are the same decision at
- * different scales, and a student who has seen one should recognise the
- * other. Only the right-hand side differs: dates and times for one lesson,
- * weekdays and times for a term.
+ * It used to wrap the single-lesson picker too. That one dropped it: a free
+ * twenty-minute trial does not need a university, a lesson length, "video
+ * call" and a price of zero arranged around one small decision, and the
+ * booking dialog now says all of that in a sentence. Buying a three-month
+ * package is a large enough commitment to be worth the framing, so it keeps
+ * it here.
  */
 export function SlotPickerFrame({
   tutor,
@@ -126,7 +127,6 @@ export function SlotPickerFrame({
         <dl className="space-y-2.5 text-[0.875rem] text-ink">
           <MetaRow icon={<Clock size={16} weight="regular" />} label={`${durationMinutes} dakika`} />
           <MetaRow icon={<VideoCamera size={16} weight="regular" />} label="Görüntülü ders" />
-          <MetaRow icon={<GlobeSimple size={16} weight="regular" />} label="İstanbul saati" />
           <MetaRow icon={<CalendarBlank size={16} weight="regular" />} label={priceLabel} />
         </dl>
 
@@ -149,14 +149,12 @@ function MetaRow({ icon, label }: { icon: ReactNode; label: string }) {
   );
 }
 
+/** Mirrors the day grid's geometry, not a generic row of bars. */
 export function SlotStripSkeleton({ count = 7 }: { count?: number }) {
   return (
-    <div className="mt-3 flex gap-2" aria-hidden>
+    <div className="mt-3 grid grid-cols-4 gap-2 sm:grid-cols-7" aria-hidden>
       {Array.from({ length: count }, (_, index) => (
-        <div
-          key={index}
-          className="h-[4.25rem] w-[4.5rem] shrink-0 animate-pulse rounded-input bg-skeleton"
-        />
+        <div key={index} className="h-[4.25rem] animate-pulse rounded-input bg-skeleton" />
       ))}
     </div>
   );

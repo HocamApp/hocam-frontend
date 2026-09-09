@@ -97,15 +97,20 @@ function renderModal() {
   return queryClient;
 }
 
-test("the selected day and time keep white text on their filled surface", async () => {
-  // Regression guard with a specific cause: `cn()` drops a custom `text-*`
-  // size when a conditional `text-*` colour sits in the same call, so a
-  // selected control can silently lose its inverted text and end up dark on
-  // dark. See the tailwind-merge note in the repo handover.
+test("the chosen hour keeps white text on pink, and the day stays unfilled", async () => {
+  // Two things at once. The colour guard has a specific cause: `cn()` drops a
+  // custom `text-*` size when a conditional `text-*` colour sits in the same
+  // call, so a selected control can silently lose its inverted text and end up
+  // dark on dark. See the tailwind-merge note in the repo handover.
+  //
+  // And the day card must not be a solid block: which day is on screen is a
+  // view, not a commitment, so it is marked by a border. Filling it too made
+  // the screen a wall of black.
   const queryClient = renderModal();
 
-  const openDays = await screen.findAllByText(/^3 boş$/);
-  const day = openDays[0].closest("button");
+  // The day strip no longer prints how many hours are left, so pick the card
+  // by its date. Booking one lesson does not need a count of the rest.
+  const day = (await screen.findByText(String(Number(today.slice(8))))).closest("button");
   assert.ok(day);
   fireEvent.click(day);
 
@@ -113,19 +118,23 @@ test("the selected day and time keep white text on their filled surface", async 
   fireEvent.click(time);
 
   await waitFor(() => {
-    assert.equal(day.classList.contains("text-white"), true);
     assert.equal(time.classList.contains("text-white"), true);
+    assert.equal(time.classList.contains("bg-pink"), true);
   });
+  assert.equal(day.classList.contains("bg-ink"), false);
+  assert.equal(day.classList.contains("border-ink"), true);
   queryClient.clear();
 });
 
-test("a day with no free slot is offered as full rather than hidden", async () => {
+test("a day with nothing free says so instead of being a dead grey card", async () => {
   const queryClient = renderModal();
 
-  const full = await screen.findByText("Dolu");
-  const button = full.closest("button");
+  const unavailable = await screen.findByText("Müsait değil");
+  const button = unavailable.closest("button");
   assert.ok(button);
   assert.equal(button.disabled, true);
+  // The count is gone from the days that do have hours.
+  assert.equal(screen.queryByText(/boş$/), null);
   queryClient.clear();
 });
 
@@ -152,6 +161,37 @@ test("a failing slot fetch offers a retry instead of an empty calendar", async (
 
   slotsFail = false;
   fireEvent.click(screen.getByRole("button", { name: "Tekrar dene" }));
+  await screen.findByRole("button", { name: "09:00" });
+  queryClient.clear();
+});
+
+test("with more than one subject, the calendar waits for the subject", async () => {
+  // The complaint about this dialog and about the package schedule step was
+  // the same: the choice that has to be made sat in the quietest corner while
+  // everything else was already on screen.
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  render(
+    <QueryClientProvider client={queryClient}>
+      <BookingModal
+        tutor={{
+          ...tutor,
+          subjects: [
+            { id: "subject-1", name: "Matematik", exam_type: "TYT" },
+            { id: "subject-2", name: "Fizik", exam_type: "AYT" },
+          ],
+        }}
+        isOpen
+        isTrial
+        onClose={() => undefined}
+        onSuccess={() => undefined}
+      />
+    </QueryClientProvider>,
+  );
+
+  await screen.findByText("Hangi dersi alacaksın?");
+  assert.equal(screen.queryByRole("button", { name: "09:00" }), null);
+
+  fireEvent.click(screen.getByRole("button", { name: /Matematik/ }));
   await screen.findByRole("button", { name: "09:00" });
   queryClient.clear();
 });

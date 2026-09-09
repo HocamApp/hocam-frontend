@@ -34,7 +34,6 @@ import {
   toSchedulePayload,
 } from "@/lib/checkoutSchedule";
 import { BookingModal } from "@/components/lessons/BookingModal";
-import { CheckoutProductPicker } from "@/components/checkout/CheckoutProductPicker";
 import { CheckoutSummary, type PromoStatus } from "@/components/checkout/CheckoutSummary";
 import { CheckoutShell } from "@/components/checkout/CheckoutShell";
 import { normalizeCheckoutPalette } from "@/components/checkout/checkoutPalette";
@@ -545,19 +544,13 @@ export default function TutorCheckoutPage({
               <Button variant="outline" className="mt-5 rounded-pill" asChild><Link href={`/tutors/${tutorId}`}>Hoca profiline dön</Link></Button>
             </div>
           ) : (
-            <CheckoutProductPicker
-              palette={checkoutPalette}
-              basePrice={basePrice}
-              weeklyPlans={weeklyPlans}
-              lessonsPerWeek={lessonsPerWeek}
-              durationDays={durationDays}
-              onLessonsPerWeekChange={setLessonsPerWeek}
-              onDurationDaysChange={setDurationDays}
-              trialLessonsRemaining={canBookFreeTrial ? trialLessonsRemaining : 0}
-              paidRemainingCredits={paidWithCredits?.remaining_credits ?? null}
-              onBookTrial={() => setBookingModalMode("trial")}
-              onUseCredits={() => setBookingModalMode("credits")}
-            />
+            // Nothing left to explore here. The product card and the weekly
+            // lesson count moved to the schedule step, because the count
+            // decides how many hours the student has to pick and changing it
+            // afterwards threw those hours away. What remains on this screen
+            // is one decision — how long the package runs — so the shell
+            // drops to a single column.
+            null
           )
         }
         decision={
@@ -603,6 +596,8 @@ export default function TutorCheckoutPage({
               otherPendingPlanName={otherPendingPlanName}
               paidRemainingCredits={paidWithCredits?.remaining_credits ?? null}
               onUseCredits={() => setBookingModalMode("credits")}
+              trialLessonsRemaining={canBookFreeTrial ? trialLessonsRemaining : 0}
+              onBookTrial={() => setBookingModalMode("trial")}
               coachingQuote={coachingReady ? coachingQuote : null}
               coachingBlockedMessage={
                 coachingBlocked

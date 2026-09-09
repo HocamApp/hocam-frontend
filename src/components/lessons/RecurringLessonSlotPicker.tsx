@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
@@ -72,7 +72,18 @@ export function RecurringLessonSlotPicker({
     enabled: enabled && Boolean(tutor.id),
   });
 
-  const candidates = useMemo(() => data?.candidates ?? [], [data]);
+  // Only hours that are open EVERY week of the lookahead. The per-slot
+  // "12 of 13 weeks free" line is gone, and without it a slot open three weeks
+  // out of thirteen would look identical to one open all thirteen. Offering
+  // only the fully-free ones is what makes the silence honest. Weeks that fill
+  // up later are skipped at activation and keep their lesson credit.
+  const candidates = useMemo(
+    () =>
+      (data?.candidates ?? []).filter(
+        (candidate) => candidate.free_occurrences === candidate.total_occurrences
+      ),
+    [data]
+  );
 
   const byWeekday = useMemo(() => {
     const grouped = new Map<number, TutorRecurringSlotCandidate[]>();
@@ -98,9 +109,22 @@ export function RecurringLessonSlotPicker({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [candidates]);
 
-  const activeWeekday =
-    value[value.length - 1]?.day_of_week ??
-    (byWeekday.size > 0 ? Math.min(...Array.from(byWeekday.keys())) : null);
+  // Which weekday the time grid is showing. Its own state, not derived from
+  // the selection: deriving it meant a weekday card had to select something in
+  // order to change the view, so merely looking at Thursday silently booked
+  // Thursday's first hour and the student had to undo it.
+  const [activeWeekday, setActiveWeekday] = useState<number | null>(null);
+
+  const firstOfferedWeekday =
+    byWeekday.size > 0 ? Math.min(...Array.from(byWeekday.keys())) : null;
+
+  // Fall back when the day being shown has nothing to show: on first load, and
+  // whenever a refetch empties the weekday the student was looking at.
+  useEffect(() => {
+    if (activeWeekday !== null && byWeekday.has(activeWeekday)) return;
+    setActiveWeekday(value[0]?.day_of_week ?? firstOfferedWeekday);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [byWeekday, firstOfferedWeekday]);
 
   const toggle = (candidate: TutorRecurringSlotCandidate) => {
     const slot = {
@@ -126,8 +150,7 @@ export function RecurringLessonSlotPicker({
       selectedSubjectId={selectedSubjectId}
       onSubjectChange={onSubjectChange}
       priceLabel={priceLabel}
-      note={`Seçtiğin saatler paket boyunca her hafta tekrar eder. Haftada ${requiredCount} ders, toplam ${Math.round(termDays / 7)} hafta.`}
-      eyebrow="Ders programı"
+      note="Seçtiğin saatler paket boyunca her hafta tekrar eder."
     >
       <>
         <div className="flex items-baseline justify-between gap-3">
@@ -155,7 +178,10 @@ export function RecurringLessonSlotPicker({
           </p>
         ) : (
           <>
-            <div className="mt-3 -mr-4 flex max-w-full gap-2 overflow-x-auto overscroll-x-contain pb-2 pr-4">
+            {/* Seven fixed columns rather than a scrolling strip: there are
+                exactly seven weekdays, and a strip that needs a trackpad
+                swipe hides some of them from anyone using a mouse. */}
+            <div className="mt-3 grid grid-cols-4 gap-2 sm:grid-cols-7">
               {WEEKDAY_SHORT.map((label, weekday) => {
                 const open = byWeekday.get(weekday)?.length ?? 0;
                 const chosen = value.filter((slot) => slot.day_of_week === weekday).length;
@@ -166,32 +192,26 @@ export function RecurringLessonSlotPicker({
                     type="button"
                     disabled={open === 0}
                     aria-pressed={active}
-                    onClick={() => {
-                      const first = byWeekday.get(weekday)?.[0];
-                      if (first && value.length < requiredCount) toggle(first);
-                    }}
+                    onClick={() => setActiveWeekday(weekday)}
                     className={cn(
-                      "w-[4.5rem] shrink-0 rounded-input border px-2 py-2 text-center transition-colors duration-[120ms]",
+                      "min-w-0 rounded-input border px-2 py-2 text-center transition-colors duration-[120ms]",
                       open === 0 && "cursor-not-allowed border-line text-ink-mid opacity-60",
-                      open > 0 && !active && "border-line bg-success-soft text-ink hover:border-ink",
-                      active && "border-ink bg-ink text-white"
+                      // A border, not a solid ink block: this says which day is
+                      // on screen, not which hour was picked.
+                      open > 0 && "bg-success-soft text-ink",
+                      open > 0 && !active && "border-line hover:border-ink",
+                      open > 0 && active && "border-ink"
                     )}
                   >
                     <span className="block text-[0.75rem]">{label}</span>
                     <span
-                      className={cn(
-                        "block text-[0.6875rem] tabular-nums",
-                        active ? "text-white/70" : "text-ink-mid"
-                      )}
+                      className="block text-[0.6875rem] tabular-nums text-ink-mid"
                     >
-                      {open === 0 ? "Dolu" : `${open} saat`}
+                      {open === 0 ? "Müsait değil" : `${open} saat`}
                     </span>
                     {chosen > 0 && (
                       <span
-                        className={cn(
-                          "mt-0.5 block text-[0.6875rem] tabular-nums",
-                          active ? "text-white" : "text-pink"
-                        )}
+                        className="mt-0.5 block text-[0.6875rem] tabular-nums text-pink"
                       >
                         {chosen} seçili
                       </span>
@@ -213,7 +233,6 @@ export function RecurringLessonSlotPicker({
                       start_time: candidate.start_time,
                     };
                     const active = value.some((entry) => sameSlot(entry, slot));
-                    const full = candidate.free_occurrences === candidate.total_occurrences;
                     const disabled = !active && remaining <= 0;
                     return (
                       <button
@@ -234,16 +253,6 @@ export function RecurringLessonSlotPicker({
                         <span className="block text-[0.875rem] tabular-nums">
                           {candidate.start_time} –{" "}
                           {endTimeLabel(candidate.start_time, durationMinutes)}
-                        </span>
-                        <span
-                          className={cn(
-                            "block text-[0.6875rem] tabular-nums",
-                            active ? "text-white/70" : full ? "text-ink-mid" : "text-error"
-                          )}
-                        >
-                          {full
-                            ? `${candidate.total_occurrences} haftanın hepsi boş`
-                            : `${candidate.total_occurrences} haftanın ${candidate.free_occurrences} tanesi boş`}
                         </span>
                       </button>
                     );

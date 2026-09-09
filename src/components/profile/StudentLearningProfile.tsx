@@ -216,7 +216,7 @@ export function StudentLearningProfile() {
                     <Link href={`/tutors/${tutor.id}`}>Profili görüntüle</Link>
                   </Button>
                   <Button asChild size="sm" className="!text-white max-md:min-h-11 flex-1">
-                    <Link href={`/tutors/${tutor.id}/checkout`}>Yeni ders planla</Link>
+                    <Link href={`/tutors/${tutor.id}/checkout/schedule`}>Yeni ders planla</Link>
                   </Button>
                 </div>
               ) : (

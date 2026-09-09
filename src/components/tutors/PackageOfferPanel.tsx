@@ -17,7 +17,7 @@ interface PackageOfferPanelProps {
 /**
  * Compact teaser for lesson packages on the tutor detail page's sticky CTA
  * card. The actual purchase (weekly matrix, promo code, pricing breakdown)
- * lives on /tutors/[id]/checkout — this row just advertises the packages
+ * lives on /tutors/[id]/checkout/schedule — this row just advertises the packages
  * and reflects the student's current purchase state with this tutor.
  */
 export function PackageOfferPanel({ tutor }: PackageOfferPanelProps) {
@@ -56,7 +56,7 @@ export function PackageOfferPanel({ tutor }: PackageOfferPanelProps) {
 
   return (
     <Link
-      href={`/tutors/${tutor.id}/checkout`}
+      href={`/tutors/${tutor.id}/checkout/schedule`}
       className="flex w-full items-center gap-2 rounded-lg border bg-muted/30 px-3 py-2.5 text-left text-sm transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
       aria-label="Haftalık ders paketleri"
     >
