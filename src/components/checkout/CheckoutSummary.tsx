@@ -74,7 +74,23 @@ interface CheckoutSummaryProps {
   onAcceptNewCoachingPrice?: () => void;
   /** Back to the coaching choice step, keeping the package selection. */
   coachingEditHref?: string;
+  /** The weekly rhythm chosen on the schedule step, ready to display. Null
+   * when the student has not picked one, or when the one they picked no
+   * longer matches the weekly lesson count on this screen. */
+  schedule?: { day_of_week: number; start_time: string }[] | null;
+  /** Back to the schedule step, keeping the package selection. */
+  scheduleEditHref?: string;
 }
+
+const WEEKDAY_NAMES = [
+  "Pazartesi",
+  "Salı",
+  "Çarşamba",
+  "Perşembe",
+  "Cuma",
+  "Cumartesi",
+  "Pazar",
+];
 
 function initials(tutor: TutorProfile) {
   return `${tutor.name?.[0] ?? ""}${tutor.surname?.[0] ?? ""}`.toUpperCase() || "?";
@@ -108,6 +124,8 @@ export function CheckoutSummary({
   coachingPriceChanged = false,
   onAcceptNewCoachingPrice,
   coachingEditHref,
+  schedule,
+  scheduleEditHref,
 }: CheckoutSummaryProps) {
   const durations = weeklyPlans
     .filter((plan) => plan.lessons_per_week === lessonsPerWeek && plan.duration_days != null)
@@ -303,6 +321,53 @@ export function CheckoutSummary({
           Bu haftalık ders sayısı için sunulan bir paket bulunmuyor.
         </div>
       )}
+
+      {/* The schedule sits above coaching because it is what the student
+          decided first, and because a package with no hours attached is the
+          state this step exists to make visible. */}
+      <section aria-labelledby="schedule-title" className="mt-3.5">
+        <div className="flex items-center justify-between gap-4">
+          <h2 id="schedule-title" className="text-sm font-bold">Ders programı</h2>
+          {scheduleEditHref && (
+            <Link
+              href={scheduleEditHref}
+              className="text-xs underline underline-offset-2 hover:text-foreground"
+            >
+              {schedule?.length ? "Düzenle" : "Seç"}
+            </Link>
+          )}
+        </div>
+        {schedule?.length ? (
+          <>
+            <ul className="mt-1.5 space-y-1 text-xs sm:text-sm">
+              {[...schedule]
+                .sort(
+                  (a, b) =>
+                    a.day_of_week - b.day_of_week ||
+                    a.start_time.localeCompare(b.start_time)
+                )
+                .map((slot) => (
+                  <li
+                    key={`${slot.day_of_week}-${slot.start_time}`}
+                    className="flex justify-between gap-4"
+                  >
+                    <span>Her {WEEKDAY_NAMES[slot.day_of_week]}</span>
+                    <span className="tabular-nums">{slot.start_time}</span>
+                  </li>
+                ))}
+            </ul>
+            <p className="mt-1.5 text-xs text-[var(--checkout-muted-ink)]">
+              Bu saatler paket boyunca her hafta tekrarlanır. Çakışan bir hafta
+              olursa o dersin hakkı sende kalır.
+            </p>
+          </>
+        ) : (
+          <p className="mt-1.5 text-xs text-[var(--checkout-muted-ink)]">
+            Henüz saat seçmedin. Dersler paket onaylandıktan sonra tek tek
+            ayarlanır.
+          </p>
+        )}
+      </section>
 
       {coachingQuote && (
         <section aria-labelledby="coaching-title" className="mt-3.5">
