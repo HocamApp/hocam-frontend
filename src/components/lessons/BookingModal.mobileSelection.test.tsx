@@ -15,7 +15,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import type { TutorProfile, TutorSlotsResponse } from "@/types";
 
-import { addDays, istanbulToday } from "./slotPickerFormat";
+import { addDays, istanbulToday, longDateLabel } from "./slotPickerFormat";
 
 let slotsFail = false;
 
@@ -79,14 +79,14 @@ before(async () => {
 
 afterEach(() => act(() => cleanup()));
 
-function renderModal() {
+function renderModal(tutorOverrides: Partial<TutorProfile> = {}) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
   render(
     <QueryClientProvider client={queryClient}>
       <BookingModal
-        tutor={tutor}
+        tutor={{ ...tutor, ...tutorOverrides }}
         isOpen
         isTrial
         onClose={() => undefined}
@@ -97,15 +97,7 @@ function renderModal() {
   return queryClient;
 }
 
-test("the chosen hour keeps white text on pink, and the day stays unfilled", async () => {
-  // Two things at once. The colour guard has a specific cause: `cn()` drops a
-  // custom `text-*` size when a conditional `text-*` colour sits in the same
-  // call, so a selected control can silently lose its inverted text and end up
-  // dark on dark. See the tailwind-merge note in the repo handover.
-  //
-  // And the day card must not be a solid block: which day is on screen is a
-  // view, not a commitment, so it is marked by a border. Filling it too made
-  // the screen a wall of black.
+test("the chosen day and hour both give strong pink selection feedback", async () => {
   const queryClient = renderModal();
 
   // The day strip no longer prints how many hours are left, so pick the card
@@ -121,20 +113,31 @@ test("the chosen hour keeps white text on pink, and the day stays unfilled", asy
     assert.equal(time.classList.contains("text-white"), true);
     assert.equal(time.classList.contains("bg-pink"), true);
   });
-  assert.equal(day.classList.contains("bg-ink"), false);
-  assert.equal(day.classList.contains("border-ink"), true);
+  assert.equal(day.classList.contains("bg-pink"), true);
+  assert.equal(day.classList.contains("border-pink"), true);
+  assert.equal(day.classList.contains("text-white"), true);
   queryClient.clear();
 });
 
-test("a day with nothing free says so instead of being a dead grey card", async () => {
+test("an unavailable day stays disabled without repeating visible unavailable copy", async () => {
   const queryClient = renderModal();
 
-  const unavailable = await screen.findByText("Müsait değil");
-  const button = unavailable.closest("button");
-  assert.ok(button);
-  assert.equal(button.disabled, true);
-  // The count is gone from the days that do have hours.
-  assert.equal(screen.queryByText(/boş$/), null);
+  const unavailableDate = slotResponse.days[1].date;
+  const unavailable = await screen.findByRole("button", {
+    name: new RegExp(`${Number(unavailableDate.slice(8))}.*müsait değil`, "i"),
+  });
+  assert.equal((unavailable as HTMLButtonElement).disabled, true);
+  assert.equal(screen.queryByText("Müsait değil"), null);
+  queryClient.clear();
+});
+
+test("the trial header is a tutor identity row with purposeful Turkish copy", async () => {
+  const queryClient = renderModal();
+
+  assert.ok(screen.getByText("DA"));
+  assert.ok(screen.getByRole("heading", { name: "Ücretsiz deneme dersi ayırt" }));
+  assert.ok(screen.getByText("Seviyeni ve sana uygun çalışma planını konuşmak için."));
+  assert.equal(screen.queryByText(/Deniz Aydın ile 20 dakika/), null);
   queryClient.clear();
 });
 
@@ -144,11 +147,49 @@ test("the submit button stays disabled until a time is chosen", async () => {
   await screen.findByRole("button", { name: "09:00" });
   const submit = screen.getByRole("button", { name: /Rezervasyonu tamamla/ });
   assert.equal((submit as HTMLButtonElement).disabled, true);
+  assert.equal(submit.classList.contains("duration-200"), true);
+  assert.equal(submit.classList.contains("motion-reduce:transition-none"), true);
 
   fireEvent.click(screen.getByRole("button", { name: "09:00" }));
   await waitFor(() =>
     assert.equal((screen.getByRole("button", { name: /Rezervasyonu tamamla/ }) as HTMLButtonElement).disabled, false),
   );
+  queryClient.clear();
+});
+
+test("the selected lesson summary appears once in the fixed footer", async () => {
+  const queryClient = renderModal();
+
+  const time = await screen.findByRole("button", { name: "09:00" });
+  fireEvent.click(time);
+
+  const expected = `${longDateLabel(today)} · 09:00 – 09:20`;
+  await waitFor(() => assert.equal(screen.getAllByText(expected).length, 1));
+  assert.ok(screen.getByText("20 dakika · 0 ₺"));
+  queryClient.clear();
+});
+
+test("the footer shows only the strongest trust signal the tutor has earned", async () => {
+  let queryClient = renderModal({ completed_lessons_count: 128, total_reviews: 24, rating: 4.9 });
+  let signal = screen.getByText("Çok tercih ediliyor · 128 ders verdi");
+  assert.ok(signal.parentElement?.querySelector("svg"));
+  queryClient.clear();
+  cleanup();
+
+  queryClient = renderModal({ completed_lessons_count: 12, total_reviews: 24, rating: 4.9 });
+  signal = screen.getByText("Öğrencilerden 4,9/5 · 24 yorum");
+  assert.ok(signal.parentElement?.querySelector("svg"));
+  queryClient.clear();
+  cleanup();
+
+  queryClient = renderModal({ completed_lessons_count: 42, total_reviews: 2, rating: 5 });
+  signal = screen.getByText("42 tamamlanan ders deneyimi");
+  assert.ok(signal.parentElement?.querySelector("svg"));
+  queryClient.clear();
+  cleanup();
+
+  queryClient = renderModal({ completed_lessons_count: 8, total_reviews: 9, rating: 5 });
+  assert.equal(document.querySelector("[data-booking-trust-signal]"), null);
   queryClient.clear();
 });
 
@@ -193,5 +234,13 @@ test("with more than one subject, the calendar waits for the subject", async () 
 
   fireEvent.click(screen.getByRole("button", { name: /Matematik/ }));
   await screen.findByRole("button", { name: "09:00" });
+  const subjectHeading = screen.getByRole("heading", { name: "Hangi dersi alacaksın?" });
+  const scheduleHeading = screen.getByRole("heading", { name: "Hangi gün ve saatte?" });
+  const hoursHeading = screen.getByRole("heading", { name: new RegExp(`${longDateLabel(today)} saatleri`) });
+  for (const heading of [subjectHeading, scheduleHeading, hoursHeading]) {
+    assert.equal(heading.classList.contains("text-h3-m"), true);
+    assert.equal(heading.classList.contains("font-medium"), true);
+  }
+  assert.equal(screen.queryByText("Gün seç"), null);
   queryClient.clear();
 });
