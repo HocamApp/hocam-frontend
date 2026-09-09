@@ -1061,10 +1061,31 @@ export interface UpdateTutorPackageOfferPayload {
   discount_percent: number | null;
 }
 
+/** One weekly lesson of a package, as posted at checkout. Times are Istanbul
+ * wall clock; `slot_index` identifies which of the plan's weekly lessons this
+ * is, so a later edit has a stable handle. */
+export interface PackageScheduleSlotPayload {
+  slot_index: number;
+  /** 0 = Monday. */
+  day_of_week: number;
+  /** "HH:MM" */
+  start_time: string;
+}
+
+export interface PackageSchedulePayload {
+  /** Subject UUID every generated lesson will carry. */
+  subject: string;
+  slots: PackageScheduleSlotPayload[];
+}
+
 export interface CreatePackagePurchasePayload {
   tutor: string;
   plan: string;
   promotion_code?: string;
+  /** The weekly rhythm the student picked. Validated server-side against the
+   * tutor's real availability; an unavailable slot answers 409 rather than
+   * being silently dropped. */
+  schedule?: PackageSchedulePayload;
 }
 
 export interface PromoPreviewRequest {

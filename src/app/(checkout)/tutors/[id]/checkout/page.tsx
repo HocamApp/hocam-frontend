@@ -29,6 +29,10 @@ import {
   readCoachingSelectedFromSearchParams,
   type CoachingQuote,
 } from "@/lib/coachingApi";
+import {
+  decodeCheckoutSchedule,
+  toSchedulePayload,
+} from "@/lib/checkoutSchedule";
 import { BookingModal } from "@/components/lessons/BookingModal";
 import { CheckoutProductPicker } from "@/components/checkout/CheckoutProductPicker";
 import { CheckoutSummary, type PromoStatus } from "@/components/checkout/CheckoutSummary";
@@ -85,6 +89,12 @@ export default function TutorCheckoutPage({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const checkoutPalette = normalizeCheckoutPalette(searchParams.get("palette"));
+  // The weekly schedule chosen on the step before this one, carried in the
+  // URL like every other choice in this flow. It is only sent when it still
+  // matches the plan on screen: changing the weekly lesson count here would
+  // otherwise submit a schedule for a different package, which the server
+  // refuses with a 409 the student cannot act on.
+  const chosenSchedule = decodeCheckoutSchedule(searchParams.get("schedule"));
   const queryClient = useQueryClient();
   const { isAuthenticated, isLoading: authLoading, isStudent, user } = useAuth();
 
@@ -179,6 +189,22 @@ export default function TutorCheckoutPage({
       ) ?? null,
     [weeklyPlans, lessonsPerWeek, durationDays]
   );
+
+  // A schedule describes N lessons a week. If the student changes the weekly
+  // count on this screen, the schedule they picked no longer describes the
+  // package in front of them, so it is dropped rather than trimmed: silently
+  // discarding one of their chosen hours would be a worse surprise than being
+  // asked to pick again.
+  const scheduleMatchesPlan =
+    chosenSchedule !== null &&
+    selectedPlan !== null &&
+    chosenSchedule.slots.length === selectedPlan.lessons_per_week;
+  const scheduleHref = (() => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("per_week", String(lessonsPerWeek));
+    params.set("duration", String(durationDays));
+    return `/tutors/${tutorId}/checkout/schedule?${params.toString()}`;
+  })();
 
   // Deep links may point at a retired combination or a plan this tutor has
   // switched off. Resolve deterministically to a real offer, preferring the
@@ -567,6 +593,9 @@ export default function TutorCheckoutPage({
                   // and re-checks the quote; this flag only says "the
                   // student wants coaching too".
                   ...(coachingReady ? { coaching: {} } : {}),
+                  ...(scheduleMatchesPlan && chosenSchedule
+                    ? { schedule: toSchedulePayload(chosenSchedule) }
+                    : {}),
                 });
               }}
               purchasePending={purchaseMutation.isPending}
@@ -581,6 +610,8 @@ export default function TutorCheckoutPage({
                     "Koçluk kontenjanı şu anda doğrulanamadı."
                   : null
               }
+              schedule={scheduleMatchesPlan ? chosenSchedule!.slots : null}
+              scheduleEditHref={scheduleHref}
               coachingHoldExpiresAt={coachingHoldExpiresAt}
               coachingUnavailableMessage={coachingUnavailableMessage}
               coachingPriceChanged={coachingPriceChanged}

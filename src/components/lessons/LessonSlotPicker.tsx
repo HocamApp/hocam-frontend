@@ -2,13 +2,11 @@
 
 import { useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { CalendarBlank, Clock, GlobeSimple, VideoCamera } from "@phosphor-icons/react";
-
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { fetchTutorSlots } from "@/lib/lessonsApi";
 import { cn } from "@/lib/utils";
 import type { Subject, TutorSlotDay } from "@/types";
+import { SlotPickerFrame, SlotStripSkeleton, type SlotPickerTutor } from "./SlotPickerFrame";
 import {
   addDays,
   dayOfMonth,
@@ -26,13 +24,7 @@ export interface SlotSelection {
   time: string;
 }
 
-export interface SlotPickerTutor {
-  id: string;
-  name: string;
-  surname: string;
-  university?: string | null;
-  profile_picture?: string | null;
-}
+export type { SlotPickerTutor };
 
 interface LessonSlotPickerProps {
   tutor: SlotPickerTutor;
@@ -54,10 +46,6 @@ interface LessonSlotPickerProps {
 }
 
 const DEFAULT_RANGE_DAYS = 14;
-
-function initials(name: string, surname: string): string {
-  return ((name?.trim()[0] ?? "") + (surname?.trim()[0] ?? "")).toUpperCase() || "?";
-}
 
 /**
  * Pick one lesson: a day, then a time.
@@ -125,86 +113,17 @@ export function LessonSlotPicker({
   const activeDay = days.find((day) => day.date === activeDate) ?? null;
 
   return (
-    <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,15rem)_minmax(0,1fr)]">
-      <aside className="min-w-0 space-y-5">
-        {eyebrow && (
-          <p className="text-label uppercase tracking-[0.08em] text-pink">{eyebrow}</p>
-        )}
-
-        <div className="flex min-w-0 items-center gap-3">
-          <Avatar className="h-11 w-11">
-            <AvatarImage
-              src={tutor.profile_picture || undefined}
-              alt={`${tutor.name} ${tutor.surname}`}
-            />
-            <AvatarFallback className="bg-ink text-white">
-              {initials(tutor.name, tutor.surname)}
-            </AvatarFallback>
-          </Avatar>
-          <div className="min-w-0">
-            <p className="truncate font-medium text-ink">
-              {tutor.name} {tutor.surname}
-            </p>
-            {tutor.university && (
-              <p className="truncate text-[0.8125rem] text-ink-mid">{tutor.university}</p>
-            )}
-          </div>
-        </div>
-
-        {subjects && subjects.length > 0 && (
-          <div className="min-w-0">
-            <p className="text-label text-ink-mid">Ders konusu</p>
-            {/* Stacked full-width rather than wrapped pills: a subject name
-                here can run to a dozen words ("AYT İleri Düzey Kalkülüs ve
-                Diferansiyel Denklemler..."), and as a pill that either
-                overflows the column or wraps into an unreadable block. */}
-            <div className="mt-2 flex flex-col gap-2">
-              {subjects.map((subject) => {
-                const active = String(subject.id) === selectedSubjectId;
-                return (
-                  <button
-                    key={String(subject.id)}
-                    type="button"
-                    aria-pressed={active}
-                    title={`${subject.name} ${subject.exam_type}`}
-                    onClick={() => onSubjectChange?.(String(subject.id))}
-                    className={cn(
-                      "flex w-full min-w-0 items-center gap-2 overflow-hidden rounded-input border px-3 py-2 text-left text-[0.8125rem] transition-colors duration-[120ms]",
-                      active
-                        ? "border-ink bg-ink text-white"
-                        : "border-line text-ink hover:border-ink"
-                    )}
-                  >
-                    <span className="min-w-0 flex-1 truncate">{subject.name}</span>
-                    <span
-                      className={cn(
-                        "shrink-0 text-[0.6875rem]",
-                        active ? "text-white/70" : "text-ink-mid"
-                      )}
-                    >
-                      {subject.exam_type}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        <dl className="space-y-2.5 text-[0.875rem] text-ink">
-          <MetaRow icon={<Clock size={16} weight="regular" />} label={`${durationMinutes} dakika`} />
-          <MetaRow icon={<VideoCamera size={16} weight="regular" />} label="Görüntülü ders" />
-          <MetaRow icon={<GlobeSimple size={16} weight="regular" />} label="İstanbul saati" />
-          <MetaRow
-            icon={<CalendarBlank size={16} weight="regular" />}
-            label={priceLabel}
-          />
-        </dl>
-
-        {note && <p className="text-[0.8125rem] leading-relaxed text-ink-mid">{note}</p>}
-      </aside>
-
-      <div className="min-w-0">
+    <SlotPickerFrame
+      tutor={tutor}
+      durationMinutes={durationMinutes}
+      subjects={subjects}
+      selectedSubjectId={selectedSubjectId}
+      onSubjectChange={onSubjectChange}
+      priceLabel={priceLabel}
+      note={note}
+      eyebrow={eyebrow}
+    >
+      <>
         <div className="flex items-baseline justify-between gap-3">
           <p className="text-label uppercase tracking-[0.08em] text-ink-mid">Gün seç</p>
           {activeDate && (
@@ -222,7 +141,7 @@ export function LessonSlotPicker({
             </Button>
           </div>
         ) : isLoading ? (
-          <DayStripSkeleton />
+          <SlotStripSkeleton />
         ) : days.length === 0 ? (
           <p className="mt-3 text-[0.875rem] text-ink-mid">
             Bu hoca önümüzdeki {rangeDays} gün için müsaitlik eklememiş.
@@ -305,31 +224,7 @@ export function LessonSlotPicker({
             {longDateLabel(value.date)} · {value.time} – {endTimeLabel(value.time, durationMinutes)}
           </p>
         )}
-      </div>
-    </div>
-  );
-}
-
-function MetaRow({ icon, label }: { icon: React.ReactNode; label: string }) {
-  return (
-    <div className="flex items-center gap-2">
-      <span className="shrink-0 text-ink-mid" aria-hidden>
-        {icon}
-      </span>
-      <span className="min-w-0 break-words">{label}</span>
-    </div>
-  );
-}
-
-function DayStripSkeleton() {
-  return (
-    <div className="mt-3 flex gap-2" aria-hidden>
-      {Array.from({ length: 7 }, (_, index) => (
-        <div
-          key={index}
-          className="h-[4.25rem] w-[4.5rem] shrink-0 animate-pulse rounded-input bg-skeleton"
-        />
-      ))}
-    </div>
+      </>
+    </SlotPickerFrame>
   );
 }

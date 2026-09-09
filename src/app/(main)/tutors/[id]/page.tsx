@@ -548,14 +548,12 @@ export default function TutorProfilePage({
       }
     }
     const query = qp.toString();
-    // Tutors who offer coaching get the choice step first (master spec
-    // §13.1); everyone else goes straight to package selection, so the
-    // extra screen never appears where it has nothing to ask.
-    const base =
-      tutor?.offers_coaching && coachingCheckoutEnabled
-        ? `/tutors/${id}/checkout/coaching`
-        : `/tutors/${id}/checkout`;
-    return `${base}${query ? `?${query}` : ""}`;
+    // The schedule step comes first for every tutor: when the lessons happen
+    // decides whether the package is worth buying at all, and finding out
+    // after choosing a plan wastes the whole flow. It hands off to the
+    // coaching choice (master spec §13.1) or straight to package selection,
+    // so that extra screen still never appears where it has nothing to ask.
+    return `/tutors/${id}/checkout/schedule${query ? `?${query}` : ""}`;
   })();
 
   const submitTutorReport = async () => {
