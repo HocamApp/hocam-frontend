@@ -14,6 +14,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { TrialLessonOffer } from "./TrialLessonOffer";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { cn, formatPrice } from "@/lib/utils";
@@ -51,6 +52,9 @@ interface CheckoutSummaryProps {
   /** Remaining credits on a paid package with this tutor, if any. */
   paidRemainingCredits: number | null;
   onUseCredits: () => void;
+  /** Free trials the student may still book with this tutor. */
+  trialLessonsRemaining?: number;
+  onBookTrial?: () => void;
   /** Server-priced coaching add-on; null when coaching is not selected. */
   coachingQuote?: CoachingQuote | null;
   /** Server-issued hold expiry — the countdown source, not a local timer. */
@@ -117,6 +121,8 @@ export function CheckoutSummary({
   onRemovePromo,
   paidRemainingCredits,
   onUseCredits,
+  trialLessonsRemaining = 0,
+  onBookTrial,
   coachingQuote = null,
   coachingHoldExpiresAt = null,
   coachingBlockedMessage = null,
@@ -516,6 +522,12 @@ export function CheckoutSummary({
               Ders hakkını kullan
             </Button>
           </div>
+        )}
+        {/* Moved here from the left-hand product card, which this screen no
+            longer has. It is a genuine alternative to buying a package, so it
+            belongs beside the decision rather than disappearing with the card. */}
+        {trialLessonsRemaining > 0 && onBookTrial && (
+          <TrialLessonOffer remaining={trialLessonsRemaining} onSelect={onBookTrial} />
         )}
       </div>
 

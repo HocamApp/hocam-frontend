@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { CalendarBlank, Clock, GlobeSimple, VideoCamera } from "@phosphor-icons/react";
+import { CalendarBlank, Clock, VideoCamera } from "@phosphor-icons/react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
@@ -126,7 +126,6 @@ export function SlotPickerFrame({
         <dl className="space-y-2.5 text-[0.875rem] text-ink">
           <MetaRow icon={<Clock size={16} weight="regular" />} label={`${durationMinutes} dakika`} />
           <MetaRow icon={<VideoCamera size={16} weight="regular" />} label="Görüntülü ders" />
-          <MetaRow icon={<GlobeSimple size={16} weight="regular" />} label="İstanbul saati" />
           <MetaRow icon={<CalendarBlank size={16} weight="regular" />} label={priceLabel} />
         </dl>
 

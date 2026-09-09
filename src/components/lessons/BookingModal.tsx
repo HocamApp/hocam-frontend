@@ -289,7 +289,7 @@ export function BookingModal({
               {isTrial ? "Ücretsiz deneme dersi ayırt" : "Ders rezervasyonu yap"}
             </DialogTitle>
             <DialogDescription className="text-[0.875rem] text-ink-mid">
-              Hocanın müsait olduğu bir gün ve saat seç. Saatler İstanbul saatine göredir.
+              Hocanın müsait olduğu bir gün ve saat seç.
             </DialogDescription>
           </DialogHeader>
         </div>
