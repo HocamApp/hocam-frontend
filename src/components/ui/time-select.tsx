@@ -2,7 +2,7 @@
 
 import { ResponsiveSelect } from "@/components/ui/responsive-select";
 
-// Matches the 30-minute slot grid BookingModal.tsx's getSlotsForDay already
+// Matches the 30-minute slot grid the server's slot engine already
 // uses for booking-time selection, for consistency across the app.
 function generateTimeOptions(startHour = 6, endHour = 23, stepMinutes = 30): string[] {
   const options: string[] = [];

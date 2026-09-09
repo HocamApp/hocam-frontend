@@ -3,9 +3,10 @@ import api from "./api";
 import {
   LessonRequest,
   Booking,
-  BusyInterval,
   LessonArtifact,
   LessonSessionState,
+  TutorRecurringSlotsResponse,
+  TutorSlotsResponse,
 } from "@/types";
 import { syncServerClock } from "./serverClock";
 
@@ -61,17 +62,49 @@ export async function fetchBookings(): Promise<Booking[]> {
 }
 
 /**
- * Busy intervals (blocking lessons, coaching and private time off) for a tutor within a date
- * range — used to hide already-booked slots in BookingModal. Deliberately
- * privacy-minimal: only start_time/end_time, per the backend contract.
+ * Bookable start times per calendar day, computed on the server.
+ *
+ * Replaces deriving the list in the browser from availability rules minus
+ * bookings. That computation could only see lessons, so a slot occupied by
+ * the tutor's private time off or by a coaching session looked free and was
+ * then refused by POST /bookings/. The endpoint asks the cross-domain busy
+ * registry, so what it offers is what will be accepted.
+ *
+ * Times are Istanbul wall clock, matching what the booking form posts back.
  */
-export async function fetchTutorBusyIntervals(
+export async function fetchTutorSlots(
   tutorId: string,
-  start: string,
-  end: string
-): Promise<BusyInterval[]> {
-  const response = await api.get<BusyInterval[]>(
-    `/bookings/busy/?tutor=${tutorId}&start=${start}&end=${end}`
+  params: { start: string; end: string; durationMinutes: number }
+): Promise<TutorSlotsResponse> {
+  const response = await api.get<TutorSlotsResponse>(`/tutors/${tutorId}/slots/`, {
+    params: {
+      start: params.start,
+      end: params.end,
+      duration: params.durationMinutes,
+    },
+  });
+  return response.data;
+}
+
+/**
+ * Weekly (weekday, time) candidates for a package term, each carrying how
+ * many of its occurrences across the term are free. A package is bought as
+ * "N lessons a week for D days", so the checkout question is whether a
+ * weekday and time works week after week, not whether one date is open.
+ */
+export async function fetchTutorRecurringSlots(
+  tutorId: string,
+  params: { start?: string; termDays: number; durationMinutes: number }
+): Promise<TutorRecurringSlotsResponse> {
+  const response = await api.get<TutorRecurringSlotsResponse>(
+    `/tutors/${tutorId}/recurring-slots/`,
+    {
+      params: {
+        ...(params.start ? { start: params.start } : {}),
+        duration_days: params.termDays,
+        duration: params.durationMinutes,
+      },
+    }
   );
   return response.data;
 }

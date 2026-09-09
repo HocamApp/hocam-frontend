@@ -1134,6 +1134,47 @@ export interface BusyInterval {
   end_time: string;
 }
 
+/** One calendar day of bookable start times, from GET /tutors/<id>/slots/.
+ * Days with nothing free are still returned, with an empty `slots`, so a date
+ * picker can render them disabled without inferring which dates it asked
+ * about. Every value is Istanbul wall clock — see the `timezone` field. */
+export interface TutorSlotDay {
+  /** YYYY-MM-DD */
+  date: string;
+  /** "HH:MM" starts, ascending */
+  slots: string[];
+}
+
+export interface TutorSlotsResponse {
+  /** Always "Europe/Istanbul". Stated rather than assumed, because these are
+   * wall-clock times, not instants. */
+  timezone: string;
+  duration_minutes: number;
+  days: TutorSlotDay[];
+}
+
+/** A weekday-and-time that repeats across a package term.
+ * `free_occurrences` counts how many of its `total_occurrences` weeks are
+ * actually open. A candidate with some weeks taken is still offered, because
+ * over a 90-day term one clash should not remove the whole slot. */
+export interface TutorRecurringSlotCandidate {
+  /** 0 = Monday, matching the backend AvailabilityRule convention. */
+  day_of_week: number;
+  /** "HH:MM" */
+  start_time: string;
+  free_occurrences: number;
+  total_occurrences: number;
+}
+
+export interface TutorRecurringSlotsResponse {
+  timezone: string;
+  duration_minutes: number;
+  /** YYYY-MM-DD */
+  starts_on: string;
+  ends_on: string;
+  candidates: TutorRecurringSlotCandidate[];
+}
+
 export interface TutorVerification {
   id: string;
   tutor: string;
