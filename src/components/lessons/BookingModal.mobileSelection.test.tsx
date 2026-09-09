@@ -13,31 +13,33 @@ import {
 } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
-import type { AvailabilityRule, TutorProfile } from "@/types";
+import type { TutorProfile, TutorSlotsResponse } from "@/types";
 
-let busyFails = false;
+import { addDays, istanbulToday } from "./slotPickerFormat";
 
-const availability: AvailabilityRule[] = Array.from({ length: 7 }, (_, day) => ({
-  id: `availability-${day}`,
-  tutor: "tutor-1",
-  day_of_week: day,
-  start_time: "09:00:00",
-  end_time: "11:00:00",
-  created_at: "2026-09-02T00:00:00",
-}));
+let slotsFail = false;
 
-mock.module("@/lib/dashboardApi", {
-  namedExports: {
-    fetchTutorAvailability: async () => availability,
-  },
-});
+const today = istanbulToday();
+// A closed day in the middle, so "every day is returned, some disabled" is
+// exercised rather than assumed.
+const slotResponse: TutorSlotsResponse = {
+  timezone: "Europe/Istanbul",
+  duration_minutes: 20,
+  days: Array.from({ length: 5 }, (_, offset) => ({
+    date: addDays(today, offset),
+    slots: offset === 1 ? [] : ["09:00", "09:30", "10:00"],
+  })),
+};
 
 mock.module("@/lib/lessonsApi", {
   namedExports: {
     createBooking: async () => {
       throw new Error("Booking submission is outside this visual-state test.");
     },
-    fetchTutorBusyIntervals: async () => { if (busyFails) throw new Error("offline"); return []; },
+    fetchTutorSlots: async (): Promise<TutorSlotsResponse> => {
+      if (slotsFail) throw new Error("offline");
+      return slotResponse;
+    },
   },
 });
 
@@ -77,13 +79,10 @@ before(async () => {
 
 afterEach(() => act(() => cleanup()));
 
-test("selected mobile date and time keep white text on the pink surface", async () => {
+function renderModal() {
   const queryClient = new QueryClient({
-    defaultOptions: {
-      queries: { retry: false, staleTime: Infinity },
-    },
+    defaultOptions: { queries: { retry: false } },
   });
-
   render(
     <QueryClientProvider client={queryClient}>
       <BookingModal
@@ -95,46 +94,64 @@ test("selected mobile date and time keep white text on the pink surface", async 
       />
     </QueryClientProvider>,
   );
+  return queryClient;
+}
 
-  fireEvent.click(screen.getByRole("button", { name: /Matematik/ }));
-  fireEvent.click(screen.getByRole("button", { name: "İleri →" }));
+test("the selected day and time keep white text on their filled surface", async () => {
+  // Regression guard with a specific cause: `cn()` drops a custom `text-*`
+  // size when a conditional `text-*` colour sits in the same call, so a
+  // selected control can silently lose its inverted text and end up dark on
+  // dark. See the tailwind-merge note in the repo handover.
+  const queryClient = renderModal();
 
-  await screen.findByRole("heading", { name: /Tarih ve Saat Seç/ });
+  const openDays = await screen.findAllByText(/^3 boş$/);
+  const day = openDays[0].closest("button");
+  assert.ok(day);
+  fireEvent.click(day);
 
-  const dateGroup = screen.getByText("Tarih").parentElement;
-  assert.ok(dateGroup);
-  let firstEnabledDate: HTMLButtonElement | undefined;
-  await waitFor(() => {
-    firstEnabledDate = Array.from(
-      dateGroup.querySelectorAll<HTMLButtonElement>("button"),
-    ).find((button) => !button.disabled);
-    assert.ok(firstEnabledDate);
-  });
-
-  assert.ok(firstEnabledDate);
-  const selectedDateButton = firstEnabledDate;
-  fireEvent.click(selectedDateButton);
   const time = await screen.findByRole("button", { name: "09:00" });
   fireEvent.click(time);
 
   await waitFor(() => {
-    assert.equal(selectedDateButton.classList.contains("text-white"), true);
-    assert.equal(time.classList.contains("!text-white"), true);
+    assert.equal(day.classList.contains("text-white"), true);
+    assert.equal(time.classList.contains("text-white"), true);
   });
+  queryClient.clear();
 });
 
-test("busy endpoint failure blocks date selection until retry succeeds", async () => {
-  busyFails = true;
-  const queryClient = new QueryClient({defaultOptions:{queries:{retry:false}}});
-  render(<QueryClientProvider client={queryClient}><BookingModal tutor={tutor} isOpen isTrial onClose={() => undefined} onSuccess={() => undefined} /></QueryClientProvider>);
-  fireEvent.click(screen.getByRole("button", {name:/Matematik/}));
-  fireEvent.click(screen.getByRole("button", {name:"İleri →"}));
+test("a day with no free slot is offered as full rather than hidden", async () => {
+  const queryClient = renderModal();
+
+  const full = await screen.findByText("Dolu");
+  const button = full.closest("button");
+  assert.ok(button);
+  assert.equal(button.disabled, true);
+  queryClient.clear();
+});
+
+test("the submit button stays disabled until a time is chosen", async () => {
+  const queryClient = renderModal();
+
+  await screen.findByRole("button", { name: "09:00" });
+  const submit = screen.getByRole("button", { name: /Rezervasyonu tamamla/ });
+  assert.equal((submit as HTMLButtonElement).disabled, true);
+
+  fireEvent.click(screen.getByRole("button", { name: "09:00" }));
+  await waitFor(() =>
+    assert.equal((screen.getByRole("button", { name: /Rezervasyonu tamamla/ }) as HTMLButtonElement).disabled, false),
+  );
+  queryClient.clear();
+});
+
+test("a failing slot fetch offers a retry instead of an empty calendar", async () => {
+  slotsFail = true;
+  const queryClient = renderModal();
+
   await screen.findByRole("alert");
-  const dates = screen.getByText("Tarih").parentElement!;
-  assert.ok(Array.from(dates.querySelectorAll<HTMLButtonElement>("button")).every((button) => button.disabled));
-  assert.equal((screen.getByRole("button", {name:"İleri →"}) as HTMLButtonElement).disabled, true);
-  busyFails = false;
-  fireEvent.click(screen.getByRole("button", {name:"Tekrar dene"}));
-  await waitFor(() => assert.ok(Array.from(dates.querySelectorAll<HTMLButtonElement>("button")).some((button) => !button.disabled)));
+  assert.equal(screen.queryByRole("button", { name: "09:00" }), null);
+
+  slotsFail = false;
+  fireEvent.click(screen.getByRole("button", { name: "Tekrar dene" }));
+  await screen.findByRole("button", { name: "09:00" });
   queryClient.clear();
 });
