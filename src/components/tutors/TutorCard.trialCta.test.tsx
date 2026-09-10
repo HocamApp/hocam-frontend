@@ -70,6 +70,22 @@ test("large tutor card shows the trial action even when list data says it is una
   assert.ok(screen.getByRole("button", { name: "Deneme Dersi Al" }));
 });
 
+test("compact tutor card also keeps profile navigation separate from direct trial booking", () => {
+  const trialStarts: TutorProfile[] = [];
+  render(
+    <TutorCard
+      tutor={tutor}
+      onStartTrial={(selectedTutor) => trialStarts.push(selectedTutor)}
+    />,
+  );
+
+  assert.equal(screen.getByRole("link", { name: /Profili Gör/i }).getAttribute("href"), "/tutors/tutor-1");
+  const trial = screen.getByRole("button", { name: "Deneme Dersi Al" });
+  assert.equal(trial.closest("a"), null);
+  fireEvent.click(trial);
+  assert.deepEqual(trialStarts, [tutor]);
+});
+
 test("both tutor actions share the design-system button geometry and hierarchy", () => {
   render(<TutorCard tutor={tutor} size="lg" onStartTrial={() => undefined} />);
 

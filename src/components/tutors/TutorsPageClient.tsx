@@ -636,6 +636,7 @@ function TutorsPageContent() {
                     discoveryImpressionId={discoveryImpressionId}
                     onStartTrial={trialBooking.startTrial}
                     trialPending={trialBooking.pendingTutorId === tutor.id}
+                    trialDisabled={trialBooking.trialDisabled}
                   />
                 ))}
               </div>

@@ -31,9 +31,6 @@ export async function prepareTrialBooking(
   if (!viewer.isAuthenticated) {
     return { status: "unavailable", reason: "sign_in_required" };
   }
-  if (!viewer.isStudent) {
-    return { status: "unavailable", reason: "student_account_required" };
-  }
 
   const tutor = await fetchTutorDetail(tutorId);
   const availability = resolveTrialBookingAvailability(tutor, viewer);
@@ -47,8 +44,8 @@ export function resolveTrialBookingAvailability(
   viewer: TrialBookingViewer,
 ): TrialBookingAvailability {
   if (!viewer.isAuthenticated) return "sign_in_required";
-  if (!viewer.isStudent) return "student_account_required";
   if (viewer.userId === tutor.user) return "own_profile";
+  if (!viewer.isStudent) return "student_account_required";
   if (tutor.accepts_trial_lessons === false) return "tutor_not_accepting_trials";
   if (tutor.accepting_new_students === false || tutor.open_student_slots === 0) {
     return "tutor_capacity_full";

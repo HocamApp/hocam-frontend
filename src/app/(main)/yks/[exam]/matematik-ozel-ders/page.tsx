@@ -12,7 +12,7 @@ import {
   PublicSeoSection,
   PublicSeoStat,
 } from "@/components/seo/PublicSeoPage";
-import { TutorCard } from "@/components/tutors/TutorCard";
+import { TutorCardGridWithTrial } from "@/components/tutors/TutorCardGridWithTrial";
 import {
   breadcrumbJsonLd,
   filterTutorsBySubject,
@@ -190,11 +190,7 @@ export default async function MathematicsPrivateLessonPage({
             intro={`Bu profiller ${config.examType} Matematik dersini herkese açık ders alanları arasında listeleyen doğrulanmış hocalardan alınır.`}
             className="border-t"
           >
-            <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-              {featuredTutors.map((tutor) => (
-                <TutorCard key={tutor.id} tutor={tutor} />
-              ))}
-            </div>
+            <TutorCardGridWithTrial tutors={featuredTutors} returnUrl={config.path} />
             <div className="mt-7 text-center">
               <Link
                 href={directoryHref}

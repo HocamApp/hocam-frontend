@@ -32,6 +32,7 @@ interface TutorCardProps {
   discoveryImpressionId?: string | null;
   onStartTrial?: (tutor: TutorProfile) => void;
   trialPending?: boolean;
+  trialDisabled?: boolean;
   /** "lg" is used by the main directory grid: a wider, photo-left row
    * (portrait photo, bio excerpt, price/rating/CTA column) instead of the
    * compact stacked card. Every other call site keeps the original size. */
@@ -198,6 +199,9 @@ function TutorCardDefault({
   favoritePending,
   learningContext,
   discoveryImpressionId,
+  onStartTrial,
+  trialPending = false,
+  trialDisabled = false,
 }: TutorCardProps) {
   const { visibleSubjects, remainingCount, completedLessonsLabel } = useTutorCardData(tutor);
   const tutorHref = buildTutorHref(tutor.id, learningContext, discoveryImpressionId);
@@ -289,15 +293,32 @@ function TutorCardDefault({
               <span className="text-muted-foreground">{completedLessonsLabel}</span>
             </div>
           </Link>
-          <div className="mt-3 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="mt-3 flex flex-col items-stretch gap-3 sm:flex-row sm:items-start sm:justify-between">
             <Link href={tutorHref} className="min-w-0 sm:shrink-0">
               <span className="text-lg font-semibold">{formatPrice(tutor.hourly_price)}</span>
               <span className="ml-1 text-sm text-muted-foreground">/40 dk</span>
             </Link>
-            <div className="flex w-full shrink-0 items-center gap-1 sm:w-auto">
-              <Link href={tutorHref} className="flex-1 rounded-md bg-primary px-3 py-2 text-center text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 sm:flex-none">
-                Profili Gör <ArrowRight className="ml-1 inline h-3.5 w-3.5" />
-              </Link>
+            <div className="flex w-full shrink-0 flex-col gap-2 sm:w-40">
+              <Button asChild className="w-full">
+                <Link href={tutorHref}>
+                  Profili Gör <ArrowRight className="ml-1 h-4 w-4" aria-hidden />
+                </Link>
+              </Button>
+              {onStartTrial && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  disabled={trialDisabled}
+                  aria-busy={trialPending}
+                  onClick={() => onStartTrial(tutor)}
+                >
+                  {trialPending && (
+                    <CircleNotch className="mr-2 h-4 w-4 animate-spin" aria-hidden />
+                  )}
+                  {trialPending ? "Kontrol ediliyor…" : "Deneme Dersi Al"}
+                </Button>
+              )}
               {onToggleFavorite && (
                 <FavoriteButton
                   tutorId={tutor.id}
@@ -333,6 +354,7 @@ function TutorCardLarge({
   discoveryImpressionId,
   onStartTrial,
   trialPending = false,
+  trialDisabled = false,
 }: TutorCardProps) {
   const { visibleSubjects, remainingCount } = useTutorCardData(tutor);
   const tutorHref = buildTutorHref(tutor.id, learningContext, discoveryImpressionId);
@@ -482,7 +504,7 @@ function TutorCardLarge({
                 type="button"
                 variant="outline"
                 className="w-full"
-                disabled={trialPending}
+                disabled={trialDisabled}
                 aria-busy={trialPending}
                 onClick={() => onStartTrial(tutor)}
               >

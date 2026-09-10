@@ -101,3 +101,13 @@ test("does not call the personalized endpoint before a visitor signs in", async 
   assert.equal(requests, 0);
   assert.deepEqual(result, { status: "unavailable", reason: "sign_in_required" });
 });
+
+test("shows the own-profile warning before the generic account-role warning", async () => {
+  const result = await prepareTrialBooking(
+    "tutor-1",
+    { isAuthenticated: true, isStudent: false, userId: eligibleTutor.user },
+    async () => eligibleTutor,
+  );
+
+  assert.deepEqual(result, { status: "unavailable", reason: "own_profile" });
+});

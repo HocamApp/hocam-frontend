@@ -89,6 +89,7 @@ export function useTutorTrialBookingLauncher(discoveryImpressionId?: string | nu
 
   return {
     pendingTutorId,
+    trialDisabled: authLoading || pendingTutorId !== null,
     startTrial,
     trialTutor,
     unavailableReason,

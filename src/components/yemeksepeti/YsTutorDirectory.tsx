@@ -524,6 +524,7 @@ function DirectoryBody({ favoritesOnly = false }: DirectoryProps) {
                     favoritePending={isFavoritePending(tutor.id)}
                     onStartTrial={trialBooking.startTrial}
                     trialPending={trialBooking.pendingTutorId === tutor.id}
+                    trialDisabled={trialBooking.trialDisabled}
                   />
                 ))}
               </div>

@@ -9,7 +9,7 @@ import {
   PublicSeoSection,
   PublicSeoStat,
 } from "@/components/seo/PublicSeoPage";
-import { TutorCard } from "@/components/tutors/TutorCard";
+import { TutorCardGridWithTrial } from "@/components/tutors/TutorCardGridWithTrial";
 import {
   breadcrumbJsonLd,
   loadPublicTutors,
@@ -158,11 +158,7 @@ export default async function YksPrivateLessonPage() {
             intro="Aşağıdaki profiller herkese açık hoca listesinden alınır. Güncel ders alanı, ücret ve uygunluk için ilgili profili incele."
             className="border-t"
           >
-            <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-              {featuredTutors.map((tutor) => (
-                <TutorCard key={tutor.id} tutor={tutor} />
-              ))}
-            </div>
+            <TutorCardGridWithTrial tutors={featuredTutors} returnUrl={path} />
             <div className="mt-7 text-center">
               <Link
                 href="/tutors"
