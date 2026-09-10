@@ -15,9 +15,16 @@ import { EmptyState } from "@/components/shared/EmptyState";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  TutorTrialBookingOverlays,
+  useTutorTrialBookingLauncher,
+} from "@/components/tutors/TutorTrialBookingLauncher";
 import SlidingPagination from "@/components/ui/sliding-pagination";
 import { isSubjectValidForExam } from "@/lib/subjects";
-import { createDirectoryImpression, DISCOVERY_CONSENT_CHANGED } from "@/lib/discovery";
+import {
+  createDirectoryImpression,
+  DISCOVERY_CONSENT_CHANGED,
+} from "@/lib/discovery";
 import { useDiscoveryExposures } from "@/hooks/useDiscoveryExposures";
 import {
   defaultTutorOrdering,
@@ -199,6 +206,7 @@ function TutorsPageContent() {
   const [desktopFiltersOpen, setDesktopFiltersOpen] = useState(false);
   const [discoveryImpressionId, setDiscoveryImpressionId] = useState<string | null>(null);
   const [consentRevision, setConsentRevision] = useState(0);
+  const trialBooking = useTutorTrialBookingLauncher(discoveryImpressionId);
 
   // Favorites toggle is URL-synced but not a backend filter (client-side only).
   const showFavorites = searchParams.get("favorites") === "1";
@@ -385,8 +393,11 @@ function TutorsPageContent() {
 
   useDiscoveryExposures(discoveryImpressionId);
 
+  const currentReturnUrl = `/tutors${searchParams.toString() ? `?${searchParams.toString()}` : ""}`;
+
   const content = (
-    <div className="mx-auto max-w-7xl overflow-x-clip px-4 py-8 space-y-6">
+    <>
+      <div className="mx-auto max-w-7xl overflow-x-clip px-4 py-8 space-y-6">
         {!showFavorites && (
           <>
             <div className="relative isolate overflow-hidden rounded-2xl border shadow-sm">
@@ -623,6 +634,8 @@ function TutorsPageContent() {
                     favoritePending={isFavoritePending(tutor.id)}
                     learningContext={learningContext}
                     discoveryImpressionId={discoveryImpressionId}
+                    onStartTrial={trialBooking.startTrial}
+                    trialPending={trialBooking.pendingTutorId === tutor.id}
                   />
                 ))}
               </div>
@@ -651,6 +664,13 @@ function TutorsPageContent() {
           </div>
         </div>
       </div>
+
+      <TutorTrialBookingOverlays
+        launcher={trialBooking}
+        learningContext={learningContext}
+        returnUrl={currentReturnUrl}
+      />
+    </>
   );
   return content;
 }

@@ -36,6 +36,10 @@ import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import SlidingPagination from "@/components/ui/sliding-pagination";
+import {
+  TutorTrialBookingOverlays,
+  useTutorTrialBookingLauncher,
+} from "@/components/tutors/TutorTrialBookingLauncher";
 
 /**
  * The homepage's tutor directory.
@@ -164,6 +168,7 @@ function DirectoryBody({ favoritesOnly = false }: DirectoryProps) {
      preference would defeat that. No hydration effect, so no open/close
      flash on first paint either. */
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const trialBooking = useTutorTrialBookingLauncher();
 
   /* Paging used to jump to the top of the document, which on the homepage is
      the hero — three sections above the list the reader was actually working
@@ -325,7 +330,8 @@ function DirectoryBody({ favoritesOnly = false }: DirectoryProps) {
   ];
 
   return (
-    <section
+    <>
+      <section
       ref={listRef}
       /* The top margin separates the list from the university strip above it
          on the homepage. The favourites page has nothing above it and sets
@@ -516,6 +522,8 @@ function DirectoryBody({ favoritesOnly = false }: DirectoryProps) {
                     isFavorite={favoriteIds.has(tutor.id)}
                     onToggleFavorite={toggle}
                     favoritePending={isFavoritePending(tutor.id)}
+                    onStartTrial={trialBooking.startTrial}
+                    trialPending={trialBooking.pendingTutorId === tutor.id}
                   />
                 ))}
               </div>
@@ -565,6 +573,9 @@ function DirectoryBody({ favoritesOnly = false }: DirectoryProps) {
           )}
         </div>
       </div>
-    </section>
+      </section>
+
+      <TutorTrialBookingOverlays launcher={trialBooking} returnUrl={returnUrl} />
+    </>
   );
 }

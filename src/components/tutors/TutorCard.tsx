@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, TrendUp } from "@phosphor-icons/react";
+import { ArrowRight, CircleNotch, TrendUp } from "@phosphor-icons/react";
 import { TutorProfile } from "@/types";
 import { RankMark } from "@/components/brand/marks";
 import { cn, formatLessonCount, formatPrice, formatRating } from "@/lib/utils";
@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { TutorPresenceBadge } from "@/components/tutors/TutorPresenceBadge";
 import { FavoriteButton } from "@/components/tutors/FavoriteButton";
 import { recordDiscoveryEvent } from "@/lib/discovery";
+import { Button } from "@/components/ui/button";
 
 function getInitials(name: string, surname: string): string {
   const n = (name || "").trim()[0] || "";
@@ -29,6 +30,8 @@ interface TutorCardProps {
   favoritePending?: boolean;
   learningContext?: LearningContextQuery | null;
   discoveryImpressionId?: string | null;
+  onStartTrial?: (tutor: TutorProfile) => void;
+  trialPending?: boolean;
   /** "lg" is used by the main directory grid: a wider, photo-left row
    * (portrait photo, bio excerpt, price/rating/CTA column) instead of the
    * compact stacked card. Every other call site keeps the original size. */
@@ -45,7 +48,6 @@ function buildTutorHref(
   tutorId: string,
   learningContext?: LearningContextQuery | null,
   discoveryImpressionId?: string | null,
-  intent?: TutorHrefIntent | null
 ): string {
   const params = new URLSearchParams();
   if (learningContext) {
@@ -57,13 +59,9 @@ function buildTutorHref(
     params.set("learning_topic_id", learningContext.learning_topic_id);
   }
   if (discoveryImpressionId) params.set("discovery_impression_id", discoveryImpressionId);
-  if (intent) params.set("intent", intent);
   const query = params.toString();
   return `/tutors/${tutorId}${query ? `?${query}` : ""}`;
 }
-
-/** The profile page reads `?intent=trial` and decides real eligibility there. */
-type TutorHrefIntent = "trial";
 
 /** Preply shows "Booked 65 times recently". We have no booking-velocity field,
  *  so the line is derived from lesson/review volume and simply omitted when
@@ -333,18 +331,11 @@ function TutorCardLarge({
   favoritePending,
   learningContext,
   discoveryImpressionId,
+  onStartTrial,
+  trialPending = false,
 }: TutorCardProps) {
   const { visibleSubjects, remainingCount } = useTutorCardData(tutor);
   const tutorHref = buildTutorHref(tutor.id, learningContext, discoveryImpressionId);
-  const trialHref = buildTutorHref(tutor.id, learningContext, discoveryImpressionId, "trial");
-
-  // Both flags are tutor-global and present on the cached list response. Real
-  // per-student trial eligibility (no prior booking with this tutor + monthly
-  // quota) lives only on the uncached detail endpoint, so the card never
-  // promises a *free* lesson — it just opens the flow, and
-  // /tutors/[id] decides. `=== true` rather than `!== false`: a missing field
-  // must hide the button, never reveal one the backend has not allowed.
-  const showTrialCta = tutor.accepts_trial_lessons === true && tutor.is_bookable === true;
 
   const coachingLabel = tutor.offers_free_coaching
     ? "Ücretsiz koçluk"
@@ -481,19 +472,23 @@ function TutorCardLarge({
           </dl>
 
           <div className="mt-auto flex flex-col gap-2 pt-3">
-            <Link
-              href={tutorHref}
-              className="rounded-pill bg-ink px-4 py-2 text-center text-sm font-semibold text-paper transition-colors duration-[var(--duration-state)] hover:bg-pink"
-            >
-              Profili Gör <ArrowRight className="ml-1 inline h-4 w-4" />
-            </Link>
-            {showTrialCta && (
-              <Link
-                href={trialHref}
-                className="rounded-md border px-4 py-2 text-center text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
-              >
-                Deneme Dersi Al
+            <Button asChild className="w-full">
+              <Link href={tutorHref}>
+                Profili Gör <ArrowRight className="ml-1 h-4 w-4" aria-hidden />
               </Link>
+            </Button>
+            {onStartTrial && (
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                disabled={trialPending}
+                aria-busy={trialPending}
+                onClick={() => onStartTrial(tutor)}
+              >
+                {trialPending && <CircleNotch className="mr-2 h-4 w-4 animate-spin" aria-hidden />}
+                {trialPending ? "Kontrol ediliyor…" : "Deneme Dersi Al"}
+              </Button>
             )}
           </div>
         </div>
