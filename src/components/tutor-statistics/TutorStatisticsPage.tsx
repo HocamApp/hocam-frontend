@@ -14,7 +14,7 @@ import {
   resolveStatisticsSelection, StatisticsPeriod, StatisticsSelection, StatisticsTab,
   STATUS_LABELS, type ComparisonMetric, type TutorIncomeResponse, type TutorStatisticsResponse,
 } from "@/lib/tutorStatistics";
-import { ChartCard, HorizontalBars, LineChart } from "./StatisticsCharts";
+import { ChartCard, StatisticsDonutChart, StatisticsLineChart } from "./StatisticsCharts";
 
 const periods: Array<{ value: StatisticsPeriod; label: string }> = [
   { value: "30", label: "Son 30 gün" }, { value: "90", label: "Son 90 gün" },
@@ -58,25 +58,79 @@ function Overview({ data }: { data: TutorStatisticsResponse }) {
     </section>
 
     <ChartCard title="Tamamlanan dersler" action={<div role="group" aria-label="Ders grafiği ölçüsü" className="flex gap-1">{(["count", "minutes"] as const).map(mode => <Button key={mode} size="sm" variant="outline" aria-pressed={activityMode === mode} onClick={() => setActivityMode(mode)} className={activityMode === mode ? "border-ink bg-ink text-paper hover:bg-ink hover:text-paper" : "border-line"}>{mode === "count" ? "Ders" : "Dakika"}</Button>)}</div>}>
-      <LineChart title="Tamamlanan dersler" points={data.lesson_activity.map(row => ({ label: row.period_start, value: row[activityKey] }))} valueLabel={value => activityMode === "count" ? `${value} ders` : `${value} dakika`} xAxisLabel="Tarih" yAxisLabel={activityMode === "count" ? "Tamamlanan ders sayısı" : "Planlanan süre (dakika)"} />
+      <StatisticsLineChart
+        title="Tamamlanan dersler"
+        points={data.lesson_activity.map(row => ({ label: row.period_start, value: row[activityKey] }))}
+        valueLabel={(value: number) => activityMode === "count" ? `${value} ders` : `${value} dakika`}
+        xAxisLabel="Tarih"
+        yAxisLabel={activityMode === "count" ? "Tamamlanan ders sayısı" : "Planlanan süre (dakika)"}
+      />
     </ChartCard>
 
     <div className="grid gap-6 lg:grid-cols-2">
-      <ChartCard title="Ders durumları"><HorizontalBars title="Ders durumları" rows={data.lesson_statuses.map(row => ({ label: statusLabel(row.status), value: row.count }))} /></ChartCard>
-      <ChartCard title="Ders alanları"><HorizontalBars title="Ders alanları" rows={data.subjects.map(row => ({ label: `${row.name} · ${row.exam_type}`, value: row.completed_count }))} valueLabel={value => `${value} ders`} /></ChartCard>
+      <ChartCard title="Ders durumları">
+        <StatisticsDonutChart title="Ders durumları" rows={data.lesson_statuses.map(row => ({ label: statusLabel(row.status), value: row.count }))} />
+      </ChartCard>
+      <ChartCard title="Ders alanları">
+        <StatisticsDonutChart
+          title="Ders alanları"
+          rows={data.subjects.map(row => ({ label: `${row.name} · ${row.exam_type}`, value: row.completed_count }))}
+          valueLabel={(value: number) => `${value} ders`}
+        />
+      </ChartCard>
     </div>
 
     <div className="grid gap-6 lg:grid-cols-2">
-      <ChartCard title="Öğrenci gelişimi"><LineChart title="Yeni öğrenciler" points={data.students.activity.map(row => ({ label: row.period_start, value: row.new_students }))} valueLabel={value => `${value} öğrenci`} xAxisLabel="Tarih" yAxisLabel="Yeni öğrenci sayısı" /></ChartCard>
-      <ChartCard title="Değerlendirme eğilimi"><LineChart title="Değerlendirme eğilimi" points={data.reviews.trend.map(row => ({ label: row.period_start, value: row.average }))} valueLabel={value => `${value.toFixed(2)} / 5`} xAxisLabel="Tarih" yAxisLabel="Ortalama puan" maxValue={5} /></ChartCard>
+      <ChartCard title="Öğrenci gelişimi">
+        <StatisticsLineChart
+          title="Yeni öğrenciler"
+          points={data.students.activity.map(row => ({ label: row.period_start, value: row.new_students }))}
+          valueLabel={(value: number) => `${value} öğrenci`}
+          xAxisLabel="Tarih"
+          yAxisLabel="Yeni öğrenci sayısı"
+        />
+      </ChartCard>
+      <ChartCard title="Değerlendirme eğilimi">
+        <StatisticsLineChart
+          title="Değerlendirme eğilimi"
+          points={data.reviews.trend.map(row => ({ label: row.period_start, value: row.average }))}
+          valueLabel={(value: number) => `${value.toFixed(2)} / 5`}
+          xAxisLabel="Tarih"
+          yAxisLabel="Ortalama puan"
+          maxValue={5}
+        />
+      </ChartCard>
     </div>
 
     <ChartCard title="Güvenilirlik">
       <div className="grid gap-5 sm:grid-cols-3"><div><p className="text-caption text-ink-mid">Hoca kaynaklı kaçırılan ders</p><strong className="mt-1 block text-h2-m">{data.reliability.missed_lessons}</strong></div><div><p className="text-caption text-ink-mid">24 saatte yanıt</p><strong className="mt-1 block text-h2-m">{percent(data.reliability.reply_rate_24h.rate)}</strong></div><div><p className="text-caption text-ink-mid">Toplam iptal</p><strong className="mt-1 block text-h2-m">{data.reliability.cancellations.reduce((total, row) => total + row.count, 0)}</strong></div></div>
-      <div className="mt-5 border-t border-line pt-5"><HorizontalBars title="İptal nedenleri" rows={data.reliability.cancellations.filter(row => row.reason !== "unknown").map(row => ({ label: CANCELLATION_LABELS[row.reason] ?? row.reason, value: row.count }))} /></div>
+      <div className="mt-5 border-t border-line pt-5">
+        <StatisticsDonutChart title="İptal nedenleri" rows={data.reliability.cancellations.filter(row => row.reason !== "unknown").map(row => ({ label: CANCELLATION_LABELS[row.reason] ?? row.reason, value: row.count }))} />
+      </div>
     </ChartCard>
 
-    {data.coaching && <section className="space-y-5 border-t-2 border-ink pt-7"><h2 className="text-h2-m font-bold sm:text-h2">Koçluk görünümü</h2><div className="grid gap-3 sm:grid-cols-3"><MetricCard label="Toplam görüşme" value={String(data.coaching.summary.total_sessions)} detail="Seçili dönemde planlanan" icon={<CalendarDots size={22} />} /><MetricCard label="Tamamlanan görüşme" value={String(data.coaching.summary.completed_sessions)} detail="Yayınlanmış raporla tamamlanan" icon={<ChalkboardTeacher size={22} />} /><MetricCard label="Koçluk öğrencisi" value={String(data.coaching.summary.students)} detail="Bu dönemde görüşmesi olan" icon={<Users size={22} />} /></div><div className="grid gap-6 lg:grid-cols-2"><ChartCard title="Koçluk görüşmeleri"><LineChart title="Tamamlanan koçluk görüşmeleri" points={data.coaching.activity.map(row => ({ label: row.period_start, value: row.completed_count }))} valueLabel={value => `${value} görüşme`} xAxisLabel="Tarih" yAxisLabel="Tamamlanan görüşme sayısı" /></ChartCard><ChartCard title="Koçluk durumları"><HorizontalBars title="Koçluk durumları" rows={data.coaching.statuses.map(row => ({ label: statusLabel(row.status), value: row.count }))} /></ChartCard></div></section>}
+    {data.coaching && <section className="space-y-5 border-t-2 border-ink pt-7">
+      <h2 className="text-h2-m font-bold sm:text-h2">Koçluk görünümü</h2>
+      <div className="grid gap-3 sm:grid-cols-3">
+        <MetricCard label="Toplam görüşme" value={String(data.coaching.summary.total_sessions)} detail="Seçili dönemde planlanan" icon={<CalendarDots size={22} />} />
+        <MetricCard label="Tamamlanan görüşme" value={String(data.coaching.summary.completed_sessions)} detail="Yayınlanmış raporla tamamlanan" icon={<ChalkboardTeacher size={22} />} />
+        <MetricCard label="Koçluk öğrencisi" value={String(data.coaching.summary.students)} detail="Bu dönemde görüşmesi olan" icon={<Users size={22} />} />
+      </div>
+      <div className="grid gap-6 lg:grid-cols-2">
+        <ChartCard title="Koçluk görüşmeleri">
+          <StatisticsLineChart
+            title="Tamamlanan koçluk görüşmeleri"
+            points={data.coaching.activity.map(row => ({ label: row.period_start, value: row.completed_count }))}
+            valueLabel={(value: number) => `${value} görüşme`}
+            xAxisLabel="Tarih"
+            yAxisLabel="Tamamlanan görüşme sayısı"
+          />
+        </ChartCard>
+        <ChartCard title="Koçluk durumları">
+          <StatisticsDonutChart title="Koçluk durumları" rows={data.coaching.statuses.map(row => ({ label: statusLabel(row.status), value: row.count }))} />
+        </ChartCard>
+      </div>
+    </section>}
   </div>;
 }
 
@@ -92,8 +146,48 @@ function Income({ data, selection }: { data: TutorIncomeResponse; selection: Sta
       <MetricCard label="Ders kazancı" value={data.lesson_earnings.available && data.lesson_earnings.amount_minor !== null ? formatMinor(data.lesson_earnings.amount_minor) : "Henüz hesaplanamıyor"} icon={<BookOpen size={22} />} />
       <MetricCard label="Koçluk geliri" value={data.coaching ? formatMinor(data.coaching.entitlement_amount_minor) : "Kapalı"} icon={<ChalkboardTeacher size={22} />} />
     </section>
-    <ChartCard title="Ders paketi tutarları"><LineChart title="Ders paketi tutarları" points={data.packages.activity.map(row => ({ label: row.period_start, value: row.recorded_amount_minor }))} valueLabel={value => formatMinor(value)} axisValueLabel={value => formatMinor(value)} xAxisLabel="Tarih" yAxisLabel="Kayıtlı paket tutarı" /><div className="mt-5 border-t border-line pt-5"><HorizontalBars title="Paket durumları" rows={data.packages.statuses.map(row => ({ label: `${statusLabel(row.status)} · ${formatMinor(row.recorded_amount_minor)}`, value: row.count }))} valueLabel={value => `${value} kayıt`} /></div></ChartCard>
-    {data.coaching && <section className="space-y-5 border-t-2 border-ink pt-7"><h2 className="text-h2-m font-bold sm:text-h2">Gelir ve ödeme durumu</h2><div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3"><MetricCard label="Fon bekleyen" value={formatMinor(data.coaching.status_amounts_minor.eligible_unfunded ?? 0)} icon={<Clock size={22} />} /><MetricCard label="Gelir bekliyor" value={formatMinor(data.coaching.status_amounts_minor.pending ?? 0)} icon={<CalendarDots size={22} />} /><MetricCard label="İncelemede" value={formatMinor(data.coaching.status_amounts_minor.on_hold ?? 0)} icon={<ChatCircle size={22} />} /><MetricCard label="Ters kayıt" value={formatMinor(data.coaching.status_amounts_minor.reversed ?? 0)} icon={<CurrencyCircleDollar size={22} />} /><MetricCard label="Ödemeye hazır" value={formatMinor(data.coaching.batched_ready_amount_minor)} icon={<CurrencyCircleDollar size={22} />} /><MetricCard label="Ödenen" value={formatMinor(data.coaching.paid_amount_minor)} icon={<CurrencyCircleDollar size={22} />} /></div><ChartCard title="Koçluk gelir eğilimi"><LineChart title="Koçluk gelirleri" points={data.coaching.activity.map(row => ({ label: row.period_start, value: row.entitlement_amount_minor }))} valueLabel={value => formatMinor(value)} axisValueLabel={value => formatMinor(value)} xAxisLabel="Tarih" yAxisLabel="Tutar" /></ChartCard>{data.coaching.payout_batches.length > 0 && <ChartCard title="Aylık ödeme partileri"><ul className="divide-y divide-line">{data.coaching.payout_batches.map(batch => <li key={batch.id} className="flex flex-wrap items-center justify-between gap-3 py-3 first:pt-0 last:pb-0"><span>{formatDate(batch.local_month)} · {statusLabel(batch.status)}</span><strong>{formatMinor(batch.total_amount_minor)}</strong></li>)}</ul></ChartCard>}</section>}
+
+    <ChartCard title="Ders paketi tutarları">
+      <StatisticsLineChart
+        title="Ders paketi tutarları"
+        points={data.packages.activity.map(row => ({ label: row.period_start, value: row.recorded_amount_minor }))}
+        valueLabel={(value: number) => formatMinor(value)}
+        axisValueLabel={(value: number) => formatMinor(value)}
+        xAxisLabel="Tarih"
+        yAxisLabel="Kayıtlı paket tutarı"
+      />
+      <div className="mt-5 border-t border-line pt-5">
+        <StatisticsDonutChart
+          title="Paket durumları"
+          rows={data.packages.statuses.map(row => ({ label: `${statusLabel(row.status)} · ${formatMinor(row.recorded_amount_minor)}`, value: row.count }))}
+          valueLabel={(value: number) => `${value} kayıt`}
+        />
+      </div>
+    </ChartCard>
+
+    {data.coaching && <section className="space-y-5 border-t-2 border-ink pt-7">
+      <h2 className="text-h2-m font-bold sm:text-h2">Gelir ve ödeme durumu</h2>
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        <MetricCard label="Fon bekleyen" value={formatMinor(data.coaching.status_amounts_minor.eligible_unfunded ?? 0)} icon={<Clock size={22} />} />
+        <MetricCard label="Gelir bekliyor" value={formatMinor(data.coaching.status_amounts_minor.pending ?? 0)} icon={<CalendarDots size={22} />} />
+        <MetricCard label="İncelemede" value={formatMinor(data.coaching.status_amounts_minor.on_hold ?? 0)} icon={<ChatCircle size={22} />} />
+        <MetricCard label="Ters kayıt" value={formatMinor(data.coaching.status_amounts_minor.reversed ?? 0)} icon={<CurrencyCircleDollar size={22} />} />
+        <MetricCard label="Ödemeye hazır" value={formatMinor(data.coaching.batched_ready_amount_minor)} icon={<CurrencyCircleDollar size={22} />} />
+        <MetricCard label="Ödenen" value={formatMinor(data.coaching.paid_amount_minor)} icon={<CurrencyCircleDollar size={22} />} />
+      </div>
+      <ChartCard title="Koçluk gelir eğilimi">
+        <StatisticsLineChart
+          title="Koçluk gelirleri"
+          points={data.coaching.activity.map(row => ({ label: row.period_start, value: row.entitlement_amount_minor }))}
+          valueLabel={(value: number) => formatMinor(value)}
+          axisValueLabel={(value: number) => formatMinor(value)}
+          xAxisLabel="Tarih"
+          yAxisLabel="Tutar"
+        />
+      </ChartCard>
+      {data.coaching.payout_batches.length > 0 && <ChartCard title="Aylık ödeme partileri"><ul className="divide-y divide-line">{data.coaching.payout_batches.map(batch => <li key={batch.id} className="flex flex-wrap items-center justify-between gap-3 py-3 first:pt-0 last:pb-0"><span>{formatDate(batch.local_month)} · {statusLabel(batch.status)}</span><strong>{formatMinor(batch.total_amount_minor)}</strong></li>)}</ul></ChartCard>}
+    </section>}
+
     <ChartCard title="Gelir kayıtları" description="Seçili dönemdeki kaynak kayıtlar; para hareketlerinin anlamı durum etiketiyle birlikte okunur." action={<div role="group" aria-label="Gelir kayıt türü" className="flex flex-wrap gap-1">{recordKinds.filter(item => data.coaching || item.value === "packages").map(item => <Button key={item.value} variant="outline" size="sm" aria-pressed={kind === item.value} onClick={() => chooseKind(item.value)} className={kind === item.value ? "border-ink bg-ink text-paper hover:bg-ink hover:text-paper" : "border-line"}>{item.label}</Button>)}</div>}>
       {records.isPending ? <p role="status" className="py-6 text-small text-ink-mid">Kayıtlar yükleniyor…</p> : records.isError ? <div role="alert" className="py-4"><p>Kayıt ayrıntıları yüklenemedi.</p><Button className="mt-3" variant="outline" size="sm" onClick={() => void records.refetch()}>Yeniden dene</Button></div> : records.data?.results.length ? <><ul className="divide-y divide-line">{records.data.results.map(record => <li key={record.id} className="grid gap-1 py-4 first:pt-0 sm:grid-cols-[1fr_auto] sm:items-center"><div><p className="font-medium">{record.label}</p><p className="text-caption text-ink-mid">{record.student?.display_name ? `${record.student.display_name} · ` : ""}{statusLabel(record.status)} · {formatDate(record.occurred_at.slice(0,10))}</p>{record.service_period_id && <Link className="text-small font-medium text-pink underline-offset-4 hover:underline" href={`/dashboard/tutor/coaching/service-periods/${record.service_period_id}/program`}>Koçluk programını aç</Link>}</div><strong>{formatMinor(record.amount_minor)}</strong></li>)}</ul><div className="mt-4 flex items-center justify-between border-t border-line pt-4"><Button variant="outline" size="sm" disabled={!records.data.previous} onClick={() => setPage(current => current - 1)}>Önceki</Button><span className="text-caption text-ink-mid">{records.data.count} kayıt · Sayfa {page}</span><Button variant="outline" size="sm" disabled={!records.data.next} onClick={() => setPage(current => current + 1)}>Sonraki</Button></div></> : <p className="py-6 text-small text-ink-mid">Bu dönemde seçilen türde kayıt yok.</p>}
     </ChartCard>
