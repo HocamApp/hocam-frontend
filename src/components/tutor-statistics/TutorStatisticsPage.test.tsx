@@ -2,10 +2,10 @@ import "@/test/setupDom";
 import assert from "node:assert/strict";
 import { afterEach, before, beforeEach, mock, test } from "node:test";
 import React from "react";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import api from "@/lib/api";
-import { LineChart } from "./StatisticsCharts";
+import { StatisticsDonutChart } from "./StatisticsCharts";
 
 let role = "tutor";
 let authenticated = true;
@@ -83,9 +83,6 @@ test("overview renders one H1, four honest metrics and accessible graph tables",
   assert.ok(screen.getByText("Tamamlanan ders sayısı"));
   assert.ok(screen.getByText("Ortalama puan"));
   assert.equal(screen.queryByText("Ortalama puan (5 üzerinden)"), null);
-  const axisTitles = Array.from(container.querySelectorAll("svg text")).filter(node => node.textContent === "Tarih");
-  assert.ok(axisTitles.length > 0);
-  assert.ok(axisTitles.every(node => node.getAttribute("x") === "380"));
   assert.ok(screen.getByText("Koçluk görünümü"));
   assert.equal(screen.queryByText("Ayrı hizmet alanı"), null);
   assert.equal(screen.queryByText("Koçluk görüşmeleri ders istatistiklerine eklenmeden ayrı hesaplanır."), null);
@@ -124,32 +121,32 @@ test("income keeps the financial records while removing explanatory copy and hak
   assert.equal(screen.queryByText("Teslim edilen koçluk hizmetlerinden doğan hak; ödeme toplamı değildir."), null);
 });
 
-test("line chart reserves enough gutter for long Turkish currency labels", () => {
-  const { container } = render(<>
-    <LineChart
-      title="Kısa değerler"
-      points={[{ label: "2026-08-08", value: 4 }]}
-      valueLabel={(value) => String(value)}
-      xAxisLabel="Tarih"
-      yAxisLabel="Ders"
-    />
-    <LineChart
-      title="Koçluk gelirleri"
-      points={[{ label: "2026-08-08", value: 1014000 }]}
-      valueLabel={(value) => `${value} ₺`}
-      axisValueLabel={(value) => `${value.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₺`}
-      xAxisLabel="Tarih"
-      yAxisLabel="Koçluk geliri"
-    />
-  </>);
+test("lesson statuses render as a donut with a legend and a data table", async () => {
+  mount();
+  await screen.findAllByText("12");
 
-  const charts = container.querySelectorAll("svg");
-  const shortTick = Array.from(charts[0].querySelectorAll("text")).find((node) => node.textContent === "4");
-  const longestTick = Array.from(charts[1].querySelectorAll("text")).find((node) => node.textContent === "1.014.000,00 ₺");
-  assert.ok(shortTick);
-  assert.ok(longestTick);
-  assert.ok(Number(longestTick.getAttribute("x")) > Number(shortTick.getAttribute("x")));
-  assert.ok(Number(longestTick.getAttribute("x")) >= 130);
+  const chart = screen.getByRole("img", { name: "Ders durumları grafiği" });
+  const table = screen.getByRole("table", { name: "Ders durumları verileri" });
+  assert.match(table.textContent ?? "", /Tamamlandı/);
+  assert.match(table.textContent ?? "", /İptal/);
+  // The legend doubles as the hover control, so each slice is a real button.
+  // Scoped to this chart: "Tamamlandı" is also a coaching status further down.
+  assert.ok(within(chart).getByRole("button", { name: /Tamamlandı/ }));
+  assert.ok(within(chart).getByRole("button", { name: /İptal/ }));
+  // Toplam, in the middle of the ring, is the sum and not one of the slices.
+  assert.ok(within(chart).getByText("Toplam"));
+});
+
+test("a distribution with nothing in it says so instead of drawing an empty ring", () => {
+  render(
+    <StatisticsDonutChart
+      title="Koçluk durumları"
+      rows={[{ label: "Tamamlandı", value: 0 }, { label: "İptal", value: 0 }]}
+    />,
+  );
+
+  assert.ok(screen.getByText("Bu dönem için veri bulunmuyor."));
+  assert.equal(screen.queryByRole("img", { name: "Koçluk durumları grafiği" }), null);
 });
 
 test("reviews tab keeps private period feedback, criteria and pagination", async () => {
