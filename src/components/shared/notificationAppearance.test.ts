@@ -89,6 +89,17 @@ describe("notification appearance", () => {
     assert.equal(iconOf("coaching_tutor_earning"), "💸");
   });
 
+  it("gives the tutor's pending-action reminder the person tile", () => {
+    // The backend's `booking_action_required` cron row. It carries
+    // related_object_type "booking", so without an explicit rule it would land
+    // on the generic event tile — and none of the substring rules must claim
+    // it either, or a green thumbs-up would sit on unfinished work.
+    assert.deepEqual(
+      getNotificationAppearance("booking_action_required", "booking"),
+      { icon: "\u{1F464}", color: "#FFB800" },
+    );
+  });
+
   it("matches on the relation when the type alone does not say", () => {
     assert.equal(iconOf("something_new", "conversation"), "💬");
     assert.equal(iconOf("something_new", "lesson_request"), "👤");

@@ -5,6 +5,7 @@ import {
   dashboardBookingGroups,
   dashboardGreeting,
   resolveTutorDashboardRoute,
+  tutorPendingActions,
 } from "./tutorDashboard";
 import type { Booking } from "@/types";
 
@@ -77,4 +78,43 @@ test("dashboard greeting follows Istanbul time instead of the browser timezone",
   assert.equal(dashboardGreeting(Date.parse("2026-09-05T21:30:00Z")), "Günaydın");
   assert.equal(dashboardGreeting(Date.parse("2026-09-05T14:00:00Z")), "İyi günler");
   assert.equal(dashboardGreeting(Date.parse("2026-09-05T17:00:00Z")), "İyi akşamlar");
+});
+
+test("pending actions cover all four things that wait on the tutor", () => {
+  const now = Date.parse("2026-09-05T21:30:00Z");
+  const progress = booking("progress", "completed", "2026-09-04T10:00:00Z");
+  progress.learning_context = {
+    activity_id: "activity-1",
+    status: "pending_confirmation",
+    goal: null,
+    milestone: null,
+    topic: null,
+  } as Booking["learning_context"];
+  const settled = booking("settled", "completed", "2026-09-04T12:00:00Z");
+  settled.learning_context = {
+    activity_id: "activity-2",
+    status: "confirmed",
+    goal: null,
+    milestone: null,
+    topic: null,
+  } as Booking["learning_context"];
+
+  const rows = tutorPendingActions([
+    booking("unanswered", "pending", "2026-09-06T10:00:00Z"),
+    // A pending booking whose lesson already started is the sweep's to cancel,
+    // not the tutor's to answer.
+    booking("expired-pending", "pending", "2026-09-05T10:00:00Z"),
+    booking("awaiting", "awaiting_confirmation", "2026-09-05T18:00:00Z"),
+    booking("disputed", "disputed", "2026-09-04T18:00:00Z"),
+    progress,
+    settled,
+    booking("upcoming", "confirmed", "2026-09-06T09:00:00Z"),
+  ], now);
+
+  assert.deepEqual(rows.map(row => row.id), [
+    "unanswered",
+    "awaiting",
+    "disputed",
+    "progress",
+  ]);
 });

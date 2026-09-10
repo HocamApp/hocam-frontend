@@ -56,6 +56,24 @@ function byStart(first: Booking, second: Booking): number {
   return bookingInstant(first.start_time) - bookingInstant(second.start_time);
 }
 
+/**
+ * The bookings that are waiting on the tutor: approve, dispute, confirm
+ * progress. One definition, because three surfaces show this number — the
+ * Panom card, the authenticated home card, and (via the backend job that
+ * mirrors it) the notification bell. The home page used to recompute it
+ * inline and omit the dispute/awaiting-confirmation case, so the same tutor
+ * could read two different counts on two screens.
+ */
+export function tutorPendingActions(bookings: Booking[], now = serverNow()): Booking[] {
+  return bookings.filter(booking => {
+    if (booking.status === "pending" && bookingInstant(booking.start_time) > now) return true;
+    if (booking.status === "disputed" || booking.status === "awaiting_confirmation") return true;
+    return booking.status === "completed"
+      && Boolean(booking.learning_context?.activity_id)
+      && booking.learning_context?.status === "pending_confirmation";
+  });
+}
+
 export function dashboardBookingGroups(bookings: Booking[], now = serverNow()) {
   const active = bookings.filter(booking => {
     const future = bookingInstant(booking.start_time) > now;
@@ -74,13 +92,7 @@ export function dashboardBookingGroups(bookings: Booking[], now = serverNow()) {
   ).sort(byStart);
   const todayKey = istanbulDay(now);
   const today = upcoming.filter(booking => istanbulDay(bookingInstant(booking.start_time)) === todayKey);
-  const pendingActions = bookings.filter(booking => {
-    if (booking.status === "pending" && bookingInstant(booking.start_time) > now) return true;
-    if (booking.status === "disputed" || booking.status === "awaiting_confirmation") return true;
-    return booking.status === "completed"
-      && Boolean(booking.learning_context?.activity_id)
-      && booking.learning_context?.status === "pending_confirmation";
-  });
+  const pendingActions = tutorPendingActions(bookings, now);
   return { active, past, upcoming, today, next: upcoming[0] ?? null, pendingActions };
 }
 

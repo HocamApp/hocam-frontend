@@ -84,8 +84,15 @@ const RULES: Rule[] = [
   },
   {
     // Someone wants something from you — the reference's "user signed up".
+    // `booking_action_required` is the backend's cron reminder for a booking
+    // waiting on the tutor (approve, dispute, confirm progress). It is a
+    // booking-related notification, so it would otherwise fall through to the
+    // generic event tile; this is the one family that says "this is yours to
+    // act on", which is the whole point of that notification.
     match: (type, relatedObjectType) =>
-      type.startsWith("lesson_request") || relatedObjectType === "lesson_request",
+      type === "booking_action_required" ||
+      type.startsWith("lesson_request") ||
+      relatedObjectType === "lesson_request",
     appearance: PERSON,
   },
 ];
