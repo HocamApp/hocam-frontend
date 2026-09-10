@@ -177,31 +177,45 @@ export function AvatarEditor({
                 <div className="space-y-2">
                   <p className="text-sm font-medium text-foreground">Hazır avatar seç</p>
                   <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
-                    {STUDENT_AVATAR_PRESETS.map((preset) => {
+                    {STUDENT_AVATAR_PRESETS.map((preset, index) => {
                       const selected =
                         studentAvatar?.avatarKind === "anonymous" &&
                         studentAvatar?.avatarKey === preset.key;
                       const pending = avatarChoicePendingKey === preset.key;
+                      // Named by position, not by the illustration's filename:
+                      // the picture is the whole content of the choice, and a
+                      // screen reader still needs one option told from another.
+                      const position = index + 1;
 
                       return (
                         <button
                           key={preset.key}
                           type="button"
                           aria-pressed={selected}
+                          aria-label={`${position}. avatar`}
                           onClick={() => onChooseStudentAvatar(preset.key)}
                           disabled={busy}
                           className={cn(
-                            "flex min-h-[92px] flex-col items-center justify-center gap-2 rounded-md border bg-background px-2 py-2 text-xs font-medium text-foreground transition hover:border-primary/60 hover:bg-primary/5 disabled:cursor-not-allowed disabled:opacity-60",
-                            selected && "border-primary bg-primary/10 text-primary"
+                            "relative flex aspect-square items-center justify-center rounded-md border bg-background p-2 transition hover:border-primary/60 hover:bg-primary/5 disabled:cursor-not-allowed disabled:opacity-60",
+                            selected && "border-primary bg-primary/10"
                           )}
                         >
-                          <Avatar className="h-12 w-12 border border-border bg-muted">
-                            <AvatarImage src={preset.url} alt={preset.label} />
-                            <AvatarFallback>{preset.label.slice(0, 1)}</AvatarFallback>
+                          <Avatar className="h-full w-full border border-border bg-muted">
+                            <AvatarImage src={preset.url} alt="" />
+                            <AvatarFallback>{position}</AvatarFallback>
                           </Avatar>
-                          <span className="leading-none">
-                            {pending ? "Seçiliyor" : preset.label}
-                          </span>
+                          {pending && (
+                            <span
+                              className="absolute inset-0 flex items-center justify-center rounded-md bg-background/70"
+                              role="status"
+                              aria-label="Seçiliyor"
+                            >
+                              <span
+                                className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent"
+                                aria-hidden
+                              />
+                            </span>
+                          )}
                         </button>
                       );
                     })}
