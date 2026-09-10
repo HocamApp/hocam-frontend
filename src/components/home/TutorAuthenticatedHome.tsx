@@ -28,6 +28,7 @@ import {
   istanbulDayKey,
 } from "@/lib/bookingTime";
 import { serverNow } from "@/lib/serverClock";
+import { tutorPendingActions } from "@/lib/tutorDashboard";
 import { fetchBookings } from "@/lib/lessonsApi";
 import { fetchAvailability } from "@/lib/dashboardApi";
 import { fetchConversations } from "@/lib/messagingApi";
@@ -500,21 +501,12 @@ export function TutorAuthenticatedHome() {
     [bookings, now]
   );
 
+  // Shared with the Panom card and with the backend job behind the bell
+  // notification. Recomputed inline here once, and the inline copy quietly
+  // dropped the disputed / awaiting-confirmation case — the same tutor could
+  // read one number on the home page and another on the dashboard.
   const pendingActionCount = useMemo(
-    () =>
-      bookings.filter((booking) => {
-        if (
-          booking.status === "pending" &&
-          bookingInstant(booking.start_time) > now
-        ) {
-          return true;
-        }
-        return (
-          booking.status === "completed" &&
-          Boolean(booking.learning_context?.activity_id) &&
-          booking.learning_context?.status === "pending_confirmation"
-        );
-      }).length,
+    () => tutorPendingActions(bookings, now).length,
     [bookings, now]
   );
 
