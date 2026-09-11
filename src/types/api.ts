@@ -174,15 +174,42 @@ export interface RegisterRequest {
   notice_acknowledged: true;
 }
 
-export interface RegisterStartResponse {
+export interface VerificationChallenge {
+  challenge_id: string;
+  expires_at: string;
+  expires_in_seconds: number;
+  resend_available_at: string;
+}
+
+export interface RegisterStartResponse extends VerificationChallenge {
   requires_verification: true;
   email: string;
-  expires_in_seconds: number;
 }
 
 export interface RegisterConfirmRequest {
   email: string;
+  challenge_id?: string;
   code: string;
+}
+
+export interface RegisterResendRequest {
+  email: string;
+  challenge_id: string;
+}
+
+export interface ChangePasswordRequestPayload {
+  current_password: string;
+  new_password: string;
+  password_confirm: string;
+}
+
+export interface ChangePasswordConfirmPayload {
+  challenge_id: string;
+  code: string;
+}
+
+export interface VerificationChallengeResponse extends VerificationChallenge {
+  detail: string;
 }
 
 export type ExamType = "TYT" | "AYT" | "YDT" | "DGS" | "KPSS";

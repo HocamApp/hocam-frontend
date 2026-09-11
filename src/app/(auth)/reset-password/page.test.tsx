@@ -149,7 +149,7 @@ describe("reset-password link handling", () => {
     };
     renderPage();
 
-    fillPasswords("yeni-sifre-123");
+    fillPasswords("Yeni-sifre-123");
     submitForm();
 
     assert.ok(
@@ -161,8 +161,8 @@ describe("reset-password link handling", () => {
       {
         uid: "U1",
         token: "T1",
-        new_password: "yeni-sifre-123",
-        password_confirm: "yeni-sifre-123",
+        new_password: "Yeni-sifre-123",
+        password_confirm: "Yeni-sifre-123",
       },
     ]);
     assert.equal(
@@ -176,6 +176,17 @@ describe("reset-password link handling", () => {
 });
 
 describe("reset-password form", () => {
+  it("şifre gücünü ve iki alanın eşleşmesini canlı gösterir", () => {
+    renderPage();
+    fillPasswords("Güvenli9", "Güvenli8");
+    assert.equal(screen.getByRole("meter").getAttribute("aria-valuenow"), "3");
+    screen.getByText("Şifreler eşleşmiyor.");
+    fireEvent.change(screen.getByLabelText("Şifre tekrar"), {
+      target: { value: "Güvenli9" },
+    });
+    screen.getByText("Şifreler eşleşiyor.");
+  });
+
   it("marks password fields and show/hide toggles accessibly", () => {
     renderPage();
 
@@ -220,7 +231,7 @@ describe("reset-password form", () => {
     };
     renderPage();
 
-    fillPasswords("yeni-sifre-123");
+    fillPasswords("Yeni-sifre-123");
     submitForm();
 
     const alert = await screen.findByRole("alert");
@@ -239,7 +250,7 @@ describe("reset-password form", () => {
   it("toasts and routes to /login on success without auto-login", async () => {
     renderPage();
 
-    fillPasswords("yeni-sifre-123");
+    fillPasswords("Yeni-sifre-123");
     submitForm();
 
     await waitFor(() => {
