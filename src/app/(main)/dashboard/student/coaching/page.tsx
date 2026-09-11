@@ -132,7 +132,7 @@ function OverviewContent() {
           { href: "/support", label: "Destek", icon: Question },
           {
             href: "/dashboard/student/coaching/complaints",
-            label: "Koçluk başvurularım",
+            label: "Bildirdiğim koçluk sorunları",
             icon: ShieldCheck,
           },
         ].map(({ href, label, icon: Icon }) => (
