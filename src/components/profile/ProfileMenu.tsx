@@ -495,10 +495,21 @@ export function ProfileMenu() {
               onChange={(v) => handleNotificationToggle("notify_booking_reminders", v)}
             />
             <ProfileToggleRow
+              label="Koçluk güncellemeleri"
+              checked={prefs.notify_coaching_updates}
+              onChange={(v) =>
+                handleNotificationToggle("notify_coaching_updates", v)
+              }
+            />
+            <ProfileToggleRow
               label="E-posta bildirimleri"
               checked={prefs.notify_email}
               onChange={(v) => handleNotificationToggle("notify_email", v)}
             />
+            <p className="mt-2 px-2 text-xs text-muted-foreground">
+              Bu tercihler yalnız bildirim teslimini etkiler; rapor, destek ve
+              SLA durumları panelinde görünmeye devam eder.
+            </p>
           </ProfileAccordionSection>
 
           {/* ---- Gelişmiş Ayarlar ---- */}
