@@ -26,7 +26,7 @@ export function PasswordStrength({ value, className }: PasswordStrengthProps) {
       ? "text-amber-600 dark:text-amber-400"
       : result.score === 3
         ? "text-emerald-600 dark:text-emerald-400"
-        : "text-muted-foreground";
+        : "text-foreground/70";
 
   return (
     <div className={cn("w-full", className)}>
@@ -67,12 +67,12 @@ export function PasswordStrength({ value, className }: PasswordStrengthProps) {
                 "grid size-4 shrink-0 place-items-center rounded-[5px] border text-[11px] font-bold transition-colors",
                 rule.met
                   ? "border-emerald-500 bg-emerald-500 text-white"
-                  : "border-border text-transparent"
+                  : "border-foreground/60 text-transparent"
               )}
             >
               ✓
             </span>
-            <span className={rule.met ? "text-foreground" : "text-muted-foreground"}>
+            <span className={rule.met ? "text-foreground" : "text-foreground/65"}>
               {rule.label}
             </span>
             <span className="sr-only">{rule.met ? "karşılandı" : "karşılanmadı"}</span>
