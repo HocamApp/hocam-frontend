@@ -448,16 +448,18 @@ describe("Güvenlik sayfası — OTP ve planlama", () => {
 });
 
 describe("Güvenlik sayfası — kullanıcı odaklı güvenlik metinleri", () => {
-  it("mobil başlık simgesini nötr tutarken masaüstü altın rengini korur", async () => {
+  it("başlık simgesi her boyutta marka pembesini taşır", async () => {
     await renderLoadedPage();
 
     const heading = screen.getByRole("heading", { name: "Güvenlik Ayarları" });
     const iconShell = heading.parentElement?.previousElementSibling;
     assert.ok(iconShell);
-    assert.equal(iconShell.classList.contains("max-md:bg-[var(--ink)]"), true);
-    assert.equal(iconShell.classList.contains("max-md:text-white"), true);
-    assert.equal(iconShell.classList.contains("max-md:shrink-0"), true);
-    assert.equal(iconShell.classList.contains("bg-[var(--gold)]"), true);
+    assert.equal(iconShell.classList.contains("bg-primary"), true);
+    assert.equal(iconShell.classList.contains("text-primary-foreground"), true);
+    // Gold stays the pending-verification signal, so the page mark must not
+    // borrow it back and turn the whole header into a warning.
+    assert.equal(iconShell.classList.contains("bg-[var(--gold)]"), false);
+    assert.equal(iconShell.classList.contains("max-md:bg-[var(--ink)]"), false);
   });
 
   for (const [verified, enabled, label] of [
