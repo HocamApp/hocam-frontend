@@ -172,6 +172,8 @@ export interface RegisterRequest {
   notice_code: string;
   notice_version: string;
   notice_acknowledged: true;
+  /** Optional invite code; the server validates it and 400s on a bad one. */
+  referral_code?: string;
 }
 
 export interface VerificationChallenge {
@@ -1134,6 +1136,12 @@ export interface PromoPreviewResponse {
 export interface ReferralInfo {
   referral_code: string;
   referral_url: string;
+  /** Accounts created with this code. A count, not an entitlement. */
+  invited_count: number;
+  /** Of those, the ones whose email was verified. Still just a count. */
+  pending_reward_count: number;
+  /** False until a payment provider and a fraud model exist. */
+  rewards_enabled: boolean;
 }
 
 export interface SubjectRating {

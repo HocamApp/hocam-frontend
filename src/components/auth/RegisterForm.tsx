@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/form";
 import { cn } from "@/lib/utils";
 import { passwordSchema, passwordsMatchMessage } from "@/lib/passwordPolicy";
+import { normalizeReferralCode } from "@/lib/referralCode";
 import { formatCountdown, secondsUntil } from "@/lib/verificationChallenge";
 import { OtpInput, type OtpInputHandle, type OtpStatus } from "@/components/ui/otp-input";
 import { PasswordStrength } from "@/components/ui/password-strength";
@@ -52,6 +53,11 @@ const registerSchema = z
     password: passwordSchema,
     password_confirm: z.string().max(128, "Şifre en fazla 128 karakter olabilir"),
     role: z.enum(["student", "tutor"]).optional(),
+    referral_code: z
+      .string()
+      .trim()
+      .max(12, "Davet kodu en fazla 12 karakter olabilir")
+      .optional(),
   })
   .refine((data) => data.password === data.password_confirm, {
     message: "Şifreler eşleşmiyor",
@@ -75,6 +81,8 @@ interface RegisterFormProps {
   lockedRole?: "student" | "tutor";
   /** Same-origin route used after a successful registration. */
   returnUrl?: string | null;
+  /** Invite code carried by a shared link (?ref=). Pre-fills, stays editable. */
+  initialReferralCode?: string;
   /** Optional hook for embedded flows; runs after auth is stored and before navigation. */
   onAuthenticated?: (auth: AuthResponse) => void | Promise<void>;
 }
@@ -85,6 +93,7 @@ export function RegisterForm({
   onRoleChange,
   lockedRole,
   returnUrl,
+  initialReferralCode,
   onAuthenticated,
 }: RegisterFormProps) {
   const router = useRouter();
@@ -132,6 +141,7 @@ export function RegisterForm({
       password: "",
       password_confirm: "",
       role: lockedRole ?? initialRole,
+      referral_code: initialReferralCode ?? "",
     },
     mode: "onSubmit",
   });
@@ -193,6 +203,7 @@ export function RegisterForm({
       const res = await registerUser({
         ...parsed.data,
         role: parsed.data.role as "student" | "tutor",
+        referral_code: normalizeReferralCode(parsed.data.referral_code),
         notice_code: noticeConfig.code,
         notice_version: noticeConfig.version,
         notice_acknowledged: true,
@@ -213,6 +224,8 @@ export function RegisterForm({
         if (body.password) form.setError("password", { message: body.password[0] });
         if (body.password_confirm) form.setError("password_confirm", { message: body.password_confirm[0] });
         if (body.role) form.setError("role", { message: body.role[0] });
+        if (body.referral_code)
+          form.setError("referral_code", { message: body.referral_code[0] });
         const otherKeys = Object.keys(body).filter((k) => !["email", "password", "password_confirm", "role"].includes(k));
         if (otherKeys.length > 0) {
           setGeneralError(otherKeys.map((k) => (body as Record<string, string[]>)[k].join(" ")).join(" "));
@@ -645,6 +658,44 @@ export function RegisterForm({
                     {passwordMatchMessage}
                   </p>
                 )}
+              </FormItem>
+            )}
+          />
+
+          {/* A shared invite link fills this in; anyone who was handed a code
+              on paper or in a message can still type it. Optional, and never
+              a reason a registration fails to start. */}
+          <FormField
+            control={form.control}
+            name="referral_code"
+            render={({ field }) => (
+              <FormItem className="animate-element animate-delay-700 space-y-2">
+                <FormLabel className="text-sm font-medium text-neutral-400">
+                  Davet kodu{" "}
+                  <span className="text-neutral-500">(opsiyonel)</span>
+                </FormLabel>
+                <FormControl>
+                  <GlassInputWrapper>
+                    <input
+                      {...field}
+                      value={field.value ?? ""}
+                      onChange={(event) =>
+                        field.onChange(
+                          normalizeReferralCode(event.target.value),
+                        )
+                      }
+                      type="text"
+                      inputMode="text"
+                      autoComplete="off"
+                      autoCapitalize="characters"
+                      spellCheck={false}
+                      maxLength={12}
+                      placeholder="Örn. 7SWAMTPS"
+                      className="w-full rounded-2xl bg-transparent p-4 text-base uppercase tracking-[0.18em] text-white placeholder:tracking-normal placeholder:text-neutral-500 focus:outline-none"
+                    />
+                  </GlassInputWrapper>
+                </FormControl>
+                <FormMessage />
               </FormItem>
             )}
           />
