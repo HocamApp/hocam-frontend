@@ -38,6 +38,7 @@ import {
   actionableConfirmDisputeBookings,
   LessonConfirmDisputeCard,
 } from "@/components/lessons/LessonConfirmDisputeCard";
+import { ReferralInviteCard } from "@/components/profile/ReferralInviteCard";
 import { ParticipantAvatar } from "@/components/messaging/ParticipantAvatar";
 import { LessonJoinButton } from "@/components/lessons/LessonJoinButton";
 import { LessonMaterialsDialog } from "@/components/lessons/LessonMaterialsDialog";
@@ -596,6 +597,8 @@ function StudentDashboardContent() {
           bookings={allBookings}
         />
       )}
+
+      <ReferralInviteCard />
 
       <PackageLearningDetailsSheet
         purchase={selectedPackage}

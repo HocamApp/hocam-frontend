@@ -166,16 +166,6 @@ function ProfileContent() {
     toast.success(url ? "Tanıtım videosu güncellendi." : "Tanıtım videosu kaldırıldı.");
   };
 
-  const updateCoachingNotificationPreference = async (next: boolean) => {
-    try {
-      await updateProfileMe({ preferences: { notify_coaching_updates: next } });
-      await queryClient.invalidateQueries({ queryKey: ["profile-me"] });
-      toast.success("Koçluk bildirim tercihi güncellendi.");
-    } catch {
-      toast.error("Tercih kaydedilemedi.");
-    }
-  };
-
   if (isLoading || (isTutor && tutorMeLoading)) {
     return (
       <div className="flex justify-center py-20">
@@ -250,17 +240,6 @@ function ProfileContent() {
         <div className="space-y-6 lg:space-y-8">
           {identitySummary}
           <Card className="rounded-card border border-line bg-surface">
-            <CardHeader><SectionCardTitle className="text-base">Bildirimler</SectionCardTitle></CardHeader>
-            <CardContent>
-              <ProfileToggleRow
-                label="Koçluk güncellemeleri"
-                checked={data?.preferences?.notify_coaching_updates ?? true}
-                onChange={updateCoachingNotificationPreference}
-              />
-              <p className="mt-2 px-2 text-xs text-muted-foreground">Bu tercih proaktif bildirimleri etkiler; rapor, destek ve SLA durumları panelinde görünmeye devam eder.</p>
-            </CardContent>
-          </Card>
-          <Card className="rounded-card border border-line bg-surface">
             <CardHeader>
               <SectionCardTitle className="text-base">Hoca Bilgileri</SectionCardTitle>
             </CardHeader>
@@ -319,17 +298,6 @@ function ProfileContent() {
         <div className="space-y-6 lg:space-y-8">
           {identitySummary}
           <ReferralInviteCard />
-          <Card className="rounded-card border border-line bg-surface">
-            <CardHeader><SectionCardTitle className="text-base">Bildirimler</SectionCardTitle></CardHeader>
-            <CardContent>
-              <ProfileToggleRow
-                label="Koçluk güncellemeleri"
-                checked={data?.preferences?.notify_coaching_updates ?? true}
-                onChange={updateCoachingNotificationPreference}
-              />
-              <p className="mt-2 px-2 text-xs text-muted-foreground">Bu tercih yalnız bildirim teslimini etkiler; destek ve rapor durumları görünür kalır.</p>
-            </CardContent>
-          </Card>
           <StudentLearningProfile />
         </div>
       )}

@@ -55,9 +55,10 @@ function NewDisputeForm({ purchaseId }: { purchaseId: string }) {
   const [description, setDescription] = useState("");
   // The server decides which reasons are open right now; the local state can
   // lag a refetch, so the submitted value is always taken from the live list.
-  const selected = categories.includes(category)
-    ? category
-    : (categories[0] ?? "");
+  // Nothing is pre-selected: the form used to open with the first eligible
+  // reason already chosen, which on most accounts is "Uygunsuz davranış" —
+  // an accusation nobody made, shown to someone who only opened the tab.
+  const selected = categories.includes(category) ? category : "";
   const canSubmit =
     Boolean(selected) && Boolean(description.trim()) && !create.isPending;
 
@@ -68,16 +69,16 @@ function NewDisputeForm({ purchaseId }: { purchaseId: string }) {
           level="subsection"
           description="Konu ve kapsam sunucunun mevcut koçluk kaydından doğrulanır."
         >
-          Koçluk başvurusu oluştur
+          Sorun bildir
         </CoachingSectionHeading>
         {eligibility.isLoading ? (
-          <div aria-label="Başvuru konuları yükleniyor" className="space-y-3">
+          <div aria-label="Sorun konuları yükleniyor" className="space-y-3">
             <div className="h-11 animate-pulse rounded-input bg-[var(--skeleton)]" />
             <div className="h-32 animate-pulse rounded-input bg-[var(--skeleton)]" />
           </div>
         ) : eligibility.isError ? (
           <p className="text-small text-error">
-            Başvuru konuları şu anda getirilemedi. Sayfayı yenileyip tekrar
+            Sorun konuları şu anda getirilemedi. Sayfayı yenileyip tekrar
             dene.
           </p>
         ) : categories.length === 0 ? (
@@ -85,8 +86,8 @@ function NewDisputeForm({ purchaseId }: { purchaseId: string }) {
           // eligible. Offering a placeholder reason here only produced a
           // paragraph of writing that the server then rejected.
           <p className="text-small leading-[1.5] text-ink-mid">
-            Şu anda başvuru açabileceğin bir konu görünmüyor. Koçluk kaydın
-            ilerledikçe uygun konular burada listelenir.
+            Şu anda bildirebileceğin bir sorun konusu görünmüyor. Koçluk
+            kaydın ilerledikçe uygun konular burada listelenir.
           </p>
         ) : (
           <>
@@ -95,15 +96,16 @@ function NewDisputeForm({ purchaseId }: { purchaseId: string }) {
                 htmlFor="coaching-dispute-category"
                 className="block text-label font-medium text-ink"
               >
-                Başvuru konusu
+                Sorun konusu
               </label>
               <select
                 id="coaching-dispute-category"
                 className="h-11 w-full rounded-input border border-line bg-surface px-3 text-body text-ink transition-colors duration-[--duration-state] focus:border-ink focus:outline-none"
-                aria-label="Başvuru konusu"
+                aria-label="Sorun konusu"
                 value={selected}
                 onChange={(event) => setCategory(event.target.value)}
               >
+                <option value="">Konu seç</option>
                 {categories.map((item) => (
                   <option key={item} value={item}>
                     {coachingDisputeCategoryLabel(item)}
@@ -130,14 +132,14 @@ function NewDisputeForm({ purchaseId }: { purchaseId: string }) {
         )}
         {create.error ? (
           <p className="text-small text-error">
-            Başvuru oluşturulamadı. Güncel durumu tekrar kontrol et.
+            Sorun bildirimi oluşturulamadı. Güncel durumu tekrar kontrol et.
           </p>
         ) : null}
         <Button
           disabled={!canSubmit}
           onClick={() => create.mutate({ category: selected, description })}
         >
-          {create.isPending ? "Gönderiliyor…" : "Başvuruyu gönder"}
+          {create.isPending ? "Gönderiliyor…" : "Sorunu gönder"}
         </Button>
       </CardContent>
     </Card>
@@ -181,10 +183,10 @@ function ComplaintsContent() {
       <EmptyState
         icon={ShieldCheck}
         title="Koçluk kaydı bulunamadı"
-        description="Koçluk başvuruları aktif bir koçluk satın alımıyla ilişkilidir."
+        description="Koçluk sorun bildirimleri aktif bir koçluk satın alımıyla ilişkilidir."
         steps={[
           "Aktif koçluk kaydı doğrulanır",
-          "Başvuru alanı hizmete bağlanır",
+          "Sorun bildirimi hizmete bağlanır",
         ]}
       />
     );
@@ -239,7 +241,7 @@ function ComplaintsContent() {
         </CardContent>
       </Card>
       <section className="space-y-4">
-        <CoachingSectionHeading>Başvurularım</CoachingSectionHeading>
+        <CoachingSectionHeading>Bildirdiğim sorunlar</CoachingSectionHeading>
         {disputes.data?.length ? (
           disputes.data.map((dispute) => (
             <Link
@@ -269,10 +271,10 @@ function ComplaintsContent() {
         ) : (
           <EmptyState
             icon={ShieldCheck}
-            title="Henüz başvurun yok"
-            description="Bir sorun olduğunda başvurunu buradan takip edebilirsin."
+            title="Henüz bildirdiğin bir sorun yok"
+            description="Bir sorun olduğunda bildirimini buradan takip edebilirsin."
             steps={[
-              "Başvurunu ve kanıtını paylaşırsın",
+              "Sorunu ve kanıtını paylaşırsın",
               "Paylaşılabilir süreç güncellemelerini izlersin",
             ]}
           />
@@ -286,7 +288,7 @@ export default function StudentCoachingComplaintsPage() {
   return (
     <RouteGuard requireAuth requireRole="student">
       <CoachingPageShell
-        title="Koçluk başvurularım"
+        title="Bildirdiğim koçluk sorunları"
         width="narrow"
         currentHref="/dashboard/student/coaching/complaints"
         audience="student"

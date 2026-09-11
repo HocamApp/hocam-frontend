@@ -11,7 +11,7 @@ export function TrialLessonOffer({
     <section className="flex min-h-14 flex-col gap-2 rounded-card border border-[var(--checkout-soft-line)] bg-[var(--checkout-card-surface)] px-3 py-2 sm:flex-row sm:items-center">
       <div className="min-w-0 flex-1">
         <p className="text-sm font-semibold">Önce ücretsiz tanışma dersi planla</p>
-        <p className="text-xs opacity-65">Bu ay {remaining} ücretsiz hakkın kaldı.</p>
+        <p className="text-xs opacity-65">Bu ay {remaining} ücretsiz deneme dersi hakkın kaldı.</p>
       </div>
       <Button
         variant="outline"

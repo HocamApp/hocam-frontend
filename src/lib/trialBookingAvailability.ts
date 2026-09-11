@@ -74,8 +74,8 @@ const unavailableCopy: Record<
     description: "Deneme dersi ayırtmak için bir öğrenci hesabıyla başka bir hoca seç.",
   },
   monthly_quota: {
-    title: "Bu ayki deneme hakların doldu",
-    description: "Yeni ücretsiz deneme hakkın gelecek ay yenilenecek.",
+    title: "Bu ayki deneme dersi hakların doldu",
+    description: "Yeni ücretsiz deneme dersi hakkın gelecek ay yenilenecek.",
   },
   already_used_with_tutor: {
     title: "Bu hocayla deneme hakkını kullandın",

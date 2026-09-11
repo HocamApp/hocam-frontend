@@ -13,6 +13,16 @@ import {
   tutorFullName,
   tutorSeoDescription,
 } from "@/lib/seo";
+import { resolveProfileImageUrl } from "@/lib/profileImages";
+
+/* Seed runs stored full deployment URLs for demo tutor photos, so a retired
+   deployment left dead images in every share card. resolveProfileImageUrl maps
+   those back to a same-origin path; crawlers need it absolute. */
+function seoProfileImageUrl(profilePicture: string | null | undefined) {
+  const resolved = resolveProfileImageUrl(profilePicture);
+  if (!resolved) return undefined;
+  return resolved.startsWith("/") ? absoluteUrl(resolved) : resolved;
+}
 
 type TutorLayoutProps = Readonly<{
   children: React.ReactNode;
@@ -36,6 +46,7 @@ export async function generateMetadata({
   const name = tutorFullName(tutor);
   const description = tutorSeoDescription(tutor);
   const canonical = `/tutors/${encodeURIComponent(tutor.id)}`;
+  const ogImage = seoProfileImageUrl(tutor.profile_picture);
 
   return {
     title: {
@@ -54,10 +65,10 @@ export async function generateMetadata({
       url: canonical,
       title: `${name} | Hocam`,
       description,
-      images: tutor.profile_picture
+      images: ogImage
         ? [
             {
-              url: tutor.profile_picture,
+              url: ogImage,
               alt: name,
             },
           ]
@@ -120,7 +131,7 @@ export default async function TutorProfileLayout({
             "@id": personId,
             name,
             url: profileUrl,
-            image: tutor.profile_picture || undefined,
+            image: seoProfileImageUrl(tutor.profile_picture),
             description: tutor.bio || description,
             alumniOf: tutor.university
               ? {

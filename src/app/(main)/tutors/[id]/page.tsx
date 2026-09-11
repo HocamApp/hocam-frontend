@@ -684,11 +684,6 @@ export default function TutorProfilePage({
                     lastSeenAt={tutor.last_seen_at}
                   />
                 </div>
-                {(tutor.completed_lessons_count ?? 0) > 0 && (
-                  <p className="mt-2 text-sm text-ink-mid">
-                    {completedLessonsLabel}
-                  </p>
-                )}
                 {/* The rank is the achievement the whole product is built on, so
                   it takes the gold surface here as it does on the tutor card,
                   at 14px inside the page's 20px surfaces. Gold never carries
@@ -901,8 +896,8 @@ export default function TutorProfilePage({
                             Uymadı mı, sorun değil.
                           </p>
                           <p className="mt-0.5 text-sm text-ink-mid">
-                            Bu ay {trialLessonsRemaining} ücretsiz deneme hakkın
-                            kaldı.
+                            Bu ay {trialLessonsRemaining} ücretsiz deneme dersi
+                            hakkın kaldı.
                           </p>
                         </div>
                       </div>
@@ -1360,6 +1355,7 @@ export default function TutorProfilePage({
               src={tutorPhotoUrl}
               alt={`${tutor.name} ${tutor.surname}`}
               className="max-h-[80vh] w-full rounded-card bg-paper object-contain"
+              onError={() => setIsPhotoPreviewOpen(false)}
             />
           </DialogContent>
         </Dialog>
