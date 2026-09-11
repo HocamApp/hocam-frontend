@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -25,6 +24,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { dativeName } from "@/lib/turkishSuffix";
 
@@ -192,19 +192,19 @@ export function MessageRequestModal({
             card, the profile header. A circle here would be the only round
             one on the site. */}
         <DialogHeader className="items-center space-y-0 text-center">
-          <span className="mb-4 inline-flex size-24 items-center justify-center overflow-hidden rounded-card bg-ink text-paper">
-            {tutor.profile_picture ? (
-              <Image
-                src={tutor.profile_picture}
-                alt=""
-                width={192}
-                height={192}
-                className="size-full object-cover"
-              />
-            ) : (
-              <span className="text-[28px] font-semibold">{initials}</span>
-            )}
-          </span>
+          <Avatar
+            shape="square"
+            className="mb-4 size-24 rounded-card bg-ink text-paper"
+          >
+            <AvatarImage
+              src={tutor.profile_picture || undefined}
+              alt=""
+              className="object-cover"
+            />
+            <AvatarFallback className="rounded-card bg-ink text-[28px] font-semibold text-paper">
+              {initials}
+            </AvatarFallback>
+          </Avatar>
           <DialogTitle className="text-center text-[22px] leading-[1.3] tracking-[-0.01em]">
             {dativeName(firstName)} yaz
           </DialogTitle>
