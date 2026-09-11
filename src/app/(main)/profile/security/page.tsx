@@ -9,6 +9,8 @@ import {
   ArrowLeft,
   BadgeCheck,
   CalendarClock,
+  Eye,
+  EyeOff,
   KeyRound,
   LogOut,
   MailCheck,
@@ -30,8 +32,10 @@ import {
   requestDeletionOtp,
   requestAccountDeletion,
   requestEmailVerificationCode,
+  requestPasswordChange,
   type DeletionPrecheck,
 } from "@/lib/authApi";
+import type { VerificationChallenge } from "@/types/api";
 import { useAuth } from "@/hooks/useAuth";
 import { useAuthContext } from "@/providers/AuthProvider";
 import { RouteGuard } from "@/components/shared/RouteGuard";
@@ -46,6 +50,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { OtpInput, type OtpInputHandle, type OtpStatus } from "@/components/ui/otp-input";
+import { PasswordStrength } from "@/components/ui/password-strength";
+import { passwordSchema, passwordsMatchMessage } from "@/lib/passwordPolicy";
+import { formatCountdown, secondsUntil } from "@/lib/verificationChallenge";
 import { cn } from "@/lib/utils";
 
 function formatLastSeen(value: string | null): string {
@@ -77,6 +85,8 @@ function SecurityContent() {
   const { setAuth } = useAuthContext();
   const [code, setCode] = useState("");
   const [codeError, setCodeError] = useState<string | null>(null);
+  const [codeStatus, setCodeStatus] = useState<OtpStatus>("idle");
+  const [emailChallenge, setEmailChallenge] = useState<VerificationChallenge | null>(null);
   const [requestingCode, setRequestingCode] = useState(false);
   const [confirmingCode, setConfirmingCode] = useState(false);
   const [loggingOutAll, setLoggingOutAll] = useState(false);
@@ -107,8 +117,26 @@ function SecurityContent() {
   const [newPasswordConfirm, setNewPasswordConfirm] = useState("");
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [changingPassword, setChangingPassword] = useState(false);
+  const [passwordChallenge, setPasswordChallenge] = useState<VerificationChallenge | null>(null);
+  const [passwordCode, setPasswordCode] = useState("");
+  const [passwordCodeStatus, setPasswordCodeStatus] = useState<OtpStatus>("idle");
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showNewPasswordConfirm, setShowNewPasswordConfirm] = useState(false);
+  const [clock, setClock] = useState(() => Date.now());
   const [deletionFlowOpen, setDeletionFlowOpen] = useState(false);
   const deletionPanelRef = useRef<HTMLDivElement>(null);
+  const emailOtpRef = useRef<OtpInputHandle>(null);
+  const passwordOtpRef = useRef<OtpInputHandle>(null);
+  const confirmingEmailRef = useRef(false);
+  const confirmingPasswordRef = useRef(false);
+
+  const passwordEvaluation = passwordSchema.safeParse(newPassword);
+  const passwordMatchMessage = passwordsMatchMessage(newPassword, newPasswordConfirm);
+  const emailExpiresIn = secondsUntil(emailChallenge?.expires_at, clock);
+  const emailResendIn = secondsUntil(emailChallenge?.resend_available_at, clock);
+  const passwordExpiresIn = secondsUntil(passwordChallenge?.expires_at, clock);
+  const passwordResendIn = secondsUntil(passwordChallenge?.resend_available_at, clock);
 
   const accountEmail = user?.email ?? "";
   const canDeleteAccount =
@@ -143,6 +171,17 @@ function SecurityContent() {
   }, [otpCooldown]);
 
   useEffect(() => {
+    if (!emailChallenge && !passwordChallenge) return;
+    const updateClock = () => setClock(Date.now());
+    const timer = window.setInterval(updateClock, 1000);
+    document.addEventListener("visibilitychange", updateClock);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", updateClock);
+    };
+  }, [emailChallenge, passwordChallenge]);
+
+  useEffect(() => {
     if (!deletionFlowOpen) return;
     deletionPanelRef.current?.scrollIntoView?.({
       behavior: "smooth",
@@ -163,13 +202,25 @@ function SecurityContent() {
   };
 
   const handleRequestCode = async () => {
+    if (emailChallenge && emailResendIn > 0) return;
     setCodeError(null);
+    setCodeStatus("idle");
     setRequestingCode(true);
     try {
-      await requestEmailVerificationCode();
+      const challenge = await requestEmailVerificationCode();
+      setEmailChallenge(challenge);
+      setClock(Date.now());
+      setCode("");
+      emailOtpRef.current?.clear();
       setCodeSent(true);
       toast.success("Doğrulama kodu e-postanıza gönderildi.");
     } catch (err: any) {
+      const challenge = err?.response?.data;
+      if (challenge?.challenge_id && challenge?.expires_at && challenge?.resend_available_at) {
+        setEmailChallenge(challenge);
+        setCodeSent(true);
+        setClock(Date.now());
+      }
       if (err?.response?.status === 429) {
         setCodeError("Yeni kod istemeden önce kısa bir süre bekleyin.");
       } else {
@@ -180,58 +231,138 @@ function SecurityContent() {
     }
   };
 
-  const handleConfirmCode = async () => {
-    if (!/^\d{6}$/.test(code)) {
+  const handleConfirmCode = async (submittedCode = code) => {
+    if (confirmingEmailRef.current || confirmingCode) return;
+    if (!/^\d{6}$/.test(submittedCode)) {
       setCodeError("6 haneli doğrulama kodunu girin.");
+      setCodeStatus("error");
+      return;
+    }
+    if (!emailChallenge || emailExpiresIn <= 0) {
+      setCodeError("Kodun süresi doldu. Yeni bir kod isteyin.");
+      setCodeStatus("error");
       return;
     }
     setCodeError(null);
+    setCodeStatus("idle");
+    confirmingEmailRef.current = true;
     setConfirmingCode(true);
     try {
-      await confirmEmailVerificationCode(code);
+      await confirmEmailVerificationCode(submittedCode, emailChallenge.challenge_id);
+      setCodeStatus("success");
+      await new Promise((resolve) => window.setTimeout(resolve, 600));
       setCode("");
       setCodeSent(false);
+      setEmailChallenge(null);
       await queryClient.invalidateQueries({ queryKey: ["security-settings"] });
       toast.success("E-posta adresiniz doğrulandı.");
-    } catch {
-      setCodeError("Kod doğrulanamadı. Kodu kontrol edip tekrar deneyin.");
+    } catch (err: any) {
+      const response = err?.response;
+      setCodeStatus(response ? "error" : "idle");
+      setCodeError(
+        response?.data?.code?.[0] ||
+          response?.data?.detail ||
+          (response
+            ? "Kod doğrulanamadı. Kodu kontrol edip tekrar deneyin."
+            : "Bağlantı kurulamadı. Aynı kodla tekrar deneyin.")
+      );
     } finally {
+      confirmingEmailRef.current = false;
       setConfirmingCode(false);
     }
   };
 
-  const handleChangePassword = async () => {
+  const handleRequestPasswordChange = async () => {
+    if (passwordChallenge && passwordResendIn > 0) return;
     if (newPassword !== newPasswordConfirm) {
-      setPasswordError("Yeni şifreler eşleşmiyor.");
+      setPasswordError("Şifreler eşleşmiyor.");
       return;
     }
-    if (newPassword.length < 8) {
-      setPasswordError("Yeni şifre en az 8 karakter olmalı.");
+    const validation = passwordSchema.safeParse(newPassword);
+    if (!validation.success) {
+      setPasswordError(validation.error.issues[0]?.message ?? "Yeni şifre geçerli değil.");
+      return;
+    }
+    if (!currentPassword) {
+      setPasswordError("Mevcut şifrenizi girin.");
       return;
     }
     setPasswordError(null);
     setChangingPassword(true);
     try {
-      const { token, user: updatedUser } = await changePassword({
+      const challenge = await requestPasswordChange({
         current_password: currentPassword,
         new_password: newPassword,
         password_confirm: newPasswordConfirm,
       });
-      setAuth(updatedUser, token);
-      setCurrentPassword("");
-      setNewPassword("");
-      setNewPasswordConfirm("");
-      setShowPasswordForm(false);
-      toast.success("Şifreniz güncellendi.");
+      setPasswordChallenge(challenge);
+      setPasswordCode("");
+      setPasswordCodeStatus("idle");
+      setClock(Date.now());
+      passwordOtpRef.current?.clear();
+      toast.success("Doğrulama kodu e-postanıza gönderildi.");
     } catch (err: any) {
       const data = err?.response?.data;
+      if (data?.challenge_id && data?.expires_at && data?.resend_available_at) {
+        setPasswordChallenge(data);
+        setClock(Date.now());
+      }
       const message =
         data?.current_password?.[0] ||
         data?.new_password?.[0] ||
         data?.password_confirm?.[0] ||
+        data?.detail ||
         "Şifre değiştirilemedi. Lütfen tekrar deneyin.";
       setPasswordError(message);
     } finally {
+      setChangingPassword(false);
+    }
+  };
+
+  const handleConfirmPasswordChange = async (submittedCode = passwordCode) => {
+    if (confirmingPasswordRef.current || changingPassword) return;
+    if (!/^\d{6}$/.test(submittedCode)) {
+      setPasswordCodeStatus("error");
+      setPasswordError("6 haneli doğrulama kodunu girin.");
+      return;
+    }
+    if (!passwordChallenge || passwordExpiresIn <= 0) {
+      setPasswordCodeStatus("error");
+      setPasswordError("Kodun süresi doldu. Yeni bir kod isteyin.");
+      return;
+    }
+
+    setPasswordError(null);
+    setPasswordCodeStatus("idle");
+    confirmingPasswordRef.current = true;
+    setChangingPassword(true);
+    try {
+      const { token, user: updatedUser } = await changePassword({
+        challenge_id: passwordChallenge.challenge_id,
+        code: submittedCode,
+      });
+      setPasswordCodeStatus("success");
+      await new Promise((resolve) => window.setTimeout(resolve, 600));
+      setAuth(updatedUser, token);
+      setCurrentPassword("");
+      setNewPassword("");
+      setNewPasswordConfirm("");
+      setPasswordCode("");
+      setPasswordChallenge(null);
+      setShowPasswordForm(false);
+      toast.success("Şifreniz güncellendi.");
+    } catch (err: any) {
+      const response = err?.response;
+      setPasswordCodeStatus(response ? "error" : "idle");
+      setPasswordError(
+        response?.data?.code?.[0] ||
+          response?.data?.detail ||
+          (response
+            ? "Kod doğrulanamadı. Kodu kontrol edip tekrar deneyin."
+            : "Bağlantı kurulamadı. Aynı kodla tekrar deneyin.")
+      );
+    } finally {
+      confirmingPasswordRef.current = false;
       setChangingPassword(false);
     }
   };
@@ -482,15 +613,15 @@ function SecurityContent() {
                     hesabınızı güvenceye alın.
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    Kod 10 dakika geçerlidir.
+                    Kod 2 dakika geçerlidir ve yalnızca bir kez kullanılabilir.
                   </p>
                 </div>
 
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+                <div className="space-y-3">
                   <Button
                     type="button"
                     onClick={handleRequestCode}
-                    disabled={requestingCode}
+                    disabled={requestingCode || (Boolean(emailChallenge) && emailResendIn > 0)}
                     className="sm:w-auto"
                   >
                     {requestingCode ? (
@@ -501,45 +632,52 @@ function SecurityContent() {
                     ) : (
                       <Send className="mr-2 h-4 w-4" />
                     )}
-                    Kod gönder
+                    {emailChallenge
+                      ? emailResendIn > 0
+                        ? `Tekrar gönder (${emailResendIn} sn)`
+                        : "Kodu tekrar gönder"
+                      : "Kod gönder"}
                   </Button>
-                  <div className="flex-1">
-                    <Label htmlFor="verification-code">Doğrulama kodu</Label>
-                    <div className="mt-1 flex flex-col gap-2 min-[420px]:flex-row">
-                      <Input
-                        id="verification-code"
-                        value={code}
-                        onChange={(e) => {
-                          setCode(e.target.value.replace(/\D/g, "").slice(0, 6));
-                          setCodeError(null);
-                        }}
-                        inputMode="numeric"
-                        autoComplete="one-time-code"
-                        placeholder="000000"
-                        className="w-full min-[420px]:max-w-[12rem]"
-                      />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="w-full min-[420px]:w-auto"
-                        onClick={handleConfirmCode}
-                        disabled={confirmingCode || code.length !== 6}
-                      >
-                        {confirmingCode ? "Kontrol ediliyor" : "Doğrula"}
-                      </Button>
-                    </div>
-                    {codeError && (
-                      <p className="mt-1.5 text-sm text-destructive">
-                        {codeError}
-                      </p>
-                    )}
-                  </div>
                 </div>
 
-                {codeSent && (
-                  <p className="text-sm text-muted-foreground">
-                    Kod gönderildi. Gelen kutunuzu ve spam klasörünüzü kontrol edin.
-                  </p>
+                {codeSent && emailChallenge && (
+                  <div className="space-y-3 rounded-[var(--radius-input)] border border-[var(--line)] bg-[var(--paper)] p-4">
+                    <OtpInput
+                      ref={emailOtpRef}
+                      label="E-posta doğrulama kodu"
+                      disabled={confirmingCode || emailExpiresIn <= 0}
+                      status={codeStatus}
+                      errorMessage={codeError ?? ""}
+                      successMessage="Kod doğrulandı."
+                      hint={
+                        emailExpiresIn > 0
+                          ? `Kodun geçerlilik süresi: ${formatCountdown(emailExpiresIn)}`
+                          : "Kodun süresi doldu. Yeni bir kod isteyin."
+                      }
+                      onChange={(value) => {
+                        setCode(value);
+                        if (codeStatus !== "success") setCodeStatus("idle");
+                        setCodeError(null);
+                      }}
+                      onComplete={(value) => void handleConfirmCode(value)}
+                      autoFocus
+                    />
+                    {codeError && codeStatus === "idle" && (
+                      <div className="space-y-2">
+                        <ErrorMessage message={codeError} />
+                        {code.length === 6 && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => void handleConfirmCode()}
+                            disabled={confirmingCode}
+                          >
+                            Aynı kodla tekrar dene
+                          </Button>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 )}
               </>
             )}
@@ -590,72 +728,196 @@ function SecurityContent() {
 
             {showPasswordForm && data?.has_usable_password !== false && (
               <div className="space-y-4 rounded-[var(--radius-input)] border border-[var(--line)] bg-[var(--paper)] p-5">
-                <div className="space-y-1.5">
-                  <Label htmlFor="current-password">Mevcut şifre</Label>
-                  <Input
-                    id="current-password"
-                    type="password"
-                    value={currentPassword}
-                    onChange={(e) => {
-                      setCurrentPassword(e.target.value);
-                      setPasswordError(null);
-                    }}
-                    autoComplete="current-password"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="new-password">Yeni şifre</Label>
-                  <Input
-                    id="new-password"
-                    type="password"
-                    value={newPassword}
-                    onChange={(e) => {
-                      setNewPassword(e.target.value);
-                      setPasswordError(null);
-                    }}
-                    autoComplete="new-password"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="new-password-confirm">Yeni şifre (tekrar)</Label>
-                  <Input
-                    id="new-password-confirm"
-                    type="password"
-                    value={newPasswordConfirm}
-                    onChange={(e) => {
-                      setNewPasswordConfirm(e.target.value);
-                      setPasswordError(null);
-                    }}
-                    autoComplete="new-password"
-                  />
-                </div>
-                {passwordError && <ErrorMessage message={passwordError} />}
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                  <Button
-                    type="button"
-                    onClick={handleChangePassword}
-                    disabled={
-                      changingPassword ||
-                      !currentPassword ||
-                      !newPassword ||
-                      !newPasswordConfirm
-                    }
-                  >
-                    {changingPassword && (
-                      <span
-                        className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"
-                        aria-hidden
-                      />
+                {passwordChallenge ? (
+                  <div className="space-y-4">
+                    <div>
+                      <p className="font-medium text-foreground">E-postanıza gönderilen kodu girin</p>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        Kod 2 dakika geçerlidir. Altıncı rakamı girdiğinizde otomatik kontrol edilir.
+                      </p>
+                    </div>
+                    <OtpInput
+                      ref={passwordOtpRef}
+                      label="Şifre değişikliği doğrulama kodu"
+                      disabled={changingPassword || passwordExpiresIn <= 0}
+                      status={passwordCodeStatus}
+                      errorMessage={passwordError ?? ""}
+                      successMessage="Kod doğrulandı."
+                      hint={
+                        passwordExpiresIn > 0
+                          ? `Kodun geçerlilik süresi: ${formatCountdown(passwordExpiresIn)}`
+                          : "Kodun süresi doldu. Yeni bir kod isteyin."
+                      }
+                      onChange={(value) => {
+                        setPasswordCode(value);
+                        if (passwordCodeStatus !== "success") setPasswordCodeStatus("idle");
+                        setPasswordError(null);
+                      }}
+                      onComplete={(value) => void handleConfirmPasswordChange(value)}
+                      autoFocus
+                    />
+                    {passwordError && passwordCodeStatus === "idle" && (
+                      <div className="space-y-2">
+                        <ErrorMessage message={passwordError} />
+                        {passwordCode.length === 6 && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => void handleConfirmPasswordChange()}
+                            disabled={changingPassword}
+                          >
+                            Aynı kodla tekrar dene
+                          </Button>
+                        )}
+                      </div>
                     )}
-                    Şifreyi güncelle
-                  </Button>
-                  <Link
-                    href="/forgot-password"
-                    className="text-sm text-muted-foreground underline-offset-4 hover:underline"
-                  >
-                    Mevcut şifrenizi mi unuttunuz?
-                  </Link>
-                </div>
+                    <div className="flex flex-col gap-3 sm:flex-row">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => void handleRequestPasswordChange()}
+                        disabled={changingPassword || passwordResendIn > 0}
+                      >
+                        {passwordResendIn > 0
+                          ? `Tekrar gönder (${passwordResendIn} sn)`
+                          : "Kodu tekrar gönder"}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        onClick={() => {
+                          setPasswordChallenge(null);
+                          setPasswordCode("");
+                          setPasswordCodeStatus("idle");
+                          setPasswordError(null);
+                        }}
+                      >
+                        Bilgileri düzenle
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="current-password">Mevcut şifre</Label>
+                      <div className="relative">
+                        <Input
+                          id="current-password"
+                          type={showCurrentPassword ? "text" : "password"}
+                          value={currentPassword}
+                          onChange={(e) => {
+                            setCurrentPassword(e.target.value);
+                            setPasswordError(null);
+                          }}
+                          autoComplete="current-password"
+                          className="pr-11"
+                        />
+                        <button
+                          type="button"
+                          aria-label={showCurrentPassword ? "Mevcut şifreyi gizle" : "Mevcut şifreyi göster"}
+                          aria-pressed={showCurrentPassword}
+                          onClick={() => setShowCurrentPassword((value) => !value)}
+                          className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-muted-foreground"
+                        >
+                          {showCurrentPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                      </div>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="new-password">Yeni şifre</Label>
+                      <div className="relative">
+                        <Input
+                          id="new-password"
+                          type={showNewPassword ? "text" : "password"}
+                          value={newPassword}
+                          maxLength={128}
+                          onChange={(e) => {
+                            setNewPassword(e.target.value);
+                            setPasswordError(null);
+                          }}
+                          autoComplete="new-password"
+                          className="pr-11"
+                        />
+                        <button
+                          type="button"
+                          aria-label={showNewPassword ? "Yeni şifreyi gizle" : "Yeni şifreyi göster"}
+                          aria-pressed={showNewPassword}
+                          onClick={() => setShowNewPassword((value) => !value)}
+                          className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-muted-foreground"
+                        >
+                          {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                      </div>
+                      <PasswordStrength value={newPassword} className="pt-1" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="new-password-confirm">Yeni şifre (tekrar)</Label>
+                      <div className="relative">
+                        <Input
+                          id="new-password-confirm"
+                          type={showNewPasswordConfirm ? "text" : "password"}
+                          value={newPasswordConfirm}
+                          maxLength={128}
+                          onChange={(e) => {
+                            setNewPasswordConfirm(e.target.value);
+                            setPasswordError(null);
+                          }}
+                          autoComplete="new-password"
+                          className="pr-11"
+                        />
+                        <button
+                          type="button"
+                          aria-label={showNewPasswordConfirm ? "Şifre tekrarını gizle" : "Şifre tekrarını göster"}
+                          aria-pressed={showNewPasswordConfirm}
+                          onClick={() => setShowNewPasswordConfirm((value) => !value)}
+                          className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-muted-foreground"
+                        >
+                          {showNewPasswordConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                      </div>
+                      {passwordMatchMessage && (
+                        <p
+                          role="status"
+                          className={cn(
+                            "text-sm",
+                            newPassword === newPasswordConfirm
+                              ? "text-emerald-600 dark:text-emerald-400"
+                              : "text-destructive"
+                          )}
+                        >
+                          {passwordMatchMessage}
+                        </p>
+                      )}
+                    </div>
+                    {passwordError && <ErrorMessage message={passwordError} />}
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                      <Button
+                        type="button"
+                        onClick={() => void handleRequestPasswordChange()}
+                        disabled={
+                          changingPassword ||
+                          !currentPassword ||
+                          !passwordEvaluation.success ||
+                          newPassword !== newPasswordConfirm
+                        }
+                      >
+                        {changingPassword && (
+                          <span
+                            className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"
+                            aria-hidden
+                          />
+                        )}
+                        Doğrulama kodu gönder
+                      </Button>
+                      <Link
+                        href="/forgot-password"
+                        className="text-sm text-muted-foreground underline-offset-4 hover:underline"
+                      >
+                        Mevcut şifrenizi mi unuttunuz?
+                      </Link>
+                    </div>
+                  </>
+                )}
               </div>
             )}
             <p className="text-sm leading-relaxed text-muted-foreground">

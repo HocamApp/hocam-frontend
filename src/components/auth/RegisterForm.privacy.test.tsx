@@ -48,8 +48,14 @@ mock.module("@/lib/authApi", {
       return {
         requires_verification: true,
         email: String(payload.email),
-        expires_in_seconds: 600,
+        challenge_id: "register-challenge-1",
+        expires_at: "2099-01-01T00:02:00Z",
+        expires_in_seconds: 120,
+        resend_available_at: "2099-01-01T00:01:00Z",
       };
+    },
+    resendRegistrationCode: async () => {
+      throw new Error("not used");
     },
     confirmRegistration: async () => {
       throw new Error("not used");
@@ -164,10 +170,10 @@ describe("registration KVKK acknowledgement", () => {
       target: { value: "student@example.com" },
     });
     fireEvent.change(screen.getByPlaceholderText("Şifreni gir"), {
-      target: { value: "safe-pass-123" },
+      target: { value: "Safe-pass-123" },
     });
     fireEvent.change(screen.getByPlaceholderText("Şifreni tekrar gir"), {
-      target: { value: "safe-pass-123" },
+      target: { value: "Safe-pass-123" },
     });
     fireEvent.click(screen.getByRole("button", { name: "Kayıt Ol" }));
 

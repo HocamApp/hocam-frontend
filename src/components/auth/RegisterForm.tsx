@@ -12,9 +12,10 @@ import {
   confirmRegistration,
   googleAuth,
   registerUser,
+  resendRegistrationCode,
 } from "@/lib/authApi";
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
-import { ApiError, AuthResponse } from "@/types";
+import { ApiError, AuthResponse, RegisterStartResponse } from "@/types";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import {
@@ -26,6 +27,10 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { cn } from "@/lib/utils";
+import { passwordSchema, passwordsMatchMessage } from "@/lib/passwordPolicy";
+import { formatCountdown, secondsUntil } from "@/lib/verificationChallenge";
+import { OtpInput, type OtpInputHandle, type OtpStatus } from "@/components/ui/otp-input";
+import { PasswordStrength } from "@/components/ui/password-strength";
 import { GlassInputWrapper } from "@/components/auth/AuthSplitScreen";
 import { AydinlatmaMetniPreview } from "@/components/privacy/AydinlatmaMetniPreview";
 import {
@@ -44,8 +49,8 @@ import {
 const registerSchema = z
   .object({
     email: z.string().email("Geçerli bir e-posta adresi girin"),
-    password: z.string().min(8, "Şifre en az 8 karakter olmalıdır"),
-    password_confirm: z.string(),
+    password: passwordSchema,
+    password_confirm: z.string().max(128, "Şifre en fazla 128 karakter olabilir"),
     role: z.enum(["student", "tutor"]).optional(),
   })
   .refine((data) => data.password === data.password_confirm, {
@@ -88,8 +93,14 @@ export function RegisterForm({
   const [showPassword, setShowPassword] = useState(false);
   const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
   const [pendingEmail, setPendingEmail] = useState<string | null>(null);
+  const [pendingChallenge, setPendingChallenge] = useState<RegisterStartResponse | null>(null);
   const [verificationCode, setVerificationCode] = useState("");
+  const [verificationStatus, setVerificationStatus] = useState<OtpStatus>("idle");
+  const [verificationError, setVerificationError] = useState("");
+  const [verificationRetryAvailable, setVerificationRetryAvailable] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
+  const [isResending, setIsResending] = useState(false);
+  const [clock, setClock] = useState(() => Date.now());
   const [noticeOpen, setNoticeOpen] = useState(false);
   const [noticeConfig, setNoticeConfig] = useState<RegistrationNoticeConfig | null>(null);
   const [noticeConfigFailed, setNoticeConfigFailed] = useState(false);
@@ -97,6 +108,8 @@ export function RegisterForm({
   const [noticeViewed, setNoticeViewed] = useState(false);
   const [noticeAcknowledged, setNoticeAcknowledged] = useState(false);
   const authHandledByFormRef = useRef(false);
+  const confirmingRef = useRef(false);
+  const otpRef = useRef<OtpInputHandle>(null);
   const handleNoticeReady = useCallback(() => setNoticeLoaded(true), []);
 
   useEffect(() => {
@@ -124,6 +137,23 @@ export function RegisterForm({
   });
 
   const role = form.watch("role");
+  const passwordValue = form.watch("password");
+  const passwordConfirmValue = form.watch("password_confirm");
+  const passwordMatchMessage = passwordsMatchMessage(passwordValue, passwordConfirmValue);
+  const expiresIn = secondsUntil(pendingChallenge?.expires_at, clock);
+  const resendIn = secondsUntil(pendingChallenge?.resend_available_at, clock);
+
+  useEffect(() => {
+    if (!pendingChallenge) return;
+    setClock(Date.now());
+    const updateClock = () => setClock(Date.now());
+    const timer = window.setInterval(updateClock, 1000);
+    document.addEventListener("visibilitychange", updateClock);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", updateClock);
+    };
+  }, [pendingChallenge]);
 
   useEffect(() => {
     if (role === "student" || role === "tutor") {
@@ -169,7 +199,10 @@ export function RegisterForm({
       });
       if ("requires_verification" in res) {
         setPendingEmail(res.email);
+        setPendingChallenge(res);
         setVerificationCode("");
+        setVerificationStatus("idle");
+        setVerificationError("");
       } else {
         completeAuth(res);
       }
@@ -185,7 +218,25 @@ export function RegisterForm({
           setGeneralError(otherKeys.map((k) => (body as Record<string, string[]>)[k].join(" ")).join(" "));
         }
       } else if (axios.isAxiosError(err) && err.response?.status === 429) {
-        setGeneralError("Çok fazla kayıt denemesi yapıldı. Lütfen biraz sonra tekrar deneyin.");
+        const challenge = err.response.data as Partial<RegisterStartResponse>;
+        if (
+          challenge.challenge_id &&
+          challenge.expires_at &&
+          challenge.resend_available_at
+        ) {
+          setPendingEmail(parsed.data.email);
+          setPendingChallenge({
+            requires_verification: true,
+            email: parsed.data.email,
+            challenge_id: challenge.challenge_id,
+            expires_at: challenge.expires_at,
+            expires_in_seconds: challenge.expires_in_seconds ?? 120,
+            resend_available_at: challenge.resend_available_at,
+          });
+          setGeneralError("Önceki kod hâlâ geçerli. E-postanızdaki son kodu girin.");
+        } else {
+          setGeneralError("Çok fazla kayıt denemesi yapıldı. Lütfen biraz sonra tekrar deneyin.");
+        }
       } else if (axios.isAxiosError(err) && err.response?.status === 503) {
         setGeneralError("Kayıt şu anda tamamlanamadı. Lütfen biraz sonra tekrar deneyin.");
       } else if (axios.isAxiosError(err) && err.response) {
@@ -207,35 +258,78 @@ export function RegisterForm({
     }
   }, [onAuthenticated, returnUrl, router, setAuth]);
 
-  const handleConfirmRegistration = async () => {
-    if (!pendingEmail) return;
-    if (!/^\d{6}$/.test(verificationCode)) {
-      setGeneralError("6 haneli doğrulama kodunu girin.");
+  const handleConfirmRegistration = async (submittedCode = verificationCode) => {
+    if (!pendingEmail || confirmingRef.current) return;
+    if (!/^\d{6}$/.test(submittedCode)) {
+      setVerificationStatus("error");
+      setVerificationError("6 haneli doğrulama kodunu girin.");
       return;
     }
+    if (pendingChallenge && secondsUntil(pendingChallenge.expires_at) === 0) {
+      setVerificationStatus("error");
+      setVerificationError("Kodun süresi doldu. Yeni kod isteyin.");
+      return;
+    }
+    confirmingRef.current = true;
     setGeneralError(null);
+    setVerificationRetryAvailable(false);
     setIsConfirming(true);
+    setVerificationStatus("idle");
+    setVerificationError("");
     try {
       const res = await confirmRegistration({
         email: pendingEmail,
-        code: verificationCode,
+        challenge_id: pendingChallenge?.challenge_id,
+        code: submittedCode,
       });
-      completeAuth(res);
+      setVerificationStatus("success");
+      await new Promise((resolve) => window.setTimeout(resolve, 600));
+      await completeAuth(res);
     } catch (err) {
       if (axios.isAxiosError(err) && err.response?.status === 400 && err.response?.data) {
-        const body = err.response.data as ApiError;
+        const body = err.response.data as ApiError & { reason?: string };
         if (body.code) {
-          setGeneralError(body.code[0]);
+          setVerificationStatus("error");
+          setVerificationError(body.code[0]);
         } else if (body.email) {
           setGeneralError(body.email[0]);
         } else {
-          setGeneralError("Kod doğrulanamadı. Lütfen tekrar deneyin.");
+          setVerificationStatus("error");
+          setVerificationError("Kod doğrulanamadı. Lütfen tekrar deneyin.");
         }
       } else {
-        setGeneralError("Kod doğrulanamadı. Lütfen tekrar deneyin.");
+        setVerificationRetryAvailable(true);
+        setGeneralError("Bağlantı kurulamadı. Lütfen tekrar deneyin.");
       }
     } finally {
+      confirmingRef.current = false;
       setIsConfirming(false);
+    }
+  };
+
+  const handleResendRegistration = async () => {
+    if (!pendingEmail || !pendingChallenge || resendIn > 0 || isResending) return;
+    setIsResending(true);
+    setGeneralError(null);
+    try {
+      const response = await resendRegistrationCode({
+        email: pendingEmail,
+        challenge_id: pendingChallenge.challenge_id,
+      });
+      setPendingChallenge(response);
+      setVerificationCode("");
+      otpRef.current?.clear();
+      setVerificationStatus("idle");
+      setVerificationError("");
+      setVerificationRetryAvailable(false);
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response?.status === 429) {
+        setGeneralError("Yeni kod istemeden önce kısa bir süre bekleyin.");
+      } else {
+        setGeneralError("Kod gönderilemedi. Lütfen tekrar deneyin.");
+      }
+    } finally {
+      setIsResending(false);
     }
   };
 
@@ -313,51 +407,69 @@ export function RegisterForm({
             </div>
           </div>
 
-          <label
-            htmlFor="signup-code"
-            className="text-sm font-medium text-neutral-400"
-          >
-            Doğrulama kodu
-          </label>
-          <div className="mt-2">
-            <GlassInputWrapper>
-              <input
-                id="signup-code"
-                value={verificationCode}
-                onChange={(e) =>
-                  setVerificationCode(e.target.value.replace(/\D/g, "").slice(0, 6))
-                }
-                inputMode="numeric"
-                autoComplete="one-time-code"
-                placeholder="000000"
-                className="w-full rounded-2xl bg-transparent p-4 text-center text-lg tracking-[0.35em] text-white placeholder:text-neutral-500 focus:outline-none"
-              />
-            </GlassInputWrapper>
-          </div>
+          <p className="text-sm font-medium text-neutral-400">Doğrulama kodu</p>
+          <OtpInput
+            ref={otpRef}
+            autoFocus
+            className="mt-2"
+            disabled={isConfirming || expiresIn === 0}
+            status={
+              expiresIn === 0 && verificationStatus !== "success"
+                ? "error"
+                : verificationStatus
+            }
+            errorMessage={
+              expiresIn === 0
+                ? "Kodun süresi doldu. Yeni kod isteyin."
+                : verificationError
+            }
+            successMessage="Kod doğrulandı."
+            hint={`Kodun kalan süresi: ${formatCountdown(expiresIn)}`}
+            onChange={(value) => {
+              setVerificationCode(value);
+              if (verificationStatus === "error") {
+                setVerificationStatus("idle");
+                setVerificationError("");
+              }
+            }}
+            onComplete={(value) => void handleConfirmRegistration(value)}
+          />
 
           <button
             type="button"
-            onClick={handleConfirmRegistration}
-            disabled={isConfirming || verificationCode.length !== 6}
+            onClick={() => void handleConfirmRegistration()}
+            disabled={isConfirming || verificationCode.length !== 6 || expiresIn === 0}
             className="mt-4 w-full rounded-2xl bg-white py-4 font-medium text-neutral-950 transition-colors hover:bg-white/90 disabled:opacity-70"
           >
-            {isConfirming ? "Doğrulanıyor..." : "Kodu doğrula ve hesabı aç"}
+            {isConfirming
+              ? "Doğrulanıyor..."
+              : verificationRetryAvailable
+                ? "Aynı kodla tekrar dene"
+                : "Kodu doğrula ve hesabı aç"}
           </button>
 
           <div className="mt-3 flex flex-col gap-2 sm:flex-row">
             <button
               type="button"
-              onClick={() => form.handleSubmit(onSubmit)()}
-              disabled={form.formState.isSubmitting}
+              onClick={() => void handleResendRegistration()}
+              disabled={!pendingChallenge || resendIn > 0 || isResending}
               className="rounded-2xl border border-white/10 px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-white/10 disabled:opacity-70"
             >
-              Kodu tekrar gönder
+              {isResending
+                ? "Gönderiliyor..."
+                : resendIn > 0
+                  ? `Tekrar gönder (${resendIn})`
+                  : "Kodu tekrar gönder"}
             </button>
             <button
               type="button"
               onClick={() => {
                 setPendingEmail(null);
+                setPendingChallenge(null);
                 setVerificationCode("");
+                setVerificationStatus("idle");
+                setVerificationError("");
+                setVerificationRetryAvailable(false);
                 setGeneralError(null);
               }}
               className="inline-flex items-center justify-center rounded-2xl px-4 py-3 text-sm font-medium text-neutral-400 transition-colors hover:bg-white/10 hover:text-white"
@@ -458,6 +570,7 @@ export function RegisterForm({
                         {...field}
                         type={showPassword ? "text" : "password"}
                         autoComplete="new-password"
+                        maxLength={128}
                         placeholder="Şifreni gir"
                         className="w-full rounded-2xl bg-transparent p-4 pr-12 text-base text-white placeholder:text-neutral-500 focus:outline-none"
                       />
@@ -466,6 +579,7 @@ export function RegisterForm({
                         onClick={() => setShowPassword((prev) => !prev)}
                         className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-neutral-400 transition-colors hover:text-white"
                         aria-label={showPassword ? "Şifreyi gizle" : "Şifreyi göster"}
+                        aria-pressed={showPassword}
                       >
                         {showPassword ? (
                           <EyeOff className="h-5 w-5" aria-hidden="true" />
@@ -477,6 +591,7 @@ export function RegisterForm({
                   </GlassInputWrapper>
                 </FormControl>
                 <FormMessage />
+                <PasswordStrength value={passwordValue} className="pt-1" />
               </FormItem>
             )}
           />
@@ -496,6 +611,7 @@ export function RegisterForm({
                         {...field}
                         type={showPasswordConfirm ? "text" : "password"}
                         autoComplete="new-password"
+                        maxLength={128}
                         placeholder="Şifreni tekrar gir"
                         className="w-full rounded-2xl bg-transparent p-4 pr-12 text-base text-white placeholder:text-neutral-500 focus:outline-none"
                       />
@@ -503,7 +619,8 @@ export function RegisterForm({
                         type="button"
                         onClick={() => setShowPasswordConfirm((prev) => !prev)}
                         className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-neutral-400 transition-colors hover:text-white"
-                        aria-label={showPasswordConfirm ? "Şifreyi gizle" : "Şifreyi göster"}
+                        aria-label={showPasswordConfirm ? "Şifre tekrarını gizle" : "Şifre tekrarını göster"}
+                        aria-pressed={showPasswordConfirm}
                       >
                         {showPasswordConfirm ? (
                           <EyeOff className="h-5 w-5" aria-hidden="true" />
@@ -515,6 +632,19 @@ export function RegisterForm({
                   </GlassInputWrapper>
                 </FormControl>
                 <FormMessage />
+                {passwordMatchMessage && (
+                  <p
+                    role="status"
+                    className={cn(
+                      "text-xs",
+                      passwordValue === passwordConfirmValue
+                        ? "text-emerald-400"
+                        : "text-red-400"
+                    )}
+                  >
+                    {passwordMatchMessage}
+                  </p>
+                )}
               </FormItem>
             )}
           />

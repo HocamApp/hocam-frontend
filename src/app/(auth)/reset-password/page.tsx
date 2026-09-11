@@ -19,11 +19,14 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { AuthSplitScreen, GlassInputWrapper } from "@/components/auth/AuthSplitScreen";
+import { PasswordStrength } from "@/components/ui/password-strength";
+import { cn } from "@/lib/utils";
+import { passwordSchema, passwordsMatchMessage } from "@/lib/passwordPolicy";
 
 const resetSchema = z
   .object({
-    new_password: z.string().min(8, "Şifre en az 8 karakter olmalıdır"),
-    password_confirm: z.string(),
+    new_password: passwordSchema,
+    password_confirm: z.string().max(128, "Şifre en fazla 128 karakter olabilir"),
   })
   .refine((data) => data.new_password === data.password_confirm, {
     message: "Şifreler eşleşmiyor",
@@ -102,6 +105,9 @@ function ResetPasswordContent() {
     defaultValues: { new_password: "", password_confirm: "" },
     mode: "onSubmit",
   });
+  const newPassword = form.watch("new_password");
+  const passwordConfirmation = form.watch("password_confirm");
+  const matchMessage = passwordsMatchMessage(newPassword, passwordConfirmation);
 
   if (!linkChecked) return null;
 
@@ -195,6 +201,7 @@ function ResetPasswordContent() {
                           id="new-password"
                           type={showPassword ? "text" : "password"}
                           autoComplete="new-password"
+                          maxLength={128}
                           placeholder="Yeni şifreni gir"
                           className="w-full rounded-2xl bg-transparent p-4 pr-12 text-base text-white placeholder:text-neutral-500 focus:outline-none"
                         />
@@ -215,6 +222,7 @@ function ResetPasswordContent() {
                     </GlassInputWrapper>
                   </FormControl>
                   <FormMessage role="alert" />
+                  <PasswordStrength value={newPassword} className="pt-1" />
                 </FormItem>
               )}
             />
@@ -235,6 +243,7 @@ function ResetPasswordContent() {
                           id="password-confirm"
                           type={showPasswordConfirm ? "text" : "password"}
                           autoComplete="new-password"
+                          maxLength={128}
                           placeholder="Yeni şifreni tekrar gir"
                           className="w-full rounded-2xl bg-transparent p-4 pr-12 text-base text-white placeholder:text-neutral-500 focus:outline-none"
                         />
@@ -255,6 +264,19 @@ function ResetPasswordContent() {
                     </GlassInputWrapper>
                   </FormControl>
                   <FormMessage role="alert" />
+                  {matchMessage && (
+                    <p
+                      role="status"
+                      className={cn(
+                        "text-xs",
+                        newPassword === passwordConfirmation
+                          ? "text-emerald-400"
+                          : "text-red-400"
+                      )}
+                    >
+                      {matchMessage}
+                    </p>
+                  )}
                 </FormItem>
               )}
             />

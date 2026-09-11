@@ -29,6 +29,9 @@ const confirmOtpCalls: string[] = [];
 const requestDeletionCalls: string[] = [];
 const cancelDeletionCalls: number[] = [];
 const acceptOfferCalls: number[] = [];
+const passwordRequestCalls: Array<Record<string, string>> = [];
+const passwordConfirmCalls: Array<Record<string, string>> = [];
+const setAuthCalls: Array<unknown[]> = [];
 
 let precheckResponse: Record<string, unknown> = {
   blockers: [],
@@ -81,7 +84,7 @@ async function loadPage() {
         user: { id: "student-1", role: "student", email: "ogrenci@example.com" },
         token: "token-1",
         isLoading: false,
-        setAuth: () => {},
+        setAuth: (...args: unknown[]) => setAuthCalls.push(args),
         clearAuth: () => {},
         updateUser: () => {},
       }),
@@ -112,7 +115,23 @@ async function loadPage() {
         cancelDeletionCalls.push(1);
         return { detail: "ok" };
       },
-      changePassword: async () => ({}),
+      requestPasswordChange: async (payload: Record<string, string>) => {
+        passwordRequestCalls.push(payload);
+        return {
+          detail: "Kod gönderildi.",
+          challenge_id: "password-challenge-1",
+          expires_at: "2099-01-01T00:02:00Z",
+          expires_in_seconds: 120,
+          resend_available_at: "2000-01-01T00:01:00Z",
+        };
+      },
+      changePassword: async (payload: Record<string, string>) => {
+        passwordConfirmCalls.push(payload);
+        return {
+          token: "rotated-token",
+          user: { id: "student-1", role: "student", email: "ogrenci@example.com" },
+        };
+      },
       confirmEmailVerificationCode: async () => ({}),
       logoutAllSessions: async () => {},
       requestEmailVerificationCode: async () => ({ detail: "ok" }),
@@ -189,6 +208,9 @@ beforeEach(async () => {
   requestDeletionCalls.length = 0;
   cancelDeletionCalls.length = 0;
   acceptOfferCalls.length = 0;
+  passwordRequestCalls.length = 0;
+  passwordConfirmCalls.length = 0;
+  setAuthCalls.length = 0;
   precheckResponse = { blockers: [], warnings: [], retention_offer: null };
   deletionStatusResponse = { active: false };
   securitySettingsResponse = {
@@ -198,6 +220,46 @@ beforeEach(async () => {
     has_usable_password: true,
     last_seen_at: null,
   };
+});
+
+describe("Güvenlik sayfası — şifre değişimi", () => {
+  it("yeni şifreyi doğrular, e-posta kodu ister ve altıncı rakamda tamamlar", async () => {
+    await renderLoadedPage();
+    fireEvent.click(screen.getByRole("button", { name: "Şifre değiştir" }));
+
+    fireEvent.change(screen.getByLabelText("Mevcut şifre"), {
+      target: { value: "Mevcut-sifre-1" },
+    });
+    fireEvent.change(screen.getByLabelText("Yeni şifre"), {
+      target: { value: "Yeni-sifre-2" },
+    });
+    fireEvent.change(screen.getByLabelText("Yeni şifre (tekrar)"), {
+      target: { value: "Yeni-sifre-2" },
+    });
+
+    screen.getByRole("meter", { name: "Şifre gücü" });
+    fireEvent.click(screen.getByRole("button", { name: "Doğrulama kodu gönder" }));
+
+    await waitFor(() => assert.equal(passwordRequestCalls.length, 1));
+    assert.deepEqual(passwordRequestCalls[0], {
+      current_password: "Mevcut-sifre-1",
+      new_password: "Yeni-sifre-2",
+      password_confirm: "Yeni-sifre-2",
+    });
+
+    const firstDigit = await screen.findByLabelText("Şifre değişikliği doğrulama kodu, 1/6");
+    fireEvent.paste(firstDigit, {
+      clipboardData: { getData: () => "012345" },
+    });
+
+    await waitFor(() => assert.equal(passwordConfirmCalls.length, 1));
+    assert.deepEqual(passwordConfirmCalls[0], {
+      challenge_id: "password-challenge-1",
+      code: "012345",
+    });
+    await screen.findByText("Kod doğrulandı.");
+    await waitFor(() => assert.equal(setAuthCalls.length, 1), { timeout: 1500 });
+  });
 });
 
 afterEach(() => {
@@ -446,7 +508,7 @@ describe("Güvenlik sayfası — kullanıcı odaklı güvenlik metinleri", () =>
     screen.getByText(
       "Bu e-posta size ait mi? 6 haneli bir kod göndererek hesabınızı güvenceye alın."
     );
-    screen.getByText("Kod 10 dakika geçerlidir.");
+    screen.getByText("Kod 2 dakika geçerlidir ve yalnızca bir kez kullanılabilir.");
     assert.equal(screen.queryByText("Doğrulama gerekiyor."), null);
   });
 

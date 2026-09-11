@@ -2,14 +2,18 @@ import api from "./api";
 import Cookies from "js-cookie";
 import {
   AuthResponse,
+  ChangePasswordConfirmPayload,
+  ChangePasswordRequestPayload,
   GoogleAuthResponse,
   PasswordResetConfirmRequest,
   PasswordResetRequest,
   RegisterConfirmRequest,
+  RegisterResendRequest,
   RegisterRequest,
   RegisterStartResponse,
   SecuritySettings,
   User,
+  VerificationChallengeResponse,
 } from "@/types";
 
 export interface GoogleAuthPayload {
@@ -41,6 +45,16 @@ export async function confirmRegistration(
   data: RegisterConfirmRequest
 ): Promise<AuthResponse> {
   const response = await api.post<AuthResponse>("/auth/register/confirm/", data);
+  return response.data;
+}
+
+export async function resendRegistrationCode(
+  data: RegisterResendRequest
+): Promise<RegisterStartResponse> {
+  const response = await api.post<RegisterStartResponse>(
+    "/auth/register/resend/",
+    data
+  );
   return response.data;
 }
 
@@ -84,38 +98,35 @@ export async function fetchSecuritySettings(): Promise<SecuritySettings> {
   return response.data;
 }
 
-export interface ChangePasswordPayload {
-  current_password: string;
-  new_password: string;
-  password_confirm: string;
+export async function requestPasswordChange(
+  data: ChangePasswordRequestPayload
+): Promise<VerificationChallengeResponse> {
+  const response = await api.post<VerificationChallengeResponse>(
+    "/auth/change-password/request/",
+    data
+  );
+  return response.data;
 }
 
-/**
- * Change password for the already-authenticated user. The backend rotates the
- * underlying DRF token and refreshes the HttpOnly cookie when cookie mode is
- * active. Header mode still returns the replacement token.
- */
 export async function changePassword(
-  data: ChangePasswordPayload
+  data: ChangePasswordConfirmPayload
 ): Promise<AuthResponse> {
   const response = await api.post<AuthResponse>("/auth/change-password/", data);
   return response.data;
 }
 
-export async function requestEmailVerificationCode(): Promise<{
-  detail: string;
-  expires_in_seconds?: number;
-}> {
+export async function requestEmailVerificationCode(): Promise<VerificationChallengeResponse> {
   const response = await api.post("/auth/email-verification/request/");
   return response.data;
 }
 
 export async function confirmEmailVerificationCode(
-  code: string
+  code: string,
+  challengeId?: string
 ): Promise<SecuritySettings> {
   const response = await api.post<SecuritySettings>(
     "/auth/email-verification/confirm/",
-    { code }
+    { code, ...(challengeId ? { challenge_id: challengeId } : {}) }
   );
   return response.data;
 }
