@@ -47,7 +47,7 @@ function SupportContent() {
       <div className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6 sm:py-14">
         {/* Header */}
         <div className="flex items-start gap-4">
-          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[var(--radius-input)] bg-gold text-gold-ink">
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[var(--radius-input)] bg-primary text-primary-foreground">
             <LifeBuoy className="h-6 w-6" />
           </span>
           <div>

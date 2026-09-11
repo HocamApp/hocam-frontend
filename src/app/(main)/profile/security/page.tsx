@@ -539,7 +539,7 @@ function SecurityContent() {
           </Link>
         </Button>
         <div className="flex min-w-0 items-start gap-3">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[var(--gold-ink)]/20 bg-[var(--gold)] text-[var(--gold-ink)] max-md:shrink-0 max-md:border-transparent max-md:bg-[var(--ink)] max-md:text-white">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-transparent bg-primary text-primary-foreground">
             <ShieldCheck className="h-5 w-5" />
           </div>
           <div className="min-w-0">
@@ -612,7 +612,7 @@ function SecurityContent() {
                     Bu e-posta size ait mi? 6 haneli bir kod göndererek
                     hesabınızı güvenceye alın.
                   </p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-sm text-[var(--ink-mid)]">
                     Kod 2 dakika geçerlidir ve yalnızca bir kez kullanılabilir.
                   </p>
                 </div>
@@ -732,7 +732,7 @@ function SecurityContent() {
                   <div className="space-y-4">
                     <div>
                       <p className="font-medium text-foreground">E-postanıza gönderilen kodu girin</p>
-                      <p className="mt-1 text-sm text-muted-foreground">
+                      <p className="mt-1 text-sm text-[var(--ink-mid)]">
                         Kod 2 dakika geçerlidir. Altıncı rakamı girdiğinizde otomatik kontrol edilir.
                       </p>
                     </div>
