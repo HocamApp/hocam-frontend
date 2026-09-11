@@ -78,8 +78,18 @@ export function ReferralInviteCard() {
               Hocam&apos;ı birlikte keşfedin
             </h2>
             <p className="mt-1 max-w-xl text-sm leading-6 opacity-80">
-              Davet linkini paylaş. Referans ödülleri aktif olduğunda bu kod üzerinden takip edilecek.
+              Davet linkini paylaş. Arkadaşın kayıt olurken bu kodu girsin.
+              Referans ödülleri aktif olduğunda bu kod üzerinden takip
+              edilecek.
             </p>
+            {data.invited_count > 0 && (
+              <p className="mt-2 text-sm font-semibold">
+                {data.invited_count} kişi bu kodla kaydoldu
+                {data.pending_reward_count > 0
+                  ? ` · ${data.pending_reward_count} tanesi e-postasını doğruladı`
+                  : ""}
+              </p>
+            )}
           </div>
         </div>
 
