@@ -47,15 +47,11 @@ function Metric({
 }) {
   return (
     <div
-      className={`min-w-0 rounded-input border border-line p-4 ${
-        featured ? "bg-gold text-gold-ink" : "bg-paper text-ink"
+      className={`min-w-0 rounded-input border border-line p-4 text-ink ${
+        featured ? "bg-pink-pale" : "bg-paper"
       }`}
     >
-      <div
-        className={`flex items-center gap-2 text-xs font-medium ${
-          featured ? "text-gold-ink/75" : "text-ink-mid"
-        }`}
-      >
+      <div className="flex items-center gap-2 text-xs font-medium text-ink-mid">
         {icon}
         <span>{label}</span>
       </div>
@@ -66,20 +62,10 @@ function Metric({
         </div>
       ) : (
         <>
-          <p
-            className={`mt-2 text-2xl font-semibold tracking-tight ${
-              featured ? "text-gold-ink" : "text-ink"
-            }`}
-          >
+          <p className="mt-2 text-2xl font-semibold tracking-tight text-ink">
             {value}
           </p>
-          <p
-            className={`mt-1 text-xs leading-5 ${
-              featured ? "text-gold-ink/75" : "text-ink-mid"
-            }`}
-          >
-            {detail}
-          </p>
+          <p className="mt-1 text-xs leading-5 text-ink-mid">{detail}</p>
         </>
       )}
     </div>
