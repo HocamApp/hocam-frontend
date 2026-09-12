@@ -51,16 +51,56 @@ describe("student dashboard — DESIGN.md contract", () => {
 
   it("keeps every dashboard action and data-backed surface", () => {
     for (const behavior of [
-      '<Link href="/profile/lessons?tab=upcoming">Dersi görüntüle</Link>',
       "booking.conversation_id",
-      '<Link href="/profile/lessons">',
-      'href="/profile/lessons?tab=history"',
       'href="/profile/payments"',
+      '<Link href="/schedule">',
       "<PackageLearningDetailsSheet",
       "<LessonMaterialsDialog",
       "<LessonConfirmDisputeCard",
+      "<PendingReviewsSection",
+      "<LessonHistorySection",
+      "<LessonIssuesSection",
+      "<CoachingSummarySection",
+      "<CancelLessonButton",
+      "highlightBooking",
     ]) {
       assert.ok(source.includes(behavior), `missing dashboard behavior: ${behavior}`);
+    }
+  });
+
+  it("no longer sends anyone to the retired lessons workspace", () => {
+    // /profile/lessons is gone; its contents live on this page now, and a
+    // link left behind would land on a redirect back to here.
+    assert.equal(source.includes("/profile/lessons"), false);
+  });
+
+  it("holds the moved sections to the same design tokens as the page", () => {
+    // The lessons workspace was on lucide-react, text-3xl and rounded-2xl.
+    // Its parts were rewritten for this page, and the contract has to cover
+    // them or the old styling walks back in through a component file.
+    for (const file of [
+      "src/components/dashboard/LessonHistorySection.tsx",
+      "src/components/dashboard/LessonIssuesSection.tsx",
+      "src/components/dashboard/PendingReviewsSection.tsx",
+      "src/components/dashboard/CoachingSummarySection.tsx",
+      "src/components/dashboard/LessonStatusChip.tsx",
+    ]) {
+      const moved = readFileSync(path.join(process.cwd(), file), "utf8");
+      assert.equal(
+        moved.includes('from "lucide-react"'),
+        false,
+        `${file} still imports lucide-react`,
+      );
+      assert.equal(
+        /(?:text|bg|border|divide)-slate-/.test(moved),
+        false,
+        `${file} still uses legacy slate`,
+      );
+      assert.equal(
+        /#[0-9a-fA-F]{6}/.test(moved),
+        false,
+        `${file} hardcodes a brand hex`,
+      );
     }
   });
 });

@@ -2,7 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowRight,
   ArrowSquareOut,
@@ -39,6 +40,13 @@ import {
   LessonConfirmDisputeCard,
 } from "@/components/lessons/LessonConfirmDisputeCard";
 import { ReferralInviteCard } from "@/components/profile/ReferralInviteCard";
+import { CancelLessonButton, canCancelLesson } from "@/components/dashboard/CancelLessonButton";
+import { CoachingSummarySection } from "@/components/dashboard/CoachingSummarySection";
+import { LessonHistorySection } from "@/components/dashboard/LessonHistorySection";
+import { LessonIssuesSection } from "@/components/dashboard/LessonIssuesSection";
+import { LessonStatusChip } from "@/components/dashboard/LessonStatusChip";
+import { PendingReviewsSection } from "@/components/dashboard/PendingReviewsSection";
+import { bookingStatusExplanation } from "@/lib/bookingStatusCopy";
 import { ParticipantAvatar } from "@/components/messaging/ParticipantAvatar";
 import { LessonJoinButton } from "@/components/lessons/LessonJoinButton";
 import { LessonMaterialsDialog } from "@/components/lessons/LessonMaterialsDialog";
@@ -272,9 +280,15 @@ function NextLessonCard({ booking }: { booking: Booking }) {
           </div>
         </div>
         <div className="mt-8 flex flex-col gap-3 border-t border-line pt-6 sm:flex-row sm:items-center">
-          <Button asChild size="lg" className="text-white hover:text-white">
-            <Link href="/profile/lessons?tab=upcoming">Dersi görüntüle</Link>
-          </Button>
+          <LessonJoinButton
+            bookingId={booking.id}
+            startTime={booking.start_time}
+            durationMinutes={booking.duration_minutes}
+            status={booking.status}
+            roomUrl={booking.room_url}
+            size="lg"
+            className="text-white hover:text-white"
+          />
           <Button asChild variant="outline" size="lg" className="justify-start">
             <Link href={booking.conversation_id ? `/messages/${booking.conversation_id}` : "/messages"}>
               <ChatCircle className="mr-2 size-4" weight="regular" aria-hidden="true" />
@@ -287,13 +301,19 @@ function NextLessonCard({ booking }: { booking: Booking }) {
   );
 }
 
-function UpcomingLessons({ bookings }: { bookings: Booking[] }) {
+function UpcomingLessons({
+  bookings,
+  highlightedBookingId,
+}: {
+  bookings: Booking[];
+  highlightedBookingId: string | null;
+}) {
   return (
     <section aria-labelledby="upcoming-lessons-title" className="rounded-card border border-line bg-surface p-6">
       <div className="flex items-center justify-between gap-3">
-        <h2 id="upcoming-lessons-title" className="text-h3-m text-ink md:text-h3">Sonraki 3 ders</h2>
+        <h2 id="upcoming-lessons-title" className="text-h3-m text-ink md:text-h3">Sıradaki derslerin</h2>
         <Button asChild variant="ghost" size="sm">
-          <Link href="/profile/lessons">
+          <Link href="/schedule">
             Takvimi aç
             <ArrowSquareOut className="ml-1 size-4" weight="regular" aria-hidden="true" />
           </Link>
@@ -303,18 +323,34 @@ function UpcomingLessons({ bookings }: { bookings: Booking[] }) {
       {bookings.length > 0 ? (
         <ol className="mt-6 divide-y divide-line">
           {bookings.map((booking) => (
-            <li key={booking.id}>
-              <Link href="/profile/lessons?tab=upcoming" className="grid grid-cols-[42px_minmax(0,1fr)_auto] items-center gap-3 rounded-input py-4 transition-colors [transition-duration:120ms] hover:bg-paper focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2">
+            <li
+              key={booking.id}
+              id={`booking-${booking.id}`}
+              className={cn(
+                "rounded-input py-4 transition-colors [transition-duration:120ms]",
+                highlightedBookingId === booking.id && "bg-pink-pale px-3"
+              )}
+            >
+              <div className="grid grid-cols-[42px_minmax(0,1fr)_auto] items-start gap-3">
                 <ParticipantAvatar name={tutorName(booking)} avatarUrl={booking.tutor.profile_picture} className="h-10 w-10 border border-line" />
-                <span className="min-w-0">
-                  <span className="block truncate text-body font-medium text-ink">{booking.subject.name}</span>
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="truncate text-body font-medium text-ink">{booking.subject.name}</span>
+                    <LessonStatusChip status={booking.status} />
+                  </div>
                   <span className="mt-0.5 block truncate text-small text-ink-mid">{tutorName(booking)}</span>
-                </span>
-                <span className="text-right">
+                  <p className="mt-1 text-small text-ink-mid">{bookingStatusExplanation(booking.status)}</p>
+                </div>
+                <div className="text-right">
                   <span className="block text-small font-medium capitalize text-ink">{formatLessonDay(booking.start_time)}</span>
                   <span className="mt-0.5 block text-small tabular-nums text-ink-mid">{formatTime(booking.start_time)}</span>
-                </span>
-              </Link>
+                  {canCancelLesson(booking) && (
+                    <div className="mt-1 flex justify-end">
+                      <CancelLessonButton booking={booking} />
+                    </div>
+                  )}
+                </div>
+              </div>
             </li>
           ))}
         </ol>
@@ -322,55 +358,6 @@ function UpcomingLessons({ bookings }: { bookings: Booking[] }) {
         <div className="mt-6 flex items-center gap-3 border-y border-line py-4 text-small text-ink-mid">
           <CalendarDots className="size-5 shrink-0" weight="regular" aria-hidden="true" />
           Sıradaki dersinden sonra planlanmış başka bir dersin yok.
-        </div>
-      )}
-    </section>
-  );
-}
-
-function RecentLessonContent({
-  bookings,
-  onOpen,
-}: {
-  bookings: Booking[];
-  onOpen: (booking: Booking) => void;
-}) {
-  return (
-    <section aria-labelledby="recent-lessons-title" className="rounded-card border border-line bg-surface p-6">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h2 id="recent-lessons-title" className="text-h3-m text-ink md:text-h3">Son derslerin</h2>
-          <p className="mt-1 text-small text-ink-mid">Notlarına, dosyalarına ve çözülen sorulara dön.</p>
-        </div>
-        <Button asChild variant="ghost" size="sm" className="shrink-0">
-          <Link href="/profile/lessons?tab=history">
-            <BookOpenText className="mr-1.5 size-4" weight="regular" aria-hidden="true" />
-            <span className="hidden sm:inline">Tüm geçmiş dersler</span>
-            <span className="sm:hidden">Tümü</span>
-            <ArrowSquareOut className="ml-1 size-4" weight="regular" aria-hidden="true" />
-          </Link>
-        </Button>
-      </div>
-
-      {bookings.length > 0 ? (
-        <ol className="mt-4 divide-y divide-line">
-          {bookings.map((booking) => (
-            <li key={booking.id} className="flex items-center gap-3 py-4">
-              <ParticipantAvatar name={tutorName(booking)} avatarUrl={booking.tutor.profile_picture} className="h-10 w-10 shrink-0 border border-line" />
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-body font-medium text-ink">{booking.subject.name}</p>
-                <p className="mt-0.5 truncate text-small text-ink-mid">{tutorName(booking)} · {formatLessonDay(booking.start_time)}</p>
-              </div>
-              <Button variant="ghost" size="sm" className="shrink-0" onClick={() => onOpen(booking)}>
-                <FolderOpen className="mr-1.5 size-4" weight="regular" aria-hidden="true" />
-                İçeriği aç
-              </Button>
-            </li>
-          ))}
-        </ol>
-      ) : (
-        <div className="mt-6 border-y border-line py-4 text-small text-ink-mid">
-          Tamamladığın derslerin içerikleri burada birikecek.
         </div>
       )}
     </section>
@@ -476,8 +463,14 @@ function CreditSummary({
 
 function StudentDashboardContent() {
   const { user, isAuthenticated } = useAuth();
+  const searchParams = useSearchParams();
   const [selectedPackage, setSelectedPackage] = useState<PackagePurchase | null>(null);
   const [materialsBooking, setMaterialsBooking] = useState<Booking | null>(null);
+  // Booking notifications have always linked here with ?highlightBooking=<id>,
+  // and the page has never read it — you arrived at a list and had to work out
+  // which row the notification meant.
+  const highlightedBookingId = searchParams.get("highlightBooking");
+  const highlightScrolledRef = useRef<string | null>(null);
 
   const bookingsQuery = useQuery({ queryKey: ["bookings"], queryFn: fetchBookings, enabled: isAuthenticated });
   const packagesQuery = useQuery({ queryKey: ["package-purchases"], queryFn: fetchPackagePurchases, enabled: isAuthenticated });
@@ -491,20 +484,35 @@ function StudentDashboardContent() {
 
   const allBookings = bookingsQuery.data ?? [];
   const now = serverNow();
+  // `pending` belongs here. It used to be filtered out, so a request a student
+  // had sent and was waiting on appeared nowhere on the page they check — the
+  // lesson simply did not exist until the tutor answered.
   const upcomingBookings = sortByStart(allBookings.filter((booking) => {
     const start = bookingInstant(booking.start_time);
-    return booking.status === "in_progress" || (booking.status === "confirmed" && start > now);
+    return (
+      booking.status === "in_progress" ||
+      ((booking.status === "confirmed" || booking.status === "pending") && start > now)
+    );
   }));
-  const nextLesson = upcomingBookings[0] ?? null;
-  const followingLessons = upcomingBookings.slice(1, 4);
-  const recentLessons = [...allBookings]
+  // The hero card is for a lesson that is actually happening; an unanswered
+  // request has no room to join and no time to count down to.
+  const nextLesson =
+    upcomingBookings.find(
+      (booking) => booking.status === "confirmed" || booking.status === "in_progress"
+    ) ?? null;
+  const followingLessons = upcomingBookings.filter(
+    (booking) => booking.id !== nextLesson?.id
+  );
+  const completedLessons = [...allBookings]
     .filter((booking) => booking.status === "completed")
     .sort((a, b) => {
       const second = b.completed_at ? Date.parse(b.completed_at) : bookingInstant(b.start_time);
       const first = a.completed_at ? Date.parse(a.completed_at) : bookingInstant(a.start_time);
       return second - first;
-    })
-    .slice(0, 3);
+    });
+  const issueLessons = [...allBookings]
+    .filter((booking) => ["cancelled", "expired", "disputed"].includes(booking.status))
+    .sort((a, b) => bookingInstant(b.start_time) - bookingInstant(a.start_time));
   const actionableBookings = actionableConfirmDisputeBookings(allBookings);
 
   const currentPackages = (packagesQuery.data ?? []).filter((purchase) => {
@@ -528,6 +536,17 @@ function StudentDashboardContent() {
   const name = studentProfile?.name?.trim() || emailFirstName(user?.email);
   const avatarUrl = studentProfile?.avatar_url;
   const isUrgentLesson = Boolean(nextLesson && (nextLesson.status === "in_progress" || bookingInstant(nextLesson.start_time) - now <= URGENT_LESSON_WINDOW_MS));
+
+  // Scroll once per id: re-running on every render would fight the user the
+  // moment they scrolled away from the row.
+  useEffect(() => {
+    if (!highlightedBookingId) return;
+    if (highlightScrolledRef.current === highlightedBookingId) return;
+    const element = document.getElementById(`booking-${highlightedBookingId}`);
+    if (!element) return;
+    highlightScrolledRef.current = highlightedBookingId;
+    element.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [highlightedBookingId, allBookings.length]);
 
   if (isEmptyAccount) {
     return <EmptyStudentDashboard name={name} avatarUrl={avatarUrl} />;
@@ -559,6 +578,8 @@ function StudentDashboardContent() {
         </section>
       )}
 
+      <PendingReviewsSection />
+
       {bookingsQuery.isLoading ? (
         <Skeleton className="h-[280px] w-full rounded-card" />
       ) : nextLesson ? (
@@ -575,15 +596,20 @@ function StudentDashboardContent() {
         </section>
       )}
 
-      {nextLesson && (
-        <div className="grid items-start gap-6 lg:grid-cols-2">
-          <UpcomingLessons bookings={followingLessons} />
-          <RecentLessonContent bookings={recentLessons} onOpen={setMaterialsBooking} />
-        </div>
+      {followingLessons.length > 0 && (
+        <UpcomingLessons
+          bookings={followingLessons}
+          highlightedBookingId={highlightedBookingId}
+        />
       )}
 
-      {!nextLesson && hasAccountActivity && (
-        <RecentLessonContent bookings={recentLessons} onOpen={setMaterialsBooking} />
+      <CoachingSummarySection />
+
+      {hasAccountActivity && (
+        <LessonHistorySection
+          bookings={completedLessons}
+          onOpenMaterials={setMaterialsBooking}
+        />
       )}
 
       {hasAccountActivity && (
@@ -597,6 +623,8 @@ function StudentDashboardContent() {
           bookings={allBookings}
         />
       )}
+
+      <LessonIssuesSection bookings={issueLessons} />
 
       <ReferralInviteCard />
 
