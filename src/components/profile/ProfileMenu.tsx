@@ -6,12 +6,10 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   Bell,
-  CalendarClock,
   ChevronDown,
   CreditCard,
   Download,
   Eye,
-  Gift,
   Globe,
   KeyRound,
   LifeBuoy,
@@ -60,6 +58,12 @@ import {
 
 // Boolean-valued preference keys — excludes string fields like `language`
 type BoolPrefKey = keyof Omit<UserPreferences, "language">;
+
+export function profileMenuSectionKeys(
+  _role: "student" | "tutor",
+): readonly string[] {
+  return ["profile", "payment", "security", "notifications", "advanced"];
+}
 
 function getInitials(name: string, surname: string): string {
   const n = (name || "").trim()[0] || "";
@@ -152,7 +156,6 @@ export function ProfileMenu() {
   const tutorDepartment = tutorMeData?.department ?? tutor?.department ?? "";
   const showDemoPaymentMethods = isBurakYilmazTutor(name, surname, role);
 
-  const stats = data?.stats;
   const prefs: UserPreferences = useMemo(
     () => ({
       dark_mode: false,
@@ -243,8 +246,8 @@ export function ProfileMenu() {
 
   // Single-open connected accordion: one active section key (null = all collapsed).
   const sectionKeys = useMemo(
-    () => ["profile", "lessons", "payment", "security", "notifications", "advanced"],
-    []
+    () => profileMenuSectionKeys(isTutor ? "tutor" : "student"),
+    [isTutor]
   );
   const activeIndex = sectionKeys.indexOf(activeSection ?? "");
 
@@ -359,29 +362,6 @@ export function ProfileMenu() {
               onClick={() => go(isTutor ? editHref : "/profile")}
             />
           </ProfileAccordionSection>
-
-          {/* ---- Dersler ve Rezervasyonlar (tutors only) ---- */}
-          {isTutor && (
-            <ProfileAccordionSection
-              icon={<CalendarClock className="h-4 w-4" />}
-              title="Dersler ve Rezervasyonlar"
-              {...sectionProps("lessons")}
-            >
-              <ProfileMenuRow
-                icon={<CalendarClock className="h-4 w-4" />}
-                label="Derslerim"
-                badgeCount={stats?.upcoming_lessons_count}
-                showChevron
-                onClick={() => go("/profile/lessons/upcoming")}
-              />
-              <ProfileMenuRow
-                icon={<Gift className="h-4 w-4" />}
-                label="Paketlerim"
-                showChevron
-                onClick={() => go("/dashboard/tutor/packages")}
-              />
-            </ProfileAccordionSection>
-          )}
 
           {/* ---- Ödeme ve Faturalandırma ---- */}
           <ProfileAccordionSection

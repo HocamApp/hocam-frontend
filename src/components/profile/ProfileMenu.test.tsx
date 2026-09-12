@@ -42,6 +42,9 @@ Object.defineProperty(globalThis, "self", { value: window, configurable: true })
 const routerCalls: string[] = [];
 
 let ProfileMenu: React.ComponentType | null = null;
+let profileMenuSectionKeys:
+  | ((role: "student" | "tutor") => readonly string[])
+  | undefined;
 
 async function loadMenu() {
   if (ProfileMenu) return;
@@ -80,7 +83,13 @@ async function loadMenu() {
     },
   });
 
-  ProfileMenu = (await import("./ProfileMenu")).ProfileMenu;
+  const menuModule = await import("./ProfileMenu");
+  ProfileMenu = menuModule.ProfileMenu;
+  profileMenuSectionKeys = (
+    menuModule as typeof menuModule & {
+      profileMenuSectionKeys?: (role: "student" | "tutor") => readonly string[];
+    }
+  ).profileMenuSectionKeys;
 }
 
 function renderMenu() {
@@ -102,6 +111,12 @@ beforeEach(async () => {
 
 afterEach(() => {
   cleanup();
+});
+
+describe("ProfileMenu ders navigasyonu", () => {
+  it("hoca profil menüsünü ders yönetimi akordiyonu olmadan kurar", () => {
+    assert.equal(profileMenuSectionKeys?.("tutor").includes("lessons"), false);
+  });
 });
 
 describe("ProfileMenu güvenlik bölümü", () => {
