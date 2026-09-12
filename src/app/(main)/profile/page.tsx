@@ -225,10 +225,7 @@ function ProfileContent() {
   return (
     <div className="mx-auto w-full min-w-0 max-w-6xl overflow-x-clip px-4 py-8 sm:py-10">
       <div className="mb-8 max-w-3xl">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-ink-mid">
-          HESAP VE ÖĞRENME
-        </p>
-        <h1 className="mt-2 text-4xl font-bold tracking-tight text-ink">Profilim</h1>
+        <h1 className="text-4xl font-bold tracking-tight text-ink">Profilim</h1>
         <p className="mt-2 text-base leading-7 text-ink-mid">
           {isTutor
             ? "Hesap bilgilerini ve hoca ayarlarını buradan yönet."
