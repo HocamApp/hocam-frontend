@@ -9,13 +9,18 @@ const learningProfile = readFileSync(
 );
 
 test("profile hierarchy uses DESIGN.md typography and semantic cards", () => {
-  assert.match(profilePage, /HESAP VE ÖĞRENME/);
   assert.match(profilePage, /text-4xl/);
   assert.match(profilePage, /rounded-card border border-line bg-surface/);
+  // The page had an eyebrow above its own title that only restated the
+  // subtitle below it. A heading does not need a label announcing it.
+  assert.doesNotMatch(profilePage, /HESAP VE ÖĞRENME/);
 });
 
-test("learning profile avoids legacy tinted surfaces and uses gold deliberately", () => {
+test("the learning summary emphasises with brand pink, not the rank gold", () => {
   assert.doesNotMatch(learningProfile, /bg-muted\/35|bg-primary\/10/);
-  assert.match(learningProfile, /bg-gold text-gold-ink/);
   assert.match(learningProfile, /rounded-input/);
+  // Gold is the achievement surface — the YKS rank wears it on the tutor card
+  // and the profile header. A completed-lesson counter in gold read as a rank
+  // chip, so the featured tile takes the brand's quiet emphasis instead.
+  assert.match(learningProfile, /featured \? "bg-pink-pale" : "bg-paper"/);
 });

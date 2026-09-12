@@ -506,10 +506,6 @@ export function ProfileMenu() {
               checked={prefs.notify_email}
               onChange={(v) => handleNotificationToggle("notify_email", v)}
             />
-            <p className="mt-2 px-2 text-xs text-muted-foreground">
-              Bu tercihler yalnız bildirim teslimini etkiler; rapor, destek ve
-              SLA durumları panelinde görünmeye devam eder.
-            </p>
           </ProfileAccordionSection>
 
           {/* ---- Gelişmiş Ayarlar ---- */}
