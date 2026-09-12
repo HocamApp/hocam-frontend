@@ -360,28 +360,28 @@ export function ProfileMenu() {
             />
           </ProfileAccordionSection>
 
-          {/* ---- Dersler ve Rezervasyonlar ---- */}
-          <ProfileAccordionSection
-            icon={<CalendarClock className="h-4 w-4" />}
-            title="Dersler ve Rezervasyonlar"
-            {...sectionProps("lessons")}
-          >
-            <ProfileMenuRow
+          {/* ---- Dersler ve Rezervasyonlar (tutors only) ---- */}
+          {isTutor && (
+            <ProfileAccordionSection
               icon={<CalendarClock className="h-4 w-4" />}
-              label="Derslerim"
-              badgeCount={stats?.upcoming_lessons_count}
-              showChevron
-              onClick={() => go(isTutor ? "/profile/lessons/upcoming" : "/profile/lessons")}
-            />
-            {isTutor && (
+              title="Dersler ve Rezervasyonlar"
+              {...sectionProps("lessons")}
+            >
+              <ProfileMenuRow
+                icon={<CalendarClock className="h-4 w-4" />}
+                label="Derslerim"
+                badgeCount={stats?.upcoming_lessons_count}
+                showChevron
+                onClick={() => go("/profile/lessons/upcoming")}
+              />
               <ProfileMenuRow
                 icon={<Gift className="h-4 w-4" />}
                 label="Paketlerim"
                 showChevron
                 onClick={() => go("/dashboard/tutor/packages")}
               />
-            )}
-          </ProfileAccordionSection>
+            </ProfileAccordionSection>
+          )}
 
           {/* ---- Ödeme ve Faturalandırma ---- */}
           <ProfileAccordionSection

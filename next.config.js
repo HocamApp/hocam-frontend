@@ -39,6 +39,20 @@ const nextConfig = {
         destination: "/kvkk/aydinlatma-metni",
         permanent: false,
       },
+      /*
+       * The student lessons workspace moved onto the dashboard. Exact source
+       * for the reason `/tutors` is exact: `/profile/lessons/:path*` would
+       * swallow `/profile/lessons/upcoming` and `/profile/lessons/history`,
+       * which are still the tutor's own screens.
+       *
+       * Not permanent. Routing a daily surface out of the settings menu is a
+       * product judgement, and a cached 308 would outlive any change of mind.
+       */
+      {
+        source: "/profile/lessons",
+        destination: "/dashboard/student",
+        permanent: false,
+      },
     ];
   },
 
