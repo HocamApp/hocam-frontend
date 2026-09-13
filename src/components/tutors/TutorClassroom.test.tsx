@@ -131,7 +131,7 @@ test("context persists four fields, enforces limit, cancels and clears", async (
   await screen.findByText(/İlk 10 bin/);
   assert.equal(contexts["student-1"].goals, "İlk 10 bin\nDüzenli tekrar");
   assert.equal(Object.keys(requests.find(r => r.method === "put")!.data as object).length, 4);
-  fireEvent.click(screen.getByRole("button", { name: "Düzenle" }));
+  fireEvent.click(await screen.findByRole("button", { name: "Düzenle" }));
   fireEvent.change(screen.getByRole("textbox", { name: "Hedefler" }), { target: { value: "Vazgeçilen" } });
   fireEvent.click(screen.getByRole("button", { name: "Vazgeç" }));
   assert.equal(screen.queryByText("Vazgeçilen"), null);
@@ -162,7 +162,7 @@ test("notes support create edit delete, failure draft and student isolation", as
   fireEvent.change(screen.getByRole("textbox", { name: "Notu düzenle" }), { target: { value: "Bir sonraki ders integral" } });
   fireEvent.click(screen.getByRole("button", { name: "Kaydet" }));
   await screen.findByText("Bir sonraki ders integral");
-  fireEvent.click(screen.getByRole("button", { name: "Notu sil" }));
+  fireEvent.click(await screen.findByRole("button", { name: "Notu sil" }));
   await screen.findByText(/Bu öğrenci için henüz notun yok/);
   failure = "post /notifications/tutor-student-notes";
   fireEvent.change(screen.getByRole("textbox", { name: "Yeni özel not" }), { target: { value: "Taslak" } });
