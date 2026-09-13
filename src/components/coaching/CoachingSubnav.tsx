@@ -13,6 +13,8 @@ import {
 
 import { cn } from "@/lib/utils";
 
+import { CoachingSubnavStrip } from "./CoachingSubnavStrip";
+
 const TUTOR_LINKS = [
   {
     label: "Genel bakış",
@@ -152,10 +154,7 @@ export function CoachingSubnav({
         Koçlukta konumun
       </p>
       <div className="relative">
-        <nav
-          aria-label="Koçluk bölümleri"
-          className="flex gap-1 overflow-x-auto rounded-card border border-line bg-surface p-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-        >
+        <CoachingSubnavStrip activeHref={activeHref}>
           {links.map(({ label, href, icon: Icon }) => {
             const active = href === activeHref;
             return (
@@ -179,7 +178,7 @@ export function CoachingSubnav({
               </Link>
             );
           })}
-        </nav>
+        </CoachingSubnavStrip>
       </div>
       {current ? (
         <p className="sr-only" aria-live="polite">
