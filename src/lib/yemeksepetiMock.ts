@@ -9,7 +9,7 @@
 
 /**
  * The vertical switcher. Labels and icons are Hocam's own nav items (see
- * `src/components/layout/navItems.ts`); only the Yemeksepeti tab *shape* and
+ * `src/components/yemeksepeti/ysAppNav.ts`); only the Yemeksepeti tab *shape* and
  * its hover animation are borrowed. Nothing here routes yet — the tabs are
  * presentational while the homepage design is being worked out.
  */
