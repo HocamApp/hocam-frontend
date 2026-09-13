@@ -103,3 +103,21 @@ describe("the daily grid", () => {
     assert.ok(screen.getByText("Bu gün için planlanmış bir şey yok."));
   });
 });
+
+describe("the daily grid on a narrow screen", () => {
+  // jsdom has no layout engine, so the width itself cannot be measured here.
+  // What can be pinned is the one rule that decides it: an hour's cell is a
+  // flex item, and without min-w-0 its minimum width is its widest card. One
+  // long lesson title then held the whole row wider than a 375px screen and
+  // the scroller clipped every card in that hour, controls included.
+  it("lets every hour cell shrink below its widest card", () => {
+    renderDay([block("Felsefe · Burak Çelik ile uzun başlıklı ders", "11:00", 40)]);
+
+    const cells = screen.getAllByRole("gridcell");
+    assert.ok(cells.length > 0);
+    for (const cell of cells) {
+      assert.ok(cell.classList.contains("min-w-0"), cell.className);
+      assert.ok(cell.classList.contains("flex-1"), cell.className);
+    }
+  });
+});

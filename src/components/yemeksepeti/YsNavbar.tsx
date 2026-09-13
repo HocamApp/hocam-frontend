@@ -6,6 +6,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { AnimatedSearchBar } from "@/components/tutors/AnimatedSearchBar";
 import { BrandMark } from "@/components/brand/BrandMark";
+import { useRevealActiveInStrip } from "@/hooks/useRevealActiveInStrip";
 import { MobileNotificationsBell } from "@/components/shared/MobileNotificationsBell";
 import { ProfileMenu } from "@/components/profile/ProfileMenu";
 import { StreakIndicator } from "@/components/profile/StreakIndicator";
@@ -77,23 +78,7 @@ function TabStrip({
   const pathname = usePathname();
   const stripRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const strip = stripRef.current;
-    if (!strip) return;
-    // Only move this strip; scrollIntoView would also move the document.
-    const revealActive = () => {
-      const selected = strip.querySelector<HTMLElement>('[aria-current="page"]');
-      if (!selected) return;
-      const bounds = strip.getBoundingClientRect();
-      const item = selected.getBoundingClientRect();
-      if (item.left < bounds.left) strip.scrollLeft -= bounds.left - item.left;
-      else if (item.right > bounds.right) strip.scrollLeft += item.right - bounds.right;
-    };
-    revealActive();
-    const observer = typeof ResizeObserver !== "undefined" ? new ResizeObserver(revealActive) : null;
-    observer?.observe(strip);
-    return () => observer?.disconnect();
-  }, [active?.href, pathname]);
+  useRevealActiveInStrip(stripRef, [active?.href, pathname]);
 
   return (
     <div ref={stripRef} className="scrollbar-none flex min-w-0 flex-1 overflow-x-auto">

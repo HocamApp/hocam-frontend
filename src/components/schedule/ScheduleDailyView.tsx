@@ -139,7 +139,13 @@ export function ScheduleDailyView({
               role="gridcell"
               style={{ minHeight: rowHeight }}
               className={cn(
-                "flex-1 space-y-2 p-2 max-md:space-y-1 max-md:p-1",
+                // min-w-0: a flex item's minimum width defaults to its content,
+                // so one long lesson title held the whole hour at its natural
+                // width and the row was clipped by the scroller — taking the
+                // title, the "Tamamlandı" box and the edit/delete controls of
+                // every card in that hour with it. Allowed to shrink, the
+                // cards' own truncation does the work instead.
+                "min-w-0 flex-1 space-y-2 p-2 max-md:space-y-1 max-md:p-1",
                 isToday && hour === currentHour && "bg-brand-50/40 dark:bg-brand-900/15"
               )}
             >
