@@ -15,18 +15,11 @@ import {
 } from "@phosphor-icons/react";
 
 /**
- * Navigation for the rebranded shell.
+ * The app's navigation: the desktop header tabs, the mobile tab bar and the
+ * active-route resolution all read from here and nowhere else.
  *
- * This is a second source of truth beside `src/components/layout/navItems.ts`,
- * and that is deliberate rather than an oversight. The old set opens with
- * "Ana Sayfa" at `/home` and "Hocalar" at `/tutors` — two destinations. In the
- * new site those are one: the root route is the homepage *and* the tutor
- * directory, and the search that filters it lives in the header. Rewriting
- * `navItems.ts` to say so would rewrite the nav the old navbar still renders,
- * and take `navItems.test.ts` with it. Leaving it alone keeps the old shell
- * recallable while this one is proven.
- *
- * Delete `navItems.ts` and its test only once the old navbar is gone for good.
+ * "Hocalar" is the root route because the homepage *is* the tutor directory;
+ * the search that filters it lives in the header.
  */
 
 /**
@@ -141,8 +134,6 @@ export function getYsAppTabs(role: YsNavRole, flags: Flags): YsNavItem[] {
  * Length of the most specific path this item matches, or -1 when it does not.
  * Longest match wins, which is what stops `/dashboard/tutor` lighting up while
  * you are inside `/dashboard/tutor/coaching`.
- *
- * Ported from `getNavRouteMatchLength` in navItems.ts.
  *
  * Favourites needs no special case any more. It used to be `/?favorites=1` —
  * a query-string view of the Hocalar route, which tied with it and had to be
