@@ -33,21 +33,21 @@ const BOOKING_STYLES: Record<string, string> = {
   in_progress: "border-pink bg-pink text-[var(--ink-on-light)]",
   awaiting_confirmation: "border-ink bg-ink text-paper",
   completed: "border-success bg-success-soft text-ink",
-  disputed: "border-error bg-error text-white",
-  cancelled: "border-error bg-error text-white",
-  expired: "border-error bg-error text-white",
+  disputed: "border-error bg-error text-destructive-foreground",
+  cancelled: "border-error bg-error text-destructive-foreground",
+  expired: "border-error bg-error text-destructive-foreground",
 };
 
 const LESSON_REQUEST_STYLES: Record<string, string> = {
   pending: "border-ink bg-ink text-paper",
   accepted: "border-success bg-success-soft text-ink",
-  declined: "border-error bg-error text-white",
+  declined: "border-error bg-error text-destructive-foreground",
 };
 
 const PACKAGE_PURCHASE_STYLES: Record<string, string> = {
   pending: "border-ink bg-ink text-paper",
   paid: "border-success bg-success-soft text-ink",
-  cancelled: "border-error bg-error text-white",
+  cancelled: "border-error bg-error text-destructive-foreground",
   refunded: "border-line bg-paper text-ink-mid",
 };
 
