@@ -112,7 +112,7 @@ export function getYsAppTabs(role: YsNavRole, flags: Flags): YsNavItem[] {
 
   if (flags.coachingEnabled) {
     tabs.push({
-      label: "Koçluk",
+      label: isTutor ? "Koçluk" : "Koçluk Programım",
       href: isTutor
         ? "/dashboard/tutor/coaching"
         : "/dashboard/student/coaching",

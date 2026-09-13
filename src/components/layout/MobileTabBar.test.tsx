@@ -139,7 +139,7 @@ test("Daha Fazla keeps coaching and favorites in a right-side drawer, without du
   assert.ok(sheet.classList.contains("right-0"));
   assert.ok(sheet.classList.contains("inset-y-0"));
   assert.equal(within(sheet).queryByRole("link", { name: "Çalışma Programım" }), null);
-  assert.ok(within(sheet).getByRole("link", { name: "Koçluk" }));
+  assert.ok(within(sheet).getByRole("link", { name: "Koçluk Programım" }));
   assert.ok(within(sheet).getByRole("link", { name: "Favoriler" }));
   assert.equal(within(sheet).queryByRole("link", { name: "Panelim" }), null);
 });

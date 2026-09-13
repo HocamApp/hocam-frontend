@@ -152,7 +152,7 @@ const tutorCoachingDescriptor: NavRouteDescriptor = {
  */
 const studentCoachingDescriptor: NavRouteDescriptor = {
   kind: "route",
-  title: "Koçluk",
+  title: "Koçluk Programım",
   icon: "Compass",
   href: "/dashboard/student/coaching",
   mobilePlacement: "overflow",

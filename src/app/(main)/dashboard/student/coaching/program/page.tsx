@@ -71,7 +71,7 @@ export default function StudentCoachingProgramPage() {
   return (
     <RouteGuard requireAuth requireRole="student">
       <CoachingPageShell
-        title="Çalışma programım"
+        title="Koçluk Programım"
         width="narrow"
         currentHref="/dashboard/student/coaching/program"
         audience="student"

@@ -34,7 +34,7 @@ function activeLabels(currentHref: string, audience: "tutor" | "student") {
 // Every currentHref the app actually passes, collected from the call sites.
 const STUDENT_ROUTES: [string, string][] = [
   ["/dashboard/student/coaching", "Genel bakış"],
-  ["/dashboard/student/coaching/program", "Programım"],
+  ["/dashboard/student/coaching/program", "Koçluk Programım"],
   ["/dashboard/student/coaching/upcoming", "Görüşmeler"],
   ["/dashboard/student/coaching/reports", "Raporlar"],
   ["/dashboard/student/coaching/complaints", "Destek"],

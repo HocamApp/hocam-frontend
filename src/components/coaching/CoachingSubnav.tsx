@@ -58,7 +58,7 @@ const STUDENT_LINKS = [
     icon: SquaresFour,
   },
   {
-    label: "Programım",
+    label: "Koçluk Programım",
     href: "/dashboard/student/coaching/program",
     icon: FileText,
   },

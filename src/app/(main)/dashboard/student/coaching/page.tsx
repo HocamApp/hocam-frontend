@@ -120,7 +120,7 @@ function OverviewContent() {
           },
           {
             href: "/dashboard/student/coaching/program",
-            label: "Programım",
+            label: "Koçluk Programım",
             icon: ListChecks,
           },
           {
@@ -163,7 +163,7 @@ export default function StudentCoachingOverviewPage() {
   return (
     <RouteGuard requireAuth requireRole="student">
       <CoachingPageShell
-        title="Çalışma koçluğum"
+        title="Koçluk Programım"
         width="narrow"
         currentHref="/dashboard/student/coaching"
         audience="student"
