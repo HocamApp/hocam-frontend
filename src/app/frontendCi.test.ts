@@ -14,10 +14,13 @@ test("the full unit suite is discovered automatically", () => {
   assert.ok(runner.includes(String.raw`/\.test\.tsx?$/`));
 });
 
-test("GitHub Actions runs the complete Node 20 frontend gate", () => {
+test("GitHub Actions runs the complete frontend gate on production's Node", () => {
   const workflow = readFileSync(".github/workflows/frontend-ci.yml", "utf8");
 
-  assert.match(workflow, /node-version:\s*20/);
+  // Vercel builds and serves this app on Node 24.x. CI on another major tests a
+  // runtime production never uses — and on Node 20 --test-force-exit truncated
+  // the report, so a red run could not name the test that failed.
+  assert.match(workflow, /node-version:\s*24/);
   for (const command of [
     "npm ci",
     "npm run test:unit",
