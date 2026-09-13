@@ -65,7 +65,9 @@ function renderWithQueryClient(node: React.ReactNode) {
 test("student coaching overview names the workspace and both program entries consistently", async () => {
   renderWithQueryClient(<StudentCoachingOverviewPage />);
 
-  assert.ok(screen.getByRole("heading", { level: 1, name: "Koçluk Programım" }));
+  // The overview is the coaching workspace; "Koçluk Programım" names only the
+  // program inside it, so the two pages never share a heading.
+  assert.ok(screen.getByRole("heading", { level: 1, name: "Çalışma koçluğum" }));
   const subnav = screen.getByRole("navigation", { name: "Koçluk bölümleri" });
   assert.equal(
     within(subnav).getByRole("link", { name: "Koçluk Programım" }).getAttribute("href"),
@@ -83,12 +85,12 @@ test("student coaching program page does not borrow the study schedule name", ()
   assert.equal(screen.queryByRole("heading", { name: "Çalışma Programım" }), null);
 });
 
-test("student dashboard coaching card enters Koçluk Programım", async () => {
+test("student dashboard coaching card opens the coaching workspace, not the program", async () => {
   renderWithQueryClient(<CoachingSummarySection />);
 
-  assert.ok(await screen.findByText("Koçluk Programım"));
+  assert.ok(await screen.findByText("Çalışma koçluğun"));
   assert.equal(
-    screen.getByRole("link", { name: "Koçluk Programım'ı aç" }).getAttribute("href"),
+    screen.getByRole("link", { name: "Koçluğu aç" }).getAttribute("href"),
     "/dashboard/student/coaching",
   );
 });

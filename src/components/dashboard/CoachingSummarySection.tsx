@@ -72,7 +72,7 @@ export function CoachingSummarySection() {
             <Compass className="size-4" weight="regular" aria-hidden="true" />
           </span>
           <div className="min-w-0">
-            <p className="text-label text-ink-mid">Koçluk Programım</p>
+            <p className="text-label text-ink-mid">Çalışma koçluğun</p>
             <h2 id="coaching-summary-title" className="text-h3-m text-ink">
               {coachingServiceStatusLabel(state.service_status)}
             </h2>
@@ -88,7 +88,7 @@ export function CoachingSummarySection() {
         </div>
         <Button asChild variant="outline" size="sm" className="shrink-0">
           <Link href="/dashboard/student/coaching">
-            Koçluk Programım&apos;ı aç
+            Koçluğu aç
             <ArrowRight className="ml-1.5 size-4" weight="regular" aria-hidden="true" />
           </Link>
         </Button>
