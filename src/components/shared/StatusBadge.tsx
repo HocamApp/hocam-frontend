@@ -28,27 +28,27 @@ const PACKAGE_PURCHASE_LABELS: Record<string, string> = {
 };
 
 const BOOKING_STYLES: Record<string, string> = {
-  pending: "border-amber-500 text-amber-700 dark:border-amber-400 dark:text-amber-300",
+  pending: "border-ink bg-ink text-paper",
   confirmed: "border-gold bg-gold text-gold-ink",
-  in_progress: "border-sky-500 text-sky-700 dark:border-sky-400 dark:text-sky-300",
-  awaiting_confirmation: "border-amber-500 text-amber-700 dark:border-amber-400 dark:text-amber-300",
-  completed: "border-green-500 text-green-700 dark:border-green-400 dark:text-green-300",
-  disputed: "border-orange-500 text-orange-700 dark:border-orange-400 dark:text-orange-300",
-  cancelled: "border-red-500 text-red-700 dark:border-red-400 dark:text-red-300",
-  expired: "border-red-500 text-red-700 dark:border-red-400 dark:text-red-300",
+  in_progress: "border-pink bg-pink text-[var(--ink-on-light)]",
+  awaiting_confirmation: "border-ink bg-ink text-paper",
+  completed: "border-success bg-success-soft text-ink",
+  disputed: "border-error bg-error text-destructive-foreground",
+  cancelled: "border-error bg-error text-destructive-foreground",
+  expired: "border-error bg-error text-destructive-foreground",
 };
 
 const LESSON_REQUEST_STYLES: Record<string, string> = {
-  pending: "border-amber-500 text-amber-700 dark:border-amber-400 dark:text-amber-300",
-  accepted: "border-green-500 text-green-700 dark:border-green-400 dark:text-green-300",
-  declined: "border-red-500 text-red-700 dark:border-red-400 dark:text-red-300",
+  pending: "border-ink bg-ink text-paper",
+  accepted: "border-success bg-success-soft text-ink",
+  declined: "border-error bg-error text-destructive-foreground",
 };
 
 const PACKAGE_PURCHASE_STYLES: Record<string, string> = {
-  pending: "border-amber-500 text-amber-700 dark:border-amber-400 dark:text-amber-300",
-  paid: "border-green-500 text-green-700 dark:border-green-400 dark:text-green-300",
-  cancelled: "border-red-500 text-red-700 dark:border-red-400 dark:text-red-300",
-  refunded: "border-slate-500 text-slate-700 dark:border-slate-400 dark:text-slate-300",
+  pending: "border-ink bg-ink text-paper",
+  paid: "border-success bg-success-soft text-ink",
+  cancelled: "border-error bg-error text-destructive-foreground",
+  refunded: "border-line bg-paper text-ink-mid",
 };
 
 const LABELS_BY_TYPE = {
@@ -73,7 +73,7 @@ export default function StatusBadge({ status, type }: StatusBadgeProps) {
   const labels = LABELS_BY_TYPE[type];
   const styles = STYLES_BY_TYPE[type];
   const label = labels[normalized] ?? status ?? "";
-  const style = styles[normalized] ?? "";
+  const style = styles[normalized] ?? "border-line bg-paper text-ink-mid";
 
   return (
     <Badge variant="outline" className={cn(style)}>

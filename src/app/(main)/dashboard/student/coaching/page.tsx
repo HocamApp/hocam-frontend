@@ -120,7 +120,7 @@ function OverviewContent() {
           },
           {
             href: "/dashboard/student/coaching/program",
-            label: "Programım",
+            label: "Koçluk Programım",
             icon: ListChecks,
           },
           {
