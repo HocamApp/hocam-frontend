@@ -150,7 +150,7 @@ afterEach(() => {
 describe("ProfileMenu ders navigasyonu", () => {
   it("hoca menüsünde eski ders akordiyonunu ve profil ders bağlantısını göstermez", async () => {
     currentRole = "tutor";
-    const { container } = renderMenu();
+    renderMenu();
 
     fireEvent.click(screen.getByRole("button", { name: "Profil menüsü" }));
     await screen.findByRole("button", { name: "Profil Detayları" });
@@ -159,7 +159,7 @@ describe("ProfileMenu ders navigasyonu", () => {
       name: "Dersler ve Rezervasyonlar",
     });
     const legacyLessonRow = screen.queryByRole("button", { name: "Derslerim" });
-    const legacyHref = container.querySelector(
+    const legacyHref = document.querySelector(
       'a[href="/profile/lessons/upcoming"]',
     );
     fireEvent.click(screen.getByRole("button", { name: "Profil menüsü" }));
