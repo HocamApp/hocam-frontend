@@ -59,11 +59,13 @@ import {
 // Boolean-valued preference keys — excludes string fields like `language`
 type BoolPrefKey = keyof Omit<UserPreferences, "language">;
 
-export function profileMenuSectionKeys(
-  _role: "student" | "tutor",
-): readonly string[] {
-  return ["profile", "payment", "security", "notifications", "advanced"];
-}
+const PROFILE_MENU_SECTION_KEYS: readonly string[] = [
+  "profile",
+  "payment",
+  "security",
+  "notifications",
+  "advanced",
+];
 
 function getInitials(name: string, surname: string): string {
   const n = (name || "").trim()[0] || "";
@@ -245,10 +247,7 @@ export function ProfileMenu() {
   };
 
   // Single-open connected accordion: one active section key (null = all collapsed).
-  const sectionKeys = useMemo(
-    () => profileMenuSectionKeys(isTutor ? "tutor" : "student"),
-    [isTutor]
-  );
+  const sectionKeys = PROFILE_MENU_SECTION_KEYS;
   const activeIndex = sectionKeys.indexOf(activeSection ?? "");
 
   const sectionProps = (key: string) => {
