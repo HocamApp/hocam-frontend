@@ -1,23 +1,28 @@
 import type { Message } from "@/types";
 
+import { istanbulDayKey } from "@/lib/bookingTime";
+
 function sameDay(a: Date, b: Date): boolean {
-  return (
-    a.getFullYear() === b.getFullYear() &&
-    a.getMonth() === b.getMonth() &&
-    a.getDate() === b.getDate()
-  );
+  const aDay = istanbulDayKey(a);
+  const bDay = istanbulDayKey(b);
+  return aDay !== "" && aDay === bDay;
 }
 
 export function formatDaySeparator(iso: string, now = new Date()): string {
   const date = new Date(iso);
-  const yesterday = new Date(now);
-  yesterday.setDate(now.getDate() - 1);
+  const yesterday = new Date(
+    Date.parse(`${istanbulDayKey(now)}T00:00:00Z`) - 86_400_000,
+  );
   if (sameDay(date, now)) return "Bugün";
   if (sameDay(date, yesterday)) return "Dün";
   return date.toLocaleDateString("tr-TR", {
     day: "numeric",
     month: "long",
-    year: date.getFullYear() === now.getFullYear() ? undefined : "numeric",
+    year:
+      istanbulDayKey(date).slice(0, 4) === istanbulDayKey(now).slice(0, 4)
+        ? undefined
+        : "numeric",
+    timeZone: "Europe/Istanbul",
   });
 }
 

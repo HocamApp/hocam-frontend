@@ -34,7 +34,6 @@ describe("directory retirement redirects", () => {
         ["/tutors", "/"],
         ["/home", "/"],
         ["/kvkk", "/kvkk/aydinlatma-metni"],
-        ["/profile/lessons", "/dashboard/student"],
       ],
     );
   });
@@ -67,11 +66,9 @@ describe("directory retirement redirects", () => {
       // moves the retired URL's search value to the route that replaced it.
       process.env.VERCEL_ENV = "production";
       for (const redirect of await nextConfig.redirects()) {
-        // Two exceptions, for the same reason: both are plausible to
-        // restore, and a cached 308 would make restoring them impossible.
-        // /kvkk is a documents hub; /profile/lessons is a page whose move
-        // onto the dashboard is a product judgement, not a retirement.
-        const expected = !["/kvkk", "/profile/lessons"].includes(redirect.source);
+        // /kvkk is a documents hub that may plausibly return; a cached 308
+        // would make restoring it impossible.
+        const expected = redirect.source !== "/kvkk";
         assert.equal(redirect.permanent, expected, redirect.source);
       }
     } finally {

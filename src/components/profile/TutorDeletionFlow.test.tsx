@@ -6,11 +6,19 @@ import React from "react";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
+// next/link's runtime touches `self`; the shared jsdom setup does not define it.
+Object.defineProperty(globalThis, "self", { value: window, configurable: true });
+
 let statusResponse: Record<string, unknown> = { active: false };
 let cancelResponse: Record<string, unknown> = {
   cancelled: true,
   can_republish: true,
   started_actions: [],
+};
+let tutorPrecheckResponse: Record<string, unknown> = {
+  blockers: [],
+  warnings: [],
+  offboarding_preview: [],
 };
 
 const pauseCalls: number[] = [];
@@ -32,7 +40,7 @@ async function loadFlow() {
       fetchDeletionStatus: async () => statusResponse,
       fetchTutorDeletionPrecheck: async () => {
         tutorPrecheckCalls.push(1);
-        return { blockers: [], warnings: [], offboarding_preview: [] };
+        return tutorPrecheckResponse;
       },
       requestDeletionOtp: async () => {
         otpRequestCalls.push(1);
@@ -83,6 +91,11 @@ beforeEach(async () => {
   await loadFlow();
   statusResponse = { active: false };
   cancelResponse = { cancelled: true, can_republish: true, started_actions: [] };
+  tutorPrecheckResponse = {
+    blockers: [],
+    warnings: [],
+    offboarding_preview: [],
+  };
   pauseCalls.length = 0;
   cancelCalls.length = 0;
   republishCalls.length = 0;
@@ -154,6 +167,33 @@ describe("TutorDeletionFlow", () => {
     await screen.findByText("Kapanış süreci başladı.");
     assert.deepEqual(otpConfirmCalls, ["654321"]);
     assert.deepEqual(tutorDeletionCalls, ["SİL"]);
+  });
+
+  it("yaklaşan ders engelini hocanın Panom rezervasyonlarına bağlar", async () => {
+    tutorPrecheckResponse = {
+      blockers: [
+        {
+          code: "upcoming_lessons",
+          message: "Yaklaşan dersiniz var.",
+        },
+      ],
+      warnings: [],
+      offboarding_preview: [],
+    };
+    renderFlow();
+
+    fireEvent.click(await screen.findByRole("button", { name: "Hesabı sil" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Kalıcı silmeye devam et" }),
+    );
+
+    const lessonsLink = await screen.findByRole("link", {
+      name: /Derslerinizi görüntüleyin/,
+    });
+    assert.equal(
+      lessonsLink.getAttribute("href"),
+      "/dashboard/tutor?tab=bookings",
+    );
   });
 
   it("iptal sonrası can_republish=true ise yeniden yayımla akışını gösterir", async () => {
