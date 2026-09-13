@@ -17,10 +17,8 @@ let previewCalls = 0;
 
 before(async () => {
   mock.module("next/link", {
-    namedExports: {
-      default: ({ href, children, ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { href: string }) =>
-        React.createElement("a", { href, ...props }, children),
-    },
+    defaultExport: ({ href, children, ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { href: string }) =>
+      React.createElement("a", { href, ...props }, children),
   });
   mock.module("@/lib/hocaBulAnalytics", {
     namedExports: { trackHocaBul: (event: unknown) => tracked.push(event) },

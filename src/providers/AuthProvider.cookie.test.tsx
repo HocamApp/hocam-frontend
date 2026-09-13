@@ -8,6 +8,8 @@ import Cookies from "js-cookie";
 
 import type { User } from "@/types";
 
+process.env.NEXT_PUBLIC_AUTH_MODE = "cookie";
+
 const user: User = {
   id: "user-1",
   email: "cookie@example.com",
