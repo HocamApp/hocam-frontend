@@ -469,6 +469,7 @@ export function TutorDeletionFlow({ accountEmail }: TutorDeletionFlowProps) {
                 blockers={precheck.blockers}
                 warnings={precheck.warnings}
                 onContinue={() => setStep("confirm")}
+                upcomingLessonsHref="/dashboard/tutor?tab=bookings"
               />
             )}
             {precheck.blockers.length === 0 &&

@@ -17,9 +17,6 @@ interface IssueAction {
  * deletion precheck contract; unknown codes render their message only.
  */
 const ISSUE_ACTIONS: Record<string, IssueAction[]> = {
-  upcoming_lessons: [
-    { label: "Derslerinizi görüntüleyin", href: "/profile/lessons/upcoming" },
-  ],
   unused_credits: [
     { label: "Ders planla", href: "/tutors" },
     { label: "İade talebi oluştur", href: "/profile/payments" },
@@ -31,8 +28,16 @@ const ISSUE_ACTIONS: Record<string, IssueAction[]> = {
   ],
 };
 
-function IssueActions({ code }: { code: string }) {
-  const actions = ISSUE_ACTIONS[code] ?? [];
+function IssueActions({
+  code,
+  upcomingLessonsHref,
+}: {
+  code: string;
+  upcomingLessonsHref: string;
+}) {
+  const actions = code === "upcoming_lessons"
+    ? [{ label: "Derslerinizi görüntüleyin", href: upcomingLessonsHref }]
+    : ISSUE_ACTIONS[code] ?? [];
   if (actions.length === 0) return null;
   return (
     <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1">
@@ -55,6 +60,7 @@ interface DeletionOptionsListProps {
   warnings: DeletionIssue[];
   onContinue: () => void;
   continuing?: boolean;
+  upcomingLessonsHref: string;
 }
 
 /**
@@ -67,6 +73,7 @@ export function DeletionOptionsList({
   warnings,
   onContinue,
   continuing = false,
+  upcomingLessonsHref,
 }: DeletionOptionsListProps) {
   return (
     <div className="space-y-4">
@@ -79,7 +86,7 @@ export function DeletionOptionsList({
               {blockers.map((issue) => (
                 <li key={issue.code}>
                   <p>{issue.message}</p>
-                  <IssueActions code={issue.code} />
+                  <IssueActions code={issue.code} upcomingLessonsHref={upcomingLessonsHref} />
                 </li>
               ))}
             </ul>
@@ -97,7 +104,7 @@ export function DeletionOptionsList({
             {warnings.map((issue) => (
               <li key={issue.code}>
                 <p>{issue.message}</p>
-                <IssueActions code={issue.code} />
+                <IssueActions code={issue.code} upcomingLessonsHref={upcomingLessonsHref} />
               </li>
             ))}
           </ul>

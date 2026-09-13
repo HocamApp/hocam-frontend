@@ -15,6 +15,7 @@ const SUBJECT_SEARCH = "subject-search-stub";
 const ENTRY_CARD = "hoca-bul-entry-card-stub";
 
 let Home: React.ComponentType | null = null;
+let bookings: Array<Record<string, unknown>> = [];
 
 function stub(testId: string) {
   const Stub = () => React.createElement("div", { "data-testid": testId });
@@ -66,7 +67,7 @@ before(async () => {
     },
   });
   mock.module("@/lib/lessonsApi", {
-    namedExports: { fetchBookings: async () => [] },
+    namedExports: { fetchBookings: async () => bookings },
   });
   mock.module("@/lib/paymentsApi", {
     namedExports: { fetchPackagePurchases: async () => [] },
@@ -122,7 +123,10 @@ function renderHome() {
   );
 }
 
-afterEach(() => cleanup());
+afterEach(() => {
+  bookings = [];
+  cleanup();
+});
 
 describe("authenticated home entry point (default configuration)", () => {
   it("keeps the subject search and never reveals the matching card", async () => {
@@ -142,6 +146,24 @@ describe("authenticated home entry point (default configuration)", () => {
 
     assert.ok(
       await screen.findByRole("heading", { name: "Kaldığın yerden devam et" })
+    );
+  });
+
+  it("opens the next lesson directly in the student dashboard", async () => {
+    bookings = [{
+      id: "booking-1",
+      status: "confirmed",
+      start_time: "2099-09-12T12:00:00Z",
+      duration_minutes: 40,
+      tutor: { name: "Ada", surname: "Hoca" },
+      subject: { name: "Matematik" },
+    }];
+
+    renderHome();
+
+    assert.equal(
+      (await screen.findByRole("link", { name: /Dersi görüntüle/ })).getAttribute("href"),
+      "/dashboard/student",
     );
   });
 });

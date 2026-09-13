@@ -300,6 +300,31 @@ describe("Güvenlik sayfası — hesap silme onayı", () => {
 });
 
 describe("Güvenlik sayfası — precheck dallanması", () => {
+  it("yaklaşan ders engelini öğrencinin Panom ders alanına bağlar", async () => {
+    precheckResponse = {
+      blockers: [
+        {
+          code: "upcoming_lessons",
+          message: "Yaklaşan dersiniz var.",
+        },
+      ],
+      warnings: [],
+      retention_offer: null,
+    };
+    await renderLoadedPage();
+    openDeletionFlow();
+
+    typeDeleteConfirm("SİL");
+    fireEvent.click(
+      screen.getByRole("button", { name: "Hesabı kalıcı olarak sil" }),
+    );
+
+    const lessonsLink = await screen.findByRole("link", {
+      name: /Derslerinizi görüntüleyin/,
+    });
+    assert.equal(lessonsLink.getAttribute("href"), "/dashboard/student");
+  });
+
   it("uyarı varsa seçenek listesi ve 'Yine de devam et' gösterilir", async () => {
     precheckResponse = {
       blockers: [],

@@ -228,7 +228,7 @@ export function AuthenticatedHome() {
         title={upcomingBooking.subject.name}
         description={`${tutorName || "Hoca bilgisi bekleniyor"} ile ${upcomingBooking.duration_minutes} dakikalık ders`}
         meta={formatLessonDateTime(upcomingBooking)}
-        href="/profile/lessons/upcoming"
+        href="/dashboard/student"
         action="Dersi görüntüle"
         contentType="lesson"
         contentId={upcomingBooking.id}

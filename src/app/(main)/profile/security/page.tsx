@@ -1122,6 +1122,7 @@ function SecurityContent() {
                     warnings={precheck.warnings}
                     onContinue={handleContinueFromOptions}
                     continuing={deletingAccount}
+                    upcomingLessonsHref="/dashboard/student"
                   />
                 )}
 

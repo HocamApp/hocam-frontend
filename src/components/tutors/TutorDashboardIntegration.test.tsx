@@ -108,6 +108,14 @@ test("Panom keeps the daily focus without duplicating workspace and profile navi
   assert.equal(screen.queryByText("Bugünkü programın"), null);
   assert.equal(screen.queryByText("Öğrencilerin"), null);
   assert.equal(screen.queryByText("Hoca yönetim merkezi"), null);
+  assert.equal(
+    screen.getByRole("link", { name: "Rezervasyonlar" }).getAttribute("href"),
+    "/dashboard/tutor?tab=bookings",
+  );
+  assert.equal(
+    screen.getByRole("link", { name: "Paket ayarları" }).getAttribute("href"),
+    "/dashboard/tutor/packages",
+  );
 });
 
 test("legacy tabs redirect to their canonical workspace", async () => {

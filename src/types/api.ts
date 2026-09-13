@@ -1361,48 +1361,6 @@ export interface StudentLearningProfileSummary {
 
 export type ParticipantRole = "tutor" | "student";
 
-export interface UpcomingLesson {
-  id: string;
-  subject: Subject;
-  start_time: string;
-  end_time: string;
-  duration_minutes: number;
-  status: string;
-  participant_name: string;
-  participant_role: ParticipantRole;
-  price: number;
-  room_url: string;
-  can_join: boolean;
-}
-
-export interface PendingReservation {
-  id: string;
-  subject: Subject;
-  start_time: string;
-  end_time: string;
-  duration_minutes: number;
-  status: string;
-  participant_name: string;
-  participant_role: ParticipantRole;
-  price: number;
-  can_confirm: boolean;
-  can_cancel: boolean;
-}
-
-export interface PastLesson {
-  id: string;
-  subject: Subject;
-  start_time: string;
-  end_time: string;
-  duration_minutes: number;
-  status: string;
-  participant_name: string;
-  participant_role: ParticipantRole;
-  price: number;
-  has_review: boolean;
-  can_review: boolean;
-}
-
 // Extends Booking so it can be passed straight to the existing ReviewModal.
 export interface PendingReviewItem extends Booking {
   participant_name: string;
