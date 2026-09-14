@@ -34,6 +34,11 @@ import { TeachingAttributeSelector } from "@/components/tutors/TeachingAttribute
 import { SearchableEducationSelect } from "@/components/tutors/SearchableEducationSelect";
 import { TutorJourneyAside } from "@/components/tutors/TutorJourneyAside";
 import { syncCreatedTutorProfile } from "@/lib/tutorSetup";
+import {
+  BIO_MIN_WORDS,
+  BIO_MIN_WORDS_MESSAGE,
+  countBioWords,
+} from "@/components/tutors/profile-editor/TutorProfileFormSections";
 
 const setupSchema = z.object({
   name: z.string().min(1, "Ad zorunludur"),
@@ -53,7 +58,9 @@ const setupSchema = z.object({
     .refine((v) => !isNaN(Number(v)) && Number(v) > 0, {
       message: "Ücret pozitif olmalıdır",
     }),
-  bio: z.string().optional(),
+  bio: z
+    .string()
+    .refine((v) => countBioWords(v) >= BIO_MIN_WORDS, { message: BIO_MIN_WORDS_MESSAGE }),
 });
 
 type SetupFormValues = z.infer<typeof setupSchema>;
@@ -129,6 +136,7 @@ export default function TutorSetupPage() {
       if (err.fieldErrors.department) form.setError("department", { message: err.fieldErrors.department[0] });
       if (err.fieldErrors.yks_rank) form.setError("yks_rank", { message: err.fieldErrors.yks_rank[0] });
       if (err.fieldErrors.hourly_price) form.setError("hourly_price", { message: err.fieldErrors.hourly_price[0] });
+      if (err.fieldErrors.bio) form.setError("bio", { message: err.fieldErrors.bio[0] });
       return;
     }
     const supportedSelectedSubjectIds = filterSelectedSubjectIds(subjects, selectedSubjectIds);
@@ -150,7 +158,7 @@ export default function TutorSetupPage() {
         department: parsed.data.department,
         yks_rank: Number(parsed.data.yks_rank),
         hourly_price: parsed.data.hourly_price,
-        bio: parsed.data.bio ?? "",
+        bio: parsed.data.bio,
         subject_ids: supportedSelectedSubjectIds,
         teaching_attribute_codes: selectedTeachingAttributes,
       });
@@ -387,7 +395,12 @@ export default function TutorSetupPage() {
                 name="bio"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Hakkımda (isteğe bağlı)</FormLabel>
+                    <div className="flex items-end justify-between gap-3">
+                      <FormLabel>Hakkımda</FormLabel>
+                      <span className="text-sm tabular-nums text-muted-foreground">
+                        {countBioWords(field.value ?? "")}/{BIO_MIN_WORDS} kelime
+                      </span>
+                    </div>
                     <FormControl>
                       <Textarea
                         rows={4}
@@ -395,6 +408,9 @@ export default function TutorSetupPage() {
                         {...field}
                       />
                     </FormControl>
+                    <p className="text-xs text-muted-foreground">
+                      En az {BIO_MIN_WORDS} kelime yaz: kim olduğun, ne öğrettiğin ve nasıl çalıştığın.
+                    </p>
                     <FormMessage />
                   </FormItem>
                 )}

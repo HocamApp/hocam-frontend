@@ -38,7 +38,9 @@ import { Form } from "@/components/ui/form";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   BIO_MAX_LENGTH,
-  BIO_RECOMMENDED_LENGTH,
+  BIO_MIN_WORDS,
+  BIO_MIN_WORDS_MESSAGE,
+  countBioWords,
   EducationSection,
   getYouTubeEmbedUrl,
   IntroVideoSection,
@@ -76,7 +78,12 @@ const editSchema = z.object({
     .refine((value) => !value || getYouTubeEmbedUrl(value) !== null, {
       message: "Geçerli bir YouTube video bağlantısı gir.",
     }),
-  bio: z.string().max(BIO_MAX_LENGTH, "Hakkımda en fazla 1000 karakter olabilir").optional(),
+  bio: z
+    .string()
+    .max(BIO_MAX_LENGTH, "Hakkımda en fazla 1000 karakter olabilir")
+    .optional()
+    // Optional only for the form's shared value type; a missing bio still fails.
+    .refine((value) => countBioWords(value ?? "") >= BIO_MIN_WORDS, { message: BIO_MIN_WORDS_MESSAGE }),
 });
 
 type EditFormValues = z.infer<typeof editSchema> & TutorProfileEditValues;
@@ -399,8 +406,8 @@ function TutorProfileEditContent() {
     ...(!profile.profile_picture
       ? [{ label: "Profil fotoğrafı ekle", target: "#profile-basics" }]
       : []),
-    ...(bioValue.length < BIO_RECOMMENDED_LENGTH
-      ? [{ label: `Hakkımda yazını en az ${BIO_RECOMMENDED_LENGTH} karaktere tamamla`, target: "#profile-basics" }]
+    ...(countBioWords(bioValue) < BIO_MIN_WORDS
+      ? [{ label: `Hakkımda yazını en az ${BIO_MIN_WORDS} kelimeye tamamla`, target: "#profile-basics" }]
       : []),
     ...(!introVideoValue
       ? [{ label: "Tanıtım videosu ekle", target: "#intro-video" }]
