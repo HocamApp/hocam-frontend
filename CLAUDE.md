@@ -110,7 +110,11 @@ Everything goes through `src/lib/bookingTime.ts`:
 - logic — `bookingInstant`, `bookingHasStarted`, `bookingHasEnded`,
   `bookingJoinWindowOpen`, `byBookingInstant`
 - calendar days — `bookingDayKey` / `istanbulDayKey`, never `toDateString()`
-- writing — `toBookingStartTime`, the only way to produce a `start_time`
+- writing — `toBookingStartTime` when you hold an instant (a `Date`/epoch).
+  When you already hold Istanbul wall-clock strings (the slot picker's
+  `"YYYY-MM-DD"` + `"HH:MM"`), join them as `${date}T${time}:00`. Never rebuild
+  them with multi-argument `new Date(y, m, d, h, min)`: that reads the numbers
+  in the browser's zone and shifted US students' lessons by 7 hours.
 
 Countdowns run off `src/lib/serverClock.ts` (`serverNow()`), which corrects the
 browser clock toward the server. **The browser never grants access to a lesson**
