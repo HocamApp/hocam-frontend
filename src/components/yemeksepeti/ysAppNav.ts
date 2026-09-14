@@ -89,7 +89,7 @@ export function getYsAppTabs(role: YsNavRole, flags: Flags): YsNavItem[] {
   const tabs: YsNavItem[] = [
     { label: "Hocalar", href: "/", icon: GraduationCap, exact: true },
     {
-      label: isTutor ? "Panom" : "Panelim",
+      label: isTutor ? "Panom" : "Derslerim",
       href: isTutor ? "/dashboard/tutor" : "/dashboard/student",
       icon: SquaresFour,
     },

@@ -225,7 +225,7 @@ function LessonEndedScreen({
           ? "Ders tamamlandı olarak işaretlendi. Panelindeki onay kartından dersi onaylayabilir veya bir sorun bildirebilirsin."
           : "Bu ders artık aktif değil. Detayları panelinden görebilirsin."}
       </p>
-      <Button onClick={onGoToDashboard}>Panelime dön</Button>
+      <Button onClick={onGoToDashboard}>Derslerime dön</Button>
     </div>
   );
 }
