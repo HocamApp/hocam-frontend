@@ -17,7 +17,6 @@ import {
 } from "@phosphor-icons/react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
-import { useCountdownLabel } from "@/hooks/useCountdown";
 import {
   bookingDayKey,
   bookingInstant,
@@ -58,7 +57,6 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Booking, PackagePurchase, ProfileStudent } from "@/types";
 
-const URGENT_LESSON_WINDOW_MS = 30 * 60 * 1000;
 const DAY_MS = 24 * 60 * 60 * 1000;
 const RENEW_DAYS_THRESHOLD = 7;
 const RENEW_CREDITS_THRESHOLD = 2;
@@ -225,35 +223,6 @@ function EmptyStudentDashboard({
         </ol>
       </section>
     </div>
-  );
-}
-
-function UrgentLessonBanner({ booking }: { booking: Booking }) {
-  const countdown = useCountdownLabel(new Date(bookingInstant(booking.start_time)));
-  return (
-    <section aria-label="Yaklaşan ders bildirimi" className="flex flex-col gap-4 rounded-card border border-ink bg-surface p-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-      <div className="flex min-w-0 items-center gap-4">
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-input bg-ink text-white">
-          <Clock className="size-5" weight="regular" aria-hidden="true" />
-        </span>
-        <div className="min-w-0">
-          <p className="text-body font-medium text-ink">Dersin birazdan başlıyor</p>
-          <p className="mt-1 truncate text-small text-ink-mid">
-            {booking.subject.name} · {tutorName(booking)} · {formatTime(booking.start_time)}
-            {countdown ? ` · ${countdown} kaldı` : ""}
-          </p>
-        </div>
-      </div>
-      <LessonJoinButton
-        bookingId={booking.id}
-        startTime={booking.start_time}
-        durationMinutes={booking.duration_minutes}
-        status={booking.status}
-        roomUrl={booking.room_url}
-        size="lg"
-        className="shrink-0"
-      />
-    </section>
   );
 }
 
@@ -535,7 +504,6 @@ function StudentDashboardContent() {
     !hasAccountActivity;
   const name = studentProfile?.name?.trim() || emailFirstName(user?.email);
   const avatarUrl = studentProfile?.avatar_url;
-  const isUrgentLesson = Boolean(nextLesson && (nextLesson.status === "in_progress" || bookingInstant(nextLesson.start_time) - now <= URGENT_LESSON_WINDOW_MS));
 
   // Scroll once per id: re-running on every render would fight the user the
   // moment they scrolled away from the row.
@@ -563,8 +531,6 @@ function StudentDashboardContent() {
         </div>
       )}
 
-      {isUrgentLesson && nextLesson && <UrgentLessonBanner booking={nextLesson} />}
-
       {actionableBookings.length > 0 && (
         <section aria-labelledby="attention-title" className="rounded-card border border-ink bg-surface p-6">
           <div className="mb-4 flex items-center gap-3">
@@ -578,7 +544,9 @@ function StudentDashboardContent() {
         </section>
       )}
 
-      <PendingReviewsSection />
+      {/* With a lesson coming up, that card leads and reviews wait beneath it;
+          with none, the reviews are the next thing to do and stay on top. */}
+      {!bookingsQuery.isLoading && !nextLesson && <PendingReviewsSection />}
 
       {bookingsQuery.isLoading ? (
         <Skeleton className="h-[280px] w-full rounded-card" />
@@ -595,6 +563,8 @@ function StudentDashboardContent() {
           </Button>
         </section>
       )}
+
+      {(bookingsQuery.isLoading || nextLesson) && <PendingReviewsSection />}
 
       {followingLessons.length > 0 && (
         <UpcomingLessons
