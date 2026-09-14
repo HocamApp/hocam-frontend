@@ -24,7 +24,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { SubjectSelector } from "@/components/tutors/profile-editor/SubjectSelector";
 
 export const BIO_MAX_LENGTH = 1000;
-export const BIO_RECOMMENDED_LENGTH = 80;
+// One sentence ("Matematik öğretmeniyim, sabırlıyım") told students nothing.
+// 40 words asks for three or four sentences: who you are, what you teach and
+// how you work. Mirrors apps/tutors/serializers.py::BIO_MIN_WORDS.
+export const BIO_MIN_WORDS = 40;
+export const BIO_MIN_WORDS_MESSAGE =
+  "Hakkımda yazın en az 40 kelime olmalı. Kim olduğunu, ne öğrettiğini ve nasıl çalıştığını anlat.";
+
+export function countBioWords(value: string): number {
+  return value.trim().split(/\s+/).filter(Boolean).length;
+}
 
 export interface TutorProfileEditValues {
   university: string;
@@ -153,7 +162,7 @@ export function ProfileBasicsSection({
               <div className="flex items-end justify-between gap-3">
                 <FormLabel>Hakkımda</FormLabel>
                 <span className="text-sm tabular-nums text-muted-foreground">
-                  {bioValue.length}/{BIO_MAX_LENGTH}
+                  {countBioWords(bioValue)}/{BIO_MIN_WORDS} kelime · {bioValue.length}/{BIO_MAX_LENGTH}
                 </span>
               </div>
               <FormControl>
@@ -169,7 +178,7 @@ export function ProfileBasicsSection({
                 />
               </FormControl>
               <FormDescription>
-                En az {BIO_RECOMMENDED_LENGTH} karakter önerilir; bu bir kayıt zorunluluğu değildir.
+                En az {BIO_MIN_WORDS} kelime yaz: kim olduğun, ne öğrettiğin ve nasıl çalıştığın.
               </FormDescription>
               <FormMessage />
             </FormItem>
