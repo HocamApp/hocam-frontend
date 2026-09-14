@@ -16,7 +16,6 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { toBookingStartTime } from "@/lib/bookingTime";
 import { LessonSlotPicker, type SlotSelection } from "./LessonSlotPicker";
 import { endTimeLabel, longDateLabel } from "./slotPickerFormat";
 import { ChalkboardTeacher, Star, TrendUp } from "@phosphor-icons/react";
@@ -242,15 +241,13 @@ export function BookingModal({
     setApiError(null);
     setIsSubmitting(true);
 
-    // The picker speaks Istanbul wall clock in plain strings; rebuild the
-    // local Date only here, at the single write boundary. One writer for the
-    // whole app — see toBookingStartTime. This must stay a naive local string;
-    // an ISO instant with a Z moves the lesson.
-    const [year, month, day] = selection.date.split("-").map(Number);
-    const [hours, minutes] = selection.time.split(":").map(Number);
-    const start_time = toBookingStartTime(
-      new Date(year, month - 1, day, hours, minutes, 0, 0)
-    );
+    // The picker already speaks Istanbul wall clock ("YYYY-MM-DD", "HH:MM"),
+    // which is exactly the naive string the backend stores. Never round-trip
+    // it through a Date: multi-argument `new Date(...)` reads the numbers in
+    // the browser's zone, so a student outside Turkey had the lesson shifted
+    // by their offset (US Eastern: 18 Sep 20:30 became 19 Sep 03:30). An ISO
+    // instant with a Z moves the lesson too.
+    const start_time = `${selection.date}T${selection.time}:00`;
 
     try {
       const booking = await createBooking({

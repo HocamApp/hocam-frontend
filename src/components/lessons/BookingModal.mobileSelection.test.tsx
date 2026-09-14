@@ -18,6 +18,7 @@ import type { TutorProfile, TutorSlotsResponse } from "@/types";
 import { addDays, istanbulToday, longDateLabel } from "./slotPickerFormat";
 
 let slotsFail = false;
+let submittedStartTimes: string[] = [];
 
 const today = istanbulToday();
 // A closed day in the middle, so "every day is returned, some disabled" is
@@ -33,7 +34,8 @@ const slotResponse: TutorSlotsResponse = {
 
 mock.module("@/lib/lessonsApi", {
   namedExports: {
-    createBooking: async () => {
+    createBooking: async (payload: { start_time: string }) => {
+      submittedStartTimes.push(payload.start_time);
       throw new Error("Booking submission is outside this visual-state test.");
     },
     fetchTutorSlots: async (): Promise<TutorSlotsResponse> => {
@@ -155,6 +157,28 @@ test("the submit button stays disabled until a time is chosen", async () => {
     assert.equal((screen.getByRole("button", { name: /Rezervasyonu tamamla/ }) as HTMLButtonElement).disabled, false),
   );
   queryClient.clear();
+});
+
+test("the picked Istanbul slot is sent verbatim, whatever the browser's zone", async () => {
+  // A student in the US picked 18 Sep 20:30 and the backend received 19 Sep
+  // 03:30: the slot was rebuilt as a Date in the browser's zone. Run the
+  // submit from a zone seven hours behind Istanbul to keep that from returning.
+  const originalTz = process.env.TZ;
+  process.env.TZ = "America/New_York";
+  submittedStartTimes = [];
+  const queryClient = renderModal();
+  try {
+    fireEvent.click(await screen.findByRole("button", { name: "09:00" }));
+    const submit = screen.getByRole("button", { name: /Rezervasyonu tamamla/ });
+    await waitFor(() => assert.equal((submit as HTMLButtonElement).disabled, false));
+    fireEvent.click(submit);
+
+    await waitFor(() => assert.deepEqual(submittedStartTimes, [`${today}T09:00:00`]));
+  } finally {
+    if (originalTz === undefined) delete process.env.TZ;
+    else process.env.TZ = originalTz;
+    queryClient.clear();
+  }
 });
 
 test("the selected lesson summary appears once in the fixed footer", async () => {
