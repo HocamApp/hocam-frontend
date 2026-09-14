@@ -15,7 +15,7 @@
  */
 export const VERTICAL_TABS = [
   { id: "tutors", label: "Hocalar", icon: "GraduationCap" },
-  { id: "dashboard", label: "Panelim", icon: "SquaresFour" },
+  { id: "dashboard", label: "Derslerim", icon: "SquaresFour" },
   { id: "coaching", label: "Koçluk", icon: "Compass" },
   { id: "schedule", label: "Çalışma Programım", icon: "CalendarBlank" },
 ] as const;

@@ -104,7 +104,7 @@ test("student mobile navigation exposes five distinct primary destinations acros
 
   assert.deepEqual(
     Array.from(nav.children).map((item) => item.getAttribute("aria-label")),
-    ["Hocalar", "Panelim", "Mesajlar", "Çalışma Programım", "Daha Fazla"],
+    ["Hocalar", "Derslerim", "Mesajlar", "Çalışma Programım", "Daha Fazla"],
   );
   assert.equal(screen.queryByRole("link", { name: "Ana Sayfa" }), null);
   assert.equal(screen.getByRole("link", { name: "Hocalar" }).getAttribute("href"), "/");
@@ -122,7 +122,7 @@ test("student mobile navigation uses filled active icons and regular inactive ic
   );
   assert.equal(
     screen
-      .getByRole("link", { name: "Panelim" })
+      .getByRole("link", { name: "Derslerim" })
       .querySelector("svg")
       ?.getAttribute("data-icon-weight"),
     "regular",
@@ -141,7 +141,7 @@ test("Daha Fazla keeps coaching and favorites in a right-side drawer, without du
   assert.equal(within(sheet).queryByRole("link", { name: "Çalışma Programım" }), null);
   assert.ok(within(sheet).getByRole("link", { name: "Koçluk" }));
   assert.ok(within(sheet).getByRole("link", { name: "Favoriler" }));
-  assert.equal(within(sheet).queryByRole("link", { name: "Panelim" }), null);
+  assert.equal(within(sheet).queryByRole("link", { name: "Derslerim" }), null);
 });
 
 test("program is a direct active destination and notifies neither the bar nor More", () => {

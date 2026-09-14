@@ -32,7 +32,7 @@ describe("ys app nav", () => {
     const tabs = getYsAppTabs("student", flags);
     assert.deepEqual(
       tabs.map((t) => t.label),
-      ["Hocalar", "Panelim", "Koçluk", "Çalışma Programım"],
+      ["Hocalar", "Derslerim", "Koçluk", "Çalışma Programım"],
     );
     assert.equal(tabs[0].href, "/");
   });
@@ -47,7 +47,7 @@ describe("ys app nav", () => {
   });
 
   it("gives the deepest match the tab rather than its parent", () => {
-    assert.equal(labelOf("/dashboard/student"), "Panelim");
+    assert.equal(labelOf("/dashboard/student"), "Derslerim");
     assert.equal(labelOf("/dashboard/student/coaching"), "Koçluk");
     assert.equal(labelOf("/dashboard/student/coaching/program"), "Koçluk");
   });
@@ -91,7 +91,7 @@ describe("ys app nav", () => {
     });
     assert.deepEqual(
       off.map((t) => t.label),
-      ["Hocalar", "Panelim"],
+      ["Hocalar", "Derslerim"],
     );
   });
 

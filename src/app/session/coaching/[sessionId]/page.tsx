@@ -135,7 +135,7 @@ function CoachingSessionContent() {
       <div className="flex flex-1 flex-col items-center justify-center gap-4 p-6">
         <ErrorMessage message={message} />
         <Button variant="outline" onClick={() => router.push(`/dashboard/${viewerRole}`)}>
-          Panelime dön
+          Derslerime dön
         </Button>
       </div>
     );
