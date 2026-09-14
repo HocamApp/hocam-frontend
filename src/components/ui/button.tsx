@@ -31,8 +31,10 @@ const buttonVariants = cva(
         outline: "border border-ink bg-transparent text-ink hover:bg-ink hover:text-paper",
         /* Tertiary: no container at all. Dismissals, back, cancel. */
         ghost: "text-ink hover:bg-paper",
-        /* Tutor-side actions only, and never beside a pink button: both are
-           fully saturated and large adjacent areas visually vibrate. */
+        /* Tutor-side actions, and never beside a pink button: both are fully
+           saturated and large adjacent areas visually vibrate. One recorded
+           exception (DESIGN.md §8): the free-trial CTA stacked above the pink
+           checkout CTA on the tutor profile. */
         gold: "bg-gold text-gold-ink hover:brightness-95",
         destructive: "bg-error text-white hover:brightness-95",
         secondary: "bg-paper text-ink hover:bg-line",
