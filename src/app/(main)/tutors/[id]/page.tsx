@@ -99,11 +99,12 @@ function Stars({ rating }: { rating: number }) {
   return (
     <span className="inline-flex gap-0.5" aria-label={`${rating} yıldız`}>
       {[1, 2, 3, 4, 5].map((i) =>
-        // Gold is a surface, never text: #FFD100 as a glyph measures about
-        // 1.6:1 on paper. The rank lockup carries the gold on this page; the
-        // stars are ink, and the numeral beside them carries the value.
+        // Pink, not gold: #FFD100 as a glyph measures about 1.6:1 on paper.
+        // --pink (not --pink-deep, which DESIGN.md keeps for hover/active)
+        // measures about 3.8:1 on paper and 4.5:1 on the dark canvas, past
+        // the 3:1 floor for graphics; the numeral beside them carries the value.
         i <= Math.round(rating) ? (
-          <span key={i} className="text-ink">
+          <span key={i} className="text-pink">
             ★
           </span>
         ) : (
@@ -836,9 +837,16 @@ export default function TutorProfilePage({
                         </div>
                       ) : tutor.is_bookable === false ? null : (
                         <>
-                          {canBookFreeTrial ? (
-                            <div className="space-y-2">
+                          {/* A free trial is offered, never required: a student
+                              who already knows what they want can go straight
+                              to checkout. The trial takes the gold "offer"
+                              surface so the two do not read as one repeated
+                              action; this is the one student-side gold button
+                              DESIGN.md allows next to pink. */}
+                          <div className="space-y-2">
+                            {canBookFreeTrial && (
                               <Button
+                                variant="gold"
                                 className="w-full"
                                 onClick={() => {
                                   void recordDiscoveryEvent(
@@ -851,8 +859,7 @@ export default function TutorProfilePage({
                               >
                                 Deneme Dersi Al
                               </Button>
-                            </div>
-                          ) : (
+                            )}
                             <TutorCheckoutCta
                               href={checkoutHref}
                               offersCoaching={tutor.offers_coaching === true}
@@ -866,7 +873,7 @@ export default function TutorProfilePage({
                                 router.push(href);
                               }}
                             />
-                          )}
+                          </div>
                         </>
                       )}
                     </>
