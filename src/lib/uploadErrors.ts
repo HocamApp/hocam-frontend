@@ -59,6 +59,9 @@ export function getPhotoUploadErrorMessage(error: unknown): string {
 }
 
 export function getMaterialUploadErrorMessage(error: unknown): string {
+  if (error instanceof Error && error.name === "MaterialStorageUploadError") {
+    return "Dosya yüklenirken bağlantı koptu. İnternet bağlantını kontrol edip tekrar dene.";
+  }
   const kind = getUploadErrorKind(error);
   if (kind === "storage_unavailable") return STORAGE_UNAVAILABLE_MESSAGE;
   if (kind === "throttled") return THROTTLED_MESSAGE;

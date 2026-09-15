@@ -99,10 +99,30 @@ describe("tutor material helpers", () => {
     assert.equal(formatMaterialSize(1_572_864), "1,5 MB");
     assert.equal(
       validateMaterialFile(new File(["x"], "notes.exe", { type: "application/octet-stream" })),
-      "PDF, JPG, PNG, WebP, DOCX veya PPTX dosyası seç."
+      "PDF, Word, PowerPoint, Excel, metin, görsel, ses veya video dosyası seç."
     );
     const oversized = new File(["x"], "notes.pdf", { type: "application/pdf" });
-    Object.defineProperty(oversized, "size", { value: 25 * 1024 * 1024 + 1 });
-    assert.equal(validateMaterialFile(oversized), "Dosya 25 MB veya daha küçük olmalı.");
+    Object.defineProperty(oversized, "size", { value: 50 * 1024 * 1024 + 1 });
+    assert.equal(validateMaterialFile(oversized), "Dosya 50 MB veya daha küçük olmalı.");
+  });
+
+  it("accepts a 40 MB question book and office files with an empty browser MIME", () => {
+    const book = new File(["x"], "TYT Soru Bankası.pdf", { type: "application/pdf" });
+    Object.defineProperty(book, "size", { value: 40 * 1024 * 1024 });
+    assert.equal(validateMaterialFile(book), null);
+    assert.equal(validateMaterialFile(new File(["x"], "sunum.PPTX", { type: "" })), null);
+    for (const name of ["ders.mp4", "ses.m4a", "tablo.xlsx", "eski.doc", "not.txt", "foto.heic"]) {
+      assert.equal(validateMaterialFile(new File(["x"], name)), null, name);
+    }
+    for (const name of ["sayfa.html", "logo.svg", "arsiv.zip"]) {
+      assert.notEqual(validateMaterialFile(new File(["x"], name)), null, name);
+    }
+  });
+
+  it("advertises the new limit and types in the panel", () => {
+    renderView();
+    assert.ok(screen.getByText("PDF, Word, PowerPoint, Excel, metin, görsel, ses veya video · En fazla 50 MB"));
+    const input = screen.getByLabelText("Özel materyal dosyası seç");
+    assert.match(input.getAttribute("accept") ?? "", /\.mp4/);
   });
 });

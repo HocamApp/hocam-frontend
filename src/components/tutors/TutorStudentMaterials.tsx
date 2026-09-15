@@ -21,19 +21,9 @@ import {
   getMaterialUploadError,
   uploadTutorStudentMaterial,
 } from "@/lib/notificationsApi";
+import { TUTOR_MATERIAL_ACCEPT, TUTOR_MATERIAL_HINT, validateTutorMaterialFile } from "@/lib/tutorMaterialTypes";
 import { cn, formatDate } from "@/lib/utils";
 import type { TutorStudentMaterial } from "@/types";
-
-const MAX_MATERIAL_BYTES = 25 * 1024 * 1024;
-const ACCEPTED_MATERIALS: Record<string, readonly string[]> = {
-  pdf: ["application/pdf"],
-  jpg: ["image/jpeg"],
-  jpeg: ["image/jpeg"],
-  png: ["image/png"],
-  webp: ["image/webp"],
-  docx: ["application/vnd.openxmlformats-officedocument.wordprocessingml.document"],
-  pptx: ["application/vnd.openxmlformats-officedocument.presentationml.presentation"],
-};
 
 export function formatMaterialSize(bytes: number): string {
   if (bytes < 1024) return bytes + " B";
@@ -44,12 +34,7 @@ export function formatMaterialSize(bytes: number): string {
 }
 
 export function validateMaterialFile(file: File): string | null {
-  if (file.size > MAX_MATERIAL_BYTES) return "Dosya 25 MB veya daha küçük olmalı.";
-  const extension = file.name.split(".").pop()?.toLocaleLowerCase("en-US") ?? "";
-  if (!ACCEPTED_MATERIALS[extension]?.includes(file.type)) {
-    return "PDF, JPG, PNG, WebP, DOCX veya PPTX dosyası seç.";
-  }
-  return null;
+  return validateTutorMaterialFile(file);
 }
 
 export interface TutorStudentMaterialsViewProps {
@@ -105,7 +90,7 @@ export function TutorStudentMaterialsView({
           type="file"
           aria-label="Özel materyal dosyası seç"
           className="sr-only"
-          accept=".pdf,.jpg,.jpeg,.png,.webp,.docx,.pptx"
+          accept={TUTOR_MATERIAL_ACCEPT}
           disabled={isUploading}
           onChange={(event) => {
             const file = event.target.files?.[0];
@@ -118,7 +103,7 @@ export function TutorStudentMaterialsView({
           Dosya ekle
         </Button>
       </div>
-      <p className="text-xs text-ink-mid">PDF, JPG, PNG, WebP, DOCX veya PPTX · En fazla 25 MB</p>
+      <p className="text-xs text-ink-mid">{TUTOR_MATERIAL_HINT}</p>
       {isUploading && (
         <div className="space-y-1" aria-live="polite">
           <div className="h-2 overflow-hidden rounded-pill bg-line" role="progressbar" aria-label="Materyal yükleniyor" aria-valuemin={0} aria-valuemax={100} aria-valuenow={uploadProgress}>
