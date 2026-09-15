@@ -1,4 +1,5 @@
 import api from "./api";
+import { uploadTutorStudentMaterialFile } from "./materialUpload";
 import { getMaterialUploadErrorMessage } from "./uploadErrors";
 import type {
   Notification,
@@ -54,21 +55,7 @@ export async function fetchTutorStudentMaterials(studentId: string): Promise<Tut
 }
 
 export async function uploadTutorStudentMaterial(studentId: string, file: File, onProgress?: (percent: number) => void): Promise<TutorStudentMaterial> {
-  const formData = new FormData();
-  formData.append("student", studentId);
-  formData.append("file", file);
-  const { data } = await api.post<TutorStudentMaterial>(
-    "/notifications/tutor-student-materials/",
-    formData,
-    {
-      headers: { "Content-Type": undefined },
-      onUploadProgress: (event) => {
-        if (!event.total || !onProgress) return;
-        onProgress(Math.min(100, Math.round((event.loaded / event.total) * 100)));
-      },
-    }
-  );
-  return data;
+  return uploadTutorStudentMaterialFile(studentId, file, onProgress);
 }
 
 export function getMaterialUploadError(error: unknown): string {
