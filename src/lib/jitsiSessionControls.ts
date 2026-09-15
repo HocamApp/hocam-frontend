@@ -156,16 +156,35 @@ export interface JitsiCommand {
  * audioOnly mode; the video levels clear audio-only first, then set the receive
  * resolution — order matters so a switch away from audio-only re-enables video.
  */
-export function videoQualityCommands(level: VideoQualityLevel): JitsiCommand[] {
+export function videoQualityCommands(
+  level: VideoQualityLevel,
+  supportedCommands: string[] = []
+): JitsiCommand[] {
   const option = getVideoQualityOption(level);
+  const command = audioOnlyCommandName(supportedCommands);
   if (option.audioOnly) {
-    return [{ command: "setAudioOnly", args: [true] }];
+    return [{ command, args: [true] }];
   }
   return [
-    { command: "setAudioOnly", args: [false] },
+    { command, args: [false] },
     { command: "setVideoQuality", args: [option.height] },
   ];
 }
+
+/**
+ * Jitsi renamed setAudioOnly to setLowBandwidthMode (commit 97c1e557,
+ * 2026-07-17) with no alias, and JaaS rolls releases forward on its own
+ * schedule. Prefer whichever name the embedded release advertises, and fall
+ * back to the old one when the list is not available yet.
+ */
+export function audioOnlyCommandName(supportedCommands: string[]): string {
+  if (supportedCommands.includes("setAudioOnly")) return "setAudioOnly";
+  if (supportedCommands.includes("setLowBandwidthMode")) return "setLowBandwidthMode";
+  return "setAudioOnly";
+}
+
+/** Both spellings of the audio-only event, for addEventListener. */
+export const AUDIO_ONLY_EVENTS = ["audioOnlyChanged", "lowBandwidthModeChanged"];
 
 /** Maps confirmed Jitsi state (audioOnly + last video height) back to a level. */
 export function videoQualityLevelFromState(
@@ -187,13 +206,21 @@ export function videoHeightFromEvent(event: unknown): number | null {
 }
 
 /**
- * Parses audioOnlyChanged → whether audio-only is enabled, or null.
- * The official payload is `{ audioOnlyChanged: boolean }`.
+ * Parses the audio-only event → whether audio-only is enabled, or null.
+ *
+ * The handbook documents `{ audioOnlyChanged: boolean }`, but Jitsi's own
+ * API.js sends `{ enabled }` (notifyAudioOnlyChanged), and the renamed
+ * low-bandwidth event uses `{ enabled }` too. Reading only the documented key
+ * meant the flag never updated, so "En iyi performans" always reported a
+ * failure while the camera really had turned off. Accept every shape.
  */
 export function audioOnlyFromEvent(event: unknown): boolean | null {
   if (!event || typeof event !== "object") return null;
-  const value = (event as { audioOnlyChanged?: unknown }).audioOnlyChanged;
-  return typeof value === "boolean" ? value : null;
+  const payload = event as Record<string, unknown>;
+  for (const key of ["audioOnlyChanged", "enabled", "lowBandwidthMode"]) {
+    if (typeof payload[key] === "boolean") return payload[key] as boolean;
+  }
+  return null;
 }
 
 // ---------------------------------------------------------------------------
@@ -243,8 +270,8 @@ export function filmstripToggleNeeded(
 // Capability checks (rolling JaaS releases may lag on newer commands/events)
 // ---------------------------------------------------------------------------
 
-export const REQUIRED_QUALITY_COMMANDS = ["setAudioOnly", "setVideoQuality"];
-export const REQUIRED_QUALITY_EVENTS = ["videoQualityChanged", "audioOnlyChanged"];
+export const REQUIRED_QUALITY_COMMANDS = ["setVideoQuality"];
+export const AUDIO_ONLY_COMMANDS = ["setAudioOnly", "setLowBandwidthMode"];
 export const REQUIRED_FILMSTRIP_COMMANDS = ["toggleFilmStrip"];
 export const REQUIRED_FILMSTRIP_EVENTS = ["filmstripDisplayChanged"];
 
@@ -264,9 +291,13 @@ export function checkJitsiCapabilities(
   supportedEvents: string[]
 ): JitsiCapabilities {
   return {
+    // Events are no longer required: they reconcile the UI with reality when
+    // they arrive, but Jitsi stays silent when the chosen level is already
+    // the active one, and gating the whole feature on a silent event is what
+    // made the dialog claim failure after three seconds.
     videoQuality:
       hasAll(supportedCommands, REQUIRED_QUALITY_COMMANDS) &&
-      hasAll(supportedEvents, REQUIRED_QUALITY_EVENTS),
+      AUDIO_ONLY_COMMANDS.some((command) => supportedCommands.includes(command)),
     filmstrip:
       hasAll(supportedCommands, REQUIRED_FILMSTRIP_COMMANDS) &&
       hasAll(supportedEvents, REQUIRED_FILMSTRIP_EVENTS),

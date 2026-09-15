@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
   audioOnlyFromEvent,
+  AUDIO_ONLY_EVENTS,
+  audioOnlyCommandName,
   checkJitsiCapabilities,
   filmstripToggleNeeded,
   filmstripVisibleFromEvent,
@@ -119,13 +121,18 @@ describe("video quality levels", () => {
   it("parses quality events safely", () => {
     assert.equal(videoHeightFromEvent({ videoQuality: 360 }), 360);
     assert.equal(videoHeightFromEvent({}), null);
-    // Official audioOnlyChanged payload: { audioOnlyChanged: boolean }.
+    // The handbook documents { audioOnlyChanged }, Jitsi's API.js actually
+    // sends { enabled }, and the renamed low-bandwidth event does too. Reading
+    // only the documented key is why "En iyi performans" always failed while
+    // the camera really did turn off.
     assert.equal(audioOnlyFromEvent({ audioOnlyChanged: true }), true);
     assert.equal(audioOnlyFromEvent({ audioOnlyChanged: false }), false);
+    assert.equal(audioOnlyFromEvent({ enabled: true }), true);
+    assert.equal(audioOnlyFromEvent({ enabled: false }), false);
+    assert.equal(audioOnlyFromEvent({ lowBandwidthMode: true }), true);
     assert.equal(audioOnlyFromEvent({}), null);
     assert.equal(audioOnlyFromEvent(null), null);
-    // Legacy/wrong shape must not be read as a boolean.
-    assert.equal(audioOnlyFromEvent({ enabled: true }), null);
+    assert.equal(audioOnlyFromEvent({ enabled: "yes" }), null);
   });
 
   it("confirms audio-only from its event so no false failure is shown", () => {
@@ -190,10 +197,53 @@ describe("capability checks", () => {
     });
   });
 
-  it("marks a control unavailable when its command or event is missing", () => {
+  it("marks a control unavailable when its command is missing", () => {
     const caps = checkJitsiCapabilities(["setVideoQuality"], ["videoQualityChanged"]);
-    assert.equal(caps.videoQuality, false); // setAudioOnly + audioOnlyChanged missing
+    assert.equal(caps.videoQuality, false); // no audio-only command at all
     assert.equal(caps.filmstrip, false);
     assert.equal(caps.whiteboard, false);
+  });
+
+  it("keeps video quality available on a release that renamed setAudioOnly", () => {
+    // Jitsi commit 97c1e557 (2026-07-17) renamed setAudioOnly to
+    // setLowBandwidthMode with no alias; JaaS ships it whenever it ships it.
+    const caps = checkJitsiCapabilities(
+      ["setLowBandwidthMode", "setVideoQuality"],
+      ["videoQualityChanged", "lowBandwidthModeChanged"]
+    );
+    assert.equal(caps.videoQuality, true);
+  });
+
+  it("does not require the confirmation events", () => {
+    // Jitsi sends no event when the chosen level is already the active one,
+    // so gating the feature on events made a working setting look broken.
+    const caps = checkJitsiCapabilities(["setAudioOnly", "setVideoQuality"], []);
+    assert.equal(caps.videoQuality, true);
+  });
+});
+
+describe("audio-only command naming", () => {
+  it("prefers the name the running release advertises", () => {
+    assert.equal(audioOnlyCommandName(["setAudioOnly", "setVideoQuality"]), "setAudioOnly");
+    assert.equal(
+      audioOnlyCommandName(["setLowBandwidthMode", "setVideoQuality"]),
+      "setLowBandwidthMode"
+    );
+    // Before the probe answers, keep today's name.
+    assert.equal(audioOnlyCommandName([]), "setAudioOnly");
+  });
+
+  it("builds the command sequence with the supported name", () => {
+    assert.deepEqual(videoQualityCommands("audio-only", ["setLowBandwidthMode"]), [
+      { command: "setLowBandwidthMode", args: [true] },
+    ]);
+    assert.deepEqual(videoQualityCommands("balanced", ["setLowBandwidthMode"]), [
+      { command: "setLowBandwidthMode", args: [false] },
+      { command: "setVideoQuality", args: [360] },
+    ]);
+  });
+
+  it("listens for both spellings of the audio-only event", () => {
+    assert.deepEqual(AUDIO_ONLY_EVENTS, ["audioOnlyChanged", "lowBandwidthModeChanged"]);
   });
 });
