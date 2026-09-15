@@ -1,6 +1,5 @@
 "use client";
 
-import { useRef, useState } from "react";
 import { Camera } from "lucide-react";
 
 import {
@@ -12,14 +11,8 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import {
-  checkProfilePhotoMinResolution,
-  PROFILE_PHOTO_ACCEPT,
-  PROFILE_PHOTO_RULE_TEXT,
-  TUTOR_REAL_PHOTO_RULE_TEXT,
-  validateProfilePhotoSourceFile,
-} from "@/lib/profilePhoto";
-import { ProfilePhotoCropper } from "@/components/profile/ProfilePhotoCropper";
+import { PROFILE_PHOTO_RULE_TEXT, TUTOR_REAL_PHOTO_RULE_TEXT } from "@/lib/profilePhoto";
+import { useProfilePhotoPicker } from "@/hooks/useProfilePhotoPicker";
 import { STUDENT_AVATAR_PRESETS, type StudentAvatarKey } from "@/lib/studentAvatars";
 
 interface AvatarEditorProps {
@@ -55,11 +48,7 @@ export function AvatarEditor({
   avatarChoicePendingKey,
   onChooseStudentAvatar,
 }: AvatarEditorProps) {
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [sourceError, setSourceError] = useState<string | null>(null);
-  const [pendingCrop, setPendingCrop] = useState<{ src: string; maxZoom: number } | null>(
-    null
-  );
+  const { openPicker, pickerElements, sourceError } = useProfilePhotoPicker(onFileReady);
 
   if (!isStudent && !isTutor) return null;
 
@@ -72,63 +61,16 @@ export function AvatarEditor({
   // clears once onFileReady actually fires for the new one.
   const displayedError = sourceError ?? photoError;
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    e.target.value = "";
-    setSourceError(null);
-
-    const typeOrSizeError = validateProfilePhotoSourceFile(file);
-    if (typeOrSizeError) {
-      setSourceError(typeOrSizeError);
-      return;
-    }
-
-    const resolutionCheck = await checkProfilePhotoMinResolution(file);
-    if (!resolutionCheck.ok) {
-      setSourceError(resolutionCheck.error);
-      return;
-    }
-
-    setPendingCrop({ src: resolutionCheck.objectUrl, maxZoom: resolutionCheck.maxZoom });
-  };
-
-  const handleCropCancel = () => {
-    if (pendingCrop) URL.revokeObjectURL(pendingCrop.src);
-    setPendingCrop(null);
-  };
-
-  const handleCropped = (file: File) => {
-    if (pendingCrop) URL.revokeObjectURL(pendingCrop.src);
-    setPendingCrop(null);
-    onFileReady(file);
-  };
-
   return (
     <div>
-      <input
-        type="file"
-        accept={PROFILE_PHOTO_ACCEPT}
-        hidden
-        ref={fileInputRef}
-        onChange={handleFileChange}
-      />
-      {pendingCrop && (
-        <ProfilePhotoCropper
-          open
-          imageSrc={pendingCrop.src}
-          maxZoom={pendingCrop.maxZoom}
-          onCancel={handleCropCancel}
-          onCropped={handleCropped}
-        />
-      )}
+      {pickerElements}
       <Accordion type="single" collapsible>
         <AccordionItem value="avatar-editor" className="border-none">
           <AccordionTrigger className="gap-2 rounded-md py-2 text-sm font-medium text-foreground hover:no-underline">
             <span className="flex items-center gap-2">
               <Avatar className="h-6 w-6 border border-border">
                 {avatarImage ? <AvatarImage src={avatarImage} alt={fullName} /> : null}
-                <AvatarFallback className="bg-primary/10 text-xs font-semibold text-primary">
+                <AvatarFallback className="bg-pink text-xs font-semibold text-white">
                   {initials}
                 </AvatarFallback>
               </Avatar>
@@ -160,7 +102,7 @@ export function AvatarEditor({
                 type="button"
                 size="sm"
                 variant="outline"
-                onClick={() => fileInputRef.current?.click()}
+                onClick={openPicker}
                 disabled={busy}
               >
                 {photoUploading ? (

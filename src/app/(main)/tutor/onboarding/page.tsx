@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Camera, CheckCircle, Circle, Clock, Confetti } from "@phosphor-icons/react";
@@ -12,10 +12,10 @@ import { VerificationForm } from "@/components/tutors/VerificationForm";
 import { RouteGuard } from "@/components/shared/RouteGuard";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { validateProfilePhotoFile, PROFILE_PHOTO_ACCEPT } from "@/lib/profilePhoto";
+import { useProfilePhotoPicker } from "@/hooks/useProfilePhotoPicker";
+import { getPhotoUploadErrorMessage } from "@/lib/uploadErrors";
 import { bypassAdminTutorOnboardingVerification } from "@/lib/adminControlApi";
 import { TutorJourneyAside } from "@/components/tutors/TutorJourneyAside";
 import { cn } from "@/lib/utils";
@@ -32,7 +32,6 @@ function TutorOnboardingContent() {
   const { isAuthenticated, user } = useAuth();
   const router = useRouter();
   const queryClient = useQueryClient();
-  const photoInputRef = useRef<HTMLInputElement>(null);
   const [photoError, setPhotoError] = useState<string | null>(null);
   const { data: profile, isLoading: profileLoading } = useQuery({
     queryKey: ["tutor-me"],
@@ -80,7 +79,7 @@ function TutorOnboardingContent() {
       queryClient.setQueryData(["tutor-me"], updatedProfile);
       setPhotoError(null);
     },
-    onError: () => setPhotoError("Fotoğraf yüklenemedi. Lütfen tekrar deneyin."),
+    onError: (error) => setPhotoError(getPhotoUploadErrorMessage(error)),
   });
   const qaVerificationMutation = useMutation({
     mutationFn: bypassAdminTutorOnboardingVerification,
@@ -98,17 +97,12 @@ function TutorOnboardingContent() {
     return () => window.clearTimeout(timeout);
   }, [router, setupComplete]);
 
-  const handlePhotoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    event.target.value = "";
-    if (!file) return;
-    const validationError = validateProfilePhotoFile(file);
-    if (validationError) {
-      setPhotoError(validationError);
-      return;
-    }
+  // Same pick → crop → 512px JPEG pipeline as every other photo upload.
+  const photoPicker = useProfilePhotoPicker((file) => {
+    setPhotoError(null);
     photoMutation.mutate(file);
-  };
+  });
+  const displayedPhotoError = photoPicker.sourceError ?? photoError;
 
   if (profileLoading) {
     return <div className="mx-auto max-w-3xl px-4 py-10"><Skeleton className="h-96 w-full" /></div>;
@@ -233,18 +227,18 @@ function TutorOnboardingContent() {
             <div className="space-y-4 rounded-card border border-line bg-paper p-5">
               <div className="flex items-center gap-4">
                 <Avatar className="h-16 w-16">
-                  <AvatarFallback className="bg-primary/10 text-lg font-semibold text-primary">
+                  <AvatarFallback className="bg-pink text-lg font-semibold text-white">
                     {`${profile?.name?.[0] ?? ""}${profile?.surname?.[0] ?? ""}`.toUpperCase() || "?"}
                   </AvatarFallback>
                 </Avatar>
                 <div>
                   <p className="font-medium">Profil fotoğrafını ekle</p>
-                  <p className="mt-1 text-sm text-muted-foreground">Yüzünün net göründüğü, yalnızca sana ait bir JPG, PNG veya WebP fotoğraf yükle. En fazla 5 MB.</p>
+                  <p className="mt-1 text-sm text-muted-foreground">Yüzünün net göründüğü, yalnızca sana ait bir JPG, PNG veya WebP fotoğraf seç. Seçtikten sonra kırpıp yükleyeceksin.</p>
                 </div>
               </div>
-              <Input className="hidden" ref={photoInputRef} type="file" accept={PROFILE_PHOTO_ACCEPT} onChange={handlePhotoChange} disabled={photoMutation.isPending} />
-              {photoError && <p className="text-sm text-destructive">{photoError}</p>}
-              <Button type="button" variant="outline" onClick={() => photoInputRef.current?.click()} disabled={photoMutation.isPending}>
+              {photoPicker.pickerElements}
+              {displayedPhotoError && <p className="text-sm text-destructive" role="alert">{displayedPhotoError}</p>}
+              <Button type="button" variant="outline" onClick={photoPicker.openPicker} disabled={photoMutation.isPending}>
                 <Camera className="mr-2 h-4 w-4" />
                 {photoMutation.isPending ? "Fotoğraf yükleniyor..." : "Fotoğraf seç"}
               </Button>

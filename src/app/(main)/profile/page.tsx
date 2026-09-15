@@ -17,6 +17,7 @@ import {
   updateMyTutorProfile,
   uploadTutorProfilePicture,
 } from "@/lib/tutorsApi";
+import { getPhotoUploadErrorMessage } from "@/lib/uploadErrors";
 import type { StudentAvatarKey } from "@/lib/studentAvatars";
 import { formatPrice } from "@/lib/utils";
 import type { ProfileMeResponse, ProfileStudent, ProfileTutor } from "@/types";
@@ -121,8 +122,8 @@ function ProfileContent() {
         return;
       }
       toast.success("Profil fotoğrafı güncellendi.");
-    } catch {
-      setPhotoError("Fotoğraf yüklenemedi. Lütfen tekrar deneyin.");
+    } catch (error) {
+      setPhotoError(getPhotoUploadErrorMessage(error));
     } finally {
       setPhotoUploading(false);
     }

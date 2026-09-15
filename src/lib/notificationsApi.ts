@@ -1,5 +1,5 @@
-import axios from "axios";
 import api from "./api";
+import { getMaterialUploadErrorMessage } from "./uploadErrors";
 import type {
   Notification,
   NotificationSummary,
@@ -72,12 +72,7 @@ export async function uploadTutorStudentMaterial(studentId: string, file: File, 
 }
 
 export function getMaterialUploadError(error: unknown): string {
-  if (!axios.isAxiosError(error)) return "Materyal yüklenemedi. Lütfen tekrar dene.";
-  const data = error.response?.data;
-  const fileError = Array.isArray(data?.file) ? data.file[0] : undefined;
-  const studentError = Array.isArray(data?.student) ? data.student[0] : undefined;
-  const detail = typeof data?.detail === "string" ? data.detail : undefined;
-  return fileError || studentError || detail || "Materyal yüklenemedi. Lütfen tekrar dene.";
+  return getMaterialUploadErrorMessage(error);
 }
 
 export async function fetchTutorStudentMaterialAccess(
