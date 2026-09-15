@@ -6,7 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft } from "@phosphor-icons/react";
 
-import { RecurringLessonSlotPicker } from "@/components/lessons/RecurringLessonSlotPicker";
+import { RecurringLessonSlotPicker, nonOverlappingCount } from "@/components/lessons/RecurringLessonSlotPicker";
 import type { RecurringSelection } from "@/components/lessons/RecurringLessonSlotPicker";
 import {
   PrivateLessonPlanCard,
@@ -91,11 +91,17 @@ function ScheduleStepContent({ tutorId }: { tutorId: string }) {
   const soleSubjectId = subjects.length === 1 ? String(subjects[0].id) : "";
   const effectiveSubjectId = subjectId || soleSubjectId;
 
+  // Hours that can actually be taken together. Counting every candidate
+  // overstated capacity while the grid offered overlapping starts, so a tutor
+  // with one free stretch looked able to teach three lessons a week in it.
   const freeHourCount = useMemo(
     () =>
-      (recurring?.candidates ?? []).filter(
-        (candidate) => candidate.free_occurrences === candidate.total_occurrences
-      ).length,
+      nonOverlappingCount(
+        (recurring?.candidates ?? []).filter(
+          (candidate) => candidate.free_occurrences === candidate.total_occurrences
+        ),
+        LESSON_DURATION_MINUTES
+      ),
     [recurring]
   );
 
