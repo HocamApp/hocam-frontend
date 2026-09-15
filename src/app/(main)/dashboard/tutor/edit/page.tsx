@@ -17,6 +17,7 @@ import {
   updateMyTutorProfile,
   uploadTutorProfilePicture,
 } from "@/lib/tutorsApi";
+import { getPhotoUploadErrorMessage } from "@/lib/uploadErrors";
 import { filterSelectedSubjectIds } from "@/lib/subjects";
 import type { TutorProfile } from "@/types";
 
@@ -339,8 +340,8 @@ function TutorProfileEditContent() {
         queryClient.invalidateQueries({ queryKey: ["tutors"] }),
       ]);
       toast.success("Profil fotoğrafı güncellendi.");
-    } catch {
-      setPhotoError("Fotoğraf yüklenemedi. Dosyayı kontrol edip tekrar dene.");
+    } catch (error) {
+      setPhotoError(getPhotoUploadErrorMessage(error));
     } finally {
       setPhotoUploading(false);
     }
