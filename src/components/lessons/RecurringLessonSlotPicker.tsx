@@ -36,6 +36,53 @@ interface RecurringLessonSlotPickerProps {
 
 const WEEKDAY_SHORT = ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"];
 
+/** Minutes between two lessons before they count as clashing: the lesson plus
+ * the 10-minute break the backend's slot grid leaves (apps/tutors/slots.py).
+ * The server no longer offers overlapping hours, so this is a second line of
+ * defence — a stale candidate list must not let the student buy a schedule
+ * whose lessons eat each other. */
+export const LESSON_BREAK_MINUTES = 10;
+
+function minutesOfDay(startTime: string): number {
+  const [hours, minutes] = startTime.split(":").map(Number);
+  return hours * 60 + minutes;
+}
+
+export function slotsClash(
+  a: RecurringSelection,
+  b: RecurringSelection,
+  durationMinutes: number
+): boolean {
+  if (a.day_of_week !== b.day_of_week) return false;
+  const gap = Math.abs(minutesOfDay(a.start_time) - minutesOfDay(b.start_time));
+  return gap < durationMinutes + LESSON_BREAK_MINUTES;
+}
+
+/** How many of these hours can be taken together without clashing — what the
+ * weekday card and the "can this tutor do N a week" check must count. Counting
+ * raw candidates overstated a day's capacity while the grid overlapped. */
+export function nonOverlappingCount(
+  slots: { day_of_week: number; start_time: string }[],
+  durationMinutes: number
+): number {
+  const byDay = new Map<number, number[]>();
+  for (const slot of slots) {
+    const list = byDay.get(slot.day_of_week) ?? [];
+    list.push(minutesOfDay(slot.start_time));
+    byDay.set(slot.day_of_week, list);
+  }
+  let total = 0;
+  for (const starts of Array.from(byDay.values())) {
+    let lastTaken = Number.NEGATIVE_INFINITY;
+    for (const start of [...starts].sort((a, b) => a - b)) {
+      if (start - lastTaken < durationMinutes + LESSON_BREAK_MINUTES) continue;
+      lastTaken = start;
+      total += 1;
+    }
+  }
+  return total;
+}
+
 function sameSlot(a: RecurringSelection, b: RecurringSelection): boolean {
   return a.day_of_week === b.day_of_week && a.start_time === b.start_time;
 }
@@ -137,6 +184,7 @@ export function RecurringLessonSlotPicker({
       return;
     }
     if (value.length >= requiredCount) return;
+    if (value.some((entry) => slotsClash(entry, slot, durationMinutes))) return;
     onChange([...value, slot]);
   };
 
@@ -183,7 +231,7 @@ export function RecurringLessonSlotPicker({
                 swipe hides some of them from anyone using a mouse. */}
             <div className="mt-3 grid grid-cols-4 gap-2 sm:grid-cols-7">
               {WEEKDAY_SHORT.map((label, weekday) => {
-                const open = byWeekday.get(weekday)?.length ?? 0;
+                const open = nonOverlappingCount(byWeekday.get(weekday) ?? [], durationMinutes);
                 const chosen = value.filter((slot) => slot.day_of_week === weekday).length;
                 const active = weekday === activeWeekday;
                 return (
@@ -233,13 +281,17 @@ export function RecurringLessonSlotPicker({
                       start_time: candidate.start_time,
                     };
                     const active = value.some((entry) => sameSlot(entry, slot));
-                    const disabled = !active && remaining <= 0;
+                    const clashes =
+                      !active &&
+                      value.some((entry) => slotsClash(entry, slot, durationMinutes));
+                    const disabled = !active && (remaining <= 0 || clashes);
                     return (
                       <button
                         key={`${candidate.day_of_week}-${candidate.start_time}`}
                         type="button"
                         aria-pressed={active}
                         disabled={disabled}
+                        title={clashes ? "Seçtiğin başka bir saatle çakışıyor." : undefined}
                         onClick={() => toggle(candidate)}
                         className={cn(
                           "w-full min-w-0 rounded-input border px-3 py-2 text-left transition-colors duration-[120ms]",

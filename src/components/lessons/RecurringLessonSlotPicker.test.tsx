@@ -16,6 +16,9 @@ const response: TutorRecurringSlotsResponse = {
   ends_on: "2026-10-11",
   candidates: [
     { day_of_week: 0, start_time: "10:00", free_occurrences: 4, total_occurrences: 4 },
+    // 10:30 overlaps 10:00 for a 40-minute lesson. The server grid no longer
+    // emits these, but a stale list must still not let both be picked.
+    { day_of_week: 0, start_time: "10:30", free_occurrences: 4, total_occurrences: 4 },
     { day_of_week: 0, start_time: "11:00", free_occurrences: 4, total_occurrences: 4 },
     { day_of_week: 2, start_time: "16:00", free_occurrences: 3, total_occurrences: 4 },
     { day_of_week: 3, start_time: "09:00", free_occurrences: 4, total_occurrences: 4 },
@@ -115,4 +118,41 @@ test("an hour is selected only by clicking the hour itself", async () => {
 
   assert.deepEqual(selections, [[{ day_of_week: 0, start_time: "10:00" }]]);
   queryClient.clear();
+});
+
+test("an hour clashing with one already picked cannot be selected", async () => {
+  const selections: unknown[] = [];
+  renderPicker((next) => selections.push(next), [{ day_of_week: 0, start_time: "10:00" }]);
+  await screen.findByText(/Her Pazartesi saatleri/i);
+
+  const clashing = screen.getByRole("button", { name: /10:30/ }) as HTMLButtonElement;
+  assert.equal(clashing.disabled, true, "10:30 overlaps the chosen 10:00");
+  fireEvent.click(clashing);
+  assert.deepEqual(selections, [], "a clashing hour must not enter the schedule");
+
+  const free = screen.getByRole("button", { name: /11:00/ }) as HTMLButtonElement;
+  assert.equal(free.disabled, false, "11:00 clears 10:00 by the 10-minute break");
+});
+
+test("a weekday advertises only hours that can be taken together", async () => {
+  renderPicker(() => {});
+  // Monday offers 10:00, 10:30 and 11:00, but 10:30 overlaps 10:00, so at
+  // most two of them fit in a week.
+  const monday = await screen.findByText("Pzt");
+  assert.ok(monday.parentElement?.textContent?.includes("2 saat"));
+});
+
+test("clash and capacity helpers follow the lesson plus break rule", async () => {
+  const { slotsClash, nonOverlappingCount } = await import("./RecurringLessonSlotPicker");
+  const at = (start: string, day = 0) => ({ day_of_week: day, start_time: start });
+
+  assert.equal(slotsClash(at("10:00"), at("10:30"), 40), true);
+  assert.equal(slotsClash(at("10:00"), at("10:50"), 40), false);
+  assert.equal(slotsClash(at("10:00"), at("10:30", 1), 40), false, "different days never clash");
+  assert.equal(slotsClash(at("10:00"), at("10:20"), 20), true, "20 + 10 means a trial needs 30 minutes of room");
+  assert.equal(slotsClash(at("10:00"), at("10:30"), 20), false, "a 20-minute trial keeps its 30-minute step");
+
+  assert.equal(nonOverlappingCount([at("10:00"), at("10:30"), at("11:00")], 40), 2);
+  assert.equal(nonOverlappingCount([at("10:00"), at("10:50"), at("11:40")], 40), 3);
+  assert.equal(nonOverlappingCount([at("10:00"), at("10:30", 1)], 40), 2);
 });

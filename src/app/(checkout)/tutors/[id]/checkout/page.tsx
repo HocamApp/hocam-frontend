@@ -388,6 +388,15 @@ export default function TutorCheckoutPage({
         );
         return;
       }
+      // A schedule the tutor can no longer honour (an hour taken since the
+      // picker rendered) or one whose own hours clash. The message alone
+      // leaves the student on a screen with no way to act, so send them back
+      // to the step that can fix it.
+      if (typeof data?.code === "string" && data.code.startsWith("schedule_") && scheduleHref) {
+        toast.error(extractPackagePurchaseErrorMessage(err));
+        router.push(scheduleHref);
+        return;
+      }
       toast.error(extractPackagePurchaseErrorMessage(err));
     },
   });
