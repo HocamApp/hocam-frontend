@@ -27,6 +27,7 @@ import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
+  AUDIO_ONLY_EVENTS,
   audioOnlyFromEvent,
   checkJitsiCapabilities,
   DEFAULT_VIDEO_QUALITY_LEVEL,
@@ -38,6 +39,7 @@ import {
   videoHeightFromEvent,
   videoQualityCommands,
   videoQualityLevelFromState,
+  VIDEO_QUALITY_LEVELS,
   whiteboardVisibleFromEvent,
   type JitsiCapabilities,
   type VideoQualityLevel,
@@ -281,6 +283,11 @@ function SessionContent() {
   const [pendingQuality, setPendingQuality] = useState<VideoQualityLevel | null>(null);
   const [qualityError, setQualityError] = useState(false);
   const desiredQualityRef = useRef<VideoQualityLevel | null>(null);
+  // Command names this JaaS release advertises; setAudioOnly was renamed to
+  // setLowBandwidthMode upstream, so the name is chosen at runtime.
+  const supportedCommandsRef = useRef<string[]>([]);
+  const [conferenceJoined, setConferenceJoined] = useState(false);
+  const qualityAppliedRef = useRef(false);
   const qualityTimeoutRef = useRef<number | null>(null);
   const jitsiAudioOnlyRef = useRef(false);
   const jitsiHeightRef = useRef<number | null>(null);
@@ -430,31 +437,46 @@ function SessionContent() {
 
   // --- Video quality: apply + event-confirm ---------------------------------
   const applyQuality = useCallback(
-    (level: VideoQualityLevel) => {
+    (level: VideoQualityLevel, { silent = false }: { silent?: boolean } = {}) => {
       if (!jitsiApi?.executeCommand || !capabilities.videoQuality) return;
-      setPendingQuality(level);
-      setQualityError(false);
+      if (!silent) {
+        setPendingQuality(level);
+        setQualityError(false);
+      }
       desiredQualityRef.current = level;
       try {
-        for (const { command, args } of videoQualityCommands(level)) {
+        for (const { command, args } of videoQualityCommands(
+          level,
+          supportedCommandsRef.current
+        )) {
           jitsiApi.executeCommand(command, ...args);
         }
       } catch {
-        setQualityError(true);
-        setPendingQuality(null);
+        if (!silent) {
+          setQualityError(true);
+          setPendingQuality(null);
+        }
         desiredQualityRef.current = null;
         return;
       }
+      // Dispatching the command IS the result. Jitsi sends no event when the
+      // level it already holds is re-selected, so waiting for one used to
+      // report a failure for a setting that had in fact been applied. An
+      // event that later contradicts this is handled in the reconciler.
+      setConfirmedQuality(level);
+      setPendingQuality(null);
+      try {
+        sessionStorage.setItem(videoQualityStorageKey(bookingId), level);
+      } catch {
+        // Preference persistence is best-effort.
+      }
       if (qualityTimeoutRef.current) window.clearTimeout(qualityTimeoutRef.current);
       qualityTimeoutRef.current = window.setTimeout(() => {
-        if (desiredQualityRef.current === level) {
-          setQualityError(true);
-          setPendingQuality(null);
-          desiredQualityRef.current = null;
-        }
+        // Stop treating late events as answers to this request.
+        if (desiredQualityRef.current === level) desiredQualityRef.current = null;
       }, QUALITY_CONFIRM_TIMEOUT_MS);
     },
-    [jitsiApi, capabilities.videoQuality]
+    [jitsiApi, capabilities.videoQuality, bookingId]
   );
 
   const reconcileQualityFromEvents = useCallback(() => {
@@ -463,11 +485,15 @@ function SessionContent() {
       jitsiHeightRef.current
     );
     setConfirmedQuality(level);
-    if (desiredQualityRef.current === level) {
-      if (qualityTimeoutRef.current) window.clearTimeout(qualityTimeoutRef.current);
-      setPendingQuality(null);
-      setQualityError(false);
-      desiredQualityRef.current = null;
+    const requested = desiredQualityRef.current;
+    if (requested === null) return;
+    if (qualityTimeoutRef.current) window.clearTimeout(qualityTimeoutRef.current);
+    desiredQualityRef.current = null;
+    setPendingQuality(null);
+    // Jitsi reporting a level other than the one just asked for is the only
+    // honest failure: the request was dispatched and something else happened.
+    setQualityError(level !== requested);
+    if (level === requested) {
       try {
         sessionStorage.setItem(videoQualityStorageKey(bookingId), level);
       } catch {
@@ -475,6 +501,26 @@ function SessionContent() {
       }
     }
   }, [bookingId]);
+
+  // Jitsi's own default is its highest receive resolution, while this screen
+  // opened claiming "Dengeli". Apply the level the label promises (or the one
+  // stored for this lesson) as soon as the conference is up, so the dialog
+  // tells the truth and a reconnect restores the student's choice.
+  useEffect(() => {
+    if (!conferenceJoined || !capabilities.videoQuality) return;
+    if (qualityAppliedRef.current) return;
+    qualityAppliedRef.current = true;
+    let stored: string | null = null;
+    try {
+      stored = sessionStorage.getItem(videoQualityStorageKey(bookingId));
+    } catch {
+      // Storage may be unavailable; the default still applies.
+    }
+    const level = VIDEO_QUALITY_LEVELS.some((option) => option.level === stored)
+      ? (stored as VideoQualityLevel)
+      : DEFAULT_VIDEO_QUALITY_LEVEL;
+    applyQuality(level, { silent: true });
+  }, [conferenceJoined, capabilities.videoQuality, applyQuality, bookingId]);
 
   // --- Teacher video (student, whiteboard open) -----------------------------
   // The teacher's tile in Jitsi's filmstrip is hidden when the filmstrip is not
@@ -859,6 +905,7 @@ function SessionContent() {
               .then(async () => {
                 const cmds = (await api.getSupportedCommands?.()) ?? null;
                 const evts = (await api.getSupportedEvents?.()) ?? null;
+                if (cmds) supportedCommandsRef.current = cmds;
                 if (cmds && evts) setCapabilities(checkJitsiCapabilities(cmds, evts));
               })
               .catch(() => {});
@@ -880,11 +927,15 @@ function SessionContent() {
               if (height !== null) jitsiHeightRef.current = height;
               reconcileQualityFromEvents();
             });
-            api.addEventListener?.("audioOnlyChanged", (event?: unknown) => {
-              const audioOnly = audioOnlyFromEvent(event);
-              if (audioOnly !== null) jitsiAudioOnlyRef.current = audioOnly;
-              reconcileQualityFromEvents();
-            });
+            // Both spellings: the event was renamed to lowBandwidthModeChanged
+            // upstream, and JaaS rolls releases forward on its own schedule.
+            for (const eventName of AUDIO_ONLY_EVENTS) {
+              api.addEventListener?.(eventName, (event?: unknown) => {
+                const audioOnly = audioOnlyFromEvent(event);
+                if (audioOnly !== null) jitsiAudioOnlyRef.current = audioOnly;
+                reconcileQualityFromEvents();
+              });
+            }
             api.addEventListener?.("whiteboardStatusChanged", (event?: unknown) => {
               const visible = whiteboardVisibleFromEvent(event);
               if (visible !== null) setWhiteboardVisible(visible);
@@ -896,6 +947,7 @@ function SessionContent() {
 
             // --- Join/leave toasts -----------------------------------------
             api.addEventListener?.("videoConferenceJoined", (event?: unknown) => {
+              setConferenceJoined(true);
               const id =
                 event && typeof event === "object"
                   ? (event as { id?: unknown }).id
