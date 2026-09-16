@@ -3,6 +3,7 @@
  * countdown, the clock-offset math that keeps it authoritative, and the
  * booking-scoped sessionStorage keys. No React, no I/O — unit-tested directly.
  */
+import { bookingEndInstant, bookingInstant } from "@/lib/bookingTime";
 import type { EarlyEndRequestState, LessonSessionState } from "@/types";
 
 export const LOW_TIME_WARNING_MS = 5 * 60_000;
@@ -36,6 +37,41 @@ export function computeServerOffsetMs(
 /** Current server time in ms, given a clock offset from computeServerOffsetMs. */
 export function serverNowMs(offsetMs: number, localNowMs: number = Date.now()): number {
   return localNowMs + offsetMs;
+}
+
+/**
+ * Which pair of timestamps the countdown is allowed to read.
+ *
+ * `start_time` / `scheduled_end` are LEGACY stored space: an Istanbul wall
+ * clock wearing a UTC label (docs/time-architecture.md). Comparing them with
+ * real server time made the lesson look three hours away, and the clamp in
+ * computeCountdown turned that error into a constant — "Kalan 40:00" for the
+ * whole lesson. `start_instant` / `end_instant` are the real moments and the
+ * only pair safe to compare with `server_time`.
+ *
+ * Falls back to deriving the instants from the booking (never to the stored
+ * pair) when session state has not arrived yet; mixing one of each is what
+ * briefly rendered "Kalan 0:00".
+ */
+export function countdownBounds(
+  state:
+    | Pick<LessonSessionState, "start_instant" | "end_instant">
+    | null
+    | undefined,
+  booking: { start_time: string; duration_minutes: number } | null | undefined
+): { startIso: string; endIso: string } | null {
+  if (state?.start_instant && state?.end_instant) {
+    return { startIso: state.start_instant, endIso: state.end_instant };
+  }
+  if (booking) {
+    return {
+      startIso: new Date(bookingInstant(booking.start_time)).toISOString(),
+      endIso: new Date(
+        bookingEndInstant(booking.start_time, booking.duration_minutes)
+      ).toISOString(),
+    };
+  }
+  return null;
 }
 
 export interface CountdownParts {

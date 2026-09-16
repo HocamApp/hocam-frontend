@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
   computeCountdown,
+  countdownBounds,
   computeServerOffsetMs,
   earlyEndFromSessionState,
   formatDuration,
@@ -117,6 +118,8 @@ describe("early-end version reconciliation", () => {
       status: "in_progress" as const,
       start_time: START,
       scheduled_end: END,
+      start_instant: START,
+      end_instant: END,
       server_time: START,
       early_end_request: serverState,
     };
@@ -157,5 +160,56 @@ describe("formatJoinCountdown", () => {
       label: "15 saat 4 dakika",
     });
     assert.deepEqual(formatJoinCountdown(40 * HOUR), { mode: "later", label: "1 gün 16 saat" });
+  });
+});
+
+describe("countdownBounds", () => {
+  // A lesson at 15:00 Istanbul: the stored pair wears a UTC label three hours
+  // ahead of the real moment. Reading the stored pair against server time is
+  // what froze the timer at "Kalan 40:00" for the whole lesson.
+  const STORED_START = "2026-07-09T15:00:00Z";
+  const STORED_END = "2026-07-09T15:40:00Z";
+  const REAL_START = "2026-07-09T12:00:00.000Z";
+  const REAL_END = "2026-07-09T12:40:00.000Z";
+
+  const state = {
+    start_time: STORED_START,
+    scheduled_end: STORED_END,
+    start_instant: REAL_START,
+    end_instant: REAL_END,
+  };
+
+  it("reads the instants, never the legacy stored pair", () => {
+    assert.deepEqual(countdownBounds(state, null), {
+      startIso: REAL_START,
+      endIso: REAL_END,
+    });
+  });
+
+  it("derives both bounds from the booking before session state arrives", () => {
+    // Both sides instants: one of each is what briefly showed "Kalan 0:00".
+    const bounds = countdownBounds(null, {
+      start_time: STORED_START,
+      duration_minutes: 40,
+    });
+    assert.deepEqual(bounds, { startIso: REAL_START, endIso: REAL_END });
+  });
+
+  it("has nothing to show without either source", () => {
+    assert.equal(countdownBounds(null, null), null);
+  });
+
+  it("counts down in real time instead of freezing at the full duration", () => {
+    const bounds = countdownBounds(state, null)!;
+    const tenMinutesIn = new Date("2026-07-09T12:10:00Z").getTime();
+    const parts = computeCountdown(bounds.startIso, bounds.endIso, tenMinutesIn);
+
+    assert.equal(parts.elapsedMs, 10 * 60_000);
+    assert.equal(parts.remainingMs, 30 * 60_000);
+
+    // The same moment read through the legacy pair: the bug, pinned.
+    const buggy = computeCountdown(STORED_START, STORED_END, tenMinutesIn);
+    assert.equal(buggy.remainingMs, 40 * 60_000);
+    assert.equal(buggy.elapsedMs, 0);
   });
 });
