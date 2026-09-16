@@ -30,7 +30,10 @@ const PACKAGE_PURCHASE_LABELS: Record<string, string> = {
 const BOOKING_STYLES: Record<string, string> = {
   pending: "border-ink bg-ink text-paper",
   confirmed: "border-gold bg-gold text-gold-ink",
-  in_progress: "border-pink bg-pink text-[var(--ink-on-light)]",
+  // Pink with white/paper text, never dark text on pink (DESIGN.md v0.8).
+  // --pink-deep rather than --pink because a badge is small text: paper on
+  // #FA0050 is 4.05:1, on #D70F64 it is 5.07:1.
+  in_progress: "border-pink-deep bg-pink-deep text-primary-foreground",
   awaiting_confirmation: "border-ink bg-ink text-paper",
   completed: "border-success bg-success-soft text-ink",
   disputed: "border-error bg-error text-destructive-foreground",

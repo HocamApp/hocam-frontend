@@ -194,7 +194,7 @@ function TutorPackagesContent() {
               <span
                 className={cn(
                   "flex h-5 w-5 items-center justify-center rounded-pill text-xs",
-                  step === s ? "bg-pink text-ink" : "bg-surface text-ink-mid"
+                  step === s ? "bg-pink text-primary-foreground" : "bg-surface text-ink-mid"
                 )}
               >
                 {s}
@@ -295,7 +295,7 @@ function StepFrequency({
               onClick={() => onToggle(count)}
               className={cn(
                 "rounded-pill border border-line bg-paper px-4 py-1.5 text-small font-medium text-ink transition-colors hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink focus-visible:ring-offset-2",
-                selected && "border-pink bg-pink text-ink hover:bg-pink-deep"
+                selected && "border-pink bg-pink text-primary-foreground hover:bg-pink-deep"
               )}
             >
               Haftada {count}
