@@ -16,6 +16,7 @@ import {
   updateTypingStatus,
   deleteMessage,
   blockConversationParticipant,
+  unblockConversationParticipant,
 } from "@/lib/messagingApi";
 import { MessageBubble } from "@/components/messaging/MessageBubble";
 import { MessageInput } from "@/components/messaging/MessageInput";
@@ -105,6 +106,18 @@ export function ConversationWorkspace({
     },
     onError: () => {
       toast.error("İşlem gerçekleştirilemedi. Lütfen tekrar deneyin.");
+    },
+  });
+
+  const unblockMutation = useMutation({
+    mutationFn: () => unblockConversationParticipant(conversationId),
+    onSuccess: () => {
+      toast.success("Engel kaldırıldı.");
+      queryClient.invalidateQueries({ queryKey: ["conversation", conversationId] });
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
+    },
+    onError: () => {
+      toast.error("Engel kaldırılamadı. Lütfen tekrar deneyin.");
     },
   });
 
@@ -371,11 +384,6 @@ export function ConversationWorkspace({
                 </button>
               </>
             )}
-            {layout === "page" && conversation?.is_blocked && (
-              <span className="rounded-full bg-destructive/10 px-2.5 py-1 text-xs font-medium text-destructive">
-                Bu konuşma engellendi
-              </span>
-            )}
             {layout === "page" && !conversation?.is_blocked && showBookingButton && (
               <button
                 type="button"
@@ -398,24 +406,27 @@ export function ConversationWorkspace({
                 Sorun bildir
               </Link>
             )}
-            {layout === "page" && isTutor && conversation && !conversation.is_blocked && (
+            {layout === "page" && isTutor && conversation?.can_block !== false && conversation && (
               <button
                 type="button"
-                className="text-sm font-medium text-destructive hover:underline"
-                onClick={() => setIsBlockConfirmOpen(true)}
+                className={cn(
+                  "text-sm font-medium hover:underline",
+                  conversation.is_blocked ? "text-ink-mid" : "text-destructive"
+                )}
+                disabled={unblockMutation.isPending}
+                onClick={() =>
+                  conversation.is_blocked
+                    ? unblockMutation.mutate()
+                    : setIsBlockConfirmOpen(true)
+                }
               >
-                Öğrenciyi engelle
+                {conversation.is_blocked ? "Engeli kaldır" : "Öğrenciyi engelle"}
               </button>
             )}
           </div>
         </header>
         {layout === "panel" && (
           <div className="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-1.5 border-b px-4 py-2 text-xs">
-            {conversation?.is_blocked && (
-              <span className="rounded-full bg-destructive/10 px-2.5 py-1 font-medium text-destructive">
-                Bu konuşma engellendi
-              </span>
-            )}
             {!conversation?.is_blocked && showBookingButton && (
               <button
                 type="button"
@@ -433,13 +444,21 @@ export function ConversationWorkspace({
                 Sorun bildir
               </Link>
             )}
-            {isTutor && conversation && !conversation.is_blocked && (
+            {isTutor && conversation?.can_block !== false && conversation && (
               <button
                 type="button"
-                className="font-semibold text-destructive hover:underline"
-                onClick={() => setIsBlockConfirmOpen(true)}
+                className={cn(
+                  "font-semibold hover:underline",
+                  conversation.is_blocked ? "text-ink-mid" : "text-destructive"
+                )}
+                disabled={unblockMutation.isPending}
+                onClick={() =>
+                  conversation.is_blocked
+                    ? unblockMutation.mutate()
+                    : setIsBlockConfirmOpen(true)
+                }
               >
-                Öğrenciyi engelle
+                {conversation.is_blocked ? "Engeli kaldır" : "Öğrenciyi engelle"}
               </button>
             )}
           </div>
@@ -505,12 +524,35 @@ export function ConversationWorkspace({
           )}
         </div>
 
-        {/* Input */}
+        {/* Input, or the reason there is none. A disabled composer still
+            invited typing ("Mesajınızı yazın...") into a thread nothing can
+            be sent to; WhatsApp replaces the box with the explanation and the
+            way out. */}
         <div className="shrink-0">
+          {conversation?.is_blocked ? (
+            <div className="flex flex-col items-center gap-2 border-t bg-paper px-4 py-4 text-center">
+              <p className="text-sm text-ink-mid">
+                {isTutor
+                  ? "Bu öğrenciyi engelledin. Mesajlaşma iki taraf için de kapalı."
+                  : "Bu konuşmaya mesaj gönderilemiyor."}
+              </p>
+              {isTutor && conversation.can_block !== false && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={unblockMutation.isPending}
+                  onClick={() => unblockMutation.mutate()}
+                >
+                  Engeli kaldır
+                </Button>
+              )}
+            </div>
+          ) : (
           <MessageInput
             conversationId={conversationId}
             onMessageSent={handleMessageSent}
-            disabled={!!messagesError || !!conversation?.is_blocked}
+            disabled={!!messagesError}
             replyTo={replyTo}
             replyToName={
               replyTo
@@ -522,6 +564,7 @@ export function ConversationWorkspace({
             onCancelReply={() => setReplyTo(null)}
             onTypingChange={setIsComposing}
           />
+          )}
         </div>
 
         {tutorForBooking && (
@@ -568,7 +611,8 @@ export function ConversationWorkspace({
           <DialogHeader>
             <DialogTitle>Öğrenciyi engelle</DialogTitle>
             <DialogDescription>
-              {headerTitle} bir daha sana mesaj gönderemeyecek. Bu işlem geri alınamaz.
+              {headerTitle} sana mesaj gönderemeyecek ve ders talebi oluşturamayacak.
+              Engeli istediğin zaman kaldırabilirsin.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2 sm:gap-0">

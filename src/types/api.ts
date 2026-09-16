@@ -877,6 +877,9 @@ export interface Conversation {
   } | null;
   tutor_profile?: TutorProfile | null;
   is_blocked: boolean;
+  /** Whether the viewer may block/unblock this thread at all. Lesson-request
+   * and coaching conversations carry no MessageRequest, so they cannot. */
+  can_block?: boolean;
   coaching_purchase_id?: string | null;
   response_sla?: CoachingResponseSla | null;
 }
