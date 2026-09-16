@@ -27,6 +27,16 @@ export async function blockConversationParticipant(
   return response.data;
 }
 
+/** Tutor-only: lift a block the tutor applied. The student is not notified. */
+export async function unblockConversationParticipant(
+  conversationId: string
+): Promise<Conversation> {
+  const response = await api.post<Conversation>(
+    `/conversations/${conversationId}/unblock/`
+  );
+  return response.data;
+}
+
 export async function fetchConversations(): Promise<Conversation[]> {
   const response = await api.get<Conversation[]>("/conversations/");
   return response.data;
