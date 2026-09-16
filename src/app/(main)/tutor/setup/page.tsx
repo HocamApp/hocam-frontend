@@ -12,6 +12,7 @@ import { fetchMe } from "@/lib/authApi";
 import {
   fetchSubjects,
   createTutorProfile,
+  fetchFeaturedUniversities,
   fetchTutorEducationOptions,
 } from "@/lib/tutorsApi";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
@@ -95,6 +96,13 @@ export default function TutorSetupPage() {
     queryKey: ["subjects"],
     queryFn: fetchSubjects,
     enabled: isAuthenticated && isTutor,
+  });
+  const { data: featuredUniversities = [] } = useQuery({
+    queryKey: ["featured-universities"],
+    queryFn: fetchFeaturedUniversities,
+    enabled: isAuthenticated && isTutor,
+    staleTime: Infinity,
+    retry: false,
   });
   const {
     data: educationOptions = [],
@@ -284,6 +292,8 @@ export default function TutorSetupPage() {
                         disabled={educationOptionsLoading}
                         value={field.value}
                         options={universities}
+                        featuredOptions={featuredUniversities}
+                        featuredLabel="Öne çıkan üniversiteler"
                         placeholder={educationOptionsLoading ? "Üniversiteler yükleniyor..." : "Üniversiteni ara"}
                         searchPlaceholder="Üniversite adı yaz"
                         customLabel="“{value}” üniversitesini kullan"

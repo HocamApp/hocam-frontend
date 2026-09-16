@@ -284,6 +284,30 @@
     --error: #f0917d;
   }
 
+  /* The base layer hides every scrollbar (`* { scrollbar-width: none }`).
+     A long picker list then gave no hint that it scrolls at all, so opt back
+     in where the affordance is the point. */
+  .scrollbar-visible {
+    -ms-overflow-style: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--line) transparent;
+  }
+
+  .scrollbar-visible::-webkit-scrollbar {
+    display: block;
+    height: 8px;
+    width: 8px;
+  }
+
+  .scrollbar-visible::-webkit-scrollbar-thumb {
+    background-color: var(--line);
+    border-radius: 9999px;
+  }
+
+  .scrollbar-visible::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
   .scrollbar-none {
     -ms-overflow-style: none;
     scrollbar-width: none;
