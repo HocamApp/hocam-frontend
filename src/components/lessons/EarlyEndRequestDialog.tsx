@@ -3,6 +3,7 @@
 import { useRef, type RefObject } from "react";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { InlineError } from "@/components/shared/InlineError";
 import {
   Dialog,
   DialogContent,
@@ -66,11 +67,7 @@ export function EarlyEndRequestDialog({
           </DialogDescription>
         </DialogHeader>
 
-        {hasError && (
-          <p className="text-sm text-destructive" aria-live="polite">
-            Yanıtın gönderilemedi. Lütfen tekrar dene.
-          </p>
-        )}
+        {hasError && <InlineError message="Yanıtın gönderilemedi. Lütfen tekrar dene." />}
 
         <DialogFooter className="gap-2 sm:space-x-0">
           <Button

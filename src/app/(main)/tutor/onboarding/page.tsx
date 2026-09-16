@@ -10,6 +10,7 @@ import { fetchMyTutorProfile, uploadTutorProfilePicture } from "@/lib/tutorsApi"
 import { fetchVerification } from "@/lib/dashboardApi";
 import { VerificationForm } from "@/components/tutors/VerificationForm";
 import { RouteGuard } from "@/components/shared/RouteGuard";
+import { InlineError } from "@/components/shared/InlineError";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -237,7 +238,7 @@ function TutorOnboardingContent() {
                 </div>
               </div>
               {photoPicker.pickerElements}
-              {displayedPhotoError && <p className="text-sm text-destructive" role="alert">{displayedPhotoError}</p>}
+              <InlineError message={displayedPhotoError} />
               <Button type="button" variant="outline" onClick={photoPicker.openPicker} disabled={photoMutation.isPending}>
                 <Camera className="mr-2 h-4 w-4" />
                 {photoMutation.isPending ? "Fotoğraf yükleniyor..." : "Fotoğraf seç"}

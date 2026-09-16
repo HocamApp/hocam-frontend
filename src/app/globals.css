@@ -277,6 +277,13 @@
 }
 
 @layer utilities {
+  /* Dark surfaces: the live lesson screen and the auth panel are near-black
+     whatever the theme, and --error (#B33A24, tuned for --paper) all but
+     disappears on them. Same hue, lifted until it reads. */
+  .surface-dark {
+    --error: #f0917d;
+  }
+
   .scrollbar-none {
     -ms-overflow-style: none;
     scrollbar-width: none;
