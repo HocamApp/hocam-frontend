@@ -281,7 +281,7 @@ function TutorCardDefault({
             <div className="flex min-w-0 flex-wrap items-center gap-x-1 text-sm">
               {tutor.total_reviews > 0 ? (
                 <>
-                  <span className="font-medium">★ {formatRating(tutor.rating)}</span>
+                  <span className="font-medium"><span className="text-pink">★</span> {formatRating(tutor.rating)}</span>
                   <span className="text-muted-foreground">
                     ({tutor.total_reviews} değerlendirme)
                   </span>

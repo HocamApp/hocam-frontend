@@ -38,6 +38,7 @@ import { TutorCheckoutCta } from "@/components/tutors/TutorCheckoutCta";
 import { resolveProfileImageUrl } from "@/lib/profileImages";
 import { buildTutorSubjectLabels } from "@/lib/tutorSubjectLabels";
 import { formatLessonCount, formatPrice, formatRating } from "@/lib/utils";
+import { RatingStars } from "@/components/tutors/RatingStars";
 import { ReviewCard } from "@/components/tutors/ReviewCard";
 import { TutorPresenceBadge } from "@/components/tutors/TutorPresenceBadge";
 import { AvailabilityCalendar } from "@/components/tutors/AvailabilityCalendar";
@@ -93,28 +94,6 @@ function learningContextFromSearchParams(
     learning_milestone_id,
     ...(learning_topic_id ? { learning_topic_id } : {}),
   };
-}
-
-function Stars({ rating }: { rating: number }) {
-  return (
-    <span className="inline-flex gap-0.5" aria-label={`${rating} yıldız`}>
-      {[1, 2, 3, 4, 5].map((i) =>
-        // Pink, not gold: #FFD100 as a glyph measures about 1.6:1 on paper.
-        // --pink (not --pink-deep, which DESIGN.md keeps for hover/active)
-        // measures about 3.8:1 on paper and 4.5:1 on the dark canvas, past
-        // the 3:1 floor for graphics; the numeral beside them carries the value.
-        i <= Math.round(rating) ? (
-          <span key={i} className="text-pink">
-            ★
-          </span>
-        ) : (
-          <span key={i} className="text-line">
-            ☆
-          </span>
-        ),
-      )}
-    </span>
-  );
 }
 
 function RatingSummaryPopover({
@@ -177,7 +156,7 @@ function RatingSummaryPopover({
           onMouseEnter={openPopover}
           onMouseLeave={closePopover}
         >
-          <Stars rating={rating} />
+          <RatingStars rating={rating} />
           <span className="font-medium">{formatRating(rating)}</span>
         </button>
       </PopoverTrigger>
@@ -203,7 +182,7 @@ function RatingSummaryPopover({
             <div>
               <p className="text-label uppercase text-ink-mid">Genel puan</p>
               <div className="mt-1 flex items-center gap-2">
-                <Stars rating={rating} />
+                <RatingStars rating={rating} />
                 <span className="text-lg font-semibold">
                   {formatRating(rating)}
                 </span>
@@ -235,7 +214,7 @@ function RatingSummaryPopover({
                     </div>
                     <div className="shrink-0 text-right">
                       <div className="flex items-center justify-end gap-1">
-                        <Stars rating={sr.average} />
+                        <RatingStars rating={sr.average} size="sm" />
                         <span className="font-medium">
                           {formatRating(sr.average)}
                         </span>
