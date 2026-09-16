@@ -13,6 +13,7 @@ import {
 } from "react-hook-form";
 
 import { cn } from "@/lib/utils";
+import { InlineError } from "@/components/shared/InlineError";
 import { Label } from "@/components/ui/label";
 
 const Form = FormProvider;
@@ -143,8 +144,8 @@ const FormDescription = React.forwardRef<
 FormDescription.displayName = "FormDescription";
 
 const FormMessage = React.forwardRef<
-  HTMLParagraphElement,
-  React.HTMLAttributes<HTMLParagraphElement>
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
 >(({ className, children, ...props }, ref) => {
   const { error, formMessageId } = useFormField();
   const body = error ? String(error?.message) : children;
@@ -153,15 +154,18 @@ const FormMessage = React.forwardRef<
     return null;
   }
 
+  // Field errors use the same icon + motion as every other inline error, at
+  // the smaller size that sits under an input. Rendered as the single alert
+  // element: wrapping it nested one role="alert" inside another.
   return (
-    <p
+    <InlineError
       ref={ref}
       id={formMessageId}
-      className={cn("text-sm font-medium text-destructive", className)}
+      size="sm"
+      message={String(body)}
+      className={className}
       {...props}
-    >
-      {body}
-    </p>
+    />
   );
 });
 FormMessage.displayName = "FormMessage";

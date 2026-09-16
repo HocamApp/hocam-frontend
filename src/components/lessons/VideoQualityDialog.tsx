@@ -10,6 +10,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Slider } from "@/components/ui/slider";
+import { InlineError } from "@/components/shared/InlineError";
 import {
   getVideoQualityOption,
   VIDEO_QUALITY_LEVELS,
@@ -119,9 +120,10 @@ export function VideoQualityDialog({
                 </span>
               )}
               {hasError && !isApplying && (
-                <span className="text-destructive">
-                  Görüntü ayarı uygulanamadı. Lütfen tekrar dene.
-                </span>
+                <InlineError
+                  size="sm"
+                  message="Görüntü ayarı uygulanamadı. Lütfen tekrar dene."
+                />
               )}
             </div>
           </div>
