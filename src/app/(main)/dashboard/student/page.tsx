@@ -243,10 +243,28 @@ function NextLessonCard({ booking }: { booking: Booking }) {
               <p className="mt-1 text-small text-ink-mid">{booking.subject.exam_type} · {booking.duration_minutes} dakika</p>
             </div>
           </div>
-          <div className="rounded-input border border-line bg-paper px-4 py-4 sm:px-6">
-            <p className="text-label capitalize text-ink-mid">{formatLessonDay(booking.start_time, true)}</p>
-            <p className="mt-1 text-h2-m font-bold tabular-nums text-ink md:text-h2">{formatTime(booking.start_time)}</p>
-          </div>
+          {booking.status === "in_progress" ? (
+            // While the lesson is live the box stops being a date and says so.
+            // White on pink, never dark text on pink (DESIGN.md v0.8).
+            <div className="rounded-input border border-pink bg-pink px-4 py-4 text-primary-foreground sm:px-6">
+              <p className="inline-flex items-center gap-2 text-label">
+                <span
+                  className="h-2 w-2 rounded-full bg-primary-foreground motion-safe:animate-pulse"
+                  aria-hidden="true"
+                />
+                Canlı
+              </p>
+              <p className="mt-1 text-h2-m font-bold md:text-h2">Ders başladı</p>
+              <p className="mt-1 text-label tabular-nums">
+                {formatTime(booking.start_time)}&apos;da başladı
+              </p>
+            </div>
+          ) : (
+            <div className="rounded-input border border-line bg-paper px-4 py-4 sm:px-6">
+              <p className="text-label capitalize text-ink-mid">{formatLessonDay(booking.start_time, true)}</p>
+              <p className="mt-1 text-h2-m font-bold tabular-nums text-ink md:text-h2">{formatTime(booking.start_time)}</p>
+            </div>
+          )}
         </div>
         <div className="mt-8 flex flex-col gap-3 border-t border-line pt-6 sm:flex-row sm:items-center">
           <LessonJoinButton

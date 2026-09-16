@@ -21,7 +21,7 @@ const CASES: Array<{
   { type: "booking", status: "pending", label: "Hoca onayı bekleniyor", classes: ["border-ink", "bg-ink", "text-paper"], background: "ink", foreground: "paper" },
   { type: "booking", status: "awaiting_confirmation", label: "Ders onayınızı bekliyor", classes: ["border-ink", "bg-ink", "text-paper"], background: "ink", foreground: "paper" },
   { type: "booking", status: "confirmed", label: "Ders kesinleşti", classes: ["border-gold", "bg-gold", "text-gold-ink"], background: "gold", foreground: "gold-ink" },
-  { type: "booking", status: "in_progress", label: "Ders başladı", classes: ["border-pink", "bg-pink", "text-[var(--ink-on-light)]"], background: "pink", foreground: "ink-on-light" },
+  { type: "booking", status: "in_progress", label: "Ders başladı", classes: ["border-pink-deep", "bg-pink-deep", "text-primary-foreground"], background: "pink-deep", foreground: "primary-foreground" },
   { type: "booking", status: "completed", label: "Ders tamamlandı", classes: ["border-success", "bg-success-soft", "text-ink"], background: "success-soft", foreground: "ink" },
   { type: "booking", status: "disputed", label: "İnceleme devam ediyor", classes: ["border-error", "bg-error", "text-destructive-foreground"], background: "error", foreground: "destructive-foreground" },
   { type: "booking", status: "cancelled", label: "Ders iptal edildi", classes: ["border-error", "bg-error", "text-destructive-foreground"], background: "error", foreground: "destructive-foreground" },

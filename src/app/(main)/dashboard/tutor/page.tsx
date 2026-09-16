@@ -210,12 +210,52 @@ function TutorDashboardContent() {
             <ArrowRight className="h-5 w-5" aria-hidden="true" />
           </Link>
         </nav>
-        {bookings.isError ? <div role="alert" className="rounded-card border border-line bg-surface p-6 sm:p-8"><h2 className="text-h2-m font-bold sm:text-h2">Ders programın yüklenemedi.</h2><p className="mt-2 max-w-xl text-small text-ink-mid">Sıradaki dersini ve bekleyen işlemlerini göstermek için program verisine ulaşmamız gerekiyor.</p><Button type="button" variant="outline" className="mt-5" onClick={() => void bookings.refetch()}>Yeniden dene</Button></div> : nextBooking ? <Card className="overflow-hidden"><CardContent className="p-6 sm:p-8"><div className="grid items-center gap-6 md:grid-cols-[minmax(0,1fr)_auto]"><div className="flex min-w-0 items-center gap-4"><ParticipantAvatar name={nextStudentName} avatarUrl={nextBooking.student.avatar_url} className="h-16 w-16 shrink-0 rounded-input" /><div className="min-w-0"><p className="truncate text-h3 font-medium">{nextBooking.subject.name}</p><p className="mt-1 truncate text-body text-ink-mid">{nextStudentName} · {nextBooking.duration_minutes} dk</p></div></div><div className="flex min-w-[150px] flex-col rounded-input border border-line bg-paper px-5 py-4 md:items-end"><span className="text-label text-ink-mid">{dashboardCountdown(nextBooking.start_time)}</span><span className="mt-1 text-h2-m font-bold tabular-nums">{bookingTimeLabel(nextBooking.start_time).split(" – ")[0]}</span><span className="mt-1 text-label text-ink-mid">{bookingDateLabel(nextBooking.start_time)}</span></div></div><div className="mt-6 flex flex-wrap items-center gap-3 border-t border-line pt-5">{canJoinBooking(nextBooking) ? <Button asChild size="lg"><a href={`/session/${nextBooking.id}`}><VideoCamera className="mr-2 h-5 w-5" aria-hidden="true" />Derse katıl</a></Button> : nextBooking.room_url ? <Button size="lg" variant="outline" disabled className="h-auto max-w-full whitespace-normal text-center">Derse katılım başlangıçtan 15 dakika önce açılır</Button> : <Badge variant="outline">Oda onaydan sonra oluşur</Badge>}<Button asChild variant="outline"><Link href={conversationId ? `/messages/${conversationId}` : "/messages"}><ChatCircle className="mr-2 h-5 w-5" aria-hidden="true" />Öğrenciye mesaj</Link></Button><div className="ml-auto hidden items-center gap-2 text-small text-ink-mid sm:flex"><StatusBadge status={nextBooking.status} type="booking" /><span>{paymentLabel(nextBooking)}</span></div></div></CardContent></Card> : <Card><CardContent className="flex flex-col items-start justify-between gap-5 p-6 sm:flex-row sm:items-center sm:p-8"><div><h2 className="text-h2-m font-bold sm:text-h2">Takvimin şu anda sakin</h2><p className="mt-2 max-w-xl text-small text-ink-mid">Müsaitlik saatlerini güncel tutarak yeni rezervasyonlara hazır olabilirsin.</p></div><Button asChild><Link href="/dashboard/tutor/calendar">Takvimi aç</Link></Button></CardContent></Card>}
+        {bookings.isError ? <div role="alert" className="rounded-card border border-line bg-surface p-6 sm:p-8"><h2 className="text-h2-m font-bold sm:text-h2">Ders programın yüklenemedi.</h2><p className="mt-2 max-w-xl text-small text-ink-mid">Sıradaki dersini ve bekleyen işlemlerini göstermek için program verisine ulaşmamız gerekiyor.</p><Button type="button" variant="outline" className="mt-5" onClick={() => void bookings.refetch()}>Yeniden dene</Button></div> : nextBooking ? <Card className="overflow-hidden"><CardContent className="p-6 sm:p-8"><div className="grid items-center gap-6 md:grid-cols-[minmax(0,1fr)_auto]"><div className="flex min-w-0 items-center gap-4"><ParticipantAvatar name={nextStudentName} avatarUrl={nextBooking.student.avatar_url} className="h-16 w-16 shrink-0 rounded-input" /><div className="min-w-0"><p className="truncate text-h3 font-medium">{nextBooking.subject.name}</p><p className="mt-1 truncate text-body text-ink-mid">{nextStudentName} · {nextBooking.duration_minutes} dk</p></div></div><NextLessonTimeBox booking={nextBooking} /></div><div className="mt-6 flex flex-wrap items-center gap-3 border-t border-line pt-5">{canJoinBooking(nextBooking) ? <Button asChild size="lg"><a href={`/session/${nextBooking.id}`}><VideoCamera className="mr-2 h-5 w-5" aria-hidden="true" />Derse katıl</a></Button> : nextBooking.room_url ? <Button size="lg" variant="outline" disabled className="h-auto max-w-full whitespace-normal text-center">Derse katılım başlangıçtan 15 dakika önce açılır</Button> : <Badge variant="outline">Oda onaydan sonra oluşur</Badge>}<Button asChild variant="outline"><Link href={conversationId ? `/messages/${conversationId}` : "/messages"}><ChatCircle className="mr-2 h-5 w-5" aria-hidden="true" />Öğrenciye mesaj</Link></Button><div className="ml-auto hidden items-center gap-2 text-small text-ink-mid sm:flex">{nextBooking.status !== "in_progress" && <StatusBadge status={nextBooking.status} type="booking" />}<span>{paymentLabel(nextBooking)}</span></div></div></CardContent></Card> : <Card><CardContent className="flex flex-col items-start justify-between gap-5 p-6 sm:flex-row sm:items-center sm:p-8"><div><h2 className="text-h2-m font-bold sm:text-h2">Takvimin şu anda sakin</h2><p className="mt-2 max-w-xl text-small text-ink-mid">Müsaitlik saatlerini güncel tutarak yeni rezervasyonlara hazır olabilirsin.</p></div><Button asChild><Link href="/dashboard/tutor/calendar">Takvimi aç</Link></Button></CardContent></Card>}
         {groups.pendingActions.length > 0 && <Link href="/dashboard/tutor?tab=bookings" className="flex w-full items-center justify-between gap-4 rounded-card border border-ink bg-surface px-5 py-4 text-left transition-colors duration-[var(--duration-state)] hover:bg-paper focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2"><span className="flex min-w-0 items-start gap-3"><WarningCircle className="mt-0.5 h-5 w-5 shrink-0" weight="fill" aria-hidden="true" /><span><strong className="block text-small font-medium">{groups.pendingActions.length} işlem seni bekliyor</strong><span className="text-small text-ink-mid">Onay, itiraz veya ders ilerlemesi gerektiren kayıtlarını kontrol et.</span></span></span><ArrowRight className="h-5 w-5 shrink-0" aria-hidden="true" /></Link>}
         <TutorPerformanceSection profile={profileData} availability={availability.data ?? []} priceInsight={priceInsight.data ?? null} />
       </div>
     </div>{dialogs}
   </>;
+}
+
+/**
+ * The right-hand time box on the "next lesson" card.
+ *
+ * While the lesson is live it stops being a date and becomes the state: a
+ * solid pink block that says so. "Ders başladı" was a small pill at the
+ * bottom of the card — dark text on pink, easy to miss on the one card where
+ * the tutor has to act now. White on pink at this size clears the contrast
+ * floor for large text, and DESIGN.md v0.8 bans dark text on pink outright.
+ */
+function NextLessonTimeBox({ booking }: { booking: Booking }) {
+  const live = booking.status === "in_progress";
+  const startedAt = bookingTimeLabel(booking.start_time).split(" – ")[0];
+
+  if (live) {
+    return (
+      <div className="flex min-w-[150px] flex-col rounded-input border border-pink bg-pink px-5 py-4 text-primary-foreground md:items-end">
+        <span className="inline-flex items-center gap-2 text-label">
+          <span
+            className="h-2 w-2 rounded-full bg-primary-foreground motion-safe:animate-pulse"
+            aria-hidden="true"
+          />
+          Canlı
+        </span>
+        <span className="mt-1 text-h2-m font-bold">Ders başladı</span>
+        <span className="mt-1 text-label tabular-nums">
+          {startedAt}&apos;da başladı · {bookingDateLabel(booking.start_time)}
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex min-w-[150px] flex-col rounded-input border border-line bg-paper px-5 py-4 md:items-end">
+      <span className="text-label text-ink-mid">{dashboardCountdown(booking.start_time)}</span>
+      <span className="mt-1 text-h2-m font-bold tabular-nums">{startedAt}</span>
+      <span className="mt-1 text-label text-ink-mid">{bookingDateLabel(booking.start_time)}</span>
+    </div>
+  );
 }
 
 export default function TutorDashboardPage() {
