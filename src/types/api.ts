@@ -836,8 +836,13 @@ export interface EarlyEndRequestState {
 export interface LessonSessionState {
   booking_id: string;
   status: Booking["status"];
+  /** LEGACY stored space (Istanbul wall clock wearing a UTC label). Display
+   * and round-trips only — never compare these with server_time. */
   start_time: string;
   scheduled_end: string;
+  /** The lesson's real moments: the only pair safe against server_time. */
+  start_instant: string;
+  end_instant: string;
   server_time: string;
   early_end_request: EarlyEndRequestState;
 }

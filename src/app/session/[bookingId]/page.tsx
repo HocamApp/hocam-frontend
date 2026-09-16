@@ -46,6 +46,7 @@ import {
 } from "@/lib/jitsiSessionControls";
 import {
   computeCountdown,
+  countdownBounds,
   formatJoinCountdown,
   teacherVideoStorageKey,
   videoQualityStorageKey,
@@ -373,15 +374,14 @@ function SessionContent() {
     sessionEndedFromBooking ||
     Boolean(liveStatus && ENDED_STATUSES.has(liveStatus));
 
-  // Countdown driven by the drift-corrected server clock.
-  const startTimeIso = session.state?.start_time ?? booking?.start_time;
-  const scheduledEndIso =
-    session.state?.scheduled_end ??
-    (booking ? new Date(scheduledEndTime(booking)).toISOString() : undefined);
+  // Countdown driven by the drift-corrected server clock. `now` comes from
+  // serverNow(), which already carries the measured skew — adding
+  // session.serverOffsetMs applied the same correction twice.
   const countdown = useMemo(() => {
-    if (!startTimeIso || !scheduledEndIso) return null;
-    return computeCountdown(startTimeIso, scheduledEndIso, now + session.serverOffsetMs);
-  }, [startTimeIso, scheduledEndIso, now, session.serverOffsetMs]);
+    const bounds = countdownBounds(session.state, booking);
+    if (!bounds) return null;
+    return computeCountdown(bounds.startIso, bounds.endIso, now);
+  }, [session.state, booking, now]);
 
   // Ticks once a second while in session (drives the countdown display).
   useEffect(() => {
@@ -702,7 +702,8 @@ function SessionContent() {
 
   const earlyEnd = session.earlyEnd;
   const isEndPending = earlyEnd?.status === "pending";
-  const serverNowMs = now + session.serverOffsetMs;
+  // Same reason as the countdown: `now` is already server-corrected.
+  const serverNowMs = now;
   const cooldownActive = Boolean(
     earlyEnd?.retry_available_at &&
       serverNowMs < new Date(earlyEnd.retry_available_at).getTime()
