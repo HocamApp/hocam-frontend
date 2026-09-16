@@ -165,7 +165,7 @@ export function HomeTeacherCard({
           <span className="min-w-0 text-sm">
             {teacher.totalReviews > 0 ? (
               <span className="inline-flex items-center gap-1 font-medium">
-                <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" aria-hidden="true" />
+                <Star className="h-3.5 w-3.5 fill-pink text-pink" aria-hidden="true" />
                 {formatRating(teacher.rating)}
                 <span className="font-normal text-muted-foreground">
                   ({teacher.totalReviews})

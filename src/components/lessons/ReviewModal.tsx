@@ -67,14 +67,10 @@ function StarInput({
           className="text-3xl leading-none transition-transform duration-150 hover:scale-125 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded"
           aria-label={`${star} yıldız`}
         >
-          <span
-            className={
-              star <= active
-                ? "text-amber-400 drop-shadow-[0_1px_2px_rgba(251,191,36,0.5)]"
-                : "text-muted-foreground/30"
-            }
-          >
-            ★
+          {/* Same pink as the ratings these become (DESIGN.md); an unfilled
+              star is the outlined glyph in that pink, not a grey ghost. */}
+          <span className={star <= active ? "text-pink" : "text-pink/40"}>
+            {star <= active ? "★" : "☆"}
           </span>
         </button>
       ))}

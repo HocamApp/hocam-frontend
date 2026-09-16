@@ -131,7 +131,7 @@ export function HocaBulResultCard({
               <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
                 {tutor.total_reviews > 0 ? (
                   <span className="inline-flex items-center gap-1 font-medium">
-                    <Star className="h-4 w-4 fill-amber-400 text-amber-400" aria-hidden />
+                    <Star className="h-4 w-4 fill-pink text-pink" aria-hidden />
                     {formatRating(tutor.rating)}
                     <span className="font-normal text-muted-foreground">({tutor.total_reviews} değerlendirme)</span>
                   </span>
