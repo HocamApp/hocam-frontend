@@ -640,7 +640,7 @@ function SessionContent() {
 
   if (isTokenError || !sessionToken) {
     return (
-      <div className="flex flex-1 items-center justify-center p-6">
+      <div className="surface-dark flex flex-1 items-center justify-center p-6">
         <ErrorMessage message="Bu ders için canlı ders odası henüz hazır değil." />
       </div>
     );
@@ -749,7 +749,7 @@ function SessionContent() {
   const selectedQuality = pendingQuality ?? confirmedQuality;
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col bg-ink">
+    <div className="surface-dark flex min-h-0 flex-1 flex-col bg-ink">
       {connectionStatus === "interrupted" && (
         <div className="flex items-center justify-center gap-2 bg-error px-4 py-2 text-center text-xs font-medium text-white">
           <WifiSlash className="h-4 w-4" aria-hidden="true" />

@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/accordion";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { InlineError } from "@/components/shared/InlineError";
 import { cn } from "@/lib/utils";
 import { PROFILE_PHOTO_RULE_TEXT, TUTOR_REAL_PHOTO_RULE_TEXT } from "@/lib/profilePhoto";
 import { useProfilePhotoPicker } from "@/hooks/useProfilePhotoPicker";
@@ -93,11 +94,7 @@ export function AvatarEditor({
                   </p>
                 ))}
               </div>
-              {displayedError && (
-                <p className="text-sm text-destructive" role="alert">
-                  {displayedError}
-                </p>
-              )}
+              <InlineError message={displayedError} />
               <Button
                 type="button"
                 size="sm"
