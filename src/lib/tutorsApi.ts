@@ -126,6 +126,16 @@ export async function fetchTutorEducationOptions(): Promise<TutorEducationOption
   return response.data;
 }
 
+/** The universities the picker shows before anyone types. A separate endpoint
+ * so /education-options/ keeps its plain-list payload. An empty list is a fine
+ * answer: the picker falls back to the full catalogue. */
+export async function fetchFeaturedUniversities(): Promise<string[]> {
+  const response = await api.get<{ universities: string[] }>(
+    "/tutors/featured-universities/"
+  );
+  return response.data.universities ?? [];
+}
+
 export async function fetchTutorById(id: string): Promise<TutorProfile> {
   const response = await api.get<TutorProfile>(`/tutors/${id}/`);
   return applyDemoTutorPresentation(response.data);
