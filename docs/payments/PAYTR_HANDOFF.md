@@ -1,12 +1,35 @@
 # PayTR Frontend — İlerleme ve Devir Kaydı
 
 **Güncelleme:** 17 Eylül 2026\
-**Yetkili kapsam:** kullanıcı yalnız S0'ın uygulanmasını istedi. S0-V veya S1 başlatılmadı.\
+**Yetkili kapsam:** S0 tamamlandı; kullanıcı sonraki bölümü istedi, S0-V görsel sözleşmesi hazırlandı. S1 başlatılmadı.\
 **Araç/model:** Codex / GPT-6 Astra. Model önerileri plan içindedir; bu kayıt düşünme seviyesi tahmini yapmaz.
 
 ## S0 teslimat durumu
 
-S0 dokümantasyonu teslim edildi, yeni worktree baseline'ı geçti ve [frontend PR #267](https://github.com/HocamApp/hocam-frontend/pull/267) açıldı. Sonraki bölüme geçiş için bu PR'ın nihai head kontrollerini ve merge durumunu doğrula. CI/merge/deploy'un kalıcı ve güncel durum kaynağı PR kaydıdır; bu belge onları gerçekleşmeden başarılı ilan etmez.
+S0 [frontend PR #267](https://github.com/HocamApp/hocam-frontend/pull/267) ile merge edildi: `dbf385f42315172617c95305f1f0bba566ad3ed3`; nihai head `8f0bf51bbc4e393390fac78c9b9f2815a7e39d8d`. PR CI yeşil. Main [CI #35268162686](https://github.com/HocamApp/hocam-frontend/actions/runs/35268162686) ilk denemesinde işlem iptal edildi; iptalin kök nedeni doğrulanmadı. Aynı SHA üzerinde ikinci deneme SUCCESS olarak yeniden doğrulandı. [Vercel production](https://vercel.com/hocamapp/hocam-frontend/ATyfSqxpy74SaCcEE3gFsSJj6Abg) commit status SUCCESS. Aşağıdaki S0 tablosu tarihsel başlangıç kaydıdır.
+
+## S0-V teslimat ve devir
+
+| Alan | Değer |
+| --- | --- |
+| Repo | HocamApp/hocam-frontend |
+| Worktree | `/Users/ardagg/Desktop/Hocam/.worktrees/frontend/paytr-00-visual-20260917` |
+| Branch | `agent/paytr-00-visual-20260917` |
+| Başlangıç main SHA | `dbf385f42315172617c95305f1f0bba566ad3ed3` |
+| Kapsam | Yeni VISUAL_SPEC; plan bağlantısı/durumu; bu devir kaydı |
+| Mod / araç | Normal uygulama modu; Codex / GPT-6 Astra; ckm:design-system rehberi |
+| PR / checkpoint | [#268](https://github.com/HocamApp/hocam-frontend/pull/268); ilk doküman commit'i `33edf43`; final head/merge SHA PR kaydından doğrulanır |
+| Sonraki bölüm | S1 — API, tipler, kapalı bayrak; kullanıcı istediğinde |
+
+[Görsel sözleşme](PAYTR_VISUAL_SPEC.md) masaüstü/mobil wireframe, mevcut token eşlemesi, yerel CTA kontrast düzeltmesi, form/iframe/sonuç bileşenleri, tüm durum metinleri ve S3–S8 kabul senaryolarını içerir. Preply özel checkout'u görülmedi; açık arayüz gözlemleri ile resmî yardım kaynakları ayrıldı. Gerçek ödeme ekranları henüz kodlanmadı; browser screenshot/3DS kabulü S3–S8'e aittir.
+
+S0-V yerel doğrulama: `npm ci` başarılı, lockfile değişmedi; `npm run lint` exit 0 (mevcut tutor img uyarısı), `npm run typecheck` exit 0, `npm run test:checkout` 8/8 başarılı. Üç değişen Markdown belgesinde 16 göreli bağlantı geçerli, code fence'ler dengeli, diff whitespace kontrolü temiz. Production build ve tüm unit suite PR CI tarafından çalıştırılır; yerel frontend baseline testleri yeni ödeme ekranlarının çalıştığı anlamına gelmez.
+
+Kesintide önce bu branch'in PR/head/check durumunu kontrol et; mevcut PR varsa yenisini açma. PR yeşil olunca repo kuralıyla merge commit + remote branch silme, ardından main CI ve Vercel durumunu doğrulama kalır. Bu belge tamamlanmamış CI/merge/deploy'u başarılı ilan etmez.
+
+S1 devri: güncel origin/main'den `agent/paytr-01-api-20260917`; normal mod, plan önerisi Astra Medium / Sonnet High. Planın S1 kabul ölçütlerini uygula. Payment-state endpoint'ini var sayma, flag varsayılan kapalı, otomatik POST/retry yok. B01–B06 açık; S0-V backend referansını veya sözleşmesini değiştirmedi.
+
+## S0 başlangıç kaydı
 
 | Alan | Değer |
 | --- | --- |
@@ -71,7 +94,7 @@ Node checkout test komutu experimental/deprecation uyarıları verdi; testler ge
 - Payment-state mevcut değil; kesin failure/manual-review UI'ı S7'ye bağlı.
 - Includes-coaching ödeme, toplam/aktivasyon kanıtı gelene kadar kapalı tasarlanır.
 - Frontend çift tıklama koruması server concurrency/idempotency yerine geçmez.
-- Görsel referans araştırması plan içinde; S0-V ekran sözleşmesi henüz oluşturulmadı.
+- Görsel referans araştırması ve S0-V ekran sözleşmesi hazır; çalışan ekranların görsel/3DS doğrulaması henüz yapılmadı.
 - Hiçbir API/UI/runtime/flag/backend dosyası değiştirilmedi; ödeme başlatılmadı.
 - Backend sahibine mesaj, e-posta veya issue gönderilmedi; devir talepleri CONTRACT içindedir.
 
@@ -89,8 +112,8 @@ rtk git log -1 --format=%H
 1. Bu kaydı, planı, sözleşmeyi ve repo kurallarını oku.
 2. GitHub'da S0 branch/PR commit ve merge durumunu doğrula; anlatılan durumu kodla uzlaştır.
 3. S0 tamamlanmadan kesinti olduysa aynı branch/PR ve worktree'den devam et.
-4. S0 merged ve kullanıcı S0-V istiyorsa origin/main'den `agent/paytr-00-visual-20260917` aç.
-5. S0-V'de yalnız görsel ekran sözleşmesini tamamla; API/ödeme geliştirmesine atlama.
+4. S0-V için yukarıdaki branch/PR kaydını doğrula; yarım kaldıysa aynı branch'ten devam et.
+5. S0-V merged ve kullanıcı S1 istiyorsa yukarıdaki S1 devrini uygula; görsel sözleşmeyi baştan üretme.
 6. Token sınırından önce tamamlanan iş, kalan ilk adım, testler ve commit edilmemiş dosyaları güncelle.
 
 Yeni bölüm devri için planın sonundaki şablon kullanılır. Nihai self-referential commit/merge SHA bu dosyaya uydurulmaz; PR ve Git kaydından okunur.

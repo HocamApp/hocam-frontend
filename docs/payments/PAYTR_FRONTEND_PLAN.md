@@ -6,7 +6,7 @@
 **S0 başlangıcı:** frontend `f90874d01b5b83facbac9bfb4a3be2f20bc6ba44`.\
 **Backend referansı:** [PR #163](https://github.com/HocamApp/hocam-backend/pull/163), `e1e36966eed5690957fa36018216ef9dcb765011`; S0 incelemesinde açık.
 
-Bu belge 17 Eylül konuşmasında kabul edilen planın repo içindeki taşınabilir sürümüdür. Yalnız **S0** bu teslimatta uygulanır. Sonraki bölümler kendiliğinden başlatılmaz. Belgede yazan hedef davranışlar mevcut üründe uygulanmış sayılmaz.
+Bu belge 17 Eylül konuşmasında kabul edilen planın repo içindeki taşınabilir sürümüdür. S0 tamamlandı; kullanıcının sonraki bölüm isteğiyle **S0-V** görsel sözleşmesi hazırlanmıştır. Teslimat/PR durumu devir kaydındadır. S1 ve sonrası kendiliğinden başlatılmaz. Belgede yazan hedef davranışlar mevcut üründe uygulanmış sayılmaz.
 
 ## Okuma sırası ve kaynaklar
 
@@ -15,6 +15,7 @@ Bu belge 17 Eylül konuşmasında kabul edilen planın repo içindeki taşınabi
 3. [Doğrulanmış API sözleşmesi ve bağımlılıklar](PAYTR_CONTRACT.md).
 4. [İlerleme, test ve devir kaydı](PAYTR_HANDOFF.md).
 5. [Arkadaşın gönderdiği kaynak yol haritası](PAYTR_FRONTEND_SOURCE_ROADMAP.md).
+6. [S0-V görsel ekran sözleşmesi](PAYTR_VISUAL_SPEC.md): ölçüler, wireframe, bileşenler, metinler ve durum matrisi.
 
 Kaynak yol haritası tarihsel referanstır. Bu planın nötr sonuç metni, belirsiz ağ hatasında retry ve koçluk tahsilat kapısı gibi açık kararları uygulanır. API'nin gerçekte sunduğu davranış için commit'e sabitlenmiş sözleşme esas alınır. Hiçbir belge backend'de olmayan endpoint'i var kabul etme yetkisi vermez.
 
@@ -121,7 +122,7 @@ Varsayılan sıra: S0 → S0-V → S1 → S2 → S3 → S4 → S5 → S6 → S7 
 ### S0-V — Görsel teslimat
 
 **Bağımlılık:** S0.\
-**Çıktı:** `docs/payments/PAYTR_VISUAL_SPEC.md` ve devir kaydı; S0'da oluşturulmaz.
+**Çıktı:** [PAYTR_VISUAL_SPEC.md](PAYTR_VISUAL_SPEC.md) ve devir kaydı. Yeni ödeme CTA'sında normal metin kontrastı için mevcut koyu pembe token yerel olarak kullanılır; global palet değişmez.
 
 - Kaynak, inceleme tarihi ve erişim sınırlarını kaydet.
 - Bölüm 2'ye göre masaüstü/mobil ekran düzenini ve bileşen hiyerarşisini tanımla.
