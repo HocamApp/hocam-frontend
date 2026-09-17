@@ -18,12 +18,12 @@ S0 [frontend PR #267](https://github.com/HocamApp/hocam-frontend/pull/267) ile m
 | Başlangıç main SHA | `dbf385f42315172617c95305f1f0bba566ad3ed3` |
 | Kapsam | Yeni VISUAL_SPEC; plan bağlantısı/durumu; bu devir kaydı |
 | Mod / araç | Normal uygulama modu; Codex / GPT-6 Astra; ckm:design-system rehberi |
-| PR / final SHA | PR açılışında bu kayıt güncellenir; final SHA GitHub'dan doğrulanır |
+| PR / checkpoint | [#268](https://github.com/HocamApp/hocam-frontend/pull/268); ilk doküman commit'i `33edf43`; final head/merge SHA PR kaydından doğrulanır |
 | Sonraki bölüm | S1 — API, tipler, kapalı bayrak; kullanıcı istediğinde |
 
 [Görsel sözleşme](PAYTR_VISUAL_SPEC.md) masaüstü/mobil wireframe, mevcut token eşlemesi, yerel CTA kontrast düzeltmesi, form/iframe/sonuç bileşenleri, tüm durum metinleri ve S3–S8 kabul senaryolarını içerir. Preply özel checkout'u görülmedi; açık arayüz gözlemleri ile resmî yardım kaynakları ayrıldı. Gerçek ödeme ekranları henüz kodlanmadı; browser screenshot/3DS kabulü S3–S8'e aittir.
 
-S0-V yerel doğrulama: `npm ci` başarılı, lockfile değişmedi; `npm run lint` exit 0 (mevcut tutor img uyarısı), `npm run typecheck` exit 0, `npm run test:checkout` 8/8 başarılı. Markdown link/code-fence ve diff kontrolleri commit öncesinde çalıştırılır. Production build ve tüm unit suite PR CI tarafından çalıştırılır; yerel frontend baseline testleri yeni ödeme ekranlarının çalıştığı anlamına gelmez.
+S0-V yerel doğrulama: `npm ci` başarılı, lockfile değişmedi; `npm run lint` exit 0 (mevcut tutor img uyarısı), `npm run typecheck` exit 0, `npm run test:checkout` 8/8 başarılı. Üç değişen Markdown belgesinde 16 göreli bağlantı geçerli, code fence'ler dengeli, diff whitespace kontrolü temiz. Production build ve tüm unit suite PR CI tarafından çalıştırılır; yerel frontend baseline testleri yeni ödeme ekranlarının çalıştığı anlamına gelmez.
 
 Kesintide önce bu branch'in PR/head/check durumunu kontrol et; mevcut PR varsa yenisini açma. PR yeşil olunca repo kuralıyla merge commit + remote branch silme, ardından main CI ve Vercel durumunu doğrulama kalır. Bu belge tamamlanmamış CI/merge/deploy'u başarılı ilan etmez.
 
