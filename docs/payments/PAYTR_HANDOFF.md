@@ -6,7 +6,7 @@
 
 ## S0 teslimat durumu
 
-S0 dokümantasyonu hazır, yeni worktree baseline'ı geçti. Commit/PR süreci bu kaydın ilk sürümünde henüz başlamadı; nihai commit ve PR bilgileri kapanışta güncellenecek.
+S0 dokümantasyonu teslim edildi, yeni worktree baseline'ı geçti ve [frontend PR #267](https://github.com/HocamApp/hocam-frontend/pull/267) açıldı. Sonraki bölüme geçiş için bu PR'ın nihai head kontrollerini ve merge durumunu doğrula. CI/merge/deploy'un kalıcı ve güncel durum kaynağı PR kaydıdır; bu belge onları gerçekleşmeden başarılı ilan etmez.
 
 | Alan | Değer |
 | --- | --- |
@@ -14,11 +14,14 @@ S0 dokümantasyonu hazır, yeni worktree baseline'ı geçti. Commit/PR süreci b
 | Çalışma worktree'si | `/Users/ardagg/Desktop/Hocam/.worktrees/frontend/paytr-00-contract-20260917` |
 | Branch | `agent/paytr-00-contract-20260917` |
 | Başlangıç main SHA | `f90874d01b5b83facbac9bfb4a3be2f20bc6ba44` |
+| İlk doküman checkpoint SHA | `9f804b9cf14d391ea131c7f42633879095ecd761` |
+| Frontend PR | [#267](https://github.com/HocamApp/hocam-frontend/pull/267) |
+| Nihai belge / merge SHA | PR #267 `headRefOid` / `mergeCommit.oid` alanlarından doğrula |
 | Backend PR | [#163](https://github.com/HocamApp/hocam-backend/pull/163), OPEN |
 | Backend başvuru SHA | `e1e36966eed5690957fa36018216ef9dcb765011` |
 | Korunan eski worktree | `/Users/ardagg/Desktop/Hocam/Hocam_frontend`, `agent/session-countdown-20260916` |
 | Sonraki bölüm | S0-V — kullanıcı o bölümü istediğinde |
-| Commit edilmemiş kapsam | Bu ilk kayıt anında yalnız dört yeni Markdown dosyası |
+| Beklenen commit kapsamı | Yalnız dört Markdown dosyası; gerçek dirty durumunu git status ile kontrol et |
 
 Yerel yol cloud ortamında aynı olmak zorunda değildir. Repo/branch/commit, taşınabilir kimliktir. Ana checkout'un branch'i değiştirilmedi; final dosyalar S0 worktree'sindedir.
 
@@ -43,7 +46,8 @@ Kaynak attachment SHA-256: `646948de9ae64547abf1a5477e6763212af9b139a00df795d305
 - [x] Staging/PayTR panel yapılandırmasının doğrulanmadığı açıkça kaydedildi; secret okunmadı/kopyalanmadı.
 - [x] Yeni worktree'de npm ci, lint, typecheck ve 8 checkout testi geçti.
 - [x] Markdown göreli bağlantıları ve code fence'leri kontrol edildi; kaynak roadmap arşivi orijinal bölümüyle, yalnız satır sonu boşlukları normalize edilerek karşılaştırıldı.
-- [ ] Doküman commit'i, PR, CI ve merge doğrulaması.
+- [x] Doküman checkpoint'i commit/push edildi ve PR #267 açıldı.
+- CI, merge ve deploy kapanış kanıtı: [PR #267 checks](https://github.com/HocamApp/hocam-frontend/pull/267/checks) ve aşağıdaki salt okunur komutlar. Kullanıcı raporunda nihai merge SHA ve gözlenen deploy durumu belirtilir.
 
 ## Başlangıç kontrol kanıtı
 
@@ -57,7 +61,7 @@ Kontroller `f90874d` bazlı S0 worktree'sinde, yalnız yeni belgeler varken çal
 | `rtk npm run test:checkout` | 8 geçti, 0 başarısız |
 | Production build ve tüm unit suite | Yerelde çalıştırılmadı; Frontend CI bunları PR'da çalıştırır |
 | Backend testleri / gerçek PayTR işlemi | Çalıştırılmadı; S0 backend/runtime değiştirmez |
-| GitHub PR / Vercel durumu | PR oluşturulduktan sonra kaydedilecek |
+| GitHub PR / Vercel durumu | PR #267 canlı kontrol kaydından doğrula; deploy başarı varsayılmadı |
 
 Node checkout test komutu experimental/deprecation uyarıları verdi; testler geçti. npm ci mevcut dependency ağacı için 14 audit bulgusu bildirdi (1 low, 1 moderate, 11 high, 1 critical); S0 dependency audit/fix yapmadı ve paket/lockfile değiştirmedi. Bu yükleme çıktısı yeni PayTR kodunun bulgusu değildir.
 
@@ -72,6 +76,15 @@ Node checkout test komutu experimental/deprecation uyarıları verdi; testler ge
 - Backend sahibine mesaj, e-posta veya issue gönderilmedi; devir talepleri CONTRACT içindedir.
 
 ## Başka araçta devam
+
+Repo kökünde güncel dış durumu doğrula (yerel ortamda RTK yoksa normal git/gh eşdeğeri kullanılabilir):
+
+```bash
+rtk proxy gh pr view 267 --repo HocamApp/hocam-frontend --json state,headRefOid,mergeCommit,statusCheckRollup
+rtk proxy gh pr checks 267 --repo HocamApp/hocam-frontend
+rtk git status --short --branch
+rtk git log -1 --format=%H
+```
 
 1. Bu kaydı, planı, sözleşmeyi ve repo kurallarını oku.
 2. GitHub'da S0 branch/PR commit ve merge durumunu doğrula; anlatılan durumu kodla uzlaştır.
