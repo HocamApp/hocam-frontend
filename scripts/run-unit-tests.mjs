@@ -10,7 +10,16 @@ function findUnitTests(directory) {
   });
 }
 
-const testFiles = findUnitTests("src").sort();
+/* Node treats every positional --test argument as a glob pattern, so a real
+   path through an App Router dynamic segment — src/app/.../[purchaseId]/... —
+   is read as a character class, matches nothing, and the file is skipped in
+   silence rather than reported as missing. Each magic character becomes a
+   one-character class that matches itself. */
+function escapeGlob(path) {
+  return path.replace(/[[\]*?{}]/g, (character) => `[${character}]`);
+}
+
+const testFiles = findUnitTests("src").sort().map(escapeGlob);
 if (testFiles.length === 0) {
   console.error("No unit tests found under src.");
   process.exit(1);
