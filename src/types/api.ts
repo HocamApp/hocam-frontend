@@ -592,6 +592,8 @@ export interface TutorProfile {
   trial_lessons_remaining?: number | null;
   subjects: Subject[];
   created_at: string;
+  /** Public profile modification time, when supplied by the public API. */
+  updated_at?: string;
   /** Only present on GET/PATCH /api/tutors/me/ — never the public list/detail response. */
   no_show_count?: number;
   /** Present only on GET/PATCH /api/tutors/me/. */

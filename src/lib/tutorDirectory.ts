@@ -1,6 +1,8 @@
 import type { TutorSavedSearch } from "@/types";
 import type { TutorFilters } from "@/lib/tutorsApi";
 
+export { tutorDirectoryQueryKey } from "@/lib/directorySeo";
+
 export function defaultTutorOrdering(filters: TutorFilters): "relevance" | "rating" {
   return filters.search || filters.subject || filters.topic ? "relevance" : "rating";
 }

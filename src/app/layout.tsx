@@ -21,6 +21,7 @@ import {
   SITE_DESCRIPTION,
   SITE_NAME,
   SITE_URL,
+  SOCIAL_IMAGE,
 } from "@/lib/seo";
 
 /**
@@ -55,20 +56,13 @@ export const metadata: Metadata = {
     siteName: SITE_NAME,
     title: "Hocam | YKS için Online Özel Ders",
     description: SITE_DESCRIPTION,
-    images: [
-      {
-        url: "/brand/hocam-logo.png",
-        width: 1024,
-        height: 1024,
-        alt: "Hocam",
-      },
-    ],
+    images: [SOCIAL_IMAGE],
   },
   twitter: {
-    card: "summary",
+    card: "summary_large_image",
     title: "Hocam | YKS için Online Özel Ders",
     description: SITE_DESCRIPTION,
-    images: ["/brand/hocam-logo.png"],
+    images: ["/twitter-image"],
   },
   icons: {
     icon: [{ url: "/brand/hocam-logo.png", type: "image/png" }],

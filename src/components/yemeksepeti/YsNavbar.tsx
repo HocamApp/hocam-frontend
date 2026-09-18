@@ -16,6 +16,7 @@ import { useCoachingFlag } from "@/hooks/useCoachingFlag";
 import { useIsMobile } from "@/hooks/useMediaQuery";
 import { useScheduleFlag } from "@/hooks/useScheduleFlag";
 import { useTutorAcceptanceConfig } from "@/hooks/useTutorAcceptanceConfig";
+import { directorySearchQuery } from "@/lib/tutorDirectoryLinks";
 
 import { YsNavIcons } from "./YsNavIcons";
 import {
@@ -218,10 +219,7 @@ export function YsNavbar({ startCoachmark = true }: Props) {
   const commitSearch = (value: string | undefined) => {
     // Cloned rather than rebuilt: a bare `/?search=x` would silently drop the
     // favourites view and every filter the directory reads from the URL.
-    const next = new URLSearchParams(searchParams.toString());
-    if (value) next.set("search", value);
-    else next.delete("search");
-    const query = next.toString();
+    const query = directorySearchQuery(searchParams.toString(), value);
     router.push(query ? `/?${query}` : "/");
   };
 
