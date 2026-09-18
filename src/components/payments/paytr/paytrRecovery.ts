@@ -50,7 +50,7 @@ function parseRecord(raw: unknown): PayTRRecoveryRecord | null {
   if (candidate.schemaVersion !== 1) return null;
   if (typeof candidate.purchaseId !== "string" || !candidate.purchaseId) return null;
   if (typeof candidate.tutorId !== "string" || !candidate.tutorId) return null;
-  if (typeof candidate.startedAt !== "number") return null;
+  if (typeof candidate.startedAt !== "number" || !Number.isFinite(candidate.startedAt) || candidate.startedAt < 0) return null;
   if (candidate.merchantOid != null && typeof candidate.merchantOid !== "string") {
     return null;
   }
@@ -125,8 +125,10 @@ export function readPayTRRecovery(
  */
 export function clearPayTRRecovery(
   storage: StorageLike | null,
-  userId: string | undefined | null
+  userId: string | undefined | null,
+  purchaseId?: string
 ): void {
   if (!userId) return;
+  if (purchaseId && readPayTRRecovery(storage, userId)?.purchaseId !== purchaseId) return;
   removeKey(storage, payTRRecoveryKey(userId));
 }

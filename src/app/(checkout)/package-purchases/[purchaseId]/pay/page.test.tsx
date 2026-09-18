@@ -363,6 +363,18 @@ describe("payment page — when the token request fails", () => {
 });
 
 describe("payment page — coming back to an attempt", () => {
+  it("does not restart fast polling for an old recovery after reload", async () => {
+    window.sessionStorage.setItem("hocam:paytr-attempt:v1:student-1", JSON.stringify({
+      schemaVersion: 1, purchaseId: "purchase-1", merchantOid: "HOCAM-OID-1",
+      tutorId: "tutor-1", startedAt: Date.now() - 60_000,
+    }));
+    renderPage();
+    await waitFor(() => screen.getByText("Ödeme sonucu doğrulanıyor"));
+    const reads = getCalls.filter((url) => !url.includes("acceptance-status")).length;
+    await new Promise((resolve) => setTimeout(resolve, 2200));
+    assert.equal(getCalls.filter((url) => !url.includes("acceptance-status")).length, reads);
+    assert.equal(postCalls.length, 0);
+  });
   it("verifies a remembered attempt instead of starting another", async () => {
     window.sessionStorage.setItem(
       "hocam:paytr-attempt:v1:student-1",

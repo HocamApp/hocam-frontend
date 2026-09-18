@@ -18,6 +18,7 @@ import { readPayTRIframeUrl } from "@/components/payments/paytr/paytrIframeUrl";
 import {
   PAYTR_FAST_POLL_WINDOW_MS,
   payTRPollIntervalMs,
+  payTRRecoveryStartedAt,
 } from "@/components/payments/paytr/paytrPolling";
 import {
   attachMerchantOid,
@@ -102,8 +103,11 @@ export default function PayTRPaymentPage({
   // what happened to it.
   useEffect(() => {
     if (!userId) return;
-    setKnownAttempt(readPayTRRecovery(getSessionStorage(), userId));
-  }, [userId]);
+    const record = readPayTRRecovery(getSessionStorage(), userId);
+    const recovered = record ? { ...record, startedAt: payTRRecoveryStartedAt(record.startedAt, Date.now()) } : null;
+    setKnownAttempt(recovered);
+    setAttemptStartedAt(recovered?.purchaseId === purchaseId ? recovered.startedAt : null);
+  }, [userId, purchaseId]);
 
   const attemptActive =
     attemptPhase !== "idle" ||
@@ -114,10 +118,11 @@ export default function PayTRPaymentPage({
     queryKey: ["package-purchases"],
     queryFn: fetchPackagePurchases,
     enabled: isAuthenticated && isStudent,
-    refetchInterval: () =>
+    refetchInterval: (query) =>
       payTRPollIntervalMs({
         attemptActive,
-        elapsedMs: attemptStartedAt ? Date.now() - attemptStartedAt : 0,
+        elapsedMs: attemptStartedAt !== null ? Date.now() - attemptStartedAt : 0,
+        purchaseStatus: query.state.data?.find((item) => item.id === purchaseId)?.status,
       }),
   });
 
@@ -198,7 +203,7 @@ export default function PayTRPaymentPage({
       }
 
       // The server answered, so no attempt is waiting on this submit.
-      clearPayTRRecovery(getSessionStorage(), userId);
+      clearPayTRRecovery(getSessionStorage(), userId, purchaseId);
       setKnownAttempt(null);
       setAttemptStartedAt(null);
       setFieldErrors(described.fieldErrors);
@@ -245,7 +250,7 @@ export default function PayTRPaymentPage({
   // The fast-poll window ending is a UI change, not a verdict: the frame stays
   // and the student is offered a manual re-check.
   useEffect(() => {
-    if (!attemptStartedAt) return;
+    if (attemptStartedAt === null) return;
     const remaining = PAYTR_FAST_POLL_WINDOW_MS - (Date.now() - attemptStartedAt);
     if (remaining <= 0) {
       setFastPollWindowOver(true);
@@ -258,14 +263,14 @@ export default function PayTRPaymentPage({
   // A settled purchase ends the attempt: drop the breadcrumb and let the rest
   // of the app see the new credits.
   useEffect(() => {
-    if (state.name !== "payment_paid") return;
-    clearPayTRRecovery(getSessionStorage(), userId);
+    if (!["payment_paid", "purchase_cancelled", "purchase_refunded"].includes(state.name)) return;
+    clearPayTRRecovery(getSessionStorage(), userId, purchaseId);
     setKnownAttempt(null);
     setIframeUrl(null);
     setAttemptPhase("idle");
     setAttemptStartedAt(null);
     queryClient.invalidateQueries({ queryKey: ["payment-history"] });
-  }, [state.name, queryClient, userId]);
+  }, [state.name, queryClient, userId, purchaseId]);
 
   const recheck = useCallback(() => {
     if (revalidation === "checking") return;

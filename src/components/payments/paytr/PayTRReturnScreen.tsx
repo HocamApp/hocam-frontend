@@ -15,7 +15,7 @@ import { PayTRProcessingState } from "./PayTRProcessingState";
 import { PayTRPurchaseSummary } from "./PayTRPurchaseSummary";
 import { PayTRResultState, PAYTR_PACKAGES_HREF } from "./PayTRResultState";
 import { paytrCheckoutState } from "./paytrCheckoutState";
-import { payTRPollIntervalMs } from "./paytrPolling";
+import { payTRPollIntervalMs, payTRRecoveryStartedAt } from "./paytrPolling";
 import {
   clearPayTRRecovery,
   readPayTRRecovery,
@@ -66,17 +66,19 @@ export function PayTRReturnScreen() {
     const userId = user?.id;
     if (!userId || readFor.current === userId) return;
     readFor.current = userId;
-    setRecovery(readPayTRRecovery(getSessionStorage(), userId));
+    const record = readPayTRRecovery(getSessionStorage(), userId);
+    setRecovery(record ? { ...record, startedAt: payTRRecoveryStartedAt(record.startedAt, Date.now()) } : null);
   }, [authLoading, isAuthenticated, pathname, router, user?.id]);
 
   const purchasesQuery = useQuery({
     queryKey: ["package-purchases"],
     queryFn: fetchPackagePurchases,
     enabled: isAuthenticated && Boolean(recovery),
-    refetchInterval: () =>
+    refetchInterval: (query) =>
       payTRPollIntervalMs({
         attemptActive: Boolean(recovery),
         elapsedMs: recovery ? Date.now() - recovery.startedAt : 0,
+        purchaseStatus: query.state.data?.find((item) => item.id === recovery?.purchaseId)?.status,
       }),
   });
 
@@ -108,9 +110,9 @@ export function PayTRReturnScreen() {
     if (!settled) return;
     // A final server answer is the one thing that ends the attempt. Walking to
     // Paketlerim does not, and neither does closing the tab.
-    clearPayTRRecovery(getSessionStorage(), user?.id);
+    if (recovery) clearPayTRRecovery(getSessionStorage(), user?.id, recovery.purchaseId);
     queryClient.invalidateQueries({ queryKey: ["payment-history"] });
-  }, [settled, queryClient, user?.id]);
+  }, [settled, queryClient, user?.id, recovery]);
 
   const recheck = useCallback(() => {
     void purchasesQuery.refetch();

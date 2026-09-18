@@ -5,9 +5,25 @@ import {
   PAYTR_FAST_POLL_WINDOW_MS,
   PAYTR_POLL_INTERVAL_MS,
   payTRPollIntervalMs,
+  payTRRecoveryStartedAt,
 } from "./paytrPolling";
 
 describe("payTRPollIntervalMs", () => {
+  it("retains elapsed recovery time and clamps a future clock once", () => {
+    const openedAt = 100_000;
+    const old = payTRRecoveryStartedAt(55_000, openedAt);
+    assert.equal(payTRPollIntervalMs({ attemptActive: true, elapsedMs: openedAt - old }), false);
+    const future = payTRRecoveryStartedAt(200_000, openedAt);
+    assert.equal(future, openedAt);
+    assert.equal(payTRPollIntervalMs({ attemptActive: true, elapsedMs: 144_999 - future }), 2000);
+    assert.equal(payTRPollIntervalMs({ attemptActive: true, elapsedMs: 145_000 - future }), false);
+  });
+
+  it("stops immediately on every terminal server status", () => {
+    for (const purchaseStatus of ["paid", "cancelled", "refunded"]) {
+      assert.equal(payTRPollIntervalMs({ attemptActive: true, elapsedMs: 1, purchaseStatus }), false);
+    }
+  });
   it("asks the server every two seconds while an attempt is open", () => {
     assert.equal(PAYTR_POLL_INTERVAL_MS, 2000);
     assert.equal(

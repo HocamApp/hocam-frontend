@@ -137,6 +137,21 @@ describe("readPayTRRecovery", () => {
 });
 
 describe("clearPayTRRecovery", () => {
+  it("rejects invalid recovery timestamps", () => {
+    const storage = createMemoryStorage();
+    for (const startedAt of [-1, null, "123", 1e400]) {
+      storage.setItem(payTRRecoveryKey(STUDENT), JSON.stringify({ schemaVersion: 1, ...ATTEMPT, merchantOid: null, startedAt }));
+      assert.equal(readPayTRRecovery(storage, STUDENT), null);
+    }
+  });
+  it("cannot clear a different purchase's recovery", () => {
+    const storage = createMemoryStorage();
+    beginPayTRRecovery(storage, STUDENT, ATTEMPT);
+    clearPayTRRecovery(storage, STUDENT, "different-purchase");
+    assert.ok(readPayTRRecovery(storage, STUDENT));
+    clearPayTRRecovery(storage, STUDENT, ATTEMPT.purchaseId);
+    assert.equal(readPayTRRecovery(storage, STUDENT), null);
+  });
   it("removes the record once a final result is known", () => {
     const storage = createMemoryStorage();
     beginPayTRRecovery(storage, STUDENT, ATTEMPT);
