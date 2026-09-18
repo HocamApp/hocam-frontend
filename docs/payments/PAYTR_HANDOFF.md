@@ -1,8 +1,8 @@
 # PayTR Frontend — İlerleme ve Devir Kaydı
 
 **Güncelleme:** 18 Eylül 2026\
-**Yetkili kapsam:** S0, S0-V ve S1 merge edildi; kullanıcı S2'yi istedi ve S2 uygulandı. S3 başlatılmadı.\
-**Araç/model:** S0 ve S0-V: Codex / GPT-6 Astra. S1 ve S2: Claude Code / Claude Opus 5. Model önerileri plan içindedir; bu kayıt düşünme seviyesi tahmini yapmaz.
+**Yetkili kapsam:** S0–S2 merge edildi; kullanıcı S3'ü istedi ve S3 uygulandı. S4 başlatılmadı.\
+**Araç/model:** S0 ve S0-V: Codex / GPT-6 Astra. S1–S3: Claude Code / Claude Opus 5. Model önerileri plan içindedir; bu kayıt düşünme seviyesi tahmini yapmaz.
 
 ## S0 teslimat durumu
 
@@ -28,6 +28,72 @@ S0-V yerel doğrulama: `npm ci` başarılı, lockfile değişmedi; `npm run lint
 Kesintide önce bu branch'in PR/head/check durumunu kontrol et; mevcut PR varsa yenisini açma. PR yeşil olunca repo kuralıyla merge commit + remote branch silme, ardından main CI ve Vercel durumunu doğrulama kalır. Bu belge tamamlanmamış CI/merge/deploy'u başarılı ilan etmez.
 
 S1 devri: güncel origin/main'den `agent/paytr-01-api-20260917`; normal mod, plan önerisi Astra Medium / Sonnet High. Planın S1 kabul ölçütlerini uygula. Payment-state endpoint'ini var sayma, flag varsayılan kapalı, otomatik POST/retry yok. B01–B06 açık; S0-V backend referansını veya sözleşmesini değiştirmedi.
+
+## S3 teslimat ve devir
+
+| Alan | Değer |
+| --- | --- |
+| Repo | HocamApp/hocam-frontend |
+| Worktree | `/Users/ardagg/Desktop/Hocam/.worktrees/frontend/paytr-03-form-20260917` |
+| Branch | `agent/paytr-03-form-20260917` |
+| Başlangıç main SHA | `5cff2061cc8f7fa2a7a87e70a79d44a03eb696e3` (PR #270 merge) |
+| Kapsam | Müşteri formu, paket özeti, hukuki bağlantılar, durum/sonuç görünümleri, onaylı metin haritası |
+| Mod / araç | Normal uygulama modu; Claude Code / Claude Opus 5; TDD |
+| PR / merge SHA | PR kaydından doğrula |
+| Sonraki bölüm | S4 — ödeme route'u, iframe, polling; kullanıcı istediğinde |
+
+Yeni dosyalar (`src/components/payments/paytr/`): `paytrCustomerSchema.ts`, `paytrPurchaseFacts.ts`,
+`paytrStateCopy.ts`, `PayTRCustomerForm.tsx`, `PayTRPurchaseSummary.tsx`, `PayTRLegalNotice.tsx`,
+`PayTRProcessingState.tsx`, `PayTRResultState.tsx` ve beş test dosyası. Değişen: `package.json`
+(`test:paytr` kapsamı + alias loader), bu kayıt.
+
+**Form.** React Hook Form + zod, repo idiomuyla (`mode: "onSubmit"` + `safeParse` + `setError`;
+`zodResolver` bağımlılığı eklenmedi). Ad trim 2–60, adres trim 5–400, telefon zorunlu.
+`normalizePayTRPhone` boşluk (NBSP dahil), parantez, tire, nokta ve eğik çizgiyi siliyor; tek baştaki
+`+` korunuyor, ülke kodu uydurulmuyor, uzun numara sessizce kesilmiyor — reddediliyor. Kabul: `0555 111
+22 33`, `(0555) 111-22-33`, `+90 555 111 22 33`, `5551112233`. Alan sırası ad → telefon → adres; ilk
+submit'te hepsi doğrulanıyor, ilk hatalı alana focus veriliyor, hata `aria-invalid` +
+`aria-describedby` ile bağlanıyor ve tek bir polite özet duyuruluyor (alan başına assertive tekrar yok).
+Senkron `inFlight` ref'i sayesinde üç hızlı tıklama tek token isteği yapıyor; `isSubmitting` sırasında
+alanlar salt okunur ve CTA "Ödeme ekranı hazırlanıyor…" oluyor. Form yalnız üç alan içeriyor; kart/CVV
+alanı yok, sözleşme onay checkbox'ı yok (backend sürüm/zaman damgası saklamıyor).
+
+**Özet.** `readPayTRPurchaseFacts` tutarları satın almadan okuyor, DRF'in string decimal'ini de kabul
+ediyor; herhangi bir tutar eksik/negatif/NaN ise özetin tamamı reddediliyor ("Paket tutarı
+görüntülenemiyor.") — uydurma `0 ₺` gösterilmiyor. Toplam yeniden hesaplanmıyor: sunucunun
+`total_price`'ı satırlarla çelişse bile ekranda o görünüyor (testte sabitlendi). Sıfır indirim satırları
+gizleniyor. Toplam ve hoca/paket her zaman açık; ayrıntı dökümü mobilde `aria-expanded`/`aria-controls`
+ile katlanıyor, 1024 px üstünde açık. Satın almada doğrulanmış program alanı olmadığı için ders programı
+iddia edilmiyor; müşterinin adresi/telefonu özete yazılmıyor.
+
+**Metin haritası.** `payTRStateCopy(state)` S2'deki her durum adı için başlık, açıklama, ton ve eylem
+türü veriyor. `success` tonu yalnız `payment_paid`'de; çözülmemiş durumlar "çekilmedi"/"tekrar öde"
+demiyor, "durumu kontrol et" diyor; `acceptance_rejected` alt durumu (`rejected` / `expired` /
+`withdrawn` / `cancelled`) kendi başlığını alıyor; `payment_unavailable` bayrak ile koçluk gerekçesini
+ayırıyor. `PayTRResultState` eylemleri buradan seçiyor: `manual_review`'da retry yok, `attempt_failed`'de
+tek retry, çözülmemişte yalnız GET yapan "Durumu kontrol et". Callback handler verilmediyse o eylem hiç
+render edilmiyor.
+
+**Not (case-insensitive dosya sistemi).** Pure modül önce `paytrCustomerForm.ts` adıyla yazıldı ve macOS'ta
+`PayTRCustomerForm.tsx` ile çakışıp bileşenin kendisini import etmesine yol açtı (modül boş export
+verdi). Dosya `paytrCustomerSchema.ts` olarak adlandırıldı; bu klasörde bileşen ve yardımcı modül adları
+büyük/küçük harf dışında da farklı tutulmalı.
+
+S3 yerel doğrulama (worktree `5cff206` bazlı):
+
+| Komut | Sonuç |
+| --- | --- |
+| `npm run test:paytr` (uygulamadan önce) | Yeni beş dosya kırmızı (modül yok) |
+| `npm run test:paytr` | 96 test, 96 geçti |
+| `npm run test:unit` | 1366 test, 1365 geçti, 0 başarısız, 1 atlandı (mevcut) |
+| `npm run lint` | Exit 0; mevcut tutor profili `@next/next/no-img-element` uyarısı |
+| `npm run typecheck` | Exit 0 |
+| `npm run build` | Başarılı |
+| Gerçek PayTR test işlemi / tarayıcı görsel kabulü | Yapılmadı; S4 ve S8 kapıları |
+
+Bileşenler hiçbir route'a bağlı değil: `/package-purchases/[purchaseId]/pay` S4'te açılacak. Ödeme
+başlatılmadı, API çağrısı yapılmadı, backend dosyası değişmedi. Görsel kabul (dört viewport screenshot,
+3DS, mobil klavye) ekranlar route'a bağlandıktan sonra S4/S8'e ait.
 
 ## S2 teslimat ve devir
 
@@ -229,8 +295,9 @@ Node checkout test komutu experimental/deprecation uyarıları verdi; testler ge
 - Includes-coaching ödeme, toplam/aktivasyon kanıtı gelene kadar kapalı tasarlanır.
 - Frontend çift tıklama koruması server concurrency/idempotency yerine geçmez.
 - Görsel referans araştırması ve S0-V ekran sözleşmesi hazır; çalışan ekranların görsel/3DS doğrulaması henüz yapılmadı.
-- S1–S2 sonrası: frontend'de API katmanı, kapalı bayrak, saf durum eşleyicisi ve kurtarma kaydı var;
-  UI/route/iframe yok, hiçbir ödeme başlatılmadı, backend dosyası değiştirilmedi.
+- S1–S3 sonrası: frontend'de API katmanı, kapalı bayrak, saf durum eşleyicisi, kurtarma kaydı ve ödeme
+  bileşenleri var; route/iframe yok, hiçbir ödeme başlatılmadı, backend dosyası değiştirilmedi.
+- S3 bileşenlerinin tarayıcıdaki görsel/erişilebilirlik kabulü yapılmadı; test kanıtı jsdom düzeyindedir.
 - Kurtarma kaydı sekme kapanınca kaybolur (sessionStorage). Sahiplik her zaman backend'den doğrulanır;
   kayıt tek başına sonuç veya yetki kanıtı değildir.
 - `NEXT_PUBLIC_PAYTR_ENABLED` build-time inline edilir; herhangi bir ortamda değiştirmek
@@ -251,10 +318,11 @@ rtk git log -1 --format=%H
 1. Bu kaydı, planı, sözleşmeyi ve repo kurallarını oku.
 2. GitHub'da S0 branch/PR commit ve merge durumunu doğrula; anlatılan durumu kodla uzlaştır.
 3. S0 tamamlanmadan kesinti olduysa aynı branch/PR ve worktree'den devam et.
-4. S0-V, S1 ve S2 için yukarıdaki branch/PR kayıtlarını doğrula; yarım kalan bölümde aynı branch'ten devam et.
-5. S2 merged ve kullanıcı S3 istiyorsa güncel origin/main'den `agent/paytr-03-form-20260917` aç;
-   API katmanını, durum eşleyicisini ve görsel sözleşmeyi baştan üretme, payment-state endpoint'ini
-   var sayma. S3 bileşenleri `paytrCheckoutState` sonucunu render eder, koşulları yeniden türetmez.
+4. S0-V ve S1–S3 için yukarıdaki branch/PR kayıtlarını doğrula; yarım kalan bölümde aynı branch'ten devam et.
+5. S3 merged ve kullanıcı S4 istiyorsa güncel origin/main'den `agent/paytr-04-checkout-20260917` aç;
+   API katmanını, durum eşleyicisini, bileşenleri ve metin haritasını baştan üretme,
+   payment-state endpoint'ini var sayma. S4 route'u `paytrCheckoutState` sonucunu render eder,
+   iframe URL'sini kendisi doğrular ve token POST'unu yalnız kullanıcı gönderimiyle yapar.
 6. Token sınırından önce tamamlanan iş, kalan ilk adım, testler ve commit edilmemiş dosyaları güncelle.
 
 Yeni bölüm devri için planın sonundaki şablon kullanılır. Nihai self-referential commit/merge SHA bu dosyaya uydurulmaz; PR ve Git kaydından okunur.
