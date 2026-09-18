@@ -36,6 +36,23 @@ describe("browser storage inventory", () => {
     assert.equal(discovery?.required, false);
   });
 
+  it("declares the PayTR attempt breadcrumb and the hosted payment form", () => {
+    const recovery = BROWSER_STORAGE_INVENTORY.find((entry) =>
+      entry.name.includes("hocam:paytr-attempt")
+    );
+    const embed = BROWSER_STORAGE_INVENTORY.find((entry) =>
+      entry.provider.includes("PayTR")
+    );
+
+    assert.equal(recovery?.kind, "Oturum depolaması");
+    assert.equal(recovery?.category, "Zorunlu");
+    // The record is a pointer to a purchase, so the public description must not
+    // suggest the browser keeps card, contact or token data.
+    assert.doesNotMatch(recovery?.purpose ?? "", /kart|adres|telefon|token/i);
+    assert.equal(embed?.kind, "Üçüncü taraf hizmet");
+    assert.equal(embed?.category, "Zorunlu");
+  });
+
   it("covers cookies, local storage, session storage, and embedded providers", () => {
     const kinds = new Set(BROWSER_STORAGE_INVENTORY.map((entry) => entry.kind));
 

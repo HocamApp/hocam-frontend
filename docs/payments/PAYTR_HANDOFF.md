@@ -1,8 +1,8 @@
 # PayTR Frontend — İlerleme ve Devir Kaydı
 
 **Güncelleme:** 18 Eylül 2026\
-**Yetkili kapsam:** S0 ve S0-V merge edildi; kullanıcı S1'i istedi ve S1 uygulandı. S2 başlatılmadı.\
-**Araç/model:** S0 ve S0-V: Codex / GPT-6 Astra. S1: Claude Code / Claude Opus 5. Model önerileri plan içindedir; bu kayıt düşünme seviyesi tahmini yapmaz.
+**Yetkili kapsam:** S0, S0-V ve S1 merge edildi; kullanıcı S2'yi istedi ve S2 uygulandı. S3 başlatılmadı.\
+**Araç/model:** S0 ve S0-V: Codex / GPT-6 Astra. S1 ve S2: Claude Code / Claude Opus 5. Model önerileri plan içindedir; bu kayıt düşünme seviyesi tahmini yapmaz.
 
 ## S0 teslimat durumu
 
@@ -28,6 +28,83 @@ S0-V yerel doğrulama: `npm ci` başarılı, lockfile değişmedi; `npm run lint
 Kesintide önce bu branch'in PR/head/check durumunu kontrol et; mevcut PR varsa yenisini açma. PR yeşil olunca repo kuralıyla merge commit + remote branch silme, ardından main CI ve Vercel durumunu doğrulama kalır. Bu belge tamamlanmamış CI/merge/deploy'u başarılı ilan etmez.
 
 S1 devri: güncel origin/main'den `agent/paytr-01-api-20260917`; normal mod, plan önerisi Astra Medium / Sonnet High. Planın S1 kabul ölçütlerini uygula. Payment-state endpoint'ini var sayma, flag varsayılan kapalı, otomatik POST/retry yok. B01–B06 açık; S0-V backend referansını veya sözleşmesini değiştirmedi.
+
+## S2 teslimat ve devir
+
+| Alan | Değer |
+| --- | --- |
+| Repo | HocamApp/hocam-frontend |
+| Worktree | `/Users/ardagg/Desktop/Hocam/.worktrees/frontend/paytr-02-state-20260917` |
+| Branch | `agent/paytr-02-state-20260917` |
+| Başlangıç main SHA | `5c480fc22d5486d05c5ad9b116c62db4f55a2600` (PR #269 merge) |
+| Kapsam | Saf durum eşleyicisi, kurtarma kaydı, storage envanteri, testler |
+| Mod / araç | Normal uygulama modu; Claude Code / Claude Opus 5; TDD (önce kırmızı test) |
+| PR / merge SHA | PR kaydından doğrula |
+| Sonraki bölüm | S3 — form, paket özeti, hukuki bağlantılar; kullanıcı istediğinde |
+
+Yeni dosyalar: `src/components/payments/paytr/paytrCheckoutState.ts`,
+`src/components/payments/paytr/paytrRecovery.ts` ve ikisinin testleri. Değişenler:
+`src/lib/browserStorageInventory.ts` (+ testi), `package.json` (`test:paytr` kapsamı), bu kayıt.
+
+**Durum eşleyicisi.** `paytrCheckoutState(input)` tek saf fonksiyon; bileşenler sonucu render eder,
+uygunluğu yeniden türetmez. Öncelik sırası:
+
+1. `purchase === undefined` → `loading`; `null` → sorgu hatasıysa `query_error`, değilse `purchase_unavailable`.
+2. Backend satın alma durumu: `paid` → `payment_paid`, `cancelled` / `refunded` → kendi terminal durumları.
+   Bu adım her yerel sinyalin önündedir; başarısız dönüş URL'i, kayıp yanıt ve yerel kayıt `paid` sonucunu
+   geçersiz kılamaz.
+3. Doğrulanmış `manual_review` → `manual_review`.
+4. Aktif iframe (`iframe` + doğrulanmış URL) → `iframe_open`; `starting` → `starting_payment`.
+5. Doğrulanmış attempt verisi: `failed` → `attempt_failed` (yalnız burada `canRetryPayment`),
+   `created` / `token_issued` / `succeeded` (satın alma hâlâ pending) → `callback_pending`.
+6. Bu sekmenin bildiği girişim (`verifying` fazı, `unknown` başlatma hatası veya aynı satın almaya ait
+   kurtarma kaydı) → `callback_pending`. Form yeniden açılmaz.
+7. `paytrEnabled === false` → `payment_unavailable` (`flag_off`). Bu adım 6'dan sonradır: bayrak kapansa
+   da başlamış girişimin kurtarma yolu erişilebilir kalır.
+8. Acceptance `undefined` → `loading`; okunamadıysa veya yoksa → `query_error` (ödeme açılmaz).
+9. `includes_coaching === true` → `payment_unavailable` (`coaching_unverified`, B03).
+10. Onay gerekmiyorsa veya `accepted` ise → `payment_ready` (`canStartPayment` yalnız burada true);
+    `pending` → `acceptance_pending`; `rejected` / `expired` / `withdrawn` / `cancelled` →
+    `acceptance_rejected` + `acceptanceStatus` (ekran doğru başlığı seçsin diye).
+
+Koçluk çıkarımı backend'e dayanıyor: `purchase_requires_tutor_acceptance(has_coaching=...)` koçluklu her
+satın almada acceptance kaydı yaratıyor ve `CoachingPurchase.acceptance` zorunlu FK. Dolayısıyla "acceptance
+kaydı yok" kanıtlanmış lesson-only demek; bilgi eksikliği lesson-only sayılmıyor. `requires_tutor_acceptance`
+true iken kayıt yoksa (B06 çelişkisi) ödeme açılmıyor, `query_error` ile yeniden okuma isteniyor.
+
+`attempt_failed` ve `manual_review` yalnız `verifiedAttempt` girdisiyle üretilebiliyor; o girdi de S7'nin
+payment-state endpoint'inden gelecek. Pending satın alma, kayıp yanıt veya yerel sayaç bu durumları
+türetemiyor — testte de böyle sabitlendi.
+
+**Kurtarma kaydı.** `hocam:paytr-attempt:v1:{kullanıcı}`, sessionStorage, `@/lib/safeStorage` üzerinden.
+Kayıt POST'tan önce açılıyor (`beginPayTRRecovery`), `merchantOid` yanıt gelene kadar `null`, sonra
+`attachMerchantOid` yalnız aynı `purchaseId` için dolduruyor. Alanlar: `schemaVersion`, `purchaseId`,
+`merchantOid`, `tutorId`, `startedAt` — test, fazladan alan geçirilse bile JSON anahtarlarının tam olarak
+bunlar olduğunu ve ad/telefon/iframe URL'inin yazılmadığını doğruluyor. Anahtar hesaba göre ayrıldığı için
+aynı sekmedeki ikinci hesap öncekinin kaydını okuyamıyor; bozuk/şema dışı kayıt okunurken siliniyor;
+`getItem`/`setItem` fırlatan depolama çökme yaratmıyor. Eski `startedAt` başarısızlık kanıtı değil, kayıt
+yalnız terminal sunucu sonucunda veya açık kapatma eyleminde siliniyor. React Query verisi kalıcı
+depolamaya taşınmıyor.
+
+Envanter: kurtarma anahtarı ve "PayTR güvenli ödeme formu" gömülü hizmeti
+`BROWSER_STORAGE_INVENTORY`'ye eklendi; kamuya açık çerez/depolama sayfası bu listeden üretiliyor.
+
+S2 yerel doğrulama (worktree `5c480fc` bazlı):
+
+| Komut | Sonuç |
+| --- | --- |
+| `npm run test:paytr` (uygulamadan önce) | İki yeni test dosyası modül bulunamadı hatasıyla kırmızı |
+| `npm run test:paytr` | 48 test, 48 geçti |
+| `npm run test:privacy-cookies` | 13 geçti (yeni envanter testi dahil) |
+| `npm run test:checkout` | 8 geçti |
+| `npm run test:unit` | 1318 test, 1317 geçti, 0 başarısız, 1 atlandı (mevcut) |
+| `npm run lint` | Exit 0; mevcut tutor profili `@next/next/no-img-element` uyarısı |
+| `npm run typecheck` | Exit 0 |
+| `npm run build` | Başarılı |
+| Gerçek PayTR test işlemi | Yapılmadı; S8 kabul kapısı |
+
+Bu bölüm de saf mantık: hiçbir route, bileşen veya sayfa bu fonksiyonları henüz çağırmıyor, ödeme
+başlatılmadı, backend dosyası değiştirilmedi.
 
 ## S1 teslimat ve devir
 
@@ -152,8 +229,10 @@ Node checkout test komutu experimental/deprecation uyarıları verdi; testler ge
 - Includes-coaching ödeme, toplam/aktivasyon kanıtı gelene kadar kapalı tasarlanır.
 - Frontend çift tıklama koruması server concurrency/idempotency yerine geçmez.
 - Görsel referans araştırması ve S0-V ekran sözleşmesi hazır; çalışan ekranların görsel/3DS doğrulaması henüz yapılmadı.
-- S1 sonrası: frontend API katmanı ve kapalı bayrak var; UI/route/iframe yok, hiçbir ödeme
-  başlatılmadı, backend dosyası değiştirilmedi.
+- S1–S2 sonrası: frontend'de API katmanı, kapalı bayrak, saf durum eşleyicisi ve kurtarma kaydı var;
+  UI/route/iframe yok, hiçbir ödeme başlatılmadı, backend dosyası değiştirilmedi.
+- Kurtarma kaydı sekme kapanınca kaybolur (sessionStorage). Sahiplik her zaman backend'den doğrulanır;
+  kayıt tek başına sonuç veya yetki kanıtı değildir.
 - `NEXT_PUBLIC_PAYTR_ENABLED` build-time inline edilir; herhangi bir ortamda değiştirmek
   yeniden build/deploy gerektirir. Bayrağın açılması canlı aktivasyon kararı değildir.
 - Backend sahibine mesaj, e-posta veya issue gönderilmedi; devir talepleri CONTRACT içindedir.
@@ -172,9 +251,10 @@ rtk git log -1 --format=%H
 1. Bu kaydı, planı, sözleşmeyi ve repo kurallarını oku.
 2. GitHub'da S0 branch/PR commit ve merge durumunu doğrula; anlatılan durumu kodla uzlaştır.
 3. S0 tamamlanmadan kesinti olduysa aynı branch/PR ve worktree'den devam et.
-4. S0-V ve S1 için yukarıdaki branch/PR kayıtlarını doğrula; yarım kalan bölümde aynı branch'ten devam et.
-5. S1 merged ve kullanıcı S2 istiyorsa güncel origin/main'den `agent/paytr-02-state-20260917` aç;
-   API katmanını ve görsel sözleşmeyi baştan üretme, payment-state endpoint'ini var sayma.
+4. S0-V, S1 ve S2 için yukarıdaki branch/PR kayıtlarını doğrula; yarım kalan bölümde aynı branch'ten devam et.
+5. S2 merged ve kullanıcı S3 istiyorsa güncel origin/main'den `agent/paytr-03-form-20260917` aç;
+   API katmanını, durum eşleyicisini ve görsel sözleşmeyi baştan üretme, payment-state endpoint'ini
+   var sayma. S3 bileşenleri `paytrCheckoutState` sonucunu render eder, koşulları yeniden türetmez.
 6. Token sınırından önce tamamlanan iş, kalan ilk adım, testler ve commit edilmemiş dosyaları güncelle.
 
 Yeni bölüm devri için planın sonundaki şablon kullanılır. Nihai self-referential commit/merge SHA bu dosyaya uydurulmaz; PR ve Git kaydından okunur.
