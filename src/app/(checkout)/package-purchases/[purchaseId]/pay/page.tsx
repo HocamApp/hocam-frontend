@@ -265,13 +265,20 @@ export default function PayTRPaymentPage({
           Paketini kontrol et, ardından ödeme bilgilerini gir.
         </p>
 
+        {/* The summary comes first in the DOM: on a phone the student should
+            see what they are paying for before the form, and a screen reader
+            gets the same order. On a wide screen the grid places it in the
+            second column without moving it in the document. */}
         <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_22.5rem]">
-          <div className="min-w-0">
+          {showSummary && (
+            <PayTRPurchaseSummary
+              purchase={purchase}
+              className="lg:sticky lg:top-6 lg:col-start-2 lg:row-start-1"
+            />
+          )}
+          <div className="min-w-0 lg:col-start-1 lg:row-start-1">
             {renderMain()}
           </div>
-          {showSummary && (
-            <PayTRPurchaseSummary purchase={purchase} className="lg:sticky lg:top-6" />
-          )}
         </div>
       </main>
     </div>
