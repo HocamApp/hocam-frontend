@@ -101,9 +101,9 @@ before(async () => {
       get: async (url: string) => {
         getCalls.push(url);
         if (url.includes("acceptance-status")) {
-          return { data: acceptanceResponse() };
+          return { data: await acceptanceResponse() };
         }
-        return { data: purchasesResponse() };
+        return { data: await purchasesResponse() };
       },
       post: async (url: string, body: unknown) => {
         postCalls.push({ url, body });
@@ -277,6 +277,8 @@ describe("payment page — when the token request fails", () => {
   });
 
   it("re-reads the server state on a 409 instead of arguing with it", async () => {
+    let finish!: (value: unknown) => void;
+    const delayed = new Promise((resolve) => { finish = resolve; });
     postResult = () => ({
       reject: {
         response: {
@@ -286,6 +288,8 @@ describe("payment page — when the token request fails", () => {
       },
     });
     renderPage();
+    await waitFor(() => screen.getByLabelText("Ad soyad"));
+    acceptanceResponse = () => delayed;
     await fillAndSubmit();
 
     await waitFor(() => assert.equal(postCalls.length, 1));
@@ -299,7 +303,10 @@ describe("payment page — when the token request fails", () => {
       );
     });
     assert.ok(screen.getByText("Paketin güncel durumu kontrol ediliyor."));
+    assert.equal(screen.queryByLabelText("Ad soyad"), null);
     assert.equal(postCalls.length, 1);
+    finish({ requires_tutor_acceptance: false, acceptance: null });
+    await waitFor(() => screen.getByLabelText("Ad soyad"));
   });
 
   it("offers a service outage a manual retry, not an automatic one", async () => {
@@ -314,7 +321,34 @@ describe("payment page — when the token request fails", () => {
     );
     assert.equal(postCalls.length, 1);
     assert.doesNotMatch(document.body.textContent ?? "", /SALT/);
-    assert.ok(screen.getByRole("button", { name: "Güvenli ödemeye geç" }));
+    assert.equal(screen.queryByRole("button", { name: "Güvenli ödemeye geç" }), null);
+    fireEvent.click(screen.getByRole("button", { name: "Durumu kontrol et" }));
+    await waitFor(() => screen.getByLabelText("Ad soyad"));
+    assert.equal(postCalls.length, 1);
+  });
+
+  it("keeps a failed conflict refresh locked until a successful GET", async () => {
+    postResult = () => {
+      purchasesResponse = () => { throw new Error("offline"); };
+      return { reject: { response: { status: 409 } } };
+    };
+    renderPage();
+    await fillAndSubmit();
+    await waitFor(() => screen.getByRole("button", { name: "Durumu kontrol et" }));
+    assert.equal(screen.queryByLabelText("Ad soyad"), null);
+    purchasesResponse = () => [purchase()];
+    fireEvent.click(screen.getByRole("button", { name: "Durumu kontrol et" }));
+    await waitFor(() => screen.getByLabelText("Ad soyad"));
+    assert.equal(postCalls.length, 1);
+  });
+
+  it("removes the form after a token 404 despite cached purchase data", async () => {
+    postResult = () => ({ reject: { response: { status: 404 } } });
+    renderPage();
+    await fillAndSubmit();
+    await waitFor(() => screen.getByText("Paket görüntülenemiyor"));
+    assert.equal(screen.queryByLabelText("Ad soyad"), null);
+    assert.equal(postCalls.length, 1);
   });
 
   it("treats a lost response as unresolved and stops offering to pay", async () => {

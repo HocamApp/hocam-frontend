@@ -1,5 +1,15 @@
 # PayTR Frontend — İlerleme ve Devir Kaydı
 
+## 19 Eylül — K1 düzeltmesi
+
+Branch: `agent/paytr-k1-payment-guards-20260919`, baz `3aad448`. Codex, normal mod.
+Cached pending + sorgu hatası artık yeni ödeme açmaz; açık iframe korunur.
+409 yeniden doğrulama bitene kadar, 503 manuel GET doğrulamasına kadar kilitlidir;
+404 formu kaldırır. Submit handler ayrıca uygunluk ve doğrulama kilidini kontrol eder.
+Yerel PayTR regresyonları: 163/163; lint ve typecheck başarılı. Build/CI/merge
+kapanışı ilgili branch PR kaydından doğrulanır. Production bayrağı değiştirilmez.
+Sonraki bölüm K2: recovery başlangıç zamanı ve terminal polling temizliği.
+
 **Güncelleme:** 18 Eylül 2026\
 **Yetkili kapsam:** S0–S6 ve S8 merge edildi; kullanıcı S9'u istedi ve S9'un belge/operasyon teslimatı yapıldı. S7 ve gerçek aktivasyon backend bağımlılığı bekliyor.\
 **Araç/model:** S0 ve S0-V: Codex / GPT-6 Astra. S1–S6, S8 ve S9: Claude Code / Claude Opus 5. Model önerileri plan içindedir; bu kayıt düşünme seviyesi tahmini yapmaz.
