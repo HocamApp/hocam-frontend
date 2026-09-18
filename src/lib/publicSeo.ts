@@ -5,6 +5,7 @@ import {
   absoluteUrl,
   fetchAllPublicTutors,
   SITE_NAME,
+  SOCIAL_IMAGE,
 } from "@/lib/seo";
 
 export const PUBLIC_SEO_ROUTES = [
@@ -43,6 +44,7 @@ export function publicPageMetadata({
       url: path,
       title: `${title} | ${SITE_NAME}`,
       description,
+      images: [SOCIAL_IMAGE],
     },
   };
 }

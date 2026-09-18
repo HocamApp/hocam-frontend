@@ -10,6 +10,12 @@ export const SITE_URL = "https://www.hocamozelders.com";
 export const SITE_NAME = "Hocam";
 export const SITE_DESCRIPTION =
   "YKS, TYT ve AYT hazırlığında öğrencileri doğrulanmış, YKS'de derece yapmış hocalarla buluşturan online özel ders platformu.";
+export const SOCIAL_IMAGE = {
+  url: "/opengraph-image",
+  width: 1200,
+  height: 630,
+  alt: "Hocam — Doğrulanmış YKS hocalarıyla online özel ders",
+} as const;
 export const PUBLIC_API_URL =
   process.env.NEXT_PUBLIC_API_URL ||
   "https://web-production-22415.up.railway.app/api";
@@ -26,6 +32,12 @@ function publicApiUrl(path: string) {
   return `${PUBLIC_API_URL.replace(/\/$/, "")}/${path.replace(/^\//, "")}`;
 }
 
+class PublicApiError extends Error {
+  constructor(readonly status: number) {
+    super(`Public API request failed with ${status}`);
+  }
+}
+
 async function fetchJson<T>(path: string): Promise<T> {
   const response = await fetch(publicApiUrl(path), {
     headers: {
@@ -38,7 +50,7 @@ async function fetchJson<T>(path: string): Promise<T> {
   });
 
   if (!response.ok) {
-    throw new Error(`Public API request failed with ${response.status}`);
+    throw new PublicApiError(response.status);
   }
 
   return response.json() as Promise<T>;
@@ -103,8 +115,9 @@ export async function fetchPublicTutor(
     return tutor.is_public && tutor.is_verified
       ? applyDemoTutorPresentation(tutor)
       : null;
-  } catch {
-    return null;
+  } catch (error) {
+    if (error instanceof PublicApiError && error.status === 404) return null;
+    throw error;
   }
 }
 

@@ -20,6 +20,14 @@ export function directoryFilterQuery(current: string, filters: TutorFilters): st
   return params.toString();
 }
 
+export function directorySearchQuery(current: string, search?: string): string {
+  const params = new URLSearchParams(current);
+  params.delete("page");
+  if (search) params.set("search", search);
+  else params.delete("search");
+  return params.toString();
+}
+
 export function tutorListHref(filters: TutorFilters = {}): string {
   const query = directoryFilterQuery("", filters);
   return `/${query ? `?${query}` : ""}#${TUTOR_LIST_ID}`;

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { readDirectoryFilters, directoryFilterQuery, tutorListHref } from "./tutorDirectoryLinks";
+import { readDirectoryFilters, directoryFilterQuery, directorySearchQuery, tutorListHref } from "./tutorDirectoryLinks";
 import { getSubjectOptionsForExam } from "./subjects";
 
 test("subject shortcuts round-trip through query state, including browser history", () => {
@@ -16,6 +16,13 @@ test("subject shortcuts round-trip through query state, including browser histor
 test("clearing filters retains search and favorites but removes pagination and stale fields", () => {
   const query = directoryFilterQuery("search=Arda&favorites=1&exam_type=AYT&subject=Matematik&page=2", {});
   assert.equal(query, "search=Arda&favorites=1");
+});
+
+test("search resets pagination while preserving directory context", () => {
+  assert.equal(
+    directorySearchQuery("page=2&favorites=1&subject=Matematik", "limit"),
+    "favorites=1&subject=Matematik&search=limit",
+  );
 });
 
 test("YKS subject options include TYT and AYT only and deduplicate names", () => {

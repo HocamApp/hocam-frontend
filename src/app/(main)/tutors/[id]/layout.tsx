@@ -10,6 +10,7 @@ import { JsonLd } from "@/components/seo/JsonLd";
 import {
   absoluteUrl,
   fetchPublicTutor,
+  SOCIAL_IMAGE,
   SITE_URL,
   tutorFullName,
   tutorSeoDescription,
@@ -66,14 +67,14 @@ export async function generateMetadata({
       url: canonical,
       title: `${name} | Hocam`,
       description,
-      images: ogImage
-        ? [
-            {
+      images: [
+        ogImage
+          ? {
               url: ogImage,
               alt: name,
-            },
-          ]
-        : undefined,
+            }
+          : SOCIAL_IMAGE,
+      ],
     },
   };
 }
