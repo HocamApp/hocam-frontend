@@ -7,7 +7,8 @@ This is the active product and technical direction for Hocam. It supersedes earl
 
 - Hocam is a verified YKS tutor marketplace. Only verified, high-ranking tutors are publicly visible and bookable.
 - The sole paid-learning model is a package-credit model: weekly lessons (2–6) × a 14/30/90/180-day duration. One-off paid lessons and ten-lesson packages are retired.
-- A package, credit, or ledger record is not proof of a live payment. No payment provider is connected.
+- A package, credit, or ledger record is not proof of a live payment. No payment provider is live in production.
+- PayTR is under development, not activated. The frontend currently holds only its API layer, types and an off-by-default `NEXT_PUBLIC_PAYTR_ENABLED` build flag; backend `PAYTR_ENABLED` is what authorises a real charge, and switching production on is a separate operational decision. Plan and contract: `docs/payments/`.
 - `MANUAL_PAYMENT_ACTIVATION_ENABLED` remains disabled until written founder approval after G0/G1 reconciliation and the payment-provider plan are complete.
 - Production email/password registration requires the 6-digit verification code. Resend sends from the verified `hocamozelders.com` domain, password-reset links use `www.hocamozelders.com`, and Google sign-in is configured in production using Google's verified-email signal.
 - Package lesson counts are not settled tutor earnings. Do not display them as currency; a processed refund record is not proof of a real-world refund.

@@ -19,3 +19,21 @@ export const HOCA_BUL_ENABLED =
  */
 export const STUDY_SCHEDULE_ENABLED =
   process.env.NEXT_PUBLIC_STUDY_SCHEDULE_ENABLED !== "false";
+
+/**
+ * PayTR checkout entry points in the frontend build.
+ *
+ * Off unless the build sets NEXT_PUBLIC_PAYTR_ENABLED to exactly "true" — a
+ * near miss like "TRUE" or "1" stays closed rather than guessing that someone
+ * meant to take money. This flag only decides what the UI offers; the backend
+ * PAYTR_ENABLED setting is what actually authorises a charge, and the two are
+ * separate switches. NEXT_PUBLIC_* is inlined at build time, so flipping it
+ * needs a rebuild and redeploy, not just an environment change.
+ */
+export function paytrEnabledFromEnv(value: string | undefined): boolean {
+  return value === "true";
+}
+
+export const PAYTR_ENABLED = paytrEnabledFromEnv(
+  process.env.NEXT_PUBLIC_PAYTR_ENABLED
+);

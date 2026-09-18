@@ -1034,6 +1034,27 @@ export interface PackagePurchase {
   promotion_code: string | null;
 }
 
+/**
+ * What the student types before the PayTR iframe opens. The server derives
+ * everything else — amount from `PackagePurchase.total_price`, e-mail from the
+ * session, IP from the request — so the browser never sends money figures and
+ * never sees a merchant secret.
+ */
+export interface StartPayTRCheckoutRequest {
+  user_name: string;
+  user_address: string;
+  user_phone: string;
+}
+
+/**
+ * One PayTR attempt for one purchase. `iframe_url` carries a short-lived token:
+ * hold it in memory, never in logs, analytics or browser storage.
+ */
+export interface StartPayTRCheckoutResponse {
+  merchant_oid: string;
+  iframe_url: string;
+}
+
 export interface PaymentLedgerEntry {
   id: string;
   entry_type: string;

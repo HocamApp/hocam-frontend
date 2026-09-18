@@ -12,6 +12,8 @@ import {
   PromoPreviewRequest,
   PromoPreviewResponse,
   ReferralInfo,
+  StartPayTRCheckoutRequest,
+  StartPayTRCheckoutResponse,
   TutorEarningsSummary,
   TutorPackageOffer,
   UpdateTutorPackageOfferPayload,
@@ -172,4 +174,116 @@ export function extractPromoPreviewErrorMessage(err: unknown): string {
   return translated.startsWith("Paket talebi oluşturulamadı")
     ? "İndirim kodu doğrulanamadı. Lütfen tekrar deneyin."
     : translated;
+}
+
+// =========================================================================
+// PayTR — hosted iframe checkout for an already-created package purchase.
+//
+// The browser only ever asks for a token: the amount comes from the stored
+// purchase, the acceptance gate is re-checked server-side, and card, CVV, OTP
+// and 3D Secure input stay inside PayTR's own iframe. Nothing here confirms a
+// payment — only a purchase that the backend reports as `paid` does that.
+// =========================================================================
+
+/**
+ * Opens one PayTR attempt for one purchase. Call it from a deliberate user
+ * submit only: the server creates a new attempt on every accepted POST, so a
+ * mount, focus or automatic mutation retry would leave stray attempts behind.
+ */
+export async function startPayTRCheckout(
+  purchaseId: string,
+  payload: StartPayTRCheckoutRequest
+): Promise<StartPayTRCheckoutResponse> {
+  const response = await api.post<StartPayTRCheckoutResponse>(
+    `/payments/package-purchases/${purchaseId}/paytr-checkout/`,
+    payload
+  );
+  return response.data;
+}
+
+export type PayTRCustomerField = "user_name" | "user_address" | "user_phone";
+
+/**
+ * What the caller should do next, not what went wrong on the server:
+ *
+ * - `field` — the form owns it; show the message beside the named input.
+ * - `form`  — a 400 we cannot attribute to a field (an invalid customer IP,
+ *             say). One safe line above the form; no infrastructure detail.
+ * - `unavailable` — 404: not this student's purchase, or gone. No retry loop.
+ * - `conflict`    — 409: local state is stale. Refetch purchase + acceptance
+ *                   and render whatever the server now says.
+ * - `service`     — 503: PayTR is off or misconfigured. Manual retry only,
+ *                   after a state check.
+ * - `unknown`     — the response was lost, so the attempt may well exist.
+ *                   Check the purchase; never claim the card was not charged
+ *                   and never re-POST on the user's behalf.
+ */
+export type PayTRCheckoutErrorKind =
+  | "field"
+  | "form"
+  | "unavailable"
+  | "conflict"
+  | "service"
+  | "unknown";
+
+export interface PayTRCheckoutError {
+  kind: PayTRCheckoutErrorKind;
+  message: string;
+  fieldErrors: Partial<Record<PayTRCustomerField, string>>;
+}
+
+const PAYTR_CUSTOMER_FIELDS: PayTRCustomerField[] = [
+  "user_name",
+  "user_address",
+  "user_phone",
+];
+
+/** Our own copy, keyed by field. The server's English validation text is
+ * never rendered, so a wording change there cannot leak into the UI. */
+const PAYTR_FIELD_MESSAGES: Record<PayTRCustomerField, string> = {
+  user_name: "Ad soyad gerekli.",
+  user_address: "Adres gerekli.",
+  user_phone: "Telefon numarası gerekli.",
+};
+
+const PAYTR_KIND_MESSAGES: Record<PayTRCheckoutErrorKind, string> = {
+  field: "Ödeme başlatılamadı. Bilgilerini kontrol edip yeniden dene.",
+  form: "Ödeme başlatılamadı. Bilgilerini kontrol edip yeniden dene.",
+  unavailable: "Paket bilgilerine erişilemiyor.",
+  conflict: "Paketin güncel durumu kontrol ediliyor.",
+  service: "Ödeme hizmeti şu anda kullanılamıyor.",
+  unknown:
+    "Ödeme sonucu doğrulanmadı. Yeniden ödeme başlatmadan durumu kontrol et.",
+};
+
+function describedError(
+  kind: PayTRCheckoutErrorKind,
+  fieldErrors: Partial<Record<PayTRCustomerField, string>> = {}
+): PayTRCheckoutError {
+  return { kind, message: PAYTR_KIND_MESSAGES[kind], fieldErrors };
+}
+
+/**
+ * Classifies a failed `startPayTRCheckout` call into something the payment
+ * screen can act on. Deliberately narrow: it never forwards raw server text
+ * and never turns an uncertain outcome into a confirmed failure.
+ */
+export function describePayTRCheckoutError(err: unknown): PayTRCheckoutError {
+  const status = (err as { response?: { status?: number } }).response?.status;
+  if (status === 404) return describedError("unavailable");
+  if (status === 409) return describedError("conflict");
+  if (status === 503) return describedError("service");
+  if (status !== 400) return describedError("unknown");
+
+  const data = (err as { response?: { data?: unknown } }).response?.data;
+  const fieldErrors: Partial<Record<PayTRCustomerField, string>> = {};
+  if (data && typeof data === "object") {
+    const body = data as Record<string, unknown>;
+    for (const field of PAYTR_CUSTOMER_FIELDS) {
+      if (body[field] != null) fieldErrors[field] = PAYTR_FIELD_MESSAGES[field];
+    }
+  }
+  return Object.keys(fieldErrors).length > 0
+    ? describedError("field", fieldErrors)
+    : describedError("form");
 }

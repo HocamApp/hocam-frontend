@@ -9,10 +9,22 @@
 
 ## 1. Ödeme / checkout — kritik
 
-- Gerçek bir ödeme sağlayıcısı (iyzico vb.) henüz entegre değil. Checkout bir "paket talebi"
+- Gerçek bir ödeme sağlayıcısı henüz **canlıda aktif değil**. Checkout bir "paket talebi"
   oluşturuyor, kart bilgisi almıyor; backend'de admin manuel onaylıyordu — bu manuel onay şu
   anda geçici olarak **kapalı** (G0/G1 denetimi sürüyor, bkz. backend `AI_AGENT_RULES.md`).
   UI'da hiçbir yerde IBAN/banka/havale bilgisi **gösterme veya isteme**.
+- PayTR entegrasyonu **geliştirme aşamasında**: frontend'de yalnız API katmanı ve tipleri var
+  (`startPayTRCheckout`, `describePayTRCheckoutError` — `src/lib/paymentsApi.ts`). Ödeme
+  ekranı, iframe ve giriş noktaları henüz yok; planı `docs/payments/` altında.
+  `NEXT_PUBLIC_PAYTR_ENABLED` yalnız tam olarak `"true"` değerinde açılır, varsayılanı
+  kapalıdır ve **canlı aktivasyon yetkisi vermez** — parayı gerçekten tahsil etmeye izin veren
+  backend `PAYTR_ENABLED` ayarıdır; ikisi ayrı anahtardır ve production'da açılması ayrı bir
+  operasyon kararıdır. `NEXT_PUBLIC_*` build-time inline edilir: değiştirmek yeniden
+  build/deploy gerektirir.
+- Kart, CVV, OTP ve 3D Secure verisi yalnız PayTR'nin kendi iframe'inde kalır. Merchant
+  key/salt frontend'e **gelmez**; ad/telefon/adres ve iframe token'ı log, analytics veya
+  tarayıcı depolamasına **yazılmaz**. Ödeme başarısı yalnız backend `purchase.status === "paid"`
+  ile gösterilir — dönüş URL'i, iframe olayı veya yerel kayıt kanıt değildir.
 - Tek satın alma modeli: haftalık ders sayısı (2-6) × paket süresi (14/30/90/180 gün)
   matrisi. Tekli ders alımı ve "10'luk paket" kavramları tamamen kaldırıldı — `types/api.ts`'e
   `term_months` gibi eski alanları geri **ekleme**.
@@ -90,5 +102,6 @@ Her değişiklik için:
     sonucu, deploy durumu (Vercel).
 
 ---
-Son güncelleme: 24 Temmuz 2026 — Git/PR akışı (§6) eklendi. Bu dosyayı güncel tutmak Arda ve
+Son güncelleme: 17 Eylül 2026 — PayTR geliştirme/canlı aktivasyon ayrımı (§1) eklendi;
+24 Temmuz 2026'da Git/PR akışı (§6) eklenmişti. Bu dosyayı güncel tutmak Arda ve
 Emin'in ortak sorumluluğu — büyük bir karar/kısıt değiştiğinde buraya da eklenmeli.
