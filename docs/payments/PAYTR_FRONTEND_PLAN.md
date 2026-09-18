@@ -14,7 +14,8 @@ Bu belge 17 Eylül konuşmasında kabul edilen planın repo içindeki taşınabi
 2. Bu plan.
 3. [Doğrulanmış API sözleşmesi ve bağımlılıklar](PAYTR_CONTRACT.md).
 4. [İlerleme, test ve devir kaydı](PAYTR_HANDOFF.md).
-5. [Arkadaşın gönderdiği kaynak yol haritası](PAYTR_FRONTEND_SOURCE_ROADMAP.md).
+5. [Yayın ve operasyon devri](PAYTR_RELEASE_RUNBOOK.md).
+6. [Arkadaşın gönderdiği kaynak yol haritası](PAYTR_FRONTEND_SOURCE_ROADMAP.md).
 6. [S0-V görsel ekran sözleşmesi](PAYTR_VISUAL_SPEC.md): ölçüler, wireframe, bileşenler, metinler ve durum matrisi.
 
 Kaynak yol haritası tarihsel referanstır. Bu planın nötr sonuç metni, belirsiz ağ hatasında retry ve koçluk tahsilat kapısı gibi açık kararları uygulanır. API'nin gerçekte sunduğu davranış için commit'e sabitlenmiş sözleşme esas alınır. Hiçbir belge backend'de olmayan endpoint'i var kabul etme yetkisi vermez.
