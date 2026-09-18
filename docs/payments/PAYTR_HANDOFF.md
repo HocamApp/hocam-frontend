@@ -1,8 +1,8 @@
 # PayTR Frontend — İlerleme ve Devir Kaydı
 
 **Güncelleme:** 18 Eylül 2026\
-**Yetkili kapsam:** S0–S2 merge edildi; kullanıcı S3'ü istedi ve S3 uygulandı. S4 başlatılmadı.\
-**Araç/model:** S0 ve S0-V: Codex / GPT-6 Astra. S1–S3: Claude Code / Claude Opus 5. Model önerileri plan içindedir; bu kayıt düşünme seviyesi tahmini yapmaz.
+**Yetkili kapsam:** S0–S3 merge edildi; kullanıcı S4'ü istedi ve S4 uygulandı. S5 başlatılmadı.\
+**Araç/model:** S0 ve S0-V: Codex / GPT-6 Astra. S1–S4: Claude Code / Claude Opus 5. Model önerileri plan içindedir; bu kayıt düşünme seviyesi tahmini yapmaz.
 
 ## S0 teslimat durumu
 
@@ -28,6 +28,75 @@ S0-V yerel doğrulama: `npm ci` başarılı, lockfile değişmedi; `npm run lint
 Kesintide önce bu branch'in PR/head/check durumunu kontrol et; mevcut PR varsa yenisini açma. PR yeşil olunca repo kuralıyla merge commit + remote branch silme, ardından main CI ve Vercel durumunu doğrulama kalır. Bu belge tamamlanmamış CI/merge/deploy'u başarılı ilan etmez.
 
 S1 devri: güncel origin/main'den `agent/paytr-01-api-20260917`; normal mod, plan önerisi Astra Medium / Sonnet High. Planın S1 kabul ölçütlerini uygula. Payment-state endpoint'ini var sayma, flag varsayılan kapalı, otomatik POST/retry yok. B01–B06 açık; S0-V backend referansını veya sözleşmesini değiştirmedi.
+
+## S4 teslimat ve devir
+
+| Alan | Değer |
+| --- | --- |
+| Repo | HocamApp/hocam-frontend |
+| Worktree | `/Users/ardagg/Desktop/Hocam/.worktrees/frontend/paytr-04-checkout-20260917` |
+| Branch | `agent/paytr-04-checkout-20260917` |
+| Başlangıç main SHA | `77ae6c3a52c35b8f7d290a6a568828d5ef0810c9` (PR #271 merge) |
+| Kapsam | Ödeme route'u, iframe origin doğrulaması, polling, hata yolları, test runner glob düzeltmesi |
+| Mod / araç | Normal uygulama modu; Claude Code / Claude Opus 5; TDD |
+| PR / merge SHA | PR kaydından doğrula |
+| Sonraki bölüm | S5 — dönüş sayfaları; kullanıcı istediğinde |
+
+Yeni: `src/app/(checkout)/package-purchases/[purchaseId]/pay/page.tsx` (+ `page.test.tsx`,
+`pageFlagOff.test.tsx`), `src/components/payments/paytr/paytrIframeUrl.ts`, `paytrPolling.ts`,
+`PayTRFrame.tsx` ve testleri. Değişen: `src/components/checkout/MinimalCheckoutHeader.tsx`
+(opsiyonel `backHref`/`backLabel`), `scripts/run-unit-tests.mjs`, `package.json`, bu kayıt.
+
+**Route.** `/package-purchases/[purchaseId]/pay`. Oturum yoksa `/login?returnUrl=` ile geri dönüş,
+öğrenci değilse `/home`. Satın alma listeden ID ile bulunuyor (tekil endpoint yok); bulunamazsa
+`purchase_unavailable`, liste hatası `query_error`. Ekran karar vermiyor: `paytrCheckoutState` ne
+döndürürse o render ediliyor. Başlık geri bağlantısı `/profile/payments` (tarayıcı geçmişi harcanmış
+iframe'e dönebiliyordu); seçim ekranının hoca profiline dönüşü değişmedi.
+
+**Token isteği.** Yalnız kullanıcı gönderiminde. `retry: false` + senkron `submitLock` ref'i; mount,
+focus, reload ve PayTR dönüşü POST yapmıyor. Sıra: kurtarma kaydı aç → POST → yanıtta `merchantOid`
+ekle → iframe.
+
+**Iframe.** `readPayTRIframeUrl` URL parser ile doğruluyor: `https`, tam `www.paytr.com` hostname,
+port yok, kimlik bilgisi yok, `/odeme/guvenli/` yolu ve boş olmayan token. Prefix eşleşmesi değil —
+`https://www.paytr.com.attacker.example/...` doğru karakterlerle başlıyor ama doğru host değil.
+Doğrulanamayan adres iframe üretmiyor: "Ödeme ekranı güvenli şekilde açılamadı." + kurtarma yolu
+gösteriliyor, token yeniden yaratılmıyor (attempt sunucuda var). `sandbox` eklenmedi (3DS ile test
+edilmedi), iframe üzerine HOCAM kontrolü konmadı, token/URL yalnız bellekte.
+
+**Polling.** `payTRPollIntervalMs`: aktif girişimde 2 sn, 45 sn sonra duruyor. Pencere bitince iframe
+kalıyor, "Durumu kontrol et" (yalnız GET) çıkıyor; başarısızlık iddiası yok. Süre `attemptStartedAt`e
+göre, focus/render timer'ı sıfırlamıyor. `paid` gelince iframe kaldırılıyor, kurtarma kaydı siliniyor,
+`payment-history` invalidate ediliyor (`package-purchases` zaten bu sorgunun kendisi).
+
+**Hata ayrımı (önemli karar).** Sunucu kesin yanıt verdiyse (400/404/409/503) o submit için bekleyen
+girişim yok → kurtarma kaydı siliniyor, form kullanılabilir kalıyor, mesaj onaylı metin. 503'te backend
+attempt'i failed işaretliyor ve token vermiyor, dolayısıyla tahsilat riski yok. Yanıt kaybolduysa
+(network/unknown) tersi geçerli → kayıt duruyor, ekran `callback_pending` oluyor, "Güvenli ödemeye geç"
+kaldırılıyor. 409'da purchase + acceptance yeniden okunuyor.
+
+**Test runner hatası (gerçek bulgu).** Node, `--test` konumsal argümanlarını glob olarak yorumluyor;
+`[purchaseId]` karakter sınıfı sayıldığı için dinamik route altındaki test dosyası sessizce
+çalışmıyordu (hata da vermiyor). `scripts/run-unit-tests.mjs` artık glob özel karakterlerini tek
+karakterlik sınıfa kaçırıyor (`[` → `[[]`), `test:paytr` de aynı biçimi kullanıyor. Doğrulama: `test:unit`
+1366 → 1395 test. Bu düzeltme olmasa yeni route testleri CI'da hiç koşmayacaktı.
+
+S4 yerel doğrulama (worktree `77ae6c3` bazlı):
+
+| Komut | Sonuç |
+| --- | --- |
+| `npm run test:paytr` (uygulamadan önce) | Yeni dosyalar kırmızı |
+| `npm run test:paytr` | 125 test, 125 geçti |
+| `npm run test:unit` | 1395 test, 1394 geçti, 0 başarısız, 1 atlandı (mevcut) |
+| `npm run lint` | Exit 0; yalnız mevcut tutor profili img uyarısı |
+| `npm run typecheck` | Exit 0 |
+| `npm run build` | Başarılı; route `ƒ /package-purchases/[purchaseId]/pay` üretildi |
+| Tarayıcı görsel/3DS kabulü | Yapılmadı; S8 kapısı (jsdom testleri görsel kabul yerine geçmez) |
+| Gerçek PayTR test işlemi | Yapılmadı; S8 kapısı |
+
+Kapsam dışı bırakılanlar: dönüş sayfaları (S5), checkout/Paketlerim giriş noktaları (S6), doğrulanmış
+attempt durumu ve retry (S7). Resmî PayTR resizer script'i eklenmedi — iframe sabit `min-height` ile
+çalışıyor; gerekirse S8'de sağlayıcı entegrasyonu doğrulanarak eklenir.
 
 ## S3 teslimat ve devir
 
@@ -295,8 +364,9 @@ Node checkout test komutu experimental/deprecation uyarıları verdi; testler ge
 - Includes-coaching ödeme, toplam/aktivasyon kanıtı gelene kadar kapalı tasarlanır.
 - Frontend çift tıklama koruması server concurrency/idempotency yerine geçmez.
 - Görsel referans araştırması ve S0-V ekran sözleşmesi hazır; çalışan ekranların görsel/3DS doğrulaması henüz yapılmadı.
-- S1–S3 sonrası: frontend'de API katmanı, kapalı bayrak, saf durum eşleyicisi, kurtarma kaydı ve ödeme
-  bileşenleri var; route/iframe yok, hiçbir ödeme başlatılmadı, backend dosyası değiştirilmedi.
+- S1–S4 sonrası: ödeme route'u, iframe ve polling var; bayrak kapalı olduğu için üretimde yeni ödeme
+  girişi açılmıyor. Backend dosyası değiştirilmedi, gerçek ödeme başlatılmadı.
+- Route'a giriş noktası yok: checkout ve Paketlerim bağlantıları S6'da bağlanacak.
 - S3 bileşenlerinin tarayıcıdaki görsel/erişilebilirlik kabulü yapılmadı; test kanıtı jsdom düzeyindedir.
 - Kurtarma kaydı sekme kapanınca kaybolur (sessionStorage). Sahiplik her zaman backend'den doğrulanır;
   kayıt tek başına sonuç veya yetki kanıtı değildir.
@@ -318,11 +388,11 @@ rtk git log -1 --format=%H
 1. Bu kaydı, planı, sözleşmeyi ve repo kurallarını oku.
 2. GitHub'da S0 branch/PR commit ve merge durumunu doğrula; anlatılan durumu kodla uzlaştır.
 3. S0 tamamlanmadan kesinti olduysa aynı branch/PR ve worktree'den devam et.
-4. S0-V ve S1–S3 için yukarıdaki branch/PR kayıtlarını doğrula; yarım kalan bölümde aynı branch'ten devam et.
-5. S3 merged ve kullanıcı S4 istiyorsa güncel origin/main'den `agent/paytr-04-checkout-20260917` aç;
-   API katmanını, durum eşleyicisini, bileşenleri ve metin haritasını baştan üretme,
-   payment-state endpoint'ini var sayma. S4 route'u `paytrCheckoutState` sonucunu render eder,
-   iframe URL'sini kendisi doğrular ve token POST'unu yalnız kullanıcı gönderimiyle yapar.
+4. S0-V ve S1–S4 için yukarıdaki branch/PR kayıtlarını doğrula; yarım kalan bölümde aynı branch'ten devam et.
+5. S4 merged ve kullanıcı S5 istiyorsa güncel origin/main'den `agent/paytr-05-return-20260917` aç;
+   route, durum eşleyicisi, kurtarma katmanı ve metin haritası hazır — dönüş sayfaları bunları
+   yeniden üretmeden kullanır. Route adı sonucu belirlemez: `/odeme/basarili` ve `/odeme/basarisiz`
+   aynı kurtarma → sahiplik doğrulama → backend sonucu zincirini çalıştırır.
 6. Token sınırından önce tamamlanan iş, kalan ilk adım, testler ve commit edilmemiş dosyaları güncelle.
 
 Yeni bölüm devri için planın sonundaki şablon kullanılır. Nihai self-referential commit/merge SHA bu dosyaya uydurulmaz; PR ve Git kaydından okunur.
