@@ -49,10 +49,9 @@ import { getSessionStorage } from "@/lib/safeStorage";
  *
  * - A token is requested only from a deliberate submit. Mounting, focusing,
  *   reloading or returning from PayTR never posts.
- * - A definite error answer (400/404/409/503) means no attempt is in flight,
- *   so the breadcrumb is cleared and the form stays usable. A lost response
- *   means the opposite, so the breadcrumb stays and the screen goes to
- *   "verifying" rather than offering to pay again.
+ * - A rejected submit clears its breadcrumb. A 400 can be corrected; a 404
+ *   closes the form; 409/503 require fresh purchase and acceptance reads.
+ *   A lost response keeps recovery and never invites another payment.
  * - Polling asks the server for two seconds at a time and stops after the
  *   window; it never concludes anything by itself.
  */
@@ -83,6 +82,8 @@ export default function PayTRPaymentPage({
   // attempt exists, so this is an unresolved payment, not a free retry.
   const [iframeRejected, setIframeRejected] = useState(false);
   const submitLock = useRef(false);
+  const verificationLock = useRef(false);
+  const [revalidation, setRevalidation] = useState<"idle" | "required" | "checking" | "failed">("idle");
 
   const storage = typeof window === "undefined" ? null : getSessionStorage();
   const userId = user?.id;
@@ -143,7 +144,28 @@ export default function PayTRPaymentPage({
     iframeUrl,
     knownAttempt,
     lastStartErrorKind,
+    revalidation,
   });
+
+  const canSubmit = useRef(false);
+  canSubmit.current = state.canStartPayment;
+
+  const revalidate = useCallback(async () => {
+    verificationLock.current = true;
+    setRevalidation("checking");
+    const results = await Promise.allSettled([
+      purchasesQuery.refetch({ throwOnError: true }),
+      acceptanceQuery.refetch({ throwOnError: true }),
+    ]);
+    if (results.some((result) => result.status === "rejected" || result.value.isError)) {
+      setRevalidation("failed");
+      return;
+    }
+    setLastStartErrorKind(null);
+    setFormError(null);
+    setRevalidation("idle");
+    verificationLock.current = false;
+  }, [purchasesQuery, acceptanceQuery]);
 
   const startCheckout = useMutation({
     mutationFn: (values: PayTRCustomerFormValues) =>
@@ -184,8 +206,10 @@ export default function PayTRPaymentPage({
         Object.keys(described.fieldErrors).length > 0 ? null : described.message
       );
       if (described.kind === "conflict") {
-        void purchasesQuery.refetch();
-        void acceptanceQuery.refetch();
+        void revalidate();
+      } else if (described.kind === "service") {
+        verificationLock.current = true;
+        setRevalidation("required");
       }
     },
     onSettled: () => {
@@ -195,7 +219,7 @@ export default function PayTRPaymentPage({
 
   const handleSubmit = useCallback(
     async (values: PayTRCustomerFormValues) => {
-      if (submitLock.current || !purchase || !userId) return;
+      if (submitLock.current || verificationLock.current || !canSubmit.current || !purchase || !userId) return;
       submitLock.current = true;
       setFieldErrors({});
       setFormError(null);
@@ -244,9 +268,9 @@ export default function PayTRPaymentPage({
   }, [state.name, queryClient, userId]);
 
   const recheck = useCallback(() => {
-    void purchasesQuery.refetch();
-    void acceptanceQuery.refetch();
-  }, [purchasesQuery, acceptanceQuery]);
+    if (revalidation === "checking") return;
+    void revalidate();
+  }, [revalidation, revalidate]);
 
   const showSummary =
     state.name !== "purchase_unavailable" && state.name !== "query_error";
@@ -277,6 +301,9 @@ export default function PayTRPaymentPage({
             />
           )}
           <div className="min-w-0 lg:col-start-1 lg:row-start-1">
+            {formError && state.name !== "payment_ready" && state.name !== "starting_payment" && (
+              <p role="status" className="mb-4 text-sm text-[#b33a24]">{formError}</p>
+            )}
             {renderMain()}
           </div>
         </div>

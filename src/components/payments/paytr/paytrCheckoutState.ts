@@ -58,6 +58,7 @@ export interface PayTRCheckoutStateInput {
    * this student. */
   purchase: PackagePurchase | null | undefined;
   purchaseQueryFailed?: boolean;
+  revalidation?: "idle" | "required" | "checking" | "failed";
   acceptance: PurchaseAcceptanceState | null | undefined;
   acceptanceQueryFailed?: boolean;
   attemptPhase?: PayTRAttemptPhase;
@@ -118,6 +119,7 @@ export function paytrCheckoutState(
     paytrEnabled,
     purchase,
     purchaseQueryFailed = false,
+    revalidation = "idle",
     acceptance,
     acceptanceQueryFailed = false,
     attemptPhase = "idle",
@@ -158,6 +160,10 @@ export function paytrCheckoutState(
     lastStartErrorKind === "unknown" ||
     knownAttempt?.purchaseId === purchase.id;
   if (startedHere) return build("callback_pending");
+
+  if (lastStartErrorKind === "unavailable") return build("purchase_unavailable");
+  if (revalidation === "checking") return build("loading");
+  if (purchaseQueryFailed || revalidation !== "idle") return build("query_error");
 
   if (!paytrEnabled) {
     return build("payment_unavailable", { blockedReason: "flag_off" });
