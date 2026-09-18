@@ -1,8 +1,8 @@
 # PayTR Frontend — İlerleme ve Devir Kaydı
 
 **Güncelleme:** 18 Eylül 2026\
-**Yetkili kapsam:** S0–S4 merge edildi; kullanıcı S5'i istedi ve S5 uygulandı. S6 başlatılmadı.\
-**Araç/model:** S0 ve S0-V: Codex / GPT-6 Astra. S1–S5: Claude Code / Claude Opus 5. Model önerileri plan içindedir; bu kayıt düşünme seviyesi tahmini yapmaz.
+**Yetkili kapsam:** S0–S5 merge edildi; kullanıcı S6'yı istedi ve S6 uygulandı. S7 başlatılmadı.\
+**Araç/model:** S0 ve S0-V: Codex / GPT-6 Astra. S1–S6: Claude Code / Claude Opus 5. Model önerileri plan içindedir; bu kayıt düşünme seviyesi tahmini yapmaz.
 
 ## S0 teslimat durumu
 
@@ -28,6 +28,75 @@ S0-V yerel doğrulama: `npm ci` başarılı, lockfile değişmedi; `npm run lint
 Kesintide önce bu branch'in PR/head/check durumunu kontrol et; mevcut PR varsa yenisini açma. PR yeşil olunca repo kuralıyla merge commit + remote branch silme, ardından main CI ve Vercel durumunu doğrulama kalır. Bu belge tamamlanmamış CI/merge/deploy'u başarılı ilan etmez.
 
 S1 devri: güncel origin/main'den `agent/paytr-01-api-20260917`; normal mod, plan önerisi Astra Medium / Sonnet High. Planın S1 kabul ölçütlerini uygula. Payment-state endpoint'ini var sayma, flag varsayılan kapalı, otomatik POST/retry yok. B01–B06 açık; S0-V backend referansını veya sözleşmesini değiştirmedi.
+
+## S6 teslimat ve devir
+
+| Alan | Değer |
+| --- | --- |
+| Repo | HocamApp/hocam-frontend |
+| Worktree | `/Users/ardagg/Desktop/Hocam/.worktrees/frontend/paytr-06-entrypoints-20260917` |
+| Branch | `agent/paytr-06-entrypoints-20260917` |
+| Başlangıç main SHA | `516b9e9ae016082880175057115ef2b94eb57f2e` (PR #274 merge) |
+| Kapsam | Checkout sonrası yönlendirme, CTA metni, Paketlerim ödeme/kontrol bağlantıları |
+| Mod / araç | Normal uygulama modu; Claude Code / Claude Opus 5; TDD |
+| PR / merge SHA | PR kaydından doğrula |
+| Sonraki bölüm | S7 — backend girişim durumu ve retry (backend endpoint'ine bağlı) |
+
+Yeni: `src/components/payments/paytr/paytrEntryPoints.ts` (+ testi),
+`src/components/payments/PackageRequestStatus.paytr.test.tsx`. Değişen:
+`src/app/(checkout)/tutors/[id]/checkout/page.tsx`, `src/components/checkout/CheckoutSummary.tsx`
+(+ testi), `src/components/payments/PackageRequestStatus.tsx`,
+`src/components/payments/PackagePurchaseCard.tsx`, `package.json`, bu kayıt.
+
+**Karar katmanı.** `payTRPurchaseAction`, `payTRPostCreateTarget` ve `payTRShowsUnpaidCancel` saf
+fonksiyonlar; ekranlar koşulu yeniden türetmiyor. Kural her yerde aynı: teklif kanıt ister. Okunamayan
+acceptance yanıtı, tür bilinmeyen paket (koçluk, B03) ve terminal satın alma "teklif yok" demek.
+Bilinen girişim varsa "Ödeme durumunu kontrol et" — bu, yeni ödeme bayrağı kapalıyken bile erişilebilir.
+
+**Checkout sonrası.** Paket oluşturulduktan sonra oluşturulan talep ekranı önce render ediliyor,
+ardından tek bir acceptance **okuması** yapılıyor; sonuç ödenebilirse `/package-purchases/{id}/pay`
+adresine geçiliyor. Okuma hata verirse veya onay bekliyorsa mevcut talep ekranı kalıyor — hiçbir
+durumda ikinci paket POST'u yapılmıyor.
+
+**CTA metni.** Koçluk seçiliyse "Paketi hocaya gönder" (backend koçlukta acceptance kaydını zorunlu
+kılıyor, yani bu bilgi kanıtlı). Ders-only pakette öğrenci tutor-acceptance rollout bayrağını okuyamıyor
+(`/payments/tutor/acceptance-config/` tutor ekranı için), bu yüzden metin nötr "Paket talebi oluştur"
+olarak kalıyor — plandaki "bilinmiyor → nötr" kuralı. Öğrenciye açık bir acceptance-config okuması
+eklenmedi; gerekirse ayrı bir karar.
+
+**Paketlerim.** `PackageRequestStatus` artık acceptance kaydı olmayan pending satın almalarda da
+render ediliyor (yalnız ödeme bağlantısı için). Kabul edilmiş + pending → "Ödemeye devam et";
+bilinen girişim → "Ödeme durumunu kontrol et"; onay bekliyor veya talep kapandıysa ödeme bağlantısı
+yok. Kabul metni bayrak açıkken "hiçbir tahsilat yapılmadı" iddiasını bırakıyor ve yalnız pending
+satın almada "Paket ödeme bekliyor." diyor. `can_cancel_unpaid` artık üç koşula bağlı: sunucunun
+bayrağı, bilinen girişim olmaması (B04) ve satın almanın hâlâ pending olması (bayat bayrak koruması).
+
+**Belirsiz create yanıtı.** Yanıt hiç gelmezse paket listesi yeniden okunuyor; gerçekten oluşmuş bir
+talep pending olarak görünüp CTA'yı kapatıyor. Otomatik ikinci POST yok. Bu davranışın otomatik testi
+yok (checkout sayfası entegrasyon testi bu bölümde kurulmadı); arkasındaki emniyet backend'in aynı
+öğrenci+hoca+plan için duplicate pending reddi.
+
+**Test kaydında dürüst not.** `PackageRequestStatus.paytr.test.tsx` içine yazılan "paid satın almada
+ödeme bağlantısı yok" bileşen testi, aynı dosyadaki diğer testlerle birlikte koşarken node test
+sürecini teşhis vermeden düşürüyordu (tek başına aynı senaryo geçiyor; sorun ürün kodunda değil test
+sürecinde). Test dosyadan çıkarıldı; aynı davranış `payTRPurchaseAction` ve `payTRShowsUnpaidCancel`
+saf testlerinde terminal durumların hepsi için doğrulanıyor. Kalıcı çözüm S8'e bırakıldı.
+
+S6 yerel doğrulama (worktree `516b9e9` bazlı):
+
+| Komut | Sonuç |
+| --- | --- |
+| `npm run test:paytr` | 159 test, 159 geçti |
+| `npm run test:checkout` | 10 geçti (iki yeni CTA testi dahil) |
+| `npm run test:unit` | 1431 test, 1430 geçti, 0 başarısız, 1 atlandı (mevcut) |
+| `npm run lint` | Exit 0; yalnız mevcut tutor profili img uyarısı |
+| `npm run typecheck` | Exit 0 |
+| `npm run build` | Başarılı |
+| Tarayıcı görsel kabulü, gerçek PayTR işlemi | Yapılmadı; S8 kapısı |
+
+Korunanlar: promosyon önizleme/invalidation, koçluk quote/hold ve `price_changed` akışı, schedule
+serialization ve `schedule_*` hata yönlendirmesi, login `returnUrl`, deneme dersi ve mevcut kredi
+rezervasyonu, admin QA kredileri. Bunlara dokunulmadı.
 
 ## S5 teslimat ve devir
 
@@ -419,7 +488,10 @@ Node checkout test komutu experimental/deprecation uyarıları verdi; testler ge
 - Görsel referans araştırması ve S0-V ekran sözleşmesi hazır; çalışan ekranların görsel/3DS doğrulaması henüz yapılmadı.
 - S1–S5 sonrası: ödeme route'u, iframe, polling ve dönüş sayfaları var; bayrak kapalı olduğu için
   üretimde yeni ödeme girişi açılmıyor. Backend dosyası değiştirilmedi, gerçek ödeme başlatılmadı.
-- Route'lara uygulama içinden giriş noktası yok: checkout ve Paketlerim bağlantıları S6'da bağlanacak.
+- S6 sonrası giriş noktaları bağlı: checkout sonrası yönlendirme ve Paketlerim bağlantıları bayrak
+  açıkken çalışır. Bayrak kapalıyken yalnız bilinen girişimin durum kontrolü görünür.
+- Checkout sayfası için entegrasyon testi yok; S6 kararları saf fonksiyon ve bileşen testleriyle
+  doğrulandı.
 - S3 bileşenlerinin tarayıcıdaki görsel/erişilebilirlik kabulü yapılmadı; test kanıtı jsdom düzeyindedir.
 - Kurtarma kaydı sekme kapanınca kaybolur (sessionStorage). Sahiplik her zaman backend'den doğrulanır;
   kayıt tek başına sonuç veya yetki kanıtı değildir.
@@ -441,11 +513,11 @@ rtk git log -1 --format=%H
 1. Bu kaydı, planı, sözleşmeyi ve repo kurallarını oku.
 2. GitHub'da S0 branch/PR commit ve merge durumunu doğrula; anlatılan durumu kodla uzlaştır.
 3. S0 tamamlanmadan kesinti olduysa aynı branch/PR ve worktree'den devam et.
-4. S0-V ve S1–S5 için yukarıdaki branch/PR kayıtlarını doğrula; yarım kalan bölümde aynı branch'ten devam et.
-5. S5 merged ve kullanıcı S6 istiyorsa güncel origin/main'den `agent/paytr-06-entrypoints-20260917` aç;
-   ödeme route'u ve dönüş sayfaları hazır — S6 yalnız mevcut checkout ve Paketlerim ekranlarını bu
-   route'a bağlar. Promosyon, koçluk hold, schedule, deneme dersi ve kredi akışları korunur; acceptance
-   okuma hatası yeni paket POST'u üretmez.
+4. S0-V ve S1–S6 için yukarıdaki branch/PR kayıtlarını doğrula; yarım kalan bölümde aynı branch'ten devam et.
+5. S6 merged ve kullanıcı S7 istiyorsa önce backend payment-state endpoint'ini doğrula (B01). Endpoint
+   yoksa S7 "bağımlılık bekliyor" olarak kalır ve mock failure ile tamamlanmış sayılmaz; bu durumda
+   S8'in temel akış kontrolleri yapılabilir. Endpoint varsa `agent/paytr-07-attempt-state-20260917`
+   aç, gerçek wire shape'i sözleşmeye sabitle ve `verifiedAttempt` girdisini besle.
 6. Token sınırından önce tamamlanan iş, kalan ilk adım, testler ve commit edilmemiş dosyaları güncelle.
 
 Yeni bölüm devri için planın sonundaki şablon kullanılır. Nihai self-referential commit/merge SHA bu dosyaya uydurulmaz; PR ve Git kaydından okunur.

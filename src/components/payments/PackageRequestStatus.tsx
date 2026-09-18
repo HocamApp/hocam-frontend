@@ -1,11 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
+import {
+  payTRPayHref,
+  payTRPurchaseAction,
+  payTRShowsUnpaidCancel,
+} from "@/components/payments/paytr/paytrEntryPoints";
+import { readPayTRRecovery } from "@/components/payments/paytr/paytrRecovery";
+import { useAuth } from "@/hooks/useAuth";
 import {
   acceptanceStatusCopy,
   cancelUnpaidPackagePurchase,
@@ -13,6 +20,9 @@ import {
   fetchPurchaseAcceptanceState,
   withdrawPackageRequest,
 } from "@/lib/coachingApi";
+import { PAYTR_ENABLED } from "@/lib/featureFlags";
+import { getSessionStorage } from "@/lib/safeStorage";
+import type { PackagePurchaseStatus } from "@/types";
 
 /**
  * The student's half of the tutor-acceptance layer.
@@ -28,11 +38,22 @@ import {
  *   The acceptance record stays `accepted` on purpose: the tutor really
  *   did say yes, and that is an audit fact worth keeping.
  *
- * Neither moves money, because no payment provider is connected. Nothing
- * here may say "iade", "ödendi" or "hakediş".
+ * Neither moves money by itself. What has changed since: an accepted, still
+ * unpaid purchase can now be paid, so this block also carries the way into
+ * the PayTR screen — "Ödemeye devam et" when the purchase is payable, and
+ * "Ödeme durumunu kontrol et" when this tab already started an attempt.
+ * Nothing here may say "iade", "ödendi" or "hakediş".
  */
-export function PackageRequestStatus({ purchaseId }: { purchaseId: string }) {
+export function PackageRequestStatus({
+  purchaseId,
+  purchaseStatus = "pending",
+}: {
+  purchaseId: string;
+  purchaseStatus?: PackagePurchaseStatus;
+}) {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const [hasKnownAttempt, setHasKnownAttempt] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirming, setConfirming] = useState<null | "withdraw" | "cancel">(
     null
@@ -42,6 +63,31 @@ export function PackageRequestStatus({ purchaseId }: { purchaseId: string }) {
     queryKey: ["purchase-acceptance", purchaseId],
     queryFn: () => fetchPurchaseAcceptanceState(purchaseId),
   });
+
+  // Read once per account: the breadcrumb says an attempt for some purchase
+  // exists in this tab, never what became of it.
+  useEffect(() => {
+    if (!user?.id) return;
+    const record = readPayTRRecovery(getSessionStorage(), user.id);
+    setHasKnownAttempt(record?.purchaseId === purchaseId);
+  }, [user?.id, purchaseId]);
+
+  const paymentAction = payTRPurchaseAction({
+    paytrEnabled: PAYTR_ENABLED,
+    purchaseStatus,
+    acceptance: data,
+    hasKnownAttempt,
+  });
+  const paymentLink =
+    paymentAction === "none" ? null : (
+      <Button size="sm" asChild>
+        <Link href={payTRPayHref(purchaseId)}>
+          {paymentAction === "pay"
+            ? "Ödemeye devam et"
+            : "Ödeme durumunu kontrol et"}
+        </Link>
+      </Button>
+    );
 
   const invalidate = () => {
     setError(null);
@@ -64,8 +110,12 @@ export function PackageRequestStatus({ purchaseId }: { purchaseId: string }) {
   });
 
   // Purchases created before the acceptance layer carry no request at all.
-  // They keep their old behaviour and this block simply does not render.
-  if (!data?.requires_tutor_acceptance || !data.acceptance) return null;
+  // They used to render nothing; now they may still have a payment to make,
+  // so the payment link stands on its own.
+  if (!data?.requires_tutor_acceptance || !data.acceptance) {
+    if (!paymentLink) return null;
+    return <div className="mt-3">{paymentLink}</div>;
+  }
 
   const { acceptance, can_withdraw, can_cancel_unpaid } = data;
   const pending = withdraw.isPending || cancel.isPending;
@@ -94,10 +144,11 @@ export function PackageRequestStatus({ purchaseId }: { purchaseId: string }) {
         </p>
       ) : null}
 
-      {acceptance.status === "accepted" ? (
+      {acceptance.status === "accepted" && purchaseStatus === "pending" ? (
         <p className="text-xs text-muted-foreground">
-          Öğretmenin kabul etti. Paket henüz ödeme aktivasyonu bekliyor —
-          hiçbir tahsilat yapılmadı.
+          {PAYTR_ENABLED
+            ? "Öğretmenin kabul etti. Paket ödeme bekliyor."
+            : "Öğretmenin kabul etti. Paket henüz ödeme aktivasyonu bekliyor — hiçbir tahsilat yapılmadı."}
         </p>
       ) : null}
 
@@ -145,6 +196,7 @@ export function PackageRequestStatus({ purchaseId }: { purchaseId: string }) {
         </div>
       ) : (
         <div className="flex flex-wrap gap-2">
+          {paymentLink}
           {can_withdraw ? (
             <Button
               size="sm"
@@ -154,7 +206,11 @@ export function PackageRequestStatus({ purchaseId }: { purchaseId: string }) {
               Talebi geri çek
             </Button>
           ) : null}
-          {can_cancel_unpaid ? (
+          {payTRShowsUnpaidCancel({
+            canCancelUnpaid: Boolean(can_cancel_unpaid),
+            hasKnownAttempt,
+            purchaseStatus,
+          }) ? (
             <Button
               size="sm"
               variant="outline"

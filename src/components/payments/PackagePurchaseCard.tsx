@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/sheet";
 import { ParticipantAvatar } from "@/components/messaging/ParticipantAvatar";
 import { PackageRequestStatus } from "@/components/payments/PackageRequestStatus";
+import { PAYTR_ENABLED } from "@/lib/featureFlags";
 import type { Booking, PackagePurchase } from "@/types";
 import { bookingDateLabel, bookingInstant, bookingTimeLabel } from "@/lib/bookingTime";
 import { serverNow } from "@/lib/serverClock";
@@ -126,7 +127,10 @@ export function PackagePurchaseCard({
       )}
       {/* Renders nothing for purchases with no acceptance request — i.e.
           everything created before the acceptance layer. */}
-      <PackageRequestStatus purchaseId={purchase.id} />
+      <PackageRequestStatus
+        purchaseId={purchase.id}
+        purchaseStatus={purchase.status}
+      />
     </>
   );
 
@@ -238,7 +242,9 @@ export function PackageLearningCard({
             <div>
               <p className="text-sm font-medium">Paket talebin alındı</p>
               <p className="mt-1 text-sm leading-5 text-muted-foreground">
-                Talebin incelendikten sonra ders hakların kullanıma açılacak. Şu anda senden ek bir işlem beklenmiyor.
+                {PAYTR_ENABLED
+                  ? "Talebinin güncel durumunu ve varsa ödeme adımını detaylarda görebilirsin."
+                  : "Talebin incelendikten sonra ders hakların kullanıma açılacak. Şu anda senden ek bir işlem beklenmiyor."}
               </p>
             </div>
           </div>

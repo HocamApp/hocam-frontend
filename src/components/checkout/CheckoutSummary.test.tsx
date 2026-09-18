@@ -215,3 +215,63 @@ test("uses canonical minor values and one TRY convention for a Coaching bundle",
   assert.equal(screen.getAllByText("31.440,00 ₺").length, 2);
   assert.equal(screen.queryByText("444,44 ₺"), null);
 });
+
+test("names the next step: a coaching bundle always goes to the tutor first", () => {
+  render(
+    <CheckoutSummary
+      tutor={tutor}
+      lessonsPerWeek={2}
+      durationDays={90}
+      pricing={calculatePackagePricing(1000, 24, 16)}
+      planAvailable
+      promoCode=""
+      onPromoCodeChange={() => {}}
+      onPurchaseCta={() => {}}
+      purchasePending={false}
+      pendingForSelectedPlan={false}
+      otherPendingPlanName={null}
+      weeklyPlans={plans}
+      onDurationDaysChange={() => {}}
+      onApplyPromo={() => {}}
+      promoStatus="idle"
+      promoMessage={null}
+      promoPricing={null}
+      onRemovePromo={() => {}}
+      paidRemainingCredits={null}
+      onUseCredits={() => {}}
+      purchaseCtaLabel="Paketi hocaya gönder"
+    />
+  );
+
+  assert.ok(screen.getAllByRole("button", { name: "Paketi hocaya gönder" }).length > 0);
+  assert.equal(screen.queryByRole("button", { name: "Paket talebi oluştur" }), null);
+});
+
+test("keeps the neutral request wording when the next step is not known yet", () => {
+  render(
+    <CheckoutSummary
+      tutor={tutor}
+      lessonsPerWeek={2}
+      durationDays={90}
+      pricing={calculatePackagePricing(1000, 24, 16)}
+      planAvailable
+      promoCode=""
+      onPromoCodeChange={() => {}}
+      onPurchaseCta={() => {}}
+      purchasePending={false}
+      pendingForSelectedPlan={false}
+      otherPendingPlanName={null}
+      weeklyPlans={plans}
+      onDurationDaysChange={() => {}}
+      onApplyPromo={() => {}}
+      promoStatus="idle"
+      promoMessage={null}
+      promoPricing={null}
+      onRemovePromo={() => {}}
+      paidRemainingCredits={null}
+      onUseCredits={() => {}}
+    />
+  );
+
+  assert.ok(screen.getAllByRole("button", { name: "Paket talebi oluştur" }).length > 0);
+});
