@@ -1,8 +1,8 @@
 # PayTR Frontend — İlerleme ve Devir Kaydı
 
 **Güncelleme:** 18 Eylül 2026\
-**Yetkili kapsam:** S0–S6 merge edildi; kullanıcı S8'i istedi ve S8'in backend'e bağlı olmayan kısmı uygulandı. S7 backend bağımlılığı bekliyor.\
-**Araç/model:** S0 ve S0-V: Codex / GPT-6 Astra. S1–S6 ve S8: Claude Code / Claude Opus 5. Model önerileri plan içindedir; bu kayıt düşünme seviyesi tahmini yapmaz.
+**Yetkili kapsam:** S0–S6 ve S8 merge edildi; kullanıcı S9'u istedi ve S9'un belge/operasyon teslimatı yapıldı. S7 ve gerçek aktivasyon backend bağımlılığı bekliyor.\
+**Araç/model:** S0 ve S0-V: Codex / GPT-6 Astra. S1–S6, S8 ve S9: Claude Code / Claude Opus 5. Model önerileri plan içindedir; bu kayıt düşünme seviyesi tahmini yapmaz.
 
 ## S0 teslimat durumu
 
@@ -28,6 +28,47 @@ S0-V yerel doğrulama: `npm ci` başarılı, lockfile değişmedi; `npm run lint
 Kesintide önce bu branch'in PR/head/check durumunu kontrol et; mevcut PR varsa yenisini açma. PR yeşil olunca repo kuralıyla merge commit + remote branch silme, ardından main CI ve Vercel durumunu doğrulama kalır. Bu belge tamamlanmamış CI/merge/deploy'u başarılı ilan etmez.
 
 S1 devri: güncel origin/main'den `agent/paytr-01-api-20260917`; normal mod, plan önerisi Astra Medium / Sonnet High. Planın S1 kabul ölçütlerini uygula. Payment-state endpoint'ini var sayma, flag varsayılan kapalı, otomatik POST/retry yok. B01–B06 açık; S0-V backend referansını veya sözleşmesini değiştirmedi.
+
+## S9 teslimat ve devir (belge/operasyon — aktivasyon yapılmadı)
+
+| Alan | Değer |
+| --- | --- |
+| Repo | HocamApp/hocam-frontend |
+| Worktree | `/Users/ardagg/Desktop/Hocam/.worktrees/frontend/paytr-09-release-20260917` |
+| Branch | `agent/paytr-09-release-20260917` |
+| Başlangıç main SHA | `4a61d332971fb81ed6f7835a5b4bc5f39acc67fa` (PR #276 merge) |
+| Kapsam | Yayın runbook'u, ürün/ajan belgelerinin son davranışa güncellenmesi |
+| Mod / araç | Normal uygulama modu; Claude Code / Claude Opus 5 |
+| PR / merge SHA | PR kaydından doğrula |
+| Sonraki adım | Backend kararı: PR #163 merge/deploy, sonra S7 ve runbook'taki aktivasyon sırası |
+
+Yeni: `docs/payments/PAYTR_RELEASE_RUNBOOK.md`. Değişen: `AI_AGENT_RULES.md` §1,
+`docs/current-product-and-technical-state.md`, `docs/payments/PAYTR_FRONTEND_PLAN.md` (okuma
+sırasına runbook eklendi), bu kayıt.
+
+**Hiçbir bayrak açılmadı, hiçbir ortam değiştirilmedi, secret okunmadı.** Bu bölüm production
+aktivasyonu değildir ve merge edilmesi aktivasyon yetkisi vermez. Backend PR #163 18 Eylül 2026
+itibarıyla hâlâ OPEN; aktivasyonun ön koşulları runbook'ta P1–P9 olarak sahibiyle birlikte yazıldı.
+
+Runbook'un kapsadıkları: bugünkü durum tablosu, ön koşullar ve sahipleri, aktivasyon sırası
+(backend staging → frontend staging yeniden build → gerçek test modu işlemi → kanıt → sahip kararı
+→ production backend → production frontend), izleme listesi (token hataları, 30 dakikadan uzun
+pending, manual_review, duplicate callback, callback almayan attempt), kanıt formatı (purchase ID,
+OID, zaman, sonuç — secret/kart/adres/telefon yok), dört kademeli geri alma ve açık B01–B06
+bağımlılıkları.
+
+`NEXT_PUBLIC_PAYTR_ENABLED` build-time inline edildiği için her iki yönde de yeniden build/deploy
+gerektirir; runbook bunu aktivasyon ve geri alma adımlarında ayrıca yazıyor.
+
+S9 yerel doğrulama (worktree `4a61d33` bazlı): yalnız Markdown değişti.
+
+| Komut | Sonuç |
+| --- | --- |
+| `npm run lint` | Exit 0; yalnız mevcut tutor profili img uyarısı |
+| `npm run typecheck` | Exit 0 |
+| `npm run test:paytr` | 160 test, 160 geçti |
+| `npm run test:unit` | 1435 test, 1434 geçti, 0 başarısız, 1 atlandı; bütünlük kontrolü geçti |
+| `npm run build` | Başarılı |
 
 ## S8 teslimat ve devir (kısmi — backend kapısı açık)
 
@@ -601,10 +642,11 @@ rtk git log -1 --format=%H
 2. GitHub'da S0 branch/PR commit ve merge durumunu doğrula; anlatılan durumu kodla uzlaştır.
 3. S0 tamamlanmadan kesinti olduysa aynı branch/PR ve worktree'den devam et.
 4. S0-V ve S1–S6 için yukarıdaki branch/PR kayıtlarını doğrula; yarım kalan bölümde aynı branch'ten devam et.
-5. S6 merged ve kullanıcı S7 istiyorsa önce backend payment-state endpoint'ini doğrula (B01). Endpoint
-   yoksa S7 "bağımlılık bekliyor" olarak kalır ve mock failure ile tamamlanmış sayılmaz; bu durumda
-   S8'in temel akış kontrolleri yapılabilir. Endpoint varsa `agent/paytr-07-attempt-state-20260917`
-   aç, gerçek wire shape'i sözleşmeye sabitle ve `verifiedAttempt` girdisini besle.
+5. Frontend bölümlerinin hepsi (S0–S6, S8, S9) merge edildi. Kalan iş backend'e bağlı:
+   (a) payment-state endpoint'i gelirse `agent/paytr-07-attempt-state-20260917` ile S7 — gerçek wire
+   shape'i sözleşmeye sabitle ve `verifiedAttempt` girdisini besle; (b) backend PR #163 merge/deploy
+   edilirse `docs/payments/PAYTR_RELEASE_RUNBOOK.md` sırasıyla staging aktivasyonu ve gerçek test modu
+   işlemi. Hiçbirini kullanıcı istemeden başlatma; production bayrağını ajan açmaz.
 6. Token sınırından önce tamamlanan iş, kalan ilk adım, testler ve commit edilmemiş dosyaları güncelle.
 
 Yeni bölüm devri için planın sonundaki şablon kullanılır. Nihai self-referential commit/merge SHA bu dosyaya uydurulmaz; PR ve Git kaydından okunur.
