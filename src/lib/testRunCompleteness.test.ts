@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-// @ts-expect-error — plain ESM helper shared with the unit-test runner script.
+// A plain ESM helper, shared with the unit-test runner script.
 import { missingTestFiles } from "../../scripts/testRunCompleteness.mjs";
 
 describe("missingTestFiles", () => {
