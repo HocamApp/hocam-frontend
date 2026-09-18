@@ -127,6 +127,16 @@ export const BROWSER_STORAGE_INVENTORY: readonly BrowserStorageEntry[] = [
     required: true,
   },
   {
+    name: "hocam:paytr-attempt:v1:{kullanıcı}",
+    kind: "Oturum depolaması",
+    purpose:
+      "Ödeme sayfasından ayrıldıktan sonra hangi paket satın almasının sonucunun bekleneceğini hatırlar. Yalnız satın alma, hoca ve işlem numarası ile başlangıç zamanını taşır; ödeme sonucu her zaman sunucudan doğrulanır.",
+    provider: "HOCAM",
+    duration: "Sekme kapanana kadar",
+    category: "Zorunlu",
+    required: true,
+  },
+  {
     name: "hocam:retention-offer-shown, hocam:tutor-profile-ai-nudge-shown",
     kind: "Oturum depolaması",
     purpose: "Aynı güvenlik veya yardım uyarısının tek sekmede tekrar gösterilmesini önler.",
@@ -150,6 +160,16 @@ export const BROWSER_STORAGE_INVENTORY: readonly BrowserStorageEntry[] = [
     purpose: "Onaylanmış dersin görüntülü görüşme oturumunu çalıştırır.",
     provider: "8x8 / JaaS",
     duration: "Canlı ders ve sağlayıcı ayarlarına göre",
+    category: "Zorunlu",
+    required: true,
+  },
+  {
+    name: "PayTR güvenli ödeme formu",
+    kind: "Üçüncü taraf hizmet",
+    purpose:
+      "Paket ödemesi başlatıldığında kart bilgilerinin girildiği güvenli ödeme ekranını sunar. Kart, CVV ve doğrulama bilgileri yalnız bu sağlayıcıda kalır, HOCAM tarafından görülmez veya saklanmaz.",
+    provider: "PayTR",
+    duration: "Ödeme işlemi ve sağlayıcı ayarlarına göre",
     category: "Zorunlu",
     required: true,
   },
