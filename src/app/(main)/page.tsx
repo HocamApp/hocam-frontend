@@ -13,6 +13,13 @@ import {
   SITE_DESCRIPTION,
   SITE_URL,
 } from "@/lib/seo";
+import {
+  directoryFiltersFromRecord,
+  homeDirectoryMetadata,
+  parseDirectoryPage,
+  tutorDirectoryQueryKey,
+  type DirectorySearchParams,
+} from "@/lib/directorySeo";
 
 /**
  * The homepage and the tutor directory, which in this design are one screen
@@ -39,26 +46,15 @@ import {
  * was an unfinished experiment and would be a quiet catastrophe now: this is
  * the page the site's search traffic is supposed to land on.
  */
-export const metadata: Metadata = {
-  title: "Doğrulanmış YKS Hocaları",
-  description:
-    "TYT ve AYT dersleri için doğrulanmış hocaları ders, YKS sıralaması, fiyat ve uygunluk bilgilerine göre inceleyin.",
-  alternates: {
-    canonical: "/",
-  },
-  robots: {
-    index: true,
-    follow: true,
-  },
-  openGraph: {
-    type: "website",
-    url: "/",
-    title: "Doğrulanmış YKS Hocaları | Hocam",
-    description: "TYT ve AYT dersleri için doğrulanmış hocaları karşılaştırın.",
-  },
-};
+type HomeProps = Readonly<{ searchParams: DirectorySearchParams }>;
 
-export default async function Home() {
+export function generateMetadata({ searchParams }: HomeProps): Metadata {
+  return homeDirectoryMetadata(searchParams);
+}
+
+export default async function Home({ searchParams }: HomeProps) {
+  const filters = directoryFiltersFromRecord(searchParams);
+  const page = parseDirectoryPage(searchParams.page);
   /* Warms the first page of the list the directory renders below. It used to
      be prefetched by the /tutors layout, where it also hydrated every tutor
      profile — those read `["tutor", id]` and never touched this cache, so it
@@ -66,8 +62,8 @@ export default async function Home() {
   const queryClient = new QueryClient();
   await Promise.allSettled([
     queryClient.prefetchQuery({
-      queryKey: ["tutors", { ordering: "rating" }, 1],
-      queryFn: () => fetchPublicTutors(1, 12),
+      queryKey: tutorDirectoryQueryKey(filters, page),
+      queryFn: () => fetchPublicTutors(filters, page, 12),
     }),
     queryClient.prefetchQuery({
       queryKey: ["subjects"],

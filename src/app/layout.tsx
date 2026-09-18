@@ -57,18 +57,18 @@ export const metadata: Metadata = {
     description: SITE_DESCRIPTION,
     images: [
       {
-        url: "/brand/hocam-logo.png",
-        width: 1024,
-        height: 1024,
-        alt: "Hocam",
+        url: "/opengraph-image",
+        width: 1200,
+        height: 630,
+        alt: "Hocam — Doğrulanmış YKS hocalarıyla online özel ders",
       },
     ],
   },
   twitter: {
-    card: "summary",
+    card: "summary_large_image",
     title: "Hocam | YKS için Online Özel Ders",
     description: SITE_DESCRIPTION,
-    images: ["/brand/hocam-logo.png"],
+    images: ["/twitter-image"],
   },
   icons: {
     icon: [{ url: "/brand/hocam-logo.png", type: "image/png" }],

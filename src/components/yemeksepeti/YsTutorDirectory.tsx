@@ -21,7 +21,8 @@ import {
   signupUrlForGatedPage,
 } from "@/lib/anonymousBrowsing";
 import { directoryFilterQuery, readDirectoryFilters, TUTOR_LIST_ID } from "@/lib/tutorDirectoryLinks";
-import { defaultTutorOrdering } from "@/lib/tutorDirectory";
+import { defaultTutorOrdering, tutorDirectoryQueryKey } from "@/lib/tutorDirectory";
+import { parseDirectoryPage } from "@/lib/directorySeo";
 import {
   filterFavoriteTutors,
   sortFavoriteTutors,
@@ -162,7 +163,7 @@ function DirectoryBody({ favoritesOnly = false }: DirectoryProps) {
   const showFavorites = favoritesOnly || searchParams.get("favorites") === "1";
 
   const filters = useMemo(() => readDirectoryFilters(searchParams), [searchParams]);
-  const [page, setPage] = useState(1);
+  const page = parseDirectoryPage(searchParams.get("page") ?? undefined);
   /* Starts closed on purpose, and deliberately does NOT read
      `hocam:tutor-filters-open` — inheriting the visitor's `/tutors`
      preference would defeat that. No hydration effect, so no open/close
@@ -219,18 +220,13 @@ function DirectoryBody({ favoritesOnly = false }: DirectoryProps) {
     [filters, search],
   );
 
-  // A new term should land the reader on the first page of its own results.
-  useEffect(() => {
-    setPage(1);
-  }, [search, filters]);
-
   const {
     data: tutors,
     isLoading,
     isPlaceholderData,
     error,
   } = useQuery({
-    queryKey: ["tutors", effectiveFilters, page],
+    queryKey: tutorDirectoryQueryKey(effectiveFilters, page),
     queryFn: () => fetchTutors(effectiveFilters, page, PAGE_SIZE),
     placeholderData: (previousData) => previousData,
   });
@@ -293,7 +289,6 @@ function DirectoryBody({ favoritesOnly = false }: DirectoryProps) {
   const handleFiltersChange = (next: TutorFiltersType) => {
     const query = directoryFilterQuery(searchParams.toString(), next);
     router.replace(`${pathname}${query ? `?${query}` : ""}#${TUTOR_LIST_ID}`, { scroll: false });
-    setPage(1);
   };
 
   const handleClear = () => handleFiltersChange({});
@@ -564,7 +559,11 @@ function DirectoryBody({ favoritesOnly = false }: DirectoryProps) {
                         router.push(signupUrlForGatedPage(returnUrl));
                         return;
                       }
-                      setPage(nextPage);
+                      const params = new URLSearchParams(searchParams.toString());
+                      if (nextPage === 1) params.delete("page");
+                      else params.set("page", String(nextPage));
+                      const query = params.toString();
+                      router.replace(`${pathname}${query ? `?${query}` : ""}#${TUTOR_LIST_ID}`, { scroll: false });
                       scrollListIntoView();
                     }}
                   />

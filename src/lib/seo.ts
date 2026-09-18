@@ -4,6 +4,7 @@ import type {
   TutorProfile,
 } from "@/types";
 import { applyDemoTutorPresentation } from "./demoTutorPresentation";
+import type { TutorFilters } from "./tutorsApi";
 
 export const SITE_URL = "https://www.hocamozelders.com";
 export const SITE_NAME = "Hocam";
@@ -58,11 +59,18 @@ function normalizeTutorsResponse(
 }
 
 export async function fetchPublicTutors(
+  filters: TutorFilters = {},
   page = 1,
   pageSize = 12
 ): Promise<PaginatedResponse<TutorProfile>> {
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(filters)) {
+    if (value) params.set(key, value);
+  }
+  params.set("page", String(page));
+  params.set("page_size", String(pageSize));
   const data = await fetchJson<PaginatedResponse<TutorProfile> | TutorProfile[]>(
-    `/tutors/?page=${page}&page_size=${pageSize}&ordering=rating`
+    `/tutors/?${params.toString()}`
   );
   return normalizeTutorsResponse(data);
 }
@@ -72,7 +80,7 @@ export async function fetchAllPublicTutors(): Promise<TutorProfile[]> {
   const seenIds = new Set<string>();
 
   for (let page = 1; page <= 20; page += 1) {
-    const response = await fetchPublicTutors(page, 100);
+    const response = await fetchPublicTutors({ ordering: "rating" }, page, 100);
     for (const tutor of response.results) {
       if (tutor.is_public && tutor.is_verified && !seenIds.has(tutor.id)) {
         seenIds.add(tutor.id);

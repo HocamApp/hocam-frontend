@@ -13,11 +13,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const pages: MetadataRoute.Sitemap = [
     {
       url: absoluteUrl("/"),
+      lastModified: new Date("2026-09-18"),
       changeFrequency: "daily",
       priority: 1,
     },
     ...PUBLIC_SEO_ROUTES.map((route) => ({
       url: absoluteUrl(route),
+      lastModified: new Date("2026-09-18"),
       changeFrequency: "weekly" as const,
       priority:
         route === "/yks-ozel-ders"
@@ -42,6 +44,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     for (const tutor of tutors) {
       pages.push({
         url: absoluteUrl(`/tutors/${encodeURIComponent(tutor.id)}`),
+        lastModified: new Date(tutor.created_at),
         changeFrequency: "weekly",
         priority: 0.8,
       });

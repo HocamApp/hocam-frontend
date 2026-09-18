@@ -9,6 +9,17 @@ import {
   tutorFullName,
   tutorSeoDescription,
 } from "@/lib/seo";
+import {
+  isBlockedByRobots,
+  PRIVATE_CRAWL_PATHS,
+  PUBLIC_CRAWL_EXAMPLES,
+} from "@/lib/seoRoutes";
+import {
+  directoryFiltersFromRecord,
+  homeDirectoryMetadata,
+  parseDirectoryPage,
+  tutorDirectoryQueryKey,
+} from "@/lib/directorySeo";
 import type { TutorProfile } from "@/types";
 
 const tutor: TutorProfile = {
@@ -65,6 +76,41 @@ test("robots exposes public pages while protecting account and lesson routes", (
     Array.isArray(rules?.disallow) && rules.disallow.includes("/session")
   );
   assert.match(String(result.sitemap), /\/sitemap\.xml$/);
+  assert.deepEqual(rules?.disallow, [...PRIVATE_CRAWL_PATHS]);
+  for (const path of PUBLIC_CRAWL_EXAMPLES) {
+    assert.equal(isBlockedByRobots(path), false, `${path} must remain crawlable`);
+  }
+  assert.equal(isBlockedByRobots("/tutor/setup"), true);
+  assert.equal(isBlockedByRobots("/tutors/public-tutor-id"), false);
+});
+
+test("directory pages share query keys and indexing policy", () => {
+  const filters = directoryFiltersFromRecord({
+    exam_type: "TYT",
+    subject: "Matematik",
+    page: "2",
+  });
+  assert.deepEqual(filters, { exam_type: "TYT", subject: "Matematik" });
+  assert.deepEqual(tutorDirectoryQueryKey(filters, 2), ["tutors", filters, 2]);
+  assert.equal(parseDirectoryPage("invalid"), 1);
+
+  const pageTwo = homeDirectoryMetadata({ page: "2" });
+  assert.deepEqual(pageTwo.alternates?.canonical, {
+    url: "https://www.hocamozelders.com/?page=2",
+  });
+  assert.deepEqual(pageTwo.robots, { index: true, follow: true });
+
+  const filtered = homeDirectoryMetadata({ subject: "Matematik", page: "2" });
+  assert.deepEqual(filtered.alternates?.canonical, {
+    url: "https://www.hocamozelders.com/",
+  });
+  assert.deepEqual(filtered.robots, { index: false, follow: true });
+
+  const campaign = homeDirectoryMetadata({ utm_source: "newsletter" });
+  assert.deepEqual(campaign.alternates?.canonical, {
+    url: "https://www.hocamozelders.com/",
+  });
+  assert.deepEqual(campaign.robots, { index: true, follow: true });
 });
 
 test("llms.txt is plain text, factual, and excludes private URLs", async () => {

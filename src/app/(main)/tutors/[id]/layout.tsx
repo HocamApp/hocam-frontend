@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import {
   dehydrate,
   HydrationBoundary,
@@ -82,7 +83,7 @@ export default async function TutorProfileLayout({
   params,
 }: TutorLayoutProps) {
   const tutor = await fetchPublicTutor(params.id);
-  if (!tutor) return children;
+  if (!tutor) notFound();
 
   const queryClient = new QueryClient();
   // Seeded as already stale, on purpose.
