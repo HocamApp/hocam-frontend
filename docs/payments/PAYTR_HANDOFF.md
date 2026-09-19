@@ -1,5 +1,29 @@
 # PayTR Frontend — İlerleme ve Devir Kaydı
 
+## Güncel checkpoint — 19 Eylül, S9-R belge teslimi
+
+| Bölüm | PR | Merge / doğrulama |
+| --- | --- | --- |
+| K1 | [#278](https://github.com/HocamApp/hocam-frontend/pull/278) | `95d8875`; K2 main CI bu düzeltmeleri de kapsar |
+| K2 | [#279](https://github.com/HocamApp/hocam-frontend/pull/279) | `1fa4bbb`; main CI #35437617890 ve Vercel başarılı |
+| K3 | [#280](https://github.com/HocamApp/hocam-frontend/pull/280) | `a48c616`; main CI #35457253190 ve Vercel başarılı; 1451 test: 1450 pass, 1 skip |
+| K4 | [#281](https://github.com/HocamApp/hocam-frontend/pull/281) | `9f5933e`; main CI #35456940060 ve Vercel başarılı |
+| S8-R yerel | [#282](https://github.com/HocamApp/hocam-frontend/pull/282) | `95e31d8`; PR CI #35457293817 ve Vercel başarılı; 12 browser senaryosu |
+| S9-R belge | [#283](https://github.com/HocamApp/hocam-frontend/pull/283) | Bu branch; karar BEKLE, operasyon kabulü açık |
+
+Aktif branch `agent/paytr-09-release-readiness-20260919`; güncel main
+`95e31d86b4a9be2d940d2b59f29a31cae90fb975` alındı. S8/S9 son main CI/deploy
+kanıtı ilgili merge SHA'nın GitHub Actions/deployment kaydından doğrulanır;
+bu checkpoint sonradan bitecek kontrolleri başarılı ilan etmez.
+
+İlk bağımlı adım: backend sahibi B01/B02 gerçek endpoint/izin sözleşmesini ve
+HTTPS staging/test modu kanıtlarını teslim eder; ardından S7, gerçek S8 ve
+operasyon S9 yürütülür. Frontend modeli/branch/mod önerileri
+[kalan işler planında](PAYTR_REMAINING_WORK.md). Görseller
+[S8-R raporunda](PAYTR_S8R_VERIFICATION.md), açık yayın kapıları
+[karar kaydında](PAYTR_RELEASE_READINESS.md). Production bayrakları değiştirilmedi.
+Aşağıdaki kayıtlar bölümün o andaki tarihsel checkpoint'leridir.
+
 ## 19 Eylül — S8-R yerel görsel ve etkileşim doğrulaması
 
 Branch `agent/paytr-08-final-verification-20260919`, baz `1fa4bbb` (güncel main).

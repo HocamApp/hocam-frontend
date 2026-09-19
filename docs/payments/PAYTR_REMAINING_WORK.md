@@ -16,7 +16,7 @@ branch/PR sürdürülür. Tamamlanmış bölüm tekrar yapılmaz.
 | K3 test tamamlanması | Normal | Codex yüksek / Claude Opus | k3-test-completeness-20260919 | PR #280 merged, a48c616; son PR CI/Vercel başarılı |
 | K4 backend devri | Sözleşme inceleme → normal belge | Codex yüksek / Claude Opus | k4-backend-handoff-20260919 | PR #281 merged, 9f5933e; main CI/Vercel başarılı; B01–B06 teslim matrisi hazır |
 | S7 attempt/retry | Sözleşme inceleme → normal | Codex yüksek / Claude Opus | 07-attempt-state-20260919 | B01 endpoint yok, B02 retry garantisi yok; gerçek response teslimini bekle |
-| S8-R doğrulama | Normal test/düzeltme | Codex yüksek / Claude Opus | 08-final-verification-20260919 | PR #282: 12 yerel mock/görsel senaryo başarılı; gerçek staging, fiziksel klavye ve ekran okuyucu açık |
+| S8-R doğrulama | Normal test/düzeltme | Codex yüksek / Claude Opus | 08-final-verification-20260919 | PR #282 merged, 95e31d8: 12 yerel mock/görsel senaryo başarılı; gerçek staging, fiziksel klavye ve ekran okuyucu açık |
 | S9-R yayın hazırlığı | Plan → ayrıca yetkili operasyon | Codex yüksek / Claude Opus | 09-release-readiness-20260919 | PR #283: BEKLE karar kaydı hazır; operasyon kapıları ve production kararı açık |
 
 K1/K2 main kanıtı: [CI 35437617890](https://github.com/HocamApp/hocam-frontend/actions/runs/35437617890)
