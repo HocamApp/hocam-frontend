@@ -13,16 +13,17 @@ branch/PR sürdürülür. Tamamlanmış bölüm tekrar yapılmaz.
 | --- | --- | --- | --- | --- |
 | K1 ödeme uygunluğu | Normal | Codex yüksek / Claude Opus | k1-payment-guards-20260919 | PR #278 merged, 95d8875; cached GET hatası ve 409/503/404 korumaları |
 | K2 recovery/polling | Normal | Codex orta / Claude Sonnet | k2-recovery-polling-20260919 | PR #279 merged, 1fa4bbb; 45 saniye ortak deadline, terminal duruş |
-| K3 test tamamlanması | Normal | Codex yüksek / Claude Opus | k3-test-completeness-20260919 | PR #280 açık; 0e69b22 CI başarılı, Vercel failed; log erişimi 403, kapanış bekliyor |
-| K4 backend devri | Sözleşme inceleme → normal belge | Codex yüksek / Claude Opus | k4-backend-handoff-20260919 | Bu bölüm: B01–B06 teslim matrisi, P1–P9 ve açık operasyon kanıtları |
+| K3 test tamamlanması | Normal | Codex yüksek / Claude Opus | k3-test-completeness-20260919 | PR #280 merged, a48c616; son PR CI/Vercel başarılı |
+| K4 backend devri | Sözleşme inceleme → normal belge | Codex yüksek / Claude Opus | k4-backend-handoff-20260919 | PR #281 merged, 9f5933e; main CI/Vercel başarılı; B01–B06 teslim matrisi hazır |
 | S7 attempt/retry | Sözleşme inceleme → normal | Codex yüksek / Claude Opus | 07-attempt-state-20260919 | B01 endpoint yok, B02 retry garantisi yok; gerçek response teslimini bekle |
 | S8-R doğrulama | Normal test/düzeltme | Codex yüksek / Claude Opus | 08-final-verification-20260919 | PR #282: 12 yerel mock/görsel senaryo başarılı; gerçek staging, fiziksel klavye ve ekran okuyucu açık |
 | S9-R yayın hazırlığı | Plan → ayrıca yetkili operasyon | Codex yüksek / Claude Opus | 09-release-readiness-20260919 | PR #283: BEKLE karar kaydı hazır; operasyon kapıları ve production kararı açık |
 
 K1/K2 main kanıtı: [CI 35437617890](https://github.com/HocamApp/hocam-frontend/actions/runs/35437617890)
 başarılı; merge `1fa4bbb37a77be7b5b438a76323f335e1f89bda5` Vercel status SUCCESS.
-K3 [PR #280](https://github.com/HocamApp/hocam-frontend/pull/280) güncel check'leri devralırken
-yeniden okunur; CI yeşil olması Vercel kontrolünü geçersiz kılmaz.
+K3 [PR #280](https://github.com/HocamApp/hocam-frontend/pull/280) son CI #35456979892
+ve Vercel başarılı; önceki farklı takım deployment hatasının kök nedeni doğrulanmadı.
+K4 main CI #35456940060 başarılı. Devralırken güncel checkpoint'i HANDOFF'tan oku.
 
 Model önerisi hesapta erişilebilir eşdeğerle uygulanır. Bu çalışma Codex normal modunda;
 çalışma zamanı kesin model sürümünü sunmadığından sürüm adı tahmin edilmedi.

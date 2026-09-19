@@ -302,7 +302,7 @@ export default function PayTRPaymentPage({
           {showSummary && (
             <PayTRPurchaseSummary
               purchase={purchase}
-              className="lg:sticky lg:top-6 lg:col-start-2 lg:row-start-1"
+              className="self-start lg:col-start-2 lg:row-start-1"
             />
           )}
           <div className="min-w-0 lg:col-start-1 lg:row-start-1">

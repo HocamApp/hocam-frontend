@@ -1,0 +1,739 @@
+{
+  "capturedAt": "2026-09-19T17:02:00.032Z",
+  "browser": "149.0.7827.55",
+  "scope": "local mocked Chromium; not real PayTR, screen reader, or physical mobile keyboard",
+  "results": [
+    {
+      "state": "ready",
+      "theme": "light",
+      "width": 320,
+      "height": 568,
+      "screenshot": "ready-320-light.png",
+      "metrics": {
+        "width": 320,
+        "scrollWidth": 320,
+        "reducedMotion": true,
+        "dark": false,
+        "controls": [
+          {
+            "label": "Paketlerim",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "label": "Hocam ana sayfa",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "label": "Fiyat ayrıntıları+",
+            "height": 44,
+            "font": "14px"
+          },
+          {
+            "label": "user_name",
+            "height": 48,
+            "font": "16px"
+          },
+          {
+            "label": "user_phone",
+            "height": 48,
+            "font": "16px"
+          },
+          {
+            "label": "Kullanım koşulları",
+            "height": 44,
+            "font": "14px"
+          },
+          {
+            "label": "Mesafeli satış sözleşmesi",
+            "height": 44,
+            "font": "14px"
+          },
+          {
+            "label": "İptal ve iade",
+            "height": 44,
+            "font": "14px"
+          },
+          {
+            "label": "Güvenli ödemeye geç",
+            "height": 48,
+            "font": "16px"
+          }
+        ],
+        "positiveTabindex": false
+      },
+      "keyboard": [
+        {
+          "label": "İçeriğe geç",
+          "name": null,
+          "outline": "auto",
+          "shadow": "rgb(255, 255, 255) 0px 0px 0px 0px, rgb(2, 23, 26) 0px 0px 0px 2px, rgba(0, 0, 0, 0) 0px 0px 0px 0px"
+        },
+        {
+          "label": "Paketlerim",
+          "name": null,
+          "outline": "solid",
+          "shadow": "rgb(255, 255, 255) 0px 0px 0px 2px, rgb(2, 23, 26) 0px 0px 0px 4px, rgba(0, 0, 0, 0) 0px 0px 0px 0px"
+        },
+        {
+          "label": "Hocam ana sayfa",
+          "name": null,
+          "outline": "solid",
+          "shadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px"
+        },
+        {
+          "label": "Fiyat ayrıntıları+",
+          "name": null,
+          "outline": "auto",
+          "shadow": "none"
+        },
+        {
+          "label": "user_name",
+          "name": "user_name",
+          "outline": "solid",
+          "shadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px"
+        }
+      ],
+      "validation": {
+        "invalid": 3,
+        "focus": "user_name"
+      },
+      "textScale200Percent": "no horizontal overflow",
+      "errors": [],
+      "writes": [],
+      "unexpectedRequests": []
+    },
+    {
+      "state": "ready",
+      "theme": "light",
+      "width": 375,
+      "height": 812,
+      "screenshot": "ready-375-light.png",
+      "metrics": {
+        "width": 375,
+        "scrollWidth": 375,
+        "reducedMotion": true,
+        "dark": false,
+        "controls": [
+          {
+            "label": "Paketlerim",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "label": "Hocam ana sayfa",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "label": "Fiyat ayrıntıları+",
+            "height": 44,
+            "font": "14px"
+          },
+          {
+            "label": "user_name",
+            "height": 48,
+            "font": "16px"
+          },
+          {
+            "label": "user_phone",
+            "height": 48,
+            "font": "16px"
+          },
+          {
+            "label": "Kullanım koşulları",
+            "height": 44,
+            "font": "14px"
+          },
+          {
+            "label": "Mesafeli satış sözleşmesi",
+            "height": 44,
+            "font": "14px"
+          },
+          {
+            "label": "İptal ve iade",
+            "height": 44,
+            "font": "14px"
+          },
+          {
+            "label": "Güvenli ödemeye geç",
+            "height": 48,
+            "font": "16px"
+          }
+        ],
+        "positiveTabindex": false
+      },
+      "keyboard": [
+        {
+          "label": "İçeriğe geç",
+          "name": null,
+          "outline": "auto",
+          "shadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px"
+        },
+        {
+          "label": "Paketlerim",
+          "name": null,
+          "outline": "solid",
+          "shadow": "rgb(255, 255, 255) 0px 0px 0px 2px, rgb(2, 23, 26) 0px 0px 0px 4px, rgba(0, 0, 0, 0) 0px 0px 0px 0px"
+        },
+        {
+          "label": "Hocam ana sayfa",
+          "name": null,
+          "outline": "solid",
+          "shadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px"
+        },
+        {
+          "label": "Fiyat ayrıntıları+",
+          "name": null,
+          "outline": "auto",
+          "shadow": "none"
+        },
+        {
+          "label": "user_name",
+          "name": "user_name",
+          "outline": "solid",
+          "shadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px"
+        }
+      ],
+      "validation": {
+        "invalid": 3,
+        "focus": "user_name"
+      },
+      "textScale200Percent": "no horizontal overflow",
+      "errors": [],
+      "writes": [],
+      "unexpectedRequests": []
+    },
+    {
+      "state": "ready",
+      "theme": "light",
+      "width": 768,
+      "height": 1024,
+      "screenshot": "ready-768-light.png",
+      "metrics": {
+        "width": 768,
+        "scrollWidth": 768,
+        "reducedMotion": true,
+        "dark": false,
+        "controls": [
+          {
+            "label": "Paketlerim",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "label": "Hocam ana sayfa",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "label": "Fiyat ayrıntıları+",
+            "height": 44,
+            "font": "14px"
+          },
+          {
+            "label": "user_name",
+            "height": 48,
+            "font": "16px"
+          },
+          {
+            "label": "user_phone",
+            "height": 48,
+            "font": "16px"
+          },
+          {
+            "label": "Kullanım koşulları",
+            "height": 44,
+            "font": "14px"
+          },
+          {
+            "label": "Mesafeli satış sözleşmesi",
+            "height": 44,
+            "font": "14px"
+          },
+          {
+            "label": "İptal ve iade",
+            "height": 44,
+            "font": "14px"
+          },
+          {
+            "label": "Güvenli ödemeye geç",
+            "height": 48,
+            "font": "16px"
+          }
+        ],
+        "positiveTabindex": false
+      },
+      "keyboard": [
+        {
+          "label": "İçeriğe geç",
+          "name": null,
+          "outline": "auto",
+          "shadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px"
+        },
+        {
+          "label": "Paketlerim",
+          "name": null,
+          "outline": "solid",
+          "shadow": "rgb(255, 255, 255) 0px 0px 0px 2px, rgb(2, 23, 26) 0px 0px 0px 4px, rgba(0, 0, 0, 0) 0px 0px 0px 0px"
+        },
+        {
+          "label": "Hocam ana sayfa",
+          "name": null,
+          "outline": "solid",
+          "shadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px"
+        },
+        {
+          "label": "Fiyat ayrıntıları+",
+          "name": null,
+          "outline": "auto",
+          "shadow": "none"
+        },
+        {
+          "label": "user_name",
+          "name": "user_name",
+          "outline": "solid",
+          "shadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px"
+        }
+      ],
+      "validation": {
+        "invalid": 3,
+        "focus": "user_name"
+      },
+      "textScale200Percent": "no horizontal overflow",
+      "errors": [],
+      "writes": [],
+      "unexpectedRequests": []
+    },
+    {
+      "state": "ready",
+      "theme": "light",
+      "width": 1440,
+      "height": 900,
+      "screenshot": "ready-1440-light.png",
+      "metrics": {
+        "width": 1440,
+        "scrollWidth": 1440,
+        "reducedMotion": true,
+        "dark": false,
+        "controls": [
+          {
+            "label": "Paketlerim",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "label": "Hocam ana sayfa",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "label": "Fiyat ayrıntıları+",
+            "height": 0,
+            "font": "14px"
+          },
+          {
+            "label": "user_name",
+            "height": 48,
+            "font": "16px"
+          },
+          {
+            "label": "user_phone",
+            "height": 48,
+            "font": "16px"
+          },
+          {
+            "label": "Kullanım koşulları",
+            "height": 44,
+            "font": "14px"
+          },
+          {
+            "label": "Mesafeli satış sözleşmesi",
+            "height": 44,
+            "font": "14px"
+          },
+          {
+            "label": "İptal ve iade",
+            "height": 44,
+            "font": "14px"
+          },
+          {
+            "label": "Güvenli ödemeye geç",
+            "height": 48,
+            "font": "16px"
+          }
+        ],
+        "positiveTabindex": false
+      },
+      "keyboard": [
+        {
+          "label": "İçeriğe geç",
+          "name": null,
+          "outline": "auto",
+          "shadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px"
+        },
+        {
+          "label": "Paketlerim",
+          "name": null,
+          "outline": "solid",
+          "shadow": "rgb(255, 255, 255) 0px 0px 0px 2px, rgb(2, 23, 26) 0px 0px 0px 4px, rgba(0, 0, 0, 0) 0px 0px 0px 0px"
+        },
+        {
+          "label": "Hocam ana sayfa",
+          "name": null,
+          "outline": "solid",
+          "shadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px"
+        },
+        {
+          "label": "user_name",
+          "name": "user_name",
+          "outline": "solid",
+          "shadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px"
+        }
+      ],
+      "validation": {
+        "invalid": 3,
+        "focus": "user_name"
+      },
+      "textScale200Percent": "no horizontal overflow",
+      "errors": [],
+      "writes": [],
+      "unexpectedRequests": []
+    },
+    {
+      "state": "pending",
+      "theme": "light",
+      "width": 375,
+      "height": 812,
+      "screenshot": "pending-375-light.png",
+      "metrics": {
+        "width": 375,
+        "scrollWidth": 375,
+        "reducedMotion": true,
+        "dark": false,
+        "controls": [
+          {
+            "label": "Paketlerim",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "label": "Hocam ana sayfa",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "label": "Fiyat ayrıntıları+",
+            "height": 44,
+            "font": "14px"
+          }
+        ],
+        "positiveTabindex": false
+      },
+      "errors": [],
+      "writes": [],
+      "unexpectedRequests": []
+    },
+    {
+      "state": "coaching",
+      "theme": "light",
+      "width": 375,
+      "height": 812,
+      "screenshot": "coaching-375-light.png",
+      "metrics": {
+        "width": 375,
+        "scrollWidth": 375,
+        "reducedMotion": true,
+        "dark": false,
+        "controls": [
+          {
+            "label": "Paketlerim",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "label": "Hocam ana sayfa",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "label": "Fiyat ayrıntıları+",
+            "height": 44,
+            "font": "14px"
+          }
+        ],
+        "positiveTabindex": false
+      },
+      "errors": [],
+      "writes": [],
+      "unexpectedRequests": []
+    },
+    {
+      "state": "paid",
+      "theme": "light",
+      "width": 375,
+      "height": 812,
+      "screenshot": "paid-375-light.png",
+      "metrics": {
+        "width": 375,
+        "scrollWidth": 375,
+        "reducedMotion": true,
+        "dark": false,
+        "controls": [
+          {
+            "label": "Paketlerim",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "label": "Hocam ana sayfa",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "label": "Fiyat ayrıntıları+",
+            "height": 44,
+            "font": "14px"
+          }
+        ],
+        "positiveTabindex": false
+      },
+      "errors": [],
+      "writes": [],
+      "unexpectedRequests": []
+    },
+    {
+      "state": "cancelled",
+      "theme": "light",
+      "width": 375,
+      "height": 812,
+      "screenshot": "cancelled-375-light.png",
+      "metrics": {
+        "width": 375,
+        "scrollWidth": 375,
+        "reducedMotion": true,
+        "dark": false,
+        "controls": [
+          {
+            "label": "Paketlerim",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "label": "Hocam ana sayfa",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "label": "Fiyat ayrıntıları+",
+            "height": 44,
+            "font": "14px"
+          }
+        ],
+        "positiveTabindex": false
+      },
+      "errors": [],
+      "writes": [],
+      "unexpectedRequests": []
+    },
+    {
+      "state": "refunded",
+      "theme": "light",
+      "width": 375,
+      "height": 812,
+      "screenshot": "refunded-375-light.png",
+      "metrics": {
+        "width": 375,
+        "scrollWidth": 375,
+        "reducedMotion": true,
+        "dark": false,
+        "controls": [
+          {
+            "label": "Paketlerim",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "label": "Hocam ana sayfa",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "label": "Fiyat ayrıntıları+",
+            "height": 44,
+            "font": "14px"
+          }
+        ],
+        "positiveTabindex": false
+      },
+      "errors": [],
+      "writes": [],
+      "unexpectedRequests": []
+    },
+    {
+      "state": "missing",
+      "theme": "light",
+      "width": 375,
+      "height": 812,
+      "screenshot": "missing-375-light.png",
+      "metrics": {
+        "width": 375,
+        "scrollWidth": 375,
+        "reducedMotion": true,
+        "dark": false,
+        "controls": [
+          {
+            "label": "Paketlerim",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "label": "Hocam ana sayfa",
+            "height": 44,
+            "font": "16px"
+          }
+        ],
+        "positiveTabindex": false
+      },
+      "errors": [],
+      "writes": [],
+      "unexpectedRequests": []
+    },
+    {
+      "state": "error",
+      "theme": "light",
+      "width": 375,
+      "height": 812,
+      "screenshot": "error-375-light.png",
+      "metrics": {
+        "width": 375,
+        "scrollWidth": 375,
+        "reducedMotion": true,
+        "dark": false,
+        "controls": [
+          {
+            "label": "Paketlerim",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "label": "Hocam ana sayfa",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "label": "Durumu kontrol et",
+            "height": 48,
+            "font": "16px"
+          }
+        ],
+        "positiveTabindex": false
+      },
+      "errors": [],
+      "writes": [],
+      "unexpectedRequests": []
+    },
+    {
+      "state": "ready",
+      "theme": "dark",
+      "width": 375,
+      "height": 812,
+      "screenshot": "ready-375-dark.png",
+      "metrics": {
+        "width": 375,
+        "scrollWidth": 375,
+        "reducedMotion": true,
+        "dark": true,
+        "controls": [
+          {
+            "label": "Paketlerim",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "label": "Hocam ana sayfa",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "label": "Fiyat ayrıntıları+",
+            "height": 44,
+            "font": "14px"
+          },
+          {
+            "label": "user_name",
+            "height": 48,
+            "font": "16px"
+          },
+          {
+            "label": "user_phone",
+            "height": 48,
+            "font": "16px"
+          },
+          {
+            "label": "Kullanım koşulları",
+            "height": 44,
+            "font": "14px"
+          },
+          {
+            "label": "Mesafeli satış sözleşmesi",
+            "height": 44,
+            "font": "14px"
+          },
+          {
+            "label": "İptal ve iade",
+            "height": 44,
+            "font": "14px"
+          },
+          {
+            "label": "Güvenli ödemeye geç",
+            "height": 48,
+            "font": "16px"
+          }
+        ],
+        "positiveTabindex": false
+      },
+      "keyboard": [
+        {
+          "label": "İçeriğe geç",
+          "name": null,
+          "outline": "auto",
+          "shadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px"
+        },
+        {
+          "label": "Paketlerim",
+          "name": null,
+          "outline": "solid",
+          "shadow": "rgb(255, 255, 255) 0px 0px 0px 2px, rgb(2, 23, 26) 0px 0px 0px 4px, rgba(0, 0, 0, 0) 0px 0px 0px 0px"
+        },
+        {
+          "label": "Hocam ana sayfa",
+          "name": null,
+          "outline": "solid",
+          "shadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px"
+        },
+        {
+          "label": "Fiyat ayrıntıları+",
+          "name": null,
+          "outline": "auto",
+          "shadow": "none"
+        },
+        {
+          "label": "user_name",
+          "name": "user_name",
+          "outline": "solid",
+          "shadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px"
+        }
+      ],
+      "validation": {
+        "invalid": 3,
+        "focus": "user_name"
+      },
+      "textScale200Percent": "no horizontal overflow",
+      "errors": [],
+      "writes": [],
+      "unexpectedRequests": []
+    }
+  ]
+}

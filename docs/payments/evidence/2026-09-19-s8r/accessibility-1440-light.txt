@@ -1,0 +1,38 @@
+- main:
+  - heading "Ödemeyi tamamla" [level=1]
+  - paragraph: Paketini kontrol et, ardından ödeme bilgilerini gir.
+  - region "Paket özeti":
+    - text: UÖ
+    - paragraph: Uzun İsimli Test Öğretmeni
+    - paragraph: Haftada 3 ders · 30 gün
+    - paragraph: 12 ders · 40 dakika
+    - paragraph: Toplam ödeme
+    - paragraph: 4.320 ₺
+    - paragraph: Tek seferlik ödeme. Otomatik yenilenmez.
+    - term: Ara toplam
+    - definition: 4.800 ₺
+    - term: Paket indirimi
+    - definition: −480 ₺
+  - heading "Ödeme için gereken bilgiler" [level=2]
+  - paragraph: Tüm alanlar zorunludur.
+  - text: Ad soyad
+  - textbox "Ad soyad" [invalid]
+  - text: Ad soyad 2–60 karakter olmalı. Telefon
+  - textbox "Telefon" [invalid]
+  - text: Geçerli bir telefon numarası gir. Adres
+  - textbox "Adres" [invalid]
+  - text: Adres 5–400 karakter olmalı.
+  - status: Eksik veya hatalı alanları kontrol et.
+  - list:
+    - listitem:
+      - link "Kullanım koşulları":
+        - /url: /kullanim-kosullari
+    - listitem:
+      - link "Mesafeli satış sözleşmesi":
+        - /url: /mesafeli-satis-sozlesmesi
+    - listitem:
+      - link "İptal ve iade":
+        - /url: /iptal-ve-iade
+  - paragraph: Yeni sekmede açılır.
+  - button "Güvenli ödemeye geç"
+  - paragraph: Kart bilgilerini PayTR ödeme ekranında gireceksin.
