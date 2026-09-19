@@ -1,5 +1,26 @@
 # PayTR Frontend — İlerleme ve Devir Kaydı
 
+## 19 Eylül — K3 test tamamlanma kanıtı
+
+Branch `agent/paytr-k3-test-completeness-20260919`, baz `1fa4bbb` (K2 PR #279).
+Reporter artık dosya özeti + başarılı alt süreç kapanışı + ilan edilen testlerin
+tamamlanmasını arar. Enqueue/start yeterli değildir; eksik/bozuk rapor kırmızıdır.
+Gerçek alt süreç testleri: erken exit(0), crash, iptal, başarı ve explicit skip.
+İlk PR CI çalışması illustrationState.test.ts dosyasında altı eksik testi yakaladı.
+Bu nedenle force-exit kaldırıldı: yalnız izole child içinde root after hook'u
+testlerden kalan timer'ları unref eder; yeni teardown timer'ları normal çalışır.
+Zorla process.exit ve özel başarı işareti yoktur. Parent eksiksiz native
+summary/complete kanıtı ister; geç teardown hatası da regresyonla doğrulandı.
+Son yerel suite: 1451 test, 1450 başarılı, 1 skipped; lint/typecheck başarılı.
+PR CI build/merge kanıtı ilgili branch PR kaydındadır. Sonraki bölüm K4.
+PR #280 head 0e69b22 CI #35442720281 başarılı. Aynı head'in hocamapp Vercel
+önizlemesi 12:26 UTC'de başarılı, ardından donbahadirs-projects yayını 13:09 UTC'de
+başarısız oldu. İkinci takım loglarına erişim 403; kök neden doğrulanmadı.
+Bu açıklama/devir güncellemesiyle yeni PR kontrolleri tetikleniyor; tüm güncel
+kontroller yeşil olmadan merge yok. K4 bağımsız belgeleri PR #281'de hazırlanıyor.
+K2 main CI #35437617890 başarılı; merge `1fa4bbb` Vercel status SUCCESS.
+K1'in ilk main CI #35397946429 iptal edildi; K1 değişikliklerini içeren K2 main CI geçti.
+
 ## 19 Eylül — K4 backend teslim paketi
 
 Branch `agent/paytr-k4-backend-handoff-20260919`, baz `1fa4bbb` (güncel main).
@@ -25,6 +46,9 @@ K4 yerel lint/typecheck ve göreli belge bağlantıları kontrolü başarılı; 
 İlk somut adımlar: K3 deployment hata kaydını elde et; K4 PR kontrol/merge kapanışını
 doğrula; ardından S8-R yerel görsel/klavye kontrolleri. Staging URL ve backend sorumlu
 bilgisi istenmiş, henüz verilmemiştir. Production bayrağı/secret/backend kodu değişmedi.
+
+K4 kapanış güncellemesi: PR #281 merge `9f5933e3432e0d2b95ef2eb12adb3c6a03ca3a93`.
+PR CI #35456663064 ve Vercel başarılı; main CI #35456940060 sürüyor.
 
 ## 19 Eylül — K2 düzeltmesi
 
