@@ -29,14 +29,15 @@ if (testFiles.length === 0) {
 }
 
 console.log(`Running ${testFiles.length} unit test files.`);
-/* Second reporter requires successful child summaries, closed file processes
-   and completion of every declared test, not just an event from each file. */
+/* Second reporter requires root completion, closed file processes and
+   completion of every declared test, not just an event from each file. */
 const seenFile = join(mkdtempSync(join(tmpdir(), "hocam-unit-")), "completion.json");
 const result = spawnSync(
   process.execPath,
   [
     "--experimental-test-module-mocks",
-    "--test-force-exit",
+    "--import",
+    "./scripts/test-child-cleanup.mjs",
     "--test-reporter=spec",
     "--test-reporter-destination=stdout",
     "--test-reporter=./scripts/test-files-reporter.mjs",

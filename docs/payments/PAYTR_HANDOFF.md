@@ -6,7 +6,12 @@ Branch `agent/paytr-k3-test-completeness-20260919`, baz `1fa4bbb` (K2 PR #279).
 Reporter artık dosya özeti + başarılı alt süreç kapanışı + ilan edilen testlerin
 tamamlanmasını arar. Enqueue/start yeterli değildir; eksik/bozuk rapor kırmızıdır.
 Gerçek alt süreç testleri: erken exit(0), crash, iptal, başarı ve explicit skip.
-Yerel suite: 1449 test, 1448 başarılı, 1 skipped; lint/typecheck başarılı.
+İlk PR CI çalışması illustrationState.test.ts dosyasında altı eksik testi yakaladı.
+Bu nedenle force-exit kaldırıldı: yalnız izole child içinde root after hook'u
+testlerden kalan timer'ları unref eder; yeni teardown timer'ları normal çalışır.
+Zorla process.exit ve özel başarı işareti yoktur. Parent eksiksiz native
+summary/complete kanıtı ister; geç teardown hatası da regresyonla doğrulandı.
+Son yerel suite: 1451 test, 1450 başarılı, 1 skipped; lint/typecheck başarılı.
 PR CI build/merge kanıtı ilgili branch PR kaydındadır. Sonraki bölüm K4.
 K2 main CI #35437617890 başarılı; merge `1fa4bbb` Vercel status SUCCESS.
 K1'in ilk main CI #35397946429 iptal edildi; K1 değişikliklerini içeren K2 main CI geçti.

@@ -51,6 +51,8 @@ describe("test completion proof", () => {
 
   for (const scenario of [
     { name: "completed and explicitly skipped tests", code: "test('ok',()=>{}); test.skip('skip',()=>{});", complete: true },
+    { name: "late subtest with a retained timer", code: "setInterval(()=>{},1000); test('parent',async t=>{await t.test('first',()=>{}); await new Promise(r=>setTimeout(r,20)); await t.test('last',()=>{});});", complete: true },
+    { name: "late failing teardown is not hidden", code: "after(async()=>{await new Promise(r=>setTimeout(r,50)); throw new Error('teardown');}); test('ok',()=>{});", complete: false },
     { name: "early zero-exit after a passing test", code: "test('ok',()=>{}); test('cut short',()=>process.exit(0));", complete: false },
     { name: "crashed child", code: "test('crash',()=>process.exit(2));", complete: false },
     { name: "cancelled pending test", code: "const ac=new AbortController(); test('pending',{signal:ac.signal},()=>new Promise(()=>{})); setTimeout(()=>ac.abort(),20);", complete: false },
@@ -59,18 +61,18 @@ describe("test completion proof", () => {
       const directory = mkdtempSync(join(tmpdir(), "paytr-runner-proof-"));
       const fixture = join(directory, "fixture.test.mjs");
       try {
-        writeFileSync(fixture, "import {test} from 'node:test';\n" + scenario.code);
+        writeFileSync(fixture, "import {test,after} from 'node:test';\n" + scenario.code);
         const env = { ...process.env };
         delete env.NODE_TEST_CONTEXT;
         const result = spawnSync(process.execPath, [
-          "--test-force-exit",
+          "--import", resolve("scripts/test-child-cleanup.mjs"),
           `--test-reporter=${resolve("scripts/test-files-reporter.mjs")}`,
           "--test", fixture,
         ], { encoding: "utf8", timeout: 10_000, env });
         assert.ifError(result.error);
         assert.ok(result.stdout, result.stderr);
         const report = JSON.parse(result.stdout);
-        assert.equal(incompleteTestFiles([fixture], report).length === 0, scenario.complete);
+        assert.equal(incompleteTestFiles([fixture], report).length === 0, scenario.complete, JSON.stringify(report));
       } finally {
         rmSync(directory, { recursive: true, force: true });
       }
