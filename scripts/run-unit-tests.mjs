@@ -3,7 +3,7 @@ import { join, resolve } from "node:path";
 import { tmpdir } from "node:os";
 import { spawnSync } from "node:child_process";
 
-import { missingTestFiles } from "./testRunCompleteness.mjs";
+import { incompleteTestFiles } from "./testRunCompleteness.mjs";
 
 function findUnitTests(directory) {
   return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
@@ -29,9 +29,9 @@ if (testFiles.length === 0) {
 }
 
 console.log(`Running ${testFiles.length} unit test files.`);
-/* Second reporter, writing to a file: it records which files actually ran, so
-   --test-force-exit cannot end a run early and still call it green. */
-const seenFile = join(mkdtempSync(join(tmpdir(), "hocam-unit-")), "files.txt");
+/* Second reporter requires successful child summaries, closed file processes
+   and completion of every declared test, not just an event from each file. */
+const seenFile = join(mkdtempSync(join(tmpdir(), "hocam-unit-")), "completion.json");
 const result = spawnSync(
   process.execPath,
   [
@@ -54,21 +54,21 @@ const result = spawnSync(
 if (result.error) throw result.error;
 if (result.status !== 0) process.exit(result.status ?? 1);
 
-let seen = [];
+let report;
 try {
-  seen = readFileSync(seenFile, "utf8").split("\n").filter(Boolean);
+  report = JSON.parse(readFileSync(seenFile, "utf8"));
 } catch {
   console.error("Could not read the per-file report; treating the run as incomplete.");
   process.exit(1);
 }
 
-const missing = missingTestFiles(
+const missing = incompleteTestFiles(
   findUnitTests("src").sort().map((file) => resolve(file)),
-  seen.map((file) => resolve(file)),
+  report,
 );
 if (missing.length > 0) {
   console.error(
-    `\n${missing.length} test file(s) reported no results. A skipped test cannot fail, so this run is not green:`,
+    `\n${missing.length} test file(s) lack successful completion proof. This run is not green:`,
   );
   for (const file of missing) console.error(`  - ${file}`);
   process.exit(1);
