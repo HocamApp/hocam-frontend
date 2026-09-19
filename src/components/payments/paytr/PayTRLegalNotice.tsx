@@ -24,7 +24,7 @@ export function PayTRLegalNotice({ className }: { className?: string }) {
               href={link.href}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-block py-1 text-sm text-[#02171a] underline underline-offset-4 hover:text-[var(--pink-deep)]"
+              className="inline-flex min-h-[2.75rem] items-center py-1 text-sm text-[#02171a] underline underline-offset-4 hover:text-[var(--pink-deep)]"
             >
               {link.label}
             </Link>

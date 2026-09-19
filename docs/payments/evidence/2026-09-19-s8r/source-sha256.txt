@@ -1,0 +1,5 @@
+c2f482e95558aa106253dfc34930e3f465f2b7ec4aacb26446e089079f449d38  scripts/paytr-browser-check.cjs
+6ea69e1a3d0a555ac2b3cfcf7eeaacb456e82a15a98474943116abcdba76381d  src/components/payments/paytr/PayTRPurchaseSummary.tsx
+cf7e8b07b5336719800a83e8b8048072421d6a55faecd2bfe10279f0405627de  src/components/payments/paytr/PayTRLegalNotice.tsx
+16ef7d6736e3deb858ba90ae70bc44c3bb01c4364501854e63f95db19a09b489  src/components/checkout/MinimalCheckoutHeader.tsx
+d395a556013992bf5362eee9449bfd7ff5e6b5bd17a8da7ef0e95cbdc619efc7  src/app/(checkout)/package-purchases/[purchaseId]/pay/page.tsx
