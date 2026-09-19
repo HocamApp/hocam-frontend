@@ -10,13 +10,21 @@
 export const PAYTR_POLL_INTERVAL_MS = 2000;
 export const PAYTR_FAST_POLL_WINDOW_MS = 45_000;
 
+/** Clamp once when reading recovery, never on every polling tick. */
+export function payTRRecoveryStartedAt(startedAt: number, openedAt: number): number {
+  return Math.min(startedAt, openedAt);
+}
+
 export function payTRPollIntervalMs({
   attemptActive,
   elapsedMs,
+  purchaseStatus,
 }: {
   attemptActive: boolean;
   elapsedMs: number;
+  purchaseStatus?: string;
 }): number | false {
+  if (["paid", "cancelled", "refunded"].includes(purchaseStatus ?? "")) return false;
   if (!attemptActive) return false;
   // An unusable clock reading counts as "just started" rather than as an
   // expired window: polling a little longer is harmless, stopping early is not.

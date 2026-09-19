@@ -1,5 +1,15 @@
 # PayTR Frontend — İlerleme ve Devir Kaydı
 
+## 19 Eylül — K2 düzeltmesi
+
+Branch: `agent/paytr-k2-recovery-polling-20260919`, baz `95d8875` (K1 PR #278).
+Recovery zamanı iki ekranda geri yüklenir; ileri tarih sayfa açılışına bir kez
+sabitlenir. Geçersiz timestamp reddedilir. Paid/cancelled/refunded polling'i
+durdurur; temizleme yalnız aynı purchase kaydını hedefler. 45 saniye bir ödeme
+sonucu değildir; GET ile kontrol ve açık iframe korunur.
+PayTR testleri 168/168, lint/typecheck başarılı; build ve PR kapanış kanıtları
+branch PR kaydından doğrulanır. Sonraki bölüm K3, test tamamlanma raporu.
+
 ## 19 Eylül — K1 düzeltmesi
 
 Branch: `agent/paytr-k1-payment-guards-20260919`, baz `3aad448`. Codex, normal mod.
