@@ -13,6 +13,11 @@ Zorla process.exit ve özel başarı işareti yoktur. Parent eksiksiz native
 summary/complete kanıtı ister; geç teardown hatası da regresyonla doğrulandı.
 Son yerel suite: 1451 test, 1450 başarılı, 1 skipped; lint/typecheck başarılı.
 PR CI build/merge kanıtı ilgili branch PR kaydındadır. Sonraki bölüm K4.
+PR #280 head 0e69b22 CI #35442720281 başarılı. Aynı head'in hocamapp Vercel
+önizlemesi 12:26 UTC'de başarılı, ardından donbahadirs-projects yayını 13:09 UTC'de
+başarısız oldu. İkinci takım loglarına erişim 403; kök neden doğrulanmadı.
+Bu açıklama/devir güncellemesiyle yeni PR kontrolleri tetikleniyor; tüm güncel
+kontroller yeşil olmadan merge yok. K4 bağımsız belgeleri PR #281'de hazırlanıyor.
 K2 main CI #35437617890 başarılı; merge `1fa4bbb` Vercel status SUCCESS.
 K1'in ilk main CI #35397946429 iptal edildi; K1 değişikliklerini içeren K2 main CI geçti.
 
