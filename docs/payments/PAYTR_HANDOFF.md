@@ -8,12 +8,36 @@ K3 dış servis kontrolü ve K4 PR'ı beklenirken bağımsız frontend kontrolle
 Avatar gece teması, 44 px ödeme bağlantıları ve masaüstü özet yüksekliği düzeltildi.
 [S8-R raporu](PAYTR_S8R_VERIFICATION.md) 12 mock senaryoyu, 4 genişliği, klavye/focus,
 reduced-motion ve 200% yazı büyütme ölçümlerini; görselleri ve taşınabilir betiği içerir.
-PayTR 168/168 ve checkout 10/10, lint/typecheck başarılı.
+PayTR 168/168 ve checkout 10/10, lint/typecheck ve yerel production build başarılı.
+K3 PR #280 merge `a48c616b0715cdec2f6ad66eacd6a438f9fcc3cc`; son PR CI
+#35456979892 ve Vercel başarılı. K4 PR #281 merge `9f5933e`; main CI
+#35456940060 ve Vercel başarılı. Aşağıdaki eski checkpoint'ler tarihsel kayıttır.
 
 S7 için gerçek endpoint yok; staging adresi/test modu teslimi yok. Gerçek iframe/3DS,
 ekran okuyucu, fiziksel mobil klavye, duplicate callback ve S9 operasyon kabulü AÇIK.
 İlk somut adım bu branch'in PR check/merge/main CI/deploy kapanışı; ardından backend
 teslim kanıtı geldiğinde S7 ve gerçek staging senaryoları. Production aktivasyonu yapılmadı.
+
+## 19 Eylül — K3 test tamamlanma kanıtı
+
+Branch `agent/paytr-k3-test-completeness-20260919`, baz `1fa4bbb` (K2 PR #279).
+Reporter artık dosya özeti + başarılı alt süreç kapanışı + ilan edilen testlerin
+tamamlanmasını arar. Enqueue/start yeterli değildir; eksik/bozuk rapor kırmızıdır.
+Gerçek alt süreç testleri: erken exit(0), crash, iptal, başarı ve explicit skip.
+İlk PR CI çalışması illustrationState.test.ts dosyasında altı eksik testi yakaladı.
+Bu nedenle force-exit kaldırıldı: yalnız izole child içinde root after hook'u
+testlerden kalan timer'ları unref eder; yeni teardown timer'ları normal çalışır.
+Zorla process.exit ve özel başarı işareti yoktur. Parent eksiksiz native
+summary/complete kanıtı ister; geç teardown hatası da regresyonla doğrulandı.
+Son yerel suite: 1451 test, 1450 başarılı, 1 skipped; lint/typecheck başarılı.
+PR CI build/merge kanıtı ilgili branch PR kaydındadır. Sonraki bölüm K4.
+PR #280 head 0e69b22 CI #35442720281 başarılı. Aynı head'in hocamapp Vercel
+önizlemesi 12:26 UTC'de başarılı, ardından donbahadirs-projects yayını 13:09 UTC'de
+başarısız oldu. İkinci takım loglarına erişim 403; kök neden doğrulanmadı.
+Bu açıklama/devir güncellemesiyle yeni PR kontrolleri tetikleniyor; tüm güncel
+kontroller yeşil olmadan merge yok. K4 bağımsız belgeleri PR #281'de hazırlanıyor.
+K2 main CI #35437617890 başarılı; merge `1fa4bbb` Vercel status SUCCESS.
+K1'in ilk main CI #35397946429 iptal edildi; K1 değişikliklerini içeren K2 main CI geçti.
 
 ## 19 Eylül — K4 backend teslim paketi
 
@@ -40,6 +64,9 @@ K4 yerel lint/typecheck ve göreli belge bağlantıları kontrolü başarılı; 
 İlk somut adımlar: K3 deployment hata kaydını elde et; K4 PR kontrol/merge kapanışını
 doğrula; ardından S8-R yerel görsel/klavye kontrolleri. Staging URL ve backend sorumlu
 bilgisi istenmiş, henüz verilmemiştir. Production bayrağı/secret/backend kodu değişmedi.
+
+K4 kapanış güncellemesi: PR #281 merge `9f5933e3432e0d2b95ef2eb12adb3c6a03ca3a93`.
+PR CI #35456663064 ve Vercel başarılı; main CI #35456940060 sürüyor.
 
 ## 19 Eylül — K2 düzeltmesi
 

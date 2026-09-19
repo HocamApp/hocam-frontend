@@ -1,12 +1,9 @@
-/**
- * Records every test file the runner actually produced events for. Paired with
- * missingTestFiles(), this turns a silently skipped file into a failed run.
- */
+import { createTestCompletionTracker } from "./testRunCompleteness.mjs";
+
+// Require root completion (native summary), successful
+// process exit, and completion of every declared test. No one signal suffices.
 export default async function* filesReporter(source) {
-  const seen = new Set();
-  for await (const event of source) {
-    const file = event.data?.file;
-    if (file) seen.add(file);
-  }
-  yield `${[...seen].join("\n")}\n`;
+  const tracker = createTestCompletionTracker();
+  for await (const event of source) tracker.observe(event);
+  yield JSON.stringify(tracker.report()) + "\n";
 }
