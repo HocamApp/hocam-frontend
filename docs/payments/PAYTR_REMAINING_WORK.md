@@ -16,8 +16,8 @@ branch/PR sürdürülür. Tamamlanmış bölüm tekrar yapılmaz.
 | K3 test tamamlanması | Normal | Codex yüksek / Claude Opus | k3-test-completeness-20260919 | PR #280 merged, a48c616; son PR CI/Vercel başarılı |
 | K4 backend devri | Sözleşme inceleme → normal belge | Codex yüksek / Claude Opus | k4-backend-handoff-20260919 | PR #281 merged, 9f5933e; main CI/Vercel başarılı; B01–B06 teslim matrisi hazır |
 | S7 attempt/retry | Sözleşme inceleme → normal | Codex yüksek / Claude Opus | 07-attempt-state-20260919 | B01 endpoint yok, B02 retry garantisi yok; gerçek response teslimini bekle |
-| S8-R doğrulama | Normal test/düzeltme | Codex yüksek / Claude Opus | 08-final-verification-20260919 | Yerel mock/görsel kontroller bağımsız yapılabilir; gerçek staging açık |
-| S9-R yayın hazırlığı | Plan → ayrıca yetkili operasyon | Codex yüksek / Claude Opus | 09-release-readiness-20260919 | P kapıları + izleme sahibi/kanalı + rollback provası olmadan kapanmaz |
+| S8-R doğrulama | Normal test/düzeltme | Codex yüksek / Claude Opus | 08-final-verification-20260919 | PR #282 merged, 95e31d8: 12 yerel mock/görsel senaryo başarılı; gerçek staging, fiziksel klavye ve ekran okuyucu açık |
+| S9-R yayın hazırlığı | Plan → ayrıca yetkili operasyon | Codex yüksek / Claude Opus | 09-release-readiness-20260919 | PR #283: BEKLE karar kaydı hazır; operasyon kapıları ve production kararı açık |
 
 K1/K2 main kanıtı: [CI 35437617890](https://github.com/HocamApp/hocam-frontend/actions/runs/35437617890)
 başarılı; merge `1fa4bbb37a77be7b5b438a76323f335e1f89bda5` Vercel status SUCCESS.
@@ -58,3 +58,6 @@ Model önerisi hesapta erişilebilir eşdeğerle uygulanır. Bu çalışma Codex
 K3 dış servis kontrolü beklerken K4 belgeleri ve S8-R yerel kontrolleri ilerleyebilir;
 bu bağımsız ilerleme K3'ün tamamlandığı anlamına gelmez.
 Gerçek staging ve operasyon kapıları kapanmadan “PayTR tamamlandı/canlıya hazır” denmez.
+[S9-R karar kaydı](PAYTR_RELEASE_READINESS.md) açık kapıları ve isimli operasyon
+teslim alanlarını toplar. PR #282/#283 güncel check/merge durumları devralırken okunur;
+belge veya yerel test başarısı gerçek ödeme kabulü değildir.

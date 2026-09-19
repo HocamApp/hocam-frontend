@@ -11,6 +11,9 @@ doğrulayacağını, izleme listesini ve geri alma adımlarını yazar.
 **Bu bölüm merge edilmesi ödemeyi açma yetkisi değildir.** Production aktivasyonu ayrı, sahibi
 belli bir karardır (Arda/Emin), ve aşağıdaki ön koşullar kapanmadan başlatılamaz.
 
+19 Eylül [S9-R karar kaydı](PAYTR_RELEASE_READINESS.md): **BEKLE (NO-GO)**.
+Yerel frontend doğrulamaları gerçek staging ve operasyon kabulünün yerine geçmez.
+
 ## 1. Bugünkü durum
 
 | Alan | Durum |
