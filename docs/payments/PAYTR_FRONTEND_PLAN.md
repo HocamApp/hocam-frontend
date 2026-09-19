@@ -6,7 +6,11 @@
 **S0 başlangıcı:** frontend `f90874d01b5b83facbac9bfb4a3be2f20bc6ba44`.\
 **Backend referansı:** [PR #163](https://github.com/HocamApp/hocam-backend/pull/163), `e1e36966eed5690957fa36018216ef9dcb765011`; S0 incelemesinde açık.
 
-Bu belge 17 Eylül konuşmasında kabul edilen planın repo içindeki taşınabilir sürümüdür. S0 tamamlandı; kullanıcının sonraki bölüm isteğiyle **S0-V** görsel sözleşmesi hazırlanmıştır. Teslimat/PR durumu devir kaydındadır. S1 ve sonrası kendiliğinden başlatılmaz. Belgede yazan hedef davranışlar mevcut üründe uygulanmış sayılmaz.
+Bu belge 17 Eylül konuşmasında kabul edilen planın tarihsel temelidir. S0/S0-V ve S1–S6 main'de;
+S8/S9 gerçek staging/operasyon kabulü kapanmadı. Kullanıcı 19 Eylül kalan işlerin uygulanmasını
+yetkilendirdi: güncel sıra ve bölüm kapıları [kalan işler planında](PAYTR_REMAINING_WORK.md),
+backend teslimleri [K4 paketinde](PAYTR_BACKEND_HANDOFF.md). Teslimat/PR durumu devir
+kaydındadır. Belgede yazan hedef davranışlar mevcut üründe uygulanmış sayılmaz.
 
 ## Okuma sırası ve kaynaklar
 

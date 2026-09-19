@@ -1,12 +1,16 @@
 # PayTR Frontend — Doğrulanmış API Sözleşmesi
 
-**Doğrulama tarihi:** 17 Eylül 2026\
+**Doğrulama tarihi:** 19 Eylül 2026 (backend PR head ve açık durumu yeniden kontrol edildi)\
 **Frontend baz SHA:** `f90874d01b5b83facbac9bfb4a3be2f20bc6ba44`\
 **Backend baz SHA:** `e1e36966eed5690957fa36018216ef9dcb765011`\
 **Backend PR:** [HocamApp/hocam-backend #163](https://github.com/HocamApp/hocam-backend/pull/163), incelemede **OPEN**, merge commit yok.\
 **Yöntem:** yerel frontend ve GitHub'daki sabit backend commit'inin kaynak kodu okundu. Canlı ödeme API'sine istek gönderilmedi; deploy/staging doğrulanmadı.
 
 Bu belge **mevcut kod**, **frontend hedefi** ve **backend bağımlılığını** ayırır. API'nin PR'da bulunması test veya production ortamında mevcut olduğunu göstermez.
+
+K1/K2 frontend düzeltmeleri main'de; güncel teslim/test/deploy gereksinimleri
+[K4 backend devir paketinde](PAYTR_BACKEND_HANDOFF.md). B01–B06 hâlâ açık;
+payment-state endpoint'i ve retry garantisi teslim edilmeden S7 uygulanmaz.
 
 ## 1. Kaynaklar ve taşıma katmanı
 
