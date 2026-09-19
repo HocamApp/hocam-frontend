@@ -69,7 +69,7 @@ export function PayTRPurchaseSummary({
       <div className="flex items-center gap-3">
         <Avatar shape="circle" className="h-10 w-10 shrink-0">
           {facts.tutorAvatarUrl && <AvatarImage src={facts.tutorAvatarUrl} alt="" />}
-          <AvatarFallback>{facts.tutorInitials}</AvatarFallback>
+          <AvatarFallback className="bg-[#fbf6f6] text-[#02171a]">{facts.tutorInitials}</AvatarFallback>
         </Avatar>
         <p className="min-w-0 break-words text-base font-medium">
           {facts.tutorName}

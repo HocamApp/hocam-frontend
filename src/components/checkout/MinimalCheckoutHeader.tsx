@@ -46,7 +46,7 @@ export function MinimalCheckoutHeader({
           <Link
             href={backHref}
             aria-label={backLabel ?? "Geri dön"}
-            className="flex size-10 items-center justify-center rounded-pill border border-[var(--checkout-soft-line)] bg-[var(--checkout-clearway)] text-[var(--checkout-nighttime)] transition-colors duration-[--duration-state] hover:border-[var(--checkout-evergreen)] hover:bg-[var(--checkout-nighttime)] hover:text-[var(--checkout-clearway)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--checkout-evergreen)] focus-visible:ring-offset-2"
+            className="flex size-11 items-center justify-center rounded-pill border border-[var(--checkout-soft-line)] bg-[var(--checkout-clearway)] text-[var(--checkout-nighttime)] transition-colors duration-[--duration-state] hover:border-[var(--checkout-evergreen)] hover:bg-[var(--checkout-nighttime)] hover:text-[var(--checkout-clearway)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--checkout-evergreen)] focus-visible:ring-offset-2"
           >
             <ArrowLeft className="size-5" weight="regular" aria-hidden="true" />
           </Link>
@@ -60,7 +60,7 @@ export function MinimalCheckoutHeader({
           <ArrowLeft className="size-5" weight="regular" aria-hidden="true" />
         </button>
         )}
-        <Link href="/home" aria-label="Hocam ana sayfa" className="inline-flex h-10 items-center rounded-pill focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2">
+        <Link href="/home" aria-label="Hocam ana sayfa" className={`inline-flex ${backHref ? "h-11" : "h-10"} items-center rounded-pill focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2`}>
           <BrandMark priority />
         </Link>
       </div>

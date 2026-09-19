@@ -1,5 +1,23 @@
 # PayTR Frontend — İlerleme ve Devir Kaydı
 
+## 19 Eylül — S8-R yerel görsel ve etkileşim doğrulaması
+
+Branch `agent/paytr-08-final-verification-20260919`, baz `1fa4bbb` (güncel main).
+Codex normal mod; kesin model sürümü çalışma zamanında doğrulanamadı.
+K3 dış servis kontrolü ve K4 PR'ı beklenirken bağımsız frontend kontrolleri yürütüldü.
+Avatar gece teması, 44 px ödeme bağlantıları ve masaüstü özet yüksekliği düzeltildi.
+[S8-R raporu](PAYTR_S8R_VERIFICATION.md) 12 mock senaryoyu, 4 genişliği, klavye/focus,
+reduced-motion ve 200% yazı büyütme ölçümlerini; görselleri ve taşınabilir betiği içerir.
+PayTR 168/168 ve checkout 10/10, lint/typecheck ve yerel production build başarılı.
+K3 PR #280 merge `a48c616b0715cdec2f6ad66eacd6a438f9fcc3cc`; son PR CI
+#35456979892 ve Vercel başarılı. K4 PR #281 merge `9f5933e`; main CI
+#35456940060 ve Vercel başarılı. Aşağıdaki eski checkpoint'ler tarihsel kayıttır.
+
+S7 için gerçek endpoint yok; staging adresi/test modu teslimi yok. Gerçek iframe/3DS,
+ekran okuyucu, fiziksel mobil klavye, duplicate callback ve S9 operasyon kabulü AÇIK.
+İlk somut adım bu branch'in PR check/merge/main CI/deploy kapanışı; ardından backend
+teslim kanıtı geldiğinde S7 ve gerçek staging senaryoları. Production aktivasyonu yapılmadı.
+
 ## 19 Eylül — K3 test tamamlanma kanıtı
 
 Branch `agent/paytr-k3-test-completeness-20260919`, baz `1fa4bbb` (K2 PR #279).
