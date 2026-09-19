@@ -54,7 +54,8 @@ PR CI #35456663064 ve Vercel başarılı; main CI #35456940060 sürüyor.
 
 Branch `agent/paytr-09-release-readiness-20260919`, başlangıç main `9f5933e`,
 K3 main `a48c616` ayrıca alındı. Normal belge uygulaması, Codex; kesin model sürümü
-çalışma zamanında doğrulanamadı. [Yayın karar kaydı](PAYTR_RELEASE_READINESS.md)
+çalışma zamanında doğrulanamadı. PR [#283](https://github.com/HocamApp/hocam-frontend/pull/283).
+[Yayın karar kaydı](PAYTR_RELEASE_READINESS.md)
 eklendi; runbook'a bağlandı. K1/K2/K3/K4 frontend düzeltme ve devirleri main'de;
 S8-R yerel görsel/etkileşim kanıtı [PR #282](https://github.com/HocamApp/hocam-frontend/pull/282).
 
