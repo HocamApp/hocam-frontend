@@ -1,8 +1,8 @@
 # PayTR — Yayın ve Operasyon Devri (S9)
 
-**Hazırlanma:** 18 Eylül 2026\
+**Hazırlanma:** 18 Eylül 2026; K4 güncellemesi 19 Eylül 2026\
 **Frontend referansı:** `4a61d332971fb81ed6f7835a5b4bc5f39acc67fa` (S8 merge)\
-**Backend referansı:** [PR #163](https://github.com/HocamApp/hocam-backend/pull/163), `e1e36966eed5690957fa36018216ef9dcb765011` — **18 Eylül 2026 itibarıyla hâlâ OPEN**
+**Backend referansı:** [PR #163](https://github.com/HocamApp/hocam-backend/pull/163), `e1e36966eed5690957fa36018216ef9dcb765011` — **19 Eylül 2026 itibarıyla hâlâ OPEN**
 
 Bu belge yayın kararını **vermez** ve hiçbir bayrağı açmaz. Frontend tarafında ödeme akışı
 kodlanmış ve kapalı bayrak arkasında duruyor; bu dosya, canlıya alma sırasını, kimin neyi
@@ -23,7 +23,13 @@ belli bir karardır (Arda/Emin), ve aşağıdaki ön koşullar kapanmadan başla
 | Staging URL'leri, PayTR panel callback, merchant secret'ları | Doğrulanmadı; bu oturumda okunmadı |
 | Koçluk içeren paketlerde ödeme | Frontend kasıtlı olarak engelliyor (B03) |
 
-## 2. Ön koşullar (hepsi kapanmadan aktivasyon yok)
+## 2. Ön koşullar (uygulanabilir kapılar kapanmadan aktivasyon yok)
+
+P1–P7 için doğrulanmış kapanış kanıtı yoktur. P8 lesson-only yayında koçluk kapalı
+tutularak kapsam dışında kalabilir; B03 çözülmüş sayılmaz. P9 koşulludur:
+ifşa olmadığına dair sahibin teyidi veya ifşa varsa rotasyon kanıtı gerekir.
+Rol sahiplerinin isimleri henüz atanmadı/doğrulanmadı. [K4 teslim matrisi](PAYTR_BACKEND_HANDOFF.md)
+B01–B06 için istenen testleri ve mevcut engelleri tanımlar.
 
 | # | Koşul | Sahibi | Kapanma kanıtı |
 | --- | --- | --- | --- |
@@ -70,6 +76,10 @@ Araya giren her deploy sırayı bozmaz: frontend bayrağı kapalıyken merge edi
 | Ödeme sayfasında JS hatası / iframe açılmama şikâyeti | Frontend regresyonu | Frontend sahibi |
 
 Uyarı eşiği ve alarm kanalı bu belgede belirlenmedi; izleme aracı seçimi operasyon sahibinindir.
+S9-R kapanışında isimli izleme sorumlusu/yedeği, mevcut alarm kanalının bağlantısı,
+pending tarama sıklığı, müdahale süresi ve escalation sorumlusu kaydedilir. 30 dakika
+pending izleme eşiğidir, otomatik failed/iptal veya yeni ödeme izni değildir.
+Bu alanların tamamı şu anda AÇIK; yeni alarm kanalı oluşturulmadı.
 
 ## 5. Kanıt formatı
 
@@ -96,6 +106,25 @@ Sırayla, en hafiften ağıra:
 
 Her durumda: ödenmiş satın almalar ve ledger kayıtları değiştirilmez, silinmez. Geri alma bir
 iade mekanizması değildir.
+
+S9-R staging provası kanıtı: eski/yeni frontend build SHA, bayrak kapalıyken yeni
+init engeli, mevcut recovery/GET erişimi, açık callback'in geç paid sonucunu uzlaştırması,
+isimli uygulayan ve saat. Prova henüz yapılmadı. Üretimde rollback/aktivasyon uygulanmadı.
+
+## 6a. S8-R ve S9-R kapanış kaydı
+
+| Kanıt | Durum | Sağlayacak rol |
+| --- | --- | --- |
+| HTTPS staging URL'leri + frontend/backend deploy SHA | AÇIK | Deployment sahibi |
+| Onay gerektiren/gerektirmeyen paket + 3DS + geç callback | AÇIK | Frontend/backend test sorumluları |
+| Reload, auth expiry, doğrulanmış güvenli retry | AÇIK; retry ayrıca B01/B02 bekler | Frontend/backend test sorumluları |
+| Gerçek sağlayıcı iframe yükseklik/resize, mobil klavye, ekran okuyucu | AÇIK; mock/ARIA snapshot yeterli değil | Frontend test sorumlusu |
+| Duplicate callback: tek ledger + tek hak aktivasyonu | AÇIK | Backend sahibi |
+| İzleme sahibi, alarm kanalı, pending takip ve rollback provası | AÇIK | Operasyon sahibi |
+| Lesson-only production kararı | VERİLMEDİ | Arda/Emin |
+
+Yerel görsel/mock çıktıları gerçek ödeme kabulünden ayrı kaydedilir.
+Sabit minimum iframe yüksekliği gerçek sağlayıcı resize kanıtı sayılmaz.
 
 ## 7. Açık kalan bağımlılıklar
 

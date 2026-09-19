@@ -21,6 +21,35 @@ kontroller yeşil olmadan merge yok. K4 bağımsız belgeleri PR #281'de hazırl
 K2 main CI #35437617890 başarılı; merge `1fa4bbb` Vercel status SUCCESS.
 K1'in ilk main CI #35397946429 iptal edildi; K1 değişikliklerini içeren K2 main CI geçti.
 
+## 19 Eylül — K4 backend teslim paketi
+
+Branch `agent/paytr-k4-backend-handoff-20260919`, baz `1fa4bbb` (güncel main).
+Normal belge uygulaması, Codex; kesin model sürümü çalışma zamanında doğrulanamadı.
+[Kalan işler](PAYTR_REMAINING_WORK.md) ve [backend teslim matrisi](PAYTR_BACKEND_HANDOFF.md)
+eklendi; sözleşme ve runbook güncellendi. B01–B06, P1–P9 ve operasyon kanıtları açıkça ayrıldı.
+Backend PR #163 OPEN, head `e1e36966eed5690957fa36018216ef9dcb765011`; S7 bloke.
+
+K1 [#278](https://github.com/HocamApp/hocam-frontend/pull/278) merge `95d8875`;
+K2 [#279](https://github.com/HocamApp/hocam-frontend/pull/279) merge `1fa4bbb`.
+K2 main CI #35437617890 ve Vercel başarılı.
+K3 [#280](https://github.com/HocamApp/hocam-frontend/pull/280) head `0e69b22`:
+1451 test (1450 pass, 1 skip), lint/typecheck ve CI #35442720281 build başarılı.
+Vercel preview failed; deployment `dpl_EirUSCj93XtcKajQMRfqxV5RNxFd` log erişimi
+donbahadirs-projects takımında 403. K3 merge edilmedi; aynı PR'dan sürdür.
+K4 bağımsız belgeleri bu dış servis engeli beklenirken güncel main'den hazırlanıyor.
+
+GitHub deployment geçmişinde aynı K3 head için hocamapp önizlemesi 12:26 UTC'de
+başarılı; 13:09 UTC'deki donbahadirs-projects başarısız sonucu güncel status olmuş.
+İki ayrı takımın deployment kaydı mevcut; ikinci hatanın nedeni henüz bilinmiyor.
+K4 yerel lint/typecheck ve göreli belge bağlantıları kontrolü başarılı; kod değişmedi.
+
+İlk somut adımlar: K3 deployment hata kaydını elde et; K4 PR kontrol/merge kapanışını
+doğrula; ardından S8-R yerel görsel/klavye kontrolleri. Staging URL ve backend sorumlu
+bilgisi istenmiş, henüz verilmemiştir. Production bayrağı/secret/backend kodu değişmedi.
+
+K4 kapanış güncellemesi: PR #281 merge `9f5933e3432e0d2b95ef2eb12adb3c6a03ca3a93`.
+PR CI #35456663064 ve Vercel başarılı; main CI #35456940060 sürüyor.
+
 ## 19 Eylül — K2 düzeltmesi
 
 Branch: `agent/paytr-k2-recovery-polling-20260919`, baz `95d8875` (K1 PR #278).
