@@ -10,13 +10,32 @@ const DEFAULT_API_URL =
 export const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || DEFAULT_API_URL;
 
+// Gunicorn stops a worker at 30 seconds (GUNICORN_TIMEOUT, backend
+// gunicorn.conf.py), so a request still waiting after that is one the server
+// has already given up on. With no bound of our own the browser holds the
+// promise open until its idle timeout — minutes — and the spinner turns the
+// whole time with nothing to report. 45 seconds clears the server's ceiling
+// with room for queueing and transit, and still fails while someone is
+// watching.
+const REQUEST_TIMEOUT_MS = 45_000;
+
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     "Content-Type": "application/json",
   },
   withCredentials: true,
+  timeout: REQUEST_TIMEOUT_MS,
 });
+
+// Uploads are paced by the sender's connection rather than by server work, and
+// axios maps `timeout` onto XMLHttpRequest.timeout, which counts the body on
+// its way out. One bound for everything would cut a 50 MB attachment off
+// mid-flight on a slow line — the failure that moved tutor materials to
+// resumable uploads in the first place (see materialUpload.ts).
+function isMultipartBody(data: unknown): boolean {
+  return typeof FormData !== "undefined" && data instanceof FormData;
+}
 
 const PUBLIC_AUTH_PATHS = new Set([
   "/auth/token/",
@@ -87,6 +106,13 @@ api.interceptors.request.use(async (config) => {
     requestPath !== "/auth/session/migrate/"
   ) {
     config.headers["X-CSRFToken"] = await getCsrfToken();
+  }
+  // Only the instance default is lifted, never a number the caller chose —
+  // including the 0 axios reads as "no timeout". By the time an interceptor
+  // runs, an omitted timeout and an explicit one look alike, so the default
+  // value itself is the signal that nobody asked for anything.
+  if (isMultipartBody(config.data) && config.timeout === REQUEST_TIMEOUT_MS) {
+    config.timeout = 0;
   }
   return config;
 });
