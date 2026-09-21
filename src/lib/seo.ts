@@ -4,11 +4,18 @@ import type {
   TutorProfile,
 } from "@/types";
 import { applyDemoTutorPresentation } from "./demoTutorPresentation";
+import type { TutorFilters } from "./tutorsApi";
 
 export const SITE_URL = "https://www.hocamozelders.com";
 export const SITE_NAME = "Hocam";
 export const SITE_DESCRIPTION =
   "YKS, TYT ve AYT hazırlığında öğrencileri doğrulanmış, YKS'de derece yapmış hocalarla buluşturan online özel ders platformu.";
+export const SOCIAL_IMAGE = {
+  url: "/opengraph-image",
+  width: 1200,
+  height: 630,
+  alt: "Hocam — Doğrulanmış YKS hocalarıyla online özel ders",
+} as const;
 export const PUBLIC_API_URL =
   process.env.NEXT_PUBLIC_API_URL ||
   "https://web-production-22415.up.railway.app/api";
@@ -25,6 +32,12 @@ function publicApiUrl(path: string) {
   return `${PUBLIC_API_URL.replace(/\/$/, "")}/${path.replace(/^\//, "")}`;
 }
 
+class PublicApiError extends Error {
+  constructor(readonly status: number) {
+    super(`Public API request failed with ${status}`);
+  }
+}
+
 async function fetchJson<T>(path: string): Promise<T> {
   const response = await fetch(publicApiUrl(path), {
     headers: {
@@ -37,7 +50,7 @@ async function fetchJson<T>(path: string): Promise<T> {
   });
 
   if (!response.ok) {
-    throw new Error(`Public API request failed with ${response.status}`);
+    throw new PublicApiError(response.status);
   }
 
   return response.json() as Promise<T>;
@@ -58,11 +71,18 @@ function normalizeTutorsResponse(
 }
 
 export async function fetchPublicTutors(
+  filters: TutorFilters = {},
   page = 1,
   pageSize = 12
 ): Promise<PaginatedResponse<TutorProfile>> {
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(filters)) {
+    if (value) params.set(key, value);
+  }
+  params.set("page", String(page));
+  params.set("page_size", String(pageSize));
   const data = await fetchJson<PaginatedResponse<TutorProfile> | TutorProfile[]>(
-    `/tutors/?page=${page}&page_size=${pageSize}&ordering=rating`
+    `/tutors/?${params.toString()}`
   );
   return normalizeTutorsResponse(data);
 }
@@ -72,7 +92,7 @@ export async function fetchAllPublicTutors(): Promise<TutorProfile[]> {
   const seenIds = new Set<string>();
 
   for (let page = 1; page <= 20; page += 1) {
-    const response = await fetchPublicTutors(page, 100);
+    const response = await fetchPublicTutors({ ordering: "rating" }, page, 100);
     for (const tutor of response.results) {
       if (tutor.is_public && tutor.is_verified && !seenIds.has(tutor.id)) {
         seenIds.add(tutor.id);
@@ -95,8 +115,9 @@ export async function fetchPublicTutor(
     return tutor.is_public && tutor.is_verified
       ? applyDemoTutorPresentation(tutor)
       : null;
-  } catch {
-    return null;
+  } catch (error) {
+    if (error instanceof PublicApiError && error.status === 404) return null;
+    throw error;
   }
 }
 

@@ -9,15 +9,30 @@ import { PUBLIC_SEO_ROUTES } from "@/lib/publicSeo";
 
 export const revalidate = 3_600;
 
+const PUBLIC_PAGE_LAST_MODIFIED: Record<
+  (typeof PUBLIC_SEO_ROUTES)[number],
+  string
+> = {
+  "/ucretsiz-deneme-dersi": "2026-09-03",
+  "/yks-ozel-ders": "2026-09-10",
+  "/yks/tyt/matematik-ozel-ders": "2026-09-10",
+  "/yks/ayt/matematik-ozel-ders": "2026-09-10",
+  "/nasil-calisir": "2026-09-04",
+  "/hocalar-nasil-dogrulaniyor": "2026-09-04",
+  "/hakkimizda": "2026-09-04",
+};
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const pages: MetadataRoute.Sitemap = [
     {
       url: absoluteUrl("/"),
+      lastModified: new Date("2026-09-18"),
       changeFrequency: "daily",
       priority: 1,
     },
     ...PUBLIC_SEO_ROUTES.map((route) => ({
       url: absoluteUrl(route),
+      lastModified: new Date(PUBLIC_PAGE_LAST_MODIFIED[route]),
       changeFrequency: "weekly" as const,
       priority:
         route === "/yks-ozel-ders"
@@ -42,6 +57,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     for (const tutor of tutors) {
       pages.push({
         url: absoluteUrl(`/tutors/${encodeURIComponent(tutor.id)}`),
+        lastModified: tutor.updated_at ? new Date(tutor.updated_at) : undefined,
         changeFrequency: "weekly",
         priority: 0.8,
       });

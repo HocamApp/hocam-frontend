@@ -10,12 +10,13 @@
  *   answer that by sending less traffic. Two pages is 24 tutors here, plus
  *   every filter and every profile — enough for a visitor to decide the
  *   product is worth an account.
- * - It is an interaction gate, not a content gate. Paging is client state
- *   with no URL of its own, so nothing that a crawler can reach is behind
- *   this, and no indexed page starts returning a login screen.
+ * - It is an interaction gate, not a profile-visibility gate. The first two
+ *   URL-backed pages are public and indexable; deeper directory pages are
+ *   noindex and send signed-out visitors to registration after auth settles.
+ *   Every public tutor profile remains discoverable through the sitemap.
  *
- * Keep it that way: the moment a paged URL exists, this gate needs a
- * crawler-visible exception or it becomes cloaking.
+ * Keep server HTML and client enforcement aligned. Rendering a deeper page to
+ * signed-out visitors and gating only the pagination click bypasses the meter.
  */
 export const ANONYMOUS_PAGE_LIMIT = 2;
 

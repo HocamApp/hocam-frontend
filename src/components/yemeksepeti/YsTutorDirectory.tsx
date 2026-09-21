@@ -21,7 +21,8 @@ import {
   signupUrlForGatedPage,
 } from "@/lib/anonymousBrowsing";
 import { directoryFilterQuery, readDirectoryFilters, TUTOR_LIST_ID } from "@/lib/tutorDirectoryLinks";
-import { defaultTutorOrdering } from "@/lib/tutorDirectory";
+import { defaultTutorOrdering, tutorDirectoryQueryKey } from "@/lib/tutorDirectory";
+import { parseDirectoryPage } from "@/lib/directorySeo";
 import {
   filterFavoriteTutors,
   sortFavoriteTutors,
@@ -146,7 +147,7 @@ function DirectoryBody({ favoritesOnly = false }: DirectoryProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   /* Back to the directory with the reader's filters intact, not to a bare
      "/". Register already knows how to honour returnUrl. */
   const returnUrl = useMemo(() => {
@@ -162,13 +163,22 @@ function DirectoryBody({ favoritesOnly = false }: DirectoryProps) {
   const showFavorites = favoritesOnly || searchParams.get("favorites") === "1";
 
   const filters = useMemo(() => readDirectoryFilters(searchParams), [searchParams]);
-  const [page, setPage] = useState(1);
+  const requestedPage = parseDirectoryPage(searchParams.get("page") ?? undefined);
+  const page =
+    !authLoading && isAuthenticated
+      ? requestedPage
+      : Math.min(requestedPage, ANONYMOUS_PAGE_LIMIT);
   /* Starts closed on purpose, and deliberately does NOT read
      `hocam:tutor-filters-open` — inheriting the visitor's `/tutors`
      preference would defeat that. No hydration effect, so no open/close
      flash on first paint either. */
   const [filtersOpen, setFiltersOpen] = useState(false);
   const trialBooking = useTutorTrialBookingLauncher();
+
+  useEffect(() => {
+    if (authLoading || !isGatedPage(requestedPage, isAuthenticated)) return;
+    router.replace(signupUrlForGatedPage(returnUrl));
+  }, [authLoading, isAuthenticated, requestedPage, returnUrl, router]);
 
   /* Paging used to jump to the top of the document, which on the homepage is
      the hero — three sections above the list the reader was actually working
@@ -219,18 +229,13 @@ function DirectoryBody({ favoritesOnly = false }: DirectoryProps) {
     [filters, search],
   );
 
-  // A new term should land the reader on the first page of its own results.
-  useEffect(() => {
-    setPage(1);
-  }, [search, filters]);
-
   const {
     data: tutors,
     isLoading,
     isPlaceholderData,
     error,
   } = useQuery({
-    queryKey: ["tutors", effectiveFilters, page],
+    queryKey: tutorDirectoryQueryKey(effectiveFilters, page),
     queryFn: () => fetchTutors(effectiveFilters, page, PAGE_SIZE),
     placeholderData: (previousData) => previousData,
   });
@@ -293,7 +298,6 @@ function DirectoryBody({ favoritesOnly = false }: DirectoryProps) {
   const handleFiltersChange = (next: TutorFiltersType) => {
     const query = directoryFilterQuery(searchParams.toString(), next);
     router.replace(`${pathname}${query ? `?${query}` : ""}#${TUTOR_LIST_ID}`, { scroll: false });
-    setPage(1);
   };
 
   const handleClear = () => handleFiltersChange({});
@@ -564,7 +568,11 @@ function DirectoryBody({ favoritesOnly = false }: DirectoryProps) {
                         router.push(signupUrlForGatedPage(returnUrl));
                         return;
                       }
-                      setPage(nextPage);
+                      const params = new URLSearchParams(searchParams.toString());
+                      if (nextPage === 1) params.delete("page");
+                      else params.set("page", String(nextPage));
+                      const query = params.toString();
+                      router.replace(`${pathname}${query ? `?${query}` : ""}#${TUTOR_LIST_ID}`, { scroll: false });
                       scrollListIntoView();
                     }}
                   />

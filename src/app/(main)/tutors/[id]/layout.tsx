@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import {
   dehydrate,
   HydrationBoundary,
@@ -9,6 +10,7 @@ import { JsonLd } from "@/components/seo/JsonLd";
 import {
   absoluteUrl,
   fetchPublicTutor,
+  SOCIAL_IMAGE,
   SITE_URL,
   tutorFullName,
   tutorSeoDescription,
@@ -65,14 +67,14 @@ export async function generateMetadata({
       url: canonical,
       title: `${name} | Hocam`,
       description,
-      images: ogImage
-        ? [
-            {
+      images: [
+        ogImage
+          ? {
               url: ogImage,
               alt: name,
-            },
-          ]
-        : undefined,
+            }
+          : SOCIAL_IMAGE,
+      ],
     },
   };
 }
@@ -82,7 +84,7 @@ export default async function TutorProfileLayout({
   params,
 }: TutorLayoutProps) {
   const tutor = await fetchPublicTutor(params.id);
-  if (!tutor) return children;
+  if (!tutor) notFound();
 
   const queryClient = new QueryClient();
   // Seeded as already stale, on purpose.
