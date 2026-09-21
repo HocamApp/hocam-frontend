@@ -13,9 +13,16 @@
   oluşturuyor, kart bilgisi almıyor; backend'de admin manuel onaylıyordu — bu manuel onay şu
   anda geçici olarak **kapalı** (G0/G1 denetimi sürüyor, bkz. backend `AI_AGENT_RULES.md`).
   UI'da hiçbir yerde IBAN/banka/havale bilgisi **gösterme veya isteme**.
-- PayTR entegrasyonu **geliştirme aşamasında**: frontend'de yalnız API katmanı ve tipleri var
-  (`startPayTRCheckout`, `describePayTRCheckoutError` — `src/lib/paymentsApi.ts`). Ödeme
-  ekranı, iframe ve giriş noktaları henüz yok; planı `docs/payments/` altında.
+- PayTR entegrasyonu **frontend tarafında tamamlandı, canlıda kapalı**: API katmanı, saf durum
+  eşleyicisi, müşteri formu, `/package-purchases/[purchaseId]/pay` route'u, iframe, polling,
+  `/odeme/basarili` ve `/odeme/basarisiz` dönüş sayfaları ile checkout/Paketlerim giriş noktaları
+  main'de (`src/components/payments/paytr/`). Backend PayTR PR'ı henüz açık; yayın sırası, izleme ve
+  geri alma `docs/payments/PAYTR_RELEASE_RUNBOOK.md` dosyasında.
+- Ödeme ekranlarına dokunan değişikliklerde değişmez kurallar: başarı yalnız backend
+  `purchase.status === "paid"` ile gösterilir; token isteği yalnız kullanıcı gönderimiyle yapılır
+  (mount/focus/reload/otomatik retry değil); belirsiz sonuç yeniden ödeme daveti değildir; iframe
+  adresi URL parser ile `www.paytr.com` origin'ine karşı doğrulanır; tarayıcıda yalnız
+  `hocam:paytr-attempt:v1:{kullanıcı}` kaydındaki dört kişisel olmayan alan saklanır.
   `NEXT_PUBLIC_PAYTR_ENABLED` yalnız tam olarak `"true"` değerinde açılır, varsayılanı
   kapalıdır ve **canlı aktivasyon yetkisi vermez** — parayı gerçekten tahsil etmeye izin veren
   backend `PAYTR_ENABLED` ayarıdır; ikisi ayrı anahtardır ve production'da açılması ayrı bir
@@ -102,6 +109,7 @@ Her değişiklik için:
     sonucu, deploy durumu (Vercel).
 
 ---
-Son güncelleme: 17 Eylül 2026 — PayTR geliştirme/canlı aktivasyon ayrımı (§1) eklendi;
+Son güncelleme: 18 Eylül 2026 — PayTR frontend akışı tamamlandı (canlıda kapalı), yayın runbook'u eklendi;
+17 Eylül 2026'da PayTR geliştirme/canlı aktivasyon ayrımı (§1) eklenmişti;
 24 Temmuz 2026'da Git/PR akışı (§6) eklenmişti. Bu dosyayı güncel tutmak Arda ve
 Emin'in ortak sorumluluğu — büyük bir karar/kısıt değiştiğinde buraya da eklenmeli.

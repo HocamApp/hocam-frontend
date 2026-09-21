@@ -39,6 +39,10 @@ interface CheckoutSummaryProps {
   promoCode: string;
   onPromoCodeChange: (code: string) => void;
   onPurchaseCta: () => void;
+  /** What the primary action actually does next. A coaching bundle always
+   * needs the tutor's yes, so it says so; otherwise the wording stays neutral,
+   * because the student cannot read the tutor-acceptance rollout flag. */
+  purchaseCtaLabel?: string;
   purchasePending: boolean;
   pendingForSelectedPlan: boolean;
   otherPendingPlanName: string | null;
@@ -109,6 +113,7 @@ export function CheckoutSummary({
   promoCode,
   onPromoCodeChange,
   onPurchaseCta,
+  purchaseCtaLabel = "Paket talebi oluştur",
   purchasePending,
   pendingForSelectedPlan,
   otherPendingPlanName,
@@ -498,7 +503,7 @@ export function CheckoutSummary({
               onClick={onPurchaseCta}
               disabled={purchaseBlocked}
             >
-              {purchasePending ? "Talep oluşturuluyor…" : "Paket talebi oluştur"}
+              {purchasePending ? "Talep oluşturuluyor…" : purchaseCtaLabel}
             </Button>
             {!planAvailable && (
               <p className="text-center text-xs text-destructive">
@@ -612,7 +617,7 @@ export function CheckoutSummary({
               onClick={onPurchaseCta}
               disabled={purchaseBlocked}
             >
-              {purchasePending ? "Talep oluşturuluyor…" : "Paket talebi oluştur"}
+              {purchasePending ? "Talep oluşturuluyor…" : purchaseCtaLabel}
             </Button>
           </div>
         </div>

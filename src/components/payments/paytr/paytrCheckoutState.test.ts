@@ -43,6 +43,13 @@ const NO_ACCEPTANCE: PurchaseAcceptanceState = {
   acceptance: null,
 };
 
+it("blocks cached pending after a failed refresh but preserves an active frame", () => {
+  const input = { paytrEnabled: true, purchase: purchase(), acceptance: NO_ACCEPTANCE, purchaseQueryFailed: true };
+  assert.equal(paytrCheckoutState(input).canStartPayment, false);
+  assert.equal(paytrCheckoutState(input).name, "query_error");
+  assert.equal(paytrCheckoutState({ ...input, attemptPhase: "iframe", iframeUrl: "https://www.paytr.com/odeme/guvenli/test" }).name, "iframe_open");
+});
+
 function acceptance(
   status: NonNullable<PurchaseAcceptanceState["acceptance"]>["status"],
   includesCoaching = false

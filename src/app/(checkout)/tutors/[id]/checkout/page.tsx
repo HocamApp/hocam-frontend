@@ -26,9 +26,15 @@ import {
   createCoachingHold,
   extractCoachingErrorMessage,
   fetchCoachingEligibility,
+  fetchPurchaseAcceptanceState,
   readCoachingSelectedFromSearchParams,
   type CoachingQuote,
 } from "@/lib/coachingApi";
+import { PAYTR_ENABLED } from "@/lib/featureFlags";
+import {
+  payTRPayHref,
+  payTRPostCreateTarget,
+} from "@/components/payments/paytr/paytrEntryPoints";
 import {
   decodeCheckoutSchedule,
   toSchedulePayload,
@@ -361,10 +367,21 @@ export default function TutorCheckoutPage({
 
   const purchaseMutation = useMutation({
     mutationFn: createPackagePurchase,
-    onSuccess: (purchase) => {
+    onSuccess: async (purchase) => {
       queryClient.invalidateQueries({ queryKey: ["package-purchases"] });
       queryClient.invalidateQueries({ queryKey: ["payment-history"] });
+      // Render the created request first: if the acceptance read below fails
+      // or says the tutor still has to answer, this is the screen that stays.
       setCreatedPurchase(purchase);
+      if (!PAYTR_ENABLED) return;
+      // One read, and only a read. A failure here must never turn into a
+      // second package POST — the purchase already exists either way.
+      const acceptance = await fetchPurchaseAcceptanceState(purchase.id).catch(
+        () => null
+      );
+      if (payTRPostCreateTarget({ paytrEnabled: PAYTR_ENABLED, acceptance }) === "pay") {
+        router.push(payTRPayHref(purchase.id));
+      }
     },
     onError: (err: unknown) => {
       // The server refuses a bundle whose price moved since the quote and
@@ -377,6 +394,13 @@ export default function TutorCheckoutPage({
         }
       ).response;
       const data = response?.data;
+      // No response at all: the request may have created the purchase before
+      // the connection dropped. Re-read the list so a purchase that did land
+      // shows up as pending and the CTA stops inviting a second one. Never
+      // re-POST on the student's behalf.
+      if (!response) {
+        queryClient.invalidateQueries({ queryKey: ["package-purchases"] });
+      }
       if (response?.status === 409 && data?.code === "price_changed") {
         const fresh = data.coaching_quote as CoachingQuote | undefined;
         if (fresh) setCoachingQuote(fresh);
@@ -600,6 +624,13 @@ export default function TutorCheckoutPage({
                     : {}),
                 });
               }}
+              purchaseCtaLabel={
+                // Coaching always needs the tutor's yes (the backend makes the
+                // acceptance record mandatory for it). For a lesson-only
+                // package the student cannot see the rollout flag, so the
+                // wording stays neutral rather than promising a payment step.
+                coachingReady ? "Paketi hocaya gönder" : undefined
+              }
               purchasePending={purchaseMutation.isPending}
               pendingForSelectedPlan={pendingForSelectedPlan}
               otherPendingPlanName={otherPendingPlanName}

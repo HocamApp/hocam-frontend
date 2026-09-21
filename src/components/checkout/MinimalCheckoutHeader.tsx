@@ -5,7 +5,21 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft } from "@phosphor-icons/react";
 import { BrandMark } from "@/components/brand/BrandMark";
 
-export function MinimalCheckoutHeader({ tutorId }: { tutorId: string }) {
+/**
+ * `backHref` turns the history-aware back button into a plain link. The
+ * payment and result screens use it: stepping back through history there can
+ * land on a spent PayTR iframe, so they send the student to Paketlerim
+ * instead. The selection screen keeps the original behaviour.
+ */
+export function MinimalCheckoutHeader({
+  tutorId,
+  backHref,
+  backLabel,
+}: {
+  tutorId?: string;
+  backHref?: string;
+  backLabel?: string;
+}) {
   const router = useRouter();
 
   function goBack() {
@@ -19,7 +33,7 @@ export function MinimalCheckoutHeader({ tutorId }: { tutorId: string }) {
       router.back();
       return;
     }
-    router.push(`/tutors/${tutorId}`);
+    router.push(tutorId ? `/tutors/${tutorId}` : "/home");
   }
 
   return (
@@ -28,6 +42,15 @@ export function MinimalCheckoutHeader({ tutorId }: { tutorId: string }) {
         İçeriğe geç
       </a>
       <div className="flex h-[var(--app-header-row-1-h)] w-full items-center gap-3 px-4 sm:px-7 lg:px-10 xl:px-14">
+        {backHref ? (
+          <Link
+            href={backHref}
+            aria-label={backLabel ?? "Geri dön"}
+            className="flex size-11 items-center justify-center rounded-pill border border-[var(--checkout-soft-line)] bg-[var(--checkout-clearway)] text-[var(--checkout-nighttime)] transition-colors duration-[--duration-state] hover:border-[var(--checkout-evergreen)] hover:bg-[var(--checkout-nighttime)] hover:text-[var(--checkout-clearway)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--checkout-evergreen)] focus-visible:ring-offset-2"
+          >
+            <ArrowLeft className="size-5" weight="regular" aria-hidden="true" />
+          </Link>
+        ) : (
         <button
           type="button"
           onClick={goBack}
@@ -36,7 +59,8 @@ export function MinimalCheckoutHeader({ tutorId }: { tutorId: string }) {
         >
           <ArrowLeft className="size-5" weight="regular" aria-hidden="true" />
         </button>
-        <Link href="/home" aria-label="Hocam ana sayfa" className="inline-flex h-10 items-center rounded-pill focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2">
+        )}
+        <Link href="/home" aria-label="Hocam ana sayfa" className={`inline-flex ${backHref ? "h-11" : "h-10"} items-center rounded-pill focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2`}>
           <BrandMark priority />
         </Link>
       </div>
