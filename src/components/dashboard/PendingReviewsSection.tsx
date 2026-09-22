@@ -93,11 +93,24 @@ export function PendingReviewsSection() {
           isOpen
           onClose={() => setSelected(null)}
           onSuccess={() => {
+            const tutorId = selected.tutor.id;
             setSelected(null);
             void queryClient.invalidateQueries({
               queryKey: ["profile-pending-reviews"],
             });
             void queryClient.invalidateQueries({ queryKey: ["bookings"] });
+            // The score the student just gave changes what every surface
+            // showing this tutor's rating should say. Nothing here refetches on
+            // its own inside the five-minute staleTime, so a student who had
+            // the tutor's page open before rating went back to it and read the
+            // number from before their own review. The server was right the
+            // whole time; only these caches were behind.
+            void queryClient.invalidateQueries({ queryKey: ["tutor", tutorId] });
+            void queryClient.invalidateQueries({
+              queryKey: ["tutor-reviews-infinite", tutorId],
+            });
+            // The directory cards on / and /favoriler read the same rating.
+            void queryClient.invalidateQueries({ queryKey: ["tutors"] });
           }}
         />
       )}
