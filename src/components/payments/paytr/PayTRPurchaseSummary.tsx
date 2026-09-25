@@ -3,8 +3,9 @@
 import * as React from "react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { formatTryMinor } from "@/lib/money";
 import { formatPrice } from "@/lib/utils";
-import type { PackagePurchase } from "@/types";
+import type { PackagePurchase, PayTRPaymentStatus } from "@/types";
 
 import { readPayTRPurchaseFacts } from "./paytrPurchaseFacts";
 
@@ -21,9 +22,13 @@ import { readPayTRPurchaseFacts } from "./paytrPurchaseFacts";
  */
 export function PayTRPurchaseSummary({
   purchase,
+  paymentStatus,
+  includesCoaching = false,
   className,
 }: {
   purchase: PackagePurchase | null | undefined;
+  paymentStatus?: PayTRPaymentStatus | null;
+  includesCoaching?: boolean;
   className?: string;
 }) {
   const detailsId = React.useId();
@@ -47,7 +52,20 @@ export function PayTRPurchaseSummary({
   }
 
   const facts = readPayTRPurchaseFacts(purchase);
-  if (!facts) {
+  const combined = includesCoaching || (paymentStatus?.coaching_amount_minor ?? 0) > 0;
+  const lessonMinor = paymentStatus?.lesson_amount_minor;
+  const coachingMinor = paymentStatus?.coaching_amount_minor;
+  const verifiedCombined = Boolean(
+    facts && paymentStatus && paymentStatus.currency === "TL" &&
+    Number.isSafeInteger(lessonMinor) && Number.isSafeInteger(coachingMinor) &&
+    Number.isSafeInteger(paymentStatus.amount_minor) &&
+    lessonMinor === facts.total * 100 && coachingMinor! >= 0 &&
+    paymentStatus.amount_minor === lessonMinor! + coachingMinor! &&
+    Number.isSafeInteger(paymentStatus.coaching_subtotal_minor) &&
+    Number.isSafeInteger(paymentStatus.coaching_discount_minor) &&
+    paymentStatus.coaching_subtotal_minor! - paymentStatus.coaching_discount_minor! === coachingMinor
+  );
+  if (!facts || (combined && !verifiedCombined)) {
     return (
       <section aria-label="Paket özeti" className={wrapperClassName(className)}>
         <p className="text-sm text-[#02171a]">Paket tutarı görüntülenemiyor.</p>
@@ -59,10 +77,14 @@ export function PayTRPurchaseSummary({
   }
 
   const rows = [
-    { label: "Ara toplam", value: facts.subtotal },
-    { label: "Paket indirimi", value: facts.packageDiscount },
-    { label: "Promosyon indirimi", value: facts.promoDiscount },
-  ].filter((row) => row.label === "Ara toplam" || row.value > 0);
+    { label: combined ? "Ders ara toplam" : "Ara toplam", minor: facts.subtotal * 100, deduction: false },
+    { label: "Paket indirimi", minor: facts.packageDiscount * 100, deduction: true },
+    { label: "Promosyon indirimi", minor: facts.promoDiscount * 100, deduction: true },
+    ...(combined ? [
+      { label: "Koçluk ara toplam", minor: paymentStatus!.coaching_subtotal_minor!, deduction: false },
+      { label: "Koçluk indirimi", minor: paymentStatus!.coaching_discount_minor!, deduction: true },
+    ] : []),
+  ].filter((row) => !row.deduction || row.minor > 0);
 
   return (
     <section aria-label="Paket özeti" className={wrapperClassName(className)}>
@@ -80,11 +102,12 @@ export function PayTRPurchaseSummary({
       <p className="mt-1 text-sm text-[#5c6b6d]">
         {facts.totalCredits} ders · {facts.lessonDurationMinutes} dakika
       </p>
+      {combined && <p className="mt-1 text-sm text-[#5c6b6d]">Koçluk paketi dahil</p>}
 
       <div className="mt-5 border-t border-[#e6dddd] pt-4">
         <p className="text-sm text-[#5c6b6d]">Toplam ödeme</p>
         <p className="mt-1 text-[1.75rem] font-semibold leading-9">
-          {formatPrice(facts.total)}
+          {combined ? formatTryMinor(paymentStatus!.amount_minor) : formatPrice(facts.total)}
         </p>
         <p className="mt-2 text-sm text-[#5c6b6d]">
           Tek seferlik ödeme. Otomatik yenilenmez.
@@ -110,8 +133,8 @@ export function PayTRPurchaseSummary({
           <div key={row.label} className="flex flex-wrap justify-between gap-x-4">
             <dt className="text-[#5c6b6d]">{row.label}</dt>
             <dd className="font-medium">
-              {row.label === "Ara toplam" ? "" : "−"}
-              {formatPrice(row.value)}
+              {row.deduction ? "−" : ""}
+              {combined ? formatTryMinor(row.minor) : formatPrice(row.minor / 100)}
             </dd>
           </div>
         ))}

@@ -389,4 +389,25 @@ describe("paytrCheckoutState — authoritative payment status", () => {
     }) });
     assert.equal(disabled.canStartPayment, false);
   });
+
+  it("allows a verified combined coaching amount from the server", () => {
+    const combined = paymentStatus({
+      amount_minor: 532025, lesson_amount_minor: 432000,
+      coaching_amount_minor: 100025, coaching_subtotal_minor: 110000,
+      coaching_discount_minor: 9975,
+    });
+    const ready = state({
+      paymentStatusRequired: true, paymentStatus: combined,
+      acceptance: acceptance("accepted", true),
+    });
+    assert.equal(ready.name, "payment_ready");
+    assert.equal(ready.canStartPayment, true);
+    const mismatched = state({
+      paymentStatusRequired: true,
+      paymentStatus: { ...combined, amount_minor: 532024 },
+      acceptance: acceptance("accepted", true),
+    });
+    assert.equal(mismatched.canStartPayment, false);
+    assert.equal(mismatched.blockedReason, "coaching_unverified");
+  });
 });
