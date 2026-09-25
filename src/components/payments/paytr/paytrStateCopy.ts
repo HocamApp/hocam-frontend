@@ -85,6 +85,12 @@ const BASE: Record<PayTRCheckoutStateName, PayTRStateCopy> = {
     tone: "neutral",
     action: "form",
   },
+  payment_resume: {
+    title: "Ödemeye devam et",
+    description: "Açık ödeme girişimine devam etmek için bilgilerini gir.",
+    tone: "neutral",
+    action: "form",
+  },
   starting_payment: {
     title: "Ödeme ekranı hazırlanıyor…",
     description: "Güvenli ödeme formu açılıyor.",

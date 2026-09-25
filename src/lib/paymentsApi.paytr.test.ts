@@ -22,6 +22,11 @@ describe("startPayTRCheckout", () => {
     const calls: Array<{ url: string; body: unknown }> = [];
     mock.module("./api", {
       defaultExport: {
+        get: async (url: string) => {
+          calls.push({ url, body: null });
+          return { data: { purchase_id: "purchase-1", purchase_status: "pending",
+            can_start_checkout: false, requires_reconciliation: true } };
+        },
         post: async (url: string, body: unknown) => {
           calls.push({ url, body });
           return {
@@ -34,7 +39,7 @@ describe("startPayTRCheckout", () => {
       },
     });
 
-    const { startPayTRCheckout } = await import("./paymentsApi");
+    const { startPayTRCheckout, fetchPayTRPaymentStatus } = await import("./paymentsApi");
     const result = await startPayTRCheckout("purchase-1", CUSTOMER);
 
     // Exactly these three keys: the amount, e-mail and IP are the server's
@@ -48,6 +53,14 @@ describe("startPayTRCheckout", () => {
     assert.deepEqual(result, {
       merchant_oid: "HOCAM123",
       iframe_url: "https://www.paytr.com/odeme/guvenli/tok",
+    });
+    const status = await fetchPayTRPaymentStatus("purchase-1");
+    assert.equal(status.purchase_status, "pending");
+    assert.equal(status.can_start_checkout, false);
+    assert.equal(status.requires_reconciliation, true);
+    assert.deepEqual(calls.at(-1), {
+      url: "/payments/package-purchases/purchase-1/payment-status/",
+      body: null,
     });
   });
 });
