@@ -337,7 +337,9 @@ export default function PayTRPaymentPage({
         <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_22.5rem]">
           {showSummary && (
             <PayTRPurchaseSummary
-              purchase={purchase}
+              purchase={paymentStatusQuery.data ? purchase : paymentStatusQuery.isError ? null : undefined}
+              paymentStatus={paymentStatusQuery.data}
+              includesCoaching={Boolean(acceptanceQuery.data?.acceptance?.includes_coaching)}
               className="self-start lg:col-start-2 lg:row-start-1"
             />
           )}

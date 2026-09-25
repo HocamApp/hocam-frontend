@@ -116,6 +116,19 @@ function isLessonOnly(acceptance: PurchaseAcceptanceState): boolean {
   return acceptance.acceptance.includes_coaching === false;
 }
 
+function hasVerifiedCoachingAmount(
+  purchase: PackagePurchase,
+  status: PayTRPaymentStatus
+): boolean {
+  const lesson = status.lesson_amount_minor;
+  const coaching = status.coaching_amount_minor;
+  return status.currency === "TL" &&
+    Number.isSafeInteger(lesson) && Number.isSafeInteger(coaching) &&
+    Number.isSafeInteger(status.amount_minor) &&
+    lesson === purchase.total_price * 100 &&
+    coaching! >= 0 && status.amount_minor === lesson! + coaching!;
+}
+
 export function paytrCheckoutState(
   input: PayTRCheckoutStateInput
 ): PayTRCheckoutState {
@@ -174,10 +187,15 @@ export function paytrCheckoutState(
         paymentStatus.latest_attempt?.status === "succeeded") {
       return build("callback_pending");
     }
+    if (acceptance?.acceptance?.includes_coaching &&
+        !hasVerifiedCoachingAmount(purchase, paymentStatus)) {
+      return build("payment_unavailable", { blockedReason: "coaching_unverified" });
+    }
     if (paymentStatus.has_active_attempt) {
       if (paytrEnabled && paymentStatus.can_resume_checkout &&
           paymentStatus.checkout_enabled && acceptance &&
-          !acceptanceQueryFailed && isLessonOnly(acceptance) &&
+          !acceptanceQueryFailed &&
+          (isLessonOnly(acceptance) || hasVerifiedCoachingAmount(purchase, paymentStatus)) &&
           (!acceptance.requires_tutor_acceptance ||
             acceptance.acceptance?.status === "accepted")) {
         return build("payment_resume", { canStartPayment: true });
@@ -226,7 +244,9 @@ export function paytrCheckoutState(
   if (acceptance === undefined) return build("loading");
   if (!acceptance || acceptanceQueryFailed) return build("query_error");
 
-  if (!isLessonOnly(acceptance)) {
+  if (!isLessonOnly(acceptance) &&
+      !(paymentStatusRequired && paymentStatus?.can_start_checkout &&
+        hasVerifiedCoachingAmount(purchase, paymentStatus))) {
     return build("payment_unavailable", { blockedReason: "coaching_unverified" });
   }
 

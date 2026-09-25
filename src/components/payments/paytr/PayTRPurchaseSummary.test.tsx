@@ -5,7 +5,7 @@ import { afterEach, describe, it } from "node:test";
 import React from "react";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 
-import type { PackagePurchase } from "@/types";
+import type { PackagePurchase, PayTRPaymentStatus } from "@/types";
 
 import { PayTRPurchaseSummary } from "./PayTRPurchaseSummary";
 
@@ -40,6 +40,20 @@ function purchase(overrides: Partial<PackagePurchase> = {}): PackagePurchase {
     paid_at: null,
     promotion_code: null,
     ...overrides,
+  };
+}
+
+function combinedStatus(): PayTRPaymentStatus {
+  return {
+    purchase_id: "purchase-1", purchase_status: "pending", paid_at: null,
+    provider: "", provider_reference: "", amount_minor: 520025,
+    lesson_amount_minor: 420000, coaching_amount_minor: 100025,
+    coaching_subtotal_minor: 110000, coaching_discount_minor: 9975,
+    currency: "TL", checkout_enabled: true, has_active_attempt: false,
+    manual_review: false, requires_reconciliation: false,
+    can_start_checkout: true, can_resume_checkout: false,
+    can_retry_checkout: false, can_cancel_unpaid: true,
+    checkout_blocked_reason: "", latest_attempt: null,
   };
 }
 
@@ -117,5 +131,25 @@ describe("PayTRPurchaseSummary", () => {
     );
 
     assert.doesNotMatch(container.textContent ?? "", /adres|telefon/i);
+  });
+
+  it("shows the combined provider total with exact kuruş", () => {
+    render(<PayTRPurchaseSummary
+      purchase={purchase()} paymentStatus={combinedStatus()} includesCoaching
+    />);
+    assert.ok(screen.getByText("5.200,25 ₺"));
+    assert.ok(screen.getByText("Koçluk paketi dahil"));
+    assert.ok(screen.getByText("Koçluk ara toplam"));
+    assert.equal(screen.queryByText("4.200 ₺"), null);
+  });
+
+  it("refuses a coaching price that differs from the provider order", () => {
+    render(<PayTRPurchaseSummary
+      purchase={purchase()}
+      paymentStatus={{ ...combinedStatus(), amount_minor: 520024 }}
+      includesCoaching
+    />);
+    assert.ok(screen.getByText("Paket tutarı görüntülenemiyor."));
+    assert.equal(screen.queryByText("5.200,24 ₺"), null);
   });
 });
