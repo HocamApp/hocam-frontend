@@ -1,5 +1,14 @@
 # PayTR — S9-R yayın karar kaydı
 
+**25 Eylül 2026 eki: Karar hâlâ NO-GO.** Bu kayıt tarihsel lesson-only yayın
+değerlendirmesidir. Yeni hedef lesson ve coaching içeren tam marketplace
+akışıdır. Backend checkout güvenliği ve frontend payment-status bağlantısı
+yerel dallarda geliştirilip otomatik test edilmiştir; staging, PayTR panel
+callback'i, finansal politika onayı, provider iadeleri, tutor transferleri ve
+uzlaştırma kanıtları tamamlanmamıştır. Aşağıdaki eski kapıların hiçbiri yerel
+test sonucu nedeniyle production için kapanmış sayılmaz.
+
+
 **19 Eylül 2026 — Karar: BEKLE (NO-GO).** Bu karar kaydı frontend hazırlığıdır,
 production aktivasyonu veya operasyon kabulü değildir. İlk yayın kapsamı lesson-only;
 koçluk kapalı kalır. Arda/Emin'in ayrıca vereceği karar olmadan production açılmaz.

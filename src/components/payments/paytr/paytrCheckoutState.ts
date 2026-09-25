@@ -1,6 +1,6 @@
 import type { PurchaseAcceptanceState } from "@/lib/coachingApi";
 import type { PayTRCheckoutErrorKind } from "@/lib/paymentsApi";
-import type { PackagePurchase } from "@/types";
+import type { PackagePurchase, PayTRPaymentStatus } from "@/types";
 
 import type { PayTRRecoveryRecord } from "./paytrRecovery";
 
@@ -31,6 +31,7 @@ export type PayTRCheckoutStateName =
   | "acceptance_rejected"
   | "payment_unavailable"
   | "payment_ready"
+  | "payment_resume"
   | "starting_payment"
   | "iframe_open"
   | "callback_pending"
@@ -68,17 +69,20 @@ export interface PayTRCheckoutStateInput {
   knownAttempt?: PayTRRecoveryRecord | null;
   lastStartErrorKind?: PayTRCheckoutErrorKind | null;
   /**
-   * Only ever a verified response from the student-visible payment-state
-   * endpoint (S7, backend dependency B01). While that endpoint does not exist,
-   * leave it undefined: a failed or under-review attempt is never inferred
-   * from a pending purchase, a lost response or a local timer.
+   * Legacy mapper input for pure state tests. Real payment routes use the
+   * owned purchase payment-status endpoint below.
    */
   verifiedAttempt?: PayTRVerifiedAttempt | null;
+  /** Required by the real payment route before offering a new POST. */
+  paymentStatusRequired?: boolean;
+  paymentStatus?: PayTRPaymentStatus | null;
+  paymentStatusQueryFailed?: boolean;
+  retryRequested?: boolean;
 }
 
 export interface PayTRCheckoutState {
   name: PayTRCheckoutStateName;
-  /** True only on payment_ready: the form may be shown and submitted. */
+  /** True when a new attempt or the same active order can be submitted. */
   canStartPayment: boolean;
   /** True only on a verified failed attempt: one new attempt, same purchase. */
   canRetryPayment: boolean;
@@ -127,6 +131,10 @@ export function paytrCheckoutState(
     knownAttempt,
     lastStartErrorKind,
     verifiedAttempt,
+    paymentStatusRequired = false,
+    paymentStatus,
+    paymentStatusQueryFailed = false,
+    retryRequested = false,
   } = input;
 
   if (purchase === undefined) return build("loading");
@@ -135,16 +143,60 @@ export function paytrCheckoutState(
   }
 
   // Terminal server truth first — nothing local outranks it.
-  if (purchase.status === "paid") return build("payment_paid");
+  if (purchase.status === "paid" || paymentStatus?.purchase_status === "paid") {
+    return build("payment_paid");
+  }
   if (purchase.status === "cancelled") return build("purchase_cancelled");
   if (purchase.status === "refunded") return build("purchase_refunded");
 
-  if (verifiedAttempt?.manualReview) return build("manual_review");
+  if (paymentStatus?.manual_review || verifiedAttempt?.manualReview) {
+    return build("manual_review");
+  }
 
   if (attemptPhase === "iframe" && iframeUrl) {
     return build("iframe_open", { iframeUrl });
   }
   if (attemptPhase === "starting") return build("starting_payment");
+
+  if (paymentStatusRequired && paymentStatus === undefined) {
+    return build("loading");
+  }
+  if (paymentStatusRequired && (paymentStatus === null || paymentStatusQueryFailed)) {
+    return build("query_error");
+  }
+
+  if (paymentStatus) {
+    if (paymentStatus.purchase_id !== purchase.id ||
+        paymentStatus.purchase_status !== purchase.status) {
+      return build("query_error");
+    }
+    if (paymentStatus.requires_reconciliation ||
+        paymentStatus.latest_attempt?.status === "succeeded") {
+      return build("callback_pending");
+    }
+    if (paymentStatus.has_active_attempt) {
+      if (paytrEnabled && paymentStatus.can_resume_checkout &&
+          paymentStatus.checkout_enabled && acceptance &&
+          !acceptanceQueryFailed && isLessonOnly(acceptance) &&
+          (!acceptance.requires_tutor_acceptance ||
+            acceptance.acceptance?.status === "accepted")) {
+        return build("payment_resume", { canStartPayment: true });
+      }
+      return build("callback_pending");
+    }
+    if (paymentStatus.latest_attempt?.status === "failed") {
+      if (!paymentStatus.can_retry_checkout || !paytrEnabled) {
+        return build("attempt_failed");
+      }
+      if (!retryRequested) {
+        return build("attempt_failed", { canRetryPayment: true });
+      }
+      // A confirmed retry still passes the acceptance and package gates below.
+    } else if (!paymentStatus.can_start_checkout) {
+      if (knownAttempt?.purchaseId === purchase.id) return build("callback_pending");
+      return build("payment_unavailable");
+    }
+  }
 
   if (verifiedAttempt) {
     if (verifiedAttempt.status === "failed") {
@@ -159,7 +211,9 @@ export function paytrCheckoutState(
     attemptPhase === "verifying" ||
     lastStartErrorKind === "unknown" ||
     knownAttempt?.purchaseId === purchase.id;
-  if (startedHere) return build("callback_pending");
+  if (startedHere && !(paymentStatus?.can_retry_checkout && retryRequested)) {
+    return build("callback_pending");
+  }
 
   if (lastStartErrorKind === "unavailable") return build("purchase_unavailable");
   if (revalidation === "checking") return build("loading");

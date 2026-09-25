@@ -34,6 +34,7 @@ import { PAYTR_ENABLED } from "@/lib/featureFlags";
 import {
   describePayTRCheckoutError,
   fetchPackagePurchases,
+  fetchPayTRPaymentStatus,
   startPayTRCheckout,
   type PayTRCheckoutErrorKind,
   type PayTRCustomerField,
@@ -79,6 +80,7 @@ export default function PayTRPaymentPage({
   const [formError, setFormError] = useState<string | null>(null);
   const [attemptStartedAt, setAttemptStartedAt] = useState<number | null>(null);
   const [fastPollWindowOver, setFastPollWindowOver] = useState(false);
+  const [retryRequested, setRetryRequested] = useState(false);
   // The server issued a token but named an address we will not embed. The
   // attempt exists, so this is an unresolved payment, not a free retry.
   const [iframeRejected, setIframeRejected] = useState(false);
@@ -139,6 +141,19 @@ export default function PayTRPaymentPage({
     return purchasesQuery.data.find((item) => item.id === purchaseId) ?? null;
   }, [purchasesQuery.data, purchasesQuery.isError, purchaseId]);
 
+  const paymentStatusQuery = useQuery({
+    queryKey: ["paytr-payment-status", purchaseId],
+    queryFn: () => fetchPayTRPaymentStatus(purchaseId),
+    enabled: isAuthenticated && isStudent && Boolean(purchase),
+    retry: false,
+    refetchInterval: () =>
+      payTRPollIntervalMs({
+        attemptActive,
+        elapsedMs: attemptStartedAt !== null ? Date.now() - attemptStartedAt : 0,
+        purchaseStatus: purchase?.status,
+      }),
+  });
+
   const state = paytrCheckoutState({
     paytrEnabled: PAYTR_ENABLED,
     purchase,
@@ -150,6 +165,10 @@ export default function PayTRPaymentPage({
     knownAttempt,
     lastStartErrorKind,
     revalidation,
+    paymentStatusRequired: true,
+    paymentStatus: paymentStatusQuery.isError ? null : paymentStatusQuery.data,
+    paymentStatusQueryFailed: paymentStatusQuery.isError,
+    retryRequested,
   });
 
   const canSubmit = useRef(false);
@@ -161,21 +180,29 @@ export default function PayTRPaymentPage({
     const results = await Promise.allSettled([
       purchasesQuery.refetch({ throwOnError: true }),
       acceptanceQuery.refetch({ throwOnError: true }),
+      paymentStatusQuery.refetch({ throwOnError: true }),
     ]);
     if (results.some((result) => result.status === "rejected" || result.value.isError)) {
       setRevalidation("failed");
       return;
     }
+    const status = results[2].status === "fulfilled" ? results[2].value.data : null;
+    if (status?.can_start_checkout && !status.has_active_attempt &&
+        !status.requires_reconciliation) {
+      clearPayTRRecovery(getSessionStorage(), userId, purchaseId);
+      setKnownAttempt(null);
+      setAttemptStartedAt(null);
+    }
     setLastStartErrorKind(null);
     setFormError(null);
     setRevalidation("idle");
     verificationLock.current = false;
-  }, [purchasesQuery, acceptanceQuery]);
+  }, [purchasesQuery, acceptanceQuery, paymentStatusQuery, userId, purchaseId]);
 
   const startCheckout = useMutation({
     mutationFn: (values: PayTRCustomerFormValues) =>
       startPayTRCheckout(purchaseId, values),
-    // No automatic retry: every accepted POST opens another PayTR attempt.
+    // Never automatically POST: only the student's submit starts or resumes.
     retry: false,
     onSuccess: (response) => {
       attachMerchantOid(
@@ -189,16 +216,21 @@ export default function PayTRPaymentPage({
       setIframeUrl(safeUrl);
       setIframeRejected(!safeUrl);
       setAttemptPhase(safeUrl ? "iframe" : "verifying");
+      void paymentStatusQuery.refetch();
     },
     onError: (error) => {
       const described = describePayTRCheckoutError(error);
       setLastStartErrorKind(described.kind);
       setAttemptPhase("idle");
 
-      if (described.kind === "unknown") {
+      if (["unknown", "conflict", "service"].includes(described.kind)) {
         // The request may well have created an attempt. Keep the breadcrumb,
         // stop offering to pay, and let the student re-check the result.
         setKnownAttempt(readPayTRRecovery(getSessionStorage(), userId));
+        if (described.kind !== "unknown") setFormError(described.message);
+        if (described.kind === "conflict") {
+          void revalidate();
+        }
         return;
       }
 
@@ -210,12 +242,6 @@ export default function PayTRPaymentPage({
       setFormError(
         Object.keys(described.fieldErrors).length > 0 ? null : described.message
       );
-      if (described.kind === "conflict") {
-        void revalidate();
-      } else if (described.kind === "service") {
-        verificationLock.current = true;
-        setRevalidation("required");
-      }
     },
     onSettled: () => {
       submitLock.current = false;
@@ -229,10 +255,14 @@ export default function PayTRPaymentPage({
       setFieldErrors({});
       setFormError(null);
       setLastStartErrorKind(null);
+      setRetryRequested(false);
       setFastPollWindowOver(false);
       setIframeRejected(false);
 
-      const startedAt = Date.now();
+      const previousStartedAt = state.name === "payment_resume"
+        ? Date.parse(paymentStatusQuery.data?.latest_attempt?.created_at ?? "")
+        : NaN;
+      const startedAt = Number.isFinite(previousStartedAt) ? previousStartedAt : Date.now();
       setAttemptStartedAt(startedAt);
       // Opened before the POST: a reply that never arrives still leaves a
       // trace pointing at this purchase.
@@ -244,7 +274,7 @@ export default function PayTRPaymentPage({
       setAttemptPhase("starting");
       startCheckout.mutate(values);
     },
-    [purchase, purchaseId, startCheckout, userId]
+    [purchase, purchaseId, startCheckout, userId, state.name, paymentStatusQuery.data]
   );
 
   // The fast-poll window ending is a UI change, not a verdict: the frame stays
@@ -276,6 +306,12 @@ export default function PayTRPaymentPage({
     if (revalidation === "checking") return;
     void revalidate();
   }, [revalidation, revalidate]);
+
+  const requestRetry = useCallback(() => {
+    if (!paymentStatusQuery.data?.can_retry_checkout) return;
+    setRetryRequested(true);
+    setLastStartErrorKind(null);
+  }, [paymentStatusQuery.data]);
 
   const showSummary =
     state.name !== "purchase_unavailable" && state.name !== "query_error";
@@ -317,13 +353,14 @@ export default function PayTRPaymentPage({
   );
 
   function renderMain() {
-    if (state.name === "payment_ready" || state.name === "starting_payment") {
+    if (state.name === "payment_ready" || state.name === "payment_resume" || state.name === "starting_payment") {
       return (
         <PayTRCustomerForm
           onSubmit={handleSubmit}
           isSubmitting={state.name === "starting_payment"}
           fieldErrors={fieldErrors}
           formError={formError}
+          resumeExisting={state.name === "payment_resume"}
         />
       );
     }
@@ -376,6 +413,7 @@ export default function PayTRPaymentPage({
           blockedReason: state.blockedReason,
         }}
         onRecheck={recheck}
+        onRetry={state.canRetryPayment ? requestRetry : undefined}
       />
     );
   }
