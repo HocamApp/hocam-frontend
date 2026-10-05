@@ -159,6 +159,34 @@ describe("paytrCheckoutState — the purchase status is the last word", () => {
   });
 });
 
+describe("paytrCheckoutState — authoritative payment status", () => {
+  it("shows success from a newer paid payment-status response", () => {
+    assert.equal(state({
+      paymentStatusRequired: true,
+      paymentStatus: paymentStatus({ purchase_status: "paid" }),
+    }).name, "payment_paid");
+  });
+
+  it("does not show success when the two server responses disagree", () => {
+    assert.equal(state({
+      purchase: purchase("paid"), paymentStatusRequired: true,
+      paymentStatus: paymentStatus(),
+    }).name, "query_error");
+  });
+
+  it("closes a stale iframe view after the backend reports failure", () => {
+    assert.equal(state({
+      paymentStatusRequired: true,
+      paymentStatus: paymentStatus({
+        latest_attempt: { merchant_oid: "HOCAM1", status: "failed",
+          created_at: "2026-09-17T09:00:00Z", completed_at: null },
+        can_start_checkout: false, can_retry_checkout: false,
+      }),
+      attemptPhase: "iframe", iframeUrl: "https://www.paytr.com/odeme/guvenli/test",
+    }).name, "attempt_failed");
+  });
+});
+
 describe("paytrCheckoutState — tutor acceptance", () => {
   it("opens the form when no tutor decision is required", () => {
     const ready = state();
