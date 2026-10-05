@@ -1,5 +1,20 @@
 # PayTR Frontend — Doğrulanmış API Sözleşmesi
 
+## 25 Eylül 2026 uygulama eki
+
+Bu belgenin aşağıdaki 19 Eylül bölümleri tarihsel S0 kaydıdır. Backend PR
+[#163](https://github.com/HocamApp/hocam-backend/pull/163) açık durumdayken
+`GET /api/payments/package-purchases/{id}/payment-status/` endpoint'ini ekledi;
+bu frontend dalı ödeme ve dönüş ekranında onu kullanır. Yanıt `purchase_status`,
+`latest_attempt`, `manual_review`, `requires_reconciliation`,
+`checkout_enabled`, `can_start_checkout`, `can_resume_checkout`,
+`can_retry_checkout`, `can_cancel_unpaid` ve `checkout_blocked_reason` içerir.
+Yeni POST yalnız `can_start_checkout` ile, mevcut siparişe devam ise
+`can_resume_checkout` ile açılır. İki durumda da PayTR flag'i açık olmalıdır.
+Başarılı sonuç yalnız sunucunun `paid` durumuyla gösterilir. Bu sözleşme yerel
+testlerle kontrol edilmiştir; staging ve gerçek PayTR kanıtı henüz yoktur.
+
+
 **Doğrulama tarihi:** 19 Eylül 2026 (backend PR head ve açık durumu yeniden kontrol edildi)\
 **Frontend baz SHA:** `f90874d01b5b83facbac9bfb4a3be2f20bc6ba44`\
 **Backend baz SHA:** `e1e36966eed5690957fa36018216ef9dcb765011`\

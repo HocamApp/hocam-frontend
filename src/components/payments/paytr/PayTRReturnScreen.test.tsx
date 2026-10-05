@@ -88,6 +88,20 @@ before(async () => {
   mock.module("@/lib/api", {
     defaultExport: {
       get: async (url: string) => {
+        if (url.includes("payment-status")) {
+          return { data: {
+            purchase_id: "purchase-1", purchase_status: purchaseStatus,
+            paid_at: purchaseStatus === "paid" ? "2026-09-17T09:20:00Z" : null,
+            provider: purchaseStatus === "paid" ? "paytr" : "",
+            provider_reference: "", amount_minor: 432000, currency: "TL",
+            checkout_enabled: true, has_active_attempt: false,
+            manual_review: false, requires_reconciliation: false,
+            can_start_checkout: purchaseStatus === "pending",
+            can_resume_checkout: false, can_retry_checkout: false,
+            can_cancel_unpaid: purchaseStatus === "pending",
+            checkout_blocked_reason: "", latest_attempt: null,
+          } };
+        }
         if (url.includes("acceptance-status")) {
           return { data: { requires_tutor_acceptance: false, acceptance: null } };
         }

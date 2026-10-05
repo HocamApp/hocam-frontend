@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
 import type { PurchaseAcceptanceState } from "@/lib/coachingApi";
-import type { PackagePurchase, PackagePurchaseStatus } from "@/types";
+import type { PackagePurchase, PackagePurchaseStatus, PayTRPaymentStatus } from "@/types";
 
 import {
   paytrCheckoutState,
@@ -42,6 +42,19 @@ const NO_ACCEPTANCE: PurchaseAcceptanceState = {
   requires_tutor_acceptance: false,
   acceptance: null,
 };
+
+function paymentStatus(overrides: Partial<PayTRPaymentStatus> = {}): PayTRPaymentStatus {
+  return {
+    purchase_id: "purchase-1", purchase_status: "pending", paid_at: null,
+    provider: "", provider_reference: "", amount_minor: 432000,
+    currency: "TL", checkout_enabled: true, has_active_attempt: false,
+    manual_review: false, requires_reconciliation: false,
+    can_start_checkout: true, can_resume_checkout: false,
+    can_retry_checkout: false, can_cancel_unpaid: true,
+    checkout_blocked_reason: "", latest_attempt: null,
+    ...overrides,
+  };
+}
 
 it("blocks cached pending after a failed refresh but preserves an active frame", () => {
   const input = { paytrEnabled: true, purchase: purchase(), acceptance: NO_ACCEPTANCE, purchaseQueryFailed: true };
@@ -143,6 +156,34 @@ describe("paytrCheckoutState — the purchase status is the last word", () => {
     assert.equal(cancelled.canStartPayment, false);
     assert.equal(refunded.canStartPayment, false);
     assert.equal(cancelled.canRetryPayment, false);
+  });
+});
+
+describe("paytrCheckoutState — authoritative payment status", () => {
+  it("shows success from a newer paid payment-status response", () => {
+    assert.equal(state({
+      paymentStatusRequired: true,
+      paymentStatus: paymentStatus({ purchase_status: "paid" }),
+    }).name, "payment_paid");
+  });
+
+  it("does not show success when the two server responses disagree", () => {
+    assert.equal(state({
+      purchase: purchase("paid"), paymentStatusRequired: true,
+      paymentStatus: paymentStatus(),
+    }).name, "query_error");
+  });
+
+  it("closes a stale iframe view after the backend reports failure", () => {
+    assert.equal(state({
+      paymentStatusRequired: true,
+      paymentStatus: paymentStatus({
+        latest_attempt: { merchant_oid: "HOCAM1", status: "failed",
+          created_at: "2026-09-17T09:00:00Z", completed_at: null },
+        can_start_checkout: false, can_retry_checkout: false,
+      }),
+      attemptPhase: "iframe", iframeUrl: "https://www.paytr.com/odeme/guvenli/test",
+    }).name, "attempt_failed");
   });
 });
 
@@ -329,5 +370,51 @@ describe("paytrCheckoutState — verified attempt data only (S7)", () => {
 
     assert.equal(succeededAttempt.name, "callback_pending");
     assert.notEqual(succeededAttempt.name, "payment_paid");
+  });
+});
+
+describe("paytrCheckoutState — authoritative payment status", () => {
+  it("never opens a checkout before payment status has loaded", () => {
+    const pending = state({ paymentStatusRequired: true });
+    assert.equal(pending.name, "loading");
+    assert.equal(pending.canStartPayment, false);
+  });
+
+  it("offers to resume the same live order", () => {
+    const resumed = state({ paymentStatusRequired: true, paymentStatus: paymentStatus({
+      has_active_attempt: true, can_start_checkout: false,
+      can_resume_checkout: true, checkout_blocked_reason: "checkout_in_progress",
+      latest_attempt: { merchant_oid: "HOCAM1", status: "token_issued",
+        created_at: "2026-09-25T10:00:00Z", completed_at: null },
+    }) });
+    assert.equal(resumed.name, "payment_resume");
+    assert.equal(resumed.canStartPayment, true);
+  });
+
+  it("retries only after a verified failure and an explicit click", () => {
+    const input = { paymentStatusRequired: true, knownAttempt: {
+      schemaVersion: 1 as const, purchaseId: "purchase-1", tutorId: "tutor-1",
+      merchantOid: "HOCAM1", startedAt: 1,
+    }, paymentStatus: paymentStatus({ can_retry_checkout: true,
+      latest_attempt: { merchant_oid: "HOCAM1", status: "failed",
+        created_at: "2026-09-25T10:00:00Z", completed_at: "2026-09-25T10:01:00Z" },
+    }) };
+    assert.equal(state(input).name, "attempt_failed");
+    assert.equal(state(input).canRetryPayment, true);
+    assert.equal(state({ ...input, retryRequested: true }).name, "payment_ready");
+  });
+
+  it("blocks unknown outcomes and disabled accounts", () => {
+    const unresolved = state({ paymentStatusRequired: true, paymentStatus: paymentStatus({
+      requires_reconciliation: true, can_start_checkout: false,
+      checkout_blocked_reason: "payment_unverified",
+    }) });
+    assert.equal(unresolved.name, "callback_pending");
+    assert.equal(unresolved.canStartPayment, false);
+    const disabled = state({ paymentStatusRequired: true, paymentStatus: paymentStatus({
+      checkout_enabled: false, can_start_checkout: false,
+      checkout_blocked_reason: "checkout_disabled",
+    }) });
+    assert.equal(disabled.canStartPayment, false);
   });
 });

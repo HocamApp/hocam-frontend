@@ -8,7 +8,7 @@ import React from "react";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
-import type { PackagePurchase } from "@/types";
+import type { PackagePurchase, PayTRPaymentStatus } from "@/types";
 
 Object.defineProperty(globalThis, "self", { value: window, configurable: true });
 
@@ -30,6 +30,21 @@ let postResult: () => PostResult = () => ({
     iframe_url: "https://www.paytr.com/odeme/guvenli/abc123token",
   },
 });
+
+function paymentStatus(): PayTRPaymentStatus {
+  return {
+    purchase_id: "purchase-1", purchase_status: purchaseStatus,
+    paid_at: purchaseStatus === "paid" ? "2026-09-17T09:20:00Z" : null,
+    provider: purchaseStatus === "paid" ? "paytr" : "",
+    provider_reference: "", amount_minor: 432000, currency: "TL",
+    checkout_enabled: true, has_active_attempt: false,
+    manual_review: false, requires_reconciliation: false,
+    can_start_checkout: purchaseStatus === "pending",
+    can_resume_checkout: false, can_retry_checkout: false,
+    can_cancel_unpaid: purchaseStatus === "pending",
+    checkout_blocked_reason: "", latest_attempt: null,
+  };
+}
 
 function purchase(): PackagePurchase {
   return {
@@ -100,6 +115,7 @@ before(async () => {
     defaultExport: {
       get: async (url: string) => {
         getCalls.push(url);
+        if (url.includes("payment-status")) return { data: paymentStatus() };
         if (url.includes("acceptance-status")) {
           return { data: await acceptanceResponse() };
         }

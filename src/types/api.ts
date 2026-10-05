@@ -1053,6 +1053,34 @@ export interface StartPayTRCheckoutRequest {
 export interface StartPayTRCheckoutResponse {
   merchant_oid: string;
   iframe_url: string;
+  reused?: boolean;
+}
+
+/** Owned purchase status from the backend; only the backend can authorize a
+ * new order or a resume of the existing PayTR iframe. */
+export interface PayTRPaymentStatus {
+  purchase_id: string;
+  purchase_status: "pending" | "paid" | "cancelled" | "refunded";
+  paid_at: string | null;
+  provider: string;
+  provider_reference: string;
+  amount_minor: number;
+  currency: string;
+  checkout_enabled: boolean;
+  has_active_attempt: boolean;
+  manual_review: boolean;
+  requires_reconciliation: boolean;
+  can_start_checkout: boolean;
+  can_resume_checkout: boolean;
+  can_retry_checkout: boolean;
+  can_cancel_unpaid: boolean;
+  checkout_blocked_reason: string;
+  latest_attempt: null | {
+    merchant_oid: string;
+    status: "created" | "token_issued" | "token_failed" | "expired" | "succeeded" | "failed";
+    created_at: string;
+    completed_at: string | null;
+  };
 }
 
 export interface PaymentLedgerEntry {

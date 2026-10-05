@@ -14,6 +14,7 @@ import {
   ReferralInfo,
   StartPayTRCheckoutRequest,
   StartPayTRCheckoutResponse,
+  PayTRPaymentStatus,
   TutorEarningsSummary,
   TutorPackageOffer,
   UpdateTutorPackageOfferPayload,
@@ -187,8 +188,8 @@ export function extractPromoPreviewErrorMessage(err: unknown): string {
 
 /**
  * Opens one PayTR attempt for one purchase. Call it from a deliberate user
- * submit only: the server creates a new attempt on every accepted POST, so a
- * mount, focus or automatic mutation retry would leave stray attempts behind.
+ * submit only: the server may resume the same active order, but the browser
+ * never starts or resumes payment automatically.
  */
 export async function startPayTRCheckout(
   purchaseId: string,
@@ -197,6 +198,15 @@ export async function startPayTRCheckout(
   const response = await api.post<StartPayTRCheckoutResponse>(
     `/payments/package-purchases/${purchaseId}/paytr-checkout/`,
     payload
+  );
+  return response.data;
+}
+
+export async function fetchPayTRPaymentStatus(
+  purchaseId: string
+): Promise<PayTRPaymentStatus> {
+  const response = await api.get<PayTRPaymentStatus>(
+    `/payments/package-purchases/${purchaseId}/payment-status/`
   );
   return response.data;
 }

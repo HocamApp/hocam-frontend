@@ -30,6 +30,7 @@ export interface PayTRCustomerFormProps {
   /** Safe, already-mapped server messages from describePayTRCheckoutError. */
   fieldErrors?: Partial<Record<PayTRCustomerField, string>>;
   formError?: string | null;
+  resumeExisting?: boolean;
 }
 
 const FIELD_LABELS: Record<PayTRCustomerField, string> = {
@@ -46,6 +47,7 @@ export function PayTRCustomerForm({
   isSubmitting = false,
   fieldErrors,
   formError,
+  resumeExisting = false,
 }: PayTRCustomerFormProps) {
   const fieldId = React.useId();
   const form = useForm<PayTRCustomerFormValues>({
@@ -54,7 +56,7 @@ export function PayTRCustomerForm({
   });
   const [summary, setSummary] = React.useState<string | null>(null);
   // Synchronous, so three impatient clicks still buy exactly one attempt. The
-  // server opens a new PayTR attempt for every accepted POST.
+  // server either resumes the active order or opens an authorized new one.
   const inFlight = React.useRef(false);
 
   const ids = (field: PayTRCustomerField) => ({
@@ -170,7 +172,7 @@ export function PayTRCustomerForm({
         disabled={isSubmitting}
         className="mt-4 flex min-h-[3rem] w-full items-center justify-center rounded-full bg-[var(--pink-deep)] px-5 py-3 text-base font-medium text-white transition-colors hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#02171a] focus-visible:ring-offset-2 disabled:bg-[#e6dddd] disabled:text-[#5c6b6d]"
       >
-        {isSubmitting ? "Ödeme ekranı hazırlanıyor…" : "Güvenli ödemeye geç"}
+        {isSubmitting ? "Ödeme ekranı hazırlanıyor…" : resumeExisting ? "Ödemeye devam et" : "Güvenli ödemeye geç"}
       </button>
       <p className="mt-3 text-sm text-[#5c6b6d]">
         Kart bilgilerini PayTR ödeme ekranında gireceksin.

@@ -8,7 +8,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { MinimalCheckoutHeader } from "@/components/checkout/MinimalCheckoutHeader";
 import { useAuth } from "@/hooks/useAuth";
 import { PAYTR_ENABLED } from "@/lib/featureFlags";
-import { fetchPackagePurchases } from "@/lib/paymentsApi";
+import { fetchPackagePurchases, fetchPayTRPaymentStatus } from "@/lib/paymentsApi";
 import { getSessionStorage } from "@/lib/safeStorage";
 
 import { PayTRProcessingState } from "./PayTRProcessingState";
@@ -91,6 +91,19 @@ export function PayTRReturnScreen() {
       : (purchasesQuery.data.find((item) => item.id === recovery.purchaseId) ??
         null);
 
+  const paymentStatusQuery = useQuery({
+    queryKey: ["paytr-payment-status", recovery?.purchaseId],
+    queryFn: () => fetchPayTRPaymentStatus(recovery!.purchaseId),
+    enabled: isAuthenticated && Boolean(recovery),
+    retry: false,
+    refetchInterval: () =>
+      payTRPollIntervalMs({
+        attemptActive: Boolean(recovery),
+        elapsedMs: recovery ? Date.now() - recovery.startedAt : 0,
+        purchaseStatus: purchase?.status,
+      }),
+  });
+
   const state = paytrCheckoutState({
     paytrEnabled: PAYTR_ENABLED,
     purchase,
@@ -99,6 +112,9 @@ export function PayTRReturnScreen() {
     // mapper ever consults acceptance, and this screen only renders with one.
     acceptance: null,
     knownAttempt: recovery ?? null,
+    paymentStatusRequired: true,
+    paymentStatus: paymentStatusQuery.isError ? null : paymentStatusQuery.data,
+    paymentStatusQueryFailed: paymentStatusQuery.isError,
   });
 
   const settled =
@@ -116,7 +132,8 @@ export function PayTRReturnScreen() {
 
   const recheck = useCallback(() => {
     void purchasesQuery.refetch();
-  }, [purchasesQuery]);
+    void paymentStatusQuery.refetch();
+  }, [purchasesQuery, paymentStatusQuery]);
 
   const activatedCredits =
     state.name === "payment_paid" && typeof purchase?.remaining_credits === "number"
