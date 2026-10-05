@@ -142,8 +142,21 @@ export function paytrCheckoutState(
     return build(purchaseQueryFailed ? "query_error" : "purchase_unavailable");
   }
 
-  // Terminal server truth first — nothing local outranks it.
-  if (purchase.status === "paid" || paymentStatus?.purchase_status === "paid") {
+  if (paymentStatus && paymentStatus.purchase_id !== purchase.id) {
+    return build("query_error");
+  }
+  // The payment-status response is the freshest server verdict when present.
+  if (paymentStatus?.purchase_status === "paid") {
+    return build("payment_paid");
+  }
+  if (paymentStatus && paymentStatus.purchase_status !== purchase.status) {
+    return build("query_error");
+  }
+  if (purchase.status === "paid") {
+    if (paymentStatusRequired && paymentStatus === undefined) return build("loading");
+    if (paymentStatusRequired && (paymentStatus === null || paymentStatusQueryFailed)) {
+      return build("query_error");
+    }
     return build("payment_paid");
   }
   if (purchase.status === "cancelled") return build("purchase_cancelled");
@@ -151,6 +164,16 @@ export function paytrCheckoutState(
 
   if (paymentStatus?.manual_review || verifiedAttempt?.manualReview) {
     return build("manual_review");
+  }
+
+  if (paymentStatus?.requires_reconciliation ||
+      paymentStatus?.latest_attempt?.status === "succeeded") {
+    return build("callback_pending");
+  }
+  if (paymentStatus?.latest_attempt?.status === "failed" && !retryRequested) {
+    return build("attempt_failed", {
+      canRetryPayment: paytrEnabled && paymentStatus.can_retry_checkout,
+    });
   }
 
   if (attemptPhase === "iframe" && iframeUrl) {
@@ -166,14 +189,6 @@ export function paytrCheckoutState(
   }
 
   if (paymentStatus) {
-    if (paymentStatus.purchase_id !== purchase.id ||
-        paymentStatus.purchase_status !== purchase.status) {
-      return build("query_error");
-    }
-    if (paymentStatus.requires_reconciliation ||
-        paymentStatus.latest_attempt?.status === "succeeded") {
-      return build("callback_pending");
-    }
     if (paymentStatus.has_active_attempt) {
       if (paytrEnabled && paymentStatus.can_resume_checkout &&
           paymentStatus.checkout_enabled && acceptance &&
