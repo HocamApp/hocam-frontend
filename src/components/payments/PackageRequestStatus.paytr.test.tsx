@@ -9,7 +9,7 @@ import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import type { PurchaseAcceptanceState } from "@/lib/coachingApi";
-import type { PackagePurchaseStatus } from "@/types";
+import type { PackagePurchaseStatus, PayTRPaymentStatus } from "@/types";
 
 Object.defineProperty(globalThis, "self", { value: window, configurable: true });
 
@@ -19,6 +19,33 @@ let acceptanceResponse: PurchaseAcceptanceState = {
   requires_tutor_acceptance: false,
   acceptance: null,
 };
+
+/** The server is ready to take payment and nothing is in flight. */
+function payableStatus(): PayTRPaymentStatus {
+  return {
+    purchase_id: "purchase-1",
+    purchase_status: "pending",
+    paid_at: null,
+    provider: "",
+    provider_reference: "",
+    amount_minor: 432000,
+    lesson_amount_minor: 432000,
+    coaching_amount_minor: 0,
+    currency: "TL",
+    checkout_enabled: true,
+    has_active_attempt: false,
+    manual_review: false,
+    requires_reconciliation: false,
+    can_start_checkout: true,
+    can_resume_checkout: false,
+    can_retry_checkout: false,
+    can_cancel_unpaid: true,
+    checkout_blocked_reason: "",
+    latest_attempt: null,
+  };
+}
+
+let paymentStatusResponse: PayTRPaymentStatus = payableStatus();
 
 let PackageRequestStatus: typeof import("./PackageRequestStatus").PackageRequestStatus;
 
@@ -45,7 +72,9 @@ before(async () => {
   });
   mock.module("@/lib/api", {
     defaultExport: {
-      get: async () => ({ data: acceptanceResponse }),
+      get: async (url: string) => ({
+        data: url.includes("payment-status") ? paymentStatusResponse : acceptanceResponse,
+      }),
       post: async () => ({ data: acceptanceResponse }),
     },
     namedExports: { API_BASE_URL: "http://localhost:8000/api" },
@@ -63,7 +92,11 @@ function renderStatus(purchaseStatus: PackagePurchaseStatus = "pending") {
   clients.push(client);
   return render(
     <QueryClientProvider client={client}>
-      <PackageRequestStatus purchaseId="purchase-1" purchaseStatus={purchaseStatus} />
+      <PackageRequestStatus
+        purchaseId="purchase-1"
+        purchaseStatus={purchaseStatus}
+        totalPrice={4320}
+      />
     </QueryClientProvider>
   );
 }
@@ -89,6 +122,7 @@ function acceptance(
 
 beforeEach(() => {
   acceptanceResponse = { requires_tutor_acceptance: false, acceptance: null };
+  paymentStatusResponse = payableStatus();
   window.sessionStorage.clear();
 });
 

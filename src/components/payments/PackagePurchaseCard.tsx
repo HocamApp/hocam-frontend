@@ -130,6 +130,7 @@ export function PackagePurchaseCard({
       <PackageRequestStatus
         purchaseId={purchase.id}
         purchaseStatus={purchase.status}
+        totalPrice={purchase.total_price}
       />
     </>
   );

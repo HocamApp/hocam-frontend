@@ -5,18 +5,38 @@ import { CheckCircle, Clock } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  payTREntryBlockedMessage,
+  type PayTREntryBlockedReason,
+} from "@/components/payments/paytr/paytrEntryPoints";
+import type { PayTRPostCreateCheck } from "@/components/payments/paytr/usePayTRPostCreate";
+import { useDelayedVisible } from "@/hooks/useDelayedVisible";
 import { formatPrice } from "@/lib/utils";
 import type { PackagePurchase } from "@/types";
 
 interface PurchaseSuccessProps {
   purchase: PackagePurchase;
   tutorId: string;
+  /** PayTR on only: where the read that decides "go to payment" stands. */
+  paymentCheck?: PayTRPostCreateCheck["check"];
+  paymentBlockedReason?: PayTREntryBlockedReason;
+  onRetryPaymentCheck?: () => void;
 }
 
 /** Shown after a package request is created. Deliberately styled as a
  * pending state (amber clock, not a green payment success): no money has
- * moved yet and activation timing is not promised here. */
-export function CheckoutPurchaseSuccess({ purchase, tutorId }: PurchaseSuccessProps) {
+ * moved yet and activation timing is not promised here. With PayTR on it
+ * also says why it is still here instead of the payment screen. */
+export function CheckoutPurchaseSuccess({
+  purchase,
+  tutorId,
+  paymentCheck = null,
+  paymentBlockedReason,
+  onRetryPaymentCheck,
+}: PurchaseSuccessProps) {
+  const showCheckPlaceholder = useDelayedVisible(paymentCheck === "checking");
+
   return (
     <Card className="mx-auto max-w-lg rounded-card border-[var(--checkout-soft-line)] bg-[var(--checkout-card-surface)] shadow-none">
       <CardContent className="space-y-4 pt-6 text-center">
@@ -77,6 +97,35 @@ export function CheckoutPurchaseSuccess({ purchase, tutorId }: PurchaseSuccessPr
           Tek seferlik ödeme. Paket otomatik yenilenmez. Kartından anlık ödeme
           alınmaz.
         </p>
+
+        {paymentCheck === "checking" ? (
+          <div role="status" aria-busy="true" className="flex flex-col items-center gap-2">
+            {showCheckPlaceholder ? (
+              <Skeleton className="h-10 w-56 rounded-pill" />
+            ) : null}
+            <p className="text-xs text-muted-foreground">Ödeme durumu kontrol ediliyor…</p>
+          </div>
+        ) : null}
+        {paymentCheck === "status_error" ? (
+          <div className="space-y-2">
+            <p role="status" className="text-sm">
+              Ödeme durumu alınamadı.
+            </p>
+            <Button
+              type="button"
+              variant="outline"
+              className="h-11 rounded-pill"
+              onClick={onRetryPaymentCheck}
+            >
+              Yenile
+            </Button>
+          </div>
+        ) : null}
+        {paymentCheck === "blocked" && paymentBlockedReason ? (
+          <p className="text-sm text-muted-foreground">
+            {payTREntryBlockedMessage(paymentBlockedReason)}
+          </p>
+        ) : null}
 
         <div className="grid gap-2 sm:grid-cols-2">
           <Button className="rounded-pill bg-[var(--checkout-cta)] text-[var(--checkout-on-cta)] hover:bg-[var(--checkout-cta-hover)]" asChild>
