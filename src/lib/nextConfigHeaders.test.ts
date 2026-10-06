@@ -53,7 +53,6 @@ describe("next.config headers with PayTR off (production build)", () => {
 
 describe("next.config headers with PayTR on (staging build)", () => {
   // Next matches header sources with path-to-regexp; use the same compiler.
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { pathToRegexp } = require("next/dist/compiled/path-to-regexp") as {
     pathToRegexp: (source: string, keys: unknown[]) => RegExp;
   };
