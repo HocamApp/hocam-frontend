@@ -1,5 +1,29 @@
 # PayTR — Yayın ve Operasyon Devri (S9)
 
+## 6 Ekim 2026 durum kaydı — NO-GO
+
+Bu tarihli kayıt, aşağıdaki 19 Eylül başlangıç tablosundaki PR/callback durumunu günceller.
+Canlı tahsilat kararı hâlâ verilmedi. Önceki tablonun açık maddeleri bu kayıttaki kanıtla
+kapanmadıkça geçerlidir.
+
+| Alan | Doğrulanan durum |
+| --- | --- |
+| Backend iFrame/callback ve ödeme durumu | [PR #163](https://github.com/HocamApp/hocam-backend/pull/163) merge edildi; ek geliştirmeler ve son uzlaştırma [PR #177](https://github.com/HocamApp/hocam-backend/pull/177) `main` üzerinde, son merge `1d02b2047a5fe668c974333516f1459b62030a38` |
+| Frontend ödeme durumu ve koçluk checkout | [PR #286](https://github.com/HocamApp/hocam-frontend/pull/286) ve [PR #287](https://github.com/HocamApp/hocam-frontend/pull/287) `main` üzerinde; son merge `6f4ebe6646d70788b9835f8eef3b2470232e983c` |
+| Staging backend | `https://hocam-backend-staging-staging.up.railway.app/api/health/` yanıtı `ok`; son dağıtım `4d8e4b02-64ae-4e5b-a920-7a7c2e3440d3` başarılı |
+| PayTR test paneli | HTTPS bildirim adresi `https://hocam-backend-staging-staging.up.railway.app/api/payments/paytr/callback/` olarak kaydedildi |
+| Merchant sırları | Yalnız Railway `hocam-backend-staging` / `staging` servisinde üç `PAYTR_MERCHANT_*` adı doğrulandı; değerler kayda alınmadı |
+| Callback kanıtı | İmzalı sentetik başarısız callback HTTP 200 ve düz `OK` döndürdü; staging denetim komutu bilinmeyen sentetik OID'yi kaydetti. Bu, PayTR kaynaklı uçtan uca ödeme kanıtı değildir |
+| Bayraklar | Staging'de `PAYTR_ENABLED`, `PAYTR_COACHING_ENABLED`, `PAYTR_REFUNDS_ENABLED` tanımlı değil (varsayılan kapalı); manuel ödeme aktivasyonu `False` |
+
+**Açık yayın kapıları:** Gerçek PayTR test kartıyla başarılı/başarısız iFrame ve tekrar
+callback matrisi; isimli test öğrenci allowlist'i ve frontend staging build'i; onaylı
+finansal şartnamenin belge konumu ve ders politikalarıyla mutabakatı; PayTR'nin iFrame
+ve Platform Transfer API erişimine dair yazılı teyidi; G0/G1 geçmiş ödeme denetimi;
+tutor kazancı/transferi ve iade dağıtımı; settlement uzlaştırması; isimli izleme/geri
+alma sahipleri ve prova; kurucu canlıya alma onayı. Bunlar kapanmadan gerçek kartla
+pilot veya herkese açık satış başlatılmaz. Aşağıdaki P4–P8 ve §6a kanıtları açık kalır.
+
 **Hazırlanma:** 18 Eylül 2026; K4 güncellemesi 19 Eylül 2026\
 **Frontend referansı:** `4a61d332971fb81ed6f7835a5b4bc5f39acc67fa` (S8 merge)\
 **Backend referansı:** [PR #163](https://github.com/HocamApp/hocam-backend/pull/163), `e1e36966eed5690957fa36018216ef9dcb765011` — **19 Eylül 2026 itibarıyla hâlâ OPEN**
