@@ -1,0 +1,48 @@
+{
+  "capturedAt": "2026-10-06T15:36:47.050Z",
+  "browser": "149.0.7827.55",
+  "flag": "off",
+  "scope": "local mocked Chromium against a production build; not real PayTR or a real backend",
+  "results": [
+    {
+      "state": "flag-off",
+      "flag": "off",
+      "width": 375,
+      "height": 812,
+      "screenshot": "fe1-flag-off-375.png",
+      "paymentStatusReads": 0,
+      "writes": [],
+      "errors": [],
+      "unexpectedRequests": [],
+      "card": {
+        "links": [],
+        "buttons": [
+          {
+            "label": "Paketi iptal et",
+            "height": 36
+          }
+        ]
+      }
+    },
+    {
+      "state": "flag-off",
+      "flag": "off",
+      "width": 1440,
+      "height": 900,
+      "screenshot": "fe1-flag-off-1440.png",
+      "paymentStatusReads": 0,
+      "writes": [],
+      "errors": [],
+      "unexpectedRequests": [],
+      "card": {
+        "links": [],
+        "buttons": [
+          {
+            "label": "Paketi iptal et",
+            "height": 36
+          }
+        ]
+      }
+    }
+  ]
+}

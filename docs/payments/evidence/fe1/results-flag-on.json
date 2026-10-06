@@ -1,0 +1,200 @@
+{
+  "capturedAt": "2026-10-06T15:35:37.439Z",
+  "browser": "149.0.7827.55",
+  "flag": "on",
+  "scope": "local mocked Chromium against a production build; not real PayTR or a real backend",
+  "results": [
+    {
+      "state": "payable",
+      "flag": "on",
+      "width": 375,
+      "height": 812,
+      "screenshot": "fe1-payable-375.png",
+      "paymentStatusReads": 1,
+      "writes": [],
+      "errors": [],
+      "unexpectedRequests": [],
+      "card": {
+        "links": [
+          "Ödemeye devam et"
+        ],
+        "buttons": [
+          {
+            "label": "Paketi iptal et",
+            "height": 36
+          }
+        ]
+      }
+    },
+    {
+      "state": "payable",
+      "flag": "on",
+      "width": 1440,
+      "height": 900,
+      "screenshot": "fe1-payable-1440.png",
+      "paymentStatusReads": 1,
+      "writes": [],
+      "errors": [],
+      "unexpectedRequests": [],
+      "card": {
+        "links": [
+          "Ödemeye devam et"
+        ],
+        "buttons": [
+          {
+            "label": "Paketi iptal et",
+            "height": 36
+          }
+        ]
+      }
+    },
+    {
+      "state": "open-attempt",
+      "flag": "on",
+      "width": 375,
+      "height": 812,
+      "screenshot": "fe1-open-attempt-375.png",
+      "paymentStatusReads": 1,
+      "writes": [],
+      "errors": [],
+      "unexpectedRequests": [],
+      "card": {
+        "links": [
+          "Ödeme durumunu kontrol et"
+        ],
+        "buttons": []
+      }
+    },
+    {
+      "state": "open-attempt",
+      "flag": "on",
+      "width": 1440,
+      "height": 900,
+      "screenshot": "fe1-open-attempt-1440.png",
+      "paymentStatusReads": 1,
+      "writes": [],
+      "errors": [],
+      "unexpectedRequests": [],
+      "card": {
+        "links": [
+          "Ödeme durumunu kontrol et"
+        ],
+        "buttons": []
+      }
+    },
+    {
+      "state": "status-error",
+      "flag": "on",
+      "width": 375,
+      "height": 812,
+      "screenshot": "fe1-status-error-375.png",
+      "paymentStatusReads": 1,
+      "writes": [],
+      "errors": [],
+      "unexpectedRequests": [],
+      "card": {
+        "links": [],
+        "buttons": [
+          {
+            "label": "Yenile",
+            "height": 44
+          }
+        ]
+      }
+    },
+    {
+      "state": "status-error",
+      "flag": "on",
+      "width": 1440,
+      "height": 900,
+      "screenshot": "fe1-status-error-1440.png",
+      "paymentStatusReads": 1,
+      "writes": [],
+      "errors": [],
+      "unexpectedRequests": [],
+      "card": {
+        "links": [],
+        "buttons": [
+          {
+            "label": "Yenile",
+            "height": 44
+          }
+        ]
+      }
+    },
+    {
+      "state": "loading",
+      "flag": "on",
+      "width": 375,
+      "height": 812,
+      "screenshot": "fe1-loading-375.png",
+      "paymentStatusReads": 1,
+      "writes": [],
+      "errors": [],
+      "unexpectedRequests": [],
+      "card": {
+        "links": [],
+        "buttons": []
+      }
+    },
+    {
+      "state": "loading",
+      "flag": "on",
+      "width": 1440,
+      "height": 900,
+      "screenshot": "fe1-loading-1440.png",
+      "paymentStatusReads": 1,
+      "writes": [],
+      "errors": [],
+      "unexpectedRequests": [],
+      "card": {
+        "links": [],
+        "buttons": []
+      }
+    },
+    {
+      "state": "coaching-bundle",
+      "flag": "on",
+      "width": 375,
+      "height": 812,
+      "screenshot": "fe1-coaching-bundle-375.png",
+      "paymentStatusReads": 1,
+      "writes": [],
+      "errors": [],
+      "unexpectedRequests": [],
+      "card": {
+        "links": [
+          "Ödemeye devam et"
+        ],
+        "buttons": [
+          {
+            "label": "Paketi iptal et",
+            "height": 36
+          }
+        ]
+      }
+    },
+    {
+      "state": "coaching-bundle",
+      "flag": "on",
+      "width": 1440,
+      "height": 900,
+      "screenshot": "fe1-coaching-bundle-1440.png",
+      "paymentStatusReads": 1,
+      "writes": [],
+      "errors": [],
+      "unexpectedRequests": [],
+      "card": {
+        "links": [
+          "Ödemeye devam et"
+        ],
+        "buttons": [
+          {
+            "label": "Paketi iptal et",
+            "height": 36
+          }
+        ]
+      }
+    }
+  ]
+}
