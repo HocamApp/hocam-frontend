@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -56,7 +57,14 @@ import { getSessionStorage } from "@/lib/safeStorage";
  *   A lost response keeps recovery and never invites another payment.
  * - Polling asks the server for two seconds at a time and stops after the
  *   window; it never concludes anything by itself.
+ * - With payments live, a session that ends while the PayTR frame is open
+ *   does not tear the frame down: the payment may still complete inside it.
  */
+
+/** With payments live, never answer from the app's five-minute cache. */
+const FRESH_STATUS = PAYTR_ENABLED
+  ? { staleTime: 0, refetchOnWindowFocus: true }
+  : {};
 export default function PayTRPaymentPage({
   params,
 }: {
@@ -92,14 +100,18 @@ export default function PayTRPaymentPage({
   const userId = user?.id;
 
   // Checkout is meaningless anonymously; come back here after logging in.
+  // Except while PayTR's frame is open: leaving would destroy a payment that
+  // may be mid-3D Secure, so the frame stays and the student is offered a
+  // way back in instead (below).
   useEffect(() => {
     if (authLoading) return;
     if (!isAuthenticated) {
+      if (PAYTR_ENABLED && attemptPhase === "iframe") return;
       router.replace(`/login?returnUrl=${encodeURIComponent(pathname)}`);
       return;
     }
     if (!isStudent) router.replace("/home");
-  }, [authLoading, isAuthenticated, isStudent, pathname, router]);
+  }, [authLoading, isAuthenticated, isStudent, pathname, router, attemptPhase]);
 
   // Read the breadcrumb once per account: it says an attempt exists, never
   // what happened to it.
@@ -146,6 +158,7 @@ export default function PayTRPaymentPage({
     queryFn: () => fetchPayTRPaymentStatus(purchaseId),
     enabled: isAuthenticated && isStudent && Boolean(purchase),
     retry: false,
+    ...FRESH_STATUS,
     refetchInterval: () =>
       payTRPollIntervalMs({
         attemptActive,
@@ -173,6 +186,26 @@ export default function PayTRPaymentPage({
 
   const canSubmit = useRef(false);
   canSubmit.current = state.canStartPayment;
+
+  const sessionLostWithFrameOpen =
+    PAYTR_ENABLED && !authLoading && !isAuthenticated && attemptPhase === "iframe";
+
+  // Focus follows the screen when it changes under the student: onto the
+  // frame when it opens, onto the outcome when it replaces the frame. Never
+  // on a first load.
+  const frameHeadingRef = useRef<HTMLHeadingElement>(null);
+  const resultHeadingRef = useRef<HTMLHeadingElement>(null);
+  const previousStateName = useRef(state.name);
+  useEffect(() => {
+    if (!PAYTR_ENABLED) return;
+    const previous = previousStateName.current;
+    previousStateName.current = state.name;
+    if (previous === state.name) return;
+    if (state.name === "iframe_open") frameHeadingRef.current?.focus();
+    else if (previous === "iframe_open" || previous === "starting_payment") {
+      resultHeadingRef.current?.focus();
+    }
+  }, [state.name]);
 
   const revalidate = useCallback(async () => {
     verificationLock.current = true;
@@ -344,6 +377,22 @@ export default function PayTRPaymentPage({
             />
           )}
           <div className="min-w-0 lg:col-start-1 lg:row-start-1">
+            {sessionLostWithFrameOpen && (
+              <div
+                role="status"
+                className="mb-4 rounded-[20px] border border-[#e6dddd] bg-white p-4 sm:p-6"
+              >
+                <p className="text-sm text-[#02171a]">
+                  Oturumun kapandı. Ödeme PayTR ekranında sürebilir; sonucu görmek için yeniden giriş yap.
+                </p>
+                <Link
+                  href={`/login?returnUrl=${encodeURIComponent(pathname)}`}
+                  className="mt-3 inline-flex min-h-[2.75rem] items-center text-base underline underline-offset-4 hover:text-[var(--pink-deep)]"
+                >
+                  Yeniden giriş yap
+                </Link>
+              </div>
+            )}
             {formError && state.name !== "payment_ready" && state.name !== "starting_payment" && (
               <p role="status" className="mb-4 text-sm text-[#b33a24]">{formError}</p>
             )}
@@ -370,10 +419,13 @@ export default function PayTRPaymentPage({
     if (state.name === "iframe_open") {
       return (
         <>
-          <PayTRFrame iframeUrl={state.iframeUrl} />
+          <PayTRFrame
+            iframeUrl={state.iframeUrl}
+            headingRef={PAYTR_ENABLED ? frameHeadingRef : undefined}
+          />
           {fastPollWindowOver && (
             <div className="mt-4 rounded-[20px] border border-[#e6dddd] bg-white p-4 sm:p-6">
-              <p className="text-sm text-[#02171a]">
+              <p role={PAYTR_ENABLED ? "status" : undefined} className="text-sm text-[#02171a]">
                 Ödeme sonucu henüz doğrulanmadı. Durumu yeniden kontrol
                 edebilirsin.
               </p>
@@ -398,6 +450,8 @@ export default function PayTRPaymentPage({
             state={{ name: state.name }}
             onRecheck={recheck}
             className="mt-4"
+            live={PAYTR_ENABLED}
+            headingRef={PAYTR_ENABLED ? resultHeadingRef : undefined}
           />
         </>
       );
@@ -416,6 +470,8 @@ export default function PayTRPaymentPage({
         }}
         onRecheck={recheck}
         onRetry={state.canRetryPayment ? requestRetry : undefined}
+        live={PAYTR_ENABLED}
+        headingRef={PAYTR_ENABLED ? resultHeadingRef : undefined}
       />
     );
   }
