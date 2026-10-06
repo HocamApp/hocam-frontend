@@ -13,11 +13,12 @@
   oluşturuyor, kart bilgisi almıyor; backend'de admin manuel onaylıyordu — bu manuel onay şu
   anda geçici olarak **kapalı** (G0/G1 denetimi sürüyor, bkz. backend `AI_AGENT_RULES.md`).
   UI'da hiçbir yerde IBAN/banka/havale bilgisi **gösterme veya isteme**.
-- PayTR entegrasyonu **frontend tarafında tamamlandı, canlıda kapalı**: API katmanı, saf durum
+- PayTR entegrasyonu **frontend tarafında kodlandı, canlıda kapalı**: API katmanı, saf durum
   eşleyicisi, müşteri formu, `/package-purchases/[purchaseId]/pay` route'u, iframe, polling,
   `/odeme/basarili` ve `/odeme/basarisiz` dönüş sayfaları ile checkout/Paketlerim giriş noktaları
-  main'de (`src/components/payments/paytr/`). Backend PayTR PR'ı henüz açık; yayın sırası, izleme ve
-  geri alma `docs/payments/PAYTR_RELEASE_RUNBOOK.md` dosyasında.
+  main'de (`src/components/payments/paytr/`). Backend ödeme ve callback kodu da main'de;
+  gerçek PayTR test ödemesi, mali şartname, transferler ve canlı yayın kapıları açık.
+  Güncel kanıt, yayın sırası, izleme ve geri alma `docs/payments/PAYTR_RELEASE_RUNBOOK.md` dosyasında.
 - Ödeme ekranlarına dokunan değişikliklerde değişmez kurallar: başarı yalnız backend
   `purchase.status === "paid"` ile gösterilir; token isteği yalnız kullanıcı gönderimiyle yapılır
   (mount/focus/reload/otomatik retry değil); belirsiz sonuç yeniden ödeme daveti değildir; iframe
