@@ -15,6 +15,7 @@ kapanmadıkça geçerlidir.
 | Merchant sırları | Yalnız Railway `hocam-backend-staging` / `staging` servisinde üç `PAYTR_MERCHANT_*` adı doğrulandı; değerler kayda alınmadı |
 | Callback kanıtı | İmzalı sentetik başarısız callback HTTP 200 ve düz `OK` döndürdü; staging denetim komutu bilinmeyen sentetik OID'yi kaydetti. Bu, PayTR kaynaklı uçtan uca ödeme kanıtı değildir |
 | Bayraklar | Staging'de `PAYTR_ENABLED`, `PAYTR_COACHING_ENABLED`, `PAYTR_REFUNDS_ENABLED` tanımlı değil (varsayılan kapalı); manuel ödeme aktivasyonu `False` |
+| FE-1 ödeme girişleri | [PR #289](https://github.com/HocamApp/hocam-frontend/pull/289): Paketlerim kartı ve satın alma sonrası akış öde/durum/iptal kararını `payment-status`'tan alıyor; açık girişimde yalnız "durumu kontrol et", iptal öncesi taze okuma. Flag kapalı davranış main ile birebir (karakterizasyon testleri). Kanıt yalnız mock'lu: `evidence/fe1/`. Açık: backend B-FE1-1 (`can_resume_checkout` `check_payable` engelini hesaba katmalı), FE-2 notu (ödeme sayfası payment-status `staleTime: 0`) |
 
 **Açık yayın kapıları:** Gerçek PayTR test kartıyla başarılı/başarısız iFrame ve tekrar
 callback matrisi; isimli test öğrenci allowlist'i ve frontend staging build'i; onaylı
