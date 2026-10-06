@@ -459,6 +459,9 @@ function SecurityContent() {
     setOtpSending(true);
     try {
       await requestDeletionOtp();
+      // A new code was issued, so it has to be verified again before the
+      // request; the earlier verification no longer stands for this step.
+      setOtpVerified(false);
       setOtpCooldown(60);
       toast.success("Yeni kod e-postanıza gönderildi.");
     } catch {
@@ -481,20 +484,35 @@ function SecurityContent() {
       // not re-confirm (the backend would reject the consumed code and the
       // user would be stuck until resend).
       if (!otpVerified) {
-        await confirmDeletionOtp(deletionOtp);
+        try {
+          await confirmDeletionOtp(deletionOtp);
+        } catch (err: any) {
+          setDeleteError(
+            err?.response?.data?.detail ||
+              "Kod doğrulanamadı. Kodu kontrol edip tekrar deneyin."
+          );
+          return;
+        }
         setOtpVerified(true);
       }
-      const result = await requestAccountDeletion(deleteConfirm);
+      // The code is fine at this point; a failure here is about the request
+      // itself (e.g. a blocker), so it gets its own message.
+      let result: Awaited<ReturnType<typeof requestAccountDeletion>>;
+      try {
+        result = await requestAccountDeletion(deleteConfirm);
+      } catch (err: any) {
+        setDeleteError(
+          err?.response?.data?.detail ||
+            "Silme talebi oluşturulamadı. Lütfen tekrar deneyin."
+        );
+        return;
+      }
       setScheduledAt(result.scheduled_deletion_at ?? null);
       setDeleteStep("scheduled");
       setDeletionOtp("");
       await queryClient.invalidateQueries({
         queryKey: ["account-deletion-status"],
       });
-    } catch {
-      setDeleteError(
-        "Kod doğrulanamadı veya işlem tamamlanamadı. Kodu kontrol edip tekrar deneyin."
-      );
     } finally {
       setOtpConfirming(false);
     }
@@ -979,10 +997,28 @@ function SecurityContent() {
                   <Alert variant="destructive">
                     <AlertTriangle className="h-4 w-4" />
                     <AlertTitle>Silme işlemi bekletiliyor.</AlertTitle>
-                    <AlertDescription>
-                      Hesabınızdaki açık bir finansal süreç (iade/ihtilaf)
-                      nedeniyle silme işlemi bekletiliyor. Süreç
-                      tamamlandığında silme otomatik devam edecektir.
+                    <AlertDescription className="space-y-2">
+                      {activeDeletion.blockers &&
+                      activeDeletion.blockers.length > 0 ? (
+                        <>
+                          <p>
+                            Aşağıdaki işlemler tamamlanmadan hesabınız
+                            silinemiyor:
+                          </p>
+                          <ul className="list-disc space-y-1 pl-5">
+                            {activeDeletion.blockers.map((blocker) => (
+                              <li key={blocker.code}>{blocker.message}</li>
+                            ))}
+                          </ul>
+                        </>
+                      ) : (
+                        <p>Hesabınızda tamamlanmamış bir işlem var.</p>
+                      )}
+                      <p>
+                        Bu işlemler tamamlandığında silme işleminiz otomatik
+                        olarak devam eder. İsterseniz silme talebinizi iptal
+                        edebilirsiniz.
+                      </p>
                     </AlertDescription>
                   </Alert>
                 ) : (

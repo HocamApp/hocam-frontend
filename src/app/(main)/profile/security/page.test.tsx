@@ -33,6 +33,11 @@ const passwordRequestCalls: Array<Record<string, string>> = [];
 const passwordConfirmCalls: Array<Record<string, string>> = [];
 const setAuthCalls: Array<unknown[]> = [];
 
+// Per-test failure switches for the deletion API mocks.
+let otpRequestFailuresLeft = 0;
+let confirmOtpError: unknown = null;
+let requestDeletionError: unknown = null;
+
 let precheckResponse: Record<string, unknown> = {
   blockers: [],
   warnings: [],
@@ -97,14 +102,20 @@ async function loadPage() {
       fetchDeletionStatus: async () => deletionStatusResponse,
       requestDeletionOtp: async () => {
         otpRequestCalls.push(1);
+        if (otpRequestFailuresLeft > 0) {
+          otpRequestFailuresLeft -= 1;
+          throw new Error("otp request failed");
+        }
         return { detail: "ok" };
       },
       confirmDeletionOtp: async (code: string) => {
         confirmOtpCalls.push(code);
+        if (confirmOtpError) throw confirmOtpError;
         return { detail: "ok" };
       },
       requestAccountDeletion: async (confirmText: string) => {
         requestDeletionCalls.push(confirmText);
+        if (requestDeletionError) throw requestDeletionError;
         return {
           id: "del-1",
           status: "scheduled",
@@ -211,6 +222,9 @@ beforeEach(async () => {
   passwordRequestCalls.length = 0;
   passwordConfirmCalls.length = 0;
   setAuthCalls.length = 0;
+  otpRequestFailuresLeft = 0;
+  confirmOtpError = null;
+  requestDeletionError = null;
   precheckResponse = { blockers: [], warnings: [], retention_offer: null };
   deletionStatusResponse = { active: false };
   securitySettingsResponse = {
@@ -466,9 +480,122 @@ describe("Güvenlik sayfası — OTP ve planlama", () => {
     };
     await renderLoadedPage();
 
-    await screen.findByText(/iade\/ihtilaf/);
+    // No blockers in the response: a generic line instead of an empty list.
+    await screen.findByText("Hesabınızda tamamlanmamış bir işlem var.");
     assert.equal(screen.queryByPlaceholderText("SİL"), null);
     screen.getByRole("button", { name: "Silme işlemini iptal et" });
+  });
+});
+
+async function reachOtpStep() {
+  await renderLoadedPage();
+  openDeletionFlow();
+  typeDeleteConfirm("SİL");
+  fireEvent.click(
+    screen.getByRole("button", { name: "Hesabı kalıcı olarak sil" })
+  );
+  await screen.findByText("Son adım: e-posta doğrulaması");
+}
+
+function submitOtp(code: string) {
+  fireEvent.change(screen.getByPlaceholderText("000000"), {
+    target: { value: code },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "Silme işlemini onayla" }));
+}
+
+describe("Güvenlik sayfası — silme hataları ve kod yenileme", () => {
+  it("kod yeniden gönderilince yeni kod da doğrulanır", async () => {
+    // First send fails, so no cooldown blocks the resend button below.
+    otpRequestFailuresLeft = 1;
+    await reachOtpStep();
+
+    // The code is accepted, then creating the request fails: the page now
+    // remembers the code as verified.
+    requestDeletionError = new Error("network down");
+    submitOtp("123456");
+    await screen.findByText("Silme talebi oluşturulamadı. Lütfen tekrar deneyin.");
+
+    fireEvent.click(screen.getByRole("button", { name: "Kodu yeniden gönder" }));
+    await waitFor(() => assert.equal(otpRequestCalls.length, 2));
+
+    // A resend issues a new code, so the new code must be verified too.
+    requestDeletionError = null;
+    submitOtp("654321");
+    await screen.findByText(/Silme işleminiz planlandı/);
+    assert.deepEqual(confirmOtpCalls, ["123456", "654321"]);
+  });
+
+  it("kod doğrulama hatasında sunucunun mesajını gösterir ve talep açmaz", async () => {
+    await reachOtpStep();
+    confirmOtpError = {
+      response: { status: 400, data: { detail: "Kod hatalı veya süresi dolmuş." } },
+    };
+    submitOtp("111111");
+
+    await screen.findByText("Kod hatalı veya süresi dolmuş.");
+    assert.deepEqual(requestDeletionCalls, []);
+  });
+
+  it("kod doğrulama hatasında mesaj yoksa genel kod mesajını gösterir", async () => {
+    await reachOtpStep();
+    confirmOtpError = new Error("network down");
+    submitOtp("111111");
+
+    await screen.findByText("Kod doğrulanamadı. Kodu kontrol edip tekrar deneyin.");
+  });
+
+  it("talep oluşturma hatasında sunucunun mesajını gösterir", async () => {
+    await reachOtpStep();
+    requestDeletionError = {
+      response: {
+        status: 409,
+        data: { detail: "Devam eden bir iade talebiniz var. İade tamamlanmadan hesap silinemez." },
+      },
+    };
+    submitOtp("123456");
+
+    await screen.findByText(
+      "Devam eden bir iade talebiniz var. İade tamamlanmadan hesap silinemez."
+    );
+    assert.equal(
+      screen.queryByText("Kod doğrulanamadı. Kodu kontrol edip tekrar deneyin."),
+      null
+    );
+  });
+
+  it("engellenen silme kartı engelleri listeler ve iptale izin verir", async () => {
+    deletionStatusResponse = {
+      active: true,
+      id: "del-1",
+      role: "student",
+      status: "blocked",
+      scheduled_deletion_at: "2026-09-01T00:00:00Z",
+      blockers: [
+        {
+          code: "open_refund",
+          message: "Devam eden bir iade talebiniz var. İade tamamlanmadan hesap silinemez.",
+        },
+        {
+          code: "open_dispute",
+          message: "İtiraz süreci devam eden bir dersiniz var. İtiraz sonuçlanmadan hesap silinemez.",
+        },
+      ],
+    };
+    await renderLoadedPage();
+
+    await screen.findByText("Silme işlemi bekletiliyor.");
+    screen.getByText(
+      "Devam eden bir iade talebiniz var. İade tamamlanmadan hesap silinemez."
+    );
+    screen.getByText(
+      "İtiraz süreci devam eden bir dersiniz var. İtiraz sonuçlanmadan hesap silinemez."
+    );
+    screen.getByText(/otomatik olarak devam eder/);
+    assert.equal(screen.queryByText(/otomatik devam edecektir/), null);
+
+    fireEvent.click(screen.getByRole("button", { name: "Silme işlemini iptal et" }));
+    await waitFor(() => assert.equal(cancelDeletionCalls.length, 1));
   });
 });
 

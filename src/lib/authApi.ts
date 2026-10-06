@@ -182,6 +182,8 @@ export type AccountDeletionStatus =
       role: "student" | "tutor";
       status: "scheduled" | "blocked" | "offboarding" | "ready_for_erasure";
       scheduled_deletion_at: string;
+      /** Student requests in "blocked" only: what must be resolved first. */
+      blockers?: { code: string; message: string }[];
       can_republish?: boolean;
       started_actions?: { type: string; label: string; reason: string }[];
     };
