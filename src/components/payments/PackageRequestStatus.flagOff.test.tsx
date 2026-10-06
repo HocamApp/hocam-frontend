@@ -249,7 +249,7 @@ describe("PackageRequestStatus with PayTR off (production build)", () => {
     assertNoPaymentStatusRead();
   });
 
-  it("creates no payment-status cache entry when the status link is followed", async () => {
+  it("leaves payment-status state untouched when the status link is followed", async () => {
     acceptanceResponse = acceptance("accepted");
     rememberAttempt();
     const { client } = renderStatus();
@@ -257,10 +257,16 @@ describe("PackageRequestStatus with PayTR off (production build)", () => {
     fireEvent.click(
       await screen.findByRole("link", { name: "Ödeme durumunu kontrol et" })
     );
-    assert.equal(
-      client.getQueryCache().find({ queryKey: ["paytr-payment-status", "purchase-1"] }),
-      undefined
-    );
+    // A disabled query may still register an empty cache entry; what matters
+    // is that nothing ever filled it, fetched it or marked it stale.
+    const query = client
+      .getQueryCache()
+      .find({ queryKey: ["paytr-payment-status", "purchase-1"] });
+    if (query) {
+      assert.equal(query.state.dataUpdateCount, 0);
+      assert.equal(query.state.fetchStatus, "idle");
+      assert.equal(query.state.isInvalidated, false);
+    }
     assertNoPaymentStatusRead();
   });
 });

@@ -116,8 +116,10 @@ function isLessonOnly(acceptance: PurchaseAcceptanceState): boolean {
   return acceptance.acceptance.includes_coaching === false;
 }
 
-function hasVerifiedCoachingAmount(
-  purchase: PackagePurchase,
+/** Shared with the entry points, so a package they offer to pay is one this
+ * screen will also open: same amount rule, one definition. */
+export function hasVerifiedCoachingAmount(
+  purchase: Pick<PackagePurchase, "total_price">,
   status: PayTRPaymentStatus
 ): boolean {
   const lesson = status.lesson_amount_minor;

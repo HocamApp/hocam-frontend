@@ -26,15 +26,10 @@ import {
   createCoachingHold,
   extractCoachingErrorMessage,
   fetchCoachingEligibility,
-  fetchPurchaseAcceptanceState,
   readCoachingSelectedFromSearchParams,
   type CoachingQuote,
 } from "@/lib/coachingApi";
-import { PAYTR_ENABLED } from "@/lib/featureFlags";
-import {
-  payTRPayHref,
-  payTRPostCreateTarget,
-} from "@/components/payments/paytr/paytrEntryPoints";
+import { usePayTRPostCreate } from "@/components/payments/paytr/usePayTRPostCreate";
 import {
   decodeCheckoutSchedule,
   toSchedulePayload,
@@ -367,21 +362,12 @@ export default function TutorCheckoutPage({
 
   const purchaseMutation = useMutation({
     mutationFn: createPackagePurchase,
-    onSuccess: async (purchase) => {
+    onSuccess: (purchase) => {
       queryClient.invalidateQueries({ queryKey: ["package-purchases"] });
       queryClient.invalidateQueries({ queryKey: ["payment-history"] });
-      // Render the created request first: if the acceptance read below fails
-      // or says the tutor still has to answer, this is the screen that stays.
+      // Render the created request first: if the reads in usePayTRPostCreate
+      // fail or the purchase cannot be paid yet, this is the screen that stays.
       setCreatedPurchase(purchase);
-      if (!PAYTR_ENABLED) return;
-      // One read, and only a read. A failure here must never turn into a
-      // second package POST — the purchase already exists either way.
-      const acceptance = await fetchPurchaseAcceptanceState(purchase.id).catch(
-        () => null
-      );
-      if (payTRPostCreateTarget({ paytrEnabled: PAYTR_ENABLED, acceptance }) === "pay") {
-        router.push(payTRPayHref(purchase.id));
-      }
     },
     onError: (err: unknown) => {
       // The server refuses a bundle whose price moved since the quote and
@@ -424,6 +410,10 @@ export default function TutorCheckoutPage({
       toast.error(extractPackagePurchaseErrorMessage(err));
     },
   });
+
+  // With PayTR on: read acceptance + payment status for the created purchase
+  // and go to payment only when both prove it payable. Reads only.
+  const postCreate = usePayTRPostCreate(createdPurchase);
 
   const { mutate: runPromoPreview } = useMutation({
     mutationFn: previewPackagePromotion,
@@ -556,7 +546,13 @@ export default function TutorCheckoutPage({
         header={<MinimalCheckoutHeader tutorId={tutorId} />}
         exploration={
           createdPurchase ? (
-            <CheckoutPurchaseSuccess purchase={createdPurchase} tutorId={tutorId} />
+            <CheckoutPurchaseSuccess
+              purchase={createdPurchase}
+              tutorId={tutorId}
+              paymentCheck={postCreate.check}
+              paymentBlockedReason={postCreate.blockedReason}
+              onRetryPaymentCheck={postCreate.retry}
+            />
           ) : bookingComplete ? (
             <CheckoutBookingSuccess tutorId={tutorId} />
           ) : plansLoading ? (
