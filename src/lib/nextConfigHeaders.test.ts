@@ -50,3 +50,46 @@ describe("next.config headers with PayTR off (production build)", () => {
     assert.deepEqual(await headersWith("TRUE"), MAIN_HEADERS);
   });
 });
+
+describe("next.config headers with PayTR on (staging build)", () => {
+  // Next matches header sources with path-to-regexp; use the same compiler.
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { pathToRegexp } = require("next/dist/compiled/path-to-regexp") as {
+    pathToRegexp: (source: string, keys: unknown[]) => RegExp;
+  };
+
+  function headersFor(rules: HeaderRule[], path: string) {
+    const merged = new Map<string, string>();
+    for (const rule of rules) {
+      if (!pathToRegexp(rule.source, []).test(path)) continue;
+      for (const { key, value } of rule.headers) merged.set(key, value);
+    }
+    return merged;
+  }
+
+  it("lets only the two PayTR return pages be framed, and only by this site", async () => {
+    const rules = await headersWith("true");
+    for (const path of ["/odeme/basarili", "/odeme/basarisiz"]) {
+      const headers = headersFor(rules, path);
+      assert.equal(headers.get("X-Frame-Options"), "SAMEORIGIN", path);
+      assert.equal(headers.get("Content-Security-Policy"), "frame-ancestors 'self'", path);
+      assert.equal(headers.get("X-Content-Type-Options"), "nosniff", path);
+      assert.equal(headers.get("Referrer-Policy"), "strict-origin-when-cross-origin", path);
+    }
+  });
+
+  it("keeps every other route unframeable, exactly as main", async () => {
+    const rules = await headersWith("true");
+    const main = new Map(MAIN_HEADERS[0].headers.map(({ key, value }) => [key, value]));
+    for (const path of [
+      "/",
+      "/package-purchases/purchase-1/pay",
+      "/profile/payments",
+      "/odeme",
+      "/odeme/basarili/extra",
+      "/login",
+    ]) {
+      assert.deepEqual(headersFor(rules, path), main, path);
+    }
+  });
+});

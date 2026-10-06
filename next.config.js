@@ -43,22 +43,42 @@ const nextConfig = {
   },
 
   async headers() {
+    const shared = [
+      { key: "X-Content-Type-Options", value: "nosniff" },
+      { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+      // JaaS video is embedded from 8x8.vc. Delegate camera and microphone
+      // only to that trusted iframe origin; keep them disabled elsewhere.
+      {
+        key: "Permissions-Policy",
+        value:
+          'camera=(self "https://8x8.vc"), microphone=(self "https://8x8.vc"), geolocation=()',
+      },
+    ];
+    // The app is never legitimately embedded; YouTube intro videos are
+    // iframes WE embed, which X-Frame-Options does not restrict.
+    const deny = { key: "X-Frame-Options", value: "DENY" };
+
+    // PayTR sends the student back to /odeme/basarili or /odeme/basarisiz
+    // after 3D Secure. Its docs do not say whether that lands in the top
+    // window or inside the payment iframe on our own page; if it is the
+    // iframe, DENY blanks it. With payments built in, those two pages may be
+    // framed by this site only (they then move themselves to the top
+    // window). The flag is inlined at build time, so a production build with
+    // payments off sends exactly the headers it always has.
+    if (process.env.NEXT_PUBLIC_PAYTR_ENABLED !== "true") {
+      return [{ source: "/(.*)", headers: [deny, ...shared] }];
+    }
     return [
       {
-        source: "/(.*)",
+        source: "/((?!odeme/basarili$|odeme/basarisiz$).*)",
+        headers: [deny, ...shared],
+      },
+      {
+        source: "/odeme/:result(basarili|basarisiz)",
         headers: [
-          // The app is never legitimately embedded; YouTube intro videos are
-          // iframes WE embed, which X-Frame-Options does not restrict.
-          { key: "X-Frame-Options", value: "DENY" },
-          { key: "X-Content-Type-Options", value: "nosniff" },
-          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-          // JaaS video is embedded from 8x8.vc. Delegate camera and microphone
-          // only to that trusted iframe origin; keep them disabled elsewhere.
-          {
-            key: "Permissions-Policy",
-            value:
-              'camera=(self "https://8x8.vc"), microphone=(self "https://8x8.vc"), geolocation=()',
-          },
+          { key: "X-Frame-Options", value: "SAMEORIGIN" },
+          { key: "Content-Security-Policy", value: "frame-ancestors 'self'" },
+          ...shared,
         ],
       },
     ];
