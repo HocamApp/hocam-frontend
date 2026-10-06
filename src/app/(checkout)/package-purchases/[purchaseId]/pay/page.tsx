@@ -404,6 +404,18 @@ export default function PayTRPaymentPage({
   );
 
   function renderMain() {
+    // Signing out clears the whole query cache, so the state machine is back
+    // to "loading" — but the frame and its token are still in this tab's
+    // memory, and the payment inside may still complete. Keep showing it,
+    // through the same branch so React keeps the same iframe element and
+    // PayTR's page (possibly mid-3D Secure) is not reloaded.
+    const openFrameUrl =
+      state.name === "iframe_open"
+        ? state.iframeUrl
+        : sessionLostWithFrameOpen
+          ? iframeUrl
+          : null;
+
     if (state.name === "payment_ready" || state.name === "payment_resume" || state.name === "starting_payment") {
       return (
         <PayTRCustomerForm
@@ -416,11 +428,11 @@ export default function PayTRPaymentPage({
       );
     }
 
-    if (state.name === "iframe_open") {
+    if (openFrameUrl) {
       return (
         <>
           <PayTRFrame
-            iframeUrl={state.iframeUrl}
+            iframeUrl={openFrameUrl}
             headingRef={PAYTR_ENABLED ? frameHeadingRef : undefined}
           />
           {fastPollWindowOver && (

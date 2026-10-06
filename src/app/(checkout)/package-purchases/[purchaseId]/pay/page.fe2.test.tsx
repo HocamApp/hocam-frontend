@@ -197,7 +197,12 @@ describe("payment page when the session ends with the PayTR frame open", () => {
     const view = render(tree(client));
     await fillAndSubmit();
 
+    const frameBefore = document.querySelector("iframe");
+
+    // What the real 401 path does: AuthProvider.clearAuth() drops the user
+    // and clears the whole React Query cache.
     authenticated = false;
+    client.clear();
     view.rerender(tree(client));
 
     const link = await screen.findByRole("link", { name: "Yeniden giriş yap" });
@@ -205,7 +210,10 @@ describe("payment page when the session ends with the PayTR frame open", () => {
     screen.getByText(
       "Oturumun kapandı. Ödeme PayTR ekranında sürebilir; sonucu görmek için yeniden giriş yap."
     );
-    assert.ok(document.querySelector("iframe"), "the frame stays mounted");
+    assert.ok(
+      document.querySelector("iframe") === frameBefore,
+      "the same iframe element stays: PayTR's page is not reloaded"
+    );
     assert.deepEqual(routerCalls.filter((href) => href.startsWith("/login")), []);
     assert.equal(postCalls.length, 1, "no second checkout");
   });
