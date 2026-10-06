@@ -212,7 +212,10 @@ describe("PackageRequestStatus reads the server's payment status", () => {
 
     // The acceptance answer is in and rendered; only payment status is missing.
     await screen.findByText("Öğretmenin kabul etti. Paket ödeme bekliyor.");
-    screen.getByText("Ödeme durumu kontrol ediliyor");
+    // A line the student can read, not only a screen-reader label.
+    const line = screen.getByText("Ödeme durumu kontrol ediliyor…");
+    assert.doesNotMatch(line.className, /sr-only/);
+    assert.ok(line.closest('[role="status"]'), "announced as a status");
     assert.deepEqual(screen.queryAllByRole("button"), []);
     assert.deepEqual(screen.queryAllByRole("link"), []);
 

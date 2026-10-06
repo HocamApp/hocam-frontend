@@ -146,13 +146,15 @@ export function PackageRequestStatus({
       </Button>
     ) : null;
 
-  // Nothing to act on until the server has answered.
+  // Nothing to act on until the server has answered. The line is visible
+  // at once so the student knows what the card is waiting for; the shape
+  // only follows if the wait is long enough to notice.
   const statusPending = statusLoading ? (
-    <div role="status" aria-busy="true">
-      <span className="sr-only">Ödeme durumu kontrol ediliyor</span>
+    <div role="status" aria-busy="true" className="space-y-2">
       {showLoadingPlaceholder ? (
         <Skeleton className="h-9 w-48 rounded-pill" />
       ) : null}
+      <p className="text-xs text-muted-foreground">Ödeme durumu kontrol ediliyor…</p>
     </div>
   ) : null;
 

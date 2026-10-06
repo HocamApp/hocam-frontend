@@ -151,7 +151,7 @@ const states = flag === "on" ? {
       if (expect.link) await card.getByRole("link", { name: expect.link }).waitFor();
       if (expect.text) await card.getByText(expect.text, { exact: true }).waitFor();
       if (expect.loading) {
-        await card.getByText("Ödeme durumu kontrol ediliyor").waitFor({ state: "attached" });
+        await card.getByText("Ödeme durumu kontrol ediliyor…", { exact: true }).waitFor();
         await card.locator(".animate-skeleton-pulse").waitFor();
       }
       await page.waitForTimeout(300);

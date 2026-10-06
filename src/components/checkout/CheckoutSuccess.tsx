@@ -99,11 +99,11 @@ export function CheckoutPurchaseSuccess({
         </p>
 
         {paymentCheck === "checking" ? (
-          <div role="status" aria-busy="true" className="flex justify-center">
-            <span className="sr-only">Ödeme durumu kontrol ediliyor</span>
+          <div role="status" aria-busy="true" className="flex flex-col items-center gap-2">
             {showCheckPlaceholder ? (
               <Skeleton className="h-10 w-56 rounded-pill" />
             ) : null}
+            <p className="text-xs text-muted-foreground">Ödeme durumu kontrol ediliyor…</p>
           </div>
         ) : null}
         {paymentCheck === "status_error" ? (

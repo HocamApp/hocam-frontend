@@ -271,8 +271,11 @@ describe("usePayTRPostCreate with PayTR on", () => {
       });
     renderScreen();
 
-    await screen.findByText("Ödeme durumu kontrol ediliyor");
-    assert.equal(screen.queryByRole("button", { name: "Yenile" }), null);
+    const line = await screen.findByText("Ödeme durumu kontrol ediliyor…");
+    assert.doesNotMatch(line.className, /sr-only/);
+    assert.ok(line.closest('[role="status"]'), "announced as a status");
+    // The card's own navigation links stay; no button of any kind appears.
+    assert.deepEqual(screen.queryAllByRole("button"), []);
     assert.deepEqual(pushes, []);
 
     release();
