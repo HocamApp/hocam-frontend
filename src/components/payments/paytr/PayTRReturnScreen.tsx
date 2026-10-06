@@ -188,7 +188,11 @@ export function PayTRReturnScreen() {
             {activatedCredits} ders kredin kullanıma açıldı.
           </p>
         )}
-        {purchase && <PayTRPurchaseSummary purchase={purchase} className="mt-6" />}
+        {purchase && <PayTRPurchaseSummary
+          purchase={paymentStatusQuery.data ? purchase : paymentStatusQuery.isError ? null : undefined}
+          paymentStatus={paymentStatusQuery.data}
+          className="mt-6"
+        />}
       </>
     );
   }

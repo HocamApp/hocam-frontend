@@ -1065,6 +1065,10 @@ export interface PayTRPaymentStatus {
   provider: string;
   provider_reference: string;
   amount_minor: number;
+  lesson_amount_minor?: number;
+  coaching_amount_minor?: number;
+  coaching_subtotal_minor?: number;
+  coaching_discount_minor?: number;
   currency: string;
   checkout_enabled: boolean;
   has_active_attempt: boolean;
