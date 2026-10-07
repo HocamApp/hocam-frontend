@@ -54,3 +54,20 @@ export function homeV2EnabledFromEnv(value: string | undefined): boolean {
 }
 
 export const HOME_V2_ENABLED = homeV2EnabledFromEnv(process.env.NEXT_PUBLIC_HOME_V2);
+
+/**
+ * The tutor earnings calculator in the homepage tutors band.
+ *
+ * Off unless NEXT_PUBLIC_TUTOR_EARNINGS_PREVIEW is exactly "true". The
+ * calculator promises tutor income, and no payment provider pays tutors yet
+ * (docs/current-product-and-technical-state.md, F-006), so it stays off until
+ * payouts are real. It also needs COMMISSION_PERCENT and PRICE_RANGE_TL
+ * decided in ysHomeFacts.ts.
+ */
+export function tutorEarningsPreviewFromEnv(value: string | undefined): boolean {
+  return value === "true";
+}
+
+export const TUTOR_EARNINGS_PREVIEW_ENABLED = tutorEarningsPreviewFromEnv(
+  process.env.NEXT_PUBLIC_TUTOR_EARNINGS_PREVIEW
+);

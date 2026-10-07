@@ -11,6 +11,7 @@ import { YsParentsPanel } from "./YsParentsPanel";
 import { YsPricing } from "./YsPricing";
 import { YsSubjectGrid } from "./YsSubjectGrid";
 import { YsTestimonials } from "./YsTestimonials";
+import { YsTutorBand } from "./YsTutorBand";
 import { YsTutorDirectory } from "./YsTutorDirectory";
 import { YsUniversityStrip } from "./YsUniversityStrip";
 import { YsVerifiedBand } from "./YsVerifiedBand";
@@ -65,6 +66,8 @@ export function YemeksepetiHome({
           <YsPricing />
           <YsGuarantees />
           <YsParentsPanel className="mt-[120px]" />
+          {/* Full bleed, like the pink band. */}
+          <YsTutorBand className="mt-[120px]" />
         </>
       ) : (
         /* Outside the shell for the same reason the verified band is: the
@@ -75,11 +78,11 @@ export function YemeksepetiHome({
         </div>
       )}
 
-      <div className="ys-shell pb-12">
+      <div className={v2 ? "ys-shell" : "ys-shell pb-12"}>
         {/* The journey explains the product, then social proof and the FAQ
               answer whether that product is worth trying. */}
-        <YsTestimonials />
-        <YsHomeFaq />
+        <YsTestimonials v2={v2} />
+        <YsHomeFaq v2={v2} />
       </div>
       <YsEntryDialog />
     </div>
