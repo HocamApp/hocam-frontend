@@ -146,6 +146,12 @@ ${returnToUs ? `<script>setTimeout(function(){location.href=${JSON.stringify(new
         if (url.pathname.startsWith("/odeme/guvenli/")) {
           return route.fulfill({ contentType: "text/html", body: standInPage(control.returnToUs) });
         }
+        if (url.pathname === "/js/iframeResizer.min.js") {
+          // PayTR's real resizer is not fetched; an empty stand-in proves only
+          // that the page asks for it.
+          net.resizerRequests = (net.resizerRequests || 0) + 1;
+          return route.fulfill({ contentType: "application/javascript", body: "/* MOCK resizer */" });
+        }
         net.unexpected.push(url.origin + url.pathname); // any other PayTR asset
         return route.abort();
       }

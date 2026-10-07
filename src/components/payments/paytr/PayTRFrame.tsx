@@ -1,8 +1,31 @@
 "use client";
 
 import type { Ref } from "react";
+import Script from "next/script";
+
+import { PAYTR_ENABLED } from "@/lib/featureFlags";
 
 import { readPayTRIframeUrl } from "./paytrIframeUrl";
+
+/**
+ * PayTR's own iFrame integration, step 1
+ * (dev.paytr.com/iframe-api/iframe-api-1-adim): the frame carries
+ * id="paytriframe", the page loads this script from PayTR and calls
+ * iFrameResize({},'#paytriframe') so the frame grows with PayTR's content
+ * instead of scrolling inside a fixed box.
+ *
+ * It is a third-party script running on our origin, loaded only with
+ * payments built in and only while a verified PayTR frame is on screen. If
+ * it never loads, the 600px floor and scrolling inside the frame remain.
+ */
+const PAYTR_RESIZER_SRC = "https://www.paytr.com/js/iframeResizer.min.js";
+const PAYTR_FRAME_ID = "paytriframe";
+
+declare global {
+  interface Window {
+    iFrameResize?: (options: object, target: string | HTMLElement) => unknown;
+  }
+}
 
 /**
  * PayTR's hosted payment form, embedded as the provider serves it.
@@ -62,10 +85,20 @@ export function PayTRFrame({
         Kart bilgilerini PayTR ekranında gir.
       </p>
       <iframe
+        id={PAYTR_ENABLED ? PAYTR_FRAME_ID : undefined}
         src={safeUrl}
         title="PayTR güvenli ödeme"
         className="mt-4 block w-full min-h-[600px] border-0"
       />
+      {PAYTR_ENABLED && (
+        <Script
+          src={PAYTR_RESIZER_SRC}
+          strategy="afterInteractive"
+          onReady={() => {
+            window.iFrameResize?.({}, `#${PAYTR_FRAME_ID}`);
+          }}
+        />
+      )}
     </section>
   );
 }
