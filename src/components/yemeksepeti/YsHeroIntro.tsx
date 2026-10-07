@@ -38,7 +38,7 @@ const AUDIENCE = [
  * — and the brand is Hocam.
  *
  * Text comes from `ysHomeCopy.ts`. `v2` (NEXT_PUBLIC_HOME_V2) turns on the
- * rebuild's changes: the lowercase headline, "Hoca ol" to the tutors band,
+ * rebuild's changes: the lowercase headline, "Hoca ol" to /hoca-ol,
  * and the audience row. Off, the hero is the pre-rebuild one.
  */
 export function YsHeroIntro({ v2 = false }: { v2?: boolean }) {
@@ -68,10 +68,10 @@ export function YsHeroIntro({ v2 = false }: { v2?: boolean }) {
             >
               {hero.ctaTutors}
             </Link>
-            {/* With the rebuild on, the tutors band further down answers "can
-                I, and how" before sending anyone to a registration form. */}
+            {/* With the rebuild on, every "Hoca ol" goes to /hoca-ol, which
+                answers "can I, and how" before the registration form. */}
             <Link
-              href={v2 ? "#hocalar" : "/register?role=tutor"}
+              href={v2 ? "/hoca-ol" : "/register?role=tutor"}
               className="inline-flex h-12 items-center rounded-pill border border-ink px-8 text-body font-semibold text-ink transition-colors duration-[--duration-state] hover:bg-ink hover:text-paper"
             >
               {hero.ctaBecomeTutor}

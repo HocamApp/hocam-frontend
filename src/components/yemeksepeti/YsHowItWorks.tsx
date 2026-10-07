@@ -9,7 +9,7 @@ import {
 import { YsFact } from "./YsFact";
 import { YsJourneyHeading } from "./YsJourneyHeading";
 import { YS_SECTION_HEADING_CLASSNAME } from "./YsPillHeading";
-import { YsStepList } from "./YsStepList";
+import { YsStepList, type YsStep } from "./YsStepList";
 import { JOURNEY_SECTION_ID } from "./ysAppNav";
 import { students as copy } from "./ysHomeCopy";
 import {
@@ -116,6 +116,14 @@ const STUDENT_STEP_FACTS = {
   remainingOnSwitch: <YsFact value={REMAINING_ON_SWITCH_TEXT} label="kalan dersler: D6" />,
 };
 
+/** The seven student steps, with their facts filled in. */
+export function studentSteps(): YsStep[] {
+  return copy.steps.map((step) => ({
+    title: step.title,
+    body: step.body(STUDENT_STEP_FACTS),
+  }));
+}
+
 /* The screenshots' own ratio, as in VerticalTabs. */
 const SHOT_WIDTH = 2880;
 const SHOT_HEIGHT = 1645;
@@ -182,13 +190,7 @@ function YsStudentJourney({ lessonRoomShot }: { lessonRoomShot: boolean }) {
       <p className="mx-auto mt-5 max-w-[52ch] text-center text-body-l text-ink-mid">{copy.sub}</p>
 
       <div className="mt-14 grid grid-cols-1 items-start gap-x-16 gap-y-8 lg:grid-cols-12">
-        <YsStepList
-          className="min-w-0 lg:col-span-5"
-          steps={copy.steps.map((step) => ({
-            title: step.title,
-            body: step.body(STUDENT_STEP_FACTS),
-          }))}
-        />
+        <YsStepList className="min-w-0 lg:col-span-5" steps={studentSteps()} />
 
         <div className="grid min-w-0 grid-cols-1 gap-4 lg:sticky lg:top-[calc(var(--app-header-h)+24px)] lg:col-span-7 lg:grid-cols-2">
           <Shot wide src="/images/how-it-works/01-tutor-list.png" {...copy.shots.tutorList} />

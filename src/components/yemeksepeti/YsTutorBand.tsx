@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 
 import { YsEarningsCalculator } from "./YsEarningsCalculator";
 import { YsFact } from "./YsFact";
-import { YsStepList } from "./YsStepList";
+import { YsStepList, type YsStep } from "./YsStepList";
 import { YsTestimonialCard } from "./YsTestimonials";
 import { tutors as copy } from "./ysHomeCopy";
 import {
@@ -49,15 +49,12 @@ import { approvedTestimonials } from "./ysTestimonialData";
  * `className` lets /hoca-ol use the band as its hero without the homepage's
  * 120px lead-in.
  */
-export function YsTutorBand({ className }: { className?: string }) {
+/**
+ * The seven tutor steps, with their facts filled in and the coaching parts
+ * following the coaching flag. Shared with /nasil-calisir.
+ */
+export function useTutorSteps(): YsStep[] {
   const { enabled: coaching } = useCoachingFlag();
-  const quotes = approvedTestimonials("tutor");
-
-  const calculator =
-    TUTOR_EARNINGS_PREVIEW_ENABLED && !isTodo(COMMISSION_PERCENT) && !isTodo(PRICE_RANGE_TL)
-      ? { commissionPercent: COMMISSION_PERCENT, defaultPrice: PRICE_RANGE_TL.min }
-      : null;
-
   const stepFacts = {
     signupMinutes: TUTOR_SIGNUP_MINUTES,
     reviewDays: <YsFact value={VERIFICATION_REVIEW_DAYS} label="X" />,
@@ -90,6 +87,18 @@ export function YsTutorBand({ className }: { className?: string }) {
       body: step.body(stepFacts),
     };
   });
+  return steps;
+}
+
+export function YsTutorBand({ className }: { className?: string }) {
+  const quotes = approvedTestimonials("tutor");
+
+  const calculator =
+    TUTOR_EARNINGS_PREVIEW_ENABLED && !isTodo(COMMISSION_PERCENT) && !isTodo(PRICE_RANGE_TL)
+      ? { commissionPercent: COMMISSION_PERCENT, defaultPrice: PRICE_RANGE_TL.min }
+      : null;
+
+  const steps = useTutorSteps();
 
   return (
     <section

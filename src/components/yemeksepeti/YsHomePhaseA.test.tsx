@@ -109,15 +109,21 @@ describe("Phase A components keep text in the copy file", () => {
 });
 
 describe("the band's checklist card", () => {
-  const source = readFileSync("src/components/yemeksepeti/YsVerifiedBand.tsx", "utf8");
+  const band = readFileSync("src/components/yemeksepeti/YsVerifiedBand.tsx", "utf8");
+  const card = readFileSync("src/components/yemeksepeti/YsChecklistCard.tsx", "utf8");
+  const bandVariant = card.match(/band: \{([\s\S]*?)\},/)?.[1] ?? "";
 
   it("has no shadow", () => {
-    assert.doesNotMatch(source, /shadow-/);
+    assert.doesNotMatch(band, /shadow-/);
+    assert.doesNotMatch(card, /shadow-/);
   });
 
   it("keeps light-theme inks on its fixed white surface", () => {
     // --ink-mid flips light in dark mode and would vanish on white.
-    assert.match(source, /text-\[var\(--ink-mid-on-light\)\]/);
-    assert.doesNotMatch(source, /text-ink-mid/);
+    assert.match(band, /variant="band"/);
+    assert.match(bandVariant, /bg-white/);
+    assert.match(bandVariant, /text-\[var\(--ink-mid-on-light\)\]/);
+    assert.match(bandVariant, /border-\[var\(--line-on-light\)\]/);
+    assert.doesNotMatch(bandVariant, /text-ink-mid/);
   });
 });

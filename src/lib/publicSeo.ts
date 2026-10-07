@@ -17,7 +17,16 @@ export const PUBLIC_SEO_ROUTES = [
   "/hakkimizda",
 ] as const;
 
-export type PublicSeoRoute = (typeof PUBLIC_SEO_ROUTES)[number];
+/**
+ * Pages of the rebuilt homepage (NEXT_PUBLIC_HOME_V2). Kept apart from
+ * PUBLIC_SEO_ROUTES so the sitemap lists them only while the flag is on; with
+ * it off they return 404.
+ */
+export const HOME_V2_ROUTES = ["/hoca-ol", "/veliler"] as const;
+
+export type PublicSeoRoute =
+  | (typeof PUBLIC_SEO_ROUTES)[number]
+  | (typeof HOME_V2_ROUTES)[number];
 
 export function publicPageMetadata({
   title,

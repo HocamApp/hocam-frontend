@@ -506,3 +506,57 @@ export const footer = {
   mersis: "MERSİS",
   kvkkContact: "KVKK başvuru: iletisim@hocamozelders.com",
 } as const;
+
+/* Supporting pages (plan T13–T16). They have no mockup: built from the
+   homepage's own sections, with only the page furniture below. */
+export const pages = {
+  homeBreadcrumb: "Ana sayfa",
+  hocaOl: {
+    title: "Hoca Ol",
+    breadcrumb: "Hoca ol",
+    description: (maxRank: string) =>
+      `YKS'de ilk ${maxRank} içine girmiş üniversite öğrencileri Hocam'da ders verebilir. Kimlerin başvurabileceğini ve başvurudan ilk derse kadar süreci öğren.`,
+    ctaTitle: "Başvurmaya hazır mısın?",
+    ctaButton: "Hoca olarak başvur",
+  },
+  veliler: {
+    title: "Veliler İçin",
+    breadcrumb: "Veliler",
+    description:
+      "Çocuğunuzun kiminle, nerede ders aldığını ve bir sorun olursa ne olacağını öğrenin.",
+  },
+  nasilCalisir: {
+    stepsTitle: "Adım adım",
+    toggleLabel: "Kim için",
+    student: "Öğrenciyim",
+    tutor: "Hocayım",
+  },
+  verification: {
+    faq: {
+      reviewTime: {
+        question: "Başvurum ne kadar sürede sonuçlanır?",
+        answer: (days: ReactNode): ReactNode[] => ["Başvurular ", days, " gün içinde sonuçlanır."],
+      },
+      rejection: {
+        question: "Başvurum reddedilirse ne olur?",
+        answer: (text: ReactNode): ReactNode[] => [text],
+      },
+      /* Matches /kvkk/hoca-dogrulama "Ne kadar saklanır?" word for word. */
+      deletion: {
+        question: "Belgelerim ne zaman siliniyor?",
+        answer: (afterApproval: number, maxRetention: number, link: ReactNode): ReactNode[] => [
+          `Ham belgeler ve güvenli önizlemeler onaydan sonra ${afterApproval} gün içinde silinir. Reddedilen veya bekleyen başvurularda belge saklama üst sınırı ${maxRetention} gündür. Ayrıntılar `,
+          link,
+          ".",
+        ],
+        link: "hoca doğrulama aydınlatma metninde",
+      },
+      /* /kvkk/hoca-dogrulama "Kimlere aktarılır?". */
+      reviewer: {
+        question: "Başvuruları kim inceliyor?",
+        answer:
+          "Belgeler yalnız gerekli yetkiye sahip ve erişimi kaydedilen inceleme personeline açılır.",
+      },
+    },
+  },
+} as const;

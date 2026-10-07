@@ -30,7 +30,14 @@ import {
  * `className` lets the /veliler page reuse the panel without the homepage's
  * 120px lead-in.
  */
-export function YsParentsPanel({ className }: { className?: string }) {
+export function YsParentsPanel({
+  className,
+  showCta = true,
+}: {
+  className?: string;
+  /** Off on /veliler itself, where the link would point at the same page. */
+  showCta?: boolean;
+}) {
   const rows: { Icon: Icon; title: string; body: ReactNode[] }[] = [
     { Icon: ShieldCheck, title: copy.onPlatform.title, body: [copy.onPlatform.body] },
     {
@@ -71,6 +78,7 @@ export function YsParentsPanel({ className }: { className?: string }) {
               {copy.title}
             </h2>
             <p className="mt-4 max-w-[36ch] text-body-l leading-[29px] text-ink-mid">{copy.lead}</p>
+            {showCta && (
             <Link
               href="/veliler"
               className="mt-7 inline-flex h-12 items-center gap-2 rounded-pill border border-ink px-8 text-body font-semibold text-ink transition-colors duration-[--duration-state] hover:bg-ink hover:text-paper"
@@ -78,6 +86,7 @@ export function YsParentsPanel({ className }: { className?: string }) {
               {copy.cta}
               <ArrowRight className="size-4" aria-hidden />
             </Link>
+            )}
           </div>
 
           <div className="flex min-w-0 flex-col">

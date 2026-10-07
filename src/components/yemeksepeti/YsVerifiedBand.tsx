@@ -1,9 +1,9 @@
-import { Check } from "@phosphor-icons/react";
 import Link from "next/link";
 import { Children } from "react";
 
 import { RankMark } from "@/components/brand/marks";
 
+import { YsChecklistCard } from "./YsChecklistCard";
 import { YsFact } from "./YsFact";
 import { band as copy } from "./ysHomeCopy";
 import {
@@ -105,40 +105,22 @@ export function YsVerifiedBand({ v2 = false }: { v2?: boolean }) {
       <div className="ys-shell grid items-center gap-12 md:grid-cols-2">
         <div className="min-w-0">{claim}</div>
 
-        {/* Literal white with the light theme's inks, for the same reason as
-            the pill: the band does not change with the theme, so neither
-            does what sits on it. `--ink-mid-on-light` is the repo's token for
-            exactly that, and `--line-on-light` is the light --line. In flow, so no
-            shadow. */}
-        <div className="w-full min-w-0 max-w-[500px] rounded-card bg-white p-7 text-[var(--ink-on-light)] md:justify-self-end">
-          <h3 className="text-[1.125rem] font-bold leading-[26px]">{copy.checklistTitle}</h3>
-          <ul className="mt-4 flex flex-col">
-            {copy.checklist.map((item) => (
-              <li
-                key={item.label}
-                className="flex items-start gap-3.5 border-t border-[var(--line-on-light)] py-3.5 first:border-t-0"
-              >
-                <span className="grid h-6 w-6 flex-none place-items-center text-success">
-                  <Check className="h-[22px] w-[22px]" aria-hidden />
-                </span>
-                <div className="min-w-0">
-                  <b className="block text-[0.9375rem] font-semibold leading-[22px]">{item.label}</b>
-                  <span className="text-small leading-5 text-[var(--ink-mid-on-light)]">{item.sub}</span>
-                </div>
-              </li>
-            ))}
-          </ul>
-          {showFoot && (
-            <p className="mt-1.5 border-t border-[var(--line-on-light)] pt-3.5 text-label font-normal leading-[19px] text-[var(--ink-mid-on-light)]">
-              {Children.toArray(
-                copy.checklistFoot({
-                  reviewDays: <YsFact value={VERIFICATION_REVIEW_DAYS} label="X" />,
-                  docsDeletedAfter: <YsFact value={VERIFICATION_DOCS_DELETED_AFTER} label="SÜRE" />,
-                }),
-              )}
-            </p>
-          )}
-        </div>
+        <YsChecklistCard
+          variant="band"
+          className="md:justify-self-end"
+          title={copy.checklistTitle}
+          items={copy.checklist}
+          footer={
+            showFoot
+              ? Children.toArray(
+                  copy.checklistFoot({
+                    reviewDays: <YsFact value={VERIFICATION_REVIEW_DAYS} label="X" />,
+                    docsDeletedAfter: <YsFact value={VERIFICATION_DOCS_DELETED_AFTER} label="SÜRE" />,
+                  }),
+                )
+              : undefined
+          }
+        />
       </div>
     </section>
   );

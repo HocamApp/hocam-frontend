@@ -11,6 +11,19 @@ import {
   PublicSeoRows,
   PublicSeoSection,
 } from "@/components/seo/PublicSeoPage";
+import { YsChecklistCard } from "@/components/yemeksepeti/YsChecklistCard";
+import { YsFact } from "@/components/yemeksepeti/YsFact";
+import { pages, tutors } from "@/components/yemeksepeti/ysHomeCopy";
+import {
+  isTodo,
+  MAX_TUTOR_YKS_RANK,
+  TUTOR_MIN_WEEKLY_HOURS,
+  VERIFICATION_DOCS_DELETE_DAYS_AFTER_APPROVAL,
+  VERIFICATION_DOCS_MAX_RETENTION_DAYS,
+  VERIFICATION_REJECTION_TEXT,
+  VERIFICATION_REVIEW_DAYS,
+} from "@/components/yemeksepeti/ysHomeFacts";
+import { HOME_V2_ENABLED } from "@/lib/featureFlags";
 import { publicPageMetadata, publicWebPageJsonLd } from "@/lib/publicSeo";
 
 const path = "/hocalar-nasil-dogrulaniyor" as const;
@@ -56,6 +69,46 @@ function DisclosureList({
   );
 }
 
+/**
+ * The rebuilt homepage's additions (plan T16), NEXT_PUBLIC_HOME_V2 only:
+ * review time, rejection, document deletion and who reviews. The deletion and
+ * reviewer answers quote /kvkk/hoca-dogrulama; answers that are still TODO
+ * are left out of production builds.
+ */
+function rebuildFaqItems() {
+  const production = process.env.NODE_ENV === "production";
+  const copy = pages.verification.faq;
+  const items = [
+    {
+      pending: isTodo(VERIFICATION_REVIEW_DAYS),
+      question: copy.reviewTime.question,
+      answer: copy.reviewTime.answer(<YsFact key="d" value={VERIFICATION_REVIEW_DAYS} label="X" />),
+    },
+    {
+      pending: isTodo(VERIFICATION_REJECTION_TEXT),
+      question: copy.rejection.question,
+      answer: copy.rejection.answer(
+        <YsFact key="r" value={VERIFICATION_REJECTION_TEXT} label="Ret sonrası ne olur" />,
+      ),
+    },
+    {
+      pending: false,
+      question: copy.deletion.question,
+      answer: copy.deletion.answer(
+        VERIFICATION_DOCS_DELETE_DAYS_AFTER_APPROVAL,
+        VERIFICATION_DOCS_MAX_RETENTION_DAYS,
+        <Link key="l" href="/kvkk/hoca-dogrulama" className="text-primary hover:underline">
+          {copy.deletion.link}
+        </Link>,
+      ),
+    },
+    { pending: false, question: copy.reviewer.question, answer: [copy.reviewer.answer] },
+  ];
+  return items
+    .filter((item) => !production || !item.pending)
+    .map(({ question, answer }) => ({ question, answer: <>{answer}</> }));
+}
+
 export default function TutorVerificationPage() {
   return (
     <>
@@ -89,6 +142,31 @@ export default function TutorVerificationPage() {
             ]}
           />
         </PublicSeoSection>
+
+        {HOME_V2_ENABLED && (
+          <div className="mt-12 border-t border-line pt-12">
+            <YsChecklistCard
+              variant="surface"
+              title={tutors.eligibilityTitle}
+              items={tutors
+                .eligibility({
+                  maxRank: MAX_TUTOR_YKS_RANK,
+                  minWeeklyHours: <YsFact value={TUTOR_MIN_WEEKLY_HOURS} label="X" />,
+                })
+                /* The last line quotes the weekly-hours fact; while it is
+                   TODO, production leaves the line out. */
+                .filter(
+                  (_, index, lines) =>
+                    !(
+                      index === lines.length - 1 &&
+                      isTodo(TUTOR_MIN_WEEKLY_HOURS) &&
+                      process.env.NODE_ENV === "production"
+                    ),
+                )
+                .map((line) => ({ label: line }))}
+            />
+          </div>
+        )}
 
         <PublicSeoSection
           title="Doğrulama durumu profilde nasıl görünür?"
@@ -186,6 +264,7 @@ export default function TutorVerificationPage() {
                   </>
                 ),
               },
+              ...(HOME_V2_ENABLED ? rebuildFaqItems() : []),
             ]}
           />
         </PublicSeoSection>
