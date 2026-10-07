@@ -5,7 +5,8 @@ import {
   fetchAllPublicTutors,
 } from "@/lib/seo";
 import { LEGAL_DOCUMENTS } from "@/lib/legalDocuments";
-import { PUBLIC_SEO_ROUTES } from "@/lib/publicSeo";
+import { HOME_V2_ENABLED } from "@/lib/featureFlags";
+import { HOME_V2_ROUTES, PUBLIC_SEO_ROUTES } from "@/lib/publicSeo";
 
 export const revalidate = 3_600;
 
@@ -25,6 +26,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
           : route.includes("matematik-ozel-ders")
             ? 0.9
             : 0.7,
+    })),
+    // The rebuilt homepage's pages exist only while its flag is on.
+    ...(HOME_V2_ENABLED ? HOME_V2_ROUTES : []).map((route) => ({
+      url: absoluteUrl(route),
+      changeFrequency: "weekly" as const,
+      priority: 0.7,
     })),
     // Legal texts come from their own registry rather than
     // PUBLIC_SEO_ROUTES: that list is search-intent landing pages, and its

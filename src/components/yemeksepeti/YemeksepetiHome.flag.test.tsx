@@ -104,6 +104,7 @@ describe("homepage with NEXT_PUBLIC_HOME_V2 on", () => {
     assert.match(text, /bugünün öğretmeni/);
     assert.doesNotMatch(text, /Bugünün öğretmeni/);
     assert.equal(container.querySelector('a[href="/register?role=tutor"]'), null);
+    assert.ok(container.querySelector('a[href="/hoca-ol"]'));
     assert.match(text, /Senin için olan kısma atla/);
     for (const anchor of ["#ogrenciler", "#veliler", "#hocalar"]) {
       assert.ok(container.querySelector(`a[href="${anchor}"]`), `missing link to ${anchor}`);

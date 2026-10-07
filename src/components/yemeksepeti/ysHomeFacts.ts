@@ -79,6 +79,15 @@ export const PLAN_DURATIONS = PLAN_DURATION_DAYS.map((days) => ({
 export const AUTO_CONFIRM_HOURS = 24;
 
 /**
+ * Verification document retention, as /kvkk/hoca-dogrulama publishes it ("Ne
+ * kadar saklanır?"): raw documents and safe previews are deleted within this
+ * many days of approval...
+ */
+export const VERIFICATION_DOCS_DELETE_DAYS_AFTER_APPROVAL = 7;
+/** ...and rejected or pending applications keep documents at most this long. */
+export const VERIFICATION_DOCS_MAX_RETENTION_DAYS = 30;
+
+/**
  * Single paid lessons are retired: the only paid model is the weekly-lessons ×
  * duration package (docs/current-product-and-technical-state.md).
  */
@@ -127,6 +136,8 @@ export const TUTOR_MUST_ACCEPT_TEXT: Fact<string> = TODO;
 export const STUDENT_NO_SHOW_TEXT: Fact<string> = TODO;
 /** Minimum weekly hours a tutor commits to. */
 export const TUTOR_MIN_WEEKLY_HOURS: Fact<number> = TODO;
+/** What happens when a verification application is rejected (can they reapply?). */
+export const VERIFICATION_REJECTION_TEXT: Fact<string> = TODO;
 /** Days until a verification application is decided. */
 export const VERIFICATION_REVIEW_DAYS: Fact<number> = TODO;
 /** How long after the review the verification documents are deleted, e.g. "30 gün". Must match /kvkk. */

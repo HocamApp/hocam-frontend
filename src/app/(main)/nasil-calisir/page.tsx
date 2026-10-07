@@ -8,6 +8,9 @@ import {
   PublicSeoRows,
   PublicSeoSection,
 } from "@/components/seo/PublicSeoPage";
+import { pages } from "@/components/yemeksepeti/ysHomeCopy";
+import { YsStepsToggle } from "@/components/yemeksepeti/YsStepsToggle";
+import { HOME_V2_ENABLED } from "@/lib/featureFlags";
 import { publicPageMetadata, publicWebPageJsonLd } from "@/lib/publicSeo";
 
 const path = "/nasil-calisir" as const;
@@ -40,50 +43,58 @@ export default function HowItWorksPage() {
           />
         </div>
 
-        <PublicSeoSection
-          title="Dört temel adım"
-          intro="Hoca profillerini hesap açmadan inceleyebilirsin. Ders ayırtma ve hesapla ilişkili işlemler için giriş yapman gerekir."
-        >
-          <ol className="grid gap-4 md:grid-cols-2">
-            {[
-              {
-                number: "1",
-                title: "Ders ve hoca ara",
-                text: "Hoca listesinde sınav türü, ders, fiyat, YKS sıralaması, üniversite ve uygunluk filtrelerini kullan.",
-              },
-              {
-                number: "2",
-                title: "Profilleri karşılaştır",
-                text: "Hocanın bio bilgisini, ders alanlarını, 40 dakikalık ücretini ve tamamlanan ders değerlendirmelerini birlikte incele.",
-              },
-              {
-                number: "3",
-                title: "Hesabınla ders adımına geç",
-                text: "Ders ayırtmak istediğinde giriş yap. Profilde sunulan ders ve uygunluk seçeneklerinden sana uyan seçeneği belirle.",
-              },
-              {
-                number: "4",
-                title: "Onaylanan derse online katıl",
-                text: "Onaylanan ders hesabındaki yaklaşan derslerde görünür. Ders saatinde aynı kayıt üzerinden online ders odasına katıl.",
-              },
-            ].map((step) => (
-              <li
-                key={step.number}
-                className="flex gap-4 rounded-[20px] border border-line bg-[var(--surface)] p-6"
-              >
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-pink-pale text-sm font-medium text-ink-on-light">
-                  {step.number}
-                </span>
-                <div>
-                  <h3 className="text-[19px] font-medium leading-[1.3] md:text-[22px]">{step.title}</h3>
-                  <p className="mt-2 text-base leading-[1.6] text-ink-mid">
-                    {step.text}
-                  </p>
-                </div>
-              </li>
-            ))}
-          </ol>
-        </PublicSeoSection>
+        {/* With the rebuilt homepage the four steps give way to its own
+            student and tutor steps, behind a toggle (plan T15). */}
+        {HOME_V2_ENABLED ? (
+          <PublicSeoSection title={pages.nasilCalisir.stepsTitle}>
+            <YsStepsToggle />
+          </PublicSeoSection>
+        ) : (
+          <PublicSeoSection
+            title="Dört temel adım"
+            intro="Hoca profillerini hesap açmadan inceleyebilirsin. Ders ayırtma ve hesapla ilişkili işlemler için giriş yapman gerekir."
+          >
+            <ol className="grid gap-4 md:grid-cols-2">
+              {[
+                {
+                  number: "1",
+                  title: "Ders ve hoca ara",
+                  text: "Hoca listesinde sınav türü, ders, fiyat, YKS sıralaması, üniversite ve uygunluk filtrelerini kullan.",
+                },
+                {
+                  number: "2",
+                  title: "Profilleri karşılaştır",
+                  text: "Hocanın bio bilgisini, ders alanlarını, 40 dakikalık ücretini ve tamamlanan ders değerlendirmelerini birlikte incele.",
+                },
+                {
+                  number: "3",
+                  title: "Hesabınla ders adımına geç",
+                  text: "Ders ayırtmak istediğinde giriş yap. Profilde sunulan ders ve uygunluk seçeneklerinden sana uyan seçeneği belirle.",
+                },
+                {
+                  number: "4",
+                  title: "Onaylanan derse online katıl",
+                  text: "Onaylanan ders hesabındaki yaklaşan derslerde görünür. Ders saatinde aynı kayıt üzerinden online ders odasına katıl.",
+                },
+              ].map((step) => (
+                <li
+                  key={step.number}
+                  className="flex gap-4 rounded-[20px] border border-line bg-[var(--surface)] p-6"
+                >
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-pink-pale text-sm font-medium text-ink-on-light">
+                    {step.number}
+                  </span>
+                  <div>
+                    <h3 className="text-[19px] font-medium leading-[1.3] md:text-[22px]">{step.title}</h3>
+                    <p className="mt-2 text-base leading-[1.6] text-ink-mid">
+                      {step.text}
+                    </p>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </PublicSeoSection>
+        )}
 
         <PublicSeoSection
           title="Profil karşılaştırmasında kullanabileceğin bilgiler"
