@@ -1,5 +1,6 @@
 "use client";
 
+import type { Ref } from "react";
 import { CheckCircle, Clock, WarningCircle } from "@phosphor-icons/react";
 import Link from "next/link";
 
@@ -35,6 +36,8 @@ export function PayTRResultState({
   onRecheck,
   onRetry,
   className,
+  live = false,
+  headingRef,
 }: {
   state: PayTRStateCopyInput;
   /** Re-reads the server state. Never starts a payment. */
@@ -42,6 +45,10 @@ export function PayTRResultState({
   /** Only wired where the backend verified the attempt failed. */
   onRetry?: () => void;
   className?: string;
+  /** Announce the outcome politely when it changes under the student. */
+  live?: boolean;
+  /** Lets the screen move focus here when the outcome replaces the frame. */
+  headingRef?: Ref<HTMLHeadingElement>;
 }) {
   const copy = payTRStateCopy(state);
   const Icon = ICONS[copy.tone];
@@ -58,8 +65,23 @@ export function PayTRResultState({
         aria-hidden="true"
         className={`${ICON_COLORS[copy.tone]}`}
       />
-      <h2 className="mt-3 text-[1.375rem] font-semibold leading-8">{copy.title}</h2>
-      <p className="mt-2 text-sm text-[#5c6b6d]">{copy.description}</p>
+      {live ? (
+        <div role="status" aria-live="polite">
+          <h2
+            ref={headingRef}
+            tabIndex={headingRef ? -1 : undefined}
+            className="mt-3 text-[1.375rem] font-semibold leading-8 focus-visible:outline-none"
+          >
+            {copy.title}
+          </h2>
+          <p className="mt-2 text-sm text-[#5c6b6d]">{copy.description}</p>
+        </div>
+      ) : (
+        <>
+          <h2 className="mt-3 text-[1.375rem] font-semibold leading-8">{copy.title}</h2>
+          <p className="mt-2 text-sm text-[#5c6b6d]">{copy.description}</p>
+        </>
+      )}
 
       <div className="mt-6 flex flex-wrap items-center gap-3">
         {showRetry && (

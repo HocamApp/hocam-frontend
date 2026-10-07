@@ -15,7 +15,12 @@ import { PayTRProcessingState } from "./PayTRProcessingState";
 import { PayTRPurchaseSummary } from "./PayTRPurchaseSummary";
 import { PayTRResultState, PAYTR_PACKAGES_HREF } from "./PayTRResultState";
 import { paytrCheckoutState } from "./paytrCheckoutState";
-import { payTRPollIntervalMs, payTRRecoveryStartedAt } from "./paytrPolling";
+import { isFramed, moveTopHere } from "./paytrFrameEscape";
+import {
+  PAYTR_FAST_POLL_WINDOW_MS,
+  payTRPollIntervalMs,
+  payTRRecoveryStartedAt,
+} from "./paytrPolling";
 import {
   clearPayTRRecovery,
   readPayTRRecovery,
@@ -36,7 +41,18 @@ import {
  * The return URLs carry no purchase id, which is why the recovery breadcrumb
  * exists at all. Without one, the screen claims nothing and offers a way to
  * Paketlerim.
+ *
+ * PayTR's docs do not say whether these URLs open in the top window or inside
+ * the payment iframe on our own page. With payments built in, a copy that
+ * finds itself framed reads nothing and moves the whole tab here instead, so
+ * the result never renders squeezed inside the provider's box.
  */
+
+/** Pick the payment status up straight away when payments are live. */
+const FRESH_STATUS = PAYTR_ENABLED
+  ? { staleTime: 0, refetchOnWindowFocus: true }
+  : {};
+
 export function PayTRReturnScreen() {
   const router = useRouter();
   const pathname = usePathname();
@@ -52,8 +68,22 @@ export function PayTRReturnScreen() {
   // and spin the effect forever.
   const readFor = useRef<string | null>(null);
   const redirected = useRef(false);
+  const [framed, setFramed] = useState(false);
+  const [waitWindowOver, setWaitWindowOver] = useState(false);
+  const resultHeadingRef = useRef<HTMLHeadingElement>(null);
+  const focusedState = useRef<string | null>(null);
+
+  // Same-origin frame: the top window is this site's payment page, so the
+  // tab can be moved here whole. The breadcrumb travels with the tab.
+  useEffect(() => {
+    if (!PAYTR_ENABLED || !isFramed()) return;
+    setFramed(true);
+    // A top window we may not navigate: stay quiet rather than read here.
+    moveTopHere();
+  }, []);
 
   useEffect(() => {
+    if (PAYTR_ENABLED && isFramed()) return;
     if (authLoading) return;
     if (!isAuthenticated) {
       if (redirected.current) return;
@@ -96,6 +126,7 @@ export function PayTRReturnScreen() {
     queryFn: () => fetchPayTRPaymentStatus(recovery!.purchaseId),
     enabled: isAuthenticated && Boolean(recovery),
     retry: false,
+    ...FRESH_STATUS,
     refetchInterval: () =>
       payTRPollIntervalMs({
         attemptActive: Boolean(recovery),
@@ -130,6 +161,30 @@ export function PayTRReturnScreen() {
     queryClient.invalidateQueries({ queryKey: ["payment-history"] });
   }, [settled, queryClient, user?.id, recovery]);
 
+  // The fast polling window ending is not a verdict either; it only means the
+  // student is told the wait is longer than usual and how to look again.
+  useEffect(() => {
+    if (!PAYTR_ENABLED || !recovery) return;
+    const remaining = PAYTR_FAST_POLL_WINDOW_MS - (Date.now() - recovery.startedAt);
+    if (remaining <= 0) {
+      setWaitWindowOver(true);
+      return;
+    }
+    const timer = window.setTimeout(() => setWaitWindowOver(true), remaining);
+    return () => window.clearTimeout(timer);
+  }, [recovery]);
+
+  const resultShown =
+    !framed && !authLoading && Boolean(recovery) && state.name !== "loading";
+
+  // Each new outcome takes focus, so a screen reader and a keyboard both land
+  // on it rather than on whatever the processing view left behind.
+  useEffect(() => {
+    if (!PAYTR_ENABLED || !resultShown || focusedState.current === state.name) return;
+    focusedState.current = state.name;
+    resultHeadingRef.current?.focus();
+  }, [resultShown, state.name]);
+
   const recheck = useCallback(() => {
     void purchasesQuery.refetch();
     void paymentStatusQuery.refetch();
@@ -153,7 +208,7 @@ export function PayTRReturnScreen() {
   );
 
   function renderBody() {
-    if (authLoading || recovery === undefined) {
+    if (framed || authLoading || recovery === undefined) {
       return <PayTRProcessingState state={{ name: "loading" }} />;
     }
 
@@ -170,7 +225,9 @@ export function PayTRReturnScreen() {
             href={PAYTR_PACKAGES_HREF}
             className="mt-6 inline-flex min-h-[2.75rem] items-center text-base underline underline-offset-4 hover:text-[var(--pink-deep)]"
           >
-            Paketlerime git
+            {PAYTR_ENABLED
+              ? "Paketlerim'de ödeme durumunu kontrol et"
+              : "Paketlerime git"}
           </Link>
         </section>
       );
@@ -182,7 +239,17 @@ export function PayTRReturnScreen() {
 
     return (
       <>
-        <PayTRResultState state={{ name: state.name }} onRecheck={recheck} />
+        <PayTRResultState
+          state={{ name: state.name }}
+          onRecheck={recheck}
+          live={PAYTR_ENABLED}
+          headingRef={PAYTR_ENABLED ? resultHeadingRef : undefined}
+        />
+        {PAYTR_ENABLED && waitWindowOver && state.name === "callback_pending" && (
+          <p role="status" className="mt-4 text-sm text-[#02171a]">
+            Doğrulama beklenenden uzun sürüyor. Yeniden ödeme yapma; durumu kontrol et.
+          </p>
+        )}
         {activatedCredits !== null && (
           <p className="mt-4 text-sm text-[#02171a]">
             {activatedCredits} ders kredin kullanıma açıldı.

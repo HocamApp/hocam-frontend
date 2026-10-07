@@ -1,5 +1,7 @@
 "use client";
 
+import type { Ref } from "react";
+
 import { readPayTRIframeUrl } from "./paytrIframeUrl";
 
 /**
@@ -14,9 +16,12 @@ import { readPayTRIframeUrl } from "./paytrIframeUrl";
 export function PayTRFrame({
   iframeUrl,
   className,
+  headingRef,
 }: {
   iframeUrl: string | null | undefined;
   className?: string;
+  /** Lets the payment screen move focus here when the frame opens. */
+  headingRef?: Ref<HTMLHeadingElement>;
 }) {
   const safeUrl = readPayTRIframeUrl(iframeUrl);
 
@@ -42,7 +47,17 @@ export function PayTRFrame({
     <section
       className={`rounded-[20px] border border-[#e6dddd] bg-white p-4 text-[#02171a] sm:p-6 ${className ?? ""}`}
     >
-      <h2 className="text-[1.375rem] font-semibold leading-8">Kartla ödeme</h2>
+      {headingRef ? (
+        <h2
+          ref={headingRef}
+          tabIndex={-1}
+          className="text-[1.375rem] font-semibold leading-8 focus-visible:outline-none"
+        >
+          Kartla ödeme
+        </h2>
+      ) : (
+        <h2 className="text-[1.375rem] font-semibold leading-8">Kartla ödeme</h2>
+      )}
       <p className="mt-2 text-sm text-[#5c6b6d]">
         Kart bilgilerini PayTR ekranında gir.
       </p>

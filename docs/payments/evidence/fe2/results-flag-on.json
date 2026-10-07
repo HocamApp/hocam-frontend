@@ -1,0 +1,179 @@
+{
+  "capturedAt": "2026-10-07T08:43:27.222Z",
+  "browser": "149.0.7827.55",
+  "flag": "on",
+  "evidence": "mock — local production build, local stand-in for PayTR; not real PayTR, 3D Secure, a bank or a backend",
+  "browserArgs": "Local Network Access checks disabled (loopback-only artifact; see script header)",
+  "results": [
+    {
+      "scenario": "frame-open",
+      "flag": "on",
+      "width": 375,
+      "height": 812,
+      "screenshot": "fe2-frame-open-375.png",
+      "evidence": "mock",
+      "url": "/package-purchases/purchase-1/pay",
+      "checkoutPosts": 1,
+      "packagePosts": 0,
+      "otherWrites": [],
+      "statusReads": 2,
+      "unexpected": [],
+      "frameHeaders": [],
+      "errors": [],
+      "focused": "Kartla ödeme"
+    },
+    {
+      "scenario": "session-lost",
+      "flag": "on",
+      "width": 375,
+      "height": 812,
+      "screenshot": "fe2-session-lost-375.png",
+      "evidence": "mock",
+      "url": "/package-purchases/purchase-1/pay",
+      "checkoutPosts": 1,
+      "packagePosts": 0,
+      "otherWrites": [],
+      "statusReads": 3,
+      "unexpected": [],
+      "frameHeaders": [],
+      "errors": [],
+      "dialogShown": true
+    },
+    {
+      "scenario": "return-in-frame",
+      "flag": "on",
+      "width": 375,
+      "height": 812,
+      "screenshot": "fe2-return-in-frame-375.png",
+      "evidence": "mock",
+      "url": "/odeme/basarili",
+      "checkoutPosts": 1,
+      "packagePosts": 0,
+      "otherWrites": [],
+      "statusReads": 3,
+      "unexpected": [],
+      "frameHeaders": [
+        {
+          "path": "/odeme/basarili",
+          "xfo": "SAMEORIGIN",
+          "csp": "frame-ancestors 'self'"
+        },
+        {
+          "path": "/odeme/basarili",
+          "xfo": "SAMEORIGIN",
+          "csp": "frame-ancestors 'self'"
+        }
+      ],
+      "errors": [],
+      "topWindowPath": "/odeme/basarili"
+    },
+    {
+      "scenario": "frame-open",
+      "flag": "on",
+      "width": 1440,
+      "height": 900,
+      "screenshot": "fe2-frame-open-1440.png",
+      "evidence": "mock",
+      "url": "/package-purchases/purchase-1/pay",
+      "checkoutPosts": 1,
+      "packagePosts": 0,
+      "otherWrites": [],
+      "statusReads": 2,
+      "unexpected": [],
+      "frameHeaders": [],
+      "errors": [],
+      "focused": "Kartla ödeme"
+    },
+    {
+      "scenario": "session-lost",
+      "flag": "on",
+      "width": 1440,
+      "height": 900,
+      "screenshot": "fe2-session-lost-1440.png",
+      "evidence": "mock",
+      "url": "/package-purchases/purchase-1/pay",
+      "checkoutPosts": 1,
+      "packagePosts": 0,
+      "otherWrites": [],
+      "statusReads": 3,
+      "unexpected": [],
+      "frameHeaders": [],
+      "errors": [],
+      "dialogShown": true
+    },
+    {
+      "scenario": "return-in-frame",
+      "flag": "on",
+      "width": 1440,
+      "height": 900,
+      "screenshot": "fe2-return-in-frame-1440.png",
+      "evidence": "mock",
+      "url": "/odeme/basarili",
+      "checkoutPosts": 1,
+      "packagePosts": 0,
+      "otherWrites": [],
+      "statusReads": 3,
+      "unexpected": [],
+      "frameHeaders": [
+        {
+          "path": "/odeme/basarili",
+          "xfo": "SAMEORIGIN",
+          "csp": "frame-ancestors 'self'"
+        },
+        {
+          "path": "/odeme/basarili",
+          "xfo": "SAMEORIGIN",
+          "csp": "frame-ancestors 'self'"
+        }
+      ],
+      "errors": [],
+      "topWindowPath": "/odeme/basarili"
+    },
+    {
+      "scenario": "return-long-wait",
+      "flag": "on",
+      "width": 375,
+      "height": 812,
+      "screenshot": "fe2-return-long-wait-375.png",
+      "evidence": "mock",
+      "url": "/odeme/basarisiz",
+      "checkoutPosts": 0,
+      "packagePosts": 0,
+      "otherWrites": [],
+      "statusReads": 1,
+      "unexpected": [],
+      "frameHeaders": [
+        {
+          "path": "/odeme/basarisiz",
+          "xfo": "SAMEORIGIN",
+          "csp": "frame-ancestors 'self'"
+        }
+      ],
+      "errors": [],
+      "longWaitShown": true
+    },
+    {
+      "scenario": "return-long-wait",
+      "flag": "on",
+      "width": 1440,
+      "height": 900,
+      "screenshot": "fe2-return-long-wait-1440.png",
+      "evidence": "mock",
+      "url": "/odeme/basarisiz",
+      "checkoutPosts": 0,
+      "packagePosts": 0,
+      "otherWrites": [],
+      "statusReads": 1,
+      "unexpected": [],
+      "frameHeaders": [
+        {
+          "path": "/odeme/basarisiz",
+          "xfo": "SAMEORIGIN",
+          "csp": "frame-ancestors 'self'"
+        }
+      ],
+      "errors": [],
+      "longWaitShown": true
+    }
+  ]
+}
