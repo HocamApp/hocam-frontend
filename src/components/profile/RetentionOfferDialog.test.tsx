@@ -148,7 +148,7 @@ describe("RetentionOfferDialog", () => {
   it("X ile kapatma nötrdür: hiçbir API çağrısı yapılmaz, red sayılmaz", async () => {
     renderDialog();
 
-    fireEvent.click(screen.getByRole("button", { name: "Close" }));
+    fireEvent.click(screen.getByRole("button", { name: "Pencereyi kapat" }));
 
     await waitFor(() =>
       assert.ok(

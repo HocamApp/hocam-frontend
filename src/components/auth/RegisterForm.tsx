@@ -1,10 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type MouseEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Eye, EyeOff, MailCheck } from "lucide-react";
 import { useForm } from "react-hook-form";
+import { queryOptions, useQuery, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
 import axios from "axios";
 import { useAuth } from "@/hooks/useAuth";
@@ -33,19 +34,8 @@ import { formatCountdown, secondsUntil } from "@/lib/verificationChallenge";
 import { OtpInput, type OtpInputHandle, type OtpStatus } from "@/components/ui/otp-input";
 import { PasswordStrength } from "@/components/ui/password-strength";
 import { GlassInputWrapper } from "@/components/auth/AuthSplitScreen";
-import { AydinlatmaMetniPreview } from "@/components/privacy/AydinlatmaMetniPreview";
-import {
-  fetchRegistrationNotice,
-  type RegistrationNoticeConfig,
-} from "@/lib/privacyApi";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { LegalDocumentSheet } from "@/components/privacy/LegalDocumentSheet";
+import { fetchRegistrationNotice } from "@/lib/privacyApi";
 
 const registerSchema = z
   .object({
@@ -69,6 +59,21 @@ const registerSchema = z
   });
 
 type RegisterFormValues = z.infer<typeof registerSchema>;
+
+// The notice code and version come from the server so the evidence stored
+// with the account always names the text that was actually published.
+const registrationNoticeQuery = queryOptions({
+  queryKey: ["privacy", "registration-notice"],
+  queryFn: fetchRegistrationNotice,
+  staleTime: Infinity,
+});
+
+const FALLBACK_NOTICE_URL = "/kvkk/aydinlatma-metni";
+const TERMS_URL = "/kullanim-kosullari";
+const NOTICE_UNAVAILABLE_MESSAGE =
+  "Aydınlatma Metni bilgisi alınamadı. Bağlantını kontrol edip tekrar dene.";
+
+type LegalDocKey = "notice" | "terms";
 
 interface RegisterFormProps {
   /** Initial selected account type. */
@@ -110,30 +115,26 @@ export function RegisterForm({
   const [isConfirming, setIsConfirming] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const [clock, setClock] = useState(() => Date.now());
-  const [noticeOpen, setNoticeOpen] = useState(false);
-  const [noticeConfig, setNoticeConfig] = useState<RegistrationNoticeConfig | null>(null);
-  const [noticeConfigFailed, setNoticeConfigFailed] = useState(false);
-  const [noticeLoaded, setNoticeLoaded] = useState(false);
-  const [noticeViewed, setNoticeViewed] = useState(false);
-  const [noticeAcknowledged, setNoticeAcknowledged] = useState(false);
+  // Kept apart from the open flag so the closing animation still shows the
+  // document that was open.
+  const [legalDoc, setLegalDoc] = useState<LegalDocKey>("notice");
+  const [legalDocOpen, setLegalDocOpen] = useState(false);
   const authHandledByFormRef = useRef(false);
   const confirmingRef = useRef(false);
   const otpRef = useRef<OtpInputHandle>(null);
-  const handleNoticeReady = useCallback(() => setNoticeLoaded(true), []);
+  const queryClient = useQueryClient();
+  const noticeQuery = useQuery(registrationNoticeQuery);
+  const noticeUrl = noticeQuery.data?.url ?? FALLBACK_NOTICE_URL;
 
-  useEffect(() => {
-    let cancelled = false;
-    fetchRegistrationNotice()
-      .then((config) => {
-        if (!cancelled) setNoticeConfig(config);
-      })
-      .catch(() => {
-        if (!cancelled) setNoticeConfigFailed(true);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  // Waits for a notice request still in flight, and retries one that failed,
+  // so a slow phone connection never turns into a dead "Kayıt Ol" button.
+  const resolveNotice = useCallback(async () => {
+    try {
+      return await queryClient.ensureQueryData(registrationNoticeQuery);
+    } catch {
+      return null;
+    }
+  }, [queryClient]);
 
   const form = useForm<RegisterFormValues>({
     defaultValues: {
@@ -183,12 +184,6 @@ export function RegisterForm({
 
   const onSubmit = async (data: RegisterFormValues) => {
     setGeneralError(null);
-    if (!noticeAcknowledged || !noticeConfig) {
-      setGeneralError(
-        "Kayıt olmak için KVKK Aydınlatma Metni’ni görüntüleyip bilgilendirildiğini onaylamalısın."
-      );
-      return;
-    }
     const parsed = registerSchema.safeParse(data);
     if (!parsed.success) {
       const err = parsed.error.flatten();
@@ -196,6 +191,11 @@ export function RegisterForm({
       if (err.fieldErrors.password) form.setError("password", { message: err.fieldErrors.password[0] });
       if (err.fieldErrors.password_confirm) form.setError("password_confirm", { message: err.fieldErrors.password_confirm[0] });
       if (err.fieldErrors.role) form.setError("role", { message: err.fieldErrors.role[0] });
+      return;
+    }
+    const noticeConfig = await resolveNotice();
+    if (!noticeConfig) {
+      setGeneralError(NOTICE_UNAVAILABLE_MESSAGE);
       return;
     }
 
@@ -349,10 +349,9 @@ export function RegisterForm({
   const handleGoogleCredential = useCallback(
     async (credential: string) => {
       setGeneralError(null);
-      if (!noticeAcknowledged || !noticeConfig) {
-        setGeneralError(
-          "Google ile kayıt olmak için önce KVKK Aydınlatma Metni’ni görüntüleyip bilgilendirildiğini onaylamalısın."
-        );
+      const noticeConfig = await resolveNotice();
+      if (!noticeConfig) {
+        setGeneralError(NOTICE_UNAVAILABLE_MESSAGE);
         return;
       }
       const selectedRole = lockedRole ?? (
@@ -385,7 +384,7 @@ export function RegisterForm({
         }
       }
     },
-    [completeAuth, form, lockedRole, noticeAcknowledged, noticeConfig]
+    [completeAuth, form, lockedRole, resolveNotice]
   );
 
   if (isLoading) {
@@ -512,6 +511,29 @@ export function RegisterForm({
       </div>
     );
   }
+
+  // A plain click opens the text over the form; modified clicks keep the
+  // browser's own "open in new tab" behaviour.
+  const openLegalDoc =
+    (doc: LegalDocKey) => (event: MouseEvent<HTMLAnchorElement>) => {
+      if (
+        event.button !== 0 ||
+        event.metaKey ||
+        event.ctrlKey ||
+        event.shiftKey ||
+        event.altKey
+      ) {
+        return;
+      }
+      event.preventDefault();
+      setLegalDoc(doc);
+      setLegalDocOpen(true);
+    };
+
+  // nowrap keeps each link in one piece on a phone, and the vertical padding
+  // widens the tap target without changing the line height.
+  const legalLinkClass =
+    "whitespace-nowrap py-1 font-medium text-white underline decoration-white/40 underline-offset-2 transition-colors hover:decoration-white";
 
   const roleButtonClass = (value: "student" | "tutor") =>
     cn(
@@ -711,44 +733,35 @@ export function RegisterForm({
             )}
           />
 
-          <div className="space-y-3 rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-            <button
-              type="button"
-              disabled={!noticeConfig}
-              onClick={() => setNoticeOpen(true)}
-              className="inline-flex min-h-6 items-center text-left text-sm font-medium text-white underline underline-offset-4 disabled:cursor-not-allowed disabled:text-neutral-500"
+          {/* Informing is the legal duty here (KVKK m.10), not consent, so the
+              notice sits beside the action instead of gating it — the way
+              large Turkish marketplaces present it. Pressing "Kayıt Ol" or
+              the Google button is the acknowledgement sent to the API. */}
+          <p className="animate-element animate-delay-700 text-xs leading-5 text-neutral-400">
+            Kayıt olarak veya Google ile devam ederek{" "}
+            <Link
+              href={TERMS_URL}
+              prefetch={false}
+              onClick={openLegalDoc("terms")}
+              className={legalLinkClass}
             >
-              KVKK Aydınlatma Metni’ni görüntüle
-            </button>
-            <label
-              className={cn(
-                "flex items-start gap-3 text-xs leading-5",
-                noticeViewed ? "text-neutral-300" : "text-neutral-500"
-              )}
+              Kullanım Koşulları
+            </Link>
+            ’nı kabul etmiş olursun. Kişisel verilerin{" "}
+            <Link
+              href={noticeUrl}
+              prefetch={false}
+              onClick={openLegalDoc("notice")}
+              className={legalLinkClass}
             >
-              <input
-                type="checkbox"
-                checked={noticeAcknowledged}
-                disabled={!noticeViewed}
-                onChange={(event) => setNoticeAcknowledged(event.target.checked)}
-                className="mt-1 h-4 w-4 shrink-0 accent-white disabled:cursor-not-allowed"
-                aria-describedby="kvkk-acknowledgement-help"
-              />
-              <span>
-                KVKK Aydınlatma Metni’ni görüntüledim ve kişisel verilerimin
-                işlenmesi hakkında bilgilendirildim.
-              </span>
-            </label>
-            <p id="kvkk-acknowledgement-help" className="text-xs leading-5 text-neutral-500">
-              {noticeConfigFailed
-                ? "Aydınlatma Metni bilgisi alınamadı. Kayıt için sayfayı yenileyin."
-                : "Bu kutu açık rıza değildir. Metni görüntüledikten sonra etkinleşir."}
-            </p>
-          </div>
+              KVKK Aydınlatma Metni
+            </Link>{" "}
+            kapsamında işlenir.
+          </p>
 
           <button
             type="submit"
-            disabled={form.formState.isSubmitting || !noticeAcknowledged}
+            disabled={form.formState.isSubmitting}
             className="animate-element animate-delay-700 w-full rounded-2xl bg-white py-4 font-medium text-neutral-950 transition-colors hover:bg-white/90 disabled:opacity-70"
           >
             {form.formState.isSubmitting ? (
@@ -776,40 +789,14 @@ export function RegisterForm({
       <GoogleSignInButton
         onCredential={handleGoogleCredential}
         text="signup_with"
-        disabled={!noticeAcknowledged}
       />
 
-      <Dialog open={noticeOpen} onOpenChange={setNoticeOpen}>
-        <DialogContent className="flex h-[min(90dvh,760px)] w-[calc(100dvw-1rem)] max-w-4xl flex-col overflow-hidden p-0">
-          <DialogHeader className="shrink-0 border-b px-6 py-5 pr-12 text-left">
-            <DialogTitle>KVKK Aydınlatma Metni</DialogTitle>
-            <DialogDescription>
-              Metin bilgilendirme amaçlıdır; açık rıza talebi değildir.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="min-h-0 flex-1 overflow-y-auto bg-background">
-            {noticeConfig && (
-              <AydinlatmaMetniPreview
-                noticeUrl={noticeConfig.url}
-                onReady={handleNoticeReady}
-              />
-            )}
-          </div>
-          <DialogFooter className="shrink-0 border-t p-4 sm:space-x-0">
-            <button
-              type="button"
-              disabled={!noticeLoaded}
-              onClick={() => {
-                setNoticeViewed(true);
-                setNoticeOpen(false);
-              }}
-              className="rounded-xl bg-primary px-5 py-3 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              Metni görüntüledim
-            </button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <LegalDocumentSheet
+        open={legalDocOpen}
+        onOpenChange={setLegalDocOpen}
+        title={legalDoc === "terms" ? "Kullanım Koşulları" : "KVKK Aydınlatma Metni"}
+        url={legalDoc === "terms" ? TERMS_URL : noticeUrl}
+      />
 
       <p className="animate-element animate-delay-800 text-center text-sm text-neutral-400">
         Zaten hesabın var mı?{" "}
