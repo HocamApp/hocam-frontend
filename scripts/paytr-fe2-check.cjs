@@ -152,7 +152,7 @@ ${returnToUs ? `<script>setTimeout(function(){location.href=${JSON.stringify(new
           net.resizerRequests = (net.resizerRequests || 0) + 1;
           return route.fulfill({ contentType: "application/javascript", body: "/* MOCK resizer */" });
         }
-        net.unexpected.push(url.origin + url.pathname); // e.g. a resizer script
+        net.unexpected.push(url.origin + url.pathname); // any other PayTR asset
         return route.abort();
       }
       if (url.origin === baseUrl.origin) return route.continue();

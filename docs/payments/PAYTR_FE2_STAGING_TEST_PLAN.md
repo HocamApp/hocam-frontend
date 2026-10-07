@@ -45,7 +45,7 @@ Her satırda en az 1, 2, 3 ve 4. adımlar; 5–11 en az bir mobil + bir masaüst
 | 9 | Geç callback (callback'in birkaç dakika gecikmesi) | 45 sn sonra "Doğrulama beklenenden uzun sürüyor. Yeniden ödeme yapma; durumu kontrol et."; "Durumu kontrol et" ile `paid` | Ekran görüntüsü; zaman damgaları |
 | 10 | VoiceOver (iOS) / TalkBack (Android) | iframe "PayTR güvenli ödeme" olarak okunur; sonuç duyurulur; odak sonuç başlığına gelir | Not veya ekran kaydı |
 | 11 | Koçluklu paket (yalnız `PAYTR_COACHING_ENABLED=True`) | Gösterilen toplam = ders + koçluk; tek tahsilat | `payment-status` `amount_minor`, `lesson_amount_minor`, `coaching_amount_minor` |
-| 12 | iframe yüksekliği (resizer commit'i PR'da tutulduysa) | iframe içeriğe göre büyür, iframe içinde kaydırma çubuğu yok | Ekran görüntüsü; aksi hâlde 600 px + iframe içi kaydırma beklenir |
+| 12 | iframe yüksekliği ve kaydırma (her cihaz satırında) | **Resizer yok:** iframe 600 px tabanında; PayTR içeriği uzunsa iframe kendi içinde kayar. Kart alanları, 3DS ekranı ve PayTR'ın ödeme butonu kaydırarak erişilebilir olmalı. Yükseklik yetersizse veya sayfa + iframe çift kaydırma ödemeyi zorlaştırıyorsa sonucu kaydet ve resizer PR'ına ([#292](https://github.com/HocamApp/hocam-frontend/pull/292)) dön | Ekran görüntüsü/kaydı (mobilde klavye açıkken de) |
 
 ## Kanıt kuralları
 
@@ -64,6 +64,7 @@ görüldü) / **Koşulmadı**.
 | payment-status'un önbelleğe güvenmemesi, sekme odağında yenilenmesi | Mock ile kanıtlandı |
 | Odak ve canlı bölge davranışı | Mock ile kanıtlandı (jsdom + Chromium) |
 | PayTR'ın dönüşü iframe içinde mi üst pencerede mi açtığı | Doğrulanmadı (dokümanda yazmıyor) |
-| 3DS/ACS sayfalarının iframe'de çalışması, resizer'ın gerçek içerikle yüksekliği ayarlaması | Doğrulanmadı |
+| 3DS/ACS sayfalarının iframe'de çalışması | Doğrulanmadı |
+| 600 px + iframe içi kaydırmanın gerçek PayTR içeriğiyle yeterli olması (resizer yok; gerekirse #292) | Doğrulanmadı |
 | Fiziksel mobil klavye, ekran okuyucunun gerçek duyurusu | Doğrulanmadı |
 | Callback zamanlaması, tek ledger/tek aktivasyon, aynı token'ın iki sekmede davranışı | Doğrulanmadı |
