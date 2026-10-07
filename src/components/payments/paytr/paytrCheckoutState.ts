@@ -165,6 +165,12 @@ export function paytrCheckoutState(
     return build("payment_paid");
   }
   if (paymentStatus && paymentStatus.purchase_status !== purchase.status) {
+    // The two are polled separately, so the list can see the callback's
+    // "paid" one poll before payment-status does. That is a payment still
+    // being confirmed, not a failed load; success waits for payment-status.
+    if (purchase.status === "paid" && paymentStatus.purchase_status === "pending") {
+      return build("callback_pending");
+    }
     return build("query_error");
   }
   if (purchase.status === "paid") {

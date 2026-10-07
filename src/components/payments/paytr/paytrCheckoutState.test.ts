@@ -167,11 +167,37 @@ describe("paytrCheckoutState — authoritative payment status", () => {
     }).name, "payment_paid");
   });
 
-  it("does not show success when the two server responses disagree", () => {
-    assert.equal(state({
+  // The list and payment-status poll separately, so right after the callback
+  // the list can say paid while payment-status still says pending. That is a
+  // payment being confirmed, not a load failure — and still not a success.
+  it("does not show success when the list is paid but payment-status is not yet", () => {
+    const catchingUp = state({
       purchase: purchase("paid"), paymentStatusRequired: true,
       paymentStatus: paymentStatus(),
-    }).name, "query_error");
+    });
+
+    assert.equal(catchingUp.name, "callback_pending");
+    assert.equal(catchingUp.canStartPayment, false);
+  });
+
+  it("keeps every other disagreement between the two responses an error", () => {
+    const cases: Array<[PackagePurchaseStatus, PayTRPaymentStatus["purchase_status"]]> = [
+      ["paid", "cancelled"],
+      ["paid", "refunded"],
+      ["pending", "cancelled"],
+      ["pending", "refunded"],
+      ["cancelled", "pending"],
+      ["refunded", "pending"],
+      ["cancelled", "refunded"],
+    ];
+    for (const [listStatus, statusStatus] of cases) {
+      const disagreeing = state({
+        purchase: purchase(listStatus), paymentStatusRequired: true,
+        paymentStatus: paymentStatus({ purchase_status: statusStatus }),
+      });
+      assert.equal(disagreeing.name, "query_error", `${listStatus} vs ${statusStatus}`);
+      assert.equal(disagreeing.canStartPayment, false, `${listStatus} vs ${statusStatus}`);
+    }
   });
 
   it("closes a stale iframe view after the backend reports failure", () => {
