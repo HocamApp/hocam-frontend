@@ -229,12 +229,15 @@ export default function TutorSetupPage() {
     educationOptions.find((option) => option.university === selectedUniversity)
       ?.departments ?? [];
   const universities = educationOptions.map((option) => option.university);
+  const missingBioWords = Math.max(0, BIO_MIN_WORDS - countBioWords(watchedValues.bio));
   const profileChecks = [
     Boolean(watchedValues.name.trim() && watchedValues.surname.trim()),
     Boolean(watchedValues.university && watchedValues.department),
-    Boolean(watchedValues.yks_rank && watchedValues.hourly_price),
-    selectedSubjectIds.length > 0,
-    selectedTeachingAttributes.length >= 3,
+    setupSchema.shape.yks_rank.safeParse(watchedValues.yks_rank).success &&
+      setupSchema.shape.hourly_price.safeParse(watchedValues.hourly_price).success,
+    missingBioWords === 0,
+    filterSelectedSubjectIds(subjects, selectedSubjectIds).length > 0,
+    selectedTeachingAttributes.length >= 3 && selectedTeachingAttributes.length <= 5,
   ];
   const profileCompletedCount = profileChecks.filter(Boolean).length;
   const profileProgress = Math.round((profileCompletedCount / profileChecks.length) * 100);
@@ -476,6 +479,12 @@ export default function TutorSetupPage() {
                 }}
               />
 
+              {missingBioWords > 0 && (
+                <p className="text-sm text-ink-mid" role="status">
+                  Devam etmek için Hakkımda bölümüne {missingBioWords} kelime daha ekle.
+                </p>
+              )}
+
               <Button
                 type="submit"
                 size="lg"
@@ -503,7 +512,7 @@ export default function TutorSetupPage() {
         title={profileProgress === 100 ? "Profilin hazır görünüyor!" : "Profilin adım adım şekilleniyor."}
         description="Temel bilgilerini, verdiğin dersleri ve anlatım tarzını tek seferde ekle."
         progress={profileProgress}
-        progressLabel={`${profileCompletedCount}/5 profil bölümü hazır`}
+        progressLabel={`${profileCompletedCount}/${profileChecks.length} profil bölümü hazır`}
         fact={priceFact}
       />
     </div>
