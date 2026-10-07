@@ -5,7 +5,10 @@ import { HOME_V2_ENABLED } from "@/lib/featureFlags";
 import { YsEntryDialog } from "./YsEntryDialog";
 import { YsHeroIntro } from "./YsHeroIntro";
 import { YsHomeFaq } from "./YsHomeFaq";
+import { YsGuarantees } from "./YsGuarantees";
 import { YsHowItWorks } from "./YsHowItWorks";
+import { YsParentsPanel } from "./YsParentsPanel";
+import { YsPricing } from "./YsPricing";
 import { YsSubjectGrid } from "./YsSubjectGrid";
 import { YsTestimonials } from "./YsTestimonials";
 import { YsTutorDirectory } from "./YsTutorDirectory";
@@ -17,7 +20,14 @@ import { YsVerifiedBand } from "./YsVerifiedBand";
  * page is the pre-rebuild homepage, unchanged. It is a prop, defaulting to the
  * build flag, so tests can render both.
  */
-export function YemeksepetiHome({ v2 = HOME_V2_ENABLED }: { v2?: boolean } = {}) {
+export function YemeksepetiHome({
+  v2 = HOME_V2_ENABLED,
+  lessonRoomShot = false,
+}: {
+  v2?: boolean;
+  /** Whether the lesson room screenshot exists; checked on the server. */
+  lessonRoomShot?: boolean;
+} = {}) {
   return (
     <div className="ys-root">
       <div className="ys-shell">
@@ -48,12 +58,22 @@ export function YemeksepetiHome({ v2 = HOME_V2_ENABLED }: { v2?: boolean } = {})
         <YsUniversityStrip />
       </div>
 
-      {/* Outside the shell for the same reason the verified band is: the
-            journey owns a full-bleed surface band, and a shell would cap it
-            at 1440px and inset it. It opens its own shell inside. */}
-      <div className="mt-16 md:mt-24">
-        <YsHowItWorks />
-      </div>
+      {v2 ? (
+        <>
+          {/* The rebuilt sections each open their own shell. */}
+          <YsHowItWorks v2 lessonRoomShot={lessonRoomShot} />
+          <YsPricing />
+          <YsGuarantees />
+          <YsParentsPanel className="mt-[120px]" />
+        </>
+      ) : (
+        /* Outside the shell for the same reason the verified band is: the
+              journey owns a full-bleed surface band, and a shell would cap it
+              at 1440px and inset it. It opens its own shell inside. */
+        <div className="mt-16 md:mt-24">
+          <YsHowItWorks />
+        </div>
+      )}
 
       <div className="ys-shell pb-12">
         {/* The journey explains the product, then social proof and the FAQ

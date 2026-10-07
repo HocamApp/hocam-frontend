@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+
 import { isTodo } from "./ysHomeFacts";
 
 /**
@@ -21,4 +23,29 @@ export function YsFact({ value, label }: { value: unknown; label: string }): JSX
     );
   }
   return <>{String(value)}</>;
+}
+
+/**
+ * A sentence that depends on a fact without quoting it, e.g. "no extra fee"
+ * is only true once the commission is settled.
+ *
+ * Decided: renders the children. Undecided: the children plus `[label]` in
+ * development, nothing in production.
+ */
+export function YsTodoGate({
+  value,
+  label,
+  children,
+}: {
+  value: unknown;
+  label: string;
+  children: ReactNode;
+}): JSX.Element {
+  if (!isTodo(value)) return <>{children}</>;
+  if (process.env.NODE_ENV === "production") return <></>;
+  return (
+    <>
+      {children} <YsFact value={value} label={label} />
+    </>
+  );
 }

@@ -1,3 +1,6 @@
+import { existsSync } from "node:fs";
+import path from "node:path";
+
 import type { Metadata } from "next";
 import {
   dehydrate,
@@ -58,6 +61,12 @@ export const metadata: Metadata = {
   },
 };
 
+/* The student journey shows the lesson room screenshot once someone adds it
+   to public/. Checked at build time, so adding the file needs a redeploy. */
+const LESSON_ROOM_SHOT = existsSync(
+  path.join(process.cwd(), "public/images/how-it-works/05-lesson-room.png"),
+);
+
 export default async function Home() {
   /* Warms the first page of the list the directory renders below. It used to
      be prefetched by the /tutors layout, where it also hydrated every tutor
@@ -90,7 +99,7 @@ export default async function Home() {
           url: SITE_URL,
         }}
       />
-      <YemeksepetiHome />
+      <YemeksepetiHome lessonRoomShot={LESSON_ROOM_SHOT} />
     </HydrationBoundary>
   );
 }

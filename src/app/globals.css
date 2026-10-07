@@ -87,6 +87,7 @@
        theme override below. */
     --ink-on-light: #02171a;
     --ink-mid-on-light: #5c6b6d;
+    --line-on-light: #e6dddd;
     --line: #e6dddd;
     /* The in-flow card surface, as a token rather than Tailwind's literal
        `bg-white`. DESIGN.md separates surfaces by value plus a hairline, and a
