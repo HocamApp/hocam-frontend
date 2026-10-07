@@ -28,7 +28,7 @@ gerçek test kartıyla koşulan adımları için kullanılır.
 | macOS | Safari, Chrome | 1440 |
 | Windows veya macOS | Chrome, Firefox | 1440 |
 
-Her satırda en az 1, 2, 3 ve 4. adımlar; 5–11 en az bir mobil + bir masaüstü satırında.
+Her satırda en az 1, 2, 3 ve 4. adımlar; 13. adım 2. adımla birlikte her koşuda ölçülür; 5–11 en az bir mobil + bir masaüstü satırında.
 
 ## Adımlar
 
@@ -46,6 +46,7 @@ Her satırda en az 1, 2, 3 ve 4. adımlar; 5–11 en az bir mobil + bir masaüst
 | 10 | VoiceOver (iOS) / TalkBack (Android) | iframe "PayTR güvenli ödeme" olarak okunur; sonuç duyurulur; odak sonuç başlığına gelir | Not veya ekran kaydı |
 | 11 | Koçluklu paket (yalnız `PAYTR_COACHING_ENABLED=True`) | Gösterilen toplam = ders + koçluk; tek tahsilat | `payment-status` `amount_minor`, `lesson_amount_minor`, `coaching_amount_minor` |
 | 12 | iframe yüksekliği ve kaydırma (her cihaz satırında) | **Resizer yok:** iframe 600 px tabanında; PayTR içeriği uzunsa iframe kendi içinde kayar. Kart alanları, 3DS ekranı ve PayTR'ın ödeme butonu kaydırarak erişilebilir olmalı. Yükseklik yetersizse veya sayfa + iframe çift kaydırma ödemeyi zorlaştırıyorsa sonucu kaydet ve resizer PR'ına ([#292](https://github.com/HocamApp/hocam-frontend/pull/292)) dön | Ekran görüntüsü/kaydı (mobilde klavye açıkken de) |
+| 13 | 3DS başarısından "Ödemen onaylandı" ekranına geçen süre — 2. adımın her koşusunda ölçülür, **ödeme sayfası** (`/package-purchases/[id]/pay`, iframe yerini sonuca bırakır) ve **`/odeme/basarili`** için ayrı. Başlangıç: banka 3DS onayının gönderildiği an (OTP/uygulama onayı); bitiş: "Ödemen onaylandı" başlığının göründüğü an. Sonucu hangi ekranın gösterdiği de kaydedilir | Süre ≤ 45 sn (`PAYTR_FAST_POLL_WINDOW_MS`; bu pencereden sonra otomatik poll durur ve öğrenci "Durumu kontrol et"e basana ya da sekmeye dönene kadar "Ödeme sonucu doğrulanıyor"da kalır). **/odeme/basarili'de 45 sn aşılırsa dönüş ekranında yavaş polling (pencereden sonra seyrek otomatik yenileme) kararı açılır**; ödeme sayfasında aşılırsa aynı not oraya da düşülür | Saatli ekran kaydı; her ekran için ayrı süre (sn) ve koşu sayısı; süreyi ikiye ayırmak için `audit_paytr_payments` callback zaman damgası (3DS → callback) ve DevTools'ta `paid` dönen ilk `GET …/payment-status/` zamanı (callback → ekran). Bir ekran hiçbir koşuda sonucu göstermediyse o ekran için **Koşulmadı** |
 
 ## Kanıt kuralları
 
@@ -68,3 +69,4 @@ görüldü) / **Koşulmadı**.
 | 600 px + iframe içi kaydırmanın gerçek PayTR içeriğiyle yeterli olması (resizer yok; gerekirse #292) | Doğrulanmadı |
 | Fiziksel mobil klavye, ekran okuyucunun gerçek duyurusu | Doğrulanmadı |
 | Callback zamanlaması, tek ledger/tek aktivasyon, aynı token'ın iki sekmede davranışı | Doğrulanmadı |
+| 3DS başarısından "Ödemen onaylandı"ya geçen sürenin 45 sn poll penceresine sığması (ödeme sayfası ve /odeme/basarili ayrı) | Doğrulanmadı (13. adım) |
