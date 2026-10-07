@@ -146,7 +146,7 @@ ${returnToUs ? `<script>setTimeout(function(){location.href=${JSON.stringify(new
         if (url.pathname.startsWith("/odeme/guvenli/")) {
           return route.fulfill({ contentType: "text/html", body: standInPage(control.returnToUs) });
         }
-        net.unexpected.push(url.origin + url.pathname); // e.g. a resizer script
+        net.unexpected.push(url.origin + url.pathname); // any other PayTR asset
         return route.abort();
       }
       if (url.origin === baseUrl.origin) return route.continue();
