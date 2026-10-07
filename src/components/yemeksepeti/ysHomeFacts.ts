@@ -6,9 +6,15 @@
  * when a rule changes there is a single line to correct rather than a hunt
  * through prose.
  *
- * If you change one of these, change the sentence that quotes it too — the
- * numbers are woven into the copy, not interpolated everywhere.
+ * Copy interpolates these rather than retyping them: the homepage copy in
+ * ysHomeCopy.ts, the FAQ, the entry promo and a few public pages.
  */
+
+import {
+  formatPlanDuration,
+  PLAN_DURATION_DAYS,
+  WEEKLY_LESSON_OPTIONS,
+} from "@/lib/lessonPricing";
 
 /** apps/lessons/pricing.py TRIAL_DURATION_MINUTES (also BookingModal.tsx). */
 export const TRIAL_MINUTES = 20;
@@ -43,3 +49,95 @@ export const PACKAGE_GRACE_DAYS = 14;
  * about the product rather than a claim about it.
  */
 export const MAX_TUTOR_YKS_RANK = "15.000";
+
+/** The weekly-lesson axis of the package matrix, lessonPricing.ts WEEKLY_LESSON_OPTIONS. */
+export const LESSONS_PER_WEEK = {
+  min: Math.min(...WEEKLY_LESSON_OPTIONS),
+  max: Math.max(...WEEKLY_LESSON_OPTIONS),
+} as const;
+
+/**
+ * The package durations, lessonPricing.ts PLAN_DURATION_DAYS, each with the
+ * label checkout prints for it (formatPlanDuration).
+ */
+export const PLAN_DURATIONS = PLAN_DURATION_DAYS.map((days) => ({
+  days,
+  label: formatPlanDuration(days),
+}));
+
+/**
+ * apps/lessons/models.py AUTO_CONFIRM_HOURS. After a lesson the student
+ * confirms it, or it confirms itself once this many hours pass without a
+ * dispute. Already quoted by /iptal-ve-iade and LessonConfirmDisputeCard.
+ */
+export const AUTO_CONFIRM_HOURS = 24;
+
+/**
+ * Single paid lessons are retired: the only paid model is the weekly-lessons ×
+ * duration package (docs/current-product-and-technical-state.md).
+ */
+export const SINGLE_LESSON_AVAILABLE = false;
+
+/* ------------------------------------------------------------------------ *
+ * Undecided facts.
+ *
+ * Everything below is a sentence or number the owners have not settled yet.
+ * Each one is `TODO` until it is, and `scripts/check-home-facts.ts` fails the
+ * production build while any are left, so a placeholder cannot ship by
+ * accident. Policy answers (no-show, cancellation details) come from
+ * DERS_POLITIKALARI_RAPORU.md, payment timing waits for the payment provider:
+ * none of them are to be filled in from guesswork.
+ *
+ * Render them through `YsFact`, which shows `[label]` in development and
+ * nothing in production.
+ * ------------------------------------------------------------------------ */
+
+export const TODO: unique symbol = Symbol("TODO");
+export type Todo = typeof TODO;
+/** A fact that may still be undecided. */
+export type Fact<T> = T | Todo;
+
+export function isTodo(value: unknown): value is Todo {
+  return value === TODO;
+}
+
+/** Lowest and highest profile price, per 40-minute lesson. */
+export const PRICE_RANGE_TL: Fact<{ min: number; max: number }> = TODO;
+/** Platform commission on a tutor's price. */
+export const COMMISSION_PERCENT: Fact<number> = TODO;
+/** When the student's card is actually charged. Waits for the payment provider. */
+export const PAYMENT_CHARGED_WHEN: Fact<string> = TODO;
+/** When and how a tutor is paid. Never IBAN, never a promise before payouts are live. */
+export const TUTOR_PAYOUT_TEXT: Fact<string> = TODO;
+/** Whether a tutor is paid for a free trial lesson. */
+export const TRIAL_PAID_TO_TUTOR: Fact<string> = TODO;
+/** What happens when the tutor does not show up. DERS_POLITIKALARI_RAPORU.md. */
+export const TUTOR_NO_SHOW_TEXT: Fact<string> = TODO;
+/** What happens to the remaining lessons when a student switches tutor. */
+export const REMAINING_ON_SWITCH_TEXT: Fact<string> = TODO;
+/** Minimum weekly hours a tutor commits to. */
+export const TUTOR_MIN_WEEKLY_HOURS: Fact<number> = TODO;
+/** Days until a verification application is decided. */
+export const VERIFICATION_REVIEW_DAYS: Fact<number> = TODO;
+/** How long after the review the verification documents are deleted, e.g. "30 gün". Must match /kvkk. */
+export const VERIFICATION_DOCS_DELETED_AFTER: Fact<string> = TODO;
+/** Whether lessons are recorded, and who can see a recording. */
+export const RECORDING_POLICY_TEXT: Fact<string> = TODO;
+/** Whether a parent can join or watch a lesson. */
+export const PARENT_CAN_JOIN_TEXT: Fact<string> = TODO;
+/** Whether a parent can pay on the student's behalf. */
+export const PARENT_CAN_PAY_TEXT: Fact<string> = TODO;
+/** How and how fast support answers. */
+export const SUPPORT_REPLY_TEXT: Fact<string> = TODO;
+/** The rule on moving lessons or payments off the platform. */
+export const OFF_PLATFORM_TEXT: Fact<string> = TODO;
+/** Tax obligations for tutors. */
+export const TAX_TEXT: Fact<string> = TODO;
+/** Who can become a coaching (koçluk) tutor. */
+export const COACHING_TUTOR_TEXT: Fact<string> = TODO;
+/** The company's registered legal name, for the footer. */
+export const COMPANY_LEGAL_NAME: Fact<string> = TODO;
+/** The company's registered address, for the footer. */
+export const COMPANY_ADDRESS: Fact<string> = TODO;
+/** The company's MERSİS number, for the footer. */
+export const COMPANY_MERSIS: Fact<string> = TODO;

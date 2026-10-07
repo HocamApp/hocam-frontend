@@ -26,4 +26,9 @@ jobs:
       - run: npm run test:unit
       - run: npm run typecheck
       - run: npm run lint
+      # CI checks that the app compiles; it is not a release. The homepage
+      # TODO-fact guard (scripts/check-home-facts.ts) is what blocks the
+      # Vercel Production build, so it is skipped here.
       - run: npm run build
+        env:
+          ALLOW_HOME_TODOS: "1"
