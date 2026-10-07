@@ -36,6 +36,12 @@ export interface RegistrationNoticeConfig {
   version: string;
   url: string;
   acknowledgement_required: true;
+  /** Current Kullanım Koşulları. Absent from backends older than terms evidence. */
+  terms?: {
+    code: string;
+    version: string;
+    url: string;
+  };
 }
 
 export async function fetchRegistrationNotice(): Promise<RegistrationNoticeConfig> {

@@ -17,8 +17,8 @@ import {
 } from "@/lib/authApi";
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 import { ApiError, AuthResponse, RegisterStartResponse } from "@/types";
-import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
+import { InlineError } from "@/components/shared/InlineError";
 import {
   Form,
   FormControl,
@@ -35,7 +35,10 @@ import { OtpInput, type OtpInputHandle, type OtpStatus } from "@/components/ui/o
 import { PasswordStrength } from "@/components/ui/password-strength";
 import { GlassInputWrapper } from "@/components/auth/AuthSplitScreen";
 import { LegalDocumentSheet } from "@/components/privacy/LegalDocumentSheet";
-import { fetchRegistrationNotice } from "@/lib/privacyApi";
+import {
+  fetchRegistrationNotice,
+  type RegistrationNoticeConfig,
+} from "@/lib/privacyApi";
 
 const registerSchema = z
   .object({
@@ -72,6 +75,24 @@ const FALLBACK_NOTICE_URL = "/kvkk/aydinlatma-metni";
 const TERMS_URL = "/kullanim-kosullari";
 const NOTICE_UNAVAILABLE_MESSAGE =
   "Aydınlatma Metni bilgisi alınamadı. Bağlantını kontrol edip tekrar dene.";
+const TERMS_REQUIRED_MESSAGE =
+  "Devam etmek için Kullanım Koşulları’nı kabul etmelisin.";
+const LEGAL_TEXT_UPDATED_MESSAGE =
+  "Yasal metinler güncellendi. Güncel metinleri görüp tekrar dene.";
+const STALE_LEGAL_FIELDS = ["notice_version", "notice_code", "terms_version", "terms_code"];
+
+// Terms evidence goes out only when the server names the terms: an older
+// backend that does not know them would otherwise be sent values it cannot
+// check.
+function termsEvidence(config: RegistrationNoticeConfig) {
+  return config.terms
+    ? {
+        terms_code: config.terms.code,
+        terms_version: config.terms.version,
+        terms_accepted: true as const,
+      }
+    : {};
+}
 
 type LegalDocKey = "notice" | "terms";
 
@@ -119,6 +140,13 @@ export function RegisterForm({
   // document that was open.
   const [legalDoc, setLegalDoc] = useState<LegalDocKey>("notice");
   const [legalDocOpen, setLegalDocOpen] = useState(false);
+  // Clickwrap acceptance of Kullanım Koşulları (TBK m.21): starts unticked
+  // and is never pre-filled. The KVKK notice is information only and is not
+  // tied to this box (Kurul ilke kararı 2026/347).
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [termsError, setTermsError] = useState(false);
+  const termsCheckboxRef = useRef<HTMLInputElement>(null);
+  const googleSlotRef = useRef<HTMLDivElement>(null);
   const authHandledByFormRef = useRef(false);
   const confirmingRef = useRef(false);
   const otpRef = useRef<OtpInputHandle>(null);
@@ -166,6 +194,15 @@ export function RegisterForm({
     };
   }, [pendingChallenge]);
 
+  // Keeps keyboard users from tabbing into Google's iframe past the overlay.
+  // Set on the DOM node because React 18 does not pass `inert` through.
+  useEffect(() => {
+    const slot = googleSlotRef.current;
+    if (!slot) return;
+    if (termsAccepted) slot.removeAttribute("inert");
+    else slot.setAttribute("inert", "");
+  }, [termsAccepted, pendingEmail]);
+
   useEffect(() => {
     if (role === "student" || role === "tutor") {
       onRoleChange?.(role);
@@ -191,6 +228,12 @@ export function RegisterForm({
       if (err.fieldErrors.password) form.setError("password", { message: err.fieldErrors.password[0] });
       if (err.fieldErrors.password_confirm) form.setError("password_confirm", { message: err.fieldErrors.password_confirm[0] });
       if (err.fieldErrors.role) form.setError("role", { message: err.fieldErrors.role[0] });
+      if (!termsAccepted) setTermsError(true);
+      return;
+    }
+    if (!termsAccepted) {
+      setTermsError(true);
+      termsCheckboxRef.current?.focus();
       return;
     }
     const noticeConfig = await resolveNotice();
@@ -207,6 +250,7 @@ export function RegisterForm({
         notice_code: noticeConfig.code,
         notice_version: noticeConfig.version,
         notice_acknowledged: true,
+        ...termsEvidence(noticeConfig),
       });
       if ("requires_verification" in res) {
         setPendingEmail(res.email);
@@ -226,7 +270,24 @@ export function RegisterForm({
         if (body.role) form.setError("role", { message: body.role[0] });
         if (body.referral_code)
           form.setError("referral_code", { message: body.referral_code[0] });
-        const otherKeys = Object.keys(body).filter((k) => !["email", "password", "password_confirm", "role"].includes(k));
+        if (body.terms_accepted) setTermsError(true);
+        const staleLegalText = STALE_LEGAL_FIELDS.some((k) => k in body);
+        if (staleLegalText) {
+          void queryClient.invalidateQueries({ queryKey: registrationNoticeQuery.queryKey });
+          setGeneralError(LEGAL_TEXT_UPDATED_MESSAGE);
+        }
+        const otherKeys = Object.keys(body).filter(
+          (k) =>
+            ![
+              "email",
+              "password",
+              "password_confirm",
+              "role",
+              "referral_code",
+              "terms_accepted",
+              ...STALE_LEGAL_FIELDS,
+            ].includes(k)
+        );
         if (otherKeys.length > 0) {
           setGeneralError(otherKeys.map((k) => (body as Record<string, string[]>)[k].join(" ")).join(" "));
         }
@@ -349,6 +410,10 @@ export function RegisterForm({
   const handleGoogleCredential = useCallback(
     async (credential: string) => {
       setGeneralError(null);
+      if (!termsAccepted) {
+        setTermsError(true);
+        return;
+      }
       const noticeConfig = await resolveNotice();
       if (!noticeConfig) {
         setGeneralError(NOTICE_UNAVAILABLE_MESSAGE);
@@ -364,6 +429,7 @@ export function RegisterForm({
           notice_code: noticeConfig.code,
           notice_version: noticeConfig.version,
           notice_acknowledged: true,
+          ...termsEvidence(noticeConfig),
         });
         if ("needs_role" in resp) {
           setGeneralError("Kayıt tamamlanamadı. Lütfen tekrar deneyin.");
@@ -371,30 +437,25 @@ export function RegisterForm({
         }
         await completeAuth(resp);
       } catch (error) {
-        if (
-          axios.isAxiosError(error) &&
-          error.response?.status === 400 &&
-          error.response?.data?.notice_version
-        ) {
-          setGeneralError(
-            "KVKK Aydınlatma Metni güncellendi. Lütfen sayfayı yenileyip güncel metni inceleyin."
-          );
+        const body = axios.isAxiosError(error) && error.response?.status === 400
+          ? (error.response.data as Record<string, unknown> | undefined)
+          : undefined;
+        if (body && STALE_LEGAL_FIELDS.some((k) => k in body)) {
+          void queryClient.invalidateQueries({ queryKey: registrationNoticeQuery.queryKey });
+          setGeneralError(LEGAL_TEXT_UPDATED_MESSAGE);
+        } else if (body?.terms_accepted) {
+          setTermsError(true);
         } else {
           setGeneralError("Google ile kayıt başarısız oldu. Lütfen tekrar deneyin.");
         }
       }
     },
-    [completeAuth, form, lockedRole, resolveNotice]
+    [completeAuth, form, lockedRole, queryClient, resolveNotice, termsAccepted]
   );
 
-  if (isLoading) {
-    return (
-      <div className="flex min-h-[20rem] items-center justify-center">
-        <LoadingSpinner />
-      </div>
-    );
-  }
-
+  // No spinner while the session is restored: the page is server-rendered
+  // with the form, and swapping a short spinner for the tall form re-centred
+  // the whole column. A signed-in visitor is redirected by the effect above.
   if (isAuthenticated) {
     return null;
   }
@@ -733,31 +794,56 @@ export function RegisterForm({
             )}
           />
 
-          {/* Informing is the legal duty here (KVKK m.10), not consent, so the
-              notice sits beside the action instead of gating it — the way
-              large Turkish marketplaces present it. Pressing "Kayıt Ol" or
-              the Google button is the acknowledgement sent to the API. */}
-          <p className="animate-element animate-delay-700 text-xs leading-5 text-neutral-400">
-            Kayıt olarak veya Google ile devam ederek{" "}
-            <Link
-              href={TERMS_URL}
-              prefetch={false}
-              onClick={openLegalDoc("terms")}
-              className={legalLinkClass}
-            >
-              Kullanım Koşulları
-            </Link>
-            ’nı kabul etmiş olursun. Kişisel verilerin{" "}
-            <Link
-              href={noticeUrl}
-              prefetch={false}
-              onClick={openLegalDoc("notice")}
-              className={legalLinkClass}
-            >
-              KVKK Aydınlatma Metni
-            </Link>{" "}
-            kapsamında işlenir.
-          </p>
+          {/* Two separate things, kept visibly apart (Kurul ilke kararı
+              2026/347): the KVKK notice only informs, so it is a line with
+              no control; the terms of use are a contract, accepted with an
+              unticked box (TBK m.21). Neither requires opening the text. */}
+          <div className="animate-element animate-delay-700 space-y-1">
+            <p className="text-xs leading-5 text-neutral-400">
+              Kişisel verilerin{" "}
+              <Link
+                href={noticeUrl}
+                prefetch={false}
+                onClick={openLegalDoc("notice")}
+                className={legalLinkClass}
+              >
+                KVKK Aydınlatma Metni
+              </Link>{" "}
+              kapsamında işlenir.
+            </p>
+            <label className="flex min-h-11 cursor-pointer items-start gap-3 py-2.5 text-sm leading-6 text-neutral-300">
+              <input
+                ref={termsCheckboxRef}
+                type="checkbox"
+                checked={termsAccepted}
+                onChange={(event) => {
+                  setTermsAccepted(event.target.checked);
+                  if (event.target.checked) setTermsError(false);
+                }}
+                aria-invalid={termsError || undefined}
+                aria-describedby={termsError ? "terms-acceptance-error" : undefined}
+                className="h-6 w-6 shrink-0 cursor-pointer rounded accent-white"
+              />
+              <span>
+                <Link
+                  href={TERMS_URL}
+                  prefetch={false}
+                  onClick={openLegalDoc("terms")}
+                  className={legalLinkClass}
+                >
+                  Kullanım Koşulları
+                </Link>
+                ’nı okudum ve kabul ediyorum.
+              </span>
+            </label>
+            {termsError && (
+              <InlineError
+                id="terms-acceptance-error"
+                size="sm"
+                message={TERMS_REQUIRED_MESSAGE}
+              />
+            )}
+          </div>
 
           <button
             type="submit"
@@ -786,10 +872,30 @@ export function RegisterForm({
         </span>
       </div>
 
-      <GoogleSignInButton
-        onCredential={handleGoogleCredential}
-        text="signup_with"
-      />
+      {/* Google's button lives in a cross-origin iframe, so it cannot be
+          disabled or asked to wait. Until the terms box is ticked a
+          transparent button covers it and explains instead of opening
+          Google; the layout is the same either way. */}
+      <div className="relative">
+        <div ref={googleSlotRef}>
+          <GoogleSignInButton
+            onCredential={handleGoogleCredential}
+            text="signup_with"
+          />
+        </div>
+        {!termsAccepted && (
+          <button
+            type="button"
+            aria-label="Google ile kaydol"
+            aria-describedby={termsError ? "terms-acceptance-error" : undefined}
+            onClick={() => {
+              setTermsError(true);
+              termsCheckboxRef.current?.focus();
+            }}
+            className="absolute inset-0 z-10 cursor-pointer rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+          />
+        )}
+      </div>
 
       <LegalDocumentSheet
         open={legalDocOpen}

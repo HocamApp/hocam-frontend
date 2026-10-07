@@ -22,6 +22,9 @@ export interface GoogleAuthPayload {
   notice_code?: string;
   notice_version?: string;
   notice_acknowledged?: true;
+  terms_code?: string;
+  terms_version?: string;
+  terms_accepted?: true;
 }
 
 export async function googleAuth(
