@@ -159,11 +159,13 @@ export default function PayTRPaymentPage({
     enabled: isAuthenticated && isStudent && Boolean(purchase),
     retry: false,
     ...FRESH_STATUS,
-    refetchInterval: () =>
+    // Stops on its own answer, never the list's: if the list sees "paid"
+    // first, this query must still poll until it says so too.
+    refetchInterval: (query) =>
       payTRPollIntervalMs({
         attemptActive,
         elapsedMs: attemptStartedAt !== null ? Date.now() - attemptStartedAt : 0,
-        purchaseStatus: purchase?.status,
+        purchaseStatus: query.state.data?.purchase_status,
       }),
   });
 
