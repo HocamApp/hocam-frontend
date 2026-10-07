@@ -22,6 +22,8 @@ import type { ReactNode } from "react";
 export const hero = {
   titleLine1: "Dünün öğrencisi,",
   titleLine2: "bugünün öğretmeni",
+  /* The pre-rebuild headline, shown while NEXT_PUBLIC_HOME_V2 is off. */
+  titleLine2Legacy: "Bugünün öğretmeni",
   sub: "YKS'de derece yapmış öğrencileri, derece yapacaklarla buluşturuyoruz.",
   ctaTutors: "Hocaları gör",
   ctaBecomeTutor: "Hoca ol",

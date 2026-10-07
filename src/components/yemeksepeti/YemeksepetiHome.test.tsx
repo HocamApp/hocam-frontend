@@ -55,8 +55,8 @@ test("keeps the journey band outside the shell so its surface runs full bleed", 
   assert.doesNotMatch(journeyWrapper.props.className ?? "", /ys-shell/);
 });
 
-test("puts the subject grid right after the directory, inside its shell", () => {
-  const home = YemeksepetiHome() as Wrapper;
+test("with the rebuild on, puts the subject grid right after the directory, inside its shell", () => {
+  const home = YemeksepetiHome({ v2: true }) as Wrapper;
   const directoryWrapper = wrappers(home).find((wrapper) =>
     sectionsOf(wrapper).includes(YsTutorDirectory),
   );
