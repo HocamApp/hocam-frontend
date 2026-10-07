@@ -11,6 +11,8 @@ import { useEffect, useState } from "react";
 
 import { TextRotate } from "@/components/ui/text-rotate";
 
+import { YS_PILL_CLASSNAME } from "./YsPillHeading";
+
 /**
  * "Sen sadece ___" — the journey section's heading, with the last word
  * rotating through the four things a student actually does.
@@ -84,7 +86,7 @@ export function YsJourneyHeading() {
             <motion.span
               layout
               transition={SPRING}
-              className="inline-flex w-auto max-w-full items-center justify-center gap-2 overflow-hidden rounded-card bg-pink px-4 py-1 text-white md:w-auto md:max-w-none md:gap-3 md:px-5 md:py-2"
+              className={YS_PILL_CLASSNAME}
             >
               <TextRotate
                 texts={[...LABELS]}

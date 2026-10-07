@@ -108,15 +108,15 @@ export function YsVerifiedBand({ v2 = false }: { v2?: boolean }) {
         {/* Literal white with the light theme's inks, for the same reason as
             the pill: the band does not change with the theme, so neither
             does what sits on it. `--ink-mid-on-light` is the repo's token for
-            exactly that, and the hairline is the light --line. In flow, so no
+            exactly that, and `--line-on-light` is the light --line. In flow, so no
             shadow. */}
-        <div className="w-full min-w-0 max-w-[500px] rounded-card bg-white p-7 text-[#02171a] md:justify-self-end">
+        <div className="w-full min-w-0 max-w-[500px] rounded-card bg-white p-7 text-[var(--ink-on-light)] md:justify-self-end">
           <h3 className="text-[1.125rem] font-bold leading-[26px]">{copy.checklistTitle}</h3>
           <ul className="mt-4 flex flex-col">
             {copy.checklist.map((item) => (
               <li
                 key={item.label}
-                className="flex items-start gap-3.5 border-t border-[#e6dddd] py-3.5 first:border-t-0"
+                className="flex items-start gap-3.5 border-t border-[var(--line-on-light)] py-3.5 first:border-t-0"
               >
                 <span className="grid h-6 w-6 flex-none place-items-center text-success">
                   <Check className="h-[22px] w-[22px]" aria-hidden />
@@ -129,7 +129,7 @@ export function YsVerifiedBand({ v2 = false }: { v2?: boolean }) {
             ))}
           </ul>
           {showFoot && (
-            <p className="mt-1.5 border-t border-[#e6dddd] pt-3.5 text-label font-normal leading-[19px] text-[var(--ink-mid-on-light)]">
+            <p className="mt-1.5 border-t border-[var(--line-on-light)] pt-3.5 text-label font-normal leading-[19px] text-[var(--ink-mid-on-light)]">
               {Children.toArray(
                 copy.checklistFoot({
                   reviewDays: <YsFact value={VERIFICATION_REVIEW_DAYS} label="X" />,

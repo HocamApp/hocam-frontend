@@ -17,6 +17,7 @@ const STUBBED = [
   "YsSubjectGrid",
   "YsUniversityStrip",
   "YsHowItWorks",
+  "YsPricing",
   "YsTestimonials",
   "YsHomeFaq",
   "YsEntryDialog",
@@ -80,6 +81,8 @@ describe("homepage with NEXT_PUBLIC_HOME_V2 off", () => {
     assert.doesNotMatch(text, /Her hoca başvurusunda kontrol ettiklerimiz/);
     assert.doesNotMatch(text, /İlk 15\.000/);
     assert.ok(container.querySelector("section.ys-band.pt-20"));
+    assert.equal(container.querySelector("#veliler"), null);
+    assert.doesNotMatch(text, /Ters giderse/);
 
     assert.deepEqual(stubs(container), [
       "YsTutorDirectory",
@@ -114,9 +117,26 @@ describe("homepage with NEXT_PUBLIC_HOME_V2 on", () => {
       "YsSubjectGrid",
       "YsUniversityStrip",
       "YsHowItWorks",
+      "YsPricing",
       "YsTestimonials",
       "YsHomeFaq",
       "YsEntryDialog",
     ]);
+  });
+
+  it("renders the Phase B guarantees and parents sections after pricing", () => {
+    const { container } = render(<YemeksepetiHome v2 />);
+    const text = container.textContent ?? "";
+
+    assert.match(text, /Hoca derse gelmezse\?/);
+    assert.ok(container.querySelector('a[href="/iptal-ve-iade"]'));
+    assert.ok(container.querySelector("section#veliler"));
+    assert.ok(container.querySelector('a[href="/veliler"]'));
+
+    const pricing = container.querySelector('[data-stub="YsPricing"]')!;
+    const guarantees = container.querySelector("#ys-guarantees-title")!;
+    const parents = container.querySelector("#veliler")!;
+    assert.ok(pricing.compareDocumentPosition(guarantees) & Node.DOCUMENT_POSITION_FOLLOWING);
+    assert.ok(guarantees.compareDocumentPosition(parents) & Node.DOCUMENT_POSITION_FOLLOWING);
   });
 });
