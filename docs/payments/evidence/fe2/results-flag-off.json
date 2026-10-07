@@ -1,0 +1,87 @@
+{
+  "capturedAt": "2026-10-07T08:44:36.973Z",
+  "browser": "149.0.7827.55",
+  "flag": "off",
+  "evidence": "mock — local production build, local stand-in for PayTR; not real PayTR, 3D Secure, a bank or a backend",
+  "browserArgs": "Local Network Access checks disabled (loopback-only artifact; see script header)",
+  "results": [
+    {
+      "scenario": "flag-off-return",
+      "flag": "off",
+      "width": 375,
+      "height": 812,
+      "screenshot": "fe2-flag-off-return-375.png",
+      "evidence": "mock",
+      "url": "/odeme/basarisiz",
+      "checkoutPosts": 0,
+      "packagePosts": 0,
+      "otherWrites": [],
+      "statusReads": 1,
+      "unexpected": [],
+      "frameHeaders": [
+        {
+          "path": "/odeme/basarisiz",
+          "xfo": "DENY",
+          "csp": null
+        }
+      ],
+      "errors": [],
+      "longWaitShown": false
+    },
+    {
+      "scenario": "flag-off-pay",
+      "flag": "off",
+      "width": 375,
+      "height": 812,
+      "screenshot": "fe2-flag-off-pay-375.png",
+      "evidence": "mock",
+      "url": "/package-purchases/purchase-1/pay",
+      "checkoutPosts": 0,
+      "packagePosts": 0,
+      "otherWrites": [],
+      "statusReads": 1,
+      "unexpected": [],
+      "frameHeaders": [],
+      "errors": []
+    },
+    {
+      "scenario": "flag-off-return",
+      "flag": "off",
+      "width": 1440,
+      "height": 900,
+      "screenshot": "fe2-flag-off-return-1440.png",
+      "evidence": "mock",
+      "url": "/odeme/basarisiz",
+      "checkoutPosts": 0,
+      "packagePosts": 0,
+      "otherWrites": [],
+      "statusReads": 1,
+      "unexpected": [],
+      "frameHeaders": [
+        {
+          "path": "/odeme/basarisiz",
+          "xfo": "DENY",
+          "csp": null
+        }
+      ],
+      "errors": [],
+      "longWaitShown": false
+    },
+    {
+      "scenario": "flag-off-pay",
+      "flag": "off",
+      "width": 1440,
+      "height": 900,
+      "screenshot": "fe2-flag-off-pay-1440.png",
+      "evidence": "mock",
+      "url": "/package-purchases/purchase-1/pay",
+      "checkoutPosts": 0,
+      "packagePosts": 0,
+      "otherWrites": [],
+      "statusReads": 1,
+      "unexpected": [],
+      "frameHeaders": [],
+      "errors": []
+    }
+  ]
+}
