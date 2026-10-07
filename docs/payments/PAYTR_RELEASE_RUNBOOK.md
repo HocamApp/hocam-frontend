@@ -1,5 +1,21 @@
 # PayTR — Yayın ve Operasyon Devri (S9)
 
+## 7 Ekim 2026 — FE-2 staging ortamı
+
+Bu kayıt yalnız test ortamı içindir; canlı tahsilat kararı hâlâ **NO-GO**.
+
+| Alan | Doğrulanan durum |
+| --- | --- |
+| Sabit frontend adresi | `https://hocam-paytr-staging.vercel.app` (ayrı Vercel `hocam-paytr-staging` projesi); `/`, `/login` ve `/odeme/basarili` HTTP 200 |
+| Frontend kaynak ve dağıtım | `origin/main` commit `4333c56` üzerinden Vercel deployment `dpl_9AZbEZSSpAo4uRtwFJL1tSXY5Tpe`; Next.js build, lint ve type check geçti. Bu proje Git'e otomatik bağlı değil; sonraki staging güncellemeleri kontrollü CLI deploy ister |
+| Frontend build ayarları | `NEXT_PUBLIC_API_URL=https://hocam-backend-staging-staging.up.railway.app/api`, `NEXT_PUBLIC_PAYTR_ENABLED=true`, `NEXT_PUBLIC_AUTH_MODE=header`; yalnız bu ayrı staging projesinde |
+| Backend staging ayarları | `FRONTEND_URL` sabit frontend adresine, `CORS_ALLOWED_ORIGINS` ve `CSRF_TRUSTED_ORIGINS` bu origin'i içerecek biçimde, `PAYTR_TEST_MODE=True` olarak ayarlandı. Railway deployment `ed46e96e-143b-4121-9e52-ac57f54796c8` başarılı; login preflight ve health yanıtı `Access-Control-Allow-Origin: https://hocam-paytr-staging.vercel.app` döndü |
+| Ödeme yetkisi | `PAYTR_ENABLED` tanımlı değil (varsayılan kapalı); allowlist'te tek isimli öğrenci var. Test kartıyla ödeme ve PayTR kaynaklı callback **henüz koşulmadı** |
+
+PayTR iFrame erişiminin yazılı teyidi, gerçek test kartı matrisi, callback/ledger/kredi
+kanıtı ve finansal/operasyonel kapılar açık kalır. Staging frontend bayrağının açık olması
+backend ödeme yetkisi veya production onayı değildir.
+
 ## 6 Ekim 2026 durum kaydı — NO-GO
 
 Bu tarihli kayıt, aşağıdaki 19 Eylül başlangıç tablosundaki PR/callback durumunu günceller.
