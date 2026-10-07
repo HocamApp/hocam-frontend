@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -14,14 +14,20 @@ import {
 } from "@/components/ui/dialog";
 import { useAuthContext } from "@/providers/AuthProvider";
 import { SESSION_EXPIRED_EVENT } from "@/lib/api";
+import { loginUrlWithReturn } from "@/lib/utils";
 
 export function SessionExpiredDialog() {
   const router = useRouter();
   const { clearAuth } = useAuthContext();
   const [open, setOpen] = useState(false);
+  // Where the session ran out. Read at the 401, not at the click: clearing
+  // auth makes the payment pages redirect to /login under this dialog, and by
+  // the time the button is pressed the address bar already says /login.
+  const returnPath = useRef<string | null>(null);
 
   useEffect(() => {
     const handleSessionExpired = () => {
+      returnPath.current = window.location.pathname + window.location.search;
       clearAuth();
       setOpen(true);
     };
@@ -37,7 +43,7 @@ export function SessionExpiredDialog() {
 
   const handleLogin = () => {
     setOpen(false);
-    router.push("/login");
+    router.push(loginUrlWithReturn(returnPath.current));
   };
 
   return (
