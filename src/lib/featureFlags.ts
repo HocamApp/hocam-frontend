@@ -37,3 +37,20 @@ export function paytrEnabledFromEnv(value: string | undefined): boolean {
 export const PAYTR_ENABLED = paytrEnabledFromEnv(
   process.env.NEXT_PUBLIC_PAYTR_ENABLED
 );
+
+/**
+ * The rebuilt homepage (docs/design/product-home/homepage-rebuild/).
+ *
+ * Off unless the build sets NEXT_PUBLIC_HOME_V2 to exactly "true", the same
+ * rule as NEXT_PUBLIC_PAYTR_ENABLED. With it off `/` renders the homepage as
+ * it was before the rebuild. With it on, the rebuilt sections render and
+ * scripts/check-home-facts.ts fails the build while any homepage fact is
+ * still TODO, unless ALLOW_HOME_TODOS=1. Vercel Preview sets both; Production
+ * sets neither until the facts are filled. NEXT_PUBLIC_* is inlined at build
+ * time, so flipping it needs a rebuild and redeploy.
+ */
+export function homeV2EnabledFromEnv(value: string | undefined): boolean {
+  return value === "true";
+}
+
+export const HOME_V2_ENABLED = homeV2EnabledFromEnv(process.env.NEXT_PUBLIC_HOME_V2);

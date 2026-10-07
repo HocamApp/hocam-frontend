@@ -1,8 +1,17 @@
+import { ArrowDown } from "@phosphor-icons/react";
 import Link from "next/link";
 
 import { CircularGallery } from "@/components/ui/circular-gallery";
 
 import { YS_CAMPUS_ITEMS } from "./ysCampusGallery";
+import { hero } from "./ysHomeCopy";
+
+/* Each pill jumps to the part of this page written for that reader. */
+const AUDIENCE = [
+  { href: "#ogrenciler", label: hero.audience.students },
+  { href: "#veliler", label: hero.audience.parents },
+  { href: "#hocalar", label: hero.audience.tutors },
+] as const;
 
 /**
  * The page's opening statement.
@@ -26,9 +35,13 @@ import { YS_CAMPUS_ITEMS } from "./ysCampusGallery";
  *
  * Both buttons say "hoca" rather than "öğretmen". Everything else on the page
  * does — the nav tab, the directory heading, the footer's own "Hoca ol" link
- * pointing at this same route — and the brand is Hocam.
+ * — and the brand is Hocam.
+ *
+ * Text comes from `ysHomeCopy.ts`. `v2` (NEXT_PUBLIC_HOME_V2) turns on the
+ * rebuild's changes: the lowercase headline, "Hoca ol" to the tutors band,
+ * and the audience row. Off, the hero is the pre-rebuild one.
  */
-export function YsHeroIntro() {
+export function YsHeroIntro({ v2 = false }: { v2?: boolean }) {
   return (
     <section
       className="py-16 md:pb-[90px] md:pt-24"
@@ -37,14 +50,13 @@ export function YsHeroIntro() {
       <div className="grid items-center gap-12 lg:grid-cols-[7fr_5fr] lg:gap-8">
         <div className="relative z-10 min-w-0">
           <h1 id="ys-hero-title" className="text-display-m md:text-display">
-            Dünün öğrencisi,
+            {hero.titleLine1}
             <br />
-            Bugünün öğretmeni
+            {v2 ? hero.titleLine2 : hero.titleLine2Legacy}
           </h1>
 
           <p className="mt-6 max-w-[34ch] text-hero-sub-m text-ink-mid md:text-hero-sub">
-            YKS&apos;de derece yapmış öğrencileri, derece yapacaklarla
-            buluşturuyoruz.
+            {hero.sub}
           </p>
 
           <div className="mt-10 flex flex-wrap gap-3">
@@ -54,15 +66,40 @@ export function YsHeroIntro() {
               href="#ys-tutor-list-title"
               className="inline-flex h-12 items-center rounded-pill bg-pink px-8 text-body font-semibold text-white transition-colors duration-[--duration-state] hover:bg-pink-deep"
             >
-              Hocaları gör
+              {hero.ctaTutors}
             </Link>
+            {/* With the rebuild on, the tutors band further down answers "can
+                I, and how" before sending anyone to a registration form. */}
             <Link
-              href="/register?role=tutor"
+              href={v2 ? "#hocalar" : "/register?role=tutor"}
               className="inline-flex h-12 items-center rounded-pill border border-ink px-8 text-body font-semibold text-ink transition-colors duration-[--duration-state] hover:bg-ink hover:text-paper"
             >
-              Hoca ol
+              {hero.ctaBecomeTutor}
             </Link>
           </div>
+
+          {/* Three readers land here: a student, a parent, a would-be tutor.
+              The row lets each skip to their own section. Outline pills on
+              the card surface; only the border changes on hover. */}
+          {v2 && (
+            <div className="mt-9 flex flex-col gap-3">
+              <span className="text-small font-medium text-ink-mid">{hero.audienceLabel}</span>
+              <div className="flex flex-wrap gap-2">
+                {AUDIENCE.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className="inline-flex h-11 items-center gap-2.5 rounded-pill border border-line bg-surface pl-[18px] pr-2 text-[0.875rem] font-medium text-ink transition-colors duration-[--duration-state] hover:border-ink sm:text-[0.9375rem]"
+                  >
+                    {item.label}
+                    <span className="grid h-7 w-6 place-items-center text-ink">
+                      <ArrowDown className="h-4 w-4" aria-hidden />
+                    </span>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* The ring is wider than the column it sits in, on purpose: the cards
