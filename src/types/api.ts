@@ -172,6 +172,10 @@ export interface RegisterRequest {
   notice_code: string;
   notice_version: string;
   notice_acknowledged: true;
+  /** Kullanım Koşulları evidence; sent whenever the server names the terms. */
+  terms_code?: string;
+  terms_version?: string;
+  terms_accepted?: true;
   /** Optional invite code; the server validates it and 400s on a bad one. */
   referral_code?: string;
 }

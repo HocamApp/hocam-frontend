@@ -161,14 +161,9 @@ export function LoginForm({
     [finishAuthSuccess, forcedGoogleRole, onCreateAccount, router]
   );
 
-  if (isLoading) {
-    return (
-      <div className="flex min-h-[20rem] items-center justify-center">
-        <LoadingSpinner />
-      </div>
-    );
-  }
-
+  // No spinner while the session is restored: the page is server-rendered
+  // with the form, and swapping a short spinner for the tall form re-centred
+  // the whole column. A signed-in visitor is redirected by the effect above.
   if (isAuthenticated) {
     return null;
   }
