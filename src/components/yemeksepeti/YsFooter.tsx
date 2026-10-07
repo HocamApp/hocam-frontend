@@ -4,10 +4,14 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { InstagramLogo, LinkedinLogo, type Icon } from "@phosphor-icons/react";
 
+import { HOME_V2_ENABLED } from "@/lib/featureFlags";
 import { getLegalDocument } from "@/lib/legalDocuments";
 import { tutorListHref } from "@/lib/tutorDirectoryLinks";
 
 import { FAQ_SECTION_ID } from "./ysAppNav";
+import { footer as copy } from "./ysHomeCopy";
+import { YsFact } from "./YsFact";
+import { COMPANY_ADDRESS, COMPANY_LEGAL_NAME, COMPANY_MERSIS, isTodo } from "./ysHomeFacts";
 
 import { BrandMark } from "@/components/brand/BrandMark";
 import { AppStoreBadge, GooglePlayBadge } from "@/components/ui/store-badges";
@@ -116,12 +120,151 @@ function FooterLink({ entry }: { entry: FooterEntry }) {
   );
 }
 
-export function YsFooter() {
+/* The rebuilt homepage's footer (NEXT_PUBLIC_HOME_V2). Five columns, no
+   store badges, and the company line under the bottom row. */
+const V2_FOOTER_COLUMNS: FooterColumn[] = [
+  {
+    heading: copy.columns.discover,
+    entries: [
+      { label: copy.links.tutorList, href: tutorListHref() },
+      { label: copy.links.yks, href: tutorListHref({ exam_type: "YKS" }) },
+      { label: copy.links.tytMath, href: tutorListHref({ exam_type: "TYT", subject: "Matematik" }) },
+      { label: copy.links.aytMath, href: tutorListHref({ exam_type: "AYT", subject: "Matematik" }) },
+      { label: copy.links.trial, href: "/ucretsiz-deneme-dersi" },
+    ],
+  },
+  {
+    heading: copy.columns.how,
+    entries: [
+      { label: copy.links.process, href: "/nasil-calisir" },
+      { label: copy.links.pricing, href: "/#fiyatlar" },
+      { label: copy.links.verification, href: "/hocalar-nasil-dogrulaniyor" },
+      { label: copy.links.faq, href: `/#${FAQ_SECTION_ID}` },
+    ],
+  },
+  {
+    heading: copy.columns.who,
+    entries: [
+      { label: copy.links.students, href: "/#ogrenciler" },
+      { label: copy.links.parents, href: "/veliler" },
+      { label: copy.links.becomeTutor, href: "/hoca-ol" },
+    ],
+  },
+  {
+    heading: copy.columns.hocam,
+    entries: [
+      // Still the noindex preview: swapping it for /hakkimizda is a separate decision.
+      { label: copy.links.about, href: "/hakkimizda-v2" },
+      { label: copy.links.contact, href: "/iletisim" },
+      { label: copy.links.mobileSoon },
+    ],
+  },
+  {
+    heading: copy.columns.legal,
+    entries: [
+      { label: copy.links.kvkk, href: "/kvkk" },
+      legalEntry("kullanim-kosullari"),
+      legalEntry("mesafeli-satis-sozlesmesi"),
+      legalEntry("cerez-politikasi"),
+      legalEntry("iptal-ve-iade"),
+    ],
+  },
+];
+
+/**
+ * "Unvan · Adres · MERSİS no · KVKK başvuru". While the company facts are
+ * TODO they show as placeholders in development and are left out in
+ * production, so the KVKK contact is never lost with them.
+ */
+function CompanyLine() {
+  const production = process.env.NODE_ENV === "production";
+  const parts = [
+    { value: COMPANY_LEGAL_NAME, node: <YsFact value={COMPANY_LEGAL_NAME} label="Şirket unvanı" /> },
+    { value: COMPANY_ADDRESS, node: <YsFact value={COMPANY_ADDRESS} label="Adres" /> },
+    {
+      value: COMPANY_MERSIS,
+      node: (
+        <>
+          {copy.mersis} <YsFact value={COMPANY_MERSIS} label="No" />
+        </>
+      ),
+    },
+  ].filter((part) => !production || !isTodo(part.value));
+
+  return (
+    <p className="mt-4 text-[13px] leading-[21px] text-ink-mid">
+      {parts.map((part, index) => (
+        <span key={index}>
+          {part.node}
+          {" · "}
+        </span>
+      ))}
+      <a href="mailto:iletisim@hocamozelders.com" className="hover:text-ink">
+        {copy.kvkkContact}
+      </a>
+    </p>
+  );
+}
+
+function YsFooterV2() {
+  return (
+    <footer className="mt-16 border-t border-line bg-paper text-ink md:mt-24">
+      <div className="ys-shell py-10">
+        <div className="grid grid-cols-2 gap-x-6 gap-y-8 lg:grid-cols-5">
+          {V2_FOOTER_COLUMNS.map((column) => (
+            <div key={column.heading}>
+              <h4 className="mb-3 text-sm font-bold text-ink">{column.heading}</h4>
+              <ul className="space-y-2">
+                {column.entries.map((entry) => (
+                  <li key={entry.label}>
+                    <FooterLink entry={entry} />
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-10 border-t border-line pt-6">
+          <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+            <div className="flex items-center gap-3">
+              <BrandMark size="sm" />
+              <span
+                className="h-6 w-px"
+                style={{ background: "var(--ys-neutral-divider)" }}
+                aria-hidden
+              />
+              <span className="ys-footer-text">{copy.copyright(new Date().getFullYear())}</span>
+            </div>
+            <div className="flex shrink-0 gap-2">
+              {SOCIAL_LINKS.map(({ id, label, Icon, href }) => (
+                <a
+                  key={id}
+                  href={href}
+                  className="ys-icon-btn"
+                  aria-label={label}
+                  target="_blank"
+                  rel="noreferrer noopener"
+                >
+                  <Icon className="h-6 w-6" />
+                </a>
+              ))}
+            </div>
+          </div>
+          <CompanyLine />
+        </div>
+      </div>
+    </footer>
+  );
+}
+
+export function YsFooter({ v2 = HOME_V2_ENABLED }: { v2?: boolean } = {}) {
   const pathname = usePathname();
   const isMessagesRoute =
     pathname === "/messages" || pathname.startsWith("/messages/");
 
   if (isMessagesRoute) return null;
+  if (v2) return <YsFooterV2 />;
 
   return (
     <footer className="mt-16 border-t border-line bg-paper text-ink md:mt-24">

@@ -1,9 +1,14 @@
 "use client";
 
 import Image from "next/image";
+import type { ReactNode } from "react";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Marquee } from "@/components/ui/marquee";
+import { cn } from "@/lib/utils";
+
+import { testimonialsTitle } from "./ysHomeCopy";
+import { approvedTestimonials, type YsTestimonial } from "./ysTestimonialData";
 
 /**
  * "Hocalar ve Öğrencilerden" — one marquee row, pausing on hover.
@@ -79,9 +84,21 @@ const TESTIMONIALS: Testimonial[] = [
   },
 ];
 
-function ReviewCard({ quote, name, credential, photo }: Testimonial) {
+export function ReviewCard({
+  quote,
+  name,
+  credential,
+  photo,
+  className,
+  footer,
+}: Testimonial & { className?: string; footer?: ReactNode }) {
   return (
-    <Card className="group/card relative isolate h-full w-[16.5rem] shrink-0 cursor-default overflow-hidden border-line bg-surface p-5 shadow-none transition-colors duration-[--duration-state] hover:border-gold hover:bg-gold sm:w-[21rem]">
+    <Card
+      className={cn(
+        "group/card relative isolate h-full w-[16.5rem] shrink-0 cursor-default overflow-hidden border-line bg-surface p-5 shadow-none transition-colors duration-[--duration-state] hover:border-gold hover:bg-gold sm:w-[21rem]",
+        className,
+      )}
+    >
       {/* The sheen, painted under the content and above the fill. Decorative
           and inert: it carries no meaning and takes no pointer events. */}
       <span aria-hidden className="ys-sheen pointer-events-none absolute inset-0 -z-10" />
@@ -106,12 +123,61 @@ function ReviewCard({ quote, name, credential, photo }: Testimonial) {
         <p className="text-[15px] leading-6 text-ink transition-colors duration-[--duration-state] group-hover/card:text-gold-ink">
           {quote}
         </p>
+        {footer}
       </CardContent>
     </Card>
   );
 }
 
-export function YsTestimonials() {
+/** A v2 entry in the existing card. */
+export function YsTestimonialCard({
+  entry,
+  className,
+  footer,
+}: {
+  entry: YsTestimonial;
+  className?: string;
+  footer?: ReactNode;
+}) {
+  return (
+    <ReviewCard
+      quote={entry.quote}
+      name={entry.name}
+      credential={entry.meta}
+      photo={entry.photo}
+      className={cn("w-auto sm:w-auto", className)}
+      footer={footer}
+    />
+  );
+}
+
+/**
+ * "Öğrencilerden", NEXT_PUBLIC_HOME_V2 only: approved student quotes in a
+ * static three-column grid, no marquee. Renders nothing until at least one
+ * student entry in ysTestimonials.ts is approved.
+ */
+function YsStudentTestimonials() {
+  const entries = approvedTestimonials("student");
+  if (entries.length === 0) return null;
+  return (
+    <section aria-labelledby="ys-testimonials-title" className="pt-[88px]">
+      <h2
+        id="ys-testimonials-title"
+        className="text-[30px] font-bold leading-9 tracking-[-0.75px]"
+      >
+        {testimonialsTitle}
+      </h2>
+      <div className="mt-10 grid grid-cols-1 gap-5 lg:grid-cols-3">
+        {entries.map((entry) => (
+          <YsTestimonialCard key={entry.id} entry={entry} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+export function YsTestimonials({ v2 = false }: { v2?: boolean }) {
+  if (v2) return <YsStudentTestimonials />;
   return (
     <section className="mt-16 overflow-hidden rounded-card bg-paper py-16 md:mt-24 md:py-24">
       <div className="mx-auto max-w-2xl space-y-2 px-4 text-center">

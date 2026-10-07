@@ -19,6 +19,12 @@ import {
 /** apps/lessons/pricing.py TRIAL_DURATION_MINUTES (also BookingModal.tsx). */
 export const TRIAL_MINUTES = 20;
 
+/**
+ * How long tutor sign-up takes, as the homepage mockup states it. An estimate,
+ * not something the code enforces; correct it if it stops being true.
+ */
+export const TUTOR_SIGNUP_MINUTES = 5;
+
 /** apps/lessons/models.py MONTHLY_TRIAL_LIMIT — per student, per calendar month. */
 export const MONTHLY_TRIAL_LIMIT = 3;
 
@@ -115,6 +121,10 @@ export const TRIAL_PAID_TO_TUTOR: Fact<string> = TODO;
 export const TUTOR_NO_SHOW_TEXT: Fact<string> = TODO;
 /** What happens to the remaining lessons when a student switches tutor. */
 export const REMAINING_ON_SWITCH_TEXT: Fact<string> = TODO;
+/** Whether a tutor has to accept every lesson request. */
+export const TUTOR_MUST_ACCEPT_TEXT: Fact<string> = TODO;
+/** What happens when the student does not show up. DERS_POLITIKALARI_RAPORU.md. */
+export const STUDENT_NO_SHOW_TEXT: Fact<string> = TODO;
 /** Minimum weekly hours a tutor commits to. */
 export const TUTOR_MIN_WEEKLY_HOURS: Fact<number> = TODO;
 /** Days until a verification application is decided. */
