@@ -8,12 +8,32 @@ export function cn(...inputs: ClassValue[]) {
 // Sanitize a post-login returnUrl: only same-origin absolute paths are
 // allowed. Rejects scheme-relative ("//evil.com"), backslash tricks and
 // absolute URLs ("https://evil.com") so login can never redirect off-site.
+//
+// The browser strips tab/newline and reads "\" as "/" before it resolves a
+// URL, so "/\t/evil.com" is "//evil.com" by the time it navigates. Control
+// characters and backslashes are refused outright, and the result must still
+// resolve to this origin the way the browser would read it.
 export function safeReturnUrl(raw: string | null | undefined): string | null {
   if (!raw || !raw.startsWith("/")) return null;
-  if (raw.startsWith("//") || raw.startsWith("/\\")) return null;
+  if (raw.startsWith("//")) return null;
+  if (/[\u0000-\u001f\u007f\\]/.test(raw)) return null;
   const beforeFirstSlash = raw.slice(1).split("/")[0] ?? "";
   if (beforeFirstSlash.includes(":")) return null;
+  const origin = "https://return-url.invalid";
+  try {
+    if (new URL(raw, origin).origin !== origin) return null;
+  } catch {
+    return null;
+  }
   return raw;
+}
+
+// The login address that brings the user back to `returnPath` afterwards.
+// Built from the same check LoginForm reads it with, so anything LoginForm
+// would drop is never written; an unsafe or empty path is plain /login.
+export function loginUrlWithReturn(returnPath: string | null | undefined): string {
+  const safe = safeReturnUrl(returnPath);
+  return safe ? `/login?returnUrl=${encodeURIComponent(safe)}` : "/login";
 }
 
 /**

@@ -41,6 +41,7 @@ import {
   type PayTRCustomerField,
 } from "@/lib/paymentsApi";
 import { getSessionStorage } from "@/lib/safeStorage";
+import { loginUrlWithReturn } from "@/lib/utils";
 
 /**
  * Where a created package purchase is paid for.
@@ -107,7 +108,7 @@ export default function PayTRPaymentPage({
     if (authLoading) return;
     if (!isAuthenticated) {
       if (PAYTR_ENABLED && attemptPhase === "iframe") return;
-      router.replace(`/login?returnUrl=${encodeURIComponent(pathname)}`);
+      router.replace(loginUrlWithReturn(pathname));
       return;
     }
     if (!isStudent) router.replace("/home");
@@ -159,11 +160,13 @@ export default function PayTRPaymentPage({
     enabled: isAuthenticated && isStudent && Boolean(purchase),
     retry: false,
     ...FRESH_STATUS,
-    refetchInterval: () =>
+    // Stops on its own answer, never the list's: if the list sees "paid"
+    // first, this query must still poll until it says so too.
+    refetchInterval: (query) =>
       payTRPollIntervalMs({
         attemptActive,
         elapsedMs: attemptStartedAt !== null ? Date.now() - attemptStartedAt : 0,
-        purchaseStatus: purchase?.status,
+        purchaseStatus: query.state.data?.purchase_status,
       }),
   });
 
@@ -386,7 +389,7 @@ export default function PayTRPaymentPage({
                   Oturumun kapandı. Ödeme PayTR ekranında sürebilir; sonucu görmek için yeniden giriş yap.
                 </p>
                 <Link
-                  href={`/login?returnUrl=${encodeURIComponent(pathname)}`}
+                  href={loginUrlWithReturn(pathname)}
                   className="mt-3 inline-flex min-h-[2.75rem] items-center text-base underline underline-offset-4 hover:text-[var(--pink-deep)]"
                 >
                   Yeniden giriş yap
