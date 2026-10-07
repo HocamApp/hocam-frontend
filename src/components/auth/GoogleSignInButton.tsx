@@ -58,20 +58,26 @@ function loadGisScript(): Promise<void> {
 interface GoogleSignInButtonProps {
   onCredential: (credential: string) => void;
   text?: "signin_with" | "signup_with" | "continue_with";
-  disabled?: boolean;
 }
 
 /**
  * Renders the official Google Identity Services button. On success it hands the
  * returned ID token (credential) to `onCredential`. Renders a small notice if
  * NEXT_PUBLIC_GOOGLE_CLIENT_ID is not configured.
+ *
+ * The slot keeps a fixed height with a pill-shaped placeholder behind it, so
+ * nothing below moves while the GIS iframe loads.
  */
 export function GoogleSignInButton({
   onCredential,
   text = "continue_with",
-  disabled = false,
 }: GoogleSignInButtonProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  // Parents rebuild their credential handler as their state changes. Reading it
+  // through a ref keeps the rendered button in place instead of tearing it
+  // down and redrawing it on every change.
+  const onCredentialRef = useRef(onCredential);
+  onCredentialRef.current = onCredential;
   const [loadFailed, setLoadFailed] = useState(false);
   const configuredClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
   // The custom-domain Vercel project still injects the retired public client
@@ -83,18 +89,22 @@ export function GoogleSignInButton({
       : configuredClientId;
 
   useEffect(() => {
-    if (disabled) return;
     if (!clientId || !containerRef.current) return;
     let cancelled = false;
     let resizeTimer: number | undefined;
+    let renderedWidth = 0;
     setLoadFailed(false);
 
     // Google's button width is a fixed pixel value (max 400), not a percentage,
     // so it's measured from the container and re-rendered on resize to stay
     // full-width on narrow screens.
+    const buttonWidth = () =>
+      Math.min(containerRef.current?.clientWidth || 320, 400);
+
     const renderButton = () => {
       if (!containerRef.current || !window.google) return;
-      const width = Math.min(containerRef.current.clientWidth || 320, 400);
+      const width = buttonWidth();
+      renderedWidth = width;
       containerRef.current.innerHTML = "";
       window.google.accounts.id.renderButton(containerRef.current, {
         type: "standard",
@@ -107,9 +117,13 @@ export function GoogleSignInButton({
       });
     };
 
+    // iOS Safari fires resize when its toolbar collapses on scroll. Only a
+    // real width change is worth redrawing for; anything else flickers.
     const handleResize = () => {
       window.clearTimeout(resizeTimer);
-      resizeTimer = window.setTimeout(renderButton, 150);
+      resizeTimer = window.setTimeout(() => {
+        if (buttonWidth() !== renderedWidth) renderButton();
+      }, 150);
     };
 
     loadGisScript()
@@ -118,7 +132,7 @@ export function GoogleSignInButton({
         window.google.accounts.id.initialize({
           client_id: clientId,
           callback: (response) => {
-            if (response.credential) onCredential(response.credential);
+            if (response.credential) onCredentialRef.current(response.credential);
           },
         });
         renderButton();
@@ -133,19 +147,7 @@ export function GoogleSignInButton({
       window.clearTimeout(resizeTimer);
       window.removeEventListener("resize", handleResize);
     };
-  }, [clientId, disabled, onCredential, text]);
-
-  if (disabled) {
-    return (
-      <button
-        type="button"
-        disabled
-        className="min-h-11 w-full rounded-full border border-white/10 bg-white/5 text-sm font-medium text-neutral-500"
-      >
-        Google ile kaydol
-      </button>
-    );
-  }
+  }, [clientId, text]);
 
   if (!clientId) {
     return (
@@ -163,5 +165,16 @@ export function GoogleSignInButton({
     );
   }
 
-  return <div ref={containerRef} className="flex min-h-11 justify-center" />;
+  return (
+    <div className="relative h-11 w-full">
+      <div
+        aria-hidden="true"
+        className="absolute inset-y-0.5 left-1/2 w-full max-w-[400px] -translate-x-1/2 rounded-full bg-white/[0.06]"
+      />
+      <div
+        ref={containerRef}
+        className="relative flex h-full items-center justify-center"
+      />
+    </div>
+  );
 }
