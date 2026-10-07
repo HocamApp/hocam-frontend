@@ -7,6 +7,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { fetchTutorById } from "@/lib/tutorsApi";
+import { loginUrlWithReturn } from "@/lib/utils";
 import {
   createPackagePurchase,
   extractPackagePurchaseErrorMessage,
@@ -132,7 +133,7 @@ export default function TutorCheckoutPage({
     if (!authLoading && !isAuthenticated) {
       const query = searchParams.toString();
       const target = query ? `${pathname}?${query}` : pathname;
-      router.replace(`/login?returnUrl=${encodeURIComponent(target)}`);
+      router.replace(loginUrlWithReturn(target));
     }
   }, [authLoading, isAuthenticated, pathname, searchParams, router]);
 

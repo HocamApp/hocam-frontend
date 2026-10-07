@@ -10,6 +10,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { PAYTR_ENABLED } from "@/lib/featureFlags";
 import { fetchPackagePurchases, fetchPayTRPaymentStatus } from "@/lib/paymentsApi";
 import { getSessionStorage } from "@/lib/safeStorage";
+import { loginUrlWithReturn } from "@/lib/utils";
 
 import { PayTRProcessingState } from "./PayTRProcessingState";
 import { PayTRPurchaseSummary } from "./PayTRPurchaseSummary";
@@ -90,7 +91,7 @@ export function PayTRReturnScreen() {
       redirected.current = true;
       // The breadcrumb lives in this tab's sessionStorage and survives the
       // login round trip, so recovery continues where it left off.
-      router.replace(`/login?returnUrl=${encodeURIComponent(pathname)}`);
+      router.replace(loginUrlWithReturn(pathname));
       return;
     }
     const userId = user?.id;
