@@ -90,7 +90,7 @@ export const students = {
     {
       title: "Hocana yaz",
       body: (): ReactNode[] => [
-        "Ders talebi gönderdiğinde aranızda mesajlaşma açılır. Hedefini, eksik konularını ve uygun saatlerini orada konuşursunuz. Talep göndermek ücretsiz.",
+        "Profilinden mesaj attığında ya da ders talebi gönderdiğinde aranızda mesajlaşma açılır. Hedefini, eksik konularını ve uygun saatlerini orada konuşursunuz. Mesaj ve talep göndermek ücretsiz.",
       ],
     },
     {
@@ -200,7 +200,11 @@ export const parents = {
   cta: "Veliler için tüm bilgiler",
   onPlatform: {
     title: "Her şey platformda",
-    body: "Dersler Hocam'ın ders odasında yapılır. Mesajlaşma sadece bir ders talebinden sonra açılır, telefon numarası paylaşmak gerekmez.",
+    /* The mockup said messaging opens only after a lesson request. It does
+       not: a first message from the tutor's profile opens the conversation
+       (lib/messagingApi.ts createMessageRequest), so the row says what is
+       true today. */
+    body: "Dersler Hocam'ın ders odasında yapılır. Hocayla mesajlaşma da platformun içinde, telefon numarası paylaşmak gerekmez.",
   },
   recording: {
     title: "Kayıt ve derse katılım",
