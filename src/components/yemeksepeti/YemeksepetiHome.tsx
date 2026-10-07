@@ -4,6 +4,7 @@ import { YsEntryDialog } from "./YsEntryDialog";
 import { YsHeroIntro } from "./YsHeroIntro";
 import { YsHomeFaq } from "./YsHomeFaq";
 import { YsHowItWorks } from "./YsHowItWorks";
+import { YsSubjectGrid } from "./YsSubjectGrid";
 import { YsTestimonials } from "./YsTestimonials";
 import { YsTutorDirectory } from "./YsTutorDirectory";
 import { YsUniversityStrip } from "./YsUniversityStrip";
@@ -22,12 +23,15 @@ export function YemeksepetiHome() {
             the thing they came for. */}
       <div className="ys-shell">
         <YsTutorDirectory />
+        {/* The same list, entered by subject: each pill filters the
+              directory above. */}
+        <YsSubjectGrid />
       </div>
 
       {/* Outside the shell on purpose: a diagonal band is full bleed, and
             `.ys-shell` would cap it at 1440px and inset it by its padding. It
             opens its own shell for the text. */}
-      <div className="mt-12 md:mt-28">
+      <div className="mt-12 md:mt-24">
         <YsVerifiedBand />
       </div>
 
