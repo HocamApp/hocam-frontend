@@ -26,7 +26,9 @@ import {
   COACHING_SESSION_QUERY_KEYS,
   extractCoachingErrorMessage,
   extractCoachingErrorCode,
+  type CoachingSessionDetail,
 } from "@/lib/coachingApi";
+import { coachingRoomUserInfo, coachingSessionStatusLabel } from "@/lib/coachingPresentation";
 
 const JitsiMeeting = dynamic(
   () => import("@jitsi/react-sdk").then((mod) => mod.JitsiMeeting),
@@ -36,15 +38,13 @@ const JitsiMeeting = dynamic(
 function CoachingRoomPanel({
   sessionId,
   viewerRole,
+  detail,
 }: {
   sessionId: string;
   viewerRole: "student" | "tutor";
+  detail: CoachingSessionDetail | undefined;
 }) {
   const [reportOpen, setReportOpen] = useState(false);
-  const { data: detail } = useQuery({
-    queryKey: COACHING_SESSION_QUERY_KEYS.detail(sessionId),
-    queryFn: () => fetchCoachingSessionDetail(sessionId),
-  });
 
   return (
     <div className="flex h-full flex-col gap-4 overflow-y-auto p-4">
@@ -58,7 +58,9 @@ function CoachingRoomPanel({
           </p>
         )}
         {detail && (
-          <p className="mt-1 text-xs text-muted-foreground">Durum: {detail.status}</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Durum: {coachingSessionStatusLabel(detail.status)}
+          </p>
         )}
       </div>
 
@@ -97,6 +99,13 @@ function CoachingSessionContent() {
   const viewerRole = user?.role === "tutor" ? "tutor" : "student";
   const { embedKey, connectionStatus, onConnectionInterrupted, onConnectionRestored } =
     useJaasReconnect();
+  // Wait for the detail before mounting the call: Jitsi reads userInfo once,
+  // so mounting early would fix the name to the role fallback.
+  const { data: detail, isLoading: isLoadingDetail } = useQuery({
+    queryKey: COACHING_SESSION_QUERY_KEYS.detail(sessionId),
+    queryFn: () => fetchCoachingSessionDetail(sessionId),
+    enabled: Boolean(sessionId),
+  });
 
   const {
     data: sessionToken,
@@ -117,7 +126,7 @@ function CoachingSessionContent() {
   // (Faz 5 Final Revision §4), so it must never be gated behind a
   // successful join.
   let videoArea: React.ReactNode;
-  if (isLoadingToken) {
+  if (isLoadingToken || isLoadingDetail) {
     videoArea = (
       <div className="flex flex-1 items-center justify-center">
         <LoadingSpinner />
@@ -147,7 +156,7 @@ function CoachingSessionContent() {
         roomName={sessionToken.room}
         jwt={sessionToken.token}
         lang="tr"
-        userInfo={{ displayName: user?.email ?? "Kullanıcı", email: user?.email ?? "" }}
+        userInfo={coachingRoomUserInfo(detail, viewerRole)}
         configOverwrite={getCoachingJitsiConfigOverwrite()}
         interfaceConfigOverwrite={COACHING_JITSI_INTERFACE_CONFIG_OVERWRITE}
         onApiReady={(api: { addEventListener?: (event: string, handler: (...args: unknown[]) => void) => void }) => {
@@ -172,7 +181,10 @@ function CoachingSessionContent() {
   return (
     <div className="flex flex-1 flex-col">
       {connectionStatus === "interrupted" && (
-        <div className="flex items-center justify-center gap-2 bg-red-600 px-4 py-1.5 text-center text-xs font-medium text-white">
+        <div
+          role="status"
+          className="flex items-center justify-center gap-2 bg-destructive px-4 py-1.5 text-center text-xs font-medium text-destructive-foreground"
+        >
           <WifiOff className="h-3.5 w-3.5" aria-hidden="true" />
           Bağlantı koptu. Yeniden bağlanmaya çalışılıyor...
         </div>
@@ -182,7 +194,7 @@ function CoachingSessionContent() {
           {videoArea}
         </div>
         <div className="min-h-0 border-t bg-background md:basis-[35%] md:border-l md:border-t-0">
-          <CoachingRoomPanel sessionId={sessionId} viewerRole={viewerRole} />
+          <CoachingRoomPanel sessionId={sessionId} viewerRole={viewerRole} detail={detail} />
         </div>
       </div>
     </div>

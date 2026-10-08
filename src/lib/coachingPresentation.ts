@@ -123,3 +123,39 @@ export function deriveCoachingStatus(input: {
     nextAction,
   };
 }
+
+const COACHING_SESSION_STATUS_LABELS: Record<string, string> = {
+  scheduled: "Planlandı",
+  reschedule_requested: "Saat değişikliği bekleniyor",
+  in_progress: "Devam ediyor",
+  awaiting_report: "Rapor bekleniyor",
+  completed: "Tamamlandı",
+  student_no_show: "Öğrenci katılmadı",
+  tutor_no_show: "Hoca katılmadı",
+  cancelled: "İptal edildi",
+  technical_failure: "Teknik sorun",
+};
+
+/**
+ * The one Turkish label for a coaching session status. Unknown values get a
+ * neutral sentence: a raw backend code must never reach the screen.
+ */
+export function coachingSessionStatusLabel(status: string): string {
+  return COACHING_SESSION_STATUS_LABELS[status] ?? "Durum güncelleniyor";
+}
+
+/**
+ * What the coaching video room shows the other participant. The JaaS token
+ * already carries the right name; the client must not override it with the
+ * viewer's e-mail address, which leaked it to the other side.
+ */
+export function coachingRoomUserInfo(
+  detail: { tutor_name?: string | null; student_name?: string | null } | undefined,
+  viewerRole: "student" | "tutor",
+): { displayName: string; email: string } {
+  const own = viewerRole === "tutor" ? detail?.tutor_name : detail?.student_name;
+  return {
+    displayName: own?.trim() || (viewerRole === "tutor" ? "Hoca" : "Öğrenci"),
+    email: "",
+  };
+}

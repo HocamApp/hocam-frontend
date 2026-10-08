@@ -120,3 +120,36 @@ describe("deriveCoachingStatus", () => {
     assert.equal(status.nextAction?.href, "/dashboard/tutor/coaching/plan?step=availability");
   });
 });
+
+describe("coachingSessionStatusLabel", () => {
+  it("labels every backend session status in Turkish", async () => {
+    const { coachingSessionStatusLabel } = await import("./coachingPresentation");
+    for (const status of [
+      "scheduled", "reschedule_requested", "in_progress", "awaiting_report", "completed",
+      "student_no_show", "tutor_no_show", "cancelled", "technical_failure",
+    ]) {
+      const label = coachingSessionStatusLabel(status);
+      assert.notEqual(label, status);
+      assert.doesNotMatch(label, /_/);
+    }
+  });
+
+  it("never echoes an unknown raw code", async () => {
+    const { coachingSessionStatusLabel } = await import("./coachingPresentation");
+    assert.equal(coachingSessionStatusLabel("brand_new_state"), "Durum güncelleniyor");
+  });
+});
+
+describe("coachingRoomUserInfo", () => {
+  it("uses the viewer's own name and never the e-mail address", async () => {
+    const { coachingRoomUserInfo } = await import("./coachingPresentation");
+    const detail = { tutor_name: "Ayşe Kaya", student_name: "Ali Demir" };
+    assert.deepEqual(coachingRoomUserInfo(detail, "student"), { displayName: "Ali Demir", email: "" });
+    assert.deepEqual(coachingRoomUserInfo(detail, "tutor"), { displayName: "Ayşe Kaya", email: "" });
+  });
+
+  it("falls back to the role, not to an address, before the detail loads", async () => {
+    const { coachingRoomUserInfo } = await import("./coachingPresentation");
+    assert.deepEqual(coachingRoomUserInfo(undefined, "student"), { displayName: "Öğrenci", email: "" });
+  });
+});
