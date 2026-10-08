@@ -130,7 +130,7 @@ function TutorOnboardingContent() {
     },
     {
       title: "Belge doğrulaması",
-      description: "Öğrenci kimliği ve YKS sonuç belgesi incelenir.",
+      description: "Öğrenci belgesi ve YKS sonuç belgesi incelenir.",
       complete: verificationApproved,
       active: profileComplete && photoComplete && !verificationSubmitted,
       waiting: verification?.status === "pending",

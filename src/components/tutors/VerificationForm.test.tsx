@@ -104,7 +104,7 @@ async function submitDocuments(error: unknown) {
     return data;
   });
   renderForm();
-  const studentInput = await screen.findByLabelText("Öğrenci Kimliği") as HTMLInputElement;
+  const studentInput = await screen.findByLabelText("Öğrenci Belgesi") as HTMLInputElement;
   const yksInput = screen.getByLabelText("YKS Sonuç Belgesi") as HTMLInputElement;
   const studentFile = new File(["student"], "student.jpeg", { type: "image/jpeg" });
   const yksFile = new File(["result"], "result.pdf", { type: "application/pdf" });

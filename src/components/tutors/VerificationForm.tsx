@@ -142,7 +142,7 @@ export function VerificationForm() {
     const studentIdError = validateDocumentFile(
       studentIdFile,
       STUDENT_ID_DOCUMENT_TYPES,
-      "Öğrenci kimliği için JPEG, PNG veya PDF yükleyin."
+      "Öğrenci belgesi için JPEG, PNG veya PDF yükleyin."
     );
     const yksError = validateDocumentFile(
       yksFile,
@@ -349,7 +349,7 @@ function VerificationUploadForm({
       <div>
         <h2 className="text-lg font-semibold">Hesabını Doğrula</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Üniversite e-postan doğrulandı. Şimdi öğrenci kimliğini ve YKS sonuç
+          Üniversite e-postan doğrulandı. Şimdi öğrenci belgeni ve YKS sonuç
           belgeni incelemeye gönder.
         </p>
         <p className="mt-2 text-xs text-muted-foreground">
@@ -361,10 +361,10 @@ function VerificationUploadForm({
         <FileDropInput
           id="student_id_document"
           name="student_id_document"
-          label="Öğrenci Kimliği"
-          helperText="Öğrenci kimlik kartınızın fotoğrafı veya taraması"
+          label="Öğrenci Belgesi"
+          helperText="Öğrenci belgenizin PDF’i, fotoğrafı veya taraması"
           acceptedTypes={STUDENT_ID_DOCUMENT_TYPES}
-          acceptedTypeMessage="Öğrenci kimliği için JPEG, PNG veya PDF yükleyin."
+          acceptedTypeMessage="Öğrenci belgesi için JPEG, PNG veya PDF yükleyin."
         />
 
         <FileDropInput
