@@ -39,6 +39,17 @@ const nextConfig = {
         destination: "/kvkk/aydinlatma-metni",
         permanent: false,
       },
+      /*
+       * The coaching earnings page ("Parayı çek") was removed: tutor money
+       * gets one earnings screen outside coaching later. Old links and
+       * bookmarks land on the coaching overview instead of a 404. Temporary,
+       * so the path can be reused.
+       */
+      {
+        source: "/dashboard/tutor/coaching/earnings",
+        destination: "/dashboard/tutor/coaching",
+        permanent: false,
+      },
     ];
   },
 
