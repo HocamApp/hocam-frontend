@@ -70,9 +70,14 @@ describe("YsHomeFaq", () => {
 
   it("states the facts the backend actually enforces", () => {
     const text = answersText();
-    for (const fact of ["20 dakika", "40 dakika", "%30", "12 saat", "14 gün", ".edu.tr"]) {
+    for (const fact of ["20 dakika", "40 dakika", "%30", "12 saat", ".edu.tr"]) {
       assert.ok(text.includes(fact), `missing fact: ${fact}`);
     }
+  });
+
+  it("promises no grace period after the package ends", () => {
+    // The backend's grace period is 0 and /iptal-ve-iade promises none.
+    assert.ok(!answersText().includes("ek süre"));
   });
 
   it("never claims something the codebase cannot back up", () => {

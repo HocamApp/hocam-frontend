@@ -192,7 +192,7 @@ function CompanyLine() {
   ].filter((part) => !production || !isTodo(part.value));
 
   return (
-    <p className="mt-4 text-[13px] leading-[21px] text-ink-mid">
+    <p className="mt-3.5 text-[13px] leading-[21px] text-ink-mid">
       {parts.map((part, index) => (
         <span key={index}>
           {part.node}
@@ -209,49 +209,53 @@ function CompanyLine() {
 function YsFooterV2() {
   return (
     <footer className="mt-16 border-t border-line bg-paper text-ink md:mt-24">
-      <div className="ys-shell py-10">
-        <div className="grid grid-cols-2 gap-x-6 gap-y-8 lg:grid-cols-5">
-          {V2_FOOTER_COLUMNS.map((column) => (
-            <div key={column.heading}>
-              <h4 className="mb-3 text-sm font-bold text-ink">{column.heading}</h4>
-              <ul className="space-y-2">
-                {column.entries.map((entry) => (
-                  <li key={entry.label}>
-                    <FooterLink entry={entry} />
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </div>
-
-        <div className="mt-10 border-t border-line pt-6">
-          <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-            <div className="flex items-center gap-3">
-              <BrandMark size="sm" />
-              <span
-                className="h-6 w-px"
-                style={{ background: "var(--ys-neutral-divider)" }}
-                aria-hidden
-              />
-              <span className="ys-footer-text">{copy.copyright(new Date().getFullYear())}</span>
-            </div>
-            <div className="flex shrink-0 gap-2">
-              {SOCIAL_LINKS.map(({ id, label, Icon, href }) => (
-                <a
-                  key={id}
-                  href={href}
-                  className="ys-icon-btn"
-                  aria-label={label}
-                  target="_blank"
-                  rel="noreferrer noopener"
-                >
-                  <Icon className="h-6 w-6" />
-                </a>
-              ))}
-            </div>
+      {/* The mockup's `.fgrid` and `.fbot` padding, on a wrapper: `.ys-shell`
+          overrides padding set on itself. */}
+      <div className="pb-9 pt-9">
+        <div className="ys-shell">
+          <div className="grid grid-cols-2 gap-7 lg:grid-cols-5">
+            {V2_FOOTER_COLUMNS.map((column) => (
+              <div key={column.heading}>
+                <h4 className="mb-3.5 text-sm font-bold leading-5 text-ink">{column.heading}</h4>
+                <ul className="flex flex-col gap-3">
+                  {column.entries.map((entry) => (
+                    <li key={entry.label}>
+                      <FooterLink entry={entry} />
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
           </div>
-          <CompanyLine />
+
+          <div className="mt-10 border-t border-line pt-7">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-3.5">
+              <div className="flex items-center gap-3">
+                <BrandMark size="sm" />
+                <span
+                  className="h-6 w-px"
+                  style={{ background: "var(--ys-neutral-divider)" }}
+                  aria-hidden
+                />
+                <span className="ys-footer-text">{copy.copyright(new Date().getFullYear())}</span>
+              </div>
+              <div className="ml-auto flex shrink-0 gap-2">
+                {SOCIAL_LINKS.map(({ id, label, Icon, href }) => (
+                  <a
+                    key={id}
+                    href={href}
+                    className="ys-icon-btn"
+                    aria-label={label}
+                    target="_blank"
+                    rel="noreferrer noopener"
+                  >
+                    <Icon className="h-6 w-6" />
+                  </a>
+                ))}
+              </div>
+            </div>
+            <CompanyLine />
+          </div>
         </div>
       </div>
     </footer>

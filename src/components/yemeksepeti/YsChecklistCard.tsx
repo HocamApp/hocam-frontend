@@ -57,13 +57,15 @@ export function YsChecklistCard({
               <b className="block text-[0.9375rem] font-semibold leading-[22px]">
                 {Array.isArray(item.label) ? Children.toArray(item.label) : item.label}
               </b>
-              {item.sub && <span className={cn("text-small leading-5", v.sub)}>{item.sub}</span>}
+              {item.sub && <span className={cn("block text-[14px] leading-5", v.sub)}>{item.sub}</span>}
             </div>
           </li>
         ))}
       </ul>
       {footer && (
-        <p className={cn("mt-1.5 border-t pt-3.5 text-label font-normal leading-[19px]", v.divider, v.sub)}>
+        /* Sizes in px rather than the `small`/`label` tokens: tailwind-merge
+           reads those as colours and drops them against `v.sub`. */
+        <p className={cn("mt-1.5 border-t pt-3.5 text-[13px] font-normal leading-[19px]", v.divider, v.sub)}>
           {footer}
         </p>
       )}

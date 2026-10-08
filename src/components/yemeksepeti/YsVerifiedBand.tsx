@@ -46,7 +46,11 @@ export function YsVerifiedBand({ v2 = false }: { v2?: boolean }) {
 
   const claim = (
     <>
-      <h2 id="ys-band-title" className="max-w-[13ch] text-h1-m font-bold md:text-h1">
+      {/* v2: the mockup's 34/36 on phones; desktop is the h1 token either way. */}
+      <h2
+        id="ys-band-title"
+        className={`max-w-[13ch] font-bold md:text-h1 ${v2 ? "text-[34px] leading-9 tracking-[-0.88px]" : "text-h1-m"}`}
+      >
         {copy.title}
       </h2>
 
@@ -57,10 +61,10 @@ export function YsVerifiedBand({ v2 = false }: { v2?: boolean }) {
           surface with --gold-ink on it, which also holds on pink at this
           scale. The number is the setup form's enforced maximum. */}
       {v2 && (
-        <p className="mt-[18px] flex flex-wrap items-center gap-2 text-body-l font-semibold">
+        <p className="mt-[18px] flex flex-wrap items-center gap-2 text-[18px] font-semibold leading-7">
           {Children.toArray(
             copy.eligibility(
-              <span className="inline-flex items-center gap-1.5 rounded-[14px] bg-gold px-2 py-0.5 text-lg font-bold leading-tight tabular-nums text-gold-ink">
+              <span className="inline-flex items-center gap-1.5 rounded-input bg-gold px-2 py-px text-base font-bold leading-6 tabular-nums text-gold-ink">
                 <RankMark className="h-3.5 w-3.5" />
                 {copy.rankBadge(MAX_TUTOR_YKS_RANK)}
               </span>,

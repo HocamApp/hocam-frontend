@@ -65,7 +65,7 @@ export function YemeksepetiHome({
           <YsHowItWorks v2 lessonRoomShot={lessonRoomShot} />
           <YsPricing />
           <YsGuarantees />
-          <YsParentsPanel className="mt-[120px]" />
+          <YsParentsPanel className="mt-[88px] md:mt-[120px]" />
           {/* Full bleed, like the pink band. */}
           <YsTutorBand className="mt-[120px]" />
         </>

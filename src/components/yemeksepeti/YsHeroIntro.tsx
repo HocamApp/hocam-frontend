@@ -13,6 +13,12 @@ const AUDIENCE = [
   { href: "#hocalar", label: hero.audience.tutors },
 ] as const;
 
+/* The mockup's `.btn-lg`: 50px, and smaller on phones. Class strings are
+   joined by hand here, not with `cn`: tailwind-merge does not know the
+   custom type scale and would drop `text-white` against `text-body`. */
+const HERO_BUTTON_V2 = "h-[50px] px-[22px] text-[15px] sm:px-8 sm:text-body";
+const HERO_BUTTON = "h-12 px-8 text-body";
+
 /**
  * The page's opening statement.
  *
@@ -42,6 +48,7 @@ const AUDIENCE = [
  * and the audience row. Off, the hero is the pre-rebuild one.
  */
 export function YsHeroIntro({ v2 = false }: { v2?: boolean }) {
+  const heroButtonSize = v2 ? HERO_BUTTON_V2 : HERO_BUTTON;
   return (
     <section
       className="py-16 md:pb-[90px] md:pt-24"
@@ -49,22 +56,30 @@ export function YsHeroIntro({ v2 = false }: { v2?: boolean }) {
     >
       <div className="grid items-center gap-12 lg:grid-cols-[7fr_5fr] lg:gap-8">
         <div className="relative z-10 min-w-0">
-          <h1 id="ys-hero-title" className="text-display-m md:text-display">
+          {/* v2 follows the mockup's mobile sizes: a 40px line on the 40px
+              headline, a 21/30 subline capped at 30ch, 15px buttons. */}
+          <h1 id="ys-hero-title" className={`text-display-m md:text-display${v2 ? " max-md:leading-10" : ""}`}>
             {hero.titleLine1}
             <br />
             {v2 ? hero.titleLine2 : hero.titleLine2Legacy}
           </h1>
 
-          <p className="mt-6 max-w-[34ch] text-hero-sub-m text-ink-mid md:text-hero-sub">
+          <p
+            className={
+              v2
+                ? "mt-4 max-w-[30ch] text-[21px] leading-[30px] tracking-[-0.26px] text-ink-mid md:text-hero-sub"
+                : "mt-6 max-w-[34ch] text-hero-sub-m text-ink-mid md:text-hero-sub"
+            }
+          >
             {hero.sub}
           </p>
 
-          <div className="mt-10 flex flex-wrap gap-3">
+          <div className={`flex flex-wrap gap-3 ${v2 ? "mt-11" : "mt-10"}`}>
             {/* The directory is further down this same page, so this scrolls
             rather than navigating to /tutors and reloading the same list. */}
             <Link
               href="#ys-tutor-list-title"
-              className="inline-flex h-12 items-center rounded-pill bg-pink px-8 text-body font-semibold text-white transition-colors duration-[--duration-state] hover:bg-pink-deep"
+              className={`inline-flex items-center rounded-pill bg-pink font-semibold text-white transition-colors duration-[--duration-state] hover:bg-pink-deep ${heroButtonSize}`}
             >
               {hero.ctaTutors}
             </Link>
@@ -72,7 +87,7 @@ export function YsHeroIntro({ v2 = false }: { v2?: boolean }) {
                 answers "can I, and how" before the registration form. */}
             <Link
               href={v2 ? "/hoca-ol" : "/register?role=tutor"}
-              className="inline-flex h-12 items-center rounded-pill border border-ink px-8 text-body font-semibold text-ink transition-colors duration-[--duration-state] hover:bg-ink hover:text-paper"
+              className={`inline-flex items-center rounded-pill border border-ink font-semibold text-ink transition-colors duration-[--duration-state] hover:bg-ink hover:text-paper ${heroButtonSize}`}
             >
               {hero.ctaBecomeTutor}
             </Link>

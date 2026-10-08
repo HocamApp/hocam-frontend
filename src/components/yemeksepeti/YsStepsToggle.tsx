@@ -5,9 +5,9 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 
 import { studentSteps } from "./YsHowItWorks";
-import { YsStepList } from "./YsStepList";
+import { YsStepTabs, type YsTabStep } from "./YsStepTabs";
 import { useTutorSteps } from "./YsTutorBand";
-import { pages } from "./ysHomeCopy";
+import { pages, students, tutors } from "./ysHomeCopy";
 
 type Audience = "student" | "tutor";
 
@@ -17,12 +17,16 @@ type Audience = "student" | "tutor";
  *
  * Both lists are in the server HTML; the toggle only flips `hidden`, so the
  * student steps read without JavaScript. Pills as in the FAQ tabs.
+ *
+ * Inside each track the steps switch like the homepage's: clicking one makes
+ * it active. The student track shows the homepage's screenshots beside it;
+ * there are no tutor screenshots, so that track switches the marker alone.
  */
-export function YsStepsToggle() {
+export function YsStepsToggle({ lessonRoomShot = false }: { lessonRoomShot?: boolean }) {
   const [active, setActive] = useState<Audience>("student");
-  const lists: Record<Audience, ReturnType<typeof studentSteps>> = {
-    student: studentSteps(),
-    tutor: useTutorSteps(),
+  const lists: Record<Audience, { label: string; steps: YsTabStep[] }> = {
+    student: { label: students.stepsLabel, steps: studentSteps(lessonRoomShot) },
+    tutor: { label: tutors.stepsLabel, steps: useTutorSteps() },
   };
   const copy = pages.nasilCalisir;
 
@@ -58,9 +62,9 @@ export function YsStepsToggle() {
           id={`ys-steps-panel-${audience}`}
           aria-labelledby={`ys-steps-tab-${audience}`}
           hidden={audience !== active}
-          className="mt-8 max-w-3xl"
+          className={cn("mt-8", audience === "tutor" && "max-w-3xl")}
         >
-          <YsStepList steps={lists[audience]} />
+          <YsStepTabs label={lists[audience].label} steps={lists[audience].steps} />
         </div>
       ))}
     </div>

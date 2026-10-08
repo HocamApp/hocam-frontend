@@ -41,8 +41,11 @@ export default function BecomeTutorPage() {
           breadcrumbJsonLd(breadcrumbs),
         ]}
       />
-      <div className="ys-shell pt-6">
-        <PublicSeoBreadcrumbs items={breadcrumbs} />
+      {/* pt on the wrapper: `.ys-shell` overrides its own padding. */}
+      <div className="pt-6">
+        <div className="ys-shell">
+          <PublicSeoBreadcrumbs items={breadcrumbs} />
+        </div>
       </div>
       <YsTutorBand className="mt-6" />
       <div className="ys-shell">

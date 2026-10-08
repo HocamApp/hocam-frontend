@@ -1,3 +1,5 @@
+> **Current state: see [`STATUS.md`](STATUS.md), the source of truth for what's built, what's behind the flag, the remaining TODO facts and the decisions made since this plan. Where they disagree, STATUS.md wins (for example, T05's stacked screenshots were replaced by interactive steps).**
+
 # Hocam Homepage Rebuild: Execution Plan for Claude Code
 
 **Goal:** make the homepage (`/`) look and behave exactly like `homepage-mockup.html`, which is in this folder. After that, build three supporting pages from the same parts.
