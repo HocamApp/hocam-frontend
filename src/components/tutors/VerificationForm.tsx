@@ -97,7 +97,18 @@ export function VerificationForm() {
       toast.success("Doğrulama başvurun gönderildi.");
     },
     onError: (error: unknown) => {
-      const data = (error as { response?: { data?: unknown } }).response?.data;
+      const response = (error as { response?: { status?: number; data?: unknown } }).response;
+      const data = response?.data;
+      if (response?.status === 429) {
+        const retryAfter = data && typeof data === "object"
+          ? (data as Record<string, unknown>).retry_after
+          : undefined;
+        const waitMessage = typeof retryAfter === "number" && Number.isFinite(retryAfter) && retryAfter > 0
+          ? `Yaklaşık ${Math.ceil(retryAfter / 60)} dakika sonra tekrar deneyebilirsin.`
+          : "Lütfen daha sonra tekrar dene.";
+        setSubmitError(`Belge gönderme deneme sınırına ulaştın. ${waitMessage}`);
+        return;
+      }
       if (data && typeof data === "object") {
         const body = data as Record<string, unknown>;
         const firstFieldError = Object.values(body).find(
