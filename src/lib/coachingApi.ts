@@ -1753,14 +1753,6 @@ export type CoachingRefundPresentationState =
   | "settled"
   | "nothing_to_settle";
 
-export type CoachingEarningStatus =
-  | "eligible_unfunded"
-  | "pending"
-  | "on_hold"
-  | "reversed"
-  | "ready"
-  | "paid";
-
 export function coachingRefundStateCopy(state: CoachingRefundPresentationState | string): string {
   const copy: Record<string, string> = {
     none: "Henüz iade yükümlülüğü yok.",
@@ -1771,18 +1763,6 @@ export function coachingRefundStateCopy(state: CoachingRefundPresentationState |
     nothing_to_settle: "Ödeme gerekmiyor.",
   };
   return copy[state] ?? "İade durumu güncelleniyor.";
-}
-
-export function coachingEarningStatusCopy(status: CoachingEarningStatus | string): string {
-  const copy: Record<string, string> = {
-    eligible_unfunded: "Kazanç hesabına uygun · kullanılabilir ödeme fonu doğrulanmadı",
-    pending: "Aylık değerlendirmede",
-    on_hold: "İnceleme nedeniyle bekliyor",
-    reversed: "Muhasebe kaydı geri çevrildi",
-    ready: "Aktarım hazırlığında · banka ödemesi doğrulanmadı",
-    paid: "Sistem kaydında işlendi · banka aktarımı ayrıca doğrulanmalı",
-  };
-  return copy[status] ?? "Kazanç durumu inceleniyor";
 }
 
 /**
@@ -1892,7 +1872,6 @@ export const COACHING_FAZ8_QUERY_KEYS = {
   eligibility: (purchaseId: string) => ["coaching-dispute-eligibility", purchaseId] as const,
   financialSummary: (purchaseId: string) => ["coaching-financial-summary", purchaseId] as const,
   evidenceStatus: (evidenceId: string) => ["coaching-dispute-evidence", evidenceId] as const,
-  tutorEarnings: () => ["coaching-tutor-earnings"] as const,
 } as const;
 
 export interface CoachingDisputeEligibilityIssue {
@@ -1984,14 +1963,6 @@ export interface CoachingCancellationResult {
   refund_state: CoachingRefundPresentationState | string;
 }
 
-export interface CoachingTutorEarningSummary {
-  eligible_unfunded_minor: number;
-  pending_minor: number;
-  on_hold_minor: number;
-  reversed_minor: number;
-  payout_batches: { local_month: string; status: CoachingEarningStatus | string; total_amount_minor: number; paid_at: string | null }[];
-}
-
 export async function fetchCoachingDisputeEligibility(purchaseId: string): Promise<CoachingDisputeEligibility> {
   const response = await api.get<CoachingDisputeEligibility>(`/coaching/purchases/${purchaseId}/dispute-eligibility/`);
   return response.data;
@@ -2075,10 +2046,5 @@ export async function respondToTutorCoachingDispute(disputeId: string, body: str
 
 export async function terminateTutorCoaching(purchaseId: string, reason: string): Promise<{ service_status: string; refund_liability_minor: number }> {
   const response = await api.post<{ service_status: string; refund_liability_minor: number }>(`/coaching/tutor/purchases/${purchaseId}/terminate/`, { reason });
-  return response.data;
-}
-
-export async function fetchTutorCoachingEarnings(): Promise<CoachingTutorEarningSummary> {
-  const response = await api.get<CoachingTutorEarningSummary>("/coaching/tutor/earnings/");
   return response.data;
 }

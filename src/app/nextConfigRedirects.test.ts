@@ -23,7 +23,7 @@ const nextConfig = createRequire(import.meta.url)("../../next.config.js") as {
  * every checkout under it to the homepage.
  */
 describe("directory retirement redirects", () => {
-  it("retires exactly the old directory routes and the KVKK index", async () => {
+  it("retires exactly the old directory routes, the KVKK index and the coaching earnings page", async () => {
     const redirects = await nextConfig.redirects();
     assert.deepEqual(
       redirects.map((r) => [
@@ -34,6 +34,8 @@ describe("directory retirement redirects", () => {
         ["/tutors", "/"],
         ["/home", "/"],
         ["/kvkk", "/kvkk/aydinlatma-metni"],
+        // Removed with "Parayı çek"; tutor earnings move outside coaching.
+        ["/dashboard/tutor/coaching/earnings", "/dashboard/tutor/coaching"],
       ],
     );
   });
@@ -66,9 +68,10 @@ describe("directory retirement redirects", () => {
       // moves the retired URL's search value to the route that replaced it.
       process.env.VERCEL_ENV = "production";
       for (const redirect of await nextConfig.redirects()) {
-        // /kvkk is a documents hub that may plausibly return; a cached 308
-        // would make restoring it impossible.
-        const expected = redirect.source !== "/kvkk";
+        // /kvkk is a documents hub that may plausibly return, and the
+        // coaching earnings path will be reused; a cached 308 would make
+        // restoring either impossible.
+        const expected = !["/kvkk", "/dashboard/tutor/coaching/earnings"].includes(redirect.source);
         assert.equal(redirect.permanent, expected, redirect.source);
       }
     } finally {

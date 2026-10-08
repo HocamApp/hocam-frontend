@@ -47,7 +47,7 @@ function CoachingFlagGate({ children }: { children: React.ReactNode }) {
 }
 
 /**
- * Wraps existing-coaching-record tutor pages (disputes, earnings, the
+ * Wraps existing-coaching-record tutor pages (disputes, the
  * students list): tutor-only, but deliberately NOT gated on the runtime
  * sales flag. Master Spec §42's kill switch only closes new coaching
  * sales/intake ("mevcut kayıtlar silinmez") — a tutor must still be able
