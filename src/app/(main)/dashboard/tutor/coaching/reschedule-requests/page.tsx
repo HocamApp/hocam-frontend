@@ -6,6 +6,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CoachingRecordGuard as CoachingGuard } from "@/components/coaching/CoachingGuard";
 import { CoachingEmptyState as EmptyState } from "@/components/coaching/CoachingEmptyState";
 import { CoachingPageShell } from "@/components/coaching/CoachingPageShell";
+import { CoachingConfirmDialog } from "@/components/coaching/CoachingConfirmDialog";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -21,6 +22,7 @@ import {
 function RescheduleRequestsContent() {
   const queryClient = useQueryClient();
   const [error, setError] = useState<string | null>(null);
+  const [rejectingId, setRejectingId] = useState<string | null>(null);
 
   const { data: requests = [], isLoading } = useQuery({
     queryKey: ["coaching-tutor-reschedule-requests"],
@@ -39,6 +41,7 @@ function RescheduleRequestsContent() {
       }),
     onSuccess: () => {
       setError(null);
+      setRejectingId(null);
       queryClient.invalidateQueries({ queryKey: ["coaching-tutor-reschedule-requests"] });
     },
     onError: (err) => setError(extractCoachingErrorMessage(err)),
@@ -91,20 +94,36 @@ function RescheduleRequestsContent() {
                   respond.mutate({ id: request.id, decision: "approve", grantFree: true })
                 }
               >
-                Ücretsiz onayla
+                Acil durum olarak onayla
               </Button>
               <Button
                 size="sm"
                 variant="destructive"
                 disabled={respond.isPending}
-                onClick={() => respond.mutate({ id: request.id, decision: "reject" })}
+                onClick={() => setRejectingId(request.id)}
               >
                 Reddet
               </Button>
             </div>
+            <p className="text-small text-ink-mid">
+              İki onay da öğrencinin ücretsiz değişiklik hakkını kullanmaz. &quot;Acil
+              durum olarak onayla&quot;, değişikliği senin verdiğin bir acil durum izni
+              olarak kaydeder.
+            </p>
           </CardContent>
         </Card>
       ))}
+      <CoachingConfirmDialog
+        open={rejectingId !== null}
+        title="Saat değişikliği reddedilsin mi?"
+        description="Görüşme mevcut saatinde kalır ve öğrenciye bildirilir. Bu kararı sonra değiştiremezsin."
+        confirmLabel="Reddet"
+        isPending={respond.isPending}
+        onCancel={() => setRejectingId(null)}
+        onConfirm={() => {
+          if (rejectingId) respond.mutate({ id: rejectingId, decision: "reject" });
+        }}
+      />
     </div>
   );
 }

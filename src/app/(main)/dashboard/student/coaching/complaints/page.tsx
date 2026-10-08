@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { CoachingSectionHeading } from "@/components/coaching/CoachingSectionHeading";
+import { CoachingConfirmDialog } from "@/components/coaching/CoachingConfirmDialog";
 import {
   COACHING_FAZ8_QUERY_KEYS,
   cancelStudentCoaching,
@@ -175,6 +176,7 @@ function ComplaintsContent() {
       });
     },
   });
+  const [confirmCancel, setConfirmCancel] = useState(false);
 
   if (state.isLoading || disputes.isLoading)
     return <CoachingLoadingState rows={3} />;
@@ -227,11 +229,20 @@ function ComplaintsContent() {
             <Button
               variant="outline"
               disabled={cancel.isPending}
-              onClick={() => cancel.mutate()}
+              onClick={() => setConfirmCancel(true)}
             >
               Koçluğu sonlandırmayı iste
             </Button>
           )}
+          <CoachingConfirmDialog
+            open={confirmCancel}
+            title="Koçluğu sonlandırmak istiyor musun?"
+            description="Henüz başlamamış koçluk dönemlerin iptal edilir; devam eden dönem sonuna kadar sürer. Ders paketin etkilenmez. Bu talep geri alınamaz."
+            confirmLabel="Sonlandırmayı iste"
+            isPending={cancel.isPending}
+            onCancel={() => setConfirmCancel(false)}
+            onConfirm={() => cancel.mutate(undefined, { onSettled: () => setConfirmCancel(false) })}
+          />
           {cancel.error ? (
             <p className="text-small text-error">
               İptal talebi güncel durumla çakıştı. Sayfayı yenileyip tekrar
