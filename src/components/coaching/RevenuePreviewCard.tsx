@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/accordion";
 import { Card, CardContent } from "@/components/ui/card";
 import type { CoachingRevenuePreview, CoachingRevenueRow } from "@/lib/coachingApi";
-import { formatTryMinor } from "@/lib/money";
+import { formatBpsPercent, formatTryMinor } from "@/lib/money";
 
 export function RevenuePreviewCard({ preview }: { preview: CoachingRevenuePreview }) {
   const primary = preview.rows.find((row) => row.weeks === 4) ?? preview.rows[0];
@@ -22,7 +22,7 @@ export function RevenuePreviewCard({ preview }: { preview: CoachingRevenuePrevie
           <p className="text-xs font-semibold text-pink">Sunucu hesaplaması</p>
           <h2 className="mt-1 text-xl font-bold tracking-tight text-ink">Bir aylık tahmini kazanç</h2>
           <p className="mt-1 text-sm leading-6 text-ink-mid">
-            Paket indirimi ve %{preview.commission_bps / 100} platform komisyonu mevcut katalog/config kurallarıyla hesaplanır.
+            Paket indirimi ve %{formatBpsPercent(preview.commission_bps)} platform komisyonu mevcut katalog/config kurallarıyla hesaplanır.
           </p>
         </div>
 

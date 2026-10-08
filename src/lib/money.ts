@@ -24,6 +24,18 @@ export function formatTryMinor(minor: number): string {
   return `${formatter.format(minor / 100)} ₺`;
 }
 
+const percentFormatter = new Intl.NumberFormat("tr-TR", { maximumFractionDigits: 2 });
+
+/** 17.5 -> "17,5", 15 -> "15". The digits only; callers write the "%" sign. */
+export function formatPercent(percent: number): string {
+  return percentFormatter.format(percent);
+}
+
+/** A commission rate in basis points: 1750 -> "17,5". */
+export function formatBpsPercent(bps: number): string {
+  return formatPercent(bps / 100);
+}
+
 /** True when the amount is exactly zero — used for the "free" label. */
 export function isFreeMinor(minor: number): boolean {
   return minor === 0;

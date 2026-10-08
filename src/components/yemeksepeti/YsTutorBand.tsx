@@ -6,6 +6,7 @@ import { Children } from "react";
 
 import { useCoachingFlag } from "@/hooks/useCoachingFlag";
 import { TUTOR_EARNINGS_PREVIEW_ENABLED } from "@/lib/featureFlags";
+import { formatPercent } from "@/lib/money";
 import { cn } from "@/lib/utils";
 
 import { YsEarningsCalculator } from "./YsEarningsCalculator";
@@ -63,7 +64,12 @@ export function useTutorSteps(): YsStep[] {
     trialPaid: <YsFact value={TRIAL_PAID_TO_TUTOR} label="Deneme dersi hocaya ücretli mi: D5" />,
     autoConfirmHours: AUTO_CONFIRM_HOURS,
     payout: <YsFact value={TUTOR_PAYOUT_TEXT} label="Ödeme ne zaman, nasıl: ödeme sağlayıcısı canlıya alınınca" />,
-    commission: <YsFact value={COMMISSION_PERCENT} label="X" />,
+    commission: (
+      <YsFact
+        value={isTodo(COMMISSION_PERCENT) ? COMMISSION_PERCENT : formatPercent(COMMISSION_PERCENT)}
+        label="X"
+      />
+    ),
     coaching,
     coachingText: <YsFact value={COACHING_TUTOR_TEXT} label="D11: koçluk nasıl çalışıyor" />,
   };

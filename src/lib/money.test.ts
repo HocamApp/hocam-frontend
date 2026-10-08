@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import { formatTryMinor, isFreeMinor } from "./money";
+import { formatBpsPercent, formatPercent, formatTryMinor, isFreeMinor } from "./money";
 
 describe("formatTryMinor", () => {
   it("formats whole lira with two decimals", () => {
@@ -29,5 +29,19 @@ describe("isFreeMinor", () => {
     assert.equal(isFreeMinor(0), true);
     assert.equal(isFreeMinor(1), false);
     assert.equal(isFreeMinor(45000), false);
+  });
+});
+
+describe("formatPercent", () => {
+  it("uses a Turkish decimal comma, never a dot", () => {
+    assert.equal(formatPercent(17.5), "17,5");
+    assert.equal(formatPercent(15), "15");
+    assert.equal(formatPercent(12.34), "12,34");
+  });
+
+  it("reads a commission in basis points", () => {
+    assert.equal(formatBpsPercent(1750), "17,5");
+    assert.equal(formatBpsPercent(1500), "15");
+    assert.equal(formatBpsPercent(0), "0");
   });
 });
