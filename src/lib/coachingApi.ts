@@ -418,6 +418,8 @@ const ERROR_MESSAGES: Record<string, string> = {
   requested_time_rejected: "Bu öneri artık geçerli değil.",
   reschedule_pending: "Bu görüşme için zaten bekleyen bir değişiklik talebi var.",
   session_not_reschedulable: "Bu görüşme şu anda yeniden planlanamaz.",
+  outside_service_period:
+    "Görüşme yalnız kendi haftası (koçluk dönemi) içinde taşınabilir. Daha ileri bir tarih için hocana mesaj at.",
   // --- Faz 5: session participation, attendance, attachments ----------
   too_early: "Görüşme odası henüz açılmadı.",
   session_ended: "Bu görüşme sona erdi.",
@@ -1017,6 +1019,8 @@ export interface CoachingSessionItem {
   report_overdue: boolean;
   complaint_eligible_at: string | null;
   complaint_eligible: boolean;
+  /** The session's economic period: a single reschedule must stay inside it. */
+  reschedule_window?: { starts_on: string; ends_on: string };
 }
 
 export async function fetchCoachingSessions(): Promise<CoachingSessionItem[]> {
@@ -1066,6 +1070,30 @@ export interface CoachingRescheduleRequestItem {
   requested_at: string;
   responded_at: string | null;
   rejection_reason: string;
+  /** Tutor list only. */
+  student_name?: string;
+}
+
+export interface CoachingRescheduleOption {
+  local_date: string;
+  local_time: string;
+  start: string;
+}
+
+export interface CoachingRescheduleOptions {
+  window: { starts_on: string; ends_on: string };
+  /** A pick from `options` moves the session without the tutor right now. */
+  free_change_applies_now: boolean;
+  options: CoachingRescheduleOption[];
+}
+
+export async function fetchCoachingRescheduleOptions(
+  sessionId: string,
+): Promise<CoachingRescheduleOptions> {
+  const response = await api.get<CoachingRescheduleOptions>(
+    `/coaching/sessions/${sessionId}/reschedule-options/`,
+  );
+  return response.data;
 }
 
 export async function requestCoachingSessionReschedule(
@@ -1214,6 +1242,8 @@ export const RESCHEDULE_STATUS_COPY: Record<CoachingRescheduleRequestStatus, str
 export interface MyRecurringSlots {
   purchase_id: string | null;
   recurring_slots: CoachingRecurringSlotItem[];
+  /** The tutor's other published weekly coaching hours ("HH:MM"). */
+  published_slots?: { day_of_week: number; start_time: string }[];
 }
 
 export async function fetchMyCoachingRecurringSlots(): Promise<MyRecurringSlots> {
