@@ -9,6 +9,7 @@ import { CoachingPageShell } from "@/components/coaching/CoachingPageShell";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { CoachingEmptyState as EmptyState } from "@/components/coaching/CoachingEmptyState";
+import { CoachingLoadError } from "@/components/coaching/CoachingLoadError";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -25,7 +26,9 @@ import {
   fetchCoachingSchedulingSlots,
   fetchCoachingSchedulingState,
   fetchMyCoachingRecurringSlots,
+  coachingServiceStatusLabel,
 } from "@/lib/coachingApi";
+import { studentCoachingNextStep } from "@/lib/coachingPresentation";
 
 /**
  * Faz 4: the student's recurring-slot selection screen.
@@ -41,7 +44,13 @@ function ScheduleContent() {
   const [selected, setSelected] = useState<PickedSlot[]>([]);
   const [error, setError] = useState<string | null>(null);
 
-  const { data: state, isLoading: stateLoading } = useQuery({
+  const {
+    data: state,
+    isLoading: stateLoading,
+    isError: stateFailed,
+    isFetching: stateFetching,
+    refetch: refetchState,
+  } = useQuery({
     queryKey: ["coaching-scheduling-state"],
     queryFn: fetchCoachingSchedulingState,
   });
@@ -74,6 +83,16 @@ function ScheduleContent() {
     );
   }
 
+  if (stateFailed) {
+    return (
+      <CoachingLoadError
+        message="Koçluk bilgilerin yüklenemedi. Bağlantını kontrol edip tekrar dene."
+        onRetry={() => refetchState()}
+        isRetrying={stateFetching}
+      />
+    );
+  }
+
   if (!state) {
     return (
       <EmptyState
@@ -88,7 +107,14 @@ steps={["Birleşik talebin kabul edilir", "Koçluk müsaitliğinden düzenli saa
     return <ActiveScheduleView />;
   }
 
-  if (state.service_status === "cancellation_pending" || state.service_status === "cancelled") {
+  // Only a coaching that never got a schedule ended because of the
+  // selection deadline. A student cancelling an active coaching passes
+  // through the same two statuses but already has a service period.
+  const endedBeforeScheduling =
+    (state.service_status === "cancellation_pending" || state.service_status === "cancelled") &&
+    state.service_period_id === null;
+
+  if (endedBeforeScheduling) {
     return (
       <EmptyState
         title="Saat seçme süresi doldu"
@@ -98,10 +124,13 @@ steps={["Birleşik talebin kabul edilir", "Koçluk müsaitliğinden düzenli saa
   }
 
   if (!isAwaitingSchedule) {
+    const step = studentCoachingNextStep(state.service_status, undefined);
     return (
       <EmptyState
         title="Şu anda saat seçemezsin"
-        description={`Koçluk durumu: ${state.service_status}`}
+        description={
+          step.kind === "message" ? step.text : coachingServiceStatusLabel(state.service_status)
+        }
       />
     );
   }

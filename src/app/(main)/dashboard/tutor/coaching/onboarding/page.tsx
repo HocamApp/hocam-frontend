@@ -11,6 +11,7 @@ import { OnboardingCarousel } from "@/components/coaching/OnboardingCarousel";
 import { OnboardingControlQuestions } from "@/components/coaching/OnboardingControlQuestions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { CoachingLoadError } from "@/components/coaching/CoachingLoadError";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { cn } from "@/lib/utils";
@@ -36,7 +37,13 @@ function OnboardingContent() {
   const [error, setError] = useState<string | null>(null);
   const [pendingQuestionId, setPendingQuestionId] = useState<string | null>(null);
 
-  const { data: state, isLoading } = useQuery({
+  const {
+    data: state,
+    isLoading,
+    isError: loadFailed,
+    isFetching,
+    refetch,
+  } = useQuery({
     queryKey: ["coaching-onboarding"],
     queryFn: fetchCoachingOnboarding,
   });
@@ -85,6 +92,16 @@ function OnboardingContent() {
       setPendingQuestionId(null);
     }
   };
+
+  if (loadFailed && !state) {
+    return (
+      <CoachingLoadError
+        message="Koçluk kurulumun yüklenemedi. Bağlantını kontrol edip tekrar dene."
+        onRetry={() => refetch()}
+        isRetrying={isFetching}
+      />
+    );
+  }
 
   if (isLoading || !state) {
     return (

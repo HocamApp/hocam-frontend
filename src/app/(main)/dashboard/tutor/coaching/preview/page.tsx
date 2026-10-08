@@ -6,6 +6,7 @@ import { Eye } from "lucide-react";
 
 import { CoachingEmptyState } from "@/components/coaching/CoachingEmptyState";
 import { CoachingGuard } from "@/components/coaching/CoachingGuard";
+import { CoachingLoadError } from "@/components/coaching/CoachingLoadError";
 import { CoachingPageShell } from "@/components/coaching/CoachingPageShell";
 import { StudentPreviewCard } from "@/components/coaching/StudentPreviewCard";
 import { Button } from "@/components/ui/button";
@@ -13,12 +14,21 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { fetchCoachingPlanPreview } from "@/lib/coachingApi";
 
 function PreviewContent() {
-  const { data: preview, isLoading } = useQuery({
+  const { data: preview, isLoading, isError, isFetching, refetch } = useQuery({
     queryKey: ["coaching-plan-preview"],
     queryFn: fetchCoachingPlanPreview,
   });
 
   if (isLoading) return <Skeleton className="h-64 w-full" />;
+  if (isError) {
+    return (
+      <CoachingLoadError
+        message="Öğrenci görünümü yüklenemedi."
+        onRetry={() => refetch()}
+        isRetrying={isFetching}
+      />
+    );
+  }
 
   if (!preview) {
     return (

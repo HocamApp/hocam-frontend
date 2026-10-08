@@ -153,3 +153,31 @@ describe("coachingRoomUserInfo", () => {
     assert.deepEqual(coachingRoomUserInfo(undefined, "student"), { displayName: "Öğrenci", email: "" });
   });
 });
+
+describe("studentCoachingNextStep", () => {
+  it("asks to pick a time only while the schedule is actually open", async () => {
+    const { studentCoachingNextStep } = await import("./coachingPresentation");
+    assert.deepEqual(studentCoachingNextStep("accepted_awaiting_schedule", undefined), { kind: "pick_schedule" });
+    for (const status of ["cancelled", "completed", "rejected", "refunded", "paused_by_platform", "accepted_awaiting_payment"]) {
+      assert.notEqual(studentCoachingNextStep(status, undefined).kind, "pick_schedule", status);
+    }
+  });
+
+  it("shows the next meeting while active or winding down", async () => {
+    const { studentCoachingNextStep } = await import("./coachingPresentation");
+    const sessions = [
+      { status: "completed", scheduled_start: "2026-10-01T15:00:00Z" },
+      { status: "scheduled", scheduled_start: "2026-10-12T15:00:00Z" },
+    ];
+    assert.deepEqual(studentCoachingNextStep("active", sessions), { kind: "next_session", startsAt: "2026-10-12T15:00:00Z" });
+    assert.deepEqual(studentCoachingNextStep("cancellation_pending", sessions), { kind: "next_session", startsAt: "2026-10-12T15:00:00Z" });
+    assert.deepEqual(studentCoachingNextStep("active", []), { kind: "no_upcoming_session" });
+  });
+
+  it("never echoes a raw status", async () => {
+    const { studentCoachingNextStep } = await import("./coachingPresentation");
+    const step = studentCoachingNextStep("something_new", undefined);
+    assert.equal(step.kind, "message");
+    assert.doesNotMatch(step.kind === "message" ? step.text : "", /_/);
+  });
+});

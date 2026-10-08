@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
+import { CoachingFilePicker } from "@/components/coaching/CoachingFilePicker";
 import { Button } from "@/components/ui/button";
 import {
   fetchCoachingSessionAttachments,
@@ -42,19 +43,13 @@ export function CoachingAttachmentPanel({ sessionId }: { sessionId: string }) {
   return (
     <div className="space-y-2">
       <p className="text-sm font-medium">Görüşme dosyaları</p>
-      <label className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-dashed px-3 py-2 text-xs text-muted-foreground hover:bg-muted">
-        {uploadMutation.isPending ? "Yükleniyor..." : "Dosya yükle (PDF, JPG, PNG, WebP, DOCX, PPTX)"}
-        <input
-          type="file"
-          className="hidden"
-          disabled={uploadMutation.isPending}
-          onChange={(e) => {
-            const file = e.target.files?.[0];
-            if (file) uploadMutation.mutate(file);
-            e.target.value = "";
-          }}
-        />
-      </label>
+      <CoachingFilePicker
+        label="Dosya yükle"
+        hint="PDF, JPG, PNG, WebP, DOCX veya PPTX."
+        accept=".pdf,.jpg,.jpeg,.png,.webp,.docx,.pptx"
+        busy={uploadMutation.isPending}
+        onFile={(file) => uploadMutation.mutate(file)}
+      />
       <ul className="space-y-1">
         {(attachments ?? []).map((a) => (
           <li key={a.id} className="flex items-center justify-between rounded border px-2 py-1 text-xs">

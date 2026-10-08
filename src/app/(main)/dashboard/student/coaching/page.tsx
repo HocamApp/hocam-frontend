@@ -18,6 +18,7 @@ import { CoachingPageShell } from "@/components/coaching/CoachingPageShell";
 import { CoachingSectionHeading } from "@/components/coaching/CoachingSectionHeading";
 import { CoachingLoadingState } from "@/components/coaching/CoachingLoadingState";
 import { CoachingEmptyState as EmptyState } from "@/components/coaching/CoachingEmptyState";
+import { CoachingLoadError } from "@/components/coaching/CoachingLoadError";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -25,20 +26,34 @@ import {
   fetchCoachingSchedulingState,
   fetchCoachingSessions,
 } from "@/lib/coachingApi";
+import { studentCoachingNextStep } from "@/lib/coachingPresentation";
 
 function OverviewContent() {
-  const { data: state, isLoading: stateLoading } = useQuery({
+  const stateQuery = useQuery({
     queryKey: ["coaching-scheduling-state"],
     queryFn: fetchCoachingSchedulingState,
   });
-  const { data: sessions, isLoading: sessionsLoading } = useQuery({
+  const state = stateQuery.data;
+  const hasSessions =
+    state?.service_status === "active" || state?.service_status === "cancellation_pending";
+  const sessionsQuery = useQuery({
     queryKey: ["coaching-sessions"],
     queryFn: fetchCoachingSessions,
-    enabled: state?.service_status === "active",
+    enabled: hasSessions,
   });
 
-  if (stateLoading) {
+  if (stateQuery.isLoading) {
     return <CoachingLoadingState rows={3} />;
+  }
+
+  if (stateQuery.isError) {
+    return (
+      <CoachingLoadError
+        message="Koçluk bilgilerin yüklenemedi. Bağlantını kontrol edip tekrar dene."
+        onRetry={() => stateQuery.refetch()}
+        isRetrying={stateQuery.isFetching}
+      />
+    );
   }
 
   if (!state) {
@@ -55,9 +70,7 @@ function OverviewContent() {
     );
   }
 
-  const nextSession = sessions?.find(
-    (s) => s.status === "scheduled" || s.status === "in_progress",
-  );
+  const nextStep = studentCoachingNextStep(state.service_status, sessionsQuery.data);
 
   return (
     <div className="space-y-6">
@@ -80,30 +93,33 @@ function OverviewContent() {
             </Badge>
           </div>
           <div className="mt-6 border-t border-line pt-5">
-            {sessionsLoading ? (
+            {hasSessions && sessionsQuery.isLoading ? (
               <div className="h-5 w-64 animate-pulse rounded-input bg-[var(--skeleton)]" />
-            ) : nextSession ? (
+            ) : hasSessions && sessionsQuery.isError ? (
+              <CoachingLoadError
+                message="Görüşmelerin yüklenemedi."
+                onRetry={() => sessionsQuery.refetch()}
+                isRetrying={sessionsQuery.isFetching}
+              />
+            ) : nextStep.kind === "next_session" ? (
               <p className="text-body text-ink-mid tabular-nums">
                 Sonraki görüşme:{" "}
-                {new Date(nextSession.scheduled_start).toLocaleString("tr-TR", {
+                {new Date(nextStep.startsAt).toLocaleString("tr-TR", {
                   dateStyle: "medium",
                   timeStyle: "short",
                 })}
               </p>
-            ) : state.service_status === "active" ? (
+            ) : nextStep.kind === "no_upcoming_session" ? (
               <p className="text-body text-ink-mid">Yaklaşan görüşmen yok.</p>
-            ) : state.service_status === "accepted_awaiting_payment" ? (
-              <p className="max-w-2xl text-body leading-[1.6] text-ink-mid">
-                Öğretmenin koçluk talebini kabul etti. Ödeme doğrulandıktan
-                sonra görüşme saatini seçebilirsin.
-              </p>
-            ) : (
+            ) : nextStep.kind === "pick_schedule" ? (
               <Link
                 href="/dashboard/student/coaching/schedule"
                 className="text-body font-medium text-pink underline underline-offset-4"
               >
                 Koçluk saatini seç
               </Link>
+            ) : (
+              <p className="max-w-2xl text-body leading-[1.6] text-ink-mid">{nextStep.text}</p>
             )}
           </div>
         </CardContent>

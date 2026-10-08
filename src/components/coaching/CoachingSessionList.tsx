@@ -8,34 +8,35 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { CoachingLoadingState } from "@/components/coaching/CoachingLoadingState";
+import { CoachingLoadError } from "@/components/coaching/CoachingLoadError";
 import { RescheduleDialog } from "@/components/coaching/RescheduleDialog";
 import { CoachingEmptyState } from "@/components/coaching/CoachingEmptyState";
 import { fetchCoachingSessions } from "@/lib/coachingApi";
+import { coachingSessionStatusLabel } from "@/lib/coachingPresentation";
 
 const JOINABLE_STATUSES = new Set(["scheduled", "in_progress"]);
 
-const STATUS_LABEL: Record<string, string> = {
-  scheduled: "Planlandı",
-  reschedule_requested: "Değişiklik bekleniyor",
-  in_progress: "Devam ediyor",
-  awaiting_report: "Rapor bekleniyor",
-  completed: "Tamamlandı",
-  student_no_show: "Öğrenci katılmadı",
-  tutor_no_show: "Öğretmen katılmadı",
-  cancelled: "İptal edildi",
-  technical_failure: "Teknik sorun",
-};
 
 /** The student's confirmed koçluk session list — reschedule entry point
  * for each upcoming, still-editable session. */
 export function CoachingSessionList() {
-  const { data: sessions = [], isLoading } = useQuery({
+  const { data: sessions = [], isLoading, isError, isFetching, refetch } = useQuery({
     queryKey: ["coaching-sessions"],
     queryFn: fetchCoachingSessions,
   });
 
   if (isLoading) {
     return <CoachingLoadingState rows={3} />;
+  }
+
+  if (isError) {
+    return (
+      <CoachingLoadError
+        message="Görüşmelerin yüklenemedi."
+        onRetry={() => refetch()}
+        isRetrying={isFetching}
+      />
+    );
   }
 
   if (sessions.length === 0) {
@@ -71,7 +72,7 @@ export function CoachingSessionList() {
                   variant="outline"
                   className="mt-2 border-line bg-transparent text-ink"
                 >
-                  {STATUS_LABEL[session.status] ?? session.status}
+                  {coachingSessionStatusLabel(session.status)}
                 </Badge>
                 {session.report_overdue && session.report_due_at ? (
                   <p className="mt-2 text-small text-error">
