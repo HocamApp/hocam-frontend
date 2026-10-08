@@ -27,8 +27,9 @@ import {
  * request, which is how it works now; recording, a parent joining, a parent
  * paying and support reply time are TODO facts until the owners decide them.
  *
- * `className` lets the /veliler page reuse the panel without the homepage's
- * 120px lead-in.
+ * `className` carries the space above (the homepage's 120px lead-in, less on
+ * /veliler). It goes on the outer element: `.ys-shell` sets its own padding
+ * and margin, which would override it.
  */
 export function YsParentsPanel({
   className,
@@ -66,44 +67,46 @@ export function YsParentsPanel({
     <section
       id="veliler"
       aria-labelledby="ys-parents-title"
-      className={cn("ys-shell scroll-mt-[calc(var(--app-header-h)+24px)]", className)}
+      className={cn("scroll-mt-[calc(var(--app-header-h)+24px)]", className)}
     >
-      <div className="rounded-card bg-surface px-6 py-8 lg:p-16">
-        <div className="grid grid-cols-1 items-start gap-x-16 gap-y-10 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
-          <div className="min-w-0">
-            <h2
-              id="ys-parents-title"
-              className="text-[32px] font-bold leading-9 md:text-[44px] md:leading-[46px] md:tracking-[-0.88px]"
-            >
-              {copy.title}
-            </h2>
-            <p className="mt-4 max-w-[36ch] text-body-l leading-[29px] text-ink-mid">{copy.lead}</p>
-            {showCta && (
-            <Link
-              href="/veliler"
-              className="mt-7 inline-flex h-12 items-center gap-2 rounded-pill border border-ink px-8 text-body font-semibold text-ink transition-colors duration-[--duration-state] hover:bg-ink hover:text-paper"
-            >
-              {copy.cta}
-              <ArrowRight className="size-4" aria-hidden />
-            </Link>
-            )}
-          </div>
-
-          <div className="flex min-w-0 flex-col">
-            {rows.map(({ Icon, title, body }) => (
-              <div
-                key={title}
-                className="grid grid-cols-[44px_minmax(0,1fr)] gap-4 border-t border-line py-[22px] first:border-t-0 first:pt-0"
+      <div className="ys-shell">
+        <div className="rounded-card bg-surface px-6 py-8 lg:p-16">
+          <div className="grid grid-cols-1 items-start gap-x-16 gap-y-10 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
+            <div className="min-w-0">
+              <h2
+                id="ys-parents-title"
+                className="text-[32px] font-bold leading-9 tracking-[-0.88px] md:text-[44px] md:leading-[46px]"
               >
-                <span className="grid size-11 place-items-center rounded-[12px] bg-paper text-ink">
-                  <Icon className="size-[22px]" aria-hidden />
-                </span>
-                <div>
-                  <h3 className="text-[18px] font-semibold leading-[26px]">{title}</h3>
-                  <p className="mt-1 text-[15px] leading-6 text-ink-mid">{Children.toArray(body)}</p>
+                {copy.title}
+              </h2>
+              <p className="mt-4 max-w-[36ch] text-body-l leading-[29px] text-ink-mid">{copy.lead}</p>
+              {showCta && (
+              <Link
+                href="/veliler"
+                className="mt-7 inline-flex h-[50px] items-center gap-2 rounded-pill border border-ink px-[22px] text-[15px] font-semibold sm:px-8 sm:text-body text-ink transition-colors duration-[--duration-state] hover:bg-ink hover:text-paper"
+              >
+                {copy.cta}
+                <ArrowRight className="size-4" aria-hidden />
+              </Link>
+              )}
+            </div>
+
+            <div className="flex min-w-0 flex-col">
+              {rows.map(({ Icon, title, body }) => (
+                <div
+                  key={title}
+                  className="grid grid-cols-[44px_minmax(0,1fr)] gap-4 border-t border-line py-[22px] first:border-t-0 first:pt-0"
+                >
+                  <span className="grid size-11 place-items-center rounded-[12px] bg-paper text-ink">
+                    <Icon className="size-[22px]" aria-hidden />
+                  </span>
+                  <div>
+                    <h3 className="text-[18px] font-semibold leading-[26px]">{title}</h3>
+                    <p className="mt-1 text-[15px] leading-6 text-ink-mid">{Children.toArray(body)}</p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       </div>

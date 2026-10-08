@@ -23,7 +23,6 @@ import {
   MAX_PACKAGE_DISCOUNT_PERCENT,
   MONTHLY_TRIAL_LIMIT,
   OFF_PLATFORM_TEXT,
-  PACKAGE_GRACE_DAYS,
   PARENT_CAN_JOIN_TEXT,
   PARENT_CAN_PAY_TEXT,
   PLAN_DURATIONS,
@@ -85,8 +84,7 @@ const YS_HOME_FAQ_ITEMS: SupportAccordionSectionItem[] = [
       <p className="text-base leading-7">
         Hayır. Ücretsiz deneme dersi dışındaki dersler paket üzerinden alınır. Paketi kurarken
         haftada 2–6 ders arasından seçim yapar, süreyi 2 hafta, 1 ay, 3 ay veya 6 ay olarak
-        belirlersin. Paket seçtiğin hocaya özeldir ve otomatik yenilenmez. Süre dolduktan sonra
-        kalan derslerini kullanman için {PACKAGE_GRACE_DAYS} günlük ek süren olur.
+        belirlersin. Paket seçtiğin hocaya özeldir ve otomatik yenilenmez.
       </p>
     ),
   },
@@ -260,7 +258,9 @@ function YsHomeFaqTabs({
   return (
     <div
       id={FAQ_SECTION_ID}
-      className="mt-[120px] grid scroll-mt-[calc(var(--app-header-h)+24px)] grid-cols-1 gap-x-16 gap-y-8 border-t border-line pb-[88px] pt-16 md:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]"
+      /* The mockup leaves 88px under the FAQ. The footer brings 64/96 of its
+         own, so this adds only the difference on phones. */
+      className="mt-[120px] grid scroll-mt-[calc(var(--app-header-h)+24px)] grid-cols-1 gap-x-16 gap-y-8 border-t border-line pb-6 pt-16 md:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] md:pb-0"
     >
       {visible.length > 0 && (
         <JsonLd

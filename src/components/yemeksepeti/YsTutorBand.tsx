@@ -42,7 +42,8 @@ import { approvedTestimonials } from "./ysTestimonialData";
  *
  * - The calculator promises income while no payment provider pays tutors, so
  *   it renders only with NEXT_PUBLIC_TUTOR_EARNINGS_PREVIEW on and the
- *   commission and price range decided. Without it the steps run full width.
+ *   commission and price range decided. Without it the steps keep their
+ *   column and the other one stays empty.
  * - Coaching (the step 7 chip and sentence, and the word in its title) shows
  *   only while the coaching flag is on.
  *
@@ -114,7 +115,7 @@ export function YsTutorBand({ className }: { className?: string }) {
           <div className="min-w-0">
             <h2
               id="ys-tutors-title"
-              className="text-[32px] font-bold leading-9 md:text-[44px] md:leading-[46px] md:tracking-[-0.88px]"
+              className="text-[32px] font-bold leading-9 tracking-[-0.88px] md:text-[44px] md:leading-[46px]"
             >
               {copy.title}
             </h2>
@@ -122,13 +123,13 @@ export function YsTutorBand({ className }: { className?: string }) {
             <div className="mt-9 flex flex-wrap gap-3">
               <Link
                 href="/hoca-ol"
-                className="inline-flex h-12 items-center rounded-pill bg-pink px-6 text-[15px] font-semibold text-white transition-colors duration-[--duration-state] hover:bg-pink-deep sm:px-8 sm:text-body"
+                className="inline-flex h-[50px] items-center rounded-pill bg-pink px-[22px] text-[15px] font-semibold text-white transition-colors duration-[--duration-state] hover:bg-pink-deep sm:px-8 sm:text-body"
               >
                 {copy.ctaApply}
               </Link>
               <Link
                 href="/hoca-ol"
-                className="inline-flex h-12 items-center rounded-pill border border-paper/70 px-6 text-[15px] font-semibold text-paper transition-colors duration-[--duration-state] hover:bg-paper hover:text-ink sm:px-8 sm:text-body"
+                className="inline-flex h-[50px] items-center rounded-pill border border-paper/70 px-[22px] text-[15px] font-semibold text-paper transition-colors duration-[--duration-state] hover:bg-paper hover:text-ink sm:px-8 sm:text-body"
               >
                 {copy.ctaLearnMore}
               </Link>
@@ -136,7 +137,7 @@ export function YsTutorBand({ className }: { className?: string }) {
           </div>
 
           <div className="min-w-0 rounded-card border border-paper/20 p-7">
-            <h3 className="text-[18px] font-bold">{copy.eligibilityTitle}</h3>
+            <h3 className="text-[18px] font-bold leading-6">{copy.eligibilityTitle}</h3>
             <ul className="mt-3.5 flex flex-col gap-3">
               {copy
                 .eligibility({
@@ -153,12 +154,10 @@ export function YsTutorBand({ className }: { className?: string }) {
           </div>
         </div>
 
-        <div
-          className={cn(
-            "mt-[88px] grid grid-cols-1 items-start gap-x-16 gap-y-10",
-            calculator && "lg:grid-cols-[minmax(0,6fr)_minmax(0,5fr)]",
-          )}
-        >
+        {/* The steps keep the mockup's 6/12 column with or without the
+            calculator: run across the full band, their rules and lines were
+            far wider than anything else on the page. */}
+        <div className="mt-[88px] grid grid-cols-1 items-start gap-x-16 gap-y-10 lg:grid-cols-[minmax(0,6fr)_minmax(0,5fr)]">
           <div className="min-w-0">
             <h3 className="mb-7 text-[28px] font-bold leading-[34px] tracking-[-0.5px]">{copy.stepsTitle}</h3>
             <YsStepList tone="ink" steps={steps} />

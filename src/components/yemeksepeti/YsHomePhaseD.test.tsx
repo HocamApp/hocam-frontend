@@ -78,7 +78,10 @@ describe("/nasil-calisir steps toggle", () => {
     assert.match(html, /Doğrulan/);
     assert.match(html, /id="ys-steps-panel-student"[^>]*>/);
     assert.match(html, /id="ys-steps-panel-tutor" aria-labelledby="ys-steps-tab-tutor" hidden=""/);
-    assert.equal((html.match(/<li/g) ?? []).length, 14);
+    // Seven steps per track, each a tab, both tracks in the HTML.
+    assert.equal((html.match(/role="tab"[^>]*aria-selected/g) ?? []).length, 2 + 14);
+    // The student track carries the homepage screenshots; the tutor track has none.
+    assert.match(html, /01-tutor-list\.png/);
   });
 });
 

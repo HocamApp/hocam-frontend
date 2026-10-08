@@ -11,6 +11,7 @@ import {
 import { pages } from "@/components/yemeksepeti/ysHomeCopy";
 import { YsStepsToggle } from "@/components/yemeksepeti/YsStepsToggle";
 import { HOME_V2_ENABLED } from "@/lib/featureFlags";
+import { LESSON_ROOM_SHOT_EXISTS } from "@/lib/lessonRoomShot";
 import { publicPageMetadata, publicWebPageJsonLd } from "@/lib/publicSeo";
 
 const path = "/nasil-calisir" as const;
@@ -47,7 +48,7 @@ export default function HowItWorksPage() {
             student and tutor steps, behind a toggle (plan T15). */}
         {HOME_V2_ENABLED ? (
           <PublicSeoSection title={pages.nasilCalisir.stepsTitle}>
-            <YsStepsToggle />
+            <YsStepsToggle lessonRoomShot={LESSON_ROOM_SHOT_EXISTS} />
           </PublicSeoSection>
         ) : (
           <PublicSeoSection

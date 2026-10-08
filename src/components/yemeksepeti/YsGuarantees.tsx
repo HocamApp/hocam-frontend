@@ -63,22 +63,26 @@ export function YsGuarantees() {
   ];
 
   return (
-    <section aria-labelledby="ys-guarantees-title" className="ys-shell pt-[88px] md:pt-[120px]">
-      <YsPillHeading id="ys-guarantees-title" lead={copy.titleLead} pill={copy.titlePill} />
+    /* The top space sits outside `.ys-shell`, whose own padding and margin
+       rules would override it. */
+    <section aria-labelledby="ys-guarantees-title" className="mt-[88px] md:mt-[120px]">
+      <div className="ys-shell">
+        <YsPillHeading id="ys-guarantees-title" lead={copy.titleLead} pill={copy.titlePill} />
 
-      <div className="mt-12 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        {cards.map(({ Icon, question, answer }) => (
-          <div
-            key={question}
-            className="flex min-w-0 flex-col gap-2.5 rounded-card border border-line bg-surface p-6"
-          >
-            <span className="grid size-11 place-items-center rounded-[12px] bg-paper text-ink">
-              <Icon className="size-[22px]" aria-hidden />
-            </span>
-            <h3 className="mt-1.5 text-[18px] font-semibold leading-[25px]">{question}</h3>
-            <p className="text-[15px] leading-6 text-ink-mid">{Children.toArray(answer)}</p>
-          </div>
-        ))}
+        <div className="mt-12 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          {cards.map(({ Icon, question, answer }) => (
+            <div
+              key={question}
+              className="flex min-w-0 flex-col gap-2.5 rounded-card border border-line bg-surface p-6"
+            >
+              <span className="grid size-11 place-items-center rounded-[12px] bg-paper text-ink">
+                <Icon className="size-[22px]" aria-hidden />
+              </span>
+              <h3 className="mt-1.5 text-[18px] font-semibold leading-[25px]">{question}</h3>
+              <p className="text-[15px] leading-6 text-ink-mid">{Children.toArray(answer)}</p>
+            </div>
+          ))}
+        </div>
       </div>
     </section>
   );

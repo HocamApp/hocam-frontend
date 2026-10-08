@@ -1,6 +1,3 @@
-import Image from "next/image";
-import type { CSSProperties } from "react";
-
 import {
   VerticalTabs,
   type VerticalTabItem,
@@ -9,7 +6,7 @@ import {
 import { YsFact } from "./YsFact";
 import { YsJourneyHeading } from "./YsJourneyHeading";
 import { YS_SECTION_HEADING_CLASSNAME } from "./YsPillHeading";
-import { YsStepList, type YsStep } from "./YsStepList";
+import { YsStepTabs, type YsTabStep } from "./YsStepTabs";
 import { JOURNEY_SECTION_ID } from "./ysAppNav";
 import { students as copy } from "./ysHomeCopy";
 import {
@@ -101,7 +98,8 @@ export function YsHowItWorks({
   );
 }
 
-export const LESSON_ROOM_SHOT_PATH = "/images/how-it-works/05-lesson-room.png";
+const SHOTS_DIR = "/images/how-it-works";
+export const LESSON_ROOM_SHOT_PATH = `${SHOTS_DIR}/05-lesson-room.png`;
 
 const STUDENT_STEP_FACTS = {
   trialMinutes: TRIAL_MINUTES,
@@ -116,100 +114,75 @@ const STUDENT_STEP_FACTS = {
   remainingOnSwitch: <YsFact value={REMAINING_ON_SWITCH_TEXT} label="kalan dersler: D6" />,
 };
 
-/** The seven student steps, with their facts filled in. */
-export function studentSteps(): YsStep[] {
-  return copy.steps.map((step) => ({
-    title: step.title,
-    body: step.body(STUDENT_STEP_FACTS),
-  }));
+/**
+ * Which screenshot each of the seven steps shows. "Derse gir" shows the
+ * lesson room once its screenshot exists, the lesson dashboard until then.
+ */
+function studentShotFiles(lessonRoomShot: boolean) {
+  const files = {
+    tutorList: `${SHOTS_DIR}/01-tutor-list.png`,
+    tutorProfile: `${SHOTS_DIR}/02-nazli-profile.png`,
+    packageSelection: `${SHOTS_DIR}/03-package-selection.png`,
+    lessonDashboard: `${SHOTS_DIR}/04-lesson-dashboard.png`,
+    lessonRoom: LESSON_ROOM_SHOT_PATH,
+  } as const;
+  const keys = [
+    "tutorList",
+    "tutorProfile",
+    "tutorProfile",
+    "packageSelection",
+    "packageSelection",
+    lessonRoomShot ? "lessonRoom" : "lessonDashboard",
+    "lessonDashboard",
+  ] as const;
+  return keys.map((key) => ({ key, src: files[key] }));
 }
 
-/* The screenshots' own ratio, as in VerticalTabs. */
-const SHOT_WIDTH = 2880;
-const SHOT_HEIGHT = 1645;
-
-function Shot({
-  src,
-  alt,
-  caption,
-  wide,
-}: {
-  src: string;
-  alt: string;
-  caption: string;
-  wide?: boolean;
-}) {
-  return (
-    <figure
-      className={`m-0 overflow-hidden rounded-card border border-line bg-paper ${wide ? "lg:col-span-2" : ""}`}
-    >
-      <Image
-        src={src}
-        alt={alt}
-        width={SHOT_WIDTH}
-        height={SHOT_HEIGHT}
-        sizes="(min-width: 1024px) 40vw, 100vw"
-        className="h-auto w-full"
-      />
-      <figcaption className="border-t border-line bg-surface px-[18px] py-3 text-[13px] text-ink-mid">
-        {caption}
-      </figcaption>
-    </figure>
-  );
+/** The seven student steps, with their facts and screenshots filled in. */
+export function studentSteps(lessonRoomShot = false): YsTabStep[] {
+  const shots = studentShotFiles(lessonRoomShot);
+  return copy.steps.map((step, index) => {
+    const { key, src } = shots[index];
+    return {
+      title: step.title,
+      body: step.body(STUDENT_STEP_FACTS),
+      shot: {
+        src,
+        alt: copy.shots[key].alt,
+        caption: copy.shotCaption(index + 1, copy.shots[key].caption),
+      },
+    };
+  });
 }
-
-/* Development-only stand-in until the lesson room screenshot exists. */
-const PLACEHOLDER_STRIPES: CSSProperties = {
-  backgroundImage:
-    "repeating-linear-gradient(135deg, var(--paper) 0 12px, var(--skeleton) 12px 13px)",
-};
 
 /**
  * The rebuilt student section (NEXT_PUBLIC_HOME_V2): the rotating heading as
- * it was, a subline, all seven steps visible on the left, and the product
- * screenshots on the right, sticky under the header on wide screens.
+ * it was, a subline, the seven steps on the left and the active step's
+ * screenshot on the right, sticky under the header on wide screens.
  *
  * It sits on paper inside the shell, as the mockup has it, rather than on the
- * full-bleed surface band the tabbed version uses.
+ * full-bleed surface band the tabbed version uses. The section's top space
+ * is on the outer element: `.ys-shell` sets its own padding and margin and
+ * would override it.
  */
 function YsStudentJourney({ lessonRoomShot }: { lessonRoomShot: boolean }) {
-  const showRoomPlaceholder = !lessonRoomShot && process.env.NODE_ENV !== "production";
   return (
     <section
       id="ogrenciler"
       aria-labelledby={JOURNEY_SECTION_ID}
-      className="ys-shell scroll-mt-[calc(var(--app-header-h)+24px)] pt-[88px] md:pt-[120px]"
+      className="mt-[88px] scroll-mt-[calc(var(--app-header-h)+24px)] md:mt-[120px]"
     >
-      {/* Keeps the nav's "Nasıl çalışır" anchor landing on this section. */}
-      <h2
-        id={JOURNEY_SECTION_ID}
-        className={`${YS_SECTION_HEADING_CLASSNAME} scroll-mt-[calc(var(--app-header-h)+24px)]`}
-      >
-        <YsJourneyHeading />
-      </h2>
-      <p className="mx-auto mt-5 max-w-[52ch] text-center text-body-l text-ink-mid">{copy.sub}</p>
+      <div className="ys-shell">
+        {/* Keeps the nav's "Nasıl çalışır" anchor landing on this section. */}
+        <h2
+          id={JOURNEY_SECTION_ID}
+          className={`${YS_SECTION_HEADING_CLASSNAME} scroll-mt-[calc(var(--app-header-h)+24px)]`}
+        >
+          <YsJourneyHeading />
+        </h2>
+        <p className="mx-auto mt-5 max-w-[52ch] text-center text-[18px] leading-7 text-ink-mid">{copy.sub}</p>
 
-      <div className="mt-14 grid grid-cols-1 items-start gap-x-16 gap-y-8 lg:grid-cols-12">
-        <YsStepList className="min-w-0 lg:col-span-5" steps={studentSteps()} />
-
-        <div className="grid min-w-0 grid-cols-1 gap-4 lg:sticky lg:top-[calc(var(--app-header-h)+24px)] lg:col-span-7 lg:grid-cols-2">
-          <Shot wide src="/images/how-it-works/01-tutor-list.png" {...copy.shots.tutorList} />
-          <Shot wide src="/images/how-it-works/03-package-selection.png" {...copy.shots.packageSelection} />
-          <Shot src="/images/how-it-works/04-lesson-dashboard.png" {...copy.shots.lessonDashboard} />
-          {lessonRoomShot ? (
-            <Shot src={LESSON_ROOM_SHOT_PATH} {...copy.shots.lessonRoom} />
-          ) : (
-            showRoomPlaceholder && (
-              <div
-                data-todo-fact="lesson-room-shot"
-                className="grid aspect-video place-items-center rounded-card border border-line p-6 text-center text-small text-ink-mid lg:aspect-auto"
-                style={PLACEHOLDER_STRIPES}
-              >
-                {copy.lessonRoomPlaceholder}
-              </div>
-            )
-          )}
-        </div>
+        <YsStepTabs className="mt-14" label={copy.stepsLabel} steps={studentSteps(lessonRoomShot)} />
       </div>
     </section>
   );

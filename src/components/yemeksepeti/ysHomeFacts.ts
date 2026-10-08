@@ -42,9 +42,6 @@ export const MAX_PACKAGE_DISCOUNT_PERCENT = 30;
 /** apps/lessons/services.py CANCELLATION_FREE_WINDOW — 12 hours. */
 export const CANCELLATION_FREE_HOURS = 12;
 
-/** apps/payments/services.py PACKAGE_GRACE_PERIOD_DAYS. */
-export const PACKAGE_GRACE_DAYS = 14;
-
 /**
  * The highest YKS rank a tutor can register with, formatted the Turkish way
  * (period as the thousands separator).

@@ -127,13 +127,17 @@ export const students = {
       ],
     },
   ],
+  stepsLabel: "Öğrenci adımları",
+  /* One screenshot per step; steps 2-3, 4-5 and 6-7 share one. The caption
+     carries the active step's number. */
   shots: {
-    tutorList: { caption: "01 · Hoca listesi", alt: "Hoca listesi ekranı" },
-    packageSelection: { caption: "04 · Paket seçimi", alt: "Paket seçimi ekranı" },
-    lessonDashboard: { caption: "06 · Panelden derse katıl", alt: "Öğrenci paneli, Derse katıl butonu" },
-    lessonRoom: { caption: "06 · Ders odası", alt: "Ders odası, görüntülü görüşme ve beyaz tahta" },
+    tutorList: { caption: "Hoca listesi", alt: "Hoca listesi ekranı" },
+    tutorProfile: { caption: "Hoca profili", alt: "Bir hocanın profil sayfası" },
+    packageSelection: { caption: "Paket seçimi", alt: "Paket seçimi ekranı" },
+    lessonDashboard: { caption: "Panelden derse katıl", alt: "Öğrenci paneli, Derse katıl butonu" },
+    lessonRoom: { caption: "Ders odası", alt: "Ders odası, görüntülü görüşme ve beyaz tahta" },
   },
-  lessonRoomPlaceholder: "Ders odası ekran görüntüsü (video + beyaz tahta)",
+  shotCaption: (step: number, caption: string) => `${String(step).padStart(2, "0")} · ${caption}`,
 } as const;
 
 export const pricing = {
@@ -252,7 +256,8 @@ export const tutors = {
     ["Öğrenci kimliğini ve YKS sonuç belgeni yükleyebilmek"],
     ["Haftada en az ", f.minWeeklyHours, " saat ayırabilmek"],
   ],
-  stepsTitle: "Başvurudan ilk ödemene kadar",
+  stepsTitle: "Başvurudan ilk dersine kadar",
+  stepsLabel: "Hoca adımları",
   steps: [
     {
       title: "Başvur",
@@ -288,7 +293,7 @@ export const tutors = {
       ],
     },
     {
-      title: "Ödemeni al",
+      title: "Dersin tamamlanır",
       body: (f: TutorStepFacts): ReactNode[] => [
         `Öğrenci dersi onaylayınca ya da ${f.autoConfirmHours} saat geçince ders tamamlanmış sayılır. `,
         f.payout,

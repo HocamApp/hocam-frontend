@@ -51,7 +51,7 @@ function priceRangeLabel() {
 function FactCard({ label, value, body }: { label: string; value: ReactNode; body?: ReactNode }) {
   return (
     <div className="rounded-card border border-line bg-surface px-6 py-[22px]">
-      <p className="text-[13px] font-medium text-ink-mid">{label}</p>
+      <p className="text-[13px] font-medium leading-6 text-ink-mid">{label}</p>
       <p className="mt-1 text-[28px] font-bold leading-[34px] tracking-[-0.4px]">{value}</p>
       {body && <p className="mt-1.5 text-small leading-[21px] text-ink-mid">{body}</p>}
     </div>
@@ -200,37 +200,41 @@ export function YsPricing() {
   const showExample = Boolean(exampleTutor) && options.length > 0;
 
   return (
+    /* The section's top space sits outside `.ys-shell`, whose own padding
+       and margin rules would override it. */
     <section
       id="fiyatlar"
       aria-labelledby="ys-pricing-title"
-      className="ys-shell scroll-mt-[calc(var(--app-header-h)+24px)] pt-[88px] md:pt-[120px]"
+      className="mt-[88px] scroll-mt-[calc(var(--app-header-h)+24px)] md:mt-[120px]"
     >
-      <YsPillHeading id="ys-pricing-title" lead={copy.titleLead} pill={copy.titlePill} />
-      <p className="mx-auto mt-5 max-w-[52ch] text-center text-body-l text-ink-mid">{copy.sub}</p>
+      <div className="ys-shell">
+        <YsPillHeading id="ys-pricing-title" lead={copy.titleLead} pill={copy.titlePill} />
+        <p className="mx-auto mt-5 max-w-[52ch] text-center text-body-l text-ink-mid">{copy.sub}</p>
 
-      {/* Without the example box the three cards take the full row rather
-          than leaving an empty column beside them. */}
-      <div
-        className={cn(
-          "mt-14 grid grid-cols-1 items-start gap-x-12 gap-y-8",
-          showExample && "lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]",
-        )}
-      >
-        <div className={cn("grid min-w-0 gap-3.5", !showExample && "md:grid-cols-3")}>
-          <FactCard
-            label={copy.lessonKey}
-            value={copy.lessonValue(LESSON_MINUTES)}
-            body={copy.lessonBody(LESSONS_PER_WEEK.min, LESSONS_PER_WEEK.max)}
-          />
-          <FactCard label={copy.rangeKey} value={Children.toArray([priceRangeLabel()])} />
-          <FactCard
-            label={copy.trialKey}
-            value={copy.trialValue}
-            body={copy.trialBody(TRIAL_MINUTES, MONTHLY_TRIAL_LIMIT)}
-          />
+        {/* Without the example box the three cards take the full row rather
+            than leaving an empty column beside them. */}
+        <div
+          className={cn(
+            "mt-14 grid grid-cols-1 items-start gap-x-12 gap-y-8",
+            showExample && "lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]",
+          )}
+        >
+          <div className={cn("grid min-w-0 gap-3.5", !showExample && "md:grid-cols-3")}>
+            <FactCard
+              label={copy.lessonKey}
+              value={copy.lessonValue(LESSON_MINUTES)}
+              body={copy.lessonBody(LESSONS_PER_WEEK.min, LESSONS_PER_WEEK.max)}
+            />
+            <FactCard label={copy.rangeKey} value={Children.toArray([priceRangeLabel()])} />
+            <FactCard
+              label={copy.trialKey}
+              value={copy.trialValue}
+              body={copy.trialBody(TRIAL_MINUTES, MONTHLY_TRIAL_LIMIT)}
+            />
+          </div>
+
+          {showExample && exampleTutor && <PackageExample tutor={exampleTutor} options={options} />}
         </div>
-
-        {showExample && exampleTutor && <PackageExample tutor={exampleTutor} options={options} />}
       </div>
     </section>
   );

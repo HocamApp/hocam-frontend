@@ -9,9 +9,10 @@ import { cn } from "@/lib/utils";
 export const YS_PILL_CLASSNAME =
   "inline-flex w-auto max-w-full items-center justify-center gap-2 overflow-hidden rounded-card bg-pink px-4 py-1 text-white md:w-auto md:max-w-none md:gap-3 md:px-5 md:py-2";
 
-/** The section heading the journey uses: display type, centred. */
+/** The section heading the journey uses: display type, centred, at the
+    mockup's `.big-h` sizes (36/38 on phones, 56/53 on wide screens). */
 export const YS_SECTION_HEADING_CLASSNAME =
-  "text-center text-[36px] font-bold leading-[0.95] tracking-[-0.03em] text-ink lg:text-[56px]";
+  "text-center text-[36px] font-bold leading-[38px] tracking-[-1px] text-ink lg:text-[56px] lg:leading-[53px] lg:tracking-[-1.68px]";
 
 /**
  * "Ne kadar [ödersin?]": a centred section heading whose last words sit in
