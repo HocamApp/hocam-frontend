@@ -3,6 +3,7 @@
 import { useId, useState } from "react";
 
 import { monthlyEarnings, WEEKS_PER_MONTH } from "@/lib/earnings";
+import { formatPercent } from "@/lib/money";
 import { formatPrice } from "@/lib/utils";
 
 import { tutors as copy } from "./ysHomeCopy";
@@ -82,7 +83,7 @@ export function YsEarningsCalculator({
         <div className="flex min-w-0 flex-col gap-2.5">
           <span className="text-small font-medium">{copy.calculator.commission}</span>
           <div className="flex h-11 items-center rounded-input border border-line px-3.5 text-base font-semibold tabular-nums">
-            %{commissionPercent}
+            %{formatPercent(commissionPercent)}
           </div>
         </div>
       </div>

@@ -6,6 +6,7 @@ import { Info, LockKeyhole, ShieldCheck, Sparkles, TrendingUp, WalletCards } fro
 
 import type { Subject, TutorProfile } from "@/types";
 import type { TutorPriceInsight } from "@/lib/tutorsApi";
+import { formatBpsPercent } from "@/lib/money";
 import { AvatarEditor } from "@/components/profile/AvatarEditor";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -409,7 +410,9 @@ export function PricingSection({
               <dd className="mt-1 font-semibold">{numericPrice.toLocaleString("tr-TR")} ₺</dd>
             </div>
             <div>
-              <dt className="text-muted-foreground">Hocam komisyonu (%15)</dt>
+              <dt className="text-muted-foreground">
+                Hocam komisyonu (%{formatBpsPercent(priceInsight?.commission_rate_bps ?? 0)})
+              </dt>
               <dd className="mt-1 font-semibold text-rose-700 dark:text-rose-300">
                 −{estimatedCommission.toLocaleString("tr-TR", { maximumFractionDigits: 2 })} ₺
               </dd>

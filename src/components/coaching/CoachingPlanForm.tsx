@@ -17,7 +17,7 @@ import type {
   CoachingSetupConfig,
 } from "@/lib/coachingApi";
 import { isCoachingExamGroup } from "@/lib/coachingPresentation";
-import { formatTryMinor } from "@/lib/money";
+import { formatBpsPercent, formatTryMinor } from "@/lib/money";
 import {
   buildCoachingPlanPayload,
   COACHING_SETUP_STEPS,
@@ -176,7 +176,7 @@ export function CoachingPlanForm({
               className="mt-1"
             />
             <p id="coaching-price-hint" className="mt-2 text-xs leading-5 text-muted-foreground">
-              Ücretsiz sunmak için 0 girebilirsin. Güncel platform komisyonu %{setupConfig.commission_bps / 100}; paket indirimi ve tahmini net kazanç kayıtlı plan üzerinden sunucuda hesaplanır.
+              Ücretsiz sunmak için 0 girebilirsin. Güncel platform komisyonu %{formatBpsPercent(setupConfig.commission_bps)}; paket indirimi ve tahmini net kazanç kayıtlı plan üzerinden sunucuda hesaplanır.
             </p>
             {overCap ? <p className="mt-2 text-xs font-medium text-destructive">Bu fiyat {formatTryMinor(setupConfig.price_cap_minor)} üst sınırını aşıyor.</p> : null}
           </div>

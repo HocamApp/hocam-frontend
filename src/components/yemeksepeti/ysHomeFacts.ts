@@ -115,8 +115,13 @@ export function isTodo(value: unknown): value is Todo {
 
 /** Lowest and highest profile price, per 40-minute lesson. */
 export const PRICE_RANGE_TL: Fact<{ min: number; max: number }> = TODO;
-/** Platform commission on a tutor's price. */
-export const COMMISSION_PERCENT: Fact<number> = TODO;
+/**
+ * Platform commission on a tutor's price. Founder decision, 8 October 2026
+ * (was 15%). Mirrors apps/tutors/price_insights.py
+ * TUTOR_ESTIMATED_COMMISSION_BPS = 1750 and /kullanim-kosullari §10.
+ * Render it with formatPercent so it reads "17,5", not "17.5".
+ */
+export const COMMISSION_PERCENT: Fact<number> = 17.5;
 /** When the student's card is actually charged. Waits for the payment provider. */
 export const PAYMENT_CHARGED_WHEN: Fact<string> = TODO;
 /** When and how a tutor is paid. Never IBAN, never a promise before payouts are live. */

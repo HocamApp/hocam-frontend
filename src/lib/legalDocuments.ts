@@ -132,8 +132,8 @@ export const LEGAL_DOCUMENTS: readonly LegalDocument[] = [
     navLabel: "Kullanım Koşulları",
     description:
       "Hesap açma, ders süreci, yasak kullanımlar ve sözleşmenin feshi dahil platform kuralları.",
-    updatedAt: "4 Eylül 2026",
-    updatedAtIso: "2026-09-04",
+    updatedAt: "8 Ekim 2026",
+    updatedAtIso: "2026-10-08",
   },
   {
     slug: "mesafeli-satis-sozlesmesi",

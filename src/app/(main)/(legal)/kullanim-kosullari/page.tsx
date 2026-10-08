@@ -27,11 +27,11 @@ export const metadata = legalPageMetadata("kullanim-kosullari");
  *
  * termsOfService.test.ts pins these against the backend source.
  *
- * The 15% commission in §10 is the rate the founders set. 6563 s.K. requires
- * an intermediary agreement to state the real fee, so it is named here rather
- * than deferred to a separate document. It matches
- * TUTOR_ESTIMATED_COMMISSION_BPS = 1500, which the code uses only for the
- * tutor price guide — AI_AGENT_RULES §2 still forbids applying it to earnings
+ * The 17.5% commission in §10 is the rate the founders set on 8 October 2026
+ * (it was 15%). 6563 s.K. requires an intermediary agreement to state the
+ * real fee, so it is named here rather than deferred to a separate document.
+ * It matches TUTOR_ESTIMATED_COMMISSION_BPS = 1750, which the code uses only
+ * for the tutor price guide — AI_AGENT_RULES §2 still forbids applying it to earnings
  * figures until the payment provider is live.
  *
  * The text deliberately does NOT reserve a right to change terms
@@ -247,7 +247,7 @@ export default function TermsOfServicePage() {
           </p>
           <p>
             HOCAM, sunduğu aracılık hizmeti karşılığında hoca gelirinden{" "}
-            <strong>%15</strong> oranında komisyon alır. Komisyon, öğrencinin
+            <strong>%17,5</strong> oranında komisyon alır. Komisyon, öğrencinin
             ödediği ders bedeli üzerinden hesaplanır ve hocaya kalan tutar gelir
             olarak yansıtılır. Bu oranda yapılacak değişiklik, on sekizinci
             maddedeki usule tabidir.

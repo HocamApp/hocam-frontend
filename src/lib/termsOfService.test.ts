@@ -99,11 +99,12 @@ describe("kullanım koşulları claim nothing the platform cannot do", () => {
   it("names the commission rate the code carries", () => {
     // 6563 s.K. requires the stated fee to be the real one, so the rate is
     // named rather than deferred. It has to agree with the constant.
-    assert.match(prose, /%15 oranında komisyon/);
+    assert.match(prose, /%17,5 oranında komisyon/);
+    assert.doesNotMatch(prose, /%15 oranında/);
     if (backendAvailable) {
       assert.match(
         read("apps/tutors/price_insights.py"),
-        /TUTOR_ESTIMATED_COMMISSION_BPS = 1500/,
+        /TUTOR_ESTIMATED_COMMISSION_BPS = 1750/,
       );
     }
   });
