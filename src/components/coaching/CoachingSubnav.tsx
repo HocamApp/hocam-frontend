@@ -2,7 +2,6 @@ import Link from "next/link";
 import {
   CalendarBlank,
   ClipboardText,
-  CurrencyCircleDollar,
   FileText,
   GearSix,
   ShieldCheck,
@@ -40,11 +39,6 @@ const TUTOR_LINKS = [
     label: "Kayıtlar",
     href: "/dashboard/tutor/coaching/reports",
     icon: ClipboardText,
-  },
-  {
-    label: "Kazançlar",
-    href: "/dashboard/tutor/coaching/earnings",
-    icon: CurrencyCircleDollar,
   },
   {
     label: "Teklif ayarları",

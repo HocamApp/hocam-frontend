@@ -12,7 +12,7 @@ const OUT = process.env.COACHING_QA_OUT
   : path.join(ROOT, "screenshots", "coaching-qa", "visual-polish-v2");
 
 type Role = "tutor" | "student";
-type Scenario = "empty" | "onboarding" | "draft" | "published" | "checkout-disabled" | "availability-empty" | "earnings-zero" | "earnings-populated";
+type Scenario = "empty" | "onboarding" | "draft" | "published" | "checkout-disabled" | "availability-empty";
 type QaState = {
   role: Role;
   scenario: Scenario;
@@ -224,7 +224,7 @@ async function installApi(context: BrowserContext, state: QaState) {
     });
     if (pathname === "/api/coaching/plan/") {
       if (state.scenario === "empty") return json(route, null);
-      const isPublished = ["published", "checkout-disabled", "earnings-zero", "earnings-populated"].includes(state.scenario);
+      const isPublished = ["published", "checkout-disabled"].includes(state.scenario);
       return json(route, { ...plan, is_published: isPublished, published_at: isPublished ? plan.published_at : null });
     }
     if (pathname === "/api/coaching/capacity/") return json(route, capacity);
@@ -237,25 +237,6 @@ async function installApi(context: BrowserContext, state: QaState) {
     if (pathname === "/api/coaching/students/") return json(route, []);
     if (pathname === "/api/coaching/tutor/sessions/" || pathname === "/api/coaching/sessions/") return json(route, state.scenario === "availability-empty" ? [] : sessions);
     if (pathname === "/api/coaching/tutor/time-requests/" || pathname === "/api/coaching/tutor/reschedule-requests/") return json(route, []);
-    if (pathname === "/api/coaching/tutor/earnings/") {
-      if (state.scenario === "earnings-zero") {
-        return json(route, { eligible_unfunded_minor: 0, pending_minor: 0, on_hold_minor: 0, reversed_minor: 0, payout_batches: [] });
-      }
-      return json(route, {
-        eligible_unfunded_minor: 123456,
-        pending_minor: 50000,
-        on_hold_minor: 10000,
-        reversed_minor: 2500,
-        payout_batches: [
-          { local_month: "2026-03", status: "ready", total_amount_minor: 52000, paid_at: null },
-          { local_month: "2026-04", status: "ready", total_amount_minor: 78000, paid_at: null },
-          { local_month: "2026-05", status: "ready", total_amount_minor: 67000, paid_at: null },
-          { local_month: "2026-06", status: "ready", total_amount_minor: 98000, paid_at: null },
-          { local_month: "2026-07", status: "ready", total_amount_minor: 112000, paid_at: null },
-          { local_month: "2026-08", status: "ready", total_amount_minor: 123456, paid_at: null },
-        ],
-      });
-    }
     if (pathname === "/api/coaching/tutor/disputes/" || pathname === "/api/coaching/disputes/") return json(route, []);
     if (pathname === "/api/coaching/purchases/purchase-qa/dispute-eligibility/") return json(route, { categories: [], submission_key: "qa-submission", evidence_ids: [] });
     if (pathname === "/api/coaching/purchases/purchase-qa/financial-summary/") return json(route, { service_status: "active", financial_status: "unfunded", collected_amount_minor: 0, refund_liability_minor: 0, refund_processing_count: 0, refund_settled_minor: 0, cancellation_pending: false, refund_state: "nothing_to_settle" });
@@ -362,7 +343,6 @@ async function capture(page: Page, state: QaState, options: {
 async function captureMicroPolishSet(page: Page, state: QaState, width: number) {
   const desktop = [
     ["desktop-coaching-requests.png", "/dashboard/tutor/coaching/requests", "Yeni öğrenci talepleri", "published", 0],
-    ["desktop-coaching-earnings.png", "/dashboard/tutor/coaching/earnings", "Koçluk kazançları", "published", 0],
     ["desktop-setup-price.png", "/dashboard/tutor/coaching/plan?step=price", "Koçluk teklifini hazırla", "draft", 0],
     ["desktop-coaching-home.png", "/dashboard/tutor/coaching", /Çalışma koçluğu/i, "published", 0],
   ] as const;
@@ -383,48 +363,6 @@ async function captureMicroPolishSet(page: Page, state: QaState, width: number) 
       scrollSubnavBy,
     });
   }
-}
-
-async function captureWalletSet(page: Page, state: QaState, width: number) {
-  const route = "/dashboard/tutor/coaching/earnings";
-  const heading = "Koçluk kazançları";
-  const populatedFile = width === 1440
-    ? "desktop-earnings-populated.png"
-    : width === 768
-      ? "tablet-earnings-populated.png"
-      : "mobile-earnings-populated.png";
-
-  await capture(page, state, {
-    file: populatedFile,
-    route,
-    heading,
-    scenario: "earnings-populated",
-    role: "tutor",
-    assertTryPrecision: true,
-  });
-  if (width === 375) {
-    await page.screenshot({ path: path.join(OUT, "mobile-earnings-populated-full.png"), fullPage: true });
-  }
-  const populatedWithdrawal = page.getByRole("button", { name: "Parayı çek" });
-  await populatedWithdrawal.waitFor();
-  assert.equal(await populatedWithdrawal.getAttribute("aria-disabled"), "true", `${width}: eligible-unfunded incorrectly enabled withdrawal`);
-  await page.getByText("Ödeme aktarımı, gerçek ödeme altyapısı etkinleştirildiğinde kullanılabilir.").waitFor();
-  await page.getByTestId("coaching-earnings-chart").waitFor();
-
-  if (width === 1440) {
-    await page.getByTestId("coaching-earnings-chart").locator("xpath=..").screenshot({ path: path.join(OUT, "desktop-earnings-graph-close-up.png") });
-  }
-  await capture(page, state, {
-    file: `earnings-zero-${width}.png`,
-    route,
-    heading,
-    scenario: "earnings-zero",
-    role: "tutor",
-    assertTryPrecision: true,
-  });
-  assert.equal(await page.getByTestId("coaching-earnings-chart").locator("[data-chart-month]").count(), 0, "zero fixture rendered fabricated chart points");
-  await page.getByText("Henüz grafik oluşturacak aylık kazanç kaydı yok.").waitFor();
-  assert.equal(await page.getByRole("button", { name: "Parayı çek" }).getAttribute("aria-disabled"), "true", "zero fixture enabled withdrawal");
 }
 
 async function captureCheckoutRolloutSet(page: Page, state: QaState, width: number) {
@@ -540,7 +478,6 @@ async function captureReviewSet(page: Page, state: QaState, width: number) {
       ["11-upcoming-empty.png", "/dashboard/tutor/coaching/upcoming", "Yaklaşan görüşmeler", "availability-empty", "tutor"],
       ["12-reports-empty.png", "/dashboard/tutor/coaching/reports", "Görüşme raporları", "published", "tutor"],
       ["13-coaching-requests.png", "/dashboard/tutor/coaching/requests", "Yeni öğrenci talepleri", "published", "tutor"],
-      ["14-coaching-earnings.png", "/dashboard/tutor/coaching/earnings", "Koçluk kazançları", "published", "tutor"],
       ["15-student-no-active.png", "/dashboard/student/coaching", "Çalışma koçluğum", "empty", "student"],
       ["16-public-profile-offer.png", `/tutors/${tutorProfile.id}`, /QA Tutor/i, "published", "student"],
     ] as const;
@@ -593,7 +530,6 @@ async function runRouteMatrix(page: Page, state: QaState, width: number) {
     ["/dashboard/tutor/coaching/reports", "Görüşme raporları"],
     ["/dashboard/tutor/coaching/time-requests", "Koçluk saat talepleri"],
     ["/dashboard/tutor/coaching/reschedule-requests", "Görüşme değişiklik talepleri"],
-    ["/dashboard/tutor/coaching/earnings", "Koçluk kazançları"],
     ["/dashboard/tutor/coaching/preview", "Öğrenci görünümü"],
   ] as const) await assertPage(page, route, heading, `${heading} ${width}`);
   await assertPage(page, "/dashboard/tutor/coaching/requests", "Yeni öğrenci talepleri", `coaching requests ${width}`);
@@ -689,7 +625,6 @@ async function main() {
     const browser = await chromium.launch({ headless: true });
     const hoverEvidence: Record<string, unknown> = {};
     const microOnly = process.env.COACHING_QA_MICRO_ONLY === "1";
-    const walletOnly = process.env.COACHING_QA_WALLET_ONLY === "1";
     const rolloutOnly = process.env.COACHING_QA_ROLLOUT_ONLY === "1";
     const checkoutOnly = process.env.COACHING_QA_CHECKOUT_ONLY === "1";
     const raceOnly = process.env.COACHING_QA_RACE_ONLY === "1";
@@ -709,16 +644,12 @@ async function main() {
         await captureCheckoutRolloutSet(page, state, viewport.width);
       } else if (rolloutOnly) {
         await captureCheckoutRolloutSet(page, state, viewport.width);
-        await captureWalletSet(page, state, viewport.width);
-      } else if (walletOnly) {
-        await captureWalletSet(page, state, viewport.width);
       } else if (microOnly) {
         await captureMicroPolishSet(page, state, viewport.width);
       } else {
         if (process.env.COACHING_QA_HOVER_ONLY !== "1") await runRouteMatrix(page, state, viewport.width);
         if (process.env.COACHING_QA_HOVER_ONLY !== "1") await captureReviewSet(page, state, viewport.width);
         if (process.env.COACHING_QA_HOVER_ONLY !== "1") await captureCheckoutRolloutSet(page, state, viewport.width);
-        if (process.env.COACHING_QA_HOVER_ONLY !== "1") await captureWalletSet(page, state, viewport.width);
         state.role = "tutor";
         hoverEvidence[String(viewport.width)] = await inspectHover(page, viewport.width);
       }
@@ -727,7 +658,7 @@ async function main() {
       );
       assert.deepEqual(actionableConsoleErrors, [], `browser console errors at ${viewport.width}px`);
       assert.ok(state.unknown.length < 12, `too many unhandled APIs: ${state.unknown.join(", ")}`);
-      if (!microOnly && !walletOnly) {
+      if (!microOnly) {
         await page.screenshot({ path: path.join(OUT, `coaching-final-${viewport.width}.png`), fullPage: true });
       }
       await context.close();

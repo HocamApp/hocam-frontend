@@ -11,7 +11,6 @@ import {
   type CoachingDisputeEvidence,
   type CoachingFinancialSummary,
   type CoachingCancellationResult,
-  type CoachingTutorEarningSummary,
   COACHING_DISPUTE_CATEGORY_LABEL,
   COACHING_DISPUTE_MERIT_LABEL,
   COACHING_DISPUTE_REMEDY_LABEL,
@@ -24,7 +23,6 @@ import {
   coachingDisputeStatusLabel,
   coachingEvidenceScanStateLabel,
   coachingServiceStatusLabel,
-  coachingEarningStatusCopy,
   coachingRefundStateCopy,
 } from "./coachingApi";
 
@@ -34,12 +32,6 @@ describe("Faz 8 coaching financial copy", () => {
     assert.match(coachingRefundStateCopy("processing"), /işleniyor/i);
     assert.match(coachingRefundStateCopy("settled"), /tamamlandı/i);
     assert.match(coachingRefundStateCopy("nothing_to_settle"), /Ödeme gerekmiyor/i);
-  });
-
-  it("never calls an unfunded, held, or READY earning paid", () => {
-    assert.doesNotMatch(coachingEarningStatusCopy("eligible_unfunded"), /ödendi/i);
-    assert.doesNotMatch(coachingEarningStatusCopy("on_hold"), /ödendi/i);
-    assert.doesNotMatch(coachingEarningStatusCopy("ready"), /ödendi/i);
   });
 });
 
@@ -89,16 +81,6 @@ describe("Faz 8 participant contract state", () => {
     assert.equal(cancellation.cancellation_pending, true);
     assert.equal(noCharge.refund_state, "nothing_to_settle");
     assert.notEqual(coachingRefundStateCopy("processing"), coachingRefundStateCopy("settled"));
-  });
-
-  it("keeps tutor hold, reversal, and READY payout facts distinct", () => {
-    const earnings: CoachingTutorEarningSummary = {
-      eligible_unfunded_minor: 1, pending_minor: 2, on_hold_minor: 3, reversed_minor: 4,
-      payout_batches: [{ local_month: "2026-08", status: "ready", total_amount_minor: 2, paid_at: null }],
-    };
-    assert.equal(earnings.on_hold_minor, 3);
-    assert.equal(earnings.reversed_minor, 4);
-    assert.match(coachingEarningStatusCopy(earnings.payout_batches[0].status), /hazır/i);
   });
 });
 

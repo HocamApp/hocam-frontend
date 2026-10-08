@@ -51,7 +51,6 @@ const TUTOR_ROUTES: [string, string][] = [
   ["/dashboard/tutor/coaching/requests", "Talepler"],
   ["/dashboard/tutor/coaching/reports", "Kayıtlar"],
   ["/dashboard/tutor/coaching/complaints", "Kayıtlar"],
-  ["/dashboard/tutor/coaching/earnings", "Kazançlar"],
   ["/dashboard/tutor/coaching/plan", "Teklif ayarları"],
   ["/dashboard/tutor/coaching/availability", "Teklif ayarları"],
   ["/dashboard/tutor/coaching/preview", "Teklif ayarları"],
