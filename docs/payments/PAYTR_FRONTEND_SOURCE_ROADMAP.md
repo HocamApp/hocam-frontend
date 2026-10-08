@@ -36,7 +36,7 @@ These rules apply to every implementation choice:
 8. Retrying payment creates a new PayTR attempt for the same eligible purchase. It must not create a second package purchase.
 9. A timeout or closed browser is an unknown outcome until the server state is fetched.
 10. Test credits, free trials and unfunded admin QA flows never enter PayTR.
-11. Do not show tutor earnings or the 15% commission as settled money in this work.
+11. Do not show tutor earnings or the 17.5% commission (founder decision, 8 October 2026; was 15%) as settled money in this work.
 12. Do not persist name, phone or address in localStorage/sessionStorage.
 
 ## 3. Target user journey
@@ -599,7 +599,7 @@ Frontend payment work is complete only when all statements below are true:
 ## 18. Out of scope for this frontend delivery
 
 - Tutor payout/Platform Transfer UI.
-- 15% commission accrual and tutor earnings settlement.
+- 17.5% commission accrual and tutor earnings settlement.
 - Refund execution through PayTR.
 - Invoice generation or tax calculation.
 - Admin reconciliation tooling beyond consuming a future safe status.
