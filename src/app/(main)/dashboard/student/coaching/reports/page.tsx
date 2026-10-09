@@ -16,6 +16,7 @@ import {
   extractCoachingErrorMessage,
   fetchCoachingReports,
 } from "@/lib/coachingApi";
+import { coachingDateTimeLabel } from "@/lib/coachingTime";
 
 function StudentReportsContent() {
   const query = useQuery({
@@ -53,10 +54,7 @@ function StudentReportsContent() {
                     <p className="text-body font-medium">Görüşme raporu</p>
                     <p className="mt-1 text-small text-ink-mid tabular-nums">
                       Revizyon {revision.revision_number} ·{" "}
-                      {new Date(revision.published_at).toLocaleString("tr-TR", {
-                        dateStyle: "medium",
-                        timeStyle: "short",
-                      })}
+                      {coachingDateTimeLabel(revision.published_at)}
                     </p>
                   </div>
                   <ClipboardText

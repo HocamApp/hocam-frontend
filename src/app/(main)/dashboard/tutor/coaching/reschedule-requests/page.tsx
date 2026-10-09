@@ -18,6 +18,7 @@ import {
   fetchTutorCoachingRescheduleRequests,
   respondToCoachingRescheduleRequest,
 } from "@/lib/coachingApi";
+import { coachingDateTimeLabel } from "@/lib/coachingTime";
 
 function RescheduleRequestsContent() {
   const queryClient = useQueryClient();
@@ -74,9 +75,10 @@ function RescheduleRequestsContent() {
         <Card key={request.id}>
           <CardContent className="space-y-2 pt-6">
             <Badge variant="secondary">{RESCHEDULE_STATUS_COPY[request.status]}</Badge>
-            <p className="text-sm">
-              {new Date(request.original_start).toLocaleString("tr-TR")} →{" "}
-              {new Date(request.proposed_start).toLocaleString("tr-TR")}
+            <p className="text-body font-medium text-ink">{request.student_name ?? "Öğrenci"}</p>
+            <p className="text-sm text-ink">
+              {coachingDateTimeLabel(request.original_start)} →{" "}
+              {coachingDateTimeLabel(request.proposed_start)}
             </p>
             <div className="flex flex-wrap gap-2">
               <Button

@@ -33,6 +33,7 @@ import {
   type CoachingRecommendedResource,
   type CoachingReportDraftInput,
 } from "@/lib/coachingApi";
+import { coachingDateTimeLabel } from "@/lib/coachingTime";
 
 const STEPS = [
   "Özet",
@@ -134,8 +135,8 @@ function ReportTimingNotice({
       <AlertCircle className="h-4 w-4" />
       <AlertTitle>{timing.reportOverdue ? "Rapor süresi geçti" : "Primary rapor zamanlaması"}</AlertTitle>
       <AlertDescription>
-        Rapor için son zaman: {new Date(timing.reportDueAt).toLocaleString("tr-TR", { dateStyle: "medium", timeStyle: "short" })}.
-        {timing.complaintEligibleAt ? ` Eksik rapor desteği ${new Date(timing.complaintEligibleAt).toLocaleString("tr-TR", { dateStyle: "medium", timeStyle: "short" })} itibarıyla kullanılabilir.` : ""}
+        Rapor için son zaman: {coachingDateTimeLabel(timing.reportDueAt)}.
+        {timing.complaintEligibleAt ? ` Eksik rapor desteği ${coachingDateTimeLabel(timing.complaintEligibleAt)} itibarıyla kullanılabilir.` : ""}
         {timing.complaintEligible ? <span className="ml-1 font-medium">Destek girişi şu anda kullanılabilir.</span> : null}
       </AlertDescription>
     </Alert>
@@ -297,8 +298,21 @@ export function CoachingReportWizard({ sessionId }: { sessionId: string }) {
           <CardTitle>Görüşme raporu</CardTitle>
           <p className="text-sm text-muted-foreground">Taslağı adım adım kaydedebilir, sonrasında immutable bir revizyon olarak yayınlayabilirsin.</p>
           <SensitiveDataGuidance />
-          <ol className="grid grid-cols-5 gap-1 pt-2 text-center text-xs text-muted-foreground" aria-label="Rapor adımları">
-            {STEPS.map((label, index) => <li key={label} className={index === step ? "rounded bg-primary px-1 py-2 font-medium text-primary-foreground" : "rounded bg-muted px-1 py-2"}>{index + 1}. {label}</li>)}
+          {/* Five labelled steps do not fit 375px side by side: on phones only
+              the current step is named, the rest stay as numbered dots. */}
+          <p className="pt-2 text-small font-medium text-ink sm:hidden">
+            Adım {step + 1}/{STEPS.length}: {STEPS[step]}
+          </p>
+          <ol className="hidden grid-cols-5 gap-1 pt-2 text-center text-xs text-ink-mid sm:grid" aria-label="Rapor adımları">
+            {STEPS.map((label, index) => (
+              <li
+                key={label}
+                aria-current={index === step ? "step" : undefined}
+                className={index === step ? "rounded bg-pink px-1 py-2 font-medium text-white" : "rounded bg-paper px-1 py-2"}
+              >
+                {index + 1}. {label}
+              </li>
+            ))}
           </ol>
         </CardHeader>
         <CardContent>
@@ -370,7 +384,7 @@ export function CoachingReportWizard({ sessionId }: { sessionId: string }) {
         <CardHeader><CardTitle className="text-lg">Yayın geçmişi</CardTitle></CardHeader>
         <CardContent>
           <ol className="space-y-3 border-l pl-4">
-            {(revisionHistoryQuery.data?.revisions ?? (currentRevision ? [currentRevision] : [])).map((revision) => <li key={revision.id} className="relative text-sm"><span className="absolute -left-[1.35rem] top-1 h-2.5 w-2.5 rounded-full bg-primary" />Revizyon {revision.revision_number} · {new Date(revision.published_at).toLocaleString("tr-TR", { dateStyle: "medium", timeStyle: "short" })}{revision.change_note ? ` · ${revision.change_note}` : ""}</li>)}
+            {(revisionHistoryQuery.data?.revisions ?? (currentRevision ? [currentRevision] : [])).map((revision) => <li key={revision.id} className="relative text-sm"><span className="absolute -left-[1.35rem] top-1 h-2.5 w-2.5 rounded-full bg-primary" />Revizyon {revision.revision_number} · {coachingDateTimeLabel(revision.published_at)}{revision.change_note ? ` · ${revision.change_note}` : ""}</li>)}
           </ol>
           <p className="mt-4 text-sm text-muted-foreground">Öğrenci yalnız en güncel immutable yayınlanmış revizyonu görür.</p>
         </CardContent>

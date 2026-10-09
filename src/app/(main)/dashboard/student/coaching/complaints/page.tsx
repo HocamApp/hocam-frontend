@@ -29,6 +29,7 @@ import {
   fetchStudentCoachingFinancialSummary,
 } from "@/lib/coachingApi";
 import { formatTryMinor } from "@/lib/money";
+import { coachingDateTimeLabel } from "@/lib/coachingTime";
 
 function NewDisputeForm({ purchaseId }: { purchaseId: string }) {
   const queryClient = useQueryClient();
@@ -266,7 +267,7 @@ function ComplaintsContent() {
                       {coachingDisputeCategoryLabel(dispute.category)}
                     </p>
                     <p className="mt-1 text-small text-ink-mid tabular-nums">
-                      {new Date(dispute.submitted_at).toLocaleString("tr-TR")}
+                      {coachingDateTimeLabel(dispute.submitted_at)}
                     </p>
                   </div>
                   <Badge
