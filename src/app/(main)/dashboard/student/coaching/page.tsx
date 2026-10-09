@@ -27,6 +27,7 @@ import {
   fetchCoachingSessions,
 } from "@/lib/coachingApi";
 import { studentCoachingNextStep } from "@/lib/coachingPresentation";
+import { coachingDateTimeLabel } from "@/lib/coachingTime";
 
 function OverviewContent() {
   const stateQuery = useQuery({
@@ -104,10 +105,7 @@ function OverviewContent() {
             ) : nextStep.kind === "next_session" ? (
               <p className="text-body text-ink-mid tabular-nums">
                 Sonraki görüşme:{" "}
-                {new Date(nextStep.startsAt).toLocaleString("tr-TR", {
-                  dateStyle: "medium",
-                  timeStyle: "short",
-                })}
+                {coachingDateTimeLabel(nextStep.startsAt)}
               </p>
             ) : nextStep.kind === "no_upcoming_session" ? (
               <p className="text-body text-ink-mid">Yaklaşan görüşmen yok.</p>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
@@ -18,6 +18,7 @@ import {
   fetchCoachingTimeRequests,
   withdrawCoachingTimeRequest,
 } from "@/lib/coachingApi";
+import { coachingDateTimeLabel } from "@/lib/coachingTime";
 
 /**
  * The 48h tutor-proposal fallback (master spec §16.5).
@@ -34,6 +35,7 @@ export function TimeRequestPanel({ slotIndex }: { slotIndex: number }) {
   const queryClient = useQueryClient();
   const [error, setError] = useState<string | null>(null);
   const [note, setNote] = useState("");
+  const noteId = useId();
 
   const { data: requests = [] } = useQuery({
     queryKey: ["coaching-time-requests"],
@@ -95,13 +97,18 @@ export function TimeRequestPanel({ slotIndex }: { slotIndex: number }) {
           <>
             <p className="text-sm text-muted-foreground">
               Öğretmenine saat talebi gönder; 48 saat içinde sana uygun bir saat önermesi
-              gerekir. Ortak bir saat bulunamazsa bu koçluk iptal edilir ve ücreti iade
-              edilir — ders paketin etkilenmez.
+              gerekir. Ortak bir saat bulunamazsa bu koçluk iptal edilir; ders paketin
+              etkilenmez. Ödediğin koçluk tutarı için iade kaydı açılır ve durumu Şikâyetler
+              sayfasında görünür.
             </p>
+            <label htmlFor={noteId} className="text-small font-medium text-ink">
+              Hocana not (isteğe bağlı)
+            </label>
             <textarea
+              id={noteId}
               value={note}
               onChange={(e) => setNote(e.target.value)}
-              placeholder="Örnek: Hafta içi akşamları uygunum (opsiyonel)"
+              placeholder="Örnek: Hafta içi akşamları uygunum"
               className="w-full rounded-md border bg-background p-2 text-sm"
               rows={2}
             />
@@ -120,7 +127,7 @@ export function TimeRequestPanel({ slotIndex }: { slotIndex: number }) {
                 {TIME_REQUEST_STATUS_COPY[request.status]}
               </Badge>
               <span className="text-xs text-muted-foreground">
-                Son yanıt: {new Date(request.expires_at).toLocaleString("tr-TR")}
+                Son yanıt: {coachingDateTimeLabel(request.expires_at)}
               </span>
             </div>
 

@@ -13,6 +13,8 @@ import { RescheduleDialog } from "@/components/coaching/RescheduleDialog";
 import { CoachingEmptyState } from "@/components/coaching/CoachingEmptyState";
 import { fetchCoachingSessions } from "@/lib/coachingApi";
 import { coachingSessionStatusLabel } from "@/lib/coachingPresentation";
+import { coachingDateTimeLabel } from "@/lib/coachingTime";
+import { serverNow } from "@/lib/serverClock";
 
 const JOINABLE_STATUSES = new Set(["scheduled", "in_progress"]);
 
@@ -50,7 +52,7 @@ export function CoachingSessionList() {
     );
   }
 
-  const now = Date.now();
+  const now = serverNow();
 
   return (
     <div className="space-y-2">
@@ -63,10 +65,7 @@ export function CoachingSessionList() {
               <div>
                 <p className="text-body font-medium tabular-nums">
                   {session.sequence_number}. görüşme ·{" "}
-                  {new Date(session.scheduled_start).toLocaleString("tr-TR", {
-                    dateStyle: "medium",
-                    timeStyle: "short",
-                  })}
+                  {coachingDateTimeLabel(session.scheduled_start)}
                 </p>
                 <Badge
                   variant="outline"
@@ -77,10 +76,7 @@ export function CoachingSessionList() {
                 {session.report_overdue && session.report_due_at ? (
                   <p className="mt-2 text-small text-error">
                     Görüşme raporu gecikti. Son zaman:{" "}
-                    {new Date(session.report_due_at).toLocaleString("tr-TR", {
-                      dateStyle: "medium",
-                      timeStyle: "short",
-                    })}
+                    {coachingDateTimeLabel(session.report_due_at)}
                   </p>
                 ) : null}
                 {session.complaint_eligible ? (
@@ -95,10 +91,7 @@ export function CoachingSessionList() {
                 session.complaint_eligible_at ? (
                   <p className="mt-2 text-small text-ink-mid">
                     Eksik rapor desteği{" "}
-                    {new Date(session.complaint_eligible_at).toLocaleString(
-                      "tr-TR",
-                      { dateStyle: "medium", timeStyle: "short" },
-                    )}{" "}
+                    {coachingDateTimeLabel(session.complaint_eligible_at)}{" "}
                     itibarıyla kullanılabilir.
                   </p>
                 ) : null}

@@ -6,6 +6,7 @@ import type {
   CoachingRecommendedResource,
   CoachingSessionReportRevision,
 } from "@/lib/coachingApi";
+import { coachingDateTimeLabel } from "@/lib/coachingTime";
 
 function TextSection({ title, value }: { title: string; value?: string }) {
   if (!value?.trim()) return null;
@@ -98,10 +99,7 @@ export function PublishedReportView({
         <CardTitle className="text-xl">Görüşme raporu</CardTitle>
         <p className="text-sm text-muted-foreground">
           Revizyon {revision.revision_number} ·{" "}
-          {new Date(revision.published_at).toLocaleString("tr-TR", {
-            dateStyle: "medium",
-            timeStyle: "short",
-          })}
+          {coachingDateTimeLabel(revision.published_at)}
         </p>
         {revision.change_note ? (
           <p className="text-sm text-muted-foreground">{revision.change_note}</p>

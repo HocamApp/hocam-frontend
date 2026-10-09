@@ -11,7 +11,6 @@ import { RouteGuard } from "@/components/shared/RouteGuard";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { Button } from "@/components/ui/button";
-import { formatDate } from "@/lib/utils";
 import { CoachingAttachmentPanel } from "@/components/coaching/CoachingAttachmentPanel";
 import { CoachingIncidentActions } from "@/components/coaching/CoachingIncidentActions";
 import { CoachingReportWizard } from "@/components/coaching/CoachingReportWizard";
@@ -29,6 +28,7 @@ import {
   type CoachingSessionDetail,
 } from "@/lib/coachingApi";
 import { coachingRoomUserInfo, coachingSessionStatusLabel } from "@/lib/coachingPresentation";
+import { coachingDateTimeLabel } from "@/lib/coachingTime";
 
 const JitsiMeeting = dynamic(
   () => import("@jitsi/react-sdk").then((mod) => mod.JitsiMeeting),
@@ -54,7 +54,7 @@ function CoachingRoomPanel({
         </p>
         {detail && (
           <p className="text-xs text-muted-foreground">
-            {formatDate(detail.scheduled_start)} · {detail.scheduled_local_time.slice(0, 5)}
+            {coachingDateTimeLabel(detail.scheduled_start)}
           </p>
         )}
         {detail && (

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { CoachingRecordGuard as CoachingGuard } from "@/components/coaching/CoachingGuard";
@@ -18,12 +18,14 @@ import {
   fetchTutorCoachingTimeRequests,
   proposeCoachingTime,
 } from "@/lib/coachingApi";
+import { coachingDateTimeLabel } from "@/lib/coachingTime";
 
 function ProposeForm({ timeRequestId }: { timeRequestId: string }) {
   const queryClient = useQueryClient();
   const [day, setDay] = useState("0");
   const [time, setTime] = useState("18:00");
   const [error, setError] = useState<string | null>(null);
+  const ids = useId();
 
   const mutation = useMutation({
     mutationFn: () =>
@@ -39,11 +41,13 @@ function ProposeForm({ timeRequestId }: { timeRequestId: string }) {
     <div className="mt-3 space-y-2 border-t pt-3">
       <p className="text-xs font-medium text-muted-foreground">Saat öner</p>
       {error ? <ErrorMessage message={error} /> : null}
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap items-end gap-2">
+        <label className="sr-only" htmlFor={`${ids}-day`}>Gün</label>
         <select
+          id={`${ids}-day`}
           value={day}
           onChange={(e) => setDay(e.target.value)}
-          className="rounded-md border bg-background p-2 text-sm"
+          className="min-h-11 rounded-input border border-line bg-surface px-3 text-body text-ink"
         >
           {Object.entries(COACHING_DAY_LABEL).map(([value, label]) => (
             <option key={value} value={value}>
@@ -51,11 +55,14 @@ function ProposeForm({ timeRequestId }: { timeRequestId: string }) {
             </option>
           ))}
         </select>
+        <label className="sr-only" htmlFor={`${ids}-time`}>Saat</label>
         <input
+          id={`${ids}-time`}
           type="time"
+          step={1800}
           value={time}
           onChange={(e) => setTime(e.target.value)}
-          className="rounded-md border bg-background p-2 text-sm"
+          className="min-h-11 rounded-input border border-line bg-surface px-3 text-body text-ink"
         />
         <Button size="sm" disabled={mutation.isPending} onClick={() => mutation.mutate()}>
           {mutation.isPending ? "Gönderiliyor..." : "Öner"}
@@ -106,7 +113,7 @@ function TimeRequestsContent() {
                 </Badge>
                 <span className="text-xs text-muted-foreground">
                   Yanıt son tarihi:{" "}
-                  {new Date(request.expires_at).toLocaleString("tr-TR")}
+                  {coachingDateTimeLabel(request.expires_at)}
                 </span>
               </div>
               {request.note ? (

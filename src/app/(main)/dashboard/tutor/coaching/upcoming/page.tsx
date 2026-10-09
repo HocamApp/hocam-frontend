@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { fetchTutorCoachingSessions } from "@/lib/coachingApi";
 import { coachingSessionStatusLabel } from "@/lib/coachingPresentation";
+import { coachingDateTimeLabel } from "@/lib/coachingTime";
 
 
 const JOINABLE_STATUSES = new Set(["scheduled", "in_progress"]);
@@ -50,20 +51,17 @@ function UpcomingList() {
     <div className="space-y-2">
       {sessions.map((session) => (
         <Card key={session.id}>
-          <CardContent className="flex items-center justify-between gap-3 py-3">
+          <CardContent className="flex flex-col gap-3 py-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-sm font-medium">
                 {session.student_name ?? "Öğrenci"} ·{" "}
-                {new Date(session.scheduled_start).toLocaleString("tr-TR", {
-                  dateStyle: "medium",
-                  timeStyle: "short",
-                })}
+                {coachingDateTimeLabel(session.scheduled_start)}
               </p>
               <Badge variant="secondary" className="mt-1">
                 {coachingSessionStatusLabel(session.status)}
               </Badge>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <Button asChild size="sm" variant="outline">
                 <Link href={`/dashboard/tutor/coaching/sessions/${session.id}/prepare`}>
                   Hazırlan

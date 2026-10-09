@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { serverNow } from "@/lib/serverClock";
 
 /**
  * The 7-day scheduling deadline countdown.
@@ -20,10 +21,12 @@ export function SchedulingDeadlineBanner({
 }: {
   deadlineAt: string | null;
 }) {
-  const [now, setNow] = useState(() => Date.now());
+  // The server's clock, not the browser's: a phone a few minutes off must
+  // not show a deadline that has already passed (or has not).
+  const [now, setNow] = useState(() => serverNow());
 
   useEffect(() => {
-    const id = setInterval(() => setNow(Date.now()), 1000);
+    const id = setInterval(() => setNow(serverNow()), 1000);
     return () => clearInterval(id);
   }, []);
 
@@ -41,24 +44,21 @@ export function SchedulingDeadlineBanner({
   return (
     <Card
       className={cn(
-        expired
-          ? "border-destructive/50 bg-destructive/5"
-          : expiringSoon
-            ? "border-amber-500/50 bg-amber-500/5"
-            : "border-primary/30 bg-primary/5"
+        "border-line bg-surface",
+        expired ? "border-error" : expiringSoon ? "border-gold" : undefined
       )}
     >
       <CardContent className="py-4">
         {expired ? (
-          <p className="text-sm font-medium text-destructive">
+          <p role="status" className="text-sm font-medium text-error">
             Saat seçme süren doldu. Koçluğun iptal ediliyor; ders paketin etkilenmez.
           </p>
         ) : (
-          <p className="text-sm">
+          <p className="text-sm text-ink">
             <span className="font-medium">
               Saatini seçmen için {days} gün {hours} saat {minutes} dakikan kaldı.
             </span>{" "}
-            <span className="text-muted-foreground">
+            <span className="text-ink-mid">
               Bu süre dolarsa koçluk otomatik iptal olur; ders paketin devam eder.
             </span>
           </p>

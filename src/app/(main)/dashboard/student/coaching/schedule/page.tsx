@@ -204,9 +204,8 @@ steps={["Birleşik talebin kabul edilir", "Koçluk müsaitliğinden düzenli saa
 }
 
 /**
- * Once scheduling is done, this route stays the single reachable screen
- * for reschedule/recurring-change until Faz 5 opens the full
- * `/dashboard/student/coaching` workspace.
+ * Once scheduling is done, this route is where the student changes their
+ * regular weekly time and sees every session with its reschedule action.
  */
 function ActiveScheduleView() {
   const { data } = useQuery({
@@ -239,6 +238,7 @@ function ActiveScheduleView() {
                     slotIndex={slot.slot_index}
                     currentDayOfWeek={slot.day_of_week}
                     currentStartTime={slot.start_time}
+                    publishedSlots={data.published_slots ?? []}
                   />
                 ) : null}
               </div>
@@ -255,7 +255,7 @@ function ActiveScheduleView() {
 export default function CoachingSchedulePage() {
   return (
     <RouteGuard requireRole="student">
-      <CoachingPageShell title="Koçluk saatlerim" width="narrow" currentHref="/dashboard/student/coaching/upcoming" audience="student"><ScheduleContent /></CoachingPageShell>
+      <CoachingPageShell title="Koçluk saatlerim" width="narrow" currentHref="/dashboard/student/coaching/schedule" audience="student"><ScheduleContent /></CoachingPageShell>
     </RouteGuard>
   );
 }
