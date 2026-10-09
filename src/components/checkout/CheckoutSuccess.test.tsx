@@ -5,6 +5,7 @@ import { afterEach, before, describe, it, mock } from "node:test";
 import React from "react";
 import { cleanup, render } from "@testing-library/react";
 
+import type { CoachingQuote } from "@/lib/coachingApi";
 import type { PackagePurchase } from "@/types";
 
 let CheckoutPurchaseSuccess: typeof import("./CheckoutSuccess").CheckoutPurchaseSuccess;
@@ -55,6 +56,38 @@ describe("CheckoutPurchaseSuccess without a payment check (PayTR off)", () => {
       <CheckoutPurchaseSuccess purchase={purchase} tutorId="tutor-1" />
     );
     assert.equal(container.innerHTML, MAIN_MARKUP);
+  });
+});
+
+describe("CheckoutPurchaseSuccess with coaching", () => {
+  const quote = {
+    total_sessions: 4,
+    total_price_minor: 200000,
+    total_price_display: "2.000,00 ₺",
+    is_free: false,
+  } as CoachingQuote;
+
+  it("lists the coaching that went into the request and the combined total", () => {
+    const { getByText } = render(
+      <CheckoutPurchaseSuccess purchase={purchase} tutorId="tutor-1" coachingQuote={quote} />
+    );
+    getByText(/koçluk talebini aldık/i);
+    getByText("Çalışma koçluğu");
+    getByText("4 görüşme · 2.000,00 ₺");
+    getByText("Toplam");
+    getByText("6.320,00 ₺");
+  });
+
+  it("says free coaching is free and keeps the package total", () => {
+    const { getByText, queryByText } = render(
+      <CheckoutPurchaseSuccess
+        purchase={purchase}
+        tutorId="tutor-1"
+        coachingQuote={{ ...quote, total_price_minor: 0, is_free: true }}
+      />
+    );
+    getByText("4 görüşme · Ücretsiz");
+    assert.equal(queryByText("Toplam"), null);
   });
 });
 

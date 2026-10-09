@@ -12,6 +12,8 @@ import {
 } from "@/components/payments/paytr/paytrEntryPoints";
 import type { PayTRPostCreateCheck } from "@/components/payments/paytr/usePayTRPostCreate";
 import { useDelayedVisible } from "@/hooks/useDelayedVisible";
+import type { CoachingQuote } from "@/lib/coachingApi";
+import { formatTryMinor } from "@/lib/money";
 import { formatPrice } from "@/lib/utils";
 import type { PackagePurchase } from "@/types";
 
@@ -22,6 +24,8 @@ interface PurchaseSuccessProps {
   paymentCheck?: PayTRPostCreateCheck["check"];
   paymentBlockedReason?: PayTREntryBlockedReason;
   onRetryPaymentCheck?: () => void;
+  /** The server quote for coaching sent with this request; null without. */
+  coachingQuote?: CoachingQuote | null;
 }
 
 /** Shown after a package request is created. Deliberately styled as a
@@ -34,8 +38,15 @@ export function CheckoutPurchaseSuccess({
   paymentCheck = null,
   paymentBlockedReason,
   onRetryPaymentCheck,
+  coachingQuote = null,
 }: PurchaseSuccessProps) {
   const showCheckPlaceholder = useDelayedVisible(paymentCheck === "checking");
+  // Same rule as the summary: the package total converts up to kuruş, the
+  // server's coaching total is never rounded down.
+  const combinedMinor =
+    coachingQuote && !coachingQuote.is_free
+      ? Math.round(purchase.total_price * 100) + coachingQuote.total_price_minor
+      : null;
 
   return (
     <Card className="mx-auto max-w-lg rounded-card border-[var(--checkout-soft-line)] bg-[var(--checkout-card-surface)] shadow-none">
@@ -46,7 +57,8 @@ export function CheckoutPurchaseSuccess({
         <div>
           <h2 className="text-lg font-semibold">Paket talebin oluşturuldu</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            {purchase.total_credits} derslik talebini aldık. Güncel durumunu
+            {purchase.total_credits} derslik {coachingQuote ? "paket ve koçluk " : ""}talebini
+            aldık. Güncel durumunu
             Paketlerim alanından takip edebilirsin.
           </p>
         </div>
@@ -91,6 +103,21 @@ export function CheckoutPurchaseSuccess({
             <dt>Paket toplamı</dt>
             <dd>{formatPrice(purchase.total_price)}</dd>
           </div>
+          {coachingQuote ? (
+            <div className="flex justify-between gap-4">
+              <dt className="text-muted-foreground">Çalışma koçluğu</dt>
+              <dd className="text-right">
+                {coachingQuote.total_sessions} görüşme ·{" "}
+                {coachingQuote.is_free ? "Ücretsiz" : coachingQuote.total_price_display}
+              </dd>
+            </div>
+          ) : null}
+          {combinedMinor !== null ? (
+            <div className="flex justify-between gap-4 text-base font-semibold text-foreground">
+              <dt>Toplam</dt>
+              <dd>{formatTryMinor(combinedMinor)}</dd>
+            </div>
+          ) : null}
         </dl>
 
         <p className="text-xs text-muted-foreground">

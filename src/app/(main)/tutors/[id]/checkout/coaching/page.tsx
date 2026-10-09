@@ -233,7 +233,7 @@ function CoachingChoiceContent({ tutorId }: { tutorId: string }) {
                     <dd className="text-right font-medium">
                       {selected
                         ? eligibility.plan.is_free
-                          ? "₺0 — Ders paketinle ücretsiz"
+                          ? "Ücretsiz — ders paketine dahil"
                           : `${eligibility.plan.price_per_session_display} / görüşme`
                         : "Seçilmedi"}
                     </dd>

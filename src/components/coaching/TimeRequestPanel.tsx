@@ -98,7 +98,7 @@ export function TimeRequestPanel({ slotIndex }: { slotIndex: number }) {
             <p className="text-sm text-ink-mid">
               Öğretmenine saat talebi gönder; 48 saat içinde sana uygun bir saat önermesi
               gerekir. Ortak bir saat bulunamazsa bu koçluk iptal edilir; ders paketin
-              etkilenmez. Ödediğin koçluk tutarı için iade kaydı açılır ve durumu Şikâyetler
+              etkilenmez. Koçluk için ödeme yaptıysan iade kaydı açılır ve durumu Şikâyetler
               sayfasında görünür.
             </p>
             <label htmlFor={noteId} className="text-small font-medium text-ink">

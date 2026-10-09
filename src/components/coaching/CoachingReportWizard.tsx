@@ -390,7 +390,7 @@ export function CoachingReportWizard({ sessionId }: { sessionId: string }) {
                 aria-current={index === step ? "step" : undefined}
                 className={
                   index === step
-                    ? "rounded bg-pink px-1 py-2 font-medium text-white"
+                    ? "rounded bg-pink-deep px-1 py-2 font-medium text-white"
                     : "rounded bg-paper px-1 py-2"
                 }
               >

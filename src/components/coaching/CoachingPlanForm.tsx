@@ -268,7 +268,7 @@ export function CoachingPlanForm({
       {currentStep === "capacity" ? (
         <StepCard
           title="Kaç öğrenciyle çalışmak istiyorsun?"
-          description="Müsaitliğin önce haftalık slotlara, ardından seçtiğin görüşme düzenine göre teorik kapasiteye çevrilir. Kaydetme sırasında backend’in mevcut kapasite kuralları geçerlidir."
+          description="Müsaitliğin önce haftalık slotlara, ardından seçtiğin görüşme düzenine göre teorik kapasiteye çevrilir. Kaydederken güncel kapasite kuralları uygulanır."
         >
           {capacity ? <CapacityPreviewCard capacity={capacity} /> : null}
           <div className="max-w-sm">

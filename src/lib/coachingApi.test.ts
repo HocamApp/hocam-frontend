@@ -241,3 +241,11 @@ describe("report publish errors", () => {
     assert.match(extractCoachingErrorMessage(error), /çalışma programı yok/);
   });
 });
+
+describe("acceptanceRequestStatusCopy", () => {
+  it("stops saying payment is pending once the package is paid", async () => {
+    const { acceptanceRequestStatusCopy } = await import("./coachingApi");
+    assert.match(acceptanceRequestStatusCopy({ status: "accepted", purchase_status: "pending" }), /Ödeme aktivasyonu bekleniyor/);
+    assert.equal(acceptanceRequestStatusCopy({ status: "accepted", purchase_status: "paid" }), "Ödeme tamamlandı. Paket aktif.");
+  });
+});

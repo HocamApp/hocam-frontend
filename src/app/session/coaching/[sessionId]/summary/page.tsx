@@ -43,9 +43,7 @@ function RatingCard({ sessionId }: { sessionId: string }) {
 
   if (submitted) {
     return (
-      <p className="text-body text-ink-mid">
-        Bu görüşme için değerlendirmen alındı, teşekkürler.
-      </p>
+      <p className="text-body text-ink-mid">Bu görüşme için değerlendirmen alındı, teşekkürler.</p>
     );
   }
 
@@ -57,12 +55,19 @@ function RatingCard({ sessionId }: { sessionId: string }) {
   );
 }
 
+const INCIDENT_STATUSES = new Set(["in_progress", "awaiting_report"]);
+
 function PostSessionContent() {
   const { sessionId } = useParams<{ sessionId: string }>();
   const router = useRouter();
   const { user } = useAuth();
 
-  const { data: detail, isLoading, isError, error } = useQuery({
+  const {
+    data: detail,
+    isLoading,
+    isError,
+    error,
+  } = useQuery({
     queryKey: ["coaching-session-detail", sessionId],
     queryFn: () => fetchCoachingSessionDetail(sessionId),
     enabled: user?.role !== "tutor",
@@ -92,9 +97,7 @@ function PostSessionContent() {
     <div className="mx-auto max-w-2xl space-y-6 px-4 py-8">
       <div>
         <h1 className="text-2xl font-bold">Görüşme tamamlandı</h1>
-        <p className="text-sm text-ink-mid">
-          {detail.tutor_name} ile görüşmen sona erdi.
-        </p>
+        <p className="text-sm text-ink-mid">{detail.tutor_name} ile görüşmen sona erdi.</p>
       </div>
 
       <Card>
@@ -108,14 +111,21 @@ function PostSessionContent() {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Teknik sorun mu vardı ya da öğretmen gelmedi mi?</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <CoachingIncidentActions sessionId={sessionId} viewerRole="student" />
-        </CardContent>
-      </Card>
+      {/* A no-show or technical issue can only be reported while the
+          session is open or waiting for its report; once completed the
+          server refuses it, so the buttons would only produce an error. */}
+      {INCIDENT_STATUSES.has(detail.status) ? (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">
+              Teknik sorun mu vardı ya da öğretmen gelmedi mi?
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <CoachingIncidentActions sessionId={sessionId} viewerRole="student" />
+          </CardContent>
+        </Card>
+      ) : null}
 
       <div className="grid gap-3 sm:grid-cols-2">
         <Button asChild variant="outline" className="w-full justify-start">

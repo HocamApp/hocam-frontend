@@ -765,6 +765,21 @@ export function acceptanceStatusCopy(status: string): string {
   return ACCEPTANCE_STATUS_COPY[status] ?? "Talep durumu bilinmiyor";
 }
 
+/**
+ * The tutor's request card reads the acceptance row, which stays "accepted"
+ * after the package is paid. Once the server reports the purchase as paid,
+ * say so instead of "Ödeme aktivasyonu bekleniyor".
+ */
+export function acceptanceRequestStatusCopy(request: {
+  status: string;
+  purchase_status?: string;
+}): string {
+  if (request.status === "accepted" && request.purchase_status === "paid") {
+    return "Ödeme tamamlandı. Paket aktif.";
+  }
+  return acceptanceStatusCopy(request.status);
+}
+
 // --- shared student-facing copy ----------------------------------------
 
 /**
@@ -1824,12 +1839,12 @@ export type CoachingRefundPresentationState =
 
 export function coachingRefundStateCopy(state: CoachingRefundPresentationState | string): string {
   const copy: Record<string, string> = {
-    none: "Henüz iade yükümlülüğü yok.",
-    obligation_pending: "İade gerekli; işlem henüz başlatılmadı.",
+    none: "Şu anda iade edilecek bir tutar yok.",
+    obligation_pending: "İade edilecek tutar kaydedildi; işlem sırada.",
     processing: "İade işlemi işleniyor.",
     manual_review: "İade işlemi manuel inceleme gerektiriyor.",
     settled: "İade tamamlandı.",
-    nothing_to_settle: "Ödeme gerekmiyor.",
+    nothing_to_settle: "İade edilecek bir tutar yok.",
   };
   return copy[state] ?? "İade durumu güncelleniyor.";
 }

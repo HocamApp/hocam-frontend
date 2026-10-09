@@ -33,7 +33,11 @@ export function CheckoutShell({
             aria-label="Ders planı"
             className={`min-w-0 bg-[var(--checkout-left-surface)] px-4 pb-32 pt-5 text-[var(--checkout-left-ink)] sm:px-7 sm:pt-6 lg:px-10 lg:pb-8 xl:px-14 ${decision ? "" : "lg:col-span-2"}`}
           >
-            <div className="mx-auto w-full max-w-[50rem] lg:ml-auto lg:mr-0">
+            {/* Alone (the success card), the column spans the page: centre it
+                instead of pushing it towards the absent decision column. */}
+            <div
+              className={`mx-auto w-full max-w-[50rem] ${decision ? "lg:ml-auto lg:mr-0" : ""}`}
+            >
               {exploration}
             </div>
           </section>
