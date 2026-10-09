@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowRight, Check, Clock3, Info, Target } from "lucide-react";
+import { ArrowRight, Check, Clock, Info, Target } from "@phosphor-icons/react";
 
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { Button } from "@/components/ui/button";
@@ -124,9 +124,9 @@ export function CoachingPlanForm({
                     )}
                   >
                     <span className="flex items-center justify-between gap-3">
-                      <span className="block text-lg font-semibold">{option.label}</span>
+                      <span className="block text-lg font-bold">{option.label}</span>
                       {selected ? (
-                        <span className="inline-flex items-center gap-1 rounded-pill bg-pink px-2.5 py-1 text-[11px] font-semibold text-white">
+                        <span className="inline-flex items-center gap-1 rounded-pill bg-pink-deep px-2.5 py-1 text-[11px] font-medium text-white">
                           <Check aria-hidden="true" className="h-3 w-3" />
                           Seçili düzen
                         </span>
@@ -134,7 +134,7 @@ export function CoachingPlanForm({
                         <span aria-hidden="true" className="h-5 w-5 rounded-pill border border-line" />
                       )}
                     </span>
-                    <span className="mt-3 grid gap-1.5 text-xs text-muted-foreground">
+                    <span className="mt-3 grid gap-1.5 text-xs text-ink-mid">
                       {option.packages.map((item) => (
                         <span key={item.duration_days} className="flex justify-between gap-3">
                           <span>{item.weeks} haftada</span>
@@ -175,7 +175,7 @@ export function CoachingPlanForm({
               aria-describedby="coaching-price-hint"
               className="mt-1"
             />
-            <p id="coaching-price-hint" className="mt-2 text-xs leading-5 text-muted-foreground">
+            <p id="coaching-price-hint" className="mt-2 text-xs leading-5 text-ink-mid">
               Ücretsiz sunmak için 0 girebilirsin. Güncel platform komisyonu %{formatBpsPercent(setupConfig.commission_bps)}; paket indirimi ve tahmini net kazancın kaydettiğin fiyata göre hesaplanır.
             </p>
             {overCap ? <p className="mt-2 text-xs font-medium text-destructive">Bu fiyat {formatTryMinor(setupConfig.price_cap_minor)} üst sınırını aşıyor.</p> : null}
@@ -213,15 +213,15 @@ export function CoachingPlanForm({
                         <Target aria-hidden="true" className="h-4 w-4" />
                       </span>
                       <span className={cn(
-                        "inline-flex h-7 items-center gap-1 rounded-pill px-2.5 text-[11px] font-semibold",
-                        selected ? "bg-pink text-white" : "border border-line bg-transparent text-ink-mid"
+                        "inline-flex h-7 items-center gap-1 rounded-pill px-2.5 text-[11px] font-medium",
+                        selected ? "bg-pink-deep text-white" : "border border-line bg-transparent text-ink-mid"
                       )}>
                         {selected ? <Check aria-hidden="true" className="h-3 w-3" /> : null}
                         {selected ? "Seçildi" : "Seç"}
                       </span>
                     </span>
-                    <span className="mt-5 block text-xl font-semibold tracking-tight">{exam}</span>
-                    <span className="mt-2 block text-sm font-normal leading-6 text-muted-foreground">
+                    <span className="mt-5 block text-xl font-bold tracking-tight">{exam}</span>
+                    <span className="mt-2 block text-sm font-normal leading-6 text-ink-mid">
                       {EXAM_CONTEXT[exam]}
                     </span>
                   </button>
@@ -249,13 +249,13 @@ export function CoachingPlanForm({
               className="mt-1"
               placeholder="Öğrencilerime sürdürülebilir çalışma düzeni ve deneme analizi konusunda destek oluyorum."
             />
-            <p className="mt-2 text-xs leading-5 text-muted-foreground">
+            <p className="mt-2 text-xs leading-5 text-ink-mid">
               {description.length}/{DESCRIPTION_MAX}. Platform dışı iletişim, sınırsız destek veya sınav sonucu garantisi gibi vaatler kullanma.
             </p>
           </div>
           <aside className="rounded-card border border-line bg-paper p-4 text-sm">
-            <p className="font-semibold">İyi bir açıklama ne söyler?</p>
-            <ul className="mt-3 space-y-2 text-xs leading-5 text-muted-foreground">
+            <p className="font-medium">İyi bir açıklama ne söyler?</p>
+            <ul className="mt-3 space-y-2 text-xs leading-5 text-ink-mid">
               <li>· Nasıl bir çalışma düzeni kurduğunu</li>
               <li>· Görüşmelerde neyi takip ettiğini</li>
               <li>· Öğrencinin süreçte ne bekleyebileceğini</li>
@@ -282,7 +282,7 @@ export function CoachingPlanForm({
               onChange={(event) => setMaxStudents(event.target.value)}
               className="mt-1"
             />
-            <p className="mt-2 text-xs leading-5 text-muted-foreground">
+            <p className="mt-2 text-xs leading-5 text-ink-mid">
               Bu sayı, aktif öğrenci sayından az ve koçluk müsaitliğinin karşılayabileceğinden fazla olamaz. Uygun değilse önceki değer korunur ve nedeni burada yazar.
             </p>
           </div>
@@ -325,22 +325,22 @@ function StepCard({ title, description, children }: { title: string; description
 
 function PolicyValue({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl border bg-muted/25 p-4">
-      <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="mt-1 font-semibold tabular-nums">{value}</p>
+    <div className="rounded-2xl border bg-paper p-4">
+      <p className="text-xs text-ink-mid">{label}</p>
+      <p className="mt-1 font-medium tabular-nums">{value}</p>
     </div>
   );
 }
 
 function FixedDuration({ minutes }: { minutes: number }) {
   return (
-    <div className="flex gap-3 rounded-lg border bg-muted/20 p-4 text-sm">
-      <Clock3 aria-hidden className="mt-0.5 h-4 w-4 shrink-0" />
+    <div className="flex gap-3 rounded-lg border bg-paper p-4 text-sm">
+      <Clock aria-hidden className="mt-0.5 h-4 w-4 shrink-0" />
       <div>
         <p className="font-medium">Her görüşme {minutes} dakika</p>
-        <p className="mt-1 text-xs leading-5 text-muted-foreground">Görüşme süresi bütün çalışma koçluğu planlarında sabittir.</p>
+        <p className="mt-1 text-xs leading-5 text-ink-mid">Görüşme süresi bütün çalışma koçluğu planlarında sabittir.</p>
       </div>
-      <Info aria-hidden className="ml-auto h-4 w-4 text-muted-foreground" />
+      <Info aria-hidden className="ml-auto h-4 w-4 text-ink-mid" />
     </div>
   );
 }

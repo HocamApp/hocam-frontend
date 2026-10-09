@@ -17,13 +17,64 @@ import {
 } from "@/lib/coachingApi";
 
 function TutorReportsContent() {
-  const query = useQuery({ queryKey: COACHING_FAZ6_QUERY_KEYS.tutorReportList(), queryFn: fetchCoachingReports });
-  if (query.isLoading) return <div className="flex min-h-48 items-center justify-center"><LoadingSpinner /></div>;
+  const query = useQuery({
+    queryKey: COACHING_FAZ6_QUERY_KEYS.tutorReportList(),
+    queryFn: fetchCoachingReports,
+  });
+  if (query.isLoading)
+    return (
+      <div className="flex min-h-48 items-center justify-center">
+        <LoadingSpinner />
+      </div>
+    );
   if (query.isError) return <ErrorMessage message={extractCoachingErrorMessage(query.error)} />;
-  if (!query.data?.length) return <EmptyState icon={NotePencil} title="Henüz rapor taslağı yok" description="Rapor bekleyen bir görüşmeyi açtığında taslak burada görünür." tone="accent" />;
-  return <div className="space-y-3">{query.data.map((report) => <Link key={report.id} href={`/dashboard/tutor/coaching/sessions/${report.session_id}/report`}><Card className="transition-colors hover:bg-muted/50"><CardContent className="flex items-center justify-between gap-3 py-4"><div><p className="font-medium">Görüşme raporu</p><p className="mt-1 text-sm text-muted-foreground">Taslak sürümü {report.draft_version ?? 1}{report.latest_revision ? ` · Son yayın: revizyon ${report.latest_revision.revision_number}` : " · Henüz yayınlanmadı"}</p></div><NotePencil className="h-5 w-5 text-primary" weight="regular" /></CardContent></Card></Link>)}</div>;
+  if (!query.data?.length)
+    return (
+      <EmptyState
+        icon={NotePencil}
+        title="Henüz rapor taslağı yok"
+        description="Rapor bekleyen bir görüşmeyi açtığında taslak burada görünür."
+        tone="accent"
+      />
+    );
+  return (
+    <div className="space-y-3">
+      {query.data.map((report) => (
+        <Link
+          key={report.id}
+          href={`/dashboard/tutor/coaching/sessions/${report.session_id}/report`}
+        >
+          <Card className="transition-colors hover:bg-paper">
+            <CardContent className="flex items-center justify-between gap-3 py-4">
+              <div>
+                <p className="font-medium">Görüşme raporu</p>
+                <p className="mt-1 text-sm text-ink-mid">
+                  Taslak sürümü {report.draft_version ?? 1}
+                  {report.latest_revision
+                    ? ` · Son yayın: revizyon ${report.latest_revision.revision_number}`
+                    : " · Henüz yayınlanmadı"}
+                </p>
+              </div>
+              <NotePencil className="h-5 w-5 text-ink" weight="regular" />
+            </CardContent>
+          </Card>
+        </Link>
+      ))}
+    </div>
+  );
 }
 
 export default function TutorCoachingReportsPage() {
-  return <CoachingGuard><CoachingPageShell title="Görüşme raporları" width="wide" currentHref="/dashboard/tutor/coaching/reports" audience="tutor"><TutorReportsContent /></CoachingPageShell></CoachingGuard>;
+  return (
+    <CoachingGuard>
+      <CoachingPageShell
+        title="Görüşme raporları"
+        width="wide"
+        currentHref="/dashboard/tutor/coaching/reports"
+        audience="tutor"
+      >
+        <TutorReportsContent />
+      </CoachingPageShell>
+    </CoachingGuard>
+  );
 }

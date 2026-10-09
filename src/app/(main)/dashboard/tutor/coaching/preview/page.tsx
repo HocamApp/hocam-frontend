@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { Eye } from "lucide-react";
+import { Eye } from "@phosphor-icons/react";
 
 import { CoachingEmptyState } from "@/components/coaching/CoachingEmptyState";
 import { CoachingGuard } from "@/components/coaching/CoachingGuard";
@@ -47,7 +47,7 @@ function PreviewContent() {
 
   return (
     <div className="space-y-4">
-      <p className="rounded-lg border bg-muted/25 p-4 text-sm leading-6 text-muted-foreground">
+      <p className="rounded-lg border bg-paper p-4 text-sm leading-6 text-ink-mid">
         Bu, öğrencilerin koçluk teklifini nasıl gördüğünün önizlemesidir.
         Sayfada yaptığın hiçbir işlem öğrencilere gitmez.
       </p>

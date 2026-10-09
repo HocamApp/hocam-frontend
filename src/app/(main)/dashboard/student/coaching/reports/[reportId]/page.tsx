@@ -2,7 +2,7 @@
 
 import { useParams } from "next/navigation";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Download } from "lucide-react";
+import { DownloadSimple } from "@phosphor-icons/react";
 import { toast } from "sonner";
 
 import { PublishedReportView } from "@/components/coaching/PublishedReportView";
@@ -32,7 +32,10 @@ function downloadBlob(blob: Blob, filename: string) {
 }
 
 function StudentReportDetail({ reportId }: { reportId: string }) {
-  const reportQuery = useQuery({ queryKey: COACHING_FAZ6_QUERY_KEYS.publishedReport(reportId), queryFn: () => fetchCoachingReport(reportId) });
+  const reportQuery = useQuery({
+    queryKey: COACHING_FAZ6_QUERY_KEYS.publishedReport(reportId),
+    queryFn: () => fetchCoachingReport(reportId),
+  });
   const pdfMutation = useMutation({
     mutationFn: () => fetchCoachingReportPdf(reportId),
     onSuccess: (pdf) => downloadBlob(pdf, "hocam-calisma-koclugu-raporu.pdf"),
@@ -43,12 +46,46 @@ function StudentReportDetail({ reportId }: { reportId: string }) {
     onSuccess: ({ url }) => window.open(url, "_blank", "noopener,noreferrer"),
     onError: (error) => toast.error(extractCoachingErrorMessage(error)),
   });
-  if (reportQuery.isLoading) return <div className="flex min-h-48 items-center justify-center"><LoadingSpinner /></div>;
-  if (reportQuery.isError || !reportQuery.data) return <ErrorMessage message={extractCoachingErrorMessage(reportQuery.error)} />;
-  return <div className="space-y-4"><div className="flex justify-end"><Button variant="outline" disabled={pdfMutation.isPending} onClick={() => pdfMutation.mutate()}><Download className="mr-2 h-4 w-4" /> PDF indir</Button></div><PublishedReportView revision={reportQuery.data} onDownloadAttachment={(attachmentId) => attachmentMutation.mutate(attachmentId)} /><ReportFeedbackCard reportId={reportId} currentChoice={reportQuery.data.student_feedback} /></div>;
+  if (reportQuery.isLoading)
+    return (
+      <div className="flex min-h-48 items-center justify-center">
+        <LoadingSpinner />
+      </div>
+    );
+  if (reportQuery.isError || !reportQuery.data)
+    return <ErrorMessage message={extractCoachingErrorMessage(reportQuery.error)} />;
+  return (
+    <div className="space-y-4">
+      <div className="flex justify-end">
+        <Button
+          variant="outline"
+          disabled={pdfMutation.isPending}
+          onClick={() => pdfMutation.mutate()}
+        >
+          <DownloadSimple className="mr-2 h-4 w-4" /> PDF indir
+        </Button>
+      </div>
+      <PublishedReportView
+        revision={reportQuery.data}
+        onDownloadAttachment={(attachmentId) => attachmentMutation.mutate(attachmentId)}
+      />
+      <ReportFeedbackCard reportId={reportId} currentChoice={reportQuery.data.student_feedback} />
+    </div>
+  );
 }
 
 export default function StudentCoachingReportDetailPage() {
   const { reportId } = useParams<{ reportId: string }>();
-  return <RouteGuard requireAuth requireRole="student"><CoachingPageShell title="Görüşme raporu" width="narrow" currentHref="/dashboard/student/coaching/reports" audience="student"><StudentReportDetail reportId={reportId} /></CoachingPageShell></RouteGuard>;
+  return (
+    <RouteGuard requireAuth requireRole="student">
+      <CoachingPageShell
+        title="Görüşme raporu"
+        width="narrow"
+        currentHref="/dashboard/student/coaching/reports"
+        audience="student"
+      >
+        <StudentReportDetail reportId={reportId} />
+      </CoachingPageShell>
+    </RouteGuard>
+  );
 }

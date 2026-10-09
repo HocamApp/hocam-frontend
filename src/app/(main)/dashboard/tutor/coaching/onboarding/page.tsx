@@ -144,7 +144,7 @@ function OnboardingContent() {
               key={step}
               aria-current={isCurrent ? "step" : undefined}
               className={cn(
-                "rounded-pill border px-3 py-1.5 text-xs font-semibold",
+                "rounded-pill border px-3 py-1.5 text-xs font-medium",
                 isCurrent && "border-pink bg-pink text-white",
                 isDone && "border-success bg-success-soft text-success",
                 !isCurrent && !isDone && "border-line bg-surface text-ink-mid"
@@ -199,7 +199,7 @@ function OnboardingContent() {
         <section className="space-y-4">
           <Card className="rounded-card border-line bg-surface shadow-none">
             <CardContent className="pt-6">
-              <h2 className="text-lg font-semibold">
+              <h2 className="text-lg font-bold">
                 Koçluk sözleşmesi
                 {state.contract ? (
                   <span className="ml-2 text-xs font-normal text-ink-mid">
@@ -217,7 +217,7 @@ function OnboardingContent() {
 
           {state.has_accepted_current_contract ? (
             <div className="space-y-3">
-              <p className="flex items-center gap-2 text-sm font-semibold text-success">
+              <p className="flex items-center gap-2 text-sm font-medium text-success">
                 <Check className="h-4 w-4" aria-hidden="true" />
                 Güncel sözleşmeyi kabul ettin.
               </p>
@@ -240,7 +240,7 @@ function OnboardingContent() {
         <section className="space-y-4">
           <Card className="rounded-card border-line bg-surface shadow-none">
             <CardContent className="space-y-3 pt-6">
-              <h2 className="text-lg font-semibold">Son adım</h2>
+              <h2 className="text-lg font-bold">Son adım</h2>
               <p className="text-sm text-ink-mid">
                 Tanıtımı tamamladığında koçluk teklifini oluşturabilir,
                 müsaitliğini ve kapasiteni belirleyebilirsin.

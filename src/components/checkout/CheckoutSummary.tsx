@@ -495,7 +495,7 @@ export function CheckoutSummary({
               </p>
             )}
             <div className="hidden items-center justify-between gap-4 lg:flex">
-              <span className="text-sm font-semibold opacity-65">{totalLabel}</span>
+              <span className="text-sm font-medium opacity-65">{totalLabel}</span>
               <span className="text-xl font-extrabold tabular-nums">{displayedTotal}</span>
             </div>
             <Button
@@ -548,7 +548,7 @@ export function CheckoutSummary({
           Paket yalnız {tutor.name} {tutor.surname} ile geçerlidir.{" "}
           <Link
             href="/support#odeme-ve-iade"
-            className="font-semibold underline underline-offset-2 hover:text-[var(--checkout-control)]"
+            className="font-medium underline underline-offset-2 hover:text-[var(--checkout-control)]"
           >
             İade politikası
           </Link>
@@ -609,7 +609,7 @@ export function CheckoutSummary({
         <div className="fixed inset-x-0 bottom-0 z-40 border-t border-[var(--checkout-soft-line)] bg-[var(--checkout-right-surface)] pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 lg:hidden">
           <div className="mx-auto max-w-md px-4">
             <div className="mb-2 flex items-center justify-between gap-3">
-              <span className="text-xs font-semibold opacity-65">{totalLabel}</span>
+              <span className="text-xs font-medium opacity-65">{totalLabel}</span>
               <span className="font-extrabold tabular-nums">{displayedTotal}</span>
             </div>
             <Button

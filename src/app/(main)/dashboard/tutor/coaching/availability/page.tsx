@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { CalendarClock } from "lucide-react";
+import { CalendarDots } from "@phosphor-icons/react";
 
 import { CoachingAvailabilitySection } from "@/components/coaching/CoachingAvailabilitySection";
 import { CoachingEmptyState } from "@/components/coaching/CoachingEmptyState";
@@ -28,7 +28,7 @@ function AvailabilityContent() {
   if (!planQuery.data) {
     return (
       <CoachingEmptyState
-        icon={CalendarClock}
+        icon={CalendarDots}
         title="Önce bir koçluk teklifi oluştur"
         description="Koçluk müsaitliği teklifine bağlıdır. İlk dört kurulum adımını tamamladıktan sonra yalnızca koçluk için ayırdığın saatleri ekleyebilirsin."
         actions={<Button asChild><Link href="/dashboard/tutor/coaching/plan?step=frequency">Teklif oluştur</Link></Button>}

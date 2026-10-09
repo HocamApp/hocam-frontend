@@ -41,10 +41,10 @@ export function CoachingSetupProgress({
             <p className="text-label font-medium text-pink">
               Adım {stepNumber} / {COACHING_SETUP_STEPS.length}
             </p>
-            <h2 className="mt-0.5 text-lg font-semibold tracking-[-0.025em]">
+            <h2 className="mt-0.5 text-lg font-bold tracking-[-0.025em]">
               {STEP_LABELS[currentStep]}
             </h2>
-            <p className="mt-1 text-xs text-muted-foreground">
+            <p className="mt-1 text-xs text-ink-mid">
               {nextStep ? `Sırada: ${STEP_LABELS[nextStep]}` : "Son adım: teklifini kontrol et"}
             </p>
           </div>
@@ -90,7 +90,7 @@ export function CoachingSetupProgress({
             <>
               <span
                 className={cn(
-                    "relative z-10 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-pill border bg-surface text-xs font-semibold transition-colors duration-[var(--duration-state)]",
+                    "relative z-10 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-pill border bg-surface text-xs font-medium transition-colors duration-[var(--duration-state)]",
                   current && "border-pink bg-pink text-white",
                   complete && !current && "border-success bg-success-soft text-success",
                   !complete && !current && unlocked && "border-line text-ink-mid",
@@ -100,12 +100,12 @@ export function CoachingSetupProgress({
                 {complete ? <Check aria-hidden="true" className="h-4 w-4" /> : index + 1}
               </span>
               <span className="min-w-0 flex-1 md:text-center">
-                <span className={cn("block text-xs font-semibold leading-4", !unlocked && "text-muted-foreground")}>
+                <span className={cn("block text-xs font-medium leading-4", !unlocked && "text-ink-mid")}>
                   {STEP_LABELS[step]}
                 </span>
                 <span className={cn(
                   "mt-0.5 inline-flex rounded-pill px-2 py-0.5 text-[10px]",
-                  (current || (unlocked && !complete)) ? "bg-gold text-white" : "text-muted-foreground",
+                  (current || (unlocked && !complete)) ? "bg-gold text-gold-ink" : "text-ink-mid",
                   complete && !current && "text-success",
                 )}>
                   {current ? "Şu an buradasın" : complete ? "Tamamlandı" : unlocked ? "Hazır" : "Sırayla açılır"}

@@ -37,7 +37,7 @@ export function TutorCoachingPendingWork() {
             <span className="block text-body font-medium">
               {label}
               {count ? (
-                <span className="ml-2 rounded-pill bg-pink px-2 text-label font-medium text-white">
+                <span className="ml-2 rounded-pill bg-pink-deep px-2 text-label font-medium text-white">
                   {count} bekliyor
                 </span>
               ) : null}

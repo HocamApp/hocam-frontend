@@ -165,7 +165,7 @@ export function RescheduleDialog({ session }: { session: CoachingSessionItem }) 
                               className={cn(
                                 "min-h-11 min-w-[4.5rem] rounded-input border px-3 text-body font-medium tabular-nums transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink focus-visible:ring-offset-2",
                                 selected
-                                  ? "border-pink bg-pink text-white"
+                                  ? "border-pink-deep bg-pink-deep text-white"
                                   : "border-line text-ink hover:border-ink",
                               )}
                             >

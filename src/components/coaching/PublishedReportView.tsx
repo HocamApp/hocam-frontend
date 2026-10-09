@@ -1,4 +1,4 @@
-import { FileDown, Link as LinkIcon } from "lucide-react";
+import { FileArrowDown, LinkSimple as LinkIcon } from "@phosphor-icons/react/ssr";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,8 +12,8 @@ function TextSection({ title, value }: { title: string; value?: string }) {
   if (!value?.trim()) return null;
   return (
     <section className="space-y-1">
-      <h3 className="text-sm font-semibold">{title}</h3>
-      <p className="whitespace-pre-wrap text-sm leading-6 text-muted-foreground">{value}</p>
+      <h3 className="text-sm font-medium">{title}</h3>
+      <p className="whitespace-pre-wrap text-sm leading-6 text-ink-mid">{value}</p>
     </section>
   );
 }
@@ -23,8 +23,8 @@ function StringList({ title, values }: { title: string; values?: string[] }) {
   if (!visible.length) return null;
   return (
     <section className="space-y-1">
-      <h3 className="text-sm font-semibold">{title}</h3>
-      <ul className="list-disc space-y-1 pl-5 text-sm leading-6 text-muted-foreground">
+      <h3 className="text-sm font-medium">{title}</h3>
+      <ul className="list-disc space-y-1 pl-5 text-sm leading-6 text-ink-mid">
         {visible.map((value) => (
           <li key={value}>{value}</li>
         ))}
@@ -43,7 +43,7 @@ export function ReportResources({
   if (!resources?.length) return null;
   return (
     <section className="space-y-2">
-      <h3 className="text-sm font-semibold">Önerilen kaynaklar</h3>
+      <h3 className="text-sm font-medium">Önerilen kaynaklar</h3>
       <ul className="space-y-2">
         {resources.map((resource, index) => {
           // Published resources expose only authorised attachment metadata;
@@ -53,7 +53,7 @@ export function ReportResources({
           <li key={`${resource.title}-${index}`} className="rounded-md border p-3 text-sm">
             <p className="font-medium">{resource.title}</p>
             {resource.note ? (
-              <p className="mt-1 whitespace-pre-wrap text-muted-foreground">{resource.note}</p>
+              <p className="mt-1 whitespace-pre-wrap text-ink-mid">{resource.note}</p>
             ) : null}
             <div className="mt-2 flex flex-wrap gap-2">
               {resource.url ? (
@@ -69,7 +69,7 @@ export function ReportResources({
                   variant="outline"
                   onClick={() => onDownloadAttachment(attachmentId)}
                 >
-                  <FileDown className="mr-1 h-3.5 w-3.5" />
+                  <FileArrowDown className="mr-1 h-3.5 w-3.5" />
                   {resource.attachment?.original_name ?? "Dosyayı indir"}
                 </Button>
               ) : null}
@@ -97,12 +97,12 @@ export function PublishedReportView({
     <Card>
       <CardHeader>
         <CardTitle className="text-xl">Görüşme raporu</CardTitle>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-ink-mid">
           Sürüm {revision.revision_number} ·{" "}
           {coachingDateTimeLabel(revision.published_at)}
         </p>
         {revision.change_note ? (
-          <p className="text-sm text-muted-foreground">{revision.change_note}</p>
+          <p className="text-sm text-ink-mid">{revision.change_note}</p>
         ) : null}
       </CardHeader>
       <CardContent className="space-y-6">
@@ -118,13 +118,13 @@ export function PublishedReportView({
         <TextSection title="Program değişikliği" value={content.program_changes_summary} />
 
         {exam ? (
-          <section className="space-y-3 rounded-lg bg-muted/50 p-4">
-            <h3 className="text-sm font-semibold">Sınav analizi</h3>
+          <section className="space-y-3 rounded-lg bg-paper p-4">
+            <h3 className="text-sm font-medium">Sınav analizi</h3>
             <dl className="grid gap-2 text-sm sm:grid-cols-2">
-              {exam.exam_type ? <div><dt className="text-muted-foreground">Sınav</dt><dd>{exam.exam_type}</dd></div> : null}
-              {exam.exam_name ? <div><dt className="text-muted-foreground">Deneme / test</dt><dd>{exam.exam_name}</dd></div> : null}
-              {exam.date ? <div><dt className="text-muted-foreground">Tarih</dt><dd>{exam.date}</dd></div> : null}
-              {exam.score_or_net !== undefined && exam.score_or_net !== null ? <div><dt className="text-muted-foreground">Puan / net</dt><dd>{exam.score_or_net}</dd></div> : null}
+              {exam.exam_type ? <div><dt className="text-ink-mid">Sınav</dt><dd>{exam.exam_type}</dd></div> : null}
+              {exam.exam_name ? <div><dt className="text-ink-mid">Deneme / test</dt><dd>{exam.exam_name}</dd></div> : null}
+              {exam.date ? <div><dt className="text-ink-mid">Tarih</dt><dd>{exam.date}</dd></div> : null}
+              {exam.score_or_net !== undefined && exam.score_or_net !== null ? <div><dt className="text-ink-mid">Puan / net</dt><dd>{exam.score_or_net}</dd></div> : null}
             </dl>
             <StringList title="Güçlü alanlar" values={exam.strengths} />
             <StringList title="Odak alanları" values={exam.focus_areas} />

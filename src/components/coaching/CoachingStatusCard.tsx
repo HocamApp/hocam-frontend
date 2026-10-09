@@ -49,7 +49,7 @@ export function CoachingStatusCard({ status }: { status: CoachingDerivedStatus }
               className={cn(
                 "inline-flex items-center gap-2 rounded-pill px-4 py-1.5 text-[0.8125rem] font-medium leading-[1.4] tracking-[0.01em]",
                 ready
-                  ? "bg-gold text-white"
+                  ? "bg-gold text-gold-ink"
                   : "border border-line text-ink-mid",
               )}
             >
