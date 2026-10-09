@@ -96,8 +96,8 @@ describe("guarantees", () => {
     const { container } = render(<YsGuarantees />);
     const text = container.textContent ?? "";
     assert.equal(container.querySelector("[data-todo-fact]"), null);
-    assert.ok(text.includes(TUTOR_NO_SHOW_TEXT), "tutor no-show");
-    assert.ok(text.includes(REMAINING_ON_SWITCH_TEXT), "remaining on switch");
+    assert.ok(text.includes(String(TUTOR_NO_SHOW_TEXT)), "tutor no-show");
+    assert.ok(text.includes(String(REMAINING_ON_SWITCH_TEXT)), "remaining on switch");
     assert.equal(PAYMENT_CHARGED_WHEN, null);
     assert.doesNotMatch(text, /kartından o anda çekilir/);
     assert.doesNotMatch(text, /null/);
