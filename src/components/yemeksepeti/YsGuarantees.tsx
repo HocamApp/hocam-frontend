@@ -22,9 +22,9 @@ import {
  * "Ters giderse ne olur?", NEXT_PUBLIC_HOME_V2 only.
  *
  * Four questions a student asks before paying. Every answer has to say the
- * same thing as /iptal-ve-iade; the ones that are not settled yet (payment
- * timing, a tutor no-show, what happens to remaining lessons) are TODO facts,
- * and the policy answers come from DERS_POLITIKALARI_RAPORU.md, not from here.
+ * same thing as /iptal-ve-iade, so the policy answers (a tutor no-show, what
+ * happens to remaining lessons) are facts in ysHomeFacts.ts, not text here.
+ * The payment timing sentence is `null`, and says nothing, while PayTR is off.
  */
 export function YsGuarantees() {
   const cards: { Icon: Icon; question: string; answer: ReactNode[] }[] = [
@@ -32,7 +32,7 @@ export function YsGuarantees() {
       Icon: CreditCard,
       question: copy.payment.question,
       answer: copy.payment.answer(
-        <YsFact value={PAYMENT_CHARGED_WHEN} label="Ödeme anı: ödeme sağlayıcısı canlıya alınınca" />,
+        <YsFact value={PAYMENT_CHARGED_WHEN} label="Ödeme anı" />,
       ),
     },
     {

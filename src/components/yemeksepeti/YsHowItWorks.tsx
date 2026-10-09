@@ -109,7 +109,7 @@ const STUDENT_STEP_FACTS = {
   shortestPlan: PLAN_DURATIONS[0].label.toLocaleLowerCase("tr-TR"),
   longestPlan: PLAN_DURATIONS[PLAN_DURATIONS.length - 1].label.toLocaleLowerCase("tr-TR"),
   paymentChargedWhen: (
-    <YsFact value={PAYMENT_CHARGED_WHEN} label="Ödeme adımı: ödeme sağlayıcısı canlıya alınınca yazılacak" />
+    <YsFact value={PAYMENT_CHARGED_WHEN} label="Ödeme adımı" />
   ),
   remainingOnSwitch: <YsFact value={REMAINING_ON_SWITCH_TEXT} label="kalan dersler: D6" />,
 };

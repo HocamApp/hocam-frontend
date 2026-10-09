@@ -10,6 +10,7 @@
  * ysHomeCopy.ts, the FAQ, the entry promo and a few public pages.
  */
 
+import { PAYTR_ENABLED } from "@/lib/featureFlags";
 import {
   formatPlanDuration,
   PLAN_DURATION_DAYS,
@@ -91,17 +92,19 @@ export const VERIFICATION_DOCS_MAX_RETENTION_DAYS = 30;
 export const SINGLE_LESSON_AVAILABLE = false;
 
 /* ------------------------------------------------------------------------ *
- * Undecided facts.
+ * Owner-decided facts.
  *
- * Everything below is a sentence or number the owners have not settled yet.
- * Each one is `TODO` until it is, and `scripts/check-home-facts.ts` fails the
+ * Everything below is a sentence or number the owners settle. A new one starts
+ * as `TODO` until it is, and `scripts/check-home-facts.ts` fails the
  * production build while any are left, so a placeholder cannot ship by
- * accident. Policy answers (no-show, cancellation details) come from
- * DERS_POLITIKALARI_RAPORU.md, payment timing waits for the payment provider:
- * none of them are to be filled in from guesswork.
+ * accident. None of them are to be filled in from guesswork.
  *
- * Render them through `YsFact`, which shows `[label]` in development and
- * nothing in production.
+ * A fact that is decided but must not show yet (payment sentences while
+ * payments are off, tax text until an accountant approves it) is `null`
+ * rather than `TODO`: it renders nothing and does not block the build.
+ *
+ * Render them through `YsFact`, which shows `[label]` for a `TODO` in
+ * development and nothing in production, and nothing for `null`.
  * ------------------------------------------------------------------------ */
 
 export const TODO: unique symbol = Symbol("TODO");
@@ -113,8 +116,18 @@ export function isTodo(value: unknown): value is Todo {
   return value === TODO;
 }
 
-/** Lowest and highest profile price, per 40-minute lesson. */
-export const PRICE_RANGE_TL: Fact<{ min: number; max: number }> = TODO;
+/* Answered by the owners, 8 Oct 2026 (Hocam_Ana_Sayfa_Doldurulacak_Bilgiler).
+   The Turkish sentences are theirs; checked against /iptal-ve-iade (§4 no-show,
+   §5 24h dispute, §9 refund formula, §11 refund within 15 days),
+   /kvkk/saklama-ve-imha-politikasi (attendance records 2 yıl) and the ders
+   odası FAQ (no recording). */
+
+/**
+ * Lowest and highest profile price, per 40-minute lesson. Owners, 8 Oct 2026
+ * (Hocam_Ana_Sayfa_Doldurulacak_Bilgiler). The range the owners quote, not a
+ * limit: the tutor profile form does not enforce it.
+ */
+export const PRICE_RANGE_TL: Fact<{ min: number; max: number }> = { min: 400, max: 1400 };
 /**
  * Platform commission on a tutor's price. Founder decision, 8 October 2026
  * (was 15%). Mirrors apps/tutors/price_insights.py
@@ -122,45 +135,76 @@ export const PRICE_RANGE_TL: Fact<{ min: number; max: number }> = TODO;
  * Render it with formatPercent so it reads "17,5", not "17.5".
  */
 export const COMMISSION_PERCENT: Fact<number> = 17.5;
-/** When the student's card is actually charged. Waits for the payment provider. */
-export const PAYMENT_CHARGED_WHEN: Fact<string> = TODO;
-/** When and how a tutor is paid. Never IBAN, never a promise before payouts are live. */
-export const TUTOR_PAYOUT_TEXT: Fact<string> = TODO;
-/** Whether a tutor is paid for a free trial lesson. */
-export const TRIAL_PAID_TO_TUTOR: Fact<string> = TODO;
-/** What happens when the tutor does not show up. DERS_POLITIKALARI_RAPORU.md. */
-export const TUTOR_NO_SHOW_TEXT: Fact<string> = TODO;
-/** What happens to the remaining lessons when a student switches tutor. */
-export const REMAINING_ON_SWITCH_TEXT: Fact<string> = TODO;
-/** Whether a tutor has to accept every lesson request. */
-export const TUTOR_MUST_ACCEPT_TEXT: Fact<string> = TODO;
-/** What happens when the student does not show up. DERS_POLITIKALARI_RAPORU.md. */
-export const STUDENT_NO_SHOW_TEXT: Fact<string> = TODO;
-/** Minimum weekly hours a tutor commits to. */
-export const TUTOR_MIN_WEEKLY_HOURS: Fact<number> = TODO;
-/** What happens when a verification application is rejected (can they reapply?). */
-export const VERIFICATION_REJECTION_TEXT: Fact<string> = TODO;
-/** Days until a verification application is decided. */
-export const VERIFICATION_REVIEW_DAYS: Fact<number> = TODO;
-/** How long after the review the verification documents are deleted, e.g. "30 gün". Must match /kvkk. */
-export const VERIFICATION_DOCS_DELETED_AFTER: Fact<string> = TODO;
-/** Whether lessons are recorded, and who can see a recording. */
-export const RECORDING_POLICY_TEXT: Fact<string> = TODO;
-/** Whether a parent can join or watch a lesson. */
-export const PARENT_CAN_JOIN_TEXT: Fact<string> = TODO;
-/** Whether a parent can pay on the student's behalf. */
-export const PARENT_CAN_PAY_TEXT: Fact<string> = TODO;
-/** How and how fast support answers. */
-export const SUPPORT_REPLY_TEXT: Fact<string> = TODO;
-/** The rule on moving lessons or payments off the platform. */
-export const OFF_PLATFORM_TEXT: Fact<string> = TODO;
-/** Tax obligations for tutors. */
-export const TAX_TEXT: Fact<string> = TODO;
-/** Who can become a coaching (koçluk) tutor. */
-export const COACHING_TUTOR_TEXT: Fact<string> = TODO;
-/** The company's registered legal name, for the footer. */
-export const COMPANY_LEGAL_NAME: Fact<string> = TODO;
-/** The company's registered address, for the footer. */
-export const COMPANY_ADDRESS: Fact<string> = TODO;
-/** The company's MERSİS number, for the footer. */
-export const COMPANY_MERSIS: Fact<string> = TODO;
+/**
+ * When the student's card is actually charged. Owners, 8 Oct 2026
+ * (Hocam_Ana_Sayfa_Doldurulacak_Bilgiler). Payments are not live, so this is
+ * `null` (renders nothing) unless the build has PayTR on.
+ */
+export const PAYMENT_CHARGED_WHEN: string | null = PAYTR_ENABLED
+  ? "Hocan paket talebini onaylayınca ödeme ekranı açılır; kartından o anda çekilir."
+  : null;
+/**
+ * When and how a tutor is paid. Owners, 8 Oct 2026
+ * (Hocam_Ana_Sayfa_Doldurulacak_Bilgiler). Never IBAN, and never a promise
+ * before payouts are live: `null` (renders nothing) unless PayTR is on.
+ */
+export const TUTOR_PAYOUT_TEXT: string | null = PAYTR_ENABLED
+  ? "Ders ve koçluk kazançların haftada bir, toplu olarak aktarılır: onaylanan ve itiraz süresi geçen dersler o haftanın ödemesine girer."
+  : null;
+/** Whether a tutor is paid for a free trial lesson. Owners, 8 Oct 2026 (Hocam_Ana_Sayfa_Doldurulacak_Bilgiler). */
+export const TRIAL_PAID_TO_TUTOR: Fact<string> = `Hayır. ${TRIAL_MINUTES} dakikalık deneme dersi öğrenciye ücretsiz; hocaya ayrıca ödeme yapılmaz, hoca bunu gönüllü sunar.`;
+/** What happens when the tutor does not show up. Owners, 8 Oct 2026 (Hocam_Ana_Sayfa_Doldurulacak_Bilgiler); /iptal-ve-iade §4. */
+export const TUTOR_NO_SHOW_TEXT: Fact<string> =
+  "Hoca derse gelmezse (15 dakika beklenir) ders iptal olur, ders hakkın paketine geri yüklenir ve sana ek bir telafi dersi hakkı tanımlanır.";
+/** What happens to the remaining lessons when a student switches tutor. Owners, 8 Oct 2026 (Hocam_Ana_Sayfa_Doldurulacak_Bilgiler); /iptal-ve-iade §9, §11. */
+export const REMAINING_ON_SWITCH_TEXT: Fact<string> =
+  "Paket tek bir hocaya bağlıdır, başka hocaya aktarılmaz. Hoca değiştirmek istersen kalan dersler için iade talebi açarsın: ödediğin tutardan, kullandığın derslerin indirimli birim fiyatı düşülerek hesaplanır; kabul edilince 15 gün içinde iade edilir.";
+/**
+ * Whether a tutor has to accept every lesson request. Owners, 8 Oct 2026
+ * (Hocam_Ana_Sayfa_Doldurulacak_Bilgiler), describing the product as it is:
+ * the tutor accepts the package request before payment, and bookings start
+ * pending unless "Rezervasyonları otomatik onayla" is on.
+ */
+export const TUTOR_MUST_ACCEPT_TEXT: Fact<string> =
+  "Evet, paket taleplerini ve yeni rezervasyonları sen onaylarsın. İstersen profilinden rezervasyonları otomatik onaylamayı açabilirsin. Müsait olmadığın saatleri takviminde kapalı tut.";
+/**
+ * What happens when the student does not show up. Owners, 8 Oct 2026
+ * (Hocam_Ana_Sayfa_Doldurulacak_Bilgiler); /iptal-ve-iade §4, §5. The owners'
+ * "hoca dersin karşılığını alır" is left out: it is a payout statement.
+ */
+export const STUDENT_NO_SHOW_TEXT: Fact<string> = `Sen derse gelmezsen ve hoca gelmişse ders yapılmış sayılır ve paketinden bir ders hakkı düşer. ${AUTO_CONFIRM_HOURS} saat içinde itiraz edebilirsin.`;
+/** What happens when a verification application is rejected. Owners, 8 Oct 2026 (Hocam_Ana_Sayfa_Doldurulacak_Bilgiler). */
+export const VERIFICATION_REJECTION_TEXT: Fact<string> =
+  "Tekrar başvurabilirsin, bekleme süresi yok. Ret gerekçesi hesabındaki doğrulama ekranında görünür; güncel belgelerle yeni başvuru açarsın.";
+/**
+ * How long until a verification application is decided, as copy reads it
+ * ("Başvurular X içinde sonuçlanır"). Owners, 8 Oct 2026
+ * (Hocam_Ana_Sayfa_Doldurulacak_Bilgiler).
+ */
+export const VERIFICATION_REVIEW_TIME: Fact<string> = "1–2 iş günü";
+/** Whether lessons are recorded. Owners, 8 Oct 2026 (Hocam_Ana_Sayfa_Doldurulacak_Bilgiler); /kvkk/saklama-ve-imha-politikasi. */
+export const RECORDING_POLICY_TEXT: Fact<string> =
+  "Hayır. Derslerde ses ve görüntü kaydı alınmaz; yalnızca kimin derse ne zaman katıldığı kaydı tutulur ve 2 yıl saklanır.";
+/** Whether a parent can join or watch a lesson. Owners, 8 Oct 2026 (Hocam_Ana_Sayfa_Doldurulacak_Bilgiler). */
+export const PARENT_CAN_JOIN_TEXT: Fact<string> =
+  "Hayır. Derse yalnızca öğrenci ve hoca katılır; ayrı bir veli hesabı yok. 18 yaş altı öğrenciler platformu veli bilgisi ve onayıyla kullanır.";
+/** Whether a parent can pay on the student's behalf. Owners, 8 Oct 2026 (Hocam_Ana_Sayfa_Doldurulacak_Bilgiler). */
+export const PARENT_CAN_PAY_TEXT: Fact<string> = "Ayrı bir veli hesabı yok; ödeme öğrencinin hesabı üzerinden yapılır.";
+/** How fast support answers; copy reads "… X içinde dönüyoruz.". Owners, 8 Oct 2026 (Hocam_Ana_Sayfa_Doldurulacak_Bilgiler). */
+export const SUPPORT_REPLY_TEXT: Fact<string> = "24 saat";
+/** The rule on moving lessons or payments off the platform. Owners, 8 Oct 2026 (Hocam_Ana_Sayfa_Doldurulacak_Bilgiler). */
+export const OFF_PLATFORM_TEXT: Fact<string> =
+  "Platform dışında ders yapmak veya ödeme almak yasaktır; tespit edilirse hesap askıya alınabilir.";
+/**
+ * Tax obligations for tutors. Needs accountant-approved text, which does not
+ * exist yet; while it is `null` the tutor FAQ leaves the question out, JSON-LD
+ * included. Not `TODO`: a missing answer hides the question rather than
+ * blocking the build.
+ */
+export const TAX_TEXT: string | null = null;
+/**
+ * How coaching works. Owners, 8 Oct 2026 (Hocam_Ana_Sayfa_Doldurulacak_Bilgiler).
+ * Renders only while the coaching flag is on.
+ */
+export const COACHING_TUTOR_TEXT: Fact<string> =
+  "Koçluk, öğrencinin ders paketine bağlı ek hizmettir; tek başına alınmaz. Hoca kendi koçluk planını açar: 30 dakikalık görüşmeler, çalışma programı, deneme değerlendirmesi, ilerleme raporu ve mesajlara 24 saat içinde yanıt.";

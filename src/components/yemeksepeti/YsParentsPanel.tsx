@@ -25,7 +25,7 @@ import {
  *
  * Only what the product actually does today. Messaging opens after a lesson
  * request, which is how it works now; recording, a parent joining, a parent
- * paying and support reply time are TODO facts until the owners decide them.
+ * paying and support reply time are the owners' answers in ysHomeFacts.ts.
  *
  * `className` carries the space above (the homepage's 120px lead-in, less on
  * /veliler). It goes on the outer element: `.ys-shell` sets its own padding

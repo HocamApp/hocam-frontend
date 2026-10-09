@@ -46,6 +46,15 @@ describe("YsFact", () => {
     assert.equal(container.textContent, "[SÜRE]");
     assert.ok(container.querySelector('[data-todo-fact="SÜRE"]'));
   });
+
+  it("prints nothing for a held-back (null) value", () => {
+    for (const value of [null, undefined]) {
+      const { container } = render(<YsFact value={value} label="X" />);
+      assert.equal(container.textContent, "");
+      assert.equal(container.querySelector("[data-todo-fact]"), null);
+      cleanup();
+    }
+  });
 });
 
 describe("homepage copy", () => {

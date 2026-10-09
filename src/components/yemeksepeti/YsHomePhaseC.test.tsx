@@ -117,18 +117,21 @@ describe("FAQ", () => {
     assert.match(html, /role="tablist"/);
   });
 
-  it("leaves TODO answers out of production and out of the JSON-LD", () => {
-    const parentDev = faqEntries("parent", false);
-    assert.ok(parentDev.length > 0);
-    assert.ok(parentDev.every((entry) => entry.pending));
-    assert.deepEqual(faqEntries("parent", true), []);
-    assert.ok(faqEntries("student", true).length > 0);
+  it("renders every decided answer in production and the JSON-LD, and skips the tax question", () => {
+    for (const audience of ["student", "parent", "tutor"] as const) {
+      const dev = faqEntries(audience, false);
+      assert.ok(dev.length > 0, audience);
+      assert.ok(dev.every((entry) => !entry.pending), audience);
+      assert.deepEqual(faqEntries(audience, true), dev, audience);
+    }
+    assert.ok(!faqEntries("tutor", false).some((entry) => entry.id === "hoca-vergi"));
 
     const html = renderToStaticMarkup(<YsHomeFaq v2 />);
     const jsonLd = html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)?.[1] ?? "";
     const questions = (JSON.parse(jsonLd.replace(/\\u003c/g, "<")).mainEntity as { name: string }[]).map((q) => q.name);
     assert.ok(questions.includes("Tek ders satın alabilir miyim?"));
-    assert.ok(!questions.includes("Ödemeyi ben yapabilir miyim?"));
+    assert.ok(questions.includes("Ödemeyi ben yapabilir miyim?"));
+    assert.ok(!questions.includes("Kazancımı vergi açısından nasıl beyan ederim?"));
   });
 
   it("states the single-lesson answer from the package facts", () => {
@@ -144,7 +147,7 @@ describe("FAQ", () => {
       faqAnswerText(["a ", { fact: 3, label: "x" }, " ", { href: "/y", text: "b" }]),
       "a 3 b",
     );
-    assert.equal(faqEntries("tutor", false).some((e) => e.answer.some((p) => typeof p === "object" && "fact" in p && p.fact === TODO)), true);
+    assert.equal(faqEntries("tutor", false).some((e) => e.answer.some((p) => typeof p === "object" && "fact" in p && p.fact === TODO)), false);
   });
 });
 

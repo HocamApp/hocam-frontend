@@ -9,11 +9,14 @@ import { isTodo } from "./ysHomeFacts";
  * `[label]` in a dashed outline during development, so a reviewer sees the
  * hole where the number goes, and as nothing in production. Production should
  * never get that far: `scripts/check-home-facts.ts` fails the build first.
+ * A fact that is `null` or `undefined` (decided, but held back, like the
+ * payment sentences while payments are off) renders nothing anywhere.
  *
  * Format the value before passing it (`formatPrice`, a range, a unit): this
  * only prints strings and numbers.
  */
 export function YsFact({ value, label }: { value: unknown; label: string }): JSX.Element {
+  if (value === null || value === undefined) return <></>;
   if (isTodo(value)) {
     if (process.env.NODE_ENV === "production") return <></>;
     return (

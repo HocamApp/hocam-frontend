@@ -9,8 +9,9 @@ import { band as copy } from "./ysHomeCopy";
 import {
   isTodo,
   MAX_TUTOR_YKS_RANK,
-  VERIFICATION_DOCS_DELETED_AFTER,
-  VERIFICATION_REVIEW_DAYS,
+  VERIFICATION_DOCS_DELETE_DAYS_AFTER_APPROVAL,
+  VERIFICATION_DOCS_MAX_RETENTION_DAYS,
+  VERIFICATION_REVIEW_TIME,
 } from "./ysHomeFacts";
 
 /**
@@ -39,9 +40,10 @@ import {
  * Text comes from `ysHomeCopy.ts`, numbers from `ysHomeFacts.ts`.
  */
 export function YsVerifiedBand({ v2 = false }: { v2?: boolean }) {
-  /* The footer line quotes two facts that are not decided yet. In production
-     a sentence with holes in it is worse than no sentence. */
-  const footPending = isTodo(VERIFICATION_REVIEW_DAYS) || isTodo(VERIFICATION_DOCS_DELETED_AFTER);
+  /* The footer line quotes the review time. Should it ever go back to TODO,
+     production drops the line: a sentence with a hole in it is worse than no
+     sentence. */
+  const footPending = isTodo(VERIFICATION_REVIEW_TIME);
   const showFoot = !footPending || process.env.NODE_ENV !== "production";
 
   const claim = (
@@ -118,8 +120,9 @@ export function YsVerifiedBand({ v2 = false }: { v2?: boolean }) {
             showFoot
               ? Children.toArray(
                   copy.checklistFoot({
-                    reviewDays: <YsFact value={VERIFICATION_REVIEW_DAYS} label="X" />,
-                    docsDeletedAfter: <YsFact value={VERIFICATION_DOCS_DELETED_AFTER} label="SÜRE" />,
+                    reviewTime: <YsFact value={VERIFICATION_REVIEW_TIME} label="X" />,
+                    afterApproval: VERIFICATION_DOCS_DELETE_DAYS_AFTER_APPROVAL,
+                    maxRetention: VERIFICATION_DOCS_MAX_RETENTION_DAYS,
                   }),
                 )
               : undefined

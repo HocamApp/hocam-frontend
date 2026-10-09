@@ -11,7 +11,7 @@ import type { PackagePlan } from "@/types/api";
 import { YsTodoGate } from "./YsFact";
 import { YsGuarantees } from "./YsGuarantees";
 import { guarantees, parents, pricing, students } from "./ysHomeCopy";
-import { TODO } from "./ysHomeFacts";
+import { PAYMENT_CHARGED_WHEN, REMAINING_ON_SWITCH_TEXT, TODO, TUTOR_NO_SHOW_TEXT } from "./ysHomeFacts";
 import { YsParentsPanel } from "./YsParentsPanel";
 import { examplePlans } from "./YsPricing";
 import { YsStepList } from "./YsStepList";
@@ -92,11 +92,15 @@ describe("guarantees", () => {
     assert.equal(container.querySelectorAll("h3").length, 4);
   });
 
-  it("marks the undecided answers instead of inventing them", () => {
+  it("states the owners' answers and no payment timing while PayTR is off", () => {
     const { container } = render(<YsGuarantees />);
-    for (const label of ["Ödeme anı: ödeme sağlayıcısı canlıya alınınca", "D6"]) {
-      assert.ok(container.querySelector(`[data-todo-fact="${label}"]`), label);
-    }
+    const text = container.textContent ?? "";
+    assert.equal(container.querySelector("[data-todo-fact]"), null);
+    assert.ok(text.includes(TUTOR_NO_SHOW_TEXT), "tutor no-show");
+    assert.ok(text.includes(REMAINING_ON_SWITCH_TEXT), "remaining on switch");
+    assert.equal(PAYMENT_CHARGED_WHEN, null);
+    assert.doesNotMatch(text, /kartından o anda çekilir/);
+    assert.doesNotMatch(text, /null/);
   });
 });
 
