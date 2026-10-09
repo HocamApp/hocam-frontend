@@ -10,6 +10,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import type { CoachingRevenuePreview, CoachingRevenueRow } from "@/lib/coachingApi";
 import { formatBpsPercent, formatTryMinor } from "@/lib/money";
 
+
+/** "−12,00 ₺" for a real deduction, plain "0,00 ₺" for none (a free plan
+ * used to read "−0,00 ₺"). */
+function deduction(minor: number) {
+  return minor > 0 ? `−${formatTryMinor(minor)}` : formatTryMinor(0);
+}
+
 export function RevenuePreviewCard({ preview }: { preview: CoachingRevenuePreview }) {
   const primary = preview.rows.find((row) => row.weeks === 4) ?? preview.rows[0];
   const alternatives = preview.rows.filter((row) => row !== primary);
@@ -40,8 +47,8 @@ export function RevenuePreviewCard({ preview }: { preview: CoachingRevenuePrevie
           </div>
           <dl className="mt-5 flex flex-col gap-3 border-t border-line pt-4 text-xs sm:flex-row sm:flex-wrap sm:justify-between">
             <RevenueLine label="Öğrencinin koçluk toplamı" value={formatTryMinor(primary.total_price_minor)} />
-            <RevenueLine label={`Paket indirimi · %${primary.discount_percent}`} value={`−${formatTryMinor(primary.discount_amount_minor)}`} />
-            <RevenueLine label="Platform komisyonu" value={`−${formatTryMinor(primary.platform_fee_minor)}`} />
+            <RevenueLine label={`Paket indirimi · %${primary.discount_percent}`} value={deduction(primary.discount_amount_minor)} />
+            <RevenueLine label="Platform komisyonu" value={deduction(primary.platform_fee_minor)} />
           </dl>
         </div>
 
@@ -89,7 +96,7 @@ function PackageRevenue({ row }: { row: CoachingRevenueRow }) {
       </div>
       <dl className="mt-3 space-y-1 border-t border-line pt-3 text-xs text-ink-mid">
         <div className="flex justify-between gap-3"><dt>Öğrenci toplamı</dt><dd>{formatTryMinor(row.total_price_minor)}</dd></div>
-        <div className="flex justify-between gap-3"><dt>Platform komisyonu</dt><dd>−{formatTryMinor(row.platform_fee_minor)}</dd></div>
+        <div className="flex justify-between gap-3"><dt>Platform komisyonu</dt><dd>{deduction(row.platform_fee_minor)}</dd></div>
       </dl>
     </div>
   );

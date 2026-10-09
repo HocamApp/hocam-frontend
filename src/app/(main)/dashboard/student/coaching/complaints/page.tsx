@@ -224,7 +224,7 @@ function ComplaintsContent() {
           ) : null}
           {financial.data?.cancellation_pending ? (
             <p className="text-body">
-              İptal talebin işleniyor, aktif dönem geçmiş kayıtlarda korunur.
+              İptal talebin alındı. Bu haftanın görüşmesi planlandığı gibi yapılır; sonraki haftalar iptal edildi.
             </p>
           ) : (
             <Button

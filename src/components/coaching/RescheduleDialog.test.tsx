@@ -55,7 +55,7 @@ function open() {
       <RescheduleDialog session={session} />
     </QueryClientProvider>,
   );
-  fireEvent.click(screen.getByRole("button", { name: "Yeniden planla" }));
+  fireEvent.click(screen.getByRole("button", { name: /yeniden planla/i }));
 }
 
 describe("RescheduleDialog", () => {

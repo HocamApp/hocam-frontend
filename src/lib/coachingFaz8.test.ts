@@ -28,10 +28,10 @@ import {
 
 describe("Faz 8 coaching financial copy", () => {
   it("keeps obligation, processing, settlement, and no-charge truth distinct", () => {
-    assert.match(coachingRefundStateCopy("obligation_pending"), /İade gerekli/i);
+    assert.match(coachingRefundStateCopy("obligation_pending"), /İade edilecek tutar kaydedildi/i);
     assert.match(coachingRefundStateCopy("processing"), /işleniyor/i);
     assert.match(coachingRefundStateCopy("settled"), /tamamlandı/i);
-    assert.match(coachingRefundStateCopy("nothing_to_settle"), /Ödeme gerekmiyor/i);
+    assert.match(coachingRefundStateCopy("nothing_to_settle"), /İade edilecek bir tutar yok/i);
   });
 });
 

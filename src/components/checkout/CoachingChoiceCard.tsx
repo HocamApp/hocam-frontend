@@ -65,8 +65,10 @@ export function CoachingChoiceCard({
           <Badge variant="secondary">Şu anda seçilemez</Badge>
         ) : (
           <p className="text-sm font-semibold">
-            {plan.is_free ? "₺0" : plan.price_per_session_display}
-            <span className="font-normal text-muted-foreground"> / görüşme</span>
+            {plan.is_free ? "Ücretsiz" : plan.price_per_session_display}
+            {plan.is_free ? null : (
+              <span className="font-normal text-ink-mid"> / görüşme</span>
+            )}
           </p>
         )}
       </div>

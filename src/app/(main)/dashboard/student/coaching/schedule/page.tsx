@@ -195,7 +195,7 @@ steps={["Birleşik talebin kabul edilir", "Koçluk müsaitliğinden düzenli saa
           </Button>
 
           <p className="text-xs text-ink-mid">
-            Saatler Türkiye saatidir (Europe/Istanbul).
+            Saatler Türkiye saatidir.
           </p>
         </>
       )}

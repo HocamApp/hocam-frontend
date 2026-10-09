@@ -122,6 +122,8 @@ export default function TutorCheckoutPage({
   >(null);
   const [bookingComplete, setBookingComplete] = useState(false);
   const [createdPurchase, setCreatedPurchase] = useState<PackagePurchase | null>(null);
+  // The coaching quote that went out with the request, for the success card.
+  const [submittedCoachingQuote, setSubmittedCoachingQuote] = useState<CoachingQuote | null>(null);
 
   const learningContext = learningContextFromSearchParams(
     new URLSearchParams(searchParams.toString())
@@ -553,6 +555,7 @@ export default function TutorCheckoutPage({
               paymentCheck={postCreate.check}
               paymentBlockedReason={postCreate.blockedReason}
               onRetryPaymentCheck={postCreate.retry}
+              coachingQuote={submittedCoachingQuote}
             />
           ) : bookingComplete ? (
             <CheckoutBookingSuccess tutorId={tutorId} />
@@ -608,6 +611,7 @@ export default function TutorCheckoutPage({
                 // less than was chosen.
                 if (coachingBlocked) return;
                 if (coachingPriceChanged) return;
+                setSubmittedCoachingQuote(coachingReady ? coachingQuote : null);
                 purchaseMutation.mutate({
                   tutor: tutor.id,
                   plan: selectedPlan.id,

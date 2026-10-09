@@ -62,7 +62,7 @@ function RescheduleRequestsContent() {
     return (
       <EmptyState
         title="Bekleyen değişiklik talebi yok"
-        description="Bir öğrenci ücretsiz hakkını kullandıktan sonra yeni bir değişiklik istediğinde burada görünür."
+        description="Onayın gereken saat değişiklikleri burada görünür: 24 saatten az kala yapılan, ikinci kez istenen ya da yayınladığın saatlerin dışına düşen istekler."
         steps={["Öğrenci yeni saat ister", "Mevcut hak ve durumla değerlendirirsin"]}
       />
     );

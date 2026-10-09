@@ -9,7 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { formatTryMinor } from "@/lib/money";
 import {
-  acceptanceStatusCopy,
+  acceptanceRequestStatusCopy,
   coachingFrequencyLabel,
   type AcceptanceRequest,
 } from "@/lib/coachingApi";
@@ -59,7 +59,7 @@ export function AcceptanceRequestCard({
           </div>
           <div className="flex flex-wrap gap-2">
             <Badge variant={STATUS_VARIANT[request.status] ?? "secondary"}>
-              {acceptanceStatusCopy(request.status)}
+              {acceptanceRequestStatusCopy(request)}
             </Badge>
           </div>
         </div>

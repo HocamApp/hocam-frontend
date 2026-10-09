@@ -80,8 +80,8 @@ export function RescheduleDialog({ session }: { session: CoachingSessionItem }) 
         localTime: picked.localTime,
       }),
     onSuccess: (result) => {
-      setError(null);
-      setOpen(false);
+      // Clear the pick too: the old choice is now the session's own time.
+      reset(false);
       queryClient.invalidateQueries({ queryKey: ["coaching-sessions"] });
       queryClient.invalidateQueries({ queryKey: ["coaching-reschedule-options", session.id] });
       toast.success(
@@ -110,7 +110,11 @@ export function RescheduleDialog({ session }: { session: CoachingSessionItem }) 
   return (
     <Dialog open={open} onOpenChange={reset}>
       <DialogTrigger asChild>
-        <Button size="sm" variant="outline">
+        <Button
+          size="sm"
+          variant="outline"
+          aria-label={`${coachingDateTimeLabel(session.scheduled_start)} görüşmesini yeniden planla`}
+        >
           Yeniden planla
         </Button>
       </DialogTrigger>
