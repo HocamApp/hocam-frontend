@@ -30,7 +30,6 @@ import {
   TAX_TEXT,
   TRIAL_MINUTES,
   TRIAL_PAID_TO_TUTOR,
-  TUTOR_MIN_WEEKLY_HOURS,
   TUTOR_MUST_ACCEPT_TEXT,
   TUTOR_NO_SHOW_TEXT,
 } from "./ysHomeFacts";
@@ -171,7 +170,6 @@ const FAQ_FACTS: FaqFacts = {
   tutorNoShow: TUTOR_NO_SHOW_TEXT,
   trialPaid: TRIAL_PAID_TO_TUTOR,
   mustAccept: TUTOR_MUST_ACCEPT_TEXT,
-  minWeeklyHours: TUTOR_MIN_WEEKLY_HOURS,
   studentNoShow: STUDENT_NO_SHOW_TEXT,
   tax: TAX_TEXT,
 };
@@ -190,10 +188,13 @@ function isFactPart(part: FaqPart): part is { fact: unknown; label: string } {
 
 /**
  * The questions for one audience. Outside development an answer that still
- * quotes a TODO fact is left out entirely, rather than shown with a hole.
+ * quotes a TODO fact is left out entirely, rather than shown with a hole. An
+ * answer quoting a `null` fact (decided to stay unsaid for now, like the tax
+ * text) is left out everywhere, JSON-LD included.
  */
 export function faqEntries(audience: FaqAudience, production = process.env.NODE_ENV === "production"): FaqEntry[] {
   return copy[audience](FAQ_FACTS)
+    .filter((item) => !item.answer.some((part) => isFactPart(part) && part.fact == null))
     .map((item) => ({
       ...item,
       answer: [...item.answer],

@@ -23,10 +23,9 @@ import {
   PRICE_RANGE_TL,
   TRIAL_MINUTES,
   TRIAL_PAID_TO_TUTOR,
-  TUTOR_MIN_WEEKLY_HOURS,
   TUTOR_PAYOUT_TEXT,
   TUTOR_SIGNUP_MINUTES,
-  VERIFICATION_REVIEW_DAYS,
+  VERIFICATION_REVIEW_TIME,
 } from "./ysHomeFacts";
 import { approvedTestimonials } from "./ysTestimonialData";
 
@@ -59,11 +58,12 @@ export function useTutorSteps(): YsStep[] {
   const { enabled: coaching } = useCoachingFlag();
   const stepFacts = {
     signupMinutes: TUTOR_SIGNUP_MINUTES,
-    reviewDays: <YsFact value={VERIFICATION_REVIEW_DAYS} label="X" />,
+    reviewTime: <YsFact value={VERIFICATION_REVIEW_TIME} label="X" />,
     trialMinutes: TRIAL_MINUTES,
     trialPaid: <YsFact value={TRIAL_PAID_TO_TUTOR} label="Deneme dersi hocaya ücretli mi: D5" />,
     autoConfirmHours: AUTO_CONFIRM_HOURS,
-    payout: <YsFact value={TUTOR_PAYOUT_TEXT} label="Ödeme ne zaman, nasıl: ödeme sağlayıcısı canlıya alınınca" />,
+    /* null while payments are off: the step then says nothing about payouts. */
+    payout: <YsFact value={TUTOR_PAYOUT_TEXT} label="Ödeme ne zaman, nasıl" />,
     commission: (
       <YsFact
         value={isTodo(COMMISSION_PERCENT) ? COMMISSION_PERCENT : formatPercent(COMMISSION_PERCENT)}
@@ -146,10 +146,7 @@ export function YsTutorBand({ className }: { className?: string }) {
             <h3 className="text-[18px] font-bold leading-6">{copy.eligibilityTitle}</h3>
             <ul className="mt-3.5 flex flex-col gap-3">
               {copy
-                .eligibility({
-                  maxRank: MAX_TUTOR_YKS_RANK,
-                  minWeeklyHours: <YsFact value={TUTOR_MIN_WEEKLY_HOURS} label="X" />,
-                })
+                .eligibility({ maxRank: MAX_TUTOR_YKS_RANK })
                 .map((line, index) => (
                   <li key={index} className="flex items-start gap-3 text-[15px] leading-[23px] text-paper/[0.88]">
                     <Check className="mt-px size-5 flex-none text-paper" aria-hidden />

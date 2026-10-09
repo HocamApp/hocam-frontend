@@ -10,8 +10,6 @@ import { tutorListHref } from "@/lib/tutorDirectoryLinks";
 
 import { FAQ_SECTION_ID } from "./ysAppNav";
 import { footer as copy } from "./ysHomeCopy";
-import { YsFact } from "./YsFact";
-import { COMPANY_ADDRESS, COMPANY_LEGAL_NAME, COMPANY_MERSIS, isTodo } from "./ysHomeFacts";
 
 import { BrandMark } from "@/components/brand/BrandMark";
 import { AppStoreBadge, GooglePlayBadge } from "@/components/ui/store-badges";
@@ -172,33 +170,12 @@ const V2_FOOTER_COLUMNS: FooterColumn[] = [
 ];
 
 /**
- * "Unvan · Adres · MERSİS no · KVKK başvuru". While the company facts are
- * TODO they show as placeholders in development and are left out in
- * production, so the KVKK contact is never lost with them.
+ * The KVKK contact, on its own. The footer carries no company details
+ * (owners, 8 Oct 2026).
  */
-function CompanyLine() {
-  const production = process.env.NODE_ENV === "production";
-  const parts = [
-    { value: COMPANY_LEGAL_NAME, node: <YsFact value={COMPANY_LEGAL_NAME} label="Şirket unvanı" /> },
-    { value: COMPANY_ADDRESS, node: <YsFact value={COMPANY_ADDRESS} label="Adres" /> },
-    {
-      value: COMPANY_MERSIS,
-      node: (
-        <>
-          {copy.mersis} <YsFact value={COMPANY_MERSIS} label="No" />
-        </>
-      ),
-    },
-  ].filter((part) => !production || !isTodo(part.value));
-
+function KvkkContactLine() {
   return (
     <p className="mt-3.5 text-[13px] leading-[21px] text-ink-mid">
-      {parts.map((part, index) => (
-        <span key={index}>
-          {part.node}
-          {" · "}
-        </span>
-      ))}
       <a href="mailto:iletisim@hocamozelders.com" className="hover:text-ink">
         {copy.kvkkContact}
       </a>
@@ -254,7 +231,7 @@ function YsFooterV2() {
                 ))}
               </div>
             </div>
-            <CompanyLine />
+            <KvkkContactLine />
           </div>
         </div>
       </div>

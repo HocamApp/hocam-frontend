@@ -57,12 +57,11 @@ export const band = {
     { label: "YKS sonuç belgesi", sub: "Profilde yazan sıralamanın kaynağı." },
     { label: ".edu.tr e-posta adresi", sub: "Hangi üniversitede olduğunu doğrular." },
   ],
-  checklistFoot: (f: { reviewDays: ReactNode; docsDeletedAfter: ReactNode }): ReactNode[] => [
+  /* The deletion windows match /kvkk/hoca-dogrulama "Ne kadar saklanır?". */
+  checklistFoot: (f: { reviewTime: ReactNode; afterApproval: number; maxRetention: number }): ReactNode[] => [
     "Başvurular ",
-    f.reviewDays,
-    " gün içinde sonuçlanır. Belgeler profilde hiçbir zaman görünmez ve ",
-    f.docsDeletedAfter,
-    " sonra silinir.",
+    f.reviewTime,
+    ` içinde sonuçlanır. Belgeler profilde hiçbir zaman görünmez; onaylanan başvuruda ${f.afterApproval} gün içinde, reddedilen ya da bekleyen başvuruda en geç ${f.maxRetention} gün içinde silinir.`,
   ],
 } as const;
 
@@ -121,9 +120,8 @@ export const students = {
     {
       title: "Ders sonrası",
       body: (f: StudentStepFacts): ReactNode[] => [
-        "Dersi puanla, yorumunu bırak. Kalan derslerini panelinde görürsün. Hocanla uyuşmadıysan başka hocaya geçebilirsin ",
+        "Dersi puanla, yorumunu bırak. Kalan derslerini panelinde görürsün. Hocanla uyuşmadıysan başka hocaya geçebilirsin. ",
         f.remainingOnSwitch,
-        ".",
       ],
     },
   ],
@@ -190,11 +188,7 @@ export const guarantees = {
   },
   switchTutor: {
     question: "Hocamla anlaşamazsam?",
-    answer: (remaining: ReactNode): ReactNode[] => [
-      "Başka hocaya geçebilirsin. Paketinde kalan dersler ",
-      remaining,
-      ".",
-    ],
+    answer: (remaining: ReactNode): ReactNode[] => ["Başka hocaya geçebilirsin. ", remaining],
   },
 } as const;
 
@@ -234,7 +228,7 @@ export const parents = {
 /** Values the tutor steps quote. Undecided ones arrive as `<YsFact>`. */
 export interface TutorStepFacts {
   signupMinutes: number;
-  reviewDays: ReactNode;
+  reviewTime: ReactNode;
   trialMinutes: number;
   trialPaid: ReactNode;
   autoConfirmHours: number;
@@ -250,11 +244,10 @@ export const tutors = {
   ctaApply: "Hoca olarak başvur",
   ctaLearnMore: "Hocalık hakkında her şey",
   eligibilityTitle: "Kimler başvurabilir?",
-  eligibility: (f: { maxRank: string; minWeeklyHours: ReactNode }): ReactNode[][] => [
+  eligibility: (f: { maxRank: string }): ReactNode[][] => [
     [`YKS'de ilk ${f.maxRank} içine girmiş olmak`],
     ["Aktif üniversite öğrencisi olmak ve .edu.tr e-postana erişebilmek"],
     ["Öğrenci kimliğini ve YKS sonuç belgeni yükleyebilmek"],
-    ["Haftada en az ", f.minWeeklyHours, " saat ayırabilmek"],
   ],
   stepsTitle: "Başvurudan ilk dersine kadar",
   stepsLabel: "Hoca adımları",
@@ -269,8 +262,8 @@ export const tutors = {
       title: "Doğrulan",
       body: (f: TutorStepFacts): ReactNode[] => [
         "Belgelerini yükle. ",
-        f.reviewDays,
-        " gün içinde incelenir. Belgelerin profilinde hiçbir zaman görünmez.",
+        f.reviewTime,
+        " içinde incelenir. Belgelerin profilinde hiçbir zaman görünmez.",
       ],
     },
     {
@@ -358,7 +351,6 @@ export interface FaqFacts {
   tutorNoShow: unknown;
   trialPaid: unknown;
   mustAccept: unknown;
-  minWeeklyHours: unknown;
   studentNoShow: unknown;
   tax: unknown;
 }
@@ -466,7 +458,7 @@ export const faq = {
     {
       id: "hoca-saat",
       question: "Haftada en az kaç saat ders vermeliyim?",
-      answer: ["Haftada en az ", { fact: f.minWeeklyHours, label: "D12" }, " saat."],
+      answer: ["Alt sınır yok. Müsaitlik takvimini sen belirlersin; gerçek durumuna uygun tut."],
     },
     {
       id: "hoca-ogrenci-gelmezse",
@@ -508,7 +500,6 @@ export const footer = {
     kvkk: "KVKK ve Gizlilik",
   },
   copyright: (year: number) => `© ${year} Hocam. Tüm hakları saklıdır.`,
-  mersis: "MERSİS",
   kvkkContact: "KVKK başvuru: iletisim@hocamozelders.com",
 } as const;
 
@@ -540,7 +531,7 @@ export const pages = {
     faq: {
       reviewTime: {
         question: "Başvurum ne kadar sürede sonuçlanır?",
-        answer: (days: ReactNode): ReactNode[] => ["Başvurular ", days, " gün içinde sonuçlanır."],
+        answer: (time: ReactNode): ReactNode[] => ["Başvurular ", time, " içinde sonuçlanır."],
       },
       rejection: {
         question: "Başvurum reddedilirse ne olur?",

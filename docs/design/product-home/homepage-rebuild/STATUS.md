@@ -1,10 +1,10 @@
 # Homepage rebuild: status
 
-**This file is the current source of truth for the rebuild.** `HOCAM_HOMEPAGE_PLAN.md` is the original plan; where the two disagree, this file wins. Last updated 7 October 2026.
+**This file is the current source of truth for the rebuild.** `HOCAM_HOMEPAGE_PLAN.md` is the original plan; where the two disagree, this file wins. Last updated 8 October 2026.
 
 ## What's built
 
-All four phases of the plan are on `main`, plus one fix round:
+All four phases of the plan are on `main`, plus a fix round and a facts round:
 
 | PR | Phase | Tasks |
 |---|---|---|
@@ -13,6 +13,7 @@ All four phases of the plan are on `main`, plus one fix round:
 | #303 | C | T09 tutors band and earnings calculator, T10 testimonials, T11 FAQ tabs, T12 footer |
 | #304 | D | T13 `/hoca-ol`, T14 `/veliler`, T15 `/nasil-calisir` steps toggle, T16 verification page block |
 | fix round | – | Interactive student steps, section spacing, visual pass against the mockup, copy fixes (see "Decisions") |
+| facts round | – | Every TODO fact filled from the owners' answers (8 Oct 2026); task in `FACTS_ROUND.md` |
 
 Code lives in `src/components/yemeksepeti/`. Every homepage sentence is in `ysHomeCopy.ts`; every number comes from `ysHomeFacts.ts` or `lib/lessonPricing.ts`.
 
@@ -30,47 +31,27 @@ Everything new renders only when `NEXT_PUBLIC_HOME_V2` is exactly `"true"` (`src
 To preview locally:
 
 ```bash
-NEXT_PUBLIC_HOME_V2=true ALLOW_HOME_TODOS=1 NEXT_PUBLIC_API_URL=https://web-production-22415.up.railway.app/api npm run dev
+NEXT_PUBLIC_HOME_V2=true NEXT_PUBLIC_API_URL=https://web-production-22415.up.railway.app/api npm run dev
 npm run home:compare   # side-by-side PNGs in screenshots/home-mockup/
 ```
 
-## Remaining TODO facts
+## Facts
 
-`scripts/check-home-facts.ts` fails the production build while any of these are `TODO`. Preview builds set `ALLOW_HOME_TODOS=1` (Vercel Preview environment only, never Production). In development, each one renders as a dashed `[label]` placeholder.
+Every homepage fact in `src/components/yemeksepeti/ysHomeFacts.ts` is decided. `scripts/check-home-facts.ts` passes with `NEXT_PUBLIC_HOME_V2=true` and no `ALLOW_HOME_TODOS`. The round that filled them is `FACTS_ROUND.md` in this folder.
 
-There are 23, all in `src/components/yemeksepeti/ysHomeFacts.ts`:
+The check still guards new facts: a fact added as `TODO` fails the production build again until it is filled. A fact that is decided but must not show yet is `null`, not `TODO`. `YsFact` renders nothing for it and it doesn't block the build. Two kinds are `null` today:
 
-| Fact | What it needs | Source |
-|---|---|---|
-| `PRICE_RANGE_TL` | Lowest and highest profile price per 40-minute lesson | Owners (D2) |
-| `COMMISSION_PERCENT` | Platform commission | Owners (D3) |
-| `PAYMENT_CHARGED_WHEN` | When the student's card is charged | Waits for the payment provider |
-| `TUTOR_PAYOUT_TEXT` | When and how tutors are paid (never IBAN) | Waits for the payment provider |
-| `TRIAL_PAID_TO_TUTOR` | Whether a free trial is paid to the tutor | Owners (D5) |
-| `TUTOR_NO_SHOW_TEXT` | What happens when the tutor doesn't show up | `DERS_POLITIKALARI_RAPORU.md` (D7) |
-| `REMAINING_ON_SWITCH_TEXT` | What happens to remaining lessons when switching tutor | Owners (D6) |
-| `TUTOR_MUST_ACCEPT_TEXT` | Whether a tutor must accept every request | Owners (D12) |
-| `STUDENT_NO_SHOW_TEXT` | What happens when the student doesn't show up | `DERS_POLITIKALARI_RAPORU.md` (D7) |
-| `TUTOR_MIN_WEEKLY_HOURS` | Minimum weekly hours a tutor commits to | Owners (D12) |
-| `VERIFICATION_REJECTION_TEXT` | What a rejected applicant can do next | Owners |
-| `VERIFICATION_REVIEW_DAYS` | Days until an application is decided | Owners |
-| `VERIFICATION_DOCS_DELETED_AFTER` | When verification documents are deleted (must match `/kvkk`) | Owners and KVKK text |
-| `RECORDING_POLICY_TEXT` | Whether lessons are recorded | Owners (D10) |
-| `PARENT_CAN_JOIN_TEXT` | Whether a parent can join or watch | Owners (D10) |
-| `PARENT_CAN_PAY_TEXT` | Whether a parent can pay for the student | Owners (D14) |
-| `SUPPORT_REPLY_TEXT` | How fast support answers | Owners |
-| `OFF_PLATFORM_TEXT` | The rule on taking lessons or payment off-platform | Owners (D13) |
-| `TAX_TEXT` | Tutors' tax obligations | Accountant-approved text (D13) |
-| `COACHING_TUTOR_TEXT` | Who can give coaching | Owners (D11) |
-| `COMPANY_LEGAL_NAME` | Registered company name, for the footer | Company records |
-| `COMPANY_ADDRESS` | Registered address, for the footer | Company records |
-| `COMPANY_MERSIS` | MERSİS number, for the footer | Company records |
+- `PAYMENT_CHARGED_WHEN` and `TUTOR_PAYOUT_TEXT`: filled, but `null` unless `NEXT_PUBLIC_PAYTR_ENABLED` is exactly `"true"`.
+- `TAX_TEXT`: no accountant-approved text yet. The Hoca FAQ question "Kazancımı vergi açısından nasıl beyan ederim?" is hidden, JSON-LD included.
 
-Other open items for the owners:
+## Open for Baha
 
+- Tax text for the Hoca FAQ, approved by the accountant. Set `TAX_TEXT` and the question comes back.
 - Approve testimonials one by one in `ysTestimonialData.ts` (`approved: true`).
 - Add the lesson room screenshot as `public/images/how-it-works/05-lesson-room.png`. Step 6 ("Derse gir") picks it up automatically on the next deploy, and until then it shows `04-lesson-dashboard.png`.
+- Two answers start with "Hayır." and read oddly where they sit inside a sentence rather than under a question: tutor step 4 ("… açıp kapatmak senin elinde. Hayır. 20 dakikalık deneme dersi …") and the parents panel's "Kayıt ve derse katılım" row, which reads "Hayır. … Hayır. …". The sentences were kept word for word; reword them in `ysHomeFacts.ts` if you want.
 - Rewrite the copy in `ysHomeCopy.ts` as needed.
+- Decide when to switch Production to the rebuild (`NEXT_PUBLIC_HOME_V2=true` plus a redeploy).
 
 ## Decisions so far
 
@@ -90,3 +71,8 @@ Other open items for the owners:
 7. **`cn` doesn't know the custom type scale.** `tailwind-merge` reads `text-small`, `text-label`, `text-body` and the other custom sizes as colours. It drops them against a text colour class (or the other way round). Inside `cn`, use arbitrary sizes (`text-[14px]`) or join the class strings by hand.
 8. **Copy fixes (fix round):** tutor step 6 is "Dersin tamamlanır" (was "Ödemeni al"); the tutor steps title is "Başvurudan ilk dersine kadar" (was "Başvurudan ilk ödemene kadar"). Nothing on the page promises payouts while payments aren't live.
 9. **Package grace period removed.** The flag-off FAQ's "14 günlük ek süre" sentence contradicted `/iptal-ve-iade` (the backend's grace period is now 0). The sentence and the stale `PACKAGE_GRACE_DAYS` fact were removed.
+10. **Facts filled 8 Oct 2026** from the owners' answers (`Hocam_Ana_Sayfa_Doldurulacak_Bilgiler`). The policy answers were checked against `/iptal-ve-iade`, `/kvkk/saklama-ve-imha-politikasi` and the ders odası FAQ. Two changed shape: `VERIFICATION_REVIEW_DAYS` became `VERIFICATION_REVIEW_TIME` ("1–2 iş günü"), and the band's deletion line now quotes the KVKK retention constants (7 and 30 days). `TUTOR_MIN_WEEKLY_HOURS` is gone because there is no minimum: the eligibility line is removed and the Hoca FAQ answers "Alt sınır yok." The switch-tutor answer is now full sentences, so its frames changed: student step 7 and the guarantees card read "… başka hocaya geçebilirsin." and then the answer, instead of wrapping it in "Paketinde kalan dersler … ."
+11. **Payment timing and tutor payout texts are PayTR-gated.** They're `null` while payments are off, so neither the student steps, the guarantees card nor the tutor steps say when money moves.
+12. **The homepage keeps the request/accept flow** because that's what the product does: the tutor accepts the package request before payment, and bookings start pending unless the tutor turns on automatic confirmation. Direct booking would be its own product, backend and legal round.
+13. **The tax FAQ is hidden** until accountant-approved text exists.
+14. **No company details in the footer.** The legal name, address and MERSİS facts and the footer line built from them were removed. The KVKK contact line stays on its own.

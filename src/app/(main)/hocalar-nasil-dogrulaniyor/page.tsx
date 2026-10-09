@@ -17,11 +17,10 @@ import { pages, tutors } from "@/components/yemeksepeti/ysHomeCopy";
 import {
   isTodo,
   MAX_TUTOR_YKS_RANK,
-  TUTOR_MIN_WEEKLY_HOURS,
   VERIFICATION_DOCS_DELETE_DAYS_AFTER_APPROVAL,
   VERIFICATION_DOCS_MAX_RETENTION_DAYS,
   VERIFICATION_REJECTION_TEXT,
-  VERIFICATION_REVIEW_DAYS,
+  VERIFICATION_REVIEW_TIME,
 } from "@/components/yemeksepeti/ysHomeFacts";
 import { HOME_V2_ENABLED } from "@/lib/featureFlags";
 import { publicPageMetadata, publicWebPageJsonLd } from "@/lib/publicSeo";
@@ -80,9 +79,9 @@ function rebuildFaqItems() {
   const copy = pages.verification.faq;
   const items = [
     {
-      pending: isTodo(VERIFICATION_REVIEW_DAYS),
+      pending: isTodo(VERIFICATION_REVIEW_TIME),
       question: copy.reviewTime.question,
-      answer: copy.reviewTime.answer(<YsFact key="d" value={VERIFICATION_REVIEW_DAYS} label="X" />),
+      answer: copy.reviewTime.answer(<YsFact key="d" value={VERIFICATION_REVIEW_TIME} label="X" />),
     },
     {
       pending: isTodo(VERIFICATION_REJECTION_TEXT),
@@ -149,20 +148,7 @@ export default function TutorVerificationPage() {
               variant="surface"
               title={tutors.eligibilityTitle}
               items={tutors
-                .eligibility({
-                  maxRank: MAX_TUTOR_YKS_RANK,
-                  minWeeklyHours: <YsFact value={TUTOR_MIN_WEEKLY_HOURS} label="X" />,
-                })
-                /* The last line quotes the weekly-hours fact; while it is
-                   TODO, production leaves the line out. */
-                .filter(
-                  (_, index, lines) =>
-                    !(
-                      index === lines.length - 1 &&
-                      isTodo(TUTOR_MIN_WEEKLY_HOURS) &&
-                      process.env.NODE_ENV === "production"
-                    ),
-                )
+                .eligibility({ maxRank: MAX_TUTOR_YKS_RANK })
                 .map((line) => ({ label: line }))}
             />
           </div>
