@@ -92,7 +92,7 @@ function StudentsContent() {
             {terminationFor === row.purchase_id ? (
               <div className="space-y-2 rounded border p-3">
                 <p className="text-sm font-medium">Koçluğun tamamını sonlandırma</p>
-                <Textarea value={reason} onChange={(event) => setReason(event.target.value)} placeholder="Gerekli gerekçe" />
+                <Textarea value={reason} onChange={(event) => setReason(event.target.value)} placeholder="Gerekli gerekçe" aria-label="Sonlandırma gerekçesi" />
                 <div className="flex gap-2"><Button size="sm" variant="destructive" disabled={!reason.trim() || terminate.isPending} onClick={() => terminate.mutate(row.purchase_id)}>Sonlandırmayı kaydet</Button><Button size="sm" variant="ghost" onClick={() => setTerminationFor(null)}>Vazgeç</Button></div>
                 {terminate.error ? <p className="text-xs text-destructive">İşlem güncel koçluk durumuyla çakıştı; sayfayı yenileyip tekrar dene.</p> : null}
               </div>
@@ -107,7 +107,7 @@ function StudentsContent() {
 export default function CoachingStudentsPage() {
   return (
     <CoachingRecordGuard>
-      <CoachingPageShell title="Koçluk öğrencilerim" width="wide" currentHref="/dashboard/tutor/coaching/students" audience="tutor" actions={<div className="flex flex-wrap gap-3 text-sm"><Link href="/dashboard/tutor/coaching/time-requests" className="underline">Saat talepleri</Link><Link href="/dashboard/tutor/coaching/reschedule-requests" className="underline">Değişiklik talepleri</Link></div>}><StudentsContent /></CoachingPageShell>
+      <CoachingPageShell title="Koçluk öğrencilerim" width="wide" currentHref="/dashboard/tutor/coaching/students" audience="tutor"><StudentsContent /></CoachingPageShell>
     </CoachingRecordGuard>
   );
 }

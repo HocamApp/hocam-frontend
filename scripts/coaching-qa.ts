@@ -342,7 +342,7 @@ async function capture(page: Page, state: QaState, options: {
 
 async function captureMicroPolishSet(page: Page, state: QaState, width: number) {
   const desktop = [
-    ["desktop-coaching-requests.png", "/dashboard/tutor/coaching/requests", "Yeni öğrenci talepleri", "published", 0],
+    ["desktop-coaching-requests.png", "/dashboard/tutor/coaching/requests", "Talepler", "published", 0],
     ["desktop-setup-price.png", "/dashboard/tutor/coaching/plan?step=price", "Koçluk teklifini hazırla", "draft", 0],
     ["desktop-coaching-home.png", "/dashboard/tutor/coaching", /Çalışma koçluğu/i, "published", 0],
   ] as const;
@@ -477,7 +477,7 @@ async function captureReviewSet(page: Page, state: QaState, width: number) {
       ["10-setup-publish.png", "/dashboard/tutor/coaching/plan?step=publish", "Koçluk teklifini hazırla", "published", "tutor"],
       ["11-upcoming-empty.png", "/dashboard/tutor/coaching/upcoming", "Yaklaşan görüşmeler", "availability-empty", "tutor"],
       ["12-reports-empty.png", "/dashboard/tutor/coaching/reports", "Görüşme raporları", "published", "tutor"],
-      ["13-coaching-requests.png", "/dashboard/tutor/coaching/requests", "Yeni öğrenci talepleri", "published", "tutor"],
+      ["13-coaching-requests.png", "/dashboard/tutor/coaching/requests", "Talepler", "published", "tutor"],
       ["15-student-no-active.png", "/dashboard/student/coaching", "Çalışma koçluğum", "empty", "student"],
       ["16-public-profile-offer.png", `/tutors/${tutorProfile.id}`, /QA Tutor/i, "published", "student"],
     ] as const;
@@ -532,7 +532,7 @@ async function runRouteMatrix(page: Page, state: QaState, width: number) {
     ["/dashboard/tutor/coaching/reschedule-requests", "Görüşme değişiklik talepleri"],
     ["/dashboard/tutor/coaching/preview", "Öğrenci görünümü"],
   ] as const) await assertPage(page, route, heading, `${heading} ${width}`);
-  await assertPage(page, "/dashboard/tutor/coaching/requests", "Yeni öğrenci talepleri", `coaching requests ${width}`);
+  await assertPage(page, "/dashboard/tutor/coaching/requests", "Talepler", `coaching requests ${width}`);
   await page.getByText("Koçluk Öğrencisi").waitFor();
   assert.equal(await page.getByText("Ders Öğrencisi").count(), 0, "lesson-only request leaked into Coaching");
   await assertPage(page, "/dashboard/tutor/requests", "Paket Talepleri", `lesson requests ${width}`);

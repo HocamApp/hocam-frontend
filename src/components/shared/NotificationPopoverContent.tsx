@@ -16,35 +16,8 @@ import {
 import { getNotificationAppearance } from "@/components/shared/notificationAppearance";
 import { AnimatedListItem } from "@/components/ui/animated-list";
 import { cn } from "@/lib/utils";
+import { getNotificationHref } from "@/lib/notificationHref";
 import type { Notification, NotificationSummary } from "@/types/api";
-
-function getNotificationHref(n: Notification, role?: string): string | null {
-  if (n.related_object_type === "conversation" && n.related_object_id) {
-    return `/messages/${n.related_object_id}`;
-  }
-
-  if (n.related_object_type === "booking") {
-    if (n.related_object_id) {
-      return role === "tutor"
-        ? `/dashboard/tutor?tab=bookings&highlightBooking=${n.related_object_id}`
-        : `/dashboard/student?highlightBooking=${n.related_object_id}`;
-    }
-    return role === "tutor" ? "/dashboard/tutor" : "/dashboard/student";
-  }
-
-  if (n.related_object_type === "lesson_request") {
-    return role === "tutor" ? "/dashboard/tutor" : "/dashboard/student";
-  }
-
-  // The unanswered-request nudge exists to send the student back to the
-  // directory, so that is where it goes. The request itself has no screen of
-  // its own — it is a row in a conversation that has not started yet.
-  if (n.related_object_type === "message_request") {
-    return "/";
-  }
-
-  return null;
-}
 
 // Privacy: message notifications must never surface the message content;
 // the sender is in the title, the body is replaced with a generic line.
