@@ -41,4 +41,21 @@ describe("getNotificationHref", () => {
       "/dashboard/student/coaching/complaints/d1",
     );
   });
+
+  it("splits package requests by whether they carry coaching", () => {
+    assert.equal(getNotificationHref(n("package_request", "package_purchase"), "tutor"), "/dashboard/tutor/packages");
+    assert.equal(
+      getNotificationHref(n("coaching_package_request", "package_purchase"), "tutor"),
+      "/dashboard/tutor/coaching/requests",
+    );
+    assert.equal(getNotificationHref(n("package_request_accepted", "package_purchase"), "student"), "/dashboard/student");
+    assert.equal(getNotificationHref(n("package_request_rejected", "package_purchase"), "student"), "/");
+  });
+
+  it("sends a student who must pick a time straight to the schedule", () => {
+    assert.equal(
+      getNotificationHref(n("coaching_schedule_needed", "coaching_purchase"), "student"),
+      "/dashboard/student/coaching/schedule",
+    );
+  });
 });

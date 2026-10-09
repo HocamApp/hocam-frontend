@@ -47,7 +47,12 @@ export function getNotificationHref(n: Notification, role?: string): string | nu
     case "message_request":
       return "/";
     case "package_purchase":
-      return isTutor ? "/dashboard/tutor/coaching/requests" : "/dashboard/student";
+      if (!isTutor) return n.type === "package_request_accepted" ? "/dashboard/student" : "/";
+      // A bundle with coaching is answered from the coaching Talepler tab;
+      // a lesson-only request from the package workspace.
+      return n.type === "coaching_package_request"
+        ? "/dashboard/tutor/coaching/requests"
+        : "/dashboard/tutor/packages";
     case "coaching_session":
       return coachingSessionHref(n, role);
     case "coaching_time_request":
@@ -60,7 +65,10 @@ export function getNotificationHref(n: Notification, role?: string): string | nu
         ? `/dashboard/tutor/coaching/complaints/${n.related_object_id}`
         : `/dashboard/student/coaching/complaints/${n.related_object_id}`;
     case "coaching_purchase":
-      return isTutor ? "/dashboard/tutor/coaching/students" : "/dashboard/student/coaching";
+      if (isTutor) return "/dashboard/tutor/coaching/students";
+      return n.type === "coaching_schedule_needed"
+        ? "/dashboard/student/coaching/schedule"
+        : "/dashboard/student/coaching";
     case "coaching_refund_obligation":
     case "coaching_refund_operation":
       return isTutor ? "/dashboard/tutor/coaching" : "/dashboard/student/coaching/complaints";
