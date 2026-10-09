@@ -6,7 +6,8 @@ import type {
   CoachingRecommendedResource,
   CoachingSessionReportRevision,
 } from "@/lib/coachingApi";
-import { coachingDateTimeLabel } from "@/lib/coachingTime";
+import { coachingDateTimeLabel, coachingLocalDateHeading } from "@/lib/coachingTime";
+import { EXAM_ANALYSIS_STATUS_OPTIONS } from "@/lib/coachingApi";
 
 function TextSection({ title, value }: { title: string; value?: string }) {
   if (!value?.trim()) return null;
@@ -120,10 +121,16 @@ export function PublishedReportView({
         {exam ? (
           <section className="space-y-3 rounded-lg bg-paper p-4">
             <h3 className="text-sm font-medium">Sınav analizi</h3>
+            {exam.status ? (
+              <p className="text-sm text-ink">
+                {EXAM_ANALYSIS_STATUS_OPTIONS.find((option) => option.value === exam.status)?.label ??
+                  "Durum belirtilmedi"}
+              </p>
+            ) : null}
             <dl className="grid gap-2 text-sm sm:grid-cols-2">
               {exam.exam_type ? <div><dt className="text-ink-mid">Sınav</dt><dd>{exam.exam_type}</dd></div> : null}
               {exam.exam_name ? <div><dt className="text-ink-mid">Deneme / test</dt><dd>{exam.exam_name}</dd></div> : null}
-              {exam.date ? <div><dt className="text-ink-mid">Tarih</dt><dd>{exam.date}</dd></div> : null}
+              {exam.date ? <div><dt className="text-ink-mid">Tarih</dt><dd>{coachingLocalDateHeading(exam.date)}</dd></div> : null}
               {exam.score_or_net !== undefined && exam.score_or_net !== null ? <div><dt className="text-ink-mid">Puan / net</dt><dd>{exam.score_or_net}</dd></div> : null}
             </dl>
             <StringList title="Güçlü alanlar" values={exam.strengths} />

@@ -222,3 +222,22 @@ describe("readCoachingSelectedFromSearchParams", () => {
     );
   });
 });
+
+describe("report publish errors", () => {
+  it("turns the server's nested English field error into a Turkish sentence", async () => {
+    const { extractCoachingErrorMessage } = await import("./coachingApi");
+    const error = {
+      response: {
+        status: 400,
+        data: { detail: { exam_analysis: ["A status is required: one of analyzed, no_new_result."] } },
+      },
+    };
+    assert.equal(extractCoachingErrorMessage(error), "Sınav analizi adımında bir durum seç.");
+  });
+
+  it("explains the missing study-program reason", async () => {
+    const { extractCoachingErrorMessage } = await import("./coachingApi");
+    const error = { response: { status: 400, data: { detail: { no_program_reason: ["required"] } } } };
+    assert.match(extractCoachingErrorMessage(error), /çalışma programı yok/);
+  });
+});
