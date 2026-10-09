@@ -431,6 +431,18 @@ const ERROR_MESSAGES: Record<string, string> = {
 };
 
 /** Human-readable message for a coaching error, preferring the server's own. */
+const REPORT_FIELD_ERRORS: Record<string, string> = {
+  exam_analysis: "Sınav analizi adımında bir durum seç.",
+  no_program_reason: "Bu dönem için çalışma programı yok; yayınlamak için kısa bir gerekçe yaz.",
+  short_summary: "Kısa özet en az 50 karakter olmalı.",
+  topics_discussed: "Görüşülen konular en az 20 karakter olmalı.",
+  student_progress: "Öğrencinin ilerlemesi en az 20 karakter olmalı.",
+  next_priorities: "Sonraki öncelikler en az 20 karakter olmalı.",
+  study_recommendations: "Çalışma önerileri en az 20 karakter olmalı.",
+  focus_until_next_meeting: "Bir sonraki görüşmeye kadar odak en az 20 karakter olmalı.",
+  recommended_resources: "Önerilen kaynaklardan biri geçersiz; bağlantıyı ya da dosyayı kontrol et.",
+};
+
 export function extractCoachingErrorMessage(error: unknown): string {
   const data = (error as { response?: { data?: Record<string, unknown> } })?.response
     ?.data;
@@ -443,6 +455,15 @@ export function extractCoachingErrorMessage(error: unknown): string {
   if (data && typeof data === "object") {
     const detail = (data as Record<string, unknown>).detail;
     if (typeof detail === "string") return detail;
+    // Report validation arrives as {detail: {field: [...]}} with English
+    // server text; show the Turkish sentence for the field instead.
+    if (detail && typeof detail === "object") {
+      const field = Object.keys(detail as Record<string, unknown>)[0];
+      if (field && REPORT_FIELD_ERRORS[field]) return REPORT_FIELD_ERRORS[field];
+    }
+    for (const key of Object.keys(data)) {
+      if (REPORT_FIELD_ERRORS[key]) return REPORT_FIELD_ERRORS[key];
+    }
     // Field errors: surface the first message we can find, including the
     // structured description-guardrail payload.
     for (const [key, value] of Object.entries(data)) {
@@ -1005,6 +1026,7 @@ export type CoachingSessionStatus =
 
 export interface CoachingSessionItem {
   id: string;
+  service_period_id?: string;
   sequence_number: number;
   week_index: number;
   status: CoachingSessionStatus;
@@ -1565,7 +1587,22 @@ export async function toggleCoachingProgramTaskCompletion(
   return response.data;
 }
 
+/** Master Spec §22.4 — a primary report must pick exactly one. */
+export type CoachingExamAnalysisStatus =
+  | "analyzed"
+  | "no_new_result"
+  | "not_shared_by_student"
+  | "not_done_this_session";
+
+export const EXAM_ANALYSIS_STATUS_OPTIONS: { value: CoachingExamAnalysisStatus; label: string }[] = [
+  { value: "analyzed", label: "Yeni deneme sonucu değerlendirildi" },
+  { value: "no_new_result", label: "Bu dönemde yeni deneme sonucu yoktu" },
+  { value: "not_shared_by_student", label: "Öğrenci sonucu paylaşmadı" },
+  { value: "not_done_this_session", label: "Bu görüşmede deneme analizi yapılmadı" },
+];
+
 export interface CoachingExamAnalysis {
+  status?: CoachingExamAnalysisStatus;
   exam_type?: "YKS" | "DGS" | "KPSS" | string;
   exam_name?: string;
   date?: string | null;
@@ -1594,6 +1631,8 @@ export interface CoachingReportDraftInput {
   exam_analysis?: CoachingExamAnalysis | null;
   recommended_resources?: CoachingRecommendedResource[];
   program_changes_summary?: string;
+  /** Required by the server when the period has no study program (§21.6). */
+  no_program_reason?: string;
 }
 
 export interface CoachingSessionReport {

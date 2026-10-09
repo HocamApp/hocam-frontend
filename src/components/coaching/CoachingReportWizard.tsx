@@ -23,7 +23,9 @@ import { SensitiveDataGuidance } from "@/components/privacy/SensitiveDataGuidanc
 import {
   COACHING_FAZ6_QUERY_KEYS,
   COACHING_SESSION_QUERY_KEYS,
+  EXAM_ANALYSIS_STATUS_OPTIONS,
   extractCoachingErrorMessage,
+  fetchCoachingProgram,
   fetchCoachingReportDraft,
   fetchCoachingReports,
   fetchCoachingSessionAttachments,
@@ -36,6 +38,7 @@ import {
   publishInitialCoachingReport,
   saveCoachingReportDraft,
   type CoachingExamAnalysis,
+  type CoachingExamAnalysisStatus,
   type CoachingRecommendedResource,
   type CoachingReportDraftInput,
 } from "@/lib/coachingApi";
@@ -56,6 +59,7 @@ const EMPTY_DRAFT: CoachingReportDraftInput = {
 };
 
 type ExamForm = {
+  status: CoachingExamAnalysisStatus | "";
   exam_type: string;
   exam_name: string;
   date: string;
@@ -67,6 +71,7 @@ type ExamForm = {
 };
 
 const EMPTY_EXAM: ExamForm = {
+  status: "",
   exam_type: "",
   exam_name: "",
   date: "",
@@ -86,6 +91,7 @@ function splitLines(value: string) {
 
 function createExamForm(exam?: CoachingExamAnalysis | null): ExamForm {
   return {
+    status: exam?.status ?? "",
     exam_type: String(exam?.exam_type ?? ""),
     exam_name: String(exam?.exam_name ?? ""),
     date: String(exam?.date ?? ""),
@@ -99,6 +105,9 @@ function createExamForm(exam?: CoachingExamAnalysis | null): ExamForm {
 
 function toExamAnalysis(exam: ExamForm): CoachingExamAnalysis {
   const output: CoachingExamAnalysis = {};
+  if (exam.status) output.status = exam.status;
+  // Details only describe an analysed result; any other status stands alone.
+  if (exam.status && exam.status !== "analyzed") return output;
   if (exam.exam_type.trim()) output.exam_type = exam.exam_type.trim();
   if (exam.exam_name.trim()) output.exam_name = exam.exam_name.trim();
   if (exam.date) output.date = exam.date;
@@ -174,6 +183,14 @@ export function CoachingReportWizard({ sessionId }: { sessionId: string }) {
     queryKey: COACHING_FAZ6_QUERY_KEYS.tutorReportList(),
     queryFn: fetchCoachingReports,
   });
+  const servicePeriodId = sessionQuery.data?.service_period_id;
+  // §21.6: without a study program for the period the server wants a short
+  // reason before the first report can be published.
+  const programQuery = useQuery({
+    queryKey: COACHING_FAZ6_QUERY_KEYS.program(servicePeriodId ?? "none"),
+    queryFn: () => fetchCoachingProgram(servicePeriodId!),
+    enabled: Boolean(servicePeriodId),
+  });
   const attachmentsQuery = useQuery({
     queryKey: ["coaching-session-attachments", sessionId],
     queryFn: () => fetchCoachingSessionAttachments(sessionId),
@@ -234,7 +251,7 @@ export function CoachingReportWizard({ sessionId }: { sessionId: string }) {
       return { revision, reportId: savedDraft.id };
     },
     onSuccess: ({ revision, reportId }) => {
-      toast.success(`İlk rapor yayınlandı (revizyon ${revision.revision_number}).`);
+      toast.success("İlk rapor yayınlandı; öğrenciye bildirildi.");
       invalidateAfterInitialPublish(reportId);
     },
     onError: (error) => toast.error(extractCoachingErrorMessage(error)),
@@ -246,7 +263,7 @@ export function CoachingReportWizard({ sessionId }: { sessionId: string }) {
       return publishCoachingReportRevision(report.id, changeNote);
     },
     onSuccess: (revision) => {
-      toast.success(`Yeni rapor revizyonu yayınlandı (revizyon ${revision.revision_number}).`);
+      toast.success(`Raporun ${revision.revision_number}. sürümü yayınlandı.`);
       invalidateAfterRevisionPublish(report?.id);
       setChangeNote("");
     },
@@ -327,6 +344,25 @@ export function CoachingReportWizard({ sessionId }: { sessionId: string }) {
     );
   const pending =
     saveMutation.isPending || initialPublishMutation.isPending || revisionPublishMutation.isPending;
+  // Mirrors the server's publish rules (phase6._validate_primary_report_for_publish)
+  // so the tutor sees what is missing before pressing the button.
+  const missingForPublish: string[] = [];
+  if ((draft.short_summary ?? "").trim().length < 50)
+    missingForPublish.push("Kısa özet en az 50 karakter.");
+  for (const [field, label] of [
+    ["topics_discussed", "Görüşülen konular"],
+    ["student_progress", "Öğrencinin ilerlemesi"],
+    ["next_priorities", "Sonraki öncelikler"],
+    ["study_recommendations", "Çalışma önerileri"],
+    ["focus_until_next_meeting", "Bir sonraki görüşmeye kadar odak"],
+  ] as const) {
+    if ((draft[field] ?? "").trim().length < 20)
+      missingForPublish.push(`${label} en az 20 karakter.`);
+  }
+  if (!exam.status) missingForPublish.push("Sınav analizi adımında deneme durumunu seç.");
+  if (programQuery.data === null && !(draft.no_program_reason ?? "").trim()) {
+    missingForPublish.push("Program yoksa kısa gerekçe yaz.");
+  }
 
   return (
     <div className="space-y-6">
@@ -424,59 +460,86 @@ export function CoachingReportWizard({ sessionId }: { sessionId: string }) {
               </>
             ) : null}
             {step === 3 ? (
-              <div className="grid gap-3 sm:grid-cols-2">
-                <Input
-                  value={exam.exam_type}
-                  onChange={(event) => updateExam("exam_type", event.target.value)}
-                  placeholder="Sınav türü (YKS, DGS, KPSS)"
-                  aria-label="Sınav türü"
-                />
-                <Input
-                  value={exam.exam_name}
-                  onChange={(event) => updateExam("exam_name", event.target.value)}
-                  placeholder="Deneme / test adı"
-                  aria-label="Deneme veya test adı"
-                />
-                <Input
-                  type="date"
-                  value={exam.date}
-                  onChange={(event) => updateExam("date", event.target.value)}
-                  aria-label="Sınav tarihi"
-                />
-                <Input
-                  type="number"
-                  step="any"
-                  value={exam.score_or_net}
-                  onChange={(event) => updateExam("score_or_net", event.target.value)}
-                  placeholder="Puan / net"
-                  aria-label="Puan veya net"
-                />
-                <Textarea
-                  value={exam.strengths}
-                  onChange={(event) => updateExam("strengths", event.target.value)}
-                  placeholder="Güçlü alanlar (her satıra bir madde)"
-                  aria-label="Güçlü alanlar"
-                />
-                <Textarea
-                  value={exam.focus_areas}
-                  onChange={(event) => updateExam("focus_areas", event.target.value)}
-                  placeholder="Odak alanları (her satıra bir madde)"
-                  aria-label="Odak alanları"
-                />
-                <Textarea
-                  className="sm:col-span-2"
-                  value={exam.tutor_interpretation}
-                  onChange={(event) => updateExam("tutor_interpretation", event.target.value)}
-                  placeholder="Öğretmen yorumu"
-                  aria-label="Öğretmen yorumu"
-                />
-                <Textarea
-                  className="sm:col-span-2"
-                  value={exam.next_actions}
-                  onChange={(event) => updateExam("next_actions", event.target.value)}
-                  placeholder="Sonraki adımlar (her satıra bir madde)"
-                  aria-label="Sonraki adımlar"
-                />
+              <div className="space-y-4">
+                <fieldset className="space-y-2">
+                  <legend className="text-sm font-medium text-ink">
+                    Bu dönemin deneme durumu <span className="text-ink-mid">(zorunlu)</span>
+                  </legend>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    {EXAM_ANALYSIS_STATUS_OPTIONS.map((option) => (
+                      <label
+                        key={option.value}
+                        className={`flex min-h-11 cursor-pointer items-center gap-3 rounded-input border p-3 text-sm text-ink ${exam.status === option.value ? "border-ink ring-2 ring-ink" : "border-line"}`}
+                      >
+                        <input
+                          type="radio"
+                          name="exam-analysis-status"
+                          value={option.value}
+                          checked={exam.status === option.value}
+                          onChange={() => updateExam("status", option.value)}
+                          className="h-4 w-4 accent-pink"
+                        />
+                        {option.label}
+                      </label>
+                    ))}
+                  </div>
+                </fieldset>
+                {exam.status === "analyzed" ? (
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <Input
+                      value={exam.exam_type}
+                      onChange={(event) => updateExam("exam_type", event.target.value)}
+                      placeholder="Sınav türü (YKS, DGS, KPSS)"
+                      aria-label="Sınav türü"
+                    />
+                    <Input
+                      value={exam.exam_name}
+                      onChange={(event) => updateExam("exam_name", event.target.value)}
+                      placeholder="Deneme / test adı"
+                      aria-label="Deneme veya test adı"
+                    />
+                    <Input
+                      type="date"
+                      value={exam.date}
+                      onChange={(event) => updateExam("date", event.target.value)}
+                      aria-label="Sınav tarihi"
+                    />
+                    <Input
+                      type="number"
+                      step="any"
+                      value={exam.score_or_net}
+                      onChange={(event) => updateExam("score_or_net", event.target.value)}
+                      placeholder="Puan / net"
+                      aria-label="Puan veya net"
+                    />
+                    <Textarea
+                      value={exam.strengths}
+                      onChange={(event) => updateExam("strengths", event.target.value)}
+                      placeholder="Güçlü alanlar (her satıra bir madde)"
+                      aria-label="Güçlü alanlar"
+                    />
+                    <Textarea
+                      value={exam.focus_areas}
+                      onChange={(event) => updateExam("focus_areas", event.target.value)}
+                      placeholder="Odak alanları (her satıra bir madde)"
+                      aria-label="Odak alanları"
+                    />
+                    <Textarea
+                      className="sm:col-span-2"
+                      value={exam.tutor_interpretation}
+                      onChange={(event) => updateExam("tutor_interpretation", event.target.value)}
+                      placeholder="Öğretmen yorumu"
+                      aria-label="Öğretmen yorumu"
+                    />
+                    <Textarea
+                      className="sm:col-span-2"
+                      value={exam.next_actions}
+                      onChange={(event) => updateExam("next_actions", event.target.value)}
+                      placeholder="Sonraki adımlar (her satıra bir madde)"
+                      aria-label="Sonraki adımlar"
+                    />
+                  </div>
+                ) : null}
               </div>
             ) : null}
             {step === 4 ? (
@@ -611,8 +674,37 @@ export function CoachingReportWizard({ sessionId }: { sessionId: string }) {
                 İlk raporu yayınlayınca görüşme tamamlanmış sayılır. Sonraki yayınlar yeni sürüm
                 olarak eklenir.
               </p>
+              {programQuery.data === null ? (
+                <div className="space-y-2 rounded-input border border-line p-3">
+                  <p className="text-sm text-ink">
+                    Bu dönem için çalışma programı yok.{" "}
+                    <a
+                      className="font-medium underline underline-offset-4"
+                      href={`/dashboard/tutor/coaching/service-periods/${servicePeriodId}/program`}
+                    >
+                      Programı hazırla
+                    </a>{" "}
+                    ya da neden olmadığını kısaca yaz.
+                  </p>
+                  <Textarea
+                    value={draft.no_program_reason ?? ""}
+                    onChange={(event) => updateDraft("no_program_reason", event.target.value)}
+                    placeholder="Örn. Bu hafta deneme sonuçlarını bekliyoruz, program önümüzdeki görüşmede çıkacak."
+                    aria-label="Program olmadan yayınlama gerekçesi"
+                  />
+                </div>
+              ) : null}
+              {missingForPublish.length ? (
+                <ul className="list-disc space-y-1 pl-5 text-sm text-ink-mid" aria-live="polite">
+                  {missingForPublish.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+              ) : null}
               <Button
-                disabled={pending || session.status !== "awaiting_report"}
+                disabled={
+                  pending || session.status !== "awaiting_report" || missingForPublish.length > 0
+                }
                 onClick={() => initialPublishMutation.mutate()}
               >
                 <PaperPlaneTilt className="mr-2 h-4 w-4" /> İlk raporu yayınla
