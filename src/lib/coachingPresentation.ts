@@ -159,3 +159,57 @@ export function coachingRoomUserInfo(
     email: "",
   };
 }
+
+export type StudentCoachingNextStep =
+  | { kind: "next_session"; startsAt: string }
+  | { kind: "no_upcoming_session" }
+  | { kind: "pick_schedule" }
+  | { kind: "message"; text: string };
+
+/**
+ * The one line under the student's coaching status. Each service status gets
+ * its own sentence: "Koçluk saatini seç" used to be the fallback for every
+ * state that was not active, so a cancelled or completed coaching still
+ * asked the student to pick a time.
+ */
+export function studentCoachingNextStep(
+  serviceStatus: string,
+  sessions: { status: string; scheduled_start: string }[] | undefined,
+): StudentCoachingNextStep {
+  switch (serviceStatus) {
+    case "active":
+    case "cancellation_pending": {
+      const next = sessions?.find((s) => s.status === "scheduled" || s.status === "in_progress");
+      if (next) return { kind: "next_session", startsAt: next.scheduled_start };
+      if (serviceStatus === "cancellation_pending") {
+        return {
+          kind: "message",
+          text: "İptal talebin işleniyor. Devam eden dönemin görüşmeleri sürer.",
+        };
+      }
+      return { kind: "no_upcoming_session" };
+    }
+    case "accepted_awaiting_schedule":
+      return { kind: "pick_schedule" };
+    case "accepted_awaiting_payment":
+      return {
+        kind: "message",
+        text: "Öğretmenin koçluk talebini kabul etti. Ödeme doğrulandıktan sonra görüşme saatini seçebilirsin.",
+      };
+    case "pending_tutor_acceptance":
+      return { kind: "message", text: "Koçluk talebin öğretmeninin onayını bekliyor." };
+    case "paused_by_platform":
+      return {
+        kind: "message",
+        text: "Koçluğun platform tarafından geçici olarak durduruldu. Ayrıntı için destekle iletişime geçebilirsin.",
+      };
+    case "completed":
+      return { kind: "message", text: "Koçluk dönemin tamamlandı. Raporların ve programın burada kalır." };
+    case "cancelled":
+    case "rejected":
+    case "refunded":
+      return { kind: "message", text: "Bu koçluk sona erdi. Geçmiş raporların ve programın burada kalır." };
+    default:
+      return { kind: "message", text: "Koçluk durumun güncelleniyor." };
+  }
+}

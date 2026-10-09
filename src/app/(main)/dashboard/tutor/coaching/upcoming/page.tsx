@@ -6,27 +6,33 @@ import { CalendarDots } from "@phosphor-icons/react";
 
 import { CoachingRecordGuard as CoachingGuard } from "@/components/coaching/CoachingGuard";
 import { CoachingEmptyState } from "@/components/coaching/CoachingEmptyState";
+import { CoachingLoadError } from "@/components/coaching/CoachingLoadError";
 import { CoachingPageShell } from "@/components/coaching/CoachingPageShell";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { fetchTutorCoachingSessions } from "@/lib/coachingApi";
+import { coachingSessionStatusLabel } from "@/lib/coachingPresentation";
 
-const STATUS_LABEL: Record<string, string> = {
-  scheduled: "Planlandı",
-  reschedule_requested: "Değişiklik bekleniyor",
-  in_progress: "Devam ediyor",
-  awaiting_report: "Rapor bekleniyor",
-};
 
 const JOINABLE_STATUSES = new Set(["scheduled", "in_progress"]);
 
 function UpcomingList() {
-  const { data: sessions, isLoading } = useQuery({
+  const { data: sessions, isLoading, isError, isFetching, refetch } = useQuery({
     queryKey: ["coaching-tutor-sessions"],
     queryFn: fetchTutorCoachingSessions,
   });
+
+  if (isError) {
+    return (
+      <CoachingLoadError
+        message="Görüşmeler yüklenemedi."
+        onRetry={() => refetch()}
+        isRetrying={isFetching}
+      />
+    );
+  }
 
   if (isLoading) {
     return (
@@ -54,7 +60,7 @@ function UpcomingList() {
                 })}
               </p>
               <Badge variant="secondary" className="mt-1">
-                {STATUS_LABEL[session.status] ?? session.status}
+                {coachingSessionStatusLabel(session.status)}
               </Badge>
             </div>
             <div className="flex items-center gap-2">

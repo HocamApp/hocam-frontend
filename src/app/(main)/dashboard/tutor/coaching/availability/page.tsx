@@ -7,6 +7,7 @@ import { CalendarClock } from "lucide-react";
 import { CoachingAvailabilitySection } from "@/components/coaching/CoachingAvailabilitySection";
 import { CoachingEmptyState } from "@/components/coaching/CoachingEmptyState";
 import { CoachingGuard } from "@/components/coaching/CoachingGuard";
+import { CoachingLoadError } from "@/components/coaching/CoachingLoadError";
 import { CoachingPageShell } from "@/components/coaching/CoachingPageShell";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -15,6 +16,15 @@ import { fetchCoachingPlan } from "@/lib/coachingApi";
 function AvailabilityContent() {
   const planQuery = useQuery({ queryKey: ["coaching-plan"], queryFn: fetchCoachingPlan });
   if (planQuery.isLoading) return <Skeleton className="h-72 w-full" />;
+  if (planQuery.isError) {
+    return (
+      <CoachingLoadError
+        message="Koçluk teklifin yüklenemedi."
+        onRetry={() => planQuery.refetch()}
+        isRetrying={planQuery.isFetching}
+      />
+    );
+  }
   if (!planQuery.data) {
     return (
       <CoachingEmptyState
