@@ -66,7 +66,7 @@ describe("TutorCoachingDashboard", () => {
     const publishedBadge = screen.getByText("Koçluğun yayında").closest("span");
     assert.ok(publishedBadge);
     assert.match(publishedBadge.className, /bg-gold/);
-    assert.match(publishedBadge.className, /text-white/);
+    assert.match(publishedBadge.className, /text-gold-ink/);
     assert.equal(screen.queryByText(/bundle/i), null);
   });
 

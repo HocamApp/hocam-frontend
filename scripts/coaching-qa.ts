@@ -546,10 +546,10 @@ async function runRouteMatrix(page: Page, state: QaState, width: number) {
   state.scenario = "published";
   for (const [route, heading] of [
     ["/dashboard/student/coaching/upcoming", "Yaklaşan görüşmeler"],
-    ["/dashboard/student/coaching/program", "Çalışma programım"],
+    ["/dashboard/student/coaching/program", "Koçluk Programım"],
     ["/dashboard/student/coaching/reports", "Görüşme raporlarım"],
     ["/dashboard/student/coaching/schedule", "Koçluk saatlerim"],
-    ["/dashboard/student/coaching/complaints", "Koçluk başvurularım"],
+    ["/dashboard/student/coaching/complaints", "Bildirdiğim koçluk sorunları"],
   ] as const) await assertPage(page, route, heading, `${heading} ${width}`);
 }
 

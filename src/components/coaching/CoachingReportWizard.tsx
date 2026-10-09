@@ -2,7 +2,13 @@
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertCircle, ChevronLeft, ChevronRight, Save, Send } from "lucide-react";
+import {
+  WarningCircle,
+  CaretLeft,
+  CaretRight,
+  FloppyDisk,
+  PaperPlaneTilt,
+} from "@phosphor-icons/react";
 import { toast } from "sonner";
 
 import { CoachingAttachmentPanel } from "@/components/coaching/CoachingAttachmentPanel";
@@ -35,13 +41,7 @@ import {
 } from "@/lib/coachingApi";
 import { coachingDateTimeLabel } from "@/lib/coachingTime";
 
-const STEPS = [
-  "Özet",
-  "İlerleme",
-  "Öncelikler",
-  "Sınav analizi",
-  "Kaynaklar",
-];
+const STEPS = ["Özet", "İlerleme", "Öncelikler", "Sınav analizi", "Kaynaklar"];
 
 const EMPTY_DRAFT: CoachingReportDraftInput = {
   short_summary: "",
@@ -78,7 +78,10 @@ const EMPTY_EXAM: ExamForm = {
 };
 
 function splitLines(value: string) {
-  return value.split("\n").map((item) => item.trim()).filter(Boolean);
+  return value
+    .split("\n")
+    .map((item) => item.trim())
+    .filter(Boolean);
 }
 
 function createExamForm(exam?: CoachingExamAnalysis | null): ExamForm {
@@ -106,7 +109,8 @@ function toExamAnalysis(exam: ExamForm): CoachingExamAnalysis {
   const nextActions = splitLines(exam.next_actions);
   if (strengths.length) output.strengths = strengths;
   if (focusAreas.length) output.focus_areas = focusAreas;
-  if (exam.tutor_interpretation.trim()) output.tutor_interpretation = exam.tutor_interpretation.trim();
+  if (exam.tutor_interpretation.trim())
+    output.tutor_interpretation = exam.tutor_interpretation.trim();
   if (nextActions.length) output.next_actions = nextActions;
   return output;
 }
@@ -124,20 +128,26 @@ function ReportTimingNotice({
   if (!timing.reportDueAt) {
     return (
       <Alert>
-        <AlertCircle className="h-4 w-4" />
+        <WarningCircle className="h-4 w-4" />
         <AlertTitle>Bu görüşme için normal rapor yok</AlertTitle>
-        <AlertDescription>Bu görüşme katılım sorunu ya da teknik sorunla kapandığı için rapor yazman gerekmez.</AlertDescription>
+        <AlertDescription>
+          Bu görüşme katılım sorunu ya da teknik sorunla kapandığı için rapor yazman gerekmez.
+        </AlertDescription>
       </Alert>
     );
   }
   return (
     <Alert variant={timing.reportOverdue ? "destructive" : "default"}>
-      <AlertCircle className="h-4 w-4" />
+      <WarningCircle className="h-4 w-4" />
       <AlertTitle>{timing.reportOverdue ? "Rapor süresi geçti" : "Rapor süresi"}</AlertTitle>
       <AlertDescription>
         Rapor için son zaman: {coachingDateTimeLabel(timing.reportDueAt)}.
-        {timing.complaintEligibleAt ? ` Eksik rapor desteği ${coachingDateTimeLabel(timing.complaintEligibleAt)} itibarıyla kullanılabilir.` : ""}
-        {timing.complaintEligible ? <span className="ml-1 font-medium">Destek girişi şu anda kullanılabilir.</span> : null}
+        {timing.complaintEligibleAt
+          ? ` Eksik rapor desteği ${coachingDateTimeLabel(timing.complaintEligibleAt)} itibarıyla kullanılabilir.`
+          : ""}
+        {timing.complaintEligible ? (
+          <span className="ml-1 font-medium">Destek girişi şu anda kullanılabilir.</span>
+        ) : null}
       </AlertDescription>
     </Alert>
   );
@@ -170,10 +180,12 @@ export function CoachingReportWizard({ sessionId }: { sessionId: string }) {
   });
   const report = useMemo(
     () => reportListQuery.data?.find((item) => item.session_id === sessionId) ?? null,
-    [reportListQuery.data, sessionId]
+    [reportListQuery.data, sessionId],
   );
   const revisionHistoryQuery = useQuery({
-    queryKey: report ? COACHING_FAZ6_QUERY_KEYS.reportHistory(report.id) : COACHING_FAZ6_QUERY_KEYS.reportHistory("none"),
+    queryKey: report
+      ? COACHING_FAZ6_QUERY_KEYS.reportHistory(report.id)
+      : COACHING_FAZ6_QUERY_KEYS.reportHistory("none"),
     queryFn: () => fetchTutorCoachingReportHistory(report!.id),
     enabled: Boolean(report),
   });
@@ -190,16 +202,19 @@ export function CoachingReportWizard({ sessionId }: { sessionId: string }) {
   const payload = (): CoachingReportDraftInput => ({
     ...draft,
     exam_analysis: toExamAnalysis(exam),
-    recommended_resources: resources.filter((resource) => resource.title.trim()).map((resource) => ({
-      title: resource.title.trim(),
-      ...(resource.url?.trim() ? { url: resource.url.trim() } : {}),
-      ...(resource.note?.trim() ? { note: resource.note.trim() } : {}),
-      ...(resource.attachment_id ? { attachment_id: resource.attachment_id } : {}),
-    })),
+    recommended_resources: resources
+      .filter((resource) => resource.title.trim())
+      .map((resource) => ({
+        title: resource.title.trim(),
+        ...(resource.url?.trim() ? { url: resource.url.trim() } : {}),
+        ...(resource.note?.trim() ? { note: resource.note.trim() } : {}),
+        ...(resource.attachment_id ? { attachment_id: resource.attachment_id } : {}),
+      })),
   });
-  const invalidateDraft = () => queryClient.invalidateQueries({
-    queryKey: COACHING_FAZ6_QUERY_KEYS.reportDraft(sessionId),
-  });
+  const invalidateDraft = () =>
+    queryClient.invalidateQueries({
+      queryKey: COACHING_FAZ6_QUERY_KEYS.reportDraft(sessionId),
+    });
   const saveMutation = useMutation({
     mutationFn: () => saveCoachingReportDraft(sessionId, payload()),
     onSuccess: (saved) => {
@@ -262,14 +277,25 @@ export function CoachingReportWizard({ sessionId }: { sessionId: string }) {
   }
 
   if (sessionQuery.isLoading || draftQuery.isLoading || reportListQuery.isLoading) {
-    return <div className="flex min-h-48 items-center justify-center"><LoadingSpinner /></div>;
+    return (
+      <div className="flex min-h-48 items-center justify-center">
+        <LoadingSpinner />
+      </div>
+    );
   }
-  if (sessionQuery.isError || !sessionQuery.data) return <ErrorMessage message={extractCoachingErrorMessage(sessionQuery.error)} />;
-  if (draftQuery.isError) return <ErrorMessage message={extractCoachingErrorMessage(draftQuery.error)} />;
+  if (sessionQuery.isError || !sessionQuery.data)
+    return <ErrorMessage message={extractCoachingErrorMessage(sessionQuery.error)} />;
+  if (draftQuery.isError)
+    return <ErrorMessage message={extractCoachingErrorMessage(draftQuery.error)} />;
 
   const session = sessionQuery.data;
   if (isIncident(session.status)) {
-    return <div className="space-y-4"><ReportTimingNotice session={session} /><CoachingAttachmentPanel sessionId={sessionId} /></div>;
+    return (
+      <div className="space-y-4">
+        <ReportTimingNotice session={session} />
+        <CoachingAttachmentPanel sessionId={sessionId} />
+      </div>
+    );
   }
   // Master Spec §22.2: "Görüşme sırasında otomatik taslak açılır. Öğretmen
   // görüşmede doldurabilir." — the backend already accepts a draft write
@@ -278,17 +304,29 @@ export function CoachingReportWizard({ sessionId }: { sessionId: string }) {
   // reaches awaiting_report. Publishing itself stays gated below.
   const draftableStatuses = ["in_progress", "awaiting_report"];
   if (!draftableStatuses.includes(session.status) && !report?.latest_revision) {
-    return <Alert><AlertCircle className="h-4 w-4" /><AlertTitle>Rapor henüz açılamaz</AlertTitle><AlertDescription>Rapor taslağı görüşme başladığında açılır.</AlertDescription></Alert>;
+    return (
+      <Alert>
+        <WarningCircle className="h-4 w-4" />
+        <AlertTitle>Rapor henüz açılamaz</AlertTitle>
+        <AlertDescription>Rapor taslağı görüşme başladığında açılır.</AlertDescription>
+      </Alert>
+    );
   }
 
   const hasPublishedRevision = Boolean(report?.latest_revision);
   const currentRevision = report?.latest_revision;
   const updateDraft = (field: keyof CoachingReportDraftInput, value: string) =>
     setDraft((current) => ({ ...current, [field]: value }));
-  const updateExam = (field: keyof ExamForm, value: string) => setExam((current) => ({ ...current, [field]: value }));
+  const updateExam = (field: keyof ExamForm, value: string) =>
+    setExam((current) => ({ ...current, [field]: value }));
   const upsertResource = (index: number, field: keyof CoachingRecommendedResource, value: string) =>
-    setResources((current) => current.map((resource, resourceIndex) => resourceIndex === index ? { ...resource, [field]: value } : resource));
-  const pending = saveMutation.isPending || initialPublishMutation.isPending || revisionPublishMutation.isPending;
+    setResources((current) =>
+      current.map((resource, resourceIndex) =>
+        resourceIndex === index ? { ...resource, [field]: value } : resource,
+      ),
+    );
+  const pending =
+    saveMutation.isPending || initialPublishMutation.isPending || revisionPublishMutation.isPending;
 
   return (
     <div className="space-y-6">
@@ -296,19 +334,29 @@ export function CoachingReportWizard({ sessionId }: { sessionId: string }) {
       <Card>
         <CardHeader>
           <CardTitle>Görüşme raporu</CardTitle>
-          <p className="text-sm text-muted-foreground">Taslağı adım adım kaydedebilirsin. Yayınlanan rapor değiştirilemez; düzeltme gerekirse yeni bir sürüm yayınlarsın.</p>
+          <p className="text-sm text-ink-mid">
+            Taslağı adım adım kaydedebilirsin. Yayınlanan rapor değiştirilemez; düzeltme gerekirse
+            yeni bir sürüm yayınlarsın.
+          </p>
           <SensitiveDataGuidance />
           {/* Five labelled steps do not fit 375px side by side: on phones only
               the current step is named, the rest stay as numbered dots. */}
           <p className="pt-2 text-small font-medium text-ink sm:hidden">
             Adım {step + 1}/{STEPS.length}: {STEPS[step]}
           </p>
-          <ol className="hidden grid-cols-5 gap-1 pt-2 text-center text-xs text-ink-mid sm:grid" aria-label="Rapor adımları">
+          <ol
+            className="hidden grid-cols-5 gap-1 pt-2 text-center text-xs text-ink-mid sm:grid"
+            aria-label="Rapor adımları"
+          >
             {STEPS.map((label, index) => (
               <li
                 key={label}
                 aria-current={index === step ? "step" : undefined}
-                className={index === step ? "rounded bg-pink px-1 py-2 font-medium text-white" : "rounded bg-paper px-1 py-2"}
+                className={
+                  index === step
+                    ? "rounded bg-pink px-1 py-2 font-medium text-white"
+                    : "rounded bg-paper px-1 py-2"
+                }
               >
                 {index + 1}. {label}
               </li>
@@ -316,50 +364,217 @@ export function CoachingReportWizard({ sessionId }: { sessionId: string }) {
           </ol>
         </CardHeader>
         <CardContent>
-          <form className="space-y-4" onSubmit={(event: FormEvent<HTMLFormElement>) => { event.preventDefault(); saveMutation.mutate(); }}>
-            {step === 0 ? <>
-              <Textarea required value={draft.short_summary} onChange={(event) => updateDraft("short_summary", event.target.value)} placeholder="Görüşmenin kısa özeti" aria-label="Kısa özet" />
-              <Textarea required value={draft.topics_discussed} onChange={(event) => updateDraft("topics_discussed", event.target.value)} placeholder="Görüşülen konular" aria-label="Görüşülen konular" />
-            </> : null}
-            {step === 1 ? <Textarea required value={draft.student_progress} onChange={(event) => updateDraft("student_progress", event.target.value)} placeholder="Öğrencinin mevcut durumu ve ilerlemesi" aria-label="Öğrencinin ilerlemesi" /> : null}
-            {step === 2 ? <>
-              <Textarea required value={draft.next_priorities} onChange={(event) => updateDraft("next_priorities", event.target.value)} placeholder="Sonraki dönem öncelikleri" aria-label="Sonraki öncelikler" />
-              <Textarea required value={draft.study_recommendations} onChange={(event) => updateDraft("study_recommendations", event.target.value)} placeholder="Çalışma önerileri" aria-label="Çalışma önerileri" />
-              <Textarea required value={draft.focus_until_next_meeting} onChange={(event) => updateDraft("focus_until_next_meeting", event.target.value)} placeholder="Bir sonraki görüşmeye kadar odak" aria-label="Bir sonraki görüşmeye kadar odak" />
-            </> : null}
-            {step === 3 ? <div className="grid gap-3 sm:grid-cols-2">
-              <Input value={exam.exam_type} onChange={(event) => updateExam("exam_type", event.target.value)} placeholder="Sınav türü (YKS, DGS, KPSS)" aria-label="Sınav türü" />
-              <Input value={exam.exam_name} onChange={(event) => updateExam("exam_name", event.target.value)} placeholder="Deneme / test adı" aria-label="Deneme veya test adı" />
-              <Input type="date" value={exam.date} onChange={(event) => updateExam("date", event.target.value)} aria-label="Sınav tarihi" />
-              <Input type="number" step="any" value={exam.score_or_net} onChange={(event) => updateExam("score_or_net", event.target.value)} placeholder="Puan / net" aria-label="Puan veya net" />
-              <Textarea value={exam.strengths} onChange={(event) => updateExam("strengths", event.target.value)} placeholder="Güçlü alanlar (her satıra bir madde)" aria-label="Güçlü alanlar" />
-              <Textarea value={exam.focus_areas} onChange={(event) => updateExam("focus_areas", event.target.value)} placeholder="Odak alanları (her satıra bir madde)" aria-label="Odak alanları" />
-              <Textarea className="sm:col-span-2" value={exam.tutor_interpretation} onChange={(event) => updateExam("tutor_interpretation", event.target.value)} placeholder="Öğretmen yorumu" aria-label="Öğretmen yorumu" />
-              <Textarea className="sm:col-span-2" value={exam.next_actions} onChange={(event) => updateExam("next_actions", event.target.value)} placeholder="Sonraki adımlar (her satıra bir madde)" aria-label="Sonraki adımlar" />
-            </div> : null}
-            {step === 4 ? <div className="space-y-4">
-              <Textarea value={draft.program_changes_summary ?? ""} onChange={(event) => updateDraft("program_changes_summary", event.target.value)} placeholder="Programdaki değişiklik özeti (isteğe bağlı)" aria-label="Program değişikliği özeti" />
-              <div className="space-y-2">
-                <p className="text-sm font-medium">Önerilen kaynaklar</p>
-                {resources.map((resource, index) => <div key={index} className="grid gap-2 rounded border p-3 sm:grid-cols-2">
-                  <Input value={resource.title} onChange={(event) => upsertResource(index, "title", event.target.value)} placeholder="Kaynak başlığı" aria-label={`Kaynak ${index + 1} başlığı`} />
-                  <Input value={resource.url ?? ""} onChange={(event) => upsertResource(index, "url", event.target.value)} placeholder="https:// bağlantısı (isteğe bağlı)" aria-label={`Kaynak ${index + 1} bağlantısı`} />
-                  <Textarea className="sm:col-span-2" value={resource.note ?? ""} onChange={(event) => upsertResource(index, "note", event.target.value)} placeholder="Kısa not (isteğe bağlı)" aria-label={`Kaynak ${index + 1} notu`} />
-                  <select className="h-10 rounded-md border border-input bg-background px-3 text-sm sm:col-span-2" value={resource.attachment_id ?? ""} aria-label={`Kaynak ${index + 1} dosyası`} onChange={(event) => upsertResource(index, "attachment_id", event.target.value)}>
-                    <option value="">Dosya ekleme</option>
-                    {(attachmentsQuery.data ?? []).map((attachment) => <option key={attachment.id} value={attachment.id}>{attachment.original_name}</option>)}
-                  </select>
-                  <Button type="button" size="sm" variant="ghost" className="justify-self-start" onClick={() => setResources((current) => current.filter((_, resourceIndex) => resourceIndex !== index))}>Kaynağı kaldır</Button>
-                </div>)}
-                <Button type="button" size="sm" variant="outline" onClick={() => setResources((current) => [...current, { title: "", url: "", note: "", attachment_id: "" }])}>Kaynak ekle</Button>
+          <form
+            className="space-y-4"
+            onSubmit={(event: FormEvent<HTMLFormElement>) => {
+              event.preventDefault();
+              saveMutation.mutate();
+            }}
+          >
+            {step === 0 ? (
+              <>
+                <Textarea
+                  required
+                  value={draft.short_summary}
+                  onChange={(event) => updateDraft("short_summary", event.target.value)}
+                  placeholder="Görüşmenin kısa özeti"
+                  aria-label="Kısa özet"
+                />
+                <Textarea
+                  required
+                  value={draft.topics_discussed}
+                  onChange={(event) => updateDraft("topics_discussed", event.target.value)}
+                  placeholder="Görüşülen konular"
+                  aria-label="Görüşülen konular"
+                />
+              </>
+            ) : null}
+            {step === 1 ? (
+              <Textarea
+                required
+                value={draft.student_progress}
+                onChange={(event) => updateDraft("student_progress", event.target.value)}
+                placeholder="Öğrencinin mevcut durumu ve ilerlemesi"
+                aria-label="Öğrencinin ilerlemesi"
+              />
+            ) : null}
+            {step === 2 ? (
+              <>
+                <Textarea
+                  required
+                  value={draft.next_priorities}
+                  onChange={(event) => updateDraft("next_priorities", event.target.value)}
+                  placeholder="Sonraki dönem öncelikleri"
+                  aria-label="Sonraki öncelikler"
+                />
+                <Textarea
+                  required
+                  value={draft.study_recommendations}
+                  onChange={(event) => updateDraft("study_recommendations", event.target.value)}
+                  placeholder="Çalışma önerileri"
+                  aria-label="Çalışma önerileri"
+                />
+                <Textarea
+                  required
+                  value={draft.focus_until_next_meeting}
+                  onChange={(event) => updateDraft("focus_until_next_meeting", event.target.value)}
+                  placeholder="Bir sonraki görüşmeye kadar odak"
+                  aria-label="Bir sonraki görüşmeye kadar odak"
+                />
+              </>
+            ) : null}
+            {step === 3 ? (
+              <div className="grid gap-3 sm:grid-cols-2">
+                <Input
+                  value={exam.exam_type}
+                  onChange={(event) => updateExam("exam_type", event.target.value)}
+                  placeholder="Sınav türü (YKS, DGS, KPSS)"
+                  aria-label="Sınav türü"
+                />
+                <Input
+                  value={exam.exam_name}
+                  onChange={(event) => updateExam("exam_name", event.target.value)}
+                  placeholder="Deneme / test adı"
+                  aria-label="Deneme veya test adı"
+                />
+                <Input
+                  type="date"
+                  value={exam.date}
+                  onChange={(event) => updateExam("date", event.target.value)}
+                  aria-label="Sınav tarihi"
+                />
+                <Input
+                  type="number"
+                  step="any"
+                  value={exam.score_or_net}
+                  onChange={(event) => updateExam("score_or_net", event.target.value)}
+                  placeholder="Puan / net"
+                  aria-label="Puan veya net"
+                />
+                <Textarea
+                  value={exam.strengths}
+                  onChange={(event) => updateExam("strengths", event.target.value)}
+                  placeholder="Güçlü alanlar (her satıra bir madde)"
+                  aria-label="Güçlü alanlar"
+                />
+                <Textarea
+                  value={exam.focus_areas}
+                  onChange={(event) => updateExam("focus_areas", event.target.value)}
+                  placeholder="Odak alanları (her satıra bir madde)"
+                  aria-label="Odak alanları"
+                />
+                <Textarea
+                  className="sm:col-span-2"
+                  value={exam.tutor_interpretation}
+                  onChange={(event) => updateExam("tutor_interpretation", event.target.value)}
+                  placeholder="Öğretmen yorumu"
+                  aria-label="Öğretmen yorumu"
+                />
+                <Textarea
+                  className="sm:col-span-2"
+                  value={exam.next_actions}
+                  onChange={(event) => updateExam("next_actions", event.target.value)}
+                  placeholder="Sonraki adımlar (her satıra bir madde)"
+                  aria-label="Sonraki adımlar"
+                />
               </div>
-              <CoachingAttachmentPanel sessionId={sessionId} />
-            </div> : null}
+            ) : null}
+            {step === 4 ? (
+              <div className="space-y-4">
+                <Textarea
+                  value={draft.program_changes_summary ?? ""}
+                  onChange={(event) => updateDraft("program_changes_summary", event.target.value)}
+                  placeholder="Programdaki değişiklik özeti (isteğe bağlı)"
+                  aria-label="Program değişikliği özeti"
+                />
+                <div className="space-y-2">
+                  <p className="text-sm font-medium">Önerilen kaynaklar</p>
+                  {resources.map((resource, index) => (
+                    <div key={index} className="grid gap-2 rounded border p-3 sm:grid-cols-2">
+                      <Input
+                        value={resource.title}
+                        onChange={(event) => upsertResource(index, "title", event.target.value)}
+                        placeholder="Kaynak başlığı"
+                        aria-label={`Kaynak ${index + 1} başlığı`}
+                      />
+                      <Input
+                        value={resource.url ?? ""}
+                        onChange={(event) => upsertResource(index, "url", event.target.value)}
+                        placeholder="https:// bağlantısı (isteğe bağlı)"
+                        aria-label={`Kaynak ${index + 1} bağlantısı`}
+                      />
+                      <Textarea
+                        className="sm:col-span-2"
+                        value={resource.note ?? ""}
+                        onChange={(event) => upsertResource(index, "note", event.target.value)}
+                        placeholder="Kısa not (isteğe bağlı)"
+                        aria-label={`Kaynak ${index + 1} notu`}
+                      />
+                      <select
+                        className="h-10 rounded-md border border-input bg-background px-3 text-sm sm:col-span-2"
+                        value={resource.attachment_id ?? ""}
+                        aria-label={`Kaynak ${index + 1} dosyası`}
+                        onChange={(event) =>
+                          upsertResource(index, "attachment_id", event.target.value)
+                        }
+                      >
+                        <option value="">Dosya ekleme</option>
+                        {(attachmentsQuery.data ?? []).map((attachment) => (
+                          <option key={attachment.id} value={attachment.id}>
+                            {attachment.original_name}
+                          </option>
+                        ))}
+                      </select>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        className="justify-self-start"
+                        onClick={() =>
+                          setResources((current) =>
+                            current.filter((_, resourceIndex) => resourceIndex !== index),
+                          )
+                        }
+                      >
+                        Kaynağı kaldır
+                      </Button>
+                    </div>
+                  ))}
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() =>
+                      setResources((current) => [
+                        ...current,
+                        { title: "", url: "", note: "", attachment_id: "" },
+                      ])
+                    }
+                  >
+                    Kaynak ekle
+                  </Button>
+                </div>
+                <CoachingAttachmentPanel sessionId={sessionId} />
+              </div>
+            ) : null}
             <div className="flex flex-wrap items-center justify-between gap-2 pt-2">
-              <Button type="button" variant="outline" disabled={step === 0} onClick={() => setStep((current) => current - 1)}><ChevronLeft className="mr-1 h-4 w-4" /> Geri</Button>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={step === 0}
+                onClick={() => setStep((current) => current - 1)}
+              >
+                <CaretLeft className="mr-1 h-4 w-4" /> Geri
+              </Button>
               <div className="flex flex-wrap gap-2">
-                <Button type="submit" variant="outline" disabled={pending}><Save className="mr-1 h-4 w-4" /> Taslağı kaydet</Button>
-                {step < STEPS.length - 1 ? <Button type="button" onClick={() => setStep((current) => current + 1)}>İleri <ChevronRight className="ml-1 h-4 w-4" /></Button> : null}
+                <Button type="submit" variant="outline" disabled={pending}>
+                  <FloppyDisk className="mr-1 h-4 w-4" /> Taslağı kaydet
+                </Button>
+                {step < STEPS.length - 1 ? (
+                  <Button type="button" onClick={() => setStep((current) => current + 1)}>
+                    İleri <CaretRight className="ml-1 h-4 w-4" />
+                  </Button>
+                ) : null}
               </div>
             </div>
           </form>
@@ -367,28 +582,69 @@ export function CoachingReportWizard({ sessionId }: { sessionId: string }) {
       </Card>
 
       <Card>
-        <CardHeader><CardTitle className="text-lg">Yayınla</CardTitle></CardHeader>
+        <CardHeader>
+          <CardTitle className="text-lg">Yayınla</CardTitle>
+        </CardHeader>
         <CardContent className="space-y-3">
-          {hasPublishedRevision ? <>
-            <p className="text-sm text-muted-foreground">Son yayınlanan sürüm: #{currentRevision?.revision_number}. Taslakta yaptığın değişiklikler yeni bir sürüm olarak yayınlanır.</p>
-            <Textarea value={changeNote} onChange={(event) => setChangeNote(event.target.value)} placeholder="Bu sürümde neyi değiştirdin? (isteğe bağlı)" aria-label="Sürüm değişiklik notu" />
-            <Button disabled={pending || !report} onClick={() => revisionPublishMutation.mutate()}><Send className="mr-2 h-4 w-4" /> Yeni sürümü yayınla</Button>
-          </> : <>
-            <p className="text-sm text-muted-foreground">İlk raporu yayınlayınca görüşme tamamlanmış sayılır. Sonraki yayınlar yeni sürüm olarak eklenir.</p>
-            <Button disabled={pending || session.status !== "awaiting_report"} onClick={() => initialPublishMutation.mutate()}><Send className="mr-2 h-4 w-4" /> İlk raporu yayınla</Button>
-          </>}
+          {hasPublishedRevision ? (
+            <>
+              <p className="text-sm text-ink-mid">
+                Son yayınlanan sürüm: #{currentRevision?.revision_number}. Taslakta yaptığın
+                değişiklikler yeni bir sürüm olarak yayınlanır.
+              </p>
+              <Textarea
+                value={changeNote}
+                onChange={(event) => setChangeNote(event.target.value)}
+                placeholder="Bu sürümde neyi değiştirdin? (isteğe bağlı)"
+                aria-label="Sürüm değişiklik notu"
+              />
+              <Button
+                disabled={pending || !report}
+                onClick={() => revisionPublishMutation.mutate()}
+              >
+                <PaperPlaneTilt className="mr-2 h-4 w-4" /> Yeni sürümü yayınla
+              </Button>
+            </>
+          ) : (
+            <>
+              <p className="text-sm text-ink-mid">
+                İlk raporu yayınlayınca görüşme tamamlanmış sayılır. Sonraki yayınlar yeni sürüm
+                olarak eklenir.
+              </p>
+              <Button
+                disabled={pending || session.status !== "awaiting_report"}
+                onClick={() => initialPublishMutation.mutate()}
+              >
+                <PaperPlaneTilt className="mr-2 h-4 w-4" /> İlk raporu yayınla
+              </Button>
+            </>
+          )}
         </CardContent>
       </Card>
 
-      {hasPublishedRevision ? <Card>
-        <CardHeader><CardTitle className="text-lg">Yayın geçmişi</CardTitle></CardHeader>
-        <CardContent>
-          <ol className="space-y-3 border-l pl-4">
-            {(revisionHistoryQuery.data?.revisions ?? (currentRevision ? [currentRevision] : [])).map((revision) => <li key={revision.id} className="relative text-sm"><span className="absolute -left-[1.35rem] top-1 h-2.5 w-2.5 rounded-full bg-primary" />Sürüm {revision.revision_number} · {coachingDateTimeLabel(revision.published_at)}{revision.change_note ? ` · ${revision.change_note}` : ""}</li>)}
-          </ol>
-          <p className="mt-4 text-sm text-muted-foreground">Öğrenci yalnız en son yayınlanan sürümü görür.</p>
-        </CardContent>
-      </Card> : null}
+      {hasPublishedRevision ? (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Yayın geçmişi</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ol className="space-y-3 border-l pl-4">
+              {(
+                revisionHistoryQuery.data?.revisions ?? (currentRevision ? [currentRevision] : [])
+              ).map((revision) => (
+                <li key={revision.id} className="relative text-sm">
+                  <span className="absolute -left-[1.35rem] top-1 h-2.5 w-2.5 rounded-full bg-pink" />
+                  Sürüm {revision.revision_number} · {coachingDateTimeLabel(revision.published_at)}
+                  {revision.change_note ? ` · ${revision.change_note}` : ""}
+                </li>
+              ))}
+            </ol>
+            <p className="mt-4 text-sm text-ink-mid">
+              Öğrenci yalnız en son yayınlanan sürümü görür.
+            </p>
+          </CardContent>
+        </Card>
+      ) : null}
     </div>
   );
 }

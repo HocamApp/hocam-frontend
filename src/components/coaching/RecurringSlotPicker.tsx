@@ -61,13 +61,13 @@ export function RecurringSlotPicker({
           {Object.entries(lockedSlots).map(([index, slot]) => (
             <div
               key={index}
-              className="flex items-center justify-between rounded-lg border border-primary/40 bg-primary/5 p-3"
+              className="flex items-center justify-between rounded-lg border border-pink bg-surface p-3"
             >
               <div>
                 <p className="text-sm font-medium">
                   {COACHING_DAY_LABEL[slot.day_of_week]} {slot.start_time.slice(0, 5)}
                 </p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-ink-mid">
                   Öğretmenin önerisiyle onaylandı
                 </p>
               </div>
@@ -78,7 +78,7 @@ export function RecurringSlotPicker({
       )}
 
       {availableSlots.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-ink-mid">
           Şu anda uygun saat listelenmiyor. Aşağıdan öğretmeninden saat talep edebilirsin.
         </p>
       ) : (
@@ -97,21 +97,21 @@ export function RecurringSlotPicker({
                   "rounded-lg border p-3 text-left text-sm transition-colors",
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
                   active
-                    ? "border-primary bg-primary/5 ring-1 ring-primary"
+                    ? "border-ink bg-surface ring-2 ring-ink"
                     : disabled
                       ? "cursor-not-allowed opacity-50"
-                      : "hover:bg-muted/40"
+                      : "hover:bg-paper"
                 )}
               >
                 <p className="font-medium">{COACHING_DAY_LABEL[slot.day_of_week]}</p>
-                <p className="text-muted-foreground">{slot.start_time.slice(0, 5)}</p>
+                <p className="text-ink-mid">{slot.start_time.slice(0, 5)}</p>
               </button>
             );
           })}
         </div>
       )}
 
-      <p className="text-xs text-muted-foreground">
+      <p className="text-xs text-ink-mid">
         {selected.length + Object.keys(lockedSlots).length} / {requiredCount} saat seçildi ·
         her görüşme 30 dakikadır.
       </p>

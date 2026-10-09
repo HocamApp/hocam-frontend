@@ -194,7 +194,7 @@ steps={["Birleşik talebin kabul edilir", "Koçluk müsaitliğinden düzenli saa
             {confirm.isPending ? "Onaylanıyor..." : "Saatleri Onayla"}
           </Button>
 
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-ink-mid">
             Saatler Türkiye saatidir (Europe/Istanbul).
           </p>
         </>

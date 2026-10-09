@@ -100,7 +100,7 @@ export function CoachingIncidentActions({
       >
         Teknik sorun bildir
       </Button>
-      <p className="text-xs text-muted-foreground">{consequence}</p>
+      <p className="text-xs text-ink-mid">{consequence}</p>
 
       <CoachingConfirmDialog
         open={pendingAction === "no_show"}

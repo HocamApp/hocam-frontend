@@ -24,8 +24,7 @@ function StudentReportsContent() {
     queryFn: fetchCoachingReports,
   });
   if (query.isLoading) return <CoachingLoadingState rows={3} />;
-  if (query.isError)
-    return <ErrorMessage message={extractCoachingErrorMessage(query.error)} />;
+  if (query.isError) return <ErrorMessage message={extractCoachingErrorMessage(query.error)} />;
   const reports = query.data ?? [];
   if (!reports.length)
     return (
@@ -44,10 +43,7 @@ function StudentReportsContent() {
         .map((report) => {
           const revision = report.latest_revision!;
           return (
-            <Link
-              key={report.id}
-              href={`/dashboard/student/coaching/reports/${report.id}`}
-            >
+            <Link key={report.id} href={`/dashboard/student/coaching/reports/${report.id}`}>
               <Card className="text-ink transition-colors duration-[--duration-state] hover:border-ink">
                 <CardContent className="flex items-center justify-between gap-3 p-5">
                   <div>
@@ -57,10 +53,7 @@ function StudentReportsContent() {
                       {coachingDateTimeLabel(revision.published_at)}
                     </p>
                   </div>
-                  <ClipboardText
-                    className="h-5 w-5 text-ink"
-                    weight="regular"
-                  />
+                  <ClipboardText className="h-5 w-5 text-ink" weight="regular" />
                 </CardContent>
               </Card>
             </Link>

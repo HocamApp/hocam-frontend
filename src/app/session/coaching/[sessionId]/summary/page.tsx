@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { CalendarClock, LifeBuoy, Star } from "lucide-react";
+import { CalendarDots, Lifebuoy, Star } from "@phosphor-icons/react";
 
 import { useAuth } from "@/hooks/useAuth";
 import { RouteGuard } from "@/components/shared/RouteGuard";
@@ -91,8 +91,8 @@ function PostSessionContent() {
   return (
     <div className="mx-auto max-w-2xl space-y-6 px-4 py-8">
       <div>
-        <h1 className="text-2xl font-semibold">Görüşme tamamlandı</h1>
-        <p className="text-sm text-muted-foreground">
+        <h1 className="text-2xl font-bold">Görüşme tamamlandı</h1>
+        <p className="text-sm text-ink-mid">
           {detail.tutor_name} ile görüşmen sona erdi.
         </p>
       </div>
@@ -120,12 +120,12 @@ function PostSessionContent() {
       <div className="grid gap-3 sm:grid-cols-2">
         <Button asChild variant="outline" className="w-full justify-start">
           <Link href="/dashboard/student/coaching/upcoming">
-            <CalendarClock className="mr-2 h-4 w-4" aria-hidden="true" /> Sonraki görüşmeyi görüntüle
+            <CalendarDots className="mr-2 h-4 w-4" aria-hidden="true" /> Sonraki görüşmeyi görüntüle
           </Link>
         </Button>
         <Button asChild variant="outline" className="w-full justify-start">
           <Link href="/dashboard/student/coaching/complaints">
-            <LifeBuoy className="mr-2 h-4 w-4" aria-hidden="true" /> Koçluk desteğine git
+            <Lifebuoy className="mr-2 h-4 w-4" aria-hidden="true" /> Koçluk desteğine git
           </Link>
         </Button>
       </div>

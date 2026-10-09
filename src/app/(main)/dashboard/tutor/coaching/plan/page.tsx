@@ -229,7 +229,7 @@ function PlanContent() {
           <Card className="rounded-card border-line bg-surface shadow-none">
             <CardContent className="space-y-4 p-5 sm:p-6">
               <div>
-                <h2 className="text-lg font-semibold">Yayın ve öğrenci kabulü</h2>
+                <h2 className="text-lg font-bold">Yayın ve öğrenci kabulü</h2>
                 <p className="mt-1 text-sm leading-6 text-ink-mid">
                   Teklifin yayında olması, öğrenci kabulünün açık olması, kapasite ve platform genelindeki satış durumu birbirinden bağımsızdır.
                 </p>

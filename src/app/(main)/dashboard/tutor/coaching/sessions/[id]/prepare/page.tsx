@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { CoachingAttachmentPanel } from "@/components/coaching/CoachingAttachmentPanel";
 import { TutorStudentPrivateWorkspace } from "@/components/tutors/TutorStudentPrivateWorkspace";
-import { formatDate } from "@/lib/utils";
+import { coachingDateTimeLabel } from "@/lib/coachingTime";
 import {
   fetchCoachingSessionDetail,
   extractCoachingErrorMessage,
@@ -44,9 +44,9 @@ function PrepareContent({ sessionId }: { sessionId: string }) {
       <Card>
         <CardContent className="flex flex-wrap items-center justify-between gap-3 py-4">
           <div>
-            <p className="text-lg font-semibold">{detail.student_name}</p>
-            <p className="text-sm text-muted-foreground">
-              {formatDate(detail.scheduled_start)} · {detail.scheduled_local_time.slice(0, 5)}
+            <p className="text-lg font-medium">{detail.student_name}</p>
+            <p className="text-sm text-ink-mid">
+              {coachingDateTimeLabel(detail.scheduled_start)}
             </p>
           </div>
           {JOINABLE_STATUSES.has(detail.status) && (
@@ -68,7 +68,7 @@ function PrepareContent({ sessionId }: { sessionId: string }) {
         <Card>
           <CardContent className="py-4 text-sm">
             <p className="font-medium">Öğrencinin son rapor geri bildirimi</p>
-            <p className="mt-1 text-muted-foreground">
+            <p className="mt-1 text-ink-mid">
               {REPORT_FEEDBACK_LABELS[detail.previous_report_feedback]}
             </p>
           </CardContent>

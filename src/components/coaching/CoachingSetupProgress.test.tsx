@@ -28,10 +28,10 @@ describe("CoachingSetupProgress", () => {
     assert.ok(screen.getByRole("link", { name: /Kapasite/ }));
     const currentCaption = screen.getByText("Şu an buradasın");
     assert.match(currentCaption.className, /bg-gold/);
-    assert.match(currentCaption.className, /text-white/);
+    assert.match(currentCaption.className, /text-gold-ink/);
     const readyCaptions = screen.getAllByText("Hazır");
     assert.ok(readyCaptions.length > 0);
-    assert.ok(readyCaptions.every(node => /bg-gold/.test(node.className) && /text-white/.test(node.className)));
+    assert.ok(readyCaptions.every(node => /bg-gold/.test(node.className) && /text-gold-ink/.test(node.className)));
   });
 
   it("does not expose locked capacity as an interactive link", () => {

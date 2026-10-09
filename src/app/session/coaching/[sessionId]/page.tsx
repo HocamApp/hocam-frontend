@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 import { useParams, useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { WifiOff, FileText } from "lucide-react";
+import { WifiSlash, FileText } from "@phosphor-icons/react";
 import { useState } from "react";
 
 import { useAuth } from "@/hooks/useAuth";
@@ -53,12 +53,12 @@ function CoachingRoomPanel({
           {viewerRole === "tutor" ? detail?.student_name : detail?.tutor_name}
         </p>
         {detail && (
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-ink-mid">
             {coachingDateTimeLabel(detail.scheduled_start)}
           </p>
         )}
         {detail && (
-          <p className="mt-1 text-xs text-muted-foreground">
+          <p className="mt-1 text-xs text-ink-mid">
             Durum: {coachingSessionStatusLabel(detail.status)}
           </p>
         )}
@@ -185,7 +185,7 @@ function CoachingSessionContent() {
           role="status"
           className="flex items-center justify-center gap-2 bg-destructive px-4 py-1.5 text-center text-xs font-medium text-destructive-foreground"
         >
-          <WifiOff className="h-3.5 w-3.5" aria-hidden="true" />
+          <WifiSlash className="h-3.5 w-3.5" aria-hidden="true" />
           Bağlantı koptu. Yeniden bağlanmaya çalışılıyor...
         </div>
       )}

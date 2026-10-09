@@ -60,7 +60,7 @@ export function CoachingAttachmentPanel({ sessionId }: { sessionId: string }) {
           </li>
         ))}
         {attachments?.length === 0 && (
-          <li className="text-xs text-muted-foreground">Henüz dosya yok.</li>
+          <li className="text-xs text-ink-mid">Henüz dosya yok.</li>
         )}
       </ul>
     </div>

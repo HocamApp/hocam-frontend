@@ -95,7 +95,7 @@ export function TimeRequestPanel({ slotIndex }: { slotIndex: number }) {
 
         {!request || request.status === "withdrawn" || request.status === "unresolved" ? (
           <>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-ink-mid">
               Öğretmenine saat talebi gönder; 48 saat içinde sana uygun bir saat önermesi
               gerekir. Ortak bir saat bulunamazsa bu koçluk iptal edilir; ders paketin
               etkilenmez. Ödediğin koçluk tutarı için iade kaydı açılır ve durumu Şikâyetler
@@ -126,7 +126,7 @@ export function TimeRequestPanel({ slotIndex }: { slotIndex: number }) {
               <Badge variant={request.status === "matched" ? "default" : "secondary"}>
                 {TIME_REQUEST_STATUS_COPY[request.status]}
               </Badge>
-              <span className="text-xs text-muted-foreground">
+              <span className="text-xs text-ink-mid">
                 Son yanıt: {coachingDateTimeLabel(request.expires_at)}
               </span>
             </div>
@@ -136,13 +136,13 @@ export function TimeRequestPanel({ slotIndex }: { slotIndex: number }) {
               .map((p) => (
                 <div
                   key={p.id}
-                  className="rounded-lg border border-primary/40 bg-primary/5 p-3"
+                  className="rounded-lg border border-pink bg-surface p-3"
                 >
                   <p className="text-sm font-medium">
                     Öğretmenin önerdiği özel saat: {COACHING_DAY_LABEL[p.day_of_week]}{" "}
                     {p.start_time.slice(0, 5)}
                   </p>
-                  <p className="mt-1 text-xs text-muted-foreground">
+                  <p className="mt-1 text-xs text-ink-mid">
                     Bu saat öğretmenin yayınladığı olağan koçluk saatlerinin dışında,
                     senin için özel olarak önerildi.
                   </p>

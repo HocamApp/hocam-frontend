@@ -60,14 +60,14 @@ export function OnboardingControlQuestions({
                 <p className="mt-1 text-sm text-ink-mid">Kuralı doğru anladığından emin olalım.</p>
               </div>
             </div>
-            <span className="text-xs font-semibold tabular-nums">{activeIndex + 1} / {questions.length}</span>
+            <span className="text-xs font-medium tabular-nums">{activeIndex + 1} / {questions.length}</span>
           </div>
           <div role="progressbar" aria-label="Hızlı kontrol ilerlemesi" aria-valuemin={0} aria-valuemax={questions.length} aria-valuenow={activeIndex + 1} className="mt-4 h-1.5 overflow-hidden rounded-full bg-line">
             <div className="h-full rounded-full bg-pink transition-[width] motion-reduce:transition-none" style={{ width: `${((activeIndex + 1) / questions.length) * 100}%` }} />
           </div>
         </div>
         <fieldset className="space-y-4 p-5 sm:p-6">
-          <legend className="text-base font-semibold leading-6">{question.question}</legend>
+          <legend className="text-base font-medium leading-6">{question.question}</legend>
           <div className="grid gap-2">
             {question.options.map((option) => {
               const selected = recorded?.answer === option.value;

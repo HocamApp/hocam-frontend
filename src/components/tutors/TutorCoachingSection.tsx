@@ -38,7 +38,7 @@ export function TutorCoachingSection({
 
   return (
     <section className="mt-10">
-      <h2 className="text-xl font-semibold">Çalışma Koçluğu</h2>
+      <h2 className="text-xl font-bold">Çalışma Koçluğu</h2>
       <Separator className="mt-2" />
       <div className="mt-4">
         <CoachingOfferCard

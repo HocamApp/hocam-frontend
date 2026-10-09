@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Check, Clock3, Sparkles, Target } from "lucide-react";
+import { Check, Clock, Sparkle, Target } from "@phosphor-icons/react/ssr";
 
 import {
   Accordion,
@@ -48,27 +48,27 @@ export function CoachingOfferCard({
           <div className="p-5 sm:p-7">
             <div className="space-y-4">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border bg-background text-primary">
-                  <Sparkles aria-hidden className="h-4 w-4" />
+                <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border bg-background text-ink">
+                  <Sparkle aria-hidden className="h-4 w-4" />
                 </span>
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">{offer.isFree ? "Ücretsiz çalışma koçluğu" : "Çalışma koçluğu"}</p>
+                <p className="text-xs font-medium uppercase tracking-[0.16em] text-ink">{offer.isFree ? "Ücretsiz çalışma koçluğu" : "Çalışma koçluğu"}</p>
                 {!offer.capacityAvailable ? <Badge variant="secondary">Kontenjan dolu</Badge> : null}
               </div>
-              <h2 className="max-w-xl text-2xl font-semibold tracking-[-0.025em] sm:text-3xl">Planlı çalış, ilerlemeni görünür kıl</h2>
-              {offer.description ? <p className="max-w-2xl text-sm leading-6 text-muted-foreground">{offer.description}</p> : null}
-              <p className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Clock3 aria-hidden className="h-4 w-4" />
+              <h2 className="max-w-xl text-2xl font-bold tracking-[-0.025em] sm:text-3xl">Planlı çalış, ilerlemeni görünür kıl</h2>
+              {offer.description ? <p className="max-w-2xl text-sm leading-6 text-ink-mid">{offer.description}</p> : null}
+              <p className="flex items-center gap-2 text-sm text-ink-mid">
+                <Clock aria-hidden className="h-4 w-4" />
                 {offer.frequencyLabel} · {offer.sessionDurationMinutes} dakika
               </p>
             </div>
           </div>
-          <div role="region" aria-label="Koçluk ücret özeti" className="flex flex-col justify-between border-t border-primary/10 bg-background/75 p-5 sm:p-7 lg:border-l lg:border-t-0">
+          <div role="region" aria-label="Koçluk ücret özeti" className="flex flex-col justify-between border-t border-line bg-background/75 p-5 sm:p-7 lg:border-l lg:border-t-0">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.15em] text-muted-foreground">Ders paketine ek hizmet</p>
-              <p className="mt-3 text-2xl font-semibold tabular-nums sm:text-3xl">
+              <p className="text-xs font-medium uppercase tracking-[0.15em] text-ink-mid">Ders paketine ek hizmet</p>
+              <p className="mt-3 text-2xl font-bold tabular-nums sm:text-3xl">
                 {offer.isFree ? "Ders paketinle ücretsiz" : formatTryMinor(offer.priceMinor)}
               </p>
-              {!offer.isFree ? <p className="text-xs text-muted-foreground">görüşme başına</p> : null}
+              {!offer.isFree ? <p className="text-xs text-ink-mid">görüşme başına</p> : null}
             </div>
             {action ? <div className="mt-5 [&>*]:w-full">{action}</div> : null}
           </div>
@@ -78,24 +78,24 @@ export function CoachingOfferCard({
           <div className="space-y-5">
             {offer.examTypes.length ? (
               <div>
-                <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.15em] text-muted-foreground"><Target className="h-4 w-4" aria-hidden="true" />Sınav odağı</p>
+                <p className="flex items-center gap-2 text-xs font-medium uppercase tracking-[0.15em] text-ink-mid"><Target className="h-4 w-4" aria-hidden="true" />Sınav odağı</p>
                 <div className="mt-3 flex flex-wrap gap-2">
                   {offer.examTypes.map((exam) => <Badge key={exam} variant="outline" className="rounded-lg px-3 py-1">{exam}</Badge>)}
                 </div>
               </div>
             ) : null}
-            {statusMessage ? <p className="rounded-xl border bg-muted/25 p-3 text-sm text-muted-foreground">{statusMessage}</p> : null}
-            <p className="border-t pt-4 text-xs leading-5 text-muted-foreground">
+            {statusMessage ? <p className="rounded-xl border bg-paper p-3 text-sm text-ink-mid">{statusMessage}</p> : null}
+            <p className="border-t pt-4 text-xs leading-5 text-ink-mid">
               Koçluk yalnız ders paketiyle birlikte alınır. Talebin öğretmene ders paketi ve koçluk hizmeti birlikte iletilir; kabul edilmeden başlamaz.
             </p>
           </div>
 
-          <div className="rounded-[1.25rem] bg-muted/35 p-4 sm:p-5">
-            <p className="text-xs font-semibold uppercase tracking-[0.15em] text-muted-foreground">Koçluğa dahil</p>
+          <div className="rounded-[1.25rem] bg-paper p-4 sm:p-5">
+            <p className="text-xs font-medium uppercase tracking-[0.15em] text-ink-mid">Koçluğa dahil</p>
             <ul className="mt-3 grid gap-3 text-sm sm:grid-cols-2">
               {INCLUDED.map((item) => (
                 <li key={item} className="flex items-start gap-2">
-                  <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-background text-emerald-700">
+                  <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-background text-success">
                     <Check aria-hidden className="h-3 w-3" />
                   </span>
                   <span>{item}</span>
@@ -107,7 +107,7 @@ export function CoachingOfferCard({
                 <AccordionItem value="how" className="border-b-0">
                   <AccordionTrigger className="text-sm">Koçluk nasıl çalışır?</AccordionTrigger>
                   <AccordionContent>
-                    <ul className="space-y-2 text-sm text-muted-foreground">
+                    <ul className="space-y-2 text-sm text-ink-mid">
                       {COACHING_HOW_IT_WORKS.map((item) => (
                         <li key={item} className="flex items-start gap-2"><span aria-hidden>·</span><span>{item}</span></li>
                       ))}

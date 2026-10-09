@@ -39,7 +39,7 @@ function ProposeForm({ timeRequestId }: { timeRequestId: string }) {
 
   return (
     <div className="mt-3 space-y-2 border-t pt-3">
-      <p className="text-xs font-medium text-muted-foreground">Saat öner</p>
+      <p className="text-xs font-medium text-ink-mid">Saat öner</p>
       {error ? <ErrorMessage message={error} /> : null}
       <div className="flex flex-wrap items-end gap-2">
         <label className="sr-only" htmlFor={`${ids}-day`}>Gün</label>
@@ -68,7 +68,7 @@ function ProposeForm({ timeRequestId }: { timeRequestId: string }) {
           {mutation.isPending ? "Gönderiliyor..." : "Öner"}
         </Button>
       </div>
-      <p className="text-xs text-muted-foreground">
+      <p className="text-xs text-ink-mid">
         Bu saat yayınladığın koçluk müsaitliğinin dışında olabilir; yine de dersle veya
         başka bir koçluk görüşmesiyle çakışmamalı.
       </p>
@@ -111,13 +111,13 @@ function TimeRequestsContent() {
                 <Badge variant={request.status === "pending" ? "default" : "secondary"}>
                   {TIME_REQUEST_STATUS_COPY[request.status]}
                 </Badge>
-                <span className="text-xs text-muted-foreground">
+                <span className="text-xs text-ink-mid">
                   Yanıt son tarihi:{" "}
                   {coachingDateTimeLabel(request.expires_at)}
                 </span>
               </div>
               {request.note ? (
-                <p className="text-sm text-muted-foreground">&ldquo;{request.note}&rdquo;</p>
+                <p className="text-sm text-ink-mid">&ldquo;{request.note}&rdquo;</p>
               ) : null}
 
               {pendingProposal ? (

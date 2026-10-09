@@ -2,7 +2,7 @@
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowDown, ArrowUp, Pencil, Plus, Save, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, PencilSimple, Plus, FloppyDisk, Trash } from "@phosphor-icons/react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -80,7 +80,7 @@ function TaskContentForm({
 
   return (
     <form
-      className="grid gap-3 rounded-lg border bg-muted/30 p-3 sm:grid-cols-2"
+      className="grid gap-3 rounded-lg border bg-paper p-3 sm:grid-cols-2"
       onSubmit={(event) => {
         event.preventDefault();
         onSubmit(form);
@@ -120,7 +120,7 @@ function TaskContentForm({
       />
       <div className="flex flex-wrap gap-2 sm:col-span-2">
         <Button type="submit" size="sm" disabled={isPending}>
-          <Save className="mr-1 h-4 w-4" /> {submitLabel}
+          <FloppyDisk className="mr-1 h-4 w-4" /> {submitLabel}
         </Button>
         {onCancel ? (
           <Button type="button" size="sm" variant="ghost" onClick={onCancel}>
@@ -226,7 +226,7 @@ export function CoachingProgramEditor({ servicePeriodId }: { servicePeriodId: st
       <Card>
         <CardHeader>
           <CardTitle>{program ? "Çalışma programı" : "Çalışma programı oluştur"}</CardTitle>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-ink-mid">
             Bu dönem için tek bir canlı program yönetirsin. Görev tamamlanmaları öğrencide kalır.
           </p>
         </CardHeader>
@@ -259,7 +259,7 @@ export function CoachingProgramEditor({ servicePeriodId }: { servicePeriodId: st
             />
             <div className="sm:col-span-2">
               <Button type="submit" disabled={saveProgramMutation.isPending}>
-                <Save className="mr-2 h-4 w-4" /> Programı kaydet
+                <FloppyDisk className="mr-2 h-4 w-4" /> Programı kaydet
               </Button>
             </div>
           </form>
@@ -271,7 +271,7 @@ export function CoachingProgramEditor({ servicePeriodId }: { servicePeriodId: st
           <CardHeader className="flex-row items-center justify-between space-y-0 gap-3">
             <div>
               <CardTitle className="text-lg">Görevler</CardTitle>
-              <p className="mt-1 text-sm text-muted-foreground">İçeriği sen düzenlersin; tamamlanma öğrencinindir.</p>
+              <p className="mt-1 text-sm text-ink-mid">İçeriği sen düzenlersin; tamamlanma öğrencinindir.</p>
             </div>
             <Button size="sm" onClick={() => setAddingTask(true)}>
               <Plus className="mr-1 h-4 w-4" /> Görev ekle
@@ -304,9 +304,9 @@ export function CoachingProgramEditor({ servicePeriodId }: { servicePeriodId: st
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="min-w-0">
                       <p className="font-medium">{task.title}</p>
-                      {task.subject ? <p className="mt-1 text-sm text-muted-foreground">{task.subject}</p> : null}
-                      {task.description ? <p className="mt-1 whitespace-pre-wrap text-sm text-muted-foreground">{task.description}</p> : null}
-                      <p className="mt-2 text-xs text-muted-foreground">
+                      {task.subject ? <p className="mt-1 text-sm text-ink-mid">{task.subject}</p> : null}
+                      {task.description ? <p className="mt-1 whitespace-pre-wrap text-sm text-ink-mid">{task.description}</p> : null}
+                      <p className="mt-2 text-xs text-ink-mid">
                         {task.due_date ? `Hedef: ${task.due_date}` : "Hedef tarih yok"}
                         {task.priority ? ` · ${task.priority}` : ""}
                         {task.is_completed ? " · Öğrenci tamamladı" : ""}
@@ -315,8 +315,8 @@ export function CoachingProgramEditor({ servicePeriodId }: { servicePeriodId: st
                     <div className="flex gap-1">
                       <Button size="icon" variant="ghost" aria-label="Görevi yukarı taşı" disabled={index === 0 || reorderMutation.isPending} onClick={() => moveTask(index, -1)}><ArrowUp className="h-4 w-4" /></Button>
                       <Button size="icon" variant="ghost" aria-label="Görevi aşağı taşı" disabled={index === tasks.length - 1 || reorderMutation.isPending} onClick={() => moveTask(index, 1)}><ArrowDown className="h-4 w-4" /></Button>
-                      <Button size="icon" variant="ghost" aria-label="Görevi düzenle" onClick={() => setEditingTaskId(task.id)}><Pencil className="h-4 w-4" /></Button>
-                      <Button size="icon" variant="ghost" aria-label="Görevi sil" disabled={deleteTaskMutation.isPending} onClick={() => deleteTaskMutation.mutate(task.id)}><Trash2 className="h-4 w-4" /></Button>
+                      <Button size="icon" variant="ghost" aria-label="Görevi düzenle" onClick={() => setEditingTaskId(task.id)}><PencilSimple className="h-4 w-4" /></Button>
+                      <Button size="icon" variant="ghost" aria-label="Görevi sil" disabled={deleteTaskMutation.isPending} onClick={() => deleteTaskMutation.mutate(task.id)}><Trash className="h-4 w-4" /></Button>
                     </div>
                   </div>
                 )}

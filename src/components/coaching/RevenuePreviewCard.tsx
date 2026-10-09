@@ -19,7 +19,7 @@ export function RevenuePreviewCard({ preview }: { preview: CoachingRevenuePrevie
     <Card role="region" aria-label="Tahmini kazanç" className="overflow-hidden rounded-card border-line bg-surface shadow-none">
       <CardContent className="space-y-5 p-5 sm:p-6">
         <div>
-          <p className="text-xs font-medium text-pink-deep">Tahmin</p>
+          <p className="text-xs font-medium text-ink-mid">Tahmin</p>
           <h2 className="mt-1 text-xl font-bold tracking-tight text-ink">Bir aylık tahmini kazanç</h2>
           <p className="mt-1 text-sm leading-6 text-ink-mid">
             Paket indirimi ve %{formatBpsPercent(preview.commission_bps)} platform komisyonu düşülerek hesaplanır.
@@ -32,7 +32,7 @@ export function RevenuePreviewCard({ preview }: { preview: CoachingRevenuePrevie
               <p className="text-xs font-medium text-ink-mid">Tahmini net koçluk kazancı</p>
               <p className="mt-1 text-3xl font-bold tabular-nums tracking-tight text-ink">{formatTryMinor(primary.tutor_net_minor)}</p>
             </div>
-            <p className="flex flex-wrap items-center gap-1 text-sm font-semibold">
+            <p className="flex flex-wrap items-center gap-1 text-sm font-medium">
               <span>{primary.total_sessions} görüşme</span>
               <span aria-hidden="true">·</span>
               <span>{primary.weeks} hafta</span>
@@ -82,10 +82,10 @@ function PackageRevenue({ row }: { row: CoachingRevenueRow }) {
     <div className="rounded-input border border-line bg-surface p-4 text-sm">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="font-semibold">{row.weeks} haftalık paket</p>
+          <p className="font-medium">{row.weeks} haftalık paket</p>
           <p className="text-xs text-ink-mid">{row.total_sessions} görüşme · %{row.discount_percent} paket indirimi</p>
         </div>
-        <p className="font-semibold tabular-nums">{formatTryMinor(row.tutor_net_minor)}</p>
+        <p className="font-medium tabular-nums">{formatTryMinor(row.tutor_net_minor)}</p>
       </div>
       <dl className="mt-3 space-y-1 border-t border-line pt-3 text-xs text-ink-mid">
         <div className="flex justify-between gap-3"><dt>Öğrenci toplamı</dt><dd>{formatTryMinor(row.total_price_minor)}</dd></div>

@@ -71,8 +71,8 @@ export function CoachingAvailabilityEditor({
             <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-input bg-gold text-gold-ink">
               <CalendarBlank className="h-5 w-5" aria-hidden="true" />
             </div>
-            <h2 className="text-lg font-semibold tracking-tight">Koçluk saatlerini ekle</h2>
-            <p className="mt-1 text-sm leading-6 text-muted-foreground">
+            <h2 className="text-lg font-bold tracking-tight">Koçluk saatlerini ekle</h2>
+            <p className="mt-1 text-sm leading-6 text-ink-mid">
               Bu saatler yalnız 30 dakikalık koçluk görüşmeleri için kullanılır; normal ders müsaitliğin buraya aktarılmaz.
             </p>
           </div>
@@ -135,8 +135,8 @@ export function CoachingAvailabilityEditor({
 
       <section aria-labelledby="coaching-week-heading" className="space-y-3">
         <div>
-          <h2 id="coaching-week-heading" className="text-lg font-semibold tracking-tight">Haftalık koçluk planın</h2>
-          <p className="mt-1 text-sm text-muted-foreground">Her gün görünür kalır; eklediğin görüşme aralıklarını buradan takip edebilirsin.</p>
+          <h2 id="coaching-week-heading" className="text-lg font-bold tracking-tight">Haftalık koçluk planın</h2>
+          <p className="mt-1 text-sm text-ink-mid">Her gün görünür kalır; eklediğin görüşme aralıklarını buradan takip edebilirsin.</p>
         </div>
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           {byDay.map((day) => (
@@ -145,13 +145,13 @@ export function CoachingAvailabilityEditor({
               className="min-h-36 rounded-card border border-line bg-surface p-4"
             >
               <div className="flex items-center justify-between gap-3">
-                <h3 className="font-semibold">{day.label}</h3>
-                <span className="text-xs tabular-nums text-muted-foreground">
+                <h3 className="font-medium">{day.label}</h3>
+                <span className="text-xs tabular-nums text-ink-mid">
                   {day.windows.length > 0 ? `${day.windows.length} aralık` : "Boş"}
                 </span>
               </div>
               {day.windows.length === 0 ? (
-                <div className="mt-5 flex items-center gap-2 text-sm text-muted-foreground">
+                <div className="mt-5 flex items-center gap-2 text-sm text-ink-mid">
                   <Clock className="h-4 w-4" aria-hidden="true" />
                   Henüz saat eklenmedi.
                 </div>
@@ -187,7 +187,7 @@ export function CoachingAvailabilityEditor({
 
       {windows.length === 0 ? (
         <div className="rounded-card border border-line bg-paper px-5 py-4 text-sm leading-6 text-ink-mid">
-          <strong className="font-semibold text-foreground">Henüz koçluk müsaitliğin yok.</strong>{" "}
+          <strong className="font-medium text-foreground">Henüz koçluk müsaitliğin yok.</strong>{" "}
           Koçluk saatlerin normal ders saatlerinden ayrıdır. Müsaitlik eklemeden planını yayınlayamazsın.
         </div>
       ) : null}

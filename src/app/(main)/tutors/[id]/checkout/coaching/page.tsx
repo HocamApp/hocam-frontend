@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft } from "@phosphor-icons/react";
 import { toast } from "sonner";
 
 import { CoachingChoiceCard } from "@/components/checkout/CoachingChoiceCard";
@@ -61,8 +61,8 @@ function ExamTargetPicker({
     <Card>
       <CardContent className="space-y-3 py-5">
         <div>
-          <h2 className="font-semibold">Sınav hedefini seç</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <h2 className="font-bold">Sınav hedefini seç</h2>
+          <p className="mt-1 text-sm text-ink-mid">
             Bu hocanın koçluk planını görebilmek için sınav hedefini seçmen gerekiyor.
           </p>
         </div>
@@ -150,14 +150,14 @@ function CoachingChoiceContent({ tutorId }: { tutorId: string }) {
     <div className="mx-auto max-w-5xl px-4 py-8">
       <Link
         href={`/tutors/${tutorId}`}
-        className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+        className="inline-flex items-center gap-1.5 text-sm text-ink-mid transition-colors hover:text-ink"
       >
         <ArrowLeft className="h-4 w-4" />
         Hoca profiline dön
       </Link>
 
       <h1 className="mt-6 text-2xl font-bold">Çalışma Koçluğu</h1>
-      <p className="mt-1 text-sm text-muted-foreground">
+      <p className="mt-1 text-sm text-ink-mid">
         Ders paketine çalışma koçluğu eklemek ister misin? Bu adımı
         atlayabilirsin.
       </p>
@@ -185,12 +185,12 @@ function CoachingChoiceContent({ tutorId }: { tutorId: string }) {
               "w-full rounded-xl border p-4 text-left transition-colors",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
               !selected
-                ? "border-primary bg-primary/5 ring-1 ring-primary"
-                : "hover:bg-muted/40"
+                ? "border-ink bg-surface ring-2 ring-ink"
+                : "hover:bg-paper"
             )}
           >
             <p className="font-medium">Koçluk olmadan devam et</p>
-            <p className="mt-1 text-sm text-muted-foreground">
+            <p className="mt-1 text-sm text-ink-mid">
               Yalnız ders paketi satın al.
             </p>
           </button>
@@ -199,7 +199,7 @@ function CoachingChoiceContent({ tutorId }: { tutorId: string }) {
             <AccordionItem value="how">
               <AccordionTrigger>Koçluk nasıl çalışır?</AccordionTrigger>
               <AccordionContent>
-                <ul className="space-y-2 text-sm text-muted-foreground">
+                <ul className="space-y-2 text-sm text-ink-mid">
                   {COACHING_HOW_IT_WORKS.map((item) => (
                     <li key={item} className="flex items-start gap-2">
                       <span aria-hidden="true">·</span>
@@ -216,20 +216,20 @@ function CoachingChoiceContent({ tutorId }: { tutorId: string }) {
           <div className="lg:sticky lg:top-24">
             <Card>
               <CardContent className="space-y-4 pt-6">
-                <h2 className="text-lg font-semibold">Özet</h2>
+                <h2 className="text-lg font-bold">Özet</h2>
                 <dl className="space-y-2 text-sm">
                   <div className="flex justify-between gap-4">
-                    <dt className="text-muted-foreground">Hoca</dt>
+                    <dt className="text-ink-mid">Hoca</dt>
                     <dd className="text-right font-medium">
                       {tutor ? `${tutor.name} ${tutor.surname}` : "—"}
                     </dd>
                   </div>
                   <div className="flex justify-between gap-4">
-                    <dt className="text-muted-foreground">Ders fiyatı</dt>
+                    <dt className="text-ink-mid">Ders fiyatı</dt>
                     <dd>{tutor ? `${formatTryMinor(Number(tutor.hourly_price) * 100)} / 40 dk` : "—"}</dd>
                   </div>
                   <div className="flex justify-between gap-4">
-                    <dt className="text-muted-foreground">Çalışma koçluğu</dt>
+                    <dt className="text-ink-mid">Çalışma koçluğu</dt>
                     <dd className="text-right font-medium">
                       {selected
                         ? eligibility.plan.is_free
@@ -244,7 +244,7 @@ function CoachingChoiceContent({ tutorId }: { tutorId: string }) {
                   <Link href={checkoutHref}>Paket seçeneklerine devam et</Link>
                 </Button>
 
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-ink-mid">
                   Koçluk toplamı, bir sonraki adımda seçeceğin paket süresine
                   göre hesaplanır.
                 </p>

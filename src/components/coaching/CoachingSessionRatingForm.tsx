@@ -62,7 +62,7 @@ export function CoachingSessionRatingForm({
                   onClick={() => setScores((current) => ({ ...current, [criterion]: value }))}
                   className={cn(
                     "flex h-11 w-11 items-center justify-center rounded-full border text-body font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink focus-visible:ring-offset-2",
-                    selected ? "border-pink bg-pink text-white" : "border-line text-ink-mid hover:border-ink",
+                    selected ? "border-pink-deep bg-pink-deep text-white" : "border-line text-ink-mid hover:border-ink",
                   )}
                 >
                   {value}
