@@ -32,7 +32,7 @@ function StudentReportsContent() {
       <EmptyState
         icon={ClipboardText}
         title="Henüz yayınlanmış raporun yok"
-        description="Öğretmenin rapor yayınladığında en güncel revizyon burada görünecek."
+        description="Hocan raporu yayınladığında en son sürüm burada görünecek."
         steps={["Koçluk görüşmen tamamlanır", "Öğretmenin raporu yayınlar"]}
       />
     );
@@ -53,7 +53,7 @@ function StudentReportsContent() {
                   <div>
                     <p className="text-body font-medium">Görüşme raporu</p>
                     <p className="mt-1 text-small text-ink-mid tabular-nums">
-                      Revizyon {revision.revision_number} ·{" "}
+                      Sürüm {revision.revision_number} ·{" "}
                       {coachingDateTimeLabel(revision.published_at)}
                     </p>
                   </div>

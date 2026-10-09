@@ -69,7 +69,9 @@ const STUDENT_LINKS = [
     icon: ClipboardText,
   },
   {
-    label: "Destek",
+    // Not "Destek": the overview also links to the general /support page,
+    // and the two read as the same place.
+    label: "Sorun bildir",
     href: "/dashboard/student/coaching/complaints",
     icon: ShieldCheck,
   },
@@ -100,7 +102,7 @@ function matchesGroup(href: string, currentHref: string, audience: Audience) {
   }
   if (href.endsWith("/reports")) {
     // The tutor files complaints under "Kayıtlar" and has no separate tab for
-    // them. The student does have one — "Destek" — so folding /complaints into
+    // them. The student does have one — "Sorun bildir" — so folding /complaints into
     // Raporlar there lit two tabs at once on the complaints page.
     if (audience === "tutor") {
       return (

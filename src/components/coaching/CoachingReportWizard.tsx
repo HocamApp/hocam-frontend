@@ -126,14 +126,14 @@ function ReportTimingNotice({
       <Alert>
         <AlertCircle className="h-4 w-4" />
         <AlertTitle>Bu görüşme için normal rapor yok</AlertTitle>
-        <AlertDescription>Incident oturumları için primary report ve eksik rapor zamanlaması uygulanmaz.</AlertDescription>
+        <AlertDescription>Bu görüşme katılım sorunu ya da teknik sorunla kapandığı için rapor yazman gerekmez.</AlertDescription>
       </Alert>
     );
   }
   return (
     <Alert variant={timing.reportOverdue ? "destructive" : "default"}>
       <AlertCircle className="h-4 w-4" />
-      <AlertTitle>{timing.reportOverdue ? "Rapor süresi geçti" : "Primary rapor zamanlaması"}</AlertTitle>
+      <AlertTitle>{timing.reportOverdue ? "Rapor süresi geçti" : "Rapor süresi"}</AlertTitle>
       <AlertDescription>
         Rapor için son zaman: {coachingDateTimeLabel(timing.reportDueAt)}.
         {timing.complaintEligibleAt ? ` Eksik rapor desteği ${coachingDateTimeLabel(timing.complaintEligibleAt)} itibarıyla kullanılabilir.` : ""}
@@ -278,7 +278,7 @@ export function CoachingReportWizard({ sessionId }: { sessionId: string }) {
   // reaches awaiting_report. Publishing itself stays gated below.
   const draftableStatuses = ["in_progress", "awaiting_report"];
   if (!draftableStatuses.includes(session.status) && !report?.latest_revision) {
-    return <Alert><AlertCircle className="h-4 w-4" /><AlertTitle>Rapor henüz açılamaz</AlertTitle><AlertDescription>Primary rapor taslağı, görüşme başladığında hazırlanabilir.</AlertDescription></Alert>;
+    return <Alert><AlertCircle className="h-4 w-4" /><AlertTitle>Rapor henüz açılamaz</AlertTitle><AlertDescription>Rapor taslağı görüşme başladığında açılır.</AlertDescription></Alert>;
   }
 
   const hasPublishedRevision = Boolean(report?.latest_revision);
@@ -296,7 +296,7 @@ export function CoachingReportWizard({ sessionId }: { sessionId: string }) {
       <Card>
         <CardHeader>
           <CardTitle>Görüşme raporu</CardTitle>
-          <p className="text-sm text-muted-foreground">Taslağı adım adım kaydedebilir, sonrasında immutable bir revizyon olarak yayınlayabilirsin.</p>
+          <p className="text-sm text-muted-foreground">Taslağı adım adım kaydedebilirsin. Yayınlanan rapor değiştirilemez; düzeltme gerekirse yeni bir sürüm yayınlarsın.</p>
           <SensitiveDataGuidance />
           {/* Five labelled steps do not fit 375px side by side: on phones only
               the current step is named, the rest stay as numbered dots. */}
@@ -338,13 +338,13 @@ export function CoachingReportWizard({ sessionId }: { sessionId: string }) {
               <Textarea className="sm:col-span-2" value={exam.next_actions} onChange={(event) => updateExam("next_actions", event.target.value)} placeholder="Sonraki adımlar (her satıra bir madde)" aria-label="Sonraki adımlar" />
             </div> : null}
             {step === 4 ? <div className="space-y-4">
-              <Textarea value={draft.program_changes_summary ?? ""} onChange={(event) => updateDraft("program_changes_summary", event.target.value)} placeholder="Programdaki değişiklik özeti (opsiyonel)" aria-label="Program değişikliği özeti" />
+              <Textarea value={draft.program_changes_summary ?? ""} onChange={(event) => updateDraft("program_changes_summary", event.target.value)} placeholder="Programdaki değişiklik özeti (isteğe bağlı)" aria-label="Program değişikliği özeti" />
               <div className="space-y-2">
                 <p className="text-sm font-medium">Önerilen kaynaklar</p>
                 {resources.map((resource, index) => <div key={index} className="grid gap-2 rounded border p-3 sm:grid-cols-2">
                   <Input value={resource.title} onChange={(event) => upsertResource(index, "title", event.target.value)} placeholder="Kaynak başlığı" aria-label={`Kaynak ${index + 1} başlığı`} />
-                  <Input value={resource.url ?? ""} onChange={(event) => upsertResource(index, "url", event.target.value)} placeholder="https:// bağlantısı (opsiyonel)" aria-label={`Kaynak ${index + 1} bağlantısı`} />
-                  <Textarea className="sm:col-span-2" value={resource.note ?? ""} onChange={(event) => upsertResource(index, "note", event.target.value)} placeholder="Kısa not (opsiyonel)" aria-label={`Kaynak ${index + 1} notu`} />
+                  <Input value={resource.url ?? ""} onChange={(event) => upsertResource(index, "url", event.target.value)} placeholder="https:// bağlantısı (isteğe bağlı)" aria-label={`Kaynak ${index + 1} bağlantısı`} />
+                  <Textarea className="sm:col-span-2" value={resource.note ?? ""} onChange={(event) => upsertResource(index, "note", event.target.value)} placeholder="Kısa not (isteğe bağlı)" aria-label={`Kaynak ${index + 1} notu`} />
                   <select className="h-10 rounded-md border border-input bg-background px-3 text-sm sm:col-span-2" value={resource.attachment_id ?? ""} aria-label={`Kaynak ${index + 1} dosyası`} onChange={(event) => upsertResource(index, "attachment_id", event.target.value)}>
                     <option value="">Dosya ekleme</option>
                     {(attachmentsQuery.data ?? []).map((attachment) => <option key={attachment.id} value={attachment.id}>{attachment.original_name}</option>)}
@@ -370,11 +370,11 @@ export function CoachingReportWizard({ sessionId }: { sessionId: string }) {
         <CardHeader><CardTitle className="text-lg">Yayınla</CardTitle></CardHeader>
         <CardContent className="space-y-3">
           {hasPublishedRevision ? <>
-            <p className="text-sm text-muted-foreground">Son yayınlanan revizyon: #{currentRevision?.revision_number}. Taslaktaki gerçek değişiklikler yeni bir immutable revizyon üretir.</p>
-            <Textarea value={changeNote} onChange={(event) => setChangeNote(event.target.value)} placeholder="Bu revizyondaki değişiklik notu (opsiyonel)" aria-label="Revizyon değişiklik notu" />
-            <Button disabled={pending || !report} onClick={() => revisionPublishMutation.mutate()}><Send className="mr-2 h-4 w-4" /> Yeni revizyonu yayınla</Button>
+            <p className="text-sm text-muted-foreground">Son yayınlanan sürüm: #{currentRevision?.revision_number}. Taslakta yaptığın değişiklikler yeni bir sürüm olarak yayınlanır.</p>
+            <Textarea value={changeNote} onChange={(event) => setChangeNote(event.target.value)} placeholder="Bu sürümde neyi değiştirdin? (isteğe bağlı)" aria-label="Sürüm değişiklik notu" />
+            <Button disabled={pending || !report} onClick={() => revisionPublishMutation.mutate()}><Send className="mr-2 h-4 w-4" /> Yeni sürümü yayınla</Button>
           </> : <>
-            <p className="text-sm text-muted-foreground">İlk yayın, görüşmeyi normal primary report tamamlanma kapısından geçirir. Sonraki yayınlar yeni revizyon olur.</p>
+            <p className="text-sm text-muted-foreground">İlk raporu yayınlayınca görüşme tamamlanmış sayılır. Sonraki yayınlar yeni sürüm olarak eklenir.</p>
             <Button disabled={pending || session.status !== "awaiting_report"} onClick={() => initialPublishMutation.mutate()}><Send className="mr-2 h-4 w-4" /> İlk raporu yayınla</Button>
           </>}
         </CardContent>
@@ -384,9 +384,9 @@ export function CoachingReportWizard({ sessionId }: { sessionId: string }) {
         <CardHeader><CardTitle className="text-lg">Yayın geçmişi</CardTitle></CardHeader>
         <CardContent>
           <ol className="space-y-3 border-l pl-4">
-            {(revisionHistoryQuery.data?.revisions ?? (currentRevision ? [currentRevision] : [])).map((revision) => <li key={revision.id} className="relative text-sm"><span className="absolute -left-[1.35rem] top-1 h-2.5 w-2.5 rounded-full bg-primary" />Revizyon {revision.revision_number} · {coachingDateTimeLabel(revision.published_at)}{revision.change_note ? ` · ${revision.change_note}` : ""}</li>)}
+            {(revisionHistoryQuery.data?.revisions ?? (currentRevision ? [currentRevision] : [])).map((revision) => <li key={revision.id} className="relative text-sm"><span className="absolute -left-[1.35rem] top-1 h-2.5 w-2.5 rounded-full bg-primary" />Sürüm {revision.revision_number} · {coachingDateTimeLabel(revision.published_at)}{revision.change_note ? ` · ${revision.change_note}` : ""}</li>)}
           </ol>
-          <p className="mt-4 text-sm text-muted-foreground">Öğrenci yalnız en güncel immutable yayınlanmış revizyonu görür.</p>
+          <p className="mt-4 text-sm text-muted-foreground">Öğrenci yalnız en son yayınlanan sürümü görür.</p>
         </CardContent>
       </Card> : null}
     </div>

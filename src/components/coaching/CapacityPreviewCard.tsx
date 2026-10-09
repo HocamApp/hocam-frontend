@@ -30,7 +30,7 @@ export function CapacityPreviewCard({
           </div>
           <h2 className="text-xl font-bold text-ink">Kapasite</h2>
           <p className="mt-2 text-sm leading-6 text-ink-mid">
-            Sunucu, ayrı koçluk müsaitliğindeki 30 dakikalık saatleri seçtiğin görüşme düzenine göre kapasiteye çevirir.
+            Koçluk için ayırdığın 30 dakikalık saatler, seçtiğin görüşme sıklığına göre en fazla kaç öğrenci alabileceğini belirler.
           </p>
           <div className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-ink">
             <span className={`h-2 w-2 rounded-full ${capacity.can_accept_new_student ? "bg-success" : "bg-ink-mid"}`} />
