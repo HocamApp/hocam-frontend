@@ -96,14 +96,14 @@ function TaskContentForm({
       <Input
         value={form.subject}
         onChange={(event) => update("subject", event.target.value)}
-        placeholder="Ders (opsiyonel)"
+        placeholder="Ders (isteğe bağlı)"
         aria-label="Görev dersi"
       />
       <Textarea
         className="min-h-20 sm:col-span-2"
         value={form.description}
         onChange={(event) => update("description", event.target.value)}
-        placeholder="Açıklama (opsiyonel)"
+        placeholder="Açıklama (isteğe bağlı)"
         aria-label="Görev açıklaması"
       />
       <Input
@@ -115,7 +115,7 @@ function TaskContentForm({
       <Input
         value={form.priority}
         onChange={(event) => update("priority", event.target.value)}
-        placeholder="Öncelik (opsiyonel)"
+        placeholder="Öncelik (isteğe bağlı)"
         aria-label="Görev önceliği"
       />
       <div className="flex flex-wrap gap-2 sm:col-span-2">

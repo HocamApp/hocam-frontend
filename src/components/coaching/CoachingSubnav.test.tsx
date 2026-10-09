@@ -37,7 +37,7 @@ const STUDENT_ROUTES: [string, string][] = [
   ["/dashboard/student/coaching/program", "Koçluk Programım"],
   ["/dashboard/student/coaching/upcoming", "Görüşmeler"],
   ["/dashboard/student/coaching/reports", "Raporlar"],
-  ["/dashboard/student/coaching/complaints", "Destek"],
+  ["/dashboard/student/coaching/complaints", "Sorun bildir"],
 ];
 
 const TUTOR_ROUTES: [string, string][] = [
@@ -73,18 +73,18 @@ describe("coaching subnav highlights exactly one tab", () => {
 
 describe("complaints belongs to a different tab per audience", () => {
   // The regression: the /reports grouping rule also claimed /complaints, so on
-  // the student complaints page both Raporlar and Destek rendered as active.
+  // the student complaints page both Raporlar and Sorun bildir rendered as active.
   it("does not also light Raporlar on the student complaints page", () => {
     const active = activeLabels("/dashboard/student/coaching/complaints", "student");
 
-    assert.deepEqual(active, ["Destek"]);
+    assert.deepEqual(active, ["Sorun bildir"]);
     assert.equal(active.includes("Raporlar"), false);
   });
 
   it("keeps grouping complaints under Kayıtlar for the tutor, who has no Destek tab", () => {
     render(<CoachingSubnav currentHref="/dashboard/tutor/coaching/complaints" audience="tutor" />);
 
-    assert.equal(screen.queryByText("Destek"), null);
+    assert.equal(screen.queryByText("Sorun bildir"), null);
     assert.equal(
       screen.getByText("Kayıtlar").closest("a")?.getAttribute("aria-current"),
       "page"
@@ -96,7 +96,7 @@ describe("complaints belongs to a different tab per audience", () => {
       <CoachingSubnav currentHref="/dashboard/student/coaching/complaints" audience="student" />
     );
 
-    assert.ok(screen.getByText("Koçlukta konumun: Destek"));
+    assert.ok(screen.getByText("Koçlukta konumun: Sorun bildir"));
   });
 });
 

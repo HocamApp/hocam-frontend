@@ -143,7 +143,7 @@ function OverviewContent() {
             icon: ClipboardText,
           },
           { href: "/messages", label: "Mesajlar", icon: ChatsCircle },
-          { href: "/support", label: "Destek", icon: Question },
+          { href: "/support", label: "Hocam destek", icon: Question },
           {
             href: "/dashboard/student/coaching/complaints",
             label: "Bildirdiğim koçluk sorunları",

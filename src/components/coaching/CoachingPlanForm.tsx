@@ -154,7 +154,7 @@ export function CoachingPlanForm({
       {currentStep === "price" ? (
         <StepCard
           title="Koçluk görüşme fiyatın"
-          description="Koçluk, 40 dakikalık ders fiyatına bağlı bir ek hizmettir. Fiyat kuralı ve tavan sunucudaki güncel ayardan gelir."
+          description="Koçluk, ders paketine eklenen bir hizmettir. 30 dakikalık bir görüşmenin fiyatı 40 dakikalık ders fiyatına göre belirlenen üst sınırı aşamaz."
         >
           <div className="grid gap-3 sm:grid-cols-[0.9fr_0.9fr_1.2fr]">
             <PolicyValue label="40 dk ders fiyatın" value={formatTryMinor(setupConfig.lesson_price_minor)} />
@@ -176,7 +176,7 @@ export function CoachingPlanForm({
               className="mt-1"
             />
             <p id="coaching-price-hint" className="mt-2 text-xs leading-5 text-muted-foreground">
-              Ücretsiz sunmak için 0 girebilirsin. Güncel platform komisyonu %{formatBpsPercent(setupConfig.commission_bps)}; paket indirimi ve tahmini net kazanç kayıtlı plan üzerinden sunucuda hesaplanır.
+              Ücretsiz sunmak için 0 girebilirsin. Güncel platform komisyonu %{formatBpsPercent(setupConfig.commission_bps)}; paket indirimi ve tahmini net kazancın kaydettiğin fiyata göre hesaplanır.
             </p>
             {overCap ? <p className="mt-2 text-xs font-medium text-destructive">Bu fiyat {formatTryMinor(setupConfig.price_cap_minor)} üst sınırını aşıyor.</p> : null}
           </div>
@@ -283,7 +283,7 @@ export function CoachingPlanForm({
               className="mt-1"
             />
             <p className="mt-2 text-xs leading-5 text-muted-foreground">
-              Sunucu bu değeri mevcut aktif yük ve müsaitlik semantiğine göre doğrular. Kabul edilmezse kayıtlı değer korunur ve sunucu mesajı burada gösterilir.
+              Bu sayı, aktif öğrenci sayından az ve koçluk müsaitliğinin karşılayabileceğinden fazla olamaz. Uygun değilse önceki değer korunur ve nedeni burada yazar.
             </p>
           </div>
         </StepCard>

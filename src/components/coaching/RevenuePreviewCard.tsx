@@ -16,13 +16,13 @@ export function RevenuePreviewCard({ preview }: { preview: CoachingRevenuePrevie
   if (!primary) return null;
 
   return (
-    <Card role="region" aria-label="Sunucu hesaplamalı kazanç tahmini" className="overflow-hidden rounded-card border-line bg-surface shadow-none">
+    <Card role="region" aria-label="Tahmini kazanç" className="overflow-hidden rounded-card border-line bg-surface shadow-none">
       <CardContent className="space-y-5 p-5 sm:p-6">
         <div>
-          <p className="text-xs font-semibold text-pink">Sunucu hesaplaması</p>
+          <p className="text-xs font-medium text-pink-deep">Tahmin</p>
           <h2 className="mt-1 text-xl font-bold tracking-tight text-ink">Bir aylık tahmini kazanç</h2>
           <p className="mt-1 text-sm leading-6 text-ink-mid">
-            Paket indirimi ve %{formatBpsPercent(preview.commission_bps)} platform komisyonu mevcut katalog/config kurallarıyla hesaplanır.
+            Paket indirimi ve %{formatBpsPercent(preview.commission_bps)} platform komisyonu düşülerek hesaplanır.
           </p>
         </div>
 

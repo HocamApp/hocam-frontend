@@ -98,7 +98,7 @@ export function PublishedReportView({
       <CardHeader>
         <CardTitle className="text-xl">Görüşme raporu</CardTitle>
         <p className="text-sm text-muted-foreground">
-          Revizyon {revision.revision_number} ·{" "}
+          Sürüm {revision.revision_number} ·{" "}
           {coachingDateTimeLabel(revision.published_at)}
         </p>
         {revision.change_note ? (

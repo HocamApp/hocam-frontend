@@ -54,7 +54,7 @@ describe("RevenuePreviewCard", () => {
     assert.equal(screen.queryByText("dört-hafta-net"), null);
     assert.ok(screen.getByText("940,00 ₺"));
     assert.ok(screen.getByText("4 görüşme"));
-    assert.ok(screen.getByRole("region", { name: "Sunucu hesaplamalı kazanç tahmini" }));
+    assert.ok(screen.getByRole("region", { name: "Tahmini kazanç" }));
     assert.ok(screen.getByText("Öğrencinin koçluk toplamı"));
     assert.ok(screen.getByText("Platform komisyonu"));
     assert.ok(screen.getByRole("button", { name: "Diğer paketlerde kazancını gör" }));

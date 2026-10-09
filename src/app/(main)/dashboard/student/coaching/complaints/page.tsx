@@ -69,7 +69,7 @@ function NewDisputeForm({ purchaseId }: { purchaseId: string }) {
       <CardContent className="space-y-5 p-6 sm:p-8">
         <CoachingSectionHeading
           level="subsection"
-          description="Konu ve kapsam sunucunun mevcut koçluk kaydından doğrulanır."
+          description="Bildirimin mevcut koçluğuna bağlanır ve destek ekibi inceler."
         >
           Sorun bildir
         </CoachingSectionHeading>
@@ -218,7 +218,7 @@ function ComplaintsContent() {
           </p>
           {financial.data ? (
             <p className="text-small text-ink-mid tabular-nums">
-              Sunucu kaydındaki iade yükümlülüğü:{" "}
+              İade edilecek tutar:{" "}
               {formatTryMinor(financial.data.refund_liability_minor)}.
             </p>
           ) : null}
