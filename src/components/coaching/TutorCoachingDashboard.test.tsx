@@ -1,12 +1,20 @@
 import "@/test/setupDom";
 
 import assert from "node:assert/strict";
-import { after, afterEach, describe, it } from "node:test";
+import { after, afterEach, before, describe, it, mock } from "node:test";
 import React from "react";
 import { cleanup, render, screen } from "@testing-library/react";
 
 import type { CoachingDerivedStatus } from "@/lib/coachingPresentation";
-import { TutorCoachingDashboard } from "./TutorCoachingDashboard";
+let TutorCoachingDashboard: typeof import("./TutorCoachingDashboard").TutorCoachingDashboard;
+
+before(async () => {
+  // The tutor tab badge reads React Query; not what these tests check.
+  mock.module("./TutorCoachingPendingBadge", {
+    namedExports: { TutorCoachingPendingBadge: () => null },
+  });
+  ({ TutorCoachingDashboard } = await import("./TutorCoachingDashboard"));
+});
 
 Object.defineProperty(globalThis, "self", { value: window, configurable: true });
 

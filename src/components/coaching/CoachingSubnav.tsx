@@ -13,6 +13,7 @@ import {
 import { cn } from "@/lib/utils";
 
 import { CoachingSubnavStrip } from "./CoachingSubnavStrip";
+import { TutorCoachingPendingBadge } from "./TutorCoachingPendingBadge";
 
 const TUTOR_LINKS = [
   {
@@ -82,8 +83,12 @@ type Audience = "tutor" | "student";
 /** Sub-pages that belong under a tab without matching its href exactly. */
 function matchesGroup(href: string, currentHref: string, audience: Audience) {
   if (href.endsWith("/upcoming")) {
+    return currentHref.includes("/sessions/");
+  }
+  if (href.endsWith("/requests")) {
+    // Time and reschedule requests are answered from the Talepler tab.
     return (
-      currentHref.includes("/sessions/") ||
+      currentHref.includes("/time-requests") ||
       currentHref.includes("/reschedule-requests")
     );
   }
@@ -95,10 +100,7 @@ function matchesGroup(href: string, currentHref: string, audience: Audience) {
     );
   }
   if (href.endsWith("/students")) {
-    return (
-      currentHref.includes("/service-periods/") ||
-      currentHref.includes("/time-requests")
-    );
+    return currentHref.includes("/service-periods/");
   }
   if (href.endsWith("/reports")) {
     // The tutor files complaints under "Kayıtlar" and has no separate tab for
@@ -171,6 +173,9 @@ export function CoachingSubnav({
                   weight={active ? "fill" : "regular"}
                 />
                 <span>{label}</span>
+                {audience === "tutor" && href === "/dashboard/tutor/coaching/requests" ? (
+                  <TutorCoachingPendingBadge />
+                ) : null}
               </Link>
             );
           })}

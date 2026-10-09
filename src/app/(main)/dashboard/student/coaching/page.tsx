@@ -27,6 +27,7 @@ import {
   fetchCoachingSessions,
 } from "@/lib/coachingApi";
 import { studentCoachingNextStep } from "@/lib/coachingPresentation";
+import { fetchCoachingPurchaseConversation } from "@/lib/messagingApi";
 import { coachingDateTimeLabel } from "@/lib/coachingTime";
 
 function OverviewContent() {
@@ -42,6 +43,16 @@ function OverviewContent() {
     queryFn: fetchCoachingSessions,
     enabled: hasSessions,
   });
+  // The coaching thread itself, so "Mesajlar" opens it instead of the inbox.
+  const conversationQuery = useQuery({
+    queryKey: ["coaching-purchase-conversation", state?.id],
+    queryFn: () => fetchCoachingPurchaseConversation(state!.id),
+    enabled: Boolean(state?.id),
+    staleTime: 10 * 60_000,
+  });
+  const messagesHref = conversationQuery.data?.id
+    ? `/messages/${conversationQuery.data.id}`
+    : "/messages";
 
   if (stateQuery.isLoading) {
     return <CoachingLoadingState rows={3} />;
@@ -142,7 +153,7 @@ function OverviewContent() {
             label: "Raporlarım",
             icon: ClipboardText,
           },
-          { href: "/messages", label: "Mesajlar", icon: ChatsCircle },
+          { href: messagesHref, label: "Hocanla mesajlar", icon: ChatsCircle },
           { href: "/support", label: "Hocam destek", icon: Question },
           {
             href: "/dashboard/student/coaching/complaints",

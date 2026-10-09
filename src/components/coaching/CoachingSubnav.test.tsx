@@ -17,6 +17,12 @@ before(async () => {
     }),
   });
 
+  // The pending-request badge reads React Query; its own count is not what
+  // these tab-resolution tests are about.
+  mock.module("./TutorCoachingPendingBadge", {
+    namedExports: { TutorCoachingPendingBadge: () => null },
+  });
+
   CoachingSubnav = (await import("./CoachingSubnav")).CoachingSubnav;
 });
 
@@ -44,10 +50,10 @@ const TUTOR_ROUTES: [string, string][] = [
   ["/dashboard/tutor/coaching", "Genel bakış"],
   ["/dashboard/tutor/coaching/students", "Öğrenciler"],
   ["/dashboard/tutor/coaching/service-periods/abc/program", "Öğrenciler"],
-  ["/dashboard/tutor/coaching/time-requests", "Öğrenciler"],
+  ["/dashboard/tutor/coaching/time-requests", "Talepler"],
   ["/dashboard/tutor/coaching/upcoming", "Görüşmeler"],
   ["/dashboard/tutor/coaching/sessions/prepare", "Görüşmeler"],
-  ["/dashboard/tutor/coaching/reschedule-requests", "Görüşmeler"],
+  ["/dashboard/tutor/coaching/reschedule-requests", "Talepler"],
   ["/dashboard/tutor/coaching/requests", "Talepler"],
   ["/dashboard/tutor/coaching/reports", "Kayıtlar"],
   ["/dashboard/tutor/coaching/complaints", "Kayıtlar"],
