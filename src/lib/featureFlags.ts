@@ -71,3 +71,19 @@ export function tutorEarningsPreviewFromEnv(value: string | undefined): boolean 
 export const TUTOR_EARNINGS_PREVIEW_ENABLED = tutorEarningsPreviewFromEnv(
   process.env.NEXT_PUBLIC_TUTOR_EARNINGS_PREVIEW
 );
+
+/**
+ * The footer link to the free YKS tools at /araclar and the tools sitemap line
+ * in robots.txt (the tools are a separate app, HocamApp/hocam-tools).
+ *
+ * Off unless the build sets NEXT_PUBLIC_TOOLS_ENABLED to exactly "true", the
+ * same rule as the other flags. It only decides what this app links to; the
+ * proxy itself is switched by TOOLS_ORIGIN in next.config.js, and enabling the
+ * links without it fails the build. NEXT_PUBLIC_* is inlined at build time, so
+ * flipping it needs a rebuild and redeploy.
+ */
+export function toolsEnabledFromEnv(value: string | undefined): boolean {
+  return value === "true";
+}
+
+export const TOOLS_ENABLED = toolsEnabledFromEnv(process.env.NEXT_PUBLIC_TOOLS_ENABLED);
