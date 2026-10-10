@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { InstagramLogo, LinkedinLogo, type Icon } from "@phosphor-icons/react";
 
-import { HOME_V2_ENABLED } from "@/lib/featureFlags";
+import { HOME_V2_ENABLED, TOOLS_ENABLED } from "@/lib/featureFlags";
 import { getLegalDocument } from "@/lib/legalDocuments";
 import { tutorListHref } from "@/lib/tutorDirectoryLinks";
 
@@ -36,7 +36,12 @@ import { AppStoreBadge, GooglePlayBadge } from "@/components/ui/store-badges";
  *    dimmed.
  */
 
-type FooterEntry = { label: string; href?: string };
+/**
+ * `plain`: the destination is served by another app through a rewrite
+ * (/araclar), so it must be a full page load. next/link would treat it as a
+ * client route of this app and try to prefetch it.
+ */
+type FooterEntry = { label: string; href?: string; plain?: boolean };
 
 type FooterColumn = { heading: string; entries: FooterEntry[] };
 
@@ -103,7 +108,7 @@ function FooterLink({ entry }: { entry: FooterEntry }) {
     return <span className="ys-footer-text">{entry.label}</span>;
   }
 
-  if (entry.href.startsWith("mailto:")) {
+  if (entry.href.startsWith("mailto:") || entry.plain) {
     return (
       <a href={entry.href} className="ys-footer-link">
         {entry.label}
@@ -116,6 +121,15 @@ function FooterLink({ entry }: { entry: FooterEntry }) {
       {entry.label}
     </Link>
   );
+}
+
+/** The free YKS tools (HocamApp/hocam-tools), appended to the first column when enabled. */
+const TOOLS_ENTRY: FooterEntry = { label: copy.links.tools, href: "/araclar", plain: true };
+
+function withTools(columns: FooterColumn[], tools: boolean): FooterColumn[] {
+  if (!tools) return columns;
+  const [first, ...rest] = columns;
+  return [{ ...first, entries: [...first.entries, TOOLS_ENTRY] }, ...rest];
 }
 
 /* The rebuilt homepage's footer (NEXT_PUBLIC_HOME_V2). Five columns, no
@@ -183,7 +197,7 @@ function KvkkContactLine() {
   );
 }
 
-function YsFooterV2() {
+function YsFooterV2({ tools }: { tools: boolean }) {
   return (
     <footer className="mt-16 border-t border-line bg-paper text-ink md:mt-24">
       {/* The mockup's `.fgrid` and `.fbot` padding, on a wrapper: `.ys-shell`
@@ -191,7 +205,7 @@ function YsFooterV2() {
       <div className="pb-9 pt-9">
         <div className="ys-shell">
           <div className="grid grid-cols-2 gap-7 lg:grid-cols-5">
-            {V2_FOOTER_COLUMNS.map((column) => (
+            {withTools(V2_FOOTER_COLUMNS, tools).map((column) => (
               <div key={column.heading}>
                 <h4 className="mb-3.5 text-sm font-bold leading-5 text-ink">{column.heading}</h4>
                 <ul className="flex flex-col gap-3">
@@ -239,19 +253,22 @@ function YsFooterV2() {
   );
 }
 
-export function YsFooter({ v2 = HOME_V2_ENABLED }: { v2?: boolean } = {}) {
+export function YsFooter({
+  v2 = HOME_V2_ENABLED,
+  tools = TOOLS_ENABLED,
+}: { v2?: boolean; tools?: boolean } = {}) {
   const pathname = usePathname();
   const isMessagesRoute =
     pathname === "/messages" || pathname.startsWith("/messages/");
 
   if (isMessagesRoute) return null;
-  if (v2) return <YsFooterV2 />;
+  if (v2) return <YsFooterV2 tools={tools} />;
 
   return (
     <footer className="mt-16 border-t border-line bg-paper text-ink md:mt-24">
       <div className="ys-shell py-10">
         <div className="grid grid-cols-2 gap-x-6 gap-y-8 md:grid-cols-4 lg:grid-cols-5">
-          {FOOTER_COLUMNS.map((column) => (
+          {withTools(FOOTER_COLUMNS, tools).map((column) => (
             <div key={column.heading}>
               <h4 className="mb-3 text-sm font-bold text-ink">{column.heading}</h4>
               <ul className="space-y-2">
