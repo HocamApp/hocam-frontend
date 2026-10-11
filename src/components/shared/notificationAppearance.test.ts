@@ -37,6 +37,13 @@ describe("NotificationMark", () => {
   });
 });
 
+describe("package activation notifications", () => {
+  it("shows an activated package as a confirmation and a new package as money", () => {
+    assert.equal(iconOf("package_activated", "package_purchase"), "👍");
+    assert.equal(iconOf("package_purchased", "package_purchase"), "💸");
+  });
+});
+
 describe("notification appearance", () => {
   it("uses the reference's own icon and colour for each family", () => {
     assert.deepEqual(getNotificationAppearance("message"), {

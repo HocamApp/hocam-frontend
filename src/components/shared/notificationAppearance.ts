@@ -60,6 +60,7 @@ const RULES: Rule[] = [
   {
     match: (type) =>
       type.includes("confirmed") ||
+      type.includes("activated") ||
       type.includes("accepted") ||
       type.includes("completed") ||
       type.includes("resolved"),
