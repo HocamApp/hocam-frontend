@@ -121,6 +121,10 @@ Her değişiklik için:
   `TOOLS_ORIGIN` ile proxy doğrulanır, sonra bağlantılar açılır. İkisi de build zamanında okunur:
   değiştirmek yeniden deploy gerektirir. İkisi de production'da açılmadan önce sahiplerin onayı gerekir.
 - Footer'daki `/araclar` bağlantısı `next/link` değil düz `<a>`'dır (hedef bu uygulamanın route'u değil).
+- Vercel, `/araclar` (hub) için gelen RSC isteğini `/araclar.rsc` olarak yönlendirir; `/araclar` ve
+  `/araclar/:path*` kuralları bunu yakalamaz. Bu yüzden `next.config.js` içinde üçüncü bir rewrite
+  (`/araclar.rsc` → araçlar uygulamasındaki `/araclar/index.rsc`) vardır; silme, yoksa hub'a geçişte
+  prefetch 404 olur ve sayfa baştan yüklenir.
 - Araçların kendi kuralları (doğruluk, KVKK, SEO, erişilebilirlik) `hocam-tools/AI_AGENT_RULES.md`
   dosyasındadır.
 
