@@ -648,6 +648,10 @@ export default function TutorCheckoutPage({
               }
               schedule={scheduleMatchesPlan ? chosenSchedule!.slots : null}
               scheduleEditHref={scheduleHref}
+              // The hours were picked for this term (the schedule step asks the
+              // term first), so it is not changed here: that would put the
+              // student back on hours nobody checked for the new length.
+              termEditHref={scheduleMatchesPlan ? scheduleHref : undefined}
               coachingHoldExpiresAt={coachingHoldExpiresAt}
               coachingUnavailableMessage={coachingUnavailableMessage}
               coachingPriceChanged={coachingPriceChanged}

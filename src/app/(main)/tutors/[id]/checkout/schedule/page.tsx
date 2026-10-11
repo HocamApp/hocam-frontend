@@ -8,6 +8,7 @@ import { ArrowLeft } from "@phosphor-icons/react";
 
 import { RecurringLessonSlotPicker, nonOverlappingCount } from "@/components/lessons/RecurringLessonSlotPicker";
 import type { RecurringSelection } from "@/components/lessons/RecurringLessonSlotPicker";
+import { PackageTermChoice } from "@/components/checkout/PackageTermChoice";
 import {
   PrivateLessonPlanCard,
   type WeeklyOptionState,
@@ -21,6 +22,7 @@ import { fetchTutorOfferedPlans, filterMatrixPlans } from "@/lib/paymentsApi";
 import { fetchTutorRecurringSlots } from "@/lib/lessonsApi";
 import { cn, formatPrice } from "@/lib/utils";
 import {
+  MOST_POPULAR_DURATION_DAYS,
   WEEKLY_LESSON_OPTIONS,
   normalizeWeeklyLessonOption,
   type WeeklyLessonOption,
@@ -32,21 +34,23 @@ import {
 
 const LESSON_DURATION_MINUTES = 40;
 
-// Four weeks, not the package term. The term (2 hafta / 1 ay / 3 ay / 6 ay) is
-// chosen on the screen after this one, so computing a rhythm against 90 days
-// here was asserting a length nobody had picked. A weekly rhythm is a weekly
-// rhythm; the server re-checks the real term when the request is created.
+// How many weekly hours the tutor has, for the "how many lessons a week" buttons,
+// is judged over four weeks: it is asked before the term is known. The hours the
+// student then picks are asked for the real term (below), so what is offered is
+// free for the whole package.
 const LOOKAHEAD_DAYS = 28;
 
 /**
  * The step that was missing: when do these lessons actually happen.
  *
- * It reveals itself in three parts rather than all at once. Subject first,
+ * It reveals itself in four parts rather than all at once. Subject first,
  * because it is the only question with no dependencies; then how many lessons
- * a week, because that decides how many hours to pick; then the hours. Showing
- * all three together made the screen read as a form to fill rather than a
- * decision to make, and put the subject — the one thing that must be chosen —
- * in the least prominent corner.
+ * a week, because that decides how many hours to pick; then how long the
+ * package runs, because a Thursday that is free for a month may be taken in the
+ * fifth week of six months; then the hours, which are only the ones free for
+ * the whole package. Showing everything together made the screen read as a form
+ * to fill rather than a decision to make, and put the subject — the one thing
+ * that must be chosen — in the least prominent corner.
  */
 function ScheduleStepContent({ tutorId }: { tutorId: string }) {
   const searchParams = useSearchParams();
@@ -64,6 +68,12 @@ function ScheduleStepContent({ tutorId }: { tutorId: string }) {
     searchParams.get("per_week") ? normalizeWeeklyLessonOption(searchParams.get("per_week")) : null
   );
   const [slots, setSlots] = useState<RecurringSelection[]>(initial?.slots ?? []);
+  // The package term in days. Carried in the URL like the rest; null until the
+  // student has a weekly count to choose it for.
+  const [termDays, setTermDays] = useState<number | null>(() => {
+    const raw = Number(searchParams.get("duration"));
+    return Number.isInteger(raw) && raw > 0 ? raw : null;
+  });
 
   const { data: tutor, isLoading } = useQuery({
     queryKey: ["tutor", tutorId],
@@ -86,6 +96,25 @@ function ScheduleStepContent({ tutorId }: { tutorId: string }) {
         durationMinutes: LESSON_DURATION_MINUTES,
       }),
   });
+
+  // The terms the tutor sells at the chosen weekly count.
+  const termPlans = useMemo(
+    () => filterMatrixPlans(plans).filter((plan) => plan.lessons_per_week === perWeek),
+    [plans, perWeek]
+  );
+
+  // A term that is not on offer for this cadence (a deep link, a changed weekly
+  // count) becomes the popular one, or the shortest if that is not sold.
+  useEffect(() => {
+    if (perWeek === null || plansLoading || termPlans.length === 0) return;
+    const offered = termPlans.map((plan) => plan.duration_days);
+    if (termDays !== null && offered.includes(termDays)) return;
+    setTermDays(
+      offered.includes(MOST_POPULAR_DURATION_DAYS)
+        ? MOST_POPULAR_DURATION_DAYS
+        : (offered[0] ?? null)
+    );
+  }, [perWeek, plansLoading, termPlans, termDays]);
 
   const subjects = tutor?.subjects ?? [];
   const soleSubjectId = subjects.length === 1 ? String(subjects[0].id) : "";
@@ -135,7 +164,8 @@ function ScheduleStepContent({ tutorId }: { tutorId: string }) {
   const nextHref = useMemo(() => {
     const params = new URLSearchParams(searchParams.toString());
     if (perWeek) params.set("per_week", String(perWeek));
-    if (effectiveSubjectId && perWeek && slots.length === perWeek) {
+    if (termDays) params.set("duration", String(termDays));
+    if (effectiveSubjectId && perWeek && termDays && slots.length === perWeek) {
       params.set(
         "schedule",
         encodeCheckoutSchedule({ subjectId: effectiveSubjectId, slots })
@@ -149,9 +179,22 @@ function ScheduleStepContent({ tutorId }: { tutorId: string }) {
         ? `/tutors/${tutorId}/checkout/coaching`
         : `/tutors/${tutorId}/checkout`;
     return `${base}${query ? `?${query}` : ""}`;
-  }, [searchParams, perWeek, effectiveSubjectId, slots, tutor, coachingCheckoutEnabled, tutorId]);
+  }, [
+    searchParams,
+    perWeek,
+    termDays,
+    effectiveSubjectId,
+    slots,
+    tutor,
+    coachingCheckoutEnabled,
+    tutorId,
+  ]);
 
-  const complete = Boolean(effectiveSubjectId) && perWeek !== null && slots.length === perWeek;
+  const complete =
+    Boolean(effectiveSubjectId) &&
+    perWeek !== null &&
+    termDays !== null &&
+    slots.length === perWeek;
 
   if (isLoading || !tutor) {
     return (
@@ -236,15 +279,38 @@ function ScheduleStepContent({ tutorId }: { tutorId: string }) {
         </section>
       )}
 
-      {/* 3 — the hours */}
+      {/* 3 — how long the package runs */}
       {effectiveSubjectId && perWeek !== null && (
+        <section className="mt-8">
+          <h2 className="text-h3">Paket ne kadar sürsün?</h2>
+          <p className="mt-1 text-[0.875rem] text-ink-mid">
+            Önce süreyi seç. Sonraki adımda yalnız bu sürenin tamamında boş olan saatleri görürsün.
+          </p>
+          <div className="mt-3">
+            {plansLoading ? (
+              <div className="h-40 animate-pulse rounded-card bg-skeleton" aria-hidden />
+            ) : (
+              <PackageTermChoice
+                plans={termPlans}
+                hourlyPrice={Number(tutor.hourly_price)}
+                value={termDays}
+                onChange={setTermDays}
+              />
+            )}
+          </div>
+        </section>
+      )}
+
+      {/* 4 — the hours */}
+      {effectiveSubjectId && perWeek !== null && termDays !== null && (
         <section className="mt-8">
           <h2 className="text-h3">Hangi gün ve saatte?</h2>
           <div className="mt-3">
             <RecurringLessonSlotPicker
               tutor={tutor}
               durationMinutes={LESSON_DURATION_MINUTES}
-              termDays={LOOKAHEAD_DAYS}
+              termDays={termDays}
+              lessonsPerWeek={perWeek}
               requiredCount={perWeek}
               value={slots}
               onChange={setSlots}
@@ -257,12 +323,14 @@ function ScheduleStepContent({ tutorId }: { tutorId: string }) {
       <div className="mt-8 flex flex-col gap-3 border-t border-line pt-5 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-[0.875rem] text-ink-mid">
           {complete
-            ? "Programın hazır. Paket süresini ve fiyatı bir sonraki adımda seçeceksin."
+            ? "Programın hazır. Özet adımında fiyatı ve varsa indirim kodunu görürsün."
             : !effectiveSubjectId
               ? "Önce bir ders konusu seç."
               : perWeek === null
                 ? "Haftada kaç ders alacağını seç."
-                : `${perWeek} haftalık ders saati seç.`}
+                : termDays === null
+                  ? "Paket süresini seç."
+                  : `${perWeek} haftalık ders saati seç.`}
         </p>
         <Button asChild disabled={!complete} className="w-full sm:w-auto">
           <Link

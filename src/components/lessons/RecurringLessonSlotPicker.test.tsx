@@ -9,7 +9,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { TutorRecurringSlotsResponse } from "@/types";
 
 // Monday and Thursday fully free; Wednesday open but only for part of the term.
-const response: TutorRecurringSlotsResponse = {
+const baseResponse: TutorRecurringSlotsResponse = {
   timezone: "Europe/Istanbul",
   duration_minutes: 40,
   starts_on: "2026-09-14",
@@ -25,9 +25,15 @@ const response: TutorRecurringSlotsResponse = {
   ],
 };
 
+let response: TutorRecurringSlotsResponse = baseResponse;
+const requests: unknown[] = [];
+
 mock.module("@/lib/lessonsApi", {
   namedExports: {
-    fetchTutorRecurringSlots: async () => response,
+    fetchTutorRecurringSlots: async (_tutorId: string, params: unknown) => {
+      requests.push(params);
+      return response;
+    },
   },
 });
 
@@ -46,17 +52,26 @@ before(async () => {
     .RecurringLessonSlotPicker;
 });
 
-afterEach(() => act(() => cleanup()));
+afterEach(() => {
+  response = baseResponse;
+  requests.length = 0;
+  return act(() => cleanup());
+});
 
-function renderPicker(onChange: (next: unknown) => void, value: unknown[] = []) {
+function renderPicker(
+  onChange: (next: unknown) => void,
+  value: unknown[] = [],
+  extra: { lessonsPerWeek?: number; termDays?: number } = {}
+) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
     <QueryClientProvider client={queryClient}>
       <RecurringLessonSlotPicker
         tutor={tutor}
         durationMinutes={40}
-        termDays={28}
+        termDays={extra.termDays ?? 28}
         requiredCount={2}
+        lessonsPerWeek={extra.lessonsPerWeek}
         value={value as never}
         onChange={onChange as never}
         priceLabel="300,00 ₺ / 40 dk"
@@ -155,4 +170,41 @@ test("clash and capacity helpers follow the lesson plus break rule", async () =>
   assert.equal(nonOverlappingCount([at("10:00"), at("10:30"), at("11:00")], 40), 2);
   assert.equal(nonOverlappingCount([at("10:00"), at("10:50"), at("11:40")], 40), 3);
   assert.equal(nonOverlappingCount([at("10:00"), at("10:30", 1)], 40), 2);
+});
+
+test("a package asks for its own hours: the term and the weekly count go to the server", async () => {
+  const queryClient = renderPicker(() => undefined, [], { lessonsPerWeek: 2, termDays: 90 });
+
+  await screen.findByText("Pzt");
+  assert.deepEqual(requests, [{ termDays: 90, durationMinutes: 40, lessonsPerWeek: 2 }]);
+  queryClient.clear();
+});
+
+test("without a weekly count it asks for the calendar window, as before", async () => {
+  const queryClient = renderPicker(() => undefined);
+
+  await screen.findByText("Pzt");
+  assert.deepEqual(requests, [{ termDays: 28, durationMinutes: 40, lessonsPerWeek: undefined }]);
+  queryClient.clear();
+});
+
+test("the server's fully_free decides which hours are offered", async () => {
+  // Monday 10:00 is flagged not fully free even though its counts agree, and
+  // Thursday 09:00 is flagged fully free: the flag is the server's word and
+  // the counts are only what an older server leaves us to compare.
+  response = {
+    ...baseResponse,
+    candidates: [
+      { day_of_week: 0, start_time: "10:00", free_occurrences: 4, total_occurrences: 4, fully_free: false, first_unavailable_date: "2026-10-05" },
+      { day_of_week: 3, start_time: "09:00", free_occurrences: 4, total_occurrences: 4, fully_free: true, first_unavailable_date: null },
+    ],
+  };
+  const queryClient = renderPicker(() => undefined, [], { lessonsPerWeek: 2, termDays: 90 });
+
+  await screen.findByText("Per");
+  const monday = screen.getByText("Pzt").closest("button") as HTMLButtonElement;
+  const thursday = screen.getByText("Per").closest("button") as HTMLButtonElement;
+  assert.equal(monday.disabled, true, "Monday has no fully free hour");
+  assert.equal(thursday.disabled, false);
+  queryClient.clear();
 });

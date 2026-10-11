@@ -95,7 +95,15 @@ export async function fetchTutorSlots(
  */
 export async function fetchTutorRecurringSlots(
   tutorId: string,
-  params: { start?: string; termDays: number; durationMinutes: number }
+  params: {
+    start?: string;
+    termDays: number;
+    durationMinutes: number;
+    /** Ask for the hours a package of this many lessons a week could be bought
+     * with: strict (free for every lesson the package can become) and flagged
+     * `fully_free`. Without it the answer is the calendar-window view. */
+    lessonsPerWeek?: number;
+  }
 ): Promise<TutorRecurringSlotsResponse> {
   const response = await api.get<TutorRecurringSlotsResponse>(
     `/tutors/${tutorId}/recurring-slots/`,
@@ -104,6 +112,7 @@ export async function fetchTutorRecurringSlots(
         ...(params.start ? { start: params.start } : {}),
         duration_days: params.termDays,
         duration: params.durationMinutes,
+        ...(params.lessonsPerWeek ? { lessons_per_week: params.lessonsPerWeek } : {}),
       },
     }
   );
