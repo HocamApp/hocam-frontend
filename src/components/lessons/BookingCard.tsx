@@ -5,10 +5,13 @@ import { Calendar, ClipboardCheck, Clock3, FolderOpen, User, Wallet } from "luci
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { LessonJoinButton } from "@/components/lessons/LessonJoinButton";
+import { EmergencyCancelDialog } from "@/components/lessons/EmergencyCancelDialog";
 import { ParticipantAvatar } from "@/components/messaging/ParticipantAvatar";
 import StatusBadge from "@/components/shared/StatusBadge";
 import { LessonTopicCheckInDialog } from "@/components/learning/LessonTopicCheckInDialog";
 import { cn, formatDisputeCategory, formatPrice } from "@/lib/utils";
+import { tutorCancelMode } from "@/lib/lessonCancelPolicy";
+import { toast } from "sonner";
 import {
   bookingDateLabel,
   bookingHasStarted,
@@ -73,6 +76,7 @@ export function BookingCard({
   className,
 }: BookingCardProps) {
   const [cancelOpen, setCancelOpen] = useState(false);
+  const [emergencyOpen, setEmergencyOpen] = useState(false);
   const [topicCheckInOpen, setTopicCheckInOpen] = useState(false);
   const rawStatus = booking.status;
   const status =
@@ -95,9 +99,17 @@ export function BookingCard({
   const isLateCancellation =
     isFuture &&
     millisecondsUntilStart < 12 * 60 * 60 * 1000;
+  // What the tutor may do about this lesson (mirrors the server's 12-hour
+  // lock, see lib/lessonCancelPolicy). A confirmed lesson cannot be cancelled
+  // inside the window at all; the way out is an emergency request.
+  const tutorMode =
+    currentUserRole === "tutor"
+      ? tutorCancelMode({ status, msUntilStart: millisecondsUntilStart })
+      : "none";
   const requiresCancellationConfirmation =
-    isLateCancellation &&
-    (currentUserRole === "tutor" || Boolean(booking.package_purchase));
+    currentUserRole === "tutor"
+      ? tutorMode === "confirm"
+      : isLateCancellation && Boolean(booking.package_purchase);
   const handleCancelClick = () => {
     if (requiresCancellationConfirmation) {
       setCancelOpen(true);
@@ -256,7 +268,7 @@ export function BookingCard({
                       variant="secondary"
                     />
                   )}
-                  {isFuture && (
+                  {tutorMode === "confirm" && (
                     <Button
                       size="sm"
                       variant="destructive"
@@ -264,6 +276,17 @@ export function BookingCard({
                       disabled={isUpdating}
                     >
                       İptal Et
+                    </Button>
+                  )}
+                  {tutorMode === "emergency" && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                      onClick={() => setEmergencyOpen(true)}
+                      disabled={isUpdating}
+                    >
+                      Acil durum bildir
                     </Button>
                   )}
                 </>
@@ -415,8 +438,8 @@ export function BookingCard({
           <DialogDescription>
             {currentUserRole === "student" && booking.package_purchase && isLateCancellation
               ? "Derse 12 saatten az kaldığı için kullandığın paket hakkı iade edilmeyecek. Devam etmek istiyor musun?"
-              : currentUserRole === "tutor" && isLateCancellation
-                ? "Derse 12 saatten az kaldığı için bu iptal profil ceza puanını etkileyebilir. Devam etmek istiyor musun?"
+              : currentUserRole === "tutor"
+                ? "Bu dersi iptal edersen öğrencinin paket hakkı iade edilir ve öğrenci yeni bir saat seçmek zorunda kalır. Derse 12 saatten az kala dersi kendin iptal edemezsin. Devam etmek istiyor musun?"
                 : "Bu rezervasyonu iptal etmek istediğine emin misin?"}
           </DialogDescription>
         </DialogHeader>
@@ -437,6 +460,18 @@ export function BookingCard({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+    {currentUserRole === "tutor" && emergencyOpen && (
+      <EmergencyCancelDialog
+        booking={booking}
+        isOpen={emergencyOpen}
+        onClose={() => setEmergencyOpen(false)}
+        onSuccess={() =>
+          toast.success(
+            "Talebin destek ekibine iletildi. Karar verilene kadar dersi vermeye hazır ol."
+          )
+        }
+      />
+    )}
     {topicCheckInOpen && (
       <LessonTopicCheckInDialog
         booking={booking}

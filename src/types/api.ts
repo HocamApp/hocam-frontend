@@ -1002,6 +1002,12 @@ export interface PackagePlan {
   updated_at: string;
 }
 
+/** What the server returns when a tutor sends an emergency cancel request. */
+export interface EmergencyCancelRequestResult {
+  ticket_id: string;
+  status: string;
+}
+
 export type PackagePurchaseStatus = "pending" | "paid" | "cancelled" | "refunded";
 
 export interface PackagePurchase {
