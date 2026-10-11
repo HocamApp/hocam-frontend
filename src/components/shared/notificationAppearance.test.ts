@@ -44,6 +44,14 @@ describe("package activation notifications", () => {
   });
 });
 
+describe("refund and package-term notifications", () => {
+  it("shows refund progress as money and a refused or cancelled outcome as a problem", () => {
+    assert.equal(iconOf("refund_requested", "refund_request"), "💸");
+    assert.equal(iconOf("refund_processed", "refund_request"), "💸");
+    assert.equal(iconOf("refund_lessons_cancelled", "refund_request"), "🚨");
+  });
+});
+
 describe("notification appearance", () => {
   it("uses the reference's own icon and colour for each family", () => {
     assert.deepEqual(getNotificationAppearance("message"), {
