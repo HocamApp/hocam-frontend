@@ -1035,6 +1035,10 @@ export interface PackagePurchase {
   total_price: number;
   created_at: string;
   paid_at: string | null;
+  /** When the package stops being bookable; computed by the server. Null until paid. */
+  expires_at?: string | null;
+  /** The grace window frozen on this purchase when it was sold (0 for new ones). */
+  grace_period_days?: number;
   promotion_code: string | null;
 }
 

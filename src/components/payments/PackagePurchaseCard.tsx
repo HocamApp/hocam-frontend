@@ -17,45 +17,13 @@ import { PAYTR_ENABLED } from "@/lib/featureFlags";
 import type { Booking, PackagePurchase } from "@/types";
 import { bookingDateLabel, bookingInstant, bookingTimeLabel } from "@/lib/bookingTime";
 import { serverNow } from "@/lib/serverClock";
+import { computePackageExpiry } from "@/lib/packageExpiry";
 
-// Mirrors backend apps/payments/services.py PACKAGE_GRACE_PERIOD_DAYS — a
-// package stays bookable until paid_at + plan.duration_days + this grace
-// window. One-off legacy bundles have no expiry to compute.
-const PACKAGE_GRACE_PERIOD_DAYS = 14;
-const DAY_MS = 24 * 60 * 60 * 1000;
-
-export interface PackageExpiry {
-  termEndDate: Date;
-  hardExpiryDate: Date;
-  isExpired: boolean;
-  isInGrace: boolean;
-  graceDaysLeft: number;
-}
-
-export function computePackageExpiry(purchase: PackagePurchase): PackageExpiry | null {
-  const durationDays = purchase.plan.duration_days;
-  if (!purchase.paid_at || !durationDays) return null;
-
-  const paidAt = new Date(purchase.paid_at).getTime();
-  const termEndDate = new Date(paidAt + durationDays * DAY_MS);
-  const hardExpiryDate = new Date(termEndDate.getTime() + PACKAGE_GRACE_PERIOD_DAYS * DAY_MS);
-  const now = serverNow();
-
-  return {
-    termEndDate,
-    hardExpiryDate,
-    isExpired: now > hardExpiryDate.getTime(),
-    isInGrace: now > termEndDate.getTime() && now <= hardExpiryDate.getTime(),
-    graceDaysLeft: Math.max(0, Math.ceil((hardExpiryDate.getTime() - now) / DAY_MS)),
-  };
-}
-
-export function isPastPackage(purchase: PackagePurchase, expiry: PackageExpiry | null): boolean {
-  if (purchase.status === "cancelled" || purchase.status === "refunded") return true;
-  if (purchase.status === "paid" && expiry?.isExpired) return true;
-  if (purchase.status === "paid" && purchase.remaining_credits <= 0) return true;
-  return false;
-}
+// The expiry rules live in src/lib/packageExpiry.ts (the server sends the end
+// date). Re-exported here because the dashboards and the home screen already
+// import them from this card.
+export { computePackageExpiry, isPastPackage } from "@/lib/packageExpiry";
+export type { PackageExpiry } from "@/lib/packageExpiry";
 
 export function PackagePurchaseCard({
   purchase,
