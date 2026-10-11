@@ -31,11 +31,19 @@ export async function fetchPackagePurchases(): Promise<PackagePurchase[]> {
 }
 
 export async function createPackagePurchase(
-  payload: CreatePackagePurchasePayload
+  payload: CreatePackagePurchasePayload,
+  options: {
+    /** Makes a retry of the same request the same purchase: sent again after a
+     * lost answer, the server returns the purchase it already made. */
+    idempotencyKey?: string;
+  } = {}
 ): Promise<PackagePurchase> {
   const response = await api.post<PackagePurchase>(
     "/payments/package-purchases/",
-    payload
+    payload,
+    options.idempotencyKey
+      ? { headers: { "Idempotency-Key": options.idempotencyKey } }
+      : undefined
   );
   return response.data;
 }

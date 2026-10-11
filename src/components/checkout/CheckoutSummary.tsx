@@ -1,6 +1,6 @@
 "use client";
 
-import type { FormEvent, KeyboardEvent } from "react";
+import type { FormEvent, KeyboardEvent, ReactNode } from "react";
 import Link from "next/link";
 import {
   CaretDown,
@@ -96,6 +96,23 @@ interface CheckoutSummaryProps {
    * step this links to.
    */
   termEditHref?: string;
+  /**
+   * The lesson package is bought and paid for on this path, with no tutor to
+   * answer in between: the wording stops promising a request, and the button
+   * says what it does (it opens the payment).
+   */
+  lessonPayNow?: boolean;
+  /** The rules the student accepts, shown above the button. */
+  consentSlot?: ReactNode;
+  /** Why the purchase could not be made, with what to do about it. */
+  purchaseErrorSlot?: ReactNode;
+  /** When set the button does not buy: it says why, and is disabled. */
+  purchaseUnavailableLabel?: string;
+  /** Online payment is closed in this build: the reassurance under the button
+   * stops talking about a request, because there is none to make. */
+  paymentClosed?: boolean;
+  /** Where to pay for the purchase that is already waiting for its payment. */
+  pendingPayHref?: string;
 }
 
 const WEEKDAY_NAMES = [
@@ -146,6 +163,12 @@ export function CheckoutSummary({
   schedule,
   scheduleEditHref,
   termEditHref,
+  lessonPayNow = false,
+  consentSlot,
+  purchaseErrorSlot,
+  purchaseUnavailableLabel,
+  paymentClosed = false,
+  pendingPayHref,
 }: CheckoutSummaryProps) {
   const termLocked = Boolean(termEditHref);
   const durations = weeklyPlans
@@ -173,7 +196,19 @@ export function CheckoutSummary({
         ? formatPrice(selectedTotal)
         : "—";
   const purchaseBlocked =
-    busy || unresolvedPromo || !planAvailable || !!coachingBlockedMessage || coachingPriceChanged;
+    busy ||
+    unresolvedPromo ||
+    !planAvailable ||
+    !!coachingBlockedMessage ||
+    coachingPriceChanged ||
+    Boolean(purchaseUnavailableLabel);
+  const ctaLabel = purchaseUnavailableLabel
+    ? purchaseUnavailableLabel
+    : purchasePending
+      ? lessonPayNow
+        ? "Hazırlanıyor…"
+        : "Talep oluşturuluyor…"
+      : purchaseCtaLabel;
 
   const handleDurationKeyDown = (
     event: KeyboardEvent<HTMLButtonElement>,
@@ -402,8 +437,9 @@ export function CheckoutSummary({
           </>
         ) : (
           <p className="mt-1.5 text-xs text-[var(--checkout-muted-ink)]">
-            Henüz saat seçmedin. Dersler paket onaylandıktan sonra tek tek
-            ayarlanır.
+            {lessonPayNow
+              ? "Henüz saat seçmedin. Ödemeye geçmeden önce ders programını seçmelisin."
+              : "Henüz saat seçmedin. Dersler paket onaylandıktan sonra tek tek ayarlanır."}
           </p>
         )}
       </section>
@@ -503,16 +539,25 @@ export function CheckoutSummary({
         {pendingForSelectedPlan ? (
           <div className="rounded-card border border-[var(--checkout-soft-line)] bg-[var(--checkout-switchback)] p-4 text-center text-[var(--checkout-nighttime)]">
             <p className="flex items-center justify-center gap-2 text-sm font-bold">
-              <Clock className="size-4" weight="regular" aria-hidden="true" /> Bekleyen paket talebin var
+              <Clock className="size-4" weight="regular" aria-hidden="true" />{" "}
+              {lessonPayNow && pendingPayHref ? "Ödemesi bekleyen bir satın alman var" : "Bekleyen paket talebin var"}
             </p>
-            <p className="mt-1.5 text-xs leading-5">Bu plan için yeniden talep oluşturamazsın.</p>
+            <p className="mt-1.5 text-xs leading-5">
+              {lessonPayNow && pendingPayHref
+                ? "Seçtiğin saatler ödeme süresi boyunca senin için ayrılır. Ödemeyi tamamlayabilir ya da satın almayı iptal edebilirsin."
+                : "Bu plan için yeniden talep oluşturamazsın."}
+            </p>
             <Button
               variant="outline"
               size="sm"
               className="mt-3 w-full border-[var(--checkout-nighttime)] bg-transparent"
               asChild
             >
-              <Link href="/profile/payments">Paketlerimi görüntüle</Link>
+              {lessonPayNow && pendingPayHref ? (
+                <Link href={pendingPayHref}>Ödemeye devam et</Link>
+              ) : (
+                <Link href="/profile/payments">Paketlerimi görüntüle</Link>
+              )}
             </Button>
           </div>
         ) : (
@@ -522,6 +567,8 @@ export function CheckoutSummary({
                 Bu hoca için başka bir bekleyen talebin var ({otherPendingPlanName}).
               </p>
             )}
+            {consentSlot}
+            {purchaseErrorSlot}
             <div className="hidden items-center justify-between gap-4 lg:flex">
               <span className="text-sm font-medium opacity-65">{totalLabel}</span>
               <span className="text-xl font-extrabold tabular-nums">{displayedTotal}</span>
@@ -531,7 +578,7 @@ export function CheckoutSummary({
               onClick={onPurchaseCta}
               disabled={purchaseBlocked}
             >
-              {purchasePending ? "Talep oluşturuluyor…" : purchaseCtaLabel}
+              {ctaLabel}
             </Button>
             {!planAvailable && (
               <p className="text-center text-xs text-destructive">
@@ -570,7 +617,11 @@ export function CheckoutSummary({
           Tek seferlik paket · otomatik yenilenmez
         </p>
         <p className="mt-1 opacity-70">
-          Bu adımda kartından ücret alınmaz. Talebinin durumunu Paketlerim alanından takip edebilirsin.
+          {lessonPayNow
+            ? "Ödeme PayTR'nin güvenli sayfasında yapılır, kart bilgilerin Hocam'a ulaşmaz."
+            : paymentClosed
+              ? "Online ödeme henüz açılmadı. Açıldığında ders saatlerini seçip buradan satın alabileceksin."
+              : "Bu adımda kartından ücret alınmaz. Talebinin durumunu Paketlerim alanından takip edebilirsin."}
         </p>
         <p className="mt-1 opacity-70">
           Paket yalnız {tutor.name} {tutor.surname} ile geçerlidir.{" "}
@@ -645,7 +696,7 @@ export function CheckoutSummary({
               onClick={onPurchaseCta}
               disabled={purchaseBlocked}
             >
-              {purchasePending ? "Talep oluşturuluyor…" : purchaseCtaLabel}
+              {ctaLabel}
             </Button>
           </div>
         </div>
