@@ -1,3 +1,38 @@
+/**
+ * /araclar belongs to a separate app (HocamApp/hocam-tools, its own Vercel
+ * project). This repo has no /araclar route; one rewrite proxies the prefix so
+ * the tools are served from this domain and share its search authority.
+ *
+ * TOOLS_ORIGIN is that project's production domain, for example
+ * https://hocam-tools.vercel.app. Use the production domain, not a
+ * per-deployment URL, which can sit behind Vercel's deployment protection.
+ * Unset means no rewrite, and /araclar is an ordinary 404. Rewrites are
+ * compiled into the routes manifest at build time, so changing it needs a
+ * redeploy.
+ *
+ * It is a separate switch from NEXT_PUBLIC_TOOLS_ENABLED (footer link and the
+ * tools sitemap in robots.txt) on purpose: the proxy can go live and be
+ * checked at /araclar before anything links to it. The reverse, links without
+ * a proxy, would publish a 404, so that combination fails the build.
+ */
+function toolsOrigin() {
+  const raw = process.env.TOOLS_ORIGIN;
+  if (!raw) return null;
+  let url;
+  try {
+    url = new URL(raw);
+  } catch {
+    throw new Error(`TOOLS_ORIGIN is not a valid URL: ${raw}`);
+  }
+  const local = url.hostname === "localhost" || url.hostname === "127.0.0.1";
+  if (url.protocol !== "https:" && !(local && url.protocol === "http:")) {
+    throw new Error(`TOOLS_ORIGIN must be https (http only for localhost): ${raw}`);
+  }
+  // Only the origin is kept, so a trailing slash or path in the variable
+  // cannot change where /araclar lands.
+  return url.origin;
+}
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   async redirects() {
@@ -50,6 +85,20 @@ const nextConfig = {
         destination: "/dashboard/tutor/coaching",
         permanent: false,
       },
+    ];
+  },
+
+  async rewrites() {
+    const origin = toolsOrigin();
+    if (process.env.NEXT_PUBLIC_TOOLS_ENABLED === "true" && !origin) {
+      throw new Error(
+        "NEXT_PUBLIC_TOOLS_ENABLED=true requires TOOLS_ORIGIN: the /araclar link would 404.",
+      );
+    }
+    if (!origin) return [];
+    return [
+      { source: "/araclar", destination: `${origin}/araclar` },
+      { source: "/araclar/:path*", destination: `${origin}/araclar/:path*` },
     ];
   },
 

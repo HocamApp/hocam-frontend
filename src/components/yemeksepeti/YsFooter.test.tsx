@@ -15,7 +15,7 @@ mock.module("next/navigation", {
 
 mock.module("next/link", {
   defaultExport: ({ href, children, ...props }: React.ComponentProps<"a">) => (
-    <a href={String(href)} {...props}>
+    <a href={String(href)} data-next-link="true" {...props}>
       {children}
     </a>
   ),
@@ -119,4 +119,27 @@ test("only the social accounts that exist are listed at all", async () => {
 
   // External links open away from the app and must not hand over the opener.
   assert.match(html, /rel="noreferrer noopener"/);
+});
+
+test("the free tools link is absent unless the tools are enabled", async () => {
+  pathname = "/iletisim";
+  const { YsFooter } = await import("./YsFooter");
+
+  assert.doesNotMatch(renderToStaticMarkup(<YsFooter />), /araclar|YKS araçları/);
+  assert.doesNotMatch(renderToStaticMarkup(<YsFooter v2 />), /araclar|YKS araçları/);
+});
+
+test("with the tools enabled both footers link /araclar as a plain anchor", async () => {
+  pathname = "/iletisim";
+  const { YsFooter } = await import("./YsFooter");
+
+  for (const html of [
+    renderToStaticMarkup(<YsFooter tools />),
+    renderToStaticMarkup(<YsFooter v2 tools />),
+  ]) {
+    assert.match(html, /<a href="\/araclar"[^>]*>Ücretsiz YKS araçları<\/a>/);
+    // next/link would prefetch /araclar as if it were a route of this app.
+    assert.doesNotMatch(html, /href="\/araclar"[^>]*data-next-link/);
+    assert.doesNotMatch(html, /data-next-link="true"[^>]*href="\/araclar"/);
+  }
 });

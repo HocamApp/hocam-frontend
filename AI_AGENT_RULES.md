@@ -109,8 +109,24 @@ Her değişiklik için:
 11. Rapor: PR URL'i, merge commit SHA'sı, ne değişti (kısa), çalıştırılan lint/test
     sonucu, deploy durumu (Vercel).
 
+## 7. /araclar — ücretsiz YKS araçları (ayrı uygulama)
+
+- `/araclar/*` bu repoda yaşamaz: `HocamApp/hocam-tools` reposunda ayrı bir Next.js uygulamasıdır ve
+  `next.config.js` içindeki tek bir rewrite ile bu alan adından sunulur. Bu repoda `/araclar` için
+  sayfa/route **açma**: dosya sistemindeki bir route rewrite'ın önüne geçer ve araçları gölgeler.
+- Rewrite yalnız `TOOLS_ORIGIN` (araçlar projesinin **production alan adı**, https; deployment'a özel
+  URL değil) ayarlıysa vardır; yoksa `/araclar` normal 404'tür. `NEXT_PUBLIC_TOOLS_ENABLED` yalnız tam
+  olarak `"true"` değerinde footer bağlantısını ve `robots.txt`'teki araçlar sitemap'ini açar;
+  `TOOLS_ORIGIN` olmadan açılırsa build bilerek hata verir (404 yayınlanmasın). Sıra: önce
+  `TOOLS_ORIGIN` ile proxy doğrulanır, sonra bağlantılar açılır. İkisi de build zamanında okunur:
+  değiştirmek yeniden deploy gerektirir. İkisi de production'da açılmadan önce sahiplerin onayı gerekir.
+- Footer'daki `/araclar` bağlantısı `next/link` değil düz `<a>`'dır (hedef bu uygulamanın route'u değil).
+- Araçların kendi kuralları (doğruluk, KVKK, SEO, erişilebilirlik) `hocam-tools/AI_AGENT_RULES.md`
+  dosyasındadır.
+
 ---
-Son güncelleme: 18 Eylül 2026 — PayTR frontend akışı tamamlandı (canlıda kapalı), yayın runbook'u eklendi;
+Son güncelleme: 10 Ekim 2026 — /araclar rewrite'ı ve bayrakları (§7) eklendi;
+18 Eylül 2026'da PayTR frontend akışı tamamlandı (canlıda kapalı), yayın runbook'u eklendi;
 17 Eylül 2026'da PayTR geliştirme/canlı aktivasyon ayrımı (§1) eklenmişti;
 24 Temmuz 2026'da Git/PR akışı (§6) eklenmişti. Bu dosyayı güncel tutmak Arda ve
 Emin'in ortak sorumluluğu — büyük bir karar/kısıt değiştiğinde buraya da eklenmeli.

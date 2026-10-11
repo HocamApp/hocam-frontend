@@ -67,6 +67,22 @@ test("robots exposes public pages while protecting account and lesson routes", (
   assert.match(String(result.sitemap), /\/sitemap\.xml$/);
 });
 
+test("robots lists the tools sitemap only when the tools are enabled", () => {
+  // Off, the sitemap stays the single string it has always been.
+  assert.equal(robots().sitemap, "https://www.hocamozelders.com/sitemap.xml");
+  const enabled = robots(true);
+  assert.deepEqual(enabled.sitemap, [
+    "https://www.hocamozelders.com/sitemap.xml",
+    "https://www.hocamozelders.com/araclar/sitemap.xml",
+  ]);
+  // /araclar must stay crawlable.
+  const rules = Array.isArray(enabled.rules) ? enabled.rules[0] : enabled.rules;
+  assert.equal(
+    Array.isArray(rules?.disallow) && rules.disallow.some((path) => path.startsWith("/araclar")),
+    false,
+  );
+});
+
 test("llms.txt is plain text, factual, and excludes private URLs", async () => {
   const response = getLlmsTxt();
   const body = await response.text();

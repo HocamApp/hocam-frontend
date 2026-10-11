@@ -487,6 +487,7 @@ export const footer = {
     tytMath: "TYT Matematik özel ders",
     aytMath: "AYT Matematik özel ders",
     trial: "Ücretsiz deneme dersi",
+    tools: "Ücretsiz YKS araçları",
     process: "Ders süreci",
     pricing: "Fiyatlar ve paketler",
     verification: "Hoca doğrulama",
