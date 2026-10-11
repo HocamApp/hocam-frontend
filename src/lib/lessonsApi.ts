@@ -1,6 +1,7 @@
 import axios from "axios";
 import api from "./api";
 import {
+  EmergencyCancelRequestResult,
   LessonRequest,
   Booking,
   LessonArtifact,
@@ -121,6 +122,21 @@ export async function updateBookingStatus(
   const response = await api.patch<Booking>(
     `/bookings/${bookingId}/status/`,
     { status }
+  );
+  return response.data;
+}
+
+/**
+ * The tutor's way out of the 12-hour cancel lock: a request staff decide on.
+ * 201 when a request is opened, 200 with the same ticket if one is already open.
+ */
+export async function requestEmergencyCancel(
+  bookingId: string,
+  reason: string
+): Promise<EmergencyCancelRequestResult> {
+  const response = await api.post<EmergencyCancelRequestResult>(
+    `/bookings/${bookingId}/emergency-cancel-request/`,
+    { reason }
   );
   return response.data;
 }
