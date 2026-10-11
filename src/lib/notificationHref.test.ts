@@ -52,6 +52,17 @@ describe("getNotificationHref", () => {
     assert.equal(getNotificationHref(n("package_request_rejected", "package_purchase"), "student"), "/");
   });
 
+  it("sends a paid package to the calendar of whoever it concerns", () => {
+    assert.equal(
+      getNotificationHref(n("package_activated", "package_purchase"), "student"),
+      "/dashboard/student",
+    );
+    assert.equal(
+      getNotificationHref(n("package_purchased", "package_purchase"), "tutor"),
+      "/dashboard/tutor?tab=bookings",
+    );
+  });
+
   it("sends a student who must pick a time straight to the schedule", () => {
     assert.equal(
       getNotificationHref(n("coaching_schedule_needed", "coaching_purchase"), "student"),

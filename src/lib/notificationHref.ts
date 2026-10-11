@@ -47,6 +47,11 @@ export function getNotificationHref(n: Notification, role?: string): string | nu
     case "message_request":
       return "/";
     case "package_purchase":
+      // A paid lesson package: the lessons are on the student's calendar, and
+      // the new student's lessons are on the tutor's. Decided by the type, not
+      // the role, because each type is only ever sent to one side.
+      if (n.type === "package_activated") return "/dashboard/student";
+      if (n.type === "package_purchased") return "/dashboard/tutor?tab=bookings";
       if (!isTutor) return n.type === "package_request_accepted" ? "/dashboard/student" : "/";
       // A bundle with coaching is answered from the coaching Talepler tab;
       // a lesson-only request from the package workspace.
