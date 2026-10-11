@@ -51,7 +51,7 @@ export interface HelpSection {
   icon: LucideIcon;
   title: string;
   items: string[];
-  /** Deep-link anchor; checkout links to #odeme-ve-iade for the refund policy. */
+  /** Deep-link anchor, e.g. #odeme-ve-iade. */
   anchorId?: string;
 }
 

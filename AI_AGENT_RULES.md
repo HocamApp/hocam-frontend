@@ -43,6 +43,17 @@
   "TEST CREDIT / ödeme alınmadı" olarak etiketler. Bu akışı checkout'a, ödeme geçmişine veya
   hoca kazanç göstergesine bağlama; yalnız server'ın `is_test_account` olarak işaretlediği
   hesaplarda kullanılır.
+- İade ekranları (`/profile/payments/refunds/*`, `src/components/payments/refund/`): öğrenci
+  tutar yazmaz. Tutarı sunucu hesaplar ve imzalı bir önizleme token'ıyla onaylatır
+  (`POST /payments/refund-preview/` sonra `POST /payments/refund-requests/`); tutar arada
+  değişirse sunucu yeni önizlemeyi döner, ekran yeni tutarı gösterip yeniden onay ister, eski
+  tıklamayla talep gönderilmez. Talep göndermek hiçbir dersi iptal etmez, iptal staff onayında
+  olur. Öğrenciye staff notu, `admin_note`, panel referansı veya booking id'si gösterme. Bu
+  ekranlardaki ders saatleri GERÇEK instant'tır (`+00:00` ofsetli): `src/lib/instantTime.ts` ile
+  çiz, `bookingTime.ts` helper'larıyla çizme (onlar duvar saati bekler, üç saat kayar). Tüm
+  metinler `src/lib/refundCopy.ts` içinde; sunucunun kendi metni öğrenciye gösterilmez, hata
+  kodları kendi cümlemizi seçer. Zaman çizgisi gün sözü vermez (paranın hesaba yansıma süresi
+  bankaya göre değişir).
 
 ## 2. Kazanç/earnings gösterimi — asla ₺ olarak gösterme
 
