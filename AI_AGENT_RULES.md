@@ -120,7 +120,7 @@ Her değişiklik için:
   `TOOLS_ORIGIN` olmadan açılırsa build bilerek hata verir (404 yayınlanmasın). Sıra: önce
   `TOOLS_ORIGIN` ile proxy doğrulanır, sonra bağlantılar açılır. İkisi de build zamanında okunur:
   değiştirmek yeniden deploy gerektirir. İkisi de production'da açılmadan önce sahiplerin onayı gerekir.
-- Footer'da araçlar kendi sütununda ("Ücretsiz YKS araçları", `ysHomeCopy.ts` → `toolsColumn`) listelenir; `/araclar/*` bağlantıları `next/link` değil düz `<a>`'dır (hedef bu uygulamanın route'u değil). Yeni araç eklenince `toolsColumn.links` güncellenir.
+- Footer'da araçlar kendi sütununda ("Ücretsiz sınav araçları", `ysHomeCopy.ts` → `toolsColumn`) listelenir; `/araclar/*` bağlantıları `next/link` değil düz `<a>`'dır (hedef bu uygulamanın route'u değil). Yeni araç eklenince `toolsColumn.links` güncellenir.
 - `/araclar` (hub) için `/araclar.rsc` rewrite'ı EKLEME: Vercel bu yolu rewrite'lardan önce ana
   uygulamanın statik 404'üyle yanıtlar, kural çalışmaz. Araçlar uygulaması hub'a düz `<a>` ile bağlanır.
 - Araçların kendi kuralları (doğruluk, KVKK, SEO, erişilebilirlik) `hocam-tools/AI_AGENT_RULES.md`

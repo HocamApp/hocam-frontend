@@ -125,11 +125,11 @@ test("the free tools link is absent unless the tools are enabled", async () => {
   pathname = "/iletisim";
   const { YsFooter } = await import("./YsFooter");
 
-  assert.doesNotMatch(renderToStaticMarkup(<YsFooter />), /araclar|YKS araçları/);
-  assert.doesNotMatch(renderToStaticMarkup(<YsFooter v2 />), /araclar|YKS araçları/);
+  assert.doesNotMatch(renderToStaticMarkup(<YsFooter />), /araclar|sınav araçları/);
+  assert.doesNotMatch(renderToStaticMarkup(<YsFooter v2 />), /araclar|sınav araçları/);
 });
 
-test("with the tools enabled both footers list each tool as a plain anchor", async () => {
+test("with the tools enabled both footers list the tools as plain anchors", async () => {
   pathname = "/iletisim";
   const { YsFooter } = await import("./YsFooter");
 
@@ -137,16 +137,13 @@ test("with the tools enabled both footers list each tool as a plain anchor", asy
     renderToStaticMarkup(<YsFooter tools />),
     renderToStaticMarkup(<YsFooter v2 tools />),
   ]) {
-    assert.match(html, />Ücretsiz YKS araçları<\/h4>/);
-    for (const [slug, label] of [
-      ["yks-puan-siralama-hesaplama", "YKS puan ve sıralama hesaplama"],
-      ["tyt-net-hesaplama", "TYT net hesaplama"],
-      ["ayt-net-hesaplama", "AYT net hesaplama"],
-      ["obp-hesaplama", "OBP hesaplama"],
-      ["hedef-net-planlayici", "Hedef net planlayıcı"],
-    ]) {
-      assert.match(html, new RegExp(`<a href="/araclar/${slug}"[^>]*>${label}</a>`));
-    }
+    assert.match(html, />Ücretsiz sınav araçları<\/h4>/);
+    assert.match(
+      html,
+      /<a href="\/araclar\/yks-puan-siralama-hesaplama"[^>]*>YKS puan ve sıralama hesaplama<\/a>/,
+    );
+    // Retired standalone tools must not come back as footer links.
+    assert.doesNotMatch(html, /tyt-net-hesaplama|ayt-net-hesaplama|obp-hesaplama|hedef-net-planlayici/);
     assert.match(html, /<a href="\/araclar"[^>]*>Tüm araçlar<\/a>/);
     // next/link would prefetch /araclar/* as if it were a route of this app.
     assert.doesNotMatch(html, /href="\/araclar[^"]*"[^>]*data-next-link/);

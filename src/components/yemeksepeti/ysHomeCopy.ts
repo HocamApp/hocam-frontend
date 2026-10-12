@@ -475,13 +475,9 @@ export const faq = {
 
 /** Free YKS tools column (HocamApp/hocam-tools). Titles mirror the tools' own names there. */
 export const toolsColumn = {
-  heading: "Ücretsiz YKS araçları",
+  heading: "Ücretsiz sınav araçları",
   links: [
     { label: "YKS puan ve sıralama hesaplama", slug: "yks-puan-siralama-hesaplama" },
-    { label: "TYT net hesaplama", slug: "tyt-net-hesaplama" },
-    { label: "AYT net hesaplama", slug: "ayt-net-hesaplama" },
-    { label: "OBP hesaplama", slug: "obp-hesaplama" },
-    { label: "Hedef net planlayıcı", slug: "hedef-net-planlayici" },
   ],
   all: "Tüm araçlar",
 } as const;
