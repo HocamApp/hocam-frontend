@@ -13,6 +13,7 @@ import {
   isPastPackage,
   PackagePurchaseCard,
 } from "@/components/payments/PackagePurchaseCard";
+import { useAfterDelay } from "@/hooks/useAfterDelay";
 import { fetchBookings } from "@/lib/lessonsApi";
 import { packageLessons } from "@/lib/packageLessons";
 import { fetchPackagePurchases, fetchPaymentHistory } from "@/lib/paymentsApi";
@@ -102,6 +103,8 @@ function PackageActivity({
   );
 }
 
+const BOOKINGS_WAIT_MS = 3000;
+
 function PackagesSection() {
   const [expandedPackageId, setExpandedPackageId] = useState<string | null>(null);
   const { data, isLoading, isError } = useQuery({
@@ -123,8 +126,13 @@ function PackagesSection() {
     queryKey: ["bookings"],
     queryFn: fetchBookings,
   });
+  // The packages are the page; the lessons only refine which of them are still
+  // running. A slow lessons request holds the list back for a moment, not until
+  // it times out (45 s, retried once): after that the list shows from the
+  // credits and settles when the lessons arrive.
+  const bookingsOverdue = useAfterDelay(isBookingsLoading, BOOKINGS_WAIT_MS);
 
-  if (isLoading || isBookingsLoading) {
+  if (isLoading || (isBookingsLoading && !bookingsOverdue)) {
     return (
       <div className="py-8">
         <LoadingSpinner />

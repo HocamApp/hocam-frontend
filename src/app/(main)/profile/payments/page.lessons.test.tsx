@@ -119,3 +119,29 @@ describe("which packages count as running", () => {
     assert.equal(screen.queryByText("Geçmiş paketler"), null);
   });
 });
+
+describe("a lessons list that is slow", () => {
+  it("does not hold the packages back for as long as it takes to fail", async () => {
+    purchases = [purchaseFixture({ remaining_credits: 3 })];
+    bookings = () => new Promise(() => {});
+    renderPage();
+
+    // The lessons never arrive; the list shows from the credits after a short wait.
+    await screen.findByText("Ders hakkı", {}, { timeout: 5000 });
+    assert.ok(screen.getByText("3 / 8"));
+  });
+
+  it("settles when the lessons do arrive late", async () => {
+    purchases = [purchaseFixture({ remaining_credits: 0 })];
+    let arrive: (value: unknown) => void = () => {};
+    bookings = () => new Promise((resolve) => { arrive = resolve; });
+    renderPage();
+
+    // From the credits alone the package looks used up and is filed as past.
+    await screen.findByText("Geçmiş paketler", {}, { timeout: 5000 });
+    arrive({ data: bookingsFixture("confirmed", 8) });
+
+    await screen.findByText("8 / 8", {}, { timeout: 3000 });
+    assert.equal(screen.queryByText("Geçmiş paketler"), null);
+  });
+});
