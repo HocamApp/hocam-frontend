@@ -5,7 +5,7 @@ import React from "react";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import api from "@/lib/api";
-import type { Booking, TutorStudentContext, TutorStudentNote } from "@/types";
+import type { Booking, PackagePurchase, TutorStudentContext, TutorStudentNote } from "@/types";
 
 let role = "tutor";
 let authenticated = true;
@@ -27,6 +27,7 @@ before(async () => {
 const seed: Booking = { id: "lesson-1", student: { id: "student-1", email: "ipek@example.com", display_name: "İpek Işık" }, tutor: { id: "tutor-profile", name: "Hoca", surname: "Bir" }, subject: { id: "math", name: "Matematik", exam_type: "TYT" }, start_time: "2099-09-06T00:15:00Z", duration_minutes: 40, status: "confirmed", price: 0, lesson_request: null, created_at: "2026-09-01T10:00:00Z" };
 const emptyContext = (student_id: string): TutorStudentContext => ({ student_id, goals: "", difficult_topics: "", resources: "", study_preferences: "", updated_at: null });
 let bookings: Booking[];
+let purchases: PackagePurchase[];
 let contexts: Record<string, TutorStudentContext>;
 let notes: TutorStudentNote[];
 let failure = "";
@@ -34,7 +35,7 @@ let requests: Array<{ method: string; url: string; data: unknown }>;
 let client: QueryClient;
 beforeEach(() => {
   role = "tutor"; authenticated = true; tab = ""; navigation.length = 0;
-  bookings = [seed]; contexts = {}; notes = []; failure = ""; requests = [];
+  bookings = [seed]; purchases = []; contexts = {}; notes = []; failure = ""; requests = [];
   client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity }, mutations: { retry: false } } });
   api.defaults.adapter = async config => {
     const url = config.url ?? "";
@@ -45,6 +46,7 @@ beforeEach(() => {
     let data: unknown = [];
     if (url === "/tutors/me/") data = { id: "tutor-profile", is_verified: true, is_public: false };
     else if (url === "/bookings/") data = bookings;
+    else if (url === "/payments/tutor/package-purchases/") data = purchases;
     else if (url.includes("tutor-student-context/")) {
       const id = url.split("/").filter(Boolean).at(-1)!;
       if (method === "put") contexts[id] = { ...body, student_id: id, updated_at: "2026-09-05T12:00:00Z" };
@@ -190,4 +192,56 @@ test("context read errors allow retry without presenting blank saved information
   failure = "";
   fireEvent.click(screen.getByRole("button", { name: "Yeniden dene" }));
   await screen.findByRole("button", { name: "Düzenle" });
+});
+
+const paidPackage = (overrides: Partial<Omit<PackagePurchase, "student">> & { student?: { id: string; name: string; surname: string } } = {}): PackagePurchase => ({
+  id: "pkg-1", student: { id: "student-1", name: "İpek", surname: "Işık" }, tutor: { id: "tutor-profile", name: "Hoca", surname: "Bir" },
+  plan: { id: "plan", name: "Haftada 2", code: null, lesson_count: 8, lesson_duration_minutes: 40, lessons_per_week: 2, duration_days: 30, discount_percent: 0 },
+  status: "paid", total_credits: 8, remaining_credits: 0, paid_at: new Date().toISOString(), expires_at: "2099-01-01T00:00:00Z",
+  ...overrides,
+} as PackagePurchase);
+
+test("the package line counts the lessons still ahead, not only the credits left unplaced", async () => {
+  // A package paid for a minute ago: all eight lessons are on the calendar and
+  // no credit is left unscheduled.
+  bookings = Array.from({ length: 8 }, (_, index) => ({ ...seed, id: `lesson-${index}`, package_purchase: "pkg-1", start_time: `2099-09-${10 + index}T10:00:00Z` }));
+  purchases = [paidPackage()];
+  render(wrap(<List />));
+  await screen.findByRole("link", { name: /İpek Işık/ });
+  assert.ok(screen.getByText("Pakette 8 ders kaldı"));
+  assert.equal(screen.queryByText(/planlanmadı/), null);
+});
+test("the package line says how many lessons have no day yet", async () => {
+  bookings = Array.from({ length: 6 }, (_, index) => ({ ...seed, id: `lesson-${index}`, package_purchase: "pkg-1", start_time: `2099-09-${10 + index}T10:00:00Z` }));
+  purchases = [paidPackage({ remaining_credits: 2 })];
+  render(wrap(<List />));
+  await screen.findByText("Pakette 8 ders kaldı, 2 tanesi planlanmadı");
+});
+test("a trial student with no package has no package line at all", async () => {
+  render(wrap(<List />));
+  await screen.findByRole("link", { name: /İpek Işık/ });
+  assert.equal(screen.queryByText(/Pakette|paket hakkı/), null);
+});
+test("a student who has only paid for a package is listed, without a page to open", async () => {
+  purchases = [paidPackage({ id: "pkg-9", student: { id: "student-9", name: "Ayşe", surname: "Kaya" }, remaining_credits: 8 })];
+  render(wrap(<List />));
+  await screen.findByRole("link", { name: /İpek Işık/ });
+  await screen.findByText("Ayşe Kaya");
+  assert.match(document.body.textContent ?? "", /Paketini \d{1,2} \S+ \d{4} tarihinde aldı, henüz ders planlamadı/);
+  assert.ok(screen.getByText("Pakette 8 ders kaldı, 8 tanesi planlanmadı"));
+  // Nothing to open yet: the notes, materials and context belong to a lesson.
+  assert.equal(screen.queryByRole("link", { name: /Ayşe Kaya/ }), null);
+  assert.ok(screen.getByText("2 öğrenci"));
+  // The filter for students with no lesson to come finds them.
+  fireEvent.click(screen.getByRole("button", { name: "Planlanmış dersi olmayanlar" }));
+  assert.ok(screen.getByText("Ayşe Kaya"));
+  assert.equal(screen.queryByRole("link", { name: /İpek Işık/ }), null);
+});
+test("a student who has only paid has a page that explains, and asks the server for nothing private", async () => {
+  purchases = [paidPackage({ id: "pkg-9", student: { id: "student-9", name: "Ayşe", surname: "Kaya" }, remaining_credits: 8 })];
+  render(wrap(<Detail params={{ studentId: "student-9" }} />));
+  await screen.findByRole("heading", { level: 1, name: "Ayşe Kaya" });
+  assert.ok(screen.getByText(/Bu öğrenci paketini aldı ama henüz bir ders planlamadı/));
+  assert.equal(screen.queryByRole("tab", { name: "Öğrenci bilgileri" }), null);
+  assert.ok(!requests.some(request => /tutor-student-(context|notes|materials)/.test(request.url)));
 });
