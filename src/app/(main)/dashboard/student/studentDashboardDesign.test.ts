@@ -3,10 +3,13 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, it } from "node:test";
 
-const source = readFileSync(
-  path.join(process.cwd(), "src/app/(main)/dashboard/student/page.tsx"),
-  "utf8"
-);
+// The package summary lives in its own component; it is part of this page.
+const source = [
+  "src/app/(main)/dashboard/student/page.tsx",
+  "src/components/dashboard/CreditSummary.tsx",
+]
+  .map((file) => readFileSync(path.join(process.cwd(), file), "utf8"))
+  .join("\n");
 
 describe("student dashboard — DESIGN.md contract", () => {
   it("uses the Hocam canvas, surface, typography and radius tokens", () => {

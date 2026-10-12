@@ -13,12 +13,10 @@ import { useAuth } from "@/hooks/useAuth";
 import { fetchTutors, fetchSubjects } from "@/lib/tutorsApi";
 import { fetchLearningDashboard } from "@/lib/learningApi";
 import { fetchBookings } from "@/lib/lessonsApi";
+import { firstActivePackage, packageLessons } from "@/lib/packageLessons";
 import { fetchPackagePurchases } from "@/lib/paymentsApi";
 import { fetchProfileMe } from "@/lib/profileApi";
-import {
-  computePackageExpiry,
-  isPastPackage,
-} from "@/components/payments/PackagePurchaseCard";
+import { computePackageExpiry } from "@/components/payments/PackagePurchaseCard";
 import { trackHomeEvent } from "@/lib/homeAnalytics";
 import { HOCA_BUL_ENABLED } from "@/lib/featureFlags";
 import { cn, formatDate } from "@/lib/utils";
@@ -139,17 +137,6 @@ function firstActiveGoal(goals: StudentGoal[]) {
   return goals.find((goal) => goal.status === "active");
 }
 
-function firstActivePackage(purchases: PackagePurchase[]) {
-  return purchases.find((purchase) => {
-    const expiry = computePackageExpiry(purchase);
-    return (
-      purchase.status === "paid" &&
-      purchase.remaining_credits > 0 &&
-      !isPastPackage(purchase, expiry)
-    );
-  });
-}
-
 export function AuthenticatedHome() {
   const { isAuthenticated } = useAuth();
   const trackedView = useRef(false);
@@ -198,7 +185,7 @@ export function AuthenticatedHome() {
 
   const activeGoal = firstActiveGoal(learningQuery.data?.goals ?? []);
   const upcomingBooking = firstUpcomingBooking(bookingsQuery.data ?? []);
-  const activePackage = firstActivePackage(packagesQuery.data ?? []);
+  const activePackage = firstActivePackage(packagesQuery.data ?? [], bookingsQuery.data ?? []);
 
   useEffect(() => {
     if (trackedView.current || learningQuery.isLoading || bookingsQuery.isLoading) return;
@@ -256,13 +243,18 @@ export function AuthenticatedHome() {
   }
   if (activePackage && continuationCards.length < 2) {
     const expiry = computePackageExpiry(activePackage);
+    const lessons = packageLessons(activePackage, bookingsQuery.data ?? []);
     continuationCards.push(
       <ContinueCard
         key={`package-${activePackage.id}`}
         icon={<WalletCards className="h-5 w-5" aria-hidden="true" />}
         eyebrow="Aktif ders paketin"
         title={`${activePackage.tutor.name} ${activePackage.tutor.surname}`}
-        description={`${activePackage.remaining_credits} ders kredisi kaldı.`}
+        description={
+          lessons.unscheduled > 0
+            ? `${lessons.remaining} ders kaldı, ${lessons.unscheduled} tanesi henüz planlanmadı.`
+            : `${lessons.remaining} ders kaldı.`
+        }
         meta={expiry ? `Süre sonu ${formatDate(expiry.termEndDate.toISOString())}` : undefined}
         href="/dashboard/student"
         action="Paketi görüntüle"
