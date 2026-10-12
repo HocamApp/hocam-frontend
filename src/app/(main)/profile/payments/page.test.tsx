@@ -132,4 +132,46 @@ describe("refunds on the payments page", () => {
     await screen.findByText(/Bu pakette henüz ders hakkı hareketi yok/);
     assert.equal(screen.queryByRole("link", { name: "İade talep et" }), null);
   });
+
+  function refundLinks() {
+    return screen
+      .queryAllByRole("link")
+      .map((link) => link.getAttribute("href") ?? "")
+      .filter((href) => href.includes("/refunds/"));
+  }
+
+  it("shows a student with no package nothing about refunds", async () => {
+    purchases = () => [];
+    renderPage();
+
+    await screen.findByText("Henüz paketin yok");
+    assert.equal(screen.queryByRole("link", { name: "İade talep et" }), null);
+    assert.equal(screen.queryByText("İade taleplerin"), null);
+    assert.deepEqual(refundLinks(), []);
+  });
+
+  it("shows no way into a refund while there is no paid package, with online payment off", async () => {
+    // Online payment is off in production: NEXT_PUBLIC_PAYTR_ENABLED is not set,
+    // so nothing can be paid, and the packages a student has are waiting,
+    // cancelled or already refunded.
+    delete process.env.NEXT_PUBLIC_PAYTR_ENABLED;
+    purchases = () => [
+      paidPurchase({ id: "p-wait", status: "pending", paid_at: null }),
+      paidPurchase({ id: "p-cancelled", status: "cancelled", paid_at: null }),
+      paidPurchase({ id: "p-refunded", status: "refunded" }),
+    ];
+    renderPage();
+    await screen.findAllByRole("button");
+
+    for (const toggle of screen
+      .getAllByRole("button")
+      .filter((candidate) => candidate.getAttribute("aria-expanded") === "false")) {
+      fireEvent.click(toggle);
+    }
+
+    assert.equal(screen.queryByRole("link", { name: "İade talep et" }), null);
+    assert.equal(screen.queryByRole("link", { name: "Talebini gör" }), null);
+    assert.equal(screen.queryByText("İade taleplerin"), null);
+    assert.deepEqual(refundLinks(), []);
+  });
 });
