@@ -143,7 +143,7 @@ test("with the tools enabled both footers list the tools as plain anchors", asyn
       /<a href="\/araclar\/yks-puan-siralama-hesaplama"[^>]*>YKS puan ve sıralama hesaplama<\/a>/,
     );
     assert.match(html, /<a href="\/araclar\/lgs-siralama-hesaplama"[^>]*>LGS sıralama hesaplama<\/a>/);
-    assert.match(html, /<a href="\/araclar\/kpss-puan-hesaplama"[^>]*>KPSS lisans puan hesaplama<\/a>/);
+    assert.doesNotMatch(html, /kpss/i);
     // Retired standalone tools must not come back as footer links.
     assert.doesNotMatch(html, /tyt-net-hesaplama|ayt-net-hesaplama|obp-hesaplama|hedef-net-planlayici/);
     assert.match(html, /<a href="\/araclar"[^>]*>Tüm araçlar<\/a>/);
