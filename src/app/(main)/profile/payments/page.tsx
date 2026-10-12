@@ -13,10 +13,13 @@ import {
   isPastPackage,
   PackagePurchaseCard,
 } from "@/components/payments/PackagePurchaseCard";
+import { RefundEntry } from "@/components/payments/refund/RefundEntry";
+import { RefundRequestsSection } from "@/components/payments/refund/RefundRequestsSection";
 import { useAfterDelay } from "@/hooks/useAfterDelay";
 import { fetchBookings } from "@/lib/lessonsApi";
 import { packageLessons } from "@/lib/packageLessons";
 import { fetchPackagePurchases, fetchPaymentHistory } from "@/lib/paymentsApi";
+import { fetchRefundRequests } from "@/lib/refundsApi";
 import {
   creditActivityLabel,
   isMonetaryPaymentEntry,
@@ -119,6 +122,12 @@ function PackagesSection() {
     queryKey: ["payment-history"],
     queryFn: fetchPaymentHistory,
   });
+  // Only to know which packages already have a request open; a list that
+  // cannot be read leaves the entry on its default and the server decides.
+  const { data: refunds } = useQuery({
+    queryKey: ["refund-requests"],
+    queryFn: fetchRefundRequests,
+  });
   // What is left of a package comes from its lessons as well as its credits
   // (see `packageLessons`). A list that cannot be read leaves the credits to go
   // by, as before.
@@ -181,13 +190,16 @@ function PackagesSection() {
                 )
               }
               details={
-                <PackageActivity
-                  entries={(history ?? []).filter((entry) =>
-                    isPackageCreditActivity(entry, purchase.id)
-                  )}
-                  isLoading={isHistoryLoading}
-                  isError={isHistoryError}
-                />
+                <>
+                  <PackageActivity
+                    entries={(history ?? []).filter((entry) =>
+                      isPackageCreditActivity(entry, purchase.id)
+                    )}
+                    isLoading={isHistoryLoading}
+                    isError={isHistoryError}
+                  />
+                  <RefundEntry purchase={purchase} refunds={refunds} />
+                </>
               }
             />
           ))
@@ -211,13 +223,16 @@ function PackagesSection() {
                 )
               }
               details={
-                <PackageActivity
-                  entries={(history ?? []).filter((entry) =>
-                    isPackageCreditActivity(entry, purchase.id)
-                  )}
-                  isLoading={isHistoryLoading}
-                  isError={isHistoryError}
-                />
+                <>
+                  <PackageActivity
+                    entries={(history ?? []).filter((entry) =>
+                      isPackageCreditActivity(entry, purchase.id)
+                    )}
+                    isLoading={isHistoryLoading}
+                    isError={isHistoryError}
+                  />
+                  <RefundEntry purchase={purchase} refunds={refunds} />
+                </>
               }
             />
           ))}
@@ -288,6 +303,7 @@ function PaymentsContent() {
           </div>
           <PackagesSection />
         </section>
+        <RefundRequestsSection />
         <section>
           <div className="mb-5">
             <h2 className="text-xl font-bold text-[var(--ink)]">Ödeme geçmişi</h2>
