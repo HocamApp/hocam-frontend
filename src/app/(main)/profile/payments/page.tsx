@@ -13,6 +13,8 @@ import {
   isPastPackage,
   PackagePurchaseCard,
 } from "@/components/payments/PackagePurchaseCard";
+import { fetchBookings } from "@/lib/lessonsApi";
+import { packageLessons } from "@/lib/packageLessons";
 import { fetchPackagePurchases, fetchPaymentHistory } from "@/lib/paymentsApi";
 import {
   creditActivityLabel,
@@ -114,8 +116,15 @@ function PackagesSection() {
     queryKey: ["payment-history"],
     queryFn: fetchPaymentHistory,
   });
+  // What is left of a package comes from its lessons as well as its credits
+  // (see `packageLessons`). A list that cannot be read leaves the credits to go
+  // by, as before.
+  const { data: bookings, isLoading: isBookingsLoading } = useQuery({
+    queryKey: ["bookings"],
+    queryFn: fetchBookings,
+  });
 
-  if (isLoading) {
+  if (isLoading || isBookingsLoading) {
     return (
       <div className="py-8">
         <LoadingSpinner />
@@ -137,12 +146,13 @@ function PackagesSection() {
   const withExpiry = data.map((purchase) => ({
     purchase,
     expiry: computePackageExpiry(purchase),
+    lessons: packageLessons(purchase, bookings ?? []),
   }));
   const active = withExpiry.filter(
-    ({ purchase, expiry }) => !isPastPackage(purchase, expiry)
+    ({ purchase, expiry, lessons }) => !isPastPackage(purchase, expiry, lessons)
   );
-  const past = withExpiry.filter(({ purchase, expiry }) =>
-    isPastPackage(purchase, expiry)
+  const past = withExpiry.filter(({ purchase, expiry, lessons }) =>
+    isPastPackage(purchase, expiry, lessons)
   );
 
   return (
@@ -151,10 +161,11 @@ function PackagesSection() {
         {active.length === 0 ? (
           <p className="text-sm text-muted-foreground">Aktif paketin yok.</p>
         ) : (
-          active.map(({ purchase }) => (
+          active.map(({ purchase, lessons }) => (
             <PackagePurchaseCard
               key={purchase.id}
               purchase={purchase}
+              lessons={lessons}
               isExpanded={expandedPackageId === purchase.id}
               onToggle={() =>
                 setExpandedPackageId((current) =>
@@ -180,10 +191,11 @@ function PackagesSection() {
           <h3 className="text-sm font-semibold text-muted-foreground">
             Geçmiş paketler
           </h3>
-          {past.map(({ purchase }) => (
+          {past.map(({ purchase, lessons }) => (
             <PackagePurchaseCard
               key={purchase.id}
               purchase={purchase}
+              lessons={lessons}
               isExpanded={expandedPackageId === purchase.id}
               onToggle={() =>
                 setExpandedPackageId((current) =>

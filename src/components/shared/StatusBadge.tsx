@@ -22,6 +22,10 @@ const LESSON_REQUEST_LABELS: Record<string, string> = {
 
 const PACKAGE_PURCHASE_LABELS: Record<string, string> = {
   pending: "İnceleme bekliyor",
+  // A lesson package waits for its payment, not for a tutor: see
+  // `packageBadgeStatus` in src/lib/packagePayment.ts.
+  awaiting_payment: "Ödeme bekleniyor",
+  payment_expired: "Ödeme süresi doldu",
   paid: "Aktif",
   cancelled: "İptal edildi",
   refunded: "İade edildi",
@@ -49,6 +53,8 @@ const LESSON_REQUEST_STYLES: Record<string, string> = {
 
 const PACKAGE_PURCHASE_STYLES: Record<string, string> = {
   pending: "border-ink bg-ink text-paper",
+  awaiting_payment: "border-ink bg-ink text-paper",
+  payment_expired: "border-line bg-paper text-ink-mid",
   paid: "border-success bg-success-soft text-ink",
   cancelled: "border-error bg-error text-destructive-foreground",
   refunded: "border-line bg-paper text-ink-mid",
