@@ -16,6 +16,15 @@ const ENTRY_CARD = "hoca-bul-entry-card-stub";
 
 let Home: React.ComponentType | null = null;
 let bookings: Array<Record<string, unknown>> = [];
+let purchases: Array<Record<string, unknown>> = [];
+const ACTIVE_GOAL = {
+  id: "goal-1",
+  title: "TYT Matematik",
+  status: "active",
+  progress: 40,
+  milestones: [],
+};
+let goals: Array<Record<string, unknown>> = [ACTIVE_GOAL];
 
 function stub(testId: string) {
   const Stub = () => React.createElement("div", { "data-testid": testId });
@@ -53,24 +62,14 @@ before(async () => {
   });
   mock.module("@/lib/learningApi", {
     namedExports: {
-      fetchLearningDashboard: async () => ({
-        goals: [
-          {
-            id: "goal-1",
-            title: "TYT Matematik",
-            status: "active",
-            progress: 40,
-            milestones: [],
-          },
-        ],
-      }),
+      fetchLearningDashboard: async () => ({ goals }),
     },
   });
   mock.module("@/lib/lessonsApi", {
     namedExports: { fetchBookings: async () => bookings },
   });
   mock.module("@/lib/paymentsApi", {
-    namedExports: { fetchPackagePurchases: async () => [] },
+    namedExports: { fetchPackagePurchases: async () => purchases },
   });
   mock.module("@/lib/homeAnalytics", {
     namedExports: { trackHomeEvent: () => {} },
@@ -125,6 +124,8 @@ function renderHome() {
 
 afterEach(() => {
   bookings = [];
+  purchases = [];
+  goals = [ACTIVE_GOAL];
   cleanup();
 });
 
@@ -165,5 +166,61 @@ describe("authenticated home entry point (default configuration)", () => {
       (await screen.findByRole("link", { name: /Dersi görüntüle/ })).getAttribute("href"),
       "/dashboard/student",
     );
+  });
+});
+
+describe("the package on the authenticated home", () => {
+  const paid = (overrides: Record<string, unknown> = {}) => ({
+    id: "purchase-1",
+    status: "paid",
+    total_credits: 8,
+    remaining_credits: 0,
+    tutor: { name: "Ada", surname: "Hoca" },
+    plan: { duration_days: 30 },
+    ...overrides,
+  });
+  const lessonsOf = (count: number, status = "confirmed") =>
+    Array.from({ length: count }, (_, index) => ({
+      id: `package-lesson-${index}`,
+      status,
+      package_purchase: "purchase-1",
+      start_time: "2099-09-12T12:00:00Z",
+      duration_minutes: 40,
+      tutor: { name: "Ada", surname: "Hoca" },
+      subject: { name: "Matematik" },
+    }));
+
+  it("offers a package paid for a minute ago, with every lesson on the calendar", async () => {
+    goals = [];
+    purchases = [paid()];
+    bookings = lessonsOf(8);
+
+    renderHome();
+
+    assert.ok(await screen.findByText("Aktif ders paketin"));
+    assert.ok(screen.getByText("8 ders kaldı."));
+  });
+
+  it("says how many of the lessons have no day yet", async () => {
+    goals = [];
+    purchases = [paid({ remaining_credits: 2 })];
+    bookings = lessonsOf(6);
+
+    renderHome();
+
+    assert.ok(await screen.findByText("8 ders kaldı, 2 tanesi henüz planlanmadı."));
+  });
+
+  it("offers nothing once every lesson has been taught", async () => {
+    goals = [];
+    purchases = [paid()];
+    bookings = lessonsOf(8, "completed");
+
+    renderHome();
+
+    // With nothing to continue the whole band is absent.
+    await screen.findByTestId(SUBJECT_SEARCH);
+    assert.equal(screen.queryByText("Aktif ders paketin"), null);
+    assert.equal(screen.queryByRole("heading", { name: "Kaldığın yerden devam et" }), null);
   });
 });

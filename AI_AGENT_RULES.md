@@ -43,6 +43,17 @@
   "TEST CREDIT / ödeme alınmadı" olarak etiketler. Bu akışı checkout'a, ödeme geçmişine veya
   hoca kazanç göstergesine bağlama; yalnız server'ın `is_test_account` olarak işaretlediği
   hesaplarda kullanılır.
+- İade ekranları (`/profile/payments/refunds/*`, `src/components/payments/refund/`): öğrenci
+  tutar yazmaz. Tutarı sunucu hesaplar ve imzalı bir önizleme token'ıyla onaylatır
+  (`POST /payments/refund-preview/` sonra `POST /payments/refund-requests/`); tutar arada
+  değişirse sunucu yeni önizlemeyi döner, ekran yeni tutarı gösterip yeniden onay ister, eski
+  tıklamayla talep gönderilmez. Talep göndermek hiçbir dersi iptal etmez, iptal staff onayında
+  olur. Öğrenciye staff notu, `admin_note`, panel referansı veya booking id'si gösterme. Bu
+  ekranlardaki ders saatleri GERÇEK instant'tır (`+00:00` ofsetli): `src/lib/instantTime.ts` ile
+  çiz, `bookingTime.ts` helper'larıyla çizme (onlar duvar saati bekler, üç saat kayar). Tüm
+  metinler `src/lib/refundCopy.ts` içinde; sunucunun kendi metni öğrenciye gösterilmez, hata
+  kodları kendi cümlemizi seçer. Zaman çizgisi gün sözü vermez (paranın hesaba yansıma süresi
+  bankaya göre değişir).
 
 ## 2. Kazanç/earnings gösterimi — asla ₺ olarak gösterme
 
@@ -80,6 +91,14 @@
   olmadığını kontrol edin — bu repoda sık oluyor (aynı dosyada aynı anda çalışmak özellikle
   `dashboard/tutor/page.tsx` ve `dashboard/student/page.tsx` gibi paylaşılan büyük dosyalarda
   gerçek çakışmaya yol açtı).
+- **Sırlar hiçbir yere girmez.** Veritabanı bağlantı adresi (parola içerir), parola, token, API/servis anahtarı,
+  `DATABASE_URL` ve benzeri değerler hiçbir çıktıya, rapora, commit mesajına, PR/issue metnine, koda,
+  dosyaya, log'a ya da testin beklenen çıktısına yazılmaz; yalnızca ortam değişkeni olarak kullanılır.
+  Sır içerebilecek bir komutun çıktısını yazdırmadan önce maskeleyin (ör. adresi `<url>` ile değiştiren
+  bir süzgeçten geçirin; `echo "$URL"` ya da `set -x` kullanmayın). Bir kabuk komutu hata verirse hata
+  mesajı adresi basabilir; bu yüzden bağlantıyı değişkende tutup çağrıyı bir betik dosyası içinde yapın.
+  Yanlışlıkla bir sır çıktıya sızarsa bunu **"SIR SIZDI"** diyerek hemen ve açıkça yazın: neyin, nereye
+  (hangi dosya ya da oturum kaydına) sızdığını belirtin ve sahibine haber verin. Sızıntıyı sessizce geçmeyin.
 
 ## 6. Git / PR akışı (Claude Code, Codex, vb. — yerel `git`/`gh` erişimi olan ajanlar)
 

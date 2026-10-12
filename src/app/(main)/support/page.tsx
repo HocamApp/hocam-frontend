@@ -21,7 +21,7 @@ function SupportContent() {
 
   // The page renders behind RouteGuard's auth check, so the browser's
   // native #hash scroll fires before the target exists — redo it on mount
-  // (checkout deep-links to #odeme-ve-iade for the refund policy).
+  // (the help centre's #odeme-ve-iade section is still a valid deep link).
   useEffect(() => {
     const hash = window.location.hash.slice(1);
     if (!hash) return;
