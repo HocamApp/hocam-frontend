@@ -6,6 +6,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
+import { useCheckoutAvailability } from "@/hooks/useCheckoutAvailability";
 import { fetchTutorById } from "@/lib/tutorsApi";
 import { loginUrlWithReturn } from "@/lib/utils";
 import {
@@ -36,7 +37,6 @@ import {
   encodeCheckoutSchedule,
   toSchedulePayload,
 } from "@/lib/checkoutSchedule";
-import { PAYTR_ENABLED } from "@/lib/featureFlags";
 import { fetchPolicyCopy } from "@/lib/policyCopyApi";
 import { describePurchaseError, type PurchaseError } from "@/lib/purchaseErrors";
 import {
@@ -339,7 +339,10 @@ export default function TutorCheckoutPage({
   // tutor in between. While online payment is closed in this build there is
   // nothing to buy: the purchase would hold a tutor's hours for nothing.
   const lessonOnly = !coachingReady;
-  const payNow = PAYTR_ENABLED && lessonOnly;
+  // Whether this student may pay online is the server's answer for this student
+  // (the build flag alone would open it to everyone once it is on).
+  const availability = useCheckoutAvailability();
+  const payNow = availability.open && lessonOnly;
   const { data: policy } = useQuery({
     queryKey: ["policy-copy"],
     queryFn: fetchPolicyCopy,
@@ -744,12 +747,14 @@ export default function TutorCheckoutPage({
                     : undefined
               }
               lessonPayNow={payNow}
-              paymentClosed={lessonOnly && !PAYTR_ENABLED}
+              paymentClosed={lessonOnly && !availability.open}
               purchaseUnavailableLabel={
                 // Nothing to buy while online payment is closed in this build,
                 // and nothing to pay for before the hours are chosen.
-                lessonOnly && !PAYTR_ENABLED
-                  ? "Ödeme sistemi yakında"
+                lessonOnly && !availability.open
+                  ? availability.loading
+                    ? "Hazırlanıyor…"
+                    : "Ödeme sistemi yakında"
                   : payNow && !scheduleMatchesPlan
                     ? "Önce ders programını seç"
                     : undefined
