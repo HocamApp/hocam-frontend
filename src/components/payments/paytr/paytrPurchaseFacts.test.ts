@@ -92,3 +92,79 @@ describe("readPayTRPurchaseFacts", () => {
     assert.equal(facts?.promoDiscount, 0);
   });
 });
+
+describe("the hours a purchase holds", () => {
+  const slot = (day: number, start: string, subject = "Matematik") => ({
+    slot_index: 0,
+    day_of_week: day,
+    start_time: start,
+    subject: { id: "s1", name: subject },
+  });
+
+  it("reads them sorted by day and time, whatever order they arrive in", () => {
+    const facts = readPayTRPurchaseFacts(
+      purchase({ recurring_slots: [slot(3, "12:00"), slot(0, "11:00"), slot(0, "09:30")] })
+    );
+
+    assert.deepEqual(
+      facts?.weeklySlots.map((entry) => [entry.dayOfWeek, entry.startTime]),
+      [
+        [0, "09:30"],
+        [0, "11:00"],
+        [3, "12:00"],
+      ]
+    );
+    assert.equal(facts?.weeklySlots[0].subjectName, "Matematik");
+  });
+
+  it("drops a slot that is malformed instead of showing half of it", () => {
+    const facts = readPayTRPurchaseFacts(
+      purchase({
+        recurring_slots: [
+          slot(7, "10:00"),
+          slot(-1, "10:00"),
+          slot(2, "25:00"),
+          slot(2, "10:0"),
+          slot(1.5, "10:00"),
+          slot(2, "10:00"),
+        ],
+      })
+    );
+
+    assert.deepEqual(facts?.weeklySlots.map((entry) => entry.dayOfWeek), [2]);
+  });
+
+  it("has none for a purchase that carries none", () => {
+    assert.deepEqual(readPayTRPurchaseFacts(purchase())?.weeklySlots, []);
+    assert.deepEqual(
+      readPayTRPurchaseFacts(purchase({ recurring_slots: undefined }))?.weeklySlots,
+      []
+    );
+  });
+
+  it("reads the end of the hold only for a purchase that is still waiting for its payment", () => {
+    const deadline = "2026-10-12T09:40:00+03:00";
+
+    assert.equal(
+      readPayTRPurchaseFacts(purchase({ payment_deadline: deadline }))?.holdDeadlineMs,
+      Date.parse(deadline)
+    );
+    for (const status of ["paid", "cancelled", "refunded"] as const) {
+      assert.equal(
+        readPayTRPurchaseFacts(purchase({ status, payment_deadline: deadline }))?.holdDeadlineMs,
+        null,
+        status
+      );
+    }
+  });
+
+  it("treats a missing or unreadable deadline as no hold", () => {
+    assert.equal(readPayTRPurchaseFacts(purchase())?.holdDeadlineMs, null);
+    assert.equal(readPayTRPurchaseFacts(purchase({ payment_deadline: null }))?.holdDeadlineMs, null);
+    assert.equal(
+      readPayTRPurchaseFacts(purchase({ payment_deadline: "next tuesday" }))?.holdDeadlineMs,
+      null
+    );
+  });
+});
+

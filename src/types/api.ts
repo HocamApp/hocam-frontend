@@ -1010,6 +1010,16 @@ export interface EmergencyCancelRequestResult {
 
 export type PackagePurchaseStatus = "pending" | "paid" | "cancelled" | "refunded";
 
+/** One weekly hour a package holds (while it waits for its payment) or runs on. */
+export interface PackageRecurringSlot {
+  slot_index: number;
+  /** 0 = Monday, matching the backend convention. */
+  day_of_week: number;
+  /** "HH:MM", Istanbul wall clock. */
+  start_time: string;
+  subject: { id: string; name: string };
+}
+
 export interface PackagePurchase {
   id: string;
   student: { id: string; name: string; surname: string };
@@ -1045,6 +1055,12 @@ export interface PackagePurchase {
   expires_at?: string | null;
   /** The grace window frozen on this purchase when it was sold (0 for new ones). */
   grace_period_days?: number;
+  /** While the purchase waits for its payment: when the hours it holds go back
+   * on sale (ISO). Null or absent for purchases that hold none (coaching
+   * bundles, anything created before holds existed). */
+  payment_deadline?: string | null;
+  /** The weekly hours the package holds or runs on. */
+  recurring_slots?: PackageRecurringSlot[];
   promotion_code: string | null;
 }
 
