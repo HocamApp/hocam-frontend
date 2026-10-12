@@ -478,6 +478,8 @@ export const toolsColumn = {
   heading: "Ücretsiz sınav araçları",
   links: [
     { label: "YKS puan ve sıralama hesaplama", slug: "yks-puan-siralama-hesaplama" },
+    { label: "LGS sıralama hesaplama", slug: "lgs-siralama-hesaplama" },
+    { label: "KPSS lisans puan hesaplama", slug: "kpss-puan-hesaplama" },
   ],
   all: "Tüm araçlar",
 } as const;
