@@ -473,6 +473,15 @@ export const faq = {
   ],
 } as const;
 
+/** Free YKS tools column (HocamApp/hocam-tools). Titles mirror the tools' own names there. */
+export const toolsColumn = {
+  heading: "Ücretsiz sınav araçları",
+  links: [
+    { label: "YKS puan ve sıralama hesaplama", slug: "yks-puan-siralama-hesaplama" },
+  ],
+  all: "Tüm araçlar",
+} as const;
+
 export const footer = {
   columns: {
     discover: "Hocam'ı keşfet",
@@ -487,7 +496,6 @@ export const footer = {
     tytMath: "TYT Matematik özel ders",
     aytMath: "AYT Matematik özel ders",
     trial: "Ücretsiz deneme dersi",
-    tools: "Ücretsiz YKS araçları",
     process: "Ders süreci",
     pricing: "Fiyatlar ve paketler",
     verification: "Hoca doğrulama",
