@@ -99,12 +99,9 @@ const nextConfig = {
     return [
       { source: "/araclar", destination: `${origin}/araclar` },
       { source: "/araclar/:path*", destination: `${origin}/araclar/:path*` },
-      // Vercel serves an RSC request for /araclar from "/araclar.rsc", which
-      // neither rule above matches. Tool pages are fine because their ".rsc"
-      // lands inside :path*. Without this rule the hub's prefetch and
-      // client-side navigation 404 (Next then falls back to a full page load).
-      // The tools app answers /araclar/index.rsc with the hub's RSC payload.
-      { source: "/araclar.rsc", destination: `${origin}/araclar/index.rsc` },
+      // No rule for the hub's RSC path: Vercel answers "/araclar.rsc" with this app's
+      // static 404 before rewrites run, so one cannot work. hocam-tools links to its hub
+      // with plain <a>, so no RSC request for it is made.
     ];
   },
 

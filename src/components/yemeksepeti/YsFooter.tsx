@@ -9,7 +9,7 @@ import { getLegalDocument } from "@/lib/legalDocuments";
 import { tutorListHref } from "@/lib/tutorDirectoryLinks";
 
 import { FAQ_SECTION_ID } from "./ysAppNav";
-import { footer as copy } from "./ysHomeCopy";
+import { footer as copy, toolsColumn } from "./ysHomeCopy";
 
 import { BrandMark } from "@/components/brand/BrandMark";
 import { AppStoreBadge, GooglePlayBadge } from "@/components/ui/store-badges";
@@ -123,13 +123,22 @@ function FooterLink({ entry }: { entry: FooterEntry }) {
   );
 }
 
-/** The free YKS tools (HocamApp/hocam-tools), appended to the first column when enabled. */
-const TOOLS_ENTRY: FooterEntry = { label: copy.links.tools, href: "/araclar", plain: true };
+/**
+ * The free YKS tools (HocamApp/hocam-tools): their own column, placed second, when enabled.
+ * Plain anchors: /araclar/* is another app behind a rewrite, not a route of this one.
+ */
+const TOOLS_COLUMN: FooterColumn = {
+  heading: toolsColumn.heading,
+  entries: [
+    ...toolsColumn.links.map((l) => ({ label: l.label, href: `/araclar/${l.slug}`, plain: true })),
+    { label: toolsColumn.all, href: "/araclar", plain: true },
+  ],
+};
 
 function withTools(columns: FooterColumn[], tools: boolean): FooterColumn[] {
   if (!tools) return columns;
   const [first, ...rest] = columns;
-  return [{ ...first, entries: [...first.entries, TOOLS_ENTRY] }, ...rest];
+  return [first, TOOLS_COLUMN, ...rest];
 }
 
 /* The rebuilt homepage's footer (NEXT_PUBLIC_HOME_V2). Five columns, no
@@ -204,7 +213,7 @@ function YsFooterV2({ tools }: { tools: boolean }) {
           overrides padding set on itself. */}
       <div className="pb-9 pt-9">
         <div className="ys-shell">
-          <div className="grid grid-cols-2 gap-7 lg:grid-cols-5">
+          <div className={`grid grid-cols-2 gap-7 ${tools ? "lg:grid-cols-6" : "lg:grid-cols-5"}`}>
             {withTools(V2_FOOTER_COLUMNS, tools).map((column) => (
               <div key={column.heading}>
                 <h4 className="mb-3.5 text-sm font-bold leading-5 text-ink">{column.heading}</h4>
@@ -267,7 +276,9 @@ export function YsFooter({
   return (
     <footer className="mt-16 border-t border-line bg-paper text-ink md:mt-24">
       <div className="ys-shell py-10">
-        <div className="grid grid-cols-2 gap-x-6 gap-y-8 md:grid-cols-4 lg:grid-cols-5">
+        <div
+          className={`grid grid-cols-2 gap-x-6 gap-y-8 md:grid-cols-4 ${tools ? "lg:grid-cols-6" : "lg:grid-cols-5"}`}
+        >
           {withTools(FOOTER_COLUMNS, tools).map((column) => (
             <div key={column.heading}>
               <h4 className="mb-3 text-sm font-bold text-ink">{column.heading}</h4>

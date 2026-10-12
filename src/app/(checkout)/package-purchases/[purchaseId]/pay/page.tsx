@@ -8,13 +8,22 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { MinimalCheckoutHeader } from "@/components/checkout/MinimalCheckoutHeader";
 import { PayTRCustomerForm } from "@/components/payments/paytr/PayTRCustomerForm";
 import { PayTRFrame } from "@/components/payments/paytr/PayTRFrame";
+import { PayTRHoldNotice } from "@/components/payments/paytr/PayTRHoldNotice";
 import { PayTRProcessingState } from "@/components/payments/paytr/PayTRProcessingState";
 import { PayTRPurchaseSummary } from "@/components/payments/paytr/PayTRPurchaseSummary";
 import { PayTRResultState } from "@/components/payments/paytr/PayTRResultState";
+import { PayTRUnpaidActions } from "@/components/payments/paytr/PayTRUnpaidActions";
 import {
   paytrCheckoutState,
   type PayTRAttemptPhase,
 } from "@/components/payments/paytr/paytrCheckoutState";
+import { payTRShowsUnpaidCancel } from "@/components/payments/paytr/paytrEntryPoints";
+import {
+  UNPAID_CANCEL_HELD_TEXT,
+  UnpaidCancelHeld,
+  cancelUnpaidPurchase,
+} from "@/components/payments/paytr/unpaidCancel";
+import { useHoldCountdown } from "@/components/payments/paytr/useHoldCountdown";
 import { readPayTRIframeUrl } from "@/components/payments/paytr/paytrIframeUrl";
 import {
   PAYTR_FAST_POLL_WINDOW_MS,
@@ -189,6 +198,82 @@ export default function PayTRPaymentPage({
 
   const canSubmit = useRef(false);
   canSubmit.current = state.canStartPayment;
+
+  // The hours this purchase holds go back on sale at the server's deadline. The
+  // countdown and the ways out of an unpaid purchase belong to payments that are
+  // live; with the flag off the screen is exactly what it was.
+  const holdDeadline =
+    PAYTR_ENABLED && purchase && purchase.status === "pending" && purchase.payment_deadline
+      ? Date.parse(purchase.payment_deadline)
+      : null;
+  const msLeft = useHoldCountdown(
+    holdDeadline !== null && Number.isFinite(holdDeadline) ? holdDeadline : null
+  );
+  const holdExpired = msLeft !== null && msLeft <= 0;
+  // Where to choose the hours again: this tutor's schedule step, with the plan
+  // this purchase was for.
+  const restartHref = (() => {
+    if (!purchase) return "/";
+    const query = new URLSearchParams();
+    if (purchase.plan.lessons_per_week) query.set("per_week", String(purchase.plan.lessons_per_week));
+    if (purchase.plan.duration_days) query.set("duration", String(purchase.plan.duration_days));
+    const suffix = query.toString();
+    return `/tutors/${purchase.tutor.id}/checkout/schedule${suffix ? `?${suffix}` : ""}`;
+  })();
+  const [unpaidError, setUnpaidError] = useState<string | null>(null);
+  const leaveUnpaid = useMutation({
+    mutationFn: async (intent: "cancel" | "change") => {
+      await cancelUnpaidPurchase(queryClient, purchaseId);
+      return intent;
+    },
+    retry: false,
+    onSuccess: (intent) => {
+      clearPayTRRecovery(getSessionStorage(), userId, purchaseId);
+      void queryClient.invalidateQueries({ queryKey: ["package-purchases"] });
+      void queryClient.invalidateQueries({ queryKey: ["payment-history"] });
+      router.push(intent === "change" ? restartHref : "/profile/payments");
+    },
+    onError: (error) => {
+      setUnpaidError(
+        error instanceof UnpaidCancelHeld
+          ? UNPAID_CANCEL_HELD_TEXT[error.reason]
+          : "Satın alma iptal edilemedi. Birkaç saniye sonra tekrar dene."
+      );
+    },
+  });
+  // Only a lesson package that is waiting for its payment, with no attempt in
+  // flight (the server's status decides that, not this tab alone). A bundle with
+  // coaching has a tutor's acceptance behind it and keeps its own cancel on the
+  // packages page.
+  const showsUnpaidActions =
+    PAYTR_ENABLED &&
+    state.name === "payment_ready" &&
+    !holdExpired &&
+    Boolean(purchase) &&
+    acceptanceQuery.data?.requires_tutor_acceptance === false &&
+    payTRShowsUnpaidCancel({
+      paytrEnabled: true,
+      canCancelUnpaid: Boolean(paymentStatusQuery.data?.can_cancel_unpaid),
+      hasKnownAttempt: attemptActive,
+      purchaseId,
+      purchaseStatus: purchase?.status ?? "cancelled",
+      paymentStatus: paymentStatusQuery.data,
+    });
+  // Past the hold the server has already closed the payment, and the generic
+  // "payment is unavailable" would not say why. With no payment in flight the
+  // notice says the hours ran out and is the way back; a payment that is in
+  // flight (resume, frame, verification) keeps its own screen.
+  const holdExpiredHere =
+    holdExpired &&
+    !attemptActive &&
+    (state.name === "payment_ready" || state.name === "payment_unavailable");
+  const showsHoldNotice =
+    msLeft !== null &&
+    (holdExpiredHere ||
+      (!holdExpired &&
+        (state.name === "payment_ready" ||
+          state.name === "starting_payment" ||
+          state.name === "payment_resume")));
 
   const sessionLostWithFrameOpen =
     PAYTR_ENABLED && !authLoading && !isAuthenticated && attemptPhase === "iframe";
@@ -399,7 +484,21 @@ export default function PayTRPaymentPage({
             {formError && state.name !== "payment_ready" && state.name !== "starting_payment" && (
               <p role="status" className="mb-4 text-sm text-[#b33a24]">{formError}</p>
             )}
+            {showsHoldNotice && (
+              <PayTRHoldNotice msLeft={msLeft} restartHref={restartHref} className="mb-4" />
+            )}
             {renderMain()}
+            {showsUnpaidActions && (
+              <PayTRUnpaidActions
+                className="mt-6"
+                pending={leaveUnpaid.isPending ? (leaveUnpaid.variables ?? null) : null}
+                error={unpaidError}
+                onConfirm={(intent) => {
+                  setUnpaidError(null);
+                  leaveUnpaid.mutate(intent);
+                }}
+              />
+            )}
           </div>
         </div>
       </main>
@@ -418,6 +517,10 @@ export default function PayTRPaymentPage({
         : sessionLostWithFrameOpen
           ? iframeUrl
           : null;
+
+    // Past the hold there is nothing to pay for: the hours are back on sale and
+    // the notice above is the way back.
+    if (holdExpiredHere) return null;
 
     if (state.name === "payment_ready" || state.name === "payment_resume" || state.name === "starting_payment") {
       return (

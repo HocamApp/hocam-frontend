@@ -3,6 +3,7 @@
 import * as React from "react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { endTimeLabel, weekdayLabel } from "@/components/lessons/slotPickerFormat";
 import { formatTryMinor } from "@/lib/money";
 import { formatPrice } from "@/lib/utils";
 import type { PackagePurchase, PayTRPaymentStatus } from "@/types";
@@ -17,8 +18,10 @@ import { readPayTRPurchaseFacts } from "./paytrPurchaseFacts";
  * collect, and showing anything else would be a lie about the charge. When an
  * amount cannot be trusted the summary says so instead of printing 0 ₺.
  *
- * The purchase carries no confirmed lesson schedule, so none is claimed here,
- * and the customer's own address and phone are never echoed back.
+ * The weekly hours are the ones the purchase holds for the student while it
+ * waits for its payment (`recurring_slots`); a purchase that holds none shows no
+ * schedule rather than a guess. The customer's own address and phone are never
+ * echoed back.
  */
 export function PayTRPurchaseSummary({
   purchase,
@@ -103,6 +106,31 @@ export function PayTRPurchaseSummary({
         {facts.totalCredits} ders · {facts.lessonDurationMinutes} dakika
       </p>
       {combined && <p className="mt-1 text-sm text-[#5c6b6d]">Koçluk paketi dahil</p>}
+
+      {facts.weeklySlots.length > 0 && (
+        <div className="mt-4">
+          <p className="text-sm font-medium">Ders programın</p>
+          {facts.weeklySlots[0].subjectName && (
+            <p className="mt-0.5 text-sm text-[#5c6b6d]">{facts.weeklySlots[0].subjectName}</p>
+          )}
+          <ul className="mt-2 space-y-1 text-sm">
+            {facts.weeklySlots.map((slot) => (
+              <li
+                key={`${slot.dayOfWeek}-${slot.startTime}`}
+                className="flex flex-wrap justify-between gap-x-4"
+              >
+                <span>Her {weekdayLabel(slot.dayOfWeek)}</span>
+                <span className="tabular-nums">
+                  {slot.startTime} – {endTimeLabel(slot.startTime, facts.lessonDurationMinutes)}
+                </span>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-2 text-[0.8125rem] text-[#5c6b6d]">
+            Bu saatler paket boyunca her hafta tekrar eder.
+          </p>
+        </div>
+      )}
 
       <div className="mt-5 border-t border-[#e6dddd] pt-4">
         <p className="text-sm text-[#5c6b6d]">Toplam ödeme</p>
