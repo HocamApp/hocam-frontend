@@ -52,10 +52,13 @@ before(async () => {
     .RecurringLessonSlotPicker;
 });
 
-afterEach(() => {
+afterEach(async () => {
+  // Unmount first. A test that clears its query client while the picker is still
+  // mounted makes the picker ask again, and that late request must land before
+  // the log is emptied, not in the next test's.
+  await act(async () => cleanup());
   response = baseResponse;
   requests.length = 0;
-  return act(() => cleanup());
 });
 
 function renderPicker(
