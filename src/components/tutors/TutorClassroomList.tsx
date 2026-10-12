@@ -7,18 +7,37 @@ import { WorkspacePageShell } from "@/components/layout/WorkspacePageShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useTutorClassroom } from "@/hooks/useTutorClassroom";
-import { bookingDateLabel, bookingTimeLabel, filterStudentRoster, studentName, type ClassroomFilter } from "@/lib/tutorClassroom";
-import { ClassroomError, ClassroomLoading, StudentAvatar } from "./TutorClassroomShared";
+import { formatDate } from "@/lib/utils";
+import { bookingDateLabel, bookingTimeLabel, filterStudentRoster, studentName, type ClassroomFilter, type StudentRosterEntry } from "@/lib/tutorClassroom";
+import { ClassroomError, ClassroomLoading, StudentAvatar, packageSummary, type PackagesState } from "./TutorClassroomShared";
 
 const filters: Array<{ value: ClassroomFilter; label: string }> = [
   { value: "all", label: "Tümü" }, { value: "upcoming", label: "Yaklaşan dersi olanlar" }, { value: "unscheduled", label: "Planlanmış dersi olmayanlar" },
 ];
+
+const ROW_GRID = "grid min-w-0 gap-4 p-4 sm:p-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,.7fr)_auto] lg:items-center";
+
+/** One student. A student who has paid for a package but has no lesson yet has
+ * nothing to open (the notes, materials and context belong to a lesson
+ * relationship), so the row says so instead of linking to an empty page. */
+function RosterRow({ entry, packages }: { entry: StudentRosterEntry; packages: PackagesState }) {
+  const summary = packageSummary(entry, packages);
+  const body = <>
+    <div className="flex min-w-0 items-center gap-3"><StudentAvatar student={entry.student} /><div className="min-w-0"><h2 className="break-words font-medium">{studentName(entry.student)}</h2>{entry.currentLesson && <p className="mt-1 text-small font-medium">Ders devam ediyor</p>}{!entry.hasLessons && <p className="mt-1 text-small text-ink-mid">{entry.packagePaidAt ? `Paketini ${formatDate(entry.packagePaidAt)} tarihinde aldı, henüz ders planlamadı` : "Paketini aldı, henüz ders planlamadı"}</p>}</div></div>
+    <div className="space-y-1 text-small tabular-nums"><p className="text-label text-ink-mid">Sonraki ders</p><p>{entry.nextLesson ? `${bookingDateLabel(entry.nextLesson.start_time)}, ${bookingTimeLabel(entry.nextLesson.start_time)}` : "Planlanmış ders yok"}</p><p className="text-ink-mid">{entry.lastCompletedAt ? `Son ders: ${bookingDateLabel(entry.lastCompletedAt)}` : "Henüz tamamlanan ders yok"}</p></div>
+    <div className="space-y-1 text-small tabular-nums"><p>{entry.totalLessons} tamamlanan ders</p>{summary && <p className="text-ink-mid">{summary}</p>}</div>
+  </>;
+  return entry.hasLessons
+    ? <Link href={`/dashboard/tutor/classroom/${entry.student.id}`} className={`${ROW_GRID} transition-colors duration-[120ms] hover:bg-paper focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ink`}>{body}<ArrowRight className="hidden h-5 w-5 lg:block" aria-hidden="true" /></Link>
+    : <div className={ROW_GRID}>{body}<span className="hidden lg:block" aria-hidden="true" /></div>;
+}
 
 export function TutorClassroomList() {
   const data = useTutorClassroom();
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<ClassroomFilter>("all");
   const rows = filterStudentRoster(data.roster, search, filter);
+  const packagesState: PackagesState = data.packages.isSuccess ? "ready" : data.packages.isError ? "error" : "loading";
   return <WorkspacePageShell title="Sınıfım" width="wide">
     <p className="max-w-[60ch] text-ink-mid">Öğrencilerini, derslerini ve bir sonraki derse hazırlıklarını buradan takip et.</p>
     {data.isLoading ? <ClassroomLoading /> : data.isError ? <ClassroomError message="Öğrencilerin yüklenemedi. Yeniden deneyebilirsin." onRetry={data.retry} /> : !data.profile.data?.is_verified ? <p>Öğrenci alanına erişmek için hoca doğrulamanı tamamlamalısın.</p> : <>
@@ -28,12 +47,7 @@ export function TutorClassroomList() {
         <p role="status" className="text-small tabular-nums text-ink-mid">{rows.length} öğrenci</p>
       </div>
       {data.packages.isError && <ClassroomError message="Paket hakları yüklenemedi. Öğrenci ve ders bilgilerini kullanmaya devam edebilirsin." onRetry={() => void data.packages.refetch()} />}
-      {rows.length ? <ul className="divide-y divide-line overflow-hidden rounded-card border border-line bg-surface">{rows.map(entry => <li key={entry.student.id}><Link href={`/dashboard/tutor/classroom/${entry.student.id}`} className="grid min-w-0 gap-4 p-4 transition-colors duration-[120ms] hover:bg-paper focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ink sm:p-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,.7fr)_auto] lg:items-center">
-        <div className="flex min-w-0 items-center gap-3"><StudentAvatar student={entry.student} /><div className="min-w-0"><h2 className="break-words font-medium">{studentName(entry.student)}</h2>{entry.currentLesson && <p className="mt-1 text-small font-medium">Ders devam ediyor</p>}</div></div>
-        <div className="space-y-1 text-small tabular-nums"><p className="text-label text-ink-mid">Sonraki ders</p><p>{entry.nextLesson ? `${bookingDateLabel(entry.nextLesson.start_time)}, ${bookingTimeLabel(entry.nextLesson.start_time)}` : "Planlanmış ders yok"}</p><p className="text-ink-mid">{entry.lastCompletedAt ? `Son ders: ${bookingDateLabel(entry.lastCompletedAt)}` : "Henüz tamamlanan ders yok"}</p></div>
-        <div className="space-y-1 text-small tabular-nums"><p>{entry.totalLessons} tamamlanan ders</p><p className="text-ink-mid">{data.packages.isSuccess ? `${entry.remainingCredits}/${entry.totalCredits} paket hakkı` : data.packages.isError ? "Paket hakkı alınamadı" : "Paket hakkı yükleniyor…"}</p></div>
-        <ArrowRight className="hidden h-5 w-5 lg:block" aria-hidden="true" />
-      </Link></li>)}</ul> : <div className="space-y-3 rounded-card border border-line bg-surface p-6"><Users className="h-8 w-8" aria-hidden="true" /><h2 className="text-h3 font-medium">{data.roster.length ? "Aramana uygun öğrenci bulunamadı" : "Henüz ders ilişkin olan bir öğrenci yok"}</h2><p className="text-small text-ink-mid">{data.roster.length ? "Başka bir ad deneyebilir veya filtreleri temizleyebilirsin." : "Onaylanmış dersin bulunan öğrenciler burada görünecek."}</p>{data.roster.length ? <Button variant="outline" onClick={() => { setSearch(""); setFilter("all"); }}>Filtreleri temizle</Button> : <Button variant="outline" asChild><Link href="/dashboard/tutor">Panoma dön</Link></Button>}</div>}
+      {rows.length ? <ul className="divide-y divide-line overflow-hidden rounded-card border border-line bg-surface">{rows.map(entry => <li key={entry.student.id}><RosterRow entry={entry} packages={packagesState} /></li>)}</ul> : <div className="space-y-3 rounded-card border border-line bg-surface p-6"><Users className="h-8 w-8" aria-hidden="true" /><h2 className="text-h3 font-medium">{data.roster.length ? "Aramana uygun öğrenci bulunamadı" : "Henüz ders ilişkin olan bir öğrenci yok"}</h2><p className="text-small text-ink-mid">{data.roster.length ? "Başka bir ad deneyebilir veya filtreleri temizleyebilirsin." : "Onaylanmış dersin bulunan öğrenciler burada görünecek."}</p>{data.roster.length ? <Button variant="outline" onClick={() => { setSearch(""); setFilter("all"); }}>Filtreleri temizle</Button> : <Button variant="outline" asChild><Link href="/dashboard/tutor">Panoma dön</Link></Button>}</div>}
     </>}
   </WorkspacePageShell>;
 }

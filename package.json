@@ -25,6 +25,7 @@
     "test:tutorial": "node --experimental-test-module-mocks --test-force-exit --import tsx --test src/components/tutorial/TutorialCard.test.tsx src/components/tutorial/MockChatPane.test.tsx src/components/tutorial/MockLessonScreen.test.tsx src/components/tutorial/TutorialOverlay.test.tsx src/lib/liveLessonTutorialSteps.test.ts",
     "test:unit": "node scripts/run-unit-tests.mjs",
     "test:package-surfaces": "node --experimental-test-module-mocks --test-force-exit --import ./scripts/register-test-aliases.mjs --import tsx --test src/lib/packageLessons.test.ts src/lib/packagePayment.test.ts src/lib/packageExpiry.test.ts src/components/dashboard/CreditSummary.test.tsx src/components/payments/PackagePurchaseCard.lessons.test.tsx src/components/shared/StatusBadge.appearance.test.tsx",
+    "test:tutor-surfaces": "node --experimental-test-module-mocks --test-force-exit --import ./scripts/register-test-aliases.mjs --import tsx --test src/lib/tutorClassroom.test.ts src/components/tutors/TutorClassroom.test.tsx src/hooks/useTutorAcceptanceConfig.test.tsx src/components/tutors/TutorPackageCopy.test.tsx",
     "test:seo": "node --test --import tsx src/lib/seo.test.ts src/lib/publicSeo.test.ts",
     "responsive:check": "tsx scripts/responsive-check.ts",
     "home:compare": "tsx scripts/home-mockup-compare.ts",

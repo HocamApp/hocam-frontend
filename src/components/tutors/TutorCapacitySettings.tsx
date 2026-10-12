@@ -55,7 +55,7 @@ export function TutorCapacitySettings({ profile }: { profile: TutorProfile }) {
 
   return (
     <section className="space-y-4 rounded-xl border bg-card p-4 sm:p-5">
-      <div><h2 className="font-semibold">Yeni öğrenci kapasitesi</h2><p className="mt-1 text-sm text-muted-foreground">Takvimine ek olarak kaç yeni öğrenciyle çalışabileceğini belirt.</p></div>
+      <div><h2 className="font-semibold">Yeni öğrenci kapasitesi</h2><p className="mt-1 text-sm text-muted-foreground">Takvimine ek olarak kaç yeni öğrenciyle çalışabileceğini belirt. Ödemesini yapmak üzere olan bir öğrenci de yerlerinden birini kısa süre ayırır; ödeme tamamlanmazsa yer yeniden açılır.</p></div>
       <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={accepting} onChange={(event) => setAccepting(event.target.checked)} /> Yeni öğrenci kabul ediyorum</label>
       <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={acceptsTrials} onChange={(event) => setAcceptsTrials(event.target.checked)} /> Ücretsiz deneme dersi kabul ediyorum</label>
       <div className="grid gap-4 sm:grid-cols-3">

@@ -18,7 +18,7 @@ import { serverNow } from "@/lib/serverClock";
 import { TutorStudentContextCard } from "./TutorStudentContextCard";
 import { TutorStudentNotes } from "./TutorStudentNotes";
 import { TutorStudentMaterials } from "./TutorStudentMaterials";
-import { ClassroomError, ClassroomLoading, StudentAvatar } from "./TutorClassroomShared";
+import { ClassroomError, ClassroomLoading, StudentAvatar, packageSummary } from "./TutorClassroomShared";
 
 export function TutorClassroomStudent({ studentId }: { studentId: string }) {
   const data = useTutorClassroom();
@@ -26,6 +26,12 @@ export function TutorClassroomStudent({ studentId }: { studentId: string }) {
   const back = <Button variant="outline" asChild><Link href="/dashboard/tutor/classroom"><ArrowLeft className="mr-2 h-4 w-4" aria-hidden="true" />Sınıfıma dön</Link></Button>;
   if (data.isLoading || data.isError || !entry) return <WorkspacePageShell title="Öğrenci" width="wide" actions={back}>
     {data.isLoading ? <ClassroomLoading /> : data.isError ? <ClassroomError message="Öğrenci bilgileri yüklenemedi. Yeniden deneyebilirsin." onRetry={data.retry} /> : <p role="status" className="rounded-card border border-line bg-surface p-6">Bu öğrenciye erişemiyorsun veya ders ilişkin bulunmuyor.</p>}
+  </WorkspacePageShell>;
+  // The context, notes and materials belong to a lesson relationship. A student
+  // who has paid for a package but has no lesson yet has none, so there is
+  // nothing to ask the server for (it would answer "not found").
+  if (!entry.hasLessons) return <WorkspacePageShell title={studentName(entry.student)} width="wide" actions={back}>
+    <p role="status" className="rounded-card border border-line bg-surface p-6">Bu öğrenci paketini aldı ama henüz bir ders planlamadı. İlk ders planlandığında öğrenci bilgileri, notlar ve materyaller burada açılır.</p>
   </WorkspacePageShell>;
   return <StudentWorkspace key={`${data.profile.data!.id}:${studentId}`} entry={entry} tutorId={data.profile.data!.id} tutorUserId={data.user?.id ?? ""} bookings={(data.bookings.data ?? []).filter(booking => booking.tutor.id === data.profile.data!.id && booking.student.id === studentId)} packagesState={data.packages.isSuccess ? "ready" : data.packages.isError ? "error" : "loading"} retryPackages={() => void data.packages.refetch()} />;
 }
@@ -56,7 +62,7 @@ function StudentWorkspace({ entry, tutorId, tutorUserId, bookings, packagesState
         {conversations.isPending ? <p role="status" className="text-small text-ink-mid">Mesajlar yükleniyor…</p> : conversations.isError ? <Button variant="outline" size="sm" className="h-auto whitespace-normal py-2" onClick={() => void conversations.refetch()}>Mesajlar yüklenemedi, yeniden dene</Button> : conversation ? <Button variant="outline" asChild><Link href={`/messages/${conversation.id}`}><ChatCircle className="mr-2 h-5 w-5" aria-hidden="true" />Mesajlar</Link></Button> : <p className="text-small text-ink-mid">Bu öğrenciyle henüz mesajlaşma yok.</p>}
       </div>
       <div className="flex flex-wrap gap-x-6 gap-y-2 border-t border-line pt-4 text-small tabular-nums">
-        <p>{entry.totalLessons} tamamlanan ders</p><p>{entry.upcomingLessons} yaklaşan ders</p><p>{packagesState === "ready" ? `${entry.remainingCredits}/${entry.totalCredits} paket hakkı` : packagesState === "error" ? "Paket hakkı alınamadı" : "Paket hakkı yükleniyor…"}</p>{entry.currentLesson && <p className="font-medium">Ders devam ediyor</p>}
+        <p>{entry.totalLessons} tamamlanan ders</p><p>{entry.upcomingLessons} yaklaşan ders</p>{packageSummary(entry, packagesState) && <p>{packageSummary(entry, packagesState)}</p>}{entry.currentLesson && <p className="font-medium">Ders devam ediyor</p>}
       </div>
       {entry.nextLesson && <p className="text-small tabular-nums text-ink-mid">Sonraki ders: {bookingDateLabel(entry.nextLesson.start_time)}, {bookingTimeLabel(entry.nextLesson.start_time)}</p>}
       {packagesState === "error" && <Button variant="outline" size="sm" onClick={retryPackages}>Paket haklarını yeniden yükle</Button>}
