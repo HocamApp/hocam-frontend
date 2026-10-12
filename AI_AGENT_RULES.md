@@ -80,6 +80,14 @@
   olmadığını kontrol edin — bu repoda sık oluyor (aynı dosyada aynı anda çalışmak özellikle
   `dashboard/tutor/page.tsx` ve `dashboard/student/page.tsx` gibi paylaşılan büyük dosyalarda
   gerçek çakışmaya yol açtı).
+- **Sırlar hiçbir yere girmez.** Veritabanı bağlantı adresi (parola içerir), parola, token, API/servis anahtarı,
+  `DATABASE_URL` ve benzeri değerler hiçbir çıktıya, rapora, commit mesajına, PR/issue metnine, koda,
+  dosyaya, log'a ya da testin beklenen çıktısına yazılmaz; yalnızca ortam değişkeni olarak kullanılır.
+  Sır içerebilecek bir komutun çıktısını yazdırmadan önce maskeleyin (ör. adresi `<url>` ile değiştiren
+  bir süzgeçten geçirin; `echo "$URL"` ya da `set -x` kullanmayın). Bir kabuk komutu hata verirse hata
+  mesajı adresi basabilir; bu yüzden bağlantıyı değişkende tutup çağrıyı bir betik dosyası içinde yapın.
+  Yanlışlıkla bir sır çıktıya sızarsa bunu **"SIR SIZDI"** diyerek hemen ve açıkça yazın: neyin, nereye
+  (hangi dosya ya da oturum kaydına) sızdığını belirtin ve sahibine haber verin. Sızıntıyı sessizce geçmeyin.
 
 ## 6. Git / PR akışı (Claude Code, Codex, vb. — yerel `git`/`gh` erişimi olan ajanlar)
 
