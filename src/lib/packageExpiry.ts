@@ -1,4 +1,5 @@
 import type { PackagePurchase } from "@/types";
+import type { PackageLessons } from "@/lib/packageLessons";
 import { serverNow } from "@/lib/serverClock";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -47,9 +48,24 @@ export function computePackageExpiry(
   };
 }
 
-export function isPastPackage(purchase: PackagePurchase, expiry: PackageExpiry | null): boolean {
+/**
+ * Whether a package belongs under "past packages".
+ *
+ * A paid package is used up when nothing is left to take or to place. Pass the
+ * package's `lessons` whenever the student's bookings are at hand: the credits
+ * alone say 0 as soon as every lesson is on the calendar, which is the state of
+ * a package that was paid for a minute ago. Without them the credits are all
+ * there is to go by.
+ */
+export function isPastPackage(
+  purchase: PackagePurchase,
+  expiry: PackageExpiry | null,
+  lessons?: PackageLessons | null
+): boolean {
   if (purchase.status === "cancelled" || purchase.status === "refunded") return true;
   if (purchase.status === "paid" && expiry?.isExpired) return true;
-  if (purchase.status === "paid" && purchase.remaining_credits <= 0) return true;
+  if (purchase.status === "paid" && (lessons ? lessons.remaining : purchase.remaining_credits) <= 0) {
+    return true;
+  }
   return false;
 }

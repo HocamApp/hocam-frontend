@@ -18,6 +18,8 @@ import type { Booking, PackagePurchase } from "@/types";
 import { bookingDateLabel, bookingInstant, bookingTimeLabel } from "@/lib/bookingTime";
 import { serverNow } from "@/lib/serverClock";
 import { computePackageExpiry } from "@/lib/packageExpiry";
+import { packageLessons, type PackageLessons } from "@/lib/packageLessons";
+import { awaitingPayment, deadlineTimeLabel, packageBadgeStatus } from "@/lib/packagePayment";
 
 // The expiry rules live in src/lib/packageExpiry.ts (the server sends the end
 // date). Re-exported here because the dashboards and the home screen already
@@ -27,16 +29,21 @@ export type { PackageExpiry } from "@/lib/packageExpiry";
 
 export function PackagePurchaseCard({
   purchase,
+  lessons,
   isExpanded = false,
   onToggle,
   details,
 }: {
   purchase: PackagePurchase;
+  /** Where the package stands once the student's lessons are counted (see
+   * `packageLessons`). Without it the card can only show the raw credits. */
+  lessons?: PackageLessons;
   isExpanded?: boolean;
   onToggle?: () => void;
   details?: ReactNode;
 }) {
   const expiry = computePackageExpiry(purchase);
+  const payment = awaitingPayment(purchase);
 
   const summary = (
     <>
@@ -48,7 +55,7 @@ export function PackagePurchaseCard({
           <p className="mt-0.5 text-sm text-[var(--ink-mid)]">{purchase.plan.name}</p>
         </div>
         <span className="flex items-center gap-2">
-          <StatusBadge status={purchase.status} type="packagePurchase" />
+          <StatusBadge status={packageBadgeStatus(purchase)} type="packagePurchase" />
           {onToggle && (
             <ChevronRight
               className={`h-4 w-4 text-muted-foreground transition-transform ${
@@ -63,8 +70,13 @@ export function PackagePurchaseCard({
         <div className="min-w-0">
           <p className="text-xs text-muted-foreground">Ders hakkı</p>
           <p className="mt-1 font-semibold tabular-nums text-[var(--ink)]">
-            {purchase.remaining_credits} / {purchase.total_credits}
+            {purchase.status === "pending"
+              ? `${purchase.total_credits} ders`
+              : `${lessons ? lessons.remaining : purchase.remaining_credits} / ${purchase.total_credits}`}
           </p>
+          {lessons && lessons.unscheduled > 0 && (
+            <p className="mt-1 text-xs text-[var(--ink-mid)]">{lessons.unscheduled} ders planlanmadı</p>
+          )}
         </div>
         <div className="min-w-0">
           <p className="text-xs text-muted-foreground">Toplam tutar</p>
@@ -76,14 +88,16 @@ export function PackagePurchaseCard({
         </div>
         <div className="min-w-0">
           <p className="text-xs text-muted-foreground">
-            {expiry ? "Süre sonu" : "Onay tarihi"}
+            {payment?.open ? "Son ödeme saati" : expiry ? "Süre sonu" : "Onay tarihi"}
           </p>
           <p className="mt-1 break-words font-semibold tabular-nums text-[var(--ink)]">
-            {expiry
-              ? formatDate(expiry.termEndDate.toISOString())
-              : purchase.paid_at
-                ? formatDate(purchase.paid_at)
-                : "—"}
+            {payment?.open
+              ? deadlineTimeLabel(payment.deadlineMs)
+              : expiry
+                ? formatDate(expiry.termEndDate.toISOString())
+                : purchase.paid_at
+                  ? formatDate(purchase.paid_at)
+                  : "—"}
           </p>
         </div>
       </div>
@@ -201,7 +215,7 @@ export function PackageLearningCard({
               </p>
             </div>
             <span className="flex items-center gap-2">
-              <StatusBadge status={purchase.status} type="packagePurchase" />
+              <StatusBadge status={packageBadgeStatus(purchase)} type="packagePurchase" />
               <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
             </span>
           </div>
@@ -237,7 +251,7 @@ export function PackageLearningCard({
             </p>
           </div>
           <span className="flex items-center gap-2">
-            <StatusBadge status={purchase.status} type="packagePurchase" />
+            <StatusBadge status={packageBadgeStatus(purchase)} type="packagePurchase" />
             <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
           </span>
         </div>
@@ -292,6 +306,7 @@ export function PackageLearningDetailsSheet({
   if (!purchase) return null;
 
   const now = serverNow();
+  const lessons = packageLessons(purchase, bookings);
   const packageBookings = bookings.filter((booking) => booking.package_purchase === purchase.id);
   const upcomingBookings = sortByStart(
     packageBookings.filter(
@@ -366,19 +381,34 @@ export function PackageLearningDetailsSheet({
 
           <div className="grid grid-cols-2 gap-3 rounded-xl border p-4 text-sm">
             <div>
-              <p className="text-muted-foreground">Kalan ders hakkı</p>
-              <p className="mt-1 text-lg font-semibold">{purchase.remaining_credits} / {purchase.total_credits}</p>
+              <p className="text-muted-foreground">
+                {purchase.status === "pending" ? "Paketteki ders" : "Kalan ders hakkı"}
+              </p>
+              <p className="mt-1 text-lg font-semibold">
+                {purchase.status === "pending" ? lessons.total : `${lessons.remaining} / ${lessons.total}`}
+              </p>
             </div>
             <div>
               <p className="text-muted-foreground">Planlanan ders</p>
               <p className="mt-1 text-lg font-semibold">{upcomingBookings.length}</p>
             </div>
+            {lessons.unscheduled > 0 && (
+              <p className="col-span-2 text-muted-foreground">
+                {lessons.unscheduled} dersin henüz bir saate yerleşmedi. Hocanın boş saatlerinden seçebilirsin.
+              </p>
+            )}
           </div>
 
           <LessonTimeline
             title="Sıradaki derslerin"
             bookings={upcomingBookings}
-            emptyMessage={purchase.status === "pending" ? "Paketin onaylandığında derslerini planlayabileceksin." : "Henüz planlanmış dersin yok."}
+            emptyMessage={
+              awaitingPayment(purchase)
+                ? "Ödemen tamamlandığında derslerin takvimine eklenir."
+                : purchase.status === "pending"
+                  ? "Paketin onaylandığında derslerini planlayabileceksin."
+                  : "Henüz planlanmış dersin yok."
+            }
           />
           <LessonTimeline
             title="Ders geçmişin"

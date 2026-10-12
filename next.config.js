@@ -99,6 +99,9 @@ const nextConfig = {
     return [
       { source: "/araclar", destination: `${origin}/araclar` },
       { source: "/araclar/:path*", destination: `${origin}/araclar/:path*` },
+      // No rule for the hub's RSC path: Vercel answers "/araclar.rsc" with this app's
+      // static 404 before rewrites run, so one cannot work. hocam-tools links to its hub
+      // with plain <a>, so no RSC request for it is made.
     ];
   },
 

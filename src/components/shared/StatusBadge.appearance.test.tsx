@@ -30,6 +30,8 @@ const CASES: Array<{
   { type: "lessonRequest", status: "accepted", label: "Kabul Edildi", classes: ["border-success", "bg-success-soft", "text-ink"], background: "success-soft", foreground: "ink" },
   { type: "lessonRequest", status: "declined", label: "Reddedildi", classes: ["border-error", "bg-error", "text-destructive-foreground"], background: "error", foreground: "destructive-foreground" },
   { type: "packagePurchase", status: "pending", label: "İnceleme bekliyor", classes: ["border-ink", "bg-ink", "text-paper"], background: "ink", foreground: "paper" },
+  { type: "packagePurchase", status: "awaiting_payment", label: "Ödeme bekleniyor", classes: ["border-ink", "bg-ink", "text-paper"], background: "ink", foreground: "paper" },
+  { type: "packagePurchase", status: "payment_expired", label: "Ödeme süresi doldu", classes: ["border-line", "bg-paper", "text-ink-mid"], background: "paper", foreground: "ink-mid" },
   { type: "packagePurchase", status: "paid", label: "Aktif", classes: ["border-success", "bg-success-soft", "text-ink"], background: "success-soft", foreground: "ink" },
   { type: "packagePurchase", status: "cancelled", label: "İptal edildi", classes: ["border-error", "bg-error", "text-destructive-foreground"], background: "error", foreground: "destructive-foreground" },
   { type: "packagePurchase", status: "refunded", label: "İade edildi", classes: ["border-line", "bg-paper", "text-ink-mid"], background: "paper", foreground: "ink-mid" },

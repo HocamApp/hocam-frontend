@@ -1,6 +1,8 @@
 import type { Booking, Conversation, PackagePurchase } from "@/types";
 import type { CoachingStudentRow } from "@/lib/coachingApi";
 import { bookingInstant } from "@/lib/bookingTime";
+import { computePackageExpiry, isPastPackage } from "@/lib/packageExpiry";
+import { packageLessons } from "@/lib/packageLessons";
 import { serverNow } from "@/lib/serverClock";
 
 export const CLASSROOM_STATUSES: ReadonlySet<Booking["status"]> = new Set<Booking["status"]>([
@@ -15,9 +17,22 @@ export interface StudentRosterEntry {
   nextLesson: Booking | null;
   currentLesson: Booking | null;
   lastCompletedAt: string | null;
-  remainingCredits: number;
-  totalCredits: number;
+  /** Whether the student has any lesson with this tutor. A student who has only
+   * paid for a package has none yet: every hour they chose was taken while they
+   * paid, or they have not placed one. */
+  hasLessons: boolean;
+  /** Lessons still to take or to place on the student's running packages with
+   * this tutor (see `packageLessons`). */
+  packageRemaining: number;
+  /** Of those, the credits that are on no day yet. */
+  packageUnscheduled: number;
+  /** When the most recent of those packages was paid for (an instant), if any. */
+  packagePaidAt: string | null;
 }
+
+/** Shown when a student who paid has no name on file: the purchase summary never
+ * falls back to the email, so the tutor is not handed it. */
+export const UNNAMED_STUDENT = "İsimsiz öğrenci";
 
 /** Booking wall-clock helpers now live in `@/lib/bookingTime`, the single
  * place that decodes the mislabeled-UTC storage convention. Re-exported here
@@ -31,7 +46,7 @@ export function getStudentRoster(bookings: Booking[], purchases: PackagePurchase
     const entry = roster.get(booking.student.id) ?? {
       student: booking.student, totalLessons: 0, upcomingLessons: 0,
       nextLesson: null, currentLesson: null, lastCompletedAt: null,
-      remainingCredits: 0, totalCredits: 0,
+      hasLessons: true, packageRemaining: 0, packageUnscheduled: 0, packagePaidAt: null,
     };
     const instant = bookingInstant(booking.start_time);
     if (booking.status === "completed") {
@@ -45,12 +60,30 @@ export function getStudentRoster(bookings: Booking[], purchases: PackagePurchase
     if (booking.status === "in_progress" && (!entry.currentLesson || instant > bookingInstant(entry.currentLesson.start_time))) entry.currentLesson = booking;
     roster.set(booking.student.id, entry);
   }
+  // A package is paid for and its lessons go on the calendar in the same step,
+  // so what is left of it comes from the lessons as well as the credits. A
+  // student who paid but has no lesson yet belongs here too: their place with
+  // this tutor is taken, and the tutor should know whose it is.
   for (const purchase of purchases) {
     if (purchase.status !== "paid" || purchase.tutor.id !== tutorId) continue;
-    const entry = roster.get(purchase.student.id);
-    if (!entry) continue;
-    entry.remainingCredits += purchase.remaining_credits;
-    entry.totalCredits += purchase.total_credits;
+    const lessons = packageLessons(purchase, bookings);
+    if (isPastPackage(purchase, computePackageExpiry(purchase, now), lessons)) continue;
+    const entry = roster.get(purchase.student.id) ?? {
+      student: {
+        id: purchase.student.id,
+        email: "",
+        display_name: `${purchase.student.name} ${purchase.student.surname}`.trim() || UNNAMED_STUDENT,
+      },
+      totalLessons: 0, upcomingLessons: 0, nextLesson: null, currentLesson: null,
+      lastCompletedAt: null, hasLessons: false, packageRemaining: 0, packageUnscheduled: 0,
+      packagePaidAt: null,
+    };
+    entry.packageRemaining += lessons.remaining;
+    entry.packageUnscheduled += lessons.unscheduled;
+    if (purchase.paid_at && (!entry.packagePaidAt || Date.parse(purchase.paid_at) > Date.parse(entry.packagePaidAt))) {
+      entry.packagePaidAt = purchase.paid_at;
+    }
+    roster.set(purchase.student.id, entry);
   }
   return Array.from(roster.values()).sort((a, b) => {
     const nextA = a.nextLesson ? bookingInstant(a.nextLesson.start_time) : Infinity;

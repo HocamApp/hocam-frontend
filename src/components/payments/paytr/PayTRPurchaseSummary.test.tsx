@@ -152,4 +152,30 @@ describe("PayTRPurchaseSummary", () => {
     assert.ok(screen.getByText("Paket tutarı görüntülenemiyor."));
     assert.equal(screen.queryByText("5.200,24 ₺"), null);
   });
+
+  it("shows the weekly hours the purchase holds, each with its end, once under the subject", () => {
+    render(
+      <PayTRPurchaseSummary
+        purchase={purchase({
+          recurring_slots: [
+            { slot_index: 1, day_of_week: 3, start_time: "12:00", subject: { id: "s1", name: "Matematik" } },
+            { slot_index: 0, day_of_week: 0, start_time: "11:00", subject: { id: "s1", name: "Matematik" } },
+          ],
+        })}
+      />
+    );
+
+    assert.ok(screen.getByText("Ders programın"));
+    assert.equal(screen.getAllByText("Matematik").length, 1);
+    const rows = screen.getAllByRole("listitem").map((item) => item.textContent);
+    assert.deepEqual(rows, ["Her Pazartesi11:00 – 11:40", "Her Perşembe12:00 – 12:40"]);
+    assert.ok(screen.getByText("Bu saatler paket boyunca her hafta tekrar eder."));
+  });
+
+  it("claims no schedule for a purchase that holds none", () => {
+    render(<PayTRPurchaseSummary purchase={purchase()} />);
+
+    assert.equal(screen.queryByText("Ders programın"), null);
+    assert.equal(screen.queryByRole("list"), null);
+  });
 });

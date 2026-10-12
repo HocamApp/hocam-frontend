@@ -41,7 +41,7 @@ describe("/araclar rewrite", () => {
     assert.deepEqual(await rewritesWith({}), []);
   });
 
-  it("proxies exactly /araclar and /araclar/:path* to the tools origin", async () => {
+  it("proxies /araclar, /araclar and /araclar/:path* to the tools origin", async () => {
     assert.deepEqual(await rewritesWith({ origin: "https://hocam-tools.vercel.app" }), [
       { source: "/araclar", destination: "https://hocam-tools.vercel.app/araclar" },
       { source: "/araclar/:path*", destination: "https://hocam-tools.vercel.app/araclar/:path*" },
@@ -52,7 +52,10 @@ describe("/araclar rewrite", () => {
     const rewrites = await rewritesWith({ origin: "https://hocam-tools.vercel.app/some/path/" });
     assert.deepEqual(
       rewrites.map((r) => r.destination),
-      ["https://hocam-tools.vercel.app/araclar", "https://hocam-tools.vercel.app/araclar/:path*"],
+      [
+        "https://hocam-tools.vercel.app/araclar",
+        "https://hocam-tools.vercel.app/araclar/:path*",
+      ],
     );
   });
 

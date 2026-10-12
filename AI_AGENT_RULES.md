@@ -91,6 +91,14 @@
   olmadığını kontrol edin — bu repoda sık oluyor (aynı dosyada aynı anda çalışmak özellikle
   `dashboard/tutor/page.tsx` ve `dashboard/student/page.tsx` gibi paylaşılan büyük dosyalarda
   gerçek çakışmaya yol açtı).
+- **Sırlar hiçbir yere girmez.** Veritabanı bağlantı adresi (parola içerir), parola, token, API/servis anahtarı,
+  `DATABASE_URL` ve benzeri değerler hiçbir çıktıya, rapora, commit mesajına, PR/issue metnine, koda,
+  dosyaya, log'a ya da testin beklenen çıktısına yazılmaz; yalnızca ortam değişkeni olarak kullanılır.
+  Sır içerebilecek bir komutun çıktısını yazdırmadan önce maskeleyin (ör. adresi `<url>` ile değiştiren
+  bir süzgeçten geçirin; `echo "$URL"` ya da `set -x` kullanmayın). Bir kabuk komutu hata verirse hata
+  mesajı adresi basabilir; bu yüzden bağlantıyı değişkende tutup çağrıyı bir betik dosyası içinde yapın.
+  Yanlışlıkla bir sır çıktıya sızarsa bunu **"SIR SIZDI"** diyerek hemen ve açıkça yazın: neyin, nereye
+  (hangi dosya ya da oturum kaydına) sızdığını belirtin ve sahibine haber verin. Sızıntıyı sessizce geçmeyin.
 
 ## 6. Git / PR akışı (Claude Code, Codex, vb. — yerel `git`/`gh` erişimi olan ajanlar)
 
@@ -131,7 +139,9 @@ Her değişiklik için:
   `TOOLS_ORIGIN` olmadan açılırsa build bilerek hata verir (404 yayınlanmasın). Sıra: önce
   `TOOLS_ORIGIN` ile proxy doğrulanır, sonra bağlantılar açılır. İkisi de build zamanında okunur:
   değiştirmek yeniden deploy gerektirir. İkisi de production'da açılmadan önce sahiplerin onayı gerekir.
-- Footer'daki `/araclar` bağlantısı `next/link` değil düz `<a>`'dır (hedef bu uygulamanın route'u değil).
+- Footer'da araçlar kendi sütununda ("Ücretsiz sınav araçları", `ysHomeCopy.ts` → `toolsColumn`) listelenir; `/araclar/*` bağlantıları `next/link` değil düz `<a>`'dır (hedef bu uygulamanın route'u değil). Yeni araç eklenince `toolsColumn.links` güncellenir.
+- `/araclar` (hub) için `/araclar.rsc` rewrite'ı EKLEME: Vercel bu yolu rewrite'lardan önce ana
+  uygulamanın statik 404'üyle yanıtlar, kural çalışmaz. Araçlar uygulaması hub'a düz `<a>` ile bağlanır.
 - Araçların kendi kuralları (doğruluk, KVKK, SEO, erişilebilirlik) `hocam-tools/AI_AGENT_RULES.md`
   dosyasındadır.
 
