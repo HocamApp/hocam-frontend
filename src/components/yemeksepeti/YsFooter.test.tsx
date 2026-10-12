@@ -129,7 +129,7 @@ test("the free tools link is absent unless the tools are enabled", async () => {
   assert.doesNotMatch(renderToStaticMarkup(<YsFooter v2 />), /araclar|YKS araçları/);
 });
 
-test("with the tools enabled both footers link /araclar as a plain anchor", async () => {
+test("with the tools enabled both footers list each tool as a plain anchor", async () => {
   pathname = "/iletisim";
   const { YsFooter } = await import("./YsFooter");
 
@@ -137,9 +137,19 @@ test("with the tools enabled both footers link /araclar as a plain anchor", asyn
     renderToStaticMarkup(<YsFooter tools />),
     renderToStaticMarkup(<YsFooter v2 tools />),
   ]) {
-    assert.match(html, /<a href="\/araclar"[^>]*>Ücretsiz YKS araçları<\/a>/);
-    // next/link would prefetch /araclar as if it were a route of this app.
-    assert.doesNotMatch(html, /href="\/araclar"[^>]*data-next-link/);
-    assert.doesNotMatch(html, /data-next-link="true"[^>]*href="\/araclar"/);
+    assert.match(html, />Ücretsiz YKS araçları<\/h4>/);
+    for (const [slug, label] of [
+      ["yks-puan-siralama-hesaplama", "YKS puan ve sıralama hesaplama"],
+      ["tyt-net-hesaplama", "TYT net hesaplama"],
+      ["ayt-net-hesaplama", "AYT net hesaplama"],
+      ["obp-hesaplama", "OBP hesaplama"],
+      ["hedef-net-planlayici", "Hedef net planlayıcı"],
+    ]) {
+      assert.match(html, new RegExp(`<a href="/araclar/${slug}"[^>]*>${label}</a>`));
+    }
+    assert.match(html, /<a href="\/araclar"[^>]*>Tüm araçlar<\/a>/);
+    // next/link would prefetch /araclar/* as if it were a route of this app.
+    assert.doesNotMatch(html, /href="\/araclar[^"]*"[^>]*data-next-link/);
+    assert.doesNotMatch(html, /data-next-link="true"[^>]*href="\/araclar/);
   }
 });
