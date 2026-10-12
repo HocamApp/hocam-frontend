@@ -20,6 +20,16 @@ export interface PayTRPurchaseFacts {
   packageDiscount: number;
   promoDiscount: number;
   total: number;
+  /** The weekly hours the purchase holds, sorted; empty when it carries none. */
+  weeklySlots: PayTRWeeklySlot[];
+  /** When the hold on those hours ends, in epoch milliseconds; null if none. */
+  holdDeadlineMs: number | null;
+}
+
+export interface PayTRWeeklySlot {
+  dayOfWeek: number;
+  startTime: string;
+  subjectName: string;
 }
 
 /** DRF serializes decimals as strings often enough that both shapes arrive. */
@@ -32,6 +42,35 @@ function readAmount(value: unknown): number | null {
 
 function initials(name: string, surname: string): string {
   return `${name.charAt(0)}${surname.charAt(0)}`.toUpperCase();
+}
+
+const TIME_PATTERN = /^([01]\d|2[0-3]):[0-5]\d$/;
+
+/** Anything malformed is dropped, never half-shown: a schedule line that reads
+ * "Her undefined" next to a payment button is worse than no line. */
+function readWeeklySlots(purchase: PackagePurchase): PayTRWeeklySlot[] {
+  const slots = Array.isArray(purchase.recurring_slots) ? purchase.recurring_slots : [];
+  return slots
+    .filter(
+      (slot) =>
+        Number.isInteger(slot?.day_of_week) &&
+        slot.day_of_week >= 0 &&
+        slot.day_of_week <= 6 &&
+        typeof slot.start_time === "string" &&
+        TIME_PATTERN.test(slot.start_time)
+    )
+    .map((slot) => ({
+      dayOfWeek: slot.day_of_week,
+      startTime: slot.start_time,
+      subjectName: slot.subject?.name ?? "",
+    }))
+    .sort((a, b) => a.dayOfWeek - b.dayOfWeek || a.startTime.localeCompare(b.startTime));
+}
+
+function readHoldDeadline(purchase: PackagePurchase): number | null {
+  if (typeof purchase.payment_deadline !== "string") return null;
+  const ms = Date.parse(purchase.payment_deadline);
+  return Number.isFinite(ms) ? ms : null;
 }
 
 export function readPayTRPurchaseFacts(
@@ -66,5 +105,7 @@ export function readPayTRPurchaseFacts(
     packageDiscount,
     promoDiscount,
     total,
+    weeklySlots: readWeeklySlots(purchase),
+    holdDeadlineMs: purchase.status === "pending" ? readHoldDeadline(purchase) : null,
   };
 }
