@@ -14,14 +14,74 @@ test("only confirmed relationships enter roster, scoped to tutor profile and ded
   assert.equal(rows.find(r => r.student.id === "in_progress")?.currentLesson?.status, "in_progress");
   assert.ok(!rows.some(r => ["pending", "cancelled", "expired", "own-teacher"].includes(r.student.id)));
 });
-test("orders next lesson then last completed, counts future confirmed only and enriches paid own packages", () => {
+function paid(overrides: Partial<Omit<PackagePurchase, "student">> & { student?: { id: string; name?: string; surname?: string } } = {}): PackagePurchase {
+  const { student, ...rest } = overrides;
+  return {
+    id: "pkg-1",
+    student: { id: "early", name: "Erken", surname: "Kuş", ...student },
+    tutor: { id: "tutor-1", name: "Hoca", surname: "Bir" },
+    plan: { id: "plan", name: "Haftada 2", code: null, lesson_count: 8, lesson_duration_minutes: 40, lessons_per_week: 2, duration_days: 30, discount_percent: 0 },
+    status: "paid", total_credits: 8, remaining_credits: 3,
+    paid_at: "2026-09-01T09:00:00Z", expires_at: "2026-10-31T00:00:00Z",
+    ...rest,
+  } as PackagePurchase;
+}
+test("orders next lesson then last completed and counts future confirmed only", () => {
   const lessons = [booking("late", "confirmed", "2026-09-08T12:00:00Z"), booking("early", "confirmed"), booking("early", "pending"), booking("early", "completed", "2026-08-01T12:00:00Z"), booking("recent", "completed", "2026-09-04T12:00:00Z"), booking("old", "completed", "2026-08-02T12:00:00Z")];
-  const paid = { student: { id: "early" }, tutor: { id: "tutor-1" }, status: "paid", remaining_credits: 3, total_credits: 8 } as PackagePurchase;
-  const rows = getStudentRoster(lessons, [paid, { ...paid, status: "pending" }, { ...paid, tutor: { ...paid.tutor, id: "other" } }, { ...paid, student: { ...paid.student, id: "package-only" } }], "tutor-1", now);
+  const rows = getStudentRoster(lessons, [], "tutor-1", now);
   assert.deepEqual(rows.map(r => r.student.id), ["early", "late", "recent", "old"]);
   assert.equal(rows[0].upcomingLessons, 1);
-  assert.equal(rows[0].remainingCredits, 3);
-  assert.equal(rows[0].totalCredits, 8);
+  assert.ok(rows.every(r => r.hasLessons));
+});
+test("what is left of a package is its booked lessons plus its credits not placed yet", () => {
+  // Every lesson of a freshly paid package is on the calendar and no credit is
+  // left unscheduled: the raw credits say 0, the package has 8 lessons ahead.
+  const ahead = (n: number, purchase = "pkg-1") => Array.from({ length: n }, (_, i) => ({ ...booking("early", "confirmed", `2026-09-${10 + i}T12:00:00Z`), package_purchase: purchase }));
+  const [fresh] = getStudentRoster(ahead(8), [paid({ remaining_credits: 0 })], "tutor-1", now);
+  assert.equal(fresh.packageRemaining, 8);
+  assert.equal(fresh.packageUnscheduled, 0);
+
+  const [partly] = getStudentRoster(ahead(6), [paid({ remaining_credits: 2 })], "tutor-1", now);
+  assert.equal(partly.packageRemaining, 8);
+  assert.equal(partly.packageUnscheduled, 2);
+});
+test("a student who has only paid for a package is in the roster, with no lessons", () => {
+  const rows = getStudentRoster([booking("early", "confirmed")], [paid({ student: { id: "package-only", name: "Ayşe", surname: "Kaya" }, remaining_credits: 8 })], "tutor-1", now);
+  const only = rows.find(r => r.student.id === "package-only");
+  assert.ok(only);
+  assert.equal(only.hasLessons, false);
+  assert.equal(only.student.display_name, "Ayşe Kaya");
+  assert.equal(only.student.email, "");
+  assert.equal(only.nextLesson, null);
+  assert.equal(only.upcomingLessons, 0);
+  assert.equal(only.packageRemaining, 8);
+  assert.equal(only.packageUnscheduled, 8);
+  assert.equal(only.packagePaidAt, "2026-09-01T09:00:00Z");
+  // Listed after the students who have a lesson to come.
+  assert.equal(rows.at(-1)?.student.id, "package-only");
+});
+test("a package that is not running, or is another tutor's, adds nobody and nothing", () => {
+  const lessons = [booking("early", "completed", "2026-08-01T12:00:00Z")];
+  const rows = getStudentRoster(lessons, [
+    paid({ student: { id: "pending-only" }, status: "pending" }),
+    paid({ student: { id: "cancelled-only" }, status: "cancelled" }),
+    paid({ student: { id: "refunded-only" }, status: "refunded" }),
+    paid({ student: { id: "other-tutors" }, tutor: { id: "other", name: "Başka", surname: "Hoca" } }),
+    paid({ student: { id: "used-up" }, remaining_credits: 0 }),
+    paid({ student: { id: "ended" }, expires_at: "2026-09-01T00:00:00Z" }),
+    // The student with a lesson already: a pending package adds no lessons left.
+    paid({ id: "pkg-pending", status: "pending", remaining_credits: 5 }),
+  ], "tutor-1", now);
+  assert.deepEqual(rows.map(r => r.student.id), ["early"]);
+  assert.equal(rows[0].packageRemaining, 0);
+});
+test("lessons left are added up across a student's running packages", () => {
+  const rows = getStudentRoster([booking("early", "completed", "2026-08-01T12:00:00Z")], [
+    paid({ id: "a", remaining_credits: 3 }),
+    paid({ id: "b", remaining_credits: 2 }),
+  ], "tutor-1", now);
+  assert.equal(rows[0].packageRemaining, 5);
+  assert.equal(rows[0].packageUnscheduled, 5);
 });
 test("Turkish name search excludes private email addresses and keeps scheduling filters", () => {
   const rows = getStudentRoster([booking("İpek Işık", "confirmed"), booking("Ayşe", "completed")], [], "tutor-1", now);
@@ -47,4 +107,18 @@ test("conversation and coaching associations use identities rather than names", 
   assert.equal(studentConversation([conversation, { ...conversation, id: "recent", latest_message: { created_at: "2026-09-01T00:00:00Z" } as NonNullable<Conversation["latest_message"]> }, { ...conversation, id: "wrong", tutor: "u2", created_at: "2026-10-01T00:00:00Z" }], "s1", "u1")?.id, "recent");
   assert.equal(studentConversation([conversation], "s2", "u1"), undefined);
   assert.deepEqual(studentCoaching([{ purchase_id: "p1", student_id: "s1" }, { purchase_id: "p2", student_name: "s1" }] as Parameters<typeof studentCoaching>[0], "s1").map(r => r.purchase_id), ["p1"]);
+});
+test("a student who paid and has no name on file is not named after an email address", () => {
+  const rows = getStudentRoster([], [paid({ student: { id: "nameless", name: "", surname: "" } })], "tutor-1", now);
+
+  assert.equal(rows[0].student.display_name, "İsimsiz öğrenci");
+  assert.equal(rows[0].student.email, "");
+});
+test("the day a student paid is the most recent of their running packages", () => {
+  const rows = getStudentRoster([], [
+    paid({ id: "a", paid_at: "2026-09-01T09:00:00Z" }),
+    paid({ id: "b", paid_at: "2026-09-03T09:00:00Z" }),
+  ], "tutor-1", now);
+
+  assert.equal(rows[0].packagePaidAt, "2026-09-03T09:00:00Z");
 });

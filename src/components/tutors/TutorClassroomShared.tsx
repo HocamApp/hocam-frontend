@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Booking } from "@/types";
-import { studentName } from "@/lib/tutorClassroom";
+import { studentName, type StudentRosterEntry } from "@/lib/tutorClassroom";
 
 export function StudentAvatar({ student }: { student: Booking["student"] }) {
   const name = studentName(student);
@@ -27,4 +27,18 @@ export function ClassroomLoading() {
     <div className="flex items-center gap-4"><Skeleton className="h-12 w-12 rounded-full" /><Skeleton className="h-6 w-40" /></div>
     <Skeleton className="h-4 w-3/4" /><Skeleton className="h-4 w-1/2" />
   </div>;
+}
+
+export type PackagesState = "ready" | "loading" | "error";
+
+/** What is left of the student's running packages, for the tutor: lessons to take
+ * or to place, and how many of them have no day yet. Nothing for a student with
+ * no running package (a trial lesson only). */
+export function packageSummary(entry: StudentRosterEntry, state: PackagesState): string | null {
+  if (state === "error") return "Paket hakkı alınamadı";
+  if (state === "loading") return "Paket hakkı yükleniyor…";
+  if (entry.packageRemaining === 0) return null;
+  return entry.packageUnscheduled > 0
+    ? `Pakette ${entry.packageRemaining} ders kaldı, ${entry.packageUnscheduled} tanesi planlanmadı`
+    : `Pakette ${entry.packageRemaining} ders kaldı`;
 }

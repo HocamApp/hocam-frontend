@@ -13,7 +13,13 @@ import {
   isPastPackage,
   PackagePurchaseCard,
 } from "@/components/payments/PackagePurchaseCard";
+import { RefundEntry } from "@/components/payments/refund/RefundEntry";
+import { RefundRequestsSection } from "@/components/payments/refund/RefundRequestsSection";
+import { useAfterDelay } from "@/hooks/useAfterDelay";
+import { fetchBookings } from "@/lib/lessonsApi";
+import { packageLessons } from "@/lib/packageLessons";
 import { fetchPackagePurchases, fetchPaymentHistory } from "@/lib/paymentsApi";
+import { fetchRefundRequests } from "@/lib/refundsApi";
 import {
   creditActivityLabel,
   isMonetaryPaymentEntry,
@@ -100,6 +106,8 @@ function PackageActivity({
   );
 }
 
+const BOOKINGS_WAIT_MS = 3000;
+
 function PackagesSection() {
   const [expandedPackageId, setExpandedPackageId] = useState<string | null>(null);
   const { data, isLoading, isError } = useQuery({
@@ -114,8 +122,26 @@ function PackagesSection() {
     queryKey: ["payment-history"],
     queryFn: fetchPaymentHistory,
   });
+  // Only to know which packages already have a request open; a list that
+  // cannot be read leaves the entry on its default and the server decides.
+  const { data: refunds } = useQuery({
+    queryKey: ["refund-requests"],
+    queryFn: fetchRefundRequests,
+  });
+  // What is left of a package comes from its lessons as well as its credits
+  // (see `packageLessons`). A list that cannot be read leaves the credits to go
+  // by, as before.
+  const { data: bookings, isLoading: isBookingsLoading } = useQuery({
+    queryKey: ["bookings"],
+    queryFn: fetchBookings,
+  });
+  // The packages are the page; the lessons only refine which of them are still
+  // running. A slow lessons request holds the list back for a moment, not until
+  // it times out (45 s, retried once): after that the list shows from the
+  // credits and settles when the lessons arrive.
+  const bookingsOverdue = useAfterDelay(isBookingsLoading, BOOKINGS_WAIT_MS);
 
-  if (isLoading) {
+  if (isLoading || (isBookingsLoading && !bookingsOverdue)) {
     return (
       <div className="py-8">
         <LoadingSpinner />
@@ -137,12 +163,13 @@ function PackagesSection() {
   const withExpiry = data.map((purchase) => ({
     purchase,
     expiry: computePackageExpiry(purchase),
+    lessons: packageLessons(purchase, bookings ?? []),
   }));
   const active = withExpiry.filter(
-    ({ purchase, expiry }) => !isPastPackage(purchase, expiry)
+    ({ purchase, expiry, lessons }) => !isPastPackage(purchase, expiry, lessons)
   );
-  const past = withExpiry.filter(({ purchase, expiry }) =>
-    isPastPackage(purchase, expiry)
+  const past = withExpiry.filter(({ purchase, expiry, lessons }) =>
+    isPastPackage(purchase, expiry, lessons)
   );
 
   return (
@@ -151,10 +178,11 @@ function PackagesSection() {
         {active.length === 0 ? (
           <p className="text-sm text-muted-foreground">Aktif paketin yok.</p>
         ) : (
-          active.map(({ purchase }) => (
+          active.map(({ purchase, lessons }) => (
             <PackagePurchaseCard
               key={purchase.id}
               purchase={purchase}
+              lessons={lessons}
               isExpanded={expandedPackageId === purchase.id}
               onToggle={() =>
                 setExpandedPackageId((current) =>
@@ -162,13 +190,16 @@ function PackagesSection() {
                 )
               }
               details={
-                <PackageActivity
-                  entries={(history ?? []).filter((entry) =>
-                    isPackageCreditActivity(entry, purchase.id)
-                  )}
-                  isLoading={isHistoryLoading}
-                  isError={isHistoryError}
-                />
+                <>
+                  <PackageActivity
+                    entries={(history ?? []).filter((entry) =>
+                      isPackageCreditActivity(entry, purchase.id)
+                    )}
+                    isLoading={isHistoryLoading}
+                    isError={isHistoryError}
+                  />
+                  <RefundEntry purchase={purchase} refunds={refunds} />
+                </>
               }
             />
           ))
@@ -180,10 +211,11 @@ function PackagesSection() {
           <h3 className="text-sm font-semibold text-muted-foreground">
             Geçmiş paketler
           </h3>
-          {past.map(({ purchase }) => (
+          {past.map(({ purchase, lessons }) => (
             <PackagePurchaseCard
               key={purchase.id}
               purchase={purchase}
+              lessons={lessons}
               isExpanded={expandedPackageId === purchase.id}
               onToggle={() =>
                 setExpandedPackageId((current) =>
@@ -191,13 +223,16 @@ function PackagesSection() {
                 )
               }
               details={
-                <PackageActivity
-                  entries={(history ?? []).filter((entry) =>
-                    isPackageCreditActivity(entry, purchase.id)
-                  )}
-                  isLoading={isHistoryLoading}
-                  isError={isHistoryError}
-                />
+                <>
+                  <PackageActivity
+                    entries={(history ?? []).filter((entry) =>
+                      isPackageCreditActivity(entry, purchase.id)
+                    )}
+                    isLoading={isHistoryLoading}
+                    isError={isHistoryError}
+                  />
+                  <RefundEntry purchase={purchase} refunds={refunds} />
+                </>
               }
             />
           ))}
@@ -268,6 +303,7 @@ function PaymentsContent() {
           </div>
           <PackagesSection />
         </section>
+        <RefundRequestsSection />
         <section>
           <div className="mb-5">
             <h2 className="text-xl font-bold text-[var(--ink)]">Ödeme geçmişi</h2>
