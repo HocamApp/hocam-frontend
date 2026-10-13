@@ -13,6 +13,7 @@ import {
   isPastPackage,
   PackagePurchaseCard,
 } from "@/components/payments/PackagePurchaseCard";
+import { UnplacedCreditsEntry } from "@/components/payments/place/UnplacedCreditsEntry";
 import { RefundEntry } from "@/components/payments/refund/RefundEntry";
 import { RefundRequestsSection } from "@/components/payments/refund/RefundRequestsSection";
 import { useAfterDelay } from "@/hooks/useAfterDelay";
@@ -198,6 +199,7 @@ function PackagesSection() {
                     isLoading={isHistoryLoading}
                     isError={isHistoryError}
                   />
+                  <UnplacedCreditsEntry purchase={purchase} />
                   <RefundEntry purchase={purchase} refunds={refunds} />
                 </>
               }

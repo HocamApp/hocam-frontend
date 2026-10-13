@@ -174,4 +174,22 @@ describe("refunds on the payments page", () => {
     assert.equal(screen.queryByText("İade taleplerin"), null);
     assert.deepEqual(refundLinks(), []);
   });
+
+  it("offers to place the credits that are not on the calendar, for that package", async () => {
+    purchases = () => [paidPurchase({ remaining_credits: 4 })];
+    renderPage();
+    await openPackage();
+
+    const link = await screen.findByRole("link", { name: "Hakları yerleştir" });
+    assert.equal(link.getAttribute("href"), "/profile/payments/place?purchase=purchase-1");
+  });
+
+  it("offers nothing to place on a package waiting for its payment", async () => {
+    purchases = () => [paidPurchase({ status: "pending", paid_at: null, remaining_credits: 4 })];
+    renderPage();
+    await openPackage();
+
+    await screen.findByText(/Bu pakette henüz ders hakkı hareketi yok/);
+    assert.equal(screen.queryByRole("link", { name: "Hakları yerleştir" }), null);
+  });
 });
