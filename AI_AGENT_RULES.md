@@ -29,6 +29,13 @@
   backend `PAYTR_ENABLED` ayarıdır; ikisi ayrı anahtardır ve production'da açılması ayrı bir
   operasyon kararıdır. `NEXT_PUBLIC_*` build-time inline edilir: değiştirmek yeniden
   build/deploy gerektirir.
+- **Ödemenin kime açık olduğu sunucunun cevabıdır** (`useCheckoutAvailability`,
+  `GET /api/payments/checkout-availability/`). `NEXT_PUBLIC_PAYTR_ENABLED` tek başına kimseye
+  ödeme açmaz: bayrak kapalıysa hiçbir şey sorulmaz ve ekranlar eskisi gibidir; açıksa sunucu
+  bu öğrenci için "açık" demeden ödeme akışı görünmez. Girişsiz ziyaretçi, sunucunun "hayır"ı
+  ve hatalı/404 cevap "yakında" demektir, asla "açık" değil. Cevap kullanıcıya özeldir (cache
+  anahtarında kullanıcı kimliği), bir dakika tutulur ve ilgili ekran her açıldığında yeniden
+  sorulur. Bu mantığı ekranlara elle kopyalama, hook'u kullan.
 - Kart, CVV, OTP ve 3D Secure verisi yalnız PayTR'nin kendi iframe'inde kalır. Merchant
   key/salt frontend'e **gelmez**; ad/telefon/adres ve iframe token'ı log, analytics veya
   tarayıcı depolamasına **yazılmaz**. Ödeme başarısı yalnız backend `purchase.status === "paid"`
