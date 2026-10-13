@@ -33,10 +33,22 @@ import {
 import { usePayTRPostCreate } from "@/components/payments/paytr/usePayTRPostCreate";
 import {
   decodeCheckoutSchedule,
+  encodeCheckoutSchedule,
   toSchedulePayload,
 } from "@/lib/checkoutSchedule";
+import { PAYTR_ENABLED } from "@/lib/featureFlags";
+import { fetchPolicyCopy } from "@/lib/policyCopyApi";
+import { describePurchaseError, type PurchaseError } from "@/lib/purchaseErrors";
+import {
+  clearPurchaseAttemptKey,
+  purchaseAttemptKey,
+  purchaseAttemptScope,
+} from "@/lib/purchaseAttemptKey";
+import { getSessionStorage } from "@/lib/safeStorage";
 import { BookingModal } from "@/components/lessons/BookingModal";
+import { CheckoutPayHandoff } from "@/components/checkout/CheckoutPayHandoff";
 import { CheckoutSummary, type PromoStatus } from "@/components/checkout/CheckoutSummary";
+import { PolicyConsent } from "@/components/checkout/PolicyConsent";
 import { CheckoutShell } from "@/components/checkout/CheckoutShell";
 import { normalizeCheckoutPalette } from "@/components/checkout/checkoutPalette";
 import { MinimalCheckoutHeader } from "@/components/checkout/MinimalCheckoutHeader";
@@ -45,11 +57,17 @@ import {
   CheckoutPurchaseSuccess,
 } from "@/components/checkout/CheckoutSuccess";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
+import { InlineError } from "@/components/shared/InlineError";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { PackagePlan, PackagePurchase, PromoPreviewResponse } from "@/types";
+import type {
+  CreatePackagePurchasePayload,
+  PackagePlan,
+  PackagePurchase,
+  PromoPreviewResponse,
+} from "@/types";
 
 function parseLessonsPerWeek(raw: string | null): WeeklyLessonOption {
   return normalizeWeeklyLessonOption(raw);
@@ -122,6 +140,14 @@ export default function TutorCheckoutPage({
   >(null);
   const [bookingComplete, setBookingComplete] = useState(false);
   const [createdPurchase, setCreatedPurchase] = useState<PackagePurchase | null>(null);
+  // The rules the student accepts before paying (lesson packages that are paid
+  // for here). Never pre-ticked; the error shows only once the student pressed
+  // the pay button without the box.
+  const [policyAccepted, setPolicyAccepted] = useState(false);
+  const [consentError, setConsentError] = useState(false);
+  const consentRef = useRef<HTMLInputElement>(null);
+  // Why the purchase could not be made, with what to do about it.
+  const [purchaseError, setPurchaseError] = useState<PurchaseError | null>(null);
   // The coaching quote that went out with the request, for the success card.
   const [submittedCoachingQuote, setSubmittedCoachingQuote] = useState<CoachingQuote | null>(null);
 
@@ -309,6 +335,18 @@ export default function TutorCheckoutPage({
   const coachingReady = coachingAvailable && coachingQuote !== null;
   const coachingBlocked = coachingAvailable && coachingQuote === null;
 
+  // A lesson package (no coaching bundle) is bought and paid for here with no
+  // tutor in between. While online payment is closed in this build there is
+  // nothing to buy: the purchase would hold a tutor's hours for nothing.
+  const lessonOnly = !coachingReady;
+  const payNow = PAYTR_ENABLED && lessonOnly;
+  const { data: policy } = useQuery({
+    queryKey: ["policy-copy"],
+    queryFn: fetchPolicyCopy,
+    enabled: isAuthenticated && isStudent && payNow,
+    retry: false,
+  });
+
   // The hold is taken HERE, not on the choice screen: the quote depends on
   // package duration and weekly-lesson count, which are only settled once
   // the student is on this page. Re-quoting reuses the same server row and
@@ -364,15 +402,47 @@ export default function TutorCheckoutPage({
   ]);
 
   const purchaseMutation = useMutation({
-    mutationFn: createPackagePurchase,
-    onSuccess: (purchase) => {
+    mutationFn: ({
+      payload,
+      idempotencyKey,
+    }: {
+      payload: CreatePackagePurchasePayload;
+      idempotencyKey?: string;
+      scope?: string;
+    }) => createPackagePurchase(payload, { idempotencyKey }),
+    onSuccess: (purchase, variables) => {
+      if (variables.scope) clearPurchaseAttemptKey(getSessionStorage(), variables.scope);
       queryClient.invalidateQueries({ queryKey: ["package-purchases"] });
       queryClient.invalidateQueries({ queryKey: ["payment-history"] });
       // Render the created request first: if the reads in usePayTRPostCreate
       // fail or the purchase cannot be paid yet, this is the screen that stays.
       setCreatedPurchase(purchase);
     },
-    onError: (err: unknown) => {
+    onError: (err: unknown, variables) => {
+      // A lesson package paid for here answers inline, next to the button, with
+      // what to do about it. A lost answer keeps its key (the purchase may
+      // exist, and the same key makes a retry the same purchase); any answer
+      // the server gave ends the attempt, so the key goes.
+      if (variables.scope) {
+        const described = describePurchaseError(err, extractPackagePurchaseErrorMessage(err));
+        if (described.kind !== "unknown_outcome") {
+          clearPurchaseAttemptKey(getSessionStorage(), variables.scope);
+        } else {
+          queryClient.invalidateQueries({ queryKey: ["package-purchases"] });
+        }
+        setPurchaseError(described);
+        if (
+          described.kind === "policy_version_changed" ||
+          described.kind === "policy_not_accepted"
+        ) {
+          setPolicyAccepted(false);
+          void queryClient.invalidateQueries({ queryKey: ["policy-copy"] });
+        }
+        if (described.kind === "pending_exists") {
+          void queryClient.invalidateQueries({ queryKey: ["package-purchases"] });
+        }
+        return;
+      }
       // The server refuses a bundle whose price moved since the quote and
       // hands back the current one (409 price_changed). Show the new
       // numbers and make the student confirm them — do not retry silently,
@@ -549,14 +619,23 @@ export default function TutorCheckoutPage({
         header={<MinimalCheckoutHeader tutorId={tutorId} />}
         exploration={
           createdPurchase ? (
-            <CheckoutPurchaseSuccess
-              purchase={createdPurchase}
-              tutorId={tutorId}
-              paymentCheck={postCreate.check}
-              paymentBlockedReason={postCreate.blockedReason}
-              onRetryPaymentCheck={postCreate.retry}
-              coachingQuote={submittedCoachingQuote}
-            />
+            payNow ? (
+              <CheckoutPayHandoff
+                purchase={createdPurchase}
+                paymentCheck={postCreate.check}
+                paymentBlockedReason={postCreate.blockedReason}
+                onRetryPaymentCheck={postCreate.retry}
+              />
+            ) : (
+              <CheckoutPurchaseSuccess
+                purchase={createdPurchase}
+                tutorId={tutorId}
+                paymentCheck={postCreate.check}
+                paymentBlockedReason={postCreate.blockedReason}
+                onRetryPaymentCheck={postCreate.retry}
+                coachingQuote={submittedCoachingQuote}
+              />
+            )
           ) : bookingComplete ? (
             <CheckoutBookingSuccess tutorId={tutorId} />
           ) : plansLoading ? (
@@ -611,8 +690,17 @@ export default function TutorCheckoutPage({
                 // less than was chosen.
                 if (coachingBlocked) return;
                 if (coachingPriceChanged) return;
+                // The rules come first: pressing the button without the box
+                // shows the standard error and moves focus to it, and nothing
+                // is held or created.
+                if (payNow && policy && !policyAccepted) {
+                  setConsentError(true);
+                  consentRef.current?.focus();
+                  return;
+                }
+                setPurchaseError(null);
                 setSubmittedCoachingQuote(coachingReady ? coachingQuote : null);
-                purchaseMutation.mutate({
+                const payload: CreatePackagePurchasePayload = {
                   tutor: tutor.id,
                   plan: selectedPlan.id,
                   ...(appliedPromoCode && promoPlanId === selectedPlan.id ? { promotion_code: appliedPromoCode } : {}),
@@ -623,14 +711,106 @@ export default function TutorCheckoutPage({
                   ...(scheduleMatchesPlan && chosenSchedule
                     ? { schedule: toSchedulePayload(chosenSchedule) }
                     : {}),
+                  ...(payNow && policy && policyAccepted
+                    ? { policy_accepted_version: policy.version }
+                    : {}),
+                };
+                if (!payNow) {
+                  purchaseMutation.mutate({ payload });
+                  return;
+                }
+                // The same choice keeps the same key until the server answers,
+                // so pressing the button again after a lost answer is the same
+                // purchase, never a second one.
+                const scope = purchaseAttemptScope({
+                  tutorId: tutor.id,
+                  planId: selectedPlan.id,
+                  schedule: chosenSchedule ? encodeCheckoutSchedule(chosenSchedule) : "",
+                });
+                purchaseMutation.mutate({
+                  payload,
+                  scope,
+                  idempotencyKey: purchaseAttemptKey(getSessionStorage(), scope),
                 });
               }}
               purchaseCtaLabel={
                 // Coaching always needs the tutor's yes (the backend makes the
-                // acceptance record mandatory for it). For a lesson-only
-                // package the student cannot see the rollout flag, so the
-                // wording stays neutral rather than promising a payment step.
-                coachingReady ? "Paketi hocaya gönder" : undefined
+                // acceptance record mandatory for it). A lesson package paid
+                // for here says what the button does: it opens the payment.
+                coachingReady
+                  ? "Paketi hocaya gönder"
+                  : payNow
+                    ? (policy?.pay_button_label ?? "Ödemeye geç")
+                    : undefined
+              }
+              lessonPayNow={payNow}
+              paymentClosed={lessonOnly && !PAYTR_ENABLED}
+              purchaseUnavailableLabel={
+                // Nothing to buy while online payment is closed in this build,
+                // and nothing to pay for before the hours are chosen.
+                lessonOnly && !PAYTR_ENABLED
+                  ? "Ödeme sistemi yakında"
+                  : payNow && !scheduleMatchesPlan
+                    ? "Önce ders programını seç"
+                    : undefined
+              }
+              pendingPayHref={
+                payNow
+                  ? (() => {
+                      const pending = tutorPurchases.find(
+                        (purchase) => purchase.status === "pending" && purchase.plan.id === selectedPlan?.id
+                      );
+                      return pending ? `/package-purchases/${pending.id}/pay` : undefined;
+                    })()
+                  : undefined
+              }
+              consentSlot={
+                payNow && policy ? (
+                  <PolicyConsent
+                    policy={policy}
+                    accepted={policyAccepted}
+                    onAcceptedChange={(accepted) => {
+                      setPolicyAccepted(accepted);
+                      if (accepted) setConsentError(false);
+                    }}
+                    showError={consentError}
+                    checkboxRef={consentRef}
+                  />
+                ) : null
+              }
+              purchaseErrorSlot={
+                purchaseError ? (
+                  <div className="space-y-2">
+                    <InlineError size="sm" message={purchaseError.message} />
+                    {purchaseError.kind === "schedule" && (
+                      <Link href={scheduleHref} className="inline-block text-xs font-medium underline underline-offset-2">
+                        Saatlerimi yeniden seç
+                      </Link>
+                    )}
+                    {purchaseError.kind === "pending_exists" && (
+                      <Link
+                        href={
+                          purchaseError.purchaseId
+                            ? `/package-purchases/${purchaseError.purchaseId}/pay`
+                            : "/profile/payments"
+                        }
+                        className="inline-block text-xs font-medium underline underline-offset-2"
+                      >
+                        Ödemeye devam et
+                      </Link>
+                    )}
+                    {purchaseError.kind === "unknown_outcome" && (
+                      <Link href="/profile/payments" className="inline-block text-xs font-medium underline underline-offset-2">
+                        Paketlerimi görüntüle
+                      </Link>
+                    )}
+                    {(purchaseError.kind === "capacity_full" || purchaseError.kind === "tutor_unavailable") && (
+                      <Link href="/tutors" className="inline-block text-xs font-medium underline underline-offset-2">
+                        Başka hoca bul
+                      </Link>
+                    )}
+                  </div>
+                ) : null
               }
               purchasePending={purchaseMutation.isPending}
               pendingForSelectedPlan={pendingForSelectedPlan}

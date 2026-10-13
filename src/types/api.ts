@@ -1206,6 +1206,9 @@ export interface CreatePackagePurchasePayload {
    * tutor's real availability; an unavailable slot answers 409 rather than
    * being silently dropped. */
   schedule?: PackageSchedulePayload;
+  /** The version of the checkout summary the student accepted (see
+   * `PolicyCopy.version`). Anything but the current version answers 409. */
+  policy_accepted_version?: string;
 }
 
 export interface PromoPreviewRequest {
