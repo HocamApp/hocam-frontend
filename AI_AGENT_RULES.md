@@ -67,6 +67,11 @@
 
 ## 3. Kasıtlı davranışlar — bug değil, "düzeltmeye" çalışma
 
+- Ödenmiş bir paketin takvime yerleşmemiş hakları (`remaining_credits`, ödemeden sonra tam
+  olarak "hiçbir derse yerleşmemiş kredi" demektir) Paketlerim'deki "Hakları yerleştir" ekranından
+  tek çağrıyla yerleştirilir (`/profile/payments/place`, backend `place-lessons`). Aynı hakkı
+  ders ders ayırtan ikinci bir yol ekleme; ekran yalnız ödenmiş, haftalık planlı ve hakkı olan
+  pakette görünür.
 - Hoca kendi booking'ini tamamlandı olarak işaretleyemiyor (buton yok) — kasıtlı, tek taraflı
   öğrenci onayı + 24 saat oto-onay modeli gereği (bkz. backend kuralları).
 - Paket satın alma geçmişi olmayan öğrenciye tutor profilinde gösterilen paket teaser paneli
