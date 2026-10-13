@@ -479,6 +479,7 @@ export const toolsColumn = {
   links: [
     { label: "YKS puan ve sıralama hesaplama", slug: "yks-puan-siralama-hesaplama" },
     { label: "LGS sıralama hesaplama", slug: "lgs-siralama-hesaplama" },
+    { label: "YKS sıralamasına göre bölüm bulucu", slug: "bolum-bulucu" },
   ],
   all: "Tüm araçlar",
 } as const;
