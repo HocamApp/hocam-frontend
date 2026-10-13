@@ -25,6 +25,10 @@ interface RecurringLessonSlotPickerProps {
   termDays: number;
   /** How many weekly slots the plan includes, i.e. lessons per week. */
   requiredCount: number;
+  /** Ask the server for the hours a package of this cadence could be bought
+   * with (strict, free for every lesson the package can become). The checkout
+   * passes it; the lookahead views that only want a calendar window do not. */
+  lessonsPerWeek?: number;
   subjects?: Subject[];
   selectedSubjectId?: string;
   onSubjectChange?: (subjectId: string) => void;
@@ -105,6 +109,7 @@ export function RecurringLessonSlotPicker({
   durationMinutes,
   termDays,
   requiredCount,
+  lessonsPerWeek,
   subjects,
   selectedSubjectId,
   onSubjectChange,
@@ -114,8 +119,9 @@ export function RecurringLessonSlotPicker({
   enabled = true,
 }: RecurringLessonSlotPickerProps) {
   const { data, isLoading, isError, refetch } = useQuery({
-    queryKey: ["tutor-recurring-slots", tutor.id, termDays, durationMinutes],
-    queryFn: () => fetchTutorRecurringSlots(tutor.id, { termDays, durationMinutes }),
+    queryKey: ["tutor-recurring-slots", tutor.id, termDays, durationMinutes, lessonsPerWeek ?? null],
+    queryFn: () =>
+      fetchTutorRecurringSlots(tutor.id, { termDays, durationMinutes, lessonsPerWeek }),
     enabled: enabled && Boolean(tutor.id),
   });
 
@@ -127,7 +133,10 @@ export function RecurringLessonSlotPicker({
   const candidates = useMemo(
     () =>
       (data?.candidates ?? []).filter(
-        (candidate) => candidate.free_occurrences === candidate.total_occurrences
+        // `fully_free` is the server's own word for a package request; the
+        // count comparison is what an older server answers with.
+        (candidate) =>
+          candidate.fully_free ?? candidate.free_occurrences === candidate.total_occurrences
       ),
     [data]
   );

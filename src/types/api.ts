@@ -1311,6 +1311,11 @@ export interface TutorRecurringSlotCandidate {
   start_time: string;
   free_occurrences: number;
   total_occurrences: number;
+  /** Only when the request named `lessons_per_week` (a package, not a
+   * calendar window): every occurrence the package could need is offered. */
+  fully_free?: boolean;
+  /** The first day this hour is not offered, for the same request. */
+  first_unavailable_date?: string | null;
 }
 
 export interface TutorRecurringSlotsResponse {
@@ -1320,6 +1325,11 @@ export interface TutorRecurringSlotsResponse {
   starts_on: string;
   ends_on: string;
   candidates: TutorRecurringSlotCandidate[];
+  /** The three below come with `lessons_per_week` only. */
+  lessons_per_week?: number;
+  total_credits?: number;
+  /** The earliest instant a first lesson can start (ISO, Istanbul offset). */
+  first_lesson_not_before?: string;
 }
 
 export interface TutorVerification {

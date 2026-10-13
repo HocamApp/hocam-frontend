@@ -88,6 +88,14 @@ interface CheckoutSummaryProps {
   schedule?: { day_of_week: number; start_time: string }[] | null;
   /** Back to the schedule step, keeping the package selection. */
   scheduleEditHref?: string;
+  /**
+   * Set when the hours were chosen for this very term (the schedule step asks
+   * the term first and offers only the hours free for all of it). The term is
+   * then fixed here: changing it would put the student back on hours nobody
+   * checked for the new length, so the only way to change it is the schedule
+   * step this links to.
+   */
+  termEditHref?: string;
 }
 
 const WEEKDAY_NAMES = [
@@ -137,7 +145,9 @@ export function CheckoutSummary({
   coachingEditHref,
   schedule,
   scheduleEditHref,
+  termEditHref,
 }: CheckoutSummaryProps) {
+  const termLocked = Boolean(termEditHref);
   const durations = weeklyPlans
     .filter((plan) => plan.lessons_per_week === lessonsPerWeek && plan.duration_days != null)
     .sort((a, b) => (a.duration_days ?? 0) - (b.duration_days ?? 0));
@@ -226,10 +236,11 @@ export function CheckoutSummary({
 
       <section aria-labelledby="duration-title" className="mt-3.5">
         <h2 id="duration-title" className="sr-only">Paket süresi</h2>
-        <div className="space-y-1.5" role="radiogroup" aria-label="Paket süresi">
+        <div className="space-y-1.5" role={termLocked ? "group" : "radiogroup"} aria-label="Paket süresi">
           {durations.map((plan, index) => {
             const days = plan.duration_days as number;
             const selected = days === durationDays;
+            if (termLocked && !selected) return null;
             const optionPricing = calculatePackagePricing(
               tutor.hourly_price,
               plan.lesson_count,
@@ -238,57 +249,74 @@ export function CheckoutSummary({
             const cardUnit = selected && promoPricing
               ? promoPricing.unit_price
               : optionPricing.discountedPerLesson;
+            const optionBody = (
+              <>
+                <span className="min-w-0 flex-1">
+                  <span className="flex flex-wrap items-center gap-2">
+                    <span className="text-sm font-bold sm:text-base">{formatPlanDuration(days)}</span>
+                    {days === MOST_POPULAR_DURATION_DAYS && (
+                      <Badge className="rounded-pill bg-[var(--checkout-duration-control)] text-[0.65rem] text-white hover:bg-[var(--checkout-duration-control)]">
+                        En popüler
+                      </Badge>
+                    )}
+                  </span>
+                  {optionPricing.discountPercent > 0 && (
+                    <span className="checkout-duration-advantage mt-1 inline-flex rounded-pill px-1.5 py-0.5 text-xs font-bold leading-none">
+                      %{optionPricing.discountPercent} fiyat avantajı
+                    </span>
+                  )}
+                </span>
+                <span className="shrink-0 text-right tabular-nums">
+                  <span className="block text-sm font-bold sm:text-base">{formatLessonAmount(cardUnit)}</span>
+                  <span className="block text-xs opacity-55">/ ders</span>
+                </span>
+              </>
+            );
             return (
               <div
                 key={plan.id}
                 data-selected={selected}
                 className="checkout-duration-card overflow-hidden rounded-card border transition-colors duration-[--duration-state]"
               >
-                <button
-                  type="button"
-                  role="radio"
-                  aria-checked={selected}
-                  aria-describedby={selected ? `duration-details-${days}` : undefined}
-                  tabIndex={selected ? 0 : -1}
-                  onClick={() => onDurationDaysChange(days)}
-                  onKeyDown={(event) => handleDurationKeyDown(event, index)}
-                  className="flex w-full items-center gap-3 px-3 py-2.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--checkout-duration-control)]"
-                >
-                  <span
-                    className={cn(
-                      "flex size-5 shrink-0 items-center justify-center rounded-full border-2",
-                      selected
-                        ? "border-[var(--checkout-duration-control)]"
-                        : "border-[var(--checkout-duration-control)]/45"
-                    )}
+                {termLocked ? (
+                  <div className="flex w-full items-center gap-3 px-3 py-2.5">
+                    {optionBody}
+                    <Link
+                      href={termEditHref as string}
+                      className="shrink-0 text-xs underline underline-offset-2 hover:text-foreground"
+                    >
+                      Süreyi değiştir
+                    </Link>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    role="radio"
+                    aria-checked={selected}
+                    aria-describedby={selected ? `duration-details-${days}` : undefined}
+                    tabIndex={selected ? 0 : -1}
+                    onClick={() => onDurationDaysChange(days)}
+                    onKeyDown={(event) => handleDurationKeyDown(event, index)}
+                    className="flex w-full items-center gap-3 px-3 py-2.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--checkout-duration-control)]"
                   >
-                    {selected && <span className="size-2 rounded-full bg-[var(--checkout-duration-control)]" />}
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="flex flex-wrap items-center gap-2">
-                      <span className="text-sm font-bold sm:text-base">{formatPlanDuration(days)}</span>
-                      {days === MOST_POPULAR_DURATION_DAYS && (
-                        <Badge className="rounded-pill bg-[var(--checkout-duration-control)] text-[0.65rem] text-white hover:bg-[var(--checkout-duration-control)]">
-                          En popüler
-                        </Badge>
+                    <span
+                      className={cn(
+                        "flex size-5 shrink-0 items-center justify-center rounded-full border-2",
+                        selected
+                          ? "border-[var(--checkout-duration-control)]"
+                          : "border-[var(--checkout-duration-control)]/45"
                       )}
+                    >
+                      {selected && <span className="size-2 rounded-full bg-[var(--checkout-duration-control)]" />}
                     </span>
-                    {optionPricing.discountPercent > 0 && (
-                      <span className="checkout-duration-advantage mt-1 inline-flex rounded-pill px-1.5 py-0.5 text-xs font-bold leading-none">
-                        %{optionPricing.discountPercent} fiyat avantajı
-                      </span>
+                    {optionBody}
+                    {selected ? (
+                      <CaretUp className="size-4 shrink-0 opacity-55" weight="regular" aria-hidden="true" />
+                    ) : (
+                      <CaretDown className="size-4 shrink-0 opacity-55" weight="regular" aria-hidden="true" />
                     )}
-                  </span>
-                  <span className="shrink-0 text-right tabular-nums">
-                    <span className="block text-sm font-bold sm:text-base">{formatLessonAmount(cardUnit)}</span>
-                    <span className="block text-xs opacity-55">/ ders</span>
-                  </span>
-                  {selected ? (
-                    <CaretUp className="size-4 shrink-0 opacity-55" weight="regular" aria-hidden="true" />
-                  ) : (
-                    <CaretDown className="size-4 shrink-0 opacity-55" weight="regular" aria-hidden="true" />
-                  )}
-                </button>
+                  </button>
+                )}
 
                 {selected && (
                   <div
