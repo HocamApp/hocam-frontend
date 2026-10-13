@@ -79,6 +79,8 @@ const createdPurchase = {
 };
 
 let purchasesList: unknown[] = [];
+// What the server says about this student: online payment open, closed, or not yet answered.
+let availability: () => unknown = () => ({ data: { available: true, code: null } });
 let postResponse: () => unknown = () => ({ data: createdPurchase });
 
 function failure(status: number, data: unknown) {
@@ -126,6 +128,7 @@ before(async () => {
         if (url === "/tutors/tutor-1/") return { data: tutor };
         if (url === "/payments/tutors/tutor-1/offered-plans/") return { data: plans };
         if (url === "/payments/package-purchases/") return { data: purchasesList };
+        if (url === "/payments/checkout-availability/") return availability();
         if (url === "/payments/policy-copy/") {
           policyReads += 1;
           return { data: policy };
@@ -174,6 +177,7 @@ beforeEach(() => {
   posts.length = 0;
   policyReads = 0;
   purchasesList = [];
+  availability = () => ({ data: { available: true, code: null } });
   postResponse = () => ({ data: createdPurchase });
   window.sessionStorage.clear();
 });
@@ -352,5 +356,43 @@ describe("before there is anything to pay for", () => {
       screen.getByRole("link", { name: "Ödemeye devam et" }).getAttribute("href"),
       "/package-purchases/purchase-5/pay"
     );
+  });
+});
+
+describe("when the server has not opened online payment for this student", () => {
+  it("shows the coming-soon state and buys nothing, though the build flag is on", async () => {
+    availability = () => ({ data: { available: false, code: "checkout_disabled" } });
+    renderPage();
+
+    const buttons = (await screen.findAllByRole("button", {
+      name: "Ödeme sistemi yakında",
+    })) as HTMLButtonElement[];
+    assert.ok(buttons.every((button) => button.disabled));
+    for (const button of buttons) fireEvent.click(button);
+    assert.deepEqual(posts, []);
+    assert.equal(screen.queryByRole("checkbox"), null);
+  });
+
+  it("treats a failed answer as closed, never as open", async () => {
+    availability = () => failure(500, {});
+    renderPage();
+
+    const buttons = (await screen.findAllByRole("button", {
+      name: "Ödeme sistemi yakında",
+    })) as HTMLButtonElement[];
+    assert.ok(buttons.every((button) => button.disabled));
+    assert.deepEqual(posts, []);
+  });
+
+  it("does not offer the payment before the server has answered", async () => {
+    availability = () => new Promise(() => {});
+    renderPage();
+
+    const buttons = (await screen.findAllByRole("button", {
+      name: "Hazırlanıyor…",
+    })) as HTMLButtonElement[];
+    assert.ok(buttons.every((button) => button.disabled));
+    assert.equal(screen.queryByRole("checkbox"), null);
+    assert.deepEqual(posts, []);
   });
 });

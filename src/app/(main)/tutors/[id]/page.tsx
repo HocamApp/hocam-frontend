@@ -33,6 +33,7 @@ import {
 } from "@/lib/tutorsApi";
 import { fetchTutorAvailability } from "@/lib/dashboardApi";
 import { useAuth } from "@/hooks/useAuth";
+import { useCheckoutAvailability } from "@/hooks/useCheckoutAvailability";
 import { useCoachingFlag } from "@/hooks/useCoachingFlag";
 import { TutorCheckoutCta } from "@/components/tutors/TutorCheckoutCta";
 import { resolveProfileImageUrl } from "@/lib/profileImages";
@@ -366,6 +367,7 @@ export default function TutorProfilePage({
   } = useAuth();
   const { checkoutEnabled: coachingCheckoutEnabled, checkoutState } =
     useCoachingFlag();
+  const { state: lessonPayment } = useCheckoutAvailability();
   const { favoriteIds, toggle, isFavoritePending } = useFavorites();
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
   // Paid bookings now go through /tutors/[id]/checkout; this modal only
@@ -843,6 +845,7 @@ export default function TutorProfilePage({
                               href={checkoutHref}
                               offersCoaching={tutor.offers_coaching === true}
                               checkoutState={checkoutState}
+                              lessonPayment={lessonPayment}
                               onStart={(href) => {
                                 void recordDiscoveryEvent(
                                   discoveryImpressionId,
