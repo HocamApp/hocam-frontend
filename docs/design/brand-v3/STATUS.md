@@ -12,9 +12,9 @@ Phase 0 is done (branch `agent/brand-v3-phase0-20261014`): the compare harness, 
 
 | Task | State | PR | Notes |
 |---|---|---|---|
-| T0.1 Mockup in compare harness | done | Phase 0 PR | `npm run brand:compare` → `screenshots/brand-v3/` |
-| T0.2 Tokens | done | Phase 0 PR | See "Phase 0 notes" for three additions to the plan |
-| T0.3 Flag | done | Phase 0 PR | Flag off: pixel-identical to `main`, both `HOME_V2` states, 1440/390, light/dark |
+| T0.1 Mockup in compare harness | done | #345 | `npm run brand:compare` → `screenshots/brand-v3/` |
+| T0.2 Tokens | done | #345 | See "Phase 0 notes" for three additions to the plan |
+| T0.3 Flag | done | #345 | Flag off: pixel-identical to `main`, both `HOME_V2` states, 1440/390, light/dark |
 | T1.1 Hero | not started | | Waits on D3, D4 |
 | T1.2 Tutor directory | not started | | |
 | T1.2b Promo row (new) | not started | | Waits on D7 |
