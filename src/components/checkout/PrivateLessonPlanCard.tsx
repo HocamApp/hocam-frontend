@@ -20,11 +20,15 @@ export interface WeeklyOptionState {
 }
 
 interface PrivateLessonPlanCardProps {
-  value: WeeklyLessonOption;
+  /** The chosen count, or `null` while none is: nothing is shown as chosen. */
+  value: WeeklyLessonOption | null;
   onChange: (count: WeeklyLessonOption) => void;
   /** Per-cadence availability. A missing entry is treated as unavailable. */
   optionState: Record<number, WeeklyOptionState>;
   lessonDurationMinutes: number;
+  /** The tutor's free hours are still being read. The counts wait (and say
+   * nothing against any of them yet) rather than look unavailable for a moment. */
+  checking?: boolean;
 }
 
 /**
@@ -47,6 +51,7 @@ export function PrivateLessonPlanCard({
   onChange,
   optionState,
   lessonDurationMinutes,
+  checking = false,
 }: PrivateLessonPlanCardProps) {
   return (
     <section
@@ -82,7 +87,7 @@ export function PrivateLessonPlanCard({
           >
             {WEEKLY_LESSON_OPTIONS.map((count) => {
               const state = optionState[count];
-              const enabled = Boolean(state?.offered && state?.schedulable);
+              const enabled = !checking && Boolean(state?.offered && state?.schedulable);
               const selected = count === value;
               return (
                 <button
@@ -102,7 +107,7 @@ export function PrivateLessonPlanCard({
             })}
           </div>
 
-          <UnavailableReason optionState={optionState} />
+          {!checking && <UnavailableReason optionState={optionState} />}
         </div>
 
         <div className="rounded-input border border-line bg-surface p-3 text-ink">
