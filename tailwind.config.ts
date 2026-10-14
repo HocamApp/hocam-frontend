@@ -1,4 +1,5 @@
 import type { Config } from "tailwindcss";
+import plugin from "tailwindcss/plugin";
 
 const config: Config = {
   darkMode: ["class"],
@@ -18,11 +19,27 @@ const config: Config = {
           DEFAULT: "var(--pink)",
           deep: "var(--pink-deep)",
           pale: "var(--pink-pale)",
+          soft: "var(--pink-soft)",
         },
         gold: {
           DEFAULT: "var(--gold)",
           ink: "var(--gold-ink)",
         },
+        /* Brand v3 (docs/design/brand-v3/BRAND.md §2). No `black` on
+           purpose: it would replace Tailwind's own black, which the site
+           uses with opacity modifiers. Black is `ink`, `band` or
+           `on-accent`, by role. */
+        yellow: {
+          DEFAULT: "var(--yellow)",
+          soft: "var(--yellow-soft)",
+        },
+        band: "var(--band)",
+        "on-band": {
+          DEFAULT: "var(--on-band)",
+          mid: "var(--on-band-mid)",
+          quiet: "var(--on-band-quiet)",
+        },
+        "on-accent": "var(--on-accent)",
         paper: "var(--paper)",
         ink: {
           DEFAULT: "var(--ink)",
@@ -172,7 +189,16 @@ const config: Config = {
       },
     },
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [
+    require("tailwindcss-animate"),
+    /* `v3:bg-pink-soft` applies only inside [data-brand="v3"], so a shared
+       component can take its brand v3 look on the homepage and keep today's
+       everywhere else. Phase 2 makes it match always; Phase 3 removes it
+       (docs/design/brand-v3/PLAN.md). */
+    plugin(({ addVariant }) => {
+      addVariant("v3", '[data-brand="v3"] &');
+    }),
+  ],
 };
 
 export default config;

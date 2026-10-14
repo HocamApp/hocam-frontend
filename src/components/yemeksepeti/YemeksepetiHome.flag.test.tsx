@@ -38,7 +38,7 @@ Object.defineProperty(globalThis, "IntersectionObserver", {
   configurable: true,
 });
 
-let YemeksepetiHome: ComponentType<{ v2?: boolean }>;
+let YemeksepetiHome: ComponentType<{ v2?: boolean; brandV3?: boolean }>;
 
 before(async () => {
   // A plain anchor: the real Link prefetches through browser idle callbacks.
@@ -143,5 +143,31 @@ describe("homepage with NEXT_PUBLIC_HOME_V2 on", () => {
     assert.ok(guarantees.compareDocumentPosition(parents) & Node.DOCUMENT_POSITION_FOLLOWING);
     const band = container.querySelector('[data-stub="YsTutorBand"]')!;
     assert.ok(parents.compareDocumentPosition(band) & Node.DOCUMENT_POSITION_FOLLOWING);
+  });
+});
+
+describe("homepage with NEXT_PUBLIC_BRAND_V3", () => {
+  it("leaves the root unmarked by default and when off", () => {
+    for (const element of [<YemeksepetiHome key="default" />, <YemeksepetiHome key="off" brandV3={false} />]) {
+      const { container } = render(element);
+      const root = container.querySelector(".ys-root")!;
+      assert.equal(root.hasAttribute("data-brand"), false);
+      cleanup();
+    }
+  });
+
+  it("marks the root data-brand=\"v3\" when on, without changing the sections", () => {
+    for (const v2 of [false, true]) {
+      const off = render(<YemeksepetiHome v2={v2} brandV3={false} />);
+      const offStubs = stubs(off.container);
+      const offText = off.container.textContent;
+      cleanup();
+
+      const { container } = render(<YemeksepetiHome v2={v2} brandV3 />);
+      assert.equal(container.querySelector(".ys-root")!.getAttribute("data-brand"), "v3");
+      assert.deepEqual(stubs(container), offStubs);
+      assert.equal(container.textContent, offText);
+      cleanup();
+    }
   });
 });

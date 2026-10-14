@@ -56,6 +56,22 @@ export function homeV2EnabledFromEnv(value: string | undefined): boolean {
 export const HOME_V2_ENABLED = homeV2EnabledFromEnv(process.env.NEXT_PUBLIC_HOME_V2);
 
 /**
+ * The brand v3 colours (docs/design/brand-v3/).
+ *
+ * Off unless the build sets NEXT_PUBLIC_BRAND_V3 to exactly "true", the same
+ * rule as NEXT_PUBLIC_HOME_V2. It only sets data-brand="v3" on the homepage's
+ * .ys-root, which switches that subtree to the v3 tokens in globals.css and
+ * turns on its `v3:` Tailwind classes. With it off the site looks as it did
+ * before brand v3. NEXT_PUBLIC_* is inlined at build time, so flipping it
+ * needs a rebuild and redeploy.
+ */
+export function brandV3EnabledFromEnv(value: string | undefined): boolean {
+  return value === "true";
+}
+
+export const BRAND_V3_ENABLED = brandV3EnabledFromEnv(process.env.NEXT_PUBLIC_BRAND_V3);
+
+/**
  * The tutor earnings calculator in the homepage tutors band.
  *
  * Off unless NEXT_PUBLIC_TUTOR_EARNINGS_PREVIEW is exactly "true". The

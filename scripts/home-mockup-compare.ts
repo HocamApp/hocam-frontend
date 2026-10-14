@@ -18,6 +18,12 @@
  * server up:
  *
  *   npm run home:compare
+ *
+ * HOME_COMPARE_MOCKUP points it at another mockup (a path from the repo
+ * root) and HOME_COMPARE_OUT_DIR at another folder. `npm run brand:compare`
+ * uses both for the brand v3 mockup (docs/design/brand-v3/mockup/home.html)
+ * and writes to `screenshots/brand-v3/`. That mockup has no review notes or
+ * bottom bar; the stripping step leaves a mockup without them alone.
  */
 import { chromium, type Browser, type Page } from "playwright";
 import { mkdir, readFile } from "node:fs/promises";
@@ -27,9 +33,9 @@ import { pathToFileURL } from "node:url";
 const BASE_URL = process.env.HOME_COMPARE_BASE_URL ?? "http://localhost:3000";
 const OUT_DIR =
   process.env.HOME_COMPARE_OUT_DIR ?? path.join(process.cwd(), "screenshots", "home-mockup");
-const MOCKUP_PATH = path.join(
+const MOCKUP_PATH = path.resolve(
   process.cwd(),
-  "docs/design/product-home/homepage-rebuild/homepage-mockup.html",
+  process.env.HOME_COMPARE_MOCKUP ?? "docs/design/product-home/homepage-rebuild/homepage-mockup.html",
 );
 
 const VIEWPORTS = [
@@ -64,7 +70,8 @@ async function shootMockup(browser: Browser, viewport: (typeof VIEWPORTS)[number
   const page = await context.newPage();
   try {
     await page.goto(pathToFileURL(MOCKUP_PATH).href, { waitUntil: "load" });
-    // The blue tags, dashed boxes and the bottom bar are review notes, not design.
+    // The blue tags, dashed boxes and the bottom bar are review notes, not
+    // design. Both lookups are optional: a mockup without them is left as is.
     await page.evaluate(() => {
       document.getElementById("page")?.classList.remove("review");
       document.querySelector(".rv-bar")?.remove();

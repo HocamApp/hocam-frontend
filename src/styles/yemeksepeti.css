@@ -25,7 +25,12 @@
  * palette at three hues plus neutrals, and a fourth is where it starts reading
  * as rainbow, so those three now resolve to gold.
  */
-:root {
+/* `[data-brand="v3"]` declares the same list again on the brand v3 scope
+   (docs/design/brand-v3/PLAN.md). A `var()` resolves where it is declared, so
+   without this every `--ys-*` inside the scope would keep the `:root` pink and
+   ink, not the scope's. */
+:root,
+[data-brand="v3"] {
   --ys-brand-primary: var(--pink);
   --ys-interaction-primary: var(--pink);
   --ys-interaction-primary-hover: var(--pink-deep);

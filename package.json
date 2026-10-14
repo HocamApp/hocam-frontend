@@ -29,6 +29,7 @@
     "test:seo": "node --test --import tsx src/lib/seo.test.ts src/lib/publicSeo.test.ts",
     "responsive:check": "tsx scripts/responsive-check.ts",
     "home:compare": "tsx scripts/home-mockup-compare.ts",
+    "brand:compare": "HOME_COMPARE_MOCKUP=docs/design/brand-v3/mockup/home.html HOME_COMPARE_OUT_DIR=screenshots/brand-v3 tsx scripts/home-mockup-compare.ts",
     "mobile:audit": "tsx scripts/mobile-audit.ts",
     "hoca-bul:qa": "tsx scripts/hoca-bul-qa.ts",
     "coaching:qa": "tsx scripts/coaching-qa.ts",
