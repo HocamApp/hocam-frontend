@@ -9,6 +9,7 @@ import { MinimalCheckoutHeader } from "@/components/checkout/MinimalCheckoutHead
 import { useAuth } from "@/hooks/useAuth";
 import { PAYTR_ENABLED } from "@/lib/featureFlags";
 import { fetchPackagePurchases, fetchPayTRPaymentStatus } from "@/lib/paymentsApi";
+import { paidPurchaseLine } from "@/lib/placeLessonsCopy";
 import { getSessionStorage } from "@/lib/safeStorage";
 import { loginUrlWithReturn } from "@/lib/utils";
 
@@ -193,9 +194,11 @@ export function PayTRReturnScreen() {
     void paymentStatusQuery.refetch();
   }, [purchasesQuery, paymentStatusQuery]);
 
-  const activatedCredits =
-    state.name === "payment_paid" && typeof purchase?.remaining_credits === "number"
-      ? purchase.remaining_credits
+  const paidLine =
+    state.name === "payment_paid" &&
+    typeof purchase?.remaining_credits === "number" &&
+    typeof purchase.total_credits === "number"
+      ? paidPurchaseLine(purchase)
       : null;
 
   return (
@@ -253,10 +256,8 @@ export function PayTRReturnScreen() {
             Doğrulama beklenenden uzun sürüyor. Yeniden ödeme yapma; durumu kontrol et.
           </p>
         )}
-        {activatedCredits !== null && (
-          <p className="mt-4 text-sm text-[#02171a]">
-            {activatedCredits} ders kredin kullanıma açıldı.
-          </p>
+        {paidLine !== null && (
+          <p className="mt-4 text-sm text-[#02171a]">{paidLine}</p>
         )}
         {purchase && <PayTRPurchaseSummary
           purchase={paymentStatusQuery.data ? purchase : paymentStatusQuery.isError ? null : undefined}
