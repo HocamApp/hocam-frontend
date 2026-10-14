@@ -95,6 +95,14 @@ describe("iptal ve iade koşulları describe the model that runs", () => {
     assert.doesNotMatch(text, /otomatik tahsilat/);
     assert.doesNotMatch(text, /elle yürütülür/);
     assert.doesNotMatch(text, /on beş gün/);
+    // A platform-initiated refund is a staff action (payments/services.py
+    // create_refund_request -> record_platform_request), and a refund after
+    // a late payment is requested by the student: neither starts by itself.
+    assert.doesNotMatch(text, /kendiliğinden başlatır/);
+    assert.match(text, /Öğrenci adına iade talebini kendisi açabilir/);
+    // The only trigger in code is the staff action that hides a tutor (tutors/admin.py).
+    assert.match(text, /ayrılması veya yayından çıkarılması gibi/);
+    assert.match(text, /Öğrenci iade talebi açabilir; bu durum HOCAM’dan kaynaklanan bir neden sayıldığından kesinti yapılmaz/);
     assert.doesNotMatch(text, /destek@|kvkk@/);
     // The tutor-fault refund is a staff decision, not the student's claim.
     assert.match(text, /beyandır ve karar yerine geçmez/);

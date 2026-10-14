@@ -69,8 +69,7 @@ export default function PreContractInformationPage() {
         <LegalSection title="2. Sağlayıcı ve aracı hizmet sağlayıcı">
           <p>
             <strong>Sağlayıcı:</strong> dersi veren, paketin bağlı olduğu Hoca.
-            Hocanın adı, soyadı ve vergi kimlik bilgileri sipariş özetinde
-            gösterilir. Sağlayıcıya, aşağıda bilgileri bulunan HOCAM üzerinden
+            Hocanın adı ve soyadı sipariş ekranında gösterilir. Sağlayıcıya, aşağıda bilgileri bulunan HOCAM üzerinden
             ulaşılır.
           </p>
           <p>

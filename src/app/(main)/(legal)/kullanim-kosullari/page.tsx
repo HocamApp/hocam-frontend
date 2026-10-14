@@ -407,16 +407,29 @@ export default function TermsOfServicePage() {
 
         <LegalSection title="17. Hesabın silinmesi">
           <p>
-            Hesap silme talebi hesap ayarlarından oluşturulur. Talep
-            oluşturulduktan sonra <strong>on dört gün</strong> süren bir bekleme
-            dönemi işler; bu süre içinde talep geri alınabilir. Sürenin sonunda
-            silme işlemi gerçekleştirilir.
+            Öğrenci hesabının silinmesi talebi hesap ayarlarından oluşturulur.
+            Talep oluşturulduktan sonra <strong>on dört gün</strong> süren bir
+            bekleme dönemi işler; bu süre içinde talep geri alınabilir.
+            Sürenin sonunda silme işlemi gerçekleştirilir.
           </p>
           <p>
-            Aktif ders, açık paket veya sonuçlanmamış iade talebi bulunması
-            halinde silme işlemi bunlar sonuçlanıncaya kadar bekletilir. Hoca
-            hesaplarında, devam eden derslerin tamamlanmasına yönelik bir
-            ayrılma süreci uygulanır.
+            Devam eden veya onayı bekleyen bir ders, itirazı süren bir ders, açık
+            bir iade talebi ya da sürmekte olan bir koçluk işlemi varsa silme
+            talebi oluşturulamaz; bekleme süresi içinde böyle bir işlem ortaya
+            çıkarsa silme, o işlem sonuçlanıncaya kadar bekletilir.
+          </p>
+          <p>
+            Planlanmış dersler ve kullanılmamış ders hakları silme talebini
+            engellemez. Hesap silindiğinde bu derslere ve haklara erişilemez ve
+            ödenen bedel kendiliğinden iade edilmez. Bu nedenle ödenmiş ve
+            kullanılmamış hakkı olan Öğrencinin, silme talebinden önce{" "}
+            <LegalLink href="/iptal-ve-iade">İptal ve İade Koşullarına</LegalLink>{" "}
+            göre iade talebi açması önerilir.
+          </p>
+          <p>
+            Hoca hesabının silinmesi talebi, profili herkese açık listeden hemen
+            kaldırır ve bir ayrılma süreci başlatır; devam eden derslerin
+            tamamlanması, iade ve itirazların sonuçlanması gerekir.
           </p>
           <p>
             Mevzuat gereği saklanması zorunlu olan kayıtlar, öngörülen süre

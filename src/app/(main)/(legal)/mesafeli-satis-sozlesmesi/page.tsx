@@ -68,9 +68,8 @@ export default function DistanceSalesPage() {
       <div className="mt-10 space-y-10">
         <LegalSection title="1. Taraflar">
           <p>
-            <strong>Sağlayıcı:</strong> paketin bağlı olduğu Hoca. Hocanın adı,
-            soyadı ve vergi kimlik bilgileri, Alıcıya ödemeden önce sipariş
-            özetinde gösterilir ve onaylanan sözleşme nüshasında yer alır.
+            <strong>Sağlayıcı:</strong> paketin bağlı olduğu Hoca. Hocanın adı ve
+            soyadı, Alıcıya ödemeden önce sipariş ekranında gösterilir.
           </p>
           <p>
             <strong>Aracı hizmet sağlayıcı:</strong> HOCAM platformunu işleten
@@ -187,8 +186,8 @@ export default function DistanceSalesPage() {
             vazgeçtim”) veya destek talebi ile yazılı olarak iletilir; bildirimin
             süresi içinde gönderilmiş olması yeterlidir. Alıcı ayrıca, aşağıdaki
             örnek cayma formunu kullanabilir veya cayma kararını bildiren açık bir
-            beyanda bulunabilir. HOCAM, bildirimin kendisine ulaştığını Alıcıya
-            derhal teyit eder.
+            beyanda bulunabilir. İade talebiyle yapılan bildirimin alındığı,
+            hesaba gönderilen bildirimle Alıcıya teyit edilir.
           </p>
           <p>
             Cayma halinde tahsil edilen tüm ödemeler, cayma bildiriminin HOCAM’a
@@ -246,10 +245,10 @@ export default function DistanceSalesPage() {
           <p>
             Sağlayıcı ve HOCAM, sipariş ekranında gösterilen nitelikte hizmetin
             sunulması için gerekli teknik altyapıyı sağlamakla yükümlüdür. Hizmetin
-            ifasının imkansızlaştığı hallerde, HOCAM durumdan haberdar olur olmaz
-            Alıcıyı yazılı olarak veya kalıcı veri saklayıcısı ile bilgilendirir ve
-            tahsil edilen bedeli iade eder; iade, bildirim tarihinden itibaren en
-            geç <strong>{f.refundSettleDays} gün</strong> içinde yapılır.
+            ifasının imkansızlaştığı hallerde, HOCAM Alıcı adına iade talebi açar
+            ve Alıcıya bildirim gönderir; tahsil edilen bedel, talebin açıldığı
+            tarihten itibaren en geç <strong>{f.refundSettleDays} gün</strong>
+            içinde iade edilir.
           </p>
           <p>
             Alıcı, sipariş sırasında verdiği bilgilerin doğru olmasından sorumludur.
@@ -286,9 +285,9 @@ export default function DistanceSalesPage() {
         <LegalSection title="11. Yürürlük ve bildirim">
           <p>
             İşbu sözleşme, Alıcının ön bilgileri edindiğini teyit edip ödemeyi
-            tamamlamasıyla kurulur ve elektronik ortamda kayıt altına alınır. Alıcı
-            sözleşmenin bir örneğine hesabı üzerinden erişebilir ve sözleşmenin bir
-            nüshası kalıcı veri saklayıcısı ile Alıcıya iletilir.
+            tamamlamasıyla kurulur ve elektronik ortamda kayıt altına alınır.
+            Alıcının onayladığı koşulların sürümü ve onay zamanı satın alma
+            kaydında tutulur; sözleşme metinleri bu sayfalarda yayımlanır.
           </p>
           <p>
             Cayma bildirimi ve sözleşmeye ilişkin diğer bildirimler için hesaba giriş

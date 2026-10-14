@@ -111,6 +111,24 @@ describe("kullanım koşulları claim nothing the platform cannot do", () => {
     }
   });
 
+  it("describes account deletion the way the code does it (N1)", () => {
+    // Blockers stop the request (open refund, disputed / awaiting / running
+    // lesson, coaching); planned lessons and unused rights only warn. Today
+    // nothing refunds a paid, unused package when the account goes, so the
+    // text advises a refund request first and promises no hold or block for it.
+    assert.match(prose, /silme talebi oluşturulamaz/);
+    assert.match(prose, /Planlanmış dersler ve kullanılmamış ders hakları silme talebini engellemez/);
+    assert.match(prose, /ödenen bedel kendiliğinden iade edilmez/);
+    assert.match(prose, /iade talebi açması önerilir/);
+    assert.doesNotMatch(prose, /açık paket veya sonuçlanmamış iade talebi bulunması halinde silme işlemi bunlar/);
+    if (backendAvailable) {
+      const users = read("apps/users/services.py");
+      assert.match(users, /warnings\.append\(\s*\{\s*"code": "unused_credits"/);
+      assert.match(users, /warnings\.append\(\s*\{\s*"code": "upcoming_lessons"/);
+      assert.doesNotMatch(users, /blockers\.append\(\s*\{\s*"code": "unused_credits"/);
+    }
+  });
+
   it("names the commission rate the code carries", () => {
     // 6563 s.K. requires the stated fee to be the real one, so the rate is
     // named rather than deferred. It has to agree with the constant.

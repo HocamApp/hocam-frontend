@@ -78,6 +78,19 @@ describe("mesafeli satış sözleşmesi", () => {
     assert.match(text, /KEP adresi/);
   });
 
+  it("promises only what the product does (no tax id on the order screen, no sent copy, no instant acknowledgement)", () => {
+    const text = textOf(DistanceSalesPage);
+    // The tutor's tax identity is not collected or shown anywhere yet (O8).
+    assert.doesNotMatch(text, /vergi kimlik bilgileri/);
+    assert.match(text, /Hocanın adı ve soyadı, Alıcıya ödemeden önce sipariş ekranında gösterilir/);
+    // Nothing sends a contract copy; what is recorded is the accepted version and its time.
+    assert.doesNotMatch(text, /nüshası kalıcı veri saklayıcısı ile Alıcıya iletilir/);
+    assert.match(text, /onayladığı koşulların sürümü ve onay zamanı satın alma kaydında tutulur/);
+    // A support ticket sends no acknowledgement; a refund request does.
+    assert.doesNotMatch(text, /derhal teyit eder/);
+    assert.match(text, /İade talebiyle yapılan bildirimin alındığı, hesaba gönderilen bildirimle/);
+  });
+
   it("claims no manual collection and invents no address", () => {
     const text = textOf(DistanceSalesPage);
     assert.doesNotMatch(text, /otomatik tahsilat/);
@@ -110,6 +123,12 @@ describe("ön bilgilendirme formu", () => {
     assert.match(text, /cayma hakkının sona ereceğini kabul eder/);
     assert.match(text, /Tüketici Hakem Heyetine/);
     assert.match(text, /arabulucuya/);
+  });
+
+  it("does not promise the tutor's tax identity on the order screen", () => {
+    const text = textOf(PreContractInformationPage);
+    assert.doesNotMatch(text, /vergi kimlik bilgileri/);
+    assert.match(text, /Hocanın adı ve soyadı sipariş ekranında gösterilir/);
   });
 
   it("links the privacy notice and says where the withdrawal notice goes", () => {

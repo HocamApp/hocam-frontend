@@ -115,7 +115,8 @@ export default function CancellationAndRefundPage() {
           </p>
           <p>
             Ödeme süre dolduktan sonra ulaşır ve seçilen saatler bu arada başka
-            bir Öğrenciye verilmişse, ödenen tutarın tamamı iade edilir.
+            bir Öğrenciye verilmişse, Öğrenci iade talebi açabilir; bu durum
+            HOCAM’dan kaynaklanan bir neden sayıldığından kesinti yapılmaz.
           </p>
           <p>
             Ödeme onaylandığında paket açılır ve dersler Hocanın takvimine
@@ -137,8 +138,8 @@ export default function CancellationAndRefundPage() {
           <p>
             Cayma bildirimi, hesabın Ödemeler sayfasındaki iade talebi (“Paketten
             vazgeçtim”) veya destek talebi ile yapılır; bildirimin süresi içinde
-            gönderilmiş olması yeterlidir. Talep oluşturulduğunda alındığına
-            dair bildirim gönderilir.
+            gönderilmiş olması yeterlidir. İade talebi oluşturulduğunda
+            alındığına dair bildirim hesaba gönderilir.
           </p>
           <p>
             İlk ders başladığında hizmetin ifasına başlanmış olur. Alıcı,
@@ -310,17 +311,17 @@ export default function CancellationAndRefundPage() {
             </li>
             <li>Diğer nedenler.</li>
           </ul>
-          <p>HOCAM ise aşağıdaki hallerde iade sürecini kendiliğinden başlatır:</p>
+          <p>HOCAM ise aşağıdaki hallerde Öğrenci adına iade talebini kendisi açabilir:</p>
           <ul className="list-disc space-y-2 pl-5">
             <li>Paketin bağlı olduğu Hocanın platformdan ayrılması.</li>
             <li>Hocanın doğrulama statüsünün geri alınması.</li>
             <li>Hizmetin HOCAM’dan kaynaklanan bir nedenle sunulamaması.</li>
           </ul>
           <p>
-            Hocanın ayrılması veya doğrulamasının geri alınması gibi hizmetin
-            ifasının imkansızlaştığı hallerde HOCAM, durumdan haberdar olur
-            olmaz Öğrenciyi bilgilendirir ve ödenen bedelin kullanılmamış
-            kısmını iade eder.
+            Hocanın platformdan ayrılması veya yayından çıkarılması gibi hizmetin
+            ifasının imkansızlaştığı hallerde HOCAM Öğrenci adına iade talebi
+            açar ve Öğrenciye bildirim gönderir; ödenen bedelin kullanılmamış
+            kısmı iade edilir.
           </p>
         </LegalSection>
 
