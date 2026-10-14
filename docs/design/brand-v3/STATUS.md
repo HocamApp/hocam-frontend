@@ -17,10 +17,10 @@ Phase 1A is in review (branch `agent/brand-v3-phase1a-20261014`): the hero colla
 | T0.1 Mockup in compare harness | done | #345 | `npm run brand:compare` → `screenshots/brand-v3/` |
 | T0.2 Tokens | done | #345 | See "Phase 0 notes" for three additions to the plan |
 | T0.3 Flag | done | #345 | Flag off: pixel-identical to `main`, both `HOME_V2` states, 1440/390, light/dark |
-| T1.1 Hero | in review | Phase 1A PR | Collage (D4), generic notification card (D3) |
-| T1.2 Tutor directory | in review | Phase 1A PR | Free-trial tag held back, see "Open for Baha" |
+| T1.1 Hero | in review | #347 | Collage (D4), generic notification card (D3) |
+| T1.2 Tutor directory | in review | #347 | Free-trial tag held back, see "Open for Baha" |
 | T1.2b Promo row (new) | skipped | | D7: skip for now |
-| T1.3 Subject grid | in review | Phase 1A PR | |
+| T1.3 Subject grid | in review | #347 | |
 | T1.4 Verified band | not started | | |
 | T1.5 University strip | no change | | |
 | T1.6 Student steps | not started | | |
