@@ -90,10 +90,25 @@ describe(
 );
 
 describe("kullanım koşulları claim nothing the platform cannot do", () => {
-  it("never promises automatic collection", () => {
-    // AI_AGENT_RULES §1: no payment provider is connected.
-    assert.match(prose, /otomatik tahsilat yapılmamaktadır/);
+  it("describes card payment through the provider, not a manual process", () => {
+    assert.match(prose, /PayTR’nin güvenli sayfasında kart ile/);
+    assert.match(prose, /kart bilgileri HOCAM’a ulaşmaz/);
+    assert.doesNotMatch(prose, /otomatik tahsilat yapılmamaktadır/);
+    assert.doesNotMatch(prose, /elle yürütülür/);
     assert.doesNotMatch(prose, /kartınızdan tahsil/);
+  });
+
+  it("does not say the tutor accepts a paid package, and binds the tutor to the lessons", () => {
+    assert.doesNotMatch(prose, /Hocanın onayı ile kesinleşir/);
+    assert.match(prose, /ödemenin onaylanmasıyla Hocanın takvimine yazılır/);
+    assert.match(prose, /bu derslere girmekle yükümlüdür/);
+    assert.match(prose, /f\.tutorCancelLockHours/);
+    if (backendAvailable) {
+      assert.match(
+        read("apps/lessons/policy.py"),
+        /"TUTOR_CANCEL_LOCK_HOURS", 12\)/,
+      );
+    }
   });
 
   it("names the commission rate the code carries", () => {

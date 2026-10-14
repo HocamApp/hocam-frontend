@@ -11,6 +11,7 @@
  */
 
 import { PAYTR_ENABLED } from "@/lib/featureFlags";
+import { POLICY_FACTS } from "@/lib/policyFacts";
 import {
   formatPlanDuration,
   PLAN_DURATION_DAYS,
@@ -41,7 +42,7 @@ export const LESSON_MINUTES = 40;
 export const MAX_PACKAGE_DISCOUNT_PERCENT = 30;
 
 /** apps/lessons/services.py CANCELLATION_FREE_WINDOW — 12 hours. */
-export const CANCELLATION_FREE_HOURS = 12;
+export const CANCELLATION_FREE_HOURS = POLICY_FACTS.freeCancelHours;
 
 /**
  * The highest YKS rank a tutor can register with, formatted the Turkish way
@@ -74,7 +75,7 @@ export const PLAN_DURATIONS = PLAN_DURATION_DAYS.map((days) => ({
  * confirms it, or it confirms itself once this many hours pass without a
  * dispute. Already quoted by /iptal-ve-iade and LessonConfirmDisputeCard.
  */
-export const AUTO_CONFIRM_HOURS = 24;
+export const AUTO_CONFIRM_HOURS = POLICY_FACTS.autoConfirmHours;
 
 /**
  * Verification document retention, as /kvkk/hoca-dogrulama publishes it ("Ne
@@ -141,7 +142,7 @@ export const COMMISSION_PERCENT: Fact<number> = 17.5;
  * `null` (renders nothing) unless the build has PayTR on.
  */
 export const PAYMENT_CHARGED_WHEN: string | null = PAYTR_ENABLED
-  ? "Hocan paket talebini onaylayınca ödeme ekranı açılır; kartından o anda çekilir."
+  ? `Saatlerini seçip ödemeye geçtiğinde, PayTR’nin güvenli sayfasında kartından çekilir. Ödeme tamamlanınca dersler hocanın takvimine yazılır. Ödemeye geçtiğin andan başlayarak saatler ${POLICY_FACTS.holdMinutes} dakika boyunca yalnızca senin için ayrılır.`
   : null;
 /**
  * When and how a tutor is paid. Owners, 8 Oct 2026
@@ -153,26 +154,41 @@ export const TUTOR_PAYOUT_TEXT: string | null = PAYTR_ENABLED
   : null;
 /** Whether a tutor is paid for a free trial lesson. Owners, 8 Oct 2026 (Hocam_Ana_Sayfa_Doldurulacak_Bilgiler). */
 export const TRIAL_PAID_TO_TUTOR: Fact<string> = `Hayır. ${TRIAL_MINUTES} dakikalık deneme dersi öğrenciye ücretsiz; hocaya ayrıca ödeme yapılmaz, hoca bunu gönüllü sunar.`;
-/** What happens when the tutor does not show up. Owners, 8 Oct 2026 (Hocam_Ana_Sayfa_Doldurulacak_Bilgiler); /iptal-ve-iade §4. */
+/** What happens when the tutor does not show up. Owners, 8 Oct 2026 (Hocam_Ana_Sayfa_Doldurulacak_Bilgiler); /iptal-ve-iade §6. */
 export const TUTOR_NO_SHOW_TEXT: Fact<string> =
-  "Hoca derse gelmezse (15 dakika beklenir) ders iptal olur, ders hakkın paketine geri yüklenir ve sana ek bir telafi dersi hakkı tanımlanır.";
-/** What happens to the remaining lessons when a student switches tutor. Owners, 8 Oct 2026 (Hocam_Ana_Sayfa_Doldurulacak_Bilgiler); /iptal-ve-iade §9, §11. */
-export const REMAINING_ON_SWITCH_TEXT: Fact<string> =
-  "Paket tek bir hocaya bağlıdır, başka hocaya aktarılmaz. Hoca değiştirmek istersen kalan dersler için iade talebi açarsın: ödediğin tutardan, kullandığın derslerin indirimli birim fiyatı düşülerek hesaplanır; kabul edilince 15 gün içinde iade edilir.";
+  `Hoca derse gelmezse (${POLICY_FACTS.noShowGraceMinutes} dakika beklenir) ders iptal olur, ders hakkın paketine geri döner ve sana ek bir telafi dersi hakkı tanımlanır. Paketinin süresi de uzar.`;
 /**
- * Whether a tutor has to accept every lesson request. Owners, 8 Oct 2026
- * (Hocam_Ana_Sayfa_Doldurulacak_Bilgiler), describing the product as it is:
- * the tutor accepts the package request before payment, and bookings start
- * pending unless "Rezervasyonları otomatik onayla" is on.
+ * What happens to the remaining lessons when a student switches tutor. Owners,
+ * 8 Oct 2026 (Hocam_Ana_Sayfa_Doldurulacak_Bilgiler); the refund rules are
+ * /iptal-ve-iade §9 to §11 and the 14 days is its settle time
+ * (REFUND_SLA_DAYS), the same number every other surface quotes.
  */
-export const TUTOR_MUST_ACCEPT_TEXT: Fact<string> =
-  "Evet, paket taleplerini ve yeni rezervasyonları sen onaylarsın. İstersen profilinden rezervasyonları otomatik onaylamayı açabilirsin. Müsait olmadığın saatleri takviminde kapalı tut.";
+export const REMAINING_ON_SWITCH_TEXT: Fact<string> =
+  `Paket tek bir hocaya bağlıdır, başka hocaya aktarılmaz. Hoca değiştirmek istersen kalan dersler için iade talebi açarsın: ödediğin tutardan, kullandığın derslerin ders başı fiyatı düşülerek hesaplanır. Talebin en geç ${POLICY_FACTS.refundSettleDays} gün içinde sonuçlanır ve iade ödeme yaptığın karta yapılır.`;
+/**
+ * Whether a tutor has to accept every lesson request.
+ *
+ * Two products, one question. Before instant checkout the tutor accepts the
+ * package request before the student pays, and bookings start pending unless
+ * "Rezervasyonları otomatik onayla" is on (owners, 8 Oct 2026). With instant
+ * checkout the tutor does not accept a package: the student picks from the
+ * hours the tutor left open, pays, and the lessons are written to the
+ * calendar; the tutor then owes those lessons and cannot cancel a confirmed one
+ * inside the lock window. Only free trial requests still wait for the tutor.
+ * The build flag picks the sentence the live product matches.
+ */
+export function tutorMustAcceptText(instantCheckout: boolean): string {
+  return instantCheckout
+    ? `Paket satışında talep onaylamazsın: öğrenci senin açık tuttuğun saatlerden seçip ödemeyi tamamlayınca dersler takvimine yazılır ve bu derslere girmen gerekir. Dersin başlamasına ${POLICY_FACTS.tutorCancelLockHours} saat ya da daha az kala onaylı bir dersi iptal edemezsin; acil bir durumda destek ekibine başvurursun. Müsait olmadığın saatleri takviminde kapalı tut. Ücretsiz deneme dersi taleplerini ise sen onaylarsın; istersen profilinden otomatik onayı açabilirsin.`
+    : "Evet, paket taleplerini ve yeni rezervasyonları sen onaylarsın. İstersen profilinden rezervasyonları otomatik onaylamayı açabilirsin. Müsait olmadığın saatleri takviminde kapalı tut.";
+}
+export const TUTOR_MUST_ACCEPT_TEXT: Fact<string> = tutorMustAcceptText(PAYTR_ENABLED);
 /**
  * What happens when the student does not show up. Owners, 8 Oct 2026
- * (Hocam_Ana_Sayfa_Doldurulacak_Bilgiler); /iptal-ve-iade §4, §5. The owners'
+ * (Hocam_Ana_Sayfa_Doldurulacak_Bilgiler); /iptal-ve-iade §6. The owners'
  * "hoca dersin karşılığını alır" is left out: it is a payout statement.
  */
-export const STUDENT_NO_SHOW_TEXT: Fact<string> = `Sen derse gelmezsen ve hoca gelmişse ders yapılmış sayılır ve paketinden bir ders hakkı düşer. ${AUTO_CONFIRM_HOURS} saat içinde itiraz edebilirsin.`;
+export const STUDENT_NO_SHOW_TEXT: Fact<string> = `Sen derse gelmezsen ve hoca gelmişse ders yapılmış sayılır ve paketinden bir ders hakkı düşer. ${POLICY_FACTS.absenceDisputeHours} saat içinde itiraz edebilirsin.`;
 /** What happens when a verification application is rejected. Owners, 8 Oct 2026 (Hocam_Ana_Sayfa_Doldurulacak_Bilgiler). */
 export const VERIFICATION_REJECTION_TEXT: Fact<string> =
   "Tekrar başvurabilirsin, bekleme süresi yok. Ret gerekçesi hesabındaki doğrulama ekranında görünür; güncel belgelerle yeni başvuru açarsın.";

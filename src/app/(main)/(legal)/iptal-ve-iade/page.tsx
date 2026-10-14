@@ -6,6 +6,12 @@ import {
   LegalSection,
 } from "@/components/legal/LegalDocument";
 import { legalPageMetadata } from "@/lib/legalDocuments";
+import {
+  EXTENSION_CAPS,
+  formatTlAmount,
+  POLICY_FACTS as f,
+} from "@/lib/policyFacts";
+import { formatPlanDuration } from "@/lib/lessonPricing";
 
 export const metadata = legalPageMetadata("iptal-ve-iade");
 
@@ -15,24 +21,21 @@ export const metadata = legalPageMetadata("iptal-ve-iade");
  * and refund policy is read as terms, and the KVKK notices around it keep
  * their existing register unchanged.
  *
- * Every period, threshold and formula below mirrors a constant the platform
- * actually enforces:
+ * Every period, threshold and amount below is read from `policyFacts.ts`, which
+ * mirrors the backend constant it names; `cancellationPolicy.test.ts` pins the
+ * whole page against the backend source. The rules described:
  *
- *   CANCELLATION_FREE_WINDOW = 12h      apps/lessons/services.py
- *   NO_SHOW_GRACE_PERIOD = 15m          apps/lessons/services.py
- *   STUDENT_ABSENCE_DISPUTE_WINDOW = 24h
- *   NO_SHOW_AUTO_HIDE_THRESHOLD = 3
- *   LATE_TUTOR_CANCELLATION_PENALTY_POINTS = 1
- *   AUTO_CONFIRM_HOURS = 24             apps/lessons/models.py
- *   REVIEW_WINDOW_DAYS = 3              apps/lessons/models.py
- *   PACKAGE_GRACE_PERIOD_DAYS = 0       apps/payments/services.py
- *   refund_credit = not (actor == STUDENT and is_late)
+ *   hold, payment page, retries   checkout_policy.py          (section 3)
+ *   first lesson notice           lessons/policy.py           (section 3)
+ *   withdrawal 14 days            statute                     (section 4)
+ *   cancellation, no-show         lessons/services.py         (sections 5, 6)
+ *   term and its extension        payments/extensions.py      (section 8)
+ *   refund amount and fault       payments/refund_calc.py     (sections 9, 10)
+ *   answer time, second approval  payments/refund_policy.py   (section 11)
  *
- * cancellationPolicy.test.ts pins these against the backend source.
- *
- * What the text does NOT say is that money is returned automatically: no
- * payment provider is connected, refund requests are settled by hand, and
- * section 11 states that plainly.
+ * What the text claims about money going back is limited to what the refund
+ * process does: a staff decision with a written reason, then a refund to the
+ * card through the payment provider.
  */
 export default function CancellationAndRefundPage() {
   return (
@@ -41,10 +44,10 @@ export default function CancellationAndRefundPage() {
 
       <div className="mt-6">
         <LegalNote>
-          İşbu koşullar, HOCAM üzerinden oluşturulan ders rezervasyonlarının ve
-          satın alınan ders paketlerinin iptali ile bedel iadesine ilişkin usul
-          ve esasları düzenler. Platform üzerinden ders paketi talebi oluşturan
-          Kullanıcı, bu koşulları kabul etmiş sayılır.
+          İşbu koşullar, HOCAM üzerinden satın alınan ders paketlerinin ve bu
+          paketlerden oluşturulan derslerin iptali, paketin süresi ve bedelinin
+          iadesine ilişkin usul ve esasları düzenler. Ödemeye geçen Kullanıcı,
+          ödemeden önce bu koşulları okuduğunu ve kabul ettiğini beyan eder.
         </LegalNote>
       </div>
 
@@ -52,166 +55,273 @@ export default function CancellationAndRefundPage() {
         <LegalSection title="1. Kapsam ve taraflar">
           <p>
             HOCAM, YKS’ye hazırlanan öğrenciler ile doğrulanmış üniversite
-            öğrencisi öğretmenleri bir araya getiren bir aracı hizmet
-            sağlayıcıdır. Ders, öğrenci ile öğretmen arasında gerçekleşir;
-            HOCAM bu ilişkinin kurulduğu, yürütüldüğü ve kayıt altına alındığı
-            platformu sağlar.
+            öğrencisi hocaları bir araya getiren bir aracı hizmet sağlayıcıdır.
+            Ders, Öğrenci ile Hoca arasında gerçekleşir; HOCAM bu ilişkinin
+            kurulduğu, yürütüldüğü ve kayıt altına alındığı platformu sağlar ve
+            paket bedelini Hoca adına tahsil eder. İşbu koşullar kapsamındaki
+            iade talepleri HOCAM’a iletilir ve HOCAM tarafından sonuçlandırılır.
           </p>
           <p>
-            İşbu koşullar; ders rezervasyonlarının iptali, taraflardan birinin
-            derse katılmaması, ders paketlerinin geçerlilik süresi ve paket
-            bedelinin iadesi hallerinde uygulanır. Öğrencinin on sekiz yaşından
-            küçük olması halinde bu koşullardan doğan hak ve yükümlülükler veli
-            veya yasal temsilci bakımından da geçerlidir.
+            İşbu koşullar; ders saatlerinin ayrılması, cayma hakkı, ders
+            iptalleri, taraflardan birinin derse katılmaması, paketin
+            geçerlilik süresi ve paket bedelinin iadesi hallerinde uygulanır.
+            Öğrencinin on sekiz yaşından küçük olması halinde bu koşullardan
+            doğan hak ve yükümlülükler veli veya yasal temsilci bakımından da
+            geçerlidir.
           </p>
         </LegalSection>
 
-        <LegalSection title="2. Ders iptali">
-          <p>
-            Bir rezervasyon, yalnızca ders başlangıç saatinden önce ve
-            rezervasyon “beklemede” veya “onaylandı” durumundayken iptal
-            edilebilir. Ders başlangıç saati geldikten sonra rezervasyon iptal
-            edilemez.
-          </p>
-          <p>
-            Ders başlangıç saatine <strong>on iki saatten fazla</strong> süre
-            varken yapılan iptaller ücretsizdir. Bu halde derse ayrılmış paket
-            kredisi Kullanıcının paketine geri yüklenir ve yeniden
-            kullanılabilir.
-          </p>
-          <p>
-            Ders başlangıç saatine <strong>on iki saatten az</strong> süre
-            kalmışsa:
-          </p>
+        <LegalSection title="2. Tanımlar">
           <ul className="list-disc space-y-2 pl-5">
             <li>
-              İptal öğrenci tarafından yapılmışsa, derse ayrılmış paket kredisi
-              iade edilmez ve ilgili ders öğretmenin gelirine konu edilir.
+              <strong>Paket:</strong> belirli sayıda ders hakkı içeren ve belirli
+              bir süre boyunca geçerli olan, tek seferlik ve otomatik
+              yenilenmeyen hizmet alımı.
             </li>
             <li>
-              İptal öğretmen tarafından yapılmışsa, paket kredisi öğrenciye
-              iade edilir ve öğretmenin hesabına ceza puanı işlenir.
+              <strong>Ders hakkı:</strong> paketin içerdiği her bir ders.
+            </li>
+            <li>
+              <strong>Yerleşmiş ders:</strong> Hocanın takviminde belirli bir
+              saate yazılmış ders hakkı.
+            </li>
+            <li>
+              <strong>Yerleşmemiş hak:</strong> ödenmiş olan ancak henüz hiçbir
+              saate yazılmamış ders hakkı. Ücretsiz iptalle geri dönen ders
+              hakkı da yerleşmemiş hak olarak durur.
+            </li>
+            <li>
+              <strong>Kullanılmış ders:</strong> gerçekleşmiş veya gerçekleşmiş
+              sayılan ders ile geç iptal edilen ders.
+            </li>
+            <li>
+              <strong>Telafi hakkı:</strong> Hocanın derse katılmaması halinde
+              Öğrenciye ayrıca tanımlanan ek ders hakkı.
             </li>
           </ul>
         </LegalSection>
 
-        <LegalSection title="3. Öğretmenin rezervasyonu yanıtsız bırakması">
+        <LegalSection title="3. Ödeme ve ders saatlerinin ayrılması">
           <p>
-            Öğretmen tarafından ders başlangıç saatine kadar yanıtlanmayan
-            “beklemede” durumundaki rezervasyonlar sistem tarafından
-            kendiliğinden iptal edilir. Bu halde derse ayrılmış paket kredisi
-            öğrenciye iade edilir; rezervasyon ücretsiz tanışma dersi hakkı
-            kullanılarak oluşturulmuşsa bu hak yeniden kullanılabilir hale
-            gelir.
+            Öğrencinin seçtiği saatler, ödemeye geçtiği andan başlayarak{" "}
+            <strong>{f.holdMinutes} dakika</strong> boyunca yalnızca o Öğrenci
+            için ayrılır. Ödeme sayfası en çok{" "}
+            <strong>{f.paymentPageMinutes} dakika</strong> açık kalır. Ödeme
+            başarısız olursa saatler en çok{" "}
+            <strong>{f.failedRetryHoldMinutes} dakika</strong> daha tutulur ve
+            ödeme en çok <strong>{f.maxPaymentAttempts}</strong> kez denenebilir.
+            Ödeme bu sürede tamamlanmazsa saatler yeniden herkese açılır ve
+            seçimin baştan yapılması gerekir.
+          </p>
+          <p>
+            Ödeme süre dolduktan sonra ulaşır ve seçilen saatler bu arada başka
+            bir Öğrenciye verilmişse, ödenen tutarın tamamı iade edilir.
+          </p>
+          <p>
+            Ödeme onaylandığında paket açılır ve dersler Hocanın takvimine
+            yazılır. İlk ders, ödemeden en az{" "}
+            <strong>{f.firstLessonNoticeHours} saat</strong> sonra başlar; bu
+            süreye denk gelen ders kaybolmaz, programın sonuna eklenir.
           </p>
         </LegalSection>
 
-        <LegalSection title="4. Derse katılmama">
+        <LegalSection title="4. Cayma hakkı">
+          <p>
+            Alıcı, paketi satın aldığı günden başlayarak{" "}
+            <strong>{f.withdrawalDays} gün</strong> içinde hiçbir gerekçe
+            göstermeksizin ve cezai şart ödemeksizin sözleşmeden cayabilir. Hiçbir
+            ders kullanılmamışsa ödenen tutarın tamamı iade edilir. İade, cayma
+            bildiriminin HOCAM’a ulaştığı tarihten itibaren{" "}
+            <strong>{f.withdrawalDays} gün</strong> içinde yapılır.
+          </p>
+          <p>
+            Cayma bildirimi, hesabın Ödemeler sayfasındaki iade talebi (“Paketten
+            vazgeçtim”) veya destek talebi ile yapılır; bildirimin süresi içinde
+            gönderilmiş olması yeterlidir. Talep oluşturulduğunda alındığına
+            dair bildirim gönderilir.
+          </p>
+          <p>
+            İlk ders başladığında hizmetin ifasına başlanmış olur. Alıcı,
+            ödemeden önce bu hususta bilgilendirilir ve ödemeye geçerek
+            hizmetin ifasına başlanmasını kabul ettiğini ve bu halde cayma
+            hakkının sona ereceğini onaylar. Cayma hakkının sona ermesi, Alıcının
+            kullanılmamış dersler için iade talep etme hakkını ortadan
+            kaldırmaz; bu hak onuncu maddede düzenlenmiştir.
+          </p>
+        </LegalSection>
+
+        <LegalSection title="5. Ders iptali">
+          <p>
+            Bir ders, yalnızca başlangıç saatinden önce ve “beklemede” veya
+            “onaylandı” durumundayken iptal edilebilir. Başlangıç saati
+            geldikten sonra ders iptal edilemez.
+          </p>
+          <p>
+            <strong>Öğrenci iptali.</strong> Ders başlangıç saatine{" "}
+            <strong>{f.freeCancelHours} saatten fazla</strong> süre varken yapılan
+            iptal ücretsizdir. Bu halde ders hakkı geri döner ve yerleşmemiş hak
+            olarak durur; Öğrenci bu hakkı paketin geçerlilik süresi içinde yeni
+            bir saate yerleştirebilir. Başlangıç saatine{" "}
+            <strong>{f.freeCancelHours} saatten az</strong> süre kalmışsa ders
+            hakkı geri dönmez ve ders kullanılmış sayılır.
+          </p>
+          <p>
+            <strong>Hoca iptali.</strong> Hoca, onaylanmış bir dersi başlangıç
+            saatine <strong>{f.tutorCancelLockHours} saat ya da daha az</strong>{" "}
+            kala iptal edemez. Acil bir durumda destek ekibinin onayıyla iptal
+            edebilir. Hocanın iptal ettiği her ders için ders hakkı Öğrenciye
+            geri döner ve paketin süresi sekizinci maddeye göre uzar.
+          </p>
+        </LegalSection>
+
+        <LegalSection title="6. Derse katılmama">
           <p>
             Katılım, ders başlangıç saatinden itibaren{" "}
-            <strong>on beş dakika</strong> boyunca beklenir. Bu sürenin sonunda
-            tarafların katılım durumuna göre aşağıdaki sonuçlar doğar:
+            <strong>{f.noShowGraceMinutes} dakika</strong> boyunca beklenir. Bu
+            sürenin sonunda tarafların katılım durumuna göre aşağıdaki sonuçlar
+            doğar:
           </p>
           <ul className="list-disc space-y-2 pl-5">
             <li>
-              <strong>Öğretmen katılmamışsa:</strong> ders iptal edilir, paket
-              kredisi öğrenciye iade edilir ve öğrenciye ilave bir telafi
-              kredisi tanımlanır. Katılmama kaydı öğretmenin hesabına işlenir.
+              <strong>Hoca katılmamışsa:</strong> ders iptal edilir, ders hakkı
+              Öğrenciye geri döner, ayrıca bir telafi hakkı tanımlanır ve paketin
+              süresi sekizinci maddeye göre uzar. Katılmama kaydı Hocanın
+              hesabına işlenir.
             </li>
             <li>
-              <strong>Öğrenci katılmamış, öğretmen katılmışsa:</strong> ders
-              gerçekleşmiş sayılır ve paket kredisi kullanılmış olarak düşülür.
-              Öğrenci, bu tespite karşı beşinci maddede düzenlenen süre içinde
-              itiraz edebilir.
+              <strong>Öğrenci katılmamış, Hoca katılmışsa:</strong> ders
+              gerçekleşmiş sayılır ve ders hakkı kullanılmış olarak düşülür.
+              Öğrenci, bu tespite karşı aşağıdaki süre içinde itiraz edebilir.
             </li>
             <li>
               <strong>Taraflardan hiçbiri katılmamışsa:</strong> ders iptal
-              edilir ve paket kredisi öğrenciye iade edilir.
+              edilir ve ders hakkı Öğrenciye geri döner.
             </li>
           </ul>
-        </LegalSection>
-
-        <LegalSection title="5. İtiraz">
           <p>
             Öğrenci, hakkında düzenlenen katılmama tespitine, tespitin
-            yapılmasından itibaren <strong>yirmi dört saat</strong> içinde
-            itiraz edebilir. Süresinde yapılan itiraz üzerine rezervasyon
-            uyuşmazlık durumuna alınır ve destek ekibi tarafından incelenir.
-            İnceleme sonucunda paket kredisinin iadesine karar verilebilir.
-          </p>
-        </LegalSection>
-
-        <LegalSection title="6. Ders onayı ve değerlendirme">
-          <p>
-            Tamamlanan ders, öğrencinin onayı ile kesinleşir. Öğrencinin ders
-            bitiminden itibaren <strong>yirmi dört saat</strong> içinde onay
-            vermemesi veya itirazda bulunmaması halinde ders kendiliğinden
-            onaylanmış sayılır.
+            yapılmasından itibaren{" "}
+            <strong>{f.absenceDisputeHours} saat</strong> içinde itiraz edebilir.
+            Süresinde yapılan itiraz üzerine ders uyuşmazlık durumuna alınır ve
+            destek ekibi tarafından incelenir; inceleme sonucunda ders hakkının
+            iadesine karar verilebilir.
           </p>
           <p>
-            Öğrenci, tamamlanan ders için değerlendirme yazma hakkını ders
-            bitiminden itibaren <strong>üç gün</strong> içinde kullanabilir.
-          </p>
-        </LegalSection>
-
-        <LegalSection title="7. Tekrarlanan katılmama">
-          <p>
-            Hakkında <strong>üç</strong> katılmama kaydı oluşan öğretmenin
-            profili, inceleme tamamlanıncaya kadar herkese açık listelemeden
-            kendiliğinden çıkarılır. Bu tedbir, mevcut rezervasyonların
+            Hakkında <strong>{f.noShowHideThreshold}</strong> katılmama kaydı
+            oluşan Hocanın profili, inceleme tamamlanıncaya kadar herkese açık
+            listelemeden kendiliğinden çıkarılır. Bu tedbir, mevcut derslerin
             yürütülmesine ve işbu koşullardan doğan iade haklarına etki etmez.
           </p>
         </LegalSection>
 
-        <LegalSection title="8. Paket geçerlilik süresi">
+        <LegalSection title="7. Dersin tamamlanması">
           <p>
-            Ders paketleri, satın alma tarihinden itibaren pakette belirtilen
-            süre boyunca geçerlidir. Bu süre, paket satın alınırken Kullanıcıya
-            gösterilir.
-          </p>
-          <p>
-            Sürenin dolmasıyla paket sona erer ve kalan krediler yeni
-            rezervasyon oluşturmak için kullanılamaz. Süresi dolan paketin
-            kullanılmamış kredileri bakımından onuncu maddedeki iade talep
-            hakkı saklıdır.
+            Tamamlanan ders, Öğrencinin onayı ile kesinleşir. Öğrencinin ders
+            bitiminden itibaren <strong>{f.autoConfirmHours} saat</strong> içinde
+            onay vermemesi veya itirazda bulunmaması halinde ders kendiliğinden
+            onaylanmış sayılır. Öğrenci, tamamlanan ders için değerlendirme yazma
+            hakkını ders bitiminden itibaren{" "}
+            <strong>{f.reviewWindowDays} gün</strong> içinde kullanabilir.
           </p>
         </LegalSection>
 
-        <LegalSection title="9. Paket bedelinin iadesi ve hesaplanması">
+        <LegalSection title="8. Paketin süresi ve süre uzatma">
           <p>
-            İade tutarı, paket için ödenen toplam bedelden kullanılmış derslere
-            karşılık gelen tutarın düşülmesi suretiyle hesaplanır. Kullanılmış
-            dersler, paketin liste fiyatından değil,{" "}
-            <strong>fiilen ödenen indirimli birim ders bedeli</strong> üzerinden
-            düşülür. Bu esas, iade talebinin gerekçesinden bağımsız olarak her
-            halde uygulanır.
+            Paket, satın alınan planın süresi boyunca geçerlidir; bu süre ödeme
+            öncesinde Alıcıya gösterilir. Dersler paketin süresi içindeki
+            saatlere yerleştirilir; süre bittikten sonrasına yerleştirilemez.
+            Yerleşmemiş haklar süre sonunda kullanılamaz hale gelir, ancak bu
+            haklar için onuncu maddedeki iade talebi saklıdır.
           </p>
-          <p>Hesaplama aşağıdaki gibidir:</p>
+          <p>
+            Hocanın dersi iptal etmesi, derse katılmaması veya talebe hiç yanıt
+            vermemesi nedeniyle Öğrenci ders kaybederse paketin süresi
+            kendiliğinden uzar. Uzatma, Öğrenci talepte bulunmadan yapılır ve
+            bildirilir. Uzatma süresi, hoca kaynaklı kayıp ders sayısının
+            haftalık ders sayısına bölünmesiyle bulunan hafta sayısı kadardır;
+            kayıpların tamamı birlikte hesaplanır ve süre hiçbir zaman kısalmaz.
+            Uzatma, planın süresinin yarısını ve{" "}
+            <strong>{f.maxExtensionDays} günü</strong> aşamaz:
+          </p>
+          <ul className="list-disc space-y-1 pl-5">
+            {EXTENSION_CAPS.map((cap) => (
+              <li key={cap.planDays}>
+                {formatPlanDuration(cap.planDays)} ({cap.planDays} gün) plan: en
+                çok <strong>{cap.capDays} gün</strong>
+              </li>
+            ))}
+          </ul>
+          <p>
+            Öğrencinin kendi iptali, geç kalması veya derse katılmaması paketin
+            süresini uzatmaz.
+          </p>
+        </LegalSection>
+
+        <LegalSection title="9. İade tutarının hesaplanması">
+          <p>
+            <strong>Hiçbir ders kullanılmamışsa</strong> ödenen tutarın tamamı
+            iade edilir. Ders yerleştirilmiş olması veya başlangıç saatinin
+            yakın olması bu sonucu değiştirmez.
+          </p>
+          <p>
+            <strong>Bir veya daha fazla ders kullanılmışsa</strong> iade tutarı,
+            ödenen toplam bedelden kullanılmış derslere karşılık gelen tutarın
+            düşülmesiyle bulunur. Kullanılmış dersler, paketin liste fiyatından
+            değil, <strong>fiilen ödenen ders başı bedel</strong> üzerinden
+            düşülür:
+          </p>
           <p className="tabular-nums">
-            İade tutarı = Ödenen toplam bedel − (Kullanılmış ders sayısı ×
-            İndirimli birim ders bedeli)
+            İade tutarı = Ödenen toplam bedel − (Kullanılmış ders sayısı × Ders
+            başı ödenen bedel)
           </p>
           <p>
-            Hesaplama sonucunun sıfırdan küçük çıkması halinde iade tutarı
-            sıfır olarak uygulanır. Ücretsiz tanışma dersleri ve telafi
-            kredileri bedele konu olmadığından hesaplamaya dahil edilmez.
+            Hesaplama sonucunun sıfırdan küçük çıkması halinde iade tutarı sıfır
+            olarak uygulanır. Ücretsiz tanışma dersleri ve telafi hakları bedele
+            konu olmadığından hesaplamaya dahil edilmez.
+          </p>
+          <p>
+            İade talebinin oluşturulmasından sonraki{" "}
+            <strong>{f.refundNearLessonHours} saat</strong> içinde başlayacak
+            dersler, iptal edilseler de kullanılmış sayılır; çünkü Hocaya bu saat
+            geri verilemez. Bu kural, ilk ders başlamadan yapılan taleplerde ve
+            sorunun Hocadan veya HOCAM’dan kaynaklandığı hallerde uygulanmaz.
+          </p>
+          <p>
+            <strong>Sorun Hocadan veya HOCAM’dan kaynaklanıyorsa</strong> henüz
+            kullanılmamış derslerin tamamı kesinti yapılmadan iade edilir. Sorunun
+            kimden kaynaklandığına destek ekibi, kayıtları inceleyerek ve
+            gerekçesini yazarak karar verir; Öğrencinin talep sırasında belirttiği
+            neden bir beyandır ve karar yerine geçmez.
           </p>
         </LegalSection>
 
         <LegalSection title="10. İade talep gerekçeleri">
           <p>Öğrenci aşağıdaki hallerde iade talebinde bulunabilir:</p>
           <ul className="list-disc space-y-2 pl-5">
-            <li>Paketin kullanılmaya devam edilmek istenmemesi.</li>
-            <li>Süresi dolan bir pakette kullanılmamış kredi bulunması.</li>
+            <li>Paketten vazgeçilmesi (cayma dahil).</li>
+            <li>Hocayla ilgili bir sorun bulunması.</li>
+            <li>Teknik bir sorun yaşanması.</li>
+            <li>
+              Seçilen saatlerin ödeme sırasında başkasına geçmesi ve uygun başka
+              saat bulunamaması.
+            </li>
+            <li>
+              Paket süresinin dolması ve yerleşmemiş hak kalması.
+            </li>
+            <li>Diğer nedenler.</li>
           </ul>
-          <p>
-            HOCAM ise aşağıdaki hallerde iade sürecini kendiliğinden başlatır:
-          </p>
+          <p>HOCAM ise aşağıdaki hallerde iade sürecini kendiliğinden başlatır:</p>
           <ul className="list-disc space-y-2 pl-5">
-            <li>Paketin bağlı olduğu öğretmenin platformdan ayrılması.</li>
-            <li>Öğretmenin doğrulama statüsünün geri alınması.</li>
+            <li>Paketin bağlı olduğu Hocanın platformdan ayrılması.</li>
+            <li>Hocanın doğrulama statüsünün geri alınması.</li>
             <li>Hizmetin HOCAM’dan kaynaklanan bir nedenle sunulamaması.</li>
           </ul>
+          <p>
+            Hocanın ayrılması veya doğrulamasının geri alınması gibi hizmetin
+            ifasının imkansızlaştığı hallerde HOCAM, durumdan haberdar olur
+            olmaz Öğrenciyi bilgilendirir ve ödenen bedelin kullanılmamış
+            kısmını iade eder.
+          </p>
         </LegalSection>
 
         <LegalSection title="11. Talep usulü ve inceleme">
@@ -219,25 +329,27 @@ export default function CancellationAndRefundPage() {
             Bir paket için aynı anda yalnızca bir iade talebi açık olabilir.
             Talebin oluşturulduğu an itibarıyla kullanılmış ders sayısı ve
             hesaplanan iade tutarı kayıt altına alınır ve sonradan yapılacak
-            fiyat değişikliklerinden etkilenmez. Talep açık kaldığı sürece
-            ilgili paketten yeni rezervasyon oluşturulamaz.
+            fiyat değişikliklerinden etkilenmez. Talep onaylanıncaya kadar
+            Öğrencinin hiçbir dersi iptal edilmez; ancak talep açık kaldığı
+            sürece ilgili paketten yeni ders yerleştirilemez.
           </p>
           <p>
-            İade talepleri destek ekibi tarafından incelenerek sonuçlandırılır.
-            Platform üzerinde otomatik tahsilat veya otomatik bedel iadesi
-            yapılmamaktadır; ödeme ve iade işlemleri elle yürütülür. Talebin
-            sonucu, hesaplanan tutar ve gerekçesiyle birlikte Kullanıcıya
-            bildirilir.
+            İade talepleri HOCAM destek ekibi tarafından incelenir. Onay veya
+            ret kararı gerekçesiyle birlikte yazılır ve Kullanıcıya bildirilir.{" "}
+            <strong>{formatTlAmount(f.refundSecondApprovalTl)}</strong> ve üzeri
+            iadelerde ikinci bir yetkilinin de onayı aranır. Talep onaylanırsa
+            iade, ödeme yapılan karta ödeme hizmeti sağlayıcısı üzerinden yapılır
+            ve yapıldığında ayrıca bildirilir.
           </p>
           <p>
-            İadeye konu tutar, talebin kabul edildiği tarihten itibaren{" "}
-            <strong>on beş gün</strong> içinde Kullanıcının ödeme yaptığı
-            yöntemle iade edilir.
+            HOCAM, iade talebini talebin oluşturulduğu tarihten itibaren en geç{" "}
+            <strong>{f.refundSettleDays} gün</strong> içinde sonuçlandırır. İadenin
+            kartın ekstresine yansıma süresi kartı çıkaran bankaya göre değişir.
           </p>
           <p>
             İade ve ödeme konusundaki talepler, hesaba giriş yapıldıktan sonra
-            platform üzerindeki destek talebi kanalından iletilir. Hesabı
-            bulunmayanlar{" "}
+            hesabın Ödemeler sayfasındaki iade talebi veya destek talebi kanalıyla
+            iletilir. Hesabı bulunmayanlar{" "}
             <LegalLink href="/iletisim">iletişim sayfası</LegalLink> üzerinden
             başvurabilir.
           </p>
@@ -247,9 +359,9 @@ export default function CancellationAndRefundPage() {
           <p>
             İşbu koşullar yayımlandığı tarihte yürürlüğe girer. HOCAM,
             koşullarda değişiklik yapma hakkını saklı tutar. Değişiklikler bu
-            sayfada yayımlandığı anda geçerli olur; değişiklikten önce
-            oluşturulmuş rezervasyonlar ve satın alınmış paketler bakımından,
-            işlem tarihinde yürürlükte olan koşullar uygulanır.
+            sayfada yayımlandığı anda geçerli olur; ancak değişiklikten önce satın
+            alınmış paketler ve oluşturulmuş dersler bakımından, satın alma
+            tarihinde yürürlükte olan koşullar uygulanır.
           </p>
         </LegalSection>
       </div>

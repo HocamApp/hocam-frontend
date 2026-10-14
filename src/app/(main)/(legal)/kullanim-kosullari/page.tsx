@@ -6,6 +6,7 @@ import {
   LegalSection,
 } from "@/components/legal/LegalDocument";
 import { legalPageMetadata } from "@/lib/legalDocuments";
+import { POLICY_FACTS as f } from "@/lib/policyFacts";
 
 export const metadata = legalPageMetadata("kullanim-kosullari");
 
@@ -104,7 +105,13 @@ export default function TermsOfServicePage() {
             öğrencisi hocaları bir araya getiren bir aracı hizmet
             sağlayıcıdır. Ders ilişkisi Öğrenci ile Hoca arasında kurulur;
             HOCAM bu ilişkinin kurulduğu, planlandığı ve kayıt altına alındığı
-            teknik altyapıyı sağlar.
+            teknik altyapıyı sağlar. Paket satın alınırken HOCAM, sözleşmenin
+            kurulmasına aracılık eder ve paket bedelini Hoca adına tahsil eder;
+            bu sözleşmenin tarafları ve Öğrencinin hakları{" "}
+            <LegalLink href="/mesafeli-satis-sozlesmesi">
+              Mesafeli Satış Sözleşmesinde
+            </LegalLink>{" "}
+            düzenlenmiştir.
           </p>
           <p>
             HOCAM, dersin içeriğini belirlemez ve dersi kendisi vermez. Hocanın
@@ -170,7 +177,7 @@ export default function TermsOfServicePage() {
               güncellenmesi.
             </li>
             <li>
-              Kabul ettiği dersleri belirlenen saatte ve duyurduğu kapsamda
+              Takvimine yazılan dersleri belirlenen saatte ve duyurduğu kapsamda
               vermesi.
             </li>
             <li>
@@ -182,6 +189,15 @@ export default function TermsOfServicePage() {
               kullanması, üçüncü kişilerle paylaşmaması.
             </li>
           </ul>
+          <p>
+            Paket satışında Hocanın ayrıca onayı aranmaz: Öğrenci, Hocanın açık
+            tuttuğu saatlerden seçip ödemeyi tamamladığında dersler Hocanın
+            takvimine yazılır ve Hoca bu derslere girmekle yükümlüdür. Hoca,
+            onaylanmış bir dersi başlangıç saatine{" "}
+            <strong>{f.tutorCancelLockHours} saat ya da daha az</strong> kala iptal
+            edemez; acil bir durumda destek ekibine başvurur ve destek ekibinin
+            onayıyla iptal edebilir.
+          </p>
           <p>
             Derse katılmama kayıtları hoca hesabına işlenir. Hakkında{" "}
             <strong>üç</strong> katılmama kaydı oluşan hocanın profili,
@@ -206,8 +222,10 @@ export default function TermsOfServicePage() {
 
         <LegalSection title="8. Ders süreci">
           <p>
-            Ders, Öğrencinin talebi ve Hocanın onayı ile kesinleşir. Ders,
-            Platform üzerindeki çevrim içi ders odasında yapılır. Ders sırasında
+            Paket dersleri, ödemenin onaylanmasıyla Hocanın takvimine yazılır ve
+            kesinleşir; ayrıca Hocanın onayı aranmaz. Ücretsiz deneme dersi
+            talepleri Hocanın onayıyla kesinleşir. Ders, Platform üzerindeki
+            çevrim içi ders odasında yapılır. Ders sırasında
             <strong> ses ve görüntü kaydı alınmaz</strong>; yalnızca derse kimin
             ne zaman katıldığına ilişkin kayıt tutulur.
           </p>
@@ -234,16 +252,16 @@ export default function TermsOfServicePage() {
 
         <LegalSection title="10. Ücretlendirme ve ödeme">
           <p>
-            Ders ücretleri hoca profilinde ve paket seçim ekranında, vergiler
-            dahil ve Türk lirası olarak gösterilir. Öğrenci, paket talebini
-            oluşturmadan önce toplam tutarı, paketin içerdiği ders sayısını ve
-            geçerlilik süresini görür.
+            Ders ücretleri hoca profilinde ve paket seçim ekranında Türk lirası
+            olarak gösterilir. Öğrenci, ödemeye geçmeden önce toplam tutarı,
+            paketin içerdiği ders sayısını ve geçerlilik süresini görür.
           </p>
           <p>
-            Platform üzerinde <strong>otomatik tahsilat yapılmamaktadır</strong>.
-            Ödemeye ilişkin işlemler destek ekibi tarafından elle yürütülür.
-            Paket talebi oluşturmak tek başına ödeme yapıldığı anlamına gelmez;
-            paketin kullanıma açılması, ödemenin teyit edilmesine bağlıdır.
+            Ödeme, ödeme hizmeti sağlayıcısı PayTR’nin güvenli sayfasında kart ile
+            yapılır; kart bilgileri HOCAM’a ulaşmaz. Ödemeye geçmek ödeme
+            yükümlülüğü doğurur. Ödeme onaylandığında paket açılır ve dersler
+            Hocanın takvimine yazılır; paket tek seferliktir ve otomatik
+            yenilenmez.
           </p>
           <p>
             HOCAM, sunduğu aracılık hizmeti karşılığında hoca gelirinden{" "}
