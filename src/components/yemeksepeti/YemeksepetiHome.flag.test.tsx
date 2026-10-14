@@ -156,17 +156,17 @@ describe("homepage with NEXT_PUBLIC_BRAND_V3", () => {
     }
   });
 
-  it("marks the root data-brand=\"v3\" when on, without changing the sections", () => {
+  it("marks the root data-brand=\"v3\" when on, without changing the sections or the headline", () => {
     for (const v2 of [false, true]) {
       const off = render(<YemeksepetiHome v2={v2} brandV3={false} />);
       const offStubs = stubs(off.container);
-      const offText = off.container.textContent;
+      const offTitle = off.container.querySelector("h1")!.textContent;
       cleanup();
 
       const { container } = render(<YemeksepetiHome v2={v2} brandV3 />);
       assert.equal(container.querySelector(".ys-root")!.getAttribute("data-brand"), "v3");
       assert.deepEqual(stubs(container), offStubs);
-      assert.equal(container.textContent, offText);
+      assert.equal(container.querySelector("h1")!.textContent, offTitle);
       cleanup();
     }
   });

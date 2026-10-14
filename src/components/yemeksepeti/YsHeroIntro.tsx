@@ -3,15 +3,24 @@ import Link from "next/link";
 
 import { CircularGallery } from "@/components/ui/circular-gallery";
 
+import { YsHeroCollage } from "./YsHeroCollage";
 import { YS_CAMPUS_ITEMS } from "./ysCampusGallery";
 import { hero } from "./ysHomeCopy";
 
-/* Each pill jumps to the part of this page written for that reader. */
+/* Each pill jumps to the part of this page written for that reader. The dot
+   only shows under brand v3: pink, ink and yellow, one per reader. */
 const AUDIENCE = [
-  { href: "#ogrenciler", label: hero.audience.students },
-  { href: "#veliler", label: hero.audience.parents },
-  { href: "#hocalar", label: hero.audience.tutors },
+  { href: "#ogrenciler", label: hero.audience.students, dot: "bg-pink" },
+  { href: "#veliler", label: hero.audience.parents, dot: "bg-ink" },
+  { href: "#hocalar", label: hero.audience.tutors, dot: "bg-yellow shadow-[inset_0_0_0_1px_rgb(12_14_9_/_25%)]" },
 ] as const;
+
+/* Brand v3 sets the headline's last word on a yellow highlight. Split here
+   rather than in the copy file, so the sentence stays one string there. */
+function splitLastWord(line: string): [string, string] {
+  const at = line.lastIndexOf(" ");
+  return at < 0 ? ["", line] : [line.slice(0, at + 1), line.slice(at + 1)];
+}
 
 /* The mockup's `.btn-lg`: 50px, and smaller on phones. Class strings are
    joined by hand here, not with `cn`: tailwind-merge does not know the
@@ -46,9 +55,15 @@ const HERO_BUTTON = "h-12 px-8 text-body";
  * Text comes from `ysHomeCopy.ts`. `v2` (NEXT_PUBLIC_HOME_V2) turns on the
  * rebuild's changes: the lowercase headline, "Hoca ol" to /hoca-ol,
  * and the audience row. Off, the hero is the pre-rebuild one.
+ *
+ * `brandV3` (NEXT_PUBLIC_BRAND_V3) swaps the campus ring for the collage and
+ * puts the headline's last word on yellow. Colour-only changes ride on `v3:`
+ * classes, which match only under the page's data-brand="v3".
  */
-export function YsHeroIntro({ v2 = false }: { v2?: boolean }) {
+export function YsHeroIntro({ v2 = false, brandV3 = false }: { v2?: boolean; brandV3?: boolean }) {
   const heroButtonSize = v2 ? HERO_BUTTON_V2 : HERO_BUTTON;
+  const titleLine2 = v2 ? hero.titleLine2 : hero.titleLine2Legacy;
+  const [titleLead, titleLastWord] = splitLastWord(titleLine2);
   return (
     <section
       className="py-16 md:pb-[90px] md:pt-24"
@@ -61,7 +76,16 @@ export function YsHeroIntro({ v2 = false }: { v2?: boolean }) {
           <h1 id="ys-hero-title" className={`text-display-m md:text-display${v2 ? " max-md:leading-10" : ""}`}>
             {hero.titleLine1}
             <br />
-            {v2 ? hero.titleLine2 : hero.titleLine2Legacy}
+            {brandV3 ? (
+              <>
+                {titleLead}
+                <span className="inline-block -rotate-[1.5deg] rounded-[14px] bg-yellow px-3 text-on-accent">
+                  {titleLastWord}
+                </span>
+              </>
+            ) : (
+              titleLine2
+            )}
           </h1>
 
           <p
@@ -79,7 +103,7 @@ export function YsHeroIntro({ v2 = false }: { v2?: boolean }) {
             rather than navigating to /tutors and reloading the same list. */}
             <Link
               href="#ys-tutor-list-title"
-              className={`inline-flex items-center rounded-pill bg-pink font-semibold text-white transition-colors duration-[--duration-state] hover:bg-pink-deep ${heroButtonSize}`}
+              className={`inline-flex items-center rounded-pill bg-pink font-semibold text-white transition-colors duration-[--duration-state] hover:bg-pink-deep v3:bg-pink-deep v3:hover:brightness-90 ${heroButtonSize}`}
             >
               {hero.ctaTutors}
             </Link>
@@ -87,7 +111,7 @@ export function YsHeroIntro({ v2 = false }: { v2?: boolean }) {
                 answers "can I, and how" before the registration form. */}
             <Link
               href={v2 ? "/hoca-ol" : "/register?role=tutor"}
-              className={`inline-flex items-center rounded-pill border border-ink font-semibold text-ink transition-colors duration-[--duration-state] hover:bg-ink hover:text-paper ${heroButtonSize}`}
+              className={`inline-flex items-center rounded-pill border border-ink font-semibold text-ink transition-colors duration-[--duration-state] hover:bg-ink hover:text-paper v3:border-2 ${heroButtonSize}`}
             >
               {hero.ctaBecomeTutor}
             </Link>
@@ -106,6 +130,7 @@ export function YsHeroIntro({ v2 = false }: { v2?: boolean }) {
                     href={item.href}
                     className="inline-flex h-11 items-center gap-2.5 rounded-pill border border-line bg-surface pl-[18px] pr-2 text-[0.875rem] font-medium text-ink transition-colors duration-[--duration-state] hover:border-ink sm:text-[0.9375rem]"
                   >
+                    <span aria-hidden className={`hidden size-2.5 shrink-0 rounded-pill v3:inline-block ${item.dot}`} />
                     {item.label}
                     <span className="grid h-7 w-6 place-items-center text-ink">
                       <ArrowDown className="h-4 w-4" aria-hidden />
@@ -132,6 +157,9 @@ export function YsHeroIntro({ v2 = false }: { v2?: boolean }) {
             24px out of a shell that still had 16px of padding between 640 and
             960, and those 8px per side were the page's horizontal scroll at
             tablet widths. */}
+        {brandV3 ? (
+          <YsHeroCollage />
+        ) : (
         <div className="relative -mx-4 h-[300px] overflow-hidden sm:h-[340px] min-[960px]:-mx-8 lg:mx-0 lg:-ml-20 lg:h-[360px] xl:-ml-32">
           {/* Scaled rather than re-measured per breakpoint: perspective already
               magnifies the front card by about a third, so a phone gets a card
@@ -141,6 +169,7 @@ export function YsHeroIntro({ v2 = false }: { v2?: boolean }) {
             <CircularGallery items={YS_CAMPUS_ITEMS} />
           </div>
         </div>
+        )}
       </div>
     </section>
   );

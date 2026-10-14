@@ -62,6 +62,13 @@ import {
 
 const PAGE_SIZE = 12;
 
+/* Brand v3 (homepage only, via data-brand="v3"): unselected chips are white
+   with a hairline, selected ones stay solid ink. The selected pair is
+   repeated under v3 so it outranks the unselected v3 classes. */
+const V3_CHIP =
+  "v3:border-line v3:bg-surface v3:hover:border-ink v3:hover:bg-surface v3:hover:text-ink " +
+  "v3:data-[selected]:border-ink v3:data-[selected]:bg-ink v3:data-[selected]:text-paper";
+
 /* A loading placeholder shaped like the `size="lg"` card: portrait on the
    left, text column beside it, stats/CTA rail on the right. Kept local so
    `/tutors` stays byte-identical to origin/main. */
@@ -372,7 +379,7 @@ function DirectoryBody({ favoritesOnly = false }: DirectoryProps) {
               type="button"
               size="sm"
               variant="outline"
-              className="hidden shrink-0 rounded-full lg:inline-flex"
+              className={`hidden shrink-0 rounded-full lg:inline-flex ${V3_CHIP}`}
               aria-expanded={filtersOpen}
               aria-controls="ys-tutor-filter-panel"
               onClick={() => setFiltersOpen((open) => !open)}
@@ -394,7 +401,7 @@ function DirectoryBody({ favoritesOnly = false }: DirectoryProps) {
                action in a region, and a sort toggle is not it. */
                 variant="outline"
                 data-selected={chip.active || undefined}
-                className="shrink-0 data-[selected]:border-ink data-[selected]:bg-ink data-[selected]:text-paper"
+                className={`shrink-0 data-[selected]:border-ink data-[selected]:bg-ink data-[selected]:text-paper ${V3_CHIP}`}
                 onClick={() =>
                   handleFiltersChange({ ...filters, ...chip.next })
                 }

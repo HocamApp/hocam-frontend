@@ -103,7 +103,7 @@ describe("Phase A components keep text in the copy file", () => {
         : [];
   const copyStrings = [hero, subjects, band].flatMap(strings);
 
-  for (const file of ["YsHeroIntro.tsx", "YsSubjectGrid.tsx", "YsVerifiedBand.tsx"]) {
+  for (const file of ["YsHeroIntro.tsx", "YsHeroCollage.tsx", "YsSubjectGrid.tsx", "YsVerifiedBand.tsx"]) {
     it(file, () => {
       // Comments may quote the copy; only code counts.
       const source = readFileSync(`src/components/yemeksepeti/${file}`, "utf8")
