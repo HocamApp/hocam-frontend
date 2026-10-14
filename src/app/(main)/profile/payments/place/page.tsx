@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
@@ -20,6 +20,9 @@ import { hasUnplacedCredits } from "@/lib/unplacedCredits";
 function PlaceLessonsContent() {
   const params = useSearchParams();
   const purchaseId = params.get("purchase");
+  // The package this screen has just placed lessons for. Its credits are gone
+  // from the list by then, which must not take the summary away.
+  const [placedId, setPlacedId] = useState<string | null>(null);
   const { data, isLoading, isError } = useQuery({
     queryKey: ["package-purchases"],
     queryFn: fetchPackagePurchases,
@@ -29,7 +32,7 @@ function PlaceLessonsContent() {
   if (isError) return <ErrorMessage message={PLACE_PAGES.packagesLoadFailed} />;
 
   const purchase = purchaseId ? (data ?? []).find((item) => item.id === purchaseId) : undefined;
-  if (!purchase || !hasUnplacedCredits(purchase)) {
+  if (!purchase || (!hasUnplacedCredits(purchase) && placedId !== purchase.id)) {
     return (
       <EmptyState
         title={PLACE_PAGES.packageNotFoundTitle}
@@ -43,7 +46,7 @@ function PlaceLessonsContent() {
     );
   }
 
-  return <PlaceLessonsFlow purchase={purchase} />;
+  return <PlaceLessonsFlow purchase={purchase} onPlaced={() => setPlacedId(purchase.id)} />;
 }
 
 export default function PlaceLessonsPage() {

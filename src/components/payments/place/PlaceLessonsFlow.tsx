@@ -27,8 +27,19 @@ import type { PackagePurchase, PlaceLessonsResult } from "@/types";
  * the server writes the lessons under the tutor's lock and answers how many it
  * placed. Nothing is written unless every hour is free: a refusal says which
  * day and leaves the student on this screen with their hours still selected.
+ *
+ * `onPlaced` tells the page the lessons are written. Placing the last credits
+ * makes the package list say there is nothing left to place; the page uses
+ * the call to keep this flow (and its summary) on screen instead of replacing
+ * it with "package not found".
  */
-export function PlaceLessonsFlow({ purchase }: { purchase: PackagePurchase }) {
+export function PlaceLessonsFlow({
+  purchase,
+  onPlaced,
+}: {
+  purchase: PackagePurchase;
+  onPlaced?: () => void;
+}) {
   const queryClient = useQueryClient();
   const perWeek = purchase.plan.lessons_per_week ?? 0;
   const termDays = purchase.plan.duration_days ?? 0;
@@ -55,6 +66,7 @@ export function PlaceLessonsFlow({ purchase }: { purchase: PackagePurchase }) {
     onSuccess: (data) => {
       setResult(data);
       setError(null);
+      onPlaced?.();
       void queryClient.invalidateQueries({ queryKey: ["package-purchases"] });
       void queryClient.invalidateQueries({ queryKey: ["bookings"] });
       void queryClient.invalidateQueries({ queryKey: ["payment-history"] });
