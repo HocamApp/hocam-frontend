@@ -305,7 +305,8 @@ function ScheduleStepContent({ tutorId }: { tutorId: string }) {
         <section className="mt-8">
           <h2 className="text-h3">Paket ne kadar sürsün?</h2>
           <p className="mt-1 text-[0.875rem] text-ink-mid">
-            Önce süreyi seç. Sonraki adımda yalnız bu sürenin tamamında boş olan saatleri görürsün.
+            {termDays === null ? "Önce süreyi seç. " : ""}
+            Sonraki adımda yalnız bu sürenin tamamında boş olan saatleri görürsün.
           </p>
           <div className="mt-3">
             {plansLoading ? (
@@ -353,7 +354,16 @@ function ScheduleStepContent({ tutorId }: { tutorId: string }) {
                   ? "Paket süresini seç."
                   : `${perWeek} haftalık ders saati seç.`}
         </p>
-        <Button asChild disabled={!complete} className="w-full sm:w-auto">
+        {/* A button drawn as a link never matches `:disabled`, so Button's disabled
+            look cannot reach it; it says it is disabled with aria-disabled and takes
+            the same neutral look from that (N2: it stayed pink while it did nothing).
+            Scoped here on purpose: the shared Button is pinned byte for byte by the
+            PayTR-off tests that protect what is live. */}
+        <Button
+          asChild
+          disabled={!complete}
+          className="w-full sm:w-auto aria-disabled:pointer-events-none aria-disabled:border-transparent aria-disabled:bg-line aria-disabled:text-ink-mid"
+        >
           <Link
             href={nextHref}
             aria-disabled={!complete}

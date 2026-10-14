@@ -206,6 +206,45 @@ describe("the schedule step asks the term before the hours", () => {
     assert.match(params.get("schedule") ?? "", /^7~0:10:00,2:10:00$/);
   });
 
+  it("stops telling her to choose the term once one is chosen (N2)", async () => {
+    renderPage();
+
+    fireEvent.click(await screen.findByRole("button", { name: "2 ders" }));
+    await screen.findByText("Hangi gün ve saatte?");
+
+    // 3 Ay is chosen, so "Önce süreyi seç" is an order she has already followed.
+    const text = document.body.textContent ?? "";
+    assert.doesNotMatch(text, /Önce süreyi seç/);
+    assert.match(text, /yalnız bu sürenin tamamında boş olan saatleri görürsün/);
+  });
+
+  it("says the same when the count and term came in from a link (N2)", async () => {
+    search = "per_week=2&duration=30";
+    renderPage();
+    await screen.findByText("Paket ne kadar sürsün?");
+    await waitFor(() =>
+      assert.equal(screen.getByRole("radio", { name: /1 Ay/ }).getAttribute("aria-checked"), "true")
+    );
+    assert.doesNotMatch(document.body.textContent ?? "", /Önce süreyi seç/);
+  });
+
+  it("draws the unavailable Devam et like a disabled button, not like a live one (N2)", async () => {
+    renderPage();
+    fireEvent.click(await screen.findByRole("button", { name: "2 ders" }));
+    await screen.findByText("Hangi gün ve saatte?");
+
+    const link = nextLink();
+    assert.equal(link.getAttribute("aria-disabled"), "true");
+    for (const part of [
+      "aria-disabled:bg-line",
+      "aria-disabled:text-ink-mid",
+      "aria-disabled:pointer-events-none",
+      "aria-disabled:border-transparent",
+    ]) {
+      assert.ok(link.className.includes(part), `missing ${part}`);
+    }
+  });
+
   it("does not let the student go on before a term is chosen for the hours", async () => {
     renderPage();
     fireEvent.click(await screen.findByRole("button", { name: "2 ders" }));
