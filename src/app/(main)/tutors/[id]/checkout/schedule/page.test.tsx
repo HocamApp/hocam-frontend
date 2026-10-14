@@ -50,6 +50,16 @@ let plans = [
   plan(3, 30, 12, 6),
 ];
 
+// The test can hold the hours back (the answer arrives after the plans, as it does
+// when the plans were already cached by the previous step) and can answer the
+// way the server does: a window that starts after today's already-passed hours.
+let slotsGate: Promise<void> | null = null;
+let candidatesFor: (params: Json) => ReturnType<typeof candidate>[] = () => [
+  candidate(0, "10:00"),
+  candidate(2, "10:00"),
+  candidate(3, "09:00"),
+];
+
 const candidate = (day: number, start: string) => ({
   day_of_week: day,
   start_time: start,
@@ -97,13 +107,14 @@ before(async () => {
         if (url === "/payments/tutors/tutor-1/offered-plans/") return { data: plans };
         if (url === "/tutors/tutor-1/recurring-slots/") {
           slotRequests.push(config?.params ?? {});
+          if (slotsGate) await slotsGate;
           return {
             data: {
               timezone: "Europe/Istanbul",
               duration_minutes: 40,
               starts_on: "2026-10-12",
               ends_on: "2027-01-09",
-              candidates: [candidate(0, "10:00"), candidate(2, "10:00"), candidate(3, "09:00")],
+              candidates: candidatesFor(config?.params ?? {}),
             },
           };
         }
@@ -118,6 +129,8 @@ before(async () => {
 beforeEach(() => {
   search = "";
   slotRequests.length = 0;
+  slotsGate = null;
+  candidatesFor = () => [candidate(0, "10:00"), candidate(2, "10:00"), candidate(3, "09:00")];
 });
 
 afterEach(() => cleanup());
@@ -224,5 +237,106 @@ describe("a term that comes in from a link", () => {
       assert.equal(screen.getByRole("radio", { name: /1 Ay/ }).getAttribute("aria-checked"), "true")
     );
     assert.equal(screen.getAllByRole("radio").length, 1);
+  });
+});
+
+describe("what the weekly count buttons show is what is chosen", () => {
+  it("shows no count as chosen until one is", async () => {
+    renderPage();
+    await screen.findByText("Haftada kaç ders?");
+    await waitFor(() =>
+      assert.equal((screen.getByRole("button", { name: "2 ders" }) as HTMLButtonElement).disabled, false)
+    );
+
+    for (const count of [2, 3, 4, 5, 6]) {
+      assert.equal(
+        screen.getByRole("button", { name: `${count} ders` }).getAttribute("aria-pressed"),
+        "false",
+        `${count} ders looks chosen while nothing is`
+      );
+    }
+    assert.equal(screen.queryByText("Paket ne kadar sürsün?"), null);
+  });
+
+  it("shows the count a link carries as chosen, and its term and hours", async () => {
+    search = "per_week=2&duration=30";
+    renderPage();
+
+    await screen.findByText("Hangi gün ve saatte?");
+    assert.equal(screen.getByRole("button", { name: "2 ders" }).getAttribute("aria-pressed"), "true");
+    assert.equal(screen.getByRole("button", { name: "3 ders" }).getAttribute("aria-pressed"), "false");
+  });
+
+  it("keeps the count a link carries while the tutor's hours are still on their way", async () => {
+    let release!: () => void;
+    slotsGate = new Promise<void>((resolve) => (release = resolve));
+    search = "per_week=2&duration=30";
+    renderPage();
+
+    // The plans are in (the term section needs them); the hours are not.
+    await screen.findByText("Paket ne kadar sürsün?");
+    await new Promise((resolve) => setTimeout(resolve, 60));
+    assert.ok(screen.queryByText("Paket ne kadar sürsün?"), "the count was dropped before the hours arrived");
+    assert.equal(screen.getByRole("button", { name: "2 ders" }).getAttribute("aria-pressed"), "true");
+
+    release();
+    await screen.findByText("Hangi gün ve saatte?");
+    assert.equal(screen.getByRole("button", { name: "2 ders" }).getAttribute("aria-pressed"), "true");
+  });
+
+  it("still drops a count from a link that the tutor's hours cannot fill, once they are known", async () => {
+    // Three a week is sold here, but only two weekly hours are free.
+    candidatesFor = () => [candidate(0, "10:00"), candidate(2, "10:00")];
+    search = "per_week=3&duration=30";
+    renderPage();
+
+    await screen.findByRole("button", { name: "3 ders" });
+    await waitFor(() => assert.ok(!screen.queryByText("Paket ne kadar sürsün?")));
+    assert.equal(screen.getByRole("button", { name: "3 ders" }).getAttribute("aria-pressed"), "false");
+    assert.match(document.body.textContent ?? "", /haftada bu kadar boş saati yok/);
+  });
+});
+
+describe("an hour that has already passed today", () => {
+  // Server: with no start the window opens today, and today's 10:00 is behind us,
+  // so Wednesday 10:00 is free for 3 of its 4 weeks and drops out of "free all
+  // term". Opening the window after today (the package starts a day from now at
+  // the earliest) leaves only the hours that really are taken.
+  const wedPassedToday = (params: Json) =>
+    params.start
+      ? [candidate(2, "10:00"), candidate(5, "10:00")]
+      : [{ ...candidate(2, "10:00"), free_occurrences: 3 }, candidate(5, "10:00")];
+
+  it("does not close the weekly counts of a tutor with few hours", async () => {
+    candidatesFor = wedPassedToday;
+    renderPage();
+
+    await screen.findByText("Haftada kaç ders?");
+    await waitFor(() =>
+      assert.equal((screen.getByRole("button", { name: "2 ders" }) as HTMLButtonElement).disabled, false)
+    );
+    // Three or more a week really is more than this tutor's two hours.
+    assert.equal((screen.getByRole("button", { name: "3 ders" }) as HTMLButtonElement).disabled, true);
+  });
+
+  it("asks for the hours from the day after the earliest first lesson", async () => {
+    candidatesFor = wedPassedToday;
+    renderPage();
+    await screen.findByText("Haftada kaç ders?");
+    await waitFor(() => assert.ok(slotRequests.length > 0));
+
+    const first = slotRequests[0] as { start?: string };
+    const dayAfter = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Istanbul" }).format(
+      new Date(Date.now() + 24 * 3_600_000)
+    );
+    assert.equal(first.start, dayAfter);
+  });
+
+  it("still closes a count the tutor really has too few hours for", async () => {
+    candidatesFor = () => [candidate(2, "10:00")];
+    renderPage();
+
+    await screen.findByText(/haftada bu kadar boş saati yok/i);
+    assert.equal((screen.getByRole("button", { name: "2 ders" }) as HTMLButtonElement).disabled, true);
   });
 });

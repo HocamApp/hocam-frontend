@@ -40,6 +40,19 @@ const LESSON_DURATION_MINUTES = 40;
 // free for the whole package.
 const LOOKAHEAD_DAYS = 28;
 
+// The earliest a package's first lesson can be is a day from now (the same rule
+// the server applies when it holds and books the hours), so the tutor's hours
+// are looked at from the day after: an hour that has already gone by today must
+// not take its whole weekly slot out of the four weeks, only that one lesson,
+// which the package would not use anyway.
+const EARLIEST_FIRST_LESSON_HOURS = 24;
+
+function firstWindowDay(): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Istanbul" }).format(
+    new Date(Date.now() + EARLIEST_FIRST_LESSON_HOURS * 3_600_000)
+  );
+}
+
 /**
  * The step that was missing: when do these lessons actually happen.
  *
@@ -88,10 +101,13 @@ function ScheduleStepContent({ tutorId }: { tutorId: string }) {
   // How many distinct weekly hours this tutor actually has open. Without it the
   // page would offer 6 lessons a week to a tutor with four free hours, and the
   // student would only find out after picking.
-  const { data: recurring } = useQuery({
-    queryKey: ["tutor-recurring-slots", tutorId, LOOKAHEAD_DAYS, LESSON_DURATION_MINUTES],
+  // Read once: a key that moved with the clock would refetch for nothing.
+  const [windowStart] = useState(firstWindowDay);
+  const { data: recurring, isLoading: recurringLoading } = useQuery({
+    queryKey: ["tutor-recurring-slots", tutorId, LOOKAHEAD_DAYS, LESSON_DURATION_MINUTES, windowStart],
     queryFn: () =>
       fetchTutorRecurringSlots(tutorId, {
+        start: windowStart,
         termDays: LOOKAHEAD_DAYS,
         durationMinutes: LESSON_DURATION_MINUTES,
       }),
@@ -142,24 +158,28 @@ function ScheduleStepContent({ tutorId }: { tutorId: string }) {
     for (const count of WEEKLY_LESSON_OPTIONS) {
       state[count] = {
         offered: offeredCadences.has(count),
-        schedulable: freeHourCount >= count,
+        // Until the hours are known nothing can be said against a count; and if
+        // they cannot be read, the server still refuses what cannot be held.
+        schedulable: recurring ? freeHourCount >= count : true,
       };
     }
     return state;
-  }, [plans, freeHourCount]);
+  }, [plans, freeHourCount, recurring]);
 
   // A cadence carried in from a deep link may be one this tutor does not sell.
   // Drop it rather than letting the student pick hours for a package that does
   // not exist — the checkout screen would silently re-snap it and throw the
   // schedule away.
   useEffect(() => {
-    if (perWeek === null || plansLoading) return;
+    // Not before the hours are known: until then "cannot be filled" is only the
+    // absence of an answer, and the count from the link would be thrown away.
+    if (perWeek === null || plansLoading || recurringLoading) return;
     const state = optionState[perWeek];
     if (!state?.offered || !state?.schedulable) {
       setPerWeek(null);
       setSlots([]);
     }
-  }, [perWeek, optionState, plansLoading]);
+  }, [perWeek, optionState, plansLoading, recurringLoading]);
 
   const nextHref = useMemo(() => {
     const params = new URLSearchParams(searchParams.toString());
@@ -263,7 +283,8 @@ function ScheduleStepContent({ tutorId }: { tutorId: string }) {
               <div className="h-40 animate-pulse rounded-card bg-skeleton" aria-hidden />
             ) : (
               <PrivateLessonPlanCard
-                value={perWeek ?? (WEEKLY_LESSON_OPTIONS[0] as WeeklyLessonOption)}
+                value={perWeek}
+                checking={recurringLoading}
                 onChange={(count) => {
                   setPerWeek(count);
                   // The number of hours to pick just changed; anything chosen

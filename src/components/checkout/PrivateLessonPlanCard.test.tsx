@@ -65,3 +65,35 @@ test("a count the tutor cannot staff says so, and says it differently", () => {
   assert.equal((screen.getByRole("button", { name: "6 ders" }) as HTMLButtonElement).disabled, true);
   assert.ok(screen.getByText(/haftada bu kadar boş saati yok/i));
 });
+
+test("with no count chosen, none looks chosen", () => {
+  render(
+    <PrivateLessonPlanCard
+      value={null}
+      onChange={() => undefined}
+      optionState={states({})}
+      lessonDurationMinutes={40}
+    />,
+  );
+  for (const count of [2, 3, 4, 5, 6]) {
+    assert.equal(
+      screen.getByRole("button", { name: `${count} ders` }).getAttribute("aria-pressed"),
+      "false",
+    );
+  }
+});
+
+test("while the tutor's hours are being read the counts wait and say nothing against any of them", () => {
+  render(
+    <PrivateLessonPlanCard
+      value={2 as never}
+      onChange={() => undefined}
+      optionState={states({ 6: { schedulable: false } })}
+      lessonDurationMinutes={40}
+      checking
+    />,
+  );
+  assert.equal((screen.getByRole("button", { name: "3 ders" }) as HTMLButtonElement).disabled, true);
+  assert.equal(screen.getByRole("button", { name: "2 ders" }).getAttribute("aria-pressed"), "true");
+  assert.equal(screen.queryByText(/haftada bu kadar boş saati yok/i), null);
+});
