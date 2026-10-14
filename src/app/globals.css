@@ -103,6 +103,20 @@
     --success-soft: #e0ece7;
     --error: #b33a24;
 
+    /* Brand v3 token names (docs/design/brand-v3/BRAND.md §2), set here to
+       today's look. The v3 values live only in the [data-brand="v3"] block
+       below; these exist so a v3 name used outside that scope still resolves
+       to something sane instead of nothing. --yellow-soft has no counterpart
+       today, so it carries its v3 value. */
+    --pink-soft: var(--pink-pale);
+    --yellow: var(--gold);
+    --yellow-soft: #fdffc7;
+    --on-accent: var(--gold-ink);
+    --band: var(--ink-on-light);
+    --on-band: #fbf6f6;
+    --on-band-mid: rgb(251 246 246 / 70%);
+    --on-band-quiet: rgb(251 246 246 / 14%);
+
     /*
      * Subject colours for the study calendar.
      *
@@ -231,6 +245,10 @@
     /* --success at 14% over the dark surface, same construction as light. */
     --success-soft: #17332b;
     --tutorial-overlay: rgb(2 8 10 / 46%);
+    /* Brand v3 names, dark. Same reasoning as the light fallbacks above. */
+    --yellow-soft: #384123;
+    --band: #1d282b;
+    --on-band: #ece6e6;
 
     --background: 192 25% 8%;
     --foreground: 0 14% 91%;
@@ -257,6 +275,67 @@
     --border: 192 15% 19%;
     --input: 192 15% 19%;
     --ring: 0 14% 91%;
+  }
+
+  /*
+   * Brand v3 (docs/design/brand-v3/BRAND.md §2), scoped.
+   *
+   * Only elements inside [data-brand="v3"] see these values; everything else
+   * keeps the palette above. Today only the homepage's .ys-root carries the
+   * attribute, and only when NEXT_PUBLIC_BRAND_V3 is "true". Phase 2 moves
+   * these values into :root and .dark and deletes this block.
+   *
+   * --paper, --surface, --line, --ink-mid, --success and --error do not
+   * change in v3, so they are not repeated: repeating them here would also
+   * pin the light values over .dark.
+   *
+   * The legacy names are aliases inside the scope, so a component still on
+   * --pink-pale or --gold picks up the v3 hue without being touched. Every
+   * token that is itself a var() of a changed token is declared again for
+   * the same reason: a var() resolves where it is declared, and the :root
+   * copy would keep the old ink. yemeksepeti.css does the same for --ys-*.
+   */
+  [data-brand="v3"] {
+    --pink: #ff2070;
+    --pink-deep: #e0105e;
+    --pink-soft: #ffe3ee;
+    --yellow: #fcff1a;
+    --yellow-soft: #fdffc7;
+    --ink: #0c0e09;
+    /* Text on --yellow and on the pink band. Black in both themes. */
+    --on-accent: #0c0e09;
+    --band: #0c0e09;
+    --on-band: #fbf6f6;
+    --on-band-mid: rgb(251 246 246 / 70%);
+    --on-band-quiet: rgb(251 246 246 / 14%);
+
+    --pink-pale: var(--pink-soft);
+    --gold: var(--yellow);
+    --gold-ink: var(--on-accent);
+    /* The fixed light surfaces' ink is the light theme's ink, so it moves
+       with it. */
+    --ink-on-light: #0c0e09;
+    --tutorial-spotlight-ring: var(--ink);
+  }
+
+  /* Starting values from BRAND.md, to be checked against screenshots.
+     --pink, --pink-deep, --yellow and --on-accent are the same as light.
+     --ink is the dark theme's ink again: the block above sets the light
+     value on the scoped element itself, which would otherwise beat the one
+     inherited from .dark.
+
+     --pink-pale stays light, as it does outside the scope: today's
+     pink-pale surfaces are fixed light cards with --ink-on-light text (the
+     favourites banner, for one), so following --pink-soft into dark would
+     put black text on dark plum. Only the hue moves. Components that move
+     to --pink-soft in Phase 1 get the dark value. */
+  .dark [data-brand="v3"] {
+    --ink: #ece6e6;
+    --pink-soft: #3d2231;
+    --pink-pale: #ffe3ee;
+    --yellow-soft: #384123;
+    --band: #1d282b;
+    --on-band: #ece6e6;
   }
 }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { HOME_V2_ENABLED } from "@/lib/featureFlags";
+import { BRAND_V3_ENABLED, HOME_V2_ENABLED } from "@/lib/featureFlags";
 
 import { YsEntryDialog } from "./YsEntryDialog";
 import { YsHeroIntro } from "./YsHeroIntro";
@@ -20,17 +20,23 @@ import { YsVerifiedBand } from "./YsVerifiedBand";
  * `v2` switches on the rebuilt homepage (NEXT_PUBLIC_HOME_V2). With it off the
  * page is the pre-rebuild homepage, unchanged. It is a prop, defaulting to the
  * build flag, so tests can render both.
+ *
+ * `brandV3` (NEXT_PUBLIC_BRAND_V3) puts the page under the brand v3 colours
+ * (docs/design/brand-v3/) by setting data-brand="v3" on the root. Same
+ * pattern: a prop defaulting to the build flag.
  */
 export function YemeksepetiHome({
   v2 = HOME_V2_ENABLED,
+  brandV3 = BRAND_V3_ENABLED,
   lessonRoomShot = false,
 }: {
   v2?: boolean;
+  brandV3?: boolean;
   /** Whether the lesson room screenshot exists; checked on the server. */
   lessonRoomShot?: boolean;
 } = {}) {
   return (
-    <div className="ys-root">
+    <div className="ys-root" data-brand={brandV3 ? "v3" : undefined}>
       <div className="ys-shell">
         <YsHeroIntro v2={v2} />
       </div>

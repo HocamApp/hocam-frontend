@@ -1,0 +1,742 @@
+<!doctype html>
+<html lang="tr"><head><meta name="viewport" content="width=device-width, initial-scale=1"><meta charset="utf-8">
+
+
+
+<style>
+body{margin:0;background:#FBF6F6}
+a{color:#0C0E09}a:hover{color:#FF2070}
+.hv-ink:hover{border-color:#0C0E09 !important}
+.hv-lift:hover{transform:translateY(-3px)}
+.hv-pink:hover{background:#D70F64 !important;color:#FFFFFF !important}
+.hv-dark:hover{background:#0C0E09 !important;color:#FFFFFF !important}
+.ft a{color:rgba(251,246,246,0.72);text-decoration:none}.ft a:hover{color:#FFFFFF}
+</style>
+
+<style>header{position:static !important}</style><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet"></head>
+<body>
+
+
+<div style="font-family: Poppins, system-ui, sans-serif; color: #0C0E09; background: #FBF6F6; min-height: 100vh; overflow-x: hidden">
+
+<header style="position: sticky; top: 0; z-index: 20; background: #FFFFFF; border-bottom: 1px solid #E6DDDD">
+<div style="max-width: 1240px; margin: 0 auto; padding: 12px 24px; display: flex; align-items: center; gap: 20px; flex-wrap: wrap">
+<a href="#top" style="display: flex; align-items: center; gap: 10px; text-decoration: none; color: #0C0E09">
+<img src="images/hocam-logo.png" alt="Hocam logosu" style="width: 40px; height: 40px; border-radius: 12px; object-fit: cover">
+<span style="font-size: 22px; font-weight: 800; letter-spacing: -0.5px">hocam</span>
+</a>
+<nav aria-label="Ana menü" style="display: flex; gap: 22px; flex-wrap: wrap; font-size: 15px; font-weight: 500; flex: 1 1 auto">
+<a href="#hocalar-liste" style="text-decoration: none">Hocalar</a>
+<a href="#dersler" style="text-decoration: none">Dersler</a>
+<a href="#fiyatlar" style="text-decoration: none">Fiyatlar</a>
+<a href="#veliler" style="text-decoration: none">Veliler</a>
+<a href="#hocalar" style="text-decoration: none">Hoca ol</a>
+</nav>
+<div style="display: flex; align-items: center; gap: 10px">
+<button type="button" aria-label="Bildirimler, 3 yeni" style="position: relative; width: 44px; height: 44px; border-radius: 999px; border: 1px solid #E6DDDD; background: #FFFFFF; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #0C0E09">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.7 21a2 2 0 0 1-3.4 0"></path></svg>
+<span style="position: absolute; top: -3px; right: -3px; min-width: 20px; height: 20px; padding: 0 5px; box-sizing: border-box; border-radius: 999px; background: #FF2070; color: #FFFFFF; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; border: 2px solid #FFFFFF">3</span>
+</button>
+<a href="#giris" class="hv-ink" style="height: 44px; padding: 0 18px; display: flex; align-items: center; border-radius: 999px; border: 1px solid #E6DDDD; font-size: 15px; font-weight: 600; text-decoration: none">Giriş yap</a>
+<a href="#kayit" class="hv-pink" style="height: 44px; padding: 0 20px; display: flex; align-items: center; border-radius: 999px; background: #FF2070; color: #FFFFFF; font-size: 15px; font-weight: 600; text-decoration: none">Kayıt ol</a>
+</div>
+</div>
+</header>
+
+<section id="top" style="max-width: 1240px; margin: 0 auto; padding: 56px 24px 40px; display: flex; flex-wrap: wrap; gap: 48px; align-items: center">
+<div style="flex: 1 1 480px; min-width: 0; display: flex; flex-direction: column; gap: 24px">
+<span style="align-self: flex-start; display: inline-flex; align-items: center; gap: 8px; height: 32px; padding: 0 14px; border-radius: 999px; background: #0C0E09; color: #FBF6F6; font-size: 13px; font-weight: 600">
+<span style="width: 8px; height: 8px; border-radius: 999px; background: #FCFF1A"></span>
+YKS 2027 için hocalar ders alıyor
+</span>
+<h1 style="margin: 0; font-size: clamp(44px, 6vw, 76px); line-height: 1.02; font-weight: 800; letter-spacing: -2.5px">Dünün öğrencisi,<br>bugünün <span style="background: #FCFF1A; padding: 0 12px; border-radius: 14px; display: inline-block; transform: rotate(-1.5deg)">öğretmeni</span></h1>
+<p style="margin: 0; font-size: 19px; line-height: 1.55; color: #5C6B6D; max-width: 520px">YKS'de derece yapmış öğrencileri, derece yapacaklarla buluşturuyoruz.</p>
+<div style="display: flex; gap: 12px; flex-wrap: wrap">
+<a href="#hocalar-liste" class="hv-pink" style="height: 52px; padding: 0 26px; display: inline-flex; align-items: center; gap: 10px; border-radius: 999px; background: #FF2070; color: #FFFFFF; font-size: 16px; font-weight: 600; text-decoration: none">Hocaları gör
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7"></path></svg></a>
+<a href="#hocalar" class="hv-dark" style="height: 52px; padding: 0 26px; display: inline-flex; align-items: center; border-radius: 999px; border: 2px solid #0C0E09; font-size: 16px; font-weight: 600; text-decoration: none">Hoca ol</a>
+</div>
+<div style="display: flex; flex-direction: column; gap: 10px; padding-top: 8px">
+<span style="font-size: 14px; color: #5C6B6D">Senin için olan kısma atla</span>
+<div style="display: flex; gap: 10px; flex-wrap: wrap">
+<a href="#ogrenciler" class="hv-ink" style="height: 44px; padding: 0 16px; display: inline-flex; align-items: center; gap: 10px; border-radius: 999px; border: 1px solid #E6DDDD; background: #FFFFFF; font-size: 15px; font-weight: 500; text-decoration: none"><span style="width: 10px; height: 10px; border-radius: 999px; background: #FF2070"></span>Ders almak istiyorum</a>
+<a href="#veliler" class="hv-ink" style="height: 44px; padding: 0 16px; display: inline-flex; align-items: center; gap: 10px; border-radius: 999px; border: 1px solid #E6DDDD; background: #FFFFFF; font-size: 15px; font-weight: 500; text-decoration: none"><span style="width: 10px; height: 10px; border-radius: 999px; background: #0C0E09"></span>Velisiyim</a>
+<a href="#hocalar" class="hv-ink" style="height: 44px; padding: 0 16px; display: inline-flex; align-items: center; gap: 10px; border-radius: 999px; border: 1px solid #E6DDDD; background: #FFFFFF; font-size: 15px; font-weight: 500; text-decoration: none"><span style="width: 10px; height: 10px; border-radius: 999px; background: #FCFF1A; box-shadow: inset 0 0 0 1px rgba(12,14,9,0.25)"></span>Hoca olmak istiyorum</a>
+</div>
+</div>
+</div>
+
+<div style="flex: 1 1 460px; min-width: 0; position: relative; height: 520px">
+<div style="position: absolute; left: 6%; top: 24px; right: 0; bottom: 40px; border-radius: 32px; background: #FCFF1A; transform: rotate(3deg)"></div>
+<div style="position: absolute; left: 6%; top: 24px; right: 0; bottom: 40px; border-radius: 32px; overflow: hidden; border: 3px solid #0C0E09">
+<img src="images/bogazici.jpg" alt="Boğaziçi Üniversitesi güney kampüsü" style="width: 100%; height: 100%; object-fit: cover; display: block">
+<span style="position: absolute; left: 16px; bottom: 16px; height: 34px; padding: 0 14px; border-radius: 999px; background: #0C0E09; color: #FBF6F6; font-size: 13px; font-weight: 600; display: flex; align-items: center">Boğaziçi Üniversitesi · İstanbul</span>
+</div>
+<div style="position: absolute; left: 0; top: 0; width: 180px; height: 150px; border-radius: 22px; overflow: hidden; border: 3px solid #FFFFFF; box-shadow: 0 12px 30px rgba(12,14,9,0.18); transform: rotate(-5deg)">
+<img src="images/odtu.jpg" alt="ODTÜ kampüs girişi" style="width: 100%; height: 100%; object-fit: cover; display: block">
+</div>
+<div style="position: absolute; right: 18px; top: -6px; width: 112px; height: 112px; border-radius: 999px; background: #FCFF1A; color: #0C0E09; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; transform: rotate(10deg); border: 3px solid #0C0E09">
+<span style="font-size: 12px; font-weight: 600; line-height: 1.1">YKS'de</span>
+<span style="font-size: 22px; font-weight: 800; line-height: 1.1; color: #0C0E09">İlk 15.000</span>
+<span style="font-size: 12px; font-weight: 600; line-height: 1.1">hocalar</span>
+</div>
+<div style="position: absolute; left: -8px; bottom: 0; width: 300px; max-width: 80%; background: #FFFFFF; border-radius: 18px; padding: 14px 16px; display: flex; gap: 12px; align-items: center; box-shadow: 0 14px 34px rgba(12,14,9,0.16)">
+<img src="images/zeynep.jpeg" alt="" style="width: 44px; height: 44px; border-radius: 999px; object-fit: cover; flex: none; box-shadow: 0 0 0 3px #FCFF1A">
+<div style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+<span style="font-size: 14px; font-weight: 600">Zeynep deneme dersini onayladı</span>
+<span style="font-size: 12px; color: #5C6B6D">Perşembe 19:00 · AYT Matematik</span>
+</div>
+<span style="width: 10px; height: 10px; border-radius: 999px; background: #FF2070; flex: none"></span>
+</div>
+</div>
+</section>
+
+<section aria-label="Hoca ara" style="max-width: 1240px; margin: 0 auto; padding: 0 24px">
+<div style="background: #0C0E09; border-radius: 24px; padding: 14px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center">
+<label for="ara" style="flex: 1 1 320px; min-width: 0; height: 56px; border-radius: 16px; background: #FFFFFF; display: flex; align-items: center; gap: 12px; padding: 0 18px; color: #5C6B6D">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4.3-4.3"></path></svg>
+<input id="ara" type="text" placeholder="Hangi dersi çalışıyorsun? Örn. AYT Kimya" style="border: 0; outline: none; font: inherit; font-size: 16px; flex: 1; min-width: 0; color: #0C0E09; background: transparent">
+</label>
+<div role="group" aria-label="Sınav türü" style="display: flex; gap: 6px; background: rgba(251,246,246,0.12); border-radius: 16px; padding: 6px">
+<button type="button" style="height: 44px; padding: 0 18px; border-radius: 12px; border: 0; background: #FBF6F6; color: #0C0E09; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer">TYT</button>
+<button type="button" style="height: 44px; padding: 0 18px; border-radius: 12px; border: 0; background: transparent; color: #FBF6F6; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer">AYT</button>
+</div>
+<button type="button" style="height: 56px; padding: 0 28px; border-radius: 16px; border: 0; background: #FCFF1A; color: #0C0E09; font: inherit; font-size: 16px; font-weight: 700; cursor: pointer">Hoca bul</button>
+</div>
+</section>
+
+<section id="hocalar-liste" style="max-width: 1240px; margin: 0 auto; padding: 64px 24px 0">
+<div style="display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; margin-bottom: 20px">
+<h2 style="margin: 0; font-size: 40px; font-weight: 800; letter-spacing: -1px">Hocalar</h2>
+<div style="display: flex; gap: 8px; flex-wrap: wrap">
+<button type="button" style="height: 40px; padding: 0 16px; border-radius: 999px; border: 0; background: #0C0E09; color: #FBF6F6; font: inherit; font-size: 14px; font-weight: 600">Tümü</button>
+<button type="button" class="hv-ink" style="height: 40px; padding: 0 16px; border-radius: 999px; border: 1px solid #E6DDDD; background: #FFFFFF; font: inherit; font-size: 14px; font-weight: 500">Matematik</button>
+<button type="button" class="hv-ink" style="height: 40px; padding: 0 16px; border-radius: 999px; border: 1px solid #E6DDDD; background: #FFFFFF; font: inherit; font-size: 14px; font-weight: 500">Fizik</button>
+<button type="button" class="hv-ink" style="height: 40px; padding: 0 16px; border-radius: 999px; border: 1px solid #E6DDDD; background: #FFFFFF; font: inherit; font-size: 14px; font-weight: 500; display: inline-flex; align-items: center; gap: 8px"><span style="width: 8px; height: 8px; border-radius: 999px; background: #FCFF1A; box-shadow: inset 0 0 0 1px rgba(12,14,9,0.3)"></span>Deneme açık</button>
+<button type="button" class="hv-ink" style="height: 40px; padding: 0 16px; border-radius: 999px; border: 1px solid #E6DDDD; background: #FFFFFF; font: inherit; font-size: 14px; font-weight: 500">Sırala: Puan</button>
+</div>
+</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px">
+
+<a href="#profil" class="hv-lift" style="display: flex; flex-direction: column; background: #FFFFFF; border-radius: 22px; border: 1px solid #E6DDDD; overflow: hidden; text-decoration: none; color: #0C0E09; transition: transform 150ms">
+<div style="position: relative; height: 230px">
+<img src="images/demo-man-1.jpg" alt="Mert" style="width: 100%; height: 100%; object-fit: cover; display: block">
+
+<span style="position: absolute; left: 12px; top: 12px; height: 28px; padding: 0 12px; border-radius: 999px; background: #FCFF1A; color: #0C0E09; font-size: 12px; font-weight: 700; display: flex; align-items: center">Ücretsiz deneme</span>
+
+<span style="position: absolute; right: 12px; top: 12px; width: 36px; height: 36px; border-radius: 999px; background: #FFFFFF; display: flex; align-items: center; justify-content: center; color: #FF2070">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8z"></path></svg>
+</span>
+<span style="position: absolute; left: 12px; bottom: -14px; height: 30px; padding: 0 12px; border-radius: 999px; background: #0C0E09; color: #FFFFFF; font-size: 13px; font-weight: 700; display: flex; align-items: center; border: 2px solid #FFFFFF">YKS 1.240.</span>
+</div>
+<div style="padding: 24px 16px 16px; display: flex; flex-direction: column; gap: 10px; flex: 1">
+<div style="display: flex; justify-content: space-between; align-items: baseline; gap: 8px">
+<span style="font-size: 18px; font-weight: 700">Mert</span>
+<span style="font-size: 14px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px"><svg width="14" height="14" viewBox="0 0 24 24" fill="#0C0E09" aria-hidden="true"><path d="M12 2l3 6.9 7.5.7-5.7 5 1.7 7.4L12 18.1 5.5 22l1.7-7.4-5.7-5 7.5-.7z"></path></svg>4,9</span>
+</div>
+<span style="font-size: 14px; color: #5C6B6D; margin-top: -6px">Boğaziçi · Matematik</span>
+<div style="display: flex; gap: 6px; flex-wrap: wrap">
+
+<span style="height: 26px; padding: 0 10px; border-radius: 8px; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; background: #FFE3EE; color: #0C0E09">TYT Matematik</span>
+
+<span style="height: 26px; padding: 0 10px; border-radius: 8px; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; background: #FDFFC7; color: #0C0E09">AYT Matematik</span>
+
+</div>
+<div style="margin-top: auto; padding-top: 10px; border-top: 1px solid #E6DDDD; display: flex; justify-content: space-between; align-items: center">
+<span style="font-size: 13px; color: #5C6B6D">40 dk ders</span>
+<span style="font-size: 18px; font-weight: 800">980 ₺</span>
+</div>
+</div>
+</a>
+
+<a href="#profil" class="hv-lift" style="display: flex; flex-direction: column; background: #FFFFFF; border-radius: 22px; border: 1px solid #E6DDDD; overflow: hidden; text-decoration: none; color: #0C0E09; transition: transform 150ms">
+<div style="position: relative; height: 230px">
+<img src="images/zeynep.jpeg" alt="Zeynep" style="width: 100%; height: 100%; object-fit: cover; display: block">
+
+<span style="position: absolute; left: 12px; top: 12px; height: 28px; padding: 0 12px; border-radius: 999px; background: #FCFF1A; color: #0C0E09; font-size: 12px; font-weight: 700; display: flex; align-items: center">Ücretsiz deneme</span>
+
+<span style="position: absolute; right: 12px; top: 12px; width: 36px; height: 36px; border-radius: 999px; background: #FFFFFF; display: flex; align-items: center; justify-content: center; color: #FF2070">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8z"></path></svg>
+</span>
+<span style="position: absolute; left: 12px; bottom: -14px; height: 30px; padding: 0 12px; border-radius: 999px; background: #0C0E09; color: #FFFFFF; font-size: 13px; font-weight: 700; display: flex; align-items: center; border: 2px solid #FFFFFF">YKS 3.100.</span>
+</div>
+<div style="padding: 24px 16px 16px; display: flex; flex-direction: column; gap: 10px; flex: 1">
+<div style="display: flex; justify-content: space-between; align-items: baseline; gap: 8px">
+<span style="font-size: 18px; font-weight: 700">Zeynep</span>
+<span style="font-size: 14px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px"><svg width="14" height="14" viewBox="0 0 24 24" fill="#0C0E09" aria-hidden="true"><path d="M12 2l3 6.9 7.5.7-5.7 5 1.7 7.4L12 18.1 5.5 22l1.7-7.4-5.7-5 7.5-.7z"></path></svg>5,0</span>
+</div>
+<span style="font-size: 14px; color: #5C6B6D; margin-top: -6px">Boğaziçi · Bilgisayar Müh.</span>
+<div style="display: flex; gap: 6px; flex-wrap: wrap">
+
+<span style="height: 26px; padding: 0 10px; border-radius: 8px; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; background: #FDFFC7; color: #0C0E09">AYT Matematik</span>
+
+<span style="height: 26px; padding: 0 10px; border-radius: 8px; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; background: #FDFFC7; color: #0C0E09">AYT Fizik</span>
+
+</div>
+<div style="margin-top: auto; padding-top: 10px; border-top: 1px solid #E6DDDD; display: flex; justify-content: space-between; align-items: center">
+<span style="font-size: 13px; color: #5C6B6D">40 dk ders</span>
+<span style="font-size: 18px; font-weight: 800">850 ₺</span>
+</div>
+</div>
+</a>
+
+<a href="#profil" class="hv-lift" style="display: flex; flex-direction: column; background: #FFFFFF; border-radius: 22px; border: 1px solid #E6DDDD; overflow: hidden; text-decoration: none; color: #0C0E09; transition: transform 150ms">
+<div style="position: relative; height: 230px">
+<img src="images/demo-man-2.jpg" alt="Can" style="width: 100%; height: 100%; object-fit: cover; display: block">
+
+<span style="position: absolute; right: 12px; top: 12px; width: 36px; height: 36px; border-radius: 999px; background: #FFFFFF; display: flex; align-items: center; justify-content: center; color: #FF2070">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8z"></path></svg>
+</span>
+<span style="position: absolute; left: 12px; bottom: -14px; height: 30px; padding: 0 12px; border-radius: 999px; background: #0C0E09; color: #FFFFFF; font-size: 13px; font-weight: 700; display: flex; align-items: center; border: 2px solid #FFFFFF">YKS 820.</span>
+</div>
+<div style="padding: 24px 16px 16px; display: flex; flex-direction: column; gap: 10px; flex: 1">
+<div style="display: flex; justify-content: space-between; align-items: baseline; gap: 8px">
+<span style="font-size: 18px; font-weight: 700">Can</span>
+<span style="font-size: 14px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px"><svg width="14" height="14" viewBox="0 0 24 24" fill="#0C0E09" aria-hidden="true"><path d="M12 2l3 6.9 7.5.7-5.7 5 1.7 7.4L12 18.1 5.5 22l1.7-7.4-5.7-5 7.5-.7z"></path></svg>4,8</span>
+</div>
+<span style="font-size: 14px; color: #5C6B6D; margin-top: -6px">ODTÜ · Elektrik Müh.</span>
+<div style="display: flex; gap: 6px; flex-wrap: wrap">
+
+<span style="height: 26px; padding: 0 10px; border-radius: 8px; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; background: #FFE3EE; color: #0C0E09">TYT Fizik</span>
+
+<span style="height: 26px; padding: 0 10px; border-radius: 8px; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; background: #FDFFC7; color: #0C0E09">AYT Fizik</span>
+
+</div>
+<div style="margin-top: auto; padding-top: 10px; border-top: 1px solid #E6DDDD; display: flex; justify-content: space-between; align-items: center">
+<span style="font-size: 13px; color: #5C6B6D">40 dk ders</span>
+<span style="font-size: 18px; font-weight: 800">1.040 ₺</span>
+</div>
+</div>
+</a>
+
+<a href="#profil" class="hv-lift" style="display: flex; flex-direction: column; background: #FFFFFF; border-radius: 22px; border: 1px solid #E6DDDD; overflow: hidden; text-decoration: none; color: #0C0E09; transition: transform 150ms">
+<div style="position: relative; height: 230px">
+<img src="images/demo-man-3.jpg" alt="Emre" style="width: 100%; height: 100%; object-fit: cover; display: block">
+
+<span style="position: absolute; left: 12px; top: 12px; height: 28px; padding: 0 12px; border-radius: 999px; background: #FCFF1A; color: #0C0E09; font-size: 12px; font-weight: 700; display: flex; align-items: center">Ücretsiz deneme</span>
+
+<span style="position: absolute; right: 12px; top: 12px; width: 36px; height: 36px; border-radius: 999px; background: #FFFFFF; display: flex; align-items: center; justify-content: center; color: #FF2070">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8z"></path></svg>
+</span>
+<span style="position: absolute; left: 12px; bottom: -14px; height: 30px; padding: 0 12px; border-radius: 999px; background: #0C0E09; color: #FFFFFF; font-size: 13px; font-weight: 700; display: flex; align-items: center; border: 2px solid #FFFFFF">YKS 6.700.</span>
+</div>
+<div style="padding: 24px 16px 16px; display: flex; flex-direction: column; gap: 10px; flex: 1">
+<div style="display: flex; justify-content: space-between; align-items: baseline; gap: 8px">
+<span style="font-size: 18px; font-weight: 700">Emre</span>
+<span style="font-size: 14px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px"><svg width="14" height="14" viewBox="0 0 24 24" fill="#0C0E09" aria-hidden="true"><path d="M12 2l3 6.9 7.5.7-5.7 5 1.7 7.4L12 18.1 5.5 22l1.7-7.4-5.7-5 7.5-.7z"></path></svg>4,7</span>
+</div>
+<span style="font-size: 14px; color: #5C6B6D; margin-top: -6px">İTÜ · Kimya Müh.</span>
+<div style="display: flex; gap: 6px; flex-wrap: wrap">
+
+<span style="height: 26px; padding: 0 10px; border-radius: 8px; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; background: #FFE3EE; color: #0C0E09">TYT Kimya</span>
+
+<span style="height: 26px; padding: 0 10px; border-radius: 8px; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; background: #FDFFC7; color: #0C0E09">AYT Kimya</span>
+
+</div>
+<div style="margin-top: auto; padding-top: 10px; border-top: 1px solid #E6DDDD; display: flex; justify-content: space-between; align-items: center">
+<span style="font-size: 13px; color: #5C6B6D">40 dk ders</span>
+<span style="font-size: 18px; font-weight: 800">640 ₺</span>
+</div>
+</div>
+</a>
+
+</div>
+<p style="margin: 14px 0 0; font-size: 13px; color: #5C6B6D">Kartlardaki profiller örnektir.</p>
+</section>
+
+<section id="dersler" style="max-width: 1240px; margin: 0 auto; padding: 80px 24px 0">
+<div style="display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; margin-bottom: 24px">
+<div>
+<h2 style="margin: 0; font-size: 40px; font-weight: 800; letter-spacing: -1px">Hangi dersler var?</h2>
+<p style="margin: 8px 0 0; font-size: 17px; color: #5C6B6D">Dersine tıkla, o dersi veren hocaları gör.</p>
+</div>
+<div style="display: flex; gap: 14px; font-size: 14px; font-weight: 600">
+<span style="display: inline-flex; align-items: center; gap: 8px"><span style="width: 14px; height: 14px; border-radius: 4px; background: #FFE3EE; box-shadow: inset 0 0 0 1px rgba(12,14,9,0.2)"></span>TYT</span>
+<span style="display: inline-flex; align-items: center; gap: 8px"><span style="width: 14px; height: 14px; border-radius: 4px; background: #FDFFC7; box-shadow: inset 0 0 0 1px rgba(12,14,9,0.2)"></span>AYT</span>
+</div>
+</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 14px">
+
+<a href="#hocalar-liste" class="hv-lift" style="position: relative; height: 128px; border-radius: 20px; overflow: hidden; padding: 16px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; text-decoration: none; background: #FFE3EE; color: #0C0E09; transition: transform 150ms">
+<span style="font-size: 12px; font-weight: 700; letter-spacing: 1px; opacity: 0.85">TYT</span>
+<span style="font-size: 20px; font-weight: 700; position: relative; z-index: 1">Matematik</span>
+<span aria-hidden="true" style="position: absolute; right: -6px; top: -14px; font-size: 76px; font-weight: 800; line-height: 1; letter-spacing: -3px; color: rgba(255,32,112,0.18)">∑</span>
+</a>
+
+<a href="#hocalar-liste" class="hv-lift" style="position: relative; height: 128px; border-radius: 20px; overflow: hidden; padding: 16px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; text-decoration: none; background: #FFE3EE; color: #0C0E09; transition: transform 150ms">
+<span style="font-size: 12px; font-weight: 700; letter-spacing: 1px; opacity: 0.85">TYT</span>
+<span style="font-size: 20px; font-weight: 700; position: relative; z-index: 1">Türkçe</span>
+<span aria-hidden="true" style="position: absolute; right: -6px; top: -14px; font-size: 76px; font-weight: 800; line-height: 1; letter-spacing: -3px; color: rgba(255,32,112,0.18)">Aa</span>
+</a>
+
+<a href="#hocalar-liste" class="hv-lift" style="position: relative; height: 128px; border-radius: 20px; overflow: hidden; padding: 16px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; text-decoration: none; background: #FFE3EE; color: #0C0E09; transition: transform 150ms">
+<span style="font-size: 12px; font-weight: 700; letter-spacing: 1px; opacity: 0.85">TYT</span>
+<span style="font-size: 20px; font-weight: 700; position: relative; z-index: 1">Fizik</span>
+<span aria-hidden="true" style="position: absolute; right: -6px; top: -14px; font-size: 76px; font-weight: 800; line-height: 1; letter-spacing: -3px; color: rgba(255,32,112,0.18)">λ</span>
+</a>
+
+<a href="#hocalar-liste" class="hv-lift" style="position: relative; height: 128px; border-radius: 20px; overflow: hidden; padding: 16px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; text-decoration: none; background: #FFE3EE; color: #0C0E09; transition: transform 150ms">
+<span style="font-size: 12px; font-weight: 700; letter-spacing: 1px; opacity: 0.85">TYT</span>
+<span style="font-size: 20px; font-weight: 700; position: relative; z-index: 1">Kimya</span>
+<span aria-hidden="true" style="position: absolute; right: -6px; top: -14px; font-size: 76px; font-weight: 800; line-height: 1; letter-spacing: -3px; color: rgba(255,32,112,0.18)">H₂O</span>
+</a>
+
+<a href="#hocalar-liste" class="hv-lift" style="position: relative; height: 128px; border-radius: 20px; overflow: hidden; padding: 16px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; text-decoration: none; background: #FFE3EE; color: #0C0E09; transition: transform 150ms">
+<span style="font-size: 12px; font-weight: 700; letter-spacing: 1px; opacity: 0.85">TYT</span>
+<span style="font-size: 20px; font-weight: 700; position: relative; z-index: 1">Biyoloji</span>
+<span aria-hidden="true" style="position: absolute; right: -6px; top: -14px; font-size: 76px; font-weight: 800; line-height: 1; letter-spacing: -3px; color: rgba(255,32,112,0.18)">DNA</span>
+</a>
+
+<a href="#hocalar-liste" class="hv-lift" style="position: relative; height: 128px; border-radius: 20px; overflow: hidden; padding: 16px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; text-decoration: none; background: #FFE3EE; color: #0C0E09; transition: transform 150ms">
+<span style="font-size: 12px; font-weight: 700; letter-spacing: 1px; opacity: 0.85">TYT</span>
+<span style="font-size: 20px; font-weight: 700; position: relative; z-index: 1">Tarih</span>
+<span aria-hidden="true" style="position: absolute; right: -6px; top: -14px; font-size: 76px; font-weight: 800; line-height: 1; letter-spacing: -3px; color: rgba(255,32,112,0.18)">1453</span>
+</a>
+
+<a href="#hocalar-liste" class="hv-lift" style="position: relative; height: 128px; border-radius: 20px; overflow: hidden; padding: 16px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; text-decoration: none; background: #FDFFC7; color: #0C0E09; transition: transform 150ms">
+<span style="font-size: 12px; font-weight: 700; letter-spacing: 1px; opacity: 0.85">AYT</span>
+<span style="font-size: 20px; font-weight: 700; position: relative; z-index: 1">Matematik</span>
+<span aria-hidden="true" style="position: absolute; right: -6px; top: -14px; font-size: 76px; font-weight: 800; line-height: 1; letter-spacing: -3px; color: rgba(12,14,9,0.1)">∫</span>
+</a>
+
+<a href="#hocalar-liste" class="hv-lift" style="position: relative; height: 128px; border-radius: 20px; overflow: hidden; padding: 16px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; text-decoration: none; background: #FDFFC7; color: #0C0E09; transition: transform 150ms">
+<span style="font-size: 12px; font-weight: 700; letter-spacing: 1px; opacity: 0.85">AYT</span>
+<span style="font-size: 20px; font-weight: 700; position: relative; z-index: 1">Edebiyat</span>
+<span aria-hidden="true" style="position: absolute; right: -6px; top: -14px; font-size: 76px; font-weight: 800; line-height: 1; letter-spacing: -3px; color: rgba(12,14,9,0.1)">“”</span>
+</a>
+
+<a href="#hocalar-liste" class="hv-lift" style="position: relative; height: 128px; border-radius: 20px; overflow: hidden; padding: 16px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; text-decoration: none; background: #FDFFC7; color: #0C0E09; transition: transform 150ms">
+<span style="font-size: 12px; font-weight: 700; letter-spacing: 1px; opacity: 0.85">AYT</span>
+<span style="font-size: 20px; font-weight: 700; position: relative; z-index: 1">Fizik</span>
+<span aria-hidden="true" style="position: absolute; right: -6px; top: -14px; font-size: 76px; font-weight: 800; line-height: 1; letter-spacing: -3px; color: rgba(12,14,9,0.1)">F=ma</span>
+</a>
+
+<a href="#hocalar-liste" class="hv-lift" style="position: relative; height: 128px; border-radius: 20px; overflow: hidden; padding: 16px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; text-decoration: none; background: #FDFFC7; color: #0C0E09; transition: transform 150ms">
+<span style="font-size: 12px; font-weight: 700; letter-spacing: 1px; opacity: 0.85">AYT</span>
+<span style="font-size: 20px; font-weight: 700; position: relative; z-index: 1">Kimya</span>
+<span aria-hidden="true" style="position: absolute; right: -6px; top: -14px; font-size: 76px; font-weight: 800; line-height: 1; letter-spacing: -3px; color: rgba(12,14,9,0.1)">pH</span>
+</a>
+
+<a href="#hocalar-liste" class="hv-lift" style="position: relative; height: 128px; border-radius: 20px; overflow: hidden; padding: 16px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; text-decoration: none; background: #FDFFC7; color: #0C0E09; transition: transform 150ms">
+<span style="font-size: 12px; font-weight: 700; letter-spacing: 1px; opacity: 0.85">AYT</span>
+<span style="font-size: 20px; font-weight: 700; position: relative; z-index: 1">Geometri</span>
+<span aria-hidden="true" style="position: absolute; right: -6px; top: -14px; font-size: 76px; font-weight: 800; line-height: 1; letter-spacing: -3px; color: rgba(12,14,9,0.1)">△</span>
+</a>
+
+<a href="#hocalar-liste" class="hv-lift" style="position: relative; height: 128px; border-radius: 20px; overflow: hidden; padding: 16px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; text-decoration: none; background: #FDFFC7; color: #0C0E09; transition: transform 150ms">
+<span style="font-size: 12px; font-weight: 700; letter-spacing: 1px; opacity: 0.85">AYT</span>
+<span style="font-size: 20px; font-weight: 700; position: relative; z-index: 1">İngilizce</span>
+<span aria-hidden="true" style="position: absolute; right: -6px; top: -14px; font-size: 76px; font-weight: 800; line-height: 1; letter-spacing: -3px; color: rgba(12,14,9,0.1)">EN</span>
+</a>
+
+</div>
+</section>
+
+<section aria-label="Öne çıkanlar" style="max-width: 1240px; margin: 0 auto; padding: 48px 24px 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px">
+<a href="#deneme" class="hv-lift" style="position: relative; overflow: hidden; border-radius: 24px; background: #FDFFC7; padding: 28px; min-height: 210px; box-sizing: border-box; display: flex; flex-direction: column; gap: 10px; text-decoration: none; color: #0C0E09; transition: transform 150ms">
+<span style="font-size: 13px; font-weight: 700; letter-spacing: 1px">DENEME DERSİ</span>
+<span style="font-size: 32px; font-weight: 800; line-height: 1.05; letter-spacing: -1px; max-width: 260px">İlk ders bizden, 20 dakika</span>
+<span style="font-size: 15px; max-width: 280px">Her hocayla bir kez, ayda en fazla 3 deneme.</span>
+<span style="margin-top: auto; align-self: flex-start; height: 40px; padding: 0 16px; border-radius: 999px; background: #0C0E09; color: #FBF6F6; font-size: 14px; font-weight: 600; display: flex; align-items: center">Deneme açık hocalar</span>
+<span aria-hidden="true" style="position: absolute; right: -10px; bottom: -40px; font-size: 170px; font-weight: 800; letter-spacing: -8px; color: rgba(12,14,9,0.1)">20'</span>
+</a>
+<a href="#fiyatlar" class="hv-lift" style="position: relative; overflow: hidden; border-radius: 24px; background: #0C0E09; padding: 28px; min-height: 210px; box-sizing: border-box; display: flex; flex-direction: column; gap: 10px; text-decoration: none; color: #FBF6F6; transition: transform 150ms">
+<span style="font-size: 13px; font-weight: 700; letter-spacing: 1px; color: rgba(251,246,246,0.7)">PAKETLER</span>
+<span style="font-size: 32px; font-weight: 800; line-height: 1.05; letter-spacing: -1px; max-width: 280px">Uzun pakette ders başı fiyat düşer</span>
+<span style="margin-top: auto; align-self: flex-start; height: 40px; padding: 0 16px; border-radius: 999px; background: #FBF6F6; color: #0C0E09; font-size: 14px; font-weight: 600; display: flex; align-items: center">Fiyatlara bak</span>
+<span aria-hidden="true" style="position: absolute; right: 18px; bottom: 18px; width: 116px; height: 116px; border-radius: 999px; background: #FCFF1A; color: #0C0E09; display: flex; flex-direction: column; align-items: center; justify-content: center; transform: rotate(-8deg)"><span style="font-size: 13px; font-weight: 600">%30'a</span><span style="font-size: 18px; font-weight: 800">kadar</span></span>
+</a>
+<a href="#veliler" class="hv-lift" style="position: relative; overflow: hidden; border-radius: 24px; background: #FFE3EE; padding: 28px; min-height: 210px; box-sizing: border-box; display: flex; flex-direction: column; gap: 10px; text-decoration: none; color: #0C0E09; transition: transform 150ms">
+<span style="font-size: 13px; font-weight: 700; letter-spacing: 1px">VELİLER İÇİN</span>
+<span style="font-size: 32px; font-weight: 800; line-height: 1.05; letter-spacing: -1px; max-width: 280px">Çocuğunuz kiminle ders alıyor, bilin</span>
+<span style="margin-top: auto; align-self: flex-start; height: 40px; padding: 0 16px; border-radius: 999px; background: #0C0E09; color: #FBF6F6; font-size: 14px; font-weight: 600; display: flex; align-items: center">Veli rehberi</span>
+</a>
+</section>
+
+<section aria-label="Doğrulama" style="margin-top: 96px; background: #FF2070; clip-path: polygon(0 56px, 100% 0, 100% calc(100% - 56px), 0 100%); padding: 136px 0 150px">
+<div style="max-width: 1240px; margin: 0 auto; padding: 0 24px; display: flex; flex-wrap: wrap; gap: 48px; align-items: center">
+<div style="flex: 1 1 440px; min-width: 0; color: #0C0E09; display: flex; flex-direction: column; gap: 20px">
+<h2 style="margin: 0; font-size: clamp(36px, 4.4vw, 56px); line-height: 1.04; font-weight: 800; letter-spacing: -1.5px">Belgesi olmayan kimse ders veremez</h2>
+<p style="margin: 0; font-size: 18px; line-height: 1.55; max-width: 480px">Öğrenci kimliği, YKS sonuç belgesi ve üniversite e-posta adresi tek tek kontrol edilir.</p>
+<p style="margin: 0; font-size: 17px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px">Sadece YKS'de <span style="height: 32px; padding: 0 12px; border-radius: 999px; background: #FCFF1A; color: #0C0E09; font-weight: 700; display: inline-flex; align-items: center">İlk 15.000</span> içine girmiş öğrenciler hoca olabilir.</p>
+<a href="#dogrulama" style="align-self: flex-start; height: 48px; padding: 0 22px; border-radius: 999px; background: #0C0E09; color: #FFFFFF; font-size: 15px; font-weight: 600; display: flex; align-items: center; text-decoration: none">Nasıl doğruluyoruz?</a>
+</div>
+<div style="flex: 1 1 400px; min-width: 0; max-width: 500px; margin-left: auto; background: #0C0E09; color: #FBF6F6; border-radius: 24px; padding: 28px; box-sizing: border-box">
+<h3 style="margin: 0 0 8px; font-size: 20px; font-weight: 700">Her hoca başvurusunda kontrol ettiklerimiz</h3>
+<div style="display: flex; gap: 14px; align-items: flex-start; padding: 16px 0; border-bottom: 1px solid rgba(251,246,246,0.15)">
+<span style="width: 32px; height: 32px; border-radius: 999px; background: rgba(251,246,246,0.14); color: #FBF6F6; display: flex; align-items: center; justify-content: center; flex: none"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"></path></svg></span>
+<div><div style="font-size: 16px; font-weight: 700">Öğrenci kimliği</div><div style="font-size: 14px; color: rgba(251,246,246,0.7)">Hâlâ üniversitede okuduğunu gösterir.</div></div>
+</div>
+<div style="display: flex; gap: 14px; align-items: flex-start; padding: 16px 0; border-bottom: 1px solid rgba(251,246,246,0.15)">
+<span style="width: 32px; height: 32px; border-radius: 999px; background: rgba(251,246,246,0.14); color: #FBF6F6; display: flex; align-items: center; justify-content: center; flex: none"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"></path></svg></span>
+<div><div style="font-size: 16px; font-weight: 700">YKS sonuç belgesi</div><div style="font-size: 14px; color: rgba(251,246,246,0.7)">Profilde yazan sıralamanın kaynağı.</div></div>
+</div>
+<div style="display: flex; gap: 14px; align-items: flex-start; padding: 16px 0">
+<span style="width: 32px; height: 32px; border-radius: 999px; background: rgba(251,246,246,0.14); color: #FBF6F6; display: flex; align-items: center; justify-content: center; flex: none"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"></path></svg></span>
+<div><div style="font-size: 16px; font-weight: 700">.edu.tr e-posta adresi</div><div style="font-size: 14px; color: rgba(251,246,246,0.7)">Hangi üniversitede olduğunu doğrular.</div></div>
+</div>
+<p style="margin: 8px 0 0; font-size: 13px; line-height: 1.5; color: rgba(251,246,246,0.65)">Başvurular 1–2 iş günü içinde sonuçlanır. Belgeler profilde hiçbir zaman görünmez.</p>
+</div>
+</div>
+</section>
+
+<section aria-label="Üniversiteler" style="max-width: 1240px; margin: 0 auto; padding: 24px 24px 0; text-align: center">
+<p style="margin: 0 0 20px; font-size: 15px; color: #5C6B6D">Hocalarımızın öğrencisi olduğu üniversiteler</p>
+<div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 36px; align-items: center">
+<img src="images/itu.png" alt="İTÜ" style="height: 52px; filter: grayscale(1); opacity: 0.75">
+<img src="images/bogazici.png" alt="Boğaziçi Üniversitesi" style="height: 52px; filter: grayscale(1); opacity: 0.75">
+<img src="images/odtu.png" alt="ODTÜ" style="height: 52px; filter: grayscale(1); opacity: 0.75">
+<img src="images/koc.png" alt="Koç Üniversitesi" style="height: 52px; filter: grayscale(1); opacity: 0.75">
+<img src="images/sabanci.png" alt="Sabancı Üniversitesi" style="height: 52px; filter: grayscale(1); opacity: 0.75">
+<img src="images/bilkent.png" alt="Bilkent Üniversitesi" style="height: 52px; filter: grayscale(1); opacity: 0.75">
+</div>
+</section>
+
+<section id="ogrenciler" style="max-width: 1240px; margin: 0 auto; padding: 120px 24px 0">
+<div style="text-align: center; margin-bottom: 48px">
+<h2 style="margin: 0; font-size: clamp(34px, 4vw, 52px); font-weight: 800; letter-spacing: -1.5px; line-height: 1.15">Sen sadece <span style="display: inline-block; background: #FF2070; color: #FFFFFF; padding: 0 18px; border-radius: 999px">seç</span>, gün belirle,<br>derse gir, öğren.</h2>
+<p style="margin: 16px auto 0; font-size: 18px; color: #5C6B6D; max-width: 640px">Hoca bulmaktan ilk derse kadar ne olacağını adım adım gör. Profilleri incelemek için hesap açman gerekmiyor.</p>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 48px; align-items: flex-start">
+<ol style="flex: 1 1 400px; min-width: 0; list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px">
+
+<li style="display: flex; gap: 16px; padding: 16px; border-radius: 18px; background: #FFFFFF">
+<span style="width: 40px; height: 40px; border-radius: 12px; flex: none; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 800; background: #FCFF1A; color: #0C0E09">01</span>
+<div>
+<div style="font-size: 19px; font-weight: 700">Hocanı bul</div>
+<div style="font-size: 15px; line-height: 1.55; color: #5C6B6D; margin-top: 4px">Ders, sınav türü, üniversite, fiyat ve YKS sıralamasına göre filtrele.</div>
+</div>
+</li>
+
+<li style="display: flex; gap: 16px; padding: 16px; border-radius: 18px; background: transparent">
+<span style="width: 40px; height: 40px; border-radius: 12px; flex: none; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 800; background: #FFFFFF; color: #0C0E09">02</span>
+<div>
+<div style="font-size: 19px; font-weight: 700">Hocana yaz</div>
+<div style="font-size: 15px; line-height: 1.55; color: #5C6B6D; margin-top: 4px">Mesaj attığında ya da ders talebi gönderdiğinde mesajlaşma açılır. Ücretsiz.</div>
+</div>
+</li>
+
+<li style="display: flex; gap: 16px; padding: 16px; border-radius: 18px; background: transparent">
+<span style="width: 40px; height: 40px; border-radius: 12px; flex: none; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 800; background: #FFFFFF; color: #0C0E09">03</span>
+<div>
+<div style="font-size: 19px; font-weight: 700">Ücretsiz deneme dersi</div>
+<div style="font-size: 15px; line-height: 1.55; color: #5C6B6D; margin-top: 4px">20 dakika. Her hocayla bir kez, ayda en fazla 3 deneme.</div>
+</div>
+</li>
+
+<li style="display: flex; gap: 16px; padding: 16px; border-radius: 18px; background: transparent">
+<span style="width: 40px; height: 40px; border-radius: 12px; flex: none; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 800; background: #FFFFFF; color: #0C0E09">04</span>
+<div>
+<div style="font-size: 19px; font-weight: 700">Paketini seç</div>
+<div style="font-size: 15px; line-height: 1.55; color: #5C6B6D; margin-top: 4px">Haftada 2 ile 6 ders, 2 hafta ile 6 ay. Uzun pakette ders başı fiyat düşer.</div>
+</div>
+</li>
+
+<li style="display: flex; gap: 16px; padding: 16px; border-radius: 18px; background: transparent">
+<span style="width: 40px; height: 40px; border-radius: 12px; flex: none; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 800; background: #FFFFFF; color: #0C0E09">05</span>
+<div>
+<div style="font-size: 19px; font-weight: 700">Paket talebini gönder</div>
+<div style="font-size: 15px; line-height: 1.55; color: #5C6B6D; margin-top: 4px">Talebi oluştururken kartından ücret alınmaz.</div>
+</div>
+</li>
+
+<li style="display: flex; gap: 16px; padding: 16px; border-radius: 18px; background: transparent">
+<span style="width: 40px; height: 40px; border-radius: 12px; flex: none; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 800; background: #FFFFFF; color: #0C0E09">06</span>
+<div>
+<div style="font-size: 19px; font-weight: 700">Derse gir</div>
+<div style="font-size: 15px; line-height: 1.55; color: #5C6B6D; margin-top: 4px">Tarayıcıda açılır. Görüntülü görüşme ve ortak tahta aynı ekranda.</div>
+</div>
+</li>
+
+<li style="display: flex; gap: 16px; padding: 16px; border-radius: 18px; background: transparent">
+<span style="width: 40px; height: 40px; border-radius: 12px; flex: none; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 800; background: #FFFFFF; color: #0C0E09">07</span>
+<div>
+<div style="font-size: 19px; font-weight: 700">Ders sonrası</div>
+<div style="font-size: 15px; line-height: 1.55; color: #5C6B6D; margin-top: 4px">Dersi puanla, kalan derslerini panelinde gör.</div>
+</div>
+</li>
+
+</ol>
+<div style="flex: 1 1 520px; min-width: 0; position: relative; padding: 24px 0 40px">
+<div style="position: absolute; inset: 0 0 0 40px; border-radius: 32px; background: #FFE3EE"></div>
+<div style="position: relative; margin: 24px 24px 0 0; border-radius: 20px; border: 1px solid #E6DDDD; background: #FFFFFF; overflow: hidden; box-shadow: 0 18px 40px rgba(12,14,9,0.12)">
+<div style="height: 36px; background: #FFFFFF; border-bottom: 1px solid #E6DDDD; display: flex; align-items: center; gap: 6px; padding: 0 14px">
+<span style="width: 10px; height: 10px; border-radius: 999px; background: #E6DDDD"></span><span style="width: 10px; height: 10px; border-radius: 999px; background: #E6DDDD"></span><span style="width: 10px; height: 10px; border-radius: 999px; background: #E6DDDD"></span>
+<span style="margin-left: 12px; font-size: 12px; color: #5C6B6D">hocamozelders.com</span>
+</div>
+<img src="images/01-tutor-list.png" alt="Hoca listesi ekranı" style="width: 100%; display: block">
+</div>
+<div style="position: absolute; right: -6px; top: 4px; background: #0C0E09; color: #FBF6F6; border-radius: 16px; padding: 12px 16px; display: flex; align-items: center; gap: 10px; box-shadow: 0 12px 28px rgba(12,14,9,0.25)">
+<span style="width: 28px; height: 28px; border-radius: 999px; background: rgba(251,246,246,0.14); color: #FBF6F6; display: flex; align-items: center; justify-content: center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"></path></svg></span>
+<span style="font-size: 14px; font-weight: 600">Paket talebin gönderildi</span>
+</div>
+<div style="position: absolute; left: 0; bottom: 0; background: #FFFFFF; border-radius: 16px; padding: 12px 16px; display: flex; align-items: center; gap: 12px; box-shadow: 0 12px 28px rgba(12,14,9,0.16)">
+<img src="images/demo-man-1.jpg" alt="" style="width: 36px; height: 36px; border-radius: 999px; object-fit: cover">
+<div><div style="font-size: 14px; font-weight: 600">Yeni mesaj</div><div style="font-size: 12px; color: #5C6B6D">Salı 18:00 uyar mı?</div></div>
+<span style="min-width: 22px; height: 22px; border-radius: 999px; background: #FF2070; color: #FFFFFF; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center">2</span>
+</div>
+</div>
+</div>
+</section>
+
+<section id="fiyatlar" style="max-width: 1240px; margin: 0 auto; padding: 120px 24px 0">
+<div style="text-align: center; margin-bottom: 40px">
+<h2 style="margin: 0; font-size: clamp(34px, 4vw, 52px); font-weight: 800; letter-spacing: -1.5px">Ne kadar <span style="display: inline-block; background: #FFE3EE; color: #0C0E09; padding: 0 18px; border-radius: 999px">ödersin?</span></h2>
+<p style="margin: 16px auto 0; font-size: 18px; color: #5C6B6D; max-width: 640px">Fiyatı her hoca kendisi belirler. Pakette ne kadar uzun gidersen ders başı o kadar düşer.</p>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 24px; align-items: stretch">
+<div style="flex: 1 1 340px; min-width: 0; display: flex; flex-direction: column; gap: 14px">
+<div style="background: #FFFFFF; border: 1px solid #E6DDDD; border-radius: 22px; padding: 22px; display: flex; gap: 18px; align-items: center">
+<span style="width: 64px; height: 64px; border-radius: 18px; background: #FFE3EE; color: #0C0E09; display: flex; flex-direction: column; align-items: center; justify-content: center; flex: none"><span style="font-size: 22px; font-weight: 800; line-height: 1">40</span><span style="font-size: 11px">dakika</span></span>
+<div><div style="font-size: 17px; font-weight: 700">Bir ders</div><div style="font-size: 14px; color: #5C6B6D">Her ders aynı sürede. Haftada 2 ile 6 ders arasında seçersin.</div></div>
+</div>
+<div style="background: #FFFFFF; border: 1px solid #E6DDDD; border-radius: 22px; padding: 22px; display: flex; gap: 18px; align-items: center">
+<span style="width: 64px; height: 64px; border-radius: 18px; background: #FFE3EE; color: #0C0E09; display: flex; align-items: center; justify-content: center; flex: none; font-size: 26px; font-weight: 800">₺</span>
+<div><div style="font-size: 17px; font-weight: 700">Ders başı 400 – 1.400 ₺</div><div style="font-size: 14px; color: #5C6B6D">Profilde gördüğün fiyat ders başı fiyattır.</div></div>
+</div>
+<div style="background: #FFFFFF; border: 1px solid #E6DDDD; border-radius: 22px; padding: 22px; display: flex; gap: 18px; align-items: center">
+<span style="width: 64px; height: 64px; border-radius: 18px; background: #FFE3EE; color: #0C0E09; display: flex; flex-direction: column; align-items: center; justify-content: center; flex: none"><span style="font-size: 22px; font-weight: 800; line-height: 1">20'</span><span style="font-size: 11px">deneme</span></span>
+<div><div style="font-size: 17px; font-weight: 700">Deneme dersi ücretsiz</div><div style="font-size: 14px; color: #5C6B6D">Her hocayla bir kez, ayda en fazla 3 deneme.</div></div>
+</div>
+</div>
+<div style="flex: 1.4 1 460px; min-width: 0; background: #0C0E09; color: #FBF6F6; border-radius: 28px; padding: 28px; box-sizing: border-box">
+<div style="display: flex; align-items: center; gap: 12px; margin-bottom: 18px">
+<img src="images/demo-man-2.jpg" alt="" style="width: 48px; height: 48px; border-radius: 999px; object-fit: cover">
+<div><div style="font-size: 16px; font-weight: 700">Örnek: haftada 2 ders</div><div style="font-size: 13px; color: rgba(251,246,246,0.7)">Profil fiyatı 1.040 ₺ olan bir hoca</div></div>
+</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px">
+
+<div style="position: relative; border-radius: 18px; padding: 16px; background: #FBF6F6; color: #0C0E09; border: 2px solid transparent">
+
+<div style="display: flex; align-items: center; gap: 8px">
+<span style="width: 18px; height: 18px; border-radius: 999px; border: 2px solid #0C0E09; display: flex; align-items: center; justify-content: center; box-sizing: border-box"><span style="width: 8px; height: 8px; border-radius: 999px; background: transparent"></span></span>
+<span style="font-size: 15px; font-weight: 700">2 hafta</span>
+</div>
+<div style="margin-top: 10px; font-size: 24px; font-weight: 800">1.040 ₺</div>
+<div style="font-size: 12px; color: #5C6B6D">ders başı · 4 ders</div>
+
+</div>
+
+<div style="position: relative; border-radius: 18px; padding: 16px; background: #FFFFFF; color: #0C0E09; border: 2px solid #FF2070">
+
+<span style="position: absolute; right: 10px; top: -12px; height: 24px; padding: 0 10px; border-radius: 999px; background: #FF2070; color: #FFFFFF; font-size: 11px; font-weight: 700; display: flex; align-items: center; transform: rotate(3deg)">En popüler</span>
+
+<div style="display: flex; align-items: center; gap: 8px">
+<span style="width: 18px; height: 18px; border-radius: 999px; border: 2px solid #0C0E09; display: flex; align-items: center; justify-content: center; box-sizing: border-box"><span style="width: 8px; height: 8px; border-radius: 999px; background: #FF2070"></span></span>
+<span style="font-size: 15px; font-weight: 700">1 ay</span>
+</div>
+<div style="margin-top: 10px; font-size: 24px; font-weight: 800">987 ₺</div>
+<div style="font-size: 12px; color: #5C6B6D">ders başı · 9 ders</div>
+
+<span style="margin-top: 10px; display: inline-flex; height: 24px; padding: 0 10px; border-radius: 999px; background: #FDFFC7; color: #0C0E09; font-size: 12px; font-weight: 600; align-items: center">%6 fiyat avantajı</span>
+
+</div>
+
+<div style="position: relative; border-radius: 18px; padding: 16px; background: #FBF6F6; color: #0C0E09; border: 2px solid transparent">
+
+<div style="display: flex; align-items: center; gap: 8px">
+<span style="width: 18px; height: 18px; border-radius: 999px; border: 2px solid #0C0E09; display: flex; align-items: center; justify-content: center; box-sizing: border-box"><span style="width: 8px; height: 8px; border-radius: 999px; background: transparent"></span></span>
+<span style="font-size: 15px; font-weight: 700">3 ay</span>
+</div>
+<div style="margin-top: 10px; font-size: 24px; font-weight: 800">882 ₺</div>
+<div style="font-size: 12px; color: #5C6B6D">ders başı · 26 ders</div>
+
+<span style="margin-top: 10px; display: inline-flex; height: 24px; padding: 0 10px; border-radius: 999px; background: #FDFFC7; color: #0C0E09; font-size: 12px; font-weight: 600; align-items: center">%16 fiyat avantajı</span>
+
+</div>
+
+<div style="position: relative; border-radius: 18px; padding: 16px; background: #FBF6F6; color: #0C0E09; border: 2px solid transparent">
+
+<div style="display: flex; align-items: center; gap: 8px">
+<span style="width: 18px; height: 18px; border-radius: 999px; border: 2px solid #0C0E09; display: flex; align-items: center; justify-content: center; box-sizing: border-box"><span style="width: 8px; height: 8px; border-radius: 999px; background: transparent"></span></span>
+<span style="font-size: 15px; font-weight: 700">6 ay</span>
+</div>
+<div style="margin-top: 10px; font-size: 24px; font-weight: 800">756 ₺</div>
+<div style="font-size: 12px; color: #5C6B6D">ders başı · 52 ders</div>
+
+<span style="margin-top: 10px; display: inline-flex; height: 24px; padding: 0 10px; border-radius: 999px; background: #FDFFC7; color: #0C0E09; font-size: 12px; font-weight: 600; align-items: center">%28 fiyat avantajı</span>
+
+</div>
+
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px 20px; margin-top: 18px; font-size: 14px; color: rgba(251,246,246,0.8)">
+<span style="display: inline-flex; align-items: center; gap: 8px"><span style="width: 18px; height: 18px; border-radius: 999px; background: rgba(251,246,246,0.14); color: #FBF6F6; display: inline-flex; align-items: center; justify-content: center"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"></path></svg></span>Paket tek seferlik, otomatik yenilenmez</span>
+<span style="display: inline-flex; align-items: center; gap: 8px"><span style="width: 18px; height: 18px; border-radius: 999px; background: rgba(251,246,246,0.14); color: #FBF6F6; display: inline-flex; align-items: center; justify-content: center"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"></path></svg></span>Talep gönderirken karttan ücret alınmaz</span>
+</div>
+<p style="margin: 14px 0 0; font-size: 12px; color: rgba(251,246,246,0.55)">Rakamlar örnektir; gerçek sayfada hocanın kendi paketleri görünür.</p>
+</div>
+</div>
+</section>
+
+<section aria-label="Garantiler" style="max-width: 1240px; margin: 0 auto; padding: 120px 24px 0">
+<h2 style="margin: 0 0 32px; text-align: center; font-size: clamp(34px, 4vw, 52px); font-weight: 800; letter-spacing: -1.5px">Ters giderse <span style="display: inline-block; background: #FFE3EE; color: #0C0E09; padding: 0 18px; border-radius: 999px">ne olur?</span></h2>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px">
+<div style="background: #FFFFFF; border: 1px solid #E6DDDD; border-radius: 22px; padding: 24px; display: flex; flex-direction: column; gap: 12px">
+<span style="width: 48px; height: 48px; border-radius: 14px; background: #FDFFC7; display: flex; align-items: center; justify-content: center; color: #0C0E09"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"></rect><path d="M2 10h20"></path></svg></span>
+<div style="font-size: 18px; font-weight: 700">Param ne zaman çekiliyor?</div>
+<div style="font-size: 15px; line-height: 1.55; color: #5C6B6D">Paket talebini oluştururken kartından ücret alınmaz.</div>
+</div>
+<div style="background: #FFFFFF; border: 1px solid #E6DDDD; border-radius: 22px; padding: 24px; display: flex; flex-direction: column; gap: 12px">
+<span style="width: 48px; height: 48px; border-radius: 14px; background: #FDFFC7; display: flex; align-items: center; justify-content: center; color: #0C0E09"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="4"></circle><path d="M2 21c0-4 3-6 7-6s7 2 7 6"></path><path d="M17 8h5"></path></svg></span>
+<div style="font-size: 18px; font-weight: 700">Hoca derse gelmezse?</div>
+<div style="font-size: 15px; line-height: 1.55; color: #5C6B6D">15 dakika beklenir, ders iptal olur, ders hakkın geri yüklenir ve ek bir telafi dersi hakkı tanımlanır.</div>
+</div>
+<div style="background: #FFFFFF; border: 1px solid #E6DDDD; border-radius: 22px; padding: 24px; display: flex; flex-direction: column; gap: 12px">
+<span style="width: 48px; height: 48px; border-radius: 14px; background: #FDFFC7; display: flex; align-items: center; justify-content: center; color: #0C0E09"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"></rect><path d="M3 9h18M9 14l6 5M15 14l-6 5"></path></svg></span>
+<div style="font-size: 18px; font-weight: 700">Dersi iptal edersem?</div>
+<div style="font-size: 15px; line-height: 1.55; color: #5C6B6D">Dersten 12 saat öncesine kadar ücretsiz. Sonrası için <a href="#iptal">iptal ve iade koşulları</a>.</div>
+</div>
+<div style="background: #FFFFFF; border: 1px solid #E6DDDD; border-radius: 22px; padding: 24px; display: flex; flex-direction: column; gap: 12px">
+<span style="width: 48px; height: 48px; border-radius: 14px; background: #FDFFC7; display: flex; align-items: center; justify-content: center; color: #0C0E09"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7h13l-4-4M17 17H4l4 4"></path></svg></span>
+<div style="font-size: 18px; font-weight: 700">Hocamla anlaşamazsam?</div>
+<div style="font-size: 15px; line-height: 1.55; color: #5C6B6D">Kalan dersler için iade talebi açarsın; kabul edilince 15 gün içinde iade edilir.</div>
+</div>
+</div>
+</section>
+
+<section id="veliler" style="max-width: 1240px; margin: 0 auto; padding: 120px 24px 0">
+<div style="background: #FFFFFF; border: 1px solid #E6DDDD; border-radius: 32px; padding: clamp(28px, 5vw, 64px); display: flex; flex-wrap: wrap; gap: 48px">
+<div style="flex: 1 1 360px; min-width: 0; display: flex; flex-direction: column; gap: 18px">
+<span style="align-self: flex-start; height: 30px; padding: 0 12px; border-radius: 999px; background: #0C0E09; color: #FBF6F6; font-size: 13px; font-weight: 600; display: flex; align-items: center">Veliler için</span>
+<h2 style="margin: 0; font-size: 40px; font-weight: 800; letter-spacing: -1px; line-height: 1.1">Çocuğunuzun kiminle, nerede ders aldığını bilin</h2>
+<p style="margin: 0; font-size: 17px; line-height: 1.55; color: #5C6B6D">Hocalarımız YKS'de derece yapmış, belgeleri tek tek incelenmiş üniversite öğrencileri.</p>
+<a href="#veliler-sayfa" class="hv-dark" style="align-self: flex-start; height: 48px; padding: 0 20px; border-radius: 999px; border: 2px solid #0C0E09; font-size: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px; text-decoration: none">Veliler için tüm bilgiler <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7"></path></svg></a>
+</div>
+<div style="flex: 1 1 420px; min-width: 0; display: flex; flex-direction: column">
+<div style="display: flex; gap: 16px; padding: 18px 0; border-bottom: 1px solid #E6DDDD"><span style="width: 44px; height: 44px; border-radius: 12px; background: #FBF6F6; flex: none; display: flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0C0E09" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"></path></svg></span><div><div style="font-size: 17px; font-weight: 700">Her şey platformda</div><div style="font-size: 15px; color: #5C6B6D; line-height: 1.5">Dersler Hocam'ın ders odasında yapılır. Telefon numarası paylaşmak gerekmez.</div></div></div>
+<div style="display: flex; gap: 16px; padding: 18px 0; border-bottom: 1px solid #E6DDDD"><span style="width: 44px; height: 44px; border-radius: 12px; background: #FBF6F6; flex: none; display: flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0C0E09" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="6" width="14" height="12" rx="2"></rect><path d="M16 10l6-3v10l-6-3"></path></svg></span><div><div style="font-size: 17px; font-weight: 700">Kayıt alınmaz</div><div style="font-size: 15px; color: #5C6B6D; line-height: 1.5">Derslerde ses ve görüntü kaydı yok. Derse yalnızca öğrenci ve hoca katılır.</div></div></div>
+<div style="display: flex; gap: 16px; padding: 18px 0; border-bottom: 1px solid #E6DDDD"><span style="width: 44px; height: 44px; border-radius: 12px; background: #FBF6F6; flex: none; display: flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0C0E09" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2h12v20l-3-2-3 2-3-2-3 2z"></path><path d="M9 7h6M9 11h6"></path></svg></span><div><div style="font-size: 17px; font-weight: 700">Ödeme ve dekont</div><div style="font-size: 15px; color: #5C6B6D; line-height: 1.5">Paket fiyatı ve indirim ödemeden önce açıkça görünür.</div></div></div>
+<div style="display: flex; gap: 16px; padding: 18px 0"><span style="width: 44px; height: 44px; border-radius: 12px; background: #FBF6F6; flex: none; display: flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0C0E09" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L3 21l1.9-6.4A8 8 0 1 1 21 12z"></path></svg></span><div><div style="font-size: 17px; font-weight: 700">Bir sorun olursa</div><div style="font-size: 15px; color: #5C6B6D; line-height: 1.5">iletisim@hocamozelders.com adresine yazın, 24 saat içinde dönüyoruz.</div></div></div>
+</div>
+</div>
+</section>
+
+<section id="hocalar" style="margin-top: 120px; background: #0C0E09; color: #FBF6F6; clip-path: polygon(0 56px, 100% 0, 100% calc(100% - 56px), 0 100%); padding: 136px 0 150px">
+<div style="max-width: 1240px; margin: 0 auto; padding: 0 24px; display: flex; flex-direction: column; gap: 64px">
+<div style="display: flex; flex-wrap: wrap; gap: 48px; align-items: center">
+<div style="flex: 1 1 460px; min-width: 0; display: flex; flex-direction: column; gap: 20px">
+<h2 style="margin: 0; font-size: clamp(36px, 4.4vw, 56px); line-height: 1.06; font-weight: 800; letter-spacing: -1.5px">YKS'deki dereceni <span style="display: inline-block; background: #FCFF1A; color: #0C0E09; padding: 0 12px; border-radius: 14px; transform: rotate(-1.5deg)">gelire</span> çevir</h2>
+<p style="margin: 0; font-size: 18px; line-height: 1.55; color: rgba(251,246,246,0.8); max-width: 500px">Geçen sene çözdüğün soruları bu sene sınava girenlere anlat. Saatlerini sen seçersin, fiyatını sen belirlersin.</p>
+<div style="display: flex; gap: 12px; flex-wrap: wrap">
+<a href="#basvur" style="height: 52px; padding: 0 26px; border-radius: 999px; background: #FCFF1A; color: #0C0E09; font-size: 16px; font-weight: 700; display: flex; align-items: center; text-decoration: none">Hoca olarak başvur</a>
+<a href="#hoca-ol" style="height: 52px; padding: 0 26px; border-radius: 999px; border: 2px solid rgba(251,246,246,0.7); color: #FBF6F6; font-size: 16px; font-weight: 600; display: flex; align-items: center; text-decoration: none">Hocalık hakkında her şey</a>
+</div>
+</div>
+<div style="flex: 1 1 380px; min-width: 0; border: 1px solid rgba(251,246,246,0.2); border-radius: 24px; padding: 28px; display: flex; flex-direction: column; gap: 16px">
+<h3 style="margin: 0; font-size: 20px; font-weight: 700">Kimler başvurabilir?</h3>
+<div style="display: flex; gap: 12px; align-items: center"><span style="width: 26px; height: 26px; border-radius: 999px; background: rgba(251,246,246,0.14); color: #FBF6F6; flex: none; display: flex; align-items: center; justify-content: center"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"></path></svg></span><span style="font-size: 16px">YKS'de ilk 15.000 içine girmiş olmak</span></div>
+<div style="display: flex; gap: 12px; align-items: center"><span style="width: 26px; height: 26px; border-radius: 999px; background: rgba(251,246,246,0.14); color: #FBF6F6; flex: none; display: flex; align-items: center; justify-content: center"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"></path></svg></span><span style="font-size: 16px">Aktif üniversite öğrencisi olmak, .edu.tr e-postana erişmek</span></div>
+<div style="display: flex; gap: 12px; align-items: center"><span style="width: 26px; height: 26px; border-radius: 999px; background: rgba(251,246,246,0.14); color: #FBF6F6; flex: none; display: flex; align-items: center; justify-content: center"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"></path></svg></span><span style="font-size: 16px">Öğrenci kimliğini ve YKS sonuç belgeni yükleyebilmek</span></div>
+</div>
+</div>
+<div>
+<h3 style="margin: 0 0 24px; font-size: 24px; font-weight: 700">Başvurudan ilk dersine kadar</h3>
+<ol style="list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px">
+
+<li style="border-radius: 20px; padding: 20px; background: rgba(251,246,246,0.06); border: 1px solid rgba(251,246,246,0.12); display: flex; flex-direction: column; gap: 8px">
+<span style="font-size: 32px; font-weight: 800; letter-spacing: -1px; color: rgba(251,246,246,0.4)">01</span>
+<span style="font-size: 18px; font-weight: 700">Başvur</span>
+<span style="font-size: 14px; line-height: 1.55; color: rgba(251,246,246,0.7)">Hesabını aç, üniversite ve bölüm bilgilerini gir. 5 dakika sürer.</span>
+</li>
+
+<li style="border-radius: 20px; padding: 20px; background: rgba(251,246,246,0.06); border: 1px solid rgba(251,246,246,0.12); display: flex; flex-direction: column; gap: 8px">
+<span style="font-size: 32px; font-weight: 800; letter-spacing: -1px; color: rgba(251,246,246,0.4)">02</span>
+<span style="font-size: 18px; font-weight: 700">Doğrulan</span>
+<span style="font-size: 14px; line-height: 1.55; color: rgba(251,246,246,0.7)">Belgelerini yükle. 1–2 iş günü içinde incelenir.</span>
+</li>
+
+<li style="border-radius: 20px; padding: 20px; background: rgba(251,246,246,0.06); border: 1px solid rgba(251,246,246,0.12); display: flex; flex-direction: column; gap: 8px">
+<span style="font-size: 32px; font-weight: 800; letter-spacing: -1px; color: rgba(251,246,246,0.4)">03</span>
+<span style="font-size: 18px; font-weight: 700">Profilini kur</span>
+<span style="font-size: 14px; line-height: 1.55; color: rgba(251,246,246,0.7)">Derslerini, tanıtım yazını, ücretini ve uygun saatlerini belirle.</span>
+</li>
+
+<li style="border-radius: 20px; padding: 20px; background: rgba(251,246,246,0.06); border: 1px solid rgba(251,246,246,0.12); display: flex; flex-direction: column; gap: 8px">
+<span style="font-size: 32px; font-weight: 800; letter-spacing: -1px; color: rgba(251,246,246,0.4)">04</span>
+<span style="font-size: 18px; font-weight: 700">Deneme dersi ver</span>
+<span style="font-size: 14px; line-height: 1.55; color: rgba(251,246,246,0.7)">Gelen taleplere panelinden dön. Deneme dersleri 20 dakika.</span>
+</li>
+
+<li style="border-radius: 20px; padding: 20px; background: rgba(251,246,246,0.06); border: 1px solid rgba(251,246,246,0.12); display: flex; flex-direction: column; gap: 8px">
+<span style="font-size: 32px; font-weight: 800; letter-spacing: -1px; color: rgba(251,246,246,0.4)">05</span>
+<span style="font-size: 18px; font-weight: 700">Dersini ver</span>
+<span style="font-size: 14px; line-height: 1.55; color: rgba(251,246,246,0.7)">Ders odası hazır: görüntülü görüşme ve ortak tahta.</span>
+</li>
+
+<li style="border-radius: 20px; padding: 20px; background: rgba(251,246,246,0.06); border: 1px solid rgba(251,246,246,0.12); display: flex; flex-direction: column; gap: 8px">
+<span style="font-size: 32px; font-weight: 800; letter-spacing: -1px; color: rgba(251,246,246,0.4)">06</span>
+<span style="font-size: 18px; font-weight: 700">Ders tamamlanır</span>
+<span style="font-size: 14px; line-height: 1.55; color: rgba(251,246,246,0.7)">Öğrenci onaylayınca ya da 24 saat geçince ders tamamlanır.</span>
+</li>
+
+<li style="border-radius: 20px; padding: 20px; background: rgba(251,246,246,0.06); border: 1px solid rgba(251,246,246,0.12); display: flex; flex-direction: column; gap: 8px">
+<span style="font-size: 32px; font-weight: 800; letter-spacing: -1px; color: rgba(251,246,246,0.4)">07</span>
+<span style="font-size: 18px; font-weight: 700">Büyü</span>
+<span style="font-size: 14px; line-height: 1.55; color: rgba(251,246,246,0.7)">Yorumların arttıkça listede üste çıkarsın.</span>
+</li>
+
+</ol>
+</div>
+</div>
+</section>
+
+<section aria-label="Öğrencilerden" style="max-width: 1240px; margin: 0 auto; padding: 72px 24px 0">
+<h2 style="margin: 0 0 28px; font-size: 40px; font-weight: 800; letter-spacing: -1px">Öğrencilerden</h2>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px">
+<figure style="margin: 0; border-radius: 24px; padding: 28px; background: #FDFFC7; color: #0C0E09; display: flex; flex-direction: column; gap: 20px">
+<span aria-hidden="true" style="font-size: 64px; font-weight: 800; line-height: 0.6; height: 28px">“</span>
+<blockquote style="margin: 0; font-size: 18px; line-height: 1.5; font-weight: 500">Burdaki abi geçen sene aynı soruları çözmüş, o yüzden nereye dikkat etmem gerektiğini biliyo.</blockquote>
+<figcaption style="margin-top: auto; display: flex; gap: 12px; align-items: center"><img src="images/kaan.jpeg" alt="" style="width: 44px; height: 44px; border-radius: 999px; object-fit: cover; border: 2px solid #0C0E09"><span><span style="display: block; font-weight: 700">Kaan</span><span style="font-size: 13px">12. sınıf</span></span></figcaption>
+</figure>
+<figure style="margin: 0; border-radius: 24px; padding: 28px; background: #FFFFFF; border: 1px solid #E6DDDD; color: #0C0E09; display: flex; flex-direction: column; gap: 20px">
+<span aria-hidden="true" style="font-size: 64px; font-weight: 800; line-height: 0.6; height: 28px; color: #FF2070">“</span>
+<blockquote style="margin: 0; font-size: 18px; line-height: 1.5; font-weight: 500">Hoca yaşça bana yakın olunca daha rahat soru sorabiliyorum.</blockquote>
+<figcaption style="margin-top: auto; display: flex; gap: 12px; align-items: center"><img src="images/elif.jpeg" alt="" style="width: 44px; height: 44px; border-radius: 999px; object-fit: cover"><span><span style="display: block; font-weight: 700">Elif</span><span style="font-size: 13px; color: #5C6B6D">11. sınıf</span></span></figcaption>
+</figure>
+<figure style="margin: 0; border-radius: 24px; padding: 28px; background: #FFE3EE; color: #0C0E09; display: flex; flex-direction: column; gap: 20px">
+<span aria-hidden="true" style="font-size: 64px; font-weight: 800; line-height: 0.6; height: 28px; color: #FF2070">“</span>
+<blockquote style="margin: 0; font-size: 18px; line-height: 1.5; font-weight: 500">Hem kendi bilgim işime yarıyor hem de üniversite masraflarımı çıkarıyorum.</blockquote>
+<figcaption style="margin-top: auto; display: flex; gap: 12px; align-items: center"><img src="images/zeynep.jpeg" alt="" style="width: 44px; height: 44px; border-radius: 999px; object-fit: cover; border: 2px solid #FFFFFF"><span><span style="display: block; font-weight: 700">Zeynep, hoca</span><span style="font-size: 13px">Boğaziçi Bilgisayar Müh.</span></span></figcaption>
+</figure>
+</div>
+</section>
+
+<section aria-label="Merak edilenler" style="max-width: 1240px; margin: 0 auto; padding: 120px 24px 120px; display: flex; flex-wrap: wrap; gap: 48px">
+<div style="flex: 1 1 300px; min-width: 0; display: flex; flex-direction: column; gap: 18px">
+<h2 style="margin: 0; font-size: 40px; font-weight: 800; letter-spacing: -1px">Merak edilenler</h2>
+<div role="tablist" aria-label="Kimin için" style="display: flex; gap: 8px; flex-wrap: wrap">
+<button type="button" role="tab" aria-selected="true" style="height: 40px; padding: 0 18px; border-radius: 999px; border: 0; background: #0C0E09; color: #FFFFFF; font: inherit; font-size: 14px; font-weight: 600">Öğrenci</button>
+<button type="button" role="tab" aria-selected="false" class="hv-ink" style="height: 40px; padding: 0 18px; border-radius: 999px; border: 1px solid #E6DDDD; background: #FFFFFF; font: inherit; font-size: 14px; font-weight: 500">Veli</button>
+<button type="button" role="tab" aria-selected="false" class="hv-ink" style="height: 40px; padding: 0 18px; border-radius: 999px; border: 1px solid #E6DDDD; background: #FFFFFF; font: inherit; font-size: 14px; font-weight: 500">Hoca</button>
+</div>
+</div>
+<div style="flex: 2 1 520px; min-width: 0; display: flex; flex-direction: column; gap: 10px">
+<details open="" style="background: #FFFFFF; border: 1px solid #E6DDDD; border-radius: 18px; padding: 18px 22px">
+<summary style="font-size: 17px; font-weight: 700; cursor: pointer">Ücretsiz deneme dersi nasıl çalışıyor?</summary>
+<p style="margin: 12px 0 0; font-size: 15px; line-height: 1.6; color: #5C6B6D">Deneme dersi 20 dakika sürer ve ücretsizdir. Her hocayla bir kez deneme dersi yapabilirsin, aynı ay içinde en fazla 3 deneme hakkın olur.</p>
+</details>
+<details style="background: #FFFFFF; border: 1px solid #E6DDDD; border-radius: 18px; padding: 18px 22px"><summary style="font-size: 17px; font-weight: 700; cursor: pointer">Tek ders satın alabilir miyim?</summary><p style="margin: 12px 0 0; font-size: 15px; color: #5C6B6D">Dersler haftalık paketle alınır: haftada 2 ile 6 ders, 2 hafta ile 6 ay arası.</p></details>
+<details style="background: #FFFFFF; border: 1px solid #E6DDDD; border-radius: 18px; padding: 18px 22px"><summary style="font-size: 17px; font-weight: 700; cursor: pointer">Bir dersi iptal edersem ne oluyor?</summary><p style="margin: 12px 0 0; font-size: 15px; color: #5C6B6D">12 saatten fazla varken iptal edersen ders hakkın paketine geri döner.</p></details>
+<details style="background: #FFFFFF; border: 1px solid #E6DDDD; border-radius: 18px; padding: 18px 22px"><summary style="font-size: 17px; font-weight: 700; cursor: pointer">Hocalar nasıl doğrulanıyor?</summary><p style="margin: 12px 0 0; font-size: 15px; color: #5C6B6D">Öğrenci kimliği, YKS sonuç belgesi ve .edu.tr e-posta adresiyle.</p></details>
+</div>
+</section>
+
+<footer class="ft" style="background: #0C0E09; color: #FBF6F6">
+<div style="max-width: 1240px; margin: 0 auto; padding: 64px 24px 32px">
+<div style="display: flex; flex-wrap: wrap; gap: 32px; justify-content: space-between; align-items: flex-start; padding-bottom: 40px; border-bottom: 1px solid rgba(251,246,246,0.15)">
+<div style="flex: 1 1 280px; display: flex; flex-direction: column; gap: 16px">
+<span style="font-size: 30px; font-weight: 800; letter-spacing: -1px">hocam<span style="color: #FF2070">.</span></span>
+<p style="margin: 0; font-size: 15px; color: rgba(251,246,246,0.7); max-width: 300px">Dünün öğrencisi, bugünün öğretmeni.</p>
+<span style="align-self: flex-start; height: 32px; padding: 0 12px; border-radius: 999px; border: 1px solid rgba(251,246,246,0.3); color: #FBF6F6; font-size: 13px; font-weight: 600; display: flex; align-items: center">Mobil uygulama yakında</span>
+</div>
+<div style="display: flex; flex-direction: column; gap: 10px; font-size: 14px; min-width: 150px"><span style="font-weight: 700; color: #FBF6F6">Hocam'ı keşfet</span><a href="#a">Hoca listesi</a><a href="#a">TYT Matematik özel ders</a><a href="#a">AYT Matematik özel ders</a><a href="#a">Ücretsiz deneme dersi</a></div>
+<div style="display: flex; flex-direction: column; gap: 10px; font-size: 14px; min-width: 150px"><span style="font-weight: 700; color: #FBF6F6">Nasıl çalışır?</span><a href="#a">Ders süreci</a><a href="#a">Fiyatlar ve paketler</a><a href="#a">Hoca doğrulama</a></div>
+<div style="display: flex; flex-direction: column; gap: 10px; font-size: 14px; min-width: 150px"><span style="font-weight: 700; color: #FBF6F6">Kimin için?</span><a href="#a">Öğrenciler</a><a href="#a">Veliler</a><a href="#a">Hoca ol</a></div>
+<div style="display: flex; flex-direction: column; gap: 10px; font-size: 14px; min-width: 150px"><span style="font-weight: 700; color: #FBF6F6">Yasal metinler</span><a href="#a">KVKK ve Gizlilik</a><a href="#a">Kullanım Koşulları</a><a href="#a">İptal ve İade</a></div>
+</div>
+<div style="padding-top: 20px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; font-size: 13px; color: rgba(251,246,246,0.6)"><span>© 2026 Hocam. Tüm hakları saklıdır.</span><span>KVKK başvuru: iletisim@hocamozelders.com</span></div>
+</div>
+</footer>
+
+</div>
+</body></html>
