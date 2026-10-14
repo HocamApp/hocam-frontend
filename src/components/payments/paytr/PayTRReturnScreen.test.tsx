@@ -15,6 +15,8 @@ const routerCalls: string[] = [];
 const postCalls: unknown[] = [];
 
 let purchaseStatus: PackagePurchase["status"] = "pending";
+// Credits no lesson sits on. A paid instant-checkout pack is fully placed: 0.
+let unplacedCredits = 0;
 let purchasesResponse: () => unknown = () => [purchase()];
 let authenticated = true;
 let pathname = "/odeme/basarili";
@@ -36,7 +38,7 @@ function purchase(): PackagePurchase {
     },
     status: purchaseStatus,
     total_credits: 12,
-    remaining_credits: purchaseStatus === "paid" ? 12 : 0,
+    remaining_credits: purchaseStatus === "paid" ? unplacedCredits : 0,
     unit_price: 400,
     subtotal_price: 4800,
     discount_amount: 480,
@@ -147,6 +149,7 @@ beforeEach(() => {
   routerCalls.length = 0;
   postCalls.length = 0;
   purchaseStatus = "pending";
+  unplacedCredits = 0;
   purchasesResponse = () => [purchase()];
   authenticated = true;
   pathname = "/odeme/basarili";
@@ -179,7 +182,7 @@ describe("return pages — the route name decides nothing", () => {
     assert.equal(screen.queryByText("Ödeme tamamlanamadı"), null);
   });
 
-  it("shows the package and the credits the purchase now carries", async () => {
+  it("shows the package and says every lesson of a fully placed pack is on the calendar", async () => {
     purchaseStatus = "paid";
     rememberAttempt();
     renderRoute(SuccessRoute);
@@ -187,11 +190,39 @@ describe("return pages — the route name decides nothing", () => {
     await waitFor(() => screen.getByText("Ödemen onaylandı"));
     assert.ok(screen.getByText("Haftada 3 ders · 30 gün"));
     assert.ok(screen.getByText("4.320 ₺"));
-    assert.match(document.body.textContent ?? "", /12 ders kredin kullanıma açıldı/);
+    const text = document.body.textContent ?? "";
+    assert.match(text, /12 dersin takvimine eklendi/);
+    assert.doesNotMatch(text, /\b0 ders/);
+    assert.doesNotMatch(text, /kredin kullanıma açıldı/);
     assert.equal(
       screen.getByRole("link", { name: "Paketlerime git" }).getAttribute("href"),
       "/profile/payments"
     );
+  });
+
+  it("counts the planned lessons and names the credits that stayed unplaced", async () => {
+    purchaseStatus = "paid";
+    unplacedCredits = 4;
+    rememberAttempt();
+    renderRoute(SuccessRoute);
+
+    await waitFor(() => screen.getByText("Ödemen onaylandı"));
+    const text = document.body.textContent ?? "";
+    assert.match(text, /8 dersin takvimine eklendi/);
+    assert.match(text, /4 ders hakkın henüz bir saate yerleşmedi/);
+    assert.doesNotMatch(text, /kredin kullanıma açıldı/);
+  });
+
+  it("says nothing is on the calendar yet when no lesson was placed", async () => {
+    purchaseStatus = "paid";
+    unplacedCredits = 12;
+    rememberAttempt();
+    renderRoute(SuccessRoute);
+
+    await waitFor(() => screen.getByText("Ödemen onaylandı"));
+    const text = document.body.textContent ?? "";
+    assert.match(text, /12 ders hakkın hazır; henüz bir saate yerleşmedi/);
+    assert.doesNotMatch(text, /takvimine eklendi/);
   });
 });
 

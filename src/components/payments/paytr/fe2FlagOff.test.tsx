@@ -41,7 +41,7 @@ function purchase(): PackagePurchase {
     },
     status: purchaseStatus,
     total_credits: 12,
-    remaining_credits: purchaseStatus === "paid" ? 12 : 0,
+    remaining_credits: 0,
     unit_price: 400, subtotal_price: 4800, discount_amount: 480,
     promo_discount_amount: 0, total_price: 4320,
     created_at: "2026-09-17T09:00:00Z",
@@ -210,7 +210,7 @@ describe("FE-2 screens with PayTR off (production build)", () => {
     purchaseStatus = "paid";
     rememberAttempt();
     const { container } = withClient(<SuccessRoute />);
-    await settle(container, "ders kredin kullanıma açıldı");
+    await settle(container, "dersin takvimine eklendi");
     check("return-paid", container.innerHTML);
   });
 

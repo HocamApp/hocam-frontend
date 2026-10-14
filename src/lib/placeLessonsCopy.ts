@@ -30,6 +30,24 @@ export const PLACE_FLOW = {
     `${credits} ders hakkın seçtiğin saatlere sırayla yerleşecek.`,
 } as const;
 
+/**
+ * What a paid purchase puts on the calendar. After payment `remaining_credits`
+ * is only the credits no lesson sits on, so the lessons already planned are
+ * the rest of `total_credits`.
+ */
+export function paidPurchaseLine(purchase: {
+  total_credits: number;
+  remaining_credits: number;
+}): string {
+  const unplaced = Math.max(0, purchase.remaining_credits);
+  const planned = Math.max(0, purchase.total_credits - unplaced);
+  if (planned === 0) {
+    return `${unplaced} ders hakkın hazır; henüz bir saate yerleşmedi.`;
+  }
+  const line = `${planned} dersin takvimine eklendi.`;
+  return unplaced > 0 ? `${line} ${unplaced} ders hakkın henüz bir saate yerleşmedi.` : line;
+}
+
 export function placedSummary(result: PlaceLessonsResult): string[] {
   const lines: string[] = [];
   if (result.placed > 0) {
