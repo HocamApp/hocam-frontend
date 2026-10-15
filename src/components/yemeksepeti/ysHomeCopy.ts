@@ -200,6 +200,10 @@ export const pricing = {
   planAdvantage: (percent: number) => `%${percent} fiyat avantajı`,
   planMostPopular: "En popüler",
   planPerLesson: (lessonCount: number) => `/ ders · ${lessonCount} ders`,
+  /* Brand v3's pale pink tiles beside the three fact cards. */
+  tileLesson: (minutes: number) => ({ big: `${minutes}`, small: "dakika" }),
+  tilePrice: () => ({ big: "₺" }),
+  tileTrial: (minutes: number) => ({ big: `${minutes}'`, small: "deneme" }),
   noteOneTime: "Tek seferlik paket, otomatik yenilenmez.",
   noteNoCharge: pricingNoCharge(PAYTR_ENABLED),
   noteNoExtraFee: "Hocanın profilindeki fiyatın üstüne ekstra ücret yok.",

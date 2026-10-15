@@ -87,7 +87,7 @@ export function YsStepTabs({
   };
 
   const caption = (shot: YsStepShot) => (
-    <figcaption className="border-t border-line bg-surface px-[18px] py-3 text-[13px] leading-6 text-ink-mid">
+    <figcaption className="border-t border-line bg-surface px-[18px] py-3 text-[13px] leading-6 text-ink-mid v3:mt-3 v3:rounded-[14px] v3:border-t-0">
       {shot.caption}
     </figcaption>
   );
@@ -100,11 +100,19 @@ export function YsStepTabs({
         className,
       )}
     >
-      <div role="tablist" aria-label={label} aria-orientation="vertical" className="min-w-0 border-l border-line">
+      {/* Brand v3 (homepage only): no rule or dividers; the active step is a
+          white card with a yellow number tile, the others sit on paper with
+          white tiles (docs/design/brand-v3/PLAN.md T1.6). */}
+      <div
+        role="tablist"
+        aria-label={label}
+        aria-orientation="vertical"
+        className="min-w-0 border-l border-line v3:flex v3:flex-col v3:gap-1.5 v3:border-l-0"
+      >
         {steps.map((step, index) => {
           const selected = index === active;
           return (
-            <div key={index} className="border-t border-line first:border-t-0">
+            <div key={index} className="border-t border-line first:border-t-0 v3:border-t-0">
               <button
                 ref={(node) => {
                   tabRefs.current[index] = node;
@@ -123,17 +131,30 @@ export function YsStepTabs({
                   "group relative flex w-full gap-3.5 py-[22px] pl-4 pr-2 text-left outline-none",
                   index === 0 && "pt-1",
                   "focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-4 focus-visible:ring-offset-paper",
+                  "v3:gap-4 v3:rounded-[18px] v3:p-4",
+                  selected && "v3:bg-surface",
                 )}
               >
                 <span
                   aria-hidden
                   className={cn(
-                    "absolute -left-px bottom-0 top-0 w-[2px] transition-colors duration-[--duration-state]",
+                    "absolute -left-px bottom-0 top-0 w-[2px] transition-colors duration-[--duration-state] v3:hidden",
                     selected ? "bg-ink" : "bg-transparent",
                   )}
                 />
-                <span className="mt-1.5 w-5 flex-none text-[13px] font-medium leading-[19px] tabular-nums text-ink-mid">
+                <span className="mt-1.5 w-5 flex-none text-[13px] font-medium leading-[19px] tabular-nums text-ink-mid v3:hidden">
                   {stepNumber(index)}
+                </span>
+                {/* Brand v3's number tile. Yellow on the active step (with the
+                    fixed black --on-accent), white on the others. */}
+                <span
+                  aria-hidden
+                  className={cn(
+                    "hidden size-10 flex-none place-items-center rounded-[12px] text-[14px] font-extrabold tabular-nums v3:grid",
+                    selected ? "bg-yellow text-on-accent" : "bg-surface text-ink",
+                  )}
+                >
+                  {String(index + 1).padStart(2, "0")}
                 </span>
                 <span className="min-w-0">
                   <span
@@ -160,7 +181,7 @@ export function YsStepTabs({
               {selected && step.shot && (
                 <figure
                   aria-hidden
-                  className="mx-4 mb-6 overflow-hidden rounded-card border border-line bg-paper motion-safe:duration-300 motion-safe:animate-in motion-safe:fade-in-0 min-[960px]:hidden"
+                  className="mx-4 mb-6 overflow-hidden rounded-card border border-line bg-paper motion-safe:duration-300 motion-safe:animate-in motion-safe:fade-in-0 min-[960px]:hidden v3:mx-0 v3:mt-1.5 v3:rounded-[24px] v3:border-0 v3:bg-pink-soft v3:p-3"
                 >
                   <Image
                     src={step.shot.src}
@@ -168,7 +189,7 @@ export function YsStepTabs({
                     width={SHOT_WIDTH}
                     height={SHOT_HEIGHT}
                     sizes="100vw"
-                    className="h-auto w-full"
+                    className="h-auto w-full v3:rounded-[14px] v3:border v3:border-line"
                   />
                   {caption(step.shot)}
                 </figure>
@@ -183,9 +204,11 @@ export function YsStepTabs({
           id={panelId}
           role="tabpanel"
           aria-labelledby={`${tabId(active)}-title`}
-          className="sticky top-[calc(var(--app-header-h)+24px)] m-0 hidden min-w-0 overflow-hidden rounded-card border border-line bg-paper min-[960px]:block"
+          className="sticky top-[calc(var(--app-header-h)+24px)] m-0 hidden min-w-0 overflow-hidden rounded-card border border-line bg-paper min-[960px]:block v3:rounded-[32px] v3:border-0 v3:bg-pink-soft v3:p-6 v3:pl-10"
         >
-          <div className="relative aspect-[2880/1645]">
+          {/* Brand v3: the screenshot sits as a white card on a pale pink
+              backdrop (the figure itself, padded), not edge to edge. */}
+          <div className="relative aspect-[2880/1645] v3:overflow-hidden v3:rounded-[20px] v3:border v3:border-line v3:bg-surface v3:shadow-float">
             {shots.map((shot) => {
               const visible = shot.src === activeShot?.src;
               return (
