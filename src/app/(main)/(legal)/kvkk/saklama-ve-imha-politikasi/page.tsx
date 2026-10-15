@@ -163,7 +163,7 @@ export default function RetentionPolicyPage() {
           </p>
           <p>
             Depolama katmanındaki dosyalar (doğrulama belgeleri, ders
-            materyalleri, mesaj görselleri) bu otomatik işlemin kapsamı dışında
+            materyalleri, mesaj görselleri) bu işlemin kapsamı dışında
             olup ayrıca imha edilir. Yalnızca veri tabanı kaydını silmek yeterli
             değildir.
           </p>
@@ -180,8 +180,20 @@ export default function RetentionPolicyPage() {
               sınırlı tutulur ve kimlik bilgisi şifreli olarak saklanır.
             </li>
             <li>
-              Açık uyuşmazlık, iade veya güvenlik incelemesi varsa silme, dosya
-              kapanışına kadar ertelenir ve gerekçesi kullanıcıya bildirilir.
+              <strong>Öğrenci hesabında</strong> açık bir iade talebi, itirazı
+              süren, onayı bekleyen ya da süren bir ders veya sürmekte olan bir
+              koçluk işlemi varsa silme talebi oluşturulamaz; talep
+              oluşturulduktan sonra böyle bir işlem ortaya çıkarsa silme, o
+              işlem sonuçlanıncaya kadar bekletilir ve gerekçesi e-postayla
+              bildirilir. Öğrenci hesabı için ayrı bir güvenlik incelemesi
+              engeli yoktur.
+            </li>
+            <li>
+              <strong>Hoca hesabında</strong> silme talebi bir ayrılma
+              süreciyle başlar; açık bir itiraz, açık bir iade talebi, devam
+              eden bir güvenlik incelemesi veya sürmekte olan bir koçluk işlemi
+              sonuçlanmadan silme ilerlemez. Gerekçeler hesap ekranında
+              gösterilir.
             </li>
             <li>
               Yeniden kayıt kötüye kullanımını önlemek için yalnızca geri
@@ -190,8 +202,8 @@ export default function RetentionPolicyPage() {
             </li>
           </ol>
           <p>
-            Kullanıcıya hangi verinin silindiği, hangisinin hangi hukuki sebeple
-            saklandığı açıkça yazılı olarak bildirilir.
+            Hangi verinin silindiği, hangisinin hangi hukuki sebeple saklandığı
+            bu politikanın 5. ve 7. bölümlerinde yazılıdır.
           </p>
         </LegalSection>
 

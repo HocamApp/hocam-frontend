@@ -72,14 +72,25 @@ describe(
       assert.match(prose, /on dört gün süren bir bekleme dönemi/);
     });
 
-    it("states that messaging opens only after a lesson request", () => {
-      // Conversation hangs off a lesson request, so there is no free-form
-      // messaging to describe.
-      assert.match(
-        read("apps/messaging/models.py"),
-        /lesson_request = models\.OneToOneField/,
-      );
-      assert.match(prose, /ancak bir ders talebi oluşturulduktan sonra açılır/);
+    it("states that messaging opens with the first message or a lesson request", () => {
+      // A message request becomes a real conversation at once (no approval
+      // step), and a lesson request opens one too. The old text said only a
+      // lesson request did, which the code never required.
+      const serializers = read("apps/messaging/serializers.py");
+      assert.match(serializers, /a message request immediately\s+# becomes a real conversation/);
+      assert.match(serializers, /accept_message_request\(message_request\)/);
+      assert.match(read("apps/messaging/models.py"), /lesson_request = models\.OneToOneField/);
+      assert.match(prose, /ilk mesajını göndermesiyle ya da bir ders talebi oluşturmasıyla açılır/);
+      assert.doesNotMatch(prose, /ancak bir ders talebi oluşturulduktan sonra açılır/);
+    });
+
+    it("promises no notice or announcement the code does not send (suspension, planned downtime)", () => {
+      // No code notifies a user of a suspension or announces maintenance, and
+      // suspension does not settle lessons or packages by itself.
+      assert.doesNotMatch(prose, /gerekçesiyle birlikte Kullanıcıya bildirilir/);
+      assert.doesNotMatch(prose, /Planlı kesintiler/);
+      assert.doesNotMatch(prose, /Devam eden dersler ve açık paketler, iptal ve iade kurallarına göre sonuçlandırılır/);
+      assert.match(prose, /Kullanıcı, bu karara destek kanalı üzerinden itiraz edebilir/);
     });
 
     it("states the tutor verification inputs", () => {

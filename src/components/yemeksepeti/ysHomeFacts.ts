@@ -197,7 +197,7 @@ export const VERIFICATION_REJECTION_TEXT: Fact<string> =
  * ("Başvurular X içinde sonuçlanır"). Owners, 8 Oct 2026
  * (Hocam_Ana_Sayfa_Doldurulacak_Bilgiler).
  */
-export const VERIFICATION_REVIEW_TIME: Fact<string> = "1–2 iş günü";
+export const VERIFICATION_REVIEW_TIME: Fact<string> = "genellikle 1–2 iş günü";
 /** Whether lessons are recorded. Owners, 8 Oct 2026 (Hocam_Ana_Sayfa_Doldurulacak_Bilgiler); /kvkk/saklama-ve-imha-politikasi. */
 export const RECORDING_POLICY_TEXT: Fact<string> =
   "Hayır. Derslerde ses ve görüntü kaydı alınmaz; yalnızca kimin derse ne zaman katıldığı kaydı tutulur ve 2 yıl saklanır.";

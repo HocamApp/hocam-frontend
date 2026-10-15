@@ -101,7 +101,7 @@ export function helpSections(instant: boolean): HelpSection[] {
       icon: MessageSquare,
       title: "Mesajlaşma kuralları",
       items: [
-        "Mesajlaşma yalnızca ders talebi oluşturulduktan sonra açılır.",
+        "Mesajlaşma, öğrencinin eğitmen profilinden ilk mesajını göndermesiyle ya da ders talebi oluşturmasıyla açılır.",
         "Mesajlar eğitim amaçlı ve nezaket sınırları içinde olmalıdır.",
         "Taciz, spam veya uygunsuz içerik paylaşımı yasaktır.",
         "Şüpheli bir durumla karşılaşırsanız destek talebi oluşturabilirsiniz.",
@@ -140,7 +140,7 @@ export function helpSections(instant: boolean): HelpSection[] {
       icon: HelpCircle,
       title: "Sık karşılaşılan sorunlar",
       items: [
-        "Mesaj gönderemiyorsanız, önce ilgili eğitmene ders talebi oluşturduğunuzdan emin olun.",
+        "Mesaj gönderemiyorsanız, eğitmen profilinden ilk mesajınızı gönderdiğinizden ya da ders talebi oluşturduğunuzdan emin olun.",
         "Giriş yapamıyorsanız şifre sıfırlama bağlantısını kullanabilirsiniz.",
         "Rezervasyon görünmüyorsa sayfayı yenileyin; sorun sürerse destek talebi açın.",
         "Çözüme kavuşmayan durumlarda destek ekibi talebinizi en kısa sürede inceler.",

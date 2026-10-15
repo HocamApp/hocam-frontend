@@ -208,9 +208,9 @@ export default function TermsOfServicePage() {
 
         <LegalSection title="7. Mesajlaşma">
           <p>
-            Öğrenci ile Hoca arasındaki mesajlaşma, ancak bir ders talebi
-            oluşturulduktan sonra açılır. Platform üzerinde serbest mesajlaşma
-            veya kullanıcı arama özelliği bulunmaz.
+            Öğrenci ile Hoca arasındaki mesajlaşma, Öğrencinin Hoca profilinden
+            ilk mesajını göndermesiyle ya da bir ders talebi oluşturmasıyla
+            açılır.
           </p>
           <p>
             Mesajlaşma eğitim amaçlıdır. Taciz, hakaret, tehdit, spam,
@@ -370,7 +370,7 @@ export default function TermsOfServicePage() {
             HOCAM, Platformun kesintisiz ve hatasız çalışması için makul çabayı
             gösterir. Bakım, güncelleme, altyapı sağlayıcısından kaynaklanan
             arıza veya mücbir sebep hallerinde hizmette geçici kesinti
-            yaşanabilir. Planlı kesintiler mümkün olduğunca önceden duyurulur.
+            yaşanabilir.
           </p>
           <p>
             HOCAM, Öğrenci ile Hoca arasındaki ders ilişkisinin tarafı
@@ -389,15 +389,12 @@ export default function TermsOfServicePage() {
             İşbu koşullara aykırılık tespit edilmesi halinde HOCAM, ihlalin
             ağırlığına göre içeriği kaldırabilir, profili herkese açık listeden
             çıkarabilir, hesabı geçici olarak askıya alabilir veya sözleşmeyi
-            feshedebilir. Askıya alma ve fesih kararı, mümkün olan hallerde
-            gerekçesiyle birlikte Kullanıcıya bildirilir ve Kullanıcı bu karara
-            destek kanalı üzerinden itiraz edebilir.
+            feshedebilir. Kullanıcı, bu karara destek kanalı üzerinden itiraz
+            edebilir.
           </p>
           <p>
             Askıya alma veya fesih, Kullanıcının o tarihe kadar doğmuş
-            haklarını ve varsa iade taleplerini ortadan kaldırmaz. Devam eden
-            dersler ve açık paketler, iptal ve iade kurallarına göre
-            sonuçlandırılır.
+            haklarını ve varsa iade taleplerini ortadan kaldırmaz.
           </p>
           <p>
             Kullanıcı, dilediği zaman hesabını kapatarak sözleşmeyi
