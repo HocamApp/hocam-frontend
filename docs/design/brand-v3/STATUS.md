@@ -1,12 +1,14 @@
 # Brand v3: status
 
-**This file is the current state of the rollout.** `PLAN.md` is the plan; `BRAND.md` is the color system. Update this file at the end of every task. Last updated 14 October 2026 (Phase 0).
+**This file is the current state of the rollout.** `PLAN.md` is the plan; `BRAND.md` is the color system. Update this file at the end of every task. Last updated 14 October 2026 (Phase 1A).
 
 ## Where we are
 
 Direction approved (14 October 2026): option "E2" from the palette exploration, black + pink + yellow with soft tints.
 
-Phase 0 is done (branch `agent/brand-v3-phase0-20261014`): the compare harness, the scoped tokens, the `v3:` Tailwind variant and the `NEXT_PUBLIC_BRAND_V3` flag. With the flag off the homepage is pixel-identical to `main`; with it on only the homepage hues change. Next: Phase 1, PR 1A (T1.1 to T1.3), once D3 and D4 are answered or their defaults accepted.
+Phase 0 is merged (#345): the compare harness, the scoped tokens, the `v3:` Tailwind variant and the `NEXT_PUBLIC_BRAND_V3` flag.
+
+Phase 1A is in review (branch `agent/brand-v3-phase1a-20261014`): the hero collage, the tutor cards and the subject tiles, all behind the flag. With the flag off the homepage and the other pages that use `TutorCard` are pixel-identical to `main`. Next: PR 1B, after Baha has looked at 1A and the open items below.
 
 ## Progress
 
@@ -15,10 +17,10 @@ Phase 0 is done (branch `agent/brand-v3-phase0-20261014`): the compare harness, 
 | T0.1 Mockup in compare harness | done | #345 | `npm run brand:compare` → `screenshots/brand-v3/` |
 | T0.2 Tokens | done | #345 | See "Phase 0 notes" for three additions to the plan |
 | T0.3 Flag | done | #345 | Flag off: pixel-identical to `main`, both `HOME_V2` states, 1440/390, light/dark |
-| T1.1 Hero | not started | | Waits on D3, D4 |
-| T1.2 Tutor directory | not started | | |
-| T1.2b Promo row (new) | not started | | Waits on D7 |
-| T1.3 Subject grid | not started | | |
+| T1.1 Hero | in review | #347 | Collage (D4), generic notification card (D3) |
+| T1.2 Tutor directory | in review | #347 | Free-trial tag skipped (Baha) |
+| T1.2b Promo row (new) | skipped | | D7: skip for now |
+| T1.3 Subject grid | in review | #347 | |
 | T1.4 Verified band | not started | | |
 | T1.5 University strip | no change | | |
 | T1.6 Student steps | not started | | |
@@ -39,18 +41,17 @@ Phase 0 is done (branch `agent/brand-v3-phase0-20261014`): the compare harness, 
 
 | # | Decision | Answer |
 |---|---|---|
-| D1 | Pink button fill | open (default `--pink-deep`) |
-| D2 | Hero search bar | open (default skip) |
-| D3 | Hero notification content | open (default generic, no name) |
-| D4 | Collage replaces campus gallery | open (default yes) |
-| D5 | Dark mode on the homepage | open (default ship with starting values) |
-| D6 | Navbar and footer wait for Phase 2 | open (default yes) |
-| D7 | Three-banner promo row | open (default skip until copy exists) |
+| D1 | Pink button fill | **Answered by Baha (14 Oct 2026):** button fills with white text use `--pink-deep`; `--pink` stays everywhere else |
+| D2 | Hero search bar | **Answered by Baha:** no search bar under the hero |
+| D3 | Hero notification content | **Answered by Baha:** generic text, no name and no photo, an icon instead of the avatar. Text lives in `ysHomeCopy.ts` (`hero.notice`); Baha will rewrite it |
+| D4 | Collage replaces campus gallery | **Answered by Baha:** yes, behind the `brandV3` prop |
+| D5 | Dark mode on the homepage | **Answered by Baha:** ship dark with the BRAND.md starting values, checked in screenshots |
+| D6 | Navbar and footer wait for Phase 2 | **Answered by Baha:** yes |
+| D7 | Three-banner promo row | **Answered by Baha:** skip for now |
 
 ## Open for Baha
 
-- Answer D1 to D7 above.
-- With the flag on, white text on the homepage's pink buttons drops to 3.7:1 (`#FF2070`, was `#FA0050`). D1's default (`--pink-deep` fill) fixes it, but buttons are restyled in Phase 1/2, not in Phase 0. Don't switch Production on before that.
+- Nothing open from Phase 1A. See "Answered after Phase 1A review" below.
 
 ## Phase 0 notes
 
@@ -74,6 +75,36 @@ Seen with the flag on, left for Phase 1 (each is the matching task's job):
 
 Unit tests: `npm run test:unit` reports 302 failures on this branch and the same 302 on clean `main` (mostly `Cannot find module '@/lib/…'` under the full runner). The new tests pass; the new cases in `YemeksepetiHome.flag.test.tsx` fail under the full runner only because that whole file already does on `main`, and pass with `--import ./scripts/register-test-aliases.mjs`.
 
+## Answered after Phase 1A review (Baha, 15 October 2026)
+
+1. **Card subject chips:** when the data says which exam a subject is for, the chip says it ("TYT Matematik", "AYT Matematik") and takes that exam's tint. When it doesn't, every chip gets one treatment (`--pink-soft`, ink text). No pink/yellow switching without a label. Done in #347: a tutor teaching Matematik in both exams now gets two chips. Other exams ("KPSS Tarih") are labelled on the plain outline.
+2. **Free-trial tag:** skipped. The "Deneme Dersi Al" button covers it.
+3. **Subject signs:** Coğrafya "40°N" (also on Coğrafya-1 and -2, like Tarih-1/-2), Felsefe "∃", Sosyoloji "%". Din Kültürü stays without one.
+4. **Subject grid on phones (under 768px):** the first 8 tiles, then "Tüm dersleri gör" (`subjects.showAll` in `ysHomeCopy.ts`) opens the rest and moves focus to the first new tile. Desktop shows all.
+5. **Notification text** stays "Deneme dersin onaylandı" / "20 dakika · ücretsiz".
+6. The `" 2.ts"` duplicate files in `src/` are iCloud copies; Baha handles them. Leave them alone.
+
+## Phase 1A notes
+
+How it was checked:
+- Flag off: frozen screenshots (see Phase 0 notes) of `/`, `/yks-ozel-ders` and `/yks/tyt/matematik-ozel-ders` pixel-diffed against `main`. The last two render `TutorCard` (default size) and `FavoriteButton` outside the homepage. All identical at 1440 and 390, light and dark; `/` also with `NEXT_PUBLIC_HOME_V2` off. `/tutors` redirects to `/`, so the homepage covers it.
+- Flag on (`HOME_V2=true`, `BRAND_V3=true`): `npm run brand:compare` → `screenshots/brand-v3/compare__{1440,390}__{light,dark}.png`. At 390 the collage starts below the hero text (y 705, headline ends at y 240), subject tiles are two per row (172px each), and there's no horizontal scroll.
+- Tests: `src/components/yemeksepeti/YsBrandV3Phase1A.test.tsx` (hero on/off, D3 card has no person, D1 class, tiles and legend, glyph map, card rank pill and chips are `v3:`-only). `YsHeroCollage.tsx` is added to the "text lives in the copy file" check.
+
+Composition (BRAND.md §3):
+- Hero: black headline, yellow highlight and sticker, yellow block, one pink button. The exception allowed by rule 2.
+- Directory: one shared treatment per repeated item. Every rank pill is ink, every chip a soft tint, every primary button `--pink-deep`. The selected sort chip is ink, not pink. The favourites banner is already a soft tint (`--pink-pale`), so it stays as it is.
+- Subject tiles: soft tints only, one per exam. No strong moment.
+
+What changes under v3, and where:
+- **D1** applies to the hero's "Hocaları gör" and the card's "Profili Gör". Other pink buttons on the page (pricing, tutor band, …) belong to PR 1B/1C.
+- **Rank tiers (BRAND.md §4)** on the card photo: top 1.000 is an ink pill with a star, top 5.000 an ink pill, the rest an ink outline. In dark, `bg-ink` flips light and a yellow star vanished on it, so in dark the star is black. Under v3 the rank leaves the stats rail and goes onto the photo.
+- **Favourite button**: a white circle with a pink heart, moved onto the photo's top-right corner.
+
 ## Intentional differences from the mockup
 
-(List them here as they come up: real copy, real numbers, sections the mockup doesn't have.)
+- **Hero:** no "YKS 2027 için hocalar ders alıyor" chip (no copy or fact for it) and no search bar (D2). The headline, subline and buttons keep the site's sizes and copy. The audience pills keep their down arrows next to the new dots.
+- **Collage:** no university caption on the photo. In the mockup the notification card covers it, and on a phone the card covered it here too. The photo's alt text names the university.
+- **Notification card (D3):** an icon in a pale pink circle instead of Zeynep's photo, and generic text.
+- **Tutor cards:** keep the site's horizontal card (photo, bio, price rail) rather than the mockup's vertical one. Only the treatments in PLAN.md T1.2 are applied. Real tutors, prices and ranks, not the demo ones.
+- **Subject tiles:** every subject the API returns (30) on desktop, the first 8 plus "Tüm dersleri gör" below 768px; not the mockup's 12. API order. Hover draws an ink ring instead of the mockup's lift.

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, CircleNotch, TrendUp } from "@phosphor-icons/react";
+import { ArrowRight, CircleNotch, Star, TrendUp } from "@phosphor-icons/react";
 import { TutorProfile } from "@/types";
 import { RankMark } from "@/components/brand/marks";
 import { cn, formatLessonCount, formatPrice, formatRating } from "@/lib/utils";
@@ -21,6 +21,51 @@ function getInitials(name: string, surname: string): string {
 
 function formatYksRank(rank: number): string {
   return rank.toLocaleString("tr-TR");
+}
+
+/* Brand v3 rank tiers (docs/design/brand-v3/BRAND.md §4): top 1.000 is an ink
+   pill with a yellow star, top 5.000 an ink pill, the rest an ink outline. */
+function v3RankPillClass(rank: number): string {
+  return rank <= 5000
+    ? "border-surface bg-ink text-paper"
+    : "border-ink bg-surface text-ink";
+}
+
+/* Brand v3 subject chips (homepage only). A tint always comes with its
+   label: "TYT Matematik" on pale pink, "AYT Matematik" on pale yellow, other
+   exams ("KPSS Tarih") on the plain outline. When the data names no exam for
+   any subject there is nothing to label, so every chip gets the one pale
+   pink treatment rather than colours that would mean nothing. */
+const V3_CHIP_EXAM_ORDER = ["TYT", "AYT", "YDT", "DGS", "KPSS"];
+const V3_CHIP_LIMIT = 4;
+
+function v3SubjectChips(tutor: TutorProfile) {
+  const anyExam = tutor.subjects.some((subject) => Boolean(subject.exam_type));
+  const rank = (exam: string) => {
+    const at = V3_CHIP_EXAM_ORDER.indexOf(exam);
+    return at < 0 ? V3_CHIP_EXAM_ORDER.length : at;
+  };
+  const seen = new Set<string>();
+  const chips = [...tutor.subjects]
+    .sort((a, b) => rank(a.exam_type ?? "") - rank(b.exam_type ?? ""))
+    .filter((subject) => {
+      const key = `${subject.exam_type ?? ""}|${subject.name.trim().toLocaleLowerCase("tr-TR")}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .map((subject) => {
+      const exam = anyExam ? subject.exam_type || null : null;
+      const tint = !anyExam
+        ? "border-transparent bg-pink-soft text-ink"
+        : exam === "TYT"
+          ? "border-transparent bg-pink-soft text-ink"
+          : exam === "AYT"
+            ? "border-transparent bg-yellow-soft text-ink"
+            : null;
+      return { id: subject.id, label: exam ? `${exam} ${subject.name}` : subject.name, tint };
+    });
+  return { chips: chips.slice(0, V3_CHIP_LIMIT), remaining: chips.length - V3_CHIP_LIMIT };
 }
 
 interface TutorCardProps {
@@ -357,6 +402,7 @@ function TutorCardLarge({
   trialDisabled = false,
 }: TutorCardProps) {
   const { visibleSubjects, remainingCount } = useTutorCardData(tutor);
+  const v3Subjects = v3SubjectChips(tutor);
   const tutorHref = buildTutorHref(tutor.id, learningContext, discoveryImpressionId);
 
   const coachingLabel = tutor.offers_free_coaching
@@ -386,7 +432,7 @@ function TutorCardLarge({
       className="relative h-full min-w-0 overflow-visible border-line transition-colors duration-[var(--duration-state)] hover:border-ink sm:min-h-[320px]"
     >
       <CardContent className="flex h-full flex-col gap-4 p-4 sm:flex-row sm:gap-5 sm:p-6">
-        <Link href={tutorHref} className="block min-w-0 flex-1 cursor-pointer">
+        <Link href={tutorHref} className="block min-w-0 flex-1 cursor-pointer v3:relative">
           <div className="float-left mb-2 mr-4 h-28 w-28 sm:h-40 sm:w-40">
             <div className="relative h-full w-full">
               <Avatar className="h-full w-full rounded-xl">
@@ -400,6 +446,26 @@ function TutorCardLarge({
                 </AvatarFallback>
               </Avatar>
               <PresenceDot isOnline={tutor.is_online} />
+              {/* Brand v3 only (the homepage): the rank sits on the photo's
+                  bottom edge instead of in the stats rail. Hidden otherwise,
+                  so /tutors renders exactly as before. */}
+              {tutor.yks_rank > 0 && (
+                <span
+                  className={cn(
+                    "absolute -bottom-3.5 left-2 hidden h-[30px] items-center gap-1 whitespace-nowrap rounded-pill border-2 px-3 text-[13px] font-bold tabular-nums v3:inline-flex",
+                    v3RankPillClass(tutor.yks_rank)
+                  )}
+                  title="YKS sıralaması"
+                  aria-label={`YKS sıralaması: ${formatYksRank(tutor.yks_rank)}`}
+                >
+                  {tutor.yks_rank <= 1000 && (
+                    /* Yellow on the ink pill. In dark the pill flips light, where
+                       yellow vanishes, so the star goes black there. */
+                    <Star className="h-3.5 w-3.5 text-yellow dark:text-on-accent" weight="fill" aria-hidden />
+                  )}
+                  İlk {formatYksRank(tutor.yks_rank)}
+                </span>
+              )}
             </div>
           </div>
 
@@ -409,7 +475,9 @@ function TutorCardLarge({
             </p>
             {onToggleFavorite && (
               <FavoriteButton
-                className="-mr-2 -mt-1.5"
+                /* Brand v3: a white circle on the photo's top-right corner
+                   (photo 112px, 160px from sm; circle 36px, 8px inset). */
+                className="-mr-2 -mt-1.5 v3:absolute v3:left-[68px] v3:top-2 v3:z-10 v3:m-0 sm:v3:left-[116px]"
                 tutorId={tutor.id}
                 isFavorite={isFavorite ?? false}
                 isPending={favoritePending ?? false}
@@ -428,7 +496,7 @@ function TutorCardLarge({
           <p className="mt-1 text-xs font-medium leading-5 text-foreground/80">
             {tutor.university} · {tutor.department}
           </p>
-          <div className="mt-2 flex flex-wrap gap-1.5">
+          <div className="mt-2 flex flex-wrap gap-1.5 v3:hidden">
             {coachingLabel && (
               <Badge className="border-transparent bg-ink text-xs text-paper">
                 {coachingLabel}
@@ -442,6 +510,25 @@ function TutorCardLarge({
             {remainingCount > 0 && (
               <span className="self-center text-xs text-muted-foreground">
                 +{remainingCount} daha
+              </span>
+            )}
+          </div>
+          {/* Brand v3 only: the same row with the exam in every label. The row
+              above is the one that shows everywhere else. */}
+          <div className="mt-2 hidden flex-wrap gap-1.5 v3:flex" data-testid="v3-subject-chips">
+            {coachingLabel && (
+              <Badge className="border-transparent bg-ink text-xs text-paper">
+                {coachingLabel}
+              </Badge>
+            )}
+            {v3Subjects.chips.map((chip) => (
+              <Badge key={chip.id} variant="outline" className={cn("text-xs", chip.tint)}>
+                {chip.label}
+              </Badge>
+            ))}
+            {v3Subjects.remaining > 0 && (
+              <span className="self-center text-xs text-muted-foreground">
+                +{v3Subjects.remaining} daha
               </span>
             )}
           </div>
@@ -473,7 +560,8 @@ function TutorCardLarge({
               stay quiet — the reader scans the numbers first. */}
           <dl className="space-y-1.5">
             {stats.map((stat) => (
-              <div key={stat.label} className="min-w-0">
+              /* Under brand v3 the rank moves onto the photo. */
+              <div key={stat.label} className={cn("min-w-0", stat.rank && "v3:hidden")}>
                 {stat.rank ? (
                   /* Gold, and the only gold on the card. It is a surface with
                      --gold-ink on it, never a text colour: #FFD100 as type
@@ -494,7 +582,9 @@ function TutorCardLarge({
           </dl>
 
           <div className="mt-auto flex flex-col gap-2 pt-3">
-            <Button asChild className="w-full">
+            {/* D1: white text on --pink is 3.7:1, so under brand v3 the
+                fill is --pink-deep (4.8:1). */}
+            <Button asChild className="w-full v3:bg-pink-deep v3:hover:bg-pink-deep v3:hover:brightness-90">
               <Link href={tutorHref}>
                 Profili Gör <ArrowRight className="ml-1 h-4 w-4" aria-hidden />
               </Link>

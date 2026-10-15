@@ -38,7 +38,7 @@ export function YemeksepetiHome({
   return (
     <div className="ys-root" data-brand={brandV3 ? "v3" : undefined}>
       <div className="ys-shell">
-        <YsHeroIntro v2={v2} />
+        <YsHeroIntro v2={v2} brandV3={brandV3} />
       </div>
 
       {/* The directory comes straight after the hero. A visitor who arrives
@@ -49,7 +49,7 @@ export function YemeksepetiHome({
         <YsTutorDirectory />
         {/* The same list, entered by subject: each pill filters the
               directory above. */}
-        {v2 && <YsSubjectGrid />}
+        {v2 && <YsSubjectGrid brandV3={brandV3} />}
       </div>
 
       {/* Outside the shell on purpose: a diagonal band is full bleed, and

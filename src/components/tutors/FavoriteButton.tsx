@@ -48,13 +48,16 @@ export function FavoriteButton({
         onClick={handleClick}
         // Visual size stays 32px; the ::after expands the tap target to 44px
         // for touch (WCAG 2.5.5) without altering card layout.
-        className="peer relative h-8 w-8 shrink-0 after:absolute after:-inset-1.5 after:content-['']"
+        // Brand v3 (homepage only): a white circle with a pink heart, sitting
+        // on the tutor's photo. Literal white: it is on a photograph, not on
+        // a themed surface.
+        className="peer relative h-8 w-8 shrink-0 after:absolute after:-inset-1.5 after:content-[''] v3:h-9 v3:w-9 v3:rounded-pill v3:bg-white v3:shadow-float v3:hover:bg-white"
       >
         <Heart
           weight={isFavorite ? "fill" : "regular"}
           className={cn(
             "h-5 w-5 transition duration-200 ease-out group-hover:scale-105",
-            isFavorite ? "text-pink" : "text-ink-mid group-hover:text-pink"
+            isFavorite ? "text-pink" : "text-ink-mid group-hover:text-pink v3:text-pink"
           )}
         />
       </Button>

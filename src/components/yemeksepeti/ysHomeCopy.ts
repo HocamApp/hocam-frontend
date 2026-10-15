@@ -64,12 +64,25 @@ export const hero = {
     parents: "Velisiyim",
     tutors: "Hoca olmak istiyorum",
   },
+  /* Brand v3 hero (NEXT_PUBLIC_BRAND_V3). The sticker's rank comes from
+     MAX_TUTOR_YKS_RANK. The notification card is generic on purpose (D3 in
+     docs/design/brand-v3/PLAN.md): no name and no photo, because no student
+     has approved being shown there. Placeholder wording, waiting for Baha. */
+  sticker: (maxRank: string) => ({ top: "YKS'de", rank: `İlk ${maxRank}`, bottom: "hocalar" }),
+  notice: {
+    title: "Deneme dersin onaylandı",
+    line: (trialMinutes: number) => `${trialMinutes} dakika · ücretsiz`,
+  },
 } as const;
 
 export const subjects = {
   title: "Hangi dersler var?",
   sub: "Dersine tıkla, o dersi veren hocaları gör.",
   coaching: "YKS koçluğu",
+  /* Brand v3 tiles: names the colour key for screen readers. */
+  legendLabel: "Renk anahtarı",
+  /* Below 768px the tile grid stops after eight; this opens the rest. */
+  showAll: "Tüm dersleri gör",
 } as const;
 
 export const band = {
