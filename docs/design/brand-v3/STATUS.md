@@ -23,11 +23,11 @@ Phase 1B is in review (branch `agent/brand-v3-phase1b-20261015`): the verified b
 | T1.2 Tutor directory | done | #347 | Free-trial tag skipped (Baha) |
 | T1.2b Promo row (new) | skipped | | D7: skip for now |
 | T1.3 Subject grid | done | #347 | |
-| T1.4 Verified band | in review | Phase 1B PR | Black type and button on the pink band, black checklist card; hex literals gone |
-| T1.5 University strip | checked, no change | Phase 1B PR | The heading picks up the v3 black through `--ys-neutral-strong`; the logos keep their own colours; edge fades are `--paper` (unchanged). Nothing strong, so §3 holds |
-| T1.6 Student steps | in review | Phase 1B PR | Floating notification cards not added |
-| T1.7 Pricing | in review | Phase 1B PR | |
-| T1.8 Guarantees | in review | Phase 1B PR | |
+| T1.4 Verified band | in review | #351 | Black type and button on the pink band, black checklist card; hex literals gone |
+| T1.5 University strip | checked, no change | #351 | The heading picks up the v3 black through `--ys-neutral-strong`; the logos keep their own colours; edge fades are `--paper` (unchanged). Nothing strong, so §3 holds |
+| T1.6 Student steps | in review | #351 | Floating notification cards not added |
+| T1.7 Pricing | in review | #351 | |
+| T1.8 Guarantees | in review | #351 | |
 | T1.9 Parents panel | not started | | |
 | T1.10 Tutor band | not started | | |
 | T1.11 Testimonials | not started | | |
