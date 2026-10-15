@@ -15,6 +15,8 @@ import {
   type SupportAccordionSectionItem,
 } from "@/components/support/SupportAccordionSection";
 
+import { PAYTR_ENABLED } from "@/lib/featureFlags";
+import { POLICY_FACTS } from "@/lib/policyFacts";
 import {
   CANCELLATION_FREE_HOURS,
   isTodo,
@@ -47,6 +49,9 @@ import {
  * back them up: payment methods and refunds (no provider is connected — the
  * checkout says "Bu adımda kartından ücret alınmaz"), coaching (behind two
  * flags that both default to off), and any turnaround time (no SLA exists).
+ * With the instant checkout build (NEXT_PUBLIC_PAYTR_ENABLED) the payment and
+ * refund answers appear, built from policyFacts.ts, and the tutor's "do I have
+ * to accept" answer describes the product that runs.
  */
 
 const faqLinkClass = "font-medium text-pink underline-offset-2 hover:underline";
@@ -164,6 +169,11 @@ const FAQ_FACTS: FaqFacts = {
   longestPlan: PLAN_DURATIONS[PLAN_DURATIONS.length - 1].label.toLocaleLowerCase("tr-TR"),
   maxDiscount: MAX_PACKAGE_DISCOUNT_PERCENT,
   cancelHours: CANCELLATION_FREE_HOURS,
+  instant: PAYTR_ENABLED,
+  holdMinutes: POLICY_FACTS.holdMinutes,
+  firstLessonNoticeHours: POLICY_FACTS.firstLessonNoticeHours,
+  withdrawalDays: POLICY_FACTS.withdrawalDays,
+  refundSettleDays: POLICY_FACTS.refundSettleDays,
   offPlatform: OFF_PLATFORM_TEXT,
   parentCanPay: PARENT_CAN_PAY_TEXT,
   parentCanJoin: PARENT_CAN_JOIN_TEXT,

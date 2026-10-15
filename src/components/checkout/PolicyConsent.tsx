@@ -8,6 +8,9 @@ import type { PolicyCopy } from "@/types";
 
 export const POLICY_CONSENT_ERROR = "Ödemeye geçmek için koşulları onaylaman gerekiyor.";
 
+/** The backend section (apps/payments/policy_copy.py) that states the right of withdrawal. */
+export const WITHDRAWAL_SECTION_ID = "withdrawal";
+
 interface PolicyConsentProps {
   policy: PolicyCopy;
   accepted: boolean;
@@ -24,7 +27,10 @@ interface PolicyConsentProps {
  *
  * The summary is the backend's text (`PolicyCopy`), shown behind a disclosure
  * so the page stays short and a student who wants the details has them one
- * press away; the box and the links to the legal pages are always visible.
+ * press away; the box, the links to the legal pages and the section on the
+ * right of withdrawal are always visible (the regulation wants that one shown
+ * on its own before the payment, at 12 punto or larger, so nothing here is
+ * set below 16px).
  * The box follows the registration clickwrap (DESIGN.md §10): a 24px box in a
  * row of at least 44px, never pre-ticked, always enabled, and pressing the pay
  * button without it shows the standard inline error and focuses the box.
@@ -37,6 +43,12 @@ export function PolicyConsent({
   checkboxRef,
 }: PolicyConsentProps) {
   const [open, setOpen] = useState(false);
+  // Mesafeli Sözleşmeler Yönetmeliği m.6(2)(a): the right of withdrawal and the
+  // case where it is lost are shown on their own, right before the student takes
+  // on the payment, so this section is never behind the toggle. m.6(1): at least
+  // 12 punto, which is 16px.
+  const withdrawal = policy.sections.find((section) => section.id === WITHDRAWAL_SECTION_ID);
+  const others = policy.sections.filter((section) => section.id !== WITHDRAWAL_SECTION_ID);
 
   return (
     <section aria-labelledby="policy-title" className="mt-3">
@@ -56,8 +68,8 @@ export function PolicyConsent({
       </div>
 
       {open && (
-        <dl id="policy-sections" className="mt-2 space-y-3 text-xs leading-5">
-          {policy.sections.map((section) => (
+        <dl id="policy-sections" className="mt-2 space-y-3 text-base leading-6">
+          {others.map((section) => (
             <div key={section.id}>
               <dt className="font-bold">{section.title}</dt>
               <dd className="mt-0.5 opacity-80">{section.body}</dd>
@@ -66,7 +78,14 @@ export function PolicyConsent({
         </dl>
       )}
 
-      <label className="flex min-h-11 cursor-pointer items-start gap-3 py-2.5 text-xs leading-5">
+      {withdrawal && (
+        <div className="mt-2 text-base leading-6" data-testid="policy-withdrawal">
+          <p className="font-bold">{withdrawal.title}</p>
+          <p className="mt-0.5 opacity-80">{withdrawal.body}</p>
+        </div>
+      )}
+
+      <label className="flex min-h-11 cursor-pointer items-start gap-3 py-2.5 text-base leading-6">
         <input
           ref={checkboxRef}
           type="checkbox"
@@ -78,7 +97,7 @@ export function PolicyConsent({
         />
         <span>{policy.consent_label}</span>
       </label>
-      <p className="text-xs leading-5 opacity-80">
+      <p className="text-base leading-6 opacity-80">
         {policy.links.map((link, index) => (
           <span key={link.href}>
             {index > 0 && " · "}
