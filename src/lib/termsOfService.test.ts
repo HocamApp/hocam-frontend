@@ -123,20 +123,16 @@ describe("kullanım koşulları claim nothing the platform cannot do", () => {
   });
 
   it("describes account deletion the way the code does it (N1)", () => {
-    // Blockers stop the request (open refund, disputed / awaiting / running
-    // lesson, coaching); planned lessons and unused rights only warn. Today
-    // nothing refunds a paid, unused package when the account goes, so the
-    // text advises a refund request first and promises no hold or block for it.
     assert.match(prose, /silme talebi oluşturulamaz/);
-    assert.match(prose, /Planlanmış dersler ve kullanılmamış ders hakları silme talebini engellemez/);
-    assert.match(prose, /ödenen bedel kendiliğinden iade edilmez/);
-    assert.match(prose, /iade talebi açması önerilir/);
-    assert.doesNotMatch(prose, /açık paket veya sonuçlanmamış iade talebi bulunması halinde silme işlemi bunlar/);
+    assert.match(prose, /gelecek dersler, kullanılmamış ders hakları veya sonucu henüz netleşmemiş bir ödeme silme talebini engeller/);
+    assert.match(prose, /Hesap silme talebi kendiliğinden iade başlatmaz/);
+    assert.match(prose, /Ücretli pakete bağlı olmayan planlanmış dersler ayrıca uyarı/);
+    assert.doesNotMatch(prose, /ders hakları silme talebini engellemez/);
     if (backendAvailable) {
       const users = read("apps/users/services.py");
-      assert.match(users, /warnings\.append\(\s*\{\s*"code": "unused_credits"/);
+      assert.match(users, /blockers\.append\(\s*\{\s*"code": "unused_credits"/);
+      assert.match(users, /blockers\.append\(\s*\{\s*"code": "paid_upcoming_lessons"/);
       assert.match(users, /warnings\.append\(\s*\{\s*"code": "upcoming_lessons"/);
-      assert.doesNotMatch(users, /blockers\.append\(\s*\{\s*"code": "unused_credits"/);
     }
   });
 
