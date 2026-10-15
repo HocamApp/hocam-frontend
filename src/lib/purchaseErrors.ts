@@ -87,7 +87,7 @@ export function describePurchaseError(err: unknown, fallback: string): PurchaseE
     );
   }
   if (code === "tutor_unavailable") return make("tutor_unavailable", MESSAGES.tutor_unavailable);
-  if (code === "checkout_disabled" || code === "live_not_approved") {
+  if (code === "checkout_disabled" || code === "live_not_approved" || code === "policy_acceptance_disabled") {
     return make("checkout_disabled", MESSAGES.checkout_disabled);
   }
   if (code === "policy_not_accepted" || code === "policy_version_changed") {

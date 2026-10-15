@@ -55,7 +55,7 @@ describe("describing a refused purchase", () => {
   });
 
   it("says online payment is not open, whichever way the server puts it", () => {
-    for (const code of ["checkout_disabled", "live_not_approved"]) {
+    for (const code of ["checkout_disabled", "live_not_approved", "policy_acceptance_disabled"]) {
       const error = describePurchaseError(failure(503, { code }), FALLBACK);
       assert.equal(error.kind, "checkout_disabled", code);
       assert.match(error.message, /Ödeme sistemi henüz açılmadı/);

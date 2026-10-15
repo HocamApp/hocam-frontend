@@ -41,7 +41,7 @@ export type PayTRCheckoutStateName =
   | "purchase_cancelled"
   | "purchase_refunded";
 
-export type PayTRBlockedReason = "flag_off" | "coaching_unverified";
+export type PayTRBlockedReason = "flag_off" | "coaching_unverified" | "policy_consent";
 
 /** Where the local attempt is, as this tab's memory sees it. Never persisted:
  * the phase dies with the page, and the recovery record takes over. */
@@ -235,7 +235,10 @@ export function paytrCheckoutState(
       // A confirmed retry still passes the acceptance and package gates below.
     } else if (!paymentStatus.can_start_checkout) {
       if (knownAttempt?.purchaseId === purchase.id) return build("callback_pending");
-      return build("payment_unavailable");
+      return build("payment_unavailable", {
+        blockedReason: ["policy_not_accepted", "policy_version_changed"].includes(paymentStatus.checkout_blocked_reason)
+          ? "policy_consent" : undefined,
+      });
     }
   }
 

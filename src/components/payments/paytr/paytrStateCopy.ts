@@ -164,5 +164,9 @@ export function payTRStateCopy(input: PayTRStateCopyInput): PayTRStateCopy {
     };
   }
 
+  if (input.name === "payment_unavailable" && input.blockedReason === "policy_consent") {
+    return { ...copy, title: "Koşul onayı gerekli",
+      description: "Bu satın alma için güncel koşul onayı bulunamadı. Paketlerim'den durumunu kontrol et; iptal edilebiliyorsa kapatıp güncel koşullarla yeniden başlat." };
+  }
   return copy;
 }

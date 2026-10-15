@@ -92,3 +92,10 @@ describe("payTRStateCopy", () => {
     assert.doesNotMatch(copy.description, /hesabına geçti|bankaya ulaştı|ödendi/i);
   });
 });
+
+it("policy consent failure offers package review without claiming a charge failed", () => {
+  const copy = payTRStateCopy({name: "payment_unavailable", blockedReason: "policy_consent"});
+  assert.equal(copy.action, "packages");
+  assert.match(copy.description, /koşul onayı/);
+  assert.doesNotMatch(copy.description, /yeniden öde|ödeme başarısız/i);
+});

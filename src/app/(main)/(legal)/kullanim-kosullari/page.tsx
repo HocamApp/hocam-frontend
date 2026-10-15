@@ -416,12 +416,15 @@ export default function TermsOfServicePage() {
             çıkarsa silme, o işlem sonuçlanıncaya kadar bekletilir.
           </p>
           <p>
-            Planlanmış dersler ve kullanılmamış ders hakları silme talebini
-            engellemez. Hesap silindiğinde bu derslere ve haklara erişilemez ve
-            ödenen bedel kendiliğinden iade edilmez. Bu nedenle ödenmiş ve
-            kullanılmamış hakkı olan Öğrencinin, silme talebinden önce{" "}
+            Ödenmiş paketlerdeki gelecek dersler, kullanılmamış ders hakları
+            veya sonucu henüz netleşmemiş bir ödeme silme talebini engeller.
+            Dersler tamamlanmadan ya da ilgili ödeme veya iade süreci
+            sonuçlanmadan hesap silinmez. Öğrenci, kullanılmamış hakları için{" "}
             <LegalLink href="/iptal-ve-iade">İptal ve İade Koşullarına</LegalLink>{" "}
-            göre iade talebi açması önerilir.
+            göre iade talebi oluşturabilir. Hesap silme talebi kendiliğinden
+            iade başlatmaz. Ücretli pakete bağlı olmayan planlanmış dersler
+            ayrıca uyarı olarak gösterilir. Silme öncesinde aynı kontroller
+            yeniden yapılır.
           </p>
           <p>
             Hoca hesabının silinmesi talebi, profili herkese açık listeden hemen

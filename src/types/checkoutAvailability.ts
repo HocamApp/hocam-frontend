@@ -8,5 +8,5 @@
  */
 export interface CheckoutAvailability {
   available: boolean;
-  code: "checkout_disabled" | "live_not_approved" | null;
+  code: "checkout_disabled" | "live_not_approved" | "policy_acceptance_disabled" | null;
 }
