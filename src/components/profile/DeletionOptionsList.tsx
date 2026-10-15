@@ -18,9 +18,11 @@ interface IssueAction {
  */
 const ISSUE_ACTIONS: Record<string, IssueAction[]> = {
   unused_credits: [
-    { label: "Ders planla", href: "/tutors" },
+    { label: "Paketlerinizi görüntüleyin", href: "/profile/payments" },
     { label: "İade talebi oluştur", href: "/profile/payments" },
   ],
+  paid_upcoming_lessons: [{ label: "İade talebi oluştur", href: "/profile/payments" }],
+  payment_in_progress: [{ label: "Süreci görüntüle", href: "/profile/payments" }],
   open_refund: [{ label: "Süreci görüntüle", href: "/profile/payments" }],
   open_dispute: [{ label: "Süreci görüntüle", href: "/profile/payments" }],
   active_subscription: [
@@ -35,8 +37,8 @@ function IssueActions({
   code: string;
   upcomingLessonsHref: string;
 }) {
-  const actions = code === "upcoming_lessons"
-    ? [{ label: "Derslerinizi görüntüleyin", href: upcomingLessonsHref }]
+  const actions = code === "upcoming_lessons" || code === "paid_upcoming_lessons"
+    ? [{ label: "Derslerinizi görüntüleyin", href: upcomingLessonsHref }, ...(ISSUE_ACTIONS[code] ?? [])]
     : ISSUE_ACTIONS[code] ?? [];
   if (actions.length === 0) return null;
   return (

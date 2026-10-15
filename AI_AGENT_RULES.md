@@ -163,3 +163,5 @@ Son güncelleme: 10 Ekim 2026 — /araclar rewrite'ı ve bayrakları (§7) eklen
 17 Eylül 2026'da PayTR geliştirme/canlı aktivasyon ayrımı (§1) eklenmişti;
 24 Temmuz 2026'da Git/PR akışı (§6) eklenmişti. Bu dosyayı güncel tutmak Arda ve
 Emin'in ortak sorumluluğu — büyük bir karar/kısıt değiştiğinde buraya da eklenmeli.
+
+- Ödenmiş yerleşmemiş hak, gelecek ücretli ders ve belirsiz ödeme silme engelidir. Silme ekranı bu engeller için devam düğmesi sunmaz; ücretsiz/ödenmemiş gelecek ders uyarısı ayrı kalır. Koşul onayı eksik/eski ödeme, Paketlerim üzerinden güvenli incelemeye yönlenir; otomatik retry yapılmaz.

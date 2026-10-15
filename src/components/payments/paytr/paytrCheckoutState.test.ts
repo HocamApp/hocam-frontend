@@ -465,3 +465,15 @@ describe("paytrCheckoutState — authoritative payment status", () => {
     assert.equal(mismatched.blockedReason, "coaching_unverified");
   });
 });
+
+it("missing or stale policy consent blocks new payment and directs to packages", () => {
+  for (const code of ["policy_not_accepted", "policy_version_changed"]) {
+    const answer = state({paymentStatusRequired: true, paymentStatus: paymentStatus({
+      can_start_checkout: false, can_retry_checkout: false, checkout_blocked_reason: code,
+    })});
+    assert.equal(answer.name, "payment_unavailable");
+    assert.equal(answer.blockedReason, "policy_consent");
+    assert.equal(answer.canStartPayment, false);
+    assert.equal(answer.canRetryPayment, false);
+  }
+});

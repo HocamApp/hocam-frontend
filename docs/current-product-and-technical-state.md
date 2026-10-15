@@ -49,3 +49,5 @@ This is the active product and technical direction for Hocam. It supersedes earl
 5. Old roadmaps/handoffs for history only.
 
 Read `AI_AGENT_RULES.md` before any payment, package, credit, refund, booking-lifecycle, or webhook change. Keep this document and `AI_AGENT_RULES.md` current whenever a product constraint changes.
+
+- Account deletion is blocked while paid unused rights, future paid package lessons or unresolved payment exposure remain; the server rechecks before erasure. The web exposes lesson/payment resolution links and does not claim deletion issues a refund.
