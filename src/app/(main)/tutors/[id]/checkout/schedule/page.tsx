@@ -367,7 +367,15 @@ function ScheduleStepContent({ tutorId }: { tutorId: string }) {
           <Link
             href={nextHref}
             aria-disabled={!complete}
+            // aria-disabled only says "disabled"; it blocks nothing. A mouse click
+            // and Enter on the focused link (the browser turns Enter into a click)
+            // both land here, and a middle-click (auxclick) would otherwise open the
+            // next step in a new tab, so all three are stopped while the step is
+            // incomplete.
             onClick={(event) => {
+              if (!complete) event.preventDefault();
+            }}
+            onAuxClick={(event) => {
               if (!complete) event.preventDefault();
             }}
           >

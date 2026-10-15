@@ -245,6 +245,35 @@ describe("the schedule step asks the term before the hours", () => {
     }
   });
 
+  it("an unavailable Devam et goes nowhere: click, Enter and middle-click are all stopped (N2)", async () => {
+    renderPage();
+    fireEvent.click(await screen.findByRole("button", { name: "2 ders" }));
+    await screen.findByText("Hangi gün ve saatte?");
+    const link = nextLink();
+    assert.equal(link.getAttribute("aria-disabled"), "true");
+
+    // fireEvent returns false when a handler called preventDefault, which is what
+    // keeps the browser from following the link. A keyboard Enter on a focused link
+    // reaches the page as exactly this click event.
+    assert.equal(fireEvent.click(link), false, "click was not stopped");
+    assert.equal(fireEvent.click(link, { detail: 0 }), false, "keyboard-style click was not stopped");
+    assert.equal(fireEvent.click(link, { ctrlKey: true }), false, "ctrl-click was not stopped");
+    assert.equal(fireEvent(link, new window.MouseEvent("auxclick", { bubbles: true, cancelable: true, button: 1 })), false, "middle-click was not stopped");
+  });
+
+  it("an available Devam et is left alone", async () => {
+    search = "per_week=2&duration=30";
+    renderPage();
+    await screen.findByText("Hangi gün ve saatte?");
+    fireEvent.click(await screen.findByRole("button", { name: /10:00 – 10:40/ }));
+    fireEvent.click(screen.getByText("Çar").closest("button")!);
+    const wednesdays = await screen.findAllByRole("button", { name: /10:00 – 10:40/ });
+    fireEvent.click(wednesdays.find((button) => button.getAttribute("aria-pressed") === "false")!);
+    await waitFor(() => assert.equal(nextLink().getAttribute("aria-disabled"), "false"));
+
+    assert.equal(fireEvent(nextLink(), new window.MouseEvent("auxclick", { bubbles: true, cancelable: true, button: 1 })), true);
+  });
+
   it("does not let the student go on before a term is chosen for the hours", async () => {
     renderPage();
     fireEvent.click(await screen.findByRole("button", { name: "2 ders" }));
