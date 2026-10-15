@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
+import { useEffect, useId, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { useCoachingFlag } from "@/hooks/useCoachingFlag";
@@ -43,11 +44,20 @@ const SUBJECT_GLYPHS: Readonly<Record<string, string>> = {
   Fransızca: "FR",
   Mantık: "∴",
   Psikoloji: "Ψ",
+  Coğrafya: "40°N",
+  "Coğrafya-1": "40°N",
+  "Coğrafya-2": "40°N",
+  Felsefe: "∃",
+  Sosyoloji: "%",
 };
 
 export function subjectGlyph(exam: ExamType, name: string): string | null {
   return SUBJECT_GLYPHS[`${exam} ${name}`] ?? SUBJECT_GLYPHS[name] ?? null;
 }
+
+/* Below md only the first few tiles show, then a button opens the rest. The
+   whole list at two per row is about fifteen screens of tiles on a phone. */
+const PHONE_TILE_LIMIT = 8;
 
 /* TYT tiles are pale pink with a pink watermark, AYT pale yellow with an ink
    one (BRAND.md §4). One treatment per exam, so a row never cycles colours. */
@@ -141,6 +151,20 @@ function SubjectTiles({
   groups: ReturnType<typeof homeSubjectGroups>;
   coachingEnabled: boolean;
 }) {
+  const [expanded, setExpanded] = useState(false);
+  const gridId = useId();
+  const gridRef = useRef<HTMLUListElement>(null);
+  /* The button goes away when pressed, so focus moves to the first tile it
+     revealed instead of dropping to the page. */
+  const justExpanded = useRef(false);
+  useEffect(() => {
+    if (!expanded || !justExpanded.current) return;
+    justExpanded.current = false;
+    gridRef.current?.querySelectorAll("a")[PHONE_TILE_LIMIT]?.focus();
+  }, [expanded]);
+  const tiles = groups.flatMap(({ exam, items }) => items.map((subject) => ({ exam, subject })));
+  const collapsible = tiles.length > PHONE_TILE_LIMIT;
+
   return (
     <section className="mt-[72px]" aria-labelledby="ys-subjects-title">
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
@@ -163,13 +187,13 @@ function SubjectTiles({
         </ul>
       </div>
 
-      <ul className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-3.5">
-        {groups.flatMap(({ exam, items }) =>
-          items.map((subject) => {
+      <ul ref={gridRef} id={gridId} className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-3.5">
+        {tiles.map(({ exam, subject }, index) => {
             const glyph = subjectGlyph(exam, subject.name);
             const look = EXAM_TILE[exam];
+            const phoneHidden = collapsible && !expanded && index >= PHONE_TILE_LIMIT;
             return (
-              <li key={subject.id}>
+              <li key={subject.id} className={phoneHidden ? "max-md:hidden" : undefined}>
                 <Link
                   href={tutorListHref({ exam_type: exam, subject: subject.name })}
                   className={`relative flex h-32 flex-col justify-between overflow-hidden rounded-[20px] p-4 text-ink transition-shadow duration-[--duration-state] hover:shadow-[inset_0_0_0_2px_var(--ink)] ${look?.tile ?? "bg-surface"}`}
@@ -187,9 +211,25 @@ function SubjectTiles({
                 </Link>
               </li>
             );
-          }),
-        )}
+          })}
       </ul>
+
+      {collapsible && !expanded && (
+        <div className="mt-4 flex justify-center md:hidden">
+          <Button
+            type="button"
+            variant="outline"
+            aria-controls={gridId}
+            aria-expanded={false}
+            onClick={() => {
+              justExpanded.current = true;
+              setExpanded(true);
+            }}
+          >
+            {copy.showAll}
+          </Button>
+        </div>
+      )}
 
       {coachingEnabled && (
         <div className="mt-4">

@@ -3,7 +3,7 @@ import "@/test/setupDom";
 import assert from "node:assert/strict";
 import { afterEach, before, describe, it, mock } from "node:test";
 import React, { type ComponentType } from "react";
-import { cleanup, render } from "@testing-library/react";
+import { cleanup, fireEvent, render } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import type { Subject, TutorProfile } from "@/types/api";
@@ -125,10 +125,41 @@ describe("subject grid", () => {
   it("hides the watermark from assistive tech and leaves unknown subjects blank", () => {
     assert.equal(subjectGlyph("TYT", "Matematik"), "∑");
     assert.equal(subjectGlyph("AYT", "Matematik"), "∫");
-    assert.equal(subjectGlyph("AYT", "Sosyoloji"), null);
+    assert.equal(subjectGlyph("AYT", "Coğrafya"), "40°N");
+    assert.equal(subjectGlyph("AYT", "Felsefe"), "∃");
+    assert.equal(subjectGlyph("AYT", "Sosyoloji"), "%");
+    assert.equal(subjectGlyph("TYT", "Din Kültürü"), null);
     const { container } = renderGrid(true);
     const glyphs = Array.from(container.querySelectorAll("ul.grid a [aria-hidden]"));
-    assert.equal(glyphs.length, 2);
+    assert.equal(glyphs.length, 3);
+  });
+
+  it("stops at eight tiles below md until \"Tüm dersleri gör\" opens the rest", () => {
+    const many = Array.from({ length: 10 }, (_, i) => ({ id: `m${i}`, name: `Ders ${i}`, exam_type: "TYT" })) as Subject[];
+    const client = new QueryClient();
+    client.setQueryData(["subjects"], many);
+    const { container, getByRole, queryByRole } = render(
+      <QueryClientProvider client={client}>
+        <YsSubjectGrid brandV3 />
+      </QueryClientProvider>,
+    );
+    const items = () => Array.from(container.querySelectorAll("ul.grid > li"));
+    assert.equal(items().length, 10);
+    assert.deepEqual(
+      items().map((li) => li.classList.contains("max-md:hidden")),
+      [false, false, false, false, false, false, false, false, true, true],
+    );
+    const button = getByRole("button", { name: "Tüm dersleri gör" });
+    assert.match(button.parentElement!.className, /\bmd:hidden\b/);
+    fireEvent.click(button);
+    assert.equal(items().some((li) => li.classList.contains("max-md:hidden")), false);
+    assert.equal(queryByRole("button", { name: "Tüm dersleri gör" }), null);
+    assert.equal(document.activeElement, items()[8].querySelector("a"));
+  });
+
+  it("has no button when every subject already fits", () => {
+    const { queryByRole } = renderGrid(true);
+    assert.equal(queryByRole("button", { name: "Tüm dersleri gör" }), null);
   });
 });
 
@@ -166,10 +197,48 @@ describe("tutor card under v3", () => {
     assert.match(railRank.parentElement!.className, /\bv3:hidden\b/);
   });
 
-  it("colours TYT and AYT chips only under v3, and leaves other exams alone", () => {
-    const { getByText } = render(<TutorCard tutor={tutor} size="lg" />);
-    assert.match(getByText("Fizik").className, /v3:bg-pink-soft/);
-    assert.match(getByText("Kimya").className, /v3:bg-yellow-soft/);
-    assert.doesNotMatch(getByText("Tarih").className, /v3:/);
+  it("keeps the plain chip row everywhere but v3, and adds a labelled one for v3", () => {
+    const { container, getByText } = render(<TutorCard tutor={tutor} size="lg" />);
+    const plain = getByText("Fizik").parentElement!;
+    assert.match(plain.className, /\bv3:hidden\b/);
+    assert.doesNotMatch(getByText("Fizik").className, /pink-soft/);
+
+    const v3 = container.querySelector('[data-testid="v3-subject-chips"]')!;
+    assert.match(v3.className, /\bhidden\b.*\bv3:flex\b/);
+    const chips = Array.from(v3.children).map((chip) => [chip.textContent, chip.className]);
+    assert.equal(chips[0][0], "TYT Fizik");
+    assert.match(chips[0][1], /bg-pink-soft/);
+    assert.equal(chips[1][0], "AYT Kimya");
+    assert.match(chips[1][1], /bg-yellow-soft/);
+    // Other exams carry their label but no tint.
+    assert.equal(chips[2][0], "KPSS Tarih");
+    assert.doesNotMatch(chips[2][1], /soft/);
+  });
+
+  it("shows the same subject once per exam under v3", () => {
+    const both = {
+      ...tutor,
+      subjects: [
+        { id: "a", name: "Matematik", exam_type: "AYT" },
+        { id: "b", name: "Matematik", exam_type: "TYT" },
+      ],
+    } as unknown as TutorProfile;
+    const { container } = render(<TutorCard tutor={both} size="lg" />);
+    const labels = Array.from(container.querySelector('[data-testid="v3-subject-chips"]')!.children).map((c) => c.textContent);
+    assert.deepEqual(labels, ["TYT Matematik", "AYT Matematik"]);
+  });
+
+  it("gives every chip one pale pink treatment when no subject names its exam", () => {
+    const unlabelled = {
+      ...tutor,
+      subjects: [
+        { id: "a", name: "Fizik", exam_type: "" },
+        { id: "b", name: "Kimya", exam_type: "" },
+      ],
+    } as unknown as TutorProfile;
+    const { container } = render(<TutorCard tutor={unlabelled} size="lg" />);
+    const chips = Array.from(container.querySelector('[data-testid="v3-subject-chips"]')!.children);
+    assert.deepEqual(chips.map((c) => c.textContent), ["Fizik", "Kimya"]);
+    for (const chip of chips) assert.match(chip.className, /bg-pink-soft/);
   });
 });

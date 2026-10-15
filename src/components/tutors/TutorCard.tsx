@@ -31,12 +31,41 @@ function v3RankPillClass(rank: number): string {
     : "border-ink bg-surface text-ink";
 }
 
-/* Brand v3 subject chips: TYT pale pink, AYT pale yellow, black text. Other
-   exams keep the outline. Only under [data-brand="v3"], i.e. the homepage. */
-function v3SubjectChipClass(examType: string): string | false {
-  if (examType === "TYT") return "v3:border-transparent v3:bg-pink-soft v3:text-ink";
-  if (examType === "AYT") return "v3:border-transparent v3:bg-yellow-soft v3:text-ink";
-  return false;
+/* Brand v3 subject chips (homepage only). A tint always comes with its
+   label: "TYT Matematik" on pale pink, "AYT Matematik" on pale yellow, other
+   exams ("KPSS Tarih") on the plain outline. When the data names no exam for
+   any subject there is nothing to label, so every chip gets the one pale
+   pink treatment rather than colours that would mean nothing. */
+const V3_CHIP_EXAM_ORDER = ["TYT", "AYT", "YDT", "DGS", "KPSS"];
+const V3_CHIP_LIMIT = 4;
+
+function v3SubjectChips(tutor: TutorProfile) {
+  const anyExam = tutor.subjects.some((subject) => Boolean(subject.exam_type));
+  const rank = (exam: string) => {
+    const at = V3_CHIP_EXAM_ORDER.indexOf(exam);
+    return at < 0 ? V3_CHIP_EXAM_ORDER.length : at;
+  };
+  const seen = new Set<string>();
+  const chips = [...tutor.subjects]
+    .sort((a, b) => rank(a.exam_type ?? "") - rank(b.exam_type ?? ""))
+    .filter((subject) => {
+      const key = `${subject.exam_type ?? ""}|${subject.name.trim().toLocaleLowerCase("tr-TR")}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .map((subject) => {
+      const exam = anyExam ? subject.exam_type || null : null;
+      const tint = !anyExam
+        ? "border-transparent bg-pink-soft text-ink"
+        : exam === "TYT"
+          ? "border-transparent bg-pink-soft text-ink"
+          : exam === "AYT"
+            ? "border-transparent bg-yellow-soft text-ink"
+            : null;
+      return { id: subject.id, label: exam ? `${exam} ${subject.name}` : subject.name, tint };
+    });
+  return { chips: chips.slice(0, V3_CHIP_LIMIT), remaining: chips.length - V3_CHIP_LIMIT };
 }
 
 interface TutorCardProps {
@@ -373,6 +402,7 @@ function TutorCardLarge({
   trialDisabled = false,
 }: TutorCardProps) {
   const { visibleSubjects, remainingCount } = useTutorCardData(tutor);
+  const v3Subjects = v3SubjectChips(tutor);
   const tutorHref = buildTutorHref(tutor.id, learningContext, discoveryImpressionId);
 
   const coachingLabel = tutor.offers_free_coaching
@@ -466,20 +496,39 @@ function TutorCardLarge({
           <p className="mt-1 text-xs font-medium leading-5 text-foreground/80">
             {tutor.university} · {tutor.department}
           </p>
-          <div className="mt-2 flex flex-wrap gap-1.5">
+          <div className="mt-2 flex flex-wrap gap-1.5 v3:hidden">
             {coachingLabel && (
               <Badge className="border-transparent bg-ink text-xs text-paper">
                 {coachingLabel}
               </Badge>
             )}
             {visibleSubjects.map((sub) => (
-              <Badge key={sub.id} variant="outline" className={cn("text-xs", v3SubjectChipClass(sub.exam_type))}>
+              <Badge key={sub.id} variant="outline" className="text-xs">
                 {sub.name}
               </Badge>
             ))}
             {remainingCount > 0 && (
               <span className="self-center text-xs text-muted-foreground">
                 +{remainingCount} daha
+              </span>
+            )}
+          </div>
+          {/* Brand v3 only: the same row with the exam in every label. The row
+              above is the one that shows everywhere else. */}
+          <div className="mt-2 hidden flex-wrap gap-1.5 v3:flex" data-testid="v3-subject-chips">
+            {coachingLabel && (
+              <Badge className="border-transparent bg-ink text-xs text-paper">
+                {coachingLabel}
+              </Badge>
+            )}
+            {v3Subjects.chips.map((chip) => (
+              <Badge key={chip.id} variant="outline" className={cn("text-xs", chip.tint)}>
+                {chip.label}
+              </Badge>
+            ))}
+            {v3Subjects.remaining > 0 && (
+              <span className="self-center text-xs text-muted-foreground">
+                +{v3Subjects.remaining} daha
               </span>
             )}
           </div>

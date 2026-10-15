@@ -18,7 +18,7 @@ Phase 1A is in review (branch `agent/brand-v3-phase1a-20261014`): the hero colla
 | T0.2 Tokens | done | #345 | See "Phase 0 notes" for three additions to the plan |
 | T0.3 Flag | done | #345 | Flag off: pixel-identical to `main`, both `HOME_V2` states, 1440/390, light/dark |
 | T1.1 Hero | in review | #347 | Collage (D4), generic notification card (D3) |
-| T1.2 Tutor directory | in review | #347 | Free-trial tag held back, see "Open for Baha" |
+| T1.2 Tutor directory | in review | #347 | Free-trial tag skipped (Baha) |
 | T1.2b Promo row (new) | skipped | | D7: skip for now |
 | T1.3 Subject grid | in review | #347 | |
 | T1.4 Verified band | not started | | |
@@ -51,11 +51,7 @@ Phase 1A is in review (branch `agent/brand-v3-phase1a-20261014`): the hero colla
 
 ## Open for Baha
 
-- **Hero notification card wording (D3).** Placeholder in `ysHomeCopy.ts` → `hero.notice`: title "Deneme dersin onaylandı", line "20 dakika · ücretsiz" (the 20 is `TRIAL_MINUTES`). Rewrite it there.
-- **Free-trial tag on the tutor card (T1.2), held back.** The plan asks for a yellow "free trial" tag, but all 12 tutors in the live list have `accepts_trial_lessons: true`, so it would be on every card. BRAND.md §7 says "Don't: a yellow tag on every card in a row." Options: (a) skip it while every tutor offers trials, (b) show it anyway, (c) show it only for something rarer. Every card already has a "Deneme Dersi Al" button.
-- **Card subject chips.** The card dedupes subjects by name and shows the name only ("Matematik", not "TYT Matematik"), so a tutor who teaches Matematik in both exams gets one pink (TYT) chip. The mockup writes the exam in the chip ("TYT Matematik"). Adding the exam would change the card's text and how many chips fit. Keep as is, or add it?
-- **Watermarks the mockup doesn't show.** I picked DE (Almanca), FR (Fransızca), ∴ (Mantık), Ψ (Psikoloji), and 1453 for Tarih-1 and Tarih-2. Coğrafya, Felsefe, Din Kültürü and Sosyoloji get none. Change or drop any of them in `SUBJECT_GLYPHS` (`YsSubjectGrid.tsx`).
-- **Subject tiles on a phone.** The API returns 30 TYT/AYT subjects, so at two per row the grid is 15 rows (about 2,100px) at 390. That's what the plan asks for; tell me if you'd rather cap it on mobile.
+- Nothing open from Phase 1A. See "Answered after Phase 1A review" below.
 
 ## Phase 0 notes
 
@@ -78,6 +74,15 @@ Seen with the flag on, left for Phase 1 (each is the matching task's job):
 - Navbar and footer keep today's colours (D6 default).
 
 Unit tests: `npm run test:unit` reports 302 failures on this branch and the same 302 on clean `main` (mostly `Cannot find module '@/lib/…'` under the full runner). The new tests pass; the new cases in `YemeksepetiHome.flag.test.tsx` fail under the full runner only because that whole file already does on `main`, and pass with `--import ./scripts/register-test-aliases.mjs`.
+
+## Answered after Phase 1A review (Baha, 15 October 2026)
+
+1. **Card subject chips:** when the data says which exam a subject is for, the chip says it ("TYT Matematik", "AYT Matematik") and takes that exam's tint. When it doesn't, every chip gets one treatment (`--pink-soft`, ink text). No pink/yellow switching without a label. Done in #347: a tutor teaching Matematik in both exams now gets two chips. Other exams ("KPSS Tarih") are labelled on the plain outline.
+2. **Free-trial tag:** skipped. The "Deneme Dersi Al" button covers it.
+3. **Subject signs:** Coğrafya "40°N" (also on Coğrafya-1 and -2, like Tarih-1/-2), Felsefe "∃", Sosyoloji "%". Din Kültürü stays without one.
+4. **Subject grid on phones (under 768px):** the first 8 tiles, then "Tüm dersleri gör" (`subjects.showAll` in `ysHomeCopy.ts`) opens the rest and moves focus to the first new tile. Desktop shows all.
+5. **Notification text** stays "Deneme dersin onaylandı" / "20 dakika · ücretsiz".
+6. The `" 2.ts"` duplicate files in `src/` are iCloud copies; Baha handles them. Leave them alone.
 
 ## Phase 1A notes
 
@@ -102,4 +107,4 @@ What changes under v3, and where:
 - **Collage:** no university caption on the photo. In the mockup the notification card covers it, and on a phone the card covered it here too. The photo's alt text names the university.
 - **Notification card (D3):** an icon in a pale pink circle instead of Zeynep's photo, and generic text.
 - **Tutor cards:** keep the site's horizontal card (photo, bio, price rail) rather than the mockup's vertical one. Only the treatments in PLAN.md T1.2 are applied. Real tutors, prices and ranks, not the demo ones.
-- **Subject tiles:** every subject the API returns (30), not the mockup's 12, in API order. Hover draws an ink ring instead of the mockup's lift.
+- **Subject tiles:** every subject the API returns (30) on desktop, the first 8 plus "Tüm dersleri gör" below 768px; not the mockup's 12. API order. Hover draws an ink ring instead of the mockup's lift.

@@ -81,6 +81,8 @@ export const subjects = {
   coaching: "YKS koçluğu",
   /* Brand v3 tiles: names the colour key for screen readers. */
   legendLabel: "Renk anahtarı",
+  /* Below 768px the tile grid stops after eight; this opens the rest. */
+  showAll: "Tüm dersleri gör",
 } as const;
 
 export const band = {
