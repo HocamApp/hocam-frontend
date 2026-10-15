@@ -224,6 +224,31 @@ describe("return pages — the route name decides nothing", () => {
     assert.match(text, /12 ders hakkın hazır; henüz bir saate yerleşmedi/);
     assert.doesNotMatch(text, /takvimine eklendi/);
   });
+
+  // N4: the sentence "N ders hakkın henüz bir saate yerleşmedi" suggests an
+  // action, so the screen has to offer it.
+  it("offers placing the credits that stayed unplaced, and only then", async () => {
+    purchaseStatus = "paid";
+    unplacedCredits = 4;
+    rememberAttempt();
+    renderRoute(SuccessRoute);
+
+    await waitFor(() => screen.getByText("Ödemen onaylandı"));
+    assert.equal(
+      screen.getByRole("link", { name: "Hakları yerleştir" }).getAttribute("href"),
+      "/profile/payments/place?purchase=purchase-1"
+    );
+  });
+
+  it("offers nothing to place when every lesson is already on the calendar", async () => {
+    purchaseStatus = "paid";
+    unplacedCredits = 0;
+    rememberAttempt();
+    renderRoute(SuccessRoute);
+
+    await waitFor(() => screen.getByText("Ödemen onaylandı"));
+    assert.equal(screen.queryByRole("link", { name: "Hakları yerleştir" }), null);
+  });
 });
 
 describe("return pages — claims never made", () => {
