@@ -7,7 +7,7 @@ import { cleanup, render } from "@testing-library/react";
 
 import DistanceSalesPage from "@/app/(main)/(legal)/mesafeli-satis-sozlesmesi/page";
 import PreContractInformationPage from "@/app/(main)/(legal)/on-bilgilendirme-formu/page";
-import { PENDING_TEXT } from "@/lib/companyInfo";
+import { COMPANY } from "@/lib/companyInfo";
 import { POLICY_FACTS as f } from "@/lib/policyFacts";
 
 /**
@@ -71,11 +71,46 @@ describe("mesafeli satış sözleşmesi", () => {
     assert.match(text, /arabulucuya başvurulması şartıyla/);
   });
 
-  it("shows a visible marker, never a blank, for what the owners have not supplied", () => {
-    const text = textOf(DistanceSalesPage);
-    assert.ok(text.includes(PENDING_TEXT));
-    assert.match(text, /MERSİS numarası/);
-    assert.match(text, /KEP adresi/);
+  it("keeps a space after every bold figure (no \"güniçinde\" run-ons)", () => {
+    for (const Page of [DistanceSalesPage, PreContractInformationPage]) {
+      assert.doesNotMatch(textOf(Page), /\d (gün|saat|dakika)(içinde|sonra|önce|kala|boyunca)/);
+    }
+  });
+
+  it("prints no row, label or placeholder for company details nobody supplied", () => {
+    for (const Page of [DistanceSalesPage, PreContractInformationPage]) {
+      const text = textOf(Page);
+      assert.doesNotMatch(text, /yayın öncesinde eklenecek/);
+      assert.doesNotMatch(text, /MERSİS numarası|KEP adresi|Vergi dairesi ve numarası|Unvan/);
+      assert.doesNotMatch(text, /Destek e-posta adresi/);
+    }
+  });
+
+  it("prints a company detail as soon as it is filled in, and only that one", () => {
+    const original = COMPANY.legalName;
+    COMPANY.legalName = "Örnek Eğitim A.Ş.";
+    try {
+      for (const Page of [DistanceSalesPage, PreContractInformationPage]) {
+        const text = textOf(Page);
+        assert.match(text, /Unvan\s*Örnek Eğitim A\.Ş\./);
+        assert.doesNotMatch(text, /MERSİS numarası/);
+      }
+    } finally {
+      COMPANY.legalName = original;
+      cleanup();
+    }
+  });
+
+  it("names the support e-mail for people without an account only when one is set", () => {
+    const original = COMPANY.supportEmail;
+    try {
+      assert.match(textOf(PreContractInformationPage), /Hesabı bulunmayanlar iletişim sayfası üzerinden iletir/);
+      cleanup();
+      COMPANY.supportEmail = "destek@example.test";
+      assert.match(textOf(PreContractInformationPage), /bildirim adresi destek@example\.test e-posta adresidir/);
+    } finally {
+      COMPANY.supportEmail = original;
+    }
   });
 
   it("promises only what the product does (no tax id on the order screen, no sent copy, no instant acknowledgement)", () => {

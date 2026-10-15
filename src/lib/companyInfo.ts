@@ -7,11 +7,13 @@
  * complaints. HOCAM is the intermediary; the provider of each lesson is the
  * tutor named on the order screen (see /on-bilgilendirme-formu, section 2).
  *
- * `null` means the owners have not supplied the value yet. The pages print
- * `PENDING_TEXT` in its place, so a gap is visible to a reader and to a
- * reviewer, never an empty line. `companyInfoMissing()` lists what is left, and
- * companyInfo.test.ts keeps that list honest. Fill the values in here and
- * nowhere else: no page types an address or a number of its own.
+ * `null` means the owners have not supplied the value yet. A missing field is
+ * not printed at all: no row, no label and no placeholder text appears on the
+ * page (`companyRows()` returns only what is known). `companyInfoMissing()`
+ * lists what is left, companyInfo.test.ts keeps that list honest, and the
+ * real-money launch must not open while it is not empty (plan, G2 gate). Fill
+ * the values in here and nowhere else: no page types an address or a number of
+ * its own.
  */
 
 export interface CompanyInfo {
@@ -38,8 +40,6 @@ export const COMPANY: CompanyInfo = {
   supportEmail: null,
 };
 
-export const PENDING_TEXT = "yayın öncesinde eklenecek";
-
 export const COMPANY_FIELD_LABELS: Record<keyof CompanyInfo, string> = {
   legalName: "Unvan",
   mersisNo: "MERSİS numarası",
@@ -49,9 +49,12 @@ export const COMPANY_FIELD_LABELS: Record<keyof CompanyInfo, string> = {
   supportEmail: "Destek e-posta adresi",
 };
 
-/** The value to print for a field: the real one, or the visible marker. */
-export function companyValue(field: keyof CompanyInfo): string {
-  return COMPANY[field] ?? PENDING_TEXT;
+/** The rows to print, in the contract's order: only fields that have a value. */
+export function companyRows(): { field: keyof CompanyInfo; label: string; value: string }[] {
+  return (Object.keys(COMPANY) as (keyof CompanyInfo)[]).flatMap((field) => {
+    const value = COMPANY[field];
+    return value ? [{ field, label: COMPANY_FIELD_LABELS[field], value }] : [];
+  });
 }
 
 /** Fields still waiting for the owners, in the order the contract lists them. */

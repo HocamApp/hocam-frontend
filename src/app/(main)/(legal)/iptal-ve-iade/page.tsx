@@ -184,7 +184,7 @@ export default function CancellationAndRefundPage() {
           </p>
           <ul className="list-disc space-y-2 pl-5">
             <li>
-              <strong>Hoca katılmamışsa:</strong> ders iptal edilir, ders hakkı
+              <strong>Öğrenci katılmış, Hoca katılmamışsa:</strong> ders iptal edilir, ders hakkı
               Öğrenciye geri döner, ayrıca bir telafi hakkı tanımlanır ve paketin
               süresi sekizinci maddeye göre uzar. Katılmama kaydı Hocanın
               hesabına işlenir.
@@ -335,8 +335,8 @@ export default function CancellationAndRefundPage() {
             sürece ilgili paketten yeni ders yerleştirilemez.
           </p>
           <p>
-            İade talepleri HOCAM destek ekibi tarafından incelenir. Onay veya
-            ret kararı gerekçesiyle birlikte yazılır ve Kullanıcıya bildirilir.{" "}
+            İade talepleri HOCAM destek ekibi tarafından incelenir. Karar
+            Kullanıcıya bildirilir; ret kararı gerekçesiyle birlikte yazılır.{" "}
             <strong>{formatTlAmount(f.refundSecondApprovalTl)}</strong> ve üzeri
             iadelerde ikinci bir yetkilinin de onayı aranır. Talep onaylanırsa
             iade, ödeme yapılan karta ödeme hizmeti sağlayıcısı üzerinden yapılır

@@ -443,11 +443,6 @@ export default function TermsOfServicePage() {
             oluşturulmuş dersler, paketler ve talepler bakımından işlem
             tarihinde yürürlükte olan koşullar uygulanır.
           </p>
-          <p>
-            Kullanıcı aleyhine sonuç doğuran esaslı değişiklikler, yasal veya
-            idari bir zorunluluk bulunmadıkça, yürürlüğe girmeden makul bir süre
-            önce Kullanıcıya duyurulur.
-          </p>
         </LegalSection>
 
         <LegalSection title="19. Uygulanacak hukuk ve uyuşmazlıklar">

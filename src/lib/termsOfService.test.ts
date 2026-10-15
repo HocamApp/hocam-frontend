@@ -156,7 +156,9 @@ describe("kullanım koşulları claim nothing the platform cannot do", () => {
   it("does not reserve a retroactive or unilateral adverse change", () => {
     // 6563 s.K. forbids that clause in an intermediary agreement.
     assert.match(prose, /geçmişe yürümez/);
-    assert.match(prose, /yürürlüğe girmeden makul bir süre önce/);
+    // No announcement mechanism exists, so the text promises none.
+    assert.doesNotMatch(prose, /duyurulur/);
+    assert.doesNotMatch(prose, /makul bir süre önce/);
   });
 
   it("does not invent a support address", () => {

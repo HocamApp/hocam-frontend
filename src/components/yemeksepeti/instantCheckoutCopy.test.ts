@@ -125,6 +125,7 @@ describe("the settled policy sentences agree with the legal pages", () => {
   });
 
   it("quotes the attendance numbers from the same list", () => {
+    assert.match(String(TUTOR_NO_SHOW_TEXT), /^Sen derse girdiğin hâlde hoca gelmezse/);
     assert.match(String(TUTOR_NO_SHOW_TEXT), new RegExp(`${f.noShowGraceMinutes} dakika beklenir`));
     assert.match(String(STUDENT_NO_SHOW_TEXT), new RegExp(`${f.absenceDisputeHours} saat içinde itiraz`));
   });

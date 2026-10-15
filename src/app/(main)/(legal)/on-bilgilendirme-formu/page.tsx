@@ -5,20 +5,12 @@ import {
   LegalNote,
   LegalSection,
 } from "@/components/legal/LegalDocument";
-import { COMPANY_FIELD_LABELS, companyValue, type CompanyInfo } from "@/lib/companyInfo";
+import { CompanyBlock } from "@/components/legal/CompanyBlock";
+import { COMPANY } from "@/lib/companyInfo";
 import { legalPageMetadata } from "@/lib/legalDocuments";
 import { POLICY_FACTS as f } from "@/lib/policyFacts";
 
 export const metadata = legalPageMetadata("on-bilgilendirme-formu");
-
-const COMPANY_ROWS: (keyof CompanyInfo)[] = [
-  "legalName",
-  "mersisNo",
-  "taxId",
-  "address",
-  "kepAddress",
-  "supportEmail",
-];
 
 /**
  * The pre-contract information form (Mesafeli Sözleşmeler Yönetmeliği m.5).
@@ -76,14 +68,7 @@ export default function PreContractInformationPage() {
             <strong>Aracı hizmet sağlayıcı:</strong> sözleşmenin kurulmasına
             aracılık eden ve paket bedelini Sağlayıcı adına tahsil eden HOCAM.
           </p>
-          <dl className="max-w-[60ch] divide-y divide-line rounded-input border border-line text-body">
-            {COMPANY_ROWS.map((field) => (
-              <div key={field} className="grid gap-1 px-4 py-2 sm:grid-cols-[12rem_1fr]">
-                <dt className="font-medium text-ink">{COMPANY_FIELD_LABELS[field]}</dt>
-                <dd>{companyValue(field)}</dd>
-              </div>
-            ))}
-          </dl>
+          <CompanyBlock />
           <p>
             Şikayetler, giriş yapıldıktan sonra hesabın destek talebi kanalıyla,
             hesabı bulunmayanlar için{" "}
@@ -134,9 +119,19 @@ export default function PreContractInformationPage() {
           </p>
           <p>
             Cayma bildirimi, hesabın Ödemeler sayfasındaki iade talebi (“Paketten
-            vazgeçtim”) veya destek talebi ile iletilir. Hesabı bulunmayanlar için
-            bildirim adresi{" "}
-            <strong>{companyValue("supportEmail")}</strong> e-posta adresidir. Örnek
+            vazgeçtim”) veya destek talebi ile iletilir. {COMPANY.supportEmail ? (
+              <>
+                Hesabı bulunmayanlar için bildirim adresi{" "}
+                <strong>{COMPANY.supportEmail}</strong> e-posta adresidir.{" "}
+              </>
+            ) : (
+              <>
+                Hesabı bulunmayanlar{" "}
+                <LegalLink href="/iletisim">iletişim sayfası</LegalLink> üzerinden
+                iletir.{" "}
+              </>
+            )}
+            Örnek
             cayma formu{" "}
             <LegalLink href="/mesafeli-satis-sozlesmesi">Mesafeli Satış Sözleşmesinde</LegalLink>{" "}
             yer alır. Taşıyıcı ile iade söz konusu değildir; hizmet çevrim içi

@@ -83,6 +83,10 @@ describe("iptal ve iade koşulları say the numbers of the rules", () => {
 });
 
 describe("iptal ve iade koşulları describe the model that runs", () => {
+  it("keeps a space after every bold figure", () => {
+    assert.doesNotMatch(pageText(), /\d (gün|saat|dakika)(içinde|sonra|önce|kala|boyunca)/);
+  });
+
   it("uses one word for the right that is not on the calendar", () => {
     const text = pageText();
     assert.match(text, /Yerleşmemiş hak:/);
@@ -100,6 +104,11 @@ describe("iptal ve iade koşulları describe the model that runs", () => {
     // a late payment is requested by the student: neither starts by itself.
     assert.doesNotMatch(text, /kendiliğinden başlatır/);
     assert.match(text, /Öğrenci adına iade talebini kendisi açabilir/);
+    // An approval's reason is internal (only a refusal's reaches the student).
+    assert.match(text, /ret kararı gerekçesiyle birlikte yazılır/);
+    assert.doesNotMatch(text, /Onay veya ret kararı gerekçesiyle/);
+    // The no-show cancellation needs the student to have joined.
+    assert.match(text, /Öğrenci katılmış, Hoca katılmamışsa: ders iptal edilir/);
     // The only trigger in code is the staff action that hides a tutor (tutors/admin.py).
     assert.match(text, /ayrılması veya yayından çıkarılması gibi/);
     assert.match(text, /Öğrenci iade talebi açabilir; bu durum HOCAM’dan kaynaklanan bir neden sayıldığından kesinti yapılmaz/);

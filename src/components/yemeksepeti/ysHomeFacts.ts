@@ -156,7 +156,7 @@ export const TUTOR_PAYOUT_TEXT: string | null = PAYTR_ENABLED
 export const TRIAL_PAID_TO_TUTOR: Fact<string> = `Hayır. ${TRIAL_MINUTES} dakikalık deneme dersi öğrenciye ücretsiz; hocaya ayrıca ödeme yapılmaz, hoca bunu gönüllü sunar.`;
 /** What happens when the tutor does not show up. Owners, 8 Oct 2026 (Hocam_Ana_Sayfa_Doldurulacak_Bilgiler); /iptal-ve-iade §6. */
 export const TUTOR_NO_SHOW_TEXT: Fact<string> =
-  `Hoca derse gelmezse (${POLICY_FACTS.noShowGraceMinutes} dakika beklenir) ders iptal olur, ders hakkın paketine geri döner ve sana ek bir telafi dersi hakkı tanımlanır. Paketinin süresi de uzar.`;
+  `Sen derse girdiğin hâlde hoca gelmezse (${POLICY_FACTS.noShowGraceMinutes} dakika beklenir) ders iptal olur, ders hakkın paketine geri döner ve sana ek bir telafi dersi hakkı tanımlanır. Paketinin süresi de uzar.`;
 /**
  * What happens to the remaining lessons when a student switches tutor. Owners,
  * 8 Oct 2026 (Hocam_Ana_Sayfa_Doldurulacak_Bilgiler); the refund rules are

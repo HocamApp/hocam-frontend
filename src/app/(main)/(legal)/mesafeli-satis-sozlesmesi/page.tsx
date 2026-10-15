@@ -5,20 +5,11 @@ import {
   LegalNote,
   LegalSection,
 } from "@/components/legal/LegalDocument";
-import { COMPANY_FIELD_LABELS, companyValue, type CompanyInfo } from "@/lib/companyInfo";
+import { CompanyBlock } from "@/components/legal/CompanyBlock";
 import { legalPageMetadata } from "@/lib/legalDocuments";
 import { POLICY_FACTS as f } from "@/lib/policyFacts";
 
 export const metadata = legalPageMetadata("mesafeli-satis-sozlesmesi");
-
-const COMPANY_ROWS: (keyof CompanyInfo)[] = [
-  "legalName",
-  "mersisNo",
-  "taxId",
-  "address",
-  "kepAddress",
-  "supportEmail",
-];
 
 /**
  * Formal contract register, like /kullanim-kosullari and /iptal-ve-iade.
@@ -76,14 +67,7 @@ export default function DistanceSalesPage() {
             taraf. HOCAM, sözleşmenin kurulmasına aracılık eder ve paket bedelini
             Sağlayıcı adına tahsil eder.
           </p>
-          <dl className="max-w-[60ch] divide-y divide-line rounded-input border border-line text-body">
-            {COMPANY_ROWS.map((field) => (
-              <div key={field} className="grid gap-1 px-4 py-2 sm:grid-cols-[12rem_1fr]">
-                <dt className="font-medium text-ink">{COMPANY_FIELD_LABELS[field]}</dt>
-                <dd>{companyValue(field)}</dd>
-              </div>
-            ))}
-          </dl>
+          <CompanyBlock />
           <p>
             <strong>Alıcı:</strong> HOCAM üzerinde öğrenci hesabı bulunan ve ders
             paketi satın alan kişi. Alıcının adı, e-posta adresi ve sipariş
@@ -247,7 +231,7 @@ export default function DistanceSalesPage() {
             sunulması için gerekli teknik altyapıyı sağlamakla yükümlüdür. Hizmetin
             ifasının imkansızlaştığı hallerde, HOCAM Alıcı adına iade talebi açar
             ve Alıcıya bildirim gönderir; tahsil edilen bedel, talebin açıldığı
-            tarihten itibaren en geç <strong>{f.refundSettleDays} gün</strong>
+            tarihten itibaren en geç <strong>{f.refundSettleDays} gün</strong>{" "}
             içinde iade edilir.
           </p>
           <p>
