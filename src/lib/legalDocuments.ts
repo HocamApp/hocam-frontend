@@ -27,6 +27,7 @@ export type LegalDocumentSlug =
   | "saklama-ve-imha-politikasi"
   | "iptal-ve-iade"
   | "kullanim-kosullari"
+  | "on-bilgilendirme-formu"
   | "mesafeli-satis-sozlesmesi";
 
 export interface LegalDocument {
@@ -132,8 +133,18 @@ export const LEGAL_DOCUMENTS: readonly LegalDocument[] = [
     navLabel: "Kullanım Koşulları",
     description:
       "Hesap açma, ders süreci, yasak kullanımlar ve sözleşmenin feshi dahil platform kuralları.",
-    updatedAt: "8 Ekim 2026",
-    updatedAtIso: "2026-10-08",
+    updatedAt: "14 Ekim 2026",
+    updatedAtIso: "2026-10-14",
+  },
+  {
+    slug: "on-bilgilendirme-formu",
+    href: "/on-bilgilendirme-formu",
+    title: "Ön Bilgilendirme Formu",
+    navLabel: "Ön Bilgilendirme Formu",
+    description:
+      "Ders paketi satın almadan önce verilen bilgiler: sağlayıcı, toplam fiyat, ödeme, cayma hakkı ve başvuru yolları.",
+    updatedAt: "14 Ekim 2026",
+    updatedAtIso: "2026-10-14",
   },
   {
     slug: "mesafeli-satis-sozlesmesi",
@@ -141,9 +152,9 @@ export const LEGAL_DOCUMENTS: readonly LegalDocument[] = [
     title: "Mesafeli Satış Sözleşmesi",
     navLabel: "Mesafeli Satış Sözleşmesi",
     description:
-      "Ders paketi alımında satıcı bilgileri, bedel, ifa ve cayma hakkına ilişkin koşullar.",
-    updatedAt: "4 Eylül 2026",
-    updatedAtIso: "2026-09-04",
+      "Ders paketi alımında taraflar, bedel, ifa ve cayma hakkına ilişkin koşullar.",
+    updatedAt: "14 Ekim 2026",
+    updatedAtIso: "2026-10-14",
   },
   {
     slug: "iptal-ve-iade",
@@ -151,9 +162,9 @@ export const LEGAL_DOCUMENTS: readonly LegalDocument[] = [
     title: "İptal ve İade Koşulları",
     navLabel: "İptal ve İade Koşulları",
     description:
-      "Ders iptali, derse katılmama, paket süresi ve paket iadesi hakkındaki koşullar.",
-    updatedAt: "3 Eylül 2026",
-    updatedAtIso: "2026-09-03",
+      "Ödeme ve saat ayırma, cayma hakkı, ders iptali, derse katılmama, paket süresi ve iade koşulları.",
+    updatedAt: "14 Ekim 2026",
+    updatedAtIso: "2026-10-14",
   },
 ];
 

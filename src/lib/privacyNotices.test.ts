@@ -99,7 +99,29 @@ describe(
         backend("apps/privacy/management/commands/kvkk_periyodik_imha.py"),
         /Supabase depolama nesneleri bu komutun kapsamında değildir/,
       );
-      assert.match(retentionPage, /otomatik işlemin kapsamı dışında/);
+      assert.match(retentionPage, /bu işlemin kapsamı dışında/);
+      // The destruction command is run by hand (dry run unless --apply) and nothing
+      // schedules it, so the page does not call it "otomatik".
+      assert.doesNotMatch(retentionPage, /otomatik işlem/);
+    });
+
+    it("splits what holds a deletion by role, as the precheck does", () => {
+      // Student blockers: open refund, disputed / awaiting / running lesson,
+      // coaching. No security-review blocker for a student; a tutor has one
+      // (trust_safety_case) plus the offboarding process.
+      const users = backend("apps/users/services.py");
+      assert.match(users, /"code": "open_refund"/);
+      assert.match(users, /"code": "trust_safety_case"/);
+      const studentPrecheck = users.slice(
+        users.indexOf("def run_student_deletion_precheck"),
+        users.indexOf("def _coaching_deletion_blockers"),
+      );
+      assert.doesNotMatch(studentPrecheck, /trust_safety/);
+      assert.match(retentionPage, /Öğrenci hesabında/);
+      assert.match(retentionPage, /Öğrenci hesabı için ayrı bir güvenlik incelemesi\s+engeli yoktur/);
+      assert.match(retentionPage, /Hoca hesabında/);
+      assert.doesNotMatch(retentionPage, /dosya\s+kapanışına kadar ertelenir/);
+      assert.doesNotMatch(retentionPage, /yazılı olarak bildirilir/);
     });
 
     it("keeps financial records out of the deletion path", () => {

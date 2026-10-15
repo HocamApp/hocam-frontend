@@ -17,6 +17,7 @@ const policy: PolicyCopy = {
   sections: [
     { id: "payment", title: "Ödeme", body: "Ödemeye geçtiğinde paketin tutarını ödemekle yükümlü olursun." },
     { id: "hold", title: "Saatlerin ayrılır", body: "Seçtiğin saatler 40 dakika boyunca yalnızca senin için ayrılır." },
+    { id: "withdrawal", title: "Cayma hakkı", body: "Paketi aldığın günden başlayarak 14 gün içinde cayabilirsin." },
   ],
   consent_label: "Ön bilgilendirme koşullarını okudum ve kabul ediyorum.",
   pay_button_label: "Ödeme yükümlülüğü ile devam et",
@@ -105,4 +106,33 @@ test("the page can move focus to the box", () => {
   checkboxRef.current?.focus();
 
   assert.equal(document.activeElement, screen.getByRole("checkbox"));
+});
+
+test("the right of withdrawal is shown without opening anything, and is not repeated in the summary", () => {
+  renderConsent();
+
+  assert.ok(screen.getByText("Cayma hakkı"));
+  assert.ok(screen.getByText(/14 gün içinde cayabilirsin/));
+
+  fireEvent.click(screen.getByRole("button", { name: "Özeti göster" }));
+
+  assert.equal(screen.getAllByText("Cayma hakkı").length, 1);
+});
+
+test("what the student must read is set at 16px or larger, never the extra-small size", () => {
+  const { checkboxRef } = renderConsent();
+  fireEvent.click(screen.getByRole("button", { name: "Özeti göster" }));
+
+  const shown = [
+    screen.getByText(policy.consent_label).closest("label"),
+    screen.getByText("Saatlerin ayrılır").closest("dl"),
+    screen.getByTestId("policy-withdrawal"),
+    screen.getByRole("link", { name: "İptal ve iade koşulları" }).closest("p"),
+  ];
+  for (const element of shown) {
+    assert.ok(element, "element found");
+    assert.match(element.className, /\btext-base\b/);
+    assert.doesNotMatch(element.className, /\btext-(xs|sm)\b/);
+  }
+  assert.ok(checkboxRef.current);
 });

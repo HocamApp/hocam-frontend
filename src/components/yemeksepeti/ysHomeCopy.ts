@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
 
+import { PAYTR_ENABLED } from "@/lib/featureFlags";
+
 /**
  * Every sentence the homepage says, in one place.
  *
@@ -17,6 +19,36 @@ import type { ReactNode } from "react";
  * (docs/design/product-home/homepage-rebuild/HOCAM_HOMEPAGE_PLAN.md); the ones
  * not built yet are added with their task.
  */
+
+/*
+ * Two products, one homepage. Before instant checkout a student sends a
+ * package request that the tutor accepts, and nothing is charged until later;
+ * with it she picks the hours and pays at once. The sentences that differ are
+ * built here from one flag so the build that has the payment screen says the
+ * second thing and every other build keeps saying the first. The builders are
+ * plain functions of that flag so both versions are tested without reloading
+ * the module.
+ */
+export function studentPayStep(instant: boolean, chargedWhen: ReactNode): { title: string; body: ReactNode[] } {
+  return instant
+    ? { title: "Saatlerini seç ve öde", body: [chargedWhen] }
+    : {
+        title: "Paket talebini gönder",
+        body: ["Paket talebini oluştururken kartından ücret alınmaz. ", chargedWhen],
+      };
+}
+
+export function pricingNoCharge(instant: boolean): string {
+  return instant
+    ? "Ödeme PayTR’nin güvenli sayfasında yapılır, kart bilgilerin Hocam’a ulaşmaz."
+    : "Paket talebini oluştururken kartından ücret alınmaz.";
+}
+
+export function paymentGuaranteeAnswer(instant: boolean, chargedWhen: ReactNode): ReactNode[] {
+  return instant
+    ? [chargedWhen]
+    : ["Paket talebini oluştururken kartından ücret alınmaz. ", chargedWhen];
+}
 
 export const hero = {
   titleLine1: "Dünün öğrencisi,",
@@ -116,11 +148,8 @@ export const students = {
       ],
     },
     {
-      title: "Paket talebini gönder",
-      body: (f: StudentStepFacts): ReactNode[] => [
-        "Paket talebini oluştururken kartından ücret alınmaz. ",
-        f.paymentChargedWhen,
-      ],
+      title: studentPayStep(PAYTR_ENABLED, null).title,
+      body: (f: StudentStepFacts): ReactNode[] => studentPayStep(PAYTR_ENABLED, f.paymentChargedWhen).body,
     },
     {
       title: "Derse gir",
@@ -170,7 +199,7 @@ export const pricing = {
   planMostPopular: "En popüler",
   planPerLesson: (lessonCount: number) => `/ ders · ${lessonCount} ders`,
   noteOneTime: "Tek seferlik paket, otomatik yenilenmez.",
-  noteNoCharge: "Paket talebini oluştururken kartından ücret alınmaz.",
+  noteNoCharge: pricingNoCharge(PAYTR_ENABLED),
   noteNoExtraFee: "Hocanın profilindeki fiyatın üstüne ekstra ücret yok.",
 } as const;
 
@@ -179,10 +208,7 @@ export const guarantees = {
   titlePill: "ne olur?",
   payment: {
     question: "Param ne zaman çekiliyor?",
-    answer: (chargedWhen: ReactNode): ReactNode[] => [
-      "Paket talebini oluştururken kartından ücret alınmaz. ",
-      chargedWhen,
-    ],
+    answer: (chargedWhen: ReactNode): ReactNode[] => paymentGuaranteeAnswer(PAYTR_ENABLED, chargedWhen),
   },
   noShow: {
     question: "Hoca derse gelmezse?",
@@ -356,6 +382,12 @@ export interface FaqFacts {
   longestPlan: string;
   maxDiscount: number;
   cancelHours: number;
+  /** The build has the instant checkout: the student pays at once, no tutor acceptance. */
+  instant: boolean;
+  holdMinutes: number;
+  firstLessonNoticeHours: number;
+  withdrawalDays: number;
+  refundSettleDays: number;
   offPlatform: unknown;
   parentCanPay: unknown;
   parentCanJoin: unknown;
@@ -406,9 +438,29 @@ export const faq = {
       id: "iptal",
       question: "Bir dersi iptal edersem ne oluyor?",
       answer: [
-        `Dersin başlamasına ${f.cancelHours} saatten fazla varken iptal edersen kullandığın ders hakkı paketine geri döner. ${f.cancelHours} saatten az kaldığında yapılan iptalde ders hakkı geri verilmez. Planın değişecekse hocanı mümkün olduğunca erken haberdar et.`,
+        `Dersin başlamasına ${f.cancelHours} saatten fazla varken iptal edersen kullandığın ders hakkı paketine geri döner. ${f.cancelHours} saatten az kaldığında yapılan iptalde ders hakkı geri verilmez. Planın değişecekse hocanı mümkün olduğunca erken haberdar et.${f.instant ? " Geri dönen hak takvimine yerleşmemiş hak olarak durur; paketinden yeni bir saate yerleştirirsin." : ""}`,
       ],
     },
+    ...(f.instant
+      ? [
+          {
+            id: "odeme-saat",
+            question: "Ödemeye geçince saatlerim ne kadar ayrılır?",
+            answer: [
+              `Saatlerini seçip ödemeye geçtiğin andan başlayarak ${f.holdMinutes} dakika boyunca yalnızca senin için ayrılır. Ödeme PayTR’nin güvenli sayfasında yapılır, kart bilgilerin Hocam’a ulaşmaz. Ödeme tamamlanınca paket açılır ve dersler hocanın takvimine yazılır; ilk dersin ödemenden en az ${f.firstLessonNoticeHours} saat sonra başlar.`,
+            ] as FaqPart[],
+          },
+          {
+            id: "iade",
+            question: "Paketten vazgeçersem ne olur?",
+            answer: [
+              `Paketi aldığın günden başlayarak ${f.withdrawalDays} gün içinde, hiçbir ders kullanılmadıysa gerekçe göstermeden cayabilir ve ödediğin tutarın tamamını geri alabilirsin. Dersler başladıktan sonra da kullanmadığın dersler için iade isteyebilirsin: ödediğin tutardan, kullandığın derslerin ders başı fiyatı düşülür. Sorun hocadan ya da platformdan kaynaklıysa kullanılmayan derslerin hepsi kesinti olmadan iade edilir. Talebini en geç ${f.refundSettleDays} gün içinde sonuçlandırırız. Ayrıntıları `,
+              { href: "/iptal-ve-iade", text: "iptal ve iade koşullarında" },
+              " okuyabilirsin.",
+            ] as FaqPart[],
+          },
+        ]
+      : []),
     {
       id: "ders-odasi",
       question: "Dersler nerede yapılıyor, kaydediliyor mu?",

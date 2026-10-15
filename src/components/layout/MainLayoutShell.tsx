@@ -28,6 +28,7 @@ const GATE_EXEMPT_PREFIXES = [
   "/iptal-ve-iade",
   "/kullanim-kosullari",
   "/mesafeli-satis-sozlesmesi",
+  "/on-bilgilendirme-formu",
 ];
 
 export function isTutorGateExemptPath(pathname: string) {

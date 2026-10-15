@@ -206,6 +206,74 @@ describe("the schedule step asks the term before the hours", () => {
     assert.match(params.get("schedule") ?? "", /^7~0:10:00,2:10:00$/);
   });
 
+  it("stops telling her to choose the term once one is chosen (N2)", async () => {
+    renderPage();
+
+    fireEvent.click(await screen.findByRole("button", { name: "2 ders" }));
+    await screen.findByText("Hangi gün ve saatte?");
+
+    // 3 Ay is chosen, so "Önce süreyi seç" is an order she has already followed.
+    const text = document.body.textContent ?? "";
+    assert.doesNotMatch(text, /Önce süreyi seç/);
+    assert.match(text, /yalnız bu sürenin tamamında boş olan saatleri görürsün/);
+  });
+
+  it("says the same when the count and term came in from a link (N2)", async () => {
+    search = "per_week=2&duration=30";
+    renderPage();
+    await screen.findByText("Paket ne kadar sürsün?");
+    await waitFor(() =>
+      assert.equal(screen.getByRole("radio", { name: /1 Ay/ }).getAttribute("aria-checked"), "true")
+    );
+    assert.doesNotMatch(document.body.textContent ?? "", /Önce süreyi seç/);
+  });
+
+  it("draws the unavailable Devam et like a disabled button, not like a live one (N2)", async () => {
+    renderPage();
+    fireEvent.click(await screen.findByRole("button", { name: "2 ders" }));
+    await screen.findByText("Hangi gün ve saatte?");
+
+    const link = nextLink();
+    assert.equal(link.getAttribute("aria-disabled"), "true");
+    for (const part of [
+      "aria-disabled:bg-line",
+      "aria-disabled:text-ink-mid",
+      "aria-disabled:pointer-events-none",
+      "aria-disabled:border-transparent",
+    ]) {
+      assert.ok(link.className.includes(part), `missing ${part}`);
+    }
+  });
+
+  it("an unavailable Devam et goes nowhere: click, Enter and middle-click are all stopped (N2)", async () => {
+    renderPage();
+    fireEvent.click(await screen.findByRole("button", { name: "2 ders" }));
+    await screen.findByText("Hangi gün ve saatte?");
+    const link = nextLink();
+    assert.equal(link.getAttribute("aria-disabled"), "true");
+
+    // fireEvent returns false when a handler called preventDefault, which is what
+    // keeps the browser from following the link. A keyboard Enter on a focused link
+    // reaches the page as exactly this click event.
+    assert.equal(fireEvent.click(link), false, "click was not stopped");
+    assert.equal(fireEvent.click(link, { detail: 0 }), false, "keyboard-style click was not stopped");
+    assert.equal(fireEvent.click(link, { ctrlKey: true }), false, "ctrl-click was not stopped");
+    assert.equal(fireEvent(link, new window.MouseEvent("auxclick", { bubbles: true, cancelable: true, button: 1 })), false, "middle-click was not stopped");
+  });
+
+  it("an available Devam et is left alone", async () => {
+    search = "per_week=2&duration=30";
+    renderPage();
+    await screen.findByText("Hangi gün ve saatte?");
+    fireEvent.click(await screen.findByRole("button", { name: /10:00 – 10:40/ }));
+    fireEvent.click(screen.getByText("Çar").closest("button")!);
+    const wednesdays = await screen.findAllByRole("button", { name: /10:00 – 10:40/ });
+    fireEvent.click(wednesdays.find((button) => button.getAttribute("aria-pressed") === "false")!);
+    await waitFor(() => assert.equal(nextLink().getAttribute("aria-disabled"), "false"));
+
+    assert.equal(fireEvent(nextLink(), new window.MouseEvent("auxclick", { bubbles: true, cancelable: true, button: 1 })), true);
+  });
+
   it("does not let the student go on before a term is chosen for the hours", async () => {
     renderPage();
     fireEvent.click(await screen.findByRole("button", { name: "2 ders" }));

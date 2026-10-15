@@ -9,7 +9,9 @@ import { MinimalCheckoutHeader } from "@/components/checkout/MinimalCheckoutHead
 import { useAuth } from "@/hooks/useAuth";
 import { PAYTR_ENABLED } from "@/lib/featureFlags";
 import { fetchPackagePurchases, fetchPayTRPaymentStatus } from "@/lib/paymentsApi";
-import { paidPurchaseLine } from "@/lib/placeLessonsCopy";
+import { PLACE_ENTRY, paidPurchaseLine } from "@/lib/placeLessonsCopy";
+import { placeLessonsHref } from "@/lib/placeLessonsRoutes";
+import { hasUnplacedCredits } from "@/lib/unplacedCredits";
 import { getSessionStorage } from "@/lib/safeStorage";
 import { loginUrlWithReturn } from "@/lib/utils";
 
@@ -258,6 +260,16 @@ export function PayTRReturnScreen() {
         )}
         {paidLine !== null && (
           <p className="mt-4 text-sm text-[#02171a]">{paidLine}</p>
+        )}
+        {/* "N ders hakkın henüz bir saate yerleşmedi" suggests an action, so the
+            screen offers it: the place-lessons flow for this package. */}
+        {state.name === "payment_paid" && purchase && hasUnplacedCredits(purchase) && (
+          <Link
+            href={placeLessonsHref(purchase.id)}
+            className="mt-2 inline-flex min-h-[2.75rem] items-center text-base font-medium text-[#02171a] underline underline-offset-4 hover:text-[var(--pink-deep)]"
+          >
+            {PLACE_ENTRY.action}
+          </Link>
         )}
         {purchase && <PayTRPurchaseSummary
           purchase={paymentStatusQuery.data ? purchase : paymentStatusQuery.isError ? null : undefined}

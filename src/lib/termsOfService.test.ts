@@ -72,14 +72,25 @@ describe(
       assert.match(prose, /on dört gün süren bir bekleme dönemi/);
     });
 
-    it("states that messaging opens only after a lesson request", () => {
-      // Conversation hangs off a lesson request, so there is no free-form
-      // messaging to describe.
-      assert.match(
-        read("apps/messaging/models.py"),
-        /lesson_request = models\.OneToOneField/,
-      );
-      assert.match(prose, /ancak bir ders talebi oluşturulduktan sonra açılır/);
+    it("states that messaging opens with the first message or a lesson request", () => {
+      // A message request becomes a real conversation at once (no approval
+      // step), and a lesson request opens one too. The old text said only a
+      // lesson request did, which the code never required.
+      const serializers = read("apps/messaging/serializers.py");
+      assert.match(serializers, /a message request immediately\s+# becomes a real conversation/);
+      assert.match(serializers, /accept_message_request\(message_request\)/);
+      assert.match(read("apps/messaging/models.py"), /lesson_request = models\.OneToOneField/);
+      assert.match(prose, /ilk mesajını göndermesiyle ya da bir ders talebi oluşturmasıyla açılır/);
+      assert.doesNotMatch(prose, /ancak bir ders talebi oluşturulduktan sonra açılır/);
+    });
+
+    it("promises no notice or announcement the code does not send (suspension, planned downtime)", () => {
+      // No code notifies a user of a suspension or announces maintenance, and
+      // suspension does not settle lessons or packages by itself.
+      assert.doesNotMatch(prose, /gerekçesiyle birlikte Kullanıcıya bildirilir/);
+      assert.doesNotMatch(prose, /Planlı kesintiler/);
+      assert.doesNotMatch(prose, /Devam eden dersler ve açık paketler, iptal ve iade kurallarına göre sonuçlandırılır/);
+      assert.match(prose, /Kullanıcı, bu karara destek kanalı üzerinden itiraz edebilir/);
     });
 
     it("states the tutor verification inputs", () => {
@@ -90,10 +101,43 @@ describe(
 );
 
 describe("kullanım koşulları claim nothing the platform cannot do", () => {
-  it("never promises automatic collection", () => {
-    // AI_AGENT_RULES §1: no payment provider is connected.
-    assert.match(prose, /otomatik tahsilat yapılmamaktadır/);
+  it("describes card payment through the provider, not a manual process", () => {
+    assert.match(prose, /PayTR’nin güvenli sayfasında kart ile/);
+    assert.match(prose, /kart bilgileri HOCAM’a ulaşmaz/);
+    assert.doesNotMatch(prose, /otomatik tahsilat yapılmamaktadır/);
+    assert.doesNotMatch(prose, /elle yürütülür/);
     assert.doesNotMatch(prose, /kartınızdan tahsil/);
+  });
+
+  it("does not say the tutor accepts a paid package, and binds the tutor to the lessons", () => {
+    assert.doesNotMatch(prose, /Hocanın onayı ile kesinleşir/);
+    assert.match(prose, /ödemenin onaylanmasıyla Hocanın takvimine yazılır/);
+    assert.match(prose, /bu derslere girmekle yükümlüdür/);
+    assert.match(prose, /f\.tutorCancelLockHours/);
+    if (backendAvailable) {
+      assert.match(
+        read("apps/lessons/policy.py"),
+        /"TUTOR_CANCEL_LOCK_HOURS", 12\)/,
+      );
+    }
+  });
+
+  it("describes account deletion the way the code does it (N1)", () => {
+    // Blockers stop the request (open refund, disputed / awaiting / running
+    // lesson, coaching); planned lessons and unused rights only warn. Today
+    // nothing refunds a paid, unused package when the account goes, so the
+    // text advises a refund request first and promises no hold or block for it.
+    assert.match(prose, /silme talebi oluşturulamaz/);
+    assert.match(prose, /Planlanmış dersler ve kullanılmamış ders hakları silme talebini engellemez/);
+    assert.match(prose, /ödenen bedel kendiliğinden iade edilmez/);
+    assert.match(prose, /iade talebi açması önerilir/);
+    assert.doesNotMatch(prose, /açık paket veya sonuçlanmamış iade talebi bulunması halinde silme işlemi bunlar/);
+    if (backendAvailable) {
+      const users = read("apps/users/services.py");
+      assert.match(users, /warnings\.append\(\s*\{\s*"code": "unused_credits"/);
+      assert.match(users, /warnings\.append\(\s*\{\s*"code": "upcoming_lessons"/);
+      assert.doesNotMatch(users, /blockers\.append\(\s*\{\s*"code": "unused_credits"/);
+    }
   });
 
   it("names the commission rate the code carries", () => {
@@ -112,7 +156,9 @@ describe("kullanım koşulları claim nothing the platform cannot do", () => {
   it("does not reserve a retroactive or unilateral adverse change", () => {
     // 6563 s.K. forbids that clause in an intermediary agreement.
     assert.match(prose, /geçmişe yürümez/);
-    assert.match(prose, /yürürlüğe girmeden makul bir süre önce/);
+    // No announcement mechanism exists, so the text promises none.
+    assert.doesNotMatch(prose, /duyurulur/);
+    assert.doesNotMatch(prose, /makul bir süre önce/);
   });
 
   it("does not invent a support address", () => {

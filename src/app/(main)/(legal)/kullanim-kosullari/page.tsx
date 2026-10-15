@@ -6,6 +6,7 @@ import {
   LegalSection,
 } from "@/components/legal/LegalDocument";
 import { legalPageMetadata } from "@/lib/legalDocuments";
+import { POLICY_FACTS as f } from "@/lib/policyFacts";
 
 export const metadata = legalPageMetadata("kullanim-kosullari");
 
@@ -104,7 +105,13 @@ export default function TermsOfServicePage() {
             öğrencisi hocaları bir araya getiren bir aracı hizmet
             sağlayıcıdır. Ders ilişkisi Öğrenci ile Hoca arasında kurulur;
             HOCAM bu ilişkinin kurulduğu, planlandığı ve kayıt altına alındığı
-            teknik altyapıyı sağlar.
+            teknik altyapıyı sağlar. Paket satın alınırken HOCAM, sözleşmenin
+            kurulmasına aracılık eder ve paket bedelini Hoca adına tahsil eder;
+            bu sözleşmenin tarafları ve Öğrencinin hakları{" "}
+            <LegalLink href="/mesafeli-satis-sozlesmesi">
+              Mesafeli Satış Sözleşmesinde
+            </LegalLink>{" "}
+            düzenlenmiştir.
           </p>
           <p>
             HOCAM, dersin içeriğini belirlemez ve dersi kendisi vermez. Hocanın
@@ -170,7 +177,7 @@ export default function TermsOfServicePage() {
               güncellenmesi.
             </li>
             <li>
-              Kabul ettiği dersleri belirlenen saatte ve duyurduğu kapsamda
+              Takvimine yazılan dersleri belirlenen saatte ve duyurduğu kapsamda
               vermesi.
             </li>
             <li>
@@ -183,6 +190,15 @@ export default function TermsOfServicePage() {
             </li>
           </ul>
           <p>
+            Paket satışında Hocanın ayrıca onayı aranmaz: Öğrenci, Hocanın açık
+            tuttuğu saatlerden seçip ödemeyi tamamladığında dersler Hocanın
+            takvimine yazılır ve Hoca bu derslere girmekle yükümlüdür. Hoca,
+            onaylanmış bir dersi başlangıç saatine{" "}
+            <strong>{f.tutorCancelLockHours} saat ya da daha az</strong> kala iptal
+            edemez; acil bir durumda destek ekibine başvurur ve destek ekibinin
+            onayıyla iptal edebilir.
+          </p>
+          <p>
             Derse katılmama kayıtları hoca hesabına işlenir. Hakkında{" "}
             <strong>üç</strong> katılmama kaydı oluşan hocanın profili,
             inceleme tamamlanıncaya kadar herkese açık listeden kendiliğinden
@@ -192,9 +208,9 @@ export default function TermsOfServicePage() {
 
         <LegalSection title="7. Mesajlaşma">
           <p>
-            Öğrenci ile Hoca arasındaki mesajlaşma, ancak bir ders talebi
-            oluşturulduktan sonra açılır. Platform üzerinde serbest mesajlaşma
-            veya kullanıcı arama özelliği bulunmaz.
+            Öğrenci ile Hoca arasındaki mesajlaşma, Öğrencinin Hoca profilinden
+            ilk mesajını göndermesiyle ya da bir ders talebi oluşturmasıyla
+            açılır.
           </p>
           <p>
             Mesajlaşma eğitim amaçlıdır. Taciz, hakaret, tehdit, spam,
@@ -206,8 +222,10 @@ export default function TermsOfServicePage() {
 
         <LegalSection title="8. Ders süreci">
           <p>
-            Ders, Öğrencinin talebi ve Hocanın onayı ile kesinleşir. Ders,
-            Platform üzerindeki çevrim içi ders odasında yapılır. Ders sırasında
+            Paket dersleri, ödemenin onaylanmasıyla Hocanın takvimine yazılır ve
+            kesinleşir; ayrıca Hocanın onayı aranmaz. Ücretsiz deneme dersi
+            talepleri Hocanın onayıyla kesinleşir. Ders, Platform üzerindeki
+            çevrim içi ders odasında yapılır. Ders sırasında
             <strong> ses ve görüntü kaydı alınmaz</strong>; yalnızca derse kimin
             ne zaman katıldığına ilişkin kayıt tutulur.
           </p>
@@ -234,16 +252,16 @@ export default function TermsOfServicePage() {
 
         <LegalSection title="10. Ücretlendirme ve ödeme">
           <p>
-            Ders ücretleri hoca profilinde ve paket seçim ekranında, vergiler
-            dahil ve Türk lirası olarak gösterilir. Öğrenci, paket talebini
-            oluşturmadan önce toplam tutarı, paketin içerdiği ders sayısını ve
-            geçerlilik süresini görür.
+            Ders ücretleri hoca profilinde ve paket seçim ekranında Türk lirası
+            olarak gösterilir. Öğrenci, ödemeye geçmeden önce toplam tutarı,
+            paketin içerdiği ders sayısını ve geçerlilik süresini görür.
           </p>
           <p>
-            Platform üzerinde <strong>otomatik tahsilat yapılmamaktadır</strong>.
-            Ödemeye ilişkin işlemler destek ekibi tarafından elle yürütülür.
-            Paket talebi oluşturmak tek başına ödeme yapıldığı anlamına gelmez;
-            paketin kullanıma açılması, ödemenin teyit edilmesine bağlıdır.
+            Ödeme, ödeme hizmeti sağlayıcısı PayTR’nin güvenli sayfasında kart ile
+            yapılır; kart bilgileri HOCAM’a ulaşmaz. Ödemeye geçmek ödeme
+            yükümlülüğü doğurur. Ödeme onaylandığında paket açılır ve dersler
+            Hocanın takvimine yazılır; paket tek seferliktir ve otomatik
+            yenilenmez.
           </p>
           <p>
             HOCAM, sunduğu aracılık hizmeti karşılığında hoca gelirinden{" "}
@@ -352,7 +370,7 @@ export default function TermsOfServicePage() {
             HOCAM, Platformun kesintisiz ve hatasız çalışması için makul çabayı
             gösterir. Bakım, güncelleme, altyapı sağlayıcısından kaynaklanan
             arıza veya mücbir sebep hallerinde hizmette geçici kesinti
-            yaşanabilir. Planlı kesintiler mümkün olduğunca önceden duyurulur.
+            yaşanabilir.
           </p>
           <p>
             HOCAM, Öğrenci ile Hoca arasındaki ders ilişkisinin tarafı
@@ -371,15 +389,12 @@ export default function TermsOfServicePage() {
             İşbu koşullara aykırılık tespit edilmesi halinde HOCAM, ihlalin
             ağırlığına göre içeriği kaldırabilir, profili herkese açık listeden
             çıkarabilir, hesabı geçici olarak askıya alabilir veya sözleşmeyi
-            feshedebilir. Askıya alma ve fesih kararı, mümkün olan hallerde
-            gerekçesiyle birlikte Kullanıcıya bildirilir ve Kullanıcı bu karara
-            destek kanalı üzerinden itiraz edebilir.
+            feshedebilir. Kullanıcı, bu karara destek kanalı üzerinden itiraz
+            edebilir.
           </p>
           <p>
             Askıya alma veya fesih, Kullanıcının o tarihe kadar doğmuş
-            haklarını ve varsa iade taleplerini ortadan kaldırmaz. Devam eden
-            dersler ve açık paketler, iptal ve iade kurallarına göre
-            sonuçlandırılır.
+            haklarını ve varsa iade taleplerini ortadan kaldırmaz.
           </p>
           <p>
             Kullanıcı, dilediği zaman hesabını kapatarak sözleşmeyi
@@ -389,16 +404,29 @@ export default function TermsOfServicePage() {
 
         <LegalSection title="17. Hesabın silinmesi">
           <p>
-            Hesap silme talebi hesap ayarlarından oluşturulur. Talep
-            oluşturulduktan sonra <strong>on dört gün</strong> süren bir bekleme
-            dönemi işler; bu süre içinde talep geri alınabilir. Sürenin sonunda
-            silme işlemi gerçekleştirilir.
+            Öğrenci hesabının silinmesi talebi hesap ayarlarından oluşturulur.
+            Talep oluşturulduktan sonra <strong>on dört gün</strong> süren bir
+            bekleme dönemi işler; bu süre içinde talep geri alınabilir.
+            Sürenin sonunda silme işlemi gerçekleştirilir.
           </p>
           <p>
-            Aktif ders, açık paket veya sonuçlanmamış iade talebi bulunması
-            halinde silme işlemi bunlar sonuçlanıncaya kadar bekletilir. Hoca
-            hesaplarında, devam eden derslerin tamamlanmasına yönelik bir
-            ayrılma süreci uygulanır.
+            Devam eden veya onayı bekleyen bir ders, itirazı süren bir ders, açık
+            bir iade talebi ya da sürmekte olan bir koçluk işlemi varsa silme
+            talebi oluşturulamaz; bekleme süresi içinde böyle bir işlem ortaya
+            çıkarsa silme, o işlem sonuçlanıncaya kadar bekletilir.
+          </p>
+          <p>
+            Planlanmış dersler ve kullanılmamış ders hakları silme talebini
+            engellemez. Hesap silindiğinde bu derslere ve haklara erişilemez ve
+            ödenen bedel kendiliğinden iade edilmez. Bu nedenle ödenmiş ve
+            kullanılmamış hakkı olan Öğrencinin, silme talebinden önce{" "}
+            <LegalLink href="/iptal-ve-iade">İptal ve İade Koşullarına</LegalLink>{" "}
+            göre iade talebi açması önerilir.
+          </p>
+          <p>
+            Hoca hesabının silinmesi talebi, profili herkese açık listeden hemen
+            kaldırır ve bir ayrılma süreci başlatır; devam eden derslerin
+            tamamlanması, iade ve itirazların sonuçlanması gerekir.
           </p>
           <p>
             Mevzuat gereği saklanması zorunlu olan kayıtlar, öngörülen süre
@@ -414,11 +442,6 @@ export default function TermsOfServicePage() {
             Değişiklikler <strong>geçmişe yürümez</strong>: değişiklikten önce
             oluşturulmuş dersler, paketler ve talepler bakımından işlem
             tarihinde yürürlükte olan koşullar uygulanır.
-          </p>
-          <p>
-            Kullanıcı aleyhine sonuç doğuran esaslı değişiklikler, yasal veya
-            idari bir zorunluluk bulunmadıkça, yürürlüğe girmeden makul bir süre
-            önce Kullanıcıya duyurulur.
           </p>
         </LegalSection>
 

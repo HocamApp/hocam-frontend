@@ -85,6 +85,7 @@ const FOOTER_COLUMNS: FooterColumn[] = [
       // that document would be a second link to the same page.
       { label: "KVKK ve Gizlilik", href: "/kvkk" },
       legalEntry("kullanim-kosullari"),
+      legalEntry("on-bilgilendirme-formu"),
       legalEntry("mesafeli-satis-sozlesmesi"),
       legalEntry("cerez-politikasi"),
       legalEntry("iptal-ve-iade"),
@@ -185,6 +186,7 @@ const V2_FOOTER_COLUMNS: FooterColumn[] = [
     entries: [
       { label: copy.links.kvkk, href: "/kvkk" },
       legalEntry("kullanim-kosullari"),
+      legalEntry("on-bilgilendirme-formu"),
       legalEntry("mesafeli-satis-sozlesmesi"),
       legalEntry("cerez-politikasi"),
       legalEntry("iptal-ve-iade"),

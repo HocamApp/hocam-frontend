@@ -21,6 +21,7 @@ const ALLOWED_PREFIXES = [
   "/iptal-ve-iade",
   "/kullanim-kosullari",
   "/mesafeli-satis-sozlesmesi",
+  "/on-bilgilendirme-formu",
 ];
 
 // Exact-segment match: "/tutor" must NOT allow "/tutors" (the public
