@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { CalendarBlank } from "@phosphor-icons/react";
+import { CalendarBlank, WarningCircle } from "@phosphor-icons/react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -74,37 +74,45 @@ export function CoachingSessionList() {
       (session.status === "scheduled" &&
         now >= startsAt - JOIN_EARLY_MS &&
         now < startsAt + SESSION_MS);
+    const overdueReportDueAt = session.report_overdue ? session.report_due_at : null;
+    const reportFollowUp = session.complaint_eligible ? (
+      <Link
+        href="/dashboard/student/coaching/complaints"
+        className="inline-block text-small font-medium text-ink underline underline-offset-4"
+      >
+        Eksik rapor için desteğe başvur
+      </Link>
+    ) : session.status === "awaiting_report" && session.complaint_eligible_at ? (
+      <p className="text-small text-ink-mid">
+        Eksik rapor desteği {coachingDateTimeLabel(session.complaint_eligible_at)} itibarıyla
+        kullanılabilir.
+      </p>
+    ) : null;
     return (
       <Card key={session.id} className="text-ink" data-session-row="">
         <CardContent className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
-          <div>
+          <div className={overdueReportDueAt ? "min-w-0 flex-1" : undefined}>
             <p className="text-body font-medium tabular-nums">
               {number}. görüşme · {coachingDateTimeLabel(session.scheduled_start)}
             </p>
             <Badge variant="outline" className="mt-2 border-line bg-transparent text-ink">
               {coachingSessionStatusLabel(session.status)}
             </Badge>
-            {session.report_overdue && session.report_due_at ? (
-              <p className="mt-2 text-small text-error">
-                Görüşme raporu gecikti. Son zaman: {coachingDateTimeLabel(session.report_due_at)}
-              </p>
-            ) : null}
-            {session.complaint_eligible ? (
-              <Link
-                href="/dashboard/student/coaching/complaints"
-                className="mt-2 inline-block text-small font-medium text-ink underline underline-offset-4"
-              >
-                Eksik rapor için desteğe başvur
-              </Link>
-            ) : null}
-            {/* Only a session still waiting for its report can need this. */}
-            {!session.complaint_eligible &&
-            session.status === "awaiting_report" &&
-            session.complaint_eligible_at ? (
-              <p className="mt-2 text-small text-ink-mid">
-                Eksik rapor desteği {coachingDateTimeLabel(session.complaint_eligible_at)} itibarıyla
-                kullanılabilir.
-              </p>
+            {overdueReportDueAt ? (
+              <div role="status" className="mt-4 w-full max-w-[32rem] rounded-input border border-line border-l-4 border-l-gold bg-paper px-4 py-3">
+                <div className="flex items-start gap-3">
+                  <WarningCircle aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0 text-gold-ink" />
+                  <div className="min-w-0 space-y-1.5">
+                    <p className="text-small font-bold text-ink">Görüşme raporu gecikti</p>
+                    <p className="text-small leading-relaxed text-ink-mid">
+                      Son teslim zamanı: {coachingDateTimeLabel(overdueReportDueAt)}
+                    </p>
+                    {reportFollowUp ? <div className="pt-1">{reportFollowUp}</div> : null}
+                  </div>
+                </div>
+              </div>
+            ) : reportFollowUp ? (
+              <div className="mt-2">{reportFollowUp}</div>
             ) : null}
           </div>
           <div className="flex flex-wrap items-center gap-2">
