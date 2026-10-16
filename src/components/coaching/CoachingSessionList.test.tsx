@@ -70,6 +70,27 @@ describe("CoachingSessionList", () => {
     await screen.findByText(/eksik rapor desteği/i);
   });
 
+  it("keeps the report deadline and support action together when a report is overdue", async () => {
+    sessions = [
+      {
+        id: "overdue",
+        scheduled_start: past,
+        status: "awaiting_report",
+        report_overdue: true,
+        report_due_at: "2026-01-06T15:00:00Z",
+        complaint_eligible: true,
+      },
+    ];
+    renderList();
+    const notice = await screen.findByRole("status");
+    assert.match(notice.textContent ?? "", /Görüşme raporu gecikti/);
+    assert.match(notice.textContent ?? "", /Son teslim zamanı:/);
+    assert.equal(
+      notice.querySelector("a")?.getAttribute("href"),
+      "/dashboard/student/coaching/complaints",
+    );
+  });
+
   it("keeps cancelled sessions out of the main list until expanded", async () => {
     sessions = [
       { id: "a", scheduled_start: past, status: "completed" },
