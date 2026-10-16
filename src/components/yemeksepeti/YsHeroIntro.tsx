@@ -1,4 +1,3 @@
-import { ArrowDown } from "@phosphor-icons/react";
 import Link from "next/link";
 
 import { CircularGallery } from "@/components/ui/circular-gallery";
@@ -6,14 +5,6 @@ import { CircularGallery } from "@/components/ui/circular-gallery";
 import { YsHeroCollage } from "./YsHeroCollage";
 import { YS_CAMPUS_ITEMS } from "./ysCampusGallery";
 import { hero } from "./ysHomeCopy";
-
-/* Each pill jumps to the part of this page written for that reader. The dot
-   only shows under brand v3: pink, ink and yellow, one per reader. */
-const AUDIENCE = [
-  { href: "#ogrenciler", label: hero.audience.students, dot: "bg-pink" },
-  { href: "#veliler", label: hero.audience.parents, dot: "bg-ink" },
-  { href: "#hocalar", label: hero.audience.tutors, dot: "bg-yellow shadow-[inset_0_0_0_1px_rgb(12_14_9_/_25%)]" },
-] as const;
 
 /* Brand v3 sets the headline's last word on a yellow highlight. Split here
    rather than in the copy file, so the sentence stays one string there. */
@@ -53,8 +44,7 @@ const HERO_BUTTON = "h-12 px-8 text-body";
  * — and the brand is Hocam.
  *
  * Text comes from `ysHomeCopy.ts`. `v2` (NEXT_PUBLIC_HOME_V2) turns on the
- * rebuild's changes: the lowercase headline, "Hoca ol" to /hoca-ol,
- * and the audience row. Off, the hero is the pre-rebuild one.
+ * rebuild's changes: the lowercase headline and "Hoca ol" to /hoca-ol.
  *
  * `brandV3` (NEXT_PUBLIC_BRAND_V3) swaps the campus ring for the collage and
  * puts the headline's last word on yellow. Colour-only changes ride on `v3:`
@@ -117,29 +107,6 @@ export function YsHeroIntro({ v2 = false, brandV3 = false }: { v2?: boolean; bra
             </Link>
           </div>
 
-          {/* Three readers land here: a student, a parent, a would-be tutor.
-              The row lets each skip to their own section. Outline pills on
-              the card surface; only the border changes on hover. */}
-          {v2 && (
-            <div className="mt-9 flex flex-col gap-3">
-              <span className="text-small font-medium text-ink-mid">{hero.audienceLabel}</span>
-              <div className="flex flex-wrap gap-2">
-                {AUDIENCE.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className="inline-flex h-11 items-center gap-2.5 rounded-pill border border-line bg-surface pl-[18px] pr-2 text-[0.875rem] font-medium text-ink transition-colors duration-[--duration-state] hover:border-ink sm:text-[0.9375rem]"
-                  >
-                    <span aria-hidden className={`hidden size-2.5 shrink-0 rounded-pill v3:inline-block ${item.dot}`} />
-                    {item.label}
-                    <span className="grid h-7 w-6 place-items-center text-ink">
-                      <ArrowDown className="h-4 w-4" aria-hidden />
-                    </span>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
 
         {/* The ring is wider than the column it sits in, on purpose: the cards

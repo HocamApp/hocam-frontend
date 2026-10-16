@@ -47,7 +47,7 @@ export default function ParentsPage() {
       <YsParentsPanel className="mt-6" showCta={false} />
       <YsGuarantees />
       <div className="ys-shell">
-        <YsHomeFaq v2 audiences={["parent"]} guideHref="/#ogrenciler" />
+        <YsHomeFaq v2 audiences={["parent"]} />
       </div>
     </>
   );

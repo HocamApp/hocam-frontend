@@ -7,7 +7,6 @@ import React, { type ReactElement } from "react";
 import { YemeksepetiHome } from "./YemeksepetiHome";
 import { YsHomeFaq } from "./YsHomeFaq";
 import { YsHowItWorks } from "./YsHowItWorks";
-import { YsSubjectGrid } from "./YsSubjectGrid";
 import { YsTestimonials } from "./YsTestimonials";
 import { YsTutorDirectory } from "./YsTutorDirectory";
 import { YsUniversityStrip } from "./YsUniversityStrip";
@@ -55,7 +54,7 @@ test("keeps the journey band outside the shell so its surface runs full bleed", 
   assert.doesNotMatch(journeyWrapper.props.className ?? "", /ys-shell/);
 });
 
-test("with the rebuild on, puts the subject grid right after the directory, inside its shell", () => {
+test("with the rebuild on, keeps the directory in its shell without the subject grid", () => {
   const home = YemeksepetiHome({ v2: true }) as Wrapper;
   const directoryWrapper = wrappers(home).find((wrapper) =>
     sectionsOf(wrapper).includes(YsTutorDirectory),
@@ -63,7 +62,7 @@ test("with the rebuild on, puts the subject grid right after the directory, insi
 
   assert.ok(directoryWrapper, "directory wrapper is missing");
   assert.match(directoryWrapper.props.className ?? "", /ys-shell/);
-  assert.deepEqual(sectionsOf(directoryWrapper), [YsTutorDirectory, YsSubjectGrid]);
+  assert.deepEqual(sectionsOf(directoryWrapper), [YsTutorDirectory]);
 });
 
 test("keeps the verified band outside the shell", () => {

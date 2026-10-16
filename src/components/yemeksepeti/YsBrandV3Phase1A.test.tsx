@@ -3,14 +3,13 @@ import "@/test/setupDom";
 import assert from "node:assert/strict";
 import { afterEach, before, describe, it, mock } from "node:test";
 import React, { type ComponentType } from "react";
-import { cleanup, fireEvent, render } from "@testing-library/react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { cleanup, render } from "@testing-library/react";
 
-import type { Subject, TutorProfile } from "@/types/api";
+import type { TutorProfile } from "@/types/api";
 
 /*
- * Brand v3 Phase 1A (docs/design/brand-v3/PLAN.md T1.1 to T1.3): the hero,
- * the subject tiles and the tutor card. Every change is behind the brandV3
+ * Brand v3 Phase 1A (docs/design/brand-v3/PLAN.md T1.1 to T1.3): the hero
+ * and the tutor card. Every change is behind the brandV3
  * prop or a `v3:` class, so with the flag off the markup that shows is the
  * old one.
  */
@@ -27,8 +26,6 @@ Object.defineProperty(globalThis, "IntersectionObserver", { value: NoopIntersect
 Object.defineProperty(globalThis, "self", { configurable: true, value: window });
 
 let YsHeroIntro: ComponentType<{ v2?: boolean; brandV3?: boolean }>;
-let YsSubjectGrid: ComponentType<{ brandV3?: boolean }>;
-let subjectGlyph: (exam: "TYT" | "AYT", name: string) => string | null;
 let TutorCard: ComponentType<{ tutor: TutorProfile; size?: "default" | "lg" }>;
 
 before(async () => {
@@ -47,7 +44,6 @@ before(async () => {
     namedExports: { useCoachingFlag: () => ({ enabled: false }) },
   });
   ({ YsHeroIntro } = await import("./YsHeroIntro"));
-  ({ YsSubjectGrid, subjectGlyph } = await import("./YsSubjectGrid"));
   ({ TutorCard } = await import("@/components/tutors/TutorCard"));
 });
 
@@ -85,81 +81,6 @@ describe("hero", () => {
     const cta = getByText("Hocaları gör");
     assert.match(cta.className, /\bbg-pink\b/);
     assert.match(cta.className, /\bv3:bg-pink-deep\b/);
-  });
-});
-
-describe("subject grid", () => {
-  const subjects: Subject[] = [
-    { id: "1", name: "Matematik", exam_type: "TYT" },
-    { id: "2", name: "Matematik", exam_type: "AYT" },
-    { id: "3", name: "Sosyoloji", exam_type: "AYT" },
-  ] as Subject[];
-
-  function renderGrid(brandV3: boolean) {
-    const client = new QueryClient();
-    client.setQueryData(["subjects"], subjects);
-    return render(
-      <QueryClientProvider client={client}>
-        <YsSubjectGrid brandV3={brandV3} />
-      </QueryClientProvider>,
-    );
-  }
-
-  it("keeps the pills with the flag off", () => {
-    const { container } = renderGrid(false);
-    assert.equal(container.querySelector(".bg-pink-soft"), null);
-    assert.equal(container.querySelectorAll("a").length, 3);
-  });
-
-  it("draws one tile per subject, TYT pale pink and AYT pale yellow, with the exam in words", () => {
-    const { container } = renderGrid(true);
-    const tiles = Array.from(container.querySelectorAll("ul.grid a"));
-    assert.equal(tiles.length, 3);
-    assert.match(tiles[0].className, /bg-pink-soft/);
-    assert.match(tiles[1].className, /bg-yellow-soft/);
-    assert.match(tiles[0].textContent!, /^TYTMatematik/);
-    assert.match(tiles[1].textContent!, /^AYTMatematik/);
-    assert.match(container.querySelector("ul.grid")!.className, /minmax\(150px,1fr\)/);
-  });
-
-  it("hides the watermark from assistive tech and leaves unknown subjects blank", () => {
-    assert.equal(subjectGlyph("TYT", "Matematik"), "∑");
-    assert.equal(subjectGlyph("AYT", "Matematik"), "∫");
-    assert.equal(subjectGlyph("AYT", "Coğrafya"), "40°N");
-    assert.equal(subjectGlyph("AYT", "Felsefe"), "∃");
-    assert.equal(subjectGlyph("AYT", "Sosyoloji"), "%");
-    assert.equal(subjectGlyph("TYT", "Din Kültürü"), null);
-    const { container } = renderGrid(true);
-    const glyphs = Array.from(container.querySelectorAll("ul.grid a [aria-hidden]"));
-    assert.equal(glyphs.length, 3);
-  });
-
-  it("stops at eight tiles below md until \"Tüm dersleri gör\" opens the rest", () => {
-    const many = Array.from({ length: 10 }, (_, i) => ({ id: `m${i}`, name: `Ders ${i}`, exam_type: "TYT" })) as Subject[];
-    const client = new QueryClient();
-    client.setQueryData(["subjects"], many);
-    const { container, getByRole, queryByRole } = render(
-      <QueryClientProvider client={client}>
-        <YsSubjectGrid brandV3 />
-      </QueryClientProvider>,
-    );
-    const items = () => Array.from(container.querySelectorAll("ul.grid > li"));
-    assert.equal(items().length, 10);
-    assert.deepEqual(
-      items().map((li) => li.classList.contains("max-md:hidden")),
-      [false, false, false, false, false, false, false, false, true, true],
-    );
-    const button = getByRole("button", { name: "Tüm dersleri gör" });
-    assert.match(button.parentElement!.className, /\bmd:hidden\b/);
-    fireEvent.click(button);
-    assert.equal(items().some((li) => li.classList.contains("max-md:hidden")), false);
-    assert.equal(queryByRole("button", { name: "Tüm dersleri gör" }), null);
-    assert.equal(document.activeElement, items()[8].querySelector("a"));
-  });
-
-  it("has no button when every subject already fits", () => {
-    const { queryByRole } = renderGrid(true);
-    assert.equal(queryByRole("button", { name: "Tüm dersleri gör" }), null);
   });
 });
 

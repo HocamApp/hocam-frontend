@@ -7,7 +7,7 @@ import { afterEach, describe, it } from "node:test";
  * Response headers for every route, read straight from next.config.js.
  *
  * The production build ships with NEXT_PUBLIC_PAYTR_ENABLED unset, and there
- * the headers must stay exactly what main sends: the app is never framed.
+ * the tools navbar is the only new same-origin frame exception.
  */
 
 const require = createRequire(import.meta.url);
@@ -27,24 +27,35 @@ afterEach(() => {
   delete process.env.NEXT_PUBLIC_PAYTR_ENABLED;
 });
 
-// Captured from origin/main 08c0b76.
+const SHARED_HEADERS = [
+  { key: "X-Content-Type-Options", value: "nosniff" },
+  { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+  {
+    key: "Permissions-Policy",
+    value: 'camera=(self "https://8x8.vc"), microphone=(self "https://8x8.vc"), geolocation=()',
+  },
+];
+
 const MAIN_HEADERS: HeaderRule[] = [
   {
-    source: "/(.*)",
+    source: "/((?!internal/tools-navbar$).*)",
     headers: [
       { key: "X-Frame-Options", value: "DENY" },
-      { key: "X-Content-Type-Options", value: "nosniff" },
-      { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-      {
-        key: "Permissions-Policy",
-        value: 'camera=(self "https://8x8.vc"), microphone=(self "https://8x8.vc"), geolocation=()',
-      },
+      ...SHARED_HEADERS,
+    ],
+  },
+  {
+    source: "/internal/tools-navbar",
+    headers: [
+      { key: "X-Frame-Options", value: "SAMEORIGIN" },
+      { key: "Content-Security-Policy", value: "frame-ancestors 'self'" },
+      ...SHARED_HEADERS,
     ],
   },
 ];
 
 describe("next.config headers with PayTR off (production build)", () => {
-  it("sends exactly main's headers, framing denied everywhere", async () => {
+  it("permits only the tools navbar to be framed by this site", async () => {
     assert.deepEqual(await headersWith(undefined), MAIN_HEADERS);
     // A near miss is not "on" either.
     assert.deepEqual(await headersWith("TRUE"), MAIN_HEADERS);
@@ -66,9 +77,9 @@ describe("next.config headers with PayTR on (staging build)", () => {
     return merged;
   }
 
-  it("lets only the two PayTR return pages be framed, and only by this site", async () => {
+  it("lets only the two PayTR return pages and tools navbar be framed by this site", async () => {
     const rules = await headersWith("true");
-    for (const path of ["/odeme/basarili", "/odeme/basarisiz"]) {
+    for (const path of ["/odeme/basarili", "/odeme/basarisiz", "/internal/tools-navbar"]) {
       const headers = headersFor(rules, path);
       assert.equal(headers.get("X-Frame-Options"), "SAMEORIGIN", path);
       assert.equal(headers.get("Content-Security-Policy"), "frame-ancestors 'self'", path);

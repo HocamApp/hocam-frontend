@@ -14,7 +14,6 @@ import { cleanup, render } from "@testing-library/react";
  */
 const STUBBED = [
   "YsTutorDirectory",
-  "YsSubjectGrid",
   "YsUniversityStrip",
   "YsHowItWorks",
   "YsPricing",
@@ -97,7 +96,7 @@ describe("homepage with NEXT_PUBLIC_HOME_V2 off", () => {
 });
 
 describe("homepage with NEXT_PUBLIC_HOME_V2 on", () => {
-  it("renders the Phase A hero, subject grid and two-column band", () => {
+  it("renders the Phase A hero and two-column band without the jump links or subject grid", () => {
     const { container } = render(<YemeksepetiHome v2 />);
     const text = container.textContent ?? "";
 
@@ -105,9 +104,9 @@ describe("homepage with NEXT_PUBLIC_HOME_V2 on", () => {
     assert.doesNotMatch(text, /Bugünün öğretmeni/);
     assert.equal(container.querySelector('a[href="/register?role=tutor"]'), null);
     assert.ok(container.querySelector('a[href="/hoca-ol"]'));
-    assert.match(text, /Senin için olan kısma atla/);
+    assert.doesNotMatch(text, /Senin için olan kısma atla/);
     for (const anchor of ["#ogrenciler", "#veliler", "#hocalar"]) {
-      assert.ok(container.querySelector(`a[href="${anchor}"]`), `missing link to ${anchor}`);
+      assert.equal(container.querySelector(`a[href="${anchor}"]`), null);
     }
 
     assert.match(text, /Her hoca başvurusunda kontrol ettiklerimiz/);
@@ -116,7 +115,6 @@ describe("homepage with NEXT_PUBLIC_HOME_V2 on", () => {
 
     assert.deepEqual(stubs(container), [
       "YsTutorDirectory",
-      "YsSubjectGrid",
       "YsUniversityStrip",
       "YsHowItWorks",
       "YsPricing",

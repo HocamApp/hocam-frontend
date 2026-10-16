@@ -152,6 +152,7 @@ Her değişiklik için:
   `TOOLS_ORIGIN` ile proxy doğrulanır, sonra bağlantılar açılır. İkisi de build zamanında okunur:
   değiştirmek yeniden deploy gerektirir. İkisi de production'da açılmadan önce sahiplerin onayı gerekir.
 - Footer'da araçlar kendi sütununda ("Ücretsiz sınav araçları", `ysHomeCopy.ts` → `toolsColumn`) listelenir; `/araclar/*` bağlantıları `next/link` değil düz `<a>`'dır (hedef bu uygulamanın route'u değil). Yeni araç eklenince `toolsColumn.links` güncellenir.
+- Araçlar üst menüyü `/internal/tools-navbar` üzerinden ana uygulamanın mevcut `YsNavbar` bileşeniyle gösterir. Bu uç yalnız aynı alan adında iframe'e izin verir; hesaplama girdileri oturum isteklerine girmez. Araçların kendi hesaplama sayfaları ve `/araclar` rewrite'ı ayrı uygulamada kalır.
 - `/araclar` (hub) için `/araclar.rsc` rewrite'ı EKLEME: Vercel bu yolu rewrite'lardan önce ana
   uygulamanın statik 404'üyle yanıtlar, kural çalışmaz. Araçlar uygulaması hub'a düz `<a>` ile bağlanır.
 - Araçların kendi kuralları (doğruluk, KVKK, SEO, erişilebilirlik) `hocam-tools/AI_AGENT_RULES.md`

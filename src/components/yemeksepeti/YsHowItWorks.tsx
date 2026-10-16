@@ -157,7 +157,7 @@ export function studentSteps(lessonRoomShot = false): YsTabStep[] {
 
 /**
  * The rebuilt student section (NEXT_PUBLIC_HOME_V2): the rotating heading as
- * it was, a subline, the seven steps on the left and the active step's
+ * it was, the seven steps on the left and the active step's
  * screenshot on the right, sticky under the header on wide screens.
  *
  * It sits on paper inside the shell, as the mockup has it, rather than on the
@@ -180,7 +180,6 @@ function YsStudentJourney({ lessonRoomShot }: { lessonRoomShot: boolean }) {
         >
           <YsJourneyHeading />
         </h2>
-        <p className="mx-auto mt-5 max-w-[52ch] text-center text-[18px] leading-7 text-ink-mid">{copy.sub}</p>
 
         <YsStepTabs className="mt-14" label={copy.stepsLabel} steps={studentSteps(lessonRoomShot)} />
       </div>

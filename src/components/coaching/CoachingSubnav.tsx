@@ -152,7 +152,7 @@ export function CoachingSubnav({
         Koçlukta konumun
       </p>
       <div className="relative">
-        <CoachingSubnavStrip activeHref={activeHref}>
+        <CoachingSubnavStrip audience={audience}>
           {links.map(({ label, href, icon: Icon }) => {
             const active = href === activeHref;
             return (
@@ -161,7 +161,7 @@ export function CoachingSubnav({
                 href={href}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "inline-flex min-h-10 shrink-0 items-center gap-2 rounded-pill px-4 text-small font-medium transition-colors duration-[var(--duration-state)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2",
+                  "inline-flex min-h-10 items-center justify-center gap-1 rounded-pill px-1 text-center text-[11px] font-medium leading-tight transition-colors duration-[var(--duration-state)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2 sm:gap-2 sm:px-2 sm:text-small xl:shrink-0 xl:px-2 xl:text-[13px]",
                   active
                     ? "bg-ink text-paper"
                     : "text-ink-mid hover:bg-paper hover:text-ink",
@@ -169,7 +169,7 @@ export function CoachingSubnav({
               >
                 <Icon
                   aria-hidden="true"
-                  className="h-4 w-4"
+                  className="h-4 w-4 shrink-0"
                   weight={active ? "fill" : "regular"}
                 />
                 <span>{label}</span>
