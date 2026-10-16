@@ -103,7 +103,7 @@ export function CoachingSessionList() {
                 <div className="flex items-start gap-3">
                   <WarningCircle aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0 text-gold-ink" />
                   <div className="min-w-0 space-y-1.5">
-                    <p className="text-small font-semibold text-ink">Görüşme raporu gecikti</p>
+                    <p className="text-small font-bold text-ink">Görüşme raporu gecikti</p>
                     <p className="text-small leading-relaxed text-ink-mid">
                       Son teslim zamanı: {coachingDateTimeLabel(overdueReportDueAt)}
                     </p>
