@@ -253,10 +253,8 @@ function FaqAnswer({ answer }: { answer: readonly FaqPart[] }) {
  */
 function YsHomeFaqTabs({
   audiences = ["student", "parent", "tutor"],
-  guideHref = "#ogrenciler",
 }: {
   audiences?: FaqAudience[];
-  guideHref?: string;
 }) {
   const panels = audiences
     .map((audience) => ({ audience, entries: faqEntries(audience) }))
@@ -313,9 +311,6 @@ function YsHomeFaqTabs({
             })}
           </div>
         )}
-        <Link href={guideHref} className={`mt-6 inline-flex ${faqLinkClass}`}>
-          {copy.guideLink}
-        </Link>
       </div>
 
       <div className="min-w-0">
@@ -355,31 +350,17 @@ function YsHomeFaqTabs({
 export function YsHomeFaq({
   v2 = false,
   audiences,
-  guideHref,
 }: {
   v2?: boolean;
   audiences?: FaqAudience[];
-  guideHref?: string;
 } = {}) {
-  if (v2) return <YsHomeFaqTabs audiences={audiences} guideHref={guideHref} />;
+  if (v2) return <YsHomeFaqTabs audiences={audiences} />;
   return (
     <div id={FAQ_SECTION_ID} className="scroll-mt-[calc(var(--app-header-h)+24px)] [&>section]:mt-16 [&>section]:py-0 md:[&>section]:mt-24">
       <SupportAccordionSection
         layout="split"
         items={YS_HOME_FAQ_ITEMS}
-        heading={
-          /* Title and the guide link, nothing more. The eyebrow and standfirst
-             both restated the title. The column runs short beside the
-             accordion, which is what the link is doing down there. */
-          <div>
-            <h2 className="text-2xl font-bold leading-[1.333] tracking-tight">
-              Merak Edilenler
-            </h2>
-            <Link href="/nasil-calisir" className={`mt-4 inline-flex ${faqLinkClass}`}>
-              Ders sürecinin tamamını oku
-            </Link>
-          </div>
-        }
+        heading={<h2 className="text-2xl font-bold leading-[1.333] tracking-tight">Merak Edilenler</h2>}
       />
     </div>
   );

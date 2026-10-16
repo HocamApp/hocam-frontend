@@ -81,7 +81,7 @@ export function RescheduleDialog({ session }: { session: CoachingSessionItem }) 
       }),
     onSuccess: (result) => {
       // Clear the pick too: the old choice is now the session's own time.
-      reset(false);
+      setOpen(false);
       queryClient.invalidateQueries({ queryKey: ["coaching-sessions"] });
       queryClient.invalidateQueries({ queryKey: ["coaching-reschedule-options", session.id] });
       toast.success(
@@ -93,22 +93,24 @@ export function RescheduleDialog({ session }: { session: CoachingSessionItem }) 
     onError: (err) => setError(extractCoachingErrorMessage(err)),
   });
 
-  const reset = (nextOpen: boolean) => {
+  const clearSelection = () => {
+    setChoice(null);
+    setCustom(false);
+    setCustomDate("");
+    setCustomTime("");
+    setError(null);
+  };
+
+  const handleOpenChange = (nextOpen: boolean) => {
     setOpen(nextOpen);
-    if (!nextOpen) {
-      setChoice(null);
-      setCustom(false);
-      setCustomDate("");
-      setCustomTime("");
-      setError(null);
-    }
+    if (nextOpen) clearSelection();
   };
 
   const periodWindow = optionsQuery.data?.window ?? session.reschedule_window;
   const appliesNow = optionsQuery.data?.free_change_applies_now ?? false;
 
   return (
-    <Dialog open={open} onOpenChange={reset}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button
           size="sm"
@@ -118,7 +120,14 @@ export function RescheduleDialog({ session }: { session: CoachingSessionItem }) 
           Yeniden planla
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-h-[90dvh] w-[calc(100dvw-2rem)] max-w-lg overflow-y-auto">
+      <DialogContent
+        className="max-h-[90dvh] w-[calc(100dvw-2rem)] max-w-lg overflow-y-auto"
+        onAnimationEnd={(event) => {
+          if (event.target === event.currentTarget && event.currentTarget.dataset.state === "closed") {
+            clearSelection();
+          }
+        }}
+      >
         <DialogHeader className="text-left">
           <DialogTitle>Görüşmeyi yeniden planla</DialogTitle>
           <DialogDescription>
@@ -238,7 +247,7 @@ export function RescheduleDialog({ session }: { session: CoachingSessionItem }) 
         )}
 
         <DialogFooter className="flex-col-reverse gap-2 sm:flex-row">
-          <Button type="button" variant="outline" onClick={() => reset(false)}>
+          <Button type="button" variant="outline" onClick={() => setOpen(false)}>
             Vazgeç
           </Button>
           <Button

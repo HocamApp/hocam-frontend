@@ -49,7 +49,7 @@ export default function BecomeTutorPage() {
       </div>
       <YsTutorBand className="mt-6" />
       <div className="ys-shell">
-        <YsHomeFaq v2 audiences={["tutor"]} guideHref="/nasil-calisir" />
+        <YsHomeFaq v2 audiences={["tutor"]} />
         <section
           aria-labelledby="hoca-ol-cta"
           className="mb-8 flex flex-col items-center gap-6 rounded-card bg-pink px-6 py-14 text-center text-white md:py-20"

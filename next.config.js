@@ -117,9 +117,13 @@ const nextConfig = {
           'camera=(self "https://8x8.vc"), microphone=(self "https://8x8.vc"), geolocation=()',
       },
     ];
-    // The app is never legitimately embedded; YouTube intro videos are
-    // iframes WE embed, which X-Frame-Options does not restrict.
+    // Only the tools navbar and payment return surfaces may be framed by this site.
     const deny = { key: "X-Frame-Options", value: "DENY" };
+    const sameOrigin = [
+      { key: "X-Frame-Options", value: "SAMEORIGIN" },
+      { key: "Content-Security-Policy", value: "frame-ancestors 'self'" },
+      ...shared,
+    ];
 
     // PayTR sends the student back to /odeme/basarili or /odeme/basarisiz
     // after 3D Secure. Its docs do not say whether that lands in the top
@@ -129,21 +133,21 @@ const nextConfig = {
     // window). The flag is inlined at build time, so a production build with
     // payments off sends exactly the headers it always has.
     if (process.env.NEXT_PUBLIC_PAYTR_ENABLED !== "true") {
-      return [{ source: "/(.*)", headers: [deny, ...shared] }];
+      return [
+        { source: "/((?!internal/tools-navbar$).*)", headers: [deny, ...shared] },
+        { source: "/internal/tools-navbar", headers: sameOrigin },
+      ];
     }
     return [
       {
-        source: "/((?!odeme/basarili$|odeme/basarisiz$).*)",
+        source: "/((?!odeme/basarili$|odeme/basarisiz$|internal/tools-navbar$).*)",
         headers: [deny, ...shared],
       },
       {
         source: "/odeme/:result(basarili|basarisiz)",
-        headers: [
-          { key: "X-Frame-Options", value: "SAMEORIGIN" },
-          { key: "Content-Security-Policy", value: "frame-ancestors 'self'" },
-          ...shared,
-        ],
+        headers: sameOrigin,
       },
+      { source: "/internal/tools-navbar", headers: sameOrigin },
     ];
   },
 };

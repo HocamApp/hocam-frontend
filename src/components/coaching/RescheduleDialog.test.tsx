@@ -86,4 +86,17 @@ describe("RescheduleDialog", () => {
     assert.equal(date.max, "2026-10-18");
     assert.ok(screen.getByLabelText("Saat"));
   });
+
+  it("uses a keyboard-only focus ring and clears the selected time on reopen", async () => {
+    open();
+    const slot = await screen.findByRole("radio", { name: "14 Ekim Çarşamba 18:30" });
+    fireEvent.click(slot);
+    const close = screen.getByRole("button", { name: "Pencereyi kapat" });
+    assert.match(close.className, /focus-visible:ring-2/);
+    fireEvent.click(close);
+
+    fireEvent.click(screen.getByRole("button", { name: /yeniden planla/i }));
+    const reopened = await screen.findByRole("radio", { name: "14 Ekim Çarşamba 18:30" });
+    assert.equal(reopened.getAttribute("aria-checked"), "false");
+  });
 });

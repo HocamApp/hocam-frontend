@@ -58,12 +58,6 @@ export const hero = {
   sub: "YKS'de derece yapmış öğrencileri, derece yapacaklarla buluşturuyoruz.",
   ctaTutors: "Hocaları gör",
   ctaBecomeTutor: "Hoca ol",
-  audienceLabel: "Senin için olan kısma atla",
-  audience: {
-    students: "Ders almak istiyorum",
-    parents: "Velisiyim",
-    tutors: "Hoca olmak istiyorum",
-  },
   /* Brand v3 hero (NEXT_PUBLIC_BRAND_V3). The sticker's rank comes from
      MAX_TUTOR_YKS_RANK. The notification card is generic on purpose (D3 in
      docs/design/brand-v3/PLAN.md): no name and no photo, because no student
@@ -73,16 +67,6 @@ export const hero = {
     title: "Deneme dersin onaylandı",
     line: (trialMinutes: number) => `${trialMinutes} dakika · ücretsiz`,
   },
-} as const;
-
-export const subjects = {
-  title: "Hangi dersler var?",
-  sub: "Dersine tıkla, o dersi veren hocaları gör.",
-  coaching: "YKS koçluğu",
-  /* Brand v3 tiles: names the colour key for screen readers. */
-  legendLabel: "Renk anahtarı",
-  /* Below 768px the tile grid stops after eight; this opens the rest. */
-  showAll: "Tüm dersleri gör",
 } as const;
 
 export const band = {
@@ -123,7 +107,6 @@ export interface StudentStepFacts {
 }
 
 export const students = {
-  sub: "Öğrenciler için: hoca bulmaktan ilk derse kadar ne olacağını adım adım gör. Profilleri incelemek için hesap açman gerekmiyor.",
   steps: [
     {
       title: "Hocanı bul",
@@ -402,7 +385,6 @@ export interface FaqFacts {
 
 export const faq = {
   title: "Merak Edilenler",
-  guideLink: "Ders sürecinin tamamını oku",
   tabsLabel: "Kim için",
   tabs: { student: "Öğrenci", parent: "Veli", tutor: "Hoca" },
   /* The student answers are the existing, fact-backed homepage FAQ; only the

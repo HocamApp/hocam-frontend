@@ -107,30 +107,20 @@ describe("complaints belongs to a different tab per audience", () => {
 });
 
 describe("the tab strip on a narrow screen", () => {
-  // The program tab sits past the right edge of a 375px strip once its label
-  // reads "Koçluk Programım". The strip has to bring the current page's tab
-  // into view by scrolling itself, not the document.
-  it("scrolls only the strip to reveal the current tab", () => {
-    const original = HTMLElement.prototype.getBoundingClientRect;
-    HTMLElement.prototype.getBoundingClientRect = function () {
-      if (this.tagName === "NAV") {
-        return { left: 0, right: 340, width: 340, top: 0, bottom: 56, height: 56, x: 0, y: 0, toJSON() {} } as DOMRect;
-      }
-      if (this.getAttribute("aria-current") === "page") {
-        return { left: 180, right: 385, width: 205, top: 0, bottom: 56, height: 56, x: 180, y: 0, toJSON() {} } as DOMRect;
-      }
-      return original.call(this);
-    };
-    try {
-      render(
-        <CoachingSubnav currentHref="/dashboard/student/coaching/program" audience="student" />
-      );
+  it("keeps all five student destinations in a wrapping grid", () => {
+    render(<CoachingSubnav currentHref="/dashboard/student/coaching/program" audience="student" />);
+    const strip = screen.getByRole("navigation", { name: "Koçluk bölümleri" });
+    assert.equal(strip.getAttribute("data-audience"), "student");
+    assert.match(strip.className, /grid-cols-6/);
+    assert.doesNotMatch(strip.className, /overflow-x-auto/);
+    assert.equal(strip.querySelectorAll("a").length, 5);
+    assert.ok(screen.getByRole("link", { name: "Sorun bildir" }));
+  });
 
-      const strip = screen.getByRole("navigation", { name: "Koçluk bölümleri" });
-      assert.equal(strip.scrollLeft, 45);
-      assert.equal(document.documentElement.scrollTop, 0);
-    } finally {
-      HTMLElement.prototype.getBoundingClientRect = original;
-    }
+  it("keeps all six tutor destinations in the same non-scrolling layout", () => {
+    render(<CoachingSubnav currentHref="/dashboard/tutor/coaching" audience="tutor" />);
+    const strip = screen.getByRole("navigation", { name: "Koçluk bölümleri" });
+    assert.equal(strip.querySelectorAll("a").length, 6);
+    assert.doesNotMatch(strip.className, /overflow-x-auto/);
   });
 });
