@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Trash } from "@phosphor-icons/react";
@@ -50,6 +50,8 @@ interface DayAvailabilityDialogProps {
   dayLabel?: string;
   calendarEvents?: TutorCalendarEvent[];
   onChanged?: () => void;
+  /** Rendered between the header and the form, e.g. a first-time hint. */
+  intro?: ReactNode;
 }
 
 export function DayAvailabilityDialog({
@@ -58,6 +60,7 @@ export function DayAvailabilityDialog({
   date: initialDate,
   calendarEvents = [],
   onChanged,
+  intro,
 }: DayAvailabilityDialogProps) {
   const queryClient = useQueryClient();
   const [startTime, setStartTime] = useState("");
@@ -195,6 +198,7 @@ export function DayAvailabilityDialog({
         </DialogHeader>
 
         <div className="space-y-4">
+          {intro}
           {loading && <p role="status" className="text-sm text-ink-mid">Müsaitlik yükleniyor…</p>}
           {isError && <div role="alert" className="space-y-2 text-sm text-error"><p>Müsait saatlerin yüklenemedi.</p><Button variant="outline" onClick={() => void refetch()}>Yeniden dene</Button></div>}
           <div className="grid grid-cols-2 rounded-input bg-paper p-1">
