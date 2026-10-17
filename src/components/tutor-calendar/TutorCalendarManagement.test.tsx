@@ -28,6 +28,15 @@ beforeEach(() => {
 });
 afterEach(() => {cleanup();client.clear();});
 const mount = (selectedTimeOff?: TutorTimeOff, events: TutorCalendarEvent[] = []) => render(<QueryClientProvider client={client}><Management date="2099-09-12" timeOff={[row]} events={events} onChanged={() => {}} selectedTimeOff={selectedTimeOff} /></QueryClientProvider>);
+test("availability is the pink primary and the busy block is the outline alternative", () => {
+  mount();
+  const availability = screen.getByRole("button", {name:"Müsaitliği düzenle"});
+  const busy = screen.getByRole("button", {name:"Meşguliyet ekle"});
+  assert.match(availability.className, /bg-pink/);
+  assert.doesNotMatch(availability.className, /border-ink/);
+  assert.match(busy.className, /border-ink/);
+  assert.doesNotMatch(busy.className, /bg-pink/);
+});
 test("timeoff posts a private all-day block with null times", async () => {
   mount(); fireEvent.click(screen.getByRole("button", {name:"Meşguliyet ekle"}));
   fireEvent.click(screen.getByRole("checkbox", {name:"Tüm gün"}));

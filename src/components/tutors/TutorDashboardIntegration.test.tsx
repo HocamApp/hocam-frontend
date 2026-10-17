@@ -2,7 +2,7 @@ import "@/test/setupDom";
 import assert from "node:assert/strict";
 import { afterEach, before, beforeEach, mock, test } from "node:test";
 import React from "react";
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 let query = "";
@@ -75,7 +75,11 @@ mock.module("@/lib/lessonsApi", { namedExports: {
   getBookingErrorMessage: (_error: unknown, fallback: string) => fallback,
   updateBookingStatus: async () => undefined,
 } });
-mock.module("@/lib/dashboardApi", { namedExports: { fetchAvailability: async () => [] } });
+mock.module("@/lib/dashboardApi", { namedExports: {
+  fetchAvailability: async () => [],
+  createAvailabilityRule: async () => undefined,
+  deleteAvailabilityRule: async () => undefined,
+} });
 mock.module("@/lib/messagingApi", { namedExports: { fetchConversations: async () => [] } });
 mock.module("@/lib/paymentsApi", { namedExports: {
   fetchTutorEarnings: async () => ({ last_30_days: { lesson_count: 0 } }),
@@ -116,6 +120,25 @@ test("Panom keeps the daily focus without duplicating workspace and profile navi
     screen.getByRole("link", { name: "Paket ayarları" }).getAttribute("href"),
     "/dashboard/tutor/packages",
   );
+});
+
+test("Panom edits availability and adds a busy block without opening the calendar", async () => {
+  mount();
+  await screen.findByText("Matematik");
+  const availability = screen.getByRole("button", { name: "Müsaitliği düzenle" });
+  const busy = screen.getByRole("button", { name: "Meşguliyet ekle" });
+  assert.match(availability.className, /bg-pink/);
+  assert.match(busy.className, /border-ink/);
+  assert.doesNotMatch(busy.className, /bg-pink/);
+
+  fireEvent.click(availability);
+  assert.ok(await screen.findByRole("dialog", { name: /için müsaitlik/ }));
+  fireEvent.click(screen.getByRole("button", { name: "Kapat" }));
+  await waitFor(() => assert.equal(screen.queryByRole("dialog"), null));
+
+  fireEvent.click(busy);
+  assert.ok(await screen.findByRole("dialog", { name: "Meşguliyet ekle" }));
+  assert.deepEqual(navigation, []);
 });
 
 test("legacy tabs redirect to their canonical workspace", async () => {
