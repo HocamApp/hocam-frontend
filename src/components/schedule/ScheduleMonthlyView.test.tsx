@@ -93,7 +93,7 @@ describe("month chips", () => {
     ]);
 
     const day = screen.getByRole("gridcell", { name: /23 Ağustos/ });
-    assert.match(day.className, /bg-\[#DDE9E4\]/);
+    assert.match(day.className, /bg-emerald-100/);
     assert.equal(day.querySelectorAll("[data-availability-summary]").length, 1);
     assert.ok(day.textContent?.includes("12:00–16:00, 16:00–20:00"));
     assert.equal((day.textContent?.match(/Müsait/g) ?? []).length, 1);

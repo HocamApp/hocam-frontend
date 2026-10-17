@@ -3,7 +3,7 @@ import "@/test/setupDom";
 import assert from "node:assert/strict";
 import { after, afterEach, before, describe, it, mock } from "node:test";
 import React from "react";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 
 import type { ScheduleEvent } from "@/types";
 import { eventKey } from "./eventIdentity";
@@ -73,11 +73,9 @@ describe("an empty week", () => {
 });
 
 describe("a week with work in it", () => {
-  it("shows a tutor's 09:30–11:00 availability in three half-hour cells", () => {
+  it("shows a tutor's 09:30–11:00 availability as one card", () => {
     render(<ScheduleWeeklyView anchor={ANCHOR} events={[{...occurrence("2026-08-17"),source:"availability",local_time:"09:30",duration_minutes:90,title:"Müsait"}]} pendingKeys={new Set()} tutorHalfHourGrid />);
-    assert.ok(screen.getByLabelText("Müsait: 09:30–10:00"));
-    assert.ok(screen.getByLabelText("Müsait: 10:00–10:30"));
-    assert.ok(screen.getByLabelText("Müsait: 10:30–11:00"));
+    assert.equal(within(screen.getByRole("grid")).getAllByText(/09:30 - 11:00/).length, 1);
   });
   it("uses one labelled time grid without repeating empty labels", () => {
     renderWeek([occurrence("2026-08-17")]);

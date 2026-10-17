@@ -132,7 +132,7 @@ export function ScheduleMonthlyView({
                   index % 7 === 6 && "border-r-0",
                   index >= 35 && "border-b-0",
                   isOutside && "bg-paper",
-                  availabilityEvents.length > 0 && "bg-[#DDE9E4] hover:bg-[#DDE9E4]"
+                  availabilityEvents.length > 0 && "bg-emerald-100 hover:bg-emerald-100"
                 )}
               >
                 <button
