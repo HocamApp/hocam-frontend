@@ -5,7 +5,7 @@ import React from "react";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import api from "@/lib/api";
-import type { TutorTimeOff } from "@/lib/tutorCalendar";
+import type { TutorCalendarEvent, TutorTimeOff } from "@/lib/tutorCalendar";
 mock.module("next/link", { defaultExport: ({ href, children, ...props }: React.ComponentProps<"a">) => <a href={String(href)} {...props}>{children}</a> });
 let Management: typeof import("./TutorCalendarManagement").TutorCalendarManagement;
 let started: typeof import("./TutorCalendarManagement").timeOffStarted;
@@ -27,7 +27,7 @@ beforeEach(() => {
   };
 });
 afterEach(() => {cleanup();client.clear();});
-const mount = (selectedTimeOff?: TutorTimeOff) => render(<QueryClientProvider client={client}><Management date="2099-09-12" timeOff={[row]} events={[]} onChanged={() => {}} selectedTimeOff={selectedTimeOff} /></QueryClientProvider>);
+const mount = (selectedTimeOff?: TutorTimeOff, events: TutorCalendarEvent[] = []) => render(<QueryClientProvider client={client}><Management date="2099-09-12" timeOff={[row]} events={events} onChanged={() => {}} selectedTimeOff={selectedTimeOff} /></QueryClientProvider>);
 test("timeoff posts a private all-day block with null times", async () => {
   mount(); fireEvent.click(screen.getByRole("button", {name:"Meşguliyet ekle"}));
   fireEvent.click(screen.getByRole("checkbox", {name:"Tüm gün"}));
@@ -76,10 +76,25 @@ test("availability can remove a closed date and return to weekly rules", async (
     return {config,data:config.method === "get" && !writes.length ? [{id:"closed",day_of_week:5,specific_date:"2099-09-12",is_unavailable:true,start_time:null,end_time:null}] : [],status:200,statusText:"OK",headers:{}};
   };
   mount();fireEvent.click(screen.getByRole("button",{name:"Müsaitliği düzenle"}));
-  const reset = await screen.findByRole("button",{name:"Tarih istisnasını kaldır"});
+  const reset = await screen.findByRole("button",{name:"Bu güne özel saatleri kaldır"});
   fireEvent.click(reset);
   await waitFor(() => assert.equal(writes[0]?.url,"/availability/closed/"));
-  await waitFor(() => assert.equal(screen.queryByText("Bu gün kapalı."),null));
+  await waitFor(() => assert.equal(screen.queryByText("Bu gün yeni ders için müsait değilsin."),null));
+});
+test("date tab explains weekly fallback and names the weekday correctly", async () => {
+  api.defaults.adapter = async config => ({config,data:config.method === "get" ? [{id:"weekly",day_of_week:5,specific_date:null,is_unavailable:false,start_time:"09:30:00",end_time:"11:00:00"}] : [],status:200,statusText:"OK",headers:{}});
+  mount();fireEvent.click(screen.getByRole("button",{name:"Müsaitliği düzenle"}));
+  await screen.findByText("09:30–11:00");
+  assert.ok(screen.getByText(/haftalık programındaki saatler geçerli/));
+  assert.equal(screen.queryByRole("button",{name:/09:30–11:00 saatini sil/}),null);
+  fireEvent.click(screen.getByRole("button",{name:"Her hafta tekrarla"}));
+  assert.ok(screen.getByText("Bu saatler her cumartesi geçerli."));
+});
+test("lesson outside edited availability stays linked with a readable date", async () => {
+  const lesson: TutorCalendarEvent = {source:"booking",id:"lesson-12",student:{id:"s",display_name:"Deniz",avatar_url:null},local_date:"2099-09-12",local_time:"12:00",duration_minutes:40,status:"confirmed",subject:null,classroom_available:true};
+  mount(undefined,[lesson]);fireEvent.click(screen.getByRole("button",{name:"Müsaitliği düzenle"}));
+  await screen.findByText(/Müsait saatlerini değiştirmen/);
+  assert.equal((await screen.findByRole("link",{name:/12 Eylül.*12:00.*Deniz/})).getAttribute("href"),"/dashboard/tutor?tab=bookings&highlightBooking=lesson-12");
 });
 test("availability load failure does not offer writes", async () => {
   api.defaults.adapter = async () => {throw new Error("offline");};

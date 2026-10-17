@@ -73,6 +73,12 @@ describe("an empty week", () => {
 });
 
 describe("a week with work in it", () => {
+  it("shows a tutor's 09:30–11:00 availability in three half-hour cells", () => {
+    render(<ScheduleWeeklyView anchor={ANCHOR} events={[{...occurrence("2026-08-17"),source:"availability",local_time:"09:30",duration_minutes:90,title:"Müsait"}]} pendingKeys={new Set()} tutorHalfHourGrid />);
+    assert.ok(screen.getByLabelText("Müsait: 09:30–10:00"));
+    assert.ok(screen.getByLabelText("Müsait: 10:00–10:30"));
+    assert.ok(screen.getByLabelText("Müsait: 10:30–11:00"));
+  });
   it("uses one labelled time grid without repeating empty labels", () => {
     renderWeek([occurrence("2026-08-17")]);
 
