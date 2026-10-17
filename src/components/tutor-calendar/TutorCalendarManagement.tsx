@@ -6,14 +6,15 @@ import { useQueryClient } from "@tanstack/react-query";
 import { CalendarBlank, Plus } from "@phosphor-icons/react";
 import api from "@/lib/api";
 import type { TutorCalendarEvent, TutorTimeOff } from "@/lib/tutorCalendar";
-import { Button } from "@/components/ui/button";
+import { Button, type ButtonProps } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { DayAvailabilityDialog } from "@/components/tutors/DayAvailabilityDialog";
 
-type Props = { date: string; timeOff: TutorTimeOff[]; events: TutorCalendarEvent[]; onChanged: () => void; selectedTimeOff?: TutorTimeOff | null; onTimeOffClose?: () => void };
+type Props = { date: string; timeOff: TutorTimeOff[]; events: TutorCalendarEvent[]; onChanged: () => void; selectedTimeOff?: TutorTimeOff | null; onTimeOffClose?: () => void; size?: ButtonProps["size"]; className?: string };
 type Draft = { local_date: string; all_day: boolean; start_time: string; end_time: string; description: string };
 const emptyDraft = (date: string): Draft => ({ local_date: date, all_day: false, start_time: "", end_time: "", description: "" });
 
@@ -21,7 +22,7 @@ export function timeOffStarted(row: Pick<TutorTimeOff, "local_date" | "all_day" 
   return new Date(`${row.local_date}T${row.all_day ? "00:00" : (row.start_time || "00:00").slice(0, 5)}:00+03:00`).getTime() <= now;
 }
 
-export function TutorCalendarManagement({ date, timeOff, events, onChanged, selectedTimeOff, onTimeOffClose }: Props) {
+export function TutorCalendarManagement({ date, timeOff, events, onChanged, selectedTimeOff, onTimeOffClose, size, className }: Props) {
   const queryClient = useQueryClient();
   const [availabilityOpen, setAvailabilityOpen] = useState(false);
   const [open, setOpen] = useState(false);
@@ -71,9 +72,9 @@ export function TutorCalendarManagement({ date, timeOff, events, onChanged, sele
   };
 
   return <>
-    <div className="flex flex-wrap gap-2">
-      <Button variant="outline" onClick={() => setAvailabilityOpen(true)}><CalendarBlank className="mr-2 size-4" />Müsaitliği düzenle</Button>
-      <Button onClick={() => { setEditing(null); setDraft(emptyDraft(date)); setError(""); setConflictHref(""); setOpen(true); }}><Plus className="mr-2 size-4" />Meşguliyet ekle</Button>
+    <div className={cn("flex flex-wrap gap-2", className)}>
+      <Button size={size} onClick={() => setAvailabilityOpen(true)}><CalendarBlank className="mr-2 size-4" aria-hidden="true" />Müsaitliği düzenle</Button>
+      <Button size={size} variant="outline" onClick={() => { setEditing(null); setDraft(emptyDraft(date)); setError(""); setConflictHref(""); setOpen(true); }}><Plus className="mr-2 size-4" aria-hidden="true" />Meşguliyet ekle</Button>
     </div>
     <DayAvailabilityDialog open={availabilityOpen} onOpenChange={setAvailabilityOpen} dayOfWeek={(new Date(`${date}T12:00:00`).getDay() + 6) % 7} date={date} dayLabel={new Date(`${date}T12:00:00`).toLocaleDateString("tr-TR", { weekday: "long", day: "numeric", month: "long" })} calendarEvents={events} onChanged={onChanged} />
     <Dialog open={open} onOpenChange={(value) => { if (!value) close(); }}>
