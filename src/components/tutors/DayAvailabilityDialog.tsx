@@ -20,6 +20,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { TimeSelect } from "@/components/ui/time-select";
 import { availabilityRulesOverlap } from "@/lib/availability";
@@ -29,12 +30,24 @@ function formatRuleTime(t: string | null): string {
   return t.slice(0, 5);
 }
 
+const DAY_SHORT = ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"];
+
+// Dates are "YYYY-MM-DD" Istanbul calendar days; noon UTC keeps day maths off the DST edge.
+const weekdayOf = (date: string) => (new Date(`${date}T12:00:00Z`).getUTCDay() + 6) % 7;
+function shiftDate(date: string, days: number) {
+  const moved = new Date(`${date}T12:00:00Z`);
+  moved.setUTCDate(moved.getUTCDate() + days);
+  return moved.toISOString().slice(0, 10);
+}
+
 interface DayAvailabilityDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  dayOfWeek: number;
+  /** Where the dialog opens; the tutor can pick another day inside it. */
   date: string;
-  dayLabel: string;
+  /** Kept for callers; the dialog derives both from the day it is showing. */
+  dayOfWeek?: number;
+  dayLabel?: string;
   calendarEvents?: TutorCalendarEvent[];
   onChanged?: () => void;
 }
@@ -42,9 +55,7 @@ interface DayAvailabilityDialogProps {
 export function DayAvailabilityDialog({
   open,
   onOpenChange,
-  dayOfWeek,
-  date,
-  dayLabel,
+  date: initialDate,
   calendarEvents = [],
   onChanged,
 }: DayAvailabilityDialogProps) {
@@ -54,10 +65,13 @@ export function DayAvailabilityDialog({
   const [timeError, setTimeError] = useState<string | null>(null);
   const [resetting, setResetting] = useState(false);
   const [mode, setMode] = useState<"date" | "weekly">("date");
+  const [date, setDate] = useState(initialDate);
+  const dayOfWeek = weekdayOf(date);
+  const dayLabel = new Date(`${date}T12:00:00Z`).toLocaleDateString("tr-TR", { day: "numeric", month: "long", weekday: "long", timeZone: "UTC" });
 
   useEffect(() => {
-    if (open) { setMode("date"); setStartTime(""); setEndTime(""); setTimeError(null); }
-  }, [open, date]);
+    if (open) { setMode("date"); setDate(initialDate); setStartTime(""); setEndTime(""); setTimeError(null); }
+  }, [open, initialDate]);
 
   const { data: rules = [], isPending: loading, isError, refetch } = useQuery({
     queryKey: ["availability"],
@@ -187,6 +201,35 @@ export function DayAvailabilityDialog({
             <Button type="button" size="sm" variant={mode === "date" ? "default" : "ghost"} disabled={isMutating} onClick={() => setMode("date")}>Yalnızca bu gün</Button>
             <Button type="button" size="sm" variant={mode === "weekly" ? "default" : "ghost"} disabled={isMutating} onClick={() => setMode("weekly")}>Her hafta tekrarla</Button>
           </div>
+          {mode === "date" ? (
+            <div className="space-y-1.5">
+              <Label className="text-xs" htmlFor="availability-date">Tarih</Label>
+              <Input
+                id="availability-date"
+                type="date"
+                value={date}
+                min={istanbulToday()}
+                disabled={createMutation.isPending || deleteMutation.isPending || resetting}
+                onChange={(event) => { if (event.target.value) { setDate(event.target.value); setTimeError(null); } }}
+              />
+            </div>
+          ) : (
+            <div role="group" aria-label="Gün" className="flex flex-wrap gap-1.5">
+              {DAY_SHORT.map((label, index) => (
+                <Button
+                  key={label}
+                  type="button"
+                  size="sm"
+                  variant={index === dayOfWeek ? "default" : "outline"}
+                  aria-pressed={index === dayOfWeek}
+                  disabled={createMutation.isPending || deleteMutation.isPending || resetting}
+                  onClick={() => { setDate(shiftDate(date, index - dayOfWeek)); setTimeError(null); }}
+                >
+                  {label}
+                </Button>
+              ))}
+            </div>
+          )}
           <p className="text-xs text-ink-mid">{scopeDescription}</p>
           {isClosed && <p className="rounded-input border border-error bg-white px-3 py-2 text-sm text-error">Bu gün yeni ders için müsait değilsin.</p>}
           {!loading && !isError && !isClosed && (dayRules.length === 0 ? (

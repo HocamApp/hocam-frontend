@@ -103,3 +103,13 @@ test("availability load failure does not offer writes", async () => {
   assert.ok((screen.getByRole("button",{name:"Ekle"}) as HTMLButtonElement).disabled);
   assert.ok(screen.getByRole("button",{name:"Yeniden dene"}));
 });
+test("availability dialog lets the tutor pick another day without leaving it", async () => {
+  api.defaults.adapter = async config => ({config,data:config.method === "get" ? [] : [],status:200,statusText:"OK",headers:{}});
+  mount();fireEvent.click(screen.getByRole("button",{name:"Müsaitliği düzenle"}));
+  await screen.findByText("Bu gün için müsait saat yok.");
+  fireEvent.click(screen.getByRole("button",{name:"Her hafta tekrarla"}));
+  fireEvent.click(screen.getByRole("button",{name:"Pzt"}));
+  assert.ok(screen.getByText("Bu saatler her pazartesi geçerli."));
+  fireEvent.click(screen.getByRole("button",{name:"Yalnızca bu gün"}));
+  assert.equal((screen.getByLabelText("Tarih") as HTMLInputElement).value,"2099-09-07");
+});
