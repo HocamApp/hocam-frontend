@@ -11,7 +11,7 @@ import { RouteGuard } from "@/components/shared/RouteGuard";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { Button } from "@/components/ui/button";
-import { Slider } from "@/components/ui/slider";
+import { TutorDiscountControl } from "@/components/tutors/TutorDiscountControl";
 import { ProfileToggleRow } from "@/components/profile/ProfileMenuRow";
 import { cn, formatPrice } from "@/lib/utils";
 import { fetchTutorPackageOffers, updateTutorPackageOffers } from "@/lib/paymentsApi";
@@ -352,31 +352,16 @@ function StepDurationsAndDiscount({
                     disabled={isSaving}
                   />
                   {draft.is_offered && (
-                    <div className="space-y-2 pl-2">
-                      <div className="flex items-center justify-between text-xs text-ink-mid">
-                        <span>
-                          İndirim{" "}
-                          <span className="text-ink-mid/70">
-                            (katalog varsayılanı %{offer.catalog_discount_percent})
-                          </span>
-                        </span>
-                        <span className="font-medium text-ink">%{discount}</span>
-                      </div>
-                      <Slider
-                        aria-label={`${planLabel(offer)} indirimi`}
-                        min={0}
-                        max={offer.max_discount_percent}
-                        step={1}
-                        value={[Math.min(discount, offer.max_discount_percent)]}
-                        onValueChange={([value]) => setDraft(offer.plan_id, { discount_percent: value })}
-                        disabled={isSaving}
-                      />
-                      <p className="text-xs text-ink-mid">
-                        Öğrenci fiyatı:{" "}
-                        <span className="font-medium text-ink">{formatPrice(pricing.total)}</span>{" "}
-                        ({offer.lesson_count} ders)
-                      </p>
-                    </div>
+                    <TutorDiscountControl
+                      label={planLabel(offer)}
+                      catalogDiscount={offer.catalog_discount_percent}
+                      maxDiscount={offer.max_discount_percent}
+                      discount={discount}
+                      price={formatPrice(pricing.total)}
+                      lessonCount={offer.lesson_count}
+                      onChange={(value) => setDraft(offer.plan_id, { discount_percent: value })}
+                      disabled={isSaving}
+                    />
                   )}
                 </div>
               );
