@@ -33,7 +33,9 @@ export function YsPillHeading({
     <h2 id={id} className={cn(YS_SECTION_HEADING_CLASSNAME, className)}>
       <span className="flex flex-wrap items-center justify-center gap-x-3 gap-y-2">
         <span>{lead}</span>
-        <span className={cn(YS_PILL_CLASSNAME, "leading-[1.2]")}>{pill}</span>
+        {/* Brand v3: pale pink with ink text. The one full pink pill below
+            the hero is the journey heading's "seç" (BRAND.md §3 rule 8). */}
+        <span className={cn(YS_PILL_CLASSNAME, "leading-[1.2] v3:bg-pink-soft v3:text-ink")}>{pill}</span>
       </span>
     </h2>
   );

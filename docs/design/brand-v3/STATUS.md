@@ -1,6 +1,6 @@
 # Brand v3: status
 
-**This file is the current state of the rollout.** `PLAN.md` is the plan; `BRAND.md` is the color system. Update this file at the end of every task. Last updated 14 October 2026 (Phase 1A).
+**This file is the current state of the rollout.** `PLAN.md` is the plan; `BRAND.md` is the color system. Update this file at the end of every task. Last updated 15 October 2026 (Phase 1B).
 
 ## Where we are
 
@@ -8,7 +8,9 @@ Direction approved (14 October 2026): option "E2" from the palette exploration, 
 
 Phase 0 is merged (#345): the compare harness, the scoped tokens, the `v3:` Tailwind variant and the `NEXT_PUBLIC_BRAND_V3` flag.
 
-Phase 1A is in review (branch `agent/brand-v3-phase1a-20261014`): the hero collage, the tutor cards and the subject tiles, all behind the flag. With the flag off the homepage and the other pages that use `TutorCard` are pixel-identical to `main`. Next: PR 1B, after Baha has looked at 1A and the open items below.
+Phase 1A is merged (#347): the hero collage, the tutor cards and the subject tiles, with Baha's review fixes.
+
+Phase 1B is in review (branch `agent/brand-v3-phase1b-20261015`): the verified band, the student steps, pricing and guarantees, all behind the flag. With the flag off every page checked is pixel-identical to `main`. Next: PR 1C (T1.9 to T1.12), after Baha has looked at 1B.
 
 ## Progress
 
@@ -17,15 +19,15 @@ Phase 1A is in review (branch `agent/brand-v3-phase1a-20261014`): the hero colla
 | T0.1 Mockup in compare harness | done | #345 | `npm run brand:compare` → `screenshots/brand-v3/` |
 | T0.2 Tokens | done | #345 | See "Phase 0 notes" for three additions to the plan |
 | T0.3 Flag | done | #345 | Flag off: pixel-identical to `main`, both `HOME_V2` states, 1440/390, light/dark |
-| T1.1 Hero | in review | #347 | Collage (D4), generic notification card (D3) |
-| T1.2 Tutor directory | in review | #347 | Free-trial tag skipped (Baha) |
+| T1.1 Hero | done | #347 | Collage (D4), generic notification card (D3) |
+| T1.2 Tutor directory | done | #347 | Free-trial tag skipped (Baha) |
 | T1.2b Promo row (new) | skipped | | D7: skip for now |
-| T1.3 Subject grid | in review | #347 | |
-| T1.4 Verified band | not started | | |
-| T1.5 University strip | no change | | |
-| T1.6 Student steps | not started | | |
-| T1.7 Pricing | not started | | |
-| T1.8 Guarantees | not started | | |
+| T1.3 Subject grid | done | #347 | |
+| T1.4 Verified band | in review | #351 | Black type and button on the pink band, black checklist card; hex literals gone |
+| T1.5 University strip | checked, no change | #351 | The heading picks up the v3 black through `--ys-neutral-strong`; the logos keep their own colours; edge fades are `--paper` (unchanged). Nothing strong, so §3 holds |
+| T1.6 Student steps | in review | #351 | Floating notification cards not added |
+| T1.7 Pricing | in review | #351 | |
+| T1.8 Guarantees | in review | #351 | |
 | T1.9 Parents panel | not started | | |
 | T1.10 Tutor band | not started | | |
 | T1.11 Testimonials | not started | | |
@@ -52,6 +54,8 @@ Phase 1A is in review (branch `agent/brand-v3-phase1a-20261014`): the hero colla
 ## Open for Baha
 
 - Nothing open from Phase 1A. See "Answered after Phase 1A review" below.
+- **Pricing: "En popüler" and the selected plan are different plans.** The mockup puts the pink border and the "En popüler" tag on the same plan. On the site the example opens on the 1-month plan (`EXAMPLE_SELECTED_DAYS = 30`), while "En popüler" is the 3-month plan (`MOST_POPULAR_DURATION_DAYS = 90` in `lib/lessonPricing.ts`). So the pink border and the pink tag sit on two different rows. Should the example open on the popular plan? That would change which price the box leads with.
+- **Floating cards in the student steps (T1.6, optional).** Not added. The mockup's two cards ("Paket talebin gönderildi", "Yeni mesaj · Salı 18:00 uyar mı?") would need new copy, and the second has a person's photo and a made-up message. Want them, with generic text like the hero card?
 
 ## Phase 0 notes
 
@@ -101,10 +105,33 @@ What changes under v3, and where:
 - **Rank tiers (BRAND.md §4)** on the card photo: top 1.000 is an ink pill with a star, top 5.000 an ink pill, the rest an ink outline. In dark, `bg-ink` flips light and a yellow star vanished on it, so in dark the star is black. Under v3 the rank leaves the stats rail and goes onto the photo.
 - **Favourite button**: a white circle with a pink heart, moved onto the photo's top-right corner.
 
+## Phase 1B notes
+
+How it was checked:
+- Flag off: frozen screenshots pixel-diffed against `main` on `/` (HOME_V2 on and off), `/yks-ozel-ders`, `/hocalar-nasil-dogrulaniyor` and `/nasil-calisir`. The last two use `YsChecklistCard` and the step components outside the homepage. All identical at 1440 and 390, light and dark. The pricing plan box only renders for a signed-in user, so it was checked through a temporary preview route (not committed) on both `main` and the branch: identical with the flag off.
+- Flag on: `npm run brand:compare` with `HOME_V2=true`, plus the plan box through the preview route in both themes. At 390 there's no horizontal scroll.
+- Tests: `src/components/yemeksepeti/YsBrandV3Phase1B.test.tsx`. `PackageExample` in `YsPricing.tsx` is now exported for it.
+
+What changes under v3:
+- **T1.4 verified band:** stays full pink. Its type is `--on-accent` (black, 5.3:1). The "İlk 15.000" pill is yellow through the `--gold` alias. The button is black with paper text. I used `--band`/`--on-band` rather than the plan's `bg-ink text-paper`, because ink flips light in dark mode while the pink band doesn't. The checklist card is `--band`, with `--on-band-quiet` check circles and `--on-band-mid` secondary text. The Phase 0 hex literals on the button are gone: its text is `--ink-on-light` and its hover a new `--surface-pressed-on-light` token (same values, so identical with the flag off).
+- **T1.6 student steps:** no left rule or dividers. The active step is a white (`--surface`) card with a yellow number tile, the others have white tiles. The screenshot sits as a white card on a pale pink backdrop, on wide screens and phones alike. The heading's "seç" pill stays full pink, the one allowed below the hero.
+- **T1.7 pricing:** the heading pill is pale pink with ink text. The three fact cards each get the same 64px pale pink tile (40/dakika, ₺, 20'/deneme; text in `ysHomeCopy.ts`, numbers from `ysHomeFacts.ts`). The plan box is `--band`. Plan rows are themed (paper, the selected one surface) with a 2px pink border on the selected plan, and the radio dot is pink. "En popüler" is pink: `--pink-deep`, not `--pink`, because the text is 11px white (D1's reasoning, 4.8:1 against 3.7:1). Discount tags are `--yellow-soft`, check circles `--on-band-quiet`, and the avatar has no ring (its fallback initials sit on `--on-band-quiet`).
+- **T1.8 guarantees:** the heading pill is pale pink. All four icon tiles are pale yellow, 48px. The "iptal ve iade koşulları" link is ink and underlined instead of pink: pink text on a white card is 3.5:1 (BRAND.md §6).
+
+Composition (BRAND.md §3):
+- Verified band: the pink band is the strong moment. The black checklist card and button are the plan's and the mockup's; on a pink surface, black is the text colour.
+- Student steps: the "seç" pill is the strong moment. The yellow active-number tile is a small highlight on one row only.
+- Pricing: the black plan box is the strong moment. The fact tiles and discount tags are soft.
+- Guarantees: soft only (pale pink pill, pale yellow tiles).
+
 ## Intentional differences from the mockup
 
 - **Hero:** no "YKS 2027 için hocalar ders alıyor" chip (no copy or fact for it) and no search bar (D2). The headline, subline and buttons keep the site's sizes and copy. The audience pills keep their down arrows next to the new dots.
 - **Collage:** no university caption on the photo. In the mockup the notification card covers it, and on a phone the card covered it here too. The photo's alt text names the university.
 - **Notification card (D3):** an icon in a pale pink circle instead of Zeynep's photo, and generic text.
 - **Tutor cards:** keep the site's horizontal card (photo, bio, price rail) rather than the mockup's vertical one. Only the treatments in PLAN.md T1.2 are applied. Real tutors, prices and ranks, not the demo ones.
+- **Verified band button** is `--band`, not `bg-ink`, so it stays black in dark mode (see Phase 1B notes).
+- **Student steps:** the site's real step texts and screenshots; no floating notification cards (open for Baha). The step tabs keep their click-to-switch behaviour.
+- **Pricing fact cards** keep the site's label/value/body text beside the new tile. The mockup folds them into one line ("Ders başı 400 – 1.400 ₺").
+- **Pricing plan box:** real plans for the top-rated tutor, shown only to signed-in visitors as before. Rows are a vertical list, not the mockup's 2×2 grid. The "En popüler" tag is `--pink-deep` and unrotated.
 - **Subject tiles:** every subject the API returns (30) on desktop, the first 8 plus "Tüm dersleri gör" below 768px; not the mockup's 12. API order. Hover draws an ink ring instead of the mockup's lift.

@@ -48,12 +48,35 @@ function priceRangeLabel() {
   return `${min} – ${formatPrice(PRICE_RANGE_TL.max)}`;
 }
 
-function FactCard({ label, value, body }: { label: string; value: ReactNode; body?: ReactNode }) {
+function FactCard({
+  label,
+  value,
+  body,
+  tile,
+}: {
+  label: string;
+  value: ReactNode;
+  body?: ReactNode;
+  /** Brand v3 only: a pale pink tile in front of the text. Same tint on all
+      three, so the row never cycles colours (BRAND.md §3 rule 3). */
+  tile: { big: string; small?: string };
+}) {
   return (
-    <div className="rounded-card border border-line bg-surface px-6 py-[22px]">
-      <p className="text-[13px] font-medium leading-6 text-ink-mid">{label}</p>
-      <p className="mt-1 text-[28px] font-bold leading-[34px] tracking-[-0.4px]">{value}</p>
-      {body && <p className="mt-1.5 text-small leading-[21px] text-ink-mid">{body}</p>}
+    <div className="rounded-card border border-line bg-surface px-6 py-[22px] v3:flex v3:items-center v3:gap-[18px] v3:p-[22px]">
+      <span
+        aria-hidden
+        className="hidden size-16 flex-none flex-col items-center justify-center rounded-[18px] bg-pink-soft text-ink v3:flex"
+      >
+        <span className={tile.small ? "text-[22px] font-extrabold leading-none" : "text-[26px] font-extrabold"}>
+          {tile.big}
+        </span>
+        {tile.small && <span className="text-[11px]">{tile.small}</span>}
+      </span>
+      <div className="min-w-0">
+        <p className="text-[13px] font-medium leading-6 text-ink-mid">{label}</p>
+        <p className="mt-1 text-[28px] font-bold leading-[34px] tracking-[-0.4px]">{value}</p>
+        {body && <p className="mt-1.5 text-small leading-[21px] text-ink-mid">{body}</p>}
+      </div>
     </div>
   );
 }
@@ -69,18 +92,23 @@ function FactCard({ label, value, body }: { label: string; value: ReactNode; bod
  * Plans come from `/payments/tutors/{id}/offered-plans/`, which needs a
  * signed-in user, so `YsPricing` only asks for one. If the call fails the box
  * is hidden; there is no hard-coded fallback.
+ *
+ * Exported for its test.
  */
-function PackageExample({ tutor, options }: { tutor: TutorProfile; options: PackagePlan[] }) {
+export function PackageExample({ tutor, options }: { tutor: TutorProfile; options: PackagePlan[] }) {
   const price = formatPrice(tutor.hourly_price);
   return (
     <Link
       href={`/tutors/${tutor.id}`}
-      className="block min-w-0 rounded-card bg-pink-pale p-7 text-[var(--ink-on-light)] transition-colors duration-[--duration-state]"
+      /* Brand v3: the plan box is the section's one strong moment, --band.
+         Its plan rows turn themed (paper/surface, --ink) so the pale yellow
+         discount tags and the pink selection read in both themes. */
+      className="block min-w-0 rounded-card bg-pink-pale p-7 text-[var(--ink-on-light)] transition-colors duration-[--duration-state] v3:rounded-[28px] v3:bg-band v3:text-on-band"
     >
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="text-[13px] font-bold uppercase tracking-[0.12em]">{copy.exampleTitle}</p>
-          <p className="mt-0.5 text-small text-[var(--ink-mid-on-light)]">
+          <p className="mt-0.5 text-small text-[var(--ink-mid-on-light)] v3:text-on-band-mid">
             {copy.exampleSub(EXAMPLE_LESSONS_PER_WEEK, price)}
           </p>
         </div>
@@ -89,13 +117,13 @@ function PackageExample({ tutor, options }: { tutor: TutorProfile; options: Pack
             <b className="block text-[15px] leading-5">
               {tutor.name} {tutor.surname}
             </b>
-            <span className="text-[13px] text-[var(--ink-mid-on-light)]">
+            <span className="text-[13px] text-[var(--ink-mid-on-light)] v3:text-on-band-mid">
               {copy.examplePrice(price, LESSON_MINUTES)}
             </span>
           </div>
           <Avatar className="size-10 rounded-[10px]">
             <AvatarImage src={tutor.profile_picture || undefined} alt="" />
-            <AvatarFallback className="rounded-[10px] bg-ink text-xs font-bold text-paper">
+            <AvatarFallback className="rounded-[10px] bg-ink text-xs font-bold text-paper v3:bg-on-band-quiet v3:text-on-band">
               {tutor.name.charAt(0)}
               {tutor.surname.charAt(0)}
             </AvatarFallback>
@@ -118,27 +146,33 @@ function PackageExample({ tutor, options }: { tutor: TutorProfile; options: Pack
               className={cn(
                 "flex items-center gap-3.5 rounded-[14px] bg-white px-[18px] py-3.5",
                 selected ? "border-[1.5px] border-[var(--ink-on-light)]" : "border border-[var(--line-on-light)]",
+                "v3:rounded-[18px] v3:text-ink",
+                selected ? "v3:border-2 v3:border-pink v3:bg-surface" : "v3:border-2 v3:border-transparent v3:bg-paper",
               )}
             >
               <span
                 className={cn(
                   "grid size-5 flex-none place-items-center rounded-full border-[1.5px]",
                   selected ? "border-[var(--ink-on-light)]" : "border-[var(--ink-mid-on-light)]",
+                  "v3:border-2 v3:border-ink",
                 )}
               >
-                {selected && <span className="size-2.5 rounded-full bg-[var(--ink-on-light)]" />}
+                {selected && <span className="size-2.5 rounded-full bg-[var(--ink-on-light)] v3:bg-pink" />}
               </span>
               <span className="flex min-w-0 flex-1 flex-col items-start gap-1">
                 <b className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[17px] font-bold leading-[22px]">
                   {formatPlanDuration(days)}
                   {days === MOST_POPULAR_DURATION_DAYS && (
-                    <span className="whitespace-nowrap rounded-pill bg-[var(--ink-on-light)] px-2 text-[11px] font-semibold leading-[18px] text-white">
+                    /* Brand v3: the "En popüler" tag is pink. --pink-deep
+                       rather than --pink because the text is small and
+                       white (D1: 4.8:1 against 3.7:1). */
+                    <span className="whitespace-nowrap rounded-pill bg-[var(--ink-on-light)] px-2 text-[11px] font-semibold leading-[18px] text-white v3:bg-pink-deep">
                       {copy.planMostPopular}
                     </span>
                   )}
                 </b>
                 {planPricing.discountPercent > 0 && (
-                  <span className="inline-flex rounded-[6px] bg-gold px-2 text-xs font-semibold leading-5 text-gold-ink">
+                  <span className="inline-flex rounded-[6px] bg-gold px-2 text-xs font-semibold leading-5 text-gold-ink v3:bg-yellow-soft v3:text-ink">
                     {copy.planAdvantage(planPricing.discountPercent)}
                   </span>
                 )}
@@ -147,7 +181,7 @@ function PackageExample({ tutor, options }: { tutor: TutorProfile; options: Pack
                 <b className="block text-[18px] font-bold leading-[22px]">
                   {formatPrice(planPricing.discountedPerLesson)}
                 </b>
-                <span className="text-xs text-[var(--ink-mid-on-light)]">
+                <span className="text-xs text-[var(--ink-mid-on-light)] v3:text-ink-mid">
                   {copy.planPerLesson(plan.lesson_count)}
                 </span>
               </span>
@@ -156,7 +190,7 @@ function PackageExample({ tutor, options }: { tutor: TutorProfile; options: Pack
         })}
       </div>
 
-      <div className="mt-4 flex flex-col gap-1.5 text-[13px] leading-[19px] text-[var(--ink-mid-on-light)]">
+      <div className="mt-4 flex flex-col gap-1.5 text-[13px] leading-[19px] text-[var(--ink-mid-on-light)] v3:text-on-band-mid">
         <PricingNote>{copy.noteOneTime}</PricingNote>
         <PricingNote>{copy.noteNoCharge}</PricingNote>
         <YsTodoGate value={COMMISSION_PERCENT} label="D3 onayı">
@@ -170,7 +204,13 @@ function PackageExample({ tutor, options }: { tutor: TutorProfile; options: Pack
 function PricingNote({ children }: { children: ReactNode }) {
   return (
     <span className="flex items-start gap-2">
-      <Check className="mt-0.5 size-4 flex-none text-success" aria-hidden />
+      {/* Brand v3: a quiet circle on the black box, not a coloured tick
+          (BRAND.md §3 rule 7). Drawn on the icon itself (background and
+          padding on the svg) so the markup is the same with the flag off. */}
+      <Check
+        className="mt-0.5 size-4 flex-none text-success v3:size-[18px] v3:rounded-pill v3:bg-on-band-quiet v3:p-[3px] v3:text-on-band"
+        aria-hidden
+      />
       <span>{children}</span>
     </span>
   );
@@ -224,12 +264,18 @@ export function YsPricing() {
               label={copy.lessonKey}
               value={copy.lessonValue(LESSON_MINUTES)}
               body={copy.lessonBody(LESSONS_PER_WEEK.min, LESSONS_PER_WEEK.max)}
+              tile={copy.tileLesson(LESSON_MINUTES)}
             />
-            <FactCard label={copy.rangeKey} value={Children.toArray([priceRangeLabel()])} />
+            <FactCard
+              label={copy.rangeKey}
+              value={Children.toArray([priceRangeLabel()])}
+              tile={copy.tilePrice()}
+            />
             <FactCard
               label={copy.trialKey}
               value={copy.trialValue}
               body={copy.trialBody(TRIAL_MINUTES, MONTHLY_TRIAL_LIMIT)}
+              tile={copy.tileTrial(TRIAL_MINUTES)}
             />
           </div>
 
