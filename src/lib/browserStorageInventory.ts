@@ -82,6 +82,15 @@ export const BROWSER_STORAGE_INVENTORY: readonly BrowserStorageEntry[] = [
     required: true,
   },
   {
+    name: "hocam:ui-hints:v1:{kullanıcı}",
+    kind: "Yerel depolama",
+    purpose: "Hoca panosundaki kurulum ipuçlarının gösterilip kapatıldığını hesap başına hatırlar. Asıl kayıt hesabında tutulur, bu kopya yalnızca bağlantı sorununda yedek olur.",
+    provider: "HOCAM",
+    duration: "Tarayıcı verileri silinene kadar",
+    category: "Tercih",
+    required: true,
+  },
+  {
     name: "hocam:hoca-bul-draft:v1:{kullanıcı}",
     kind: "Yerel depolama",
     purpose: "Yarım kalan Hoca Bul yanıtlarını aynı hesap için geri yükler.",

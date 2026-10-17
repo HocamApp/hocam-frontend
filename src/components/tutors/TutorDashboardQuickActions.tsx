@@ -1,9 +1,12 @@
 "use client";
 
+import { useMemo, useRef } from "react";
 import Link from "next/link";
 import { ArrowRight } from "@phosphor-icons/react";
 
 import { TutorCalendarManagement } from "@/components/tutor-calendar/TutorCalendarManagement";
+import { AvailabilityDialogHint } from "@/components/tutors/AvailabilityDialogHint";
+import { TutorSetupTour } from "@/components/tutors/TutorSetupTour";
 import { istanbulToday, type TutorCalendarEvent, type TutorTimeOff } from "@/lib/tutorCalendar";
 
 // Stable references: the calendar page feeds the busy list and the "lessons
@@ -23,6 +26,10 @@ const linkClassName =
  * busy block is the outline alternative.
  */
 export function TutorDashboardQuickActions() {
+  const packagesRef = useRef<HTMLAnchorElement>(null);
+  const availabilityRef = useRef<HTMLButtonElement>(null);
+  const anchors = useMemo(() => ({ packages: packagesRef, availability: availabilityRef }), []);
+
   return (
     <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
       <nav aria-label="Hoca yönetimi" className="grid grid-cols-2 gap-3 lg:w-[28rem]">
@@ -30,7 +37,7 @@ export function TutorDashboardQuickActions() {
           Rezervasyonlar
           <ArrowRight className="h-5 w-5 shrink-0" aria-hidden="true" />
         </Link>
-        <Link href="/dashboard/tutor/packages" className={linkClassName}>
+        <Link ref={packagesRef} href="/dashboard/tutor/packages" className={linkClassName}>
           Paket ayarları
           <ArrowRight className="h-5 w-5 shrink-0" aria-hidden="true" />
         </Link>
@@ -41,8 +48,11 @@ export function TutorDashboardQuickActions() {
         events={NO_EVENTS}
         onChanged={noop}
         size="lg"
+        availabilityButtonRef={availabilityRef}
+        availabilityIntro={<AvailabilityDialogHint />}
         className="gap-3 max-sm:grid max-sm:grid-cols-1 lg:flex-nowrap"
       />
+      <TutorSetupTour anchors={anchors} />
     </div>
   );
 }

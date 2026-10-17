@@ -1388,6 +1388,8 @@ export interface UserPreferences {
   notify_email: boolean;
   notify_coaching_updates: boolean;
   language: string;
+  /** Per-user "has seen / dismissed" state for in-product hints. Absent until the backend field ships. */
+  ui_hints?: Record<string, Record<string, unknown>>;
 }
 
 export interface ProfileStats {
