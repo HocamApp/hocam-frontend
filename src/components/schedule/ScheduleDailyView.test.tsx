@@ -47,23 +47,20 @@ function renderDay(events: ScheduleEvent[]) {
 }
 
 describe("the daily grid", () => {
-  it("fills every half-hour touched by tutor availability without filling adjacent slots", () => {
+  it("draws tutor availability as one card spanning the half-hours it covers", () => {
     const availability = { ...block("available", "09:30", 90), source: "availability" as const, title: "Müsait" };
     render(<ScheduleDailyView day={DAY} events={[availability]} pendingKeys={new Set()} tutorHalfHourGrid />);
-    assert.ok(screen.getByLabelText("Müsait: 09:30–10:00"));
-    assert.ok(screen.getByLabelText("Müsait: 10:00–10:30"));
-    assert.ok(screen.getByLabelText("Müsait: 10:30–11:00"));
-    assert.equal(screen.queryByLabelText("Müsait: 09:00–09:30"), null);
-    assert.equal(screen.queryByLabelText("Müsait: 11:00–11:30"), null);
+    assert.equal(screen.getAllByText(/09:30 - 11:00/).length, 1);
+    assert.equal(screen.getAllByText("Müsait").length, 1);
+    assert.equal((screen.getByText("Müsait").closest("[style*='grid-row']") as HTMLElement).style.gridRow, "4 / span 3");
   });
 
   it("clips irregular minutes and keeps two availability ranges beside a lesson", () => {
     const first = { ...block("first", "09:45", 25), source: "availability" as const, title: "Müsait" };
     const second = { ...block("second", "11:00", 30), source: "availability" as const, title: "Müsait" };
     render(<ScheduleDailyView day={DAY} events={[first, second, block("Ders", "09:50", 40)]} pendingKeys={new Set()} tutorHalfHourGrid />);
-    assert.ok(screen.getByLabelText("Müsait: 09:45–10:00"));
-    assert.ok(screen.getByLabelText("Müsait: 10:00–10:10"));
-    assert.ok(screen.getByLabelText("Müsait: 11:00–11:30"));
+    assert.ok(screen.getByText(/09:45 - 10:10/));
+    assert.ok(screen.getByText(/11:00 - 11:30/));
     assert.ok(screen.getByText("Ders"));
   });
   it("exposes the time rail as a labelled daily calendar", () => {
