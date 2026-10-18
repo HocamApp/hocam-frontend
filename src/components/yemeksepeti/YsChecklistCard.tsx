@@ -8,15 +8,19 @@ const VARIANTS = {
      light theme's inks (`--ink-on-light`, `--ink-mid-on-light`,
      `--line-on-light`), the same exception as the band's white pill. */
   band: {
-    card: "bg-white text-[var(--ink-on-light)]",
-    divider: "border-[var(--line-on-light)]",
-    sub: "text-[var(--ink-mid-on-light)]",
+    card: "bg-white text-[var(--ink-on-light)] v3:bg-band v3:text-on-band",
+    divider: "border-[var(--line-on-light)] v3:border-on-band-quiet",
+    sub: "text-[var(--ink-mid-on-light)] v3:text-on-band-mid",
+    /* Brand v3: quiet circles on the black card, not yellow (BRAND.md §3
+       rule 7). */
+    check: "text-success v3:rounded-pill v3:bg-on-band-quiet v3:text-on-band",
   },
   /* Off the band, on the page: themed surface with a hairline. */
   surface: {
     card: "border border-line bg-surface text-ink",
     divider: "border-line",
     sub: "text-ink-mid",
+    check: "text-success",
   },
 } as const;
 
@@ -50,8 +54,8 @@ export function YsChecklistCard({
             key={index}
             className={cn("flex items-start gap-3.5 border-t py-3.5 first:border-t-0", v.divider)}
           >
-            <span className="grid h-6 w-6 flex-none place-items-center text-success">
-              <Check className="h-[22px] w-[22px]" aria-hidden />
+            <span className={cn("grid h-6 w-6 flex-none place-items-center", v.check)}>
+              <Check className="h-[22px] w-[22px] v3:h-3.5 v3:w-3.5" aria-hidden />
             </span>
             <div className="min-w-0">
               <b className="block text-[0.9375rem] font-semibold leading-[22px]">

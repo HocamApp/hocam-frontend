@@ -49,7 +49,9 @@ export function YsGuarantees() {
         CANCELLATION_FREE_HOURS,
         <Link
           href="/iptal-ve-iade"
-          className="font-medium text-pink underline-offset-2 hover:underline"
+          /* Brand v3: ink and underlined. Pink as small text on a white
+             card is 3.5:1 (BRAND.md §6). */
+          className="font-medium text-pink underline-offset-2 hover:underline v3:text-ink v3:underline"
         >
           {copy.cancel.policyLink}
         </Link>,
@@ -75,7 +77,9 @@ export function YsGuarantees() {
               key={question}
               className="flex min-w-0 flex-col gap-2.5 rounded-card border border-line bg-surface p-6"
             >
-              <span className="grid size-11 place-items-center rounded-[12px] bg-paper text-ink">
+              {/* Brand v3: all four tiles pale yellow (one treatment for the
+                  row, BRAND.md §3 rule 3). */}
+              <span className="grid size-11 place-items-center rounded-[12px] bg-paper text-ink v3:size-12 v3:rounded-[14px] v3:bg-yellow-soft">
                 <Icon className="size-[22px]" aria-hidden />
               </span>
               <h3 className="mt-1.5 text-[18px] font-semibold leading-[25px]">{question}</h3>
