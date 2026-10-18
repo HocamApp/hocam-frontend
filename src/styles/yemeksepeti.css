@@ -739,14 +739,19 @@
  */
 .ys-sheen {
   background-image:
-    radial-gradient(115% 85% at 76% 12%, #ffee9e 0%, rgb(255 238 158 / 0%) 58%),
-    radial-gradient(90% 70% at 12% 92%, #ffe064 0%, rgb(255 224 100 / 0%) 62%);
+    radial-gradient(115% 85% at 76% 12%, var(--gold-sheen-a) 0%, var(--gold-sheen-a-clear) 58%),
+    radial-gradient(90% 70% at 12% 92%, var(--gold-sheen-b) 0%, var(--gold-sheen-b-clear) 62%);
   opacity: 0;
   transition: opacity var(--duration-state) linear;
 }
 
 .group\/card:hover .ys-sheen {
   opacity: 1;
+}
+/* Brand v3: the cards keep their soft tint on hover and only the border
+   turns ink, so the gold sheen has nothing to sit on (PLAN.md T1.11). */
+[data-brand="v3"] .ys-sheen {
+  display: none;
 }
 
 /* ---------------------------------------------------------------- footer -- */

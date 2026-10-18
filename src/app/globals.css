@@ -117,6 +117,17 @@
     --on-band-mid: rgb(251 246 246 / 70%);
     --on-band-quiet: rgb(251 246 246 / 14%);
 
+    /* The testimonial card's gold hover (pre-v3 look, flag off only): the
+       credential line's --gold-ink at 78% and the two blooms of the
+       .ys-sheen overlay in yemeksepeti.css. Same values as the literals they
+       replace; one value in both themes, as before. Brand v3 turns the
+       sheen off and does not use these. Removed in Phase 3. */
+    --gold-ink-mid: rgb(74 59 0 / 78%);
+    --gold-sheen-a: #ffee9e;
+    --gold-sheen-a-clear: rgb(255 238 158 / 0%);
+    --gold-sheen-b: #ffe064;
+    --gold-sheen-b-clear: rgb(255 224 100 / 0%);
+
     /*
      * Subject colours for the study calendar.
      *

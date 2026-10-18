@@ -214,9 +214,17 @@ export const guarantees = {
   },
 } as const;
 
+/* Brand v3 splits the lead: its first sentence becomes the heading and
+   "Veliler için" a label above it, as in the mockup. Same words either way. */
+const parentsHeadline = "Çocuğunuzun kiminle, nerede ders aldığını bilin";
+const parentsLeadRest =
+  "Hocalarımız YKS'de derece yapmış, belgeleri tek tek incelenmiş üniversite öğrencileri.";
+
 export const parents = {
   title: "Veliler için",
-  lead: "Çocuğunuzun kiminle, nerede ders aldığını bilin. Hocalarımız YKS'de derece yapmış, belgeleri tek tek incelenmiş üniversite öğrencileri.",
+  lead: `${parentsHeadline}. ${parentsLeadRest}`,
+  headline: parentsHeadline,
+  leadRest: parentsLeadRest,
   cta: "Veliler için tüm bilgiler",
   onPlatform: {
     title: "Her şey platformda",
@@ -262,6 +270,8 @@ export interface TutorStepFacts {
 
 export const tutors = {
   title: "YKS'deki dereceni gelire çevir",
+  /* Brand v3 sets this word of the title on a yellow highlight. */
+  titleHighlight: "gelire",
   lead: "Geçen sene çözdüğün soruları bu sene sınava girenlere anlat. Saatlerini sen seçersin, fiyatını sen belirlersin.",
   ctaApply: "Hoca olarak başvur",
   ctaLearnMore: "Hocalık hakkında her şey",

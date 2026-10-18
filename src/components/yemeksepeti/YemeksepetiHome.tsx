@@ -67,9 +67,9 @@ export function YemeksepetiHome({
           <YsHowItWorks v2 lessonRoomShot={lessonRoomShot} />
           <YsPricing />
           <YsGuarantees />
-          <YsParentsPanel className="mt-[88px] md:mt-[120px]" />
+          <YsParentsPanel className="mt-[88px] md:mt-[120px]" brandV3={brandV3} />
           {/* Full bleed, like the pink band. */}
-          <YsTutorBand className="mt-[120px]" />
+          <YsTutorBand className="mt-[120px]" brandV3={brandV3} />
         </>
       ) : (
         /* Outside the shell for the same reason the verified band is: the

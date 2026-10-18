@@ -26,6 +26,12 @@ import { approvedTestimonials, type YsTestimonial } from "./ysTestimonialData";
  * reference's yellow kept literally this time, plus the `.ys-sheen` overlay
  * so the fill is satin rather than a paint chip. A filled hover is a colour
  * change and never a lift.
+ *
+ * Brand v3 (PLAN.md T1.11, BRAND.md §5): the cards cycle `--yellow-soft`,
+ * `--surface` with a line, `--pink-soft` (`tone`, by position). Testimonials
+ * are the one row allowed to cycle, and only through soft tints and white.
+ * A quote mark sits on top, ink, pink on the white card. Hover keeps the
+ * tint and turns the border ink; no gold fill, no sheen.
  */
 
 type Testimonial = {
@@ -84,6 +90,14 @@ const TESTIMONIALS: Testimonial[] = [
   },
 ];
 
+/* Brand v3 card tints, cycled by position. Each repeats its fill on hover so
+   the base gold hover never shows through. */
+const V3_TONES = [
+  "v3:border-transparent v3:bg-yellow-soft v3:hover:border-ink v3:hover:bg-yellow-soft",
+  "v3:bg-surface v3:hover:border-ink v3:hover:bg-surface",
+  "v3:border-transparent v3:bg-pink-soft v3:hover:border-ink v3:hover:bg-pink-soft",
+] as const;
+
 export function ReviewCard({
   quote,
   name,
@@ -91,11 +105,19 @@ export function ReviewCard({
   photo,
   className,
   footer,
-}: Testimonial & { className?: string; footer?: ReactNode }) {
+  tone,
+}: Testimonial & {
+  className?: string;
+  footer?: ReactNode;
+  /** Brand v3: position in the row, picks the card's soft tint. Unset keeps the surface card. */
+  tone?: number;
+}) {
+  const v3Tone = tone === undefined ? undefined : tone % V3_TONES.length;
   return (
     <Card
       className={cn(
         "group/card relative isolate h-full w-[16.5rem] shrink-0 cursor-default overflow-hidden border-line bg-surface p-5 shadow-none transition-colors duration-[--duration-state] hover:border-gold hover:bg-gold sm:w-[21rem]",
+        v3Tone !== undefined && V3_TONES[v3Tone],
         className,
       )}
     >
@@ -103,6 +125,17 @@ export function ReviewCard({
           and inert: it carries no meaning and takes no pointer events. */}
       <span aria-hidden className="ys-sheen pointer-events-none absolute inset-0 -z-10" />
       <CardContent className="relative flex h-full flex-col gap-3 p-0">
+        {v3Tone !== undefined && (
+          <span
+            aria-hidden
+            className={cn(
+              "hidden h-7 text-[64px] font-extrabold leading-[0.6] v3:block",
+              v3Tone === 1 ? "text-pink" : "text-ink",
+            )}
+          >
+            “
+          </span>
+        )}
         <div className="flex flex-row items-center gap-3">
           <Image
             src={photo}
@@ -112,15 +145,15 @@ export function ReviewCard({
             className="size-11 shrink-0 rounded-full object-cover"
           />
           <div className="min-w-0">
-            <p className="text-sm font-semibold text-ink transition-colors duration-[--duration-state] group-hover/card:text-gold-ink">
+            <p className="text-sm font-semibold text-ink transition-colors duration-[--duration-state] group-hover/card:text-gold-ink v3:group-hover/card:text-ink">
               {name}
             </p>
-            <p className="text-xs text-ink-mid transition-colors duration-[--duration-state] group-hover/card:text-[rgb(74_59_0_/_78%)]">
+            <p className="text-xs text-ink-mid transition-colors duration-[--duration-state] group-hover/card:text-[var(--gold-ink-mid)] v3:group-hover/card:text-ink-mid">
               {credential}
             </p>
           </div>
         </div>
-        <p className="text-[15px] leading-6 text-ink transition-colors duration-[--duration-state] group-hover/card:text-gold-ink">
+        <p className="text-[15px] leading-6 text-ink transition-colors duration-[--duration-state] group-hover/card:text-gold-ink v3:group-hover/card:text-ink">
           {quote}
         </p>
         {footer}
@@ -134,13 +167,16 @@ export function YsTestimonialCard({
   entry,
   className,
   footer,
+  tone,
 }: {
   entry: YsTestimonial;
   className?: string;
   footer?: ReactNode;
+  tone?: number;
 }) {
   return (
     <ReviewCard
+      tone={tone}
       quote={entry.quote}
       name={entry.name}
       credential={entry.meta}
@@ -168,8 +204,8 @@ function YsStudentTestimonials() {
         {testimonialsTitle}
       </h2>
       <div className="mt-10 grid grid-cols-1 gap-5 lg:grid-cols-3">
-        {entries.map((entry) => (
-          <YsTestimonialCard key={entry.id} entry={entry} />
+        {entries.map((entry, index) => (
+          <YsTestimonialCard key={entry.id} entry={entry} tone={index} />
         ))}
       </div>
     </section>
@@ -190,8 +226,8 @@ export function YsTestimonials({ v2 = false }: { v2?: boolean }) {
 
       <div className="ys-marquee-mask relative mt-8 flex w-full flex-col items-center justify-center">
         <Marquee pauseOnHover className="[--duration:38s]">
-          {TESTIMONIALS.map((item) => (
-            <ReviewCard key={item.name} {...item} />
+          {TESTIMONIALS.map((item, index) => (
+            <ReviewCard key={item.name} {...item} tone={index} />
           ))}
         </Marquee>
       </div>

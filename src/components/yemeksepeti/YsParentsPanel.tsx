@@ -27,6 +27,10 @@ import {
  * request, which is how it works now; recording, a parent joining, a parent
  * paying and support reply time are the owners' answers in ysHomeFacts.ts.
  *
+ * `brandV3` (NEXT_PUBLIC_BRAND_V3): "Veliler için" becomes an ink label pill
+ * and the lead's first sentence the heading, as in the brand v3 mockup. The
+ * icon tiles were already `--paper`. Nothing else changes (PLAN.md T1.9).
+ *
  * `className` carries the space above (the homepage's 120px lead-in, less on
  * /veliler). It goes on the outer element: `.ys-shell` sets its own padding
  * and margin, which would override it.
@@ -34,8 +38,10 @@ import {
 export function YsParentsPanel({
   className,
   showCta = true,
+  brandV3 = false,
 }: {
   className?: string;
+  brandV3?: boolean;
   /** Off on /veliler itself, where the link would point at the same page. */
   showCta?: boolean;
 }) {
@@ -73,13 +79,20 @@ export function YsParentsPanel({
         <div className="rounded-card bg-surface px-6 py-8 lg:p-16">
           <div className="grid grid-cols-1 items-start gap-x-16 gap-y-10 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
             <div className="min-w-0">
+              {brandV3 && (
+                <span className="mb-[18px] inline-flex h-[30px] items-center rounded-pill bg-ink px-3 text-[13px] font-semibold text-paper">
+                  {copy.title}
+                </span>
+              )}
               <h2
                 id="ys-parents-title"
                 className="text-[32px] font-bold leading-9 tracking-[-0.88px] md:text-[44px] md:leading-[46px]"
               >
-                {copy.title}
+                {brandV3 ? copy.headline : copy.title}
               </h2>
-              <p className="mt-4 max-w-[36ch] text-body-l leading-[29px] text-ink-mid">{copy.lead}</p>
+              <p className="mt-4 max-w-[36ch] text-body-l leading-[29px] text-ink-mid">
+                {brandV3 ? copy.leadRest : copy.lead}
+              </p>
               {showCta && (
               <Link
                 href="/veliler"
