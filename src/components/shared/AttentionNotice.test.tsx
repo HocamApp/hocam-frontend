@@ -27,11 +27,13 @@ test("body and action are optional, and the role can be raised to alert", () => 
   assert.equal(notice.querySelectorAll("p").length, 1);
 });
 
-test("it is an ink hairline on the surface colour: no stripe, no tint, no warning hue", () => {
+test("it is a pink hairline on the surface colour with a pink icon and ink text: no stripe, no tint, no warning hue", () => {
   render(<AttentionNotice title="x" />);
   const className = screen.getByRole("status").className;
-  assert.match(className, /border-ink/);
+  assert.match(className, /border-pink/);
+  assert.match(className, /text-ink/);
+  assert.match(screen.getByRole("status").querySelector("svg")?.getAttribute("class") ?? "", /text-pink/);
   assert.match(className, /bg-surface/);
   assert.match(className, /rounded-input/);
-  assert.doesNotMatch(className, /border-l|gold|amber|yellow|bg-paper|error/);
+  assert.doesNotMatch(className, /border-l|gold|amber|yellow|bg-paper|bg-pink|error/);
 });

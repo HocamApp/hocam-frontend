@@ -91,7 +91,7 @@ describe("CoachingSessionList", () => {
     );
   });
 
-  it("offers the support action in an overdue notice as one outline button, and the notice has no stripe or tint", async () => {
+  it("offers the support action in an overdue notice as one pink pill button, and the notice has no stripe or tint", async () => {
     sessions = [
       {
         id: "overdue",
@@ -105,10 +105,11 @@ describe("CoachingSessionList", () => {
     renderList();
     const notice = await screen.findByRole("status");
     const link = notice.querySelector("a") as HTMLAnchorElement;
-    assert.match(link.className, /border-ink/, "outline pill, not an underlined link");
+    assert.match(link.className, /bg-pink/, "pink pill, not an underlined link");
+    assert.match(link.className, /text-white/);
     assert.doesNotMatch(link.className, /underline/);
-    assert.doesNotMatch(notice.className, /border-l|gold|amber|bg-paper/);
-    assert.match(notice.className, /border-ink/);
+    assert.doesNotMatch(notice.className, /border-l|gold|amber|bg-paper|bg-pink/);
+    assert.match(notice.className, /border-pink/);
   });
 
   it("while support is not open yet, the overdue notice says when it will be", async () => {
