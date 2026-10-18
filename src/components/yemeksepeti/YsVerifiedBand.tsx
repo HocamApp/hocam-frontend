@@ -57,7 +57,7 @@ export function YsVerifiedBand({ v2 = false }: { v2?: boolean }) {
       </h2>
 
       {/* The three documents are the TutorVerification fields. */}
-      <p className="mt-4 max-w-[44ch] text-body-l text-white/[0.88]">{copy.lead}</p>
+      <p className="mt-4 max-w-[44ch] text-body-l text-white/[0.88] v3:text-on-accent">{copy.lead}</p>
 
       {/* The rank lockup is the tutor card's own gold badge: gold as a
           surface with --gold-ink on it, which also holds on pink at this
@@ -76,11 +76,15 @@ export function YsVerifiedBand({ v2 = false }: { v2?: boolean }) {
       )}
 
       {/* White, not --surface: the band is pink in both themes, so this is
-          an inverted primary rather than a card. Its ink is the literal
-          light-theme value for the same reason. */}
+          an inverted primary rather than a card. Its ink is the fixed
+          light-theme ink for the same reason.
+
+          Brand v3: black with paper text. `--band`/`--on-band` rather than
+          `bg-ink text-paper`, which flip light in dark mode while the pink
+          under them does not. */}
       <Link
         href="/hocalar-nasil-dogrulaniyor"
-        className="mt-8 inline-flex h-11 items-center rounded-pill bg-white px-[34px] text-body font-semibold text-[#02171a] transition-colors duration-[--duration-state] hover:bg-[#f2ecec]"
+        className="mt-8 inline-flex h-11 items-center rounded-pill bg-white px-[34px] text-body font-semibold text-[var(--ink-on-light)] transition-colors duration-[--duration-state] hover:bg-[var(--surface-pressed-on-light)] v3:bg-band v3:text-on-band v3:hover:bg-band v3:hover:opacity-90"
       >
         {copy.cta}
       </Link>

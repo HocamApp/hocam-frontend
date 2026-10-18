@@ -699,6 +699,12 @@
   );
 }
 
+/* Brand v3: black type on the pink band (BRAND.md §6: --on-accent on
+   --pink is 5.3:1; white on it is 3.7:1). The band stays pink. */
+[data-brand="v3"] .ys-band {
+  color: var(--on-accent);
+}
+
 /*
  * The tutors band: the pink band's cut, mirrored, on ink. Colours come from
  * the component (`bg-ink text-paper`) so the band follows the theme; the two
