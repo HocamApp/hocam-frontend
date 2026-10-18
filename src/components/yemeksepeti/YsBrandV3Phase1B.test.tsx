@@ -20,7 +20,8 @@ let YsVerifiedBand: ComponentType<{ v2?: boolean }>;
 let YsStepTabs: ComponentType<{ label: string; steps: { title: string; body: string[] }[] }>;
 let YsPillHeading: ComponentType<{ id: string; lead: string; pill: string }>;
 let YsGuarantees: ComponentType;
-let PackageExample: ComponentType<{ tutor: TutorProfile; options: PackagePlan[] }>;
+let PackageExample: ComponentType<{ tutor: TutorProfile; options: PackagePlan[]; brandV3?: boolean }>;
+let exampleSelectedDays: (options: PackagePlan[], brandV3: boolean) => number;
 
 before(async () => {
   mock.module("next/link", {
@@ -34,7 +35,7 @@ before(async () => {
   ({ YsStepTabs } = await import("./YsStepTabs"));
   ({ YsPillHeading } = await import("./YsPillHeading"));
   ({ YsGuarantees } = await import("./YsGuarantees"));
-  ({ PackageExample } = await import("./YsPricing"));
+  ({ PackageExample, exampleSelectedDays } = await import("./YsPricing"));
 });
 
 afterEach(cleanup);
@@ -126,6 +127,20 @@ describe("pricing (T1.7)", () => {
 
     assert.match(getByText("En popüler").className, /\bv3:bg-pink-deep\b/);
     assert.match(getByText("%15 fiyat avantajı").className, /\bv3:bg-yellow-soft\b/);
+  });
+
+  it("opens on the \"En popüler\" plan under v3, so the border and the tag share a row", () => {
+    const options = [plan(14, 4, 0), plan(30, 8, 5), plan(90, 24, 15)];
+    assert.equal(exampleSelectedDays(options, false), 30);
+    assert.equal(exampleSelectedDays(options, true), 90);
+    assert.equal(exampleSelectedDays(options.slice(0, 2), true), 30);
+
+    const { container, getByText } = render(<PackageExample tutor={tutor} options={options} brandV3 />);
+    const rows = Array.from(container.querySelectorAll("a [aria-hidden] > div"));
+    const popularRow = getByText("En popüler").closest("[aria-hidden] > div");
+    assert.equal(popularRow, rows[2]);
+    assert.match(rows[2].className, /\bv3:border-pink\b/);
+    assert.doesNotMatch(rows[1].className, /\bv3:border-pink\b/);
   });
 
   it("gives the three fact cards the same pale pink tile", () => {

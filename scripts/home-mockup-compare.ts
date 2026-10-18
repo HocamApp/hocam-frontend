@@ -14,8 +14,9 @@
  * same mockup shot; the dark pair is there to check the site, not to match it.
  *
  * `/` is public, so no login is involved. The entry promo is marked as seen
- * and the privacy card is hidden so neither covers the page. Run with the dev
- * server up:
+ * and the privacy card is hidden so neither covers the page. The site is shot
+ * with reduced motion, so the rotating journey heading stays on its first
+ * word. Run with the dev server up:
  *
  *   npm run home:compare
  *
@@ -87,7 +88,13 @@ async function shootMockup(browser: Browser, viewport: (typeof VIEWPORTS)[number
 }
 
 async function shootSite(browser: Browser, viewport: (typeof VIEWPORTS)[number], theme: Theme) {
-  const context = await browser.newContext({ viewport: { width: viewport.width, height: viewport.height } });
+  /* Reduced motion holds the "Sen sadece ___" heading on its first word
+     (YsJourneyHeading stops rotating under it). Without it a full-page shot
+     lands mid-swap at a random moment and shows a half-drawn word. */
+  const context = await browser.newContext({
+    viewport: { width: viewport.width, height: viewport.height },
+    reducedMotion: "reduce",
+  });
   await context.addInitScript(
     ({ themeKey, theme, promoKey }) => {
       try {

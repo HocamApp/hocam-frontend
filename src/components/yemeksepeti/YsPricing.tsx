@@ -31,9 +31,19 @@ import {
 } from "./ysHomeFacts";
 
 /* The example box shows one tutor at two lessons a week, the lightest
-   package, and opens on the one-month plan. */
+   package, and opens on the one-month plan. Brand v3 opens it on the
+   "En popüler" plan instead, so the pink border and the pink tag sit on the
+   same row (Baha, 18 Oct 2026); a tutor without that plan keeps one month. */
 const EXAMPLE_LESSONS_PER_WEEK = 2;
 const EXAMPLE_SELECTED_DAYS = 30;
+
+/** The plan the example box opens on. Exported for its test. */
+export function exampleSelectedDays(options: PackagePlan[], brandV3: boolean): number {
+  if (brandV3 && options.some((plan) => plan.duration_days === MOST_POPULAR_DURATION_DAYS)) {
+    return MOST_POPULAR_DURATION_DAYS;
+  }
+  return EXAMPLE_SELECTED_DAYS;
+}
 
 /** The example tutor's 2-lessons-a-week plans, shortest first. */
 export function examplePlans(plans: PackagePlan[] | undefined): PackagePlan[] {
@@ -95,8 +105,17 @@ function FactCard({
  *
  * Exported for its test.
  */
-export function PackageExample({ tutor, options }: { tutor: TutorProfile; options: PackagePlan[] }) {
+export function PackageExample({
+  tutor,
+  options,
+  brandV3 = false,
+}: {
+  tutor: TutorProfile;
+  options: PackagePlan[];
+  brandV3?: boolean;
+}) {
   const price = formatPrice(tutor.hourly_price);
+  const selectedDays = exampleSelectedDays(options, brandV3);
   return (
     <Link
       href={`/tutors/${tutor.id}`}
@@ -134,7 +153,7 @@ export function PackageExample({ tutor, options }: { tutor: TutorProfile; option
       <div className="mt-5 flex flex-col gap-2.5" aria-hidden>
         {options.map((plan) => {
           const days = plan.duration_days as number;
-          const selected = days === EXAMPLE_SELECTED_DAYS;
+          const selected = days === selectedDays;
           const planPricing = calculatePackagePricing(
             Number(tutor.hourly_price),
             plan.lesson_count,
@@ -223,7 +242,7 @@ function PricingNote({ children }: { children: ReactNode }) {
  * right a worked package example for the top-rated tutor in the directory's
  * own prefetched first page.
  */
-export function YsPricing() {
+export function YsPricing({ brandV3 = false }: { brandV3?: boolean } = {}) {
   const { isAuthenticated } = useAuth();
   const { data: tutors } = useQuery({
     queryKey: ["tutors", { ordering: "rating" }, 1],
@@ -279,7 +298,7 @@ export function YsPricing() {
             />
           </div>
 
-          {showExample && exampleTutor && <PackageExample tutor={exampleTutor} options={options} />}
+          {showExample && exampleTutor && <PackageExample tutor={exampleTutor} options={options} brandV3={brandV3} />}
         </div>
       </div>
     </section>

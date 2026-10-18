@@ -65,7 +65,7 @@ export function YemeksepetiHome({
         <>
           {/* The rebuilt sections each open their own shell. */}
           <YsHowItWorks v2 lessonRoomShot={lessonRoomShot} />
-          <YsPricing />
+          <YsPricing brandV3={brandV3} />
           <YsGuarantees />
           <YsParentsPanel className="mt-[88px] md:mt-[120px]" />
           {/* Full bleed, like the pink band. */}
