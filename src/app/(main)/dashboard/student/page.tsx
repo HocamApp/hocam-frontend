@@ -44,7 +44,13 @@ import { CoachingSummarySection } from "@/components/dashboard/CoachingSummarySe
 import { CreditSummary } from "@/components/dashboard/CreditSummary";
 import { LessonHistorySection } from "@/components/dashboard/LessonHistorySection";
 import { LessonIssuesSection } from "@/components/dashboard/LessonIssuesSection";
+import { LessonListRow } from "@/components/dashboard/LessonListRow";
 import { LessonStatusChip } from "@/components/dashboard/LessonStatusChip";
+import {
+  SectionBandCount,
+  SectionBandHeading,
+  sectionBandClass,
+} from "@/components/dashboard/SectionBand";
 import { PendingReviewsSection } from "@/components/dashboard/PendingReviewsSection";
 import { bookingStatusExplanation } from "@/lib/bookingStatusCopy";
 import { ParticipantAvatar } from "@/components/messaging/ParticipantAvatar";
@@ -70,8 +76,8 @@ function sortByStart(bookings: Booking[]) {
   );
 }
 
-function formatLessonDay(startTime: string, long = false): string {
-  const date = new Date(bookingInstant(startTime));
+/** "Bugün" or "Yarın" for a lesson that close, otherwise nothing. */
+function relativeLessonDay(startTime: string): "Bugün" | "Yarın" | undefined {
   const lessonDay = bookingDayKey(startTime);
   const today = istanbulDayKey(serverNow());
   const diffDays = Math.round(
@@ -79,7 +85,13 @@ function formatLessonDay(startTime: string, long = false): string {
   );
   if (diffDays === 0) return "Bugün";
   if (diffDays === 1) return "Yarın";
-  return date.toLocaleDateString("tr-TR", {
+  return undefined;
+}
+
+function formatLessonDay(startTime: string, long = false): string {
+  const relative = relativeLessonDay(startTime);
+  if (relative) return relative;
+  return new Date(bookingInstant(startTime)).toLocaleDateString("tr-TR", {
     timeZone: "Europe/Istanbul",
     weekday: long ? "long" : "short",
     day: "numeric",
@@ -288,10 +300,23 @@ function UpcomingLessons({
   highlightedBookingId: string | null;
 }) {
   return (
-    <section aria-labelledby="upcoming-lessons-title" className="rounded-card border border-line bg-surface p-6">
-      <div className="flex items-center justify-between gap-3">
-        <h2 id="upcoming-lessons-title" className="text-h3-m text-ink md:text-h3">Sıradaki derslerin</h2>
-        <Button asChild variant="ghost" size="sm">
+    <section
+      aria-labelledby="upcoming-lessons-title"
+      className="overflow-hidden rounded-card border border-line bg-surface"
+    >
+      <div className={sectionBandClass("pink", "flex-wrap gap-y-3")}>
+        <div className="flex items-center gap-3">
+          <SectionBandHeading id="upcoming-lessons-title" title="Sıradaki derslerin" />
+          {bookings.length > 0 && (
+            <SectionBandCount tone="pink">{bookings.length} ders</SectionBandCount>
+          )}
+        </div>
+        <Button
+          asChild
+          variant="outline"
+          size="sm"
+          className="shrink-0 border-primary-foreground text-primary-foreground"
+        >
           <Link href="/schedule">
             Takvimi aç
             <ArrowSquareOut className="ml-1 size-4" weight="regular" aria-hidden="true" />
@@ -299,46 +324,36 @@ function UpcomingLessons({
         </Button>
       </div>
 
-      {bookings.length > 0 ? (
-        <ol className="mt-6 divide-y divide-line">
-          {bookings.map((booking) => (
-            <li
-              key={booking.id}
-              id={`booking-${booking.id}`}
-              className={cn(
-                "rounded-input py-4 transition-colors [transition-duration:120ms]",
-                highlightedBookingId === booking.id && "bg-pink-pale px-3"
-              )}
-            >
-              <div className="grid grid-cols-[42px_minmax(0,1fr)_auto] items-start gap-3">
-                <ParticipantAvatar name={tutorName(booking)} avatarUrl={booking.tutor.profile_picture} className="h-10 w-10 border border-line" />
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="truncate text-body font-medium text-ink">{booking.subject.name}</span>
-                    <LessonStatusChip status={booking.status} />
-                  </div>
-                  <span className="mt-0.5 block truncate text-small text-ink-mid">{tutorName(booking)}</span>
-                  <p className="mt-1 text-small text-ink-mid">{bookingStatusExplanation(booking.status)}</p>
-                </div>
-                <div className="text-right">
-                  <span className="block text-small font-medium capitalize text-ink">{formatLessonDay(booking.start_time)}</span>
-                  <span className="mt-0.5 block text-small tabular-nums text-ink-mid">{formatTime(booking.start_time)}</span>
-                  {canCancelLesson(booking) && (
-                    <div className="mt-1 flex justify-end">
-                      <CancelLessonButton booking={booking} />
-                    </div>
-                  )}
-                </div>
-              </div>
-            </li>
-          ))}
-        </ol>
-      ) : (
-        <div className="mt-6 flex items-center gap-3 border-y border-line py-4 text-small text-ink-mid">
-          <CalendarDots className="size-5 shrink-0" weight="regular" aria-hidden="true" />
-          Sıradaki dersinden sonra planlanmış başka bir dersin yok.
-        </div>
-      )}
+      <div className="px-6 pb-3">
+        {bookings.length > 0 ? (
+          <ol className="divide-y divide-line">
+            {bookings.map((booking) => (
+              <li
+                key={booking.id}
+                id={`booking-${booking.id}`}
+                className={cn(
+                  "transition-colors [transition-duration:120ms]",
+                  highlightedBookingId === booking.id && "-mx-3 rounded-input bg-pink-pale px-3"
+                )}
+              >
+                <LessonListRow
+                  booking={booking}
+                  relativeLabel={relativeLessonDay(booking.start_time)}
+                  meta={formatTime(booking.start_time)}
+                  chip={<LessonStatusChip status={booking.status} />}
+                  explanation={bookingStatusExplanation(booking.status)}
+                  aside={canCancelLesson(booking) ? <CancelLessonButton booking={booking} /> : undefined}
+                />
+              </li>
+            ))}
+          </ol>
+        ) : (
+          <div className="mt-6 flex items-center gap-3 border-y border-line py-4 text-small text-ink-mid">
+            <CalendarDots className="size-5 shrink-0" weight="regular" aria-hidden="true" />
+            Sıradaki dersinden sonra planlanmış başka bir dersin yok.
+          </div>
+        )}
+      </div>
     </section>
   );
 }
