@@ -11,8 +11,6 @@ const props = {
   label: "Haftada 2 · 6 Ay",
   catalogDiscount: 26,
   maxDiscount: 40,
-  price: "28.416 ₺",
-  lessonCount: 48,
   disabled: false,
   onChange: (_value: number) => {},
 };
@@ -76,4 +74,10 @@ test("the marker is dimmed with the slider while it is saving", () => {
   assert.doesNotMatch(screen.getByLabelText("Varsayılan indirim: %26").className, /opacity-50/);
   rerender(<TutorDiscountControl {...props} discount={26} disabled />);
   assert.match(screen.getByLabelText("Varsayılan indirim: %26").className, /opacity-50/);
+});
+
+test("the control no longer repeats the price: that lives on the plan's toggle row", () => {
+  const { container } = render(<TutorDiscountControl {...props} discount={26} />);
+  assert.equal(container.textContent?.includes("Öğrenci fiyatı"), false);
+  assert.equal(container.textContent?.includes("ders)"), false);
 });

@@ -28,8 +28,6 @@ export function TutorDiscountControl({
   catalogDiscount,
   maxDiscount,
   discount,
-  price,
-  lessonCount,
   disabled,
   onChange,
 }: {
@@ -37,8 +35,6 @@ export function TutorDiscountControl({
   catalogDiscount: number;
   maxDiscount: number;
   discount: number;
-  price: string;
-  lessonCount: number;
   disabled: boolean;
   onChange: (value: number) => void;
 }) {
@@ -80,8 +76,5 @@ export function TutorDiscountControl({
       <Info className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
       <span>Daha düşük indirim, paketin fiyatını artırır. Öğrenciler bu paketi daha az tercih edebilir.</span>
     </p>}
-    <p className="text-xs text-ink-mid">
-      Öğrenci fiyatı: <span className="font-medium text-ink">{price}</span> ({lessonCount} ders)
-    </p>
   </div>;
 }

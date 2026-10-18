@@ -373,6 +373,9 @@ function StepDurationsAndDiscount({
                     checked={draft.is_offered}
                     onChange={(next) => setDraft(offer.plan_id, { is_offered: next })}
                     disabled={isSaving}
+                    trailing={draft.is_offered ? (
+                      <span className="text-lg font-bold tabular-nums text-ink">{formatPrice(pricing.total)}</span>
+                    ) : undefined}
                   />
                   {draft.is_offered && (
                     <TutorDiscountControl
@@ -380,8 +383,6 @@ function StepDurationsAndDiscount({
                       catalogDiscount={offer.catalog_discount_percent}
                       maxDiscount={offer.max_discount_percent}
                       discount={discount}
-                      price={formatPrice(pricing.total)}
-                      lessonCount={offer.lesson_count}
                       onChange={(value) => setDraft(offer.plan_id, { discount_percent: value })}
                       disabled={isSaving}
                     />
