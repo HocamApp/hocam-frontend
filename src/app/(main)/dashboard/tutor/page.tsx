@@ -10,8 +10,6 @@ import {
 } from "@phosphor-icons/react";
 import { toast } from "sonner";
 
-import { AISupportChatWidget } from "@/components/ai/AISupportChatWidget";
-import { TUTOR_DASHBOARD_ASSISTANT } from "@/components/ai/pageAssistantContent";
 import { BookingCard, paymentLabel } from "@/components/lessons/BookingCard";
 import { LessonMaterialsDialog } from "@/components/lessons/LessonMaterialsDialog";
 import { WorkspacePageShell } from "@/components/layout/WorkspacePageShell";
@@ -20,6 +18,8 @@ import { EmptyState } from "@/components/shared/EmptyState";
 import { RouteGuard } from "@/components/shared/RouteGuard";
 import StatusBadge from "@/components/shared/StatusBadge";
 import { TutorialNudgeBanner } from "@/components/shared/TutorialNudgeBanner";
+import { TutorDashboardAssistant } from "@/components/tutors/TutorDashboardAssistant";
+import { TutorDashboardQuickActions } from "@/components/tutors/TutorDashboardQuickActions";
 import { TutorPerformanceSection } from "@/components/tutors/TutorPerformanceSection";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -200,16 +200,7 @@ function TutorDashboardContent() {
       <TutorialNudgeBanner />
       <header className="mt-8 flex min-w-0 items-start gap-4 sm:items-center"><Avatar className="h-12 w-12 shrink-0 border border-line">{profileData.profile_picture && <AvatarImage src={profileData.profile_picture} alt={`${profileData.name} ${profileData.surname}`} />}<AvatarFallback className="bg-ink text-body font-medium text-paper">{getInitials(profileData.name, profileData.surname)}</AvatarFallback></Avatar><div className="min-w-0"><h1 className="text-h2-m font-bold sm:text-h2">{dashboardGreeting()}, {profileData.name}</h1><p className="mt-1 text-small text-ink-mid">{bookings.isError ? "Ders programını şu anda yenileyemiyoruz." : groups.today.length ? `Bugün ${groups.today.length} dersin var${nextBooking ? ` · İlki ${bookingTimeLabel(nextBooking.start_time).split(" – ")[0]}’da` : ""}.` : "Bugün planlanmış dersin yok. Takvimini ve bekleyen işlerini buradan takip edebilirsin."}</p></div></header>
       <div className="mt-8 space-y-8 sm:mt-12">
-        <nav aria-label="Hoca yönetimi" className="grid gap-3 sm:grid-cols-2">
-          <Link href="/dashboard/tutor?tab=bookings" className="flex min-h-14 items-center justify-between rounded-card border border-line bg-surface px-5 py-4 text-small font-medium transition-colors duration-[var(--duration-state)] hover:bg-paper focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2">
-            Rezervasyonlar
-            <ArrowRight className="h-5 w-5" aria-hidden="true" />
-          </Link>
-          <Link href="/dashboard/tutor/packages" className="flex min-h-14 items-center justify-between rounded-card border border-line bg-surface px-5 py-4 text-small font-medium transition-colors duration-[var(--duration-state)] hover:bg-paper focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2">
-            Paket ayarları
-            <ArrowRight className="h-5 w-5" aria-hidden="true" />
-          </Link>
-        </nav>
+        <TutorDashboardQuickActions />
         {bookings.isError ? <div role="alert" className="rounded-card border border-line bg-surface p-6 sm:p-8"><h2 className="text-h2-m font-bold sm:text-h2">Ders programın yüklenemedi.</h2><p className="mt-2 max-w-xl text-small text-ink-mid">Sıradaki dersini ve bekleyen işlemlerini göstermek için program verisine ulaşmamız gerekiyor.</p><Button type="button" variant="outline" className="mt-5" onClick={() => void bookings.refetch()}>Yeniden dene</Button></div> : nextBooking ? <Card className="overflow-hidden"><CardContent className="p-6 sm:p-8"><div className="grid items-center gap-6 md:grid-cols-[minmax(0,1fr)_auto]"><div className="flex min-w-0 items-center gap-4"><ParticipantAvatar name={nextStudentName} avatarUrl={nextBooking.student.avatar_url} className="h-16 w-16 shrink-0 rounded-input" /><div className="min-w-0"><p className="truncate text-h3 font-medium">{nextBooking.subject.name}</p><p className="mt-1 truncate text-body text-ink-mid">{nextStudentName} · {nextBooking.duration_minutes} dk</p></div></div><NextLessonTimeBox booking={nextBooking} /></div><div className="mt-6 flex flex-wrap items-center gap-3 border-t border-line pt-5">{canJoinBooking(nextBooking) ? <Button asChild size="lg"><a href={`/session/${nextBooking.id}`}><VideoCamera className="mr-2 h-5 w-5" aria-hidden="true" />Derse katıl</a></Button> : nextBooking.room_url ? <Button size="lg" variant="outline" disabled className="h-auto max-w-full whitespace-normal text-center">Derse katılım başlangıçtan 15 dakika önce açılır</Button> : <Badge variant="outline">Oda onaydan sonra oluşur</Badge>}<Button asChild variant="outline"><Link href={conversationId ? `/messages/${conversationId}` : "/messages"}><ChatCircle className="mr-2 h-5 w-5" aria-hidden="true" />Öğrenciye mesaj</Link></Button><div className="ml-auto hidden items-center gap-2 text-small text-ink-mid sm:flex">{nextBooking.status !== "in_progress" && <StatusBadge status={nextBooking.status} type="booking" />}<span>{paymentLabel(nextBooking)}</span></div></div></CardContent></Card> : <Card><CardContent className="flex flex-col items-start justify-between gap-5 p-6 sm:flex-row sm:items-center sm:p-8"><div><h2 className="text-h2-m font-bold sm:text-h2">Takvimin şu anda sakin</h2><p className="mt-2 max-w-xl text-small text-ink-mid">Müsaitlik saatlerini güncel tutarak yeni rezervasyonlara hazır olabilirsin.</p></div><Button asChild><Link href="/dashboard/tutor/calendar">Takvimi aç</Link></Button></CardContent></Card>}
         {groups.pendingActions.length > 0 && <Link href="/dashboard/tutor?tab=bookings" className="flex w-full items-center justify-between gap-4 rounded-card border border-ink bg-surface px-5 py-4 text-left transition-colors duration-[var(--duration-state)] hover:bg-paper focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2"><span className="flex min-w-0 items-start gap-3"><WarningCircle className="mt-0.5 h-5 w-5 shrink-0" weight="fill" aria-hidden="true" /><span><strong className="block text-small font-medium">{groups.pendingActions.length} işlem seni bekliyor</strong><span className="text-small text-ink-mid">Onay, itiraz veya ders ilerlemesi gerektiren kayıtlarını kontrol et.</span></span></span><ArrowRight className="h-5 w-5 shrink-0" aria-hidden="true" /></Link>}
         <TutorPerformanceSection profile={profileData} availability={availability.data ?? []} priceInsight={priceInsight.data ?? null} />
@@ -259,5 +250,5 @@ function NextLessonTimeBox({ booking }: { booking: Booking }) {
 }
 
 export default function TutorDashboardPage() {
-  return <RouteGuard requireAuth requireRole="tutor"><><TutorDashboardContent /><AISupportChatWidget title={TUTOR_DASHBOARD_ASSISTANT.title} welcomeMessage={TUTOR_DASHBOARD_ASSISTANT.welcomeMessage} attentionMessages={TUTOR_DASHBOARD_ASSISTANT.attentionMessages} starterPrompts={TUTOR_DASHBOARD_ASSISTANT.starterPrompts} /></></RouteGuard>;
+  return <RouteGuard requireAuth requireRole="tutor"><><TutorDashboardContent /><TutorDashboardAssistant /></></RouteGuard>;
 }

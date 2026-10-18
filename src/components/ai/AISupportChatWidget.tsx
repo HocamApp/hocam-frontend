@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useRef, useState } from "react";
+import { FormEvent, useEffect, useRef, useState, type Ref } from "react";
 import axios from "axios";
 import { Bot, MessageCircle, Send, Sparkles, X } from "lucide-react";
 
@@ -54,6 +54,10 @@ interface AISupportChatWidgetProps {
   positionClassName?: string;
   panelClassName?: string;
   onStarterPrompt?: (prompt: string) => boolean;
+  /** Lets a caller point something at the round button, e.g. an intro coachmark. */
+  fabRef?: Ref<HTMLButtonElement>;
+  /** Keeps the attention card away while something else is explaining the button. */
+  suppressAttention?: boolean;
 }
 
 export function AISupportChatWidget({
@@ -68,6 +72,8 @@ export function AISupportChatWidget({
   positionClassName,
   panelClassName,
   onStarterPrompt,
+  fabRef,
+  suppressAttention = false,
 }: AISupportChatWidgetProps = {}) {
   const [isOpen, setIsOpen] = useState(false);
   const [conversationId, setConversationId] = useState<string>();
@@ -98,6 +104,10 @@ export function AISupportChatWidget({
         : []
     ).filter(Boolean);
     if (options.length === 0) return;
+    if (suppressAttention) {
+      setShowAttention(false);
+      return;
+    }
 
     if (attentionStorageKey) {
       try {
@@ -118,7 +128,7 @@ export function AISupportChatWidget({
       window.clearTimeout(showTimeout);
       window.clearTimeout(hideTimeout);
     };
-  }, [attentionMessage, attentionMessages, attentionStorageKey]);
+  }, [attentionMessage, attentionMessages, attentionStorageKey, suppressAttention]);
 
   useEffect(() => {
     if (!isOpen || !shouldAutoScrollRef.current) return;
@@ -383,6 +393,7 @@ export function AISupportChatWidget({
       )}
 
       <Button
+        ref={fabRef}
         type="button"
         size="icon"
         className="relative z-10 h-14 w-14 rounded-full shadow-xl motion-safe:animate-message-pop"

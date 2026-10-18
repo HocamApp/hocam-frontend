@@ -1,32 +1,17 @@
-"use client";
+import type { ReactNode } from "react";
 
-import { useRef, type ReactNode } from "react";
-
-import { useRevealActiveInStrip } from "@/hooks/useRevealActiveInStrip";
-
-/* The scrolling strip is the only interactive part of the coaching subnav, so it
-   is the only part that ships to the client; the links and their SSR icons stay
-   server-rendered in CoachingSubnav.
-
-   On a phone the strip is wider than the screen. Without the reveal, a page
-   whose tab sits past the right edge opened with its own tab cut off — which
-   the longer "Koçluk Programım" label turned from an edge case into the
-   program page's default state. */
 export function CoachingSubnavStrip({
-  activeHref,
+  audience,
   children,
 }: {
-  activeHref: string | null | undefined;
+  audience: "student" | "tutor";
   children: ReactNode;
 }) {
-  const stripRef = useRef<HTMLElement>(null);
-  useRevealActiveInStrip(stripRef, [activeHref]);
-
   return (
     <nav
-      ref={stripRef}
       aria-label="Koçluk bölümleri"
-      className="flex gap-1 overflow-x-auto rounded-card border border-line bg-surface p-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      data-audience={audience}
+      className="grid grid-cols-6 gap-1 rounded-card border border-line bg-surface p-2 xl:flex xl:flex-nowrap xl:justify-between [&>a]:col-span-2 [&>a]:min-w-0 [@media(max-width:1279px)]:[&[data-audience=student]>a:nth-child(-n+2)]:col-span-3"
     >
       {children}
     </nav>

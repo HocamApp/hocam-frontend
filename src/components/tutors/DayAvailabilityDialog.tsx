@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Trash } from "@phosphor-icons/react";
@@ -20,6 +20,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { TimeSelect } from "@/components/ui/time-select";
 import { availabilityRulesOverlap } from "@/lib/availability";
@@ -29,24 +30,37 @@ function formatRuleTime(t: string | null): string {
   return t.slice(0, 5);
 }
 
+const DAY_SHORT = ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"];
+
+// Dates are "YYYY-MM-DD" Istanbul calendar days; noon UTC keeps day maths off the DST edge.
+const weekdayOf = (date: string) => (new Date(`${date}T12:00:00Z`).getUTCDay() + 6) % 7;
+function shiftDate(date: string, days: number) {
+  const moved = new Date(`${date}T12:00:00Z`);
+  moved.setUTCDate(moved.getUTCDate() + days);
+  return moved.toISOString().slice(0, 10);
+}
+
 interface DayAvailabilityDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  dayOfWeek: number;
+  /** Where the dialog opens; the tutor can pick another day inside it. */
   date: string;
-  dayLabel: string;
+  /** Kept for callers; the dialog derives both from the day it is showing. */
+  dayOfWeek?: number;
+  dayLabel?: string;
   calendarEvents?: TutorCalendarEvent[];
   onChanged?: () => void;
+  /** Rendered between the header and the form, e.g. a first-time hint. */
+  intro?: ReactNode;
 }
 
 export function DayAvailabilityDialog({
   open,
   onOpenChange,
-  dayOfWeek,
-  date,
-  dayLabel,
+  date: initialDate,
   calendarEvents = [],
   onChanged,
+  intro,
 }: DayAvailabilityDialogProps) {
   const queryClient = useQueryClient();
   const [startTime, setStartTime] = useState("");
@@ -54,10 +68,13 @@ export function DayAvailabilityDialog({
   const [timeError, setTimeError] = useState<string | null>(null);
   const [resetting, setResetting] = useState(false);
   const [mode, setMode] = useState<"date" | "weekly">("date");
+  const [date, setDate] = useState(initialDate);
+  const dayOfWeek = weekdayOf(date);
+  const dayLabel = new Date(`${date}T12:00:00Z`).toLocaleDateString("tr-TR", { day: "numeric", month: "long", weekday: "long", timeZone: "UTC" });
 
   useEffect(() => {
-    if (open) { setMode("date"); setStartTime(""); setEndTime(""); setTimeError(null); }
-  }, [open, date]);
+    if (open) { setMode("date"); setDate(initialDate); setStartTime(""); setEndTime(""); setTimeError(null); }
+  }, [open, initialDate]);
 
   const { data: rules = [], isPending: loading, isError, refetch } = useQuery({
     queryKey: ["availability"],
@@ -68,9 +85,24 @@ export function DayAvailabilityDialog({
   const dateRules = rules.filter((r) => r.specific_date === date);
   const weeklyRules = rules.filter((r) => !r.specific_date && r.day_of_week === dayOfWeek);
   const isClosed = mode === "date" && dateRules.some((rule) => rule.is_unavailable);
-  const dayRules = (mode === "date" ? dateRules : weeklyRules)
+  const showingWeeklyFallback = mode === "date" && dateRules.length === 0;
+  const dayRules = (mode === "date" ? (showingWeeklyFallback ? weeklyRules : dateRules) : weeklyRules)
     .filter((rule) => !rule.is_unavailable)
     .sort((a, b) => (a.start_time || "").localeCompare(b.start_time || ""));
+  const weekday = ["pazartesi", "salı", "çarşamba", "perşembe", "cuma", "cumartesi", "pazar"][dayOfWeek];
+  const dateName = new Date(`${date}T12:00:00`).toLocaleDateString("tr-TR", {day:"numeric", month:"long"});
+  let scopeDescription: string;
+  if (mode === "weekly") {
+    scopeDescription = `Bu saatler her ${weekday} geçerli.`;
+  } else if (showingWeeklyFallback) {
+    scopeDescription = weeklyRules.length > 0
+      ? "Bu gün için haftalık programındaki saatler geçerli. Buraya yeni saat eklersen o gün yalnızca eklediğin saatler görünür."
+      : `Bu gün için henüz müsait saat belirlemedin. Eklediğin saatler yalnızca ${dateName} için geçerli olur.`;
+  } else if (isClosed) {
+    scopeDescription = `Bu gün için müsaitliği kapattın. Bu ayar yalnızca ${dateName} için geçerli.`;
+  } else {
+    scopeDescription = `Buraya eklediğin saatler yalnızca ${dateName} için geçerli. O gün haftalık programındaki saatler yerine bunlar kullanılır.`;
+  }
 
   const refresh = () => {
     for (const key of ["availability", "tutor-calendar", "tutor-busy-intervals", "tutor-availability"]) void queryClient.invalidateQueries({ queryKey: [key] });
@@ -92,7 +124,7 @@ export function DayAvailabilityDialog({
   const resetDate = async () => {
     setResetting(true); setTimeError(null);
     try { for (const rule of dateRules) await deleteAvailabilityRule(rule.id); }
-    catch { setTimeError("Tarih istisnası tamamen kaldırılamadı. Kalan kayıtları kontrol edip yeniden dene."); }
+    catch { setTimeError("Bu güne özel saatlerin bazıları kaldırılamadı. Kalan saatleri kontrol edip yeniden dene."); }
     finally { refresh(); setResetting(false); }
   };
 
@@ -103,10 +135,10 @@ export function DayAvailabilityDialog({
       setStartTime("");
       setEndTime("");
       setTimeError(null);
-      toast.success("Müsaitlik güncellendi.");
+      toast.success("Müsait saatlerin güncellendi.");
     },
     onError: () => {
-      setTimeError("Müsaitlik güncellenemedi. Yazdığın saatler korundu, yeniden deneyebilirsin.");
+      setTimeError("Müsait saatlerin kaydedilemedi. Seçtiğin saatler duruyor; yeniden deneyebilirsin.");
     },
   });
 
@@ -114,10 +146,10 @@ export function DayAvailabilityDialog({
     mutationFn: deleteAvailabilityRule,
     onSuccess: () => {
       refresh();
-      toast.success("Müsaitlik güncellendi.");
+      toast.success("Müsait saatlerin güncellendi.");
     },
     onError: () => {
-      setTimeError("Müsaitlik güncellenemedi. Yazdığın saatler korundu, yeniden deneyebilirsin.");
+      setTimeError("Müsait saatlerin güncellenemedi. Yeniden deneyebilirsin.");
     },
   });
 
@@ -127,11 +159,11 @@ export function DayAvailabilityDialog({
   const handleAdd = () => {
     setTimeError(null);
     if (!startTime || !endTime) {
-      setTimeError("Başlangıç ve bitiş saati seçin");
+      setTimeError("Başlangıç ve bitiş saatlerini seç.");
       return;
     }
     if (startTime >= endTime) {
-      setTimeError("Başlangıç saati bitiş saatinden önce olmalıdır");
+      setTimeError("Bitiş saati başlangıçtan sonra olmalı.");
       return;
     }
     if (availabilityRulesOverlap(rules, {
@@ -140,7 +172,7 @@ export function DayAvailabilityDialog({
       startTime,
       endTime,
     })) {
-      setTimeError("Bu saat aralığı mevcut müsaitlik saatiyle çakışıyor");
+      setTimeError("Bu saat aralığı eklediğin başka bir müsait saatle çakışıyor.");
       return;
     }
     createMutation.mutate({
@@ -159,24 +191,54 @@ export function DayAvailabilityDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[85dvh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{dayLabel} Müsaitliği</DialogTitle>
+          <DialogTitle>{dayLabel} için müsaitlik</DialogTitle>
           <DialogDescription>
-            Tek tarih için istisna oluşturabilir veya bu hafta gününü her hafta tekrarlayabilirsin.
+            Müsait saatlerini yalnızca seçtiğin gün için veya her hafta geçerli olacak şekilde belirleyebilirsin.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
+          {intro}
           {loading && <p role="status" className="text-sm text-ink-mid">Müsaitlik yükleniyor…</p>}
-          {isError && <div role="alert" className="space-y-2 text-sm text-error"><p>Müsaitlik alınamadı.</p><Button variant="outline" onClick={() => void refetch()}>Yeniden dene</Button></div>}
+          {isError && <div role="alert" className="space-y-2 text-sm text-error"><p>Müsait saatlerin yüklenemedi.</p><Button variant="outline" onClick={() => void refetch()}>Yeniden dene</Button></div>}
           <div className="grid grid-cols-2 rounded-input bg-paper p-1">
-            <Button type="button" size="sm" variant={mode === "date" ? "default" : "ghost"} disabled={isMutating} onClick={() => setMode("date")}>Yalnızca bu tarih</Button>
+            <Button type="button" size="sm" variant={mode === "date" ? "default" : "ghost"} disabled={isMutating} onClick={() => setMode("date")}>Yalnızca bu gün</Button>
             <Button type="button" size="sm" variant={mode === "weekly" ? "default" : "ghost"} disabled={isMutating} onClick={() => setMode("weekly")}>Her hafta tekrarla</Button>
           </div>
-          <p className="text-xs text-ink-mid">{mode === "date" ? "Bu tarihteki kurallar haftalık düzenin yerini alır." : `${dayLabel.split(" ")[0]} günleri için tekrar eden düzen.`}</p>
-          {isClosed && <p className="rounded-input border border-error bg-white px-3 py-2 text-sm text-error">Bu gün kapalı.</p>}
-          {!loading && !isError && (dayRules.length === 0 ? (
+          {mode === "date" ? (
+            <div className="space-y-1.5">
+              <Label className="text-xs" htmlFor="availability-date">Tarih</Label>
+              <Input
+                id="availability-date"
+                type="date"
+                value={date}
+                min={istanbulToday()}
+                disabled={createMutation.isPending || deleteMutation.isPending || resetting}
+                onChange={(event) => { if (event.target.value) { setDate(event.target.value); setTimeError(null); } }}
+              />
+            </div>
+          ) : (
+            <div role="group" aria-label="Gün" className="flex flex-wrap gap-1.5">
+              {DAY_SHORT.map((label, index) => (
+                <Button
+                  key={label}
+                  type="button"
+                  size="sm"
+                  variant={index === dayOfWeek ? "default" : "outline"}
+                  aria-pressed={index === dayOfWeek}
+                  disabled={createMutation.isPending || deleteMutation.isPending || resetting}
+                  onClick={() => { setDate(shiftDate(date, index - dayOfWeek)); setTimeError(null); }}
+                >
+                  {label}
+                </Button>
+              ))}
+            </div>
+          )}
+          <p className="text-xs text-ink-mid">{scopeDescription}</p>
+          {isClosed && <p className="rounded-input border border-error bg-white px-3 py-2 text-sm text-error">Bu gün yeni ders için müsait değilsin.</p>}
+          {!loading && !isError && !isClosed && (dayRules.length === 0 ? (
             <p className="rounded-input border border-dashed px-3 py-6 text-center text-sm text-ink-mid">
-              Bu gün için henüz müsaitlik saati eklenmemiş.
+              {mode === "weekly" ? `Her ${weekday} için henüz müsait saat eklemedin.` : "Bu gün için müsait saat yok."}
             </p>
           ) : (
             <div className="flex flex-wrap gap-2">
@@ -191,7 +253,7 @@ export function DayAvailabilityDialog({
                     <span className="font-medium tabular-nums">
                       {start}–{end}
                     </span>
-                    <button
+                    {!showingWeeklyFallback && <button
                       type="button"
                       onClick={() => deleteMutation.mutate(rule.id)}
                       disabled={isMutating || (mode === "date" && dateIsPast)}
@@ -199,15 +261,16 @@ export function DayAvailabilityDialog({
                       className="text-ink-mid transition-colors hover:text-error disabled:pointer-events-none disabled:opacity-50"
                     >
                       <Trash className="h-3.5 w-3.5" />
-                    </button>
+                    </button>}
                   </div>
                 );
               })}
             </div>
           ))}
-          {mode === "date" && dateRules.length > 0 && <Button variant="outline" disabled={isMutating || dateIsPast} onClick={() => void resetDate()}>Tarih istisnasını kaldır</Button>}
-          <p className="text-xs text-ink-mid">Müsaitlik değişiklikleri mevcut dersleri iptal etmez. Tarih istisnasını kaldırınca haftalık düzene dönülür.</p>
-          {affectedLessons.length > 0 && <div role="status" className="space-y-2 rounded-input border border-line p-3 text-sm text-ink"><p>Bu dönemde müsaitlik saatlerinin dışında kalan derslerin var:</p>{affectedLessons.map((event) => <Link key={event.id} className="block underline" href={`/dashboard/tutor?tab=bookings&highlightBooking=${event.id}`}>{event.local_date} {event.local_time} · {event.student.display_name}</Link>)}</div>}
+          {mode === "date" && dateRules.length > 0 && <Button variant="outline" disabled={isMutating || dateIsPast} onClick={() => void resetDate()}>Bu güne özel saatleri kaldır</Button>}
+          {mode === "date" && dateRules.length > 0 && <p className="text-xs text-ink-mid">Kaldırdığında bu gün için haftalık programındaki saatler geçerli olur.</p>}
+          <p className="text-xs text-ink-mid">Müsait saatlerini değiştirmen, takvimindeki dersleri iptal etmez veya saatlerini değiştirmez.</p>
+          {affectedLessons.length > 0 && <div role="status" className="space-y-2 rounded-input border border-line p-3 text-sm text-ink"><p>Bu dönemde müsait saatlerinin dışında kalan derslerin var:</p>{affectedLessons.map((event) => <Link key={event.id} className="block underline" href={`/dashboard/tutor?tab=bookings&highlightBooking=${encodeURIComponent(event.id)}`}>{new Date(`${event.local_date}T12:00:00`).toLocaleDateString("tr-TR", {day:"numeric", month:"long", year:"numeric"})} · {event.local_time.slice(0,5)} · {event.student.display_name}</Link>)}</div>}
 
           <div className="space-y-3 border-t pt-4">
             <p className="text-sm font-medium">Yeni saat ekle</p>

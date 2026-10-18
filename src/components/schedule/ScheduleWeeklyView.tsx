@@ -7,6 +7,7 @@ import { HorizontalDayPicker } from "@/components/shared/HorizontalDayPicker";
 import { cn } from "@/lib/utils";
 import type { ScheduleEvent } from "@/types";
 import { ScheduleEventCard } from "./ScheduleEventCard";
+import { TutorHalfHourGrid } from "./TutorHalfHourGrid";
 import { HOUR_ROW_HEIGHT } from "./ScheduleDailyView";
 import { eventKey } from "./eventIdentity";
 import {
@@ -28,6 +29,7 @@ interface ScheduleWeeklyViewProps {
   onDelete?: (event: ScheduleEvent) => void;
   onSelectEvent?: (event: ScheduleEvent) => void;
   isEventSelectable?: (event: ScheduleEvent) => boolean;
+  tutorHalfHourGrid?: boolean;
 }
 
 /**
@@ -44,6 +46,7 @@ export function ScheduleWeeklyView({
   onDelete,
   onSelectEvent,
   isEventSelectable,
+  tutorHalfHourGrid = false,
 }: ScheduleWeeklyViewProps) {
   const days = useMemo(() => weekDays(anchor), [anchor]);
   const today = new Date();
@@ -135,6 +138,7 @@ export function ScheduleWeeklyView({
       {/* md+: the seven-day grid, one row per hour. Lessons stay read-only
           cards; only personal study blocks expose their controls. */}
       <div className="hidden overflow-x-auto pb-1 md:block">
+        {tutorHalfHourGrid ? <div className="min-w-[980px]"><TutorHalfHourGrid days={days} events={events} pendingKeys={pendingKeys} onSelectEvent={onSelectEvent} isEventSelectable={isEventSelectable} /></div> :
         <div className="min-w-[980px] overflow-hidden rounded-card border border-line bg-surface">
           <div className="grid grid-cols-[4rem_repeat(7,minmax(0,1fr))] border-b border-line bg-paper/55">
             <div aria-hidden />
@@ -211,6 +215,7 @@ export function ScheduleWeeklyView({
             ))}
           </div>
         </div>
+        }
       </div>
 
     </>

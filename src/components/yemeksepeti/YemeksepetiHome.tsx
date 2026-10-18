@@ -9,7 +9,6 @@ import { YsGuarantees } from "./YsGuarantees";
 import { YsHowItWorks } from "./YsHowItWorks";
 import { YsParentsPanel } from "./YsParentsPanel";
 import { YsPricing } from "./YsPricing";
-import { YsSubjectGrid } from "./YsSubjectGrid";
 import { YsTestimonials } from "./YsTestimonials";
 import { YsTutorBand } from "./YsTutorBand";
 import { YsTutorDirectory } from "./YsTutorDirectory";
@@ -18,7 +17,7 @@ import { YsVerifiedBand } from "./YsVerifiedBand";
 
 /**
  * `v2` switches on the rebuilt homepage (NEXT_PUBLIC_HOME_V2). With it off the
- * page is the pre-rebuild homepage, unchanged. It is a prop, defaulting to the
+ * page is the pre-rebuild homepage. It is a prop, defaulting to the
  * build flag, so tests can render both.
  *
  * `brandV3` (NEXT_PUBLIC_BRAND_V3) puts the page under the brand v3 colours
@@ -47,9 +46,6 @@ export function YemeksepetiHome({
             the thing they came for. */}
       <div className="ys-shell">
         <YsTutorDirectory />
-        {/* The same list, entered by subject: each pill filters the
-              directory above. */}
-        {v2 && <YsSubjectGrid brandV3={brandV3} />}
       </div>
 
       {/* Outside the shell on purpose: a diagonal band is full bleed, and

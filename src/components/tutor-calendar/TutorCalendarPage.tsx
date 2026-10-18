@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -17,6 +17,8 @@ import { ScheduleWeeklyView } from "@/components/schedule/ScheduleWeeklyView";
 import { endTimeLabel, longDayLabel, parseLocalDate, rangeLabel, timeToMinutes, toDateKey } from "@/components/schedule/scheduleDates";
 import { calendarEventHref, calendarRange, calendarStatus, calendarViewMap, fetchTutorCalendar, istanbulToday, shiftCalendarDate, validCalendarDate, type TutorCalendarAvailability, type TutorCalendarEvent, type TutorCalendarView, type TutorTimeOff } from "@/lib/tutorCalendar";
 import type { ScheduleEvent } from "@/types";
+import { PageIntroHint } from "@/components/shared/PageIntroHint";
+import { AvailabilityDialogHint } from "@/components/tutors/AvailabilityDialogHint";
 import { TutorCalendarManagement } from "./TutorCalendarManagement";
 
 const views: Array<{value:TutorCalendarView;label:string}> = [{value:"day",label:"Gün"},{value:"week",label:"Hafta"},{value:"month",label:"Ay"}];
@@ -117,9 +119,11 @@ export function TutorCalendarPage() {
     const item = calendar.data?.events.find(row => row.source === event.source && row.id === event.id);
     if (item) setSelected(item);
   };
+  const titleRef = useRef<HTMLSpanElement>(null);
   const selectableDisplayEvent = (event: ScheduleEvent) => event.source !== "availability";
-  return <WorkspacePageShell title="Takvim" width="wide">
-    <div className="flex flex-wrap items-center justify-between gap-3"><p className="text-small text-ink-mid">Derslerin, koçluk görüşmelerin ve müsait saatlerin. Saat dilimi: İstanbul.</p>{calendar.isSuccess && <TutorCalendarManagement date={date} timeOff={calendar.data.time_off} events={calendar.data.events} onChanged={changed} selectedTimeOff={selectedTimeOff} onTimeOffClose={() => setSelectedTimeOff(null)} />}</div>
+  return <WorkspacePageShell title="Takvim" width="wide" titleRef={titleRef}>
+    <PageIntroHint hintKey="tutor_intro_calendar" anchorRef={titleRef} title="Takvimin burada">Derslerini, koçluk görüşmelerini, müsait saatlerini ve meşguliyetlerini gün, hafta veya ay görünümünde görürsün. Üstteki butonlarla müsaitliğini düzenleyebilir, meşguliyet ekleyebilirsin.</PageIntroHint>
+    <div className="flex flex-wrap items-center justify-between gap-3"><p className="text-small text-ink-mid">Derslerin, koçluk görüşmelerin ve müsait saatlerin. Saat dilimi: İstanbul.</p>{calendar.isSuccess && <TutorCalendarManagement date={date} timeOff={calendar.data.time_off} events={calendar.data.events} onChanged={changed} selectedTimeOff={selectedTimeOff} onTimeOffClose={() => setSelectedTimeOff(null)} availabilityIntro={<AvailabilityDialogHint />} />}</div>
     <div className="flex flex-wrap items-center justify-between gap-4">
       <div className="flex min-w-0 flex-wrap items-center gap-2"><Button variant="outline" onClick={() => navigate(today,view)}>Bugün</Button><Button variant="outline" size="icon" aria-label="Önceki dönem" onClick={() => navigate(shiftCalendarDate(date,view,-1),view)}><CaretLeft className="h-5 w-5" aria-hidden="true" /></Button><Button variant="outline" size="icon" aria-label="Sonraki dönem" onClick={() => navigate(shiftCalendarDate(date,view,1),view)}><CaretRight className="h-5 w-5" aria-hidden="true" /></Button><label className="sr-only" htmlFor="tutor-calendar-date">Takvim tarihi</label><Input id="tutor-calendar-date" type="date" min="1900-01-01" max="2100-12-31" value={date} onChange={event => { if(validCalendarDate(event.target.value)) navigate(event.target.value,view); }} className="w-[155px] min-w-0 rounded-input border-line bg-surface" /></div>
       <div role="group" aria-label="Takvim görünümü" className="flex gap-1">{views.map(item => <Button key={item.value} variant="outline" aria-pressed={view === item.value} onClick={() => navigate(date,item.value)} className={view === item.value ? "border-ink bg-ink text-paper hover:bg-ink hover:text-paper" : "border-line"}>{item.label}</Button>)}</div>
@@ -128,8 +132,8 @@ export function TutorCalendarPage() {
     {error ? <div role="alert" className="space-y-3 rounded-card border border-line bg-surface p-6"><p>Takvim yüklenemedi. Saatlerin boş olduğunu varsaymadan yeniden deneyebilirsin.</p><Button variant="outline" onClick={() => { void profile.refetch(); if (profile.data?.is_verified) void calendar.refetch(); }}>Yeniden dene</Button></div> : loading ? <p role="status" className="py-8 text-ink-mid">Takvim yükleniyor…</p> : !profile.data?.is_verified ? <p>Takvimine erişmek için hoca doğrulamanı tamamlamalısın.</p> : calendar.data ? <>
       {!hasData ? <p role="status" className="text-small text-ink-mid">Bu dönemde ders, müsaitlik veya meşguliyet kaydın yok. Müsait saatlerini ekleyebilirsin.</p> : !(visibleEvents.length || visibleAvailability.length || visibleTimeOff.length) ? <p role="status" className="text-small text-ink-mid">Bu dönemin kayıtları seçtiğin filtrelerle gizlendi.</p> : null}
       <section className="rounded-[28px] border border-line bg-surface p-2 shadow-soft sm:p-4" aria-label="Takvim alanı">
-        {view === "day" ? <ScheduleDailyView day={parseLocalDate(date)} events={displayEvents} pendingKeys={NO_PENDING_EVENTS} onSelectEvent={selectDisplayEvent} isEventSelectable={selectableDisplayEvent} />
-          : view === "week" ? <ScheduleWeeklyView anchor={parseLocalDate(date)} events={displayEvents} pendingKeys={NO_PENDING_EVENTS} onSelectEvent={selectDisplayEvent} isEventSelectable={selectableDisplayEvent} />
+        {view === "day" ? <ScheduleDailyView day={parseLocalDate(date)} events={displayEvents} pendingKeys={NO_PENDING_EVENTS} onSelectEvent={selectDisplayEvent} isEventSelectable={selectableDisplayEvent} tutorHalfHourGrid />
+          : view === "week" ? <ScheduleWeeklyView anchor={parseLocalDate(date)} events={displayEvents} pendingKeys={NO_PENDING_EVENTS} onSelectEvent={selectDisplayEvent} isEventSelectable={selectableDisplayEvent} tutorHalfHourGrid />
           : <ScheduleMonthlyView anchor={parseLocalDate(date)} events={displayEvents} onSelectEvent={selectDisplayEvent} isEventSelectable={selectableDisplayEvent} onSelectDay={day => navigate(toDateKey(day),"day")} />}
       </section>
     </> : null}

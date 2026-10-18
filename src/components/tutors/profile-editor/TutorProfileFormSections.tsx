@@ -404,16 +404,19 @@ export function PricingSection({
             <WalletCards className="h-4 w-4 text-primary" aria-hidden />
             <p className="text-sm font-semibold">Tahmini ders gelirin</p>
           </div>
+          {/* Three tiles with one shell and one type scale, so price, commission
+              and net read as a row of equals. The net tile keeps its green
+              ground; the other two sit on a neutral one. */}
           <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-3">
-            <div>
+            <div className="rounded-lg bg-muted/50 px-3 py-2">
               <dt className="text-muted-foreground">Ders fiyatı</dt>
-              <dd className="mt-1 font-semibold">{numericPrice.toLocaleString("tr-TR")} ₺</dd>
+              <dd className="mt-1 text-lg font-semibold">{numericPrice.toLocaleString("tr-TR")} ₺</dd>
             </div>
-            <div>
+            <div className="rounded-lg bg-muted/50 px-3 py-2">
               <dt className="text-muted-foreground">
                 Hocam komisyonu (%{formatBpsPercent(priceInsight?.commission_rate_bps ?? 0)})
               </dt>
-              <dd className="mt-1 font-semibold text-rose-700 dark:text-rose-300">
+              <dd className="mt-1 text-lg font-semibold text-rose-700 dark:text-rose-300">
                 −{estimatedCommission.toLocaleString("tr-TR", { maximumFractionDigits: 2 })} ₺
               </dd>
             </div>

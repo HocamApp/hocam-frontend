@@ -6,6 +6,7 @@ import { useIsMobile } from "@/hooks/useMediaQuery";
 import { cn } from "@/lib/utils";
 import type { ScheduleEvent } from "@/types";
 import { ScheduleEventCard } from "./ScheduleEventCard";
+import { TutorHalfHourGrid } from "./TutorHalfHourGrid";
 import { eventKey } from "./eventIdentity";
 import {
   isSameDay,
@@ -32,6 +33,7 @@ interface ScheduleDailyViewProps {
   onDelete?: (event: ScheduleEvent) => void;
   onSelectEvent?: (event: ScheduleEvent) => void;
   isEventSelectable?: (event: ScheduleEvent) => boolean;
+  tutorHalfHourGrid?: boolean;
 }
 
 /**
@@ -56,6 +58,7 @@ export function ScheduleDailyView({
   onDelete,
   onSelectEvent,
   isEventSelectable,
+  tutorHalfHourGrid = false,
 }: ScheduleDailyViewProps) {
   const dayKey = toDateKey(day);
   const dayEvents = useMemo(
@@ -113,6 +116,10 @@ export function ScheduleDailyView({
         Bu gün için planlanmış bir şey yok.
       </div>
     );
+  }
+
+  if (tutorHalfHourGrid) {
+    return <TutorHalfHourGrid days={[day]} events={dayEvents} pendingKeys={pendingKeys} onSelectEvent={onSelectEvent} isEventSelectable={isEventSelectable} />;
   }
 
   return (

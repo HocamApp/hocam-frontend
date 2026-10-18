@@ -7,7 +7,7 @@ import React from "react";
 import { cleanup, render } from "@testing-library/react";
 
 import { YsFact } from "./YsFact";
-import { band, hero, subjects } from "./ysHomeCopy";
+import { band, hero } from "./ysHomeCopy";
 import {
   isTodo,
   LESSONS_PER_WEEK,
@@ -15,7 +15,6 @@ import {
   PLAN_DURATIONS,
   TODO,
 } from "./ysHomeFacts";
-import { homeSubjectGroups } from "./YsSubjectGrid";
 
 afterEach(cleanup);
 
@@ -67,31 +66,6 @@ describe("homepage copy", () => {
   });
 });
 
-describe("subject grid grouping", () => {
-  it("shows TYT then AYT, in the API's subject order, and nothing else", () => {
-    const groups = homeSubjectGroups([
-      { id: "1", name: "Fizik", exam_type: "AYT" },
-      { id: "2", name: "Türkçe", exam_type: "TYT" },
-      { id: "3", name: "Matematik", exam_type: "KPSS" },
-      { id: "4", name: "Matematik", exam_type: "AYT" },
-      { id: "5", name: "Sayısal", exam_type: "DGS" },
-      { id: "6", name: "Matematik", exam_type: "TYT" },
-    ]);
-    assert.deepEqual(
-      groups.map(({ exam, items }) => [exam, items.map((s) => s.name)]),
-      [
-        ["TYT", ["Türkçe", "Matematik"]],
-        ["AYT", ["Fizik", "Matematik"]],
-      ],
-    );
-  });
-
-  it("renders no row for an exam the API returned nothing for", () => {
-    const groups = homeSubjectGroups([{ id: "1", name: "Edebiyat", exam_type: "AYT" }]);
-    assert.deepEqual(groups.map(({ exam }) => exam), ["AYT"]);
-  });
-});
-
 describe("Phase A components keep text in the copy file", () => {
   /* Every plain string in the copy for these sections, flattened. If one of
      them also appears in a component, someone typed it into the JSX. */
@@ -101,9 +75,9 @@ describe("Phase A components keep text in the copy file", () => {
       : value && typeof value === "object"
         ? Object.values(value).flatMap(strings)
         : [];
-  const copyStrings = [hero, subjects, band].flatMap(strings);
+  const copyStrings = [hero, band].flatMap(strings);
 
-  for (const file of ["YsHeroIntro.tsx", "YsHeroCollage.tsx", "YsSubjectGrid.tsx", "YsVerifiedBand.tsx"]) {
+  for (const file of ["YsHeroIntro.tsx", "YsHeroCollage.tsx", "YsVerifiedBand.tsx"]) {
     it(file, () => {
       // Comments may quote the copy; only code counts.
       const source = readFileSync(`src/components/yemeksepeti/${file}`, "utf8")

@@ -1,18 +1,21 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { ArrowLeft, ArrowRight } from "@phosphor-icons/react";
 
 import { WorkspacePageShell } from "@/components/layout/WorkspacePageShell";
+import { Coachmark } from "@/components/shared/Coachmark";
 import { RouteGuard } from "@/components/shared/RouteGuard";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { Button } from "@/components/ui/button";
-import { Slider } from "@/components/ui/slider";
+import { TutorDiscountControl } from "@/components/tutors/TutorDiscountControl";
 import { ProfileToggleRow } from "@/components/profile/ProfileMenuRow";
+import { useUiHints } from "@/hooks/useUiHints";
+import { acknowledgedPatch, completedPatch, packagesConfigured } from "@/lib/tutorSetupHints";
 import { cn, formatPrice } from "@/lib/utils";
 import { fetchTutorPackageOffers, updateTutorPackageOffers } from "@/lib/paymentsApi";
 import { fetchMyTutorProfile } from "@/lib/tutorsApi";
@@ -66,6 +69,9 @@ function TutorPackagesContent() {
     queryKey: ["tutor-package-offers"],
     queryFn: fetchTutorPackageOffers,
   });
+
+  const { hints, ready: hintsReady, record } = useUiHints();
+  const frequencyChipsRef = useRef<HTMLDivElement>(null);
 
   const [step, setStep] = useState<Step>(1);
   const [drafts, setDrafts] = useState<Record<string, DraftOffer>>({});
@@ -147,6 +153,7 @@ function TutorPackagesContent() {
     mutationFn: () => updateTutorPackageOffers(changedOffers),
     onSuccess: (updated) => {
       queryClient.setQueryData(["tutor-package-offers"], updated);
+      record("tutor_packages_reviewed", completedPatch());
       toast.success("Paket ayarların kaydedildi.");
       router.push("/dashboard/tutor");
     },
@@ -157,6 +164,9 @@ function TutorPackagesContent() {
 
   const handleSave = () => {
     if (changedOffers.length === 0) {
+      // Looking and keeping the defaults is a decision too; the server cannot
+      // see it, so the dashboard tour is told here.
+      record("tutor_packages_reviewed", completedPatch());
       toast.info("Değişiklik yapılmadı.");
       router.push("/dashboard/tutor");
       return;
@@ -221,6 +231,7 @@ function TutorPackagesContent() {
           <StepFrequency
             selectedFrequencies={selectedFrequencies}
             onToggle={toggleFrequency}
+            chipsRef={frequencyChipsRef}
           />
         ) : step === 2 ? (
           <StepDurationsAndDiscount
@@ -267,6 +278,16 @@ function TutorPackagesContent() {
           Devam etmek için en az bir sıklık seç.
         </p>
       )}
+      <Coachmark
+        open={hintsReady && step === 1 && Boolean(offers) && !hints.tutor_packages_hint?.acknowledged_at && !packagesConfigured(offers ?? [], hints)}
+        anchorRef={frequencyChipsRef}
+        title="Önce sıklığı seç"
+        actionLabel="Anladım"
+        onAction={() => record("tutor_packages_hint", acknowledgedPatch())}
+        forced
+      >
+        Haftada kaç ders verebileceğini seç. Seçmediğin sıklıklardaki paketler öğrencilere kapalı olur. Sonraki adımda süre ve indirimi belirlersin.
+      </Coachmark>
     </WorkspacePageShell>
   );
 }
@@ -274,9 +295,11 @@ function TutorPackagesContent() {
 function StepFrequency({
   selectedFrequencies,
   onToggle,
+  chipsRef,
 }: {
   selectedFrequencies: Set<WeeklyLessonOption>;
   onToggle: (freq: WeeklyLessonOption) => void;
+  chipsRef: React.RefObject<HTMLDivElement>;
 }) {
   return (
     <div>
@@ -284,7 +307,7 @@ function StepFrequency({
       <p className="mt-1 text-small text-ink-mid">
         Seçmediğin sıklıklara ait tüm paketler öğrencilere kapalı olur.
       </p>
-      <div className="mt-4 flex flex-wrap gap-2" role="group" aria-label="Haftalık ders sıklığı">
+      <div ref={chipsRef} className="mt-4 flex flex-wrap gap-2" role="group" aria-label="Haftalık ders sıklığı">
         {WEEKLY_LESSON_OPTIONS.map((count) => {
           const selected = selectedFrequencies.has(count);
           return (
@@ -350,33 +373,19 @@ function StepDurationsAndDiscount({
                     checked={draft.is_offered}
                     onChange={(next) => setDraft(offer.plan_id, { is_offered: next })}
                     disabled={isSaving}
+                    trailing={draft.is_offered ? (
+                      <span className="text-lg font-bold tabular-nums text-ink">{formatPrice(pricing.total)}</span>
+                    ) : undefined}
                   />
                   {draft.is_offered && (
-                    <div className="space-y-2 pl-2">
-                      <div className="flex items-center justify-between text-xs text-ink-mid">
-                        <span>
-                          İndirim{" "}
-                          <span className="text-ink-mid/70">
-                            (katalog varsayılanı %{offer.catalog_discount_percent})
-                          </span>
-                        </span>
-                        <span className="font-medium text-ink">%{discount}</span>
-                      </div>
-                      <Slider
-                        aria-label={`${planLabel(offer)} indirimi`}
-                        min={0}
-                        max={offer.max_discount_percent}
-                        step={1}
-                        value={[Math.min(discount, offer.max_discount_percent)]}
-                        onValueChange={([value]) => setDraft(offer.plan_id, { discount_percent: value })}
-                        disabled={isSaving}
-                      />
-                      <p className="text-xs text-ink-mid">
-                        Öğrenci fiyatı:{" "}
-                        <span className="font-medium text-ink">{formatPrice(pricing.total)}</span>{" "}
-                        ({offer.lesson_count} ders)
-                      </p>
-                    </div>
+                    <TutorDiscountControl
+                      label={planLabel(offer)}
+                      catalogDiscount={offer.catalog_discount_percent}
+                      maxDiscount={offer.max_discount_percent}
+                      discount={discount}
+                      onChange={(value) => setDraft(offer.plan_id, { discount_percent: value })}
+                      disabled={isSaving}
+                    />
                   )}
                 </div>
               );
