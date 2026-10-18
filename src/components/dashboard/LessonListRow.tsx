@@ -71,7 +71,7 @@ export function LessonListRow({
 }) {
   const name = lessonTutorName(booking);
   return (
-    <div className="grid grid-cols-[3rem_minmax(0,1fr)] gap-x-4 gap-y-2 py-5 sm:grid-cols-[4rem_minmax(0,1fr)_auto]">
+    <div className="grid grid-cols-[3rem_minmax(0,1fr)] gap-x-3 gap-y-2 py-5 sm:grid-cols-[4rem_minmax(0,1fr)_auto] sm:gap-x-4">
       <LessonDateColumn
         startTime={booking.start_time}
         relativeLabel={relativeLabel}

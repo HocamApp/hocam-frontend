@@ -39,17 +39,20 @@ export function SectionBandHeading({
   subtitle,
   icon,
   as: Heading = "h2",
+  className,
 }: {
   id: string;
   title: string;
   subtitle?: string;
   icon?: ReactNode;
   as?: "h2" | "span";
+  /** Placement and wrapping of the whole block, for a band that rearranges on a phone. */
+  className?: string;
 }) {
   return (
     // No min-w-0 here: it would let the title shrink below its longest word,
     // and "derslerin" then runs underneath the count pill on a phone.
-    <div className="flex items-center gap-3">
+    <div className={`flex items-center gap-3 ${className ?? ""}`}>
       {icon}
       <div>
         {/* `md:font-bold` is not redundant: `md:text-h3` carries its own
@@ -75,9 +78,11 @@ export function SectionBandHeading({
 export function SectionBandCount({
   tone,
   children,
+  className,
 }: {
   tone: SectionBandTone;
   children: ReactNode;
+  className?: string;
 }) {
   return (
     // A template string, not cn(): tailwind-merge reads the custom size
@@ -85,7 +90,7 @@ export function SectionBandCount({
     <span
       className={`inline-flex shrink-0 items-center rounded-pill px-3 py-0.5 text-label tabular-nums ${
         tone === "pink" ? "bg-gold text-gold-ink" : "border border-paper text-paper"
-      }`}
+      } ${className ?? ""}`}
     >
       {children}
     </span>

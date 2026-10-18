@@ -304,18 +304,27 @@ function UpcomingLessons({
       aria-labelledby="upcoming-lessons-title"
       className="overflow-hidden rounded-card border border-line bg-surface"
     >
-      <div className={sectionBandClass("pink", "flex-wrap gap-y-3")}>
-        <div className="flex items-center gap-3">
-          <SectionBandHeading id="upcoming-lessons-title" title="Sıradaki derslerin" />
+      {/* On a phone the band is a grid: the title takes the first row on one
+          line, then "Takvimi aç" sits left and the count bottom right. From sm
+          up the group is a flex row and the count rides beside the title. */}
+      <div className={sectionBandClass("pink", "grid grid-cols-[minmax(0,1fr)_auto] gap-y-3 sm:flex sm:gap-y-0")}>
+        <div className="contents sm:flex sm:items-center sm:gap-3">
+          <SectionBandHeading
+            id="upcoming-lessons-title"
+            title="Sıradaki derslerin"
+            className="col-span-2 whitespace-nowrap"
+          />
           {bookings.length > 0 && (
-            <SectionBandCount tone="pink">{bookings.length} ders</SectionBandCount>
+            <SectionBandCount tone="pink" className="col-start-2 row-start-2 justify-self-end">
+              {bookings.length} ders
+            </SectionBandCount>
           )}
         </div>
         <Button
           asChild
           variant="outline"
           size="sm"
-          className="shrink-0 border-primary-foreground text-primary-foreground"
+          className="col-start-1 row-start-2 shrink-0 justify-self-start border-primary-foreground text-primary-foreground"
         >
           <Link href="/schedule">
             Takvimi aç
