@@ -21,9 +21,10 @@ interface PageIntroHintProps {
 
 /**
  * "What this page is for", once. It points at the page title, has a single
- * button, and is gone for good after it is answered, by the button or by
- * dismissing it any other way: this is orientation, not a task, so it does not
- * come back on a schedule the way the Panom tour does.
+ * button, and stays until that button is pressed: nothing else on the page
+ * closes it, so it cannot be lost without being read. Once answered it is gone
+ * for good. This is orientation, not a task, so it does not come back on a
+ * schedule the way the Panom tour does.
  *
  * Each page calls `useUiHints` once, here. A page that shows two hints should
  * share one result rather than call it twice.
@@ -55,7 +56,7 @@ export function PageIntroHint({ hintKey, anchorRef, title, children, delayMs = S
       title={title}
       actionLabel="Anladım"
       onAction={answer}
-      onDismiss={answer}
+      forced
     >
       {children}
     </Coachmark>

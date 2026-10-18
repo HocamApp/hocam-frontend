@@ -38,12 +38,19 @@ test("a page explains itself once, with a single button", async () => {
   assert.ok(recorded[0][1].acknowledged_at);
 });
 
-test("dismissing it any other way is also an answer, it does not come back on a schedule", async () => {
+test("only the button closes it: Escape, a click elsewhere and focus moving away leave it up and unanswered", async () => {
   render(<Page />);
   const dialog = await screen.findByRole("dialog", { name: "Öğrencilerin burada" });
   fireEvent.keyDown(dialog, { key: "Escape" });
-  await waitFor(() => assert.equal(screen.queryByText("Öğrencilerin burada"), null));
-  assert.equal(recorded.length, 1);
+  fireEvent.pointerDown(document.body);
+  const elsewhere = document.createElement("input");
+  document.body.appendChild(elsewhere);
+  elsewhere.focus();
+  fireEvent.focusIn(elsewhere);
+  await settle();
+  elsewhere.remove();
+  assert.ok(screen.getByText("Öğrencilerin burada"));
+  assert.equal(recorded.length, 0);
 });
 
 test("an answered page stays quiet", async () => {

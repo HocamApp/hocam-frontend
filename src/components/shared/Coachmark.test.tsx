@@ -54,6 +54,26 @@ test("a reminder closes on Escape", async () => {
   assert.equal(dismissed, 1);
 });
 
+test("nothing else on the page closes a bubble: not a click elsewhere, not focus moving away", async () => {
+  for (const forced of [true, false]) {
+    let dismissed = 0;
+    const view = render(<Harness forced={forced} onAction={() => {}} onDismiss={() => { dismissed += 1; }} />);
+    await screen.findByRole("dialog", { name: "Başlık" });
+    fireEvent.pointerDown(document.body);
+    fireEvent.mouseDown(document.body);
+    fireEvent.click(document.body);
+    const elsewhere = document.createElement("input");
+    document.body.appendChild(elsewhere);
+    elsewhere.focus();
+    fireEvent.focusIn(elsewhere);
+    await new Promise((resolve) => setTimeout(resolve, 30));
+    assert.equal(dismissed, 0, forced ? "forced" : "reminder");
+    assert.ok(screen.getByRole("dialog", { name: "Başlık" }), forced ? "forced" : "reminder");
+    elsewhere.remove();
+    view.unmount();
+  }
+});
+
 test("a control at the bottom of the screen can have the bubble above it", async () => {
   function Bottom() {
     const ref = useRef<HTMLButtonElement>(null);

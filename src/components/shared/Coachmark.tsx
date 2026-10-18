@@ -15,9 +15,15 @@ interface CoachmarkProps {
   actionLabel: string;
   onAction: () => void;
   /**
-   * A forced coachmark closes only through its button: no Escape, no click
-   * outside, and the button takes focus. A reminder is a courtesy: it closes
-   * however the reader likes and never steals focus.
+   * A forced coachmark closes only through its button: no Escape, and the
+   * button takes focus. A reminder is a courtesy: Escape closes it and it never
+   * steals focus.
+   *
+   * Neither kind ever closes because of something *else* happening on the
+   * page, a click elsewhere or focus moving away. That used to dismiss the
+   * non-forced ones, and callers treat a dismissal as an answer, so a bubble
+   * that lost focus to the page (a route change, an autofocused field, a
+   * click on the way past) closed itself and was recorded as read.
    */
   forced?: boolean;
   onDismiss?: () => void;
@@ -66,6 +72,7 @@ export function Coachmark({
 
   return (
     <PopoverPrimitive.Root open onOpenChange={(next) => { if (!next && !forced) onDismiss?.(); }}>
+      {/* Only Escape can reach onOpenChange now, and only when not forced. */}
       <PopoverPrimitive.Anchor virtualRef={anchorRef} />
       <PopoverPrimitive.Portal>
         <PopoverPrimitive.Content
@@ -76,7 +83,7 @@ export function Coachmark({
           aria-label={title}
           onOpenAutoFocus={(event) => { if (!forced) event.preventDefault(); }}
           onEscapeKeyDown={(event) => { if (forced) event.preventDefault(); }}
-          onInteractOutside={(event) => { if (forced) event.preventDefault(); }}
+          onInteractOutside={(event) => event.preventDefault()}
           className="z-40 w-[min(20rem,calc(100vw-2rem))] rounded-card bg-[var(--ink-on-light)] p-4 shadow-float outline-none data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:duration-200 data-[side=bottom]:slide-in-from-top-2 data-[side=top]:slide-in-from-bottom-2 motion-reduce:animate-none"
         >
           <CoachmarkBody title={title} stepLabel={stepLabel} actionLabel={actionLabel} onAction={onAction}>
