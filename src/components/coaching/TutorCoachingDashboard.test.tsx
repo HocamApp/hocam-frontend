@@ -9,6 +9,11 @@ import type { CoachingDerivedStatus } from "@/lib/coachingPresentation";
 let TutorCoachingDashboard: typeof import("./TutorCoachingDashboard").TutorCoachingDashboard;
 
 before(async () => {
+  // The page intro reads the account's hint state (auth + React Query); these
+  // tests render the dashboard bare. Its own behaviour is in PageIntroHint.test.tsx.
+  mock.module("@/components/shared/PageIntroHint", {
+    namedExports: { PageIntroHint: () => null },
+  });
   // The tutor tab badge reads React Query; not what these tests check.
   mock.module("./TutorCoachingPendingBadge", {
     namedExports: { TutorCoachingPendingBadge: () => null },

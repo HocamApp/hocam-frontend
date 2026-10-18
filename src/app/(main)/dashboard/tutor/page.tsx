@@ -10,8 +10,6 @@ import {
 } from "@phosphor-icons/react";
 import { toast } from "sonner";
 
-import { AISupportChatWidget } from "@/components/ai/AISupportChatWidget";
-import { TUTOR_DASHBOARD_ASSISTANT } from "@/components/ai/pageAssistantContent";
 import { BookingCard, paymentLabel } from "@/components/lessons/BookingCard";
 import { LessonMaterialsDialog } from "@/components/lessons/LessonMaterialsDialog";
 import { WorkspacePageShell } from "@/components/layout/WorkspacePageShell";
@@ -20,6 +18,7 @@ import { EmptyState } from "@/components/shared/EmptyState";
 import { RouteGuard } from "@/components/shared/RouteGuard";
 import StatusBadge from "@/components/shared/StatusBadge";
 import { TutorialNudgeBanner } from "@/components/shared/TutorialNudgeBanner";
+import { TutorDashboardAssistant } from "@/components/tutors/TutorDashboardAssistant";
 import { TutorDashboardQuickActions } from "@/components/tutors/TutorDashboardQuickActions";
 import { TutorPerformanceSection } from "@/components/tutors/TutorPerformanceSection";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -251,5 +250,5 @@ function NextLessonTimeBox({ booking }: { booking: Booking }) {
 }
 
 export default function TutorDashboardPage() {
-  return <RouteGuard requireAuth requireRole="tutor"><><TutorDashboardContent /><AISupportChatWidget title={TUTOR_DASHBOARD_ASSISTANT.title} welcomeMessage={TUTOR_DASHBOARD_ASSISTANT.welcomeMessage} attentionMessages={TUTOR_DASHBOARD_ASSISTANT.attentionMessages} starterPrompts={TUTOR_DASHBOARD_ASSISTANT.starterPrompts} /></></RouteGuard>;
+  return <RouteGuard requireAuth requireRole="tutor"><><TutorDashboardContent /><TutorDashboardAssistant /></></RouteGuard>;
 }

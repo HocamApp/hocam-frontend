@@ -19,6 +19,10 @@ import {
 const SHOW_DELAY_MS = 900;
 
 const COPY: Record<TourStep, { title: string; body: string }> = {
+  bookings: {
+    title: "Rezervasyonlarını buradan yönet",
+    body: "Onay bekleyen, yaklaşan ve geçmiş ders kayıtların burada durur. Öğrenci ders aldığında önce buraya bakarsın.",
+  },
   packages: {
     title: "Paketlerini ayarla",
     body: "Haftada kaç ders vereceğini, hangi sürelerde paket sunacağını ve indirimini belirle. Öğrenciler bu paketler üzerinden ders alır.",
@@ -36,13 +40,15 @@ interface TutorSetupTourProps {
 }
 
 /**
- * The first-visit tour on Panom: package settings, then availability. The steps
- * come from the tutor's own data (see `tutorSetupHints.ts`), so a tutor who has
- * already done one of them sees only the other, and one who has done both sees
- * nothing.
+ * The tour on Panom: bookings, packages, availability.
  *
- * It waits for every input before deciding. Showing nothing while loading, or
- * when any request failed, is the right failure: a tour that flashes for
+ * The first one is the same three stops for every tutor, a short orientation
+ * that does not depend on what they have set up. Later reminders contain only
+ * the stops that are still open work (see `tutorSetupHints.ts`).
+ *
+ * It waits for the hint state before deciding, and a reminder also waits for
+ * the tutor's availability and packages. Showing nothing while loading, or
+ * when a request failed, is the right failure: a tour that flashes for
  * someone who finished it is worse than one that is late.
  */
 export function TutorSetupTour({ anchors, delayMs = SHOW_DELAY_MS }: TutorSetupTourProps) {
@@ -56,9 +62,9 @@ export function TutorSetupTour({ anchors, delayMs = SHOW_DELAY_MS }: TutorSetupT
   const hintsRef = useRef(hints);
   hintsRef.current = hints;
 
-  const dataReady = ready && Array.isArray(rules.data) && Array.isArray(offers.data);
-  const steps = dataReady ? pendingTourSteps({ rules: rules.data ?? [], offers: offers.data ?? [], hints }) : [];
-  const decision = dataReady ? decideTour({ hints, steps }) : ({ show: false } as const);
+  const dataReady = Array.isArray(rules.data) && Array.isArray(offers.data);
+  const pending = dataReady ? pendingTourSteps({ rules: rules.data ?? [], offers: offers.data ?? [], hints }) : null;
+  const decision = ready ? decideTour({ hints, pending }) : ({ show: false } as const);
   const stepKey = decision.show ? decision.steps.join(",") : "";
   const forced = decision.show && decision.forced;
 
@@ -70,7 +76,7 @@ export function TutorSetupTour({ anchors, delayMs = SHOW_DELAY_MS }: TutorSetupT
       if (document.querySelector('[role="dialog"]')) return;
       setSession({ steps: stepKey.split(",") as TourStep[], forced });
       setIndex(0);
-      record("tutor_setup_tour", shownPatch(hintsRef.current));
+      record("tutor_dashboard_tour", shownPatch(hintsRef.current));
     }, delayMs);
     return () => window.clearTimeout(timer);
   }, [session, finished, stepKey, forced, record, delayMs]);
@@ -79,7 +85,7 @@ export function TutorSetupTour({ anchors, delayMs = SHOW_DELAY_MS }: TutorSetupT
   const anchor = step ? anchors[step] : undefined;
 
   const finish = (acknowledge: boolean) => {
-    if (acknowledge) record("tutor_setup_tour", acknowledgedPatch());
+    if (acknowledge) record("tutor_dashboard_tour", acknowledgedPatch());
     setSession(null);
     setFinished(true);
   };

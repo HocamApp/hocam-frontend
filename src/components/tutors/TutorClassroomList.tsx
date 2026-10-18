@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { ArrowRight, MagnifyingGlass, Users } from "@phosphor-icons/react";
 import { WorkspacePageShell } from "@/components/layout/WorkspacePageShell";
+import { PageIntroHint } from "@/components/shared/PageIntroHint";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useTutorClassroom } from "@/hooks/useTutorClassroom";
@@ -38,7 +39,9 @@ export function TutorClassroomList() {
   const [filter, setFilter] = useState<ClassroomFilter>("all");
   const rows = filterStudentRoster(data.roster, search, filter);
   const packagesState: PackagesState = data.packages.isSuccess ? "ready" : data.packages.isError ? "error" : "loading";
-  return <WorkspacePageShell title="Sınıfım" width="wide">
+  const titleRef = useRef<HTMLSpanElement>(null);
+  return <WorkspacePageShell title="Sınıfım" width="wide" titleRef={titleRef}>
+    <PageIntroHint hintKey="tutor_intro_classroom" anchorRef={titleRef} title="Öğrencilerin burada">Ders aldığın öğrencileri, son ve sıradaki derslerini ve paketlerini tek listede görürsün. Bir öğrenciyi açınca notlarını ve ders materyallerini bulursun.</PageIntroHint>
     <p className="max-w-[60ch] text-ink-mid">Öğrencilerini, derslerini ve bir sonraki derse hazırlıklarını buradan takip et.</p>
     {data.isLoading ? <ClassroomLoading /> : data.isError ? <ClassroomError message="Öğrencilerin yüklenemedi. Yeniden deneyebilirsin." onRetry={data.retry} /> : !data.profile.data?.is_verified ? <p>Öğrenci alanına erişmek için hoca doğrulamanı tamamlamalısın.</p> : <>
       <div className="space-y-4">

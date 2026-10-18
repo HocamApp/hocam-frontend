@@ -54,6 +54,21 @@ test("a reminder closes on Escape", async () => {
   assert.equal(dismissed, 1);
 });
 
+test("a control at the bottom of the screen can have the bubble above it", async () => {
+  function Bottom() {
+    const ref = useRef<HTMLButtonElement>(null);
+    return (
+      <>
+        <button ref={ref}>Köşe</button>
+        <Coachmark open anchorRef={ref} title="Köşe notu" actionLabel="Anladım" onAction={() => {}} side="top" align="end">Açıklama</Coachmark>
+      </>
+    );
+  }
+  render(<Bottom />);
+  const dialog = await screen.findByRole("dialog", { name: "Köşe notu" });
+  assert.ok(dialog);
+});
+
 test("the in-flow panel carries the same words and button", () => {
   let acknowledged = 0;
   render(<HintPanel title="Panel" onAcknowledge={() => { acknowledged += 1; }}>Gövde</HintPanel>);
