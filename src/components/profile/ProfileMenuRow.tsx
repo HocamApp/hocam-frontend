@@ -59,6 +59,8 @@ interface ProfileToggleRowProps {
   onChange: (next: boolean) => void;
   disabled?: boolean;
   icon?: ReactNode;
+  /** Sits between the label and the switch, e.g. a price. */
+  trailing?: ReactNode;
 }
 
 /** A row with a label and an accessible on/off switch. */
@@ -68,11 +70,13 @@ export function ProfileToggleRow({
   onChange,
   disabled,
   icon,
+  trailing,
 }: ProfileToggleRowProps) {
   return (
     <div className="flex items-center gap-3 px-2 py-1.5 text-sm">
       {icon && <span className="shrink-0 text-muted-foreground">{icon}</span>}
       <span className="flex-1 text-foreground">{label}</span>
+      {trailing}
       <button
         type="button"
         role="switch"

@@ -91,6 +91,44 @@ describe("CoachingSessionList", () => {
     );
   });
 
+  it("offers the support action in an overdue notice as one outline button, and the notice has no stripe or tint", async () => {
+    sessions = [
+      {
+        id: "overdue",
+        scheduled_start: past,
+        status: "awaiting_report",
+        report_overdue: true,
+        report_due_at: "2026-01-06T15:00:00Z",
+        complaint_eligible: true,
+      },
+    ];
+    renderList();
+    const notice = await screen.findByRole("status");
+    const link = notice.querySelector("a") as HTMLAnchorElement;
+    assert.match(link.className, /border-ink/, "outline pill, not an underlined link");
+    assert.doesNotMatch(link.className, /underline/);
+    assert.doesNotMatch(notice.className, /border-l|gold|amber|bg-paper/);
+    assert.match(notice.className, /border-ink/);
+  });
+
+  it("while support is not open yet, the overdue notice says when it will be", async () => {
+    sessions = [
+      {
+        id: "overdue",
+        scheduled_start: past,
+        status: "awaiting_report",
+        report_overdue: true,
+        report_due_at: "2026-01-06T15:00:00Z",
+        complaint_eligible: false,
+        complaint_eligible_at: "2026-01-07T15:30:00Z",
+      },
+    ];
+    renderList();
+    const notice = await screen.findByRole("status");
+    assert.match(notice.textContent ?? "", /Eksik rapor desteği .* itibarıyla kullanılabilir/);
+    assert.equal(notice.querySelector("a"), null);
+  });
+
   it("keeps cancelled sessions out of the main list until expanded", async () => {
     sessions = [
       { id: "a", scheduled_start: past, status: "completed" },

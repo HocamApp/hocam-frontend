@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { CalendarBlank, WarningCircle } from "@phosphor-icons/react";
+import { CalendarBlank } from "@phosphor-icons/react";
 
+import { AttentionNotice } from "@/components/shared/AttentionNotice";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -75,16 +76,30 @@ export function CoachingSessionList() {
         now >= startsAt - JOIN_EARLY_MS &&
         now < startsAt + SESSION_MS);
     const overdueReportDueAt = session.report_overdue ? session.report_due_at : null;
-    const reportFollowUp = session.complaint_eligible ? (
+    const reportSupportOpen = session.complaint_eligible;
+    const reportSupportLater =
+      !session.complaint_eligible && session.status === "awaiting_report" && session.complaint_eligible_at
+        ? session.complaint_eligible_at
+        : null;
+    // Outside the overdue notice the same follow-up stays plain: a text link
+    // when support is open, a grey line when it is not open yet. Inside the
+    // notice the way forward is the one outline button.
+    const supportLink = (
       <Link
         href="/dashboard/student/coaching/complaints"
         className="inline-block text-small font-medium text-ink underline underline-offset-4"
       >
         Eksik rapor için desteğe başvur
       </Link>
-    ) : session.status === "awaiting_report" && session.complaint_eligible_at ? (
+    );
+    const supportButton = (
+      <Button asChild variant="outline" size="sm" className="h-auto max-w-full whitespace-normal py-2 text-center">
+        <Link href="/dashboard/student/coaching/complaints">Eksik rapor için desteğe başvur</Link>
+      </Button>
+    );
+    const supportLaterLine = reportSupportLater ? (
       <p className="text-small text-ink-mid">
-        Eksik rapor desteği {coachingDateTimeLabel(session.complaint_eligible_at)} itibarıyla
+        Eksik rapor desteği {coachingDateTimeLabel(reportSupportLater)} itibarıyla
         kullanılabilir.
       </p>
     ) : null;
@@ -99,20 +114,18 @@ export function CoachingSessionList() {
               {coachingSessionStatusLabel(session.status)}
             </Badge>
             {overdueReportDueAt ? (
-              <div role="status" className="mt-4 w-full max-w-[32rem] rounded-input border border-line border-l-4 border-l-gold bg-paper px-4 py-3">
-                <div className="flex items-start gap-3">
-                  <WarningCircle aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0 text-gold-ink" />
-                  <div className="min-w-0 space-y-1.5">
-                    <p className="text-small font-bold text-ink">Görüşme raporu gecikti</p>
-                    <p className="text-small leading-relaxed text-ink-mid">
-                      Son teslim zamanı: {coachingDateTimeLabel(overdueReportDueAt)}
-                    </p>
-                    {reportFollowUp ? <div className="pt-1">{reportFollowUp}</div> : null}
-                  </div>
-                </div>
-              </div>
-            ) : reportFollowUp ? (
-              <div className="mt-2">{reportFollowUp}</div>
+              <AttentionNotice
+                className="mt-4"
+                title="Görüşme raporu gecikti"
+                action={reportSupportOpen ? supportButton : undefined}
+              >
+                <p>Son teslim zamanı: {coachingDateTimeLabel(overdueReportDueAt)}</p>
+                {supportLaterLine}
+              </AttentionNotice>
+            ) : reportSupportOpen ? (
+              <div className="mt-2">{supportLink}</div>
+            ) : supportLaterLine ? (
+              <div className="mt-2">{supportLaterLine}</div>
             ) : null}
           </div>
           <div className="flex flex-wrap items-center gap-2">
