@@ -13,6 +13,11 @@ interface ParticipantAvatarProps {
    * cards, dashboard summaries, purchase sheets), so the default here
    * must not assume a chat context. */
   shape?: "square" | "circle";
+  /** Type size of the initials, for an avatar too small for the inherited one.
+   * Pass an arbitrary value such as `text-[0.8125rem]`: tailwind-merge reads
+   * a named custom size like `text-label` as a colour and would drop the
+   * `text-paper` the initials need, leaving ink on ink. */
+  fallbackClassName?: string;
 }
 
 function getInitials(name: string): string {
@@ -32,6 +37,7 @@ export function ParticipantAvatar({
   avatarUrl,
   className,
   shape = "square",
+  fallbackClassName,
 }: ParticipantAvatarProps) {
   return (
     <Avatar shape={shape} className={cn("h-10 w-10", className)}>
@@ -41,7 +47,7 @@ export function ParticipantAvatar({
       {/* Solid fill with inverted text, not a brand-tinted gradient. A pale
           fill carrying same-family text is the banned badge construction, and
           the gradient on top of it is banned in its own right. */}
-      <AvatarFallback className="bg-ink text-small font-medium text-paper">
+      <AvatarFallback className={cn("bg-ink font-medium text-paper", fallbackClassName)}>
         {getInitials(name)}
       </AvatarFallback>
     </Avatar>

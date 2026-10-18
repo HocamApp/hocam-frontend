@@ -1,30 +1,30 @@
 "use client";
 
 import { useState } from "react";
-import { CaretDown, Prohibit } from "@phosphor-icons/react";
+import { CaretDown, CaretUp, Prohibit } from "@phosphor-icons/react";
 
-import { ParticipantAvatar } from "@/components/messaging/ParticipantAvatar";
+import { LessonListRow } from "@/components/dashboard/LessonListRow";
 import { LessonStatusChip } from "@/components/dashboard/LessonStatusChip";
+import {
+  SectionBandCount,
+  SectionBandHeading,
+  sectionBandClass,
+} from "@/components/dashboard/SectionBand";
 import { Button } from "@/components/ui/button";
-import { bookingDateLabel } from "@/lib/bookingTime";
+import { bookingDateParts } from "@/lib/bookingTime";
 import { bookingStatusExplanation } from "@/lib/bookingStatusCopy";
-import { cn } from "@/lib/utils";
 import type { Booking } from "@/types";
 
 const PAGE_SIZE = 5;
-
-function tutorName(booking: Booking): string {
-  return booking.tutor.name
-    ? `${booking.tutor.name} ${booking.tutor.surname}`.trim()
-    : "Eğitmen bilgisi bekleniyor";
-}
 
 /**
  * Cancelled, auto-cancelled and disputed lessons.
  *
  * Nowhere on the dashboard before this; the only list lived in the lessons
  * workspace. It is a record, not a task, so it opens closed — an account with
- * dozens of cancellations should not meet them before its next lesson.
+ * dozens of cancellations should not meet them before its next lesson — and
+ * wears the ink band, never the pink one that belongs to what is coming up.
+ * The whole band is the toggle: the count says how much is behind it.
  */
 export function LessonIssuesSection({ bookings }: { bookings: Booking[] }) {
   const [open, setOpen] = useState(false);
@@ -32,69 +32,47 @@ export function LessonIssuesSection({ bookings }: { bookings: Booking[] }) {
 
   if (bookings.length === 0) return null;
   const visible = bookings.slice(0, visibleCount);
+  const Chevron = open ? CaretUp : CaretDown;
 
   return (
     <section
       aria-labelledby="lesson-issues-title"
-      className="rounded-card border border-line bg-surface p-6"
+      className="overflow-hidden rounded-card border border-line bg-surface"
     >
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
         aria-expanded={open}
-        className="flex w-full items-center gap-3 rounded-input text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2"
+        className={sectionBandClass(
+          "ink",
+          "w-full text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-paper",
+        )}
       >
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-input border border-line bg-paper text-ink-mid">
-          <Prohibit className="size-4" weight="regular" aria-hidden="true" />
-        </span>
-        <span className="min-w-0 flex-1">
-          <span
-            id="lesson-issues-title"
-            className="block text-h3-m text-ink md:text-h3"
-          >
-            İptal ve sorunlar
-          </span>
-          <span className="mt-0.5 block text-small text-ink-mid">
-            İptal edilen, otomatik iptal olan ve itiraz ettiğin dersler.
-          </span>
-        </span>
-        <span className="shrink-0 text-small tabular-nums text-ink-mid">
-          {bookings.length}
-        </span>
-        <CaretDown
-          className={cn(
-            "size-4 shrink-0 text-ink-mid transition-transform [transition-duration:120ms]",
-            open && "rotate-180",
-          )}
-          weight="regular"
-          aria-hidden="true"
+        <SectionBandHeading
+          as="span"
+          id="lesson-issues-title"
+          title="İptal ve sorunlar"
+          subtitle="İptal edilen, otomatik iptal olan ve itiraz ettiğin dersler."
+          icon={<Prohibit className="size-5 shrink-0" weight="regular" aria-hidden="true" />}
         />
+        <span className="flex shrink-0 items-center gap-3">
+          <SectionBandCount tone="ink">{bookings.length}</SectionBandCount>
+          <Chevron className="size-5" weight="regular" aria-hidden="true" />
+        </span>
       </button>
 
       {open && (
-        <>
-          <ol className="mt-4 divide-y divide-line border-t border-line">
+        <div className="px-6 pb-6">
+          <ol className="divide-y divide-line">
             {visible.map((booking) => (
-              <li key={booking.id} className="flex items-start gap-3 py-4">
-                <ParticipantAvatar
-                  name={tutorName(booking)}
-                  avatarUrl={booking.tutor.profile_picture}
-                  className="h-10 w-10 shrink-0 border border-line"
+              <li key={booking.id}>
+                <LessonListRow
+                  booking={booking}
+                  muted
+                  chip={<LessonStatusChip status={booking.status} />}
+                  meta={bookingDateParts(booking.start_time)?.year}
+                  explanation={bookingStatusExplanation(booking.status)}
                 />
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <p className="truncate text-body font-medium text-ink">
-                      {booking.subject.name}
-                    </p>
-                    <LessonStatusChip status={booking.status} />
-                  </div>
-                  <p className="mt-0.5 truncate text-small text-ink-mid">
-                    {tutorName(booking)} · {bookingDateLabel(booking.start_time)}
-                  </p>
-                  <p className="mt-1 text-small text-ink-mid">
-                    {bookingStatusExplanation(booking.status)}
-                  </p>
-                </div>
               </li>
             ))}
           </ol>
@@ -102,13 +80,13 @@ export function LessonIssuesSection({ bookings }: { bookings: Booking[] }) {
             <Button
               type="button"
               variant="outline"
-              className="mt-4 w-full"
+              className="mt-2 w-full"
               onClick={() => setVisibleCount((count) => count + PAGE_SIZE)}
             >
               {bookings.length - visible.length} kayıt daha göster
             </Button>
           )}
-        </>
+        </div>
       )}
     </section>
   );

@@ -1,6 +1,8 @@
 import "@/test/setupDom";
 
 import assert from "node:assert/strict";
+import { readFileSync, readdirSync } from "node:fs";
+import { join } from "node:path";
 import { afterEach, before, describe, it, mock } from "node:test";
 import React from "react";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
@@ -137,5 +139,65 @@ describe("which lessons a student may still cancel", () => {
       canCancelLesson(booking({ id: "d", status: "completed", start_time: past })),
       false,
     );
+  });
+});
+
+describe("the date column and bands of a dashboard lesson list", () => {
+  it("sets the lesson's own Istanbul day large, with the year beside the tutor", () => {
+    render(
+      <LessonIssuesSection
+        bookings={[booking({ id: "c1", status: "cancelled", start_time: "2026-10-26T23:30:00Z" })]}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /İptal ve sorunlar/ }));
+
+    // 23:30 stays on the 26th; read as a UTC instant it would roll to the 27th.
+    assert.ok(screen.getByText("26"));
+    assert.ok(screen.getByText("Pzt"));
+    assert.ok(screen.getByText("Ekim"));
+    assert.ok(screen.getByText("Ahmet Yılmaz · 2026"));
+  });
+
+  it("marks a cancellation with an icon as well as a word", () => {
+    render(
+      <LessonIssuesSection
+        bookings={[
+          booking({ id: "c1", status: "cancelled" }),
+          booking({ id: "c2", status: "expired" }),
+        ]}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /İptal ve sorunlar/ }));
+
+    for (const label of ["İptal edildi", "Otomatik iptal edildi"]) {
+      assert.ok(screen.getByText(label).querySelector("svg"), `${label} has no mark`);
+    }
+  });
+
+  it("puts the count in the band so a closed list still says how much is behind it", () => {
+    render(<LessonIssuesSection bookings={[booking({ id: "c1", status: "cancelled" })]} />);
+    const toggle = screen.getByRole("button", { name: /İptal ve sorunlar/ });
+
+    assert.match(toggle.className, /\bbg-ink\b/);
+    assert.match(toggle.className, /\btext-paper\b/);
+    assert.ok(toggle.textContent?.includes("1"));
+  });
+
+  it("keeps text on the dashboard lists level: no rotation classes at all", () => {
+    // DESIGN.md v0.12 cut the tilted sticker: text never sits at an angle. None
+    // of these files rotates anything today, so a rotate class showing up is a
+    // regression to look at, not a style to wave through. Scoped to the
+    // dashboard so it does not pre-judge the landing page.
+    const directory = "src/components/dashboard";
+    const files = [
+      ...readdirSync(directory)
+        .filter((name) => name.endsWith(".tsx") && !name.includes(".test."))
+        .map((name) => join(directory, name)),
+      "src/app/(main)/dashboard/student/page.tsx",
+    ];
+    const offenders = files.filter((file) =>
+      /(?:^|[\s"'`:])-?rotate-|\brotate\(/.test(readFileSync(file, "utf8")),
+    );
+    assert.deepEqual(offenders, [], `rotated element in: ${offenders.join(", ")}`);
   });
 });
