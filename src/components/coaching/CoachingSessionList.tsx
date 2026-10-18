@@ -83,7 +83,7 @@ export function CoachingSessionList() {
         : null;
     // Outside the overdue notice the same follow-up stays plain: a text link
     // when support is open, a grey line when it is not open yet. Inside the
-    // notice the way forward is the one outline button.
+    // notice the way forward is the one pink pill button.
     const supportLink = (
       <Link
         href="/dashboard/student/coaching/complaints"
@@ -93,7 +93,7 @@ export function CoachingSessionList() {
       </Link>
     );
     const supportButton = (
-      <Button asChild variant="outline" size="sm" className="h-auto max-w-full whitespace-normal py-2 text-center">
+      <Button asChild size="sm" className="h-auto max-w-full whitespace-normal py-2 text-center">
         <Link href="/dashboard/student/coaching/complaints">Eksik rapor için desteğe başvur</Link>
       </Button>
     );
