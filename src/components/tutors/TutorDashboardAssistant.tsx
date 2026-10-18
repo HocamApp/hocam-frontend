@@ -93,7 +93,7 @@ export function TutorDashboardAssistant({ delayMs = SHOW_DELAY_MS }: { delayMs?:
         title="Soruların için yardımcın burada"
         actionLabel="Anladım"
         onAction={answer}
-        onDismiss={answer}
+        forced
       >
         Rezervasyonların, müsaitliğin, öğrencilerin ve profilin hakkındaki sorularını bu balondan Hocam AI Hoca Yardımcısı’na yazabilirsin.
       </Coachmark>

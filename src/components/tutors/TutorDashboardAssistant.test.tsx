@@ -82,6 +82,16 @@ test("it stays off the bookings sub-view and while the hint state is not ready",
   assert.equal(recorded.length, 0);
 });
 
+test("a click elsewhere does not close it or count as read", async () => {
+  mount();
+  await screen.findByText("Soruların için yardımcın burada");
+  fireEvent.pointerDown(document.body);
+  fireEvent.keyDown(screen.getByRole("dialog", { name: "Soruların için yardımcın burada" }), { key: "Escape" });
+  await settle();
+  assert.ok(screen.getByText("Soruların için yardımcın burada"));
+  assert.equal(recorded.length, 0);
+});
+
 test("opening the chat is the answer too", async () => {
   mount();
   await screen.findByText("Soruların için yardımcın burada");

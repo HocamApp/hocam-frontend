@@ -284,7 +284,7 @@ function TutorPackagesContent() {
         title="Önce sıklığı seç"
         actionLabel="Anladım"
         onAction={() => record("tutor_packages_hint", acknowledgedPatch())}
-        onDismiss={() => record("tutor_packages_hint", acknowledgedPatch())}
+        forced
       >
         Haftada kaç ders verebileceğini seç. Seçmediğin sıklıklardaki paketler öğrencilere kapalı olur. Sonraki adımda süre ve indirimi belirlersin.
       </Coachmark>
