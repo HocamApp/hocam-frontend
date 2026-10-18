@@ -13,6 +13,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
   bookingDateLabel,
+  bookingDateParts,
   bookingDateTimeLabel,
   bookingInstant,
   bookingShortDateLabel,
@@ -112,4 +113,21 @@ test("labels do not depend on the machine's timezone", () => {
     if (original === undefined) delete process.env.TZ;
     else process.env.TZ = original;
   }
+});
+
+test("the date column splits a lesson into its Istanbul weekday, day, month and year", () => {
+  assert.deepEqual(bookingDateParts("2026-10-26T18:30:00Z"), {
+    weekday: "Pzt",
+    day: "26",
+    month: "Ekim",
+    year: "2026",
+  });
+  // A late-evening lesson stays on its own calendar day: read as a real UTC
+  // instant, 23:30 would roll into the 27th for a viewer east of Greenwich.
+  assert.equal(bookingDateParts("2026-10-26T23:30:00Z")?.day, "26");
+  assert.equal(bookingDateParts("2026-09-09T18:00:00Z")?.weekday, "Çar");
+});
+
+test("the date column has no parts for a value that is not a booking timestamp", () => {
+  assert.equal(bookingDateParts("not a date"), null);
 });

@@ -103,6 +103,35 @@ export function bookingShortDateLabel(value: string): string {
     : "Tarih bilgisi alınamadı";
 }
 
+const dateColumnFormatter = new Intl.DateTimeFormat("tr-TR", {
+  timeZone: "Europe/Istanbul",
+  weekday: "short",
+  day: "numeric",
+  month: "long",
+  year: "numeric",
+});
+
+/**
+ * The pieces of a lesson's Istanbul calendar day, for a date column that sets
+ * the day number large: `{ weekday: "Pzt", day: "26", month: "Ekim", year: "2026" }`.
+ * `null` when the value is not a booking timestamp.
+ */
+export function bookingDateParts(
+  value: string
+): { weekday: string; day: string; month: string; year: string } | null {
+  const instant = bookingInstant(value);
+  if (!Number.isFinite(instant)) return null;
+  const parts = Object.fromEntries(
+    dateColumnFormatter.formatToParts(instant).map((part) => [part.type, part.value])
+  );
+  return {
+    weekday: parts.weekday,
+    day: parts.day,
+    month: parts.month,
+    year: parts.year,
+  };
+}
+
 /**
  * "18:00", or "18:00 – 18:40" when a duration in minutes is supplied.
  * The lesson's Istanbul wall clock, whatever timezone the browser is in.

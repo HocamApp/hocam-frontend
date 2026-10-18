@@ -1,6 +1,6 @@
 # Brand v3: status
 
-**This file is the current state of the rollout.** `PLAN.md` is the plan; `BRAND.md` is the color system. Update this file at the end of every task. Last updated 15 October 2026 (Phase 1B).
+**This file is the current state of the rollout.** `PLAN.md` is the plan; `BRAND.md` is the color system. Update this file at the end of every task. Last updated 18 October 2026 (Phase 1B review).
 
 ## Where we are
 
@@ -10,7 +10,7 @@ Phase 0 is merged (#345): the compare harness, the scoped tokens, the `v3:` Tail
 
 Phase 1A is merged (#347): the hero collage, the tutor cards and the subject tiles, with Baha's review fixes.
 
-Phase 1B is in review (branch `agent/brand-v3-phase1b-20261015`): the verified band, the student steps, pricing and guarantees, all behind the flag. With the flag off every page checked is pixel-identical to `main`. Next: PR 1C (T1.9 to T1.12), after Baha has looked at 1B.
+Phase 1B is merged (#351): the verified band, the student steps, pricing and guarantees, with Baha's review answers (D8, D9). With the flag off every page checked is pixel-identical to `main`. Next: PR 1C (T1.9 to T1.12).
 
 ## Progress
 
@@ -22,12 +22,12 @@ Phase 1B is in review (branch `agent/brand-v3-phase1b-20261015`): the verified b
 | T1.1 Hero | done | #347 | Collage (D4), generic notification card (D3) |
 | T1.2 Tutor directory | done | #347 | Free-trial tag skipped (Baha) |
 | T1.2b Promo row (new) | skipped | | D7: skip for now |
-| T1.3 Subject grid | done | #347 | |
-| T1.4 Verified band | in review | #351 | Black type and button on the pink band, black checklist card; hex literals gone |
+| T1.3 Subject grid | removed | #347, #352 | Shipped in #347; #352 took the section off the homepage. See "Open for Baha" |
+| T1.4 Verified band | done | #351 | Black type and button on the pink band, black checklist card; hex literals gone |
 | T1.5 University strip | checked, no change | #351 | The heading picks up the v3 black through `--ys-neutral-strong`; the logos keep their own colours; edge fades are `--paper` (unchanged). Nothing strong, so §3 holds |
-| T1.6 Student steps | in review | #351 | Floating notification cards not added |
-| T1.7 Pricing | in review | #351 | |
-| T1.8 Guarantees | in review | #351 | |
+| T1.6 Student steps | done | #351 | No floating notification cards (D9) |
+| T1.7 Pricing | done | #351 | Example opens on "En popüler" under v3 (D8) |
+| T1.8 Guarantees | done | #351 | |
 | T1.9 Parents panel | not started | | |
 | T1.10 Tutor band | not started | | |
 | T1.11 Testimonials | not started | | |
@@ -50,12 +50,13 @@ Phase 1B is in review (branch `agent/brand-v3-phase1b-20261015`): the verified b
 | D5 | Dark mode on the homepage | **Answered by Baha:** ship dark with the BRAND.md starting values, checked in screenshots |
 | D6 | Navbar and footer wait for Phase 2 | **Answered by Baha:** yes |
 | D7 | Three-banner promo row | **Answered by Baha:** skip for now |
+| D8 | Pricing example: which plan is selected | **Answered by Baha (18 Oct 2026):** the example opens on the "En popüler" plan, so the pink border and the pink tag are on the same row. Under v3 only; a tutor without that plan keeps the 1-month plan. With the flag off it still opens on 1 month |
+| D9 | Floating notification cards in the student steps | **Answered by Baha (18 Oct 2026):** no floating cards |
 
 ## Open for Baha
 
 - Nothing open from Phase 1A. See "Answered after Phase 1A review" below.
-- **Pricing: "En popüler" and the selected plan are different plans.** The mockup puts the pink border and the "En popüler" tag on the same plan. On the site the example opens on the 1-month plan (`EXAMPLE_SELECTED_DAYS = 30`), while "En popüler" is the 3-month plan (`MOST_POPULAR_DURATION_DAYS = 90` in `lib/lessonPricing.ts`). So the pink border and the pink tag sit on two different rows. Should the example open on the popular plan? That would change which price the box leads with.
-- **Floating cards in the student steps (T1.6, optional).** Not added. The mockup's two cards ("Paket talebin gönderildi", "Yeni mesaj · Salı 18:00 uyar mı?") would need new copy, and the second has a person's photo and a made-up message. Want them, with generic text like the hero card?
+- **Subject grid is gone from the homepage.** #352 (Arda, 16 Oct 2026, "removes only the requested homepage elements") deleted `YsSubjectGrid.tsx` and its copy, along with the hero's audience row. So the 1B review fix for the desktop tiles (smaller glyphs, overflow hidden, 6 per row) has nothing to apply to and was not done. If the grid should come back, it's a restore of `YsSubjectGrid.tsx` from `6b68a1e` plus that fix, in its own PR, after agreeing with Arda.
 
 ## Phase 0 notes
 
@@ -124,6 +125,15 @@ Composition (BRAND.md §3):
 - Pricing: the black plan box is the strong moment. The fact tiles and discount tags are soft.
 - Guarantees: soft only (pale pink pill, pale yellow tiles).
 
+### Phase 1B review round (18 October 2026)
+
+- **Updated with main** (#352 to #363). No conflicts. #352 removed the subject grid and the hero's audience row from the homepage; see "Open for Baha".
+- **AttentionNotice (#362, #363)** is only used on the coaching session list, outside the homepage's `data-brand="v3"` scope, so the v3 flag doesn't touch it in Phase 1. For Phase 2: its action is "the one pink pill button, white text". After the global flip `--pink` is `#FF2070`, where white text is 3.7:1, so T2.2 should give that button `--pink-deep` per D1.
+- **Pricing (D8):** `exampleSelectedDays()` in `YsPricing.tsx`. The box only renders for a signed-in visitor, so this is covered by `YsBrandV3Phase1B.test.tsx` (selected row = the "En popüler" row under v3, 1 month with the flag off or without a 3-month plan), not by a screenshot.
+- **"Sen sadece ___" pill:** not clipped. Measured on a flag-on build at 1440, 390 and 360: at rest every word fits inside the pill (widest is "gün belirle", 258px against a 328px heading at 360; no overflow). The "..elirle" was the full-page shot landing mid-swap. `npm run brand:compare` (and `home:compare`, same script) now shoots the site with reduced motion, which holds the heading on "seç".
+- **Checks:** flag off, frozen screenshots pixel-diffed against `main` on `/`, `/yks-ozel-ders`, `/hocalar-nasil-dogrulaniyor`, `/nasil-calisir`, `/veliler` and `/hoca-ol`, at 1440 and 390, light and dark, with `HOME_V2` off and on, tutor directory loaded: all 48 identical (`/nasil-calisir` 1440 light was shot twice; the first time a step screenshot hadn't finished loading on the `main` side). Flag on: `npm run brand:compare` → `screenshots/brand-v3/`, no horizontal scroll at 390.
+- **Local runs need port 3000.** The Railway API only allows CORS from `http://localhost:3000`; a build served on another port renders an empty tutor directory. The frozen-diff harness answers `/api/` from a shared cache with the page's own origin, so it can run two servers side by side.
+
 ## Intentional differences from the mockup
 
 - **Hero:** no "YKS 2027 için hocalar ders alıyor" chip (no copy or fact for it) and no search bar (D2). The headline, subline and buttons keep the site's sizes and copy. The audience pills keep their down arrows next to the new dots.
@@ -131,7 +141,8 @@ Composition (BRAND.md §3):
 - **Notification card (D3):** an icon in a pale pink circle instead of Zeynep's photo, and generic text.
 - **Tutor cards:** keep the site's horizontal card (photo, bio, price rail) rather than the mockup's vertical one. Only the treatments in PLAN.md T1.2 are applied. Real tutors, prices and ranks, not the demo ones.
 - **Verified band button** is `--band`, not `bg-ink`, so it stays black in dark mode (see Phase 1B notes).
-- **Student steps:** the site's real step texts and screenshots; no floating notification cards (open for Baha). The step tabs keep their click-to-switch behaviour.
+- **Student steps:** the site's real step texts and screenshots; no floating notification cards (D9). The step tabs keep their click-to-switch behaviour.
 - **Pricing fact cards** keep the site's label/value/body text beside the new tile. The mockup folds them into one line ("Ders başı 400 – 1.400 ₺").
 - **Pricing plan box:** real plans for the top-rated tutor, shown only to signed-in visitors as before. Rows are a vertical list, not the mockup's 2×2 grid. The "En popüler" tag is `--pink-deep` and unrotated.
-- **Subject tiles:** every subject the API returns (30) on desktop, the first 8 plus "Tüm dersleri gör" below 768px; not the mockup's 12. API order. Hover draws an ink ring instead of the mockup's lift.
+- **Subject tiles:** not on the homepage since #352. (When they were: every subject the API returns, 30, on desktop; the first 8 plus "Tüm dersleri gör" below 768px; API order; an ink ring on hover.)
+- **Hero audience row** ("Ders almak istiyorum / Velisiyim / Hoca olmak istiyorum"): removed by #352, so the mockup's dotted pills aren't there.
