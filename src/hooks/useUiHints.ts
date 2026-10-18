@@ -18,6 +18,14 @@ import {
 } from "@/lib/tutorSetupHints";
 
 /**
+ * Fired on `window` after every `record`, so the several components of one
+ * page that each call `useUiHints` (the tour and the chat hint on Panom) see
+ * each other's answers at once instead of waiting for the account round trip.
+ */
+const CHANGED_EVENT = "hocam:ui-hints-changed";
+type ChangedDetail = { userId: string; key: UiHintKey; record: UiHintRecord };
+
+/**
  * Per-user "has seen / dismissed" state for in-product hints.
  *
  * The account is the source of truth (`preferences.ui_hints` on /profile/me/),
@@ -53,6 +61,19 @@ export function useUiHints() {
     setLocal(stored);
   }, [userId]);
 
+  useEffect(() => {
+    if (!userId) return;
+    const onChanged = (event: Event) => {
+      const { userId: from, key, record: changed } = (event as CustomEvent<ChangedDetail>).detail;
+      if (from !== userId) return;
+      const next: UiHints = { ...localRef.current, [key]: mergeRecords(localRef.current[key], changed) };
+      localRef.current = next;
+      setLocal(next);
+    };
+    window.addEventListener(CHANGED_EVENT, onChanged);
+    return () => window.removeEventListener(CHANGED_EVENT, onChanged);
+  }, [userId]);
+
   const preferences = profile.data?.preferences;
   const serverReady = profile.isSuccess && typeof preferences === "object" && preferences !== null;
   const server = useMemo(() => parseUiHints(preferences?.ui_hints) ?? {}, [preferences]);
@@ -70,6 +91,7 @@ export function useUiHints() {
       localRef.current = nextLocal;
       setLocal(nextLocal);
       writeLocalHints(getLocalStorage(), userId, nextLocal);
+      window.dispatchEvent(new CustomEvent<ChangedDetail>(CHANGED_EVENT, { detail: { userId, key, record: next } }));
 
       updateProfileMe({ preferences: { ui_hints: { [key]: next } } })
         .then((response) => queryClient.setQueryData(["profile-me"], response))

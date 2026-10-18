@@ -14,6 +14,7 @@ import {
   shownPatch,
   uiHintsStorageKey,
   writeLocalHints,
+  type UiHintKey,
   type UiHints,
 } from "@/lib/tutorSetupHints";
 import type { AvailabilityRule, TutorPackageOffer } from "@/types";
@@ -31,14 +32,14 @@ const offer = (overrides: Partial<TutorPackageOffer> = {}): TutorPackageOffer =>
 });
 
 const afterFirstShow = (shown: number, lastShownAt: number, acknowledged = true): UiHints => ({
-  tutor_setup_tour: {
+  tutor_dashboard_tour: {
     shown_count: shown,
     last_shown_at: new Date(lastShownAt).toISOString(),
     ...(acknowledged ? { acknowledged_at: new Date(lastShownAt).toISOString() } : {}),
   },
 });
 
-test("steps follow the tutor's data, packages first", () => {
+test("pending steps follow the tutor's data, packages first, and never include bookings", () => {
   assert.deepEqual(pendingTourSteps({ rules: [], offers: [offer()], hints: {} }), ["packages", "availability"]);
   assert.deepEqual(pendingTourSteps({ rules: [rule()], offers: [offer()], hints: {} }), ["packages"]);
   assert.deepEqual(pendingTourSteps({ rules: [], offers: [offer({ discount_percent: 10 })], hints: {} }), ["availability"]);
@@ -57,51 +58,79 @@ test("reviewing the packages page counts as configured even when nothing changed
   assert.deepEqual(pendingTourSteps({ rules: [], offers: [offer()], hints }), ["availability"]);
 });
 
-test("nothing to do means no tour", () => {
-  assert.deepEqual(decideTour({ hints: {}, steps: [], now: T0 }), { show: false });
+test("the first tour is the same three stops for everyone, even before the data has loaded", () => {
+  const all = { show: true, forced: true, steps: ["bookings", "packages", "availability"] };
+  assert.deepEqual(decideTour({ hints: {}, pending: null, now: T0 }), all);
+  assert.deepEqual(decideTour({ hints: {}, pending: [], now: T0 }), all, "a tutor with nothing left to do still gets the orientation");
+  assert.deepEqual(decideTour({ hints: {}, pending: ["packages"], now: T0 }), all);
 });
 
-test("first sight is mandatory", () => {
-  assert.deepEqual(decideTour({ hints: {}, steps: ["packages", "availability"], now: T0 }), {
-    show: true, forced: true, steps: ["packages", "availability"],
+test("the superseded v1 record is ignored: its owners get the new tour once", () => {
+  const hints: UiHints = {
+    tutor_setup_tour: { shown_count: 3, last_shown_at: new Date(T0).toISOString(), acknowledged_at: new Date(T0).toISOString() },
+  };
+  assert.equal(decideTour({ hints, pending: [], now: T0 }).show, true);
+});
+
+test("a tour closed without pressing the button stays the full mandatory tour and does not advance the schedule", () => {
+  const hints = afterFirstShow(1, T0 - 10 * DAY, false);
+  assert.deepEqual(decideTour({ hints, pending: ["availability"], now: T0 }), {
+    show: true, forced: true, steps: ["bookings", "packages", "availability"],
   });
 });
 
-test("a tour closed without pressing the button stays mandatory and does not advance the schedule", () => {
-  const hints = afterFirstShow(1, T0 - 10 * DAY, false);
-  const decision = decideTour({ hints, steps: ["availability"], now: T0 });
-  assert.deepEqual(decision, { show: true, forced: true, steps: ["availability"] });
+test("a reminder contains only the work that is still open", () => {
+  const hints = afterFirstShow(1, T0 - DAY);
+  assert.deepEqual(decideTour({ hints, pending: ["availability"], now: T0 }), { show: true, forced: false, steps: ["availability"] });
+  assert.deepEqual(decideTour({ hints, pending: ["packages", "availability"], now: T0 }), { show: true, forced: false, steps: ["packages", "availability"] });
+});
+
+test("a reminder says nothing when there is no open work or the data has not loaded", () => {
+  const hints = afterFirstShow(1, T0 - 30 * DAY);
+  assert.deepEqual(decideTour({ hints, pending: [], now: T0 }), { show: false });
+  assert.deepEqual(decideTour({ hints, pending: null, now: T0 }), { show: false });
 });
 
 test("after acknowledgement it waits 1, 3, 7 then 14 days", () => {
   TOUR_GAPS_DAYS.forEach((days, index) => {
     const shown = index + 1;
     const last = T0 - days * DAY;
-    assert.equal(decideTour({ hints: afterFirstShow(shown, last + 1000), steps: ["availability"], now: T0 }).show, false, `show ${shown} one second early`);
-    const ready = decideTour({ hints: afterFirstShow(shown, last), steps: ["availability"], now: T0 });
+    assert.equal(decideTour({ hints: afterFirstShow(shown, last + 1000), pending: ["availability"], now: T0 }).show, false, `show ${shown} one second early`);
+    const ready = decideTour({ hints: afterFirstShow(shown, last), pending: ["availability"], now: T0 });
     assert.deepEqual(ready, { show: true, forced: false, steps: ["availability"] }, `show ${shown} on the day`);
   });
 });
 
 test("it stops after the last allowed showing", () => {
   const hints = afterFirstShow(TOUR_MAX_SHOWS, T0 - 365 * DAY);
-  assert.deepEqual(decideTour({ hints, steps: ["availability"], now: T0 }), { show: false });
+  assert.deepEqual(decideTour({ hints, pending: ["availability"], now: T0 }), { show: false });
 });
 
 test("a timestamp from the future waits instead of showing", () => {
-  assert.equal(decideTour({ hints: afterFirstShow(2, T0 + DAY), steps: ["availability"], now: T0 }).show, false);
+  assert.equal(decideTour({ hints: afterFirstShow(2, T0 + DAY), pending: ["availability"], now: T0 }).show, false);
 });
 
 test("a missing last_shown_at after acknowledgement does not lock the tour forever", () => {
-  const hints: UiHints = { tutor_setup_tour: { shown_count: 2, acknowledged_at: new Date(T0).toISOString() } };
-  assert.equal(decideTour({ hints, steps: ["availability"], now: T0 }).show, true);
+  const hints: UiHints = { tutor_dashboard_tour: { shown_count: 2, acknowledged_at: new Date(T0).toISOString() } };
+  assert.equal(decideTour({ hints, pending: ["availability"], now: T0 }).show, true);
+});
+
+test("every hint key the app writes survives parsing, or its bubble would come back on every visit", () => {
+  const keys: UiHintKey[] = [
+    "tutor_dashboard_tour", "tutor_chat_hint", "tutor_intro_classroom", "tutor_intro_calendar",
+    "tutor_intro_coaching", "tutor_packages_hint", "tutor_availability_hint", "tutor_packages_reviewed",
+  ];
+  const raw = Object.fromEntries(keys.map((key) => [key, { acknowledged_at: "2026-10-17T10:00:00Z" }]));
+  const parsed = parseUiHints(raw) ?? {};
+  for (const key of keys) assert.equal(parsed[key]?.acknowledged_at, "2026-10-17T10:00:00Z", key);
+  assert.deepEqual(Object.keys(mergeHints(parsed, {})).sort(), [...keys].sort());
 });
 
 test("patches count the showing and stamp the acknowledgement", () => {
   const first = shownPatch({}, T0);
   assert.equal(first.shown_count, 1);
   assert.equal(first.last_shown_at, new Date(T0).toISOString());
-  assert.equal(shownPatch({ tutor_setup_tour: first }, T0 + DAY).shown_count, 2);
+  assert.equal(shownPatch({ tutor_dashboard_tour: first }, T0 + DAY).shown_count, 2);
   assert.equal(acknowledgedPatch(T0).acknowledged_at, new Date(T0).toISOString());
 });
 

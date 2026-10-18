@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -17,6 +17,7 @@ import { ScheduleWeeklyView } from "@/components/schedule/ScheduleWeeklyView";
 import { endTimeLabel, longDayLabel, parseLocalDate, rangeLabel, timeToMinutes, toDateKey } from "@/components/schedule/scheduleDates";
 import { calendarEventHref, calendarRange, calendarStatus, calendarViewMap, fetchTutorCalendar, istanbulToday, shiftCalendarDate, validCalendarDate, type TutorCalendarAvailability, type TutorCalendarEvent, type TutorCalendarView, type TutorTimeOff } from "@/lib/tutorCalendar";
 import type { ScheduleEvent } from "@/types";
+import { PageIntroHint } from "@/components/shared/PageIntroHint";
 import { AvailabilityDialogHint } from "@/components/tutors/AvailabilityDialogHint";
 import { TutorCalendarManagement } from "./TutorCalendarManagement";
 
@@ -118,8 +119,10 @@ export function TutorCalendarPage() {
     const item = calendar.data?.events.find(row => row.source === event.source && row.id === event.id);
     if (item) setSelected(item);
   };
+  const titleRef = useRef<HTMLSpanElement>(null);
   const selectableDisplayEvent = (event: ScheduleEvent) => event.source !== "availability";
-  return <WorkspacePageShell title="Takvim" width="wide">
+  return <WorkspacePageShell title="Takvim" width="wide" titleRef={titleRef}>
+    <PageIntroHint hintKey="tutor_intro_calendar" anchorRef={titleRef} title="Takvimin burada">Derslerini, koçluk görüşmelerini, müsait saatlerini ve meşguliyetlerini gün, hafta veya ay görünümünde görürsün. Üstteki butonlarla müsaitliğini düzenleyebilir, meşguliyet ekleyebilirsin.</PageIntroHint>
     <div className="flex flex-wrap items-center justify-between gap-3"><p className="text-small text-ink-mid">Derslerin, koçluk görüşmelerin ve müsait saatlerin. Saat dilimi: İstanbul.</p>{calendar.isSuccess && <TutorCalendarManagement date={date} timeOff={calendar.data.time_off} events={calendar.data.events} onChanged={changed} selectedTimeOff={selectedTimeOff} onTimeOffClose={() => setSelectedTimeOff(null)} availabilityIntro={<AvailabilityDialogHint />} />}</div>
     <div className="flex flex-wrap items-center justify-between gap-4">
       <div className="flex min-w-0 flex-wrap items-center gap-2"><Button variant="outline" onClick={() => navigate(today,view)}>Bugün</Button><Button variant="outline" size="icon" aria-label="Önceki dönem" onClick={() => navigate(shiftCalendarDate(date,view,-1),view)}><CaretLeft className="h-5 w-5" aria-hidden="true" /></Button><Button variant="outline" size="icon" aria-label="Sonraki dönem" onClick={() => navigate(shiftCalendarDate(date,view,1),view)}><CaretRight className="h-5 w-5" aria-hidden="true" /></Button><label className="sr-only" htmlFor="tutor-calendar-date">Takvim tarihi</label><Input id="tutor-calendar-date" type="date" min="1900-01-01" max="2100-12-31" value={date} onChange={event => { if(validCalendarDate(event.target.value)) navigate(event.target.value,view); }} className="w-[155px] min-w-0 rounded-input border-line bg-surface" /></div>

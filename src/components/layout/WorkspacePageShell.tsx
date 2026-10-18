@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { ReactNode, Ref } from "react";
 
 import { cn } from "@/lib/utils";
 
@@ -6,6 +6,12 @@ type WorkspacePageShellProps = {
   title: string;
   actions?: ReactNode;
   width?: "narrow" | "default" | "wide";
+  /**
+   * The title's text, for something that has to point at it (an intro hint).
+   * It is an inline span inside the h1: the h1 itself spans the whole row, so
+   * an arrow aimed at it would land in the middle of the page.
+   */
+  titleRef?: Ref<HTMLSpanElement>;
   children: ReactNode;
 };
 
@@ -19,6 +25,7 @@ export function WorkspacePageShell({
   title,
   actions,
   width = "default",
+  titleRef,
   children,
 }: WorkspacePageShellProps) {
   return (
@@ -35,7 +42,7 @@ export function WorkspacePageShell({
         )}
       >
         <h1 className="min-w-0 max-w-[20ch] break-words text-[1.875rem] font-bold leading-[1.05] tracking-[-0.02em] text-balance sm:text-[2.75rem]">
-          {title}
+          <span ref={titleRef}>{title}</span>
         </h1>
         {actions ? <div className="shrink-0">{actions}</div> : null}
       </header>

@@ -26,14 +26,15 @@ const linkClassName =
  * busy block is the outline alternative.
  */
 export function TutorDashboardQuickActions() {
+  const bookingsRef = useRef<HTMLAnchorElement>(null);
   const packagesRef = useRef<HTMLAnchorElement>(null);
   const availabilityRef = useRef<HTMLButtonElement>(null);
-  const anchors = useMemo(() => ({ packages: packagesRef, availability: availabilityRef }), []);
+  const anchors = useMemo(() => ({ bookings: bookingsRef, packages: packagesRef, availability: availabilityRef }), []);
 
   return (
     <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
       <nav aria-label="Hoca yönetimi" className="grid grid-cols-2 gap-3 lg:w-[28rem]">
-        <Link href="/dashboard/tutor?tab=bookings" className={linkClassName}>
+        <Link ref={bookingsRef} href="/dashboard/tutor?tab=bookings" className={linkClassName}>
           Rezervasyonlar
           <ArrowRight className="h-5 w-5 shrink-0" aria-hidden="true" />
         </Link>

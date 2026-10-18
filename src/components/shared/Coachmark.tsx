@@ -21,6 +21,9 @@ interface CoachmarkProps {
    */
   forced?: boolean;
   onDismiss?: () => void;
+  /** Where the bubble sits relative to the anchor. A control at the bottom of the screen wants "top". */
+  side?: "top" | "bottom";
+  align?: "start" | "center" | "end";
 }
 
 /**
@@ -44,6 +47,8 @@ export function Coachmark({
   onAction,
   forced = false,
   onDismiss,
+  side = "bottom",
+  align = "center",
 }: CoachmarkProps) {
   // The anchor is usually mounted in the same commit that opens the bubble, so
   // its ref is still empty during this render. Looking again after every commit
@@ -64,7 +69,8 @@ export function Coachmark({
       <PopoverPrimitive.Anchor virtualRef={anchorRef} />
       <PopoverPrimitive.Portal>
         <PopoverPrimitive.Content
-          side="bottom"
+          side={side}
+          align={align}
           sideOffset={12}
           collisionPadding={16}
           aria-label={title}

@@ -105,3 +105,10 @@ test("an answer that is not a profile keeps it not ready", async () => {
   await new Promise((resolve) => setTimeout(resolve, 30));
   assert.equal(result.current.ready, false);
 });
+
+test("two components on one page see each other's answers at once", async () => {
+  const { result } = renderHook(() => ({ first: useUiHints(), second: useUiHints() }), { wrapper });
+  await waitFor(() => assert.equal(result.current.second.ready, true));
+  act(() => result.current.first.record("tutor_dashboard_tour", { acknowledged_at: "2026-10-17T10:00:00Z" }));
+  assert.equal(result.current.second.hints.tutor_dashboard_tour?.acknowledged_at, "2026-10-17T10:00:00Z");
+});

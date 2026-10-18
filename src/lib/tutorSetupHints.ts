@@ -10,18 +10,27 @@ import type { AvailabilityRule, TutorPackageOffer } from "@/types";
  *
  * The schedule is the conventional one for a product tour:
  *
- * - **First sight is mandatory.** Until the tutor presses the button once, the
- *   tour comes back on every visit and cannot be dismissed any other way.
+ * - **First sight is mandatory and fixed.** Three stops (bookings, packages,
+ *   availability) for every tutor, whatever they already have set up. Until the
+ *   tutor presses the button once, it comes back on every visit and cannot be
+ *   dismissed any other way.
  * - **Then it backs off.** Each further showing waits longer than the last
  *   (1, 3, 7, 14 days) and the tour stops after five in total. A reminder that
  *   never ends is how people learn to ignore a surface.
- * - **It stops when the work is done.** The steps are derived from the tutor's
- *   own data, so a tutor who adds availability loses that step without
- *   anything having to be "completed" explicitly.
+ * - **Reminders are about open work only.** They contain just the steps the
+ *   tutor's own data says are still undone (packages, availability), so adding
+ *   availability drops that step without anything having to be "completed", and
+ *   a tutor with nothing left to do is never reminded.
  */
 
 export type UiHintKey =
+  /** The v1 tour (steps derived from data). Superseded: kept readable, never consulted. */
   | "tutor_setup_tour"
+  | "tutor_dashboard_tour"
+  | "tutor_chat_hint"
+  | "tutor_intro_classroom"
+  | "tutor_intro_calendar"
+  | "tutor_intro_coaching"
   | "tutor_packages_hint"
   | "tutor_availability_hint"
   | "tutor_packages_reviewed";
@@ -37,7 +46,13 @@ export type UiHintRecord = {
 
 export type UiHints = Partial<Record<UiHintKey, UiHintRecord>>;
 
-export type TourStep = "packages" | "availability";
+export type TourStep = "bookings" | "packages" | "availability";
+
+/** What the first tour walks through, whatever the tutor has or has not set up. */
+export const TOUR_ALL_STEPS: readonly TourStep[] = ["bookings", "packages", "availability"];
+
+/** The steps a later reminder can contain: the ones that are work, not orientation. */
+export type PendingTourStep = Exclude<TourStep, "bookings">;
 
 /** Days to wait after showing number n (1-based) before showing again. */
 export const TOUR_GAPS_DAYS = [1, 3, 7, 14] as const;
@@ -47,6 +62,11 @@ export const TOUR_MAX_SHOWS = TOUR_GAPS_DAYS.length + 1;
 const DAY_MS = 24 * 60 * 60 * 1000;
 const HINT_KEYS: readonly UiHintKey[] = [
   "tutor_setup_tour",
+  "tutor_dashboard_tour",
+  "tutor_chat_hint",
+  "tutor_intro_classroom",
+  "tutor_intro_calendar",
+  "tutor_intro_coaching",
   "tutor_packages_hint",
   "tutor_availability_hint",
   "tutor_packages_reviewed",
@@ -74,8 +94,8 @@ export function pendingTourSteps(input: {
   rules: readonly AvailabilityRule[];
   offers: readonly TutorPackageOffer[];
   hints: UiHints;
-}): TourStep[] {
-  const steps: TourStep[] = [];
+}): PendingTourStep[] {
+  const steps: PendingTourStep[] = [];
   if (!packagesConfigured(input.offers, input.hints)) steps.push("packages");
   if (!hasAvailability(input.rules)) steps.push("availability");
   return steps;
@@ -85,37 +105,45 @@ export type TourDecision =
   | { show: false }
   | { show: true; forced: boolean; steps: TourStep[] };
 
+/**
+ * `pending` is `null` until the tutor's availability and packages have loaded.
+ * The first tour does not need it: it is orientation, the same three stops for
+ * everyone, so a tutor who already has availability still learns where it
+ * lives. Reminders are the opposite, they exist to point at work that is still
+ * open, so they wait for the data and say nothing when there is none.
+ */
 export function decideTour(input: {
   hints: UiHints;
-  steps: readonly TourStep[];
+  pending: readonly PendingTourStep[] | null;
   now?: number;
 }): TourDecision {
-  const { hints, steps, now = Date.now() } = input;
-  if (steps.length === 0) return { show: false };
+  const { hints, pending, now = Date.now() } = input;
 
-  const record = hints.tutor_setup_tour;
+  const record = hints.tutor_dashboard_tour;
   const shown = record?.shown_count ?? 0;
 
   if (shown === 0 || !record?.acknowledged_at) {
-    return { show: true, forced: true, steps: [...steps] };
+    return { show: true, forced: true, steps: [...TOUR_ALL_STEPS] };
   }
+
+  if (!pending || pending.length === 0) return { show: false };
   if (shown >= TOUR_MAX_SHOWS) return { show: false };
 
   const last = Date.parse(record.last_shown_at ?? "");
-  if (!Number.isFinite(last)) return { show: true, forced: false, steps: [...steps] };
+  if (!Number.isFinite(last)) return { show: true, forced: false, steps: [...pending] };
 
   const gapDays = TOUR_GAPS_DAYS[Math.min(shown, TOUR_GAPS_DAYS.length) - 1];
   const age = now - last;
   // A clock that moved backwards leaves a future timestamp: wait, do not nag.
   if (age < gapDays * DAY_MS) return { show: false };
 
-  return { show: true, forced: false, steps: [...steps] };
+  return { show: true, forced: false, steps: [...pending] };
 }
 
 /** The record that results from showing the tour once more. */
 export function shownPatch(hints: UiHints, now: number = Date.now()): UiHintRecord {
   return {
-    shown_count: (hints.tutor_setup_tour?.shown_count ?? 0) + 1,
+    shown_count: (hints.tutor_dashboard_tour?.shown_count ?? 0) + 1,
     last_shown_at: new Date(now).toISOString(),
   };
 }

@@ -9,14 +9,15 @@ import type { UiHintKey, UiHintRecord, UiHints } from "@/lib/tutorSetupHints";
 
 let hints: UiHints = {};
 let ready = true;
+let api_neverResolves = false;
 let rules: Array<Record<string, unknown>> = [];
 let offers: Array<Record<string, unknown>> = [];
 const recorded: Array<[UiHintKey, UiHintRecord]> = [];
 const record = (key: UiHintKey, patch: UiHintRecord) => { recorded.push([key, patch]); };
 
 mock.module("@/hooks/useUiHints", { namedExports: { useUiHints: () => ({ hints, ready, record }) } });
-mock.module("@/lib/dashboardApi", { namedExports: { fetchAvailability: async () => rules } });
-mock.module("@/lib/paymentsApi", { namedExports: { fetchTutorPackageOffers: async () => offers } });
+mock.module("@/lib/dashboardApi", { namedExports: { fetchAvailability: async () => (api_neverResolves ? new Promise<never>(() => {}) : rules) } });
+mock.module("@/lib/paymentsApi", { namedExports: { fetchTutorPackageOffers: async () => (api_neverResolves ? new Promise<never>(() => {}) : offers) } });
 
 let Tour: typeof import("./TutorSetupTour").TutorSetupTour;
 before(async () => { Tour = (await import("./TutorSetupTour")).TutorSetupTour; });
@@ -33,11 +34,13 @@ beforeEach(() => {
 afterEach(() => { cleanup(); client.clear(); document.querySelectorAll("[data-test-modal]").forEach((node) => node.remove()); });
 
 function Harness() {
+  const bookings = useRef<HTMLAnchorElement>(null);
   const packages = useRef<HTMLAnchorElement>(null);
   const availability = useRef<HTMLButtonElement>(null);
-  const anchors = useMemo(() => ({ packages, availability }), []);
+  const anchors = useMemo(() => ({ bookings, packages, availability }), []);
   return (
     <>
+      <a ref={bookings} href="/dashboard/tutor?tab=bookings" onClick={(event) => event.preventDefault()}>Rezervasyonlar</a>
       <a ref={packages} href="/dashboard/tutor/packages" onClick={(event) => event.preventDefault()}>Paket ayarları</a>
       <button ref={availability}>Müsaitliği düzenle</button>
       <Tour anchors={anchors} delayMs={0} />
@@ -45,63 +48,73 @@ function Harness() {
   );
 }
 const mount = () => render(<QueryClientProvider client={client}><Harness /></QueryClientProvider>);
+const settle = async () => {
+  await waitFor(() => assert.equal(client.isFetching(), 0));
+  await new Promise((resolve) => setTimeout(resolve, 30));
+};
+const acknowledged = () => recorded.filter(([key, patch]) => key === "tutor_dashboard_tour" && Boolean(patch.acknowledged_at));
 
-test("a new tutor gets packages, then availability, and must press the button to finish", async () => {
+test("every tutor walks bookings, packages, then availability, and must press the button to finish", async () => {
   mount();
-  assert.ok(await screen.findByText("Paketlerini ayarla"));
-  assert.ok(screen.getByText("Adım 1/2"));
-  assert.equal(recorded[0][0], "tutor_setup_tour");
+  assert.ok(await screen.findByText("Rezervasyonlarını buradan yönet"));
+  assert.ok(screen.getByText("Adım 1/3"));
+  assert.equal(recorded[0][0], "tutor_dashboard_tour");
   assert.equal(recorded[0][1].shown_count, 1);
 
   fireEvent.click(screen.getByRole("button", { name: "İleri" }));
+  assert.ok(await screen.findByText("Paketlerini ayarla"));
+  assert.ok(screen.getByText("Adım 2/3"));
+
+  fireEvent.click(screen.getByRole("button", { name: "İleri" }));
   assert.ok(await screen.findByText("Öğrenci alman için müsaitlik ekle"));
-  assert.ok(screen.getByText("Adım 2/2"));
-  assert.equal(recorded.length, 1);
+  assert.ok(screen.getByText("Adım 3/3"));
+  assert.equal(acknowledged().length, 0, "nothing is answered before the last button");
 
   fireEvent.click(screen.getByRole("button", { name: "Anladım" }));
   await waitFor(() => assert.equal(screen.queryByText("Öğrenci alman için müsaitlik ekle"), null));
-  assert.ok(recorded.some(([key, patch]) => key === "tutor_setup_tour" && Boolean(patch.acknowledged_at)));
+  assert.equal(acknowledged().length, 1);
+  assert.equal(recorded.filter(([, patch]) => patch.shown_count).length, 1, "the whole walk counts as one showing");
+});
+
+test("a tutor who already has availability and packages still gets all three stops", async () => {
+  rules = [rule]; offers = [{ ...defaultOffer, discount_percent: 10 }];
+  mount();
+  assert.ok(await screen.findByText("Rezervasyonlarını buradan yönet"));
+  assert.ok(screen.getByText("Adım 1/3"));
+  fireEvent.click(screen.getByRole("button", { name: "İleri" }));
+  await screen.findByText("Paketlerini ayarla");
+  fireEvent.click(screen.getByRole("button", { name: "İleri" }));
+  assert.ok(await screen.findByText("Öğrenci alman için müsaitlik ekle"));
+});
+
+test("the first showing does not wait for the tutor's data", async () => {
+  api_neverResolves = true;
+  mount();
+  assert.ok(await screen.findByText("Rezervasyonlarını buradan yönet"));
+  api_neverResolves = false;
 });
 
 test("the first showing cannot be dismissed with Escape", async () => {
   mount();
-  const dialog = await screen.findByRole("dialog", { name: "Paketlerini ayarla" });
+  const dialog = await screen.findByRole("dialog", { name: "Rezervasyonlarını buradan yönet" });
   fireEvent.keyDown(dialog, { key: "Escape" });
-  assert.ok(screen.getByText("Paketlerini ayarla"));
-});
-
-test("a tutor who finished the packages sees only the availability step, without a step count", async () => {
-  offers = [{ ...defaultOffer, discount_percent: 10 }];
-  mount();
-  assert.ok(await screen.findByText("Öğrenci alman için müsaitlik ekle"));
-  assert.equal(screen.queryByText(/Adım \d\/\d/), null);
-  assert.ok(screen.getByRole("button", { name: "Anladım" }));
-});
-
-test("nothing shows when both are done", async () => {
-  rules = [rule]; offers = [{ ...defaultOffer, discount_percent: 10 }];
-  mount();
-  await waitFor(() => assert.equal(client.isFetching(), 0));
-  await new Promise((resolve) => setTimeout(resolve, 30));
-  assert.equal(screen.queryByRole("dialog"), null);
-  assert.equal(recorded.length, 0);
+  assert.ok(screen.getByText("Rezervasyonlarını buradan yönet"));
 });
 
 test("nothing shows while the hint state is not ready", async () => {
   ready = false;
   mount();
-  await waitFor(() => assert.equal(client.isFetching(), 0));
-  await new Promise((resolve) => setTimeout(resolve, 30));
+  await settle();
   assert.equal(screen.queryByRole("dialog"), null);
   assert.equal(recorded.length, 0);
 });
 
 test("using the control the bubble points at counts as the answer", async () => {
   mount();
-  await screen.findByText("Paketlerini ayarla");
-  fireEvent.click(screen.getByText("Paket ayarları"));
-  await waitFor(() => assert.equal(screen.queryByText("Paketlerini ayarla"), null));
-  assert.ok(recorded.some(([, patch]) => Boolean(patch.acknowledged_at)));
+  await screen.findByText("Rezervasyonlarını buradan yönet");
+  fireEvent.click(screen.getByText("Rezervasyonlar"));
+  await waitFor(() => assert.equal(screen.queryByText("Rezervasyonlarını buradan yönet"), null));
+  assert.equal(acknowledged().length, 1);
 });
 
 test("an open modal postpones the tour without counting the visit", async () => {
@@ -109,28 +122,39 @@ test("an open modal postpones the tour without counting the visit", async () => 
   modal.setAttribute("role", "dialog"); modal.setAttribute("data-test-modal", "");
   document.body.appendChild(modal);
   mount();
-  await waitFor(() => assert.equal(client.isFetching(), 0));
-  await new Promise((resolve) => setTimeout(resolve, 30));
-  assert.equal(screen.queryByText("Paketlerini ayarla"), null);
+  await settle();
+  assert.equal(screen.queryByText("Rezervasyonlarını buradan yönet"), null);
   assert.equal(recorded.length, 0);
 });
 
-test("a later reminder is a courtesy: Escape closes it and records no answer", async () => {
+test("a reminder shows only the open work, as a courtesy: Escape closes it and records no answer", async () => {
   const lastShown = new Date(Date.now() - 2 * DAY).toISOString();
-  hints = { tutor_setup_tour: { shown_count: 1, last_shown_at: lastShown, acknowledged_at: lastShown } };
+  hints = { tutor_dashboard_tour: { shown_count: 1, last_shown_at: lastShown, acknowledged_at: lastShown } };
+  rules = [rule];
   mount();
   const dialog = await screen.findByRole("dialog", { name: "Paketlerini ayarla" });
+  assert.equal(screen.queryByText(/Adım \d\/\d/), null, "one open step, no step count");
+  assert.equal(screen.queryByText("Rezervasyonlarını buradan yönet"), null);
   assert.equal(recorded[0][1].shown_count, 2);
   fireEvent.keyDown(dialog, { key: "Escape" });
   await waitFor(() => assert.equal(screen.queryByText("Paketlerini ayarla"), null));
-  assert.equal(recorded.filter(([, patch]) => patch.acknowledged_at).length, 0);
+  assert.equal(acknowledged().length, 0);
+});
+
+test("a reminder is silent when there is nothing left to do", async () => {
+  const lastShown = new Date(Date.now() - 30 * DAY).toISOString();
+  hints = { tutor_dashboard_tour: { shown_count: 1, last_shown_at: lastShown, acknowledged_at: lastShown } };
+  rules = [rule]; offers = [{ ...defaultOffer, discount_percent: 10 }];
+  mount();
+  await settle();
+  assert.equal(screen.queryByRole("dialog"), null);
+  assert.equal(recorded.length, 0);
 });
 
 test("a reminder that is not due yet stays away", async () => {
   const lastShown = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
-  hints = { tutor_setup_tour: { shown_count: 1, last_shown_at: lastShown, acknowledged_at: lastShown } };
+  hints = { tutor_dashboard_tour: { shown_count: 1, last_shown_at: lastShown, acknowledged_at: lastShown } };
   mount();
-  await waitFor(() => assert.equal(client.isFetching(), 0));
-  await new Promise((resolve) => setTimeout(resolve, 30));
+  await settle();
   assert.equal(screen.queryByRole("dialog"), null);
 });
