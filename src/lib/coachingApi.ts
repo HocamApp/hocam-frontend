@@ -1753,12 +1753,17 @@ export async function fetchCoachingReports(): Promise<CoachingReportListItem[]> 
     session_id: string;
     draft_version?: number;
     latest_revision: CoachingSessionReportRevision | null;
+    /** Tutor list only, and only once the backend sends them. */
+    student_name?: string;
+    scheduled_start?: string;
   }>>("/coaching/reports/");
   return response.data.map((report) => ({
     id: report.report_id,
     session_id: report.session_id,
     draft_version: report.draft_version,
     latest_revision: report.latest_revision,
+    student_name: report.student_name,
+    scheduled_start: report.scheduled_start,
   }));
 }
 
