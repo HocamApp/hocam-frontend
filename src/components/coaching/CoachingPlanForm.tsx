@@ -268,11 +268,11 @@ export function CoachingPlanForm({
       {currentStep === "capacity" ? (
         <StepCard
           title="Kaç öğrenciyle çalışmak istiyorsun?"
-          description="Müsaitliğin önce haftalık slotlara, ardından seçtiğin görüşme düzenine göre teorik kapasiteye çevrilir. Kaydederken güncel kapasite kuralları uygulanır."
+          description="Koçluk saatlerin 30 dakikalık görüşmelere bölünür. Seçtiğin görüşme sıklığına göre bu saatlerle en fazla kaç öğrenciye bakabileceğin hesaplanır. Aşağıda kendi sınırını seçersin."
         >
           {capacity ? <CapacityPreviewCard capacity={capacity} /> : null}
           <div className="max-w-sm">
-            <Label htmlFor="coaching-capacity">En fazla aktif koçluk öğrencisi</Label>
+            <Label htmlFor="coaching-capacity">Aynı anda en fazla kaç öğrenciye koçluk vereceksin?</Label>
             <Input
               id="coaching-capacity"
               type="number"
@@ -282,8 +282,10 @@ export function CoachingPlanForm({
               onChange={(event) => setMaxStudents(event.target.value)}
               className="mt-1"
             />
-            <p className="mt-2 text-xs leading-5 text-ink-mid">
-              Bu sayı, aktif öğrenci sayından az ve koçluk müsaitliğinin karşılayabileceğinden fazla olamaz. Uygun değilse önceki değer korunur ve nedeni burada yazar.
+            <p className="mt-2 text-label leading-5 text-ink-mid">
+              {capacity && capacity.theoretical_capacity >= 1
+                ? `En az ${Math.max(1, capacity.active_students)}, en fazla ${capacity.theoretical_capacity} yazabilirsin. Uygun olmayan bir sayı yazarsan önceki sayın kalır ve nedeni burada yazar.`
+                : "Önce koçluk saati eklemelisin, sonra buradan sınırını seçebilirsin."}
             </p>
           </div>
         </StepCard>

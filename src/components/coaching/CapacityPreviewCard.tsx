@@ -1,12 +1,6 @@
 "use client";
 
-import { Users } from "@phosphor-icons/react";
-
-import {
-  SectionBandCount,
-  SectionBandHeading,
-  sectionBandClass,
-} from "@/components/shared/SectionBand";
+import { SectionBandHeading, sectionBandClass } from "@/components/shared/SectionBand";
 import type { CoachingCapacityDetail } from "@/lib/coachingApi";
 
 /**
@@ -17,60 +11,49 @@ import type { CoachingCapacityDetail } from "@/lib/coachingApi";
  * capacity, and the current price cap — so this card never re-derives it.
  *
  * These are the tutor's own numbers, so the band is ink; pink is kept for the
- * offer a student sees.
+ * offer a student sees. Each of the four figures is a number with one plain
+ * sentence under it: the earlier labels ("teorik sınır", "seçili kapasite",
+ * "slot") were the backend's vocabulary and meant nothing to a tutor.
+ *
+ * Plain class strings: tailwind-merge would drop a named size such as
+ * `text-h2-m` next to a text colour.
  */
 export function CapacityPreviewCard({
   capacity,
 }: {
   capacity: CoachingCapacityDetail;
 }) {
-  const safeTheoretical = Math.max(1, capacity.theoretical_capacity);
-  const selectedPercent = Math.min(100, Math.round((capacity.max_active_students / safeTheoretical) * 100));
-  const activePercent = Math.min(100, Math.round((capacity.active_students / safeTheoretical) * 100));
-
   return (
     <div
       role="region"
       aria-label="Koçluk kapasitesi"
       className="overflow-hidden rounded-card border border-line bg-surface"
     >
-      <div className={sectionBandClass("ink")}>
-        <SectionBandHeading id="coaching-capacity-title" title="Kapasite" />
-        <SectionBandCount tone="ink">%{selectedPercent} seçili</SectionBandCount>
-      </div>
-
-      <div className="px-6 pb-6 pt-5">
-        <p className="text-small leading-6 text-ink-mid">
-          Koçluk için ayırdığın 30 dakikalık saatler, seçtiğin görüşme sıklığına göre en fazla kaç öğrenci alabileceğini belirler.
-        </p>
-        <div className="mt-4 inline-flex items-center gap-2 text-small font-medium text-ink">
-          <span className={`h-2 w-2 rounded-full ${capacity.can_accept_new_student ? "bg-success" : "bg-ink-mid"}`} />
+      <div className={sectionBandClass("ink", "flex-wrap gap-y-3")}>
+        <SectionBandHeading id="coaching-capacity-title" title="Koçluk kapasiten" />
+        <span className="inline-flex items-center rounded-pill border border-paper px-3 py-0.5 text-label text-paper">
           {capacity.can_accept_new_student
             ? "Yeni öğrenci alınabilir"
             : "Yeni öğrenci alımı kapalı"}
-        </div>
+        </span>
+      </div>
 
-        <dl className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <CapacityValue value={`${capacity.weekly_slot_count} haftalık slot`} label="Müsaitliğinden oluşan" />
-          <CapacityValue value={`${capacity.theoretical_capacity} öğrenci teorik sınırı`} label="Görüşme düzenine göre" />
-          <CapacityValue value={`${capacity.max_active_students} öğrenci seçili kapasite`} label="Senin belirlediğin" />
-          <CapacityValue value={`${capacity.active_students} aktif öğrenci`} label="Şu anda hizmet alan" />
-        </dl>
-
-        {capacity.theoretical_capacity > 0 ? (
-          <div className="mt-5 space-y-4" aria-label="Kapasite kullanımı">
-            <CapacityBar label="Seçili kapasite" percent={selectedPercent} className="bg-ink" />
-            <CapacityBar label="Aktif öğrenci yükü" percent={activePercent} className="bg-pink" />
-          </div>
-        ) : null}
+      <div className="px-6 pb-6 pt-5">
+        <ul className="grid grid-cols-[repeat(auto-fit,minmax(9.5rem,1fr))] gap-3">
+          <CapacityNumber value={capacity.weekly_slot_count} caption="haftalık görüşme yeri açtın" />
+          <CapacityNumber value={capacity.theoretical_capacity} caption="öğrenciye kadar alabilirsin (üst sınır)" />
+          <CapacityNumber value={capacity.max_active_students} caption="öğrenciyle sınırladın" />
+          <CapacityNumber value={capacity.active_students} caption="öğrenciyle şu an çalışıyorsun" />
+        </ul>
+        <p className="mt-4 text-label leading-5 text-ink-mid">
+          Üst sınır, açtığın görüşme yerlerinden ve seçtiğin görüşme sıklığından hesaplanır.
+        </p>
       </div>
 
       {capacity.weekly_slot_count === 0 ? (
         <div className="border-t border-line px-6 py-4">
-          <p className="flex items-start gap-2 text-small text-ink-mid">
-            <Users className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
-            Koçluk müsaitliğin yok, bu yüzden kullanılabilir koçluk slotun da
-            yok. Koçluk saatlerin normal ders saatlerinden ayrıdır.
+          <p className="text-small text-ink-mid">
+            Henüz koçluk saati eklemedin, bu yüzden hiç görüşme yerin yok. Koçluk saatlerin normal ders saatlerinden ayrıdır.
           </p>
         </div>
       ) : null}
@@ -78,25 +61,11 @@ export function CapacityPreviewCard({
   );
 }
 
-function CapacityValue({ value, label }: { value: string; label: string }) {
+function CapacityNumber({ value, caption }: { value: number; caption: string }) {
   return (
-    <div className="rounded-input border border-line p-3">
-      <dt className="text-label text-ink-mid">{label}</dt>
-      <dd className="mt-1 font-bold tabular-nums text-ink">{value}</dd>
-    </div>
-  );
-}
-
-function CapacityBar({ label, percent, className }: { label: string; percent: number; className: string }) {
-  return (
-    <div className="space-y-2">
-      <div className="flex justify-between text-label text-ink-mid">
-        <span>{label}</span>
-        <span className="tabular-nums">%{percent}</span>
-      </div>
-      <div className="h-2 overflow-hidden rounded-full bg-line">
-        <div className={`h-full rounded-full ${className}`} style={{ width: `${percent}%` }} />
-      </div>
-    </div>
+    <li className="rounded-input border border-line p-4">
+      <p className="text-h2-m font-bold tabular-nums text-ink md:text-h2">{value}</p>
+      <p className="mt-1 text-small leading-5 text-ink-mid">{caption}</p>
+    </li>
   );
 }

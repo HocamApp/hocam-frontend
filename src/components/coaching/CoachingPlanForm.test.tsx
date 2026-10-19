@@ -93,4 +93,32 @@ describe("CoachingPlanForm", () => {
     assert.equal(screen.queryByRole("button", { name: "AYT" }), null);
     assert.equal(screen.queryByRole("button", { name: "YDT" }), null);
   });
+
+  it("asks the capacity question in plain words and names the range the tutor may type", () => {
+    render(
+      <CoachingPlanForm
+        plan={null}
+        setupConfig={setupConfig}
+        currentStep="capacity"
+        capacity={{
+          weekly_slot_count: 4,
+          theoretical_capacity: 8,
+          max_active_students: 1,
+          active_students: 0,
+          is_accepting_new_students: true,
+          can_accept_new_student: true,
+          slots: [],
+        }}
+        onSubmit={() => undefined}
+        onContinue={() => undefined}
+        isSaving={false}
+        error={null}
+      />
+    );
+
+    assert.ok(screen.getByLabelText("Aynı anda en fazla kaç öğrenciye koçluk vereceksin?"));
+    assert.ok(screen.getByText(/En az 1, en fazla 8 yazabilirsin/));
+    assert.ok(screen.getByText(/30 dakikalık görüşmelere bölünür/));
+    assert.equal(/teorik|slot/i.test(document.body.textContent ?? ""), false);
+  });
 });
