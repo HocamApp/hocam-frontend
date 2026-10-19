@@ -33,11 +33,12 @@ export type CoachingOfferView = {
  * the tutor's own preview of it.
  *
  * Pink band, because this is the thing on offer; the tutor's private numbers
- * (capacity, earnings) wear the ink band. The price is a flat gold pill on it,
- * the one gold-on-pink pairing DESIGN.md allows at badge scale. It sits in a
- * column next to the profile's booking card and in a half-width preview, so
- * nothing here switches layout on the viewport: the facts and the list wrap by
- * what fits.
+ * (capacity, earnings) wear the ink band. The price is set large in white on
+ * the band, like the price on the booking card beside it: white on pink is
+ * 4.05:1, which passes as large bold text, and gold would be text (DESIGN.md
+ * §1: gold is a surface only). It sits in a column next to that booking card
+ * and in a half-width preview, so nothing here switches layout on the
+ * viewport: the facts and the list wrap by what fits.
  *
  * No `cn()` below: tailwind-merge reads named sizes such as `text-label` as
  * colours and drops one of the two.
@@ -64,14 +65,14 @@ export function CoachingOfferCard({
         <div
           role="region"
           aria-label="Koçluk ücret özeti"
-          className="inline-flex shrink-0 items-baseline gap-1.5 rounded-pill bg-gold px-4 py-1 tabular-nums text-gold-ink"
+          className="flex shrink-0 flex-wrap items-baseline gap-x-2 tabular-nums"
         >
           {offer.isFree ? (
-            <span className="text-small font-bold">Ders paketinle ücretsiz</span>
+            <span className="text-h3-m font-bold md:text-h3 md:font-bold">Ders paketinle ücretsiz</span>
           ) : (
             <>
-              <span className="text-small font-bold">{formatTryMinor(offer.priceMinor)}</span>
-              <span className="text-label font-medium">görüşme başına</span>
+              <span className="text-h2-m font-bold md:text-h2">{formatTryMinor(offer.priceMinor)}</span>
+              <span className="text-small">görüşme başına</span>
             </>
           )}
         </div>
@@ -92,25 +93,23 @@ export function CoachingOfferCard({
           <p className="mt-2 text-small leading-6 text-ink-mid">{offer.description}</p>
         ) : null}
 
-        <dl className="mt-5 grid grid-cols-[repeat(auto-fit,minmax(9.5rem,1fr))] gap-x-4 gap-y-3 border-y border-line py-3">
-          <div>
+        <dl className="mt-5 flex flex-wrap gap-3">
+          <div className="flex-auto rounded-input border border-line bg-paper px-4 py-3">
             <dt className="text-label text-ink-mid">Sıklık</dt>
-            <dd className="mt-0.5 text-body font-medium text-ink">{offer.frequencyLabel}</dd>
+            <dd className="mt-0.5 text-body font-bold text-ink">{offer.frequencyLabel}</dd>
           </div>
-          <div>
+          <div className="flex-auto rounded-input border border-line bg-paper px-4 py-3">
             <dt className="text-label text-ink-mid">Süre</dt>
-            <dd className="mt-0.5 text-body font-medium text-ink">
-              {offer.sessionDurationMinutes} dakika
-            </dd>
+            <dd className="mt-0.5 text-body font-bold text-ink">{offer.sessionDurationMinutes} dakika</dd>
           </div>
           {offer.examTypes.length ? (
-            <div>
+            <div className="flex-auto rounded-input border border-line bg-paper px-4 py-3">
               <dt className="text-label text-ink-mid">Sınav odağı</dt>
               <dd className="mt-1 flex flex-wrap gap-2">
                 {offer.examTypes.map((exam) => (
                   <span
                     key={exam}
-                    className="inline-flex items-center rounded-pill border border-ink px-3 py-0.5 text-label text-ink"
+                    className="inline-flex items-center rounded-pill border border-ink px-3 py-0.5 text-label font-medium text-ink"
                   >
                     {exam}
                   </span>
@@ -120,14 +119,18 @@ export function CoachingOfferCard({
           ) : null}
         </dl>
 
-        <p className="mt-5 text-label text-ink-mid">Koçluğa dahil</p>
-        <ul className="mt-1 grid grid-cols-[repeat(auto-fit,minmax(13rem,1fr))] gap-x-6">
-          {INCLUDED.map((item) => (
-            <li key={item} className="border-t border-line py-2.5 text-small text-ink">
-              {item}
-            </li>
-          ))}
-        </ul>
+        <div className="mt-4 rounded-input border border-line p-4">
+          <p className="text-label font-bold uppercase tracking-[0.08em] text-ink">Koçluğa dahil</p>
+          <ul className="mt-3 grid grid-cols-[repeat(auto-fit,minmax(14rem,1fr))] gap-x-6 gap-y-2">
+            {INCLUDED.map((item) => (
+              <li key={item} className="flex items-start gap-3 text-body text-ink">
+                {/* A short rule, not an em dash character: DESIGN.md bans the dash in copy. */}
+                <span aria-hidden="true" className="mt-[0.8em] h-px w-3 shrink-0 bg-ink" />
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
 
         {statusMessage ? (
           <p className="mt-5 rounded-input border border-line p-3 text-small text-ink-mid">

@@ -57,7 +57,7 @@ describe("CoachingOfferCard", () => {
     assert.ok(screen.getByText("Ders paketinle ücretsiz"));
   });
 
-  it("sets the price in a flat gold pill on the pink band, inside the fee region", () => {
+  it("sets the price large in white on the pink band, inside the fee region", () => {
     render(
       <CoachingOfferCard
         offer={{
@@ -73,16 +73,20 @@ describe("CoachingOfferCard", () => {
     );
 
     const region = screen.getByRole("region", { name: "Koçluk ücret özeti" });
-    assert.ok(region.textContent?.includes("300,00 ₺"));
+    const price = screen.getByText("300,00 ₺");
+    assert.ok(region.contains(price));
     assert.ok(region.textContent?.includes("görüşme başına"));
-    assert.match(region.className, /\bbg-gold\b/);
-    assert.match(region.className, /\btext-gold-ink\b/);
+    // Gold is a surface and never text, so the number is white, not yellow.
+    assert.doesNotMatch(region.innerHTML, /gold/);
+    assert.match(price.className, /\bfont-bold\b/);
+    assert.match(price.className, /\btext-h2/);
     const band = screen.getByRole("heading", { name: "Çalışma Koçluğu" }).closest("div[class*='bg-pink']");
     assert.ok(band, "the heading sits on the pink band");
     assert.match(band!.className, /\btext-primary-foreground\b/);
+    assert.ok(band!.contains(region), "the price lives on the band");
   });
 
-  it("lists what is included as plain rows, with no tick icons, sparkle or shadow", () => {
+  it("lists what is included in a bordered box with dash markers, no tick icons, sparkle or shadow", () => {
     const { container } = render(
       <CoachingOfferCard
         offer={{
