@@ -40,6 +40,25 @@ function addDays(dateKey: string, days: number): string {
   return new Date(Date.UTC(year, month - 1, day + days)).toISOString().slice(0, 10);
 }
 
+const MONTH_SHORT = ["Oca", "Şub", "Mar", "Nis", "May", "Haz", "Tem", "Ağu", "Eyl", "Eki", "Kas", "Ara"];
+
+/**
+ * A moment as a clock time on the day it falls: "Bugün 19:00", "Yarın 18:00",
+ * "Çar 18:30" within the coming week, and "26 Eki 18:30" beyond it (a bare weekday
+ * a week out would read as this week's). Never a countdown.
+ */
+export function coachingWhenLabel(at: number, now: Date): string {
+  const today = istanbulDateKey(now);
+  const day = istanbulDateKey(at);
+  const time = coachingTimeLabel(at);
+  if (day === today) return `Bugün ${time}`;
+  if (day === addDays(today, 1)) return `Yarın ${time}`;
+  for (let ahead = 2; ahead <= 6; ahead += 1) {
+    if (day === addDays(today, ahead)) return `${COACHING_DAY_SHORT[weekdayIndex(day)]} ${time}`;
+  }
+  return `${Number(day.slice(8))} ${MONTH_SHORT[Number(day.slice(5, 7)) - 1]} ${time}`;
+}
+
 export interface CoachingDue {
   label: string;
   urgent: boolean;
@@ -62,11 +81,7 @@ export function coachingDueLabel(at: number, now: Date, options?: { before?: boo
     return { label: rest === 0 ? `${hours} sa kaldı` : `${hours} sa ${rest} dk kaldı`, urgent: true };
   }
 
-  const today = istanbulDateKey(now);
-  const day = istanbulDateKey(at);
-  const word =
-    day === today ? "Bugün" : day === addDays(today, 1) ? "Yarın" : COACHING_DAY_SHORT[weekdayIndex(day)];
-  return { label: `${word} ${coachingTimeLabel(at)}${options?.before ? " öncesi" : ""}`, urgent: false };
+  return { label: `${coachingWhenLabel(at, now)}${options?.before ? " öncesi" : ""}`, urgent: false };
 }
 
 export type CoachingTodoKind = "acceptance" | "session" | "report" | "time" | "reschedule";
