@@ -434,4 +434,45 @@ describe("CoachingPlanForm", () => {
       assert.equal(screen.getByRole("alert").textContent, "En az bir sınav seç.");
     });
   });
+
+  describe("description step", () => {
+    function descriptionStep() {
+      return (
+        <CoachingPlanForm
+          plan={null}
+          setupConfig={setupConfig}
+          currentStep="description"
+          capacity={null}
+          onSubmit={() => undefined}
+          onContinue={() => undefined}
+          isSaving={false}
+          error={null}
+        />
+      );
+    }
+
+    it("tells the tutor what to write as three numbered questions above the box", () => {
+      render(descriptionStep());
+
+      const questions = screen.getAllByRole("listitem").map((item) => item.textContent);
+      assert.deepEqual(questions, [
+        "1Nasıl bir çalışma düzeni kuruyorsun?",
+        "2Görüşmelerde neyi takip ediyorsun?",
+        "3Öğrenci süreçte ne bekleyebilir?",
+      ]);
+      assert.ok(screen.getByText(/Aşağıdaki üç soruyu yanıtlayan birkaç cümle yeter/));
+      assert.equal(screen.queryByText("İyi bir açıklama ne söyler?"), null);
+    });
+
+    it("counts what is typed and states the rule once, in plain words", () => {
+      render(descriptionStep());
+      assert.ok(screen.getByText("0 / 500"));
+
+      fireEvent.change(screen.getByLabelText("Kısa açıklama"), { target: { value: "Merhaba" } });
+      assert.ok(screen.getByText("7 / 500"));
+      assert.ok(
+        screen.getByText("Platform dışı iletişim, sınırsız destek veya sınav sonucu garantisi yazma."),
+      );
+    });
+  });
 });

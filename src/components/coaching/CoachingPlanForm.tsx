@@ -31,6 +31,13 @@ import { CapacityPreviewCard } from "./CapacityPreviewCard";
 
 const DESCRIPTION_MAX = 500;
 
+// What the tutor is asked to answer; the box below is where the answers go.
+const DESCRIPTION_QUESTIONS = [
+  "Nasıl bir çalışma düzeni kuruyorsun?",
+  "Görüşmelerde neyi takip ediyorsun?",
+  "Öğrenci süreçte ne bekleyebilir?",
+];
+
 const EXAM_CONTEXT: Record<string, string> = {
   YKS: "TYT, AYT ve YDT hedeflerini birlikte kapsar.",
   DGS: "Ön lisans sonrası lisans geçişi için çalışma ritmi kurar.",
@@ -291,10 +298,25 @@ export function CoachingPlanForm({
       {currentStep === "description" ? (
         <StepCard
           title="Öğrenciye kısa bir açıklama yaz"
-          description="Nasıl bir çalışma düzeni kurduğunu sade ve somut biçimde anlat. Bu alan isteğe bağlıdır."
+          description="Aşağıdaki üç soruyu yanıtlayan birkaç cümle yeter. Bu alan isteğe bağlıdır."
         >
-          <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_16rem]">
-          <div className="rounded-card border border-line bg-surface p-4 sm:p-5">
+          <ol className="space-y-2">
+            {DESCRIPTION_QUESTIONS.map((question, index) => (
+              <li
+                key={question}
+                className="flex items-center gap-3 rounded-input border border-line px-4 py-2.5 text-body text-ink"
+              >
+                <span
+                  aria-hidden="true"
+                  className="flex h-6 w-6 shrink-0 items-center justify-center rounded-pill bg-ink text-label font-bold tabular-nums text-paper"
+                >
+                  {index + 1}
+                </span>
+                {question}
+              </li>
+            ))}
+          </ol>
+          <div>
             <Label htmlFor="coaching-description">Kısa açıklama</Label>
             <Textarea
               id="coaching-description"
@@ -305,18 +327,10 @@ export function CoachingPlanForm({
               className="mt-1"
               placeholder="Öğrencilerime sürdürülebilir çalışma düzeni ve deneme analizi konusunda destek oluyorum."
             />
-            <p className="mt-2 text-xs leading-5 text-ink-mid">
-              {description.length}/{DESCRIPTION_MAX}. Platform dışı iletişim, sınırsız destek veya sınav sonucu garantisi gibi vaatler kullanma.
-            </p>
-          </div>
-          <aside className="rounded-card border border-line bg-paper p-4 text-sm">
-            <p className="font-medium">İyi bir açıklama ne söyler?</p>
-            <ul className="mt-3 space-y-2 text-xs leading-5 text-ink-mid">
-              <li>· Nasıl bir çalışma düzeni kurduğunu</li>
-              <li>· Görüşmelerde neyi takip ettiğini</li>
-              <li>· Öğrencinin süreçte ne bekleyebileceğini</li>
-            </ul>
-          </aside>
+            <div className="mt-2 flex flex-wrap justify-between gap-x-4 gap-y-1 text-label text-ink-mid">
+              <span className="tabular-nums">{description.length} / {DESCRIPTION_MAX}</span>
+              <span>Platform dışı iletişim, sınırsız destek veya sınav sonucu garantisi yazma.</span>
+            </div>
           </div>
         </StepCard>
       ) : null}
