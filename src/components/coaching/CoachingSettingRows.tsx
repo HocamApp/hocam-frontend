@@ -12,6 +12,7 @@ import {
   type Icon,
 } from "@phosphor-icons/react";
 
+import { Button } from "@/components/ui/button";
 import type { CoachingSettingRow } from "@/lib/coachingPlanSummary";
 
 const ROW_ICONS: Record<CoachingSettingRow["step"], Icon> = {
@@ -73,12 +74,17 @@ export function CoachingSettingRows({
               </p>
               {row.hint ? <p className="mt-0.5 text-small text-ink-mid">{row.hint}</p> : null}
             </div>
-            <Link
-              href={`/dashboard/tutor/coaching/plan?step=${row.step}`}
-              className="col-start-2 mt-2 inline-flex min-h-11 shrink-0 items-center justify-self-start rounded-pill border border-ink px-4 min-[400px]:col-start-3 min-[400px]:mt-0 min-[400px]:justify-self-auto text-small font-medium text-ink transition-colors duration-[var(--duration-state)] hover:bg-ink hover:text-paper focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2"
+            {/* A solid gold button: the outline pill was the colour of the row behind it. */}
+            <Button
+              asChild
+              size="sm"
+              variant="gold"
+              className="col-start-2 mt-2 min-h-11 justify-self-start min-[400px]:col-start-3 min-[400px]:mt-0 min-[400px]:justify-self-auto"
             >
-              Düzenle <span className="sr-only">{row.label}</span>
-            </Link>
+              <Link href={`/dashboard/tutor/coaching/plan?step=${row.step}`}>
+                Düzenle <span className="sr-only">{row.label}</span>
+              </Link>
+            </Button>
           </li>
         );
       })}
