@@ -8,11 +8,7 @@ const ROUTES = [
   ["src/app/(main)/dashboard/tutor/coaching/students/page.tsx", "tutor"],
   ["src/app/(main)/dashboard/tutor/coaching/reports/page.tsx", "tutor"],
   ["src/app/(main)/dashboard/tutor/coaching/complaints/page.tsx", "tutor"],
-  ["src/app/(main)/dashboard/tutor/coaching/time-requests/page.tsx", "tutor"],
-  [
-    "src/app/(main)/dashboard/tutor/coaching/reschedule-requests/page.tsx",
-    "tutor",
-  ],
+  ["src/app/(main)/dashboard/tutor/coaching/requests/page.tsx", "tutor"],
   [
     "src/app/(main)/dashboard/tutor/coaching/service-periods/[servicePeriodId]/program/page.tsx",
     "tutor",
