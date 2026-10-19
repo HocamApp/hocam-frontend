@@ -978,6 +978,8 @@ export interface CoachingTimeRequest {
   expires_at: string;
   resolved_at: string | null;
   proposals: CoachingTimeProposal[];
+  /** Tutor list only. Absent until the backend adds it, so callers must cope with its absence. */
+  student_name?: string;
 }
 
 export async function fetchCoachingTimeRequests(): Promise<CoachingTimeRequest[]> {

@@ -17,11 +17,13 @@ import { cn } from "@/lib/utils";
  * white, so the band inverts with the dark theme instead of going white on a
  * light fill.
  */
-export type SectionBandTone = "pink" | "ink";
+export type SectionBandTone = "pink" | "ink" | "gold";
 
 const TONE_CLASSES: Record<SectionBandTone, string> = {
   pink: "bg-pink text-primary-foreground",
   ink: "bg-ink text-paper",
+  // Gold is a surface with --gold-ink on it, never a text colour (DESIGN.md §1).
+  gold: "bg-gold text-gold-ink",
 };
 
 export function sectionBandClass(tone: SectionBandTone, className?: string): string {
@@ -89,7 +91,11 @@ export function SectionBandCount({
     // `text-label` as a colour and would drop it in favour of the colour.
     <span
       className={`inline-flex shrink-0 items-center rounded-pill px-3 py-0.5 text-label tabular-nums ${
-        tone === "pink" ? "bg-gold text-gold-ink" : "border border-paper text-paper"
+        tone === "pink"
+          ? "bg-gold text-gold-ink"
+          : tone === "gold"
+            ? "border border-gold-ink text-gold-ink"
+            : "border border-paper text-paper"
       } ${className ?? ""}`}
     >
       {children}
