@@ -5,7 +5,6 @@ import { useQuery } from "@tanstack/react-query";
 
 import { CoachingOfferCard } from "@/components/coaching/CoachingOfferCard";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { coachingFrequencyLabel, fetchCoachingEligibility } from "@/lib/coachingApi";
 import type { TutorCoachingSummary } from "@/types/api";
 
@@ -37,10 +36,10 @@ export function TutorCoachingSection({
       : null;
 
   return (
-    <section className="mt-10">
-      <h2 className="text-xl font-bold">Çalışma Koçluğu</h2>
-      <Separator className="mt-2" />
-      <div className="mt-4">
+    // The offer card's band is this section's heading, so there is no h2 and
+    // hairline above it: they would say "Çalışma Koçluğu" twice.
+    <section aria-labelledby="coaching-offer-title" className="mt-10">
+      <div>
         <CoachingOfferCard
           offer={{
             frequencyLabel: coachingFrequencyLabel(coaching.frequency),

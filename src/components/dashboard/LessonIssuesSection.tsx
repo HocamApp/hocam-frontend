@@ -9,7 +9,7 @@ import {
   SectionBandCount,
   SectionBandHeading,
   sectionBandClass,
-} from "@/components/dashboard/SectionBand";
+} from "@/components/shared/SectionBand";
 import { Button } from "@/components/ui/button";
 import { bookingDateParts } from "@/lib/bookingTime";
 import { bookingStatusExplanation } from "@/lib/bookingStatusCopy";

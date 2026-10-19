@@ -1,9 +1,12 @@
 "use client";
 
-import { useState } from "react";
-import { ArrowRight, Check, Clock, Info, Target } from "@phosphor-icons/react";
+import { forwardRef, useEffect, useRef, useState } from "react";
+import { ArrowRight, Check, Clock, Equals, X } from "@phosphor-icons/react";
 
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
+import { InlineError } from "@/components/shared/InlineError";
+import { sectionBandClass } from "@/components/shared/SectionBand";
+import { ShakeOnError } from "@/components/shared/ShakeOnError";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -28,11 +31,74 @@ import { CapacityPreviewCard } from "./CapacityPreviewCard";
 
 const DESCRIPTION_MAX = 500;
 
+// What the tutor is asked to answer; the box below is where the answers go.
+const DESCRIPTION_QUESTIONS = [
+  "Nasıl bir çalışma düzeni kuruyorsun?",
+  "Görüşmelerde neyi takip ediyorsun?",
+  "Öğrenci süreçte ne bekleyebilir?",
+];
+
 const EXAM_CONTEXT: Record<string, string> = {
   YKS: "TYT, AYT ve YDT hedeflerini birlikte kapsar.",
   DGS: "Ön lisans sonrası lisans geçişi için çalışma ritmi kurar.",
   KPSS: "Kamu sınavı hazırlığını plan ve takip odağında destekler.",
 };
+
+/**
+ * Why a typed capacity cannot be saved, or null when it can. The range is the
+ * one the helper line under the box names: at least the students already being
+ * coached (never below one), at most what the tutor's hours can serve. The
+ * server still has the last word; this only answers before the round trip.
+ */
+function capacityProblem(raw: string, min: number, max: number | null): string | null {
+  const value = Number(raw);
+  if (raw.trim() === "" || Number.isNaN(value)) return `En az ${min} yazabilirsin.`;
+  if (!Number.isInteger(value)) return "Tam sayı yaz.";
+  if (value < min) return `En az ${min} yazabilirsin.`;
+  if (max !== null && value > max) {
+    return `En fazla ${max} yazabilirsin, saatlerinle bu kadar öğrenciye bakabilirsin.`;
+  }
+  return null;
+}
+
+/**
+ * What a field that cannot be saved as typed needs: it stays quiet until it has
+ * been touched or the tutor tried to go on, then shows its reason, shakes once
+ * each time it turns invalid or the reason changes, and takes the caret back
+ * when "devam et" is refused.
+ */
+function useFieldFeedback<T extends HTMLElement = HTMLInputElement>(problem: string | null) {
+  const [touched, setTouched] = useState(false);
+  const [shakes, setShakes] = useState(0);
+  const input = useRef<T>(null);
+
+  useEffect(() => {
+    if (touched && problem) setShakes((count) => count + 1);
+  }, [touched, problem]);
+
+  return {
+    input,
+    shakes,
+    shown: touched ? problem : null,
+    touch: () => setTouched(true),
+    refuse: () => {
+      setTouched(true);
+      setShakes((count) => count + 1);
+      input.current?.focus();
+    },
+  };
+}
+
+/** Why a typed price cannot be saved, or null. Zero is allowed: it means free. */
+function priceProblem(raw: string, capMinor: number): string | null {
+  const value = Number(raw);
+  if (raw.trim() === "" || Number.isNaN(value)) return "Bir fiyat yaz. Ücretsiz sunmak için 0 yaz.";
+  if (value < 0) return "Fiyat 0'dan küçük olamaz.";
+  if (Math.round(value * 100) > capMinor) {
+    return `En fazla ${formatTryMinor(capMinor)} yazabilirsin, bu fiyat üst sınırı aşıyor.`;
+  }
+  return null;
+}
 
 export function CoachingPlanForm({
   plan,
@@ -67,8 +133,18 @@ export function CoachingPlanForm({
   );
   const [description, setDescription] = useState(plan?.description ?? "");
 
+  const capacityMin = Math.max(1, capacity?.active_students ?? 0);
+  const capacityMax =
+    capacity && capacity.theoretical_capacity >= 1 ? capacity.theoretical_capacity : null;
+  const capacityError = capacityProblem(maxStudents, capacityMin, capacityMax);
+  const capacityField = useFieldFeedback(capacityError);
+
   const priceMinor = Math.round(Number(priceLira || 0) * 100);
-  const overCap = priceMinor > setupConfig.price_cap_minor;
+  const priceError = priceProblem(priceLira, setupConfig.price_cap_minor);
+  const priceField = useFieldFeedback(priceError);
+
+  const examsError = examTypes.length === 0 ? "En az bir sınav seç." : null;
+  const examsField = useFieldFeedback<HTMLButtonElement>(examsError);
   const nextStep = COACHING_SETUP_STEPS[
     Math.min(COACHING_SETUP_STEPS.length - 1, COACHING_SETUP_STEPS.indexOf(currentStep) + 1)
   ];
@@ -83,12 +159,18 @@ export function CoachingPlanForm({
     });
 
   const advance = () => {
+    // Do not send a value we already know is wrong: say so, shake, and put the
+    // caret back in the box. The server still has the last word.
+    if (currentStep === "capacity" && capacityError) return capacityField.refuse();
+    if (currentStep === "price" && priceError) return priceField.refuse();
+    if (currentStep === "exams" && examsError) return examsField.refuse();
     const requiresSave = Boolean(plan) || currentStep === "description" || currentStep === "capacity";
     if (requiresSave) onSubmit(draft(), nextStep);
     else onContinue(nextStep);
   };
 
   const toggleExamType = (value: string) => {
+    examsField.touch();
     setExamTypes((current) =>
       current.includes(value)
         ? current.filter((item) => item !== value)
@@ -103,48 +185,19 @@ export function CoachingPlanForm({
       {currentStep === "frequency" ? (
         <StepCard
           title="Görüşme düzenin nasıl olsun?"
-          description="Bu seçim her öğrencinin ders paketi boyunca kaç koçluk görüşmesi alacağını belirler."
+          description="Öğrencilerle ne sıklıkla görüşeceğini seç. Paket uzadıkça görüşme sayısı da artar."
         >
           <fieldset>
             <legend className="sr-only">Görüşme düzeni</legend>
-            <div className="grid gap-3 lg:grid-cols-[1.08fr_0.96fr_0.96fr]">
-              {setupConfig.frequency_options.map((option) => {
-                const selected = frequency === option.value;
-                return (
-                  <button
-                    key={option.value}
-                    type="button"
-                    aria-pressed={selected}
-                    onClick={() => setFrequency(option.value)}
-                    className={cn(
-                      "relative rounded-card border p-5 text-left transition-colors duration-[var(--duration-state)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2",
-                      selected
-                        ? "border-pink bg-surface"
-                        : "border-line bg-surface hover:border-ink"
-                    )}
-                  >
-                    <span className="flex items-center justify-between gap-3">
-                      <span className="block text-lg font-bold">{option.label}</span>
-                      {selected ? (
-                        <span className="inline-flex items-center gap-1 rounded-pill bg-pink-deep px-2.5 py-1 text-[11px] font-medium text-white">
-                          <Check aria-hidden="true" className="h-3 w-3" />
-                          Seçili düzen
-                        </span>
-                      ) : (
-                        <span aria-hidden="true" className="h-5 w-5 rounded-pill border border-line" />
-                      )}
-                    </span>
-                    <span className="mt-3 grid gap-1.5 text-xs text-ink-mid">
-                      {option.packages.map((item) => (
-                        <span key={item.duration_days} className="flex justify-between gap-3">
-                          <span>{item.weeks} haftada</span>
-                          <span className="font-medium text-foreground">{item.total_sessions} görüşme</span>
-                        </span>
-                      ))}
-                    </span>
-                  </button>
-                );
-              })}
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(14rem,1fr))] gap-3">
+              {setupConfig.frequency_options.map((option) => (
+                <FrequencyCard
+                  key={option.value}
+                  option={option}
+                  selected={frequency === option.value}
+                  onSelect={() => setFrequency(option.value)}
+                />
+              ))}
             </div>
           </fieldset>
           <FixedDuration minutes={setupConfig.session_duration_minutes} />
@@ -154,80 +207,90 @@ export function CoachingPlanForm({
       {currentStep === "price" ? (
         <StepCard
           title="Koçluk görüşme fiyatın"
-          description="Koçluk, ders paketine eklenen bir hizmettir. 30 dakikalık bir görüşmenin fiyatı 40 dakikalık ders fiyatına göre belirlenen üst sınırı aşamaz."
+          description="Koçluk ders paketine eklenen bir hizmettir. Bir koçluk görüşmesi, 40 dakikalık ders fiyatının belirli bir oranından pahalı olamaz."
         >
-          <div className="grid gap-3 sm:grid-cols-[0.9fr_0.9fr_1.2fr]">
-            <PolicyValue label="40 dk ders fiyatın" value={formatTryMinor(setupConfig.lesson_price_minor)} />
-            <PolicyValue label="Koçluk fiyat tavanı" value={`%${setupConfig.max_price_ratio_percent}`} />
-            <PolicyValue label="Girebileceğin en yüksek fiyat" value={formatTryMinor(setupConfig.price_cap_minor)} />
+          {/* The ceiling, worked out left to right. Plain class strings:
+              tailwind-merge would drop a named size next to a text colour. */}
+          <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:flex-wrap sm:gap-3">
+            <div className="min-w-[9rem] flex-1 rounded-input border border-line px-4 py-3">
+              <p className="text-label text-ink-mid">40 dakikalık ders fiyatın</p>
+              <p className="mt-1 text-h3-m font-bold tabular-nums text-ink md:text-h3 md:font-bold">
+                {formatTryMinor(setupConfig.lesson_price_minor)}
+              </p>
+            </div>
+            <span className="flex items-center justify-center text-ink-mid">
+              <X aria-hidden="true" className="h-5 w-5" />
+              <span className="sr-only">çarpı</span>
+            </span>
+            <div className="min-w-[7rem] flex-[0.7] rounded-input border border-line px-4 py-3">
+              <p className="text-label text-ink-mid">Koçluk oranı</p>
+              <p className="mt-1 text-h3-m font-bold tabular-nums text-ink md:text-h3 md:font-bold">
+                %{setupConfig.max_price_ratio_percent}
+              </p>
+            </div>
+            <span className="flex items-center justify-center text-ink-mid">
+              <Equals aria-hidden="true" className="h-5 w-5" />
+              <span className="sr-only">eşittir</span>
+            </span>
+            <div className="min-w-[9rem] flex-1 rounded-input bg-gold px-4 py-3 text-gold-ink">
+              <p className="text-label">Koçluk görüşmen en fazla</p>
+              <p className="mt-1 text-h3-m font-bold tabular-nums md:text-h3 md:font-bold">
+                {formatTryMinor(setupConfig.price_cap_minor)}
+              </p>
+            </div>
           </div>
-          <div className="rounded-card border border-line bg-paper p-4 sm:p-5">
-          <div className="max-w-sm">
-            <Label htmlFor="coaching-price">Görüşme başına fiyat (₺)</Label>
+
+          <ShakeOnError trigger={priceField.shakes} className="max-w-sm">
+            <Label htmlFor="coaching-price">Koçluk görüşme fiyatın (₺)</Label>
             <Input
+              ref={priceField.input}
               id="coaching-price"
               type="number"
               min={0}
               max={setupConfig.price_cap_minor / 100}
               step="0.01"
               value={priceLira}
-              onChange={(event) => setPriceLira(event.target.value)}
-              aria-describedby="coaching-price-hint"
-              className="mt-1"
+              onChange={(event) => {
+                setPriceLira(event.target.value);
+                priceField.touch();
+              }}
+              aria-invalid={priceField.shown ? true : undefined}
+              aria-describedby={priceField.shown ? "coaching-price-error coaching-price-hint" : "coaching-price-hint"}
+              className={priceField.shown ? "mt-1 border-error focus-visible:border-error" : "mt-1"}
             />
-            <p id="coaching-price-hint" className="mt-2 text-xs leading-5 text-ink-mid">
-              Ücretsiz sunmak için 0 girebilirsin. Güncel platform komisyonu %{formatBpsPercent(setupConfig.commission_bps)}; paket indirimi ve tahmini net kazancın kaydettiğin fiyata göre hesaplanır.
+            <InlineError id="coaching-price-error" message={priceField.shown} size="sm" className="mt-2" />
+            <p id="coaching-price-hint" className="mt-2 text-label leading-5 text-ink-mid">
+              Ücretsiz sunmak için 0 yaz. Her görüşmeden %{formatBpsPercent(setupConfig.commission_bps)} komisyon düşülür; paket indirimi ve net kazancın bu fiyata göre hesaplanır.
             </p>
-            {overCap ? <p className="mt-2 text-xs font-medium text-destructive">Bu fiyat {formatTryMinor(setupConfig.price_cap_minor)} üst sınırını aşıyor.</p> : null}
-          </div>
-          </div>
+          </ShakeOnError>
         </StepCard>
       ) : null}
 
       {currentStep === "exams" ? (
         <StepCard
           title="Koçluk verdiğin sınavlar"
-          description="Öğrenciler teklifini hedef sınav grubuna göre görür. TYT, AYT ve YDT bu alanda ayrı seçenek değildir; YKS grubunun içindedir."
+          description="Birden fazla seçebilirsin. Öğrenciler teklifini hedef sınav grubuna göre görür. TYT, AYT ve YDT ayrı seçenek değildir, YKS grubunun içindedir."
         >
-          <fieldset>
+          <fieldset aria-describedby={examsField.shown ? "coaching-exams-error" : undefined}>
             <legend className="sr-only">Hedef sınav grupları</legend>
-            <div className="grid gap-3 md:grid-cols-[1.08fr_0.96fr_0.96fr]">
-              {setupConfig.exam_groups.filter(isCoachingExamGroup).map((exam) => {
-                const selected = examTypes.includes(exam);
-                return (
-                  <button
-                    key={exam}
-                    type="button"
-                    aria-label={exam}
-                    aria-pressed={selected}
-                    onClick={() => toggleExamType(exam)}
-                    className={cn(
-                      "relative min-h-40 rounded-card border p-5 text-left transition-colors duration-[var(--duration-state)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2",
-                      selected
-                        ? "border-pink bg-surface"
-                        : "border-line bg-surface hover:border-ink"
-                    )}
-                  >
-                    <span className="flex items-start justify-between gap-3">
-                      <span className="inline-flex h-10 w-10 items-center justify-center rounded-pill border border-line bg-paper">
-                        <Target aria-hidden="true" className="h-4 w-4" />
-                      </span>
-                      <span className={cn(
-                        "inline-flex h-7 items-center gap-1 rounded-pill px-2.5 text-[11px] font-medium",
-                        selected ? "bg-pink-deep text-white" : "border border-line bg-transparent text-ink-mid"
-                      )}>
-                        {selected ? <Check aria-hidden="true" className="h-3 w-3" /> : null}
-                        {selected ? "Seçildi" : "Seç"}
-                      </span>
-                    </span>
-                    <span className="mt-5 block text-xl font-bold tracking-tight">{exam}</span>
-                    <span className="mt-2 block text-sm font-normal leading-6 text-ink-mid">
-                      {EXAM_CONTEXT[exam]}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
+            <ShakeOnError trigger={examsField.shakes}>
+              <div className="grid grid-cols-[repeat(auto-fit,minmax(14rem,1fr))] gap-3">
+                {setupConfig.exam_groups.filter(isCoachingExamGroup).map((exam, index) => {
+                  const selected = examTypes.includes(exam);
+                  return (
+                    <ExamCard
+                      key={exam}
+                      ref={index === 0 ? examsField.input : undefined}
+                      exam={exam}
+                      description={EXAM_CONTEXT[exam]}
+                      selected={selected}
+                      onToggle={() => toggleExamType(exam)}
+                    />
+                  );
+                })}
+              </div>
+            </ShakeOnError>
+            <InlineError id="coaching-exams-error" message={examsField.shown} size="sm" className="mt-3" />
           </fieldset>
         </StepCard>
       ) : null}
@@ -235,10 +298,25 @@ export function CoachingPlanForm({
       {currentStep === "description" ? (
         <StepCard
           title="Öğrenciye kısa bir açıklama yaz"
-          description="Nasıl bir çalışma düzeni kurduğunu sade ve somut biçimde anlat. Bu alan isteğe bağlıdır."
+          description="Aşağıdaki üç soruyu yanıtlayan birkaç cümle yeter. Bu alan isteğe bağlıdır."
         >
-          <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_16rem]">
-          <div className="rounded-card border border-line bg-surface p-4 sm:p-5">
+          <ol className="space-y-2">
+            {DESCRIPTION_QUESTIONS.map((question, index) => (
+              <li
+                key={question}
+                className="flex items-center gap-3 rounded-input border border-line px-4 py-2.5 text-body text-ink"
+              >
+                <span
+                  aria-hidden="true"
+                  className="flex h-6 w-6 shrink-0 items-center justify-center rounded-pill bg-ink text-label font-bold tabular-nums text-paper"
+                >
+                  {index + 1}
+                </span>
+                {question}
+              </li>
+            ))}
+          </ol>
+          <div>
             <Label htmlFor="coaching-description">Kısa açıklama</Label>
             <Textarea
               id="coaching-description"
@@ -249,18 +327,10 @@ export function CoachingPlanForm({
               className="mt-1"
               placeholder="Öğrencilerime sürdürülebilir çalışma düzeni ve deneme analizi konusunda destek oluyorum."
             />
-            <p className="mt-2 text-xs leading-5 text-ink-mid">
-              {description.length}/{DESCRIPTION_MAX}. Platform dışı iletişim, sınırsız destek veya sınav sonucu garantisi gibi vaatler kullanma.
-            </p>
-          </div>
-          <aside className="rounded-card border border-line bg-paper p-4 text-sm">
-            <p className="font-medium">İyi bir açıklama ne söyler?</p>
-            <ul className="mt-3 space-y-2 text-xs leading-5 text-ink-mid">
-              <li>· Nasıl bir çalışma düzeni kurduğunu</li>
-              <li>· Görüşmelerde neyi takip ettiğini</li>
-              <li>· Öğrencinin süreçte ne bekleyebileceğini</li>
-            </ul>
-          </aside>
+            <div className="mt-2 flex flex-wrap justify-between gap-x-4 gap-y-1 text-label text-ink-mid">
+              <span className="tabular-nums">{description.length} / {DESCRIPTION_MAX}</span>
+              <span>Platform dışı iletişim, sınırsız destek veya sınav sonucu garantisi yazma.</span>
+            </div>
           </div>
         </StepCard>
       ) : null}
@@ -268,24 +338,33 @@ export function CoachingPlanForm({
       {currentStep === "capacity" ? (
         <StepCard
           title="Kaç öğrenciyle çalışmak istiyorsun?"
-          description="Müsaitliğin önce haftalık slotlara, ardından seçtiğin görüşme düzenine göre teorik kapasiteye çevrilir. Kaydederken güncel kapasite kuralları uygulanır."
+          description="Koçluk saatlerin 30 dakikalık görüşmelere bölünür. Seçtiğin görüşme sıklığına göre bu saatlerle en fazla kaç öğrenciye bakabileceğin hesaplanır. Aşağıda kendi sınırını seçersin."
         >
           {capacity ? <CapacityPreviewCard capacity={capacity} /> : null}
-          <div className="max-w-sm">
-            <Label htmlFor="coaching-capacity">En fazla aktif koçluk öğrencisi</Label>
+          <ShakeOnError trigger={capacityField.shakes} className="max-w-sm">
+            <Label htmlFor="coaching-capacity">Aynı anda en fazla kaç öğrenciye koçluk vereceksin?</Label>
             <Input
+              ref={capacityField.input}
               id="coaching-capacity"
               type="number"
-              min={1}
-              max={capacity?.theoretical_capacity || undefined}
+              min={capacityMin}
+              max={capacityMax ?? undefined}
               value={maxStudents}
-              onChange={(event) => setMaxStudents(event.target.value)}
-              className="mt-1"
+              onChange={(event) => {
+                setMaxStudents(event.target.value);
+                capacityField.touch();
+              }}
+              aria-invalid={capacityField.shown ? true : undefined}
+              aria-describedby={capacityField.shown ? "coaching-capacity-error coaching-capacity-hint" : "coaching-capacity-hint"}
+              className={capacityField.shown ? "mt-1 border-error focus-visible:border-error" : "mt-1"}
             />
-            <p className="mt-2 text-xs leading-5 text-ink-mid">
-              Bu sayı, aktif öğrenci sayından az ve koçluk müsaitliğinin karşılayabileceğinden fazla olamaz. Uygun değilse önceki değer korunur ve nedeni burada yazar.
+            <InlineError id="coaching-capacity-error" message={capacityField.shown} size="sm" className="mt-2" />
+            <p id="coaching-capacity-hint" className="mt-2 text-label leading-5 text-ink-mid">
+              {capacity && capacity.theoretical_capacity >= 1
+                ? `En az ${capacityMin}, en fazla ${capacity.theoretical_capacity} yazabilirsin. Uygun olmayan bir sayı yazarsan önceki sayın kalır ve nedeni burada yazar.`
+                : "Önce koçluk saati eklemelisin, sonra buradan sınırını seçebilirsin."}
             </p>
-          </div>
+          </ShakeOnError>
         </StepCard>
       ) : null}
 
@@ -296,8 +375,7 @@ export function CoachingPlanForm({
             onClick={advance}
             disabled={
               isSaving ||
-              overCap ||
-              (["exams", "description"].includes(currentStep) && examTypes.length === 0)
+              (currentStep === "description" && examTypes.length === 0)
             }
           >
             {isSaving ? "Kaydediliyor…" : plan ? "Kaydet ve devam et" : currentStep === "description" ? "Taslağı kaydet ve devam et" : "Devam et"}
@@ -323,24 +401,134 @@ function StepCard({ title, description, children }: { title: string; description
   );
 }
 
-function PolicyValue({ label, value }: { label: string; value: string }) {
+/**
+ * One exam to choose, and any number may be. The chosen ones wear a gold header
+ * with --gold-ink on it and an ink "Seçildi" pill, so a choice among several
+ * (gold) reads apart from the one-of-three routine (pink) on the step before.
+ * Gold is a surface here, never text.
+ */
+const ExamCard = forwardRef<
+  HTMLButtonElement,
+  { exam: string; description: string | undefined; selected: boolean; onToggle: () => void }
+>(function ExamCard({ exam, description, selected, onToggle }, ref) {
   return (
-    <div className="rounded-2xl border bg-paper p-4">
-      <p className="text-xs text-ink-mid">{label}</p>
-      <p className="mt-1 font-medium tabular-nums">{value}</p>
-    </div>
+    <button
+      ref={ref}
+      type="button"
+      aria-label={exam}
+      aria-pressed={selected}
+      onClick={onToggle}
+      className={`overflow-hidden rounded-card border bg-surface text-left transition-colors duration-[var(--duration-state)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2 ${
+        selected ? "border-gold" : "border-line hover:border-ink"
+      }`}
+    >
+      <span
+        className={`flex items-center justify-between gap-3 px-4 py-3 ${
+          selected ? "bg-gold text-gold-ink" : "border-b border-line"
+        }`}
+      >
+        <span className="text-body font-bold">{exam}</span>
+        {selected ? (
+          <span className="inline-flex items-center gap-1 rounded-pill bg-ink px-3 py-0.5 text-label text-paper">
+            <Check aria-hidden="true" className="h-3.5 w-3.5" />
+            Seçildi
+          </span>
+        ) : (
+          <span aria-hidden="true" className="h-5 w-5 rounded-pill border border-line" />
+        )}
+      </span>
+      <span className="block px-4 pb-4 pt-3 text-small leading-6 text-ink-mid">{description}</span>
+    </button>
+  );
+});
+
+/** The package whose session count is the card's headline number. */
+const HEADLINE_WEEKS = 4;
+
+/**
+ * One routine to choose from. The headline is what a four-week package gives,
+ * large, and the other packages follow as rows; every figure comes from the
+ * server's setup config. The chosen card wears the pink band with a flat gold
+ * "Seçili" pill (gold on pink is the one pairing allowed at badge scale), so
+ * which one is chosen is clear before reading a word.
+ *
+ * Plain class strings: tailwind-merge would drop a named size such as
+ * `text-h2-m` next to a text colour.
+ */
+function FrequencyCard({
+  option,
+  selected,
+  onSelect,
+}: {
+  option: CoachingSetupConfig["frequency_options"][number];
+  selected: boolean;
+  onSelect: () => void;
+}) {
+  const headline =
+    option.packages.find((item) => item.weeks === HEADLINE_WEEKS) ?? option.packages[0];
+  const others = option.packages.filter((item) => item !== headline);
+
+  return (
+    <button
+      type="button"
+      aria-pressed={selected}
+      onClick={onSelect}
+      className={`overflow-hidden rounded-card border bg-surface text-left transition-colors duration-[var(--duration-state)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2 ${
+        selected ? "border-pink" : "border-line hover:border-ink"
+      }`}
+    >
+      <span
+        className={
+          selected
+            ? sectionBandClass("pink", "px-4 py-3")
+            : "flex items-center justify-between gap-3 border-b border-line px-4 py-3"
+        }
+      >
+        <span className="text-body font-bold">{option.label}</span>
+        {selected ? (
+          <span className="inline-flex items-center gap-1 rounded-pill bg-gold px-3 py-0.5 text-label text-gold-ink">
+            <Check aria-hidden="true" className="h-3.5 w-3.5" />
+            Seçili
+          </span>
+        ) : (
+          <span aria-hidden="true" className="h-5 w-5 rounded-pill border border-line" />
+        )}
+      </span>
+      <span className="block px-4 pb-4 pt-3">
+        {headline ? (
+          <>
+            <span className="block text-h2-m font-bold tabular-nums text-ink md:text-h2">
+              {headline.total_sessions}
+            </span>
+            <span className="mt-1 block text-small text-ink-mid">
+              görüşme, {headline.weeks} haftalık pakette
+            </span>
+          </>
+        ) : null}
+        <span className="mt-3 block">
+          {others.map((item) => (
+            <span
+              key={item.duration_days}
+              className="flex justify-between gap-3 border-t border-line py-1.5 text-small tabular-nums"
+            >
+              <span className="text-ink-mid">{item.weeks} haftada</span>
+              <span className="font-bold text-ink">{item.total_sessions}</span>
+            </span>
+          ))}
+        </span>
+      </span>
+    </button>
   );
 }
 
 function FixedDuration({ minutes }: { minutes: number }) {
   return (
-    <div className="flex gap-3 rounded-lg border bg-paper p-4 text-sm">
-      <Clock aria-hidden className="mt-0.5 h-4 w-4 shrink-0" />
-      <div>
-        <p className="font-medium">Her görüşme {minutes} dakika</p>
-        <p className="mt-1 text-xs leading-5 text-ink-mid">Görüşme süresi bütün çalışma koçluğu planlarında sabittir.</p>
-      </div>
-      <Info aria-hidden className="ml-auto h-4 w-4 text-ink-mid" />
-    </div>
+    <p className="flex items-center gap-3 text-small text-ink-mid">
+      <Clock aria-hidden className="h-5 w-5 shrink-0 text-ink" />
+      <span>
+        <strong className="font-medium text-ink">Her görüşme {minutes} dakika.</strong>{" "}
+        Bu süre bütün koçluk planlarında aynıdır.
+      </span>
+    </p>
   );
 }

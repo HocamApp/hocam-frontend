@@ -1,12 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { CalendarBlank, Clock, Plus, Trash } from "@phosphor-icons/react";
+import { Plus, Trash } from "@phosphor-icons/react";
 
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
-import { CoachingStudioPanel } from "@/components/coaching/CoachingStudioPanel";
+import {
+  SectionBandCount,
+  SectionBandHeading,
+  sectionBandClass,
+} from "@/components/shared/SectionBand";
 import type {
   CoachingAvailabilityPayload,
   CoachingAvailabilityWindow,
@@ -23,12 +26,43 @@ const DAYS = [
   { value: 6, label: "Pazar" },
 ];
 
+const MEETING_MINUTES = 30;
+
+function minutesOf(time: string): number {
+  const [hours, minutes] = time.split(":");
+  return Number(hours) * 60 + Number(minutes);
+}
+
+/**
+ * Whole 30-minute meetings a window opens: 18:00–20:00 is four, and 16:20–20:00
+ * is seven because the last ten minutes fit none. The backend counts the same
+ * way (`apps/coaching/capacity.py`), so this is a preview, not a second rule.
+ */
+function meetingsIn(start: string, end: string): number {
+  const length = minutesOf(end) - minutesOf(start);
+  return length > 0 ? Math.floor(length / MEETING_MINUTES) : 0;
+}
+
+/** "18:00:00" from the API, "18:00" on screen. */
+function clock(time: string): string {
+  return time.slice(0, 5);
+}
+
+const SELECT_CLASS =
+  "h-10 w-full rounded-input border border-line bg-surface px-3 text-body tabular-nums text-ink";
+
 /**
  * Coaching availability — deliberately separate from lesson availability.
  *
  * An empty list means the tutor has no coaching slots at all; normal lesson
  * hours are never used as a fallback. The empty state says so explicitly,
  * because "I already set my lesson hours" is the obvious wrong assumption.
+ *
+ * Adding hours is three numbered steps, with a live line saying how many
+ * meetings the chosen hours open. The week is a strip of seven day tiles, each
+ * saying what it gives, because a list of bare times does not tell a tutor how
+ * many students they can see. These are the tutor's own numbers, so the bands
+ * are ink.
  */
 export function CoachingAvailabilityEditor({
   windows,
@@ -60,30 +94,43 @@ export function CoachingAvailabilityEditor({
     ...day,
     windows: windows.filter((window) => window.day_of_week === day.value),
   }));
+  const weeklyMeetings = windows.reduce(
+    (sum, window) => sum + meetingsIn(clock(window.start_time), clock(window.end_time)),
+    0,
+  );
+
+  const chosenMeetings = meetingsIn(startTime, endTime);
+  const chosenHint =
+    minutesOf(endTime) <= minutesOf(startTime)
+      ? "Bitiş saati başlangıçtan sonra olmalı."
+      : chosenMeetings === 0
+        ? "Bu aralık 30 dakikadan kısa, görüşme yeri açmaz."
+        : `${startTime}–${endTime} aralığı haftada ${chosenMeetings} görüşmelik yer açar.`;
 
   return (
     <div className="space-y-6">
       {error ? <ErrorMessage message={error} /> : null}
 
-      <CoachingStudioPanel className="overflow-hidden">
-        <div className="grid gap-6 p-5 sm:p-6 lg:grid-cols-[minmax(0,0.8fr)_minmax(32rem,1.2fr)] lg:items-end">
-          <div className="max-w-xl">
-            <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-input bg-gold text-gold-ink">
-              <CalendarBlank className="h-5 w-5" aria-hidden="true" />
-            </div>
-            <h2 className="text-lg font-bold tracking-tight">Koçluk saatlerini ekle</h2>
-            <p className="mt-1 text-sm leading-6 text-ink-mid">
-              Bu saatler yalnız 30 dakikalık koçluk görüşmeleri için kullanılır; normal ders müsaitliğin buraya aktarılmaz.
-            </p>
-          </div>
-          <form onSubmit={handleAdd} className="grid gap-3 rounded-card border border-line bg-paper p-4 sm:grid-cols-2 lg:grid-cols-4 lg:items-end">
-            <div>
-              <Label htmlFor="coaching-day">Gün</Label>
+      <section
+        aria-labelledby="coaching-add-heading"
+        className="overflow-hidden rounded-card border border-line bg-surface"
+      >
+        <div className={sectionBandClass("ink")}>
+          <SectionBandHeading id="coaching-add-heading" title="Koçluk saatlerini ekle" />
+        </div>
+        <form onSubmit={handleAdd} className="px-6 pb-6 pt-5">
+          <p className="text-small leading-6 text-ink-mid">
+            Koçluk görüşmelerin sadece buraya eklediğin saatlerde yapılır. Normal ders saatlerin buraya geçmez.
+          </p>
+
+          <div className="mt-5 flex flex-wrap gap-x-8 gap-y-5">
+            <Step number={1} title="Günü seç">
+              <label htmlFor="coaching-day" className="sr-only">Gün</label>
               <select
                 id="coaching-day"
                 value={dayOfWeek}
                 onChange={(event) => setDayOfWeek(Number(event.target.value))}
-                className="mt-1 h-10 w-full rounded-input border border-line bg-surface px-3 text-sm text-ink"
+                className={`${SELECT_CLASS} min-w-[10rem]`}
               >
                 {DAYS.map((day) => (
                   <option key={day.value} value={day.value}>
@@ -91,106 +138,145 @@ export function CoachingAvailabilityEditor({
                   </option>
                 ))}
               </select>
-            </div>
-            <div>
-              <Label htmlFor="coaching-start">Başlangıç</Label>
-              <select
-                id="coaching-start"
-                value={startTime}
-                onChange={(event) => setStartTime(event.target.value)}
-                className="mt-1 h-10 w-full rounded-input border border-line bg-surface px-3 text-sm tabular-nums text-ink"
-              >
-                {COACHING_TIME_OPTIONS.map((time) => (
-                  <option key={time} value={time}>{time}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <Label htmlFor="coaching-end">Bitiş</Label>
-              <select
-                id="coaching-end"
-                value={endTime}
-                onChange={(event) => setEndTime(event.target.value)}
-                className="mt-1 h-10 w-full rounded-input border border-line bg-surface px-3 text-sm tabular-nums text-ink"
-              >
-                {COACHING_TIME_OPTIONS.map((time) => (
-                  <option key={time} value={time}>{time}</option>
-                ))}
-              </select>
-            </div>
-            <Button type="submit" disabled={isMutating} className="gap-2">
-              <Plus className="h-4 w-4" aria-hidden="true" />
-              Aralık ekle
-            </Button>
-          </form>
-        </div>
-        <div className="border-t border-line bg-paper px-5 py-3 sm:px-6">
-          <p className="text-xs text-ink-mid">
-            Aralıklar otomatik olarak 30 dakikalık koçluk slotlarına bölünür.
-            Çakışan aralıklar kabul edilmez; bitişik aralıklar (19.00–20.00 ve
-            20.00–21.00) kullanılabilir.
-          </p>
-        </div>
-      </CoachingStudioPanel>
+            </Step>
 
-      <section aria-labelledby="coaching-week-heading" className="space-y-3">
-        <div>
-          <h2 id="coaching-week-heading" className="text-lg font-bold tracking-tight">Haftalık koçluk planın</h2>
-          <p className="mt-1 text-sm text-ink-mid">Her gün görünür kalır; eklediğin görüşme aralıklarını buradan takip edebilirsin.</p>
-        </div>
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          {byDay.map((day) => (
-            <article
-              key={day.value}
-              className="min-h-36 rounded-card border border-line bg-surface p-4"
-            >
-              <div className="flex items-center justify-between gap-3">
-                <h3 className="font-medium">{day.label}</h3>
-                <span className="text-xs tabular-nums text-ink-mid">
-                  {day.windows.length > 0 ? `${day.windows.length} aralık` : "Boş"}
-                </span>
-              </div>
-              {day.windows.length === 0 ? (
-                <div className="mt-5 flex items-center gap-2 text-sm text-ink-mid">
-                  <Clock className="h-4 w-4" aria-hidden="true" />
-                  Henüz saat eklenmedi.
+            <Step number={2} title="Saatleri seç">
+              <div className="flex gap-3">
+                <div>
+                  <label htmlFor="coaching-start" className="block text-label text-ink-mid">Başlangıç</label>
+                  <select
+                    id="coaching-start"
+                    value={startTime}
+                    onChange={(event) => setStartTime(event.target.value)}
+                    className={`${SELECT_CLASS} mt-1 min-w-[6rem]`}
+                  >
+                    {COACHING_TIME_OPTIONS.map((time) => (
+                      <option key={time} value={time}>{time}</option>
+                    ))}
+                  </select>
                 </div>
-              ) : (
-                <ul className="mt-3 space-y-2">
-                  {day.windows.map((window) => (
-                    <li
-                      key={window.id}
-                      className="flex items-center justify-between rounded-input border border-line bg-paper py-1.5 pl-3 pr-1 text-sm tabular-nums"
-                    >
-                      <span>{window.start_time.slice(0, 5)}–{window.end_time.slice(0, 5)}</span>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => onDelete(window.id)}
-                        disabled={isMutating}
-                        className="h-8 w-8"
-                      >
-                        <Trash className="h-4 w-4" aria-hidden="true" />
-                        <span className="sr-only">
-                          {day.label} {window.start_time.slice(0, 5)} aralığını sil
-                        </span>
-                      </Button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </article>
-          ))}
+                <div>
+                  <label htmlFor="coaching-end" className="block text-label text-ink-mid">Bitiş</label>
+                  <select
+                    id="coaching-end"
+                    value={endTime}
+                    onChange={(event) => setEndTime(event.target.value)}
+                    className={`${SELECT_CLASS} mt-1 min-w-[6rem]`}
+                  >
+                    {COACHING_TIME_OPTIONS.map((time) => (
+                      <option key={time} value={time}>{time}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </Step>
+
+            <Step number={3} title="Ekle">
+              <Button type="submit" disabled={isMutating} className="gap-2">
+                <Plus className="h-4 w-4" aria-hidden="true" />
+                Saat aralığı ekle
+              </Button>
+            </Step>
+          </div>
+
+          <div className="mt-5 border-t border-line pt-4 text-label leading-5 text-ink-mid">
+            <p aria-live="polite" className="font-medium text-ink">{chosenHint}</p>
+            <p className="mt-1">
+              Her görüşme 30 dakikadır. Aralıklar üst üste binemez, art arda olabilir (19:00–20:00 ve 20:00–21:00).
+            </p>
+          </div>
+        </form>
+      </section>
+
+      <section
+        aria-labelledby="coaching-week-heading"
+        className="overflow-hidden rounded-card border border-line bg-surface"
+      >
+        <div className={sectionBandClass("ink", "flex-wrap gap-y-3")}>
+          <SectionBandHeading id="coaching-week-heading" title="Haftalık koçluk planın" />
+          <SectionBandCount tone="ink">Haftada {weeklyMeetings} görüşme</SectionBandCount>
+        </div>
+        <div className="px-6 pb-6 pt-5">
+          <p className="text-small text-ink-mid">
+            Haftanın her günü burada görünür. Boş günlerde koçluk görüşmesi yapılmaz.
+          </p>
+          <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7">
+            {byDay.map((day) => (
+              <article
+                key={day.value}
+                // An empty day sits on the page tone, a day with hours on white; the
+                // coaching surfaces carry no dashed borders (DESIGN.md vocabulary test).
+                className={`rounded-input border border-line p-3 ${day.windows.length === 0 ? "bg-paper" : "bg-surface"}`}
+              >
+                <h3 className="text-body font-medium text-ink">{day.label}</h3>
+                {day.windows.length === 0 ? (
+                  <p className="mt-2 text-small text-ink-mid">Boş</p>
+                ) : (
+                  <ul className="mt-2 space-y-2">
+                    {day.windows.map((window) => (
+                      <li key={window.id} className="rounded-input border border-line bg-paper p-2">
+                        <p className="text-small font-bold tabular-nums text-ink">
+                          {clock(window.start_time)}–{clock(window.end_time)}
+                        </p>
+                        <div className="mt-1 flex items-center justify-between gap-2">
+                          <span className="text-label tabular-nums text-ink-mid">
+                            {meetingsIn(clock(window.start_time), clock(window.end_time))} görüşme
+                          </span>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => onDelete(window.id)}
+                            disabled={isMutating}
+                            className="h-8 w-8 shrink-0"
+                          >
+                            <Trash className="h-4 w-4" aria-hidden="true" />
+                            <span className="sr-only">
+                              {day.label} {clock(window.start_time)} aralığını sil
+                            </span>
+                          </Button>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </article>
+            ))}
+          </div>
         </div>
       </section>
 
       {windows.length === 0 ? (
-        <div className="rounded-card border border-line bg-paper px-5 py-4 text-sm leading-6 text-ink-mid">
-          <strong className="font-medium text-foreground">Henüz koçluk müsaitliğin yok.</strong>{" "}
+        <div className="rounded-card border border-line bg-paper px-5 py-4 text-small leading-6 text-ink-mid">
+          <strong className="font-medium text-ink">Henüz koçluk müsaitliğin yok.</strong>{" "}
           Koçluk saatlerin normal ders saatlerinden ayrıdır. Müsaitlik eklemeden planını yayınlayamazsın.
         </div>
       ) : null}
+    </div>
+  );
+}
+
+function Step({
+  number,
+  title,
+  children,
+}: {
+  number: number;
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-start gap-3">
+      <span
+        data-step
+        className="mt-0.5 flex h-[1.625rem] w-[1.625rem] shrink-0 items-center justify-center rounded-pill bg-ink text-label font-bold tabular-nums text-paper"
+      >
+        {number}
+      </span>
+      <div>
+        <p className="mb-2 text-body font-bold text-ink">{title}</p>
+        {children}
+      </div>
     </div>
   );
 }
