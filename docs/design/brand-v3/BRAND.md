@@ -17,8 +17,8 @@ Tokens are CSS custom properties with raw hex values, same convention as today's
 | Token | Light | Role |
 |---|---|---|
 | `--on-accent` | `#0C0E09` | Text on `--yellow` and on the pink band. Stays black in dark mode |
-| `--pink` | `#FF2070` | Action: primary buttons, unread counts, selected day, the pink band, one heading highlight |
-| `--pink-deep` | `#E0105E` | Hover/pressed for pink. Also the fill for small pink buttons with white text (see decision D1 in PLAN.md) |
+| `--pink` | `#FA0050` | Action: primary buttons, unread counts, selected day, the pink band, one heading highlight |
+| `--pink-deep` | `#D70F64` | Hover/pressed for pink. Also the fill for small pink buttons with white text (see decision D1 in PLAN.md) |
 | `--yellow` | `#FCFF1A` | Highlight: hero word, free-trial tag, accent on dark bands. Surface only, never text |
 | `--pink-soft` | `#FFE3EE` | Soft surface: TYT, pricing icon tiles, parents banner, a testimonial card |
 | `--yellow-soft` | `#FDFFC7` | Soft surface: AYT, guarantee icon tiles, free-trial banner, discount tags |
@@ -38,8 +38,8 @@ Tokens are CSS custom properties with raw hex values, same convention as today's
 
 | Today | v3 | Note |
 |---|---|---|
-| `--pink #FA0050` | `#FF2070` | Slightly warmer, from the reference palette |
-| `--pink-deep #D70F64` | `#E0105E` | |
+| `--pink #FA0050` | `#FA0050` | Unchanged. v3 shipped with `#FF2070`; reverted on 19 Oct 2026 because the owners prefer the brighter pink |
+| `--pink-deep #D70F64` | `#D70F64` | Unchanged, reverted with `--pink` |
 | `--pink-pale #FCE5F1` | `--pink-soft #FFE3EE` | Keep `--pink-pale` as an alias until Phase 3 |
 | `--gold #FFD100` | `--yellow #FCFF1A` | Keep `--gold` as an alias until Phase 3 |
 | `--gold-ink #4A3B00` | `--on-accent` | Text on yellow is black |
