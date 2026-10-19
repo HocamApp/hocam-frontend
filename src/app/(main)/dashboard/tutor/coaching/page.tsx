@@ -13,10 +13,12 @@ import {
   fetchCoachingCapacity,
   fetchCoachingOnboarding,
   fetchCoachingPlan,
-  fetchCoachingStudents,
+  fetchTutorCoachingRescheduleRequests,
   fetchTutorCoachingSessions,
+  fetchTutorCoachingTimeRequests,
 } from "@/lib/coachingApi";
-import { deriveCoachingMetrics, deriveCoachingStatus } from "@/lib/coachingPresentation";
+import { buildCoachingTodos, buildCoachingWeek } from "@/lib/coachingOverview";
+import { deriveCoachingStatus } from "@/lib/coachingPresentation";
 
 function CoachingOverview() {
   const { checkoutEnabled } = useCoachingFlag();
@@ -34,11 +36,8 @@ function CoachingOverview() {
     queryFn: fetchCoachingCapacity,
     enabled: hasPlan,
   });
-  const studentsQuery = useQuery({
-    queryKey: ["coaching-students"],
-    queryFn: fetchCoachingStudents,
-    enabled: hasPlan,
-  });
+  // The same keys the tab badge and the request pages use, so one answer
+  // updates every place that shows it.
   const sessionsQuery = useQuery({
     queryKey: ["coaching-tutor-sessions"],
     queryFn: fetchTutorCoachingSessions,
@@ -49,16 +48,26 @@ function CoachingOverview() {
     queryFn: fetchAcceptanceRequests,
     enabled: hasPlan,
   });
+  const timeRequestsQuery = useQuery({
+    queryKey: ["coaching-tutor-time-requests"],
+    queryFn: fetchTutorCoachingTimeRequests,
+    enabled: hasPlan,
+    staleTime: 60_000,
+  });
+  const rescheduleRequestsQuery = useQuery({
+    queryKey: ["coaching-tutor-reschedule-requests"],
+    queryFn: fetchTutorCoachingRescheduleRequests,
+    enabled: hasPlan,
+    staleTime: 60_000,
+  });
 
   if (onboardingQuery.isLoading || planQuery.isLoading) {
     return (
       <div className="mx-auto w-full max-w-7xl space-y-4 px-4 py-8 sm:px-6">
         <Skeleton className="h-24 w-full" />
-        <Skeleton className="h-64 w-full" />
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, index) => (
-            <Skeleton key={index} className="h-28 w-full" />
-          ))}
+        <div className="grid gap-5 lg:grid-cols-2">
+          <Skeleton className="h-72 w-full" />
+          <Skeleton className="h-72 w-full" />
         </div>
       </div>
     );
@@ -74,25 +83,63 @@ function CoachingOverview() {
     );
   }
 
-  const rawMetrics = deriveCoachingMetrics({
-    students: studentsQuery.data ?? [],
-    sessions: sessionsQuery.data ?? [],
-    requests: requestsQuery.data ?? [],
-  });
-  const metrics = {
-    activeStudents: studentsQuery.isSuccess ? rawMetrics.activeStudents : null,
-    upcomingSessions: sessionsQuery.isSuccess ? rawMetrics.upcomingSessions : null,
-    pendingReports: sessionsQuery.isSuccess ? rawMetrics.pendingReports : null,
-    pendingRequests: requestsQuery.isSuccess ? rawMetrics.pendingRequests : null,
-  };
+  const plan = planQuery.data ?? null;
+  const capacity = capacityQuery.data ?? null;
   const status = deriveCoachingStatus({
     onboardingComplete: Boolean(onboardingQuery.data?.is_completed),
-    plan: planQuery.data ?? null,
-    capacity: capacityQuery.data ?? null,
+    plan,
+    capacity,
     checkoutEnabled,
   });
 
-  return <TutorCoachingDashboard status={status} metrics={metrics} />;
+  // A list that failed to load is not an empty list: if any source behind the
+  // to-dos failed, the card says so instead of quietly leaving that kind out.
+  const todoQueries = [sessionsQuery, requestsQuery, timeRequestsQuery, rescheduleRequestsQuery];
+  const todoState = todoQueries.some((query) => query.isLoading)
+    ? "loading"
+    : todoQueries.some((query) => query.isError)
+      ? "error"
+      : "ready";
+  const weekState = sessionsQuery.isLoading ? "loading" : sessionsQuery.isError ? "error" : "ready";
+
+  const now = new Date();
+  const sessions = sessionsQuery.data ?? [];
+
+  return (
+    <TutorCoachingDashboard
+      status={status}
+      lists={
+        hasPlan
+          ? {
+              todos: buildCoachingTodos({
+                sessions,
+                acceptanceRequests: requestsQuery.data ?? [],
+                rescheduleRequests: rescheduleRequestsQuery.data ?? [],
+                timeRequests: timeRequestsQuery.data ?? [],
+                now,
+              }),
+              todoState,
+              week: buildCoachingWeek({ sessions, now }),
+              weekState,
+              offer:
+                plan && capacity
+                  ? {
+                      published: plan.is_published,
+                      acceptingNewStudents: plan.is_accepting_new_students,
+                      activeStudents: capacity.active_students,
+                      maxStudents: plan.max_active_students,
+                    }
+                  : null,
+              onRetryTodos: () => {
+                for (const query of todoQueries) if (query.isError) void query.refetch();
+              },
+              onRetryWeek: () => void sessionsQuery.refetch(),
+              isRetrying: todoQueries.some((query) => query.isFetching) && todoState === "error",
+            }
+          : null
+      }
+    />
+  );
 }
 
 export default function CoachingDashboardPage() {

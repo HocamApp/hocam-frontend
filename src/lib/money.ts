@@ -24,6 +24,11 @@ export function formatTryMinor(minor: number): string {
   return `${formatter.format(minor / 100)} ₺`;
 }
 
+/** Same as formatTryMinor, but the space before the symbol cannot break, so a line that wraps on a phone never strands "₺". */
+export function formatTryMinorTight(minor: number): string {
+  return formatTryMinor(minor).replace(" ₺", " ₺");
+}
+
 const percentFormatter = new Intl.NumberFormat("tr-TR", { maximumFractionDigits: 2 });
 
 /** 17.5 -> "17,5", 15 -> "15". The digits only; callers write the "%" sign. */
