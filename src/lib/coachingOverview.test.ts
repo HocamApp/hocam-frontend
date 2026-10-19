@@ -11,6 +11,7 @@ import {
   buildCoachingTodos,
   buildCoachingWeek,
   coachingDueLabel,
+  coachingWhenLabel,
   istanbulDateKey,
 } from "./coachingOverview";
 
@@ -102,6 +103,20 @@ describe("istanbulDateKey", () => {
   it("reads the calendar day in Istanbul, not in UTC", () => {
     assert.equal(istanbulDateKey(new Date("2026-10-19T21:30:00Z")), "2026-10-20");
     assert.equal(istanbulDateKey(new Date("2026-10-19T20:59:00Z")), "2026-10-19");
+  });
+});
+
+describe("coachingWhenLabel", () => {
+  it("names the day and time, never a countdown", () => {
+    assert.equal(coachingWhenLabel(Date.parse("2026-10-19T09:45:00Z"), NOW), "Bugün 12:45");
+    assert.equal(coachingWhenLabel(Date.parse("2026-10-19T16:00:00Z"), NOW), "Bugün 19:00");
+    assert.equal(coachingWhenLabel(Date.parse("2026-10-20T15:00:00Z"), NOW), "Yarın 18:00");
+    assert.equal(coachingWhenLabel(Date.parse("2026-10-21T15:30:00Z"), NOW), "Çar 18:30");
+  });
+
+  it("gives a date once it is a week or more away", () => {
+    assert.equal(coachingWhenLabel(Date.parse("2026-10-26T15:30:00Z"), NOW), "26 Eki 18:30");
+    assert.equal(coachingWhenLabel(Date.parse("2026-10-25T15:30:00Z"), NOW), "Paz 18:30");
   });
 });
 

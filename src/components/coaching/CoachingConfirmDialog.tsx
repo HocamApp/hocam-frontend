@@ -26,6 +26,7 @@ export function CoachingConfirmDialog({
   onConfirm,
   onCancel,
   isPending,
+  confirmDisabled = false,
   tone = "destructive",
   children,
 }: {
@@ -36,6 +37,8 @@ export function CoachingConfirmDialog({
   onConfirm: () => void;
   onCancel: () => void;
   isPending: boolean;
+  /** Keeps the confirm button off until what the dialog asks for (a reason) is filled in. */
+  confirmDisabled?: boolean;
   tone?: "destructive" | "default";
   children?: ReactNode;
 }) {
@@ -79,7 +82,7 @@ export function CoachingConfirmDialog({
             variant={tone === "destructive" ? "destructive" : "default"}
             className="sm:min-w-40"
             onClick={onConfirm}
-            disabled={isPending}
+            disabled={isPending || confirmDisabled}
           >
             {confirmLabel}
           </Button>

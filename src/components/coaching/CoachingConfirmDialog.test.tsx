@@ -39,6 +39,23 @@ describe("CoachingConfirmDialog", () => {
     assert.equal(confirmed, 1);
   });
 
+  it("keeps the confirm button off until the caller says it may be used", () => {
+    render(
+      <CoachingConfirmDialog
+        open
+        title="Koçluğu sonlandır"
+        description="Bu işlem geri alınamaz."
+        confirmLabel="Sonlandır"
+        onConfirm={() => {}}
+        onCancel={() => {}}
+        isPending={false}
+        confirmDisabled
+      />,
+    );
+    assert.equal((screen.getByRole("button", { name: "Sonlandır" }) as HTMLButtonElement).disabled, true);
+    assert.equal((screen.getByRole("button", { name: "Vazgeç" }) as HTMLButtonElement).disabled, false);
+  });
+
   it("locks both buttons while the request is in flight", () => {
     render(
       <CoachingConfirmDialog

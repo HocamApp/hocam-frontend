@@ -1,45 +1,50 @@
 "use client";
 
-import { useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import Link from "next/link";
+import { useQuery } from "@tanstack/react-query";
 import { UserPlus } from "@phosphor-icons/react";
 
 import { CoachingRecordGuard } from "@/components/coaching/CoachingGuard";
-import { CoachingEmptyState as EmptyState } from "@/components/coaching/CoachingEmptyState";
+import { CoachingEmptyState } from "@/components/coaching/CoachingEmptyState";
+import { CoachingLoadError } from "@/components/coaching/CoachingLoadError";
 import { CoachingPageShell } from "@/components/coaching/CoachingPageShell";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+import { CoachingStudentsBoard } from "@/components/coaching/CoachingStudentsBoard";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  COACHING_DAY_LABEL,
-  coachingServiceStatusLabel,
+  fetchCoachingCapacity,
   fetchCoachingStudents,
-  terminateTutorCoaching,
+  fetchTutorCoachingRescheduleRequests,
+  fetchTutorCoachingSessions,
+  fetchTutorCoachingTimeRequests,
 } from "@/lib/coachingApi";
+import { buildStudentsBoard } from "@/lib/coachingStudents";
 
 function StudentsContent() {
-  const client = useQueryClient();
-  const { data: students = [], isLoading } = useQuery({
+  const studentsQuery = useQuery({
     queryKey: ["coaching-tutor-students"],
     queryFn: fetchCoachingStudents,
   });
-  const [terminationFor, setTerminationFor] = useState<string | null>(null);
-  const [reason, setReason] = useState("");
-  const terminate = useMutation({
-    mutationFn: (purchaseId: string) => terminateTutorCoaching(purchaseId, reason),
-    onSuccess: () => {
-      setTerminationFor(null);
-      setReason("");
-      client.invalidateQueries({ queryKey: ["coaching-tutor-students"] });
-      client.invalidateQueries({ queryKey: ["coaching-tutor-sessions"] });
-      client.invalidateQueries({ queryKey: ["coaching-disputes", "tutor"] });
-    },
+  // The same keys the overview, the tab badge and the request pages use, so
+  // one answer updates every place that shows it.
+  const sessionsQuery = useQuery({
+    queryKey: ["coaching-tutor-sessions"],
+    queryFn: fetchTutorCoachingSessions,
+  });
+  const timeRequestsQuery = useQuery({
+    queryKey: ["coaching-tutor-time-requests"],
+    queryFn: fetchTutorCoachingTimeRequests,
+    staleTime: 60_000,
+  });
+  const rescheduleRequestsQuery = useQuery({
+    queryKey: ["coaching-tutor-reschedule-requests"],
+    queryFn: fetchTutorCoachingRescheduleRequests,
+    staleTime: 60_000,
+  });
+  const capacityQuery = useQuery({
+    queryKey: ["coaching-capacity"],
+    queryFn: fetchCoachingCapacity,
   });
 
-  if (isLoading) {
+  if (studentsQuery.isLoading) {
     return (
       <div className="space-y-3">
         <Skeleton className="h-24 w-full" />
@@ -48,9 +53,42 @@ function StudentsContent() {
     );
   }
 
-  if (students.length === 0) {
+  if (studentsQuery.isError) {
     return (
-      <EmptyState
+      <CoachingLoadError
+        message="Öğrenciler yüklenemedi."
+        onRetry={() => studentsQuery.refetch()}
+        isRetrying={studentsQuery.isFetching}
+      />
+    );
+  }
+
+  // What waits on the tutor comes from three sources. If one failed, the card
+  // says so rather than leaving that kind out and looking empty.
+  const waitingQueries = [sessionsQuery, timeRequestsQuery, rescheduleRequestsQuery];
+  const waitingState = waitingQueries.some((query) => query.isLoading)
+    ? "loading"
+    : waitingQueries.some((query) => query.isError)
+      ? "error"
+      : "ready";
+
+  const board = buildStudentsBoard({
+    students: studentsQuery.data ?? [],
+    sessions: sessionsQuery.data ?? [],
+    timeRequests: timeRequestsQuery.data ?? [],
+    rescheduleRequests: rescheduleRequestsQuery.data ?? [],
+    now: new Date(),
+  });
+  const capacity = capacityQuery.data ?? null;
+
+  if (
+    board.active.length === 0 &&
+    board.pending.length === 0 &&
+    board.waiting.length === 0 &&
+    waitingState === "ready"
+  ) {
+    return (
+      <CoachingEmptyState
         icon={UserPlus}
         title="Henüz koçluk öğrencin yok"
         description="Bir öğrenci koçluk talebini kabul edip ödemesi aktive olduğunda burada görünecek."
@@ -59,78 +97,18 @@ function StudentsContent() {
   }
 
   return (
-    <div className="space-y-3">
-      {students.map((row) => (
-        <Card key={row.purchase_id}>
-          <CardContent className="space-y-2 pt-6">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <p className="font-medium">{row.student_name}</p>
-              <Badge variant="secondary">{coachingServiceStatusLabel(row.service_status)}</Badge>
-            </div>
-            {row.service_period_id ? (
-              <Link
-                href={`/dashboard/tutor/coaching/service-periods/${row.service_period_id}/program`}
-                className="inline-block text-sm font-medium text-ink underline"
-              >
-                Programı yönet
-              </Link>
-            ) : null}
-            {row.recurring_slots.length > 0 ? (
-              <div className="flex flex-wrap gap-2">
-                {row.recurring_slots.map((slot) => (
-                  <span
-                    key={slot.id}
-                    className="rounded-full bg-paper px-2 py-0.5 text-xs text-ink-mid"
-                  >
-                    {COACHING_DAY_LABEL[slot.day_of_week]} {slot.start_time.slice(0, 5)}
-                    {slot.source === "tutor_proposal" ? " · özel saat" : ""}
-                  </span>
-                ))}
-              </div>
-            ) : (
-              <p className="text-xs text-ink-mid">Öğrenci henüz saat seçmedi.</p>
-            )}
-            {terminationFor === row.purchase_id ? (
-              <div className="space-y-2 rounded border p-3">
-                <p className="text-sm font-medium">Koçluğun tamamını sonlandırma</p>
-                <Textarea
-                  value={reason}
-                  onChange={(event) => setReason(event.target.value)}
-                  placeholder="Gerekli gerekçe"
-                  aria-label="Sonlandırma gerekçesi"
-                />
-                <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    variant="destructive"
-                    disabled={!reason.trim() || terminate.isPending}
-                    onClick={() => terminate.mutate(row.purchase_id)}
-                  >
-                    Sonlandırmayı kaydet
-                  </Button>
-                  <Button size="sm" variant="ghost" onClick={() => setTerminationFor(null)}>
-                    Vazgeç
-                  </Button>
-                </div>
-                {terminate.error ? (
-                  <p className="text-xs text-destructive">
-                    İşlem güncel koçluk durumuyla çakıştı; sayfayı yenileyip tekrar dene.
-                  </p>
-                ) : null}
-              </div>
-            ) : (
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => setTerminationFor(row.purchase_id)}
-              >
-                Koçluğu sonlandır
-              </Button>
-            )}
-          </CardContent>
-        </Card>
-      ))}
-    </div>
+    <CoachingStudentsBoard
+      waiting={board.waiting}
+      waitingState={waitingState}
+      onRetryWaiting={() => {
+        for (const query of waitingQueries) if (query.isError) void query.refetch();
+      }}
+      active={board.active}
+      pending={board.pending}
+      nextKnown={sessionsQuery.isSuccess}
+      occupiedPlaces={capacity ? capacity.active_students : null}
+      maxStudents={capacity ? capacity.max_active_students : null}
+    />
   );
 }
 
