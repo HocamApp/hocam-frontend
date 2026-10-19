@@ -269,4 +269,97 @@ describe("CoachingPlanForm", () => {
       assert.equal((payload as { max_active_students: number }).max_active_students, 3);
     });
   });
+
+  describe("price step", () => {
+    function priceStep(onSubmit: (payload: unknown) => void = () => undefined) {
+      return (
+        <CoachingPlanForm
+          plan={{
+            id: "p1",
+            frequency: "weekly",
+            session_duration_minutes: 30,
+            price_per_session_minor: 0,
+            price_per_session_display: "",
+            price_cap_minor: 77040,
+            max_active_students: 1,
+            target_exam_types: ["YKS"],
+            description: "",
+            is_published: false,
+            is_accepting_new_students: true,
+            published_at: null,
+            capacity: null,
+            created_at: "",
+            updated_at: "",
+          } as CoachingPlan}
+          setupConfig={setupConfig}
+          currentStep="price"
+          capacity={null}
+          onSubmit={onSubmit}
+          onContinue={() => undefined}
+          isSaving={false}
+          error={null}
+        />
+      );
+    }
+    const field = () => screen.getByLabelText("Koçluk görüşme fiyatın (₺)");
+
+    it("shows how the ceiling comes out: the lesson price times the rate gives the most a meeting can cost", () => {
+      render(priceStep());
+
+      assert.ok(screen.getByText("40 dakikalık ders fiyatın"));
+      assert.ok(screen.getByText("Koçluk oranı"));
+      const ceiling = screen.getByText("Koçluk görüşmen en fazla");
+      assert.ok(ceiling.closest("div")?.textContent?.includes("770,40"));
+      // The ceiling is a gold surface with --gold-ink on it, never gold text.
+      const tile = ceiling.closest("div[class*='bg-gold']") as HTMLElement;
+      assert.ok(tile, "the ceiling sits on a gold tile");
+      assert.match(tile.className, /\btext-gold-ink\b/);
+      // Said in words for a screen reader, not only drawn as signs.
+      assert.ok(screen.getByText("çarpı"));
+      assert.ok(screen.getByText("eşittir"));
+    });
+
+    it("is quiet for a price at or under the ceiling, and for zero (free)", () => {
+      render(priceStep());
+      for (const value of ["0", "450", "770.40"]) {
+        fireEvent.change(field(), { target: { value } });
+        assert.equal(field().getAttribute("aria-invalid"), null, `${value} should be fine`);
+      }
+      assert.equal(screen.queryByRole("alert"), null);
+    });
+
+    it("turns the box red and names the ceiling when the price is above it", () => {
+      render(priceStep());
+      fireEvent.change(field(), { target: { value: "800" } });
+
+      assert.equal(field().getAttribute("aria-invalid"), "true");
+      assert.match(field().className, /\bborder-error\b/);
+      assert.match(screen.getByRole("alert").textContent ?? "", /En fazla 770,40\s₺ yazabilirsin/);
+    });
+
+    it("rejects a negative price and an empty box with their own sentence", () => {
+      render(priceStep());
+
+      fireEvent.change(field(), { target: { value: "-5" } });
+      assert.equal(screen.getByRole("alert").textContent, "Fiyat 0'dan küçük olamaz.");
+
+      fireEvent.change(field(), { target: { value: "" } });
+      assert.match(screen.getByRole("alert").textContent ?? "", /Bir fiyat yaz/);
+    });
+
+    it("does not save a price above the ceiling, and keeps the caret in the box", () => {
+      let saved = 0;
+      render(priceStep(() => { saved += 1; }));
+      fireEvent.change(field(), { target: { value: "800" } });
+      fireEvent.click(screen.getByRole("button", { name: /devam et/i }));
+
+      assert.equal(saved, 0);
+      assert.equal(document.activeElement, field());
+    });
+
+    it("says the commission in plain words", () => {
+      render(priceStep());
+      assert.ok(screen.getByText(/Ücretsiz sunmak için 0 yaz\. Her görüşmeden %12,34 komisyon düşülür/));
+    });
+  });
 });

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ArrowRight, Check, Clock, Target } from "@phosphor-icons/react";
+import { ArrowRight, Check, Clock, Equals, Target, X } from "@phosphor-icons/react";
 
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { InlineError } from "@/components/shared/InlineError";
@@ -54,6 +54,45 @@ function capacityProblem(raw: string, min: number, max: number | null): string |
   return null;
 }
 
+/**
+ * What a field that cannot be saved as typed needs: it stays quiet until it has
+ * been touched or the tutor tried to go on, then shows its reason, shakes once
+ * each time it turns invalid or the reason changes, and takes the caret back
+ * when "devam et" is refused.
+ */
+function useFieldFeedback(problem: string | null) {
+  const [touched, setTouched] = useState(false);
+  const [shakes, setShakes] = useState(0);
+  const input = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (touched && problem) setShakes((count) => count + 1);
+  }, [touched, problem]);
+
+  return {
+    input,
+    shakes,
+    shown: touched ? problem : null,
+    touch: () => setTouched(true),
+    refuse: () => {
+      setTouched(true);
+      setShakes((count) => count + 1);
+      input.current?.focus();
+    },
+  };
+}
+
+/** Why a typed price cannot be saved, or null. Zero is allowed: it means free. */
+function priceProblem(raw: string, capMinor: number): string | null {
+  const value = Number(raw);
+  if (raw.trim() === "" || Number.isNaN(value)) return "Bir fiyat yaz. Ücretsiz sunmak için 0 yaz.";
+  if (value < 0) return "Fiyat 0'dan küçük olamaz.";
+  if (Math.round(value * 100) > capMinor) {
+    return `En fazla ${formatTryMinor(capMinor)} yazabilirsin, bu fiyat üst sınırı aşıyor.`;
+  }
+  return null;
+}
+
 export function CoachingPlanForm({
   plan,
   setupConfig,
@@ -91,19 +130,11 @@ export function CoachingPlanForm({
   const capacityMax =
     capacity && capacity.theoretical_capacity >= 1 ? capacity.theoretical_capacity : null;
   const capacityError = capacityProblem(maxStudents, capacityMin, capacityMax);
-  // The box stays quiet until the tutor has touched it or tried to go on.
-  const [capacityTouched, setCapacityTouched] = useState(false);
-  const [capacityShakes, setCapacityShakes] = useState(0);
-  const capacityInput = useRef<HTMLInputElement>(null);
-  const shownCapacityError = capacityTouched ? capacityError : null;
-
-  // One jolt each time the box turns invalid or the reason changes.
-  useEffect(() => {
-    if (capacityTouched && capacityError) setCapacityShakes((count) => count + 1);
-  }, [capacityTouched, capacityError]);
+  const capacityField = useFieldFeedback(capacityError);
 
   const priceMinor = Math.round(Number(priceLira || 0) * 100);
-  const overCap = priceMinor > setupConfig.price_cap_minor;
+  const priceError = priceProblem(priceLira, setupConfig.price_cap_minor);
+  const priceField = useFieldFeedback(priceError);
   const nextStep = COACHING_SETUP_STEPS[
     Math.min(COACHING_SETUP_STEPS.length - 1, COACHING_SETUP_STEPS.indexOf(currentStep) + 1)
   ];
@@ -118,14 +149,10 @@ export function CoachingPlanForm({
     });
 
   const advance = () => {
-    if (currentStep === "capacity" && capacityError) {
-      // Do not send a number we already know is wrong: say so, shake, and put
-      // the caret back in the box.
-      setCapacityTouched(true);
-      setCapacityShakes((count) => count + 1);
-      capacityInput.current?.focus();
-      return;
-    }
+    // Do not send a value we already know is wrong: say so, shake, and put the
+    // caret back in the box. The server still has the last word.
+    if (currentStep === "capacity" && capacityError) return capacityField.refuse();
+    if (currentStep === "price" && priceError) return priceField.refuse();
     const requiresSave = Boolean(plan) || currentStep === "description" || currentStep === "capacity";
     if (requiresSave) onSubmit(draft(), nextStep);
     else onContinue(nextStep);
@@ -168,33 +195,62 @@ export function CoachingPlanForm({
       {currentStep === "price" ? (
         <StepCard
           title="Koçluk görüşme fiyatın"
-          description="Koçluk, ders paketine eklenen bir hizmettir. 30 dakikalık bir görüşmenin fiyatı 40 dakikalık ders fiyatına göre belirlenen üst sınırı aşamaz."
+          description="Koçluk ders paketine eklenen bir hizmettir. Bir koçluk görüşmesi, 40 dakikalık ders fiyatının belirli bir oranından pahalı olamaz."
         >
-          <div className="grid gap-3 sm:grid-cols-[0.9fr_0.9fr_1.2fr]">
-            <PolicyValue label="40 dk ders fiyatın" value={formatTryMinor(setupConfig.lesson_price_minor)} />
-            <PolicyValue label="Koçluk fiyat tavanı" value={`%${setupConfig.max_price_ratio_percent}`} />
-            <PolicyValue label="Girebileceğin en yüksek fiyat" value={formatTryMinor(setupConfig.price_cap_minor)} />
+          {/* The ceiling, worked out left to right. Plain class strings:
+              tailwind-merge would drop a named size next to a text colour. */}
+          <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:flex-wrap sm:gap-3">
+            <div className="min-w-[9rem] flex-1 rounded-input border border-line px-4 py-3">
+              <p className="text-label text-ink-mid">40 dakikalık ders fiyatın</p>
+              <p className="mt-1 text-h3-m font-bold tabular-nums text-ink md:text-h3 md:font-bold">
+                {formatTryMinor(setupConfig.lesson_price_minor)}
+              </p>
+            </div>
+            <span className="flex items-center justify-center text-ink-mid">
+              <X aria-hidden="true" className="h-5 w-5" />
+              <span className="sr-only">çarpı</span>
+            </span>
+            <div className="min-w-[7rem] flex-[0.7] rounded-input border border-line px-4 py-3">
+              <p className="text-label text-ink-mid">Koçluk oranı</p>
+              <p className="mt-1 text-h3-m font-bold tabular-nums text-ink md:text-h3 md:font-bold">
+                %{setupConfig.max_price_ratio_percent}
+              </p>
+            </div>
+            <span className="flex items-center justify-center text-ink-mid">
+              <Equals aria-hidden="true" className="h-5 w-5" />
+              <span className="sr-only">eşittir</span>
+            </span>
+            <div className="min-w-[9rem] flex-1 rounded-input bg-gold px-4 py-3 text-gold-ink">
+              <p className="text-label">Koçluk görüşmen en fazla</p>
+              <p className="mt-1 text-h3-m font-bold tabular-nums md:text-h3 md:font-bold">
+                {formatTryMinor(setupConfig.price_cap_minor)}
+              </p>
+            </div>
           </div>
-          <div className="rounded-card border border-line bg-paper p-4 sm:p-5">
-          <div className="max-w-sm">
-            <Label htmlFor="coaching-price">Görüşme başına fiyat (₺)</Label>
+
+          <ShakeOnError trigger={priceField.shakes} className="max-w-sm">
+            <Label htmlFor="coaching-price">Koçluk görüşme fiyatın (₺)</Label>
             <Input
+              ref={priceField.input}
               id="coaching-price"
               type="number"
               min={0}
               max={setupConfig.price_cap_minor / 100}
               step="0.01"
               value={priceLira}
-              onChange={(event) => setPriceLira(event.target.value)}
-              aria-describedby="coaching-price-hint"
-              className="mt-1"
+              onChange={(event) => {
+                setPriceLira(event.target.value);
+                priceField.touch();
+              }}
+              aria-invalid={priceField.shown ? true : undefined}
+              aria-describedby={priceField.shown ? "coaching-price-error coaching-price-hint" : "coaching-price-hint"}
+              className={priceField.shown ? "mt-1 border-error focus-visible:border-error" : "mt-1"}
             />
-            <p id="coaching-price-hint" className="mt-2 text-xs leading-5 text-ink-mid">
-              Ücretsiz sunmak için 0 girebilirsin. Güncel platform komisyonu %{formatBpsPercent(setupConfig.commission_bps)}; paket indirimi ve tahmini net kazancın kaydettiğin fiyata göre hesaplanır.
+            <InlineError id="coaching-price-error" message={priceField.shown} size="sm" className="mt-2" />
+            <p id="coaching-price-hint" className="mt-2 text-label leading-5 text-ink-mid">
+              Ücretsiz sunmak için 0 yaz. Her görüşmeden %{formatBpsPercent(setupConfig.commission_bps)} komisyon düşülür; paket indirimi ve net kazancın bu fiyata göre hesaplanır.
             </p>
-            {overCap ? <p className="mt-2 text-xs font-medium text-destructive">Bu fiyat {formatTryMinor(setupConfig.price_cap_minor)} üst sınırını aşıyor.</p> : null}
-          </div>
-          </div>
+          </ShakeOnError>
         </StepCard>
       ) : null}
 
@@ -285,10 +341,10 @@ export function CoachingPlanForm({
           description="Koçluk saatlerin 30 dakikalık görüşmelere bölünür. Seçtiğin görüşme sıklığına göre bu saatlerle en fazla kaç öğrenciye bakabileceğin hesaplanır. Aşağıda kendi sınırını seçersin."
         >
           {capacity ? <CapacityPreviewCard capacity={capacity} /> : null}
-          <ShakeOnError trigger={capacityShakes} className="max-w-sm">
+          <ShakeOnError trigger={capacityField.shakes} className="max-w-sm">
             <Label htmlFor="coaching-capacity">Aynı anda en fazla kaç öğrenciye koçluk vereceksin?</Label>
             <Input
-              ref={capacityInput}
+              ref={capacityField.input}
               id="coaching-capacity"
               type="number"
               min={capacityMin}
@@ -296,13 +352,13 @@ export function CoachingPlanForm({
               value={maxStudents}
               onChange={(event) => {
                 setMaxStudents(event.target.value);
-                setCapacityTouched(true);
+                capacityField.touch();
               }}
-              aria-invalid={shownCapacityError ? true : undefined}
-              aria-describedby={shownCapacityError ? "coaching-capacity-error coaching-capacity-hint" : "coaching-capacity-hint"}
-              className={shownCapacityError ? "mt-1 border-error focus-visible:border-error" : "mt-1"}
+              aria-invalid={capacityField.shown ? true : undefined}
+              aria-describedby={capacityField.shown ? "coaching-capacity-error coaching-capacity-hint" : "coaching-capacity-hint"}
+              className={capacityField.shown ? "mt-1 border-error focus-visible:border-error" : "mt-1"}
             />
-            <InlineError id="coaching-capacity-error" message={shownCapacityError} size="sm" className="mt-2" />
+            <InlineError id="coaching-capacity-error" message={capacityField.shown} size="sm" className="mt-2" />
             <p id="coaching-capacity-hint" className="mt-2 text-label leading-5 text-ink-mid">
               {capacity && capacity.theoretical_capacity >= 1
                 ? `En az ${capacityMin}, en fazla ${capacity.theoretical_capacity} yazabilirsin. Uygun olmayan bir sayı yazarsan önceki sayın kalır ve nedeni burada yazar.`
@@ -319,7 +375,6 @@ export function CoachingPlanForm({
             onClick={advance}
             disabled={
               isSaving ||
-              overCap ||
               (["exams", "description"].includes(currentStep) && examTypes.length === 0)
             }
           >
@@ -343,15 +398,6 @@ function StepCard({ title, description, children }: { title: string; description
         {children}
       </CardContent>
     </Card>
-  );
-}
-
-function PolicyValue({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-2xl border bg-paper p-4">
-      <p className="text-xs text-ink-mid">{label}</p>
-      <p className="mt-1 font-medium tabular-nums">{value}</p>
-    </div>
   );
 }
 
