@@ -38,7 +38,7 @@ export function TutorCoachingDashboard({
   const titleRef = useRef<HTMLSpanElement>(null);
   return (
     <CoachingPageShell
-      title="Çalışma koçluğu"
+      title="Genel bakış"
       titleRef={titleRef}
       width="wide"
       currentHref="/dashboard/tutor/coaching"
