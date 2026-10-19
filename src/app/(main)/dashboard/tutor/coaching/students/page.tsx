@@ -116,7 +116,7 @@ export default function CoachingStudentsPage() {
   return (
     <CoachingRecordGuard>
       <CoachingPageShell
-        title="Koçluk öğrencilerim"
+        title="Öğrenciler"
         width="wide"
         currentHref="/dashboard/tutor/coaching/students"
         audience="tutor"

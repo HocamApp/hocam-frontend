@@ -196,6 +196,7 @@ describe("Öğrenciler page", () => {
     assert.ok(within(active).getByText("Bugün 19:00"));
     assert.ok(within(active).getByText("Per 20:00"));
     assert.ok(within(active).getByText("2 / 6 kontenjan"));
+    assert.ok(screen.getByRole("heading", { level: 1, name: "Öğrenciler" }));
     assert.equal(
       within(active).getAllByRole("link", { name: "Programı yönet" })[0].getAttribute("href"),
       "/dashboard/tutor/coaching/service-periods/sp-1/program"

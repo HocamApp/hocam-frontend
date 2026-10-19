@@ -89,6 +89,12 @@ describe("TutorCoachingDashboard", () => {
     assert.ok(platformRegion.textContent?.includes("platform genelinde şu anda kapalı"));
   });
 
+  it("is titled like its tab, Genel bakış", () => {
+    render(<TutorCoachingDashboard status={publishedPaused} lists={lists()} />);
+
+    assert.ok(screen.getByRole("heading", { level: 1, name: "Genel bakış" }));
+  });
+
   it("opens a set-up tutor on the to-do list and the week, with no big status panel", () => {
     render(<TutorCoachingDashboard status={publishedPaused} lists={lists()} />);
 
