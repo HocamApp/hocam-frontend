@@ -7,7 +7,10 @@
 
 const ZONE = "Europe/Istanbul";
 
-const dateTime = new Intl.DateTimeFormat("tr-TR", {
+/** Short day names, Monday first: index is Python's weekday() (workspace rule 10), i.e. day_of_week. */
+export const COACHING_DAY_SHORT = ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"] as const;
+
+const dateTime =new Intl.DateTimeFormat("tr-TR", {
   timeZone: ZONE,
   day: "numeric",
   month: "long",

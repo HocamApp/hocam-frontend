@@ -5,13 +5,8 @@ import type {
   CoachingSetupConfig,
 } from "./coachingApi";
 import type { CoachingSetupStep } from "./coachingSetup";
-import { formatTryMinor } from "./money";
-
-/* A non-breaking space before the symbol, so a hint that wraps on a phone never
-   strands "₺" at the start of the next line. */
-function lira(minor: number): string {
-  return formatTryMinor(minor).replace(" ₺", "\u00a0₺");
-}
+import { COACHING_DAY_SHORT } from "./coachingTime";
+import { formatTryMinorTight as lira } from "./money";
 
 /** One saved setting, worded for the summary list and the review checklist. */
 export interface CoachingSettingRow {
@@ -24,14 +19,11 @@ export interface CoachingSettingRow {
   chip: string | null;
 }
 
-// day_of_week is Python's weekday(): 0 is Monday (workspace rule 10).
-const DAY_SHORT = ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"];
-
 function slotDays(capacity: CoachingCapacityDetail | null): string | null {
   if (!capacity || capacity.slots.length === 0) return null;
   const days = Array.from(new Set(capacity.slots.map((slot) => slot.day_of_week)))
     .sort((a, b) => a - b)
-    .map((day) => DAY_SHORT[day])
+    .map((day) => COACHING_DAY_SHORT[day])
     .filter(Boolean);
   return days.length > 0 ? days.join(", ") : null;
 }

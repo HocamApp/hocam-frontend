@@ -5,11 +5,8 @@ import type {
   AcceptanceRequest,
   CoachingCapacityDetail,
   CoachingPlan,
-  CoachingSessionItem,
-  CoachingStudentRow,
 } from "./coachingApi";
 import {
-  deriveCoachingMetrics,
   deriveCoachingStatus,
   isCoachingExamGroup,
   partitionAcceptanceRequests,
@@ -44,33 +41,6 @@ describe("isCoachingExamGroup", () => {
     assert.equal(isCoachingExamGroup("TYT"), false);
     assert.equal(isCoachingExamGroup("AYT"), false);
     assert.equal(isCoachingExamGroup("YDT"), false);
-  });
-});
-
-describe("deriveCoachingMetrics", () => {
-  it("counts active students, upcoming meetings, reports, and pending Coaching requests", () => {
-    const students = [
-      { service_status: "active" },
-      { service_status: "active" },
-      { service_status: "cancelled" },
-    ] as CoachingStudentRow[];
-    const sessions = [
-      { status: "scheduled" },
-      { status: "reschedule_requested" },
-      { status: "awaiting_report" },
-    ] as CoachingSessionItem[];
-    const requests = [
-      request("coaching", true),
-      request("accepted-coaching", true, "accepted"),
-      request("lesson", false),
-    ];
-
-    assert.deepEqual(deriveCoachingMetrics({ students, sessions, requests }), {
-      activeStudents: 2,
-      upcomingSessions: 2,
-      pendingReports: 1,
-      pendingRequests: 1,
-    });
   });
 });
 

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import { formatBpsPercent, formatPercent, formatTryMinor, isFreeMinor } from "./money";
+import { formatBpsPercent, formatPercent, formatTryMinor, formatTryMinorTight, isFreeMinor } from "./money";
 
 describe("formatTryMinor", () => {
   it("formats whole lira with two decimals", () => {
@@ -21,6 +21,14 @@ describe("formatTryMinor", () => {
 
   it("does not lose kuruş precision", () => {
     assert.match(formatTryMinor(45001), /450,01/);
+  });
+});
+
+describe("formatTryMinorTight", () => {
+  it("keeps the symbol after the number but cannot be split from it", () => {
+    const tight = formatTryMinorTight(240000);
+    assert.equal(tight, "2.400,00\u00a0₺");
+    assert.doesNotMatch(tight, / /, "no breaking space anywhere");
   });
 });
 

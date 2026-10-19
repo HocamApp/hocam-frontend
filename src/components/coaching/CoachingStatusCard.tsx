@@ -3,12 +3,12 @@ import {
   ArrowUpRight,
   CheckCircle,
   Circle,
-  Info,
 } from "@phosphor-icons/react/ssr";
 
 import { Button } from "@/components/ui/button";
 import type { CoachingDerivedStatus } from "@/lib/coachingPresentation";
 import { cn } from "@/lib/utils";
+import { CoachingPlatformNotice } from "./CoachingPlatformNotice";
 import { CoachingStudioPanel } from "./CoachingStudioPanel";
 
 export function CoachingStatusCard({ status }: { status: CoachingDerivedStatus }) {
@@ -90,19 +90,7 @@ export function CoachingStatusCard({ status }: { status: CoachingDerivedStatus }
         </div>
       </CoachingStudioPanel>
 
-      {status.platformMessage ? (
-        <section
-          role="region"
-          aria-label="Platform durumu"
-          className="flex gap-3 rounded-card border border-line bg-surface p-4 text-small text-ink"
-        >
-          <Info aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0" weight="regular" />
-          <div>
-            <p className="font-medium">Platform bilgisi</p>
-            <p className="mt-0.5 text-ink-mid">{status.platformMessage}</p>
-          </div>
-        </section>
-      ) : null}
+      {status.platformMessage ? <CoachingPlatformNotice message={status.platformMessage} /> : null}
     </div>
   );
 }

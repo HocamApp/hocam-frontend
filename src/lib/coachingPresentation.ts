@@ -2,8 +2,6 @@ import type {
   AcceptanceRequest,
   CoachingCapacityDetail,
   CoachingPlan,
-  CoachingSessionItem,
-  CoachingStudentRow,
 } from "./coachingApi";
 
 export const COACHING_EXAM_GROUPS = ["YKS", "DGS", "KPSS"] as const;
@@ -17,23 +15,6 @@ export function partitionAcceptanceRequests(requests: AcceptanceRequest[]) {
   return {
     coaching: requests.filter((request) => request.includes_coaching),
     lessonOnly: requests.filter((request) => !request.includes_coaching),
-  };
-}
-
-const UPCOMING_SESSION_STATUSES = new Set(["scheduled", "reschedule_requested", "in_progress"]);
-
-export function deriveCoachingMetrics(input: {
-  students: CoachingStudentRow[];
-  sessions: CoachingSessionItem[];
-  requests: AcceptanceRequest[];
-}) {
-  return {
-    activeStudents: input.students.filter((row) => row.service_status === "active").length,
-    upcomingSessions: input.sessions.filter((row) => UPCOMING_SESSION_STATUSES.has(row.status)).length,
-    pendingReports: input.sessions.filter((row) => row.status === "awaiting_report").length,
-    pendingRequests: input.requests.filter(
-      (row) => row.includes_coaching && row.status === "pending"
-    ).length,
   };
 }
 

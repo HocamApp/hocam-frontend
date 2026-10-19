@@ -3,8 +3,9 @@ import "@/test/setupDom";
 import assert from "node:assert/strict";
 import { after, afterEach, before, describe, it, mock } from "node:test";
 import React from "react";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 
+import type { CoachingTodo, CoachingWeekDay } from "@/lib/coachingOverview";
 import type { CoachingDerivedStatus } from "@/lib/coachingPresentation";
 let TutorCoachingDashboard: typeof import("./TutorCoachingDashboard").TutorCoachingDashboard;
 
@@ -37,14 +38,45 @@ const publishedPaused: CoachingDerivedStatus = {
   nextAction: null,
 };
 
+const todos: CoachingTodo[] = [
+  {
+    id: "report-1",
+    kind: "report",
+    tab: "reports",
+    title: "Zeynep K. raporu yazılmadı",
+    detail: "18 Ekim Pazar görüşmesi",
+    due: { label: "Yarın 18:00", urgent: false },
+    action: { label: "Raporu yaz", href: "/dashboard/tutor/coaching/sessions/s-r/report" },
+    at: 1,
+  },
+];
+
+const days: CoachingWeekDay[] = ["Pzt 19", "Sal 20", "Çar 21", "Per 22", "Cum 23", "Cmt 24", "Paz 25"].map(
+  (label, index) => ({
+    dateKey: `2026-10-${19 + index}`,
+    label,
+    isToday: index === 0,
+    sessions: index === 0 ? [{ id: "s-1", time: "19:00", studentName: "Zeynep K." }] : [],
+  })
+);
+
+function lists(overrides: Partial<NonNullable<React.ComponentProps<typeof TutorCoachingDashboard>["lists"]>> = {}) {
+  return {
+    todos,
+    todoState: "ready" as const,
+    week: { days, total: 1 },
+    weekState: "ready" as const,
+    offer: { published: true, acceptingNewStudents: true, activeStudents: 3, maxStudents: 6 },
+    onRetryTodos: () => undefined,
+    onRetryWeek: () => undefined,
+    isRetrying: false,
+    ...overrides,
+  };
+}
+
 describe("TutorCoachingDashboard", () => {
   it("presents platform checkout as information, never as a tutor-fixable failure", () => {
-    render(
-      <TutorCoachingDashboard
-        status={publishedPaused}
-        metrics={{ activeStudents: 2, upcomingSessions: 1, pendingReports: 0, pendingRequests: 3 }}
-      />
-    );
+    render(<TutorCoachingDashboard status={publishedPaused} lists={lists()} />);
 
     assert.ok(
       screen.getByText(
@@ -53,42 +85,86 @@ describe("TutorCoachingDashboard", () => {
     );
     assert.equal(screen.queryByText(/checkout aç/i), null);
     assert.equal(screen.queryByText(/satışları aç/i), null);
-    assert.ok(screen.getByRole("region", { name: "Koçluk hizmet durumu" }));
     const platformRegion = screen.getByRole("region", { name: "Platform durumu" });
     assert.ok(platformRegion.textContent?.includes("platform genelinde şu anda kapalı"));
-    assert.equal(screen.queryByRole("link", { name: /Yeni öğrenci talepleri/i }), null);
-    assert.equal(screen.queryByRole("region", { name: "Koçluk bağlantıları" }), null);
-    assert.equal(screen.queryByRole("heading", { name: "Koçluğu yürüt" }), null);
-    assert.equal(
-      screen.queryByText("Öğrencilerinle haftalık çalışma düzenini ve görüşme akışını sürdür."),
-      null
-    );
-    assert.equal(screen.queryByRole("heading", { name: /Koçluk alanların/i }), null);
-    assert.equal(screen.queryByRole("heading", { name: /Teklif ve ayarlar/i }), null);
-    assert.equal(screen.queryByRole("heading", { name: /Kayıtlar ve destek/i }), null);
-    assert.equal(screen.queryByText("Öğrenci kabulü"), null);
-    assert.equal(screen.queryByText("Kapasite"), null);
-    const publishedBadge = screen.getByText("Koçluğun yayında").closest("span");
-    assert.ok(publishedBadge);
-    assert.match(publishedBadge.className, /bg-gold/);
-    assert.match(publishedBadge.className, /text-gold-ink/);
-    assert.equal(screen.queryByText(/bundle/i), null);
   });
 
-  it("shows unavailable metrics without inventing zero", () => {
+  it("opens a set-up tutor on the to-do list and the week, with no big status panel", () => {
+    render(<TutorCoachingDashboard status={publishedPaused} lists={lists()} />);
+
+    assert.ok(screen.getByRole("heading", { name: "Yapılacaklar" }));
+    assert.ok(screen.getByRole("heading", { name: "Bu hafta" }));
+    assert.ok(screen.getByText("Zeynep K. raporu yazılmadı"));
+    assert.equal(screen.queryByRole("region", { name: "Koçluk hizmet durumu" }), null);
+    assert.equal(screen.queryByText("Koçluk düzenin hazır"), null);
+    // The old percent bar and four-tile rhythm are gone.
+    assert.equal(screen.queryByRole("progressbar"), null);
+    assert.equal(screen.queryByText("Koçluk akışın burada şekillenecek"), null);
+  });
+
+  it("says nothing extra about the platform when there is nothing to say", () => {
+    render(
+      <TutorCoachingDashboard status={{ ...publishedPaused, platformMessage: null }} lists={lists()} />
+    );
+
+    assert.equal(screen.queryByRole("region", { name: "Platform durumu" }), null);
+  });
+
+  it("keeps the next-step panel for a tutor whose setup is not finished", () => {
     render(
       <TutorCoachingDashboard
-        status={{ ...publishedPaused, publication: "draft", platformMessage: null }}
-        metrics={{
-          activeStudents: null,
-          upcomingSessions: null,
-          pendingReports: null,
-          pendingRequests: null,
+        status={{
+          ...publishedPaused,
+          publication: "draft",
+          readiness: "availability",
+          platformMessage: null,
+          nextAction: { label: "Koçluk saatlerini ekle", href: "/dashboard/tutor/coaching/plan?step=availability" },
         }}
+        lists={lists()}
       />
     );
 
-    assert.equal(screen.getAllByText("Şu anda görüntülenemiyor").length, 4);
-    assert.equal(screen.queryByText("0"), null);
+    assert.ok(screen.getByRole("region", { name: "Koçluk hizmet durumu" }));
+    assert.equal(
+      screen.getByRole("link", { name: /Koçluk saatlerini ekle/ }).getAttribute("href"),
+      "/dashboard/tutor/coaching/plan?step=availability"
+    );
+  });
+
+  it("shows only the next-step panel when there is no plan to list anything from", () => {
+    render(
+      <TutorCoachingDashboard
+        status={{
+          ...publishedPaused,
+          publication: "missing",
+          readiness: "plan",
+          platformMessage: null,
+          nextAction: { label: "Teklifini oluştur", href: "/dashboard/tutor/coaching/plan?step=frequency" },
+        }}
+        lists={null}
+      />
+    );
+
+    assert.ok(screen.getByRole("region", { name: "Koçluk hizmet durumu" }));
+    assert.equal(screen.queryByRole("heading", { name: "Yapılacaklar" }), null);
+    assert.equal(screen.queryByRole("heading", { name: "Bu hafta" }), null);
+  });
+
+  it("lets each card fail and retry on its own", () => {
+    const onRetryTodos = mock.fn();
+    const onRetryWeek = mock.fn();
+    render(
+      <TutorCoachingDashboard
+        status={publishedPaused}
+        lists={lists({ todoState: "error", weekState: "error", onRetryTodos, onRetryWeek })}
+      />
+    );
+
+    const retries = screen.getAllByRole("button", { name: /Tekrar dene/ });
+    assert.equal(retries.length, 2);
+    fireEvent.click(retries[0]);
+    fireEvent.click(retries[1]);
+    assert.equal(onRetryTodos.mock.callCount(), 1);
+    assert.equal(onRetryWeek.mock.callCount(), 1);
   });
 });
