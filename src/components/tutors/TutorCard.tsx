@@ -582,9 +582,7 @@ function TutorCardLarge({
           </dl>
 
           <div className="mt-auto flex flex-col gap-2 pt-3">
-            {/* D1: white text on --pink is 3.7:1, so under brand v3 the
-                fill is --pink-deep (4.8:1). */}
-            <Button asChild className="w-full v3:bg-pink-deep v3:hover:bg-pink-deep v3:hover:brightness-90">
+            <Button asChild className="w-full">
               <Link href={tutorHref}>
                 Profili Gör <ArrowRight className="ml-1 h-4 w-4" aria-hidden />
               </Link>

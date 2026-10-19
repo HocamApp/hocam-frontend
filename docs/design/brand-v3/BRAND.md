@@ -18,7 +18,7 @@ Tokens are CSS custom properties with raw hex values, same convention as today's
 |---|---|---|
 | `--on-accent` | `#0C0E09` | Text on `--yellow` and on the pink band. Stays black in dark mode |
 | `--pink` | `#FA0050` | Action: primary buttons, unread counts, selected day, the pink band, one heading highlight |
-| `--pink-deep` | `#D70F64` | Hover/pressed for pink. Also the fill for small pink buttons with white text (see decision D1 in PLAN.md) |
+| `--pink-deep` | `#D70F64` | Hover/pressed for pink. Not used as a button fill: D1 was reversed on 19 Oct 2026, white-text buttons are `--pink` |
 | `--yellow` | `#FCFF1A` | Highlight: hero word, free-trial tag, accent on dark bands. Surface only, never text |
 | `--pink-soft` | `#FFE3EE` | Soft surface: TYT, pricing icon tiles, parents banner, a testimonial card |
 | `--yellow-soft` | `#FDFFC7` | Soft surface: AYT, guarantee icon tiles, free-trial banner, discount tags |
