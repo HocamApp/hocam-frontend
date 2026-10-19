@@ -1,6 +1,6 @@
 # Brand v3: status
 
-**This file is the current state of the rollout.** `PLAN.md` is the plan; `BRAND.md` is the color system. Update this file at the end of every task. Last updated 18 October 2026 (Phase 1B review).
+**This file is the current state of the rollout.** `PLAN.md` is the plan; `BRAND.md` is the color system. Update this file at the end of every task. Last updated 18 October 2026 (Phase 1C, T1.13 prepared).
 
 ## Where we are
 
@@ -10,7 +10,9 @@ Phase 0 is merged (#345): the compare harness, the scoped tokens, the `v3:` Tail
 
 Phase 1A is merged (#347): the hero collage, the tutor cards and the subject tiles, with Baha's review fixes.
 
-Phase 1B is merged (#351): the verified band, the student steps, pricing and guarantees, with Baha's review answers (D8, D9). With the flag off every page checked is pixel-identical to `main`. Next: PR 1C (T1.9 to T1.12).
+Phase 1B is merged (#351): the verified band, the student steps, pricing and guarantees, with Baha's review answers (D8, D9). With the flag off every page checked is pixel-identical to `main`.
+
+Phase 1C is in review (branch `agent/brand-v3-phase1c-20261018`): the parents panel, the tutor band, testimonials and the FAQ, behind the flag. Flag off, identical to `main`. T1.13 is prepared below ("Intentional differences from the mockup", "Dark mode: check these yourself"). Next: Baha reviews the whole homepage in the 1C preview, then the Production switch.
 
 ## Progress
 
@@ -28,11 +30,11 @@ Phase 1B is merged (#351): the verified band, the student steps, pricing and gua
 | T1.6 Student steps | done | #351 | No floating notification cards (D9) |
 | T1.7 Pricing | done | #351 | Example opens on "En popüler" under v3 (D8) |
 | T1.8 Guarantees | done | #351 | |
-| T1.9 Parents panel | not started | | |
-| T1.10 Tutor band | not started | | |
-| T1.11 Testimonials | not started | | |
-| T1.12 FAQ | not started | | |
-| T1.13 Review and Production switch | not started | | |
+| T1.9 Parents panel | in review | 1C | Ink "Veliler için" label; the lead's first sentence is the heading |
+| T1.10 Tutor band | in review | 1C | `--band`, so it stays dark in dark mode (the Phase 0 issue); yellow word and button, the rest quiet |
+| T1.11 Testimonials | in review | 1C | Cards cycle yellow-soft / white / pink-soft; hover literals are tokens; sheen off under v3 |
+| T1.12 FAQ | in review | 1C | Selected tab was already ink; others surface with a line; links ink |
+| T1.13 Review and Production switch | prepared | | Lists below; waiting for Baha's review in the 1C preview |
 | T2.1 Global flip | not started | | Starts after the homepage is approved in Production |
 | T2.2 Shared components | not started | | |
 | T2.3 Surface audit | not started | | 8 groups, see PLAN.md |
@@ -58,6 +60,9 @@ Phase 1B is merged (#351): the verified band, the student steps, pricing and gua
 - Nothing open from Phase 1A. See "Answered after Phase 1A review" below.
 - **Subject grid is gone from the homepage.** #352 (Arda, 16 Oct 2026, "removes only the requested homepage elements") deleted `YsSubjectGrid.tsx` and its copy, along with the hero's audience row. So the 1B review fix for the desktop tiles (smaller glyphs, overflow hidden, 6 per row) has nothing to apply to and was not done. If the grid should come back, it's a restore of `YsSubjectGrid.tsx` from `6b68a1e` plus that fix, in its own PR, after agreeing with Arda.
 
+- **Production has `NEXT_PUBLIC_HOME_V2` off** (see Phase 0 notes). Pricing, guarantees, the parents panel, the tutor band and the tabbed FAQ only render with it on. If Production gets `BRAND_V3=true` with `HOME_V2` still off, visitors get the v3 colours on the old page: hero, tutor cards, verified band, the old step section and the testimonial marquee, and nothing from 1B/1C below that. Should `HOME_V2` go on in Production first, or at the same time?
+- **No approved testimonials.** With `HOME_V2` on, "Öğrencilerden" and the tutor band's quotes render nothing until an entry in `ysTestimonialData.ts` is approved, so the 1C testimonial treatment only shows in the `HOME_V2`-off marquee today.
+
 ## Phase 0 notes
 
 How it was checked:
@@ -73,9 +78,9 @@ Additions to the plan, all inside the scope:
 Outside the scope, the new names have fallbacks that keep today's look (`--pink-soft: var(--pink-pale)`, `--yellow: var(--gold)`, `--band: var(--ink-on-light)`, `--on-accent: var(--gold-ink)`). `--yellow-soft` has no counterpart today, so it carries its v3 value everywhere.
 
 Seen with the flag on, left for Phase 1 (each is the matching task's job):
-- Dark theme: the tutor band (`YsTutorBand`) is a light section on a dark page. Same on `main`; T1.10 makes it `--band`.
+- Dark theme: the tutor band (`YsTutorBand`) is a light section on a dark page. Same on `main`; T1.10 makes it `--band`. **Fixed in 1C.**
 - The shadcn HSL tokens (`--primary`, `--foreground`) are not in the scope, so anything on the homepage using them keeps today's colours until T2.1.
-- Hard-coded colours that don't follow tokens: the testimonial hover sheen (`.ys-sheen`, gold hex, T1.11) and the verified band's white button text (`text-[#02171a]`, T1.4).
+- Hard-coded colours that don't follow tokens: the testimonial hover sheen (`.ys-sheen`, gold hex, T1.11) and the verified band's white button text (`text-[#02171a]`, T1.4). **Both fixed** (1B, 1C).
 - Navbar and footer keep today's colours (D6 default).
 
 Unit tests: `npm run test:unit` reports 302 failures on this branch and the same 302 on clean `main` (mostly `Cannot find module '@/lib/…'` under the full runner). The new tests pass; the new cases in `YemeksepetiHome.flag.test.tsx` fail under the full runner only because that whole file already does on `main`, and pass with `--import ./scripts/register-test-aliases.mjs`.
@@ -134,9 +139,29 @@ Composition (BRAND.md §3):
 - **Checks:** flag off, frozen screenshots pixel-diffed against `main` on `/`, `/yks-ozel-ders`, `/hocalar-nasil-dogrulaniyor`, `/nasil-calisir`, `/veliler` and `/hoca-ol`, at 1440 and 390, light and dark, with `HOME_V2` off and on, tutor directory loaded: all 48 identical (`/nasil-calisir` 1440 light was shot twice; the first time a step screenshot hadn't finished loading on the `main` side). Flag on: `npm run brand:compare` → `screenshots/brand-v3/`, no horizontal scroll at 390.
 - **Local runs need port 3000.** The Railway API only allows CORS from `http://localhost:3000`; a build served on another port renders an empty tutor directory. The frozen-diff harness answers `/api/` from a shared cache with the page's own origin, so it can run two servers side by side.
 
+## Phase 1C notes
+
+How it was checked:
+- Flag off: frozen screenshots pixel-diffed against `main` on `/`, `/veliler`, `/hoca-ol` (YsTutorBand as its hero, YsHomeFaq), `/nasil-calisir` (YsStepList), `/yks-ozel-ders` and `/hocalar-nasil-dogrulaniyor`, at 1440 and 390, light and dark, `HOME_V2` off and on. All 48 identical. `/` at 1440 light first differed: the 1C server's image optimizer was cold for the step screenshot, the first shot of the run. After adding a warm-up pass to the harness it matched.
+- Harness fixes found on the way (the harness isn't in the repo): the entry promo's "dismissed" timestamp has a 30-day TTL, and the harness's frozen clock had made it stale, so the promo's dim layer was on both sides of the earlier 1B runs. Symmetric, so differences would still have shown, but the shots were dimmed. It's now dated to the frozen clock, and the navbar's timed sign-up coachmark is hidden.
+- Flag on (`HOME_V2=true`, `BRAND_V3=true`, main + 1B + 1C): `brand:compare` output in `screenshots/brand-v3-1c/`. No horizontal scroll, no console errors.
+- Tests: `src/components/yemeksepeti/YsBrandV3Phase1C.test.tsx`. `YsThemeSurfaces.test.tsx` now looks for the `--gold-ink-mid` token instead of the literal.
+
+What changes under v3:
+- **T1.9 parents panel:** "Veliler için" moves into an ink label pill (`bg-ink text-paper`). The lead's first sentence becomes the heading, as in the mockup. The words are unchanged: `ysHomeCopy.ts` builds `parents.lead` from `headline` + `leadRest`. Icon tiles were already `--paper`. Because this changes markup, it's a `brandV3` prop. `/veliler` doesn't pass it, so that page is unchanged.
+- **T1.10 tutor band:** `--band` with `--on-band` text instead of `bg-ink text-paper`. Ink flips light in dark mode; `--band` doesn't, which fixes the Phase 0 dark-mode issue. "gelire" (`tutors.titleHighlight`) sits on `--yellow`, rotated -1.5deg (`brandV3` prop, because it splits the title). The apply button is `--yellow` with `--on-accent` text. The second button has a 2px `--on-band-mid` outline. Check circles are 26px `--on-band-quiet`. The eligibility card border, the step list's rule and dividers, and the coaching chip are `--on-band-quiet`. Step numbers are `--on-band` at 40%, bodies `--on-band-mid`. The step list's `v3:` classes live in `YsStepList`'s ink tone, which only the band uses.
+- **T1.11 testimonials:** `ReviewCard` takes a `tone` (position). Under v3 the cards cycle `--yellow-soft`, `--surface` with a line, `--pink-soft`. A 64px quote mark sits on top: ink, pink on the white card. Hover keeps the card's tint and turns the border ink, with no gold fill. `.ys-sheen` is `display: none` under v3. The flag-off hover keeps its look, but its colours are now tokens in `globals.css` (`--gold-ink-mid`, `--gold-sheen-*`, same values), so the component and `yemeksepeti.css` have no colour literals. The tutor band's quote cards stay surface (no tone): on the band they're the quiet cards, and the profile link is ink, underlined.
+- **T1.12 FAQ:** the selected tab was already `bg-ink text-paper`. Unselected tabs become `--surface` pills with a `--line` border, and hover only turns the border ink (BRAND.md §5). Answer links go from pink to ink, underlined (pink on paper is 3.5:1). The `HOME_V2`-off FAQ is the shared support accordion and is not touched.
+
+Composition (BRAND.md §3):
+- Parents panel: no strong moment; the ink label is the only filled element. Soft only.
+- Tutor band: the band is the strong moment. Inside, yellow is used exactly twice, the highlight and the main button (rule 7). Everything else is `--on-band-quiet` / `--on-band-mid`.
+- Testimonials: the one allowed cycle, soft tints and white only (rule 3). The pink quote mark is on the white card only.
+- FAQ: no strong moment. The selected tab is ink, not pink (rule 4).
+
 ## Intentional differences from the mockup
 
-- **Hero:** no "YKS 2027 için hocalar ders alıyor" chip (no copy or fact for it) and no search bar (D2). The headline, subline and buttons keep the site's sizes and copy. The audience pills keep their down arrows next to the new dots.
+- **Hero:** no "YKS 2027 için hocalar ders alıyor" chip (no copy or fact for it) and no search bar (D2). The headline, subline and buttons keep the site's sizes and copy. 
 - **Collage:** no university caption on the photo. In the mockup the notification card covers it, and on a phone the card covered it here too. The photo's alt text names the university.
 - **Notification card (D3):** an icon in a pale pink circle instead of Zeynep's photo, and generic text.
 - **Tutor cards:** keep the site's horizontal card (photo, bio, price rail) rather than the mockup's vertical one. Only the treatments in PLAN.md T1.2 are applied. Real tutors, prices and ranks, not the demo ones.
@@ -146,3 +171,25 @@ Composition (BRAND.md §3):
 - **Pricing plan box:** real plans for the top-rated tutor, shown only to signed-in visitors as before. Rows are a vertical list, not the mockup's 2×2 grid. The "En popüler" tag is `--pink-deep` and unrotated.
 - **Subject tiles:** not on the homepage since #352. (When they were: every subject the API returns, 30, on desktop; the first 8 plus "Tüm dersleri gör" below 768px; API order; an ink ring on hover.)
 - **Hero audience row** ("Ders almak istiyorum / Velisiyim / Hoca olmak istiyorum"): removed by #352, so the mockup's dotted pills aren't there.
+- **Parents panel:** the site's card (no border, the site's card radius) and its real row texts: "Kayıt ve derse katılım" with the owners' recording and parent-join answers, and messaging inside the platform. The mockup's "Kayıt alınmaz" row is demo copy. The CTA keeps the site's 1px outline.
+- **Tutor band:** a vertical step list with a left rule, beside the earnings calculator column (shown only with `NEXT_PUBLIC_TUTOR_EARNINGS_PREVIEW`), rather than the mockup's grid of step cards. The real step texts (seven steps with facts, a coaching chip when coaching is on) and the real eligibility lines. The yellow button's hover is `--on-band` (the mockup has none).
+- **Testimonials:** with `HOME_V2` on, nothing renders until a testimonial is approved; the mockup shows three demo quotes. Where cards render, the site's order stays (person, then quote) with the quote mark added on top. Avatars have no border ring (BRAND.md §3 rule 10; the mockup has one on two cards).
+- **FAQ:** the site's rule-separated list instead of the mockup's white cards, the site's 36px tabs, the real questions and answers, and the title "Merak Edilenler" from `ysHomeCopy.ts`.
+- **Navbar and footer** keep today's colours until Phase 2 (D6). The mockup's black footer is a T2.2 task.
+
+## Dark mode: check these yourself
+
+The mockup is light only, so every dark value is BRAND.md's starting value (D5). Look at these in the 1C preview with the theme set to dark, at 1440 and 390:
+
+1. **Pale yellow (`--yellow-soft` = `#384123`, olive) surfaces.** This is the one most likely to look wrong: on the dark page it reads olive-green, not yellow. Contrast is fine (light ink on it is 8.7:1); the question is whether it reads as "our yellow". Where:
+   - the four guarantee icon tiles (`YsGuarantees`)
+   - AYT chips on tutor cards (`TutorCard`)
+   - the "%N fiyat avantajı" discount tags in the pricing plan box (signed in only)
+   - testimonial cards 1 and 4 (marquee, `HOME_V2` off only)
+   If it's off, the options are a different dark value for `--yellow-soft` (one line in `globals.css`, `.dark [data-brand="v3"]`), or `--surface` with a yellow hairline in dark only.
+2. **Pale pink (`--pink-soft` = `#3D2231`, plum) surfaces:** the "ödersin?" / guarantees heading pills, the three pricing fact tiles, TYT chips (and every chip when the exam isn't labelled), the hero notification's icon circle, the student-step screenshot backdrop, and testimonial card 3. Less risky than the yellow, but it's the same kind of check.
+3. **`--pink-pale` stays light in dark** (`#FFE3EE`, Phase 0 note 2): the favourites banner above the tutor list is a light card on the dark page, on purpose. Check it doesn't glare.
+4. **Full yellow (`#FCFF1A`) doesn't change in dark:** the hero highlight, sticker and collage block, the active step's number tile, the tutor band's "gelire" and its apply button. Check it isn't too bright on the dark page.
+5. **`--band` (`#1D282B`) is one step above the dark surface:** the pricing plan box, the verified band's checklist card and button, and the tutor band. Check each still reads as a separate dark block, especially the tutor band's top and bottom cut against the page.
+6. **`bg-ink` flips light in dark** (intended): rank pills on tutor cards, the parents "Veliler için" label, the FAQ's selected tab and the sort chip all become light pills with dark text.
+
