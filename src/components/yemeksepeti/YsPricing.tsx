@@ -182,10 +182,8 @@ export function PackageExample({
                 <b className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[17px] font-bold leading-[22px]">
                   {formatPlanDuration(days)}
                   {days === MOST_POPULAR_DURATION_DAYS && (
-                    /* Brand v3: the "En popüler" tag is pink. --pink-deep
-                       rather than --pink because the text is small and
-                       white (D1: 4.8:1 against 3.7:1). */
-                    <span className="whitespace-nowrap rounded-pill bg-[var(--ink-on-light)] px-2 text-[11px] font-semibold leading-[18px] text-white v3:bg-pink-deep">
+                    /* Brand v3: the "En popüler" tag is pink. */
+                    <span className="whitespace-nowrap rounded-pill bg-[var(--ink-on-light)] px-2 text-[11px] font-semibold leading-[18px] text-white v3:bg-pink">
                       {copy.planMostPopular}
                     </span>
                   )}

@@ -125,7 +125,7 @@ describe("pricing (T1.7)", () => {
     assert.match(rows[1].className, /\bv3:border-pink\b/);
     assert.doesNotMatch(rows[0].className, /\bv3:border-pink\b/);
 
-    assert.match(getByText("En popüler").className, /\bv3:bg-pink-deep\b/);
+    assert.match(getByText("En popüler").className, /\bv3:bg-pink\b/);
     assert.match(getByText("%15 fiyat avantajı").className, /\bv3:bg-yellow-soft\b/);
   });
 

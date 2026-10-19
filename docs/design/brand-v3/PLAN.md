@@ -151,7 +151,7 @@ Defaults are what Claude Code does if there's no answer yet.
 
 | # | Question | Default |
 |---|---|---|
-| D1 | White text on `#FF2070` is 3.7:1, below the 4.5:1 minimum for button-size text. Fill small white-text buttons with `--pink-deep` (`#E0105E`, 4.8:1, barely visible difference), or keep `--pink` exactly like the mockup? | `--pink-deep` for button fills, `--pink` everywhere else |
+| D1 | White text on `#FF2070` is 3.7:1, below the 4.5:1 minimum for button-size text. Fill small white-text buttons with `--pink-deep` (`#E0105E`, 4.8:1, barely visible difference), or keep `--pink` exactly like the mockup? | ~~`--pink-deep` for button fills~~ Reversed 19 Oct 2026 by the owners: the pink is back to `#FA0050` and buttons use `--pink` (white text 4.05:1, as before v3) |
 | D2 | The mockup has a dark search bar under the hero. The navbar already has search. Add it? | Skip |
 | D3 | The hero notification card says "Zeynep deneme dersini onayladı". Zeynep's testimonial isn't approved. Use a real approved person, or generic text with no name? | Generic, no name or photo: an icon instead of the avatar |
 | D4 | Replace the rotating campus gallery in the hero with the collage? | Yes |

@@ -76,11 +76,11 @@ describe("hero", () => {
     ]);
   });
 
-  it("uses --pink-deep for the white-text button only under v3 (D1)", () => {
+  it("keeps the white-text button on the bright pink under v3 (D1 reversed)", () => {
     const { getByText } = render(<YsHeroIntro v2 brandV3 />);
     const cta = getByText("Hocaları gör");
     assert.match(cta.className, /\bbg-pink\b/);
-    assert.match(cta.className, /\bv3:bg-pink-deep\b/);
+    assert.doesNotMatch(cta.className, /\bv3:bg-pink-deep\b/);
   });
 });
 

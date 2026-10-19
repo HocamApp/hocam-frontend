@@ -93,7 +93,7 @@ export function YsHeroIntro({ v2 = false, brandV3 = false }: { v2?: boolean; bra
             rather than navigating to /tutors and reloading the same list. */}
             <Link
               href="#ys-tutor-list-title"
-              className={`inline-flex items-center rounded-pill bg-pink font-semibold text-white transition-colors duration-[--duration-state] hover:bg-pink-deep v3:bg-pink-deep v3:hover:brightness-90 ${heroButtonSize}`}
+              className={`inline-flex items-center rounded-pill bg-pink font-semibold text-white transition-colors duration-[--duration-state] hover:bg-pink-deep ${heroButtonSize}`}
             >
               {hero.ctaTutors}
             </Link>
