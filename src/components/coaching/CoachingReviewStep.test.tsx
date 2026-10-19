@@ -92,7 +92,7 @@ describe("CoachingReviewStep", () => {
 
     const list = screen.getByRole("list", { name: "Hazır olanlar" });
     assert.equal(within(list).getAllByRole("listitem").length, 2);
-    assert.equal(list.querySelectorAll("[class*='bg-gold']").length, 2);
+    assert.equal(list.querySelectorAll("span[class*='bg-gold']").length, 2);
     assert.equal(
       screen.getByRole("link", { name: "Düzenle Görüşme düzeni" }).getAttribute("href"),
       "/dashboard/tutor/coaching/plan?step=frequency"
@@ -137,6 +137,8 @@ describe("CoachingReviewStep", () => {
     assert.match(alert.textContent ?? "", /Yayınlamadan önce şu adımı tamamla: Koçluk saatlerin\./);
     const link = within(alert.parentElement as HTMLElement).getByRole("link", { name: "Eksik adıma git" });
     assert.equal(link.getAttribute("href"), "/dashboard/tutor/coaching/plan?step=availability");
+    assert.match(link.className, /bg-gold/);
+    assert.match(link.className, /text-gold-ink/);
   });
 
   it("shows skeletons, not empty cards, while the previews load", () => {

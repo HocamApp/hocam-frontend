@@ -97,6 +97,18 @@ describe("CoachingPlanSummary", () => {
     });
   });
 
+  it("makes every Düzenle a solid gold button, not a pill the colour of the row behind it", () => {
+    render(<CoachingPlanSummary plan={plan} rows={rows} capacity={capacity} actions={null} />);
+
+    const links = screen.getAllByRole("link");
+    assert.equal(links.length, rows.length);
+    for (const link of links) {
+      assert.match(link.className, /bg-gold/);
+      assert.match(link.className, /text-gold-ink/);
+      assert.doesNotMatch(link.className, /bg-transparent|bg-surface|bg-paper|bg-white/);
+    }
+  });
+
   it("keeps every Düzenle link a full touch target", () => {
     render(<CoachingPlanSummary plan={plan} rows={rows} capacity={capacity} actions={null} />);
 
@@ -157,7 +169,7 @@ describe("CoachingPublishActions", () => {
     onReopen: mock.fn(),
   });
 
-  it("offers one pink Yayınla action while the offer is a draft", () => {
+  it("offers one solid gold Yayınla action while the offer is a draft", () => {
     const h = handlers();
     render(
       <CoachingPublishActions
@@ -168,7 +180,8 @@ describe("CoachingPublishActions", () => {
     );
 
     const publish = screen.getByRole("button", { name: "Teklifi yayınla" });
-    assert.match(publish.className, /bg-pink/);
+    assert.match(publish.className, /bg-gold/);
+    assert.match(publish.className, /text-gold-ink/);
     assert.equal(screen.getAllByRole("button").length, 1);
     fireEvent.click(publish);
     assert.equal(h.onPublish.mock.callCount(), 1);
@@ -189,6 +202,23 @@ describe("CoachingPublishActions", () => {
     fireEvent.click(screen.getByRole("button", { name: "Yayından kaldır" }));
     assert.equal(h.onClose.mock.callCount(), 1);
     assert.equal(h.onUnpublish.mock.callCount(), 1);
+  });
+
+  it("keeps the live actions solid gold too, never an outline the colour of the row", () => {
+    const h = handlers();
+    render(
+      <CoachingPublishActions
+        plan={{ is_published: true, is_accepting_new_students: true }}
+        pending={false}
+        {...h}
+      />
+    );
+
+    for (const button of screen.getAllByRole("button")) {
+      assert.match(button.className, /bg-gold/);
+      assert.match(button.className, /text-gold-ink/);
+      assert.doesNotMatch(button.className, /bg-transparent|border-ink/);
+    }
   });
 
   it("offers to reopen when intake is closed", () => {

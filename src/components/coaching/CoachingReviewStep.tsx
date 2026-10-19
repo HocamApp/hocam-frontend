@@ -5,6 +5,7 @@ import Link from "next/link";
 
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { InlineError } from "@/components/shared/InlineError";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { CoachingPlan, CoachingPlanPreview, CoachingRevenuePreview } from "@/lib/coachingApi";
 import type { CoachingSettingRow } from "@/lib/coachingPlanSummary";
@@ -70,12 +71,9 @@ export function CoachingReviewStep({
           <InlineError
             message={`Yayınlamadan önce şu ${missingSteps.length > 1 ? "adımları" : "adımı"} tamamla: ${missingTitles}.`}
           />
-          <Link
-            href={`/dashboard/tutor/coaching/plan?step=${firstMissing}`}
-            className="inline-flex min-h-11 items-center rounded-pill border border-ink px-4 text-small font-medium text-ink transition-colors duration-[var(--duration-state)] hover:bg-ink hover:text-paper focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2"
-          >
-            Eksik adıma git
-          </Link>
+          <Button asChild size="sm" variant="gold" className="min-h-11">
+            <Link href={`/dashboard/tutor/coaching/plan?step=${firstMissing}`}>Eksik adıma git</Link>
+          </Button>
         </div>
       ) : (
         <CoachingPublishPanel
