@@ -31,6 +31,9 @@ const RULES: [RegExp, string][] = [
   [/\btext-muted-foreground\b/, "shadcn grey text (use text-ink-mid)"],
   [/(?<![\w-])text-primary(?![\w/-])/, "pink text (pink is a fill)"],
   [/\bbg-primary\/\d+\b/, "pale primary tint"],
+  [/\bbg-primary\/\[/, "pale primary tint (arbitrary alpha)"],
+  [/\bSparkle\b/, "sparkle icon (DESIGN.md #24: nothing here is AI-powered)"],
+  [/\bshadow-\[/, "arbitrary shadow on an in-flow surface (DESIGN.md §4: shadows are for things that float)"],
   [/\b(amber|emerald|red|green|blue|sky)-\d{3}\b/, "raw Tailwind palette colour"],
 ];
 

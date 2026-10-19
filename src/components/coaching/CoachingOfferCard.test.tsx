@@ -27,7 +27,8 @@ describe("CoachingOfferCard", () => {
       />
     );
 
-    assert.ok(screen.getByText("Haftada 1 · 30 dakika"));
+    assert.ok(screen.getByText("Haftada 1"));
+    assert.ok(screen.getByText("30 dakika"));
     assert.ok(screen.getByText("250,00 ₺"));
     assert.ok(screen.getByText("YKS"));
     assert.ok(screen.getByText("DGS"));
@@ -54,5 +55,55 @@ describe("CoachingOfferCard", () => {
     );
     assert.ok(screen.getByText("Kontenjan dolu"));
     assert.ok(screen.getByText("Ders paketinle ücretsiz"));
+  });
+
+  it("sets the price in a flat gold pill on the pink band, inside the fee region", () => {
+    render(
+      <CoachingOfferCard
+        offer={{
+          frequencyLabel: "Haftada 1",
+          sessionDurationMinutes: 30,
+          priceMinor: 30000,
+          isFree: false,
+          examTypes: ["DGS"],
+          description: "",
+          capacityAvailable: true,
+        }}
+      />
+    );
+
+    const region = screen.getByRole("region", { name: "Koçluk ücret özeti" });
+    assert.ok(region.textContent?.includes("300,00 ₺"));
+    assert.ok(region.textContent?.includes("görüşme başına"));
+    assert.match(region.className, /\bbg-gold\b/);
+    assert.match(region.className, /\btext-gold-ink\b/);
+    const band = screen.getByRole("heading", { name: "Çalışma Koçluğu" }).closest("div[class*='bg-pink']");
+    assert.ok(band, "the heading sits on the pink band");
+    assert.match(band!.className, /\btext-primary-foreground\b/);
+  });
+
+  it("lists what is included as plain rows, with no tick icons, sparkle or shadow", () => {
+    const { container } = render(
+      <CoachingOfferCard
+        offer={{
+          frequencyLabel: "Haftada 1",
+          sessionDurationMinutes: 30,
+          priceMinor: 30000,
+          isFree: false,
+          examTypes: ["DGS"],
+          description: "",
+          capacityAvailable: true,
+        }}
+      />
+    );
+
+    assert.ok(screen.getByText("Koçluğa dahil"));
+    for (const item of ["Çalışma programı", "Deneme değerlendirmesi", "İlerleme raporu", "Kaynak önerileri"]) {
+      assert.ok(screen.getByText(item));
+    }
+    const card = container.firstElementChild as HTMLElement;
+    assert.doesNotMatch(card.className, /shadow/);
+    // The only icons left are the ones that carry meaning (the accordion caret).
+    assert.equal(container.querySelectorAll("li svg").length, 0);
   });
 });

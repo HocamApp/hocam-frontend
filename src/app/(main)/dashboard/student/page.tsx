@@ -50,7 +50,7 @@ import {
   SectionBandCount,
   SectionBandHeading,
   sectionBandClass,
-} from "@/components/dashboard/SectionBand";
+} from "@/components/shared/SectionBand";
 import { PendingReviewsSection } from "@/components/dashboard/PendingReviewsSection";
 import { bookingStatusExplanation } from "@/lib/bookingStatusCopy";
 import { ParticipantAvatar } from "@/components/messaging/ParticipantAvatar";

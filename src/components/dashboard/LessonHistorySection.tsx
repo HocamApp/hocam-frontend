@@ -8,7 +8,7 @@ import {
   SectionBandCount,
   SectionBandHeading,
   sectionBandClass,
-} from "@/components/dashboard/SectionBand";
+} from "@/components/shared/SectionBand";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {

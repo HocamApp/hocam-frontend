@@ -6,7 +6,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Card, CardContent } from "@/components/ui/card";
+import { SectionBandHeading, sectionBandClass } from "@/components/shared/SectionBand";
 import type { CoachingRevenuePreview, CoachingRevenueRow } from "@/lib/coachingApi";
 import { formatBpsPercent, formatTryMinor } from "@/lib/money";
 
@@ -17,42 +17,53 @@ function deduction(minor: number) {
   return minor > 0 ? `−${formatTryMinor(minor)}` : formatTryMinor(0);
 }
 
+/**
+ * What a month of coaching earns the tutor. The tutor's own numbers, so the
+ * band is ink; the offer a student reads wears the pink one.
+ *
+ * Plain class strings: tailwind-merge would drop a named size such as
+ * `text-h2-m` next to a text colour.
+ */
 export function RevenuePreviewCard({ preview }: { preview: CoachingRevenuePreview }) {
   const primary = preview.rows.find((row) => row.weeks === 4) ?? preview.rows[0];
   const alternatives = preview.rows.filter((row) => row !== primary);
   if (!primary) return null;
 
   return (
-    <Card role="region" aria-label="Tahmini kazanç" className="overflow-hidden rounded-card border-line bg-surface shadow-none">
-      <CardContent className="space-y-5 p-5 sm:p-6">
-        <div>
-          <p className="text-xs font-medium text-ink-mid">Tahmin</p>
-          <h2 className="mt-1 text-xl font-bold tracking-tight text-ink">Bir aylık tahmini kazanç</h2>
-          <p className="mt-1 text-sm leading-6 text-ink-mid">
-            Paket indirimi ve %{formatBpsPercent(preview.commission_bps)} platform komisyonu düşülerek hesaplanır.
-          </p>
-        </div>
+    <div
+      role="region"
+      aria-label="Tahmini kazanç"
+      className="overflow-hidden rounded-card border border-line bg-surface"
+    >
+      <div className={sectionBandClass("ink")}>
+        <SectionBandHeading
+          id="coaching-revenue-title"
+          title="Bir aylık tahmini kazanç"
+          subtitle={`Paket indirimi ve %${formatBpsPercent(preview.commission_bps)} platform komisyonu düşülerek hesaplanır.`}
+        />
+      </div>
 
-        <div className="rounded-card border border-line bg-paper p-4 sm:p-5">
+      <div className="space-y-5 px-6 pb-6 pt-5">
+        <div>
           <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <p className="text-xs font-medium text-ink-mid">Tahmini net koçluk kazancı</p>
-              <p className="mt-1 text-3xl font-bold tabular-nums tracking-tight text-ink">{formatTryMinor(primary.tutor_net_minor)}</p>
+              <p className="text-label text-ink-mid">Tahmini net koçluk kazancı</p>
+              <p className="mt-1 text-h2-m font-bold tabular-nums text-ink md:text-h2">{formatTryMinor(primary.tutor_net_minor)}</p>
             </div>
-            <p className="flex flex-wrap items-center gap-1 text-sm font-medium">
+            <p className="flex flex-wrap items-center gap-1 text-small font-medium text-ink">
               <span>{primary.total_sessions} görüşme</span>
               <span aria-hidden="true">·</span>
               <span>{primary.weeks} hafta</span>
             </p>
           </div>
-          <dl className="mt-5 flex flex-col gap-3 border-t border-line pt-4 text-xs sm:flex-row sm:flex-wrap sm:justify-between">
+          <dl className="mt-4">
             <RevenueLine label="Öğrencinin koçluk toplamı" value={formatTryMinor(primary.total_price_minor)} />
             <RevenueLine label={`Paket indirimi · %${primary.discount_percent}`} value={deduction(primary.discount_amount_minor)} />
             <RevenueLine label="Platform komisyonu" value={deduction(primary.platform_fee_minor)} />
           </dl>
         </div>
 
-        <div className="rounded-input border border-line bg-surface p-4 text-xs leading-5 text-ink-mid">
+        <div className="rounded-input border border-line p-4 text-label leading-5 text-ink-mid">
           Görüşme fiyatı {formatTryMinor(preview.unit_price_minor)}. Bu ekran tahsilat veya banka ödemesi göstermez; yalnız plan ve paket verilerinden oluşan bir tahmindir.
         </div>
 
@@ -70,16 +81,16 @@ export function RevenuePreviewCard({ preview }: { preview: CoachingRevenuePrevie
             </AccordionItem>
           </Accordion>
         ) : null}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
 
 function RevenueLine({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex min-w-[11rem] justify-between gap-3 sm:block">
+    <div className="flex justify-between gap-3 border-t border-line py-2.5 text-small">
       <dt className="text-ink-mid">{label}</dt>
-      <dd className="font-bold tabular-nums text-ink sm:mt-1">{value}</dd>
+      <dd className="font-bold tabular-nums text-ink">{value}</dd>
     </div>
   );
 }

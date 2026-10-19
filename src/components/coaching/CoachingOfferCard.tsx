@@ -1,5 +1,4 @@
 import type { ReactNode } from "react";
-import { Check, Clock, Sparkle, Target } from "@phosphor-icons/react/ssr";
 
 import {
   Accordion,
@@ -7,8 +6,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
+import { SectionBandHeading, sectionBandClass } from "@/components/shared/SectionBand";
 import { COACHING_HOW_IT_WORKS } from "@/lib/coachingApi";
 import { formatTryMinor } from "@/lib/money";
 
@@ -30,6 +28,20 @@ export type CoachingOfferView = {
   capacityAvailable: boolean;
 };
 
+/**
+ * The coaching offer as a student reads it, on a tutor's public profile and in
+ * the tutor's own preview of it.
+ *
+ * Pink band, because this is the thing on offer; the tutor's private numbers
+ * (capacity, earnings) wear the ink band. The price is a flat gold pill on it,
+ * the one gold-on-pink pairing DESIGN.md allows at badge scale. It sits in a
+ * column next to the profile's booking card and in a half-width preview, so
+ * nothing here switches layout on the viewport: the facts and the list wrap by
+ * what fits.
+ *
+ * No `cn()` below: tailwind-merge reads named sizes such as `text-label` as
+ * colours and drops one of the two.
+ */
 export function CoachingOfferCard({
   offer,
   action,
@@ -42,83 +54,109 @@ export function CoachingOfferCard({
   showHowItWorks?: boolean;
 }) {
   return (
-    <Card className="overflow-hidden rounded-[1.6rem] border-foreground/15 shadow-[0_22px_58px_-42px_hsl(var(--foreground)/0.5)]">
-      <CardContent className="p-0">
-        <div className="grid border-b bg-primary/[0.045] lg:grid-cols-[minmax(0,1.28fr)_minmax(18rem,0.72fr)]">
-          <div className="p-5 sm:p-7">
-            <div className="space-y-4">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border bg-background text-ink">
-                  <Sparkle aria-hidden className="h-4 w-4" />
-                </span>
-                <p className="text-xs font-medium uppercase tracking-[0.16em] text-ink">{offer.isFree ? "Ücretsiz çalışma koçluğu" : "Çalışma koçluğu"}</p>
-                {!offer.capacityAvailable ? <Badge variant="secondary">Kontenjan dolu</Badge> : null}
-              </div>
-              <h2 className="max-w-xl text-2xl font-bold tracking-[-0.025em] sm:text-3xl">Planlı çalış, ilerlemeni görünür kıl</h2>
-              {offer.description ? <p className="max-w-2xl text-sm leading-6 text-ink-mid">{offer.description}</p> : null}
-              <p className="flex items-center gap-2 text-sm text-ink-mid">
-                <Clock aria-hidden className="h-4 w-4" />
-                {offer.frequencyLabel} · {offer.sessionDurationMinutes} dakika
-              </p>
-            </div>
+    <div className="overflow-hidden rounded-card border border-line bg-surface">
+      <div className={sectionBandClass("pink", "flex-wrap gap-y-3")}>
+        <SectionBandHeading
+          id="coaching-offer-title"
+          title="Çalışma Koçluğu"
+          subtitle="Ders paketine ek hizmet"
+        />
+        <div
+          role="region"
+          aria-label="Koçluk ücret özeti"
+          className="inline-flex shrink-0 items-baseline gap-1.5 rounded-pill bg-gold px-4 py-1 tabular-nums text-gold-ink"
+        >
+          {offer.isFree ? (
+            <span className="text-small font-bold">Ders paketinle ücretsiz</span>
+          ) : (
+            <>
+              <span className="text-small font-bold">{formatTryMinor(offer.priceMinor)}</span>
+              <span className="text-label font-medium">görüşme başına</span>
+            </>
+          )}
+        </div>
+      </div>
+
+      <div className="px-6 pb-6 pt-5">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+          <h3 className="text-h3-m font-bold text-ink md:text-h3 md:font-bold">
+            Planlı çalış, ilerlemeni görünür kıl
+          </h3>
+          {!offer.capacityAvailable ? (
+            <span className="inline-flex items-center rounded-pill border border-ink px-3 py-0.5 text-label text-ink">
+              Kontenjan dolu
+            </span>
+          ) : null}
+        </div>
+        {offer.description ? (
+          <p className="mt-2 text-small leading-6 text-ink-mid">{offer.description}</p>
+        ) : null}
+
+        <dl className="mt-5 grid grid-cols-[repeat(auto-fit,minmax(9.5rem,1fr))] gap-x-4 gap-y-3 border-y border-line py-3">
+          <div>
+            <dt className="text-label text-ink-mid">Sıklık</dt>
+            <dd className="mt-0.5 text-body font-medium text-ink">{offer.frequencyLabel}</dd>
           </div>
-          <div role="region" aria-label="Koçluk ücret özeti" className="flex flex-col justify-between border-t border-line bg-background/75 p-5 sm:p-7 lg:border-l lg:border-t-0">
+          <div>
+            <dt className="text-label text-ink-mid">Süre</dt>
+            <dd className="mt-0.5 text-body font-medium text-ink">
+              {offer.sessionDurationMinutes} dakika
+            </dd>
+          </div>
+          {offer.examTypes.length ? (
             <div>
-              <p className="text-xs font-medium uppercase tracking-[0.15em] text-ink-mid">Ders paketine ek hizmet</p>
-              <p className="mt-3 text-2xl font-bold tabular-nums sm:text-3xl">
-                {offer.isFree ? "Ders paketinle ücretsiz" : formatTryMinor(offer.priceMinor)}
-              </p>
-              {!offer.isFree ? <p className="text-xs text-ink-mid">görüşme başına</p> : null}
-            </div>
-            {action ? <div className="mt-5 [&>*]:w-full">{action}</div> : null}
-          </div>
-        </div>
-
-        <div className="grid gap-6 p-5 sm:p-7 lg:grid-cols-[minmax(0,0.72fr)_minmax(0,1.28fr)]">
-          <div className="space-y-5">
-            {offer.examTypes.length ? (
-              <div>
-                <p className="flex items-center gap-2 text-xs font-medium uppercase tracking-[0.15em] text-ink-mid"><Target className="h-4 w-4" aria-hidden="true" />Sınav odağı</p>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {offer.examTypes.map((exam) => <Badge key={exam} variant="outline" className="rounded-lg px-3 py-1">{exam}</Badge>)}
-                </div>
-              </div>
-            ) : null}
-            {statusMessage ? <p className="rounded-xl border bg-paper p-3 text-sm text-ink-mid">{statusMessage}</p> : null}
-            <p className="border-t pt-4 text-xs leading-5 text-ink-mid">
-              Koçluk yalnız ders paketiyle birlikte alınır. Talebin öğretmene ders paketi ve koçluk hizmeti birlikte iletilir; kabul edilmeden başlamaz.
-            </p>
-          </div>
-
-          <div className="rounded-[1.25rem] bg-paper p-4 sm:p-5">
-            <p className="text-xs font-medium uppercase tracking-[0.15em] text-ink-mid">Koçluğa dahil</p>
-            <ul className="mt-3 grid gap-3 text-sm sm:grid-cols-2">
-              {INCLUDED.map((item) => (
-                <li key={item} className="flex items-start gap-2">
-                  <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-background text-success">
-                    <Check aria-hidden className="h-3 w-3" />
+              <dt className="text-label text-ink-mid">Sınav odağı</dt>
+              <dd className="mt-1 flex flex-wrap gap-2">
+                {offer.examTypes.map((exam) => (
+                  <span
+                    key={exam}
+                    className="inline-flex items-center rounded-pill border border-ink px-3 py-0.5 text-label text-ink"
+                  >
+                    {exam}
                   </span>
-                  <span>{item}</span>
-                </li>
-              ))}
-            </ul>
-            {showHowItWorks ? (
-              <Accordion type="single" collapsible className="mt-4 border-t">
-                <AccordionItem value="how" className="border-b-0">
-                  <AccordionTrigger className="text-sm">Koçluk nasıl çalışır?</AccordionTrigger>
-                  <AccordionContent>
-                    <ul className="space-y-2 text-sm text-ink-mid">
-                      {COACHING_HOW_IT_WORKS.map((item) => (
-                        <li key={item} className="flex items-start gap-2"><span aria-hidden>·</span><span>{item}</span></li>
-                      ))}
-                    </ul>
-                  </AccordionContent>
-                </AccordionItem>
-              </Accordion>
-            ) : null}
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+                ))}
+              </dd>
+            </div>
+          ) : null}
+        </dl>
+
+        <p className="mt-5 text-label text-ink-mid">Koçluğa dahil</p>
+        <ul className="mt-1 grid grid-cols-[repeat(auto-fit,minmax(13rem,1fr))] gap-x-6">
+          {INCLUDED.map((item) => (
+            <li key={item} className="border-t border-line py-2.5 text-small text-ink">
+              {item}
+            </li>
+          ))}
+        </ul>
+
+        {statusMessage ? (
+          <p className="mt-5 rounded-input border border-line p-3 text-small text-ink-mid">
+            {statusMessage}
+          </p>
+        ) : null}
+        <p className="mt-4 text-label leading-5 text-ink-mid">
+          Koçluk yalnız ders paketiyle birlikte alınır. Talebin öğretmene ders paketi ve koçluk hizmeti birlikte iletilir; kabul edilmeden başlamaz.
+        </p>
+        {action ? <div className="mt-5">{action}</div> : null}
+
+        {showHowItWorks ? (
+          <Accordion type="single" collapsible className="mt-4 border-t border-line">
+            <AccordionItem value="how" className="border-b-0">
+              <AccordionTrigger className="text-small">Koçluk nasıl çalışır?</AccordionTrigger>
+              <AccordionContent>
+                <ul className="space-y-2 text-small text-ink-mid">
+                  {COACHING_HOW_IT_WORKS.map((item) => (
+                    <li key={item} className="flex items-start gap-2">
+                      <span aria-hidden>·</span>
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+        ) : null}
+      </div>
+    </div>
   );
 }
