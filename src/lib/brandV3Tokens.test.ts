@@ -41,8 +41,8 @@ describe("brand v3 tokens", () => {
         "--on-band-quiet": v3["--on-band-quiet"],
       },
       {
-        "--pink": "#ff2070",
-        "--pink-deep": "#e0105e",
+        "--pink": "#fa0050",
+        "--pink-deep": "#d70f64",
         "--pink-soft": "#ffe3ee",
         "--yellow": "#fcff1a",
         "--yellow-soft": "#fdffc7",

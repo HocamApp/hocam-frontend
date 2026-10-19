@@ -73,6 +73,8 @@
        is indistinguishable from a promotion; #B33A24 sits roughly 30deg
        away, which is enough to read as a different category at a glance.
        --------------------------------------------------------------------- */
+    /* Pink keeps the pre-v3 values: the owners preferred the brighter
+       #FA0050 once it was live (19 Oct 2026). */
     --pink: #fa0050;
     --pink-deep: #d70f64;
     --pink-pale: #fce5f1;
@@ -309,8 +311,10 @@
    * copy would keep the old ink. yemeksepeti.css does the same for --ys-*.
    */
   [data-brand="v3"] {
-    --pink: #ff2070;
-    --pink-deep: #e0105e;
+    /* Pink keeps the pre-v3 values: the owners preferred the brighter
+       #FA0050 once it was live (19 Oct 2026). */
+    --pink: #fa0050;
+    --pink-deep: #d70f64;
     --pink-soft: #ffe3ee;
     --yellow: #fcff1a;
     --yellow-soft: #fdffc7;
