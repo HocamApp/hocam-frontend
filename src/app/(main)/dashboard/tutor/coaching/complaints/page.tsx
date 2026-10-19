@@ -1,80 +1,10 @@
-"use client";
+import { redirect } from "next/navigation";
 
-import Link from "next/link";
-import { useQuery } from "@tanstack/react-query";
-import { CoachingRecordGuard } from "@/components/coaching/CoachingGuard";
-import { CoachingEmptyState as EmptyState } from "@/components/coaching/CoachingEmptyState";
-import { CoachingPageShell } from "@/components/coaching/CoachingPageShell";
-import { CoachingLoadError } from "@/components/coaching/CoachingLoadError";
-import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
-import {
-  COACHING_FAZ8_QUERY_KEYS,
-  coachingDisputeCategoryLabel,
-  coachingDisputeStatusLabel,
-  fetchTutorCoachingDisputes,
-} from "@/lib/coachingApi";
-
-function Complaints() {
-  const query = useQuery({
-    queryKey: COACHING_FAZ8_QUERY_KEYS.tutorDisputes(),
-    queryFn: fetchTutorCoachingDisputes,
-  });
-  if (query.isLoading)
-    return (
-      <div className="flex min-h-[12rem] items-center justify-center">
-        <LoadingSpinner />
-      </div>
-    );
-  if (query.isError)
-    return (
-      <CoachingLoadError
-        message="Sorun bildirimleri yüklenemedi."
-        onRetry={() => query.refetch()}
-        isRetrying={query.isFetching}
-      />
-    );
-  if (!query.data?.length)
-    return (
-      <EmptyState
-        title="Bildirilmiş sorun yok"
-        description="Sana ait bir sorun bildirimi olduğunda, yalnız paylaşılması uygun katılımcı bilgileri burada görünür."
-        steps={["Bildirim incelemeye alınır", "Paylaşılabilir durum burada görünür"]}
-      />
-    );
-  return (
-    <div className="space-y-3">
-      {query.data.map((item) => (
-        <Link key={item.id} href={`/dashboard/tutor/coaching/complaints/${item.id}`}>
-          <Card className="transition-colors hover:bg-paper">
-            <CardContent className="flex items-center justify-between gap-3 py-4">
-              <div>
-                <p className="font-medium">{coachingDisputeCategoryLabel(item.category)}</p>
-                <p className="text-sm text-ink-mid">
-                  Öğrenci açıklaması ve iç inceleme notları burada paylaşılmaz.
-                </p>
-              </div>
-              <Badge>{coachingDisputeStatusLabel(item.status)}</Badge>
-            </CardContent>
-          </Card>
-        </Link>
-      ))}
-    </div>
-  );
-}
-
-export default function TutorCoachingComplaintsPage() {
-  return (
-    <CoachingRecordGuard>
-      <CoachingPageShell
-        title="Koçluk sorun bildirimleri"
-        width="wide"
-        currentHref="/dashboard/tutor/coaching/complaints"
-        audience="tutor"
-      >
-        <Complaints />
-      </CoachingPageShell>
-    </CoachingRecordGuard>
-  );
+/**
+ * Complaints are listed on the Kayıtlar page now. Notification links and
+ * bookmarks to this address still land in the right place; the page for a single
+ * complaint is unchanged.
+ */
+export default function TutorCoachingComplaintsRedirect() {
+  redirect("/dashboard/tutor/coaching/reports");
 }
