@@ -53,6 +53,43 @@ function form(step: "frequency" | "price" | "exams") {
 }
 
 describe("CoachingPlanForm", () => {
+  it("says Kaydet, not Kaydet ve devam et, when saving returns to the summary", () => {
+    const savedPlan = {
+      id: "plan-1",
+      frequency: "weekly",
+      session_duration_minutes: 30,
+      price_per_session_minor: 60000,
+      price_per_session_display: "600,00 ₺",
+      price_cap_minor: 77040,
+      max_active_students: 3,
+      target_exam_types: ["YKS"],
+      description: "",
+      is_published: false,
+      is_accepting_new_students: true,
+      published_at: null,
+      capacity: null,
+      created_at: "2026-10-01T09:00:00Z",
+      updated_at: "2026-10-01T09:00:00Z",
+    } as CoachingPlan;
+    const props = {
+      plan: savedPlan,
+      setupConfig,
+      currentStep: "price" as const,
+      capacity: null,
+      onSubmit: () => undefined,
+      onContinue: () => undefined,
+      isSaving: false,
+      error: null,
+    };
+
+    const { rerender } = render(<CoachingPlanForm {...props} />);
+    assert.ok(screen.getByRole("button", { name: "Kaydet ve devam et" }));
+
+    rerender(<CoachingPlanForm {...props} savesToSummary />);
+    assert.ok(screen.getByRole("button", { name: "Kaydet" }));
+    assert.equal(screen.queryByRole("button", { name: "Kaydet ve devam et" }), null);
+  });
+
   it("renders frequency package counts only from server setup config", () => {
     render(form("frequency"));
     const card = screen.getByRole("button", { name: /Haftada bir/ });

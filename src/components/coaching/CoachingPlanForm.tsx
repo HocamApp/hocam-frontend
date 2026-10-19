@@ -109,6 +109,7 @@ export function CoachingPlanForm({
   onContinue,
   isSaving,
   error,
+  savesToSummary = false,
 }: {
   plan: CoachingPlan | null;
   setupConfig: CoachingSetupConfig;
@@ -118,6 +119,8 @@ export function CoachingPlanForm({
   onContinue: (nextStep: CoachingSetupStep) => void;
   isSaving: boolean;
   error: string | null;
+  /** Editing one setting of a finished setup: saving goes back to the summary, so the button says so. */
+  savesToSummary?: boolean;
 }) {
   const [frequency, setFrequency] = useState<CoachingFrequency>(
     plan?.frequency ?? setupConfig.frequency_options[0]?.value ?? "weekly"
@@ -378,8 +381,16 @@ export function CoachingPlanForm({
               (currentStep === "description" && examTypes.length === 0)
             }
           >
-            {isSaving ? "Kaydediliyor…" : plan ? "Kaydet ve devam et" : currentStep === "description" ? "Taslağı kaydet ve devam et" : "Devam et"}
-            {!isSaving ? <ArrowRight aria-hidden className="ml-2 h-4 w-4" /> : null}
+            {isSaving
+              ? "Kaydediliyor…"
+              : savesToSummary
+                ? "Kaydet"
+                : plan
+                  ? "Kaydet ve devam et"
+                  : currentStep === "description"
+                    ? "Taslağı kaydet ve devam et"
+                    : "Devam et"}
+            {!isSaving && !savesToSummary ? <ArrowRight aria-hidden className="ml-2 h-4 w-4" /> : null}
           </Button>
         </div>
       ) : null}

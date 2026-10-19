@@ -12,15 +12,13 @@ import { CoachingEmptyState } from "@/components/coaching/CoachingEmptyState";
 import { CoachingGuard } from "@/components/coaching/CoachingGuard";
 import { CoachingPageShell } from "@/components/coaching/CoachingPageShell";
 import { CoachingPlanForm } from "@/components/coaching/CoachingPlanForm";
+import { CoachingPlanSummary } from "@/components/coaching/CoachingPlanSummary";
+import { CoachingPublishActions } from "@/components/coaching/CoachingPublishActions";
+import { CoachingReviewStep } from "@/components/coaching/CoachingReviewStep";
 import { CoachingSetupProgress } from "@/components/coaching/CoachingSetupProgress";
-import { CoachingStatusCard } from "@/components/coaching/CoachingStatusCard";
-import { RevenuePreviewCard } from "@/components/coaching/RevenuePreviewCard";
-import { StudentPreviewCard } from "@/components/coaching/StudentPreviewCard";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useCoachingFlag } from "@/hooks/useCoachingFlag";
 import {
   closeCoachingToNewStudents,
   extractCoachingErrorCode,
@@ -37,22 +35,31 @@ import {
   unpublishCoachingPlan,
   type CoachingPlanPayload,
 } from "@/lib/coachingApi";
-import { deriveCoachingStatus } from "@/lib/coachingPresentation";
+import { buildCoachingSettingRows } from "@/lib/coachingPlanSummary";
 import {
+  COACHING_SETUP_STEPS,
+  coachingSetupDoneSteps,
+  coachingSetupStepDone,
   coachingSetupStepForError,
+  isCoachingSetupComplete,
   readCoachingSetupStep,
   unlockedCoachingSetupSteps,
   type CoachingSetupStep,
 } from "@/lib/coachingSetup";
 
+const PLAN_HREF = "/dashboard/tutor/coaching/plan";
+
+/** A step to open, or the summary of a finished setup. */
+type Destination = CoachingSetupStep | "summary";
+
 function PlanContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
-  const { checkoutEnabled } = useCoachingFlag();
   const [error, setError] = useState<string | null>(null);
   const startedWithPlan = useRef<boolean | null>(null);
-  const requestedStep = readCoachingSetupStep(searchParams.get("step"));
+  const stepParam = searchParams.get("step");
+  const requestedStep = readCoachingSetupStep(stepParam);
 
   const onboardingQuery = useQuery({
     queryKey: ["coaching-onboarding"],
@@ -86,9 +93,9 @@ function PlanContent() {
     startedWithPlan.current = Boolean(planQuery.data);
   }
 
-  const navigate = (step: CoachingSetupStep) => {
+  const navigate = (destination: Destination) => {
     setError(null);
-    router.replace(`/dashboard/tutor/coaching/plan?step=${step}`);
+    router.replace(destination === "summary" ? PLAN_HREF : `${PLAN_HREF}?step=${destination}`);
   };
   const refreshPlanTruth = () => {
     for (const queryKey of [
@@ -102,7 +109,7 @@ function PlanContent() {
   };
 
   const save = useMutation({
-    mutationFn: ({ payload }: { payload: CoachingPlanPayload; next: CoachingSetupStep }) =>
+    mutationFn: ({ payload }: { payload: CoachingPlanPayload; next: Destination }) =>
       saveCoachingPlan(payload),
     onSuccess: (_plan, variables) => {
       setError(null);
@@ -118,10 +125,11 @@ function PlanContent() {
       setError(null);
       refreshPlanTruth();
       toast.success("Koçluk teklifin yayınlandı.");
+      navigate("summary");
     },
     onError: (mutationError: unknown) => {
       router.replace(
-        `/dashboard/tutor/coaching/plan?step=${coachingSetupStepForError(extractCoachingErrorCode(mutationError))}`
+        `${PLAN_HREF}?step=${coachingSetupStepForError(extractCoachingErrorCode(mutationError))}`
       );
       setError(extractCoachingErrorMessage(mutationError));
     },
@@ -142,7 +150,14 @@ function PlanContent() {
     onError: (mutationError: unknown) => setError(extractCoachingErrorMessage(mutationError)),
   });
 
-  if (onboardingQuery.isLoading || planQuery.isLoading || setupQuery.isLoading) {
+  if (
+    onboardingQuery.isLoading ||
+    planQuery.isLoading ||
+    setupQuery.isLoading ||
+    // The hours decide whether setup is finished, so wait for them rather than
+    // flash the first step at someone whose setup is done.
+    (Boolean(planQuery.data) && capacityQuery.isLoading)
+  ) {
     return <Skeleton className="h-72 w-full" />;
   }
   if (onboardingQuery.isError || planQuery.isError || setupQuery.isError || !onboardingQuery.data || !setupQuery.data) {
@@ -164,21 +179,65 @@ function PlanContent() {
   const plan = planQuery.data ?? null;
   const setupConfig = setupQuery.data;
   const capacity = capacityQuery.data ?? null;
+  const snapshot = { plan, weeklySlotCount: capacity?.weekly_slot_count ?? 0 };
+  const setupComplete = isCoachingSetupComplete(snapshot);
+  const rows = plan
+    ? buildCoachingSettingRows({ plan, setupConfig, capacity, revenue: revenueQuery.data ?? null })
+    : [];
+
+  const publishActions = plan ? (
+    <CoachingPublishActions
+      plan={plan}
+      pending={publish.isPending || unpublish.isPending || close.isPending || reopen.isPending}
+      onPublish={() => publish.mutate()}
+      onUnpublish={() => unpublish.mutate()}
+      onClose={() => close.mutate()}
+      onReopen={() => reopen.mutate()}
+    />
+  ) : null;
+
+  // A finished setup opens on its summary; the wizard is for the first setup,
+  // or for the one setting a tutor chose to change (`?step=`).
+  if (plan && setupComplete && stepParam === null) {
+    return (
+      <CoachingPlanSummary
+        plan={plan}
+        rows={rows}
+        capacity={capacity}
+        error={error}
+        actions={publishActions}
+      />
+    );
+  }
+
   const unlockedSteps = unlockedCoachingSetupSteps({
     hasPlan: startedWithPlan.current === true,
     weeklySlotCount: capacity?.weekly_slot_count ?? 0,
   });
   const currentStep = unlockedSteps.includes(requestedStep) ? requestedStep : "availability";
-  const status = deriveCoachingStatus({
-    onboardingComplete: true,
-    plan,
-    capacity,
-    checkoutEnabled,
+  const doneSteps = coachingSetupDoneSteps({
+    snapshot,
+    currentStep,
+    firstSetup: startedWithPlan.current === false,
   });
+  const chipValues = Object.fromEntries(
+    rows.flatMap((row) => (row.chip ? [[row.step, row.chip] as const] : []))
+  );
+  // Someone who arrived with a finished setup is changing one thing: saving
+  // takes them back to the summary instead of on to the next step.
+  const returnsToSummary = startedWithPlan.current === true && setupComplete;
+  const missingSteps = COACHING_SETUP_STEPS.filter(
+    (step) => step !== "publish" && !coachingSetupStepDone(step, snapshot)
+  );
 
   return (
     <div className="space-y-7">
-      <CoachingSetupProgress currentStep={currentStep} unlockedSteps={unlockedSteps} />
+      <CoachingSetupProgress
+        currentStep={currentStep}
+        doneSteps={doneSteps}
+        unlockedSteps={unlockedSteps}
+        chipValues={chipValues}
+      />
 
       {["frequency", "price", "exams", "description", "capacity"].includes(currentStep) ? (
         <CoachingPlanForm
@@ -186,10 +245,11 @@ function PlanContent() {
           setupConfig={setupConfig}
           currentStep={currentStep}
           capacity={capacity}
-          onSubmit={(payload, next) => save.mutate({ payload, next })}
+          onSubmit={(payload, next) => save.mutate({ payload, next: returnsToSummary ? "summary" : next })}
           onContinue={navigate}
           isSaving={save.isPending}
           error={error}
+          savesToSummary={returnsToSummary}
         />
       ) : null}
 
@@ -200,10 +260,10 @@ function PlanContent() {
             <CoachingAvailabilitySection />
             <div className="flex justify-end">
               <Button
-                onClick={() => navigate("capacity")}
+                onClick={() => navigate(returnsToSummary ? "summary" : "capacity")}
                 disabled={(capacity?.weekly_slot_count ?? 0) < 1}
               >
-                Kapasiteye devam et
+                {returnsToSummary ? "Tamam" : "Kapasiteye devam et"}
               </Button>
             </div>
           </div>
@@ -212,45 +272,20 @@ function PlanContent() {
         )
       ) : null}
 
-      {currentStep === "preview" ? (
-        <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,0.8fr)]">
-          {previewQuery.data ? <StudentPreviewCard preview={previewQuery.data} /> : <Skeleton className="h-72" />}
-          <div className="space-y-5">
-            {revenueQuery.data ? <RevenuePreviewCard preview={revenueQuery.data} /> : <Skeleton className="h-56" />}
-            <Button className="w-full" onClick={() => navigate("publish")}>Yayınlama adımına devam et</Button>
-          </div>
-        </div>
-      ) : null}
-
       {currentStep === "publish" ? (
-        <div className="space-y-5">
-          {error ? <ErrorMessage message={error} /> : null}
-          <CoachingStatusCard status={status} />
-          <Card className="rounded-card border-line bg-surface shadow-none">
-            <CardContent className="space-y-4 p-5 sm:p-6">
-              <div>
-                <h2 className="text-lg font-bold">Yayın ve öğrenci kabulü</h2>
-                <p className="mt-1 text-sm leading-6 text-ink-mid">
-                  Teklifin yayında olması, öğrenci kabulünün açık olması, kapasite ve platform genelindeki satış durumu birbirinden bağımsızdır.
-                </p>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {!plan?.is_published ? (
-                  <Button onClick={() => publish.mutate()} disabled={publish.isPending}>Teklifi yayınla</Button>
-                ) : (
-                  <>
-                    {plan.is_accepting_new_students ? (
-                      <Button variant="outline" onClick={() => close.mutate()} disabled={close.isPending}>Yeni öğrenci alımını kapat</Button>
-                    ) : (
-                      <Button variant="outline" onClick={() => reopen.mutate()} disabled={reopen.isPending}>Yeni öğrenci alımını aç</Button>
-                    )}
-                    <Button variant="outline" onClick={() => unpublish.mutate()} disabled={unpublish.isPending}>Taslağa al</Button>
-                  </>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        plan ? (
+          <CoachingReviewStep
+            plan={plan}
+            preview={previewQuery.data ?? null}
+            revenue={revenueQuery.data ?? null}
+            rows={rows}
+            missingSteps={missingSteps}
+            error={error}
+            actions={publishActions}
+          />
+        ) : (
+          <ErrorMessage message="Teklifi yayınlamak için önce planını kaydet." />
+        )
       ) : null}
     </div>
   );
@@ -260,9 +295,9 @@ export default function CoachingPlanPage() {
   return (
     <CoachingGuard>
       <CoachingPageShell
-        title="Koçluk teklifini hazırla"
+        title="Teklif ayarları"
         width="wide"
-        currentHref="/dashboard/tutor/coaching/plan"
+        currentHref={PLAN_HREF}
         audience="tutor"
       >
         <Suspense fallback={<Skeleton className="h-72 w-full" />}>
