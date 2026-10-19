@@ -1,9 +1,12 @@
 "use client";
 
-import { useState } from "react";
-import { ArrowRight, Check, Clock, Info, Target } from "@phosphor-icons/react";
+import { useEffect, useRef, useState } from "react";
+import { ArrowRight, Check, Clock, Target } from "@phosphor-icons/react";
 
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
+import { InlineError } from "@/components/shared/InlineError";
+import { sectionBandClass } from "@/components/shared/SectionBand";
+import { ShakeOnError } from "@/components/shared/ShakeOnError";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -33,6 +36,23 @@ const EXAM_CONTEXT: Record<string, string> = {
   DGS: "Ön lisans sonrası lisans geçişi için çalışma ritmi kurar.",
   KPSS: "Kamu sınavı hazırlığını plan ve takip odağında destekler.",
 };
+
+/**
+ * Why a typed capacity cannot be saved, or null when it can. The range is the
+ * one the helper line under the box names: at least the students already being
+ * coached (never below one), at most what the tutor's hours can serve. The
+ * server still has the last word; this only answers before the round trip.
+ */
+function capacityProblem(raw: string, min: number, max: number | null): string | null {
+  const value = Number(raw);
+  if (raw.trim() === "" || Number.isNaN(value)) return `En az ${min} yazabilirsin.`;
+  if (!Number.isInteger(value)) return "Tam sayı yaz.";
+  if (value < min) return `En az ${min} yazabilirsin.`;
+  if (max !== null && value > max) {
+    return `En fazla ${max} yazabilirsin, saatlerinle bu kadar öğrenciye bakabilirsin.`;
+  }
+  return null;
+}
 
 export function CoachingPlanForm({
   plan,
@@ -67,6 +87,21 @@ export function CoachingPlanForm({
   );
   const [description, setDescription] = useState(plan?.description ?? "");
 
+  const capacityMin = Math.max(1, capacity?.active_students ?? 0);
+  const capacityMax =
+    capacity && capacity.theoretical_capacity >= 1 ? capacity.theoretical_capacity : null;
+  const capacityError = capacityProblem(maxStudents, capacityMin, capacityMax);
+  // The box stays quiet until the tutor has touched it or tried to go on.
+  const [capacityTouched, setCapacityTouched] = useState(false);
+  const [capacityShakes, setCapacityShakes] = useState(0);
+  const capacityInput = useRef<HTMLInputElement>(null);
+  const shownCapacityError = capacityTouched ? capacityError : null;
+
+  // One jolt each time the box turns invalid or the reason changes.
+  useEffect(() => {
+    if (capacityTouched && capacityError) setCapacityShakes((count) => count + 1);
+  }, [capacityTouched, capacityError]);
+
   const priceMinor = Math.round(Number(priceLira || 0) * 100);
   const overCap = priceMinor > setupConfig.price_cap_minor;
   const nextStep = COACHING_SETUP_STEPS[
@@ -83,6 +118,14 @@ export function CoachingPlanForm({
     });
 
   const advance = () => {
+    if (currentStep === "capacity" && capacityError) {
+      // Do not send a number we already know is wrong: say so, shake, and put
+      // the caret back in the box.
+      setCapacityTouched(true);
+      setCapacityShakes((count) => count + 1);
+      capacityInput.current?.focus();
+      return;
+    }
     const requiresSave = Boolean(plan) || currentStep === "description" || currentStep === "capacity";
     if (requiresSave) onSubmit(draft(), nextStep);
     else onContinue(nextStep);
@@ -103,48 +146,19 @@ export function CoachingPlanForm({
       {currentStep === "frequency" ? (
         <StepCard
           title="Görüşme düzenin nasıl olsun?"
-          description="Bu seçim her öğrencinin ders paketi boyunca kaç koçluk görüşmesi alacağını belirler."
+          description="Öğrencilerle ne sıklıkla görüşeceğini seç. Paket uzadıkça görüşme sayısı da artar."
         >
           <fieldset>
             <legend className="sr-only">Görüşme düzeni</legend>
-            <div className="grid gap-3 lg:grid-cols-[1.08fr_0.96fr_0.96fr]">
-              {setupConfig.frequency_options.map((option) => {
-                const selected = frequency === option.value;
-                return (
-                  <button
-                    key={option.value}
-                    type="button"
-                    aria-pressed={selected}
-                    onClick={() => setFrequency(option.value)}
-                    className={cn(
-                      "relative rounded-card border p-5 text-left transition-colors duration-[var(--duration-state)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2",
-                      selected
-                        ? "border-pink bg-surface"
-                        : "border-line bg-surface hover:border-ink"
-                    )}
-                  >
-                    <span className="flex items-center justify-between gap-3">
-                      <span className="block text-lg font-bold">{option.label}</span>
-                      {selected ? (
-                        <span className="inline-flex items-center gap-1 rounded-pill bg-pink-deep px-2.5 py-1 text-[11px] font-medium text-white">
-                          <Check aria-hidden="true" className="h-3 w-3" />
-                          Seçili düzen
-                        </span>
-                      ) : (
-                        <span aria-hidden="true" className="h-5 w-5 rounded-pill border border-line" />
-                      )}
-                    </span>
-                    <span className="mt-3 grid gap-1.5 text-xs text-ink-mid">
-                      {option.packages.map((item) => (
-                        <span key={item.duration_days} className="flex justify-between gap-3">
-                          <span>{item.weeks} haftada</span>
-                          <span className="font-medium text-foreground">{item.total_sessions} görüşme</span>
-                        </span>
-                      ))}
-                    </span>
-                  </button>
-                );
-              })}
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(14rem,1fr))] gap-3">
+              {setupConfig.frequency_options.map((option) => (
+                <FrequencyCard
+                  key={option.value}
+                  option={option}
+                  selected={frequency === option.value}
+                  onSelect={() => setFrequency(option.value)}
+                />
+              ))}
             </div>
           </fieldset>
           <FixedDuration minutes={setupConfig.session_duration_minutes} />
@@ -271,23 +285,30 @@ export function CoachingPlanForm({
           description="Koçluk saatlerin 30 dakikalık görüşmelere bölünür. Seçtiğin görüşme sıklığına göre bu saatlerle en fazla kaç öğrenciye bakabileceğin hesaplanır. Aşağıda kendi sınırını seçersin."
         >
           {capacity ? <CapacityPreviewCard capacity={capacity} /> : null}
-          <div className="max-w-sm">
+          <ShakeOnError trigger={capacityShakes} className="max-w-sm">
             <Label htmlFor="coaching-capacity">Aynı anda en fazla kaç öğrenciye koçluk vereceksin?</Label>
             <Input
+              ref={capacityInput}
               id="coaching-capacity"
               type="number"
-              min={1}
-              max={capacity?.theoretical_capacity || undefined}
+              min={capacityMin}
+              max={capacityMax ?? undefined}
               value={maxStudents}
-              onChange={(event) => setMaxStudents(event.target.value)}
-              className="mt-1"
+              onChange={(event) => {
+                setMaxStudents(event.target.value);
+                setCapacityTouched(true);
+              }}
+              aria-invalid={shownCapacityError ? true : undefined}
+              aria-describedby={shownCapacityError ? "coaching-capacity-error coaching-capacity-hint" : "coaching-capacity-hint"}
+              className={shownCapacityError ? "mt-1 border-error focus-visible:border-error" : "mt-1"}
             />
-            <p className="mt-2 text-label leading-5 text-ink-mid">
+            <InlineError id="coaching-capacity-error" message={shownCapacityError} size="sm" className="mt-2" />
+            <p id="coaching-capacity-hint" className="mt-2 text-label leading-5 text-ink-mid">
               {capacity && capacity.theoretical_capacity >= 1
-                ? `En az ${Math.max(1, capacity.active_students)}, en fazla ${capacity.theoretical_capacity} yazabilirsin. Uygun olmayan bir sayı yazarsan önceki sayın kalır ve nedeni burada yazar.`
+                ? `En az ${capacityMin}, en fazla ${capacity.theoretical_capacity} yazabilirsin. Uygun olmayan bir sayı yazarsan önceki sayın kalır ve nedeni burada yazar.`
                 : "Önce koçluk saati eklemelisin, sonra buradan sınırını seçebilirsin."}
             </p>
-          </div>
+          </ShakeOnError>
         </StepCard>
       ) : null}
 
@@ -334,15 +355,93 @@ function PolicyValue({ label, value }: { label: string; value: string }) {
   );
 }
 
+/** The package whose session count is the card's headline number. */
+const HEADLINE_WEEKS = 4;
+
+/**
+ * One routine to choose from. The headline is what a four-week package gives,
+ * large, and the other packages follow as rows; every figure comes from the
+ * server's setup config. The chosen card wears the pink band with a flat gold
+ * "Seçili" pill (gold on pink is the one pairing allowed at badge scale), so
+ * which one is chosen is clear before reading a word.
+ *
+ * Plain class strings: tailwind-merge would drop a named size such as
+ * `text-h2-m` next to a text colour.
+ */
+function FrequencyCard({
+  option,
+  selected,
+  onSelect,
+}: {
+  option: CoachingSetupConfig["frequency_options"][number];
+  selected: boolean;
+  onSelect: () => void;
+}) {
+  const headline =
+    option.packages.find((item) => item.weeks === HEADLINE_WEEKS) ?? option.packages[0];
+  const others = option.packages.filter((item) => item !== headline);
+
+  return (
+    <button
+      type="button"
+      aria-pressed={selected}
+      onClick={onSelect}
+      className={`overflow-hidden rounded-card border bg-surface text-left transition-colors duration-[var(--duration-state)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2 ${
+        selected ? "border-pink" : "border-line hover:border-ink"
+      }`}
+    >
+      <span
+        className={
+          selected
+            ? sectionBandClass("pink", "px-4 py-3")
+            : "flex items-center justify-between gap-3 border-b border-line px-4 py-3"
+        }
+      >
+        <span className="text-body font-bold">{option.label}</span>
+        {selected ? (
+          <span className="inline-flex items-center gap-1 rounded-pill bg-gold px-3 py-0.5 text-label text-gold-ink">
+            <Check aria-hidden="true" className="h-3.5 w-3.5" />
+            Seçili
+          </span>
+        ) : (
+          <span aria-hidden="true" className="h-5 w-5 rounded-pill border border-line" />
+        )}
+      </span>
+      <span className="block px-4 pb-4 pt-3">
+        {headline ? (
+          <>
+            <span className="block text-h2-m font-bold tabular-nums text-ink md:text-h2">
+              {headline.total_sessions}
+            </span>
+            <span className="mt-1 block text-small text-ink-mid">
+              görüşme, {headline.weeks} haftalık pakette
+            </span>
+          </>
+        ) : null}
+        <span className="mt-3 block">
+          {others.map((item) => (
+            <span
+              key={item.duration_days}
+              className="flex justify-between gap-3 border-t border-line py-1.5 text-small tabular-nums"
+            >
+              <span className="text-ink-mid">{item.weeks} haftada</span>
+              <span className="font-bold text-ink">{item.total_sessions}</span>
+            </span>
+          ))}
+        </span>
+      </span>
+    </button>
+  );
+}
+
 function FixedDuration({ minutes }: { minutes: number }) {
   return (
-    <div className="flex gap-3 rounded-lg border bg-paper p-4 text-sm">
-      <Clock aria-hidden className="mt-0.5 h-4 w-4 shrink-0" />
-      <div>
-        <p className="font-medium">Her görüşme {minutes} dakika</p>
-        <p className="mt-1 text-xs leading-5 text-ink-mid">Görüşme süresi bütün çalışma koçluğu planlarında sabittir.</p>
-      </div>
-      <Info aria-hidden className="ml-auto h-4 w-4 text-ink-mid" />
-    </div>
+    <p className="flex items-center gap-3 text-small text-ink-mid">
+      <Clock aria-hidden className="h-5 w-5 shrink-0 text-ink" />
+      <span>
+        <strong className="font-medium text-ink">Her görüşme {minutes} dakika.</strong>{" "}
+        Bu süre bütün koçluk planlarında aynıdır.
+      </span>
+    </p>
   );
 }
