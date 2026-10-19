@@ -123,14 +123,14 @@ export function CoachingAvailabilityEditor({
             Koçluk görüşmelerin sadece buraya eklediğin saatlerde yapılır. Normal ders saatlerin buraya geçmez.
           </p>
 
-          <div className="mt-5 flex flex-wrap gap-x-8 gap-y-5">
+          <div className="mt-5 flex flex-wrap items-end gap-x-8 gap-y-5">
             <Step number={1} title="Günü seç">
-              <label htmlFor="coaching-day" className="sr-only">Gün</label>
+              <label htmlFor="coaching-day" className="block text-label text-ink-mid">Gün</label>
               <select
                 id="coaching-day"
                 value={dayOfWeek}
                 onChange={(event) => setDayOfWeek(Number(event.target.value))}
-                className={`${SELECT_CLASS} min-w-[10rem]`}
+                className={`${SELECT_CLASS} mt-1 min-w-[10rem]`}
               >
                 {DAYS.map((day) => (
                   <option key={day.value} value={day.value}>
@@ -171,7 +171,9 @@ export function CoachingAvailabilityEditor({
               </div>
             </Step>
 
-            <Step number={3} title="Ekle">
+            {/* The button says what it does, so this step has no heading of its
+                own; it lines up with the fields beside it. */}
+            <Step number={3}>
               <Button type="submit" disabled={isMutating} className="gap-2">
                 <Plus className="h-4 w-4" aria-hidden="true" />
                 Saat aralığı ekle
@@ -262,19 +264,22 @@ function Step({
   children,
 }: {
   number: number;
-  title: string;
+  /** Omit when the control says what it does. */
+  title?: string;
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex items-start gap-3">
+    <div className={`flex gap-3 ${title ? "items-start" : "items-center"}`}>
       <span
         data-step
-        className="mt-0.5 flex h-[1.625rem] w-[1.625rem] shrink-0 items-center justify-center rounded-pill bg-ink text-label font-bold tabular-nums text-paper"
+        className={`flex h-[1.625rem] w-[1.625rem] shrink-0 items-center justify-center rounded-pill bg-ink text-label font-bold tabular-nums text-paper ${
+          title ? "mt-0.5" : ""
+        }`}
       >
         {number}
       </span>
       <div>
-        <p className="mb-2 text-body font-bold text-ink">{title}</p>
+        {title ? <p className="mb-2 text-body font-bold text-ink">{title}</p> : null}
         {children}
       </div>
     </div>
