@@ -362,4 +362,76 @@ describe("CoachingPlanForm", () => {
       assert.ok(screen.getByText(/Ücretsiz sunmak için 0 yaz\. Her görüşmeden %12,34 komisyon düşülür/));
     });
   });
+
+  describe("exams step", () => {
+    function examsStep(handlers: { onContinue?: (step: unknown) => void; onSubmit?: (payload: unknown) => void } = {}) {
+      return (
+        <CoachingPlanForm
+          plan={null}
+          setupConfig={setupConfig}
+          currentStep="exams"
+          capacity={null}
+          onSubmit={handlers.onSubmit ?? (() => undefined)}
+          onContinue={handlers.onContinue ?? (() => undefined)}
+          isSaving={false}
+          error={null}
+        />
+      );
+    }
+
+    it("marks each chosen exam with a gold header and an ink pill, and leaves the rest plain", () => {
+      render(examsStep());
+      const yks = screen.getByRole("button", { name: "YKS" });
+      const dgs = screen.getByRole("button", { name: "DGS" });
+
+      fireEvent.click(yks);
+      assert.equal(yks.getAttribute("aria-pressed"), "true");
+      const header = yks.querySelector("[class*='bg-gold']") as HTMLElement;
+      assert.ok(header, "the chosen card has a gold header");
+      // Gold is a surface: the text on it is --gold-ink, and the pill is ink.
+      assert.match(header.className, /\btext-gold-ink\b/);
+      assert.match(within(yks).getByText("Seçildi").className, /\bbg-ink\b/);
+      assert.equal(dgs.querySelector("[class*='bg-gold']"), null);
+      assert.equal(within(dgs).queryByText("Seçildi"), null);
+    });
+
+    it("lets several exams be chosen at once", () => {
+      render(examsStep());
+      fireEvent.click(screen.getByRole("button", { name: "YKS" }));
+      fireEvent.click(screen.getByRole("button", { name: "DGS" }));
+
+      assert.equal(screen.getByRole("button", { name: "YKS" }).getAttribute("aria-pressed"), "true");
+      assert.equal(screen.getByRole("button", { name: "DGS" }).getAttribute("aria-pressed"), "true");
+      assert.equal(screen.getByRole("button", { name: "KPSS" }).getAttribute("aria-pressed"), "false");
+    });
+
+    it("is quiet until the tutor tries to go on, then says what is missing and does not continue", () => {
+      let continued = 0;
+      render(examsStep({ onContinue: () => { continued += 1; } }));
+      assert.equal(screen.queryByRole("alert"), null);
+
+      const next = screen.getByRole("button", { name: /devam et/i }) as HTMLButtonElement;
+      assert.equal(next.disabled, false, "the button explains itself instead of going grey");
+      fireEvent.click(next);
+
+      assert.equal(continued, 0);
+      assert.equal(screen.getByRole("alert").textContent, "En az bir sınav seç.");
+      assert.equal(document.activeElement, screen.getAllByRole("button", { name: /^(YKS|DGS|KPSS)$/ })[0]);
+
+      // Choosing one clears the message, and then it continues.
+      fireEvent.click(screen.getByRole("button", { name: "DGS" }));
+      assert.equal(screen.queryByRole("alert"), null);
+      fireEvent.click(next);
+      assert.equal(continued, 1);
+    });
+
+    it("warns as soon as the last chosen exam is taken away", () => {
+      render(examsStep());
+      const yks = screen.getByRole("button", { name: "YKS" });
+      fireEvent.click(yks);
+      fireEvent.click(yks);
+
+      assert.equal(screen.getByRole("alert").textContent, "En az bir sınav seç.");
+    });
+  });
 });

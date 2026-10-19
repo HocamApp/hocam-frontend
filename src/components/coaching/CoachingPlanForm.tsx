@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { ArrowRight, Check, Clock, Equals, Target, X } from "@phosphor-icons/react";
+import { forwardRef, useEffect, useRef, useState } from "react";
+import { ArrowRight, Check, Clock, Equals, X } from "@phosphor-icons/react";
 
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { InlineError } from "@/components/shared/InlineError";
@@ -60,10 +60,10 @@ function capacityProblem(raw: string, min: number, max: number | null): string |
  * each time it turns invalid or the reason changes, and takes the caret back
  * when "devam et" is refused.
  */
-function useFieldFeedback(problem: string | null) {
+function useFieldFeedback<T extends HTMLElement = HTMLInputElement>(problem: string | null) {
   const [touched, setTouched] = useState(false);
   const [shakes, setShakes] = useState(0);
-  const input = useRef<HTMLInputElement>(null);
+  const input = useRef<T>(null);
 
   useEffect(() => {
     if (touched && problem) setShakes((count) => count + 1);
@@ -135,6 +135,9 @@ export function CoachingPlanForm({
   const priceMinor = Math.round(Number(priceLira || 0) * 100);
   const priceError = priceProblem(priceLira, setupConfig.price_cap_minor);
   const priceField = useFieldFeedback(priceError);
+
+  const examsError = examTypes.length === 0 ? "En az bir sınav seç." : null;
+  const examsField = useFieldFeedback<HTMLButtonElement>(examsError);
   const nextStep = COACHING_SETUP_STEPS[
     Math.min(COACHING_SETUP_STEPS.length - 1, COACHING_SETUP_STEPS.indexOf(currentStep) + 1)
   ];
@@ -153,12 +156,14 @@ export function CoachingPlanForm({
     // caret back in the box. The server still has the last word.
     if (currentStep === "capacity" && capacityError) return capacityField.refuse();
     if (currentStep === "price" && priceError) return priceField.refuse();
+    if (currentStep === "exams" && examsError) return examsField.refuse();
     const requiresSave = Boolean(plan) || currentStep === "description" || currentStep === "capacity";
     if (requiresSave) onSubmit(draft(), nextStep);
     else onContinue(nextStep);
   };
 
   const toggleExamType = (value: string) => {
+    examsField.touch();
     setExamTypes((current) =>
       current.includes(value)
         ? current.filter((item) => item !== value)
@@ -257,47 +262,28 @@ export function CoachingPlanForm({
       {currentStep === "exams" ? (
         <StepCard
           title="Koçluk verdiğin sınavlar"
-          description="Öğrenciler teklifini hedef sınav grubuna göre görür. TYT, AYT ve YDT bu alanda ayrı seçenek değildir; YKS grubunun içindedir."
+          description="Birden fazla seçebilirsin. Öğrenciler teklifini hedef sınav grubuna göre görür. TYT, AYT ve YDT ayrı seçenek değildir, YKS grubunun içindedir."
         >
-          <fieldset>
+          <fieldset aria-describedby={examsField.shown ? "coaching-exams-error" : undefined}>
             <legend className="sr-only">Hedef sınav grupları</legend>
-            <div className="grid gap-3 md:grid-cols-[1.08fr_0.96fr_0.96fr]">
-              {setupConfig.exam_groups.filter(isCoachingExamGroup).map((exam) => {
-                const selected = examTypes.includes(exam);
-                return (
-                  <button
-                    key={exam}
-                    type="button"
-                    aria-label={exam}
-                    aria-pressed={selected}
-                    onClick={() => toggleExamType(exam)}
-                    className={cn(
-                      "relative min-h-40 rounded-card border p-5 text-left transition-colors duration-[var(--duration-state)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2",
-                      selected
-                        ? "border-pink bg-surface"
-                        : "border-line bg-surface hover:border-ink"
-                    )}
-                  >
-                    <span className="flex items-start justify-between gap-3">
-                      <span className="inline-flex h-10 w-10 items-center justify-center rounded-pill border border-line bg-paper">
-                        <Target aria-hidden="true" className="h-4 w-4" />
-                      </span>
-                      <span className={cn(
-                        "inline-flex h-7 items-center gap-1 rounded-pill px-2.5 text-[11px] font-medium",
-                        selected ? "bg-pink-deep text-white" : "border border-line bg-transparent text-ink-mid"
-                      )}>
-                        {selected ? <Check aria-hidden="true" className="h-3 w-3" /> : null}
-                        {selected ? "Seçildi" : "Seç"}
-                      </span>
-                    </span>
-                    <span className="mt-5 block text-xl font-bold tracking-tight">{exam}</span>
-                    <span className="mt-2 block text-sm font-normal leading-6 text-ink-mid">
-                      {EXAM_CONTEXT[exam]}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
+            <ShakeOnError trigger={examsField.shakes}>
+              <div className="grid grid-cols-[repeat(auto-fit,minmax(14rem,1fr))] gap-3">
+                {setupConfig.exam_groups.filter(isCoachingExamGroup).map((exam, index) => {
+                  const selected = examTypes.includes(exam);
+                  return (
+                    <ExamCard
+                      key={exam}
+                      ref={index === 0 ? examsField.input : undefined}
+                      exam={exam}
+                      description={EXAM_CONTEXT[exam]}
+                      selected={selected}
+                      onToggle={() => toggleExamType(exam)}
+                    />
+                  );
+                })}
+              </div>
+            </ShakeOnError>
+            <InlineError id="coaching-exams-error" message={examsField.shown} size="sm" className="mt-3" />
           </fieldset>
         </StepCard>
       ) : null}
@@ -375,7 +361,7 @@ export function CoachingPlanForm({
             onClick={advance}
             disabled={
               isSaving ||
-              (["exams", "description"].includes(currentStep) && examTypes.length === 0)
+              (currentStep === "description" && examTypes.length === 0)
             }
           >
             {isSaving ? "Kaydediliyor…" : plan ? "Kaydet ve devam et" : currentStep === "description" ? "Taslağı kaydet ve devam et" : "Devam et"}
@@ -400,6 +386,47 @@ function StepCard({ title, description, children }: { title: string; description
     </Card>
   );
 }
+
+/**
+ * One exam to choose, and any number may be. The chosen ones wear a gold header
+ * with --gold-ink on it and an ink "Seçildi" pill, so a choice among several
+ * (gold) reads apart from the one-of-three routine (pink) on the step before.
+ * Gold is a surface here, never text.
+ */
+const ExamCard = forwardRef<
+  HTMLButtonElement,
+  { exam: string; description: string | undefined; selected: boolean; onToggle: () => void }
+>(function ExamCard({ exam, description, selected, onToggle }, ref) {
+  return (
+    <button
+      ref={ref}
+      type="button"
+      aria-label={exam}
+      aria-pressed={selected}
+      onClick={onToggle}
+      className={`overflow-hidden rounded-card border bg-surface text-left transition-colors duration-[var(--duration-state)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2 ${
+        selected ? "border-gold" : "border-line hover:border-ink"
+      }`}
+    >
+      <span
+        className={`flex items-center justify-between gap-3 px-4 py-3 ${
+          selected ? "bg-gold text-gold-ink" : "border-b border-line"
+        }`}
+      >
+        <span className="text-body font-bold">{exam}</span>
+        {selected ? (
+          <span className="inline-flex items-center gap-1 rounded-pill bg-ink px-3 py-0.5 text-label text-paper">
+            <Check aria-hidden="true" className="h-3.5 w-3.5" />
+            Seçildi
+          </span>
+        ) : (
+          <span aria-hidden="true" className="h-5 w-5 rounded-pill border border-line" />
+        )}
+      </span>
+      <span className="block px-4 pb-4 pt-3 text-small leading-6 text-ink-mid">{description}</span>
+    </button>
+  );
+});
 
 /** The package whose session count is the card's headline number. */
 const HEADLINE_WEEKS = 4;
