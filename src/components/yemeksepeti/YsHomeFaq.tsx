@@ -54,7 +54,8 @@ import {
  * to accept" answer describes the product that runs.
  */
 
-const faqLinkClass = "font-medium text-pink underline-offset-2 hover:underline";
+/* Brand v3: ink and underlined. Pink text on paper is 3.5:1 (BRAND.md §6). */
+const faqLinkClass = "font-medium text-pink underline-offset-2 hover:underline v3:text-ink v3:underline";
 
 const YS_HOME_FAQ_ITEMS: SupportAccordionSectionItem[] = [
   {
@@ -302,7 +303,12 @@ function YsHomeFaqTabs({
                   onClick={() => setActive(audience)}
                   className={cn(
                     "inline-flex h-9 items-center rounded-pill border border-ink px-[22px] text-[0.875rem] font-medium transition-colors duration-[--duration-state]",
-                    selected ? "bg-ink text-paper" : "text-ink hover:bg-ink hover:text-paper",
+                    /* Brand v3 (BRAND.md §5 tabs): selected stays ink;
+                       the others are surface pills with a line border,
+                       and hover only turns the border ink. */
+                    selected
+                      ? "bg-ink text-paper"
+                      : "text-ink hover:bg-ink hover:text-paper v3:border-line v3:bg-surface v3:hover:border-ink v3:hover:bg-surface v3:hover:text-ink",
                   )}
                 >
                   {copy.tabs[audience]}

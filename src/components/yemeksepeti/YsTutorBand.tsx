@@ -49,6 +49,14 @@ import { approvedTestimonials } from "./ysTestimonialData";
  *
  * `className` lets /hoca-ol use the band as its hero without the homepage's
  * 120px lead-in.
+ *
+ * Brand v3 (PLAN.md T1.10): the band is `--band`, not `bg-ink`. Ink flips
+ * light in dark mode, which made this a light section on a dark page;
+ * `--band` stays dark in both themes. One strong moment inside (BRAND.md §3
+ * rule 7): the title word on `--yellow` and the yellow apply button.
+ * Everything else is quiet: `--on-band-quiet` check circles and lines,
+ * step numbers at 40%. The title split is a `brandV3` prop because it
+ * changes markup; the rest are `v3:` classes.
  */
 /**
  * The seven tutor steps, with their facts filled in and the coaching parts
@@ -81,7 +89,7 @@ export function useTutorSteps(): YsStep[] {
         coaching ? (
           <>
             {step.title}
-            <span className="ml-2 inline-flex rounded-pill bg-paper px-3 py-0.5 align-[3px] text-xs font-medium leading-4 text-ink">
+            <span className="ml-2 inline-flex rounded-pill bg-paper px-3 py-0.5 align-[3px] text-xs font-medium leading-4 text-ink v3:bg-on-band-quiet v3:text-on-band">
               {step.chip}
             </span>
           </>
@@ -97,7 +105,22 @@ export function useTutorSteps(): YsStep[] {
   return steps;
 }
 
-export function YsTutorBand({ className }: { className?: string }) {
+/** The title with its highlight word on yellow (brand v3). */
+function HighlightedTitle() {
+  const at = copy.title.indexOf(copy.titleHighlight);
+  if (at < 0) return <>{copy.title}</>;
+  return (
+    <>
+      {copy.title.slice(0, at)}
+      <span className="inline-block -rotate-[1.5deg] rounded-[14px] bg-yellow px-3 text-on-accent">
+        {copy.titleHighlight}
+      </span>
+      {copy.title.slice(at + copy.titleHighlight.length)}
+    </>
+  );
+}
+
+export function YsTutorBand({ className, brandV3 = false }: { className?: string; brandV3?: boolean }) {
   const quotes = approvedTestimonials("tutor");
 
   const calculator =
@@ -112,7 +135,7 @@ export function YsTutorBand({ className }: { className?: string }) {
       id="hocalar"
       aria-labelledby="ys-tutors-title"
       className={cn(
-        "ys-band-ink scroll-mt-[calc(var(--app-header-h)+24px)] bg-ink pb-[112px] pt-[100px] text-paper lg:pb-[150px] lg:pt-[136px]",
+        "ys-band-ink scroll-mt-[calc(var(--app-header-h)+24px)] bg-ink pb-[112px] pt-[100px] text-paper lg:pb-[150px] lg:pt-[136px] v3:bg-band v3:text-on-band",
         className,
       )}
     >
@@ -123,33 +146,38 @@ export function YsTutorBand({ className }: { className?: string }) {
               id="ys-tutors-title"
               className="text-[32px] font-bold leading-9 tracking-[-0.88px] md:text-[44px] md:leading-[46px]"
             >
-              {copy.title}
+              {brandV3 ? <HighlightedTitle /> : copy.title}
             </h2>
-            <p className="mt-4 max-w-[40ch] text-[20px] leading-[31px] text-paper/80">{copy.lead}</p>
+            <p className="mt-4 max-w-[40ch] text-[20px] leading-[31px] text-paper/80 v3:text-on-band-mid">{copy.lead}</p>
             <div className="mt-9 flex flex-wrap gap-3">
               <Link
                 href="/hoca-ol"
-                className="inline-flex h-[50px] items-center rounded-pill bg-pink px-[22px] text-[15px] font-semibold text-white transition-colors duration-[--duration-state] hover:bg-pink-deep sm:px-8 sm:text-body"
+                className="inline-flex h-[50px] items-center rounded-pill bg-pink px-[22px] text-[15px] font-semibold text-white transition-colors duration-[--duration-state] hover:bg-pink-deep sm:px-8 sm:text-body v3:bg-yellow v3:font-bold v3:text-on-accent v3:hover:bg-on-band"
               >
                 {copy.ctaApply}
               </Link>
               <Link
                 href="/hoca-ol"
-                className="inline-flex h-[50px] items-center rounded-pill border border-paper/70 px-[22px] text-[15px] font-semibold text-paper transition-colors duration-[--duration-state] hover:bg-paper hover:text-ink sm:px-8 sm:text-body"
+                className="inline-flex h-[50px] items-center rounded-pill border border-paper/70 px-[22px] text-[15px] font-semibold text-paper transition-colors duration-[--duration-state] hover:bg-paper hover:text-ink sm:px-8 sm:text-body v3:border-2 v3:border-on-band-mid v3:text-on-band v3:hover:bg-on-band v3:hover:text-band"
               >
                 {copy.ctaLearnMore}
               </Link>
             </div>
           </div>
 
-          <div className="min-w-0 rounded-card border border-paper/20 p-7">
+          <div className="min-w-0 rounded-card border border-paper/20 p-7 v3:border-on-band-quiet">
             <h3 className="text-[18px] font-bold leading-6">{copy.eligibilityTitle}</h3>
             <ul className="mt-3.5 flex flex-col gap-3">
               {copy
                 .eligibility({ maxRank: MAX_TUTOR_YKS_RANK })
                 .map((line, index) => (
-                  <li key={index} className="flex items-start gap-3 text-[15px] leading-[23px] text-paper/[0.88]">
-                    <Check className="mt-px size-5 flex-none text-paper" aria-hidden />
+                  <li key={index} className="flex items-start gap-3 text-[15px] leading-[23px] text-paper/[0.88] v3:text-on-band">
+                    {/* Brand v3: a quiet circle, drawn on the icon itself so
+                        the markup is the same with the flag off. */}
+                    <Check
+                      className="mt-px size-5 flex-none text-paper v3:-mt-0.5 v3:size-[26px] v3:rounded-pill v3:bg-on-band-quiet v3:p-1.5 v3:text-on-band"
+                      aria-hidden
+                    />
                     <span>{Children.toArray(line)}</span>
                   </li>
                 ))}
@@ -180,7 +208,7 @@ export function YsTutorBand({ className }: { className?: string }) {
                     entry.tutorProfileId ? (
                       <Link
                         href={`/tutors/${entry.tutorProfileId}`}
-                        className="mt-auto text-small font-medium text-pink hover:underline"
+                        className="mt-auto text-small font-medium text-pink hover:underline v3:text-ink v3:underline"
                       >
                         {copy.profileLink}
                       </Link>

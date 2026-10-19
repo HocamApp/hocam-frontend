@@ -24,7 +24,8 @@ test("testimonials run on themed surfaces with a gold hover", () => {
   assert.match(testimonials, /hover:bg-gold/);
   // DESIGN.md: text on gold is --gold-ink, never white and never gray.
   assert.match(testimonials, /group-hover\/card:text-gold-ink/);
-  assert.match(testimonials, /group-hover\/card:text-\[rgb\(74_59_0_\/_78%\)\]/);
+  // --gold-ink at 78%, now a token in globals.css (same value).
+  assert.match(testimonials, /group-hover\/card:text-\[var\(--gold-ink-mid\)\]/);
   assert.doesNotMatch(testimonials, /group-hover\/card:text-paper/);
   assert.doesNotMatch(testimonials, /bg-gradient-to-[lr]/);
 });

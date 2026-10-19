@@ -19,14 +19,16 @@ const TONES = {
     row: "py-[22px]",
   },
   /* On the ink band. `--ink` and `--paper` swap in dark mode together, so
-     paper-on-ink holds in both themes. */
+     paper-on-ink holds in both themes. Under brand v3 the band is `--band`,
+     which stays dark, so the `v3:` classes move to the `--on-band` family:
+     quiet lines and marker, numbers at 40% (PLAN.md T1.10). */
   ink: {
-    rule: "border-paper/20",
-    divider: "border-paper/[0.12]",
-    marker: "bg-paper",
-    number: "text-paper/55",
+    rule: "border-paper/20 v3:border-on-band-quiet",
+    divider: "border-paper/[0.12] v3:border-on-band-quiet",
+    marker: "bg-paper v3:bg-on-band",
+    number: "text-paper/55 v3:text-on-band v3:opacity-40",
     title: "text-[20px] leading-[27px] tracking-[-0.2px]",
-    body: "mt-1.5 max-w-[34rem] text-[15px] leading-6 text-paper/70",
+    body: "mt-1.5 max-w-[34rem] text-[15px] leading-6 text-paper/70 v3:text-on-band-mid",
     row: "py-5",
   },
 } as const;
