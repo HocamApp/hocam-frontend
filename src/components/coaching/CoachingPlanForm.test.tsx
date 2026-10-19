@@ -475,4 +475,35 @@ describe("CoachingPlanForm", () => {
       );
     });
   });
+
+  describe("cards in a stretched grid", () => {
+    // A <button> centres its content vertically. In a grid row stretched to the
+    // tallest card, a card with less text floated its header down and left a
+    // white strip above the coloured band. Each card is a column from the top.
+    it("anchors the content of every exam card to its top edge", () => {
+      render(
+        <CoachingPlanForm
+          plan={null}
+          setupConfig={setupConfig}
+          currentStep="exams"
+          capacity={null}
+          onSubmit={() => undefined}
+          onContinue={() => undefined}
+          isSaving={false}
+          error={null}
+        />
+      );
+      for (const name of ["YKS", "DGS", "KPSS"]) {
+        const card = screen.getByRole("button", { name });
+        assert.match(card.className, /\bflex-col\b/, `${name} must lay out as a column`);
+        assert.match(card.className, /\bflex\b/);
+      }
+    });
+
+    it("anchors the content of every frequency card to its top edge", () => {
+      render(form("frequency"));
+      const card = screen.getByRole("button", { name: /Haftada bir/ });
+      assert.match(card.className, /\bflex-col\b/);
+    });
+  });
 });

@@ -103,7 +103,11 @@ describe("Coaching hours editor, step by step", () => {
 
     assert.ok(screen.getByText("Günü seç"));
     assert.ok(screen.getByText("Saatleri seç"));
-    assert.ok(screen.getByText("Ekle"));
+    // The third step is the button itself: a heading "Ekle" above a button that
+    // says "Saat aralığı ekle" said the same thing twice.
+    assert.equal(screen.queryByText("Ekle"), null);
+    const add = screen.getByRole("button", { name: "Saat aralığı ekle" });
+    assert.equal(add.closest("div[class*='items-center']")?.querySelector("[data-step]")?.textContent, "3");
     assert.deepEqual(
       Array.from(document.querySelectorAll("[data-step]")).map((node) => node.textContent),
       ["1", "2", "3"],

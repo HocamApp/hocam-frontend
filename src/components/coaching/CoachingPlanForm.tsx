@@ -418,7 +418,7 @@ const ExamCard = forwardRef<
       aria-label={exam}
       aria-pressed={selected}
       onClick={onToggle}
-      className={`overflow-hidden rounded-card border bg-surface text-left transition-colors duration-[var(--duration-state)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2 ${
+      className={`flex flex-col overflow-hidden rounded-card border bg-surface text-left transition-colors duration-[var(--duration-state)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2 ${
         selected ? "border-gold" : "border-line hover:border-ink"
       }`}
     >
@@ -453,7 +453,10 @@ const HEADLINE_WEEKS = 4;
  * which one is chosen is clear before reading a word.
  *
  * Plain class strings: tailwind-merge would drop a named size such as
- * `text-h2-m` next to a text colour.
+ * `text-h2-m` next to a text colour. The card is a flex column because a
+ * <button> centres its content vertically: in a grid row stretched to the
+ * tallest card, a shorter one floated its band down and left a white strip
+ * above it.
  */
 function FrequencyCard({
   option,
@@ -473,7 +476,7 @@ function FrequencyCard({
       type="button"
       aria-pressed={selected}
       onClick={onSelect}
-      className={`overflow-hidden rounded-card border bg-surface text-left transition-colors duration-[var(--duration-state)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2 ${
+      className={`flex flex-col overflow-hidden rounded-card border bg-surface text-left transition-colors duration-[var(--duration-state)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2 ${
         selected ? "border-pink" : "border-line hover:border-ink"
       }`}
     >
