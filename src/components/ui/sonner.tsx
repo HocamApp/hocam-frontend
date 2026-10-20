@@ -31,6 +31,8 @@ export function Toaster(props: ToasterProps) {
           toast:
             "!rounded-lg !border !border-border !bg-popover !text-popover-foreground !shadow-lg !px-4 !py-3",
           title: "!text-sm !font-medium",
+          // The one action a toast carries is a flat gold pill, like a row action.
+          actionButton: "!rounded-pill !bg-gold !px-3 !text-gold-ink !font-medium",
           description: "!text-xs !text-muted-foreground",
           success:
             "[&_[data-icon]]:!text-green-600 dark:[&_[data-icon]]:!text-green-400",
