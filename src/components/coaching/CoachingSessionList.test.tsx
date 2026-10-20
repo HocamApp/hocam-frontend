@@ -130,6 +130,33 @@ describe("CoachingSessionList", () => {
     assert.equal(notice.querySelector("a"), null);
   });
 
+  it("keeps Katıl open for the session's own length, not a fixed half hour", async () => {
+    sessions = [
+      {
+        id: "long",
+        scheduled_start: new Date(Date.now() - 35 * 60_000).toISOString(),
+        status: "scheduled",
+        duration_minutes: 45,
+      },
+    ];
+    renderList();
+    assert.ok(await screen.findByRole("link", { name: "Görüşmeye katıl" }));
+  });
+
+  it("stops offering Katıl once a running session has ended", async () => {
+    sessions = [
+      {
+        id: "over",
+        scheduled_start: new Date(Date.now() - 50 * 60_000).toISOString(),
+        status: "in_progress",
+        duration_minutes: 30,
+      },
+    ];
+    renderList();
+    await screen.findByText(/1\. görüşme/);
+    assert.equal(screen.queryByRole("link", { name: "Görüşmeye katıl" }), null);
+  });
+
   it("keeps cancelled sessions out of the main list until expanded", async () => {
     sessions = [
       { id: "a", scheduled_start: past, status: "completed" },

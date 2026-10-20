@@ -176,7 +176,7 @@ export interface StudentTimelineItem {
   action: StudentTimelineAction | null;
 }
 
-function dateParts(dateKey: string): StudentTimelineDate {
+export function dateParts(dateKey: string): StudentTimelineDate {
   return {
     weekday: COACHING_DAY_SHORT[weekdayIndex(dateKey)],
     day: Number(dateKey.slice(8, 10)),

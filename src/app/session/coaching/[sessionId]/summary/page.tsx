@@ -107,7 +107,13 @@ function PostSessionContent() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <RatingCard sessionId={sessionId} />
+          {/* A second rating is not rejected by the server: it keeps the first,
+              so a form here would say "kaydedildi" and change nothing. */}
+          {detail.rating_submitted ? (
+            <p className="text-body text-ink-mid">Bu görüşme için değerlendirmen alındı, teşekkürler.</p>
+          ) : (
+            <RatingCard sessionId={sessionId} />
+          )}
         </CardContent>
       </Card>
 

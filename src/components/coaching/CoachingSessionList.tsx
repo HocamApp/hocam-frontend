@@ -14,12 +14,9 @@ import { RescheduleDialog } from "@/components/coaching/RescheduleDialog";
 import { CoachingEmptyState } from "@/components/coaching/CoachingEmptyState";
 import { fetchCoachingSessions, type CoachingSessionItem } from "@/lib/coachingApi";
 import { coachingSessionStatusLabel } from "@/lib/coachingPresentation";
+import { studentCoachingJoin } from "@/lib/coachingStudentOverview";
 import { coachingDateTimeLabel } from "@/lib/coachingTime";
 import { serverNow } from "@/lib/serverClock";
-
-const JOIN_EARLY_MS = 10 * 60_000;
-const SESSION_MS = 30 * 60_000;
-
 
 /** The student's confirmed koçluk session list — reschedule entry point
  * for each upcoming, still-editable session. */
@@ -69,12 +66,9 @@ export function CoachingSessionList() {
     const startsAt = Date.parse(session.scheduled_start);
     const isFuture = startsAt > now;
     const canReschedule = isFuture && session.status === "scheduled";
-    // The room opens 10 minutes early (backend session-token rule).
-    const canJoin =
-      session.status === "in_progress" ||
-      (session.status === "scheduled" &&
-        now >= startsAt - JOIN_EARLY_MS &&
-        now < startsAt + SESSION_MS);
+    // The backend's rule for a student: ten minutes before the start until the
+    // session's own end. It used to stop at a fixed half hour.
+    const canJoin = studentCoachingJoin(session, new Date(now))?.kind === "open";
     const overdueReportDueAt = session.report_overdue ? session.report_due_at : null;
     const reportSupportOpen = session.complaint_eligible;
     const reportSupportLater =
