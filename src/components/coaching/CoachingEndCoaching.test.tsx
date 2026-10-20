@@ -61,7 +61,7 @@ describe("CoachingEndCoaching", () => {
 
     const trigger = screen.getByRole("button", { name: "Koçluğu sonlandır" });
     assert.match(trigger.className, /underline/);
-    assert.doesNotMatch(trigger.className, /bg-error|bg-pink|bg-gold/);
+    assert.doesNotMatch(trigger.className, /bg-error|bg-danger|bg-pink|bg-gold/);
     assert.match(trigger.className, /min-h-11/);
   });
 
@@ -69,7 +69,8 @@ describe("CoachingEndCoaching", () => {
     renderControl({ variant: "button" });
 
     const trigger = screen.getByRole("button", { name: "Koçluğu sonlandır" });
-    assert.match(trigger.className, /bg-error/);
+    assert.match(trigger.className, /bg-danger/);
+    assert.doesNotMatch(trigger.className, /bg-error/);
     assert.match(trigger.className, /text-white/);
   });
 

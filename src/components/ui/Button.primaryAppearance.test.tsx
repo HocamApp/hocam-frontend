@@ -16,4 +16,13 @@ describe("Button primary appearance", () => {
 
     assert.match(screen.getByRole("button", { name: "Katıl" }).className, /text-white/);
   });
+
+  it("fills a destructive button with the plain danger red, not the orange-leaning error colour, and never outlines it", () => {
+    render(<Button variant="destructive">Koçluğu sonlandır</Button>);
+
+    const className = screen.getByRole("button", { name: "Koçluğu sonlandır" }).className;
+    assert.match(className, /\bbg-danger\b/);
+    assert.match(className, /text-white/);
+    assert.doesNotMatch(className, /bg-error|bg-transparent|border-error/);
+  });
 });

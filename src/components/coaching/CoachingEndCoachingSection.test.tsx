@@ -72,7 +72,7 @@ describe("CoachingEndCoachingSection", () => {
     assert.ok(await screen.findByRole("heading", { name: "Koçluğu sonlandır" }));
     assert.ok(screen.getByText(/Mert A\./));
     const button = screen.getByRole("button", { name: "Koçluğu sonlandır" });
-    assert.match(button.className, /bg-error/);
+    assert.match(button.className, /bg-danger/);
   });
 
   it("ends the right purchase, asks for a reason first, and returns to the student list", async () => {

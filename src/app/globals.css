@@ -106,6 +106,11 @@
        paper rather than reading as a highlighter. */
     --success-soft: #e0ece7;
     --error: #b33a24;
+    /* The fill of a destructive button: plain red, hue 0, white text at 4.98:1.
+       Not --error, which leans orange on purpose for messages and fields and
+       read as brown on a button, and not near the brand pink. The same value in
+       both themes: a filled button carries its own contrast. */
+    --danger: #d32f2f;
 
     /* Brand v3 token names (docs/design/brand-v3/BRAND.md §2), set here to
        today's look. The v3 values live only in the [data-brand="v3"] block

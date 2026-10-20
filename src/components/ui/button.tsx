@@ -36,7 +36,7 @@ const buttonVariants = cva(
            exception (DESIGN.md §8): the free-trial CTA stacked above the pink
            checkout CTA on the tutor profile. */
         gold: "bg-gold text-gold-ink hover:brightness-95",
-        destructive: "bg-error text-white hover:brightness-95",
+        destructive: "bg-danger text-white hover:brightness-95",
         secondary: "bg-paper text-ink hover:bg-line",
         link: "text-pink underline-offset-4 hover:underline",
       },

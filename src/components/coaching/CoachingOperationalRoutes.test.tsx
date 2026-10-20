@@ -103,7 +103,9 @@ describe("Coaching operational route shells", () => {
       ([file]) =>
         !file.includes("sessions/") &&
         !file.includes("service-periods/") &&
-        !file.endsWith("/upcoming/page.tsx"),
+        !file.endsWith("/upcoming/page.tsx") &&
+        // The student's Sorun bildir page hands its states to StudentComplaintsBoard.
+        !file.endsWith("student/coaching/complaints/page.tsx"),
     );
     for (const [file] of EMPTY_ROUTES) {
       const source = readFileSync(resolve(process.cwd(), file), "utf8");

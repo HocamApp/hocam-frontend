@@ -18,6 +18,7 @@ export function CoachingFilePicker({
   busy = false,
   onFile,
   className,
+  tone = "outline",
 }: {
   label: string;
   hint?: string;
@@ -26,6 +27,8 @@ export function CoachingFilePicker({
   busy?: boolean;
   onFile: (file: File) => void;
   className?: string;
+  /** "gold" is a solid gold pill, for a page whose main action is adding the file. */
+  tone?: "outline" | "gold";
 }) {
   const id = useId();
   const hintId = hint ? `${id}-hint` : undefined;
@@ -35,7 +38,9 @@ export function CoachingFilePicker({
       <label
         htmlFor={id}
         className={cn(
-          "inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-input border border-dashed border-line px-4 py-2 text-body font-medium text-ink transition-colors focus-within:ring-2 focus-within:ring-pink focus-within:ring-offset-2 hover:border-ink",
+          tone === "gold"
+            ? "inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-pill bg-gold px-5 py-2 text-body font-medium text-gold-ink transition-colors focus-within:ring-2 focus-within:ring-ink focus-within:ring-offset-2 hover:brightness-95"
+            : "inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-input border border-dashed border-line px-4 py-2 text-body font-medium text-ink transition-colors focus-within:ring-2 focus-within:ring-pink focus-within:ring-offset-2 hover:border-ink",
           (disabled || busy) && "cursor-not-allowed opacity-60",
         )}
       >

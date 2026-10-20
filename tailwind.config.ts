@@ -53,6 +53,7 @@ const config: Config = {
         success: "var(--success)",
         "success-soft": "var(--success-soft)",
         error: "var(--error)",
+        danger: "var(--danger)",
 
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
