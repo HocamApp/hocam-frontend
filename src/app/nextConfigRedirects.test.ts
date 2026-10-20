@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
+import { existsSync } from "node:fs";
 import { createRequire } from "node:module";
+import { resolve } from "node:path";
 import { describe, it } from "node:test";
+
+import { readCoachingSetupStep } from "../lib/coachingSetup";
 
 // next.config.js is CommonJS and not part of the TS program, so it is loaded
 // through createRequire rather than imported.
@@ -23,7 +27,7 @@ const nextConfig = createRequire(import.meta.url)("../../next.config.js") as {
  * every checkout under it to the homepage.
  */
 describe("directory retirement redirects", () => {
-  it("retires exactly the old directory routes, the KVKK index and the coaching earnings page", async () => {
+  it("retires exactly the old directory routes, the KVKK index, the coaching earnings page and the two pages the plan wizard replaced", async () => {
     const redirects = await nextConfig.redirects();
     assert.deepEqual(
       redirects.map((r) => [
@@ -36,6 +40,9 @@ describe("directory retirement redirects", () => {
         ["/kvkk", "/kvkk/aydinlatma-metni"],
         // Removed with "Parayı çek"; tutor earnings move outside coaching.
         ["/dashboard/tutor/coaching/earnings", "/dashboard/tutor/coaching"],
+        // Old pages that the Teklif ayarları wizard replaced.
+        ["/dashboard/tutor/coaching/availability", "/dashboard/tutor/coaching/plan?step=availability"],
+        ["/dashboard/tutor/coaching/preview", "/dashboard/tutor/coaching/plan?step=publish"],
       ],
     );
   });
@@ -71,12 +78,50 @@ describe("directory retirement redirects", () => {
         // /kvkk is a documents hub that may plausibly return, and the
         // coaching earnings path will be reused; a cached 308 would make
         // restoring either impossible.
-        const expected = !["/kvkk", "/dashboard/tutor/coaching/earnings"].includes(redirect.source);
+        // The two wizard pages are temporary too: the wizard's steps may move.
+        const expected = ![
+          "/kvkk",
+          "/dashboard/tutor/coaching/earnings",
+          "/dashboard/tutor/coaching/availability",
+          "/dashboard/tutor/coaching/preview",
+        ].includes(redirect.source);
         assert.equal(redirect.permanent, expected, redirect.source);
       }
     } finally {
       if (previous === undefined) delete process.env.VERCEL_ENV;
       else process.env.VERCEL_ENV = previous;
+    }
+  });
+});
+
+/**
+ * /availability and /preview were pages before the Teklif ayarları wizard took
+ * over their jobs: the hours step, and the review step with the student's view.
+ * Their old addresses land on those steps, and the pages themselves are gone, so
+ * there is one place for each job and no dead code behind the redirect.
+ */
+describe("retired tutor coaching pages", () => {
+  const RETIRED = [
+    ["/dashboard/tutor/coaching/availability", "availability"],
+    ["/dashboard/tutor/coaching/preview", "publish"],
+  ] as const;
+
+  it("lands each old address on the wizard step that does its job, one the wizard really reads", async () => {
+    const redirects = await nextConfig.redirects();
+    for (const [source, step] of RETIRED) {
+      const redirect = redirects.find((candidate) => candidate.source === source);
+      assert.ok(redirect, `${source} has no redirect`);
+      const target = new URL(redirect.destination, "https://hocam.test");
+      assert.equal(target.pathname, "/dashboard/tutor/coaching/plan");
+      assert.equal(target.searchParams.get("step"), step);
+      assert.equal(readCoachingSetupStep(target.searchParams.get("step")), step);
+    }
+  });
+
+  it("leaves no page file behind the redirect", () => {
+    for (const [source] of RETIRED) {
+      const file = resolve(process.cwd(), "src/app/(main)", `${source.slice(1)}/page.tsx`);
+      assert.equal(existsSync(file), false, `${file} should be deleted`);
     }
   });
 });
