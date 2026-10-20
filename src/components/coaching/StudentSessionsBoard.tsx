@@ -14,7 +14,8 @@ import { Button } from "@/components/ui/button";
 import type { StudentSessionRow, StudentSessionsModel } from "@/lib/coachingStudentSessions";
 import { coachingDateTimeLabel } from "@/lib/coachingTime";
 
-const SUPPORT_HREF = "/dashboard/student/coaching/complaints";
+/** The form opens on the missing-report topic, the one this link is about. */
+const SUPPORT_HREF = "/dashboard/student/coaching/complaints?konu=report_absent";
 
 const TEXT_LINK_CLASS =
   "inline-flex min-h-11 items-center text-small font-medium text-ink underline underline-offset-4 hover:text-pink-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2";

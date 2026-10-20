@@ -42,6 +42,13 @@ describe("getNotificationHref", () => {
     );
   });
 
+  it("opens the complaint form on the missing-report topic when a report is overdue", () => {
+    assert.equal(
+      getNotificationHref(n("coaching_complaint_eligible", "coaching_session"), "student"),
+      "/dashboard/student/coaching/complaints?konu=report_absent",
+    );
+  });
+
   it("splits package requests by whether they carry coaching", () => {
     assert.equal(getNotificationHref(n("package_request", "package_purchase"), "tutor"), "/dashboard/tutor/packages");
     assert.equal(

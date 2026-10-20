@@ -18,7 +18,8 @@ function coachingSessionHref(n: Notification, role: Role): string {
     }
     return "/dashboard/tutor/coaching/upcoming";
   }
-  if (n.type === "coaching_complaint_eligible") return "/dashboard/student/coaching/complaints";
+  // The report is overdue and support is open: the form opens on that topic.
+  if (n.type === "coaching_complaint_eligible") return "/dashboard/student/coaching/complaints?konu=report_absent";
   return "/dashboard/student/coaching/upcoming";
 }
 

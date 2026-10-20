@@ -242,7 +242,7 @@ describe("student Görüşmeler: Geçmiş", () => {
     assert.ok(within(notice).getByText("Son teslim zamanı: 17 Ekim Cumartesi 18:30"));
     assert.equal(
       within(notice).getByRole("link", { name: "Eksik rapor için desteğe başvur" }).getAttribute("href"),
-      "/dashboard/student/coaching/complaints",
+      "/dashboard/student/coaching/complaints?konu=report_absent",
     );
   });
 

@@ -2033,6 +2033,8 @@ export interface CoachingDisputeEligibility {
   missing_report?: { eligible: boolean; complaint_eligible_at: string | null; session_id: string | null };
   filing_deadline_at?: string | null;
   remaining_eligibility_seconds?: number | null;
+  /** Per topic, the moment its window closes; null for a topic that has no deadline. */
+  category_filing_deadlines?: Record<string, string | null>;
   safety_intake_available?: boolean;
   [key: string]: unknown;
 }
