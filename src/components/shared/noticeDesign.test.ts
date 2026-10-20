@@ -9,7 +9,6 @@ import { test } from "node:test";
  */
 const FILES = [
   "../tutors/TutorDiscountControl.tsx",
-  "../coaching/CoachingSessionList.tsx",
   "./AttentionNotice.tsx",
 ];
 

@@ -443,7 +443,36 @@ const REPORT_FIELD_ERRORS: Record<string, string> = {
   recommended_resources: "Önerilen kaynaklardan biri geçersiz; bağlantıyı ya da dosyayı kontrol et.",
 };
 
+/**
+ * Scheduling, time-request and reschedule errors. The server's `detail` for
+ * these is developer English ("The new recurring time conflicts with an
+ * existing lesson ..."), so the Turkish line in ERROR_MESSAGES wins. Codes
+ * whose detail is a dynamic Turkish sentence (the price cap, report fields)
+ * keep preferring the server's own text.
+ */
+const TURKISH_LINE_WINS = new Set([
+  "not_awaiting_schedule",
+  "scheduling_deadline_expired",
+  "slot_unavailable",
+  "slot_outside_coaching_availability",
+  "lesson_conflict",
+  "time_off_conflict",
+  "coaching_conflict",
+  "duplicate_slot",
+  "frequency_slot_count_mismatch",
+  "plan_unpublished",
+  "requested_time_pending",
+  "requested_time_expired",
+  "requested_time_rejected",
+  "reschedule_pending",
+  "session_not_reschedulable",
+  "outside_service_period",
+]);
+
 export function extractCoachingErrorMessage(error: unknown): string {
+  const knownCode = extractCoachingErrorCode(error);
+  if (knownCode && TURKISH_LINE_WINS.has(knownCode)) return ERROR_MESSAGES[knownCode];
+
   const data = (error as { response?: { data?: Record<string, unknown> } })?.response
     ?.data;
   // A non-JSON error body (e.g. an HTML 500/502 page from a dev server or
@@ -1295,6 +1324,21 @@ export interface MyRecurringSlots {
 export async function fetchMyCoachingRecurringSlots(): Promise<MyRecurringSlots> {
   const response = await api.get<MyRecurringSlots>("/coaching/my-recurring-slots/");
   return response.data;
+}
+
+/**
+ * The hours one recurring slot can move to right now: the tutor's other
+ * published hours without the ones a future week would clash on. Asked when
+ * the change dialog opens, not with the slots, because the server checks every
+ * remaining week for every hour.
+ */
+export async function fetchCoachingRecurringSlotOptions(
+  slotIndex: number
+): Promise<{ day_of_week: number; start_time: string }[]> {
+  const response = await api.get<{ slots: { day_of_week: number; start_time: string }[] }>(
+    `/coaching/recurring-slots/${slotIndex}/options/`
+  );
+  return response.data.slots;
 }
 
 // --- Faz 5: session token, no-show, technical issue, attendance,
