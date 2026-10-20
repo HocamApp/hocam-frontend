@@ -16,7 +16,8 @@ export function CoachingStatusCard({ status }: { status: CoachingDerivedStatus }
   const published = status.publication === "published";
   const action = status.nextAction ?? {
     label: "Öğrenci görünümünü aç",
-    href: "/dashboard/tutor/coaching/preview",
+    // The student's view is the review step of the plan wizard.
+    href: "/dashboard/tutor/coaching/plan?step=publish",
   };
 
   return (

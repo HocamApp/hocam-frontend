@@ -85,6 +85,25 @@ const nextConfig = {
         destination: "/dashboard/tutor/coaching",
         permanent: false,
       },
+      /*
+       * "Koçluk müsaitliği ve kapasite" and "Öğrenci görünümü" were pages of
+       * their own before the Teklif ayarları wizard: its Saatler step holds
+       * the hours and capacity, and its review step shows the student's view.
+       * Nothing links to the old addresses any more, but a bookmark or an old
+       * notification still lands where the job is done now. Config redirects
+       * rather than a `redirect()` in a page, so there is no page left behind
+       * them. Temporary: the wizard's steps may be renamed.
+       */
+      {
+        source: "/dashboard/tutor/coaching/availability",
+        destination: "/dashboard/tutor/coaching/plan?step=availability",
+        permanent: false,
+      },
+      {
+        source: "/dashboard/tutor/coaching/preview",
+        destination: "/dashboard/tutor/coaching/plan?step=publish",
+        permanent: false,
+      },
     ];
   },
 
