@@ -94,6 +94,7 @@ let completed = new Set<string>();
 const requested: string[] = [];
 const posted: string[] = [];
 const toasts: string[] = [];
+const toastActions: string[] = [];
 
 function httpError(status: number) {
   return Object.assign(new Error(`http ${status}`), { response: { status } });
@@ -132,7 +133,10 @@ before(async () => {
   mock.module("sonner", {
     namedExports: {
       toast: {
-        success: (message: string) => toasts.push(`success: ${message}`),
+        success: (message: string, options?: { action?: { label: string } }) => {
+          toasts.push(`success: ${message}`);
+          if (options?.action) toastActions.push(options.action.label);
+        },
         error: (message: string) => toasts.push(`error: ${message}`),
       },
     },
@@ -191,6 +195,7 @@ beforeEach(() => {
   requested.length = 0;
   posted.length = 0;
   toasts.length = 0;
+  toastActions.length = 0;
 });
 
 afterEach(() => {
@@ -267,6 +272,8 @@ describe("student Genel bakış: Sırada", () => {
     await waitFor(() => assert.deepEqual(posted, ["/coaching/program-tasks/t-1/toggle-completion/"]));
     await waitFor(() => assert.equal(screen.queryByText("Problemler: 40 soru"), null));
     assert.ok(toasts.includes("success: Görev tamamlandı."));
+    // The same undo the program page offers.
+    assert.deepEqual(toastActions, ["Geri al"]);
     // The other tasks stay.
     assert.ok(screen.getByText("Paragraf: 2 deneme"));
   });

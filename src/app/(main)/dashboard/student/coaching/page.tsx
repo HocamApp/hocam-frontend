@@ -1,9 +1,8 @@
 "use client";
 
 import { useMemo } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { GraduationCap } from "@phosphor-icons/react";
-import { toast } from "sonner";
 
 import { RouteGuard } from "@/components/shared/RouteGuard";
 import { CoachingPageShell } from "@/components/coaching/CoachingPageShell";
@@ -17,6 +16,7 @@ import {
   type StudentNextStepModel,
   type StudentOverviewProblem,
 } from "@/components/coaching/StudentCoachingOverview";
+import { useProgramTaskToggle } from "@/hooks/useProgramTaskToggle";
 import { useServerNow } from "@/hooks/useServerNow";
 import {
   COACHING_FAZ6_QUERY_KEYS,
@@ -24,13 +24,11 @@ import {
   COACHING_SESSION_QUERY_KEYS,
   coachingFrequencyLabel,
   coachingServiceStatusLabel,
-  extractCoachingErrorMessage,
   fetchCoachingProgram,
   fetchCoachingReports,
   fetchCoachingSchedulingState,
   fetchCoachingSessions,
   fetchStudentCoachingDisputes,
-  toggleCoachingProgramTaskCompletion,
   type CoachingSchedulingState,
 } from "@/lib/coachingApi";
 import { studentCoachingNextStep } from "@/lib/coachingPresentation";
@@ -97,7 +95,6 @@ function NoCoachingContent() {
 }
 
 function RunningCoachingContent({ state }: { state: CoachingSchedulingState }) {
-  const queryClient = useQueryClient();
   const now = useServerNow();
 
   const running = state.service_status === "active" || state.service_status === "cancellation_pending";
@@ -132,18 +129,7 @@ function RunningCoachingContent({ state }: { state: CoachingSchedulingState }) {
     staleTime: 10 * 60_000,
   });
 
-  const completeMutation = useMutation({
-    mutationFn: toggleCoachingProgramTaskCompletion,
-    onSuccess: async (task) => {
-      toast.success(task.is_completed ? "Görev tamamlandı." : "Görev yeniden açıldı.");
-      // Awaited so the button stays off until the list has refreshed: a second
-      // press on the stale row would toggle the task straight back.
-      if (servicePeriodId) {
-        await queryClient.invalidateQueries({ queryKey: COACHING_FAZ6_QUERY_KEYS.program(servicePeriodId) });
-      }
-    },
-    onError: (error) => toast.error(extractCoachingErrorMessage(error)),
-  });
+  const { toggle, busyTaskId } = useProgramTaskToggle(servicePeriodId);
 
   const sessions = sessionsQuery.data;
   const progress = useMemo(
@@ -221,8 +207,8 @@ function RunningCoachingContent({ state }: { state: CoachingSchedulingState }) {
       problems={problems}
       onRetry={(id) => retriers[id]?.()}
       isRetrying={isRetrying}
-      onComplete={(taskId) => completeMutation.mutate(taskId)}
-      completingTaskId={completeMutation.isPending ? (completeMutation.variables ?? null) : null}
+      onComplete={toggle}
+      completingTaskId={busyTaskId}
     />
   );
 }
