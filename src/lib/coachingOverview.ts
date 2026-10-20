@@ -31,7 +31,7 @@ export function istanbulDateKey(value: Date | number): string {
 }
 
 /** 0 for Monday, 6 for Sunday. getUTCDay is 0 for Sunday, hence the shift (workspace rule 10). */
-function weekdayIndex(dateKey: string): number {
+export function weekdayIndex(dateKey: string): number {
   return (new Date(`${dateKey}T00:00:00Z`).getUTCDay() + 6) % 7;
 }
 
@@ -40,7 +40,7 @@ function addDays(dateKey: string, days: number): string {
   return new Date(Date.UTC(year, month - 1, day + days)).toISOString().slice(0, 10);
 }
 
-const MONTH_SHORT = ["Oca", "Şub", "Mar", "Nis", "May", "Haz", "Tem", "Ağu", "Eyl", "Eki", "Kas", "Ara"];
+export const MONTH_SHORT = ["Oca", "Şub", "Mar", "Nis", "May", "Haz", "Tem", "Ağu", "Eyl", "Eki", "Kas", "Ara"];
 
 /**
  * A moment as a clock time on the day it falls: "Bugün 19:00", "Yarın 18:00",

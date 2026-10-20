@@ -6,6 +6,7 @@ import {
   coachingDateTimeLabel,
   coachingLocalDateHeading,
   coachingTimeLabel,
+  coachingTimeLocative,
 } from "./coachingTime";
 
 describe("coaching time labels", () => {
@@ -26,5 +27,36 @@ describe("coaching time labels", () => {
 
   it("says so instead of printing Invalid Date", () => {
     assert.equal(coachingDateTimeLabel("not-a-date"), "Tarih bilgisi alınamadı");
+  });
+});
+
+describe("coachingTimeLocative", () => {
+  it("picks -de or -te from how the clock time is spoken, last word first", () => {
+    // Minutes decide when there are any: yirmi, otuz, elli, on, bir, iki, altı...
+    assert.equal(coachingTimeLocative("18:20"), "18:20'de");
+    assert.equal(coachingTimeLocative("18:30"), "18:30'de");
+    assert.equal(coachingTimeLocative("18:50"), "18:50'de");
+    assert.equal(coachingTimeLocative("18:10"), "18:10'de");
+    assert.equal(coachingTimeLocative("18:06"), "18:06'de");
+    assert.equal(coachingTimeLocative("18:01"), "18:01'de");
+    // ... except kırk and the numbers ending in üç, dört, beş.
+    assert.equal(coachingTimeLocative("18:40"), "18:40'te");
+    assert.equal(coachingTimeLocative("18:45"), "18:45'te");
+    assert.equal(coachingTimeLocative("18:03"), "18:03'te");
+    assert.equal(coachingTimeLocative("18:04"), "18:04'te");
+  });
+
+  it("reads the hour when the minutes are zero", () => {
+    assert.equal(coachingTimeLocative("18:00"), "18:00'de"); // on sekiz
+    assert.equal(coachingTimeLocative("20:00"), "20:00'de"); // yirmi
+    assert.equal(coachingTimeLocative("00:00"), "00:00'de"); // sıfır
+    assert.equal(coachingTimeLocative("15:00"), "15:00'te"); // on beş
+    assert.equal(coachingTimeLocative("13:00"), "13:00'te"); // on üç
+    assert.equal(coachingTimeLocative("23:00"), "23:00'te"); // yirmi üç
+    assert.equal(coachingTimeLocative("04:00"), "04:00'te"); // dört
+  });
+
+  it("hands back anything that is not a clock time unchanged", () => {
+    assert.equal(coachingTimeLocative("akşam"), "akşam");
   });
 });

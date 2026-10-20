@@ -34,18 +34,34 @@ before(async () => {
   mock.module("@/hooks/useCoachingFlag", {
     namedExports: { useCoachingFlag: () => ({ enabled: true }) },
   });
-  mock.module("@/lib/coachingApi", {
-    namedExports: {
-      COACHING_FAZ6_QUERY_KEYS: { program: (id: string) => ["coaching-program", id] },
-      coachingServiceStatusLabel: () => "Aktif",
-      extractCoachingErrorMessage: () => "Koçluk verisi yüklenemedi",
-      fetchCoachingProgram: async () => null,
-      fetchCoachingSchedulingState: async () => ({
-        service_period_id: "period-1",
-        service_status: "active",
-      }),
-      fetchCoachingSessions: async () => [],
+  // The real coachingApi on top of a stubbed transport: the overview now
+  // reads several endpoints and a partial coachingApi mock would hand it
+  // undefined helpers.
+  mock.module("@/lib/api", {
+    defaultExport: {
+      get: async (url: string) => {
+        if (url === "/coaching/scheduling/") {
+          return {
+            data: {
+              id: "purchase-1",
+              service_period_id: "period-1",
+              service_status: "active",
+              frequency: "weekly",
+              weeks: 4,
+              total_sessions: 4,
+              slot_selection_deadline_at: null,
+              required_slot_count: 1,
+            },
+          };
+        }
+        if (url === "/coaching/sessions/") return { data: [] };
+        if (url === "/coaching/reports/") return { data: [] };
+        if (url === "/coaching/disputes/") return { data: [] };
+        // No program yet, and the coaching thread cannot be read: both are 404.
+        throw Object.assign(new Error("not found"), { response: { status: 404 } });
+      },
     },
+    namedExports: { API_BASE_URL: "http://localhost:8000/api" },
   });
 
   StudentCoachingOverviewPage = (await import("@/app/(main)/dashboard/student/coaching/page")).default;
@@ -62,20 +78,20 @@ function renderWithQueryClient(node: React.ReactNode) {
   return render(<QueryClientProvider client={client}>{node}</QueryClientProvider>);
 }
 
-test("student coaching overview names the workspace and both program entries consistently", async () => {
+test("student coaching overview is titled like its tab, and only the tabs link to the program", async () => {
   renderWithQueryClient(<StudentCoachingOverviewPage />);
 
-  // The overview is the coaching workspace; "Koçluk Programım" names only the
-  // program inside it, so the two pages never share a heading.
-  assert.ok(screen.getByRole("heading", { level: 1, name: "Çalışma koçluğum" }));
+  // The tab and the page share one name; "Koçluk Programım" names only the
+  // program, so the two pages never share a heading.
+  assert.ok(screen.getByRole("heading", { level: 1, name: "Genel bakış" }));
   const subnav = screen.getByRole("navigation", { name: "Koçluk bölümleri" });
   assert.equal(
     within(subnav).getByRole("link", { name: "Koçluk Programım" }).getAttribute("href"),
     "/dashboard/student/coaching/program",
   );
-  await waitFor(() => {
-    assert.equal(screen.getAllByRole("link", { name: "Koçluk Programım" }).length, 2);
-  });
+  await screen.findByRole("heading", { name: "Çalışma koçluğun" });
+  // The overview used to repeat the tabs as a grid of links under other names.
+  assert.equal(screen.getAllByRole("link", { name: "Koçluk Programım" }).length, 1);
 });
 
 test("student coaching program page does not borrow the study schedule name", () => {

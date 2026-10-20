@@ -1,62 +1,239 @@
 "use client";
 
-import Link from "next/link";
-import { useQuery } from "@tanstack/react-query";
-import {
-  CalendarBlank,
-  CaretRight,
-  ChatsCircle,
-  ClipboardText,
-  GraduationCap,
-  ListChecks,
-  Question,
-  ShieldCheck,
-} from "@phosphor-icons/react";
+import { useMemo } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { GraduationCap } from "@phosphor-icons/react";
+import { toast } from "sonner";
 
 import { RouteGuard } from "@/components/shared/RouteGuard";
 import { CoachingPageShell } from "@/components/coaching/CoachingPageShell";
-import { CoachingSectionHeading } from "@/components/coaching/CoachingSectionHeading";
 import { CoachingLoadingState } from "@/components/coaching/CoachingLoadingState";
 import { CoachingEmptyState as EmptyState } from "@/components/coaching/CoachingEmptyState";
 import { CoachingLoadError } from "@/components/coaching/CoachingLoadError";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import {
+  StudentCoachingHistory,
+  StudentCoachingOverview,
+  type StudentCoachingHeaderModel,
+  type StudentNextStepModel,
+  type StudentOverviewProblem,
+} from "@/components/coaching/StudentCoachingOverview";
+import { useServerNow } from "@/hooks/useServerNow";
+import {
+  COACHING_FAZ6_QUERY_KEYS,
+  COACHING_FAZ8_QUERY_KEYS,
+  COACHING_SESSION_QUERY_KEYS,
+  coachingFrequencyLabel,
   coachingServiceStatusLabel,
+  extractCoachingErrorMessage,
+  fetchCoachingProgram,
+  fetchCoachingReports,
   fetchCoachingSchedulingState,
   fetchCoachingSessions,
+  fetchStudentCoachingDisputes,
+  toggleCoachingProgramTaskCompletion,
+  type CoachingSchedulingState,
 } from "@/lib/coachingApi";
 import { studentCoachingNextStep } from "@/lib/coachingPresentation";
-import { fetchCoachingPurchaseConversation } from "@/lib/messagingApi";
+import {
+  buildStudentCoachingProgress,
+  buildStudentCoachingTimeline,
+  buildStudentReportRows,
+} from "@/lib/coachingStudentOverview";
 import { coachingDateTimeLabel } from "@/lib/coachingTime";
+import { fetchCoachingPurchaseConversation } from "@/lib/messagingApi";
+
+const BASE = "/dashboard/student/coaching";
+/** A coaching that is over: the server still answers for it while a refund obligation is open. */
+const ENDED_STATUSES = new Set(["cancelled", "rejected", "refunded", "completed"]);
+
+function nextStepFor(state: CoachingSchedulingState): StudentNextStepModel {
+  const step = studentCoachingNextStep(state.service_status, undefined);
+  if (step.kind === "pick_schedule") {
+    return {
+      text: "Koçluğun başlaması için haftalık görüşme saatlerini seçmen gerekiyor.",
+      pickSchedule: {
+        href: `${BASE}/schedule`,
+        deadline: state.slot_selection_deadline_at
+          ? coachingDateTimeLabel(state.slot_selection_deadline_at)
+          : null,
+      },
+    };
+  }
+  return {
+    text: step.kind === "message" ? step.text : "Koçluk durumun güncelleniyor.",
+    pickSchedule: null,
+  };
+}
+
+/** A student without a running coaching: past reports when there are any, otherwise the empty state. */
+function NoCoachingContent() {
+  const reportsQuery = useQuery({
+    queryKey: COACHING_FAZ6_QUERY_KEYS.studentReportList(),
+    queryFn: fetchCoachingReports,
+  });
+
+  if (reportsQuery.isLoading) return <CoachingLoadingState rows={2} />;
+  if (reportsQuery.isError) {
+    return (
+      <CoachingLoadError
+        message="Geçmiş raporların yüklenemedi. Bağlantını kontrol edip tekrar dene."
+        onRetry={() => reportsQuery.refetch()}
+        isRetrying={reportsQuery.isFetching}
+      />
+    );
+  }
+
+  const rows = buildStudentReportRows({ reports: reportsQuery.data ?? [] });
+  if (rows.length > 0) return <StudentCoachingHistory rows={rows} seeAllHref={`${BASE}/reports`} />;
+
+  return (
+    <EmptyState
+      icon={GraduationCap}
+      title="Henüz bir çalışma koçluğun yok"
+      description="Ders paketine çalışma koçluğu eklediğin talep öğretmenin tarafından kabul edildikten sonra koçluk alanın burada açılır."
+      steps={["Ders paketi ve koçluk talebin hocana gider", "Hocan kabul edince koçluk alanın açılır"]}
+    />
+  );
+}
+
+function RunningCoachingContent({ state }: { state: CoachingSchedulingState }) {
+  const queryClient = useQueryClient();
+  const now = useServerNow();
+
+  const running = state.service_status === "active" || state.service_status === "cancellation_pending";
+  const ended = ENDED_STATUSES.has(state.service_status);
+  const servicePeriodId = state.service_period_id;
+
+  const sessionsQuery = useQuery({
+    queryKey: COACHING_SESSION_QUERY_KEYS.studentList(),
+    queryFn: fetchCoachingSessions,
+    enabled: running,
+  });
+  const programQuery = useQuery({
+    queryKey: servicePeriodId ? COACHING_FAZ6_QUERY_KEYS.program(servicePeriodId) : ["coaching-program", "none"],
+    queryFn: () => fetchCoachingProgram(servicePeriodId!),
+    enabled: running && Boolean(servicePeriodId),
+  });
+  const reportsQuery = useQuery({
+    queryKey: COACHING_FAZ6_QUERY_KEYS.studentReportList(),
+    queryFn: fetchCoachingReports,
+    enabled: running || ended,
+  });
+  const disputesQuery = useQuery({
+    queryKey: COACHING_FAZ8_QUERY_KEYS.studentDisputes(),
+    queryFn: fetchStudentCoachingDisputes,
+    enabled: running,
+  });
+  // The coaching thread itself, so "Hocana yaz" opens it instead of the inbox.
+  // It also names the coach; if it cannot be read the page still works.
+  const conversationQuery = useQuery({
+    queryKey: ["coaching-purchase-conversation", state.id],
+    queryFn: () => fetchCoachingPurchaseConversation(state.id),
+    staleTime: 10 * 60_000,
+  });
+
+  const completeMutation = useMutation({
+    mutationFn: toggleCoachingProgramTaskCompletion,
+    onSuccess: async (task) => {
+      toast.success(task.is_completed ? "Görev tamamlandı." : "Görev yeniden açıldı.");
+      // Awaited so the button stays off until the list has refreshed: a second
+      // press on the stale row would toggle the task straight back.
+      if (servicePeriodId) {
+        await queryClient.invalidateQueries({ queryKey: COACHING_FAZ6_QUERY_KEYS.program(servicePeriodId) });
+      }
+    },
+    onError: (error) => toast.error(extractCoachingErrorMessage(error)),
+  });
+
+  const sessions = sessionsQuery.data;
+  const progress = useMemo(
+    () => (sessions ? buildStudentCoachingProgress({ sessions, totalSessions: state.total_sessions }) : null),
+    [sessions, state.total_sessions],
+  );
+  const timeline = useMemo(
+    () =>
+      buildStudentCoachingTimeline({
+        sessions: sessions ?? [],
+        tasks: programQuery.data?.tasks ?? [],
+        disputes: disputesQuery.data ?? [],
+        reports: reportsQuery.data ?? [],
+        now,
+      }),
+    [sessions, programQuery.data, disputesQuery.data, reportsQuery.data, now],
+  );
+
+  // With no meetings to count, the step is the sentence for a winding-down or finished coaching.
+  const endStep = studentCoachingNextStep(state.service_status, []);
+  const other = conversationQuery.data?.other_participant;
+  const header: StudentCoachingHeaderModel = {
+    name: other?.display_name || null,
+    avatarUrl: other?.avatar_url ?? null,
+    statusLabel: coachingServiceStatusLabel(state.service_status),
+    subtitle: [coachingFrequencyLabel(state.frequency), `${state.weeks} hafta`, progress?.range]
+      .filter(Boolean)
+      .join(" · "),
+    messagesHref: conversationQuery.data?.id ? `/messages/${conversationQuery.data.id}` : "/messages",
+    unread: conversationQuery.data?.unread_count ?? null,
+    notice:
+      (state.service_status === "cancellation_pending" || ended) && endStep.kind === "message"
+        ? endStep.text
+        : null,
+  };
+
+  const problems: StudentOverviewProblem[] = [];
+  if (sessionsQuery.isError) problems.push({ id: "sessions", section: "ahead", message: "Görüşmelerin yüklenemedi." });
+  if (programQuery.isError) problems.push({ id: "program", section: "ahead", message: "Görevlerin yüklenemedi." });
+  if (disputesQuery.isError) problems.push({ id: "disputes", section: "ahead", message: "Sorun bildirimlerin yüklenemedi." });
+  if (reportsQuery.isError) problems.push({ id: "reports", section: "past", message: "Raporların yüklenemedi." });
+
+  const retriers: Record<string, () => unknown> = {
+    sessions: () => sessionsQuery.refetch(),
+    program: () => programQuery.refetch(),
+    disputes: () => disputesQuery.refetch(),
+    reports: () => reportsQuery.refetch(),
+  };
+  const isRetrying = [sessionsQuery, programQuery, disputesQuery, reportsQuery].some(
+    (query) => query.isError && query.isFetching,
+  );
+
+  // Rows appear as each read arrives; the skeleton shows only while nothing can be listed yet.
+  const aheadLoading =
+    timeline.ahead.length === 0 &&
+    (sessionsQuery.isLoading || programQuery.isLoading || disputesQuery.isLoading);
+  const pastLoading = timeline.past.length === 0 && (reportsQuery.isLoading || disputesQuery.isLoading);
+
+  return (
+    <StudentCoachingOverview
+      header={header}
+      progress={progress}
+      nextStep={running || ended ? null : nextStepFor(state)}
+      history={
+        ended
+          ? { rows: buildStudentReportRows({ reports: reportsQuery.data ?? [] }), seeAllHref: `${BASE}/reports` }
+          : null
+      }
+      ahead={timeline.ahead}
+      hidden={timeline.hidden}
+      aheadLoading={aheadLoading}
+      past={timeline.past}
+      pastLoading={pastLoading}
+      programHint={running && (!servicePeriodId || programQuery.data === null)}
+      problems={problems}
+      onRetry={(id) => retriers[id]?.()}
+      isRetrying={isRetrying}
+      onComplete={(taskId) => completeMutation.mutate(taskId)}
+      completingTaskId={completeMutation.isPending ? (completeMutation.variables ?? null) : null}
+    />
+  );
+}
 
 function OverviewContent() {
   const stateQuery = useQuery({
     queryKey: ["coaching-scheduling-state"],
     queryFn: fetchCoachingSchedulingState,
   });
-  const state = stateQuery.data;
-  const hasSessions =
-    state?.service_status === "active" || state?.service_status === "cancellation_pending";
-  const sessionsQuery = useQuery({
-    queryKey: ["coaching-sessions"],
-    queryFn: fetchCoachingSessions,
-    enabled: hasSessions,
-  });
-  // The coaching thread itself, so "Mesajlar" opens it instead of the inbox.
-  const conversationQuery = useQuery({
-    queryKey: ["coaching-purchase-conversation", state?.id],
-    queryFn: () => fetchCoachingPurchaseConversation(state!.id),
-    enabled: Boolean(state?.id),
-    staleTime: 10 * 60_000,
-  });
-  const messagesHref = conversationQuery.data?.id
-    ? `/messages/${conversationQuery.data.id}`
-    : "/messages";
 
-  if (stateQuery.isLoading) {
-    return <CoachingLoadingState rows={3} />;
-  }
+  if (stateQuery.isLoading) return <CoachingLoadingState rows={3} />;
 
   if (stateQuery.isError) {
     return (
@@ -68,127 +245,15 @@ function OverviewContent() {
     );
   }
 
-  if (!state) {
-    return (
-      <EmptyState
-        icon={GraduationCap}
-        title="Henüz bir çalışma koçluğun yok"
-        description="Ders paketine çalışma koçluğu eklediğin talep öğretmenin tarafından kabul edildikten sonra koçluk alanın burada açılır."
-        steps={[
-          "Ders paketi ve koçluk talebin kabul edilir",
-          "Ödemen aktive olduğunda koçluk alanın açılır",
-        ]}
-      />
-    );
-  }
-
-  const nextStep = studentCoachingNextStep(state.service_status, sessionsQuery.data);
-
-  return (
-    <div className="space-y-6">
-      <Card className="text-ink">
-        <CardContent className="p-6 sm:p-8">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <p className="text-label font-medium uppercase tracking-[0.08em] text-ink-mid">
-                Hizmet durumu
-              </p>
-              <p className="mt-2 text-[1.375rem] font-medium tracking-[-0.01em]">
-                Çalışma koçluğu
-              </p>
-            </div>
-            <Badge
-              variant="outline"
-              className="w-fit border-line bg-transparent px-3 py-1 text-ink"
-            >
-              {coachingServiceStatusLabel(state.service_status)}
-            </Badge>
-          </div>
-          <div className="mt-6 border-t border-line pt-5">
-            {hasSessions && sessionsQuery.isLoading ? (
-              <div className="h-5 w-64 animate-pulse rounded-input bg-[var(--skeleton)]" />
-            ) : hasSessions && sessionsQuery.isError ? (
-              <CoachingLoadError
-                message="Görüşmelerin yüklenemedi."
-                onRetry={() => sessionsQuery.refetch()}
-                isRetrying={sessionsQuery.isFetching}
-              />
-            ) : nextStep.kind === "next_session" ? (
-              <p className="text-body text-ink-mid tabular-nums">
-                Sonraki görüşme:{" "}
-                {coachingDateTimeLabel(nextStep.startsAt)}
-              </p>
-            ) : nextStep.kind === "no_upcoming_session" ? (
-              <p className="text-body text-ink-mid">Yaklaşan görüşmen yok.</p>
-            ) : nextStep.kind === "pick_schedule" ? (
-              <Link
-                href="/dashboard/student/coaching/schedule"
-                className="text-body font-medium text-pink underline underline-offset-4"
-              >
-                Koçluk saatini seç
-              </Link>
-            ) : (
-              <p className="max-w-2xl text-body leading-[1.6] text-ink-mid">{nextStep.text}</p>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-      <CoachingSectionHeading>Koçluk alanların</CoachingSectionHeading>
-
-      <div className="grid overflow-hidden rounded-card border border-line bg-surface sm:grid-cols-2">
-        {[
-          {
-            href: "/dashboard/student/coaching/upcoming",
-            label: "Yaklaşan görüşmeler",
-            icon: CalendarBlank,
-          },
-          {
-            href: "/dashboard/student/coaching/program",
-            label: "Koçluk Programım",
-            icon: ListChecks,
-          },
-          {
-            href: "/dashboard/student/coaching/reports",
-            label: "Raporlarım",
-            icon: ClipboardText,
-          },
-          { href: messagesHref, label: "Hocanla mesajlar", icon: ChatsCircle },
-          { href: "/support", label: "Hocam destek", icon: Question },
-          {
-            href: "/dashboard/student/coaching/complaints",
-            label: "Bildirdiğim koçluk sorunları",
-            icon: ShieldCheck,
-          },
-        ].map(({ href, label, icon: Icon }) => (
-          <Link
-            key={href}
-            href={href}
-            className="group flex min-h-16 items-center gap-3 border-b border-line px-5 py-4 text-ink transition-colors duration-[--duration-state] last:border-b-0 hover:bg-paper focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ink sm:[&:nth-child(odd)]:border-r sm:[&:nth-last-child(-n+2)]:border-b-0"
-          >
-            <Icon
-              className="h-5 w-5 shrink-0"
-              weight="regular"
-              aria-hidden="true"
-            />
-            <span className="text-body font-medium">{label}</span>
-            <CaretRight
-              className="ml-auto h-4 w-4 text-ink-mid group-hover:text-ink"
-              weight="regular"
-              aria-hidden="true"
-            />
-          </Link>
-        ))}
-      </div>
-    </div>
-  );
+  if (!stateQuery.data) return <NoCoachingContent />;
+  return <RunningCoachingContent state={stateQuery.data} />;
 }
 
 export default function StudentCoachingOverviewPage() {
   return (
     <RouteGuard requireAuth requireRole="student">
       <CoachingPageShell
-        title="Çalışma koçluğum"
+        title="Genel bakış"
         width="narrow"
         currentHref="/dashboard/student/coaching"
         audience="student"
