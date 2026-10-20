@@ -3,7 +3,7 @@ import "@/test/setupDom";
 import assert from "node:assert/strict";
 import { after, afterEach, describe, it } from "node:test";
 import React from "react";
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 
 import type { TutorNextSession, TutorReportRow, TutorSessionDay } from "@/lib/coachingSessions";
 import { CoachingSessionsBoard } from "./CoachingSessionsBoard";
@@ -173,6 +173,24 @@ describe("CoachingSessionsBoard: what follows", () => {
     render(board({ days: [], total: 1 }));
 
     assert.equal(screen.queryByRole("heading", { name: "Sonraki görüşmeler" }), null);
+  });
+});
+
+describe("CoachingSessionsBoard: the rest of the list", () => {
+  it("offers the meetings left out as a solid gold button under the list, and asks for them when pressed", () => {
+    let asked = 0;
+    render(board({ hidden: 12, onShowMore: () => (asked += 1) }));
+
+    const button = screen.getByRole("button", { name: "12 görüşme daha göster" });
+    assert.match(button.className, /bg-gold/);
+    fireEvent.click(button);
+    assert.equal(asked, 1);
+  });
+
+  it("has no such button when nothing is left out", () => {
+    render(board({ hidden: 0, onShowMore: () => {} }));
+
+    assert.equal(screen.queryByRole("button", { name: /daha göster/ }), null);
   });
 });
 

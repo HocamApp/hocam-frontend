@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { CalendarDots } from "@phosphor-icons/react";
 
@@ -13,6 +14,8 @@ import { fetchTutorCoachingSessions } from "@/lib/coachingApi";
 import { buildTutorSessions } from "@/lib/coachingSessions";
 
 function UpcomingList() {
+  // Each press of "daha göster" lists the next 14 days.
+  const [windows, setWindows] = useState(1);
   const { data: sessions, isLoading, isError, isFetching, refetch } = useQuery({
     queryKey: ["coaching-tutor-sessions"],
     queryFn: fetchTutorCoachingSessions,
@@ -38,13 +41,22 @@ function UpcomingList() {
 
   // `now` is read here, per render: Katıl opens 15 minutes before a meeting, and
   // the list is refetched often enough (focus, navigation) for that to stay true.
-  const board = buildTutorSessions({ sessions: sessions ?? [], now: new Date() });
+  const board = buildTutorSessions({ sessions: sessions ?? [], now: new Date(), windows });
 
   if (!board.next && board.reports.length === 0) {
     return <CoachingEmptyState icon={CalendarDots} title="Yaklaşan görüşme yok" description="Planlanan bir koçluk görüşmesi olduğunda tarihi, hazırlık alanı ve katılım bağlantısı burada görünür." tone="accent" />;
   }
 
-  return <CoachingSessionsBoard next={board.next} days={board.days} reports={board.reports} total={board.total} />;
+  return (
+    <CoachingSessionsBoard
+      next={board.next}
+      days={board.days}
+      reports={board.reports}
+      total={board.total}
+      hidden={board.hidden}
+      onShowMore={() => setWindows((count) => count + 1)}
+    />
+  );
 }
 
 export default function TutorCoachingUpcomingPage() {

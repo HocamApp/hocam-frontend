@@ -52,11 +52,16 @@ export function CoachingSessionsBoard({
   days,
   reports,
   total,
+  hidden = 0,
+  onShowMore,
 }: {
   next: TutorNextSession | null;
   days: readonly TutorSessionDay[];
   reports: readonly TutorReportRow[];
   total: number;
+  /** Meetings ahead that the list leaves out for now. */
+  hidden?: number;
+  onShowMore?: () => void;
 }) {
   return (
     <div className="space-y-5">
@@ -120,6 +125,13 @@ export function CoachingSessionsBoard({
                 </div>
               </div>
             ))}
+            {hidden > 0 && onShowMore ? (
+              <div className="pb-2 pt-1">
+                <Button type="button" variant="gold" size="sm" className="min-h-11" onClick={onShowMore}>
+                  {`${hidden} görüşme daha göster`}
+                </Button>
+              </div>
+            ) : null}
           </div>
         </div>
       ) : null}
