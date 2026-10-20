@@ -10,7 +10,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { useCoachingFlag } from "@/hooks/useCoachingFlag";
 import { useIsMobile } from "@/hooks/useMediaQuery";
 import { useScheduleFlag } from "@/hooks/useScheduleFlag";
-import { useTutorAcceptanceConfig } from "@/hooks/useTutorAcceptanceConfig";
 import { cn } from "@/lib/utils";
 import {
   YS_UTILITY_ITEMS,
@@ -27,7 +26,7 @@ const itemClassName =
  * permanent tab rather than a trip through the overflow menu. Notifications
  * used to sit here; they moved up beside the avatar, where a bell belongs.
  */
-const FEATURED_HREFS = ["/schedule", "/dashboard/tutor/requests"];
+const FEATURED_HREFS = ["/schedule"];
 
 /**
  * A 10px label under a 20px icon has room for one word. The accessible name
@@ -35,7 +34,6 @@ const FEATURED_HREFS = ["/schedule", "/dashboard/tutor/requests"];
  */
 const BAR_LABELS: Record<string, string> = {
   "/schedule": "Programım",
-  "/dashboard/tutor/requests": "Talepler",
 };
 
 type MobileIconProps = {
@@ -75,7 +73,6 @@ export function MobileTabBar() {
 
   const { enabled: coachingEnabled } = useCoachingFlag();
   const scheduleEnabled = useScheduleFlag();
-  const { showPackageRequests } = useTutorAcceptanceConfig();
 
   // The bar itself is `md:hidden`, but the drawer renders in a portal outside
   // it. Without this it would survive a rotation into tablet width.
@@ -87,7 +84,6 @@ export function MobileTabBar() {
 
   const appTabs = getYsAppTabs(isTutor ? "tutor" : "student", {
     coachingEnabled,
-    packageRequestsEnabled: showPackageRequests,
     scheduleEnabled,
   });
   const messages = YS_UTILITY_ITEMS.find((item) => item.href === "/messages");

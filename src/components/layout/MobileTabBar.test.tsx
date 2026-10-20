@@ -11,7 +11,6 @@ let isTutor = false;
 let isAuthenticated = true;
 let scheduleEnabled = true;
 let coachingEnabled = false;
-let showPackageRequests = false;
 let isMobile = true;
 
 beforeEach(() => {
@@ -20,7 +19,6 @@ beforeEach(() => {
   isAuthenticated = true;
   scheduleEnabled = true;
   coachingEnabled = false;
-  showPackageRequests = false;
   isMobile = true;
 });
 
@@ -54,11 +52,6 @@ mock.module("@/hooks/useCoachingFlag", {
 });
 mock.module("@/hooks/useScheduleFlag", {
   namedExports: { useScheduleFlag: () => scheduleEnabled },
-});
-mock.module("@/hooks/useTutorAcceptanceConfig", {
-  namedExports: {
-    useTutorAcceptanceConfig: () => ({ showPackageRequests }),
-  },
 });
 mock.module("@/hooks/usePageVisibility", {
   namedExports: { usePageVisibility: () => true },
@@ -165,7 +158,6 @@ test("disabled study schedule preserves five slots without exposing the guarded 
 
 test("tutor navigation promotes the workspace and keeps other routes in More", () => {
   isTutor = true;
-  showPackageRequests = true;
   coachingEnabled = true;
   renderMobileTabBar();
   const nav = screen.getByRole("navigation", { name: "Mobil ana menü" });
@@ -174,7 +166,7 @@ test("tutor navigation promotes the workspace and keeps other routes in More", (
   fireEvent.click(screen.getByRole("button", { name: "Daha Fazla" }));
   const drawer = screen.getByRole("dialog");
   assert.deepEqual(within(drawer).getAllByRole("link").map(item => item.textContent),
-    ["Hocalar", "İstatistiklerim", "Koçluk", "Paket Talepleri", "Favoriler"]);
+    ["Hocalar", "İstatistiklerim", "Koçluk", "Favoriler"]);
   assert.equal(screen.queryByRole("link", { name: "Çalışma Programım" }), null);
 });
 

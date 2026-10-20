@@ -15,7 +15,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { useCoachingFlag } from "@/hooks/useCoachingFlag";
 import { useIsMobile } from "@/hooks/useMediaQuery";
 import { useScheduleFlag } from "@/hooks/useScheduleFlag";
-import { useTutorAcceptanceConfig } from "@/hooks/useTutorAcceptanceConfig";
 
 import { YsNavIcons } from "./YsNavIcons";
 import {
@@ -153,7 +152,6 @@ export function YsNavbar({ startCoachmark = true }: Props) {
   const { enabled: coachingEnabled } = useCoachingFlag();
   const isMobile = useIsMobile();
   const scheduleEnabled = useScheduleFlag();
-  const { showPackageRequests } = useTutorAcceptanceConfig();
 
   const [nudge, setNudge] = useState<"hidden" | "visible" | "leaving">(
     "hidden",
@@ -208,7 +206,6 @@ export function YsNavbar({ startCoachmark = true }: Props) {
       ? getYsAppTabs(isTutor ? "tutor" : "student", {
           coachingEnabled,
           scheduleEnabled,
-          packageRequestsEnabled: showPackageRequests,
         })
       : mode === "anon"
         ? YS_PUBLIC_TABS

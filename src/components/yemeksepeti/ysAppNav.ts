@@ -5,7 +5,6 @@ import {
   ChartBar,
   ChatCircle,
   ChatCircleDots,
-  ClipboardText,
   Compass,
   GraduationCap,
   Heart,
@@ -52,7 +51,6 @@ export type YsNavItem = {
 type Flags = {
   coachingEnabled: boolean;
   scheduleEnabled: boolean;
-  packageRequestsEnabled: boolean;
 };
 
 /**
@@ -117,13 +115,6 @@ export function getYsAppTabs(role: YsNavRole, flags: Flags): YsNavItem[] {
       label: "Çalışma Programım",
       href: "/schedule",
       icon: CalendarBlank,
-    });
-  }
-  if (isTutor && flags.packageRequestsEnabled) {
-    tabs.push({
-      label: "Paket Talepleri",
-      href: "/dashboard/tutor/requests",
-      icon: ClipboardText,
     });
   }
 

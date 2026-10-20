@@ -27,7 +27,7 @@ const nextConfig = createRequire(import.meta.url)("../../next.config.js") as {
  * every checkout under it to the homepage.
  */
 describe("directory retirement redirects", () => {
-  it("retires exactly the old directory routes, the KVKK index, the coaching earnings page and the two pages the plan wizard replaced", async () => {
+  it("retires exactly the old directory routes, the KVKK index, the coaching earnings page, the two pages the plan wizard replaced and Paket Talepleri", async () => {
     const redirects = await nextConfig.redirects();
     assert.deepEqual(
       redirects.map((r) => [
@@ -43,6 +43,9 @@ describe("directory retirement redirects", () => {
         // Old pages that the Teklif ayarları wizard replaced.
         ["/dashboard/tutor/coaching/availability", "/dashboard/tutor/coaching/plan?step=availability"],
         ["/dashboard/tutor/coaching/preview", "/dashboard/tutor/coaching/plan?step=publish"],
+        // "Paket Talepleri": a lesson package no longer waits for the tutor, and the
+        // coaching bundle requests that still do are answered under Koçluk.
+        ["/dashboard/tutor/requests", "/dashboard/tutor/coaching/requests"],
       ],
     );
   });
@@ -84,6 +87,7 @@ describe("directory retirement redirects", () => {
           "/dashboard/tutor/coaching/earnings",
           "/dashboard/tutor/coaching/availability",
           "/dashboard/tutor/coaching/preview",
+          "/dashboard/tutor/requests",
         ].includes(redirect.source);
         assert.equal(redirect.permanent, expected, redirect.source);
       }
@@ -123,5 +127,31 @@ describe("retired tutor coaching pages", () => {
       const file = resolve(process.cwd(), "src/app/(main)", `${source.slice(1)}/page.tsx`);
       assert.equal(existsSync(file), false, `${file} should be deleted`);
     }
+  });
+});
+
+/**
+ * "Paket Talepleri" answered lesson-package requests. A lesson package no longer
+ * waits for the tutor and the coaching bundles that do are answered under Koçluk,
+ * so the page could only ever say there was nothing to answer. Its address lands
+ * on the place the requests really are.
+ */
+describe("retired Paket Talepleri page", () => {
+  it("lands on the coaching requests page, which exists", async () => {
+    const redirects = await nextConfig.redirects();
+    const redirect = redirects.find((candidate) => candidate.source === "/dashboard/tutor/requests");
+    assert.ok(redirect, "/dashboard/tutor/requests has no redirect");
+    assert.equal(redirect.destination, "/dashboard/tutor/coaching/requests");
+    assert.equal(
+      existsSync(resolve(process.cwd(), "src/app/(main)", `${redirect.destination.slice(1)}/page.tsx`)),
+      true,
+    );
+  });
+
+  it("leaves no page file behind the redirect", () => {
+    assert.equal(
+      existsSync(resolve(process.cwd(), "src/app/(main)/dashboard/tutor/requests/page.tsx")),
+      false,
+    );
   });
 });

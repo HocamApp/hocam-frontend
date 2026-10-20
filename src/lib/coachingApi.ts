@@ -694,30 +694,6 @@ export async function createCoachingHold(params: {
   return response.data;
 }
 
-// --- Tutor acceptance (payments-owned, coaching-independent) ------------
-
-export interface TutorAcceptanceConfig {
-  enabled: boolean;
-  has_open_requests: boolean;
-  acceptance_expiry_hours: number;
-}
-
-/**
- * Deliberately NOT read from /coaching/flag/: that route is unmounted when
- * the backend's coaching build flag is off, and lesson-only package
- * acceptance has to keep working — and stay visible — regardless.
- */
-export async function fetchTutorAcceptanceConfig(): Promise<TutorAcceptanceConfig> {
-  try {
-    const response = await api.get<TutorAcceptanceConfig>(
-      "/payments/tutor-acceptance/config/"
-    );
-    return response.data;
-  } catch {
-    return { enabled: false, has_open_requests: false, acceptance_expiry_hours: 48 };
-  }
-}
-
 export type AcceptanceStatus =
   | "pending"
   | "accepted"
@@ -792,21 +768,6 @@ export const ACCEPTANCE_STATUS_COPY: Record<string, string> = {
 
 export function acceptanceStatusCopy(status: string): string {
   return ACCEPTANCE_STATUS_COPY[status] ?? "Talep durumu bilinmiyor";
-}
-
-/**
- * The tutor's request card reads the acceptance row, which stays "accepted"
- * after the package is paid. Once the server reports the purchase as paid,
- * say so instead of "Ödeme aktivasyonu bekleniyor".
- */
-export function acceptanceRequestStatusCopy(request: {
-  status: string;
-  purchase_status?: string;
-}): string {
-  if (request.status === "accepted" && request.purchase_status === "paid") {
-    return "Ödeme tamamlandı. Paket aktif.";
-  }
-  return acceptanceStatusCopy(request.status);
 }
 
 // --- shared student-facing copy ----------------------------------------
