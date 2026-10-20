@@ -177,19 +177,19 @@ export function studentCoachingNextStep(
         kind: "message",
         text: "Öğretmenin koçluk talebini kabul etti. Ödeme doğrulandıktan sonra görüşme saatini seçebilirsin.",
       };
-    case "pending_tutor_acceptance":
-      return { kind: "message", text: "Koçluk talebin öğretmeninin onayını bekliyor." };
     case "paused_by_platform":
       return {
         kind: "message",
         text: "Koçluğun platform tarafından geçici olarak durduruldu. Ayrıntı için destekle iletişime geçebilirsin.",
       };
-    case "completed":
-      return { kind: "message", text: "Koçluk dönemin tamamlandı. Raporların ve programın burada kalır." };
+    // The scheduling endpoint answers 404 while a request still waits for the
+    // tutor and once a coaching has completed, so those two never reach this
+    // function. A cancelled, rejected or refunded one does, through the refund
+    // obligation the server keeps for it.
     case "cancelled":
     case "rejected":
     case "refunded":
-      return { kind: "message", text: "Bu koçluk sona erdi. Geçmiş raporların ve programın burada kalır." };
+      return { kind: "message", text: "Bu koçluk sona erdi. Geçmiş raporların Raporlar sekmesinde kalır." };
     default:
       return { kind: "message", text: "Koçluk durumun güncelleniyor." };
   }
