@@ -1,21 +1,10 @@
-import type {
-  AcceptanceRequest,
-  CoachingCapacityDetail,
-  CoachingPlan,
-} from "./coachingApi";
+import type { CoachingCapacityDetail, CoachingPlan } from "./coachingApi";
 
 export const COACHING_EXAM_GROUPS = ["YKS", "DGS", "KPSS"] as const;
 export type CoachingExamGroup = (typeof COACHING_EXAM_GROUPS)[number];
 
 export function isCoachingExamGroup(value: string): value is CoachingExamGroup {
   return COACHING_EXAM_GROUPS.includes(value as CoachingExamGroup);
-}
-
-export function partitionAcceptanceRequests(requests: AcceptanceRequest[]) {
-  return {
-    coaching: requests.filter((request) => request.includes_coaching),
-    lessonOnly: requests.filter((request) => !request.includes_coaching),
-  };
 }
 
 export type CoachingPublicationState = "missing" | "draft" | "published";

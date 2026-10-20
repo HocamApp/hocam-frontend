@@ -42,7 +42,6 @@ function InboxContent() {
     setError(null);
     for (const queryKey of [
       ["tutor-acceptance-requests"],
-      ["tutor-acceptance-config"],
       ["coaching-capacity"],
       ["coaching-tutor-time-requests"],
       ["coaching-tutor-reschedule-requests"],

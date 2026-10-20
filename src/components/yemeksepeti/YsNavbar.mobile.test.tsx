@@ -26,7 +26,6 @@ mock.module("@/hooks/useAuth", { namedExports: { useAuth: () => ({ isAuthenticat
 mock.module("@/hooks/useMediaQuery", { namedExports: { useIsMobile: () => isMobile } });
 mock.module("@/hooks/useCoachingFlag", { namedExports: { useCoachingFlag: () => ({ enabled: true }) } });
 mock.module("@/hooks/useScheduleFlag", { namedExports: { useScheduleFlag: () => true } });
-mock.module("@/hooks/useTutorAcceptanceConfig", { namedExports: { useTutorAcceptanceConfig: () => ({ showPackageRequests: false }) } });
 mock.module("@/hooks/usePageVisibility", { namedExports: { usePageVisibility: () => true } });
 mock.module("@/components/brand/BrandMark", { namedExports: { BrandMark: () => <span>Hocam</span> } });
 mock.module("@/components/profile/ProfileMenu", { namedExports: { ProfileMenu: () => isAuthenticated ? <button aria-label="Profil menüsü">Profil</button> : null } });

@@ -21,7 +21,6 @@ const labelOf = (pathname: string, params = noParams, tabs = getYsAppTabs("stude
 const flags = {
   coachingEnabled: true,
   scheduleEnabled: true,
-  packageRequestsEnabled: true,
 };
 
 describe("ys app nav", () => {
@@ -72,7 +71,7 @@ describe("ys app nav", () => {
     const tabs = getYsAppTabs("tutor", flags);
     assert.deepEqual(
       tabs.map((t) => t.label),
-      ["Hocalar", "Panom", "Sınıfım", "Takvim", "İstatistiklerim", "Koçluk", "Paket Talepleri"],
+      ["Hocalar", "Panom", "Sınıfım", "Takvim", "İstatistiklerim", "Koçluk"],
     );
     // Çalışma Programım is a student surface; RouteGuard would bounce a tutor
     // straight back off /schedule, so offering it would be a broken link.
@@ -83,11 +82,16 @@ describe("ys app nav", () => {
     assert.equal(labelOf("/dashboard/tutor/coaching", noParams, tabs), "Koçluk");
   });
 
+  it("has no Paket Talepleri tab, whatever a caller still passes: that page is retired", () => {
+    const tabs = getYsAppTabs("tutor", { ...flags, packageRequestsEnabled: true } as never);
+
+    assert.equal(tabs.some((item) => item.label === "Paket Talepleri" || item.href === "/dashboard/tutor/requests"), false);
+  });
+
   it("drops flagged-off destinations rather than showing dead tabs", () => {
     const off = getYsAppTabs("student", {
       coachingEnabled: false,
       scheduleEnabled: false,
-      packageRequestsEnabled: false,
     });
     assert.deepEqual(
       off.map((t) => t.label),
@@ -156,7 +160,7 @@ describe("ys app nav", () => {
 
 for (const [path, label] of [["classroom", "Sınıfım"], ["calendar", "Takvim"], ["statistics", "İstatistiklerim"]]) {
   it(`selects ${label} independently of the student schedule flag`, () => {
-    const tabs = getYsAppTabs("tutor", { coachingEnabled: false, scheduleEnabled: false, packageRequestsEnabled: false });
+    const tabs = getYsAppTabs("tutor", { coachingEnabled: false, scheduleEnabled: false });
     assert.equal(labelOf(`/dashboard/tutor/${path}`, noParams, tabs), label);
     assert.equal(labelOf(`/dashboard/tutor/${path}/detail`, noParams, tabs), label);
     assert.equal(labelOf(`/dashboard/tutor/${path}-other`, noParams, tabs), "Panom");

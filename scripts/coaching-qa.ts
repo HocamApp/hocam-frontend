@@ -530,14 +530,10 @@ async function runRouteMatrix(page: Page, state: QaState, width: number) {
     ["/dashboard/tutor/coaching/reports", "Görüşme raporları"],
     ["/dashboard/tutor/coaching/time-requests", "Koçluk saat talepleri"],
     ["/dashboard/tutor/coaching/reschedule-requests", "Görüşme değişiklik talepleri"],
-    ["/dashboard/tutor/coaching/preview", "Öğrenci görünümü"],
   ] as const) await assertPage(page, route, heading, `${heading} ${width}`);
   await assertPage(page, "/dashboard/tutor/coaching/requests", "Talepler", `coaching requests ${width}`);
   await page.getByText("Koçluk Öğrencisi").waitFor();
   assert.equal(await page.getByText("Ders Öğrencisi").count(), 0, "lesson-only request leaked into Coaching");
-  await assertPage(page, "/dashboard/tutor/requests", "Paket Talepleri", `lesson requests ${width}`);
-  await page.getByText("Ders Öğrencisi").waitFor();
-  assert.equal(await page.getByText("Koçluk Öğrencisi").count(), 0, "Coaching request duplicated into general requests");
 
   state.role = "student";
   await cacheRole("student");

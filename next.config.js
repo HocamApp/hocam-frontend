@@ -104,6 +104,18 @@ const nextConfig = {
         destination: "/dashboard/tutor/coaching/plan?step=publish",
         permanent: false,
       },
+      /*
+       * "Paket Talepleri" answered lesson-package requests. A lesson package
+       * no longer waits for the tutor, and the coaching bundles that still do
+       * are answered under Koçluk > Talepler, so the page could only say there
+       * was nothing to answer, and its tab sat on every tutor's nav while
+       * coaching checkout was open. Old links land where the requests are.
+       */
+      {
+        source: "/dashboard/tutor/requests",
+        destination: "/dashboard/tutor/coaching/requests",
+        permanent: false,
+      },
     ];
   },
 

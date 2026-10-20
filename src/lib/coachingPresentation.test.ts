@@ -1,39 +1,13 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import type {
-  AcceptanceRequest,
-  CoachingCapacityDetail,
-  CoachingPlan,
-} from "./coachingApi";
+import type { CoachingCapacityDetail, CoachingPlan } from "./coachingApi";
 import {
   coachingSetupSteps,
   deriveCoachingStatus,
   isCoachingExamGroup,
-  partitionAcceptanceRequests,
   type CoachingReadinessState,
 } from "./coachingPresentation";
-
-function request(id: string, includesCoaching: boolean, status: AcceptanceRequest["status"] = "pending") {
-  return { id, includes_coaching: includesCoaching, status } as AcceptanceRequest;
-}
-
-describe("partitionAcceptanceRequests", () => {
-  it("keeps Coaching bundles and lesson-only requests mutually exclusive", () => {
-    const result = partitionAcceptanceRequests([
-      request("coaching-pending", true),
-      request("coaching-accepted", true, "accepted"),
-      request("lesson-only", false),
-    ]);
-
-    assert.deepEqual(result.coaching.map(({ id }) => id), ["coaching-pending", "coaching-accepted"]);
-    assert.deepEqual(result.lessonOnly.map(({ id }) => id), ["lesson-only"]);
-    assert.deepEqual(
-      result.coaching.filter((left) => result.lessonOnly.some((right) => right.id === left.id)),
-      []
-    );
-  });
-});
 
 describe("isCoachingExamGroup", () => {
   it("accepts only canonical Coaching exam groups", () => {
