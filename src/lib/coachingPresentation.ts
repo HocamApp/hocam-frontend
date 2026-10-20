@@ -105,6 +105,66 @@ export function deriveCoachingStatus(input: {
   };
 }
 
+export type CoachingSetupStepKey = Exclude<CoachingReadinessState, "complete">;
+export type CoachingSetupStepState = "done" | "current" | "pending";
+
+export interface CoachingSetupStepRow {
+  key: CoachingSetupStepKey;
+  title: string;
+  /** What the step covers, when its name alone does not say. */
+  hint: string | null;
+  /** What the step asks for; shown only while it is the open one. */
+  detail: string;
+  state: CoachingSetupStepState;
+}
+
+const COACHING_SETUP_STEP_ROWS: readonly Omit<CoachingSetupStepRow, "state">[] = [
+  {
+    key: "onboarding",
+    title: "Tanıtım",
+    hint: null,
+    detail: "Koçluğun nasıl işlediğini gözden geçir; bitirince teklifini hazırlayabilirsin.",
+  },
+  {
+    key: "plan",
+    title: "Teklif",
+    hint: "düzen, fiyat, sınavlar, açıklama",
+    detail: "Görüşme düzenini, fiyatı, koçluk verdiğin sınavları ve kısa bir açıklamayı belirle.",
+  },
+  {
+    key: "availability",
+    title: "Koçluk saatleri",
+    hint: null,
+    detail: "Öğrencilerin seçebileceği haftalık saatleri sen belirlersin.",
+  },
+  {
+    key: "capacity",
+    title: "Kapasite",
+    hint: null,
+    detail: "Saatlerin seçtiğin kapasiteye yetmiyor: saat ekle ya da kapasiteyi düşür.",
+  },
+  {
+    key: "publish",
+    title: "Gözden geçir ve yayınla",
+    hint: null,
+    detail: "Öğrenci görünümünü kontrol et, sonra teklifini yayınla.",
+  },
+];
+
+/**
+ * The five parts of getting a coaching offer ready, with what is done, what is
+ * open and what waits. Read from `readiness` alone: it already names the first
+ * thing still missing, so everything before it is done and everything after it
+ * waits. A finished setup has every step done.
+ */
+export function coachingSetupSteps(readiness: CoachingReadinessState): CoachingSetupStepRow[] {
+  const open = COACHING_SETUP_STEP_ROWS.findIndex((step) => step.key === readiness);
+  return COACHING_SETUP_STEP_ROWS.map((step, index) => ({
+    ...step,
+    state: open === -1 || index < open ? "done" : index === open ? "current" : "pending",
+  }));
+}
+
 const COACHING_SESSION_STATUS_LABELS: Record<string, string> = {
   scheduled: "Planlandı",
   reschedule_requested: "Saat değişikliği bekleniyor",

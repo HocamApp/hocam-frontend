@@ -1,94 +1,92 @@
 import Link from "next/link";
-import {
-  ArrowUpRight,
-  CheckCircle,
-  Circle,
-} from "@phosphor-icons/react/ssr";
+import { Check } from "@phosphor-icons/react/ssr";
 
 import { Button } from "@/components/ui/button";
-import type { CoachingDerivedStatus } from "@/lib/coachingPresentation";
-import { cn } from "@/lib/utils";
+import {
+  coachingSetupSteps,
+  type CoachingDerivedStatus,
+  type CoachingSetupStepState,
+} from "@/lib/coachingPresentation";
 import { CoachingPlatformNotice } from "./CoachingPlatformNotice";
+import { COACHING_SECTION_TITLE_CLASS } from "./CoachingSectionHeading";
 import { CoachingStudioPanel } from "./CoachingStudioPanel";
 
+const STATE_TEXT: Record<CoachingSetupStepState, string> = {
+  done: "Tamamlandı.",
+  current: "Sıradaki adım.",
+  pending: "Bekliyor.",
+};
+
+/** The marker says the state with a shape too, so colour is never the only signal. */
+function Marker({ state }: { state: CoachingSetupStepState }) {
+  if (state === "done") {
+    return (
+      <span
+        aria-hidden="true"
+        className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-gold text-gold-ink"
+      >
+        <Check className="h-3 w-3" weight="bold" />
+      </span>
+    );
+  }
+  return (
+    <span
+      aria-hidden="true"
+      className={`mt-0.5 h-5 w-5 shrink-0 rounded-full border-2 ${state === "current" ? "border-pink" : "border-line"}`}
+    />
+  );
+}
+
+/**
+ * What is left of getting the coaching offer ready, for a tutor whose setup is
+ * not finished (the overview shows nothing here once it is). Five steps from
+ * `readiness` alone: the ones before the open step are done, the open one says
+ * what it asks for and carries the one way forward, solid gold like every row
+ * action on the tutor side, and the rest wait. The page's pink belongs to the
+ * band of "Yapılacaklar" below, so the card spends it only on the open step's
+ * marker.
+ */
 export function CoachingStatusCard({ status }: { status: CoachingDerivedStatus }) {
-  const ready = status.readiness === "complete";
+  const steps = coachingSetupSteps(status.readiness);
   const published = status.publication === "published";
-  const action = status.nextAction ?? {
-    label: "Öğrenci görünümünü aç",
-    // The student's view is the review step of the plan wizard.
-    href: "/dashboard/tutor/coaching/plan?step=publish",
-  };
 
   return (
     <div className="space-y-3">
-      {/*
-        A white surface, not a second dark slab. The page already spends its
-        ink on the header band, and DESIGN.md gives ink a job there: sections
-        separate by colour, so repeating the darkest value one section later
-        spends the contrast twice and leaves the page reading black-and-white.
-        Here the state is carried by the gold lockup and the pink action, which
-        is what those two colours are for.
-      */}
-      <CoachingStudioPanel
-        role="region"
-        aria-label="Koçluk hizmet durumu"
-        className="overflow-hidden p-6 sm:p-8"
-      >
-        <div className="max-w-3xl">
-          <div>
-            {/* No eyebrow above this. The tab strip already says which part
-                of coaching you are in, and a small capitalised label repeating
-                the section name is the third thing on the page saying it. The
-                lockup below is the state, and the heading is the sentence.
+      <CoachingStudioPanel role="region" aria-label="Koçluk hizmet durumu" className="p-5 sm:p-6">
+        <h2 className={COACHING_SECTION_TITLE_CLASS}>Teklifin için kalan adımlar</h2>
+        {published ? (
+          <p className="mt-1 text-small text-ink-mid">Teklifin yayında; aşağıdaki adım eksik kaldı.</p>
+        ) : null}
 
-                Gold is a surface with --gold-ink on it, never a text colour,
-                and its subject is achievement: a published, running coaching
-                offer is exactly that. Until it is running there is nothing to
-                celebrate, so the same slot goes to an outline with no fill. */}
-            <span
-              className={cn(
-                "inline-flex items-center gap-2 rounded-pill px-4 py-1.5 text-[0.8125rem] font-medium leading-[1.4] tracking-[0.01em]",
-                ready
-                  ? "bg-gold text-gold-ink"
-                  : "border border-line text-ink-mid",
-              )}
-            >
-              {/* Outline for a step still open, filled once it is done. The
-                  weight change carries the state on its own. */}
-              {ready ? (
-                <CheckCircle aria-hidden="true" className="h-4 w-4" weight="fill" />
-              ) : (
-                <Circle aria-hidden="true" className="h-4 w-4" weight="regular" />
-              )}
-              {ready ? "Koçluğun yayında" : "Kurulum sürüyor"}
-            </span>
-
-            <h2 className="mt-3 text-h2-m sm:text-h2">
-              {ready ? "Koçluk düzenin hazır" : "Sıradaki adımı tamamla"}
-            </h2>
-            <p className="mt-3 max-w-xl text-[1rem] leading-[1.6] text-ink-mid">
-              {published
-                ? "Teklifin öğrenci görünümünde yerini aldı. Koçluk düzenini buradan sürdürebilirsin."
-                : "Koçluk teklifinin öğrenciye açılması için yalnız sana bağlı olan sıradaki kurulumu tamamla."}
-            </p>
-            {/* The page's one primary action, and the one place pink is
-                load-bearing rather than decorative.
-
-                deriveCoachingStatus returns no nextAction once the setup is
-                complete, which left this region with no way forward at all on
-                the one state a working tutor sees every day. The healthy state
-                keeps the slot and points at the student view, which is the
-                thing a tutor with a running offer actually wants to check. */}
-            <Button asChild className="mt-6">
-              <Link href={action.href}>
-                {action.label}
-                <ArrowUpRight aria-hidden="true" className="ml-2 h-5 w-5" weight="regular" />
-              </Link>
-            </Button>
-          </div>
-
-        </div>
+        <ol aria-label="Kurulum adımları" className="mt-3 divide-y divide-line">
+          {steps.map((step) => (
+            <li key={step.key} className="flex gap-3 py-3">
+              <Marker state={step.state} />
+              <div className="min-w-0 flex-1">
+                <p className={step.state === "current" ? "text-body font-medium text-ink" : "text-body text-ink-mid"}>
+                  <span className="sr-only">{STATE_TEXT[step.state]}</span>{" "}
+                  <span>{step.title}</span>
+                  {step.hint ? (
+                    <>
+                      {" "}
+                      <span className="text-small">{`(${step.hint})`}</span>
+                    </>
+                  ) : null}
+                </p>
+                {step.state === "current" ? (
+                  <>
+                    <p className="mt-1 max-w-xl text-body text-ink-mid">{step.detail}</p>
+                    {status.nextAction ? (
+                      <Button asChild variant="gold" size="sm" className="mt-3 min-h-11">
+                        <Link href={status.nextAction.href}>{status.nextAction.label}</Link>
+                      </Button>
+                    ) : null}
+                  </>
+                ) : null}
+              </div>
+            </li>
+          ))}
+        </ol>
       </CoachingStudioPanel>
 
       {status.platformMessage ? <CoachingPlatformNotice message={status.platformMessage} /> : null}
