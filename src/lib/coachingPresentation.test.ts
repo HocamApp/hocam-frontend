@@ -7,9 +7,11 @@ import type {
   CoachingPlan,
 } from "./coachingApi";
 import {
+  coachingSetupSteps,
   deriveCoachingStatus,
   isCoachingExamGroup,
   partitionAcceptanceRequests,
+  type CoachingReadinessState,
 } from "./coachingPresentation";
 
 function request(id: string, includesCoaching: boolean, status: AcceptanceRequest["status"] = "pending") {
@@ -149,5 +151,67 @@ describe("studentCoachingNextStep", () => {
     const step = studentCoachingNextStep("something_new", undefined);
     assert.equal(step.kind, "message");
     assert.doesNotMatch(step.kind === "message" ? step.text : "", /_/);
+  });
+});
+
+describe("coachingSetupSteps", () => {
+  const states = (readiness: CoachingReadinessState) =>
+    coachingSetupSteps(readiness).map((step) => `${step.key}:${step.state}`);
+
+  it("lists the five parts of getting a coaching offer ready, in order", () => {
+    assert.deepEqual(
+      coachingSetupSteps("onboarding").map((step) => step.title),
+      ["Tanıtım", "Teklif", "Koçluk saatleri", "Kapasite", "Gözden geçir ve yayınla"],
+    );
+  });
+
+  it("marks what comes before the open step as done and what follows as waiting", () => {
+    assert.deepEqual(states("onboarding"), [
+      "onboarding:current",
+      "plan:pending",
+      "availability:pending",
+      "capacity:pending",
+      "publish:pending",
+    ]);
+    assert.deepEqual(states("availability"), [
+      "onboarding:done",
+      "plan:done",
+      "availability:current",
+      "capacity:pending",
+      "publish:pending",
+    ]);
+    assert.deepEqual(states("publish"), [
+      "onboarding:done",
+      "plan:done",
+      "availability:done",
+      "capacity:done",
+      "publish:current",
+    ]);
+  });
+
+  it("has every step done once the setup is complete", () => {
+    assert.ok(coachingSetupSteps("complete").every((step) => step.state === "done"));
+  });
+
+  it("says in one sentence what the open step asks for, and says it only for that step", () => {
+    const [open, ...rest] = coachingSetupSteps("capacity").filter((step) => step.state === "current");
+    assert.equal(open.detail, "Saatlerin seçtiğin kapasiteye yetmiyor: saat ekle ya da kapasiteyi düşür.");
+    assert.equal(rest.length, 0);
+    assert.equal(
+      coachingSetupSteps("availability").find((step) => step.state === "current")?.detail,
+      "Öğrencilerin seçebileceği haftalık saatleri sen belirlersin.",
+    );
+  });
+
+  it("follows deriveCoachingStatus: the open step is the one its next action opens", () => {
+    const status = deriveCoachingStatus({
+      onboardingComplete: true,
+      plan: { is_published: false, is_accepting_new_students: true } as CoachingPlan,
+      capacity: { weekly_slot_count: 0, theoretical_capacity: 0 } as CoachingCapacityDetail,
+      checkoutEnabled: true,
+    });
+
+    assert.equal(coachingSetupSteps(status.readiness).find((step) => step.state === "current")?.key, "availability");
+    assert.match(status.nextAction?.href ?? "", /step=availability$/);
   });
 });
