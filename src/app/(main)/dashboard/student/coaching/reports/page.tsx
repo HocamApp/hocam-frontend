@@ -1,32 +1,53 @@
 "use client";
 
-import Link from "next/link";
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ClipboardText } from "@phosphor-icons/react";
 
 import { RouteGuard } from "@/components/shared/RouteGuard";
 import { CoachingEmptyState as EmptyState } from "@/components/coaching/CoachingEmptyState";
-import { CoachingPageShell } from "@/components/coaching/CoachingPageShell";
-import { CoachingSectionHeading } from "@/components/coaching/CoachingSectionHeading";
-import { ErrorMessage } from "@/components/shared/ErrorMessage";
+import { CoachingLoadError } from "@/components/coaching/CoachingLoadError";
 import { CoachingLoadingState } from "@/components/coaching/CoachingLoadingState";
-import { Card, CardContent } from "@/components/ui/card";
+import { CoachingPageShell } from "@/components/coaching/CoachingPageShell";
+import { StudentReportCards } from "@/components/coaching/StudentReportCards";
 import {
   COACHING_FAZ6_QUERY_KEYS,
-  extractCoachingErrorMessage,
+  COACHING_SESSION_QUERY_KEYS,
   fetchCoachingReports,
+  fetchCoachingSessions,
 } from "@/lib/coachingApi";
-import { coachingDateTimeLabel } from "@/lib/coachingTime";
+import { buildStudentReportCards } from "@/lib/coachingStudentReports";
 
 function StudentReportsContent() {
-  const query = useQuery({
+  const reportsQuery = useQuery({
     queryKey: COACHING_FAZ6_QUERY_KEYS.studentReportList(),
     queryFn: fetchCoachingReports,
   });
-  if (query.isLoading) return <CoachingLoadingState rows={3} />;
-  if (query.isError) return <ErrorMessage message={extractCoachingErrorMessage(query.error)} />;
-  const reports = query.data ?? [];
-  if (!reports.length)
+  // The meetings give each card its number. They are only a nicety: when they
+  // cannot be read (or the coaching is over) the card names the day instead.
+  const sessionsQuery = useQuery({
+    queryKey: COACHING_SESSION_QUERY_KEYS.studentList(),
+    queryFn: fetchCoachingSessions,
+  });
+
+  const reports = reportsQuery.data;
+  const sessions = sessionsQuery.data;
+  const cards = useMemo(
+    () => (reports ? buildStudentReportCards({ reports, sessions: sessions ?? [] }) : []),
+    [reports, sessions],
+  );
+
+  if (reportsQuery.isLoading) return <CoachingLoadingState rows={3} />;
+  if (reportsQuery.isError) {
+    return (
+      <CoachingLoadError
+        message="Raporların yüklenemedi."
+        onRetry={() => reportsQuery.refetch()}
+        isRetrying={reportsQuery.isFetching}
+      />
+    );
+  }
+  if (cards.length === 0) {
     return (
       <EmptyState
         icon={ClipboardText}
@@ -35,39 +56,15 @@ function StudentReportsContent() {
         steps={["Koçluk görüşmen tamamlanır", "Öğretmenin raporu yayınlar"]}
       />
     );
-  return (
-    <div className="space-y-3">
-      <CoachingSectionHeading>Yayınlanan raporlar</CoachingSectionHeading>
-      {reports
-        .filter((report) => report.latest_revision)
-        .map((report) => {
-          const revision = report.latest_revision!;
-          return (
-            <Link key={report.id} href={`/dashboard/student/coaching/reports/${report.id}`}>
-              <Card className="text-ink transition-colors duration-[--duration-state] hover:border-ink">
-                <CardContent className="flex items-center justify-between gap-3 p-5">
-                  <div>
-                    <p className="text-body font-medium">Görüşme raporu</p>
-                    <p className="mt-1 text-small text-ink-mid tabular-nums">
-                      Sürüm {revision.revision_number} ·{" "}
-                      {coachingDateTimeLabel(revision.published_at)}
-                    </p>
-                  </div>
-                  <ClipboardText className="h-5 w-5 text-ink" weight="regular" />
-                </CardContent>
-              </Card>
-            </Link>
-          );
-        })}
-    </div>
-  );
+  }
+  return <StudentReportCards cards={cards} />;
 }
 
 export default function StudentCoachingReportsPage() {
   return (
     <RouteGuard requireAuth requireRole="student">
       <CoachingPageShell
-        title="Görüşme raporlarım"
+        title="Raporlar"
         width="narrow"
         currentHref="/dashboard/student/coaching/reports"
         audience="student"

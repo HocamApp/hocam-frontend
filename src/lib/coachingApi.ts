@@ -1678,6 +1678,9 @@ export interface CoachingSessionReportRevision {
   change_note: string | null;
   /** Only present for the student viewer — see submitCoachingReportFeedback. */
   student_feedback?: CoachingReportFeedbackChoice | null;
+  /** Student detail only, from a server that sends them: which meeting this revision belongs to. */
+  session_id?: string;
+  scheduled_start?: string;
 }
 
 // --- Faz 8: student short report feedback (§22.9, decision #53). Not a
