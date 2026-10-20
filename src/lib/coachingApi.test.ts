@@ -55,6 +55,25 @@ describe("extractCoachingErrorMessage", () => {
     assert.match(message, /müsaitliği/i);
   });
 
+  it("shows the Turkish line for a scheduling code, not the server's developer English", () => {
+    assert.equal(
+      extractCoachingErrorMessage(
+        axiosError({
+          code: "lesson_conflict",
+          detail:
+            "The new recurring time conflicts with an existing lesson or coaching session for one of the affected future occurrences.",
+        })
+      ),
+      "Bu saat mevcut bir dersle çakışıyor."
+    );
+    assert.equal(
+      extractCoachingErrorMessage(
+        axiosError({ code: "slot_unavailable", detail: "The slot is no longer available." })
+      ),
+      "Bu saat artık uygun değil. Lütfen listeyi yenile."
+    );
+  });
+
   it("falls back to the server's detail string", () => {
     assert.equal(
       extractCoachingErrorMessage(axiosError({ detail: "Sunucudan gelen mesaj." })),

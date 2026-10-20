@@ -82,6 +82,10 @@ type Audience = "tutor" | "student";
 
 /** Sub-pages that belong under a tab without matching its href exactly. */
 function matchesGroup(href: string, currentHref: string, audience: Audience) {
+  if (audience === "student" && href === "/dashboard/student/coaching") {
+    // Choosing the first hours is a step of getting started, not a tab of its own.
+    return currentHref.startsWith("/dashboard/student/coaching/schedule");
+  }
   if (href.endsWith("/upcoming")) {
     return currentHref.includes("/sessions/");
   }

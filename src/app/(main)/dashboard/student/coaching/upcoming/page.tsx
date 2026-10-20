@@ -9,6 +9,7 @@ import { CoachingPageShell } from "@/components/coaching/CoachingPageShell";
 import { CoachingLoadingState } from "@/components/coaching/CoachingLoadingState";
 import { CoachingLoadError } from "@/components/coaching/CoachingLoadError";
 import { CoachingEmptyState } from "@/components/coaching/CoachingEmptyState";
+import { StudentRecurringSlotsStrip } from "@/components/coaching/StudentRecurringSlotsStrip";
 import { StudentSessionsBoard } from "@/components/coaching/StudentSessionsBoard";
 import { useServerNow } from "@/hooks/useServerNow";
 import { COACHING_SESSION_QUERY_KEYS, fetchCoachingSessions } from "@/lib/coachingApi";
@@ -58,7 +59,10 @@ export default function StudentCoachingUpcomingPage() {
         currentHref="/dashboard/student/coaching/upcoming"
         audience="student"
       >
-        <SessionsContent />
+        <div className="space-y-6">
+          <StudentRecurringSlotsStrip />
+          <SessionsContent />
+        </div>
       </CoachingPageShell>
     </RouteGuard>
   );

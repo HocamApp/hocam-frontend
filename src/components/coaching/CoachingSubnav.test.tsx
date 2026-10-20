@@ -44,6 +44,8 @@ const STUDENT_ROUTES: [string, string][] = [
   ["/dashboard/student/coaching/upcoming", "Görüşmeler"],
   ["/dashboard/student/coaching/reports", "Raporlar"],
   ["/dashboard/student/coaching/complaints", "Sorun bildir"],
+  // Choosing the first hours is a step of getting started, so it sits under the overview.
+  ["/dashboard/student/coaching/schedule", "Genel bakış"],
 ];
 
 const TUTOR_ROUTES: [string, string][] = [

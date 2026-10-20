@@ -54,8 +54,19 @@ const plan = [
   sessionRow("s10", "scheduled", "2026-11-12T15:30:00Z", "2026-11-12"),
 ];
 
+const regularHours = {
+  purchase_id: "cp-1",
+  recurring_slots: [
+    { id: "rs-1", slot_index: 0, day_of_week: 1, start_time: "18:30:00", source: "availability" },
+    { id: "rs-2", slot_index: 1, day_of_week: 3, start_time: "18:30:00", source: "availability" },
+  ],
+  published_slots: [],
+};
+
 let rows: unknown[] = plan;
 let sessionsFail = false;
+let regular: unknown = regularHours;
+let regularFail = false;
 
 let Page: React.ComponentType;
 
@@ -95,6 +106,10 @@ before(async () => {
           if (sessionsFail) throw Object.assign(new Error("boom"), { response: { status: 500 } });
           return { data: rows };
         }
+        if (url === "/coaching/my-recurring-slots/") {
+          if (regularFail) throw Object.assign(new Error("boom"), { response: { status: 500 } });
+          return { data: regular };
+        }
         throw new Error(`unexpected GET ${url}`);
       },
     },
@@ -107,6 +122,8 @@ beforeEach(() => {
   mock.timers.enable({ apis: ["Date"], now: NOW });
   rows = plan;
   sessionsFail = false;
+  regular = regularHours;
+  regularFail = false;
 });
 
 afterEach(() => {
@@ -241,6 +258,35 @@ describe("student Görüşmeler: Geçmiş", () => {
     assert.equal(within(region).queryByRole("status"), null);
     assert.equal(within(region).queryByRole("link", { name: "Eksik rapor için desteğe başvur" }), null);
     assert.equal(within(region).getAllByText(/eksik rapor/i).length, 1);
+  });
+});
+
+describe("student Görüşmeler: Düzenli saatlerin", () => {
+  it("opens the page with the regular hours and a way to change each, above the next meeting", async () => {
+    renderPage();
+
+    const strip = await screen.findByRole("region", { name: "Düzenli saatlerin" });
+    assert.ok(within(strip).getByText("Salı 18:30"));
+    assert.ok(within(strip).getByText("Perşembe 18:30"));
+    assert.ok(within(strip).getByRole("button", { name: "Salı 18:30 saatini değiştir" }));
+    const hero = await screen.findByRole("region", { name: "Sıradaki görüşme" });
+    assert.ok(strip.compareDocumentPosition(hero) & Node.DOCUMENT_POSITION_FOLLOWING);
+  });
+
+  it("does not take the meetings down when the regular hours cannot be read", async () => {
+    regularFail = true;
+    renderPage();
+
+    assert.ok(await screen.findByText("Düzenli saatlerin yüklenemedi."));
+    assert.ok(await screen.findByRole("region", { name: "Sıradaki görüşme" }));
+  });
+
+  it("is not shown for a student with no regular hours", async () => {
+    regular = { purchase_id: null, recurring_slots: [], published_slots: [] };
+    renderPage();
+
+    await screen.findByRole("region", { name: "Sıradaki görüşme" });
+    assert.equal(screen.queryByRole("region", { name: "Düzenli saatlerin" }), null);
   });
 });
 
