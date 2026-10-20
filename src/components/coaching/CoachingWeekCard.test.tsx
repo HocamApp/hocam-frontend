@@ -102,7 +102,7 @@ describe("CoachingWeekCard", () => {
     const footer = screen.getByRole("region", { name: "Teklifin durumu" });
     const live = within(footer).getByText("Teklifin yayında");
     assert.match(live.className, /bg-gold/);
-    assert.ok(within(footer).getByText("3 / 6 öğrenci · 3 boş kontenjan"));
+    assert.ok(within(footer).getByText("3 / 6 kontenjan dolu · 3 boş"));
     assert.equal(
       within(footer).getByRole("link", { name: "Teklif ayarları" }).getAttribute("href"),
       "/dashboard/tutor/coaching/plan"
@@ -120,13 +120,13 @@ describe("CoachingWeekCard", () => {
   it("says when new students are not being taken, rather than showing places as free", () => {
     render(card({ offer: { ...offer, acceptingNewStudents: false } }));
 
-    assert.ok(screen.getByText("3 / 6 öğrenci · yeni öğrenci almıyorsun"));
+    assert.ok(screen.getByText("3 / 6 kontenjan dolu · yeni öğrenci almıyorsun"));
   });
 
   it("never prints a negative number of free places", () => {
     render(card({ offer: { ...offer, activeStudents: 7, maxStudents: 6 } }));
 
-    assert.ok(screen.getByText("7 / 6 öğrenci · 0 boş kontenjan"));
+    assert.ok(screen.getByText("7 / 6 kontenjan dolu · 0 boş"));
   });
 
   it("leaves the footer out when there is no offer yet", () => {

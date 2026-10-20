@@ -159,7 +159,7 @@ describe("buildCoachingSettingRows", () => {
   it("explains capacity against the current students and the ceiling the hours allow", () => {
     const { capacity: row } = byStep(buildCoachingSettingRows({ plan, setupConfig, capacity, revenue }));
     assert.equal(row.value, "En fazla 6 öğrenci");
-    assert.equal(row.hint, "Şu an 3 öğrenci · saatlerinle 8 öğrenciye kadar bakabilirsin");
+    assert.equal(row.hint, "Şu an 3 kontenjan dolu · saatlerinle 8 öğrenciye kadar bakabilirsin");
     assert.equal(row.chip, "6 öğrenci");
   });
 

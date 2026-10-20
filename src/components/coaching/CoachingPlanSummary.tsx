@@ -39,7 +39,7 @@ export function CoachingPlanSummary({
 }) {
   const free = capacity ? Math.max(0, plan.max_active_students - capacity.active_students) : null;
   const subtitle = capacity
-    ? `${capacity.active_students} aktif öğrenci · ${free} boş kontenjan`
+    ? `${capacity.active_students} dolu kontenjan · ${free} boş kontenjan`
     : undefined;
 
   return (

@@ -214,7 +214,7 @@ describe("Genel bakış page", () => {
 
     const footer = await screen.findByRole("region", { name: "Teklifin durumu" });
     assert.ok(within(footer).getByText("Teklifin yayında"));
-    assert.ok(within(footer).getByText("3 / 6 öğrenci · 3 boş kontenjan"));
+    assert.ok(within(footer).getByText("3 / 6 kontenjan dolu · 3 boş"));
     assert.equal(screen.queryByRole("region", { name: "Koçluk hizmet durumu" }), null);
   });
 

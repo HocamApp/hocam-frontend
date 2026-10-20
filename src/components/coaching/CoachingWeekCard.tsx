@@ -20,9 +20,11 @@ export interface CoachingOfferGlance {
 }
 
 function offerSummary(offer: CoachingOfferGlance): string {
-  const students = `${offer.activeStudents} / ${offer.maxStudents} öğrenci`;
-  if (!offer.acceptingNewStudents) return `${students} · yeni öğrenci almıyorsun`;
-  return `${students} · ${Math.max(0, offer.maxStudents - offer.activeStudents)} boş kontenjan`;
+  // The server counts every place held (students, requests waiting for an answer or for
+  // payment), so this says places, not students.
+  const places = `${offer.activeStudents} / ${offer.maxStudents} kontenjan dolu`;
+  if (!offer.acceptingNewStudents) return `${places} · yeni öğrenci almıyorsun`;
+  return `${places} · ${Math.max(0, offer.maxStudents - offer.activeStudents)} boş`;
 }
 
 /**
