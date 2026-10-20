@@ -40,7 +40,7 @@ describe("CapacityPreviewCard", () => {
     assert.equal(numberOf("haftalık görüşme yeri açtın"), "4");
     assert.equal(numberOf("öğrenciye kadar alabilirsin (üst sınır)"), "8");
     assert.equal(numberOf("öğrenciyle sınırladın"), "1");
-    assert.equal(numberOf("öğrenciyle şu an çalışıyorsun"), "0");
+    assert.equal(numberOf("dolu kontenjan (bekleyen talepler dahil)"), "0");
     assert.ok(screen.getByRole("region", { name: "Koçluk kapasitesi" }));
   });
 

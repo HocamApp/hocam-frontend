@@ -95,7 +95,7 @@ export function buildCoachingSettingRows({
       label: "Kapasite",
       value: `En fazla ${plan.max_active_students} öğrenci`,
       hint: capacity
-        ? `Şu an ${capacity.active_students} öğrenci · saatlerinle ${capacity.theoretical_capacity} öğrenciye kadar bakabilirsin`
+        ? `Şu an ${capacity.active_students} kontenjan dolu · saatlerinle ${capacity.theoretical_capacity} öğrenciye kadar bakabilirsin`
         : null,
       chip: `${plan.max_active_students} öğrenci`,
     },

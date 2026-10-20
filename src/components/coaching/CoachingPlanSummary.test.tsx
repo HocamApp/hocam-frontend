@@ -48,7 +48,7 @@ const rows: CoachingSettingRow[] = [
   { step: "exams", label: "Sınavlar", value: "YKS, DGS", hint: null, chip: "YKS, DGS" },
   { step: "description", label: "Açıklama", value: "İlk görüşmede seviyeni çıkarıp haftalık programı birlikte yazarız.", hint: null, chip: null },
   { step: "availability", label: "Koçluk saatlerin", value: "Haftada 12 görüşme yeri", hint: "Pzt, Çar, Cum, Cmt", chip: "12 görüşme yeri" },
-  { step: "capacity", label: "Kapasite", value: "En fazla 6 öğrenci", hint: "Şu an 3 öğrenci · saatlerinle 8 öğrenciye kadar bakabilirsin", chip: "6 öğrenci" },
+  { step: "capacity", label: "Kapasite", value: "En fazla 6 öğrenci", hint: "Şu an 3 kontenjan dolu · saatlerinle 8 öğrenciye kadar bakabilirsin", chip: "6 öğrenci" },
 ];
 
 describe("CoachingPlanSummary", () => {
@@ -58,7 +58,7 @@ describe("CoachingPlanSummary", () => {
     const heading = screen.getByRole("heading", { name: "Koçluk teklifin" });
     const band = heading.closest("[class*='bg-pink']");
     assert.ok(band, "the header sits on the pink band");
-    assert.ok(within(band as HTMLElement).getByText("3 aktif öğrenci · 3 boş kontenjan"));
+    assert.ok(within(band as HTMLElement).getByText("3 dolu kontenjan · 3 boş kontenjan"));
   });
 
   it("shows a flat gold Yayında pill once the offer is live, an outline when it is not", () => {
@@ -157,7 +157,7 @@ describe("CoachingPlanSummary", () => {
   it("drops the student counts rather than inventing them when capacity has not loaded", () => {
     render(<CoachingPlanSummary plan={plan} rows={rows} capacity={null} actions={null} />);
 
-    assert.equal(screen.queryByText(/aktif öğrenci/), null);
+    assert.equal(screen.queryByText(/dolu kontenjan/), null);
   });
 });
 

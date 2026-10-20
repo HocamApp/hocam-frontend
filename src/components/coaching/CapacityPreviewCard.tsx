@@ -43,7 +43,7 @@ export function CapacityPreviewCard({
           <CapacityNumber value={capacity.weekly_slot_count} caption="haftalık görüşme yeri açtın" />
           <CapacityNumber value={capacity.theoretical_capacity} caption="öğrenciye kadar alabilirsin (üst sınır)" />
           <CapacityNumber value={capacity.max_active_students} caption="öğrenciyle sınırladın" />
-          <CapacityNumber value={capacity.active_students} caption="öğrenciyle şu an çalışıyorsun" />
+          <CapacityNumber value={capacity.active_students} caption="dolu kontenjan (bekleyen talepler dahil)" />
         </ul>
         <p className="mt-4 text-label leading-5 text-ink-mid">
           Üst sınır, açtığın görüşme yerlerinden ve seçtiğin görüşme sıklığından hesaplanır.

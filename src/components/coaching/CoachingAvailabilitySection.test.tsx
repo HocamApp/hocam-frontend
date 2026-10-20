@@ -73,7 +73,7 @@ describe("Coaching availability and capacity presentation", () => {
     assert.match(tile("haftalık görüşme yeri açtın") ?? "", /^6/);
     assert.match(tile("öğrenciye kadar alabilirsin (üst sınır)") ?? "", /^6/);
     assert.match(tile("öğrenciyle sınırladın") ?? "", /^4/);
-    assert.match(tile("öğrenciyle şu an çalışıyorsun") ?? "", /^2/);
+    assert.match(tile("dolu kontenjan (bekleyen talepler dahil)") ?? "", /^2/);
   });
 });
 
