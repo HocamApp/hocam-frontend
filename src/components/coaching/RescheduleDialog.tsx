@@ -46,7 +46,14 @@ function groupByDay(options: CoachingRescheduleOption[]) {
  * one free change, published availability); this dialog only says what the
  * server reported and submits the choice.
  */
-export function RescheduleDialog({ session }: { session: CoachingSessionItem }) {
+export function RescheduleDialog({
+  session,
+  tone = "gold",
+}: {
+  session: CoachingSessionItem;
+  /** "onPink" for the pink meeting card: solid gold on pink vibrates, so it goes solid black there. */
+  tone?: "gold" | "onPink";
+}) {
   const queryClient = useQueryClient();
   const ids = useId();
   const [open, setOpen] = useState(false);
@@ -114,7 +121,8 @@ export function RescheduleDialog({ session }: { session: CoachingSessionItem }) 
       <DialogTrigger asChild>
         <Button
           size="sm"
-          variant="outline"
+          variant="gold"
+          className={`min-h-11 ${tone === "onPink" ? "bg-ink text-paper" : ""}`}
           aria-label={`${coachingDateTimeLabel(session.scheduled_start)} görüşmesini yeniden planla`}
         >
           Yeniden planla

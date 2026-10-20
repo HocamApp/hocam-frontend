@@ -1060,6 +1060,13 @@ export interface CoachingSessionItem {
   complaint_eligible: boolean;
   /** The session's economic period: a single reschedule must stay inside it. */
   reschedule_window?: { starts_on: string; ends_on: string };
+  /**
+   * Student payload only, and only from a server that sends them: whether the
+   * student has already rated the session, and the time they asked for while
+   * the tutor has not answered yet. Absent means unknown, never "no".
+   */
+  rating_submitted?: boolean;
+  pending_reschedule?: { proposed_start: string } | null;
 }
 
 export async function fetchCoachingSessions(): Promise<CoachingSessionItem[]> {

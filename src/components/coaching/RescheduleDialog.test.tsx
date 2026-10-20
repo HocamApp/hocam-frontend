@@ -12,7 +12,7 @@ Object.defineProperty(globalThis, "self", { value: window, configurable: true })
 
 const posted: unknown[] = [];
 let appliesNow = true;
-let RescheduleDialog: ComponentType<{ session: CoachingSessionItem }>;
+let RescheduleDialog: ComponentType<{ session: CoachingSessionItem; tone?: "gold" | "onPink" }>;
 
 before(async () => {
   mock.module("sonner", { namedExports: { toast: { success: () => {}, error: () => {} } } });
@@ -98,5 +98,26 @@ describe("RescheduleDialog", () => {
     fireEvent.click(screen.getByRole("button", { name: /yeniden planla/i }));
     const reopened = await screen.findByRole("radio", { name: "14 Ekim Çarşamba 18:30" });
     assert.equal(reopened.getAttribute("aria-checked"), "false");
+  });
+
+  it("is a solid gold button in a row and a solid black one on the pink meeting card", () => {
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <RescheduleDialog session={session} />
+      </QueryClientProvider>,
+    );
+    const inRow = screen.getByRole("button", { name: /yeniden planla/i });
+    assert.match(inRow.className, /bg-gold/);
+    assert.doesNotMatch(inRow.className, /bg-ink/);
+    cleanup();
+
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <RescheduleDialog session={session} tone="onPink" />
+      </QueryClientProvider>,
+    );
+    const onPink = screen.getByRole("button", { name: /yeniden planla/i });
+    assert.match(onPink.className, /bg-ink/);
+    assert.doesNotMatch(onPink.className, /bg-gold|bg-pink/);
   });
 });
