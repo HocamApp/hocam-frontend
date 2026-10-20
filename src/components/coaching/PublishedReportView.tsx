@@ -1,11 +1,12 @@
+import type { ReactNode } from "react";
 import { FileArrowDown, LinkSimple as LinkIcon } from "@phosphor-icons/react/ssr";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type {
   CoachingRecommendedResource,
   CoachingSessionReportRevision,
 } from "@/lib/coachingApi";
+import type { StudentReportHeading } from "@/lib/coachingStudentReports";
 import { coachingDateTimeLabel, coachingLocalDateHeading } from "@/lib/coachingTime";
 import { EXAM_ANALYSIS_STATUS_OPTIONS } from "@/lib/coachingApi";
 
@@ -13,8 +14,8 @@ function TextSection({ title, value }: { title: string; value?: string }) {
   if (!value?.trim()) return null;
   return (
     <section className="space-y-1">
-      <h3 className="text-sm font-medium">{title}</h3>
-      <p className="whitespace-pre-wrap text-sm leading-6 text-ink-mid">{value}</p>
+      <h3 className="text-small font-bold text-ink">{title}</h3>
+      <p className="whitespace-pre-wrap text-body leading-[1.6] text-ink">{value}</p>
     </section>
   );
 }
@@ -24,8 +25,8 @@ function StringList({ title, values }: { title: string; values?: string[] }) {
   if (!visible.length) return null;
   return (
     <section className="space-y-1">
-      <h3 className="text-sm font-medium">{title}</h3>
-      <ul className="list-disc space-y-1 pl-5 text-sm leading-6 text-ink-mid">
+      <h3 className="text-small font-bold text-ink">{title}</h3>
+      <ul className="list-disc space-y-1 pl-5 text-body leading-[1.6] text-ink">
         {visible.map((value) => (
           <li key={value}>{value}</li>
         ))}
@@ -44,38 +45,44 @@ export function ReportResources({
   if (!resources?.length) return null;
   return (
     <section className="space-y-2">
-      <h3 className="text-sm font-medium">Önerilen kaynaklar</h3>
-      <ul className="space-y-2">
+      <h3 className="text-small font-bold text-ink">Önerilen kaynaklar</h3>
+      <ul className="divide-y divide-line">
         {resources.map((resource, index) => {
           // Published resources expose only authorised attachment metadata;
           // the browser must request its short-lived URL through the API.
           const attachmentId = resource.attachment_id ?? resource.attachment?.id;
           return (
-          <li key={`${resource.title}-${index}`} className="rounded-md border p-3 text-sm">
-            <p className="font-medium">{resource.title}</p>
-            {resource.note ? (
-              <p className="mt-1 whitespace-pre-wrap text-ink-mid">{resource.note}</p>
-            ) : null}
-            <div className="mt-2 flex flex-wrap gap-2">
-              {resource.url ? (
-                <Button asChild size="sm" variant="outline">
-                  <a href={resource.url} target="_blank" rel="noreferrer">
-                    <LinkIcon className="mr-1 h-3.5 w-3.5" /> Bağlantıyı aç
-                  </a>
-                </Button>
-              ) : null}
-              {attachmentId && onDownloadAttachment ? (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => onDownloadAttachment(attachmentId)}
-                >
-                  <FileArrowDown className="mr-1 h-3.5 w-3.5" />
-                  {resource.attachment?.original_name ?? "Dosyayı indir"}
-                </Button>
-              ) : null}
-            </div>
-          </li>
+            <li
+              key={`${resource.title}-${index}`}
+              className="flex flex-wrap items-center gap-x-4 gap-y-2 py-3 first:pt-0 last:pb-0"
+            >
+              <div className="min-w-0 flex-1 basis-48">
+                <p className="text-body font-medium text-ink">{resource.title}</p>
+                {resource.note ? (
+                  <p className="whitespace-pre-wrap text-small text-ink-mid">{resource.note}</p>
+                ) : null}
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {resource.url ? (
+                  <Button asChild size="sm" variant="gold" className="min-h-11">
+                    <a href={resource.url} target="_blank" rel="noreferrer">
+                      <LinkIcon className="mr-1 h-3.5 w-3.5" /> Bağlantıyı aç
+                    </a>
+                  </Button>
+                ) : null}
+                {attachmentId && onDownloadAttachment ? (
+                  <Button
+                    size="sm"
+                    variant="gold"
+                    className="min-h-11"
+                    onClick={() => onDownloadAttachment(attachmentId)}
+                  >
+                    <FileArrowDown className="mr-1 h-3.5 w-3.5" />
+                    {resource.attachment?.original_name ?? "Dosyayı indir"}
+                  </Button>
+                ) : null}
+              </div>
+            </li>
           );
         })}
       </ul>
@@ -83,30 +90,55 @@ export function ReportResources({
   );
 }
 
-/** Student-facing report content is always a published immutable revision. */
+/**
+ * Student-facing report content is always a published immutable revision: an
+ * ink head (which meeting, when it came out, which version, what changed, and
+ * the action of the page) over a white body that reads in ink, since the text
+ * is what the student came for.
+ *
+ * Plain class strings: tailwind-merge would drop a named size next to a colour.
+ */
 export function PublishedReportView({
   revision,
+  heading,
+  action,
   onDownloadAttachment,
 }: {
   revision: CoachingSessionReportRevision;
+  heading?: StudentReportHeading;
+  /** The page's one action beside the title, for example the PDF download. */
+  action?: ReactNode;
   onDownloadAttachment?: (attachmentId: string) => void;
 }) {
   const content = revision.content;
   const exam = content.exam_analysis;
+  const head: StudentReportHeading = heading ?? {
+    title: "Görüşme raporu",
+    meeting: null,
+    published: `Sürüm ${revision.revision_number} · ${coachingDateTimeLabel(revision.published_at)}`,
+    changeNote: revision.change_note?.trim() ? revision.change_note : null,
+  };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-xl">Görüşme raporu</CardTitle>
-        <p className="text-sm text-ink-mid">
-          Sürüm {revision.revision_number} ·{" "}
-          {coachingDateTimeLabel(revision.published_at)}
-        </p>
-        {revision.change_note ? (
-          <p className="text-sm text-ink-mid">{revision.change_note}</p>
-        ) : null}
-      </CardHeader>
-      <CardContent className="space-y-6">
+    <div className="space-y-4">
+      <section
+        aria-label="Rapor başlığı"
+        className="flex flex-wrap items-center gap-x-6 gap-y-4 rounded-card bg-ink p-5 text-paper sm:p-6"
+      >
+        <div className="min-w-0 flex-1 basis-56">
+          <h2 className="text-h3-m font-bold md:text-h3 md:font-bold">{head.title}</h2>
+          {head.meeting ? <p className="text-small">{head.meeting}</p> : null}
+          <p className="text-small tabular-nums">{head.published}</p>
+          {head.changeNote ? (
+            <p className="mt-1 text-small">
+              <span className="font-medium">Güncellendi:</span> <span>{head.changeNote}</span>
+            </p>
+          ) : null}
+        </div>
+        {action}
+      </section>
+
+      <div className="space-y-6 rounded-card border border-line bg-surface p-5 sm:p-6">
         <TextSection title="Kısa özet" value={content.short_summary} />
         <TextSection title="Görüşülen konular" value={content.topics_discussed} />
         <TextSection title="Öğrencinin ilerlemesi" value={content.student_progress} />
@@ -119,19 +151,19 @@ export function PublishedReportView({
         <TextSection title="Program değişikliği" value={content.program_changes_summary} />
 
         {exam ? (
-          <section className="space-y-3 rounded-lg bg-paper p-4">
-            <h3 className="text-sm font-medium">Sınav analizi</h3>
+          <section className="space-y-3 rounded-input bg-paper p-4">
+            <h3 className="text-small font-bold text-ink">Sınav analizi</h3>
             {exam.status ? (
-              <p className="text-sm text-ink">
+              <p className="text-body text-ink">
                 {EXAM_ANALYSIS_STATUS_OPTIONS.find((option) => option.value === exam.status)?.label ??
                   "Durum belirtilmedi"}
               </p>
             ) : null}
-            <dl className="grid gap-2 text-sm sm:grid-cols-2">
-              {exam.exam_type ? <div><dt className="text-ink-mid">Sınav</dt><dd>{exam.exam_type}</dd></div> : null}
-              {exam.exam_name ? <div><dt className="text-ink-mid">Deneme / test</dt><dd>{exam.exam_name}</dd></div> : null}
-              {exam.date ? <div><dt className="text-ink-mid">Tarih</dt><dd>{coachingLocalDateHeading(exam.date)}</dd></div> : null}
-              {exam.score_or_net !== undefined && exam.score_or_net !== null ? <div><dt className="text-ink-mid">Puan / net</dt><dd>{exam.score_or_net}</dd></div> : null}
+            <dl className="grid gap-2 text-small sm:grid-cols-2">
+              {exam.exam_type ? <div><dt className="text-ink-mid">Sınav</dt><dd className="text-ink">{exam.exam_type}</dd></div> : null}
+              {exam.exam_name ? <div><dt className="text-ink-mid">Deneme / test</dt><dd className="text-ink">{exam.exam_name}</dd></div> : null}
+              {exam.date ? <div><dt className="text-ink-mid">Tarih</dt><dd className="text-ink">{coachingLocalDateHeading(exam.date)}</dd></div> : null}
+              {exam.score_or_net !== undefined && exam.score_or_net !== null ? <div><dt className="text-ink-mid">Puan / net</dt><dd className="text-ink">{exam.score_or_net}</dd></div> : null}
             </dl>
             <StringList title="Güçlü alanlar" values={exam.strengths} />
             <StringList title="Odak alanları" values={exam.focus_areas} />
@@ -144,7 +176,7 @@ export function PublishedReportView({
           resources={content.recommended_resources}
           onDownloadAttachment={onDownloadAttachment}
         />
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
