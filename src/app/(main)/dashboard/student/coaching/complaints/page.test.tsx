@@ -75,8 +75,10 @@ let financialFails = false;
 let eligibilityValue: unknown = eligibility;
 let eligibilityFails = false;
 let search = "";
+let created: Record<string, unknown> | null = null;
 const posted: { url: string; body: unknown }[] = [];
 const pushed: string[] = [];
+const informed: string[] = [];
 
 function httpError(status: number) {
   return Object.assign(new Error(`http ${status}`), { response: { status } });
@@ -112,7 +114,9 @@ before(async () => {
       ),
     },
   });
-  mock.module("sonner", { namedExports: { toast: { success() {}, error() {} } } });
+  mock.module("sonner", {
+    namedExports: { toast: { success() {}, error() {}, info: (message: string) => informed.push(message) } },
+  });
   mock.module("@/lib/api", {
     defaultExport: {
       get: async (url: string) => {
@@ -136,7 +140,10 @@ before(async () => {
       },
       post: async (url: string, body: unknown) => {
         posted.push({ url, body });
-        if (url === "/coaching/purchases/cp-1/disputes/") return { data: { id: "d-new" } };
+        if (url === "/coaching/purchases/cp-1/disputes/") {
+          const { description } = body as { description: string };
+          return { data: created ?? { id: "d-new", description } };
+        }
         return { data: {} };
       },
     },
@@ -155,8 +162,10 @@ beforeEach(() => {
   eligibilityValue = eligibility;
   eligibilityFails = false;
   search = "";
+  created = null;
   posted.length = 0;
   pushed.length = 0;
+  informed.length = 0;
 });
 afterEach(cleanup);
 
@@ -293,6 +302,33 @@ describe("student Sorun bildir: a new complaint", () => {
     assert.equal(body.description, "Rapor gelmedi.");
     assert.equal(typeof body.submission_key, "string");
     await waitFor(() => assert.deepEqual(pushed, ["/dashboard/student/coaching/complaints/d-new"]));
+  });
+
+  it("says so when the server hands back the complaint that was already open on that topic, instead of dropping the new text without a word", async () => {
+    created = { ...dispute("d-info", "report_absent", "needs_more_info", "2026-10-15T11:20:00Z"), description: "Eski açıklama" };
+    list = [];
+    renderPage();
+
+    fireEvent.change(await screen.findByLabelText("Sorun konusu"), { target: { value: "report_absent" } });
+    fireEvent.change(screen.getByLabelText("Durumun açıklaması"), { target: { value: "Yeni yazdığım açıklama." } });
+    fireEvent.click(screen.getByRole("button", { name: "Sorunu gönder" }));
+
+    await waitFor(() => assert.deepEqual(pushed, ["/dashboard/student/coaching/complaints/d-info"]));
+    assert.deepEqual(informed, [
+      "Bu konuda zaten açık bir bildirimin var, seni ona götürdük. Yeni yazdığın açıklama eklenmedi.",
+    ]);
+  });
+
+  it("says nothing extra when the complaint that comes back carries the text just sent", async () => {
+    list = [];
+    renderPage();
+
+    fireEvent.change(await screen.findByLabelText("Sorun konusu"), { target: { value: "report_absent" } });
+    fireEvent.change(screen.getByLabelText("Durumun açıklaması"), { target: { value: "  Rapor gelmedi.  " } });
+    fireEvent.click(screen.getByRole("button", { name: "Sorunu gönder" }));
+
+    await waitFor(() => assert.deepEqual(pushed, ["/dashboard/student/coaching/complaints/d-new"]));
+    assert.deepEqual(informed, []);
   });
 
   it("opens with the topic chosen when the link says which one, but only if it is open to the student", async () => {

@@ -3,6 +3,7 @@
 import { useId, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 import { CoachingLoadError } from "@/components/coaching/CoachingLoadError";
 import { InlineError } from "@/components/shared/InlineError";
@@ -21,7 +22,10 @@ import { categoryDeadlineLines } from "@/lib/coachingStudentComplaints";
  * now and until when; nothing is chosen for the student, because a form that
  * opened with the first reason already picked put an accusation nobody had made
  * in front of someone who only opened the page. A link can name the topic it is
- * about (`initialTopic`), and it is taken only if the server lists it.
+ * about (`initialTopic`), and it is taken only if the server lists it. When a
+ * complaint on that topic is already open the server answers with that one
+ * instead of filing a second; the text typed here is then not kept, and the
+ * student is told so rather than finding an older complaint with no word why.
  */
 export function NewComplaintForm({
   purchaseId,
@@ -47,8 +51,11 @@ export function NewComplaintForm({
   const create = useMutation({
     mutationFn: (data: { category: string; description: string }) =>
       createStudentCoachingDispute(purchaseId, { ...data, submission_key: crypto.randomUUID() }),
-    onSuccess: (dispute) => {
+    onSuccess: (dispute, sent) => {
       queryClient.invalidateQueries({ queryKey: COACHING_FAZ8_QUERY_KEYS.studentDisputes() });
+      if (typeof dispute.description === "string" && dispute.description.trim() !== sent.description.trim()) {
+        toast.info("Bu konuda zaten açık bir bildirimin var, seni ona götürdük. Yeni yazdığın açıklama eklenmedi.");
+      }
       router.push(`/dashboard/student/coaching/complaints/${dispute.id}`);
     },
   });
