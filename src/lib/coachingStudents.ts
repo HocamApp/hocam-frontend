@@ -1,5 +1,6 @@
 import {
   coachingFrequencyLabel,
+  type AcceptanceRequest,
   type CoachingRescheduleRequestItem,
   type CoachingSessionItem,
   type CoachingStudentRow,
@@ -23,7 +24,7 @@ export function studentInitials(name: string): string {
 
 export interface StudentWaitingItem {
   id: string;
-  kind: "report" | "reschedule" | "time";
+  kind: "report" | "reschedule" | "time" | "acceptance";
   /** Null where the API does not name the student (time requests). */
   initials: string | null;
   title: string;
@@ -74,7 +75,8 @@ function slotText(student: CoachingStudentRow): string {
 
 /**
  * The Öğrenciler page's three groups: what is waiting on the tutor (a report
- * owed, a request to answer), the students being coached with their next
+ * owed, a request to answer, a coaching request to accept, which already holds
+ * a place and so would otherwise be counted with no row to show for it), the students being coached with their next
  * meeting, and the two that need nothing from the tutor right now (one who has
  * not chosen hours yet, one whose coaching is being ended). `now` is passed in;
  * nothing here reads the clock.
@@ -84,12 +86,14 @@ export function buildStudentsBoard({
   sessions,
   timeRequests,
   rescheduleRequests,
+  acceptanceRequests,
   now,
 }: {
   students: readonly CoachingStudentRow[];
   sessions: readonly CoachingSessionItem[];
   timeRequests: readonly CoachingTimeRequest[];
   rescheduleRequests: readonly CoachingRescheduleRequestItem[];
+  acceptanceRequests: readonly AcceptanceRequest[];
   now: Date;
 }): { waiting: StudentWaitingItem[]; active: ActiveStudentRow[]; pending: PendingStudentRow[] } {
   const waiting: StudentWaitingItem[] = [];
@@ -142,6 +146,24 @@ export function buildStudentsBoard({
       detail: "Uygun saat bulamayan öğrenciye saat öner.",
       due: { caption: "Son yanıt", value: due.label, urgent: due.urgent },
       action: { label: "Saat öner", href: `${BASE}/time-requests` },
+      at,
+    });
+  }
+
+  for (const request of acceptanceRequests) {
+    // Lesson-only package requests belong to the lessons side, and only an open one waits on the tutor.
+    if (request.status !== "pending" || !request.includes_coaching || !request.coaching) continue;
+    const name = `${request.student.name} ${request.student.surname}`.trim() || "Öğrenci";
+    const at = Date.parse(request.expires_at);
+    const due = coachingDueLabel(at, now);
+    waiting.push({
+      id: `acceptance-${request.id}`,
+      kind: "acceptance",
+      initials: studentInitials(name),
+      title: `${name} koçluk istiyor`,
+      detail: "Ders ve koçluk paketi",
+      due: { caption: "Son yanıt", value: due.label, urgent: due.urgent },
+      action: { label: "Yanıtla", href: `${BASE}/requests` },
       at,
     });
   }
