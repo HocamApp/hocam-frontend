@@ -140,10 +140,14 @@ before(async () => {
     },
   });
   mock.module("@/components/tutors/TutorStudentNotes", {
-    namedExports: { TutorStudentNotes: ({ studentId }: { studentId: string }) => <p>Notlar kutusu {studentId}</p> },
+    namedExports: {
+      TutorStudentNotes: ({ studentId, bare }: { studentId: string; bare?: boolean }) => <p data-bare={String(Boolean(bare))}>Notlar kutusu {studentId}</p>,
+    },
   });
   mock.module("@/components/tutors/TutorStudentMaterials", {
-    namedExports: { TutorStudentMaterials: ({ studentId }: { studentId: string }) => <p>Materyaller kutusu {studentId}</p> },
+    namedExports: {
+      TutorStudentMaterials: ({ studentId, bare }: { studentId: string; bare?: boolean }) => <p data-bare={String(Boolean(bare))}>Materyaller kutusu {studentId}</p>,
+    },
   });
   mock.module("@/lib/api", {
     defaultExport: {
@@ -285,6 +289,17 @@ describe("Görüşmeye hazırlan", () => {
     assert.ok(screen.getByText("Notlar kutusu u-9"));
     fireEvent.click(screen.getByRole("button", { name: /Materyallerim/ }));
     assert.ok(screen.getByText("Materyaller kutusu u-9"));
+  });
+
+  // The rows are already titled "Özel notlarım · yalnız sana görünür" and "Materyallerim · …":
+  // the panels inside leave off their own card, band and caption, so nothing is named twice.
+  it("opens the private panels without a second title of their own", async () => {
+    renderPage();
+
+    fireEvent.click(await screen.findByRole("button", { name: /Özel notlarım/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Materyallerim/ }));
+    assert.equal(screen.getByText("Notlar kutusu u-9").getAttribute("data-bare"), "true");
+    assert.equal(screen.getByText("Materyaller kutusu u-9").getAttribute("data-bare"), "true");
   });
 
   it("says when the room opens on the day, and offers Görüşmeye katıl once it can be entered", async () => {

@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useRef, useState } from "react";
+import React, { useId, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowSquareOut, DownloadSimple, FileText, SpinnerGap, Paperclip, Trash, UploadSimple, WarningCircle } from "@phosphor-icons/react";
+import { FileText, SpinnerGap, UploadSimple, WarningCircle } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,8 +22,9 @@ import {
   uploadTutorStudentMaterial,
 } from "@/lib/notificationsApi";
 import { TUTOR_MATERIAL_ACCEPT, TUTOR_MATERIAL_HINT, validateTutorMaterialFile } from "@/lib/tutorMaterialTypes";
-import { cn, formatDate } from "@/lib/utils";
+import { formatDate } from "@/lib/utils";
 import type { TutorStudentMaterial } from "@/types";
+import { TutorPrivateFrame } from "./TutorPrivateFrame";
 
 export function formatMaterialSize(bytes: number): string {
   if (bytes < 1024) return bytes + " B";
@@ -46,6 +47,8 @@ export interface TutorStudentMaterialsViewProps {
   deletingMaterial: TutorStudentMaterial | null;
   isDeleting: boolean;
   compact?: boolean;
+  /** Inside a row that already names the materials and says who sees them: no card, band or caption. */
+  bare?: boolean;
   onRetry: () => void;
   onSelectFile: (file: File) => void;
   onOpen: (material: TutorStudentMaterial) => void;
@@ -64,6 +67,7 @@ export function TutorStudentMaterialsView({
   deletingMaterial,
   isDeleting,
   compact = false,
+  bare = false,
   onRetry,
   onSelectFile,
   onOpen,
@@ -73,18 +77,11 @@ export function TutorStudentMaterialsView({
   onConfirmDelete,
 }: TutorStudentMaterialsViewProps) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const frameId = useId();
+  // Plain class strings below: tailwind-merge would drop a named size such as text-label next to a colour.
   return (
-    <section className="space-y-4 rounded-card border border-line bg-white p-4 text-ink sm:p-6">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <span className="flex shrink-0 items-center justify-center">
-            <Paperclip size={24} aria-hidden="true" />
-          </span>
-          <div>
-            <h3 className="text-base font-medium">Materyaller</h3>
-            <p className="text-xs text-ink-mid">Yalnızca sana görünür; öğrenciyle paylaşılmaz.</p>
-          </div>
-        </div>
+    <TutorPrivateFrame id={frameId} title="Materyallerim" count={!isLoading && !isError ? `${materials.length} dosya` : null} bare={bare} compact={compact}>
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
         <input
           ref={inputRef}
           type="file"
@@ -98,18 +95,18 @@ export function TutorStudentMaterialsView({
             event.currentTarget.value = "";
           }}
         />
-        <Button size="sm" variant="outline" disabled={isUploading} onClick={() => inputRef.current?.click()}>
+        <Button size="sm" variant="gold" className="min-h-11" disabled={isUploading} onClick={() => inputRef.current?.click()}>
           {isUploading ? <SpinnerGap size={20} className="mr-2 animate-spin" aria-hidden="true" /> : <UploadSimple size={20} className="mr-2" aria-hidden="true" />}
           Dosya ekle
         </Button>
+        <p className="min-w-0 flex-1 basis-56 text-small text-ink-mid">{TUTOR_MATERIAL_HINT}</p>
       </div>
-      <p className="text-xs text-ink-mid">{TUTOR_MATERIAL_HINT}</p>
       {isUploading && (
         <div className="space-y-1" aria-live="polite">
           <div className="h-2 overflow-hidden rounded-pill bg-line" role="progressbar" aria-label="Materyal yükleniyor" aria-valuemin={0} aria-valuemax={100} aria-valuenow={uploadProgress}>
-            <div className="h-full rounded-pill bg-ink transition-none" style={{ width: uploadProgress + "%" }} />
+            <div className="h-full rounded-pill bg-gold transition-none" style={{ width: uploadProgress + "%" }} />
           </div>
-          <p className="text-xs tabular-nums text-ink-mid">{"%" + uploadProgress + " yükleniyor"}</p>
+          <p className="text-label tabular-nums text-ink-mid">{"%" + uploadProgress + " yükleniyor"}</p>
         </div>
       )}
       {isLoading ? (
@@ -118,42 +115,34 @@ export function TutorStudentMaterialsView({
           <Skeleton className="h-16 w-full" />
         </div>
       ) : isError ? (
-        <div className="rounded-input border border-error p-3 text-sm">
-          <p className="flex items-center gap-2 text-error" role="alert"><WarningCircle size={20} aria-hidden="true" />Materyaller yüklenemedi.</p>
-          <Button size="sm" variant="outline" className="mt-2" onClick={onRetry}>Yeniden dene</Button>
+        <div className="space-y-3 rounded-input border border-error p-3">
+          <p className="flex items-center gap-2 text-small text-error" role="alert"><WarningCircle size={20} aria-hidden="true" />Materyaller yüklenemedi.</p>
+          <Button size="sm" variant="outline" onClick={onRetry}>Yeniden dene</Button>
         </div>
       ) : materials.length === 0 ? (
-        <p className="rounded-input border border-dashed border-line bg-paper p-3 text-sm text-ink-mid">
-          Bu öğrenci için henüz materyal eklemedin.
-        </p>
+        <p className="text-body text-ink-mid">Bu öğrenci için henüz materyal eklemedin.</p>
       ) : (
-        <div className={cn("space-y-2", compact && "max-h-56 overflow-y-auto pr-1")}>
+        <ul className={`divide-y divide-line${compact ? " max-h-56 overflow-y-auto" : ""}`}>
           {materials.map((material) => (
-            <article key={material.id} className="flex flex-wrap items-center gap-3 rounded-input border border-line bg-white p-3">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-input bg-paper text-ink-mid">
+            <li key={material.id} className="flex flex-wrap items-center gap-x-4 gap-y-3 py-3 first:pt-0 last:pb-0">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-input bg-paper text-ink-mid">
                 <FileText size={20} aria-hidden="true" />
               </span>
               <div className="min-w-0 flex-1 basis-40">
-                <p className="truncate text-sm font-medium" title={material.original_name}>{material.original_name}</p>
-                <p className="text-xs tabular-nums text-ink-mid">
+                <p className="truncate text-body font-medium text-ink" title={material.original_name}>{material.original_name}</p>
+                <p className="text-label tabular-nums text-ink-mid">
                   {material.file_extension.toLocaleUpperCase("tr-TR")} · {formatMaterialSize(material.size_bytes)}
                 </p>
-                <p className="text-xs tabular-nums text-ink-mid">{formatDate(material.created_at)}</p>
+                <p className="text-label tabular-nums text-ink-mid">{formatDate(material.created_at)}</p>
               </div>
               <div className="flex flex-wrap items-center gap-2">
-                <Button size="sm" variant="ghost" className="px-3" aria-label={material.original_name + " dosyasını aç"} onClick={() => onOpen(material)}>
-                  <ArrowSquareOut size={20} className="mr-2" aria-hidden="true" />Aç
-                </Button>
-                <Button size="sm" variant="ghost" className="px-3" aria-label={material.original_name + " dosyasını indir"} onClick={() => onDownload(material)}>
-                  <DownloadSimple size={20} className="mr-2" aria-hidden="true" />İndir
-                </Button>
-                <Button size="sm" variant="ghost" className="px-3 text-error" disabled={isDeleting} aria-label={material.original_name + " dosyasını sil"} onClick={() => onRequestDelete(material)}>
-                  <Trash size={20} className="mr-2" aria-hidden="true" />Sil
-                </Button>
+                <Button size="sm" variant="gold" className="min-h-11" aria-label={material.original_name + " dosyasını aç"} onClick={() => onOpen(material)}>Aç</Button>
+                <Button size="sm" variant="gold" className="min-h-11" aria-label={material.original_name + " dosyasını indir"} onClick={() => onDownload(material)}>İndir</Button>
+                <Button size="sm" variant="destructive" className="min-h-11" disabled={isDeleting} aria-label={material.original_name + " dosyasını sil"} onClick={() => onRequestDelete(material)}>Sil</Button>
               </div>
-            </article>
+            </li>
           ))}
-        </div>
+        </ul>
       )}
       <Dialog open={Boolean(deletingMaterial)} onOpenChange={(open) => { if (!open && !isDeleting) onCancelDelete(); }}>
         <DialogContent className="rounded-modal border-line bg-white text-ink sm:max-w-md" showClose={!isDeleting}>
@@ -165,7 +154,7 @@ export function TutorStudentMaterialsView({
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={onCancelDelete} disabled={isDeleting}>Vazgeç</Button>
+            <Button variant="ghost" onClick={onCancelDelete} disabled={isDeleting}>Vazgeç</Button>
             <Button variant="destructive" onClick={() => deletingMaterial && onConfirmDelete(deletingMaterial)} disabled={isDeleting}>
               {isDeleting && <SpinnerGap size={20} className="mr-2 animate-spin" aria-hidden="true" />}
               Evet, sil
@@ -173,15 +162,15 @@ export function TutorStudentMaterialsView({
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </section>
+    </TutorPrivateFrame>
   );
 }
 
-export function TutorStudentMaterials(props: { studentId: string; compact?: boolean }) {
+export function TutorStudentMaterials(props: { studentId: string; compact?: boolean; bare?: boolean }) {
   return <StudentMaterials key={props.studentId} {...props} />;
 }
 
-function StudentMaterials({ studentId, compact = false }: { studentId: string; compact?: boolean }) {
+function StudentMaterials({ studentId, compact = false, bare = false }: { studentId: string; compact?: boolean; bare?: boolean }) {
   const queryClient = useQueryClient();
   const queryKey = ["tutor-student-materials", studentId];
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -249,6 +238,7 @@ function StudentMaterials({ studentId, compact = false }: { studentId: string; c
       deletingMaterial={deletingMaterial}
       isDeleting={deleteMutation.isPending}
       compact={compact}
+      bare={bare}
       onRetry={() => materialsQuery.refetch()}
       onSelectFile={(file) => {
         const error = validateMaterialFile(file);
