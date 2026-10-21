@@ -39,15 +39,15 @@ function Marker({ state }: { state: CoachingSetupStepState }) {
 
 /**
  * What is left of getting the coaching offer ready, for a tutor whose setup is
- * not finished (the overview shows nothing here once it is). Five steps from
- * `readiness` alone: the ones before the open step are done, the open one says
- * what it asks for and carries the one way forward, solid gold like every row
- * action on the tutor side, and the rest wait. The page's pink belongs to the
+ * not finished (the overview shows nothing here once it is). Five steps: the
+ * ones before the open step are done, the open one says what it asks for and
+ * carries the one way forward, solid gold like every row action on the tutor
+ * side, and the rest wait unless the status says they are done already. The page's pink belongs to the
  * band of "Yapılacaklar" below, so the card spends it only on the open step's
  * marker.
  */
 export function CoachingStatusCard({ status }: { status: CoachingDerivedStatus }) {
-  const steps = coachingSetupSteps(status.readiness);
+  const steps = coachingSetupSteps(status.readiness, status.stepsDone);
   const published = status.publication === "published";
 
   return (

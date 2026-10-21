@@ -24,12 +24,20 @@ export interface CoachingNextAction {
   href: string;
 }
 
+export type CoachingSetupStepKey = Exclude<CoachingReadinessState, "complete">;
+
 export interface CoachingDerivedStatus {
   publication: CoachingPublicationState;
   intake: CoachingIntakeState;
   capacity: CoachingCapacityState;
   platformCheckout: CoachingPlatformCheckoutState;
+  /** The first step still missing. */
   readiness: CoachingReadinessState;
+  /**
+   * Each step on its own: `readiness` only names the first missing one, which
+   * would make a published offer with one step missing look unstarted.
+   */
+  stepsDone: Record<CoachingSetupStepKey, boolean>;
   platformMessage: string | null;
   nextAction: CoachingNextAction | null;
 }
@@ -80,12 +88,22 @@ export function deriveCoachingStatus(input: {
     nextAction = { label: "Teklifini gözden geçir", href: "/dashboard/tutor/coaching/plan?step=publish" };
   }
 
+  const hasHours = Boolean(input.capacity && input.capacity.weekly_slot_count >= 1);
+  const stepsDone: Record<CoachingSetupStepKey, boolean> = {
+    onboarding: input.onboardingComplete,
+    plan: Boolean(input.plan),
+    availability: hasHours,
+    capacity: Boolean(input.plan && input.capacity && hasHours && !(input.capacity.theoretical_capacity < input.plan.max_active_students)),
+    publish: Boolean(input.plan?.is_published),
+  };
+
   return {
     publication,
     intake,
     capacity,
     platformCheckout,
     readiness,
+    stepsDone,
     platformMessage:
       publication === "published" && platformCheckout === "platform_paused"
         ? "Teklifin yayında. Yeni koçluk satışları platform genelinde şu anda kapalı."
@@ -94,7 +112,6 @@ export function deriveCoachingStatus(input: {
   };
 }
 
-export type CoachingSetupStepKey = Exclude<CoachingReadinessState, "complete">;
 export type CoachingSetupStepState = "done" | "current" | "pending";
 
 export interface CoachingSetupStepRow {
@@ -142,15 +159,20 @@ const COACHING_SETUP_STEP_ROWS: readonly Omit<CoachingSetupStepRow, "state">[] =
 
 /**
  * The five parts of getting a coaching offer ready, with what is done, what is
- * open and what waits. Read from `readiness` alone: it already names the first
- * thing still missing, so everything before it is done and everything after it
- * waits. A finished setup has every step done.
+ * open and what waits. `readiness` names the first thing still missing, so
+ * everything before it is done. What comes after it waits, unless `stepsDone`
+ * says it is done on its own (a published offer whose tutor must accept the
+ * contract again has everything but the first step). A finished setup has every
+ * step done.
  */
-export function coachingSetupSteps(readiness: CoachingReadinessState): CoachingSetupStepRow[] {
+export function coachingSetupSteps(
+  readiness: CoachingReadinessState,
+  stepsDone: Partial<Record<CoachingSetupStepKey, boolean>> = {},
+): CoachingSetupStepRow[] {
   const open = COACHING_SETUP_STEP_ROWS.findIndex((step) => step.key === readiness);
   return COACHING_SETUP_STEP_ROWS.map((step, index) => ({
     ...step,
-    state: open === -1 || index < open ? "done" : index === open ? "current" : "pending",
+    state: open === -1 || index < open ? "done" : index === open ? "current" : stepsDone[step.key] ? "done" : "pending",
   }));
 }
 
