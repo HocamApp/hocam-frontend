@@ -47,6 +47,27 @@ describe("CoachingSessionRatingForm", () => {
     });
   });
 
+  it("names each criterion's group by its label, without a fieldset", () => {
+    const { container } = render(<CoachingSessionRatingForm onSubmit={() => {}} isPending={false} />);
+
+    for (const criterion of RATING_CRITERIA) {
+      assert.ok(screen.getByRole("group", { name: RATING_CRITERIA_LABELS[criterion] }));
+    }
+    // A fieldset's legend is laid out outside a flex row: the label ended up above its
+    // circles with the row's hairline running through it, instead of beside them.
+    assert.equal(container.querySelectorAll("fieldset").length, 0);
+  });
+
+  it("tells the row around it how many criteria are answered", () => {
+    const answered: number[] = [];
+    render(<CoachingSessionRatingForm onSubmit={() => {}} isPending={false} onProgress={(count) => answered.push(count)} />);
+
+    fireEvent.click(screen.getByRole("button", { name: `${RATING_CRITERIA_LABELS.motivation}: 3 / 5` }));
+    fireEvent.click(screen.getByRole("button", { name: `${RATING_CRITERIA_LABELS.motivation}: 4 / 5` }));
+    fireEvent.click(screen.getByRole("button", { name: `${RATING_CRITERIA_LABELS.attentiveness}: 5 / 5` }));
+    assert.deepEqual(answered, [1, 1, 2]);
+  });
+
   it("gives every score button a 44px target", () => {
     render(<CoachingSessionRatingForm onSubmit={() => {}} isPending={false} />);
     const button = screen.getByRole("button", { name: `${RATING_CRITERIA_LABELS.motivation}: 3 / 5` });

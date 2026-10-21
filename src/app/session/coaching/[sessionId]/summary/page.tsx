@@ -1,150 +1,153 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { toast } from "sonner";
-import { CalendarDots, Lifebuoy, Star } from "@phosphor-icons/react";
+import { useParams } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 
-import { useAuth } from "@/hooks/useAuth";
-import { RouteGuard } from "@/components/shared/RouteGuard";
-import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
-import { ErrorMessage } from "@/components/shared/ErrorMessage";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CoachingIncidentActions } from "@/components/coaching/CoachingIncidentActions";
-import { CoachingSessionRatingForm } from "@/components/coaching/CoachingSessionRatingForm";
+import { CoachingLoadError } from "@/components/coaching/CoachingLoadError";
 import {
-  fetchCoachingSessionDetail,
-  submitCoachingSessionRating,
+  PostSessionBand,
+  PostSessionGoldLink,
+  PostSessionInkLink,
+  PostSessionProblems,
+  PostSessionRatingRow,
+  PostSessionRow,
+} from "@/components/coaching/PostSessionParts";
+import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
+import { RouteGuard } from "@/components/shared/RouteGuard";
+import { useAuth } from "@/hooks/useAuth";
+import { useServerNow } from "@/hooks/useServerNow";
+import {
+  COACHING_SESSION_QUERY_KEYS,
   extractCoachingErrorMessage,
-  type CoachingSessionRatingScores,
+  fetchCoachingSessionAttendanceSummary,
+  fetchCoachingSessionDetail,
+  fetchCoachingSessions,
+  fetchTutorCoachingSessions,
 } from "@/lib/coachingApi";
+import {
+  postSessionBand,
+  postSessionCanReport,
+  postSessionMeta,
+  postSessionNext,
+  postSessionRating,
+  tutorNoShowOption,
+  tutorPresence,
+  type PostSessionRole,
+} from "@/lib/coachingPostSession";
+import { coachingTutorJoin } from "@/lib/coachingSessions";
+import { numberStudentSessions, studentCoachingJoin } from "@/lib/coachingStudentOverview";
 
 /**
- * Master Spec §24 — the exact five post-session options: "Görüşmeyi
- * değerlendir · Teknik sorun bildir · Öğretmen katılmadı bildir · Sonraki
- * görüşmeyi görüntüle · Koçluk desteğine git." Student-only: rating and
- * "tutor didn't show" reporting are both student actions.
+ * The screen after a coaching meeting, for either side. A pink band says what
+ * became of this meeting (Master Spec §24's promise of the report, with the
+ * server's own deadline, when it was held) and one white card holds the options.
+ * For the student, §24 names exactly five: Görüşmeyi değerlendir, Teknik sorun
+ * bildir, Öğretmen katılmadı bildir (only when the tutor's absence is on record),
+ * Sonraki görüşmeyi görüntüle, Koçluk desteğine git. The tutor gets the report
+ * and the next meeting. Reached from the room (both sides) and, later, from the
+ * student's Görüşmeler list to rate or to report.
  */
-function RatingCard({ sessionId }: { sessionId: string }) {
-  const [submitted, setSubmitted] = useState(false);
-
-  const ratingMutation = useMutation({
-    mutationFn: ({ scores, comment }: { scores: CoachingSessionRatingScores; comment: string }) =>
-      submitCoachingSessionRating(sessionId, scores, comment),
-    onSuccess: () => {
-      toast.success("Değerlendirmen kaydedildi.");
-      setSubmitted(true);
-    },
-    onError: (err) => toast.error(extractCoachingErrorMessage(err)),
-  });
-
-  if (submitted) {
-    return (
-      <p className="text-body text-ink-mid">Bu görüşme için değerlendirmen alındı, teşekkürler.</p>
-    );
-  }
-
-  return (
-    <CoachingSessionRatingForm
-      isPending={ratingMutation.isPending}
-      onSubmit={(scores, comment) => ratingMutation.mutate({ scores, comment })}
-    />
-  );
-}
-
-const INCIDENT_STATUSES = new Set(["in_progress", "awaiting_report"]);
-
 function PostSessionContent() {
   const { sessionId } = useParams<{ sessionId: string }>();
-  const router = useRouter();
   const { user } = useAuth();
+  const role: PostSessionRole = user?.role === "tutor" ? "tutor" : "student";
+  const now = useServerNow();
 
-  const {
-    data: detail,
-    isLoading,
-    isError,
-    error,
-  } = useQuery({
-    queryKey: ["coaching-session-detail", sessionId],
+  const detailQuery = useQuery({
+    queryKey: COACHING_SESSION_QUERY_KEYS.detail(sessionId),
     queryFn: () => fetchCoachingSessionDetail(sessionId),
-    enabled: user?.role !== "tutor",
+  });
+  const detail = detailQuery.data;
+  const sessionsQuery = useQuery({
+    queryKey: role === "tutor" ? COACHING_SESSION_QUERY_KEYS.tutorList() : COACHING_SESSION_QUERY_KEYS.studentList(),
+    queryFn: role === "tutor" ? fetchTutorCoachingSessions : fetchCoachingSessions,
+    staleTime: 60_000,
+  });
+  // Only a student reads the tutor's attendance, and only while a report is still possible.
+  const attendanceQuery = useQuery({
+    queryKey: ["coaching-session-attendance", sessionId],
+    queryFn: () => fetchCoachingSessionAttendanceSummary(sessionId),
+    enabled: role === "student" && detail !== undefined && postSessionCanReport(detail),
   });
 
-  const isTutor = user?.role === "tutor";
-  // Redirect from an effect: calling router.replace during render is a
-  // side effect React may run twice or warn about.
-  useEffect(() => {
-    if (isTutor) router.replace("/dashboard/tutor");
-  }, [isTutor, router]);
-
-  if (isTutor) return null;
-
-  if (isLoading) {
+  if (detailQuery.isLoading) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center">
         <LoadingSpinner />
       </div>
     );
   }
-  if (isError || !detail) {
-    return <ErrorMessage message={extractCoachingErrorMessage(error)} />;
+  if (detailQuery.isError || !detail) {
+    return (
+      <div className="mx-auto w-full max-w-2xl px-4 py-8">
+        <CoachingLoadError
+          message={extractCoachingErrorMessage(detailQuery.error)}
+          onRetry={() => detailQuery.refetch()}
+          isRetrying={detailQuery.isFetching}
+        />
+      </div>
+    );
   }
 
+  const sessions = sessionsQuery.data ?? [];
+  // A student's meetings are numbered across the whole plan, as on the Görüşmeler page;
+  // until that list is read the number is left out rather than guessed.
+  const number =
+    role === "tutor"
+      ? detail.sequence_number
+      : numberStudentSessions(sessions).find(({ session }) => session.id === detail.id)?.number ?? null;
+  const band = postSessionBand({ session: detail, role, otherName: role === "tutor" ? detail.student_name : detail.tutor_name });
+  const join = role === "tutor" ? coachingTutorJoin(detail, now) : studentCoachingJoin(detail, now);
+  const roomHref = join && "href" in join ? join.href : null;
+  const next = postSessionNext({ sessions, currentId: detail.id, role, now });
+  const nextCaption = sessionsQuery.isLoading ? "Yükleniyor…" : sessionsQuery.isError ? "Görüşmeler yüklenemedi." : next.caption;
+  // A failed attendance read must not hide a report that is real: fail open.
+  const presence = attendanceQuery.isError ? "absent" : tutorPresence(attendanceQuery.data);
+  const rating = postSessionRating(detail, role);
+
   return (
-    <div className="mx-auto max-w-2xl space-y-6 px-4 py-8">
-      <div>
-        <h1 className="text-2xl font-bold">Görüşme tamamlandı</h1>
-        <p className="text-sm text-ink-mid">{detail.tutor_name} ile görüşmen sona erdi.</p>
-      </div>
+    <div className="mx-auto w-full max-w-2xl space-y-4 px-4 py-8">
+      <PostSessionBand
+        title={band.title}
+        message={band.message}
+        meta={postSessionMeta(detail, number)}
+        deadline={band.deadline}
+        action={
+          roomHref ? (
+            <PostSessionInkLink href={roomHref}>
+              {detail.status === "in_progress" ? "Odaya geri dön" : "Odaya git"}
+            </PostSessionInkLink>
+          ) : undefined
+        }
+      />
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Star className="h-4 w-4" /> Görüşmeyi değerlendir
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {/* A second rating is not rejected by the server: it keeps the first,
-              so a form here would say "kaydedildi" and change nothing. */}
-          {detail.rating_submitted ? (
-            <p className="text-body text-ink-mid">Bu görüşme için değerlendirmen alındı, teşekkürler.</p>
-          ) : (
-            <RatingCard sessionId={sessionId} />
-          )}
-        </CardContent>
-      </Card>
-
-      {/* A no-show or technical issue can only be reported while the
-          session is open or waiting for its report; once completed the
-          server refuses it, so the buttons would only produce an error. */}
-      {INCIDENT_STATUSES.has(detail.status) ? (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">
-              Teknik sorun mu vardı ya da öğretmen gelmedi mi?
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <CoachingIncidentActions sessionId={sessionId} viewerRole="student" />
-          </CardContent>
-        </Card>
-      ) : null}
-
-      <div className="grid gap-3 sm:grid-cols-2">
-        <Button asChild variant="outline" className="w-full justify-start">
-          <Link href="/dashboard/student/coaching/upcoming">
-            <CalendarDots className="mr-2 h-4 w-4" aria-hidden="true" /> Sonraki görüşmeyi görüntüle
-          </Link>
-        </Button>
-        <Button asChild variant="outline" className="w-full justify-start">
-          <Link href="/dashboard/student/coaching/complaints">
-            <Lifebuoy className="mr-2 h-4 w-4" aria-hidden="true" /> Koçluk desteğine git
-          </Link>
-        </Button>
-      </div>
+      <section aria-label="Görüşme sonrası" className="overflow-hidden rounded-card border border-line bg-surface">
+        {role === "student" ? (
+          <>
+            {rating !== "hidden" ? <PostSessionRatingRow sessionId={detail.id} state={rating} /> : null}
+            <PostSessionRow title="Sonraki görüşmeyi görüntüle" caption={nextCaption}>
+              <PostSessionGoldLink href="/dashboard/student/coaching/upcoming">Görüntüle</PostSessionGoldLink>
+            </PostSessionRow>
+            {postSessionCanReport(detail) ? (
+              <PostSessionProblems sessionId={detail.id} noShow={tutorNoShowOption({ session: detail, presence, now })} />
+            ) : null}
+            <PostSessionRow title="Koçluk desteğine git" caption="Sorun bildirimlerin ve yeni bildirim">
+              <PostSessionGoldLink href="/dashboard/student/coaching/complaints">Git</PostSessionGoldLink>
+            </PostSessionRow>
+          </>
+        ) : (
+          <>
+            {detail.status === "awaiting_report" ? (
+              <PostSessionRow title="Raporu hazırla" caption="Çalışma programı ve ilerleme raporu">
+                <PostSessionGoldLink href={`/dashboard/tutor/coaching/sessions/${detail.id}/report`}>Raporu hazırla</PostSessionGoldLink>
+              </PostSessionRow>
+            ) : null}
+            <PostSessionRow title="Sıradaki görüşme" caption={nextCaption}>
+              <PostSessionGoldLink href="/dashboard/tutor/coaching/upcoming">Görüşmeler</PostSessionGoldLink>
+            </PostSessionRow>
+          </>
+        )}
+      </section>
     </div>
   );
 }

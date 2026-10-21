@@ -167,13 +167,9 @@ function CoachingSessionContent() {
           api.addEventListener?.("connectionInterrupted", onConnectionInterrupted);
           api.addEventListener?.("connectionRestored", onConnectionRestored);
         }}
-        onReadyToClose={() =>
-          router.push(
-            viewerRole === "student"
-              ? `/session/coaching/${sessionId}/summary`
-              : `/dashboard/${viewerRole}`
-          )
-        }
+        // Both sides land on the screen after the meeting: the student's options,
+        // the tutor's report and next meeting.
+        onReadyToClose={() => router.push(`/session/coaching/${sessionId}/summary`)}
         getIFrameRef={(iframeRef: HTMLElement) => {
           iframeRef.style.height = "100%";
           iframeRef.style.width = "100%";
