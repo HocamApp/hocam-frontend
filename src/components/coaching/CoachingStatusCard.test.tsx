@@ -31,6 +31,7 @@ function status(overrides: Partial<CoachingDerivedStatus> = {}): CoachingDerived
     readiness: "availability",
     platformMessage: null,
     nextAction: { label: "Koçluk saatlerini ekle", href: "/dashboard/tutor/coaching/plan?step=availability" },
+    stepsDone: { onboarding: true, plan: true, availability: false, capacity: false, publish: false },
     ...overrides,
   };
 }
@@ -96,6 +97,25 @@ describe("CoachingStatusCard", () => {
     render(<CoachingStatusCard status={status({ publication: "published" })} />);
 
     assert.ok(screen.getByText("Teklifin yayında; aşağıdaki adım eksik kaldı."));
+  });
+
+  it("shows the steps that are done as done even after the open one, so a published offer is not made to look unstarted", () => {
+    render(
+      <CoachingStatusCard
+        status={status({
+          publication: "published",
+          readiness: "onboarding",
+          nextAction: { label: "Tanıtıma devam et", href: "/dashboard/tutor/coaching/onboarding" },
+          stepsDone: { onboarding: false, plan: true, availability: true, capacity: true, publish: true },
+        })}
+      />,
+    );
+
+    assert.deepEqual(
+      rows().map((row) => row.textContent?.split(".")[0]),
+      ["Sıradaki adım", "Tamamlandı", "Tamamlandı", "Tamamlandı", "Tamamlandı"],
+    );
+    assert.equal(screen.queryByText(/Bekliyor/), null);
   });
 
   it("draws no button, and does not break, if a status has no next action", () => {

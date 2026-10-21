@@ -33,6 +33,7 @@ const publishedPaused: CoachingDerivedStatus = {
   capacity: "available",
   platformCheckout: "platform_paused",
   readiness: "complete",
+  stepsDone: { onboarding: true, plan: true, availability: true, capacity: true, publish: true },
   platformMessage:
     "Teklifin yayında. Yeni koçluk satışları platform genelinde şu anda kapalı.",
   nextAction: null,

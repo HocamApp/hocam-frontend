@@ -51,6 +51,25 @@ describe("deriveCoachingStatus", () => {
       "Teklifin yayında. Yeni koçluk satışları platform genelinde şu anda kapalı."
     );
     assert.equal(status.nextAction, null);
+    assert.deepEqual(status.stepsDone, { onboarding: true, plan: true, availability: true, capacity: true, publish: true });
+  });
+
+  it("knows which steps are done on their own, not only which one is first missing", () => {
+    const status = deriveCoachingStatus({
+      onboardingComplete: false,
+      plan,
+      capacity,
+      checkoutEnabled: true,
+    });
+
+    assert.equal(status.readiness, "onboarding");
+    assert.deepEqual(status.stepsDone, { onboarding: false, plan: true, availability: true, capacity: true, publish: true });
+  });
+
+  it("does not call a step done that it cannot see: no plan, no capacity yet", () => {
+    const status = deriveCoachingStatus({ onboardingComplete: true, plan: null, capacity: null, checkoutEnabled: true });
+
+    assert.deepEqual(status.stepsDone, { onboarding: true, plan: false, availability: false, capacity: false, publish: false });
   });
 
   it("routes missing availability to the tutor-fixable setup step", () => {
@@ -175,6 +194,16 @@ describe("coachingSetupSteps", () => {
       coachingSetupSteps("availability").find((step) => step.state === "current")?.detail,
       "Öğrencilerin seçebileceği haftalık saatleri sen belirlersin.",
     );
+  });
+
+  it("shows a later step as done when it is, so a published offer is not made to look unstarted", () => {
+    const done = { onboarding: false, plan: true, availability: true, capacity: true, publish: true };
+    assert.deepEqual(
+      coachingSetupSteps("onboarding", done).map((step) => `${step.key}:${step.state}`),
+      ["onboarding:current", "plan:done", "availability:done", "capacity:done", "publish:done"],
+    );
+    // Without that knowledge the steps after the open one wait.
+    assert.equal(coachingSetupSteps("onboarding").filter((step) => step.state === "pending").length, 4);
   });
 
   it("follows deriveCoachingStatus: the open step is the one its next action opens", () => {
