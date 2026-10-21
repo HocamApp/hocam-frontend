@@ -64,7 +64,11 @@ function CoachingRoomPanel({
         )}
       </div>
 
-      <CoachingAttachmentPanel sessionId={sessionId} />
+      <CoachingAttachmentPanel
+        sessionId={sessionId}
+        viewerRole={viewerRole}
+        otherName={viewerRole === "tutor" ? detail?.student_name : detail?.tutor_name}
+      />
 
       {viewerRole === "tutor" && detail?.status === "in_progress" && (
         <div className="space-y-2 border-t pt-3">

@@ -195,7 +195,7 @@ export function CoachingReportWizard({
     return (
       <div className="space-y-4">
         <DeadlineNotice notice={notice} />
-        <CoachingAttachmentPanel sessionId={sessionId} />
+        <CoachingAttachmentPanel sessionId={sessionId} viewerRole="tutor" otherName={session.student_name} />
       </div>
     );
   }
@@ -285,6 +285,7 @@ export function CoachingReportWizard({
             {step === "resources" ? (
               <ReportResourcesStep
                 sessionId={sessionId}
+                studentName={session.student_name}
                 summary={draft.draft.program_changes_summary ?? ""}
                 onSummary={(value) => draft.setText("program_changes_summary", value)}
                 resources={draft.resources}

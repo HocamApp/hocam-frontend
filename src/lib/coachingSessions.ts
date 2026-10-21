@@ -65,6 +65,16 @@ function joinFor(session: CoachingSessionItem, now: Date, today: string): Coachi
   return { kind: "closed", opensLabel: `${coachingTimeLabel(opens)}'te açılır` };
 }
 
+/**
+ * Katıl for one meeting, as the Görüşmeler page decides it: live while it runs,
+ * open from 15 minutes before the start until it ends, the time it opens on the
+ * day itself, nothing otherwise. Any page that offers the room asks here, so the
+ * button never answers "not open yet".
+ */
+export function coachingTutorJoin(session: CoachingSessionItem, now: Date): CoachingJoin {
+  return joinFor(session, now, istanbulDateKey(now));
+}
+
 function countdown(session: CoachingSessionItem, now: Date): string | null {
   if (session.status === "in_progress") return "Devam ediyor";
   const diff = Date.parse(session.scheduled_start) - now.getTime();
