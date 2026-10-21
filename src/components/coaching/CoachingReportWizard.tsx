@@ -1,183 +1,118 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  WarningCircle,
-  CaretLeft,
-  CaretRight,
-  FloppyDisk,
-  PaperPlaneTilt,
-} from "@phosphor-icons/react";
-import { toast } from "sonner";
 
 import { CoachingAttachmentPanel } from "@/components/coaching/CoachingAttachmentPanel";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { ErrorMessage } from "@/components/shared/ErrorMessage";
-import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
+import { CoachingLoadError } from "@/components/coaching/CoachingLoadError";
+import { ReportFieldsStep } from "@/components/coaching/ReportField";
+import { ReportPublishedState } from "@/components/coaching/ReportPublishedState";
+import { ReportReviewStep } from "@/components/coaching/ReportReviewStep";
+import { ReportSaveLine } from "@/components/coaching/ReportSaveLine";
+import { ReportExamStep, ReportResourcesStep } from "@/components/coaching/ReportStepForms";
+import { ReportStepProgress, ReportStepRail } from "@/components/coaching/ReportStepRail";
+import { useReportDraft } from "@/components/coaching/useReportDraft";
 import { SensitiveDataGuidance } from "@/components/privacy/SensitiveDataGuidance";
+import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
+import {
+  SectionBandCount,
+  SectionBandHeading,
+  sectionBandClass,
+} from "@/components/shared/SectionBand";
+import { Button } from "@/components/ui/button";
 import {
   COACHING_FAZ6_QUERY_KEYS,
   COACHING_SESSION_QUERY_KEYS,
-  EXAM_ANALYSIS_STATUS_OPTIONS,
   extractCoachingErrorMessage,
   fetchCoachingProgram,
-  fetchCoachingReportDraft,
   fetchCoachingReports,
   fetchCoachingSessionAttachments,
   fetchCoachingSessionDetail,
   fetchTutorCoachingReportHistory,
-  getReportPublishInvalidationKeys,
   getPrimaryReportTiming,
-  normalizeScoreOrNet,
+  getReportPublishInvalidationKeys,
   publishCoachingReportRevision,
   publishInitialCoachingReport,
-  saveCoachingReportDraft,
-  type CoachingExamAnalysis,
-  type CoachingExamAnalysisStatus,
-  type CoachingRecommendedResource,
-  type CoachingReportDraftInput,
+  type CoachingSessionReportRevision,
 } from "@/lib/coachingApi";
+import {
+  REPORT_FIELD_RULES,
+  REPORT_STEPS,
+  reportChecklist,
+  reportDeadlineNotice,
+  reportStepStates,
+  type ReportDeadlineNotice,
+  type ReportStepKey,
+} from "@/lib/coachingReportDraft";
 import { coachingDateTimeLabel } from "@/lib/coachingTime";
 
-const STEPS = ["Özet", "İlerleme", "Öncelikler", "Sınav analizi", "Kaynaklar"];
-
-const EMPTY_DRAFT: CoachingReportDraftInput = {
-  short_summary: "",
-  topics_discussed: "",
-  student_progress: "",
-  next_priorities: "",
-  study_recommendations: "",
-  focus_until_next_meeting: "",
-  exam_analysis: {},
-  recommended_resources: [],
-  program_changes_summary: "",
+const STEP_TITLES: Record<ReportStepKey, string> = {
+  summary: "Özet",
+  progress: "İlerleme",
+  priorities: "Öncelikler",
+  exam: "Sınav analizi",
+  resources: "Kaynaklar",
+  review: "Gözden geçir ve yayınla",
 };
 
-type ExamForm = {
-  status: CoachingExamAnalysisStatus | "";
-  exam_type: string;
-  exam_name: string;
-  date: string;
-  score_or_net: string;
-  strengths: string;
-  focus_areas: string;
-  tutor_interpretation: string;
-  next_actions: string;
-};
-
-const EMPTY_EXAM: ExamForm = {
-  status: "",
-  exam_type: "",
-  exam_name: "",
-  date: "",
-  score_or_net: "",
-  strengths: "",
-  focus_areas: "",
-  tutor_interpretation: "",
-  next_actions: "",
-};
-
-function splitLines(value: string) {
-  return value
-    .split("\n")
-    .map((item) => item.trim())
-    .filter(Boolean);
-}
-
-function createExamForm(exam?: CoachingExamAnalysis | null): ExamForm {
-  return {
-    status: exam?.status ?? "",
-    exam_type: String(exam?.exam_type ?? ""),
-    exam_name: String(exam?.exam_name ?? ""),
-    date: String(exam?.date ?? ""),
-    score_or_net: String(exam?.score_or_net ?? ""),
-    strengths: (exam?.strengths ?? []).join("\n"),
-    focus_areas: (exam?.focus_areas ?? []).join("\n"),
-    tutor_interpretation: String(exam?.tutor_interpretation ?? ""),
-    next_actions: (exam?.next_actions ?? []).join("\n"),
-  };
-}
-
-function toExamAnalysis(exam: ExamForm): CoachingExamAnalysis {
-  const output: CoachingExamAnalysis = {};
-  if (exam.status) output.status = exam.status;
-  // Details only describe an analysed result; any other status stands alone.
-  if (exam.status && exam.status !== "analyzed") return output;
-  if (exam.exam_type.trim()) output.exam_type = exam.exam_type.trim();
-  if (exam.exam_name.trim()) output.exam_name = exam.exam_name.trim();
-  if (exam.date) output.date = exam.date;
-  const scoreOrNet = normalizeScoreOrNet(exam.score_or_net);
-  if (scoreOrNet !== null) output.score_or_net = scoreOrNet;
-  const strengths = splitLines(exam.strengths);
-  const focusAreas = splitLines(exam.focus_areas);
-  const nextActions = splitLines(exam.next_actions);
-  if (strengths.length) output.strengths = strengths;
-  if (focusAreas.length) output.focus_areas = focusAreas;
-  if (exam.tutor_interpretation.trim())
-    output.tutor_interpretation = exam.tutor_interpretation.trim();
-  if (nextActions.length) output.next_actions = nextActions;
-  return output;
-}
+class DraftNotSavedError extends Error {}
 
 function isIncident(status: string) {
   return ["student_no_show", "tutor_no_show", "technical_failure"].includes(status);
 }
 
-function ReportTimingNotice({
-  session,
-}: {
-  session: Awaited<ReturnType<typeof fetchCoachingSessionDetail>>;
-}) {
-  const timing = getPrimaryReportTiming(session);
-  if (!timing.reportDueAt) {
+function DeadlineNotice({ notice }: { notice: ReportDeadlineNotice }) {
+  if (notice.kind === "no_report") {
     return (
-      <Alert>
-        <WarningCircle className="h-4 w-4" />
-        <AlertTitle>Bu görüşme için normal rapor yok</AlertTitle>
-        <AlertDescription>
-          Bu görüşme katılım sorunu ya da teknik sorunla kapandığı için rapor yazman gerekmez.
-        </AlertDescription>
-      </Alert>
+      <div role="status" className="rounded-card border border-line bg-surface p-4">
+        <p className="text-body font-medium text-ink">{notice.title}</p>
+        <p className="mt-1 text-small text-ink-mid">{notice.text}</p>
+      </div>
     );
   }
   return (
-    <Alert variant={timing.reportOverdue ? "destructive" : "default"}>
-      <WarningCircle className="h-4 w-4" />
-      <AlertTitle>{timing.reportOverdue ? "Rapor süresi geçti" : "Rapor süresi"}</AlertTitle>
-      <AlertDescription>
-        Rapor için son zaman: {coachingDateTimeLabel(timing.reportDueAt)}.
-        {timing.complaintEligibleAt
-          ? ` Eksik rapor desteği ${coachingDateTimeLabel(timing.complaintEligibleAt)} itibarıyla kullanılabilir.`
-          : ""}
-        {timing.complaintEligible ? (
-          <span className="ml-1 font-medium">Destek girişi şu anda kullanılabilir.</span>
-        ) : null}
-      </AlertDescription>
-    </Alert>
+    <section
+      aria-label="Rapor süresi"
+      className="flex flex-wrap items-center gap-x-6 gap-y-2 rounded-card border border-line bg-surface px-4 py-3"
+    >
+      <div>
+        <p className="text-label text-ink-mid">{notice.caption}</p>
+        <p className={`text-small font-medium tabular-nums ${notice.urgent ? "text-pink-deep" : "text-ink"}`}>
+          {notice.value}
+        </p>
+      </div>
+      {notice.text ? <p className="min-w-0 flex-1 basis-64 text-small text-ink">{notice.text}</p> : null}
+    </section>
   );
 }
 
-export function CoachingReportWizard({ sessionId }: { sessionId: string }) {
+/**
+ * The tutor's report for one meeting: a list of steps beside the one that is
+ * open, fields that keep their label and count their words, a draft that saves
+ * itself, and a last step that shows what is missing and how the student will
+ * see it. Once the report is out the page says so and offers a new version as a
+ * separate step.
+ */
+export function CoachingReportWizard({
+  sessionId,
+  autosaveDelayMs,
+}: {
+  sessionId: string;
+  /** Pause after the last keystroke before the draft is saved; tests shorten it. */
+  autosaveDelayMs?: number;
+}) {
   const queryClient = useQueryClient();
-  const [step, setStep] = useState(0);
-  const [draft, setDraft] = useState<CoachingReportDraftInput>(EMPTY_DRAFT);
-  const [exam, setExam] = useState<ExamForm>(EMPTY_EXAM);
-  const [resources, setResources] = useState<CoachingRecommendedResource[]>([]);
+  const [step, setStep] = useState<ReportStepKey>("summary");
+  const [mode, setMode] = useState<"edit" | "published" | null>(null);
+  const [lastPublished, setLastPublished] = useState<CoachingSessionReportRevision | null>(null);
+  const [justPublished, setJustPublished] = useState(false);
   const [changeNote, setChangeNote] = useState("");
-  const [hydratedDraftVersion, setHydratedDraftVersion] = useState<number | null>(null);
+  const [publishError, setPublishError] = useState<string | null>(null);
 
+  const draft = useReportDraft(sessionId, autosaveDelayMs);
   const sessionQuery = useQuery({
     queryKey: COACHING_SESSION_QUERY_KEYS.detail(sessionId),
     queryFn: () => fetchCoachingSessionDetail(sessionId),
-  });
-  const draftQuery = useQuery({
-    queryKey: COACHING_FAZ6_QUERY_KEYS.reportDraft(sessionId),
-    queryFn: () => fetchCoachingReportDraft(sessionId),
   });
   const reportListQuery = useQuery({
     queryKey: COACHING_FAZ6_QUERY_KEYS.tutorReportList(),
@@ -195,548 +130,220 @@ export function CoachingReportWizard({ sessionId }: { sessionId: string }) {
     queryKey: ["coaching-session-attachments", sessionId],
     queryFn: () => fetchCoachingSessionAttachments(sessionId),
   });
-  const report = useMemo(
-    () => reportListQuery.data?.find((item) => item.session_id === sessionId) ?? null,
-    [reportListQuery.data, sessionId],
-  );
-  const revisionHistoryQuery = useQuery({
-    queryKey: report
-      ? COACHING_FAZ6_QUERY_KEYS.reportHistory(report.id)
-      : COACHING_FAZ6_QUERY_KEYS.reportHistory("none"),
+  const report = reportListQuery.data?.find((item) => item.session_id === sessionId) ?? null;
+  const historyQuery = useQuery({
+    queryKey: COACHING_FAZ6_QUERY_KEYS.reportHistory(report?.id ?? "none"),
     queryFn: () => fetchTutorCoachingReportHistory(report!.id),
     enabled: Boolean(report),
   });
 
-  useEffect(() => {
-    const serverDraft = draftQuery.data;
-    if (!serverDraft || hydratedDraftVersion === serverDraft.draft_version) return;
-    setDraft({ ...EMPTY_DRAFT, ...serverDraft.content });
-    setExam(createExamForm(serverDraft.content.exam_analysis));
-    setResources(serverDraft.content.recommended_resources ?? []);
-    setHydratedDraftVersion(serverDraft.draft_version);
-  }, [draftQuery.data, hydratedDraftVersion]);
-
-  const payload = (): CoachingReportDraftInput => ({
-    ...draft,
-    exam_analysis: toExamAnalysis(exam),
-    recommended_resources: resources
-      .filter((resource) => resource.title.trim())
-      .map((resource) => ({
-        title: resource.title.trim(),
-        ...(resource.url?.trim() ? { url: resource.url.trim() } : {}),
-        ...(resource.note?.trim() ? { note: resource.note.trim() } : {}),
-        ...(resource.attachment_id ? { attachment_id: resource.attachment_id } : {}),
-      })),
-  });
-  const invalidateDraft = () =>
-    queryClient.invalidateQueries({
-      queryKey: COACHING_FAZ6_QUERY_KEYS.reportDraft(sessionId),
-    });
-  const saveMutation = useMutation({
-    mutationFn: () => saveCoachingReportDraft(sessionId, payload()),
-    onSuccess: (saved) => {
-      setHydratedDraftVersion(saved.draft_version);
-      setDraft({ ...EMPTY_DRAFT, ...saved.content });
-      setExam(createExamForm(saved.content.exam_analysis));
-      setResources(saved.content.recommended_resources ?? []);
-      invalidateDraft();
-      toast.success("Rapor taslağı kaydedildi.");
-    },
-    onError: (error) => toast.error(extractCoachingErrorMessage(error)),
-  });
-  const initialPublishMutation = useMutation({
+  const publishMutation = useMutation({
     mutationFn: async () => {
-      const savedDraft = await saveMutation.mutateAsync();
-      const revision = await publishInitialCoachingReport(sessionId);
-      return { revision, reportId: savedDraft.id };
+      // The last words first: publishing sends what the server holds.
+      if (!(await draft.autosave.flush())) throw new DraftNotSavedError();
+      return report?.latest_revision || lastPublished
+        ? { revision: await publishCoachingReportRevision(report!.id, changeNote), initial: false }
+        : { revision: await publishInitialCoachingReport(sessionId), initial: true };
     },
-    onSuccess: ({ revision, reportId }) => {
-      toast.success("İlk rapor yayınlandı; öğrenciye bildirildi.");
-      invalidateAfterInitialPublish(reportId);
-    },
-    onError: (error) => toast.error(extractCoachingErrorMessage(error)),
-  });
-  const revisionPublishMutation = useMutation({
-    mutationFn: async () => {
-      await saveMutation.mutateAsync();
-      if (!report) throw new Error("Rapor henüz bulunamadı.");
-      return publishCoachingReportRevision(report.id, changeNote);
-    },
-    onSuccess: (revision) => {
-      toast.success(`Raporun ${revision.revision_number}. sürümü yayınlandı.`);
-      invalidateAfterRevisionPublish(report?.id);
+    onSuccess: ({ revision, initial }) => {
+      const reportId = revision.report_id ?? report?.id ?? draft.reportId();
+      const keys = reportId ? getReportPublishInvalidationKeys({ sessionId, reportId, initial }) : null;
+      for (const key of keys ? Object.values(keys) : [COACHING_FAZ6_QUERY_KEYS.tutorReportList()]) {
+        queryClient.invalidateQueries({ queryKey: key });
+      }
+      setLastPublished(revision);
+      setJustPublished(true);
       setChangeNote("");
+      setPublishError(null);
+      setMode("published");
     },
-    onError: (error) => toast.error(extractCoachingErrorMessage(error)),
+    onError: (error) =>
+      setPublishError(
+        error instanceof DraftNotSavedError
+          ? "Taslak kaydedilemedi, bu yüzden yayınlanmadı. Kayıt durumunu kontrol et."
+          : extractCoachingErrorMessage(error),
+      ),
   });
 
-  function invalidateAfterInitialPublish(reportId: string) {
-    const keys = getReportPublishInvalidationKeys({ sessionId, reportId, initial: true });
-    queryClient.invalidateQueries({ queryKey: keys.draft });
-    queryClient.invalidateQueries({ queryKey: keys.sessionDetail });
-    queryClient.invalidateQueries({ queryKey: keys.sessionToken });
-    queryClient.invalidateQueries({ queryKey: keys.studentSessionList });
-    queryClient.invalidateQueries({ queryKey: keys.tutorSessionList });
-    queryClient.invalidateQueries({ queryKey: keys.tutorReportList });
-    queryClient.invalidateQueries({ queryKey: keys.studentReportList });
-    queryClient.invalidateQueries({ queryKey: keys.publishedReport });
-    queryClient.invalidateQueries({ queryKey: keys.reportHistory });
-  }
-
-  function invalidateAfterRevisionPublish(reportId?: string) {
-    if (!reportId) return;
-    const keys = getReportPublishInvalidationKeys({ sessionId, reportId, initial: false });
-    queryClient.invalidateQueries({ queryKey: keys.draft });
-    queryClient.invalidateQueries({ queryKey: keys.tutorReportList });
-    queryClient.invalidateQueries({ queryKey: keys.studentReportList });
-    queryClient.invalidateQueries({ queryKey: keys.publishedReport });
-    queryClient.invalidateQueries({ queryKey: keys.reportHistory });
-  }
-
-  if (sessionQuery.isLoading || draftQuery.isLoading || reportListQuery.isLoading) {
+  if (sessionQuery.isError || !sessionQuery.data) {
+    if (sessionQuery.isLoading) return <Loading />;
     return (
-      <div className="flex min-h-48 items-center justify-center">
-        <LoadingSpinner />
-      </div>
+      <CoachingLoadError
+        message="Görüşme yüklenemedi."
+        onRetry={() => sessionQuery.refetch()}
+        isRetrying={sessionQuery.isFetching}
+      />
     );
   }
-  if (sessionQuery.isError || !sessionQuery.data)
-    return <ErrorMessage message={extractCoachingErrorMessage(sessionQuery.error)} />;
-  if (draftQuery.isError)
-    return <ErrorMessage message={extractCoachingErrorMessage(draftQuery.error)} />;
+  if (reportListQuery.isError) {
+    return (
+      <CoachingLoadError
+        message="Raporlar yüklenemedi."
+        onRetry={() => reportListQuery.refetch()}
+        isRetrying={reportListQuery.isFetching}
+      />
+    );
+  }
+  if (draft.error) {
+    return <CoachingLoadError message="Rapor taslağı yüklenemedi." onRetry={draft.retry} isRetrying={draft.isRetrying} />;
+  }
+  if (reportListQuery.isLoading || !draft.hydrated) return <Loading />;
 
   const session = sessionQuery.data;
+  const notice = reportDeadlineNotice(getPrimaryReportTiming(session));
   if (isIncident(session.status)) {
     return (
       <div className="space-y-4">
-        <ReportTimingNotice session={session} />
+        <DeadlineNotice notice={notice} />
         <CoachingAttachmentPanel sessionId={sessionId} />
       </div>
     );
   }
-  // Master Spec §22.2: "Görüşme sırasında otomatik taslak açılır. Öğretmen
-  // görüşmede doldurabilir." — the backend already accepts a draft write
-  // as soon as the session is in_progress (see save_report_draft), so the
-  // wizard must open for drafting then too, not only once the session
-  // reaches awaiting_report. Publishing itself stays gated below.
-  const draftableStatuses = ["in_progress", "awaiting_report"];
-  if (!draftableStatuses.includes(session.status) && !report?.latest_revision) {
+
+  const published = lastPublished ?? report?.latest_revision ?? null;
+  // Master Spec §22.2: the draft opens as soon as the meeting is running, and
+  // publishing stays gated to the end of it (the review step says so).
+  const draftable = ["in_progress", "awaiting_report"].includes(session.status);
+  if (!draftable && !published) {
     return (
-      <Alert>
-        <WarningCircle className="h-4 w-4" />
-        <AlertTitle>Rapor henüz açılamaz</AlertTitle>
-        <AlertDescription>Rapor taslağı görüşme başladığında açılır.</AlertDescription>
-      </Alert>
+      <div role="status" className="rounded-card border border-line bg-surface p-4">
+        <p className="text-body font-medium text-ink">Rapor henüz açılamaz</p>
+        <p className="mt-1 text-small text-ink-mid">Rapor taslağı görüşme başladığında açılır.</p>
+      </div>
     );
   }
 
-  const hasPublishedRevision = Boolean(report?.latest_revision);
-  const currentRevision = report?.latest_revision;
-  const updateDraft = (field: keyof CoachingReportDraftInput, value: string) =>
-    setDraft((current) => ({ ...current, [field]: value }));
-  const updateExam = (field: keyof ExamForm, value: string) =>
-    setExam((current) => ({ ...current, [field]: value }));
-  const upsertResource = (index: number, field: keyof CoachingRecommendedResource, value: string) =>
-    setResources((current) =>
-      current.map((resource, resourceIndex) =>
-        resourceIndex === index ? { ...resource, [field]: value } : resource,
-      ),
+  const effectiveMode = mode ?? (published ? "published" : "edit");
+  if (effectiveMode === "published" && published) {
+    const revisions = historyQuery.data?.revisions ?? [published];
+    return (
+      <ReportPublishedState
+        revision={published}
+        justPublished={justPublished}
+        history={revisions}
+        onNewRevision={() => {
+          setStep("summary");
+          setJustPublished(false);
+          setMode("edit");
+        }}
+      />
     );
-  const pending =
-    saveMutation.isPending || initialPublishMutation.isPending || revisionPublishMutation.isPending;
-  // Mirrors the server's publish rules (phase6._validate_primary_report_for_publish)
-  // so the tutor sees what is missing before pressing the button.
-  const missingForPublish: string[] = [];
-  if ((draft.short_summary ?? "").trim().length < 50)
-    missingForPublish.push("Kısa özet en az 50 karakter.");
-  for (const [field, label] of [
-    ["topics_discussed", "Görüşülen konular"],
-    ["student_progress", "Öğrencinin ilerlemesi"],
-    ["next_priorities", "Sonraki öncelikler"],
-    ["study_recommendations", "Çalışma önerileri"],
-    ["focus_until_next_meeting", "Bir sonraki görüşmeye kadar odak"],
-  ] as const) {
-    if ((draft[field] ?? "").trim().length < 20)
-      missingForPublish.push(`${label} en az 20 karakter.`);
   }
-  if (!exam.status) missingForPublish.push("Sınav analizi adımında deneme durumunu seç.");
-  if (programQuery.data === null && !(draft.no_program_reason ?? "").trim()) {
-    missingForPublish.push("Program yoksa kısa gerekçe yaz.");
-  }
+
+  const programMissing = programQuery.data === null;
+  const checklist = reportChecklist({
+    draft: draft.payload,
+    examStatus: draft.exam.status,
+    programMissing,
+  });
+  const states = reportStepStates({
+    checklist,
+    hasResources: draft.resources.some((resource) => resource.title.trim()),
+    current: step,
+  });
+  const index = REPORT_STEPS.findIndex((item) => item.key === step);
+  const previous = REPORT_STEPS[index - 1];
+  const next = REPORT_STEPS[index + 1];
+  const goTo = (target: ReportStepKey) => {
+    void draft.autosave.flush();
+    setStep(target);
+  };
+  const revising = Boolean(published);
+  const meeting = `${session.student_name} · ${coachingDateTimeLabel(session.scheduled_start)} görüşmesi`;
 
   return (
-    <div className="space-y-6">
-      <ReportTimingNotice session={session} />
-      <Card>
-        <CardHeader>
-          <CardTitle>Görüşme raporu</CardTitle>
-          <p className="text-sm text-ink-mid">
-            Taslağı adım adım kaydedebilirsin. Yayınlanan rapor değiştirilemez; düzeltme gerekirse
-            yeni bir sürüm yayınlarsın.
-          </p>
-          <SensitiveDataGuidance />
-          {/* Five labelled steps do not fit 375px side by side: on phones only
-              the current step is named, the rest stay as numbered dots. */}
-          <p className="pt-2 text-small font-medium text-ink sm:hidden">
-            Adım {step + 1}/{STEPS.length}: {STEPS[step]}
-          </p>
-          <ol
-            className="hidden grid-cols-5 gap-1 pt-2 text-center text-xs text-ink-mid sm:grid"
-            aria-label="Rapor adımları"
-          >
-            {STEPS.map((label, index) => (
-              <li
-                key={label}
-                aria-current={index === step ? "step" : undefined}
-                className={
-                  index === step
-                    ? "rounded bg-pink-deep px-1 py-2 font-medium text-white"
-                    : "rounded bg-paper px-1 py-2"
-                }
-              >
-                {index + 1}. {label}
-              </li>
-            ))}
-          </ol>
-        </CardHeader>
-        <CardContent>
-          <form
-            className="space-y-4"
-            onSubmit={(event: FormEvent<HTMLFormElement>) => {
-              event.preventDefault();
-              saveMutation.mutate();
-            }}
-          >
-            {step === 0 ? (
+    <div className="space-y-4">
+      {!published ? <DeadlineNotice notice={notice} /> : null}
+      <div className="grid gap-4 lg:grid-cols-[13rem_minmax(0,1fr)]">
+        <div className="hidden lg:block">
+          <ReportStepRail states={states} onSelect={goTo} />
+        </div>
+        <section className="overflow-hidden rounded-card border border-line bg-surface">
+          <div className={sectionBandClass("ink", "flex-wrap")}>
+            <SectionBandHeading id="report-step-title" title={STEP_TITLES[step]} />
+            <SectionBandCount tone="ink">{`Adım ${index + 1} / ${REPORT_STEPS.length}`}</SectionBandCount>
+          </div>
+          <div className="space-y-5 px-5 py-5 sm:px-6">
+            <ReportStepProgress states={states} current={step} />
+            {revising ? (
+              <p className="text-small text-ink-mid">
+                Yeni bir sürüm yazıyorsun. Son yayınlanan: sürüm {published?.revision_number}. Yayınlayana kadar öğrenci
+                eski sürümü görür.
+              </p>
+            ) : null}
+            {step === "summary" || step === "progress" || step === "priorities" ? (
               <>
-                <Textarea
-                  required
-                  value={draft.short_summary}
-                  onChange={(event) => updateDraft("short_summary", event.target.value)}
-                  placeholder="Görüşmenin kısa özeti"
-                  aria-label="Kısa özet"
-                />
-                <Textarea
-                  required
-                  value={draft.topics_discussed}
-                  onChange={(event) => updateDraft("topics_discussed", event.target.value)}
-                  placeholder="Görüşülen konular"
-                  aria-label="Görüşülen konular"
+                <SensitiveDataGuidance />
+                <ReportFieldsStep
+                  rules={REPORT_FIELD_RULES.filter((rule) => rule.step === step)}
+                  values={draft.draft}
+                  onChange={(field, value) => draft.setText(field, value)}
                 />
               </>
             ) : null}
-            {step === 1 ? (
-              <Textarea
-                required
-                value={draft.student_progress}
-                onChange={(event) => updateDraft("student_progress", event.target.value)}
-                placeholder="Öğrencinin mevcut durumu ve ilerlemesi"
-                aria-label="Öğrencinin ilerlemesi"
+            {step === "exam" ? <ReportExamStep exam={draft.exam} onChange={draft.setExamField} /> : null}
+            {step === "resources" ? (
+              <ReportResourcesStep
+                sessionId={sessionId}
+                summary={draft.draft.program_changes_summary ?? ""}
+                onSummary={(value) => draft.setText("program_changes_summary", value)}
+                resources={draft.resources}
+                attachments={attachmentsQuery.data ?? []}
+                onChange={draft.setResources}
               />
             ) : null}
-            {step === 2 ? (
-              <>
-                <Textarea
-                  required
-                  value={draft.next_priorities}
-                  onChange={(event) => updateDraft("next_priorities", event.target.value)}
-                  placeholder="Sonraki dönem öncelikleri"
-                  aria-label="Sonraki öncelikler"
-                />
-                <Textarea
-                  required
-                  value={draft.study_recommendations}
-                  onChange={(event) => updateDraft("study_recommendations", event.target.value)}
-                  placeholder="Çalışma önerileri"
-                  aria-label="Çalışma önerileri"
-                />
-                <Textarea
-                  required
-                  value={draft.focus_until_next_meeting}
-                  onChange={(event) => updateDraft("focus_until_next_meeting", event.target.value)}
-                  placeholder="Bir sonraki görüşmeye kadar odak"
-                  aria-label="Bir sonraki görüşmeye kadar odak"
-                />
-              </>
+            {step === "review" ? (
+              <ReportReviewStep
+                checklist={checklist}
+                onGoto={goTo}
+                payload={draft.payload}
+                meeting={meeting}
+                revisionNumber={(published?.revision_number ?? 0) + 1}
+                programMissing={programMissing}
+                programHref={`/dashboard/tutor/coaching/service-periods/${servicePeriodId}/program`}
+                noProgramReason={draft.draft.no_program_reason ?? ""}
+                onNoProgramReason={(value) => draft.setText("no_program_reason", value)}
+                revising={revising}
+                changeNote={changeNote}
+                onChangeNote={setChangeNote}
+                sessionRunning={session.status !== "awaiting_report"}
+                pending={publishMutation.isPending}
+                error={publishError}
+                onPublish={() => {
+                  setPublishError(null);
+                  publishMutation.mutate();
+                }}
+              />
             ) : null}
-            {step === 3 ? (
-              <div className="space-y-4">
-                <fieldset className="space-y-2">
-                  <legend className="text-sm font-medium text-ink">
-                    Bu dönemin deneme durumu <span className="text-ink-mid">(zorunlu)</span>
-                  </legend>
-                  <div className="grid gap-2 sm:grid-cols-2">
-                    {EXAM_ANALYSIS_STATUS_OPTIONS.map((option) => (
-                      <label
-                        key={option.value}
-                        className={`flex min-h-11 cursor-pointer items-center gap-3 rounded-input border p-3 text-sm text-ink ${exam.status === option.value ? "border-ink ring-2 ring-ink" : "border-line"}`}
-                      >
-                        <input
-                          type="radio"
-                          name="exam-analysis-status"
-                          value={option.value}
-                          checked={exam.status === option.value}
-                          onChange={() => updateExam("status", option.value)}
-                          className="h-4 w-4 accent-pink"
-                        />
-                        {option.label}
-                      </label>
-                    ))}
-                  </div>
-                </fieldset>
-                {exam.status === "analyzed" ? (
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <Input
-                      value={exam.exam_type}
-                      onChange={(event) => updateExam("exam_type", event.target.value)}
-                      placeholder="Sınav türü (YKS, DGS, KPSS)"
-                      aria-label="Sınav türü"
-                    />
-                    <Input
-                      value={exam.exam_name}
-                      onChange={(event) => updateExam("exam_name", event.target.value)}
-                      placeholder="Deneme / test adı"
-                      aria-label="Deneme veya test adı"
-                    />
-                    <Input
-                      type="date"
-                      value={exam.date}
-                      onChange={(event) => updateExam("date", event.target.value)}
-                      aria-label="Sınav tarihi"
-                    />
-                    <Input
-                      type="number"
-                      step="any"
-                      value={exam.score_or_net}
-                      onChange={(event) => updateExam("score_or_net", event.target.value)}
-                      placeholder="Puan / net"
-                      aria-label="Puan veya net"
-                    />
-                    <Textarea
-                      value={exam.strengths}
-                      onChange={(event) => updateExam("strengths", event.target.value)}
-                      placeholder="Güçlü alanlar (her satıra bir madde)"
-                      aria-label="Güçlü alanlar"
-                    />
-                    <Textarea
-                      value={exam.focus_areas}
-                      onChange={(event) => updateExam("focus_areas", event.target.value)}
-                      placeholder="Odak alanları (her satıra bir madde)"
-                      aria-label="Odak alanları"
-                    />
-                    <Textarea
-                      className="sm:col-span-2"
-                      value={exam.tutor_interpretation}
-                      onChange={(event) => updateExam("tutor_interpretation", event.target.value)}
-                      placeholder="Öğretmen yorumu"
-                      aria-label="Öğretmen yorumu"
-                    />
-                    <Textarea
-                      className="sm:col-span-2"
-                      value={exam.next_actions}
-                      onChange={(event) => updateExam("next_actions", event.target.value)}
-                      placeholder="Sonraki adımlar (her satıra bir madde)"
-                      aria-label="Sonraki adımlar"
-                    />
-                  </div>
-                ) : null}
-              </div>
-            ) : null}
-            {step === 4 ? (
-              <div className="space-y-4">
-                <Textarea
-                  value={draft.program_changes_summary ?? ""}
-                  onChange={(event) => updateDraft("program_changes_summary", event.target.value)}
-                  placeholder="Programdaki değişiklik özeti (isteğe bağlı)"
-                  aria-label="Program değişikliği özeti"
-                />
-                <div className="space-y-2">
-                  <p className="text-sm font-medium">Önerilen kaynaklar</p>
-                  {resources.map((resource, index) => (
-                    <div key={index} className="grid gap-2 rounded border p-3 sm:grid-cols-2">
-                      <Input
-                        value={resource.title}
-                        onChange={(event) => upsertResource(index, "title", event.target.value)}
-                        placeholder="Kaynak başlığı"
-                        aria-label={`Kaynak ${index + 1} başlığı`}
-                      />
-                      <Input
-                        value={resource.url ?? ""}
-                        onChange={(event) => upsertResource(index, "url", event.target.value)}
-                        placeholder="https:// bağlantısı (isteğe bağlı)"
-                        aria-label={`Kaynak ${index + 1} bağlantısı`}
-                      />
-                      <Textarea
-                        className="sm:col-span-2"
-                        value={resource.note ?? ""}
-                        onChange={(event) => upsertResource(index, "note", event.target.value)}
-                        placeholder="Kısa not (isteğe bağlı)"
-                        aria-label={`Kaynak ${index + 1} notu`}
-                      />
-                      <select
-                        className="h-10 rounded-md border border-input bg-background px-3 text-sm sm:col-span-2"
-                        value={resource.attachment_id ?? ""}
-                        aria-label={`Kaynak ${index + 1} dosyası`}
-                        onChange={(event) =>
-                          upsertResource(index, "attachment_id", event.target.value)
-                        }
-                      >
-                        <option value="">Dosya ekleme</option>
-                        {(attachmentsQuery.data ?? []).map((attachment) => (
-                          <option key={attachment.id} value={attachment.id}>
-                            {attachment.original_name}
-                          </option>
-                        ))}
-                      </select>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="ghost"
-                        className="justify-self-start"
-                        onClick={() =>
-                          setResources((current) =>
-                            current.filter((_, resourceIndex) => resourceIndex !== index),
-                          )
-                        }
-                      >
-                        Kaynağı kaldır
-                      </Button>
-                    </div>
-                  ))}
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    onClick={() =>
-                      setResources((current) => [
-                        ...current,
-                        { title: "", url: "", note: "", attachment_id: "" },
-                      ])
-                    }
-                  >
-                    Kaynak ekle
-                  </Button>
-                </div>
-                <CoachingAttachmentPanel sessionId={sessionId} />
-              </div>
-            ) : null}
-            <div className="flex flex-wrap items-center justify-between gap-2 pt-2">
-              <Button
+          </div>
+          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 border-t border-line px-5 py-3 sm:px-6">
+            <ReportSaveLine status={draft.autosave.status} onRetry={draft.autosave.retry} />
+            <div className="flex items-center gap-4">
+              <button
                 type="button"
-                variant="outline"
-                disabled={step === 0}
-                onClick={() => setStep((current) => current - 1)}
+                disabled={!previous}
+                onClick={() => previous && goTo(previous.key)}
+                className="min-h-11 text-small font-medium text-ink underline underline-offset-4 disabled:cursor-not-allowed disabled:text-ink-mid disabled:no-underline"
               >
-                <CaretLeft className="mr-1 h-4 w-4" /> Geri
-              </Button>
-              <div className="flex flex-wrap gap-2">
-                <Button type="submit" variant="outline" disabled={pending}>
-                  <FloppyDisk className="mr-1 h-4 w-4" /> Taslağı kaydet
+                Geri
+              </button>
+              {next ? (
+                <Button type="button" variant="gold" className="min-h-11" onClick={() => goTo(next.key)}>
+                  {`İleri: ${next.label}`}
                 </Button>
-                {step < STEPS.length - 1 ? (
-                  <Button type="button" onClick={() => setStep((current) => current + 1)}>
-                    İleri <CaretRight className="ml-1 h-4 w-4" />
-                  </Button>
-                ) : null}
-              </div>
+              ) : null}
             </div>
-          </form>
-        </CardContent>
-      </Card>
+          </div>
+        </section>
+      </div>
+    </div>
+  );
+}
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Yayınla</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {hasPublishedRevision ? (
-            <>
-              <p className="text-sm text-ink-mid">
-                Son yayınlanan sürüm: #{currentRevision?.revision_number}. Taslakta yaptığın
-                değişiklikler yeni bir sürüm olarak yayınlanır.
-              </p>
-              <Textarea
-                value={changeNote}
-                onChange={(event) => setChangeNote(event.target.value)}
-                placeholder="Bu sürümde neyi değiştirdin? (isteğe bağlı)"
-                aria-label="Sürüm değişiklik notu"
-              />
-              <Button
-                disabled={pending || !report}
-                onClick={() => revisionPublishMutation.mutate()}
-              >
-                <PaperPlaneTilt className="mr-2 h-4 w-4" /> Yeni sürümü yayınla
-              </Button>
-            </>
-          ) : (
-            <>
-              <p className="text-sm text-ink-mid">
-                İlk raporu yayınlayınca görüşme tamamlanmış sayılır. Sonraki yayınlar yeni sürüm
-                olarak eklenir.
-              </p>
-              {programQuery.data === null ? (
-                <div className="space-y-2 rounded-input border border-line p-3">
-                  <p className="text-sm text-ink">
-                    Bu dönem için çalışma programı yok.{" "}
-                    <a
-                      className="font-medium underline underline-offset-4"
-                      href={`/dashboard/tutor/coaching/service-periods/${servicePeriodId}/program`}
-                    >
-                      Programı hazırla
-                    </a>{" "}
-                    ya da neden olmadığını kısaca yaz.
-                  </p>
-                  <Textarea
-                    value={draft.no_program_reason ?? ""}
-                    onChange={(event) => updateDraft("no_program_reason", event.target.value)}
-                    placeholder="Örn. Bu hafta deneme sonuçlarını bekliyoruz, program önümüzdeki görüşmede çıkacak."
-                    aria-label="Program olmadan yayınlama gerekçesi"
-                  />
-                </div>
-              ) : null}
-              {missingForPublish.length ? (
-                <ul className="list-disc space-y-1 pl-5 text-sm text-ink-mid" aria-live="polite">
-                  {missingForPublish.map((item) => (
-                    <li key={item}>{item}</li>
-                  ))}
-                </ul>
-              ) : null}
-              <Button
-                disabled={
-                  pending || session.status !== "awaiting_report" || missingForPublish.length > 0
-                }
-                onClick={() => initialPublishMutation.mutate()}
-              >
-                <PaperPlaneTilt className="mr-2 h-4 w-4" /> İlk raporu yayınla
-              </Button>
-            </>
-          )}
-        </CardContent>
-      </Card>
-
-      {hasPublishedRevision ? (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Yayın geçmişi</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ol className="space-y-3 border-l pl-4">
-              {(
-                revisionHistoryQuery.data?.revisions ?? (currentRevision ? [currentRevision] : [])
-              ).map((revision) => (
-                <li key={revision.id} className="relative text-sm">
-                  <span className="absolute -left-[1.35rem] top-1 h-2.5 w-2.5 rounded-full bg-pink" />
-                  Sürüm {revision.revision_number} · {coachingDateTimeLabel(revision.published_at)}
-                  {revision.change_note ? ` · ${revision.change_note}` : ""}
-                </li>
-              ))}
-            </ol>
-            <p className="mt-4 text-sm text-ink-mid">
-              Öğrenci yalnız en son yayınlanan sürümü görür.
-            </p>
-          </CardContent>
-        </Card>
-      ) : null}
+function Loading() {
+  return (
+    <div className="flex min-h-48 items-center justify-center">
+      <LoadingSpinner />
     </div>
   );
 }
