@@ -143,6 +143,53 @@ describe("buildTutorSessions: the rest, day by day", () => {
   });
 });
 
+describe("buildTutorSessions: how far ahead the list reaches", () => {
+  // Weekly on Monday at 19:00 from today: 19 Oct (the next one), 26 Oct, 2, 9 and 16 Nov.
+  const weekly = [
+    session({}),
+    ...[
+      ["w1", "2026-10-26"],
+      ["w2", "2026-11-02"],
+      ["w3", "2026-11-09"],
+      ["w4", "2026-11-16"],
+    ].map(([id, day]) => session({ id, scheduled_start: `${day}T16:00:00Z`, scheduled_local_date: day })),
+  ];
+
+  it("lists the first 14 days and says how many meetings are left out", () => {
+    const board = buildTutorSessions({ sessions: weekly, now: NOW });
+
+    assert.deepEqual(board.days.map((day) => day.heading), ["26 Ekim Pazartesi"]);
+    assert.equal(board.hidden, 3);
+    assert.equal(board.total, 5);
+  });
+
+  it("reaches the next 14 days each time it is asked for more", () => {
+    const twice = buildTutorSessions({ sessions: weekly, now: NOW, windows: 2 });
+    assert.deepEqual(twice.days.map((day) => day.heading), ["26 Ekim Pazartesi", "2 Kasım Pazartesi", "9 Kasım Pazartesi"]);
+    assert.equal(twice.hidden, 1);
+
+    const thrice = buildTutorSessions({ sessions: weekly, now: NOW, windows: 3 });
+    assert.equal(thrice.days.length, 4);
+    assert.equal(thrice.hidden, 0);
+  });
+
+  it("hides nothing when everything ahead is within the 14 days", () => {
+    const board = buildTutorSessions({ sessions, now: NOW });
+
+    assert.equal(board.days.length, 3);
+    assert.equal(board.hidden, 0);
+  });
+
+  it("still lists the first later day when nothing falls inside the 14 days, so the list is never only a button", () => {
+    const far = buildTutorSessions({ sessions: [weekly[3], weekly[4], weekly[2]], now: NOW });
+
+    assert.equal(far.next?.id, "w2");
+    assert.deepEqual(far.days.map((day) => day.heading), ["9 Kasım Pazartesi"]);
+    assert.equal(far.hidden, 1);
+    assert.equal(far.total, 3);
+  });
+});
+
 describe("buildTutorSessions: reports owed", () => {
   it("lists a report that is owed, with its deadline and the way to write it", () => {
     const { reports } = buildTutorSessions({ sessions, now: NOW });

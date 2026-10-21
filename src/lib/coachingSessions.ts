@@ -10,6 +10,9 @@ const MINUTE_MS = 60_000;
 const DAY_MS = 24 * 60 * MINUTE_MS;
 const UPCOMING = new Set(["scheduled", "reschedule_requested", "in_progress"]);
 
+/** The list reaches this many calendar days ahead, and this many more each time the tutor asks for more. */
+export const TUTOR_SESSIONS_WINDOW_DAYS = 14;
+
 export type CoachingJoin =
   | { kind: "live"; href: string }
   | { kind: "open"; href: string }
@@ -81,14 +84,27 @@ function countdown(session: CoachingSessionItem, now: Date): string | null {
  * is running; before that the row says when it opens instead of offering a
  * button that answers "not open yet". `now` is passed in; nothing here reads the
  * clock.
+ *
+ * The day list reaches `TUTOR_SESSIONS_WINDOW_DAYS` days ahead per window, so a
+ * tutor with a full roster does not get every meeting of the next months in one
+ * page. `hidden` counts the meetings left out; `total` still counts them all.
  */
 export function buildTutorSessions({
   sessions,
   now,
+  windows = 1,
 }: {
   sessions: readonly CoachingSessionItem[];
   now: Date;
-}): { next: TutorNextSession | null; days: TutorSessionDay[]; reports: TutorReportRow[]; total: number } {
+  /** How many 14-day windows to list; each "daha göster" adds one. */
+  windows?: number;
+}): {
+  next: TutorNextSession | null;
+  days: TutorSessionDay[];
+  reports: TutorReportRow[];
+  total: number;
+  hidden: number;
+} {
   const today = istanbulDateKey(now);
   const tomorrow = istanbulDateKey(now.getTime() + DAY_MS);
 
@@ -116,11 +132,11 @@ export function buildTutorSessions({
       }
     : null;
 
-  const days: TutorSessionDay[] = [];
+  const allDays: TutorSessionDay[] = [];
   for (const session of ahead) {
     if (session === first) continue;
     const key = session.scheduled_local_date;
-    let day = days.find((entry) => entry.dateKey === key);
+    let day = allDays.find((entry) => entry.dateKey === key);
     if (!day) {
       const base = coachingLocalDateHeading(key);
       day = {
@@ -128,10 +144,18 @@ export function buildTutorSessions({
         heading: key === today ? `Bugün · ${base}` : key === tomorrow ? `Yarın · ${base}` : base,
         rows: [],
       };
-      days.push(day);
+      allDays.push(day);
     }
     day.rows.push(row(session));
   }
+
+  // Days are in date order, so what is listed is a prefix. Istanbul has no summer time,
+  // so a day is a fixed length. If nothing falls inside the window (the next meeting is
+  // weeks away) the first later day is listed anyway: the list is never just a button.
+  const cutoff = istanbulDateKey(now.getTime() + (TUTOR_SESSIONS_WINDOW_DAYS * Math.max(1, windows) - 1) * DAY_MS);
+  const within = allDays.filter((day) => day.dateKey <= cutoff);
+  const days = within.length > 0 ? within : allDays.slice(0, 1);
+  const hidden = allDays.slice(days.length).reduce((sum, day) => sum + day.rows.length, 0);
 
   const reports: TutorReportRow[] = sessions
     .filter((session) => session.status === "awaiting_report")
@@ -147,5 +171,5 @@ export function buildTutorSessions({
       href: `${BASE}/sessions/${session.id}/report`,
     }));
 
-  return { next: nextSession, days, reports, total: ahead.length };
+  return { next: nextSession, days, reports, total: ahead.length, hidden };
 }

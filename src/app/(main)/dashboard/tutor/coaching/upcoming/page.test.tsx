@@ -127,6 +127,27 @@ describe("Görüşmeler page", () => {
     assert.ok(screen.getByRole("heading", { level: 1, name: "Görüşmeler" }));
   });
 
+  it("lists the first 14 days and reveals the next 14 when asked, until nothing is left out", async () => {
+    sessions = [
+      session({}),
+      ...[
+        ["w1", "2026-10-26"],
+        ["w2", "2026-11-02"],
+        ["w3", "2026-11-09"],
+      ].map(([id, day]) => session({ id, scheduled_start: `${day}T16:00:00Z`, scheduled_local_date: day })),
+    ];
+    renderPage();
+
+    await screen.findByRole("region", { name: "Sıradaki görüşme" });
+    assert.ok(screen.getByText("26 Ekim Pazartesi"));
+    assert.equal(screen.queryByText("2 Kasım Pazartesi"), null);
+
+    fireEvent.click(screen.getByRole("button", { name: "2 görüşme daha göster" }));
+    assert.ok(screen.getByText("2 Kasım Pazartesi"));
+    assert.ok(screen.getByText("9 Kasım Pazartesi"));
+    assert.equal(screen.queryByRole("button", { name: /daha göster/ }), null);
+  });
+
   it("does not offer Katıl on a meeting whose room is not open yet", async () => {
     renderPage();
 
