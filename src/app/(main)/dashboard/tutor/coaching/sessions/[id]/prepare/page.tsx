@@ -217,7 +217,7 @@ function PrepareContent({ sessionId }: { sessionId: string }) {
                 {process.env.NEXT_PUBLIC_LEARNING_PLANS_ENABLED === "true" ? (
                   <TutorLearningPlans studentId={studentId} />
                 ) : null}
-                <TutorStudentNotes studentId={studentId} />
+                <TutorStudentNotes studentId={studentId} bare />
               </div>
             </PrepareDisclosure>
             <PrepareDisclosure
@@ -228,7 +228,7 @@ function PrepareContent({ sessionId }: { sessionId: string }) {
               open={materialsOpen}
               onToggle={() => setMaterialsOpen((value) => !value)}
             >
-              <TutorStudentMaterials studentId={studentId} />
+              <TutorStudentMaterials studentId={studentId} bare />
             </PrepareDisclosure>
           </>
         ) : null}
