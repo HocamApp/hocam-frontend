@@ -13,7 +13,7 @@ import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { Button } from "@/components/ui/button";
 import { CoachingAttachmentPanel } from "@/components/coaching/CoachingAttachmentPanel";
 import { CoachingIncidentActions } from "@/components/coaching/CoachingIncidentActions";
-import { CoachingReportWizard } from "@/components/coaching/CoachingReportWizard";
+import { CoachingReportQuickDraft } from "@/components/coaching/CoachingReportQuickDraft";
 import {
   getCoachingJitsiConfigOverwrite,
   COACHING_JITSI_INTERFACE_CONFIG_OVERWRITE,
@@ -79,7 +79,7 @@ function CoachingRoomPanel({
           </Button>
           {reportOpen && (
             <div className="rounded-md border p-3">
-              <CoachingReportWizard sessionId={sessionId} />
+              <CoachingReportQuickDraft sessionId={sessionId} />
             </div>
           )}
         </div>

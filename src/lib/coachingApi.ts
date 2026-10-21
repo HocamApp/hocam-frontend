@@ -1742,9 +1742,10 @@ export async function fetchCoachingReportDraft(
   }
 }
 
+/** The server updates only the fields it is sent, so a part of the draft is enough. */
 export async function saveCoachingReportDraft(
   sessionId: string,
-  payload: CoachingReportDraftInput
+  payload: Partial<CoachingReportDraftInput>
 ): Promise<CoachingSessionReport> {
   const response = await api.put<CoachingSessionReport>(
     `/coaching/sessions/${sessionId}/report-draft/`,
