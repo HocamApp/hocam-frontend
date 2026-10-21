@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
 import type { CoachingSessionItem } from "./coachingApi";
-import { buildTutorSessions, COACHING_TUTOR_EARLY_JOIN_MINUTES } from "./coachingSessions";
+import { buildTutorSessions, COACHING_TUTOR_EARLY_JOIN_MINUTES, coachingTutorJoin } from "./coachingSessions";
 
 // Monday 19 October 2026, 12:30 in Istanbul (UTC+3). Tests never read the clock.
 const NOW = new Date("2026-10-19T09:30:00Z");
@@ -187,6 +187,28 @@ describe("buildTutorSessions: how far ahead the list reaches", () => {
     assert.deepEqual(far.days.map((day) => day.heading), ["9 Kasım Pazartesi"]);
     assert.equal(far.hidden, 1);
     assert.equal(far.total, 3);
+  });
+});
+
+describe("coachingTutorJoin", () => {
+  it("is the join state the Görüşmeler page uses, for any one meeting", () => {
+    // Today at 19:00, now 12:30: the room is shut and says when it opens.
+    assert.deepEqual(coachingTutorJoin(session({}), NOW), { kind: "closed", opensLabel: "18:45'te açılır" });
+    // 18:50: open, 15 minutes before the start.
+    assert.deepEqual(coachingTutorJoin(session({}), new Date("2026-10-19T15:50:00Z")), {
+      kind: "open",
+      href: "/session/coaching/s-1",
+    });
+    assert.deepEqual(coachingTutorJoin(session({ status: "in_progress" }), NOW), {
+      kind: "live",
+      href: "/session/coaching/s-1",
+    });
+  });
+
+  it("says nothing for a meeting that is not today, or that is over", () => {
+    const later = session({ scheduled_start: "2026-10-22T18:00:00Z", scheduled_local_date: "2026-10-22" });
+    assert.equal(coachingTutorJoin(later, NOW), null);
+    assert.equal(coachingTutorJoin(session({}), new Date("2026-10-19T17:00:00Z")), null);
   });
 });
 

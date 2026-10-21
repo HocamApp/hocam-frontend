@@ -176,6 +176,7 @@ export function ReportExamStep({
  */
 export function ReportResourcesStep({
   sessionId,
+  studentName,
   summary,
   onSummary,
   resources,
@@ -183,6 +184,7 @@ export function ReportResourcesStep({
   onChange,
 }: {
   sessionId: string;
+  studentName?: string | null;
   summary: string;
   onSummary: (value: string) => void;
   resources: CoachingRecommendedResource[];
@@ -205,7 +207,7 @@ export function ReportResourcesStep({
         <p className="text-small text-ink-mid">
           Bir dosyayı kaynak olarak önermek için önce aşağıdan görüşme dosyalarına yükle, sonra kaynağın dosya listesinden seç.
         </p>
-        <CoachingAttachmentPanel sessionId={sessionId} />
+        <CoachingAttachmentPanel sessionId={sessionId} viewerRole="tutor" otherName={studentName} />
         {resources.map((resource, index) => (
           <div key={index} className="grid gap-3 rounded-input border border-line bg-surface p-4 sm:grid-cols-2">
             <LabelledInput
