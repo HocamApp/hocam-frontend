@@ -10,6 +10,7 @@ import { CoachingPageShell } from "@/components/coaching/CoachingPageShell";
 import { CoachingStudentsBoard } from "@/components/coaching/CoachingStudentsBoard";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
+  fetchAcceptanceRequests,
   fetchCoachingCapacity,
   fetchCoachingStudents,
   fetchTutorCoachingRescheduleRequests,
@@ -39,6 +40,11 @@ function StudentsContent() {
     queryFn: fetchTutorCoachingRescheduleRequests,
     staleTime: 60_000,
   });
+  const acceptanceQuery = useQuery({
+    queryKey: ["tutor-acceptance-requests"],
+    queryFn: fetchAcceptanceRequests,
+    staleTime: 60_000,
+  });
   const capacityQuery = useQuery({
     queryKey: ["coaching-capacity"],
     queryFn: fetchCoachingCapacity,
@@ -63,9 +69,9 @@ function StudentsContent() {
     );
   }
 
-  // What waits on the tutor comes from three sources. If one failed, the card
+  // What waits on the tutor comes from four sources. If one failed, the card
   // says so rather than leaving that kind out and looking empty.
-  const waitingQueries = [sessionsQuery, timeRequestsQuery, rescheduleRequestsQuery];
+  const waitingQueries = [sessionsQuery, timeRequestsQuery, rescheduleRequestsQuery, acceptanceQuery];
   const waitingState = waitingQueries.some((query) => query.isLoading)
     ? "loading"
     : waitingQueries.some((query) => query.isError)
@@ -77,6 +83,7 @@ function StudentsContent() {
     sessions: sessionsQuery.data ?? [],
     timeRequests: timeRequestsQuery.data ?? [],
     rescheduleRequests: rescheduleRequestsQuery.data ?? [],
+    acceptanceRequests: acceptanceQuery.data ?? [],
     now: new Date(),
   });
   const capacity = capacityQuery.data ?? null;

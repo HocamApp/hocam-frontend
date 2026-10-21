@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
 import type {
+  AcceptanceRequest,
   CoachingRescheduleRequestItem,
   CoachingSessionItem,
   CoachingStudentRow,
@@ -77,6 +78,21 @@ const timeRequest = {
   proposals: [],
 } as CoachingTimeRequest;
 
+const acceptanceRequest = {
+  id: "ar-1",
+  student: { id: "u-9", name: "Can", surname: "Öztürk" },
+  package: { id: "pk-1", plan_name: "3 ay", lessons_per_week: 2, duration_days: 90, total_credits: 24, total_price: 4800 },
+  coaching: { frequency: "weekly", total_sessions: 12, total_price_minor: 240000, service_status: "pending_tutor_acceptance" },
+  includes_coaching: true,
+  status: "pending",
+  purchase_status: "pending_tutor_acceptance",
+  requested_at: "2026-10-19T06:00:00Z",
+  expires_at: "2026-10-21T10:00:00Z",
+  responded_at: null,
+  rejection_reason: "",
+  rejection_note: "",
+} as AcceptanceRequest;
+
 const students = [
   student({}),
   student({
@@ -126,6 +142,7 @@ const board = buildStudentsBoard({
   sessions,
   timeRequests: [timeRequest],
   rescheduleRequests: [rescheduleRequest],
+  acceptanceRequests: [acceptanceRequest],
   now: NOW,
 });
 
@@ -139,11 +156,20 @@ describe("studentInitials", () => {
 });
 
 describe("buildStudentsBoard: waiting on the tutor", () => {
-  it("lists what is owed, soonest first, whether it is a report, a reschedule or a time request", () => {
+  it("lists what is owed, soonest first, whether it is a report, a request to accept, a reschedule or a time request", () => {
     assert.deepEqual(
       board.waiting.map((item) => item.kind),
-      ["report", "time", "reschedule"]
+      ["report", "time", "acceptance", "reschedule"]
     );
+  });
+
+  it("asks for an answer to a coaching request that is still open, so a place it already holds has a row", () => {
+    const item = board.waiting[2];
+    assert.equal(item.title, "Can Öztürk koçluk istiyor");
+    assert.equal(item.detail, "Ders ve koçluk paketi");
+    assert.deepEqual(item.due, { caption: "Son yanıt", value: "Çar 13:00", urgent: false });
+    assert.deepEqual(item.action, { label: "Yanıtla", href: "/dashboard/tutor/coaching/requests" });
+    assert.equal(item.initials, "CÖ");
   });
 
   it("asks for a report with its deadline set apart from the sentence", () => {
@@ -156,7 +182,7 @@ describe("buildStudentsBoard: waiting on the tutor", () => {
   });
 
   it("asks for an answer to a reschedule request with the day the answer is due", () => {
-    const item = board.waiting[2];
+    const item = board.waiting[3];
     assert.equal(item.title, "Mert A. saat değiştirmek istiyor");
     assert.match(item.detail ?? "", /18:30 yerine .*18:30/);
     assert.deepEqual(item.due, { caption: "Son yanıt", value: "Çar 18:30", urgent: false });
@@ -178,6 +204,10 @@ describe("buildStudentsBoard: waiting on the tutor", () => {
       sessions: [session({ status: "completed" })],
       timeRequests: [{ ...timeRequest, status: "matched" }],
       rescheduleRequests: [{ ...rescheduleRequest, status: "approved" }],
+      acceptanceRequests: [
+        { ...acceptanceRequest, status: "accepted" },
+        { ...acceptanceRequest, id: "ar-2", includes_coaching: false, coaching: null },
+      ],
       now: NOW,
     });
     assert.deepEqual(quiet.waiting, []);
@@ -189,6 +219,7 @@ describe("buildStudentsBoard: waiting on the tutor", () => {
       sessions: [{ ...reportSession, student_name: undefined }],
       timeRequests: [],
       rescheduleRequests: [],
+      acceptanceRequests: [],
       now: NOW,
     });
     assert.equal(nameless.waiting[0].title, "Öğrenci raporu yazılmadı");
@@ -235,6 +266,7 @@ describe("buildStudentsBoard: active students", () => {
       sessions: [session({ status: "in_progress", scheduled_start: "2026-10-19T09:20:00Z" })],
       timeRequests: [],
       rescheduleRequests: [],
+      acceptanceRequests: [],
       now: NOW,
     });
     assert.equal(live.active[0].next, "Şimdi");
@@ -246,6 +278,7 @@ describe("buildStudentsBoard: active students", () => {
       sessions: [session({})],
       timeRequests: [],
       rescheduleRequests: [],
+      acceptanceRequests: [],
       now: NOW,
     });
     assert.equal(none.active[0].next, null);
@@ -257,6 +290,7 @@ describe("buildStudentsBoard: active students", () => {
       sessions: [],
       timeRequests: [],
       rescheduleRequests: [],
+      acceptanceRequests: [],
       now: NOW,
     });
     assert.equal(bare.active[0].summary, "Haftada 2 görüşme · saat seçilmedi");

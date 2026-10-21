@@ -6,7 +6,7 @@ import React from "react";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
-import type { CoachingSessionItem, CoachingStudentRow } from "@/lib/coachingApi";
+import type { AcceptanceRequest, CoachingSessionItem, CoachingStudentRow } from "@/lib/coachingApi";
 
 Object.defineProperty(globalThis, "self", { value: window, configurable: true });
 
@@ -53,6 +53,8 @@ let students: CoachingStudentRow[] = [];
 let sessions: CoachingSessionItem[] = [];
 let studentsFail = false;
 let rescheduleFail = false;
+let acceptanceFail = false;
+let acceptance: AcceptanceRequest[] = [];
 const posts: { url: string; body: unknown }[] = [];
 const requested: string[] = [];
 
@@ -102,6 +104,10 @@ before(async () => {
         if (url === "/coaching/tutor/reschedule-requests/") {
           if (rescheduleFail) throw new Error("boom");
           return { data: [] };
+        }
+        if (url === "/payments/tutor-acceptance/requests/") {
+          if (acceptanceFail) throw new Error("boom");
+          return { data: acceptance };
         }
         if (url === "/coaching/capacity/") {
           return {
@@ -161,6 +167,8 @@ beforeEach(() => {
   ];
   studentsFail = false;
   rescheduleFail = false;
+  acceptanceFail = false;
+  acceptance = [];
   posts.length = 0;
   requested.length = 0;
 });
@@ -247,6 +255,44 @@ describe("Öğrenciler page", () => {
 
     await within(waiting).findByText("Zeynep K. raporu yazılmadı");
     assert.deepEqual(requested, ["/coaching/tutor/reschedule-requests/"]);
+  });
+
+  it("lists a coaching request that is still open among what waits on the tutor, with a way to the answer", async () => {
+    acceptance = [
+      {
+        id: "ar-1",
+        student: { id: "u-9", name: "Can", surname: "Öztürk" },
+        package: { id: "pk-1", plan_name: "3 ay", lessons_per_week: 2, duration_days: 90, total_credits: 24, total_price: 4800 },
+        coaching: { frequency: "weekly", total_sessions: 12, total_price_minor: 240000, service_status: "pending_tutor_acceptance" },
+        includes_coaching: true,
+        status: "pending",
+        purchase_status: "pending_tutor_acceptance",
+        requested_at: "2026-10-19T06:00:00Z",
+        expires_at: "2026-10-21T10:00:00Z",
+        responded_at: null,
+        rejection_reason: "",
+        rejection_note: "",
+      } as AcceptanceRequest,
+    ];
+    renderPage();
+
+    const waiting = card(await screen.findByText("Senden bekleyenler").then(() => "Senden bekleyenler"));
+    await within(waiting).findByText("Can Öztürk koçluk istiyor");
+    assert.equal(within(waiting).getAllByRole("link", { name: "Yanıtla" })[0].getAttribute("href"), "/dashboard/tutor/coaching/requests");
+  });
+
+  it("does not leave the open requests out silently when they could not be read, and retries just that one", async () => {
+    acceptanceFail = true;
+    renderPage();
+
+    const waiting = card(await screen.findByText("Senden bekleyenler").then(() => "Senden bekleyenler"));
+    await within(waiting).findByText("Bekleyenler yüklenemedi.");
+
+    acceptanceFail = false;
+    requested.length = 0;
+    fireEvent.click(within(waiting).getByRole("button", { name: "Tekrar dene" }));
+
+    await waitFor(() => assert.deepEqual(requested, ["/payments/tutor-acceptance/requests/"]));
   });
 
   it("says the students could not be loaded, rather than that there are none", async () => {
