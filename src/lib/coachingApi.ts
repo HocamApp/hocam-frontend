@@ -2148,6 +2148,12 @@ export async function fetchTutorCoachingDispute(disputeId: string): Promise<Coac
   return response.data;
 }
 
+/** The short-lived address of an evidence file staff opened to this tutor. */
+export async function fetchTutorCoachingDisputeEvidenceAccessUrl(evidenceId: string): Promise<string> {
+  const response = await api.get<{ url: string }>(`/coaching/tutor/dispute-evidence/${evidenceId}/`);
+  return response.data.url;
+}
+
 export async function respondToTutorCoachingDispute(disputeId: string, body: string): Promise<{ body: string; created_at: string }> {
   const response = await api.post<{ body: string; created_at: string }>(`/coaching/tutor/disputes/${disputeId}/response/`, { body });
   return response.data;
