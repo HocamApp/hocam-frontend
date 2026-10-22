@@ -5,10 +5,13 @@ import type { CoachingSessionAttendanceSummary, CoachingSessionItem } from "./co
 import {
   TUTOR_NO_SHOW_WAIT_MINUTES,
   TUTOR_PRESENT_SECONDS,
+  counterpartPresence,
+  noShowOption,
   postSessionBand,
   postSessionCanReport,
   postSessionMeta,
   postSessionNext,
+  postSessionNumber,
   postSessionRating,
   tutorNoShowOption,
   tutorPresence,
@@ -35,14 +38,14 @@ function session(overrides: Partial<CoachingSessionItem> = {}): CoachingSessionI
   };
 }
 
-function attendance(tutorSeconds: number): CoachingSessionAttendanceSummary {
+function attendance(tutorSeconds: number, studentSeconds = 1800): CoachingSessionAttendanceSummary {
   const entry = (seconds: number) => ({
     first_joined_at: seconds > 0 ? "2026-10-21T16:00:00Z" : null,
     last_left_at: seconds > 0 ? "2026-10-21T16:30:00Z" : null,
     join_count: seconds > 0 ? 1 : 0,
     total_connected_seconds: seconds,
   });
-  return { student: entry(1800), tutor: entry(tutorSeconds) };
+  return { student: entry(studentSeconds), tutor: entry(tutorSeconds) };
 }
 
 const ALL_STATUSES = [
@@ -300,5 +303,66 @@ describe("postSessionNext", () => {
       now,
     });
     assert.equal(result.caption, "Ali Demir · 28 Ekim Çarşamba 19:00 · 6 gün 23 sa sonra");
+  });
+});
+
+describe("counterpartPresence: whose attendance each side looks at", () => {
+  it("is the tutor's for a student and the student's for a tutor", () => {
+    const tutorGone = attendance(0, 1800);
+    assert.equal(counterpartPresence(tutorGone, "student"), "absent");
+    assert.equal(counterpartPresence(tutorGone, "tutor"), "present");
+    const studentGone = attendance(1800, 0);
+    assert.equal(counterpartPresence(studentGone, "student"), "present");
+    assert.equal(counterpartPresence(studentGone, "tutor"), "absent");
+  });
+
+  it("does not know before the attendance has been read", () => {
+    assert.equal(counterpartPresence(null, "tutor"), "unknown");
+    assert.equal(counterpartPresence(undefined, "student"), "unknown");
+  });
+
+  it("keeps tutorPresence as the student's way of asking", () => {
+    assert.equal(tutorPresence(attendance(0)), counterpartPresence(attendance(0), "student"));
+  });
+});
+
+describe("noShowOption: the same rule for a tutor reporting the student as for a student reporting the tutor", () => {
+  const start = Date.parse("2026-10-21T16:00:00Z");
+  const at = (minutesAfterStart: number) => new Date(start + minutesAfterStart * 60_000);
+
+  it("is never offered while the other side is there, nor before the tenth minute, and says when it opens", () => {
+    assert.deepEqual(noShowOption({ session: session(), presence: "present", now: at(40) }), { kind: "hidden" });
+    assert.deepEqual(noShowOption({ session: session(), presence: "unknown", now: at(40) }), { kind: "hidden" });
+    assert.deepEqual(noShowOption({ session: session({ status: "in_progress" }), presence: "absent", now: at(6) }), {
+      kind: "later",
+      opensAt: "19:10",
+    });
+    assert.deepEqual(noShowOption({ session: session({ status: "in_progress" }), presence: "absent", now: at(10) }), {
+      kind: "available",
+    });
+  });
+
+  it("leaves a meeting the server no longer takes a report for alone", () => {
+    assert.deepEqual(noShowOption({ session: session({ status: "completed" }), presence: "absent", now: at(45) }), { kind: "hidden" });
+  });
+
+  it("keeps tutorNoShowOption as the student's way of asking", () => {
+    const input = { session: session(), presence: "absent" as const, now: at(45) };
+    assert.deepEqual(tutorNoShowOption(input), noShowOption(input));
+  });
+});
+
+describe("postSessionNumber", () => {
+  it("numbers a tutor's meeting inside its period", () => {
+    assert.equal(postSessionNumber({ session: session({ sequence_number: 3 }), role: "tutor", sessions: [] }), 3);
+  });
+
+  it("numbers a student's meeting across the whole plan, and says nothing until the list is read", () => {
+    const earlier = (id: string, day: string) =>
+      session({ id, status: "completed", scheduled_start: `${day}T16:00:00Z`, scheduled_local_date: day, sequence_number: 1 });
+    const current = session({ sequence_number: 1 });
+    const list = [earlier("a", "2026-10-07"), earlier("b", "2026-10-14"), current];
+    assert.equal(postSessionNumber({ session: current, role: "student", sessions: list }), 3);
+    assert.equal(postSessionNumber({ session: current, role: "student", sessions: [] }), null);
   });
 });

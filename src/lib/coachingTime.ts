@@ -68,29 +68,58 @@ export function coachingTimeLabel(value: string | number | Date): string {
   return format(timeOnly, value, "Saat bilgisi alınamadı");
 }
 
-/** Hours whose spoken form ends in a voiceless consonant: üç, dört, beş, on üç, on dört, on beş, yirmi üç. */
-const VOICELESS_HOURS = new Set([3, 4, 5, 13, 14, 15, 23]);
+/** The last word spoken of an hour: "on sekiz" → sekiz, "yirmi" → yirmi, "yirmi bir" → bir. */
+const HOUR_LAST_WORD = [
+  "sıfır", "bir", "iki", "üç", "dört", "beş", "altı", "yedi", "sekiz", "dokuz",
+  "on", "bir", "iki", "üç", "dört", "beş", "altı", "yedi", "sekiz", "dokuz",
+  "yirmi", "bir", "iki", "üç",
+] as const;
+const DIGIT_WORD = ["", "bir", "iki", "üç", "dört", "beş", "altı", "yedi", "sekiz", "dokuz"] as const;
+const TENS_WORD = ["", "on", "yirmi", "otuz", "kırk", "elli"] as const;
 
 /**
- * "18:20" → "18:20'de", "18:45" → "18:45'te". The suffix follows how the time
- * is spoken, and the last word spoken is the minute, or the hour when the
- * minutes are zero: yirmi, otuz and elli take -de; kırk and anything ending
- * in üç, dört or beş take -te. Anything that is not a clock time comes back
- * unchanged.
+ * The locative suffix after each number word: -de/-da after a vowel or a voiced
+ * consonant, -te/-ta after a voiceless one (üç, dört, beş, kırk), -e/-a by the
+ * vowel of the word (front: i, e, ü, ö; back: ı, a, o, u).
+ */
+const LOCATIVE_SUFFIX: Record<string, "de" | "da" | "te" | "ta"> = {
+  sıfır: "da",
+  bir: "de",
+  iki: "de",
+  üç: "te",
+  dört: "te",
+  beş: "te",
+  altı: "da",
+  yedi: "de",
+  sekiz: "de",
+  dokuz: "da",
+  on: "da",
+  yirmi: "de",
+  otuz: "da",
+  kırk: "ta",
+  elli: "de",
+};
+
+/**
+ * "18:20" → "18:20'de", "18:45" → "18:45'te", "19:00" → "19:00'da", "18:40" →
+ * "18:40'ta". The suffix follows how the time is spoken: the last word is the
+ * minute's (the unit when there is one, else the tens), or the hour's when the
+ * minutes are zero, and its final consonant and vowel pick -de, -da, -te or
+ * -ta. Anything that is not a clock time comes back unchanged.
  */
 export function coachingTimeLocative(time: string): string {
   const match = /^(\d{1,2}):(\d{2})/.exec(time);
   if (!match) return time;
   const hour = Number(match[1]);
   const minute = Number(match[2]);
-  const lastDigit = minute % 10;
-  const voiceless =
+  if (hour > 23 || minute > 59) return time;
+  const lastWord =
     minute === 0
-      ? VOICELESS_HOURS.has(hour)
-      : lastDigit === 0
-        ? minute === 40
-        : lastDigit >= 3 && lastDigit <= 5;
-  return `${match[0]}'${voiceless ? "te" : "de"}`;
+      ? HOUR_LAST_WORD[hour]
+      : minute % 10 !== 0
+        ? DIGIT_WORD[minute % 10]
+        : TENS_WORD[minute / 10];
+  return `${match[0]}'${LOCATIVE_SUFFIX[lastWord]}`;
 }
 
 /** "2026-10-12" → "12 Ekim Pazartesi", reading the date as an Istanbul day. */

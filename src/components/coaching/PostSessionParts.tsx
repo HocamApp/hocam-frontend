@@ -6,7 +6,7 @@ import { CaretDown } from "@phosphor-icons/react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
-import { CoachingIncidentDialogs } from "@/components/coaching/CoachingIncidentActions";
+import { CoachingIncidentDialogs } from "@/components/coaching/CoachingIncidentDialogs";
 import { CoachingSessionRatingForm } from "@/components/coaching/CoachingSessionRatingForm";
 import { useCoachingIncidentReports } from "@/components/coaching/useCoachingIncidentReports";
 import { Button } from "@/components/ui/button";
@@ -18,7 +18,7 @@ import {
   submitCoachingSessionRating,
   type CoachingSessionRatingScores,
 } from "@/lib/coachingApi";
-import { TUTOR_NO_SHOW_WAIT_MINUTES, type TutorNoShowOption } from "@/lib/coachingPostSession";
+import { TUTOR_NO_SHOW_WAIT_MINUTES, type NoShowOption, type PostSessionRole } from "@/lib/coachingPostSession";
 
 /**
  * The pieces of the screen after a coaching meeting. Pink is the meeting that
@@ -113,6 +113,7 @@ export function PostSessionDisclosure({
   open,
   onToggle,
   keepMounted = false,
+  flush = false,
   children,
 }: {
   id: string;
@@ -123,17 +124,20 @@ export function PostSessionDisclosure({
   onToggle: () => void;
   /** Keeps what is inside (a half-filled form) alive while the row is closed. */
   keepMounted?: boolean;
+  /** No side padding and no rule above: the row sits in a panel that has its own. */
+  flush?: boolean;
   children: ReactNode;
 }) {
+  const pad = flush ? "px-0" : "px-4 sm:px-6";
   return (
-    <div className="border-t border-line first:border-t-0">
+    <div className={flush ? "" : "border-t border-line first:border-t-0"}>
       <h2>
         <button
           type="button"
           aria-expanded={open}
           aria-controls={`${id}-panel`}
           onClick={onToggle}
-          className="flex min-h-11 w-full items-center justify-between gap-3 px-4 py-4 text-left sm:px-6"
+          className={`flex min-h-11 w-full items-center justify-between gap-3 py-4 text-left ${pad}`}
         >
           <span className="min-w-0">
             <span className="block text-body font-medium text-ink">{title}</span>
@@ -149,7 +153,7 @@ export function PostSessionDisclosure({
         </button>
       </h2>
       {open || keepMounted ? (
-        <div id={`${id}-panel`} hidden={!open} className="px-4 pb-5 sm:px-6">
+        <div id={`${id}-panel`} hidden={!open} className={`pb-5 ${pad}`}>
           {children}
         </div>
       ) : null}
@@ -203,23 +207,52 @@ export function PostSessionRatingRow({ sessionId, state }: { sessionId: string; 
   );
 }
 
+const NO_SHOW_WORDS: Record<PostSessionRole, { button: string; dialog: string; caption: string }> = {
+  student: {
+    button: "Öğretmen katılmadı bildir",
+    dialog: "Öğretmen katılmadı",
+    caption: "Teknik sorun ya da öğretmenin katılmaması",
+  },
+  tutor: {
+    button: "Öğrenci katılmadı bildir",
+    dialog: "Öğrenci katılmadı",
+    caption: "Teknik sorun ya da öğrencinin katılmaması",
+  },
+};
+
 /**
- * "Bir sorun mu oldu?": the technical report, and the tutor's absence only when
- * `noShow` says it can be reported. Each asks once before it closes the meeting.
+ * The problem row, for the screen after the meeting and the room's panel: the
+ * technical report, and the other side's absence only when `noShow` says it can
+ * be reported. Each asks once before it closes the meeting.
  */
-export function PostSessionProblems({ sessionId, noShow }: { sessionId: string; noShow: TutorNoShowOption }) {
-  const reports = useCoachingIncidentReports({ sessionId, viewerRole: "student" });
+export function PostSessionProblems({
+  sessionId,
+  noShow,
+  role = "student",
+  title = "Bir sorun mu oldu?",
+  flush = false,
+}: {
+  sessionId: string;
+  noShow: NoShowOption;
+  /** Whose side this is: a student reports the tutor, a tutor the student. */
+  role?: PostSessionRole;
+  title?: string;
+  flush?: boolean;
+}) {
+  const reports = useCoachingIncidentReports({ sessionId, viewerRole: role });
   const [open, setOpen] = useState(false);
   const noteId = useId();
+  const words = NO_SHOW_WORDS[role];
 
   return (
     <>
       <PostSessionDisclosure
         id="sorun"
-        title="Bir sorun mu oldu?"
-        caption={noShow.kind === "hidden" ? "Teknik sorun bildirebilirsin" : "Teknik sorun ya da öğretmenin katılmaması"}
+        title={title}
+        caption={noShow.kind === "hidden" ? "Teknik sorun bildirebilirsin" : words.caption}
         open={open}
         onToggle={() => setOpen((value) => !value)}
+        flush={flush}
       >
         <div className="space-y-4">
           <div className="space-y-1.5">
@@ -253,19 +286,19 @@ export function PostSessionProblems({ sessionId, noShow }: { sessionId: string; 
                 disabled={reports.isPending}
                 onClick={() => reports.setPending("no_show")}
               >
-                Öğretmen katılmadı bildir
+                {words.button}
               </Button>
             ) : null}
           </div>
           {noShow.kind === "available" ? <p className="text-small text-ink-mid">{reports.consequence}</p> : null}
           {noShow.kind === "later" ? (
             <p className="text-small text-ink-mid">
-              {`Öğretmen katılmadı bildirimi görüşmenin ${TUTOR_NO_SHOW_WAIT_MINUTES}. dakikasından sonra yapılabilir (${noShow.opensAt}).`}
+              {`${words.dialog} bildirimi görüşmenin ${TUTOR_NO_SHOW_WAIT_MINUTES}. dakikasından sonra yapılabilir (${noShow.opensAt}).`}
             </p>
           ) : null}
         </div>
       </PostSessionDisclosure>
-      <CoachingIncidentDialogs reports={reports} noShowLabel="Öğretmen katılmadı" />
+      <CoachingIncidentDialogs reports={reports} noShowLabel={words.dialog} />
     </>
   );
 }
