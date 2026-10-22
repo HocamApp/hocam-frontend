@@ -1,5 +1,5 @@
 import type { CoachingSessionAttendanceSummary, CoachingSessionItem } from "./coachingApi";
-import { coachingRemainingLabel } from "./coachingStudentOverview";
+import { coachingRemainingLabel, numberStudentSessions } from "./coachingStudentOverview";
 import { coachingDateTimeLabel, coachingTimeLabel } from "./coachingTime";
 
 /**
@@ -9,8 +9,10 @@ import { coachingDateTimeLabel, coachingTimeLabel } from "./coachingTime";
 
 /** Mirrors TUTOR_NO_SHOW_REPORTABLE_AFTER_MINUTES in the backend's session_views.py. */
 export const TUTOR_NO_SHOW_WAIT_MINUTES = 10;
-/** Connected this long inside the meeting's own window, the tutor was there. */
-export const TUTOR_PRESENT_SECONDS = 300;
+/** Connected this long inside the meeting's own window, a side was there. */
+export const PARTY_PRESENT_SECONDS = 300;
+/** The same threshold, under the name the student's rule was first written with. */
+export const TUTOR_PRESENT_SECONDS = PARTY_PRESENT_SECONDS;
 
 const MINUTE_MS = 60_000;
 const HELD = new Set(["completed", "awaiting_report"]);
@@ -136,36 +138,72 @@ export function postSessionBand({
   }
 }
 
-export type TutorPresence = "present" | "absent" | "unknown";
+export type Presence = "present" | "absent" | "unknown";
+export type TutorPresence = Presence;
 
-/** Whether the tutor was in the meeting, from the server's attendance. Unknown until it has been read. */
-export function tutorPresence(attendance: CoachingSessionAttendanceSummary | null | undefined): TutorPresence {
+/**
+ * Whether the other side was in the meeting, from the server's attendance: the
+ * tutor's for a student, the student's for a tutor. Unknown until it has been read.
+ */
+export function counterpartPresence(
+  attendance: CoachingSessionAttendanceSummary | null | undefined,
+  role: PostSessionRole,
+): Presence {
   if (!attendance) return "unknown";
-  return attendance.tutor.total_connected_seconds >= TUTOR_PRESENT_SECONDS ? "present" : "absent";
+  const other = role === "student" ? attendance.tutor : attendance.student;
+  return other.total_connected_seconds >= PARTY_PRESENT_SECONDS ? "present" : "absent";
+}
+
+/** Whether the tutor was in the meeting: the student's way of asking `counterpartPresence`. */
+export function tutorPresence(attendance: CoachingSessionAttendanceSummary | null | undefined): TutorPresence {
+  return counterpartPresence(attendance, "student");
 }
 
 export type TutorNoShowOption = { kind: "hidden" } | { kind: "later"; opensAt: string } | { kind: "available" };
+export type NoShowOption = TutorNoShowOption;
 
 /**
- * "Öğretmen katılmadı bildir". Master Spec §24: only when there is no record of the
- * tutor, or the wait the server asks for has run out. The server checks the wait but
- * not the attendance, so without this a student could report a tutor who was in the
- * room the whole time. While the attendance is not known the option stays hidden
- * rather than flash and vanish.
+ * "Öğretmen katılmadı bildir" for a student, "Öğrenci katılmadı bildir" for a
+ * tutor. Master Spec §24: only when there is no record of the other side, or the
+ * wait the server asks for has run out. The server checks the wait (for a
+ * student's report only) but not the attendance, so without this a side could
+ * report someone who was in the room the whole meeting. While the attendance is
+ * not known the option stays hidden rather than flash and vanish.
  */
-export function tutorNoShowOption({
+export function noShowOption({
   session,
   presence,
   now,
 }: {
   session: CoachingSessionItem;
-  presence: TutorPresence;
+  presence: Presence;
   now: Date;
-}): TutorNoShowOption {
+}): NoShowOption {
   if (!REPORTABLE.has(session.status) || presence !== "absent") return { kind: "hidden" };
   const opens = Date.parse(session.scheduled_start) + TUTOR_NO_SHOW_WAIT_MINUTES * MINUTE_MS;
   if (now.getTime() < opens) return { kind: "later", opensAt: coachingTimeLabel(opens) };
   return { kind: "available" };
+}
+
+/** The student's way of asking `noShowOption`: "Öğretmen katılmadı bildir". */
+export const tutorNoShowOption = noShowOption;
+
+/**
+ * Which meeting this is, for the line under a title: a tutor's counts inside the
+ * period, a student's across the whole plan as on the Görüşmeler page, and until
+ * that list is read a student's is left out rather than guessed.
+ */
+export function postSessionNumber({
+  session,
+  role,
+  sessions,
+}: {
+  session: CoachingSessionItem;
+  role: PostSessionRole;
+  sessions: readonly CoachingSessionItem[];
+}): number | null {
+  if (role === "tutor") return session.sequence_number;
+  return numberStudentSessions(sessions).find((entry) => entry.session.id === session.id)?.number ?? null;
 }
 
 /** A technical or no-show report can only be made while the meeting is running or waiting for its report. */

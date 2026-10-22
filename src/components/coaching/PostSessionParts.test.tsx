@@ -245,6 +245,50 @@ describe("PostSessionProblems", () => {
     assert.ok(screen.getByRole("button", { name: "Teknik sorun bildir" }));
   });
 
+  it("gives a tutor the same row: Öğrenci katılmadı bildir, and the consequence in the tutor's terms", async () => {
+    render(withClient(<P.PostSessionProblems sessionId="s-3" role="tutor" noShow={{ kind: "available" }} />));
+
+    assert.ok(screen.getByText("Teknik sorun ya da öğrencinin katılmaması"));
+    open();
+    const noShow = screen.getByRole("button", { name: "Öğrenci katılmadı bildir" });
+    assert.match(noShow.className, /bg-gold/);
+    assert.equal(screen.queryByRole("button", { name: "Öğretmen katılmadı bildir" }), null);
+    assert.ok(screen.getByText("Öğrenci gelmezse bu görüşme hakkı kullanılmış sayılır."));
+    fireEvent.click(noShow);
+    assert.equal(posted.length, 0, "nothing is sent before the confirmation");
+    assert.ok(screen.getByRole("dialog", { name: '"Öğrenci katılmadı" bildirilsin mi?' }));
+
+    fireEvent.click(screen.getByRole("button", { name: "Bildir" }));
+    await waitFor(() => assert.equal(posted.length, 1));
+    assert.equal(posted[0].url, "/coaching/sessions/s-3/report-no-show/");
+    assert.equal(posted[0].body.party, "student");
+  });
+
+  it("tells a tutor when Öğrenci katılmadı bildir opens", () => {
+    render(withClient(<P.PostSessionProblems sessionId="s-3" role="tutor" noShow={{ kind: "later", opensAt: "19:10" }} />));
+    open();
+
+    assert.equal(screen.queryByRole("button", { name: "Öğrenci katılmadı bildir" }), null);
+    assert.ok(screen.getByText("Öğrenci katılmadı bildirimi görüşmenin 10. dakikasından sonra yapılabilir (19:10)."));
+  });
+
+  it("lets a tutor back out of a technical report, and sends nothing", () => {
+    render(withClient(<P.PostSessionProblems sessionId="s-3" role="tutor" noShow={{ kind: "hidden" }} />));
+    open();
+
+    fireEvent.click(screen.getByRole("button", { name: "Teknik sorun bildir" }));
+    fireEvent.click(screen.getByRole("button", { name: "Vazgeç" }));
+    assert.equal(posted.length, 0);
+    assert.equal(screen.queryByRole("dialog"), null);
+  });
+
+  it("takes its row's title from the place it sits in", () => {
+    render(withClient(<P.PostSessionProblems sessionId="s-3" noShow={{ kind: "hidden" }} title="Bir sorun mu var?" />));
+
+    assert.ok(screen.getByRole("button", { name: /Bir sorun mu var\?/ }));
+    assert.equal(screen.queryByRole("button", { name: /Bir sorun mu oldu\?/ }), null);
+  });
+
   it("names the tutor's absence in the row's caption only when it can be reported", () => {
     const hidden = render(withClient(<P.PostSessionProblems sessionId="s-3" noShow={{ kind: "hidden" }} />));
     assert.ok(screen.getByText("Teknik sorun bildirebilirsin"));

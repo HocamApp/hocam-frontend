@@ -31,25 +31,38 @@ describe("coaching time labels", () => {
 });
 
 describe("coachingTimeLocative", () => {
-  it("picks -de or -te from how the clock time is spoken, last word first", () => {
-    // Minutes decide when there are any: yirmi, otuz, elli, on, bir, iki, altı...
+  it("follows the vowel of the last word spoken: front vowels take -de/-te, back vowels -da/-ta", () => {
+    // Minutes decide when there are any, and the last word is spoken first:
+    // yirmi, elli, bir, iki, yedi, sekiz are front (-de) ...
     assert.equal(coachingTimeLocative("18:20"), "18:20'de");
-    assert.equal(coachingTimeLocative("18:30"), "18:30'de");
     assert.equal(coachingTimeLocative("18:50"), "18:50'de");
-    assert.equal(coachingTimeLocative("18:10"), "18:10'de");
-    assert.equal(coachingTimeLocative("18:06"), "18:06'de");
     assert.equal(coachingTimeLocative("18:01"), "18:01'de");
-    // ... except kırk and the numbers ending in üç, dört, beş.
-    assert.equal(coachingTimeLocative("18:40"), "18:40'te");
+    assert.equal(coachingTimeLocative("18:02"), "18:02'de");
+    assert.equal(coachingTimeLocative("18:07"), "18:07'de");
+    assert.equal(coachingTimeLocative("18:08"), "18:08'de");
+    // ... on, otuz, altı, dokuz are back (-da) ...
+    assert.equal(coachingTimeLocative("18:10"), "18:10'da");
+    assert.equal(coachingTimeLocative("18:30"), "18:30'da");
+    assert.equal(coachingTimeLocative("18:06"), "18:06'da");
+    assert.equal(coachingTimeLocative("18:09"), "18:09'da");
+    // ... üç, dört, beş end in a voiceless consonant after a front vowel (-te), kırk after a back one (-ta).
     assert.equal(coachingTimeLocative("18:45"), "18:45'te");
     assert.equal(coachingTimeLocative("18:03"), "18:03'te");
     assert.equal(coachingTimeLocative("18:04"), "18:04'te");
+    assert.equal(coachingTimeLocative("18:40"), "18:40'ta");
   });
 
   it("reads the hour when the minutes are zero", () => {
     assert.equal(coachingTimeLocative("18:00"), "18:00'de"); // on sekiz
     assert.equal(coachingTimeLocative("20:00"), "20:00'de"); // yirmi
-    assert.equal(coachingTimeLocative("00:00"), "00:00'de"); // sıfır
+    assert.equal(coachingTimeLocative("21:00"), "21:00'de"); // yirmi bir
+    assert.equal(coachingTimeLocative("12:00"), "12:00'de"); // on iki
+    assert.equal(coachingTimeLocative("17:00"), "17:00'de"); // on yedi
+    assert.equal(coachingTimeLocative("19:00"), "19:00'da"); // on dokuz
+    assert.equal(coachingTimeLocative("16:00"), "16:00'da"); // on altı
+    assert.equal(coachingTimeLocative("10:00"), "10:00'da"); // on
+    assert.equal(coachingTimeLocative("09:00"), "09:00'da"); // dokuz
+    assert.equal(coachingTimeLocative("00:00"), "00:00'da"); // sıfır
     assert.equal(coachingTimeLocative("15:00"), "15:00'te"); // on beş
     assert.equal(coachingTimeLocative("13:00"), "13:00'te"); // on üç
     assert.equal(coachingTimeLocative("23:00"), "23:00'te"); // yirmi üç

@@ -1,108 +1,79 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
-import { WifiSlash, FileText } from "@phosphor-icons/react";
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { Folder, Lifebuoy, NotePencil } from "@phosphor-icons/react";
 
-import { useAuth } from "@/hooks/useAuth";
-import { RouteGuard } from "@/components/shared/RouteGuard";
-import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
-import { ErrorMessage } from "@/components/shared/ErrorMessage";
-import { Button } from "@/components/ui/button";
 import { CoachingAttachmentPanel } from "@/components/coaching/CoachingAttachmentPanel";
-import { CoachingIncidentActions } from "@/components/coaching/CoachingIncidentActions";
 import { CoachingReportQuickDraft } from "@/components/coaching/CoachingReportQuickDraft";
+import { PostSessionProblems } from "@/components/coaching/PostSessionParts";
+import {
+  RoomBottomBar,
+  RoomConnectionStrip,
+  RoomPanel,
+  RoomPanelSection,
+  RoomStateCard,
+  RoomTopBar,
+  useRoomOpenTimer,
+  type RoomPanelView,
+} from "@/components/coaching/RoomParts";
+import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
+import { RouteGuard } from "@/components/shared/RouteGuard";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/useAuth";
+import { useServerNow } from "@/hooks/useServerNow";
+import {
+  COACHING_SESSION_QUERY_KEYS,
+  extractCoachingErrorCode,
+  fetchCoachingSessionAttendanceSummary,
+  fetchCoachingSessionDetail,
+  fetchCoachingSessionToken,
+  fetchCoachingSessions,
+  fetchTutorCoachingSessions,
+} from "@/lib/coachingApi";
+import {
+  counterpartPresence,
+  noShowOption,
+  postSessionCanReport,
+  postSessionNumber,
+  type PostSessionRole,
+} from "@/lib/coachingPostSession";
+import { coachingRoomUserInfo } from "@/lib/coachingPresentation";
+import { roomClock, roomFailure, roomMeta } from "@/lib/coachingRoom";
 import {
   getCoachingJitsiConfigOverwrite,
   COACHING_JITSI_INTERFACE_CONFIG_OVERWRITE,
   useJaasReconnect,
 } from "@/lib/jaasEmbed";
-import {
-  fetchCoachingSessionDetail,
-  fetchCoachingSessionToken,
-  COACHING_SESSION_QUERY_KEYS,
-  extractCoachingErrorMessage,
-  extractCoachingErrorCode,
-  type CoachingSessionDetail,
-} from "@/lib/coachingApi";
-import { coachingRoomUserInfo, coachingSessionStatusLabel } from "@/lib/coachingPresentation";
-import { coachingDateTimeLabel } from "@/lib/coachingTime";
 
 const JitsiMeeting = dynamic(
   () => import("@jitsi/react-sdk").then((mod) => mod.JitsiMeeting),
   { ssr: false }
 );
 
-function CoachingRoomPanel({
-  sessionId,
-  viewerRole,
-  detail,
-}: {
-  sessionId: string;
-  viewerRole: "student" | "tutor";
-  detail: CoachingSessionDetail | undefined;
-}) {
-  const [reportOpen, setReportOpen] = useState(false);
-
-  return (
-    <div className="flex h-full flex-col gap-4 overflow-y-auto p-4">
-      <div>
-        <p className="text-sm font-medium">
-          {viewerRole === "tutor" ? detail?.student_name : detail?.tutor_name}
-        </p>
-        {detail && (
-          <p className="text-xs text-ink-mid">
-            {coachingDateTimeLabel(detail.scheduled_start)}
-          </p>
-        )}
-        {detail && (
-          <p className="mt-1 text-xs text-ink-mid">
-            Durum: {coachingSessionStatusLabel(detail.status)}
-          </p>
-        )}
-      </div>
-
-      <CoachingAttachmentPanel
-        sessionId={sessionId}
-        viewerRole={viewerRole}
-        otherName={viewerRole === "tutor" ? detail?.student_name : detail?.tutor_name}
-      />
-
-      {viewerRole === "tutor" && detail?.status === "in_progress" && (
-        <div className="space-y-2 border-t pt-3">
-          <Button
-            size="sm"
-            variant={reportOpen ? "secondary" : "outline"}
-            className="w-full justify-start"
-            onClick={() => setReportOpen((current) => !current)}
-          >
-            <FileText className="mr-2 h-4 w-4" />
-            {reportOpen ? "Rapor taslağını gizle" : "Rapor taslağını görüşme sırasında doldur"}
-          </Button>
-          {reportOpen && (
-            <div className="rounded-md border p-3">
-              <CoachingReportQuickDraft sessionId={sessionId} />
-            </div>
-          )}
-        </div>
-      )}
-
-      <div className="border-t pt-3">
-        <CoachingIncidentActions sessionId={sessionId} viewerRole={viewerRole} />
-      </div>
-    </div>
-  );
-}
-
+/**
+ * The coaching video room's frame: a dark bar (whose meeting, how much is left),
+ * the call, and a panel (files, the tutor's report draft, the problem row) that a
+ * desktop opens beside the call and a phone opens under it. The call itself is
+ * Jitsi's and none of its settings are touched. There is deliberately no "leave"
+ * control: what an early exit means for the right to a meeting, the tutor's
+ * earnings and refunds is not decided in the backend yet, so a button that makes
+ * it a deliberate act is not a frame decision.
+ */
 function CoachingSessionContent() {
   const { sessionId } = useParams<{ sessionId: string }>();
   const router = useRouter();
   const { user } = useAuth();
-  const viewerRole = user?.role === "tutor" ? "tutor" : "student";
+  const role: PostSessionRole = user?.role === "tutor" ? "tutor" : "student";
+  const now = useServerNow(15_000);
   const { embedKey, connectionStatus, onConnectionInterrupted, onConnectionRestored } =
     useJaasReconnect();
+  const [panelOpen, setPanelOpen] = useState(true);
+  const [phoneView, setPhoneView] = useState<RoomPanelView | null>(null);
+
   // Wait for the detail before mounting the call: Jitsi reads userInfo once,
   // so mounting early would fix the name to the role fallback.
   const { data: detail, isLoading: isLoadingDetail } = useQuery({
@@ -111,18 +82,45 @@ function CoachingSessionContent() {
     enabled: Boolean(sessionId),
   });
 
-  const {
-    data: sessionToken,
-    isLoading: isLoadingToken,
-    isError: isTokenError,
-    error: tokenError,
-  } = useQuery({
+  const tokenQuery = useQuery({
     queryKey: ["coaching-session-token", sessionId],
     queryFn: () => fetchCoachingSessionToken(sessionId),
     retry: false,
     enabled: Boolean(sessionId),
     refetchInterval: (query) => (query.state.status === "error" ? 30_000 : false),
   });
+  const { data: sessionToken, isLoading: isLoadingToken, isError: isTokenError, error: tokenError } = tokenQuery;
+
+  // For the meeting's number on the bar.
+  const sessionsQuery = useQuery({
+    queryKey: role === "tutor" ? COACHING_SESSION_QUERY_KEYS.tutorList() : COACHING_SESSION_QUERY_KEYS.studentList(),
+    queryFn: role === "tutor" ? fetchTutorCoachingSessions : fetchCoachingSessions,
+    staleTime: 60_000,
+  });
+  // Who is in the meeting, read again every minute while a report is still possible.
+  const canReport = detail !== undefined && postSessionCanReport(detail);
+  const attendanceQuery = useQuery({
+    queryKey: ["coaching-session-attendance", sessionId],
+    queryFn: () => fetchCoachingSessionAttendanceSummary(sessionId),
+    enabled: canReport,
+    refetchInterval: 60_000,
+  });
+
+  const otherName = role === "tutor" ? detail?.student_name : detail?.tutor_name;
+  const summaryHref = `/session/coaching/${sessionId}/summary`;
+  const roomRefused = !isLoadingToken && !isLoadingDetail && (isTokenError || !sessionToken);
+  const failure = roomRefused
+    ? roomFailure({
+        code: extractCoachingErrorCode(tokenError),
+        status: (tokenError as { response?: { status?: number } } | null)?.response?.status ?? null,
+        session: detail,
+        role,
+        otherName,
+        now,
+      })
+    : null;
+  // A room that is not open yet is asked for again the moment it opens.
+  useRoomOpenTimer(failure?.kind === "waiting" ? failure.opensAt : null, () => void tokenQuery.refetch());
 
   // The panel (attachments, no-show/technical-issue reporting) is
   // reachable regardless of whether the video token succeeds — a session
@@ -136,23 +134,40 @@ function CoachingSessionContent() {
         <LoadingSpinner />
       </div>
     );
-  } else if (isTokenError || !sessionToken) {
-    const code = extractCoachingErrorCode(tokenError);
-    const message =
-      code === "too_early"
-        ? "Görüşme odası henüz açılmadı. Başlama saatine yaklaştığında tekrar dene."
-        : code === "session_ended"
-        ? "Bu görüşme sona erdi."
-        : extractCoachingErrorMessage(tokenError);
+  } else if (failure) {
     videoArea = (
-      <div className="flex flex-1 flex-col items-center justify-center gap-4 p-6">
-        <ErrorMessage message={message} />
-        <Button variant="outline" onClick={() => router.push(`/dashboard/${viewerRole}`)}>
-          Derslerime dön
-        </Button>
+      <div className="flex flex-1 items-center justify-center">
+        <RoomStateCard
+          title={failure.title}
+          message={failure.message}
+          countdown={failure.kind === "waiting" ? failure.countdown : null}
+        >
+          {failure.kind === "waiting" && role === "tutor" ? (
+            <Button asChild size="sm" variant="gold" className="min-h-11">
+              <Link href={`/dashboard/tutor/coaching/sessions/${sessionId}/prepare`}>Görüşmeye hazırlan</Link>
+            </Button>
+          ) : null}
+          {failure.kind === "closed" && failure.summary ? (
+            <Button asChild size="sm" variant="gold" className="min-h-11">
+              <Link href={summaryHref}>Görüşme özetine git</Link>
+            </Button>
+          ) : null}
+          {failure.kind === "unavailable" ? (
+            <Button
+              type="button"
+              size="sm"
+              variant="gold"
+              className="min-h-11"
+              disabled={tokenQuery.isFetching}
+              onClick={() => void tokenQuery.refetch()}
+            >
+              Tekrar dene
+            </Button>
+          ) : null}
+        </RoomStateCard>
       </div>
     );
-  } else {
+  } else if (sessionToken) {
     videoArea = (
       <JitsiMeeting
         key={embedKey}
@@ -160,7 +175,7 @@ function CoachingSessionContent() {
         roomName={sessionToken.room}
         jwt={sessionToken.token}
         lang="tr"
-        userInfo={coachingRoomUserInfo(detail, viewerRole)}
+        userInfo={coachingRoomUserInfo(detail, role)}
         configOverwrite={getCoachingJitsiConfigOverwrite()}
         interfaceConfigOverwrite={COACHING_JITSI_INTERFACE_CONFIG_OVERWRITE}
         onApiReady={(api: { addEventListener?: (event: string, handler: (...args: unknown[]) => void) => void }) => {
@@ -169,7 +184,7 @@ function CoachingSessionContent() {
         }}
         // Both sides land on the screen after the meeting: the student's options,
         // the tutor's report and next meeting.
-        onReadyToClose={() => router.push(`/session/coaching/${sessionId}/summary`)}
+        onReadyToClose={() => router.push(summaryHref)}
         getIFrameRef={(iframeRef: HTMLElement) => {
           iframeRef.style.height = "100%";
           iframeRef.style.width = "100%";
@@ -178,25 +193,55 @@ function CoachingSessionContent() {
     );
   }
 
+  // A failed attendance read must not hide a report that is real: fail open.
+  const presence = attendanceQuery.isError ? "absent" : counterpartPresence(attendanceQuery.data, role);
+  const noShow = detail ? noShowOption({ session: detail, presence, now }) : ({ kind: "hidden" } as const);
+  const showDraft = role === "tutor" && detail?.status === "in_progress";
+  const barItems = [
+    { key: "dosyalar" as const, label: "Dosyalar", icon: <Folder className="h-5 w-5" aria-hidden="true" /> },
+    ...(showDraft
+      ? [{ key: "rapor" as const, label: "Rapor", icon: <NotePencil className="h-5 w-5" aria-hidden="true" /> }]
+      : []),
+    ...(canReport
+      ? [{ key: "sorun" as const, label: "Sorun", icon: <Lifebuoy className="h-5 w-5" aria-hidden="true" /> }]
+      : []),
+  ];
+
   return (
-    <div className="flex flex-1 flex-col">
-      {connectionStatus === "interrupted" && (
-        <div
-          role="status"
-          className="flex items-center justify-center gap-2 bg-destructive px-4 py-1.5 text-center text-xs font-medium text-destructive-foreground"
-        >
-          <WifiSlash className="h-3.5 w-3.5" aria-hidden="true" />
-          Bağlantı koptu. Yeniden bağlanmaya çalışılıyor...
-        </div>
-      )}
+    <div className="flex min-h-0 flex-1 flex-col">
+      <RoomTopBar
+        title={otherName?.trim() || "Görüşme"}
+        meta={detail ? roomMeta(detail, postSessionNumber({ session: detail, role, sessions: sessionsQuery.data ?? [] })) : ""}
+        clock={detail ? roomClock(detail, now) : null}
+        summaryHref={failure || isLoadingToken || isLoadingDetail ? null : summaryHref}
+        panelOpen={panelOpen}
+        onTogglePanel={() => setPanelOpen((open) => !open)}
+      />
+      {connectionStatus === "interrupted" && <RoomConnectionStrip />}
       <div className="flex min-h-0 flex-1 flex-col md:flex-row">
-        <div className="flex min-h-[50vh] min-w-0 flex-1 md:min-h-0 md:basis-[65%]">
-          {videoArea}
-        </div>
-        <div className="min-h-0 border-t bg-background md:basis-[35%] md:border-l md:border-t-0">
-          <CoachingRoomPanel sessionId={sessionId} viewerRole={viewerRole} detail={detail} />
-        </div>
+        <div className="flex min-h-[46vh] min-w-0 flex-1 bg-ink md:min-h-0 md:basis-[65%]">{videoArea}</div>
+        <RoomPanel view={phoneView} desktopOpen={panelOpen}>
+          <RoomPanelSection id="dosyalar" view={phoneView}>
+            <CoachingAttachmentPanel sessionId={sessionId} viewerRole={role} otherName={otherName} heading="Dosyalar" />
+          </RoomPanelSection>
+          {showDraft ? (
+            <RoomPanelSection id="rapor" view={phoneView}>
+              <h2 className="mb-3 text-body font-medium text-ink">Rapor taslağı</h2>
+              <CoachingReportQuickDraft sessionId={sessionId} />
+            </RoomPanelSection>
+          ) : null}
+          {canReport ? (
+            <RoomPanelSection id="sorun" view={phoneView}>
+              <PostSessionProblems sessionId={sessionId} role={role} noShow={noShow} title="Bir sorun mu var?" flush />
+            </RoomPanelSection>
+          ) : null}
+        </RoomPanel>
       </div>
+      <RoomBottomBar
+        items={barItems}
+        active={phoneView}
+        onSelect={(key) => setPhoneView((current) => (current === key ? null : key))}
+      />
     </div>
   );
 }
