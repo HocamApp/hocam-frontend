@@ -21,6 +21,7 @@ const RETENTION: ReadonlyArray<{
   { data: "Üniversite e-posta ispatı ve alan adı inceleme kaydı", period: "Hesap süresi", method: "Silme" },
   { data: "Ders ve rezervasyon kayıtları", period: "10 yıl", method: "Anonim hale getirme" },
   { data: "Derse katılım kayıtları", period: "2 yıl", method: "Silme" },
+  { data: "Koçluk görüşmesi katılım kayıtları", period: "2 yıl", method: "Silme" },
   { data: "Görüntülü ders altyapısı olay kayıtları", period: "90 gün", method: "Yok etme" },
   { data: "Mesajlaşma ve mesaj görselleri", period: "Hesap kapanışı + 1 yıl", method: "Silme" },
   { data: "Ders materyalleri ve öğretmen notları", period: "Ders ilişkisi bitişi + 1 yıl", method: "Yok etme" },

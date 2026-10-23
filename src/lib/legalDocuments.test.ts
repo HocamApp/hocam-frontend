@@ -93,3 +93,16 @@ describe("the coaching article's documents", () => {
     assert.match(getLegalDocument("iptal-ve-iade").description, /koçluk görüşmeleri/);
   });
 });
+
+describe("the KVKK notices the coaching attendance text changed", () => {
+  it("are dated and versioned together", () => {
+    assert.equal(getLegalDocument("aydinlatma-metni").version, "v1.2");
+    assert.equal(getLegalDocument("hoca-aydinlatma-metni").version, "v1.1");
+    assert.equal(getLegalDocument("saklama-ve-imha-politikasi").version, "v1.2");
+    for (const slug of ["aydinlatma-metni", "hoca-aydinlatma-metni", "saklama-ve-imha-politikasi"] as const) {
+      const doc = getLegalDocument(slug);
+      assert.equal(doc.updatedAt, "23 Ekim 2026");
+      assert.equal(doc.updatedAtIso, "2026-10-23");
+    }
+  });
+});

@@ -62,9 +62,9 @@ export const LEGAL_DOCUMENTS: readonly LegalDocument[] = [
     metaTitle: "Aydınlatma Metni",
     description:
       "Hangi verilerini, neden işlediğimizi, kimlerle paylaştığımızı ve haklarını anlatır.",
-    version: "v1.1",
-    updatedAt: "23 Ağustos 2026",
-    updatedAtIso: "2026-08-23",
+    version: "v1.2",
+    updatedAt: "23 Ekim 2026",
+    updatedAtIso: "2026-10-23",
   },
   {
     slug: "hoca-aydinlatma-metni",
@@ -73,9 +73,9 @@ export const LEGAL_DOCUMENTS: readonly LegalDocument[] = [
     navLabel: "Hoca Aydınlatma Metni",
     description:
       "Ders veren üniversite öğrencisi hocaların hangi verilerinin, neden işlendiğini anlatır.",
-    version: "v1.0",
-    updatedAt: "4 Eylül 2026",
-    updatedAtIso: "2026-09-04",
+    version: "v1.1",
+    updatedAt: "23 Ekim 2026",
+    updatedAtIso: "2026-10-23",
   },
   {
     slug: "hoca-dogrulama",
@@ -122,9 +122,9 @@ export const LEGAL_DOCUMENTS: readonly LegalDocument[] = [
     navLabel: "Saklama ve İmha Politikası",
     description:
       "Hangi verinin ne kadar saklandığını, süre dolunca nasıl imha edildiğini anlatır.",
-    version: "v1.1",
-    updatedAt: "4 Eylül 2026",
-    updatedAtIso: "2026-09-04",
+    version: "v1.2",
+    updatedAt: "23 Ekim 2026",
+    updatedAtIso: "2026-10-23",
   },
   {
     slug: "kullanim-kosullari",
