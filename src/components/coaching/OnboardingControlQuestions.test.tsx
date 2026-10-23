@@ -28,9 +28,10 @@ describe("OnboardingControlQuestions", () => {
     assert.ok(screen.getByText("Hızlı kontrol"));
     assert.ok(screen.getByText("Koçluk neyi kapsar?"));
     assert.equal(screen.queryByText("Görüşme kaç dakika?"), null);
-    assert.ok(screen.getByText("1 / 2"));
+    assert.ok(screen.getByText("Soru 1 / 2"));
     assert.ok(screen.getByRole("progressbar", { name: "Hızlı kontrol ilerlemesi" }));
     assert.equal(screen.queryByText(/puan|test sonucu|sınav/i), null);
+    assert.equal(screen.getByRole("progressbar", { name: "Hızlı kontrol ilerlemesi" }).getAttribute("aria-valuenow"), "0");
   });
 
   it("moves to the first answer that is not server-confirmed as correct", () => {
@@ -44,7 +45,34 @@ describe("OnboardingControlQuestions", () => {
     );
     assert.equal(screen.queryByText("Koçluk neyi kapsar?"), null);
     assert.ok(screen.getByText("Görüşme kaç dakika?"));
-    assert.ok(screen.getByText("2 / 2"));
+    assert.ok(screen.getByText("Soru 2 / 2"));
     assert.equal(screen.queryByText(/puan|test sonucu/i), null);
+    // The bar counts what the server confirmed, not the question being looked at.
+    assert.equal(screen.getByRole("progressbar", { name: "Hızlı kontrol ilerlemesi" }).getAttribute("aria-valuenow"), "1");
+  });
+
+  it("explains a wrong answer in the server's words, and says what to do when it sent none", () => {
+    render(
+      <OnboardingControlQuestions
+        questions={questions}
+        answers={{ scope: { answer: "a", is_correct: false } }}
+        onAnswer={async () => ({ explanation: "" })}
+        pendingQuestionId={null}
+      />
+    );
+    assert.ok(screen.getByRole("status").textContent?.includes("başka bir seçenek deneyebilirsin"));
+  });
+
+  it("ends on a plain done card once every answer is right", () => {
+    render(
+      <OnboardingControlQuestions
+        questions={questions}
+        answers={{ scope: { answer: "a", is_correct: true }, duration: { answer: "b", is_correct: true } }}
+        onAnswer={async () => ({ explanation: "" })}
+        pendingQuestionId={null}
+      />
+    );
+    assert.ok(screen.getByText("Hızlı kontrol tamamlandı."));
+    assert.equal(screen.queryByRole("radio"), null);
   });
 });
