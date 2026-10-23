@@ -807,6 +807,19 @@ export function coachingFrequencyLabel(frequency: string): string {
 }
 
 /**
+ * "Koçluğa dahil": what a coaching student gets, in the order the offer card
+ * lists it. One list for the tutor's profile and the checkout step, so the
+ * same offer never reads two ways.
+ */
+export const COACHING_INCLUDED: readonly string[] = [
+  "Çalışma programı",
+  "Deneme değerlendirmesi",
+  "İlerleme raporu",
+  "Kaynak takibi ve önerileri",
+  "Mesajlara 24 saat içinde yanıt",
+];
+
+/**
  * "Koçluk nasıl çalışır?" — the same six lines on the profile and on the
  * checkout choice screen.
  *

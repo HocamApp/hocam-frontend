@@ -18,10 +18,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Card, CardContent } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
-import { formatTryMinor } from "@/lib/money";
-import { fetchTutorById } from "@/lib/tutorsApi";
+import { checkoutPackageLabel } from "@/lib/coachingCheckoutStep";
 import { updateMatchingGoal } from "@/lib/matchingApi";
 import {
   COACHING_HOW_IT_WORKS,
@@ -58,29 +55,27 @@ function ExamTargetPicker({
   });
 
   return (
-    <Card>
-      <CardContent className="space-y-3 py-5">
-        <div>
-          <h2 className="font-bold">Sınav hedefini seç</h2>
-          <p className="mt-1 text-sm text-ink-mid">
-            Bu hocanın koçluk planını görebilmek için sınav hedefini seçmen gerekiyor.
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {targets.map((target) => (
-            <Button
-              key={target}
-              type="button"
-              variant="outline"
-              disabled={save.isPending}
-              onClick={() => save.mutate(target as "YKS" | "DGS" | "KPSS")}
-            >
-              {EXAM_TARGET_LABEL[target] ?? target}
-            </Button>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
+    <div className="space-y-3 rounded-card border border-line bg-surface px-6 py-5">
+      <div>
+        <h2 className="text-h3-m font-bold md:text-h3 md:font-bold">Sınav hedefini seç</h2>
+        <p className="mt-1 text-small text-ink-mid">
+          Bu hocanın koçluk planını görebilmek için sınav hedefini seçmen gerekiyor.
+        </p>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {targets.map((target) => (
+          <Button
+            key={target}
+            type="button"
+            variant="outline"
+            disabled={save.isPending}
+            onClick={() => save.mutate(target as "YKS" | "DGS" | "KPSS")}
+          >
+            {EXAM_TARGET_LABEL[target] ?? target}
+          </Button>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -93,10 +88,6 @@ function CoachingChoiceContent({ tutorId }: { tutorId: string }) {
     readCoachingSelectedFromSearchParams(searchParams)
   );
 
-  const { data: tutor, isLoading: tutorLoading } = useQuery({
-    queryKey: ["tutor", tutorId],
-    queryFn: () => fetchTutorById(tutorId),
-  });
   const eligibilityQueryKey = ["coaching-eligibility", tutorId];
   const { data: eligibility, isLoading: eligibilityLoading } = useQuery({
     queryKey: eligibilityQueryKey,
@@ -104,7 +95,6 @@ function CoachingChoiceContent({ tutorId }: { tutorId: string }) {
   });
   const shouldRedirectToLessonCheckout =
     !flagLoading &&
-    !tutorLoading &&
     !eligibilityLoading &&
     !eligibilityAllowsCoachingChoice(eligibility, checkoutEnabled);
 
@@ -113,18 +103,23 @@ function CoachingChoiceContent({ tutorId }: { tutorId: string }) {
     router.replace(`/tutors/${tutorId}/checkout?${searchParams.toString()}`);
   }, [router, searchParams, shouldRedirectToLessonCheckout, tutorId]);
 
-  const checkoutHref = useMemo(() => {
+  // A link that says coaching=1 for an offer the server no longer lets her
+  // take is not a choice: nothing is shown as chosen and nothing is carried on.
+  const chosen = selected && Boolean(eligibility?.eligible);
+
+  const checkoutHref = (withCoaching: boolean) => {
     const next = new URLSearchParams(searchParams.toString());
-    if (selected) {
+    if (withCoaching) {
       next.set("coaching", "1");
     } else {
       next.delete("coaching");
     }
     const query = next.toString();
     return `/tutors/${tutorId}/checkout${query ? `?${query}` : ""}`;
-  }, [searchParams, selected, tutorId]);
+  };
+  const packageLabel = useMemo(() => checkoutPackageLabel(searchParams), [searchParams]);
 
-  if (tutorLoading || eligibilityLoading || flagLoading) {
+  if (eligibilityLoading || flagLoading) {
     return (
       <div className="flex min-h-[24rem] items-center justify-center">
         <LoadingSpinner />
@@ -146,111 +141,82 @@ function CoachingChoiceContent({ tutorId }: { tutorId: string }) {
     );
   }
 
+  const missingTarget =
+    eligibility.reason === "missing_target_exam" && Boolean(eligibility.available_exam_targets?.length);
+
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8">
+    <div className="mx-auto max-w-3xl px-4 py-8">
       <Link
         href={`/tutors/${tutorId}`}
-        className="inline-flex items-center gap-1.5 text-sm text-ink-mid transition-colors hover:text-ink"
+        className="inline-flex items-center gap-1.5 text-small text-ink-mid transition-colors hover:text-ink"
       >
         <ArrowLeft className="h-4 w-4" />
         Hoca profiline dön
       </Link>
 
-      <h1 className="mt-6 text-2xl font-bold">Çalışma Koçluğu</h1>
-      <p className="mt-1 text-sm text-ink-mid">
-        Ders paketine çalışma koçluğu eklemek ister misin? Bu adımı
-        atlayabilirsin.
+      <h1 className="mt-6 text-h2">Çalışma Koçluğu</h1>
+      <p className="mt-1 text-small text-ink-mid">
+        Ders paketine çalışma koçluğu eklemek ister misin? Bu adımı atlayabilirsin.
       </p>
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-3">
-        <div className="space-y-4 lg:col-span-2">
-          {eligibility.reason === "missing_target_exam" && eligibility.available_exam_targets?.length ? (
-            <ExamTargetPicker
-              targets={eligibility.available_exam_targets}
-              onSaved={() => queryClient.invalidateQueries({ queryKey: eligibilityQueryKey })}
-            />
-          ) : (
-            <CoachingChoiceCard
-              eligibility={eligibility}
-              selected={selected}
-              onSelect={() => setSelected(true)}
-            />
-          )}
+      <div className="mt-6 space-y-4">
+        {missingTarget ? (
+          <ExamTargetPicker
+            targets={eligibility.available_exam_targets ?? []}
+            onSaved={() => queryClient.invalidateQueries({ queryKey: eligibilityQueryKey })}
+          />
+        ) : (
+          <CoachingChoiceCard
+            eligibility={eligibility}
+            selected={chosen}
+            onToggle={() => setSelected((current) => !current)}
+          />
+        )}
 
-          <button
-            type="button"
-            aria-pressed={!selected}
-            onClick={() => setSelected(false)}
-            className={cn(
-              "w-full rounded-xl border p-4 text-left transition-colors",
-              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-              !selected
-                ? "border-ink bg-surface ring-2 ring-ink"
-                : "hover:bg-paper"
-            )}
+        {chosen && !missingTarget ? (
+          <div className="flex flex-col gap-3 rounded-card border border-line bg-surface px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-6">
+            <div>
+              <p className="text-label text-ink-mid">Seçtiğin paket</p>
+              <p className="text-body font-medium text-ink">
+                {`${packageLabel ?? "Ders paketin"} + koçluk`}
+              </p>
+            </div>
+            {/* The label may wrap on a 320px phone: the button's own nowrap would push the page sideways. */}
+            <Button
+              asChild
+              className="h-auto min-h-10 w-full whitespace-normal py-2 text-center sm:w-auto sm:whitespace-nowrap"
+            >
+              <Link href={checkoutHref(true)}>Paket seçeneklerine devam et</Link>
+            </Button>
+          </div>
+        ) : null}
+
+        <p className="text-center">
+          <Link
+            href={checkoutHref(false)}
+            className="text-small text-ink-mid underline underline-offset-4 transition-colors hover:text-ink"
           >
-            <p className="font-medium">Koçluk olmadan devam et</p>
-            <p className="mt-1 text-sm text-ink-mid">
-              Yalnız ders paketi satın al.
-            </p>
-          </button>
+            Koçluk olmadan devam et
+          </Link>
+        </p>
 
+        <div className="rounded-card border border-line bg-surface px-6">
           <Accordion type="single" collapsible>
-            <AccordionItem value="how">
-              <AccordionTrigger>Koçluk nasıl çalışır?</AccordionTrigger>
+            <AccordionItem value="how" className="border-b-0">
+              <AccordionTrigger className="py-4 text-[1rem] font-bold hover:no-underline">
+                Koçluk nasıl çalışır?
+              </AccordionTrigger>
               <AccordionContent>
-                <ul className="space-y-2 text-sm text-ink-mid">
+                <ul className="divide-y divide-line">
                   {COACHING_HOW_IT_WORKS.map((item) => (
-                    <li key={item} className="flex items-start gap-2">
-                      <span aria-hidden="true">·</span>
-                      <span>{item}</span>
+                    <li key={item} className="py-2.5 text-small text-ink first:pt-0 last:pb-0">
+                      {item}
                     </li>
                   ))}
                 </ul>
               </AccordionContent>
             </AccordionItem>
           </Accordion>
-        </div>
-
-        <div>
-          <div className="lg:sticky lg:top-24">
-            <Card>
-              <CardContent className="space-y-4 pt-6">
-                <h2 className="text-lg font-bold">Özet</h2>
-                <dl className="space-y-2 text-sm">
-                  <div className="flex justify-between gap-4">
-                    <dt className="text-ink-mid">Hoca</dt>
-                    <dd className="text-right font-medium">
-                      {tutor ? `${tutor.name} ${tutor.surname}` : "—"}
-                    </dd>
-                  </div>
-                  <div className="flex justify-between gap-4">
-                    <dt className="text-ink-mid">Ders fiyatı</dt>
-                    <dd>{tutor ? `${formatTryMinor(Number(tutor.hourly_price) * 100)} / 40 dk` : "—"}</dd>
-                  </div>
-                  <div className="flex justify-between gap-4">
-                    <dt className="text-ink-mid">Çalışma koçluğu</dt>
-                    <dd className="text-right font-medium">
-                      {selected
-                        ? eligibility.plan.is_free
-                          ? "Ücretsiz — ders paketine dahil"
-                          : `${eligibility.plan.price_per_session_display} / görüşme`
-                        : "Seçilmedi"}
-                    </dd>
-                  </div>
-                </dl>
-
-                <Button className="w-full" asChild>
-                  <Link href={checkoutHref}>Paket seçeneklerine devam et</Link>
-                </Button>
-
-                <p className="text-xs text-ink-mid">
-                  Koçluk toplamı, bir sonraki adımda seçeceğin paket süresine
-                  göre hesaplanır.
-                </p>
-              </CardContent>
-            </Card>
-          </div>
         </div>
       </div>
     </div>

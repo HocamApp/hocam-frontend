@@ -7,16 +7,8 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { SectionBandHeading, sectionBandClass } from "@/components/shared/SectionBand";
-import { COACHING_HOW_IT_WORKS } from "@/lib/coachingApi";
+import { COACHING_HOW_IT_WORKS, COACHING_INCLUDED } from "@/lib/coachingApi";
 import { formatTryMinor } from "@/lib/money";
-
-const INCLUDED = [
-  "Çalışma programı",
-  "Deneme değerlendirmesi",
-  "İlerleme raporu",
-  "Kaynak önerileri",
-  "Mesajlara 24 saat içinde yanıt",
-];
 
 export type CoachingOfferView = {
   frequencyLabel: string;
@@ -122,7 +114,7 @@ export function CoachingOfferCard({
         <div className="mt-4 rounded-input border border-line p-4">
           <p className="text-label font-bold uppercase tracking-[0.08em] text-ink">Koçluğa dahil</p>
           <ul className="mt-3 grid grid-cols-[repeat(auto-fit,minmax(14rem,1fr))] gap-x-6 gap-y-2">
-            {INCLUDED.map((item) => (
+            {COACHING_INCLUDED.map((item) => (
               <li key={item} className="flex items-start gap-3 text-body text-ink">
                 {/* A short rule, not an em dash character: DESIGN.md bans the dash in copy. */}
                 <span aria-hidden="true" className="mt-[0.8em] h-px w-3 shrink-0 bg-ink" />
