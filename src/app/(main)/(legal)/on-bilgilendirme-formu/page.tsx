@@ -52,6 +52,16 @@ export default function PreContractInformationPage() {
             seçilen Hoca ile geçerlidir.
           </p>
           <p>
+            Alıcı isterse paketle birlikte aynı Hocadan çalışma koçluğu da
+            satın alabilir. Koçluk; her biri{" "}
+            <strong>{f.coachingSessionMinutes} dakika</strong> süren çevrim içi
+            birebir görüşmeler, çalışma programı, ilerleme raporu, gerektiğinde
+            kaynak önerisi ve platform içi mesajlara{" "}
+            <strong>{f.coachingMessageReplyHours} saat</strong> içinde yanıttan
+            oluşur; ders paketi olmadan tek başına alınamaz. Görüşme sayısı
+            seçilen sıklığa ve paket süresine göre belirlenir.
+          </p>
+          <p>
             Paketin içeriği, Hoca, ders saatleri ve toplam bedel ödeme öncesinde
             sipariş ekranında gösterilir. HOCAM, dersin içeriğini belirlemez ve
             belirli bir sınav sonucu taahhüt etmez.
@@ -84,6 +94,10 @@ export default function PreContractInformationPage() {
             teslimat veya kargo bedeli yoktur. İndirim veya kampanya varsa
             uygulanan ders başı bedel de ayrıca gösterilir.
           </p>
+          <p>
+            Koçluk eklenmişse görüşme başı bedel ve koçluğun toplam bedeli de
+            ödeme öncesinde sipariş ekranında ayrıca gösterilir.
+          </p>
         </LegalSection>
 
         <LegalSection title="4. Ödeme, ifa ve şikayet çözümü">
@@ -100,6 +114,20 @@ export default function PreContractInformationPage() {
             iptali, katılmama, süre uzatma ve iade kuralları{" "}
             <LegalLink href="/iptal-ve-iade">İptal ve İade Koşullarında</LegalLink>{" "}
             yer alır.
+          </p>
+          <p>
+            Koçluk içeren sipariş Hocanın talebi kabul etmesine bağlıdır. Koçluk,
+            Alıcı düzenli görüşme saatini seçtiğinde başlar; saat{" "}
+            <strong>{f.coachingScheduleDeadlineDays} gün</strong> içinde
+            seçilmezse ya da uygun saat bulunamazsa koçluk iptal edilir ve koçluk
+            bedelinin iadesi gerekir. Geç gelen veya gelmeyen Hoca, yarım kalan
+            görüşme, ek görüşme, koçluğun sonlandırılması ve şikâyet süreleri{" "}
+            <LegalLink href="/mesafeli-satis-sozlesmesi">
+              Mesafeli Satış Sözleşmesinin
+            </LegalLink>{" "}
+            11. maddesinde ve{" "}
+            <LegalLink href="/iptal-ve-iade">İptal ve İade Koşullarının</LegalLink>{" "}
+            12. maddesinde yer alır.
           </p>
           <p>
             Hizmetle ilgili şikayetler destek talebi kanalıyla iletilir ve destek
@@ -145,6 +173,10 @@ export default function PreContractInformationPage() {
             geçerek hizmetin ifasına başlanmasını ve bu halde cayma hakkının sona
             ereceğini kabul eder. Bu onay, ödeme öncesinde ayrıca gösterilir ve
             Alıcı tarafından işaretlenir; işaretlenmeden ödemeye geçilemez.
+          </p>
+          <p>
+            Koçluk satın alınmışsa ifa, ilk ders ya da ilk koçluk görüşmesinden
+            hangisi önce başlarsa onun başlamasıyla başlar.
           </p>
           <p>
             Cayma hakkı sona erdikten sonra da Alıcı, kullanılmamış dersler için

@@ -174,3 +174,110 @@ describe("ön bilgilendirme formu", () => {
     assert.ok(hrefs.includes("/mesafeli-satis-sozlesmesi"));
   });
 });
+
+describe("çalışma koçluğu: mesafeli satış sözleşmesi", () => {
+  const text = () => textOf(DistanceSalesPage);
+  const section = () => {
+    const all = text();
+    const start = all.indexOf("11. Çalışma koçluğu");
+    const end = all.indexOf("12. Yürürlük ve bildirim");
+    assert.ok(start >= 0, "the coaching article is on the page");
+    assert.ok(end > start, "the closing article follows it");
+    return all.slice(start, end);
+  };
+
+  it("keeps the closing article last and the earlier numbering where it was", () => {
+    const all = text();
+    assert.match(all, /10\. Uyuşmazlıklar/);
+    assert.match(all, /11\. Çalışma koçluğu/);
+    assert.match(all, /12\. Yürürlük ve bildirim/);
+    assert.doesNotMatch(all, /11\. Yürürlük ve bildirim/);
+    // The note and the withdrawal text point at the article by its number.
+    assert.match(all, /koçluğa özgü hükümler on birinci maddededir/);
+  });
+
+  it("says what coaching is, and that it is not sold alone", () => {
+    const t = section();
+    assert.match(t, /aynı Hocadan çalışma koçluğu satın alabilir/);
+    assert.match(t, /ders paketi olmadan tek başına satın alınamaz/);
+    assert.match(t, /aynı anda yalnızca bir aktif çalışma koçuna sahip olabilir/);
+    assert.match(t, new RegExp(`her biri ${f.coachingSessionMinutes} dakika süren çevrim içi birebir görüşmelerden`));
+    assert.match(t, new RegExp(`mesajlara ${f.coachingMessageReplyHours} saat içinde yanıttan oluşur`));
+    assert.match(t, /iki haftada bir, haftada bir veya haftada iki/);
+    assert.match(t, /Koçluk hakları dönemseldir ve birikmez/);
+  });
+
+  it("prices it per meeting, with the package term discount, on what was really paid", () => {
+    const t = section();
+    assert.match(t, /görüşme başı bedel ile görüşme sayısının çarpımından/);
+    assert.match(t, /paket süresine göre uygulanan indirim düşülerek/);
+    assert.match(t, /Koçluk ücretsiz sunulabilir; bu halde bedel yoktur/);
+    assert.match(t, /fiilen ödediği koçluk bedeli üzerinden yapılır/);
+  });
+
+  it("asks the tutor's yes first, starts on the weekly hour, and names both deadlines", () => {
+    const t = section();
+    assert.match(t, /Hocanın talebi kabul etmesine bağlıdır/);
+    assert.match(t, /Hoca talebi kabul etmezse veya süresinde yanıtlamazsa sipariş gerçekleşmez/);
+    assert.match(t, /düzenli görüşme saatini seçtiğinde başlar/);
+    assert.match(t, new RegExp(`saati ${f.coachingScheduleDeadlineDays} gün içinde seçmezse koçluk iptal edilir`));
+    assert.match(t, new RegExp(`saat talebinden itibaren ${f.coachingTimeRequestHours} saat içinde yeni saat önermezse koçluk iptal edilir`));
+    assert.match(t, /ders paketi devam eder/);
+  });
+
+  it("sends a failed meeting to the cancellation text and ends coaching without touching the package", () => {
+    const t = section();
+    assert.match(t, /İptal ve İade Koşullarının on ikinci maddesinde düzenlenmiştir/);
+    assert.match(t, /Alıcı koçluğu dilediği zaman sonlandırabilir; ders paketi devam eder, eski program ve raporlar silinmez/);
+    assert.match(t, /Henüz başlamamış koçluk dönemlerinin bedeli iade edilir/);
+    assert.match(t, /tamamlanmış dönemlerin bedeli iade edilmez/);
+    assert.match(t, /Hoca kalan koçluğu sonlandırırsa başlamamış dönemlerin bedeli aynı şekilde iade edilir/);
+  });
+
+  it("gives the complaint windows and promises no automatic refund", () => {
+    const t = section();
+    assert.match(t, new RegExp(`görüşmenin bitiminden itibaren ${f.coachingComplaintSessionHours} saat`));
+    assert.match(t, new RegExp(`yanıt süresinin dolmasından itibaren ${f.coachingComplaintDays} gün`));
+    assert.match(t, new RegExp(`dönemin bitiminden itibaren ${f.coachingComplaintDays} gün`));
+    assert.match(t, /Şikâyet tek başına iade doğurmaz; destek ekibi inceler/);
+    assert.match(t, /yeniden görüşme, ilgili dönemin iadesi veya kalan koçluğun sonlandırılması/);
+  });
+
+  it("records refunds as obligations, never as done, and keeps the statutory rights", () => {
+    const t = section();
+    assert.match(t, /HOCAM iade yükümlülüğünü kaydeder ve iadeyi ödeme hizmeti sağlayıcısı üzerinden, İptal ve İade Koşullarında anlatılan usulle yapar/);
+    assert.match(t, /tüketici mevzuatından doğan haklarını ortadan kaldırmaz/);
+    assert.doesNotMatch(t, /iade edildi\b|₺|\bTL\b/);
+  });
+
+  it("starts the right of withdrawal at the first lesson or the first coaching meeting, whichever is first", () => {
+    assert.match(text(), /ilk ders ya da ilk koçluk görüşmesinden hangisi önce başlarsa onun başlamasıyla başlar/);
+  });
+});
+
+describe("çalışma koçluğu: ön bilgilendirme formu", () => {
+  const text = () => textOf(PreContractInformationPage);
+
+  it("lists the coaching service's main features and that it is not sold alone", () => {
+    const t = text();
+    assert.match(t, /aynı Hocadan çalışma koçluğu da satın alabilir/);
+    assert.match(t, new RegExp(`her biri ${f.coachingSessionMinutes} dakika süren çevrim içi birebir görüşmeler`));
+    assert.match(t, new RegExp(`mesajlara ${f.coachingMessageReplyHours} saat içinde yanıttan oluşur`));
+    assert.match(t, /ders paketi olmadan tek başına alınamaz/);
+  });
+
+  it("shows the coaching total before the payment", () => {
+    assert.match(text(), /koçluğun toplam bedeli de ödeme öncesinde sipariş ekranında ayrıca gösterilir/);
+  });
+
+  it("says how coaching starts and where the rest is written", () => {
+    const t = text();
+    assert.match(t, /Hocanın talebi kabul etmesine bağlıdır/);
+    assert.match(t, new RegExp(`saat ${f.coachingScheduleDeadlineDays} gün içinde seçilmezse ya da uygun saat bulunamazsa koçluk iptal edilir`));
+    assert.match(t, /Mesafeli Satış Sözleşmesinin 11\. maddesinde ve İptal ve İade Koşullarının 12\. maddesinde yer alır/);
+  });
+
+  it("tells when the right of withdrawal is lost for an order with coaching", () => {
+    assert.match(text(), /ilk ders ya da ilk koçluk görüşmesinden hangisi önce başlarsa onun başlamasıyla başlar/);
+  });
+});

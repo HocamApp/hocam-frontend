@@ -55,6 +55,16 @@ export const POLICY_FACTS = {
   coachingLateExtensionMaxMinutes: 15,
   /** apps/coaching/attendance.py MEETING_HELD_RATIO (0.5) of the meeting length: time together that counts as held. */
   coachingMeetingHeldMinutes: 15,
+  /** apps/coaching/models.py CoachingSettingsConfig.slot_selection_deadline_days (default): days to pick the weekly hour. */
+  coachingScheduleDeadlineDays: 7,
+  /** apps/coaching/models.py CoachingSettingsConfig.new_time_request_hours (default): hours a tutor has to propose a time. */
+  coachingTimeRequestHours: 48,
+  /** apps/coaching/phase8_disputes.py _SESSION_ISSUE_WINDOW: hours after a meeting to report a problem with it. */
+  coachingComplaintSessionHours: 72,
+  /** apps/coaching/phase8_disputes.py _MESSAGE_SLA_WINDOW and _PERIOD_DEFICIENCY_WINDOW: days to report a late reply or a missing program/report. */
+  coachingComplaintDays: 7,
+  /** apps/coaching/contract.py section 4: a coaching message is answered within this many hours. */
+  coachingMessageReplyHours: 24,
 } as const;
 
 /**

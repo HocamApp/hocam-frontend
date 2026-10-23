@@ -106,3 +106,14 @@ describe("the KVKK notices the coaching attendance text changed", () => {
     }
   });
 });
+
+describe("the sales documents the coaching sale changed", () => {
+  it("are dated 23 October and name coaching", () => {
+    for (const slug of ["mesafeli-satis-sozlesmesi", "on-bilgilendirme-formu"] as const) {
+      const doc = getLegalDocument(slug);
+      assert.equal(doc.updatedAt, "23 Ekim 2026");
+      assert.equal(doc.updatedAtIso, "2026-10-23");
+      assert.match(doc.description, /çalışma koçluğu/);
+    }
+  });
+});
