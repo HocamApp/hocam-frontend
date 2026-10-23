@@ -3,11 +3,12 @@
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Folder, Lifebuoy, NotePencil } from "@phosphor-icons/react";
+import { FlagCheckered, Folder, Lifebuoy, NotePencil } from "@phosphor-icons/react";
 
 import { CoachingAttachmentPanel } from "@/components/coaching/CoachingAttachmentPanel";
+import { EarlyEndIncomingDialog, EarlyEndPanelSection } from "@/components/coaching/CoachingEarlyEndControls";
 import { CoachingReportQuickDraft } from "@/components/coaching/CoachingReportQuickDraft";
 import { PostSessionProblems } from "@/components/coaching/PostSessionParts";
 import {
@@ -24,6 +25,7 @@ import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { RouteGuard } from "@/components/shared/RouteGuard";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
+import { useCoachingLiveState } from "@/hooks/useCoachingLiveState";
 import { useServerNow } from "@/hooks/useServerNow";
 import {
   COACHING_SESSION_QUERY_KEYS,
@@ -41,6 +43,7 @@ import {
   postSessionNumber,
   type PostSessionRole,
 } from "@/lib/coachingPostSession";
+import { earlyEndView, shouldLeaveForSummary, type EarlyEndView } from "@/lib/coachingEarlyEnd";
 import { coachingRoomUserInfo } from "@/lib/coachingPresentation";
 import { roomClock, roomFailure, roomMeta } from "@/lib/coachingRoom";
 import {
@@ -59,9 +62,11 @@ const JitsiMeeting = dynamic(
  * the call, and a panel (files, the tutor's report draft, the problem row) that a
  * desktop opens beside the call and a phone opens under it. The call itself is
  * Jitsi's and none of its settings are touched. There is deliberately no "leave"
- * control: what an early exit means for the right to a meeting, the tutor's
- * earnings and refunds is not decided in the backend yet, so a button that makes
- * it a deliberate act is not a frame decision.
+ * control: what leaving alone means for the right to a meeting, the tutor's
+ * earnings and refunds is not decided in the backend yet (KARAR-ERKEN-AYRILMA).
+ * What the room does have is "Birlikte bitir": one side asks, the other says yes,
+ * and only then is the meeting over, for both. The question reaches the person
+ * over the call (a dialog), whatever the panel is doing.
  */
 function CoachingSessionContent() {
   const { sessionId } = useParams<{ sessionId: string }>();
@@ -108,6 +113,22 @@ function CoachingSessionContent() {
 
   const otherName = role === "tutor" ? detail?.student_name : detail?.tutor_name;
   const summaryHref = `/session/coaching/${sessionId}/summary`;
+
+  // "Birlikte bitir": read about every three seconds once the call is mounted,
+  // and not at all (after one 403) while the server has the feature switched off.
+  const liveState = useCoachingLiveState({ sessionId, enabled: Boolean(sessionToken) });
+  const earlyEnd: EarlyEndView = liveState.live
+    ? earlyEndView({ live: liveState.live, now, otherName })
+    : { kind: "hidden" };
+  // An accepted end has moved the meeting on: both sides go to the screen after it.
+  const leaving = shouldLeaveForSummary(liveState.live);
+  const leftForSummary = useRef(false);
+  useEffect(() => {
+    if (leaving && !leftForSummary.current) {
+      leftForSummary.current = true;
+      router.push(summaryHref);
+    }
+  }, [leaving, router, summaryHref]);
   const roomRefused = !isLoadingToken && !isLoadingDetail && (isTokenError || !sessionToken);
   const failure = roomRefused
     ? roomFailure({
@@ -202,6 +223,9 @@ function CoachingSessionContent() {
     ...(showDraft
       ? [{ key: "rapor" as const, label: "Rapor", icon: <NotePencil className="h-5 w-5" aria-hidden="true" /> }]
       : []),
+    ...(earlyEnd.kind !== "hidden"
+      ? [{ key: "bitir" as const, label: "Bitir", icon: <FlagCheckered className="h-5 w-5" aria-hidden="true" /> }]
+      : []),
     ...(canReport
       ? [{ key: "sorun" as const, label: "Sorun", icon: <Lifebuoy className="h-5 w-5" aria-hidden="true" /> }]
       : []),
@@ -230,6 +254,19 @@ function CoachingSessionContent() {
               <CoachingReportQuickDraft sessionId={sessionId} />
             </RoomPanelSection>
           ) : null}
+          {earlyEnd.kind !== "hidden" ? (
+            <RoomPanelSection id="bitir" view={phoneView}>
+              <EarlyEndPanelSection
+                view={earlyEnd}
+                otherName={otherName}
+                role={role}
+                isPending={liveState.isActing}
+                error={liveState.actionError}
+                onAsk={liveState.ask}
+                onWithdraw={() => earlyEnd.kind === "waiting" && liveState.withdraw(earlyEnd.version)}
+              />
+            </RoomPanelSection>
+          ) : null}
           {canReport ? (
             <RoomPanelSection id="sorun" view={phoneView}>
               <PostSessionProblems sessionId={sessionId} role={role} noShow={noShow} title="Bir sorun mu var?" flush />
@@ -237,6 +274,15 @@ function CoachingSessionContent() {
           ) : null}
         </RoomPanel>
       </div>
+      <EarlyEndIncomingDialog
+        view={earlyEnd}
+        role={role}
+        otherName={otherName}
+        isPending={liveState.isActing}
+        error={liveState.actionError}
+        onAccept={() => earlyEnd.kind === "incoming" && liveState.answer("accept", earlyEnd.version)}
+        onContinue={() => earlyEnd.kind === "incoming" && liveState.answer("continue", earlyEnd.version)}
+      />
       <RoomBottomBar
         items={barItems}
         active={phoneView}

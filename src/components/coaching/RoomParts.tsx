@@ -12,12 +12,12 @@ import { serverNow } from "@/lib/serverClock";
  * The frame around the coaching video room. The video itself (Jitsi) is not part
  * of it and nothing here reaches into it. A dark bar says whose meeting it is and
  * how much of it is left; on a desktop a side panel opens beside the video, on a
- * phone the same parts open under it from a bar of three buttons. Plain class
+ * phone the same parts open under it from a bar of up to four buttons. Plain class
  * strings throughout: tailwind-merge would drop a named size next to a colour.
  */
 
 /** The parts of the panel. On a phone one at a time; on a desktop all of them, in this order. */
-export type RoomPanelView = "dosyalar" | "rapor" | "sorun";
+export type RoomPanelView = "dosyalar" | "rapor" | "sorun" | "bitir";
 
 /** The dark bar: the person, the meeting's own line, the time left, and what the person can do from here. */
 export function RoomTopBar({

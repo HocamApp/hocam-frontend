@@ -260,3 +260,24 @@ describe("report publish errors", () => {
     assert.match(extractCoachingErrorMessage(error), /çalışma programı yok/);
   });
 });
+
+describe("the early-end refusals", () => {
+  const cases: [string, string][] = [
+    ["early_end_pending", "Karşı taraf görüşmeyi bitirmek istiyor. İsteğini yanıtlayabilirsin."],
+    ["early_end_cooldown", "Yeni bir istek göndermek için biraz beklemelisin."],
+    ["early_end_stale", "İstek değişmiş. Güncel durum yüklendi."],
+    ["early_end_expired", "İsteğin süresi doldu."],
+    ["session_not_in_progress", "Görüşme şu anda sürmüyor."],
+    ["early_end_own_request", "Kendi isteğini yanıtlayamazsın."],
+    ["early_end_not_requester", "Bu isteği yalnız gönderen geri çekebilir."],
+  ];
+
+  for (const [code, line] of cases) {
+    it(`${code} reads in Turkish even though the server's detail is English`, () => {
+      assert.equal(
+        extractCoachingErrorMessage(axiosError({ code, detail: "The other side has already asked." }, 409)),
+        line,
+      );
+    });
+  }
+});

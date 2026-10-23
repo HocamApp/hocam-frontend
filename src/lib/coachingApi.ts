@@ -428,6 +428,14 @@ const ERROR_MESSAGES: Record<string, string> = {
   session_service_period_mismatch: "Bu dosya bu görüşmeye ait değil.",
   not_a_participant: "Bu koçluğun katılımcısı değilsin.",
   invalid_file: "PDF, JPG, PNG, WebP, DOCX veya PPTX dosyası yükleyin.",
+  // --- "Birlikte bitir": ending a running meeting by agreement ---------
+  early_end_pending: "Karşı taraf görüşmeyi bitirmek istiyor. İsteğini yanıtlayabilirsin.",
+  early_end_cooldown: "Yeni bir istek göndermek için biraz beklemelisin.",
+  early_end_stale: "İstek değişmiş. Güncel durum yüklendi.",
+  early_end_expired: "İsteğin süresi doldu.",
+  session_not_in_progress: "Görüşme şu anda sürmüyor.",
+  early_end_own_request: "Kendi isteğini yanıtlayamazsın.",
+  early_end_not_requester: "Bu isteği yalnız gönderen geri çekebilir.",
 };
 
 /** Human-readable message for a coaching error, preferring the server's own. */
@@ -467,6 +475,14 @@ const TURKISH_LINE_WINS = new Set([
   "reschedule_pending",
   "session_not_reschedulable",
   "outside_service_period",
+  // The server's detail for these is developer English.
+  "early_end_pending",
+  "early_end_cooldown",
+  "early_end_stale",
+  "early_end_expired",
+  "session_not_in_progress",
+  "early_end_own_request",
+  "early_end_not_requester",
 ]);
 
 export function extractCoachingErrorMessage(error: unknown): string {
@@ -1422,6 +1438,74 @@ export async function fetchCoachingSessionAttendanceSummary(
   return response.data;
 }
 
+// --- "Birlikte bitir": ending a running meeting by agreement -------------
+
+export type CoachingEarlyEndStatus = "pending" | "accepted" | "declined" | "cancelled" | "expired";
+
+/** One proposal to end the meeting together; `version` counts them per meeting. */
+export interface CoachingEarlyEndRequest {
+  id: string;
+  /** A pending request past `expires_at` already reads as "expired". */
+  status: CoachingEarlyEndStatus;
+  version: number;
+  requested_by_role: "student" | "tutor";
+  requested_by_me: boolean;
+  created_at: string;
+  expires_at: string;
+  responded_at: string | null;
+  /** Set on a declined or withdrawn request: when the asker may ask again. */
+  retry_available_at: string | null;
+}
+
+/**
+ * What the room polls, and what every early-end call answers with. It is read
+ * only: asking for it never starts or advances a meeting.
+ */
+export interface CoachingLiveState {
+  server_time: string;
+  status: CoachingSessionStatus;
+  scheduled_start: string;
+  session_end: string;
+  viewer_role: "student" | "tutor";
+  /** Always true when this is readable: the server answers 403 while the feature is off. */
+  early_end_enabled: boolean;
+  /** The viewer's own cooldown; null once it has passed. */
+  early_end_retry_available_at: string | null;
+  /** The newest request in any state, or null if there never was one. */
+  early_end: CoachingEarlyEndRequest | null;
+}
+
+export type CoachingEarlyEndDecision = "accept" | "continue";
+
+export async function fetchCoachingLiveState(sessionId: string): Promise<CoachingLiveState> {
+  const response = await api.get<CoachingLiveState>(`/coaching/sessions/${sessionId}/live-state/`);
+  return response.data;
+}
+
+export async function requestCoachingEarlyEnd(sessionId: string): Promise<CoachingLiveState> {
+  const response = await api.post<CoachingLiveState>(`/coaching/sessions/${sessionId}/early-end/`, {});
+  return response.data;
+}
+
+export async function respondCoachingEarlyEnd(
+  sessionId: string,
+  decision: CoachingEarlyEndDecision,
+  version: number
+): Promise<CoachingLiveState> {
+  const response = await api.post<CoachingLiveState>(`/coaching/sessions/${sessionId}/early-end/respond/`, {
+    decision,
+    version,
+  });
+  return response.data;
+}
+
+export async function cancelCoachingEarlyEnd(sessionId: string, version: number): Promise<CoachingLiveState> {
+  const response = await api.post<CoachingLiveState>(`/coaching/sessions/${sessionId}/early-end/cancel/`, {
+    version,
+  });
+  return response.data;
+}
+
 export interface CoachingAttachmentItem {
   id: string;
   session_id: string | null;
@@ -1487,6 +1571,7 @@ export const COACHING_SESSION_QUERY_KEYS = {
   token: (sessionId: string) => ["coaching-session-token", sessionId] as const,
   studentList: () => ["coaching-sessions"] as const,
   tutorList: () => ["coaching-tutor-sessions"] as const,
+  liveState: (sessionId: string) => ["coaching-session-live-state", sessionId] as const,
 };
 
 /** Shared cache targets for a publish operation; reportId is never a revision UUID. */

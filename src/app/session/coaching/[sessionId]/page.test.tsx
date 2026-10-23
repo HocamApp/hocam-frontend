@@ -21,6 +21,11 @@ let tokenPlan: TokenAnswer[] = ["ok"];
 let tokenCalls = 0;
 let attendance: { tutor: number; student: number } | "fails" = { tutor: 1800, student: 1800 };
 let studentSessions: Record<string, unknown>[] = [];
+// The light live-state the room polls for "Birlikte bitir". "off" is the server
+// answering 403 early_end_disabled, which is what every room gets until the flag is on.
+let liveAnswer: "off" | Record<string, unknown> = "off";
+let postCalls: { url: string; body: unknown }[] = [];
+let postAnswer: ((url: string, body: unknown) => Record<string, unknown>) | null = null;
 let tutorSessions: Record<string, unknown>[] = [];
 let jitsiProps: Record<string, unknown> | null = null;
 let jitsiHandlers: Record<string, () => void> = {};
@@ -117,11 +122,18 @@ before(async () => {
           });
           return { data: { student: entry(attendance.student), tutor: entry(attendance.tutor) } };
         }
+        if (url === "/coaching/sessions/s1/live-state/") {
+          if (liveAnswer === "off") throw httpError(403, { code: "early_end_disabled", detail: "Ending a meeting together is not available." });
+          return { data: liveAnswer };
+        }
         if (url === "/coaching/sessions/") return { data: studentSessions };
         if (url === "/coaching/tutor/sessions/") return { data: tutorSessions };
         throw new Error(`unexpected GET ${url}`);
       },
-      post: async () => ({ data: {} }),
+      post: async (url: string, body: unknown) => {
+        postCalls.push({ url, body });
+        return { data: postAnswer ? postAnswer(url, body) : {} };
+      },
     },
     namedExports: { API_BASE_URL: "http://localhost:8000/api" },
   });
@@ -138,6 +150,9 @@ beforeEach(() => {
   jitsiProps = null;
   jitsiHandlers = {};
   pushed.length = 0;
+  liveAnswer = "off";
+  postCalls = [];
+  postAnswer = null;
   detail = { ...item(), tutor_name: "Elif Kaya", student_name: "Deniz Yıldız", student_id: "u-1", viewer_role: "student" };
   const earlier = (id: string, day: string) =>
     item({ id, status: "completed", scheduled_start: `${day}T16:00:00Z`, scheduled_local_date: day, sequence_number: 1 });
@@ -219,8 +234,8 @@ describe("the coaching room frame while the meeting runs", () => {
     renderPage();
 
     await screen.findByTestId("jitsi");
-    assert.equal(screen.queryByRole("button", { name: /ayrıl|çık|bitir/i }), null);
-    assert.equal(screen.queryByRole("link", { name: /ayrıl|çık|bitir/i }), null);
+    assert.equal(screen.queryByRole("button", { name: /ayrıl|çık/i }), null);
+    assert.equal(screen.queryByRole("link", { name: /ayrıl|çık/i }), null);
   });
 
   it("sends both sides to the screen after the meeting when the call closes", async () => {
@@ -464,5 +479,202 @@ describe("the coaching room frame when the room cannot be entered", () => {
 
     assert.ok(await screen.findByRole("heading", { level: 2, name: "Bağlantı kurulamadı" }));
     assert.ok(screen.getByRole("button", { name: "Tekrar dene" }));
+  });
+});
+
+// --- "Birlikte bitir" ---------------------------------------------------
+
+function liveState(overrides: Record<string, unknown> = {}) {
+  return {
+    server_time: "2026-10-21T16:12:00Z",
+    status: "in_progress",
+    scheduled_start: "2026-10-21T16:00:00Z",
+    session_end: "2026-10-21T16:30:00Z",
+    viewer_role: role,
+    early_end_enabled: true,
+    early_end_retry_available_at: null,
+    early_end: null,
+    ...overrides,
+  };
+}
+
+function earlyEnd(overrides: Record<string, unknown> = {}) {
+  return {
+    id: "r-1",
+    status: "pending",
+    version: 2,
+    requested_by_role: "tutor",
+    requested_by_me: false,
+    created_at: "2026-10-21T16:06:20Z",
+    expires_at: "2026-10-21T16:09:20Z",
+    responded_at: null,
+    retry_available_at: null,
+    ...overrides,
+  };
+}
+
+describe("ending the meeting together from the room", () => {
+  it("shows nothing at all while the server has the feature switched off", async () => {
+    renderPage();
+
+    await screen.findByTestId("jitsi");
+    await waitFor(() => assert.equal(screen.queryByRole("heading", { name: "Görüşmeyi birlikte bitir" }) === null, true));
+    assert.ok(screen.queryByRole("button", { name: "Birlikte bitir" }) === null);
+    assert.ok(screen.queryByRole("button", { name: "Bitir" }) === null, "nor a part of the phone's bar");
+  });
+
+  it("puts the button in the panel once it is on, and a part for it in the phone's bar", async () => {
+    liveAnswer = liveState();
+    renderPage();
+
+    assert.ok(await screen.findByRole("heading", { name: "Görüşmeyi birlikte bitir" }));
+    assert.ok(screen.getByRole("button", { name: "Birlikte bitir" }));
+    const bar = screen.getByRole("navigation", { name: "Görüşme paneli" });
+    fireEvent.click(within(bar).getByRole("button", { name: "Bitir" }));
+    assert.equal(within(bar).getByRole("button", { name: "Bitir" }).getAttribute("aria-pressed"), "true");
+  });
+
+  it("does not offer it before the meeting runs", async () => {
+    liveAnswer = liveState({ status: "scheduled" });
+    renderPage();
+
+    await screen.findByTestId("jitsi");
+    await waitFor(() => assert.ok(postCalls.length === 0));
+    await new Promise((resolve) => setTimeout(resolve, 30));
+    assert.ok(screen.queryByRole("button", { name: "Birlikte bitir" }) === null);
+  });
+
+  it("asks only after the person confirms, and then waits for the answer", async () => {
+    liveAnswer = liveState();
+    postAnswer = () => liveState({ early_end: earlyEnd({ requested_by_me: true, requested_by_role: "student", version: 1 }) });
+    renderPage();
+
+    fireEvent.click(await screen.findByRole("button", { name: "Birlikte bitir" }));
+    assert.deepEqual(postCalls, [], "the first press only opens the question");
+    const dialog = await screen.findByRole("dialog", { name: "Görüşmeyi birlikte bitirmek istiyor musun?" });
+    assert.ok(within(dialog).getByText(/Elif Kaya kabul ederse görüşme şimdi tamamlanmış sayılır/));
+    fireEvent.click(within(dialog).getByRole("button", { name: "İste" }));
+
+    await waitFor(() => assert.deepEqual(postCalls, [{ url: "/coaching/sessions/s1/early-end/", body: {} }]));
+    assert.ok(await screen.findByRole("button", { name: "İsteği geri çek" }));
+    await waitFor(() => assert.ok(screen.queryByRole("dialog") === null));
+  });
+
+  it("takes the request back from the waiting line", async () => {
+    liveAnswer = liveState({ early_end: earlyEnd({ requested_by_me: true, requested_by_role: "student", version: 4 }) });
+    postAnswer = () => liveState({ early_end: earlyEnd({ status: "cancelled", requested_by_me: true, version: 4 }) });
+    renderPage();
+
+    fireEvent.click(await screen.findByRole("button", { name: "İsteği geri çek" }));
+
+    await waitFor(() =>
+      assert.deepEqual(postCalls, [{ url: "/coaching/sessions/s1/early-end/cancel/", body: { version: 4 } }]),
+    );
+  });
+
+  it("asks a student, over the call, what the other side wants, with the minute and what a yes means", async () => {
+    liveAnswer = liveState({ early_end: earlyEnd() });
+    renderPage();
+
+    const dialog = await screen.findByRole("dialog", { name: "Elif Kaya görüşmeyi bitirmek istiyor" });
+    assert.ok(
+      within(dialog).getByText(
+        "Elif Kaya görüşmeyi bitirmek istiyor. Görüşme 7. dakikada. Kabul edersen görüşme tamamlanmış sayılır; kalan süre için ek görüşme hakkı doğmaz.",
+      ),
+    );
+    assert.ok(screen.getByTestId("jitsi"), "the call is still there");
+  });
+
+  it("asks a tutor the same, in the tutor's words", async () => {
+    role = "tutor";
+    detail = { ...detail, viewer_role: "tutor" };
+    liveAnswer = liveState({ early_end: earlyEnd({ requested_by_role: "student" }) });
+    renderPage();
+
+    const dialog = await screen.findByRole("dialog", { name: "Deniz Yıldız görüşmeyi bitirmek istiyor" });
+    assert.ok(
+      within(dialog).getByText(
+        "Deniz Yıldız görüşmeyi bitirmek istiyor. Görüşme 7. dakikada. Kabul edersen görüşme biter; raporu yine sen hazırlarsın.",
+      ),
+    );
+  });
+
+  it("answers yes with the version it was shown, and both sides go to the screen after the meeting", async () => {
+    liveAnswer = liveState({ early_end: earlyEnd({ version: 3 }) });
+    postAnswer = () =>
+      liveState({ status: "awaiting_report", early_end: earlyEnd({ version: 3, status: "accepted", responded_at: "2026-10-21T16:12:00Z" }) });
+    renderPage();
+
+    fireEvent.click(await screen.findByRole("button", { name: "Kabul et" }));
+
+    await waitFor(() =>
+      assert.deepEqual(postCalls, [
+        { url: "/coaching/sessions/s1/early-end/respond/", body: { decision: "accept", version: 3 } },
+      ]),
+    );
+    await waitFor(() => assert.deepEqual(pushed, ["/session/coaching/s1/summary"]));
+  });
+
+  it("answers no and the meeting goes on", async () => {
+    liveAnswer = liveState({ early_end: earlyEnd({ version: 3 }) });
+    postAnswer = () => liveState({ early_end: earlyEnd({ version: 3, status: "declined", responded_at: "2026-10-21T16:12:00Z" }) });
+    renderPage();
+
+    fireEvent.click(await screen.findByRole("button", { name: "Devam et" }));
+
+    await waitFor(() =>
+      assert.deepEqual(postCalls, [
+        { url: "/coaching/sessions/s1/early-end/respond/", body: { decision: "continue", version: 3 } },
+      ]),
+    );
+    await waitFor(() => assert.ok(screen.queryByRole("dialog") === null));
+    assert.deepEqual(pushed, []);
+  });
+
+  it("takes the person to the screen after the meeting when the other side's yes ended it", async () => {
+    liveAnswer = liveState({
+      status: "awaiting_report",
+      early_end: earlyEnd({ requested_by_me: true, status: "accepted", responded_at: "2026-10-21T16:12:00Z" }),
+    });
+    renderPage();
+
+    await waitFor(() => assert.deepEqual(pushed, ["/session/coaching/s1/summary"]));
+  });
+
+  it("does not move anyone for a meeting that ended some other way", async () => {
+    liveAnswer = liveState({ status: "awaiting_report" });
+    renderPage();
+
+    await screen.findByTestId("jitsi");
+    await new Promise((resolve) => setTimeout(resolve, 30));
+    assert.deepEqual(pushed, []);
+  });
+
+  it("asks over the call even when the panel is shut on a desktop", async () => {
+    liveAnswer = liveState();
+    renderPage();
+    await screen.findByRole("button", { name: "Birlikte bitir" });
+    fireEvent.click(screen.getByRole("button", { name: "Panel" }));
+
+    liveAnswer = liveState({ early_end: earlyEnd() });
+    // The next poll brings the request; the tab coming back stands in for the three seconds.
+    act(() => {
+      window.dispatchEvent(new window.Event("visibilitychange"));
+    });
+
+    await screen.findByRole("dialog", { name: "Elif Kaya görüşmeyi bitirmek istiyor" });
+  });
+
+  it("says the Turkish line when the answer is refused", async () => {
+    liveAnswer = liveState({ early_end: earlyEnd({ version: 3 }) });
+    postAnswer = () => {
+      throw httpError(409, { ...liveState(), code: "early_end_expired", detail: "This request ran out of time." });
+    };
+    renderPage();
+
+    fireEvent.click(await screen.findByRole("button", { name: "Kabul et" }));
+
+    assert.ok(await screen.findByText("İsteğin süresi doldu."));
+    assert.ok(screen.queryByText(/ran out of time/) === null);
   });
 });
