@@ -62,6 +62,20 @@ describe("roomClock", () => {
   });
 });
 
+describe("a meeting a late tutor ran longer", () => {
+  const extended = detail({ ends_at: "2026-10-21T16:42:00Z" });
+
+  it("keeps the clock counting after the booked end, to the server's end", () => {
+    assert.deepEqual(roomClock(extended, at(32)), { phase: "live", label: "Kalan 10 dk", urgent: false });
+    assert.deepEqual(roomClock(extended, at(38)), { phase: "live", label: "Kalan 4 dk", urgent: true });
+    assert.equal(roomClock(extended, at(42)).phase, "over");
+  });
+
+  it("writes the real end on the bar", () => {
+    assert.equal(roomMeta(extended, 3), "3. görüşme · 19:00–19:42");
+  });
+});
+
 describe("roomMeta", () => {
   it("says which meeting it is and from when to when, for the bar of a meeting that is happening today", () => {
     assert.equal(roomMeta(detail(), 3), "3. görüşme · 19:00–19:30");

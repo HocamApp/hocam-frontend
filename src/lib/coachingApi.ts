@@ -1041,6 +1041,14 @@ export interface CoachingSessionItem {
   scheduled_local_date: string;
   scheduled_local_time: string;
   duration_minutes: number;
+  /**
+   * The meeting's real end, from the server: later than scheduled_start plus
+   * duration_minutes when a late tutor's entry pushed it out. Use
+   * `coachingSessionEnd`, never the sum.
+   */
+  ends_at?: string | null;
+  /** Why the system itself cancelled the meeting; null when a participant ended it. */
+  system_cancel_reason?: "both_absent" | "partial_below_threshold" | "tutor_absent_15_min" | null;
   reschedule_count: number;
   student_name?: string;
   /** Faz 6 values are issued by the server; the browser never derives them. */

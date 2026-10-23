@@ -126,3 +126,20 @@ export function coachingTimeLocative(time: string): string {
 export function coachingLocalDateHeading(localDate: string): string {
   return coachingDayHeading(`${localDate}T12:00:00+03:00`);
 }
+
+const MINUTE_MS = 60_000;
+
+/**
+ * When a meeting ends, in milliseconds: the booked end, or the server's `ends_at`
+ * when a late tutor's entry pushed it later. Never earlier than booked, and what
+ * cannot be read counts as not sent.
+ */
+export function coachingSessionEnd(session: {
+  scheduled_start: string;
+  duration_minutes: number;
+  ends_at?: string | null;
+}): number {
+  const planned = Date.parse(session.scheduled_start) + session.duration_minutes * MINUTE_MS;
+  const sent = session.ends_at ? Date.parse(session.ends_at) : Number.NaN;
+  return Number.isFinite(sent) && sent > planned ? sent : planned;
+}
