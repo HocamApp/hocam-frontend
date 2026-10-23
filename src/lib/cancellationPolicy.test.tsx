@@ -182,3 +182,142 @@ describe("iptal ve iade koşulları mirror the backend", { skip: !backendAvailab
     assert.match(pageText(), /iptal etmesi, derse katılmaması veya talebe hiç yanıt vermemesi/);
   });
 });
+
+/** The text between the coaching article's heading and the closing article's. */
+function coachingSection() {
+  const text = pageText();
+  const start = text.indexOf("12. Koçluk görüşmeleri");
+  const end = text.indexOf("13. Yürürlük ve değişiklik");
+  assert.ok(start >= 0, "the coaching article is on the page");
+  assert.ok(end > start, "the closing article follows the coaching one");
+  return text.slice(start, end);
+}
+
+describe("iptal ve iade koşulları: koçluk görüşmeleri", () => {
+  it("keeps the closing article last and the earlier references where they were", () => {
+    const text = pageText();
+    assert.match(text, /11\. Talep usulü ve inceleme/);
+    assert.match(text, /12\. Koçluk görüşmeleri/);
+    assert.match(text, /13\. Yürürlük ve değişiklik/);
+    assert.doesNotMatch(text, /12\. Yürürlük ve değişiklik/);
+  });
+
+  it("says the length and the numbers of the rules", () => {
+    const text = coachingSection();
+    assert.match(text, new RegExp(`Her koçluk görüşmesi ${f.coachingSessionMinutes} dakika sürer`));
+    assert.match(
+      text,
+      new RegExp(`en geç ${f.coachingTutorAbsentMinutes} dakika içinde odaya girerse görüşme Hocanın geç kaldığı süre kadar uzar`),
+    );
+    assert.match(text, new RegExp(`Hocanın girdiği andan itibaren ${f.coachingSessionMinutes} dakika sürer`));
+    assert.match(
+      text,
+      new RegExp(`başlangıcından itibaren ${f.coachingTutorAbsentMinutes} dakika içinde odaya girmemişse ve Öğrenci odaya bağlanmışsa görüşme iptal edilir`),
+    );
+    assert.match(
+      text,
+      new RegExp(`aynı anda odada bulundukları süre ${f.coachingMeetingHeldMinutes} dakikadan az kalırsa görüşme yarım kalmış sayılır`),
+    );
+  });
+
+  it("describes each outcome the system decides", () => {
+    const text = coachingSection();
+    // Late tutor whose extension would run into the next lesson: free extra meeting, only for a waiting student.
+    assert.match(text, /hemen ardından gelen dersi veya görüşmesiyle çakışıyorsa görüşme uzatılmaz ve planlanan saatte biter/);
+    assert.match(text, /Öğrenci odada bekliyorsa Öğrenciye, dönemin sonuna ücretsiz bir ek görüşme eklenir/);
+    // Tutor absent: the cancelled meeting is replaced.
+    assert.match(text, /yerine Öğrenciye, dönemin sonuna bir ek görüşme eklenir/);
+    // Nobody came: only believable while the connection records are alive.
+    assert.match(text, /son yirmi dört saatte başka koçluk görüşmelerinin/);
+    assert.match(text, /kimse sorumlu tutulmadan iptal edilir/);
+    assert.match(text, /anlaşılamıyorsa kendiliğinden karar verilmez/);
+    // Mutual end: an ordinary finished meeting that owes nothing.
+    assert.match(text, /diğer taraf bunu açıkça kabul ederse görüşme tamamlanmış sayılır; bu halde ek görüşme hakkı doğmaz/);
+    // A cancelled meeting stays closed.
+    assert.match(text, /görüşme odası o görüşme için kapalıdır/);
+  });
+
+  it("explains where the extra meeting goes and what happens when none fits", () => {
+    const text = coachingSection();
+    assert.match(text, /Öğrencinin başlangıçta seçtiği haftalık saate/);
+    assert.match(text, /Öğrenci ek görüşme için ayrıca saat seçmez/);
+    assert.match(text, /bir sonraki haftalık saate kaydırılır/);
+    assert.match(text, /ek görüşme hakkı kayıtlı kalır ve Öğrenci destek talebi oluşturabilir/);
+    assert.match(text, /Bir görüşme için en fazla bir ek görüşme eklenir/);
+  });
+
+  it("gives an objection route and keeps the statutory rights (Arda, 23 October)", () => {
+    const text = coachingSection();
+    assert.match(text, /kendiliğinden verilebilir/);
+    assert.match(text, /destek talebi oluşturarak itiraz edebilir; itiraz HOCAM tarafından incelenir/);
+    assert.match(text, /6698 sayılı Kişisel Verilerin Korunması Kanunu’nun 11\. maddesinin birinci fıkrasının \(g\) bendi/);
+    assert.match(
+      text,
+      /ek görüşme hakkı tanınması, Öğrencinin tüketici mevzuatından doğan haklarını ve onuncu maddede düzenlenen iade talebi yolunu ortadan kaldırmaz/,
+    );
+  });
+
+  it("promises nothing the code does not do", () => {
+    const text = coachingSection();
+    // No rule here takes the statutory refund route away or promises a refund by itself.
+    assert.doesNotMatch(text, /para iadesi (yapılmaz|söz konusu değildir|yoktur)/i);
+    assert.doesNotMatch(text, /iade edilmez/);
+    assert.doesNotMatch(text, /iade edilir/);
+    // An automatic cancellation writes no absence record against the tutor
+    // (violations are recorded only after a support review, phase8_views.py).
+    assert.doesNotMatch(text, /katılmama kaydı/);
+    // The "leave" button does not exist yet; the text must not describe it.
+    assert.doesNotMatch(text, /ayrıl/i);
+    // No payout or earnings figure on a student-facing page.
+    assert.doesNotMatch(text, /hakediş|kazanç|₺|\bTL\b/);
+  });
+});
+
+describe(
+  "iptal ve iade koşulları: koçluk görüşmeleri mirror the backend",
+  { skip: !backendAvailable && "Hocam_backend not checked out" },
+  () => {
+    it("the lifecycle decides the cases the article names", () => {
+      const lifecycle = read("apps/coaching/session_lifecycle.py");
+      // The tutor's absence needs the student on record; nobody-came needs a live webhook.
+      assert.match(lifecycle, /if rows\.filter\(user_id=session\.student_id\)\.exists\(\):\s+return "tutor_only"/);
+      assert.match(lifecycle, /if not ops_alert\.webhook_looks_alive\(session, now=now\):/);
+      assert.match(lifecycle, /if tutor_rows\.filter\(joined_at__lte=deadline\)\.exists\(\):/);
+      // Both the absent-tutor and the short-meeting decisions hand the student a replacement.
+      assert.match(lifecycle, /request_makeup_right\(\s*cancelled, reason=late_tutor\.MAKEUP_REASON_REPLACEMENT/);
+      assert.match(lifecycle, /request_makeup_right\(\s*transitioned, reason=late_tutor\.MAKEUP_REASON_REPLACEMENT/);
+    });
+
+    it("a late tutor's free extra meeting needs a student who was already waiting", () => {
+      const lateTutor = read("apps/coaching/late_tutor.py");
+      assert.match(lateTutor, /CoachingSessionAttendance\.objects\.filter\(\s*session=locked, user_id=locked\.student_id, joined_at__lte=tutor_joined_at/);
+      assert.match(lateTutor, /request_makeup_right\(locked, reason=MAKEUP_REASON_COMPENSATION/);
+    });
+
+    it("the nobody-came check looks at the last 24 hours of other meetings", () => {
+      const alert = read("apps/coaching/ops_alert.py");
+      assert.match(alert, /WEBHOOK_LIVE_WINDOW = timedelta\(hours=24\)/);
+      assert.match(alert, /\.exclude\(session_id=session\.pk\)/);
+    });
+
+    it("one extra meeting per lost meeting, on the student's own weekly hour, and kept when none fits", () => {
+      const makeup = read("apps/coaching/makeup.py");
+      assert.match(makeup, /_TUTOR_EARNS_BY_REASON = \{\s*REASON_YERINE_GECEN: True,\s*REASON_TAZMINAT_UCRETSIZ: False,\s*\}/);
+      assert.match(makeup, /the right is kept as\s+``unplaced``/);
+      assert.match(read("apps/coaching/models.py"), /origin_session = models\.(OneToOneField|ForeignKey)/);
+    });
+
+    it("a mutual end touches no earning or refund, and a cancelled meeting has no open room", () => {
+      assert.match(read("apps/coaching/early_end.py"), /Nothing here touches earnings, refunds or holds/);
+      const views = read("apps/coaching/session_views.py");
+      assert.match(views, /if session\.status not in \(_SS\.SCHEDULED, _SS\.IN_PROGRESS\):\s+return Response\(\s+\{"code": "session_not_active"/);
+    });
+
+    it("an automatic cancellation records no violation against the tutor", () => {
+      // Violations are written only from the support-reviewed paths in phase8_views.py.
+      assert.doesNotMatch(read("apps/coaching/session_lifecycle.py"), /record_verified_tutor_violation/);
+      assert.doesNotMatch(read("apps/coaching/late_tutor.py"), /record_verified_tutor_violation/);
+      assert.doesNotMatch(read("apps/coaching/makeup.py"), /record_verified_tutor_violation/);
+    });
+  },
+);

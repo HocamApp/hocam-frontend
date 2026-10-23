@@ -165,3 +165,32 @@ describe("kullanım koşulları claim nothing the platform cannot do", () => {
     assert.match(prose, /tüketici mevzuatının Kullanıcıya tanıdığı/);
   });
 });
+
+describe("kullanım koşulları: koçluk görüşmeleri", () => {
+  it("points the cancellation article at the coaching article and renumbers nothing", () => {
+    assert.match(
+      prose,
+      /Koçluk görüşmelerinde Hocanın geç gelmesi, hiç gelmemesi, görüşmenin yarım kalması ve Öğrenciye eklenen ek görüşme hakkına ilişkin kurallar İptal ve İade Koşulları’nın 12\. maddesinde düzenlenmiştir/,
+    );
+    // Later articles keep their numbers, and so do the sentences that cite them.
+    assert.match(page, /title="11\. İptal ve iade"/);
+    assert.match(page, /title="18\. Koşullarda değişiklik"/);
+    assert.match(page, /title="20\. Yürürlük ve iletişim"/);
+    assert.match(prose, /on sekizinci maddedeki usule tabidir/);
+    assert.match(prose, /yirminci madde/);
+  });
+
+  it("tells the tutor what a late or missed coaching meeting means, in the document's own words", () => {
+    assert.match(prose, /en geç on beş dakika içinde girmeyen Hoca için görüşme iptal edilir/);
+    assert.match(prose, /iptal edilen görüşme için Hocaya gelir yansıtılmaz/);
+    assert.match(prose, /Hocanın on beş dakikaya kadar geç girmesi görüşmeyi o kadar uzatır/);
+    assert.match(prose, /Öğrencinin beklediği hallerde Hoca, Öğrenciye eklenen ek görüşmeyi gelir yansıtılmadan verir/);
+    assert.match(prose, /Bu kararlara destek talebiyle itiraz edilebilir/);
+    // No penalty and no absence record: the code writes neither on an automatic cancellation.
+    assert.doesNotMatch(prose, /Koçluk[^.]*(ceza|katılmama kaydı)/);
+    if (backendAvailable) {
+      assert.match(read("apps/coaching/session_lifecycle.py"), /^TUTOR_ABSENT_AFTER = timedelta\(minutes=15\)/m);
+      assert.match(read("apps/coaching/late_tutor.py"), /^LATE_TUTOR_MAX_EXTENSION = timedelta\(minutes=15\)/m);
+    }
+  });
+});
