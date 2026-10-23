@@ -204,6 +204,19 @@ export default function TermsOfServicePage() {
             inceleme tamamlanıncaya kadar herkese açık listeden kendiliğinden
             çıkarılır.
           </p>
+          <p>
+            Koçluk görüşmesine, başlangıç saatinden itibaren en geç on beş
+            dakika içinde girmeyen Hoca için görüşme iptal edilir; iptal edilen
+            görüşme için Hocaya gelir yansıtılmaz. Hocanın on beş dakikaya kadar
+            geç girmesi görüşmeyi o kadar uzatır; uzamanın Hocanın başka bir
+            dersiyle çakıştığı ve Öğrencinin beklediği hallerde Hoca, Öğrenciye
+            eklenen ek görüşmeyi gelir yansıtılmadan verir. Bu kararlara destek
+            talebiyle itiraz edilebilir. Ayrıntılar{" "}
+            <LegalLink href="/iptal-ve-iade">
+              İptal ve İade Koşulları’nın 12. maddesinde
+            </LegalLink>{" "}
+            yer alır.
+          </p>
         </LegalSection>
 
         <LegalSection title="7. Mesajlaşma">
@@ -286,6 +299,15 @@ export default function TermsOfServicePage() {
             </LegalLink>{" "}
             metninde ayrıca düzenlenmiştir ve işbu Kullanım Koşullarının
             ayrılmaz parçasıdır.
+          </p>
+          <p>
+            Koçluk görüşmelerinde Hocanın geç gelmesi, hiç gelmemesi, görüşmenin
+            yarım kalması ve Öğrenciye eklenen ek görüşme hakkına ilişkin
+            kurallar{" "}
+            <LegalLink href="/iptal-ve-iade">
+              İptal ve İade Koşulları’nın 12. maddesinde
+            </LegalLink>{" "}
+            düzenlenmiştir.
           </p>
         </LegalSection>
 

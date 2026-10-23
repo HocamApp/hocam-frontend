@@ -66,6 +66,23 @@ describe("policy facts mirror the backend", { skip: !backendAvailable && "Hocam_
     assert.match(extensions, /min\(\(plan\.duration_days or 0\) \/\/ 2, MAX_EXTENSION_DAYS\)/);
   });
 
+  it("coaching: meeting length, tutor absence, late extension, time together", () => {
+    const scheduling = read("apps/coaching/scheduling.py");
+    const lifecycle = read("apps/coaching/session_lifecycle.py");
+    const lateTutor = read("apps/coaching/late_tutor.py");
+    const attendance = read("apps/coaching/attendance.py");
+    const sessionMinutes = number(scheduling, /^SESSION_DURATION_MINUTES = (\d+)/m);
+    assert.equal(sessionMinutes, POLICY_FACTS.coachingSessionMinutes);
+    assert.equal(number(lifecycle, /^TUTOR_ABSENT_AFTER = timedelta\(minutes=(\d+)\)/m), POLICY_FACTS.coachingTutorAbsentMinutes);
+    assert.equal(
+      number(lateTutor, /^LATE_TUTOR_MAX_EXTENSION = timedelta\(minutes=(\d+)\)/m),
+      POLICY_FACTS.coachingLateExtensionMaxMinutes,
+    );
+    // A meeting is held once the two were together for this share of its length.
+    const ratio = number(attendance, /^MEETING_HELD_RATIO = ([\d.]+)/m);
+    assert.equal(ratio * sessionMinutes, POLICY_FACTS.coachingMeetingHeldMinutes);
+  });
+
   it("the checkout summary states the same withdrawal period", () => {
     assert.equal(number(read("apps/payments/policy_copy.py"), /WITHDRAWAL_DAYS = (\d+)/), POLICY_FACTS.withdrawalDays);
   });

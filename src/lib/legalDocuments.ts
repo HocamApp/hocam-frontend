@@ -133,8 +133,8 @@ export const LEGAL_DOCUMENTS: readonly LegalDocument[] = [
     navLabel: "Kullanım Koşulları",
     description:
       "Hesap açma, ders süreci, yasak kullanımlar ve sözleşmenin feshi dahil platform kuralları.",
-    updatedAt: "14 Ekim 2026",
-    updatedAtIso: "2026-10-14",
+    updatedAt: "23 Ekim 2026",
+    updatedAtIso: "2026-10-23",
   },
   {
     slug: "on-bilgilendirme-formu",
@@ -162,9 +162,9 @@ export const LEGAL_DOCUMENTS: readonly LegalDocument[] = [
     title: "İptal ve İade Koşulları",
     navLabel: "İptal ve İade Koşulları",
     description:
-      "Ödeme ve saat ayırma, cayma hakkı, ders iptali, derse katılmama, paket süresi ve iade koşulları.",
-    updatedAt: "14 Ekim 2026",
-    updatedAtIso: "2026-10-14",
+      "Ödeme ve saat ayırma, cayma hakkı, ders iptali, derse katılmama, paket süresi, koçluk görüşmeleri ve iade koşulları.",
+    updatedAt: "23 Ekim 2026",
+    updatedAtIso: "2026-10-23",
   },
 ];
 

@@ -47,6 +47,14 @@ export const POLICY_FACTS = {
   maxExtensionDays: 60,
   /** statute: Mesafeli Sözleşmeler Yönetmeliği m.9(1), 6502 m.48(4). */
   withdrawalDays: 14,
+  /** apps/coaching/scheduling.py SESSION_DURATION_MINUTES: every coaching meeting is this long. */
+  coachingSessionMinutes: 30,
+  /** apps/coaching/session_lifecycle.py TUTOR_ABSENT_AFTER: a tutor not in the room by then is absent. */
+  coachingTutorAbsentMinutes: 15,
+  /** apps/coaching/late_tutor.py LATE_TUTOR_MAX_EXTENSION: the most a late tutor lengthens a meeting. */
+  coachingLateExtensionMaxMinutes: 15,
+  /** apps/coaching/attendance.py MEETING_HELD_RATIO (0.5) of the meeting length: time together that counts as held. */
+  coachingMeetingHeldMinutes: 15,
 } as const;
 
 /**

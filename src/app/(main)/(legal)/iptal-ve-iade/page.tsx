@@ -32,6 +32,8 @@ export const metadata = legalPageMetadata("iptal-ve-iade");
  *   term and its extension        payments/extensions.py      (section 8)
  *   refund amount and fault       payments/refund_calc.py     (sections 9, 10)
  *   answer time, second approval  payments/refund_policy.py   (section 11)
+ *   coaching meetings             coaching/session_lifecycle.py, late_tutor.py,
+ *                                 attendance.py, makeup.py     (section 12)
  *
  * What the text claims about money going back is limited to what the refund
  * process does: a staff decision with a written reason, then a refund to the
@@ -356,7 +358,94 @@ export default function CancellationAndRefundPage() {
           </p>
         </LegalSection>
 
-        <LegalSection title="12. Yürürlük ve değişiklik">
+        <LegalSection title="12. Koçluk görüşmeleri">
+          <p>
+            Bu madde, HOCAM üzerinden alınan koçluğun görüşmelerine uygulanır.
+            Her koçluk görüşmesi{" "}
+            <strong>{f.coachingSessionMinutes} dakika</strong> sürer ve çevrim
+            içi görüşme odasında yapılır. Aşağıdaki sonuçlar, Öğrencinin ve
+            Hocanın görüşme odasında bulunduğu zamanlara ilişkin kayıtlara göre
+            belirlenir.
+          </p>
+          <ul className="list-disc space-y-2 pl-5">
+            <li>
+              <strong>Hoca geç gelirse:</strong> Hoca, görüşmenin başlangıcından
+              sonra en geç{" "}
+              <strong>{f.coachingLateExtensionMaxMinutes} dakika</strong>{" "}
+              içinde odaya girerse görüşme Hocanın geç kaldığı süre kadar uzar;
+              yani görüşme Hocanın girdiği andan itibaren{" "}
+              <strong>{f.coachingSessionMinutes} dakika</strong> sürer.
+            </li>
+            <li>
+              <strong>Uzama mümkün değilse:</strong> Uzama, Hocanın hemen
+              ardından gelen dersi veya görüşmesiyle çakışıyorsa görüşme
+              uzatılmaz ve planlanan saatte biter. Hoca girdiğinde Öğrenci
+              odada bekliyorsa Öğrenciye, dönemin sonuna ücretsiz bir ek
+              görüşme eklenir.
+            </li>
+            <li>
+              <strong>Hoca gelmezse:</strong> Hoca, görüşmenin başlangıcından
+              itibaren{" "}
+              <strong>{f.coachingTutorAbsentMinutes} dakika</strong> içinde
+              odaya girmemişse ve Öğrenci odaya bağlanmışsa görüşme iptal
+              edilir. İptal edilen görüşmenin yerine Öğrenciye, dönemin sonuna
+              bir ek görüşme eklenir.
+            </li>
+            <li>
+              <strong>İki taraf da gelmezse:</strong> Görüşmenin başlangıcından{" "}
+              <strong>{f.coachingTutorAbsentMinutes} dakika</strong> sonra
+              odada kimse yoksa ve bağlantı kayıtlarının çalıştığı, son yirmi
+              dört saatte başka koçluk görüşmelerinin kayıtlarından
+              anlaşılıyorsa görüşme kimse sorumlu tutulmadan iptal edilir ve
+              yerine Öğrenciye bir ek görüşme eklenir. Kayıtların çalıştığı
+              anlaşılamıyorsa kendiliğinden karar verilmez; durum HOCAM
+              tarafından incelenir.
+            </li>
+            <li>
+              <strong>Görüşme yarım kalırsa:</strong> Öğrenci ile Hocanın aynı
+              anda odada bulundukları süre{" "}
+              <strong>{f.coachingMeetingHeldMinutes} dakikadan</strong> az
+              kalırsa görüşme yarım kalmış sayılır; görüşme kimse sorumlu
+              tutulmadan iptal edilir ve yerine Öğrenciye bir ek görüşme
+              eklenir.
+            </li>
+            <li>
+              <strong>Birlikte bitirme:</strong> Taraflardan biri görüşmenin
+              birlikte bitirilmesini önerir ve diğer taraf bunu açıkça kabul
+              ederse görüşme tamamlanmış sayılır; bu halde ek görüşme hakkı
+              doğmaz.
+            </li>
+            <li>
+              <strong>İptalden sonra:</strong> Görüşme bu madde uyarınca iptal
+              edildikten sonra görüşme odası o görüşme için kapalıdır; Hoca
+              sonradan gelse de görüşme yeniden açılmaz.
+            </li>
+          </ul>
+          <p>
+            <strong>Ek görüşme.</strong> Ek görüşme, Öğrencinin başlangıçta
+            seçtiği haftalık saate, koçluk döneminin son görüşmesinden sonraki
+            ilk uygun tarihe eklenir; Öğrenci ek görüşme için ayrıca saat
+            seçmez. Hocanın o tarihte başka bir dersi veya görüşmesi varsa
+            görüşme bir sonraki haftalık saate kaydırılır. Uygun bir saat
+            bulunamazsa ek görüşme hakkı kayıtlı kalır ve Öğrenci destek talebi
+            oluşturabilir. Bir görüşme için en fazla bir ek görüşme eklenir.
+          </p>
+          <p>
+            Bu maddedeki kararlar, odaya bağlanma kayıtlarına dayanılarak sistem
+            tarafından kendiliğinden verilebilir. Öğrenci ve Hoca, kendisi
+            aleyhine sonuç doğuran bir karara destek talebi oluşturarak itiraz
+            edebilir; itiraz HOCAM tarafından incelenir. Bu hak, 6698 sayılı
+            Kişisel Verilerin Korunması Kanunu’nun 11. maddesinin birinci
+            fıkrasının (g) bendinde de yer alır.
+          </p>
+          <p>
+            Bu maddede sayılan hallerde Öğrenciye ek görüşme hakkı tanınması,
+            Öğrencinin tüketici mevzuatından doğan haklarını ve onuncu maddede
+            düzenlenen iade talebi yolunu ortadan kaldırmaz.
+          </p>
+        </LegalSection>
+
+        <LegalSection title="13. Yürürlük ve değişiklik">
           <p>
             İşbu koşullar yayımlandığı tarihte yürürlüğe girer. HOCAM,
             koşullarda değişiklik yapma hakkını saklı tutar. Değişiklikler bu

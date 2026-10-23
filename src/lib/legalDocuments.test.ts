@@ -82,3 +82,14 @@ describe("legal document registry", () => {
     assert.equal(meta.alternates?.canonical, "/kvkk/aydinlatma-metni");
   });
 });
+
+describe("the coaching article's documents", () => {
+  it("dates the two documents the article changed and names it in the cancellation summary", () => {
+    for (const slug of ["iptal-ve-iade", "kullanim-kosullari"] as const) {
+      const doc = getLegalDocument(slug);
+      assert.equal(doc.updatedAt, "23 Ekim 2026");
+      assert.equal(doc.updatedAtIso, "2026-10-23");
+    }
+    assert.match(getLegalDocument("iptal-ve-iade").description, /koçluk görüşmeleri/);
+  });
+});
