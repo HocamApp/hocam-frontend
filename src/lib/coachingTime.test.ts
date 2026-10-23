@@ -5,6 +5,7 @@ import {
   coachingDateLabel,
   coachingDateTimeLabel,
   coachingLocalDateHeading,
+  coachingSessionEnd,
   coachingTimeLabel,
   coachingTimeLocative,
 } from "./coachingTime";
@@ -71,5 +72,24 @@ describe("coachingTimeLocative", () => {
 
   it("hands back anything that is not a clock time unchanged", () => {
     assert.equal(coachingTimeLocative("akşam"), "akşam");
+  });
+});
+
+describe("coachingSessionEnd", () => {
+  const planned = { scheduled_start: "2026-10-21T16:00:00Z", duration_minutes: 30 };
+  const plannedEnd = Date.parse("2026-10-21T16:30:00Z");
+
+  it("is the booked end when the server sent no other", () => {
+    assert.equal(coachingSessionEnd(planned), plannedEnd);
+    assert.equal(coachingSessionEnd({ ...planned, ends_at: null }), plannedEnd);
+  });
+
+  it("is the server's end when a late tutor pushed it out", () => {
+    assert.equal(coachingSessionEnd({ ...planned, ends_at: "2026-10-21T16:42:00Z" }), Date.parse("2026-10-21T16:42:00Z"));
+  });
+
+  it("never ends a meeting earlier than it was booked, and ignores what it cannot read", () => {
+    assert.equal(coachingSessionEnd({ ...planned, ends_at: "2026-10-21T16:10:00Z" }), plannedEnd);
+    assert.equal(coachingSessionEnd({ ...planned, ends_at: "not a date" }), plannedEnd);
   });
 });

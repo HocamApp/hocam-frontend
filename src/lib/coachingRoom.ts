@@ -2,7 +2,7 @@ import type { CoachingSessionDetail, CoachingSessionItem } from "./coachingApi";
 import { postSessionBand, type PostSessionRole } from "./coachingPostSession";
 import { COACHING_TUTOR_EARLY_JOIN_MINUTES } from "./coachingSessions";
 import { COACHING_STUDENT_EARLY_JOIN_MINUTES, coachingRemainingLabel } from "./coachingStudentOverview";
-import { coachingTimeLabel, coachingTimeLocative } from "./coachingTime";
+import { coachingSessionEnd, coachingTimeLabel, coachingTimeLocative } from "./coachingTime";
 
 /**
  * What the frame around the coaching video room says: how much of the meeting is
@@ -29,11 +29,11 @@ export interface RoomClock {
 
 /** The meeting's clock for the bar: time to the start, time left, or "Süre doldu". */
 export function roomClock(
-  session: Pick<CoachingSessionItem, "scheduled_start" | "duration_minutes">,
+  session: Pick<CoachingSessionItem, "scheduled_start" | "duration_minutes" | "ends_at">,
   now: Date,
 ): RoomClock {
   const start = Date.parse(session.scheduled_start);
-  const end = start + session.duration_minutes * MINUTE_MS;
+  const end = coachingSessionEnd(session);
   const t = now.getTime();
   if (t < start) return { phase: "before", label: `Başlamasına ${coachingRemainingLabel(start, now)}`, urgent: false };
   const left = end - t;
@@ -47,11 +47,11 @@ export function roomClock(
 
 /** "3. görüşme · 19:00–19:30": which meeting and from when to when (the date is left out: it is happening now). */
 export function roomMeta(
-  session: Pick<CoachingSessionItem, "scheduled_start" | "duration_minutes">,
+  session: Pick<CoachingSessionItem, "scheduled_start" | "duration_minutes" | "ends_at">,
   number: number | null,
 ): string {
   const start = Date.parse(session.scheduled_start);
-  const span = `${coachingTimeLabel(start)}–${coachingTimeLabel(start + session.duration_minutes * MINUTE_MS)}`;
+  const span = `${coachingTimeLabel(start)}–${coachingTimeLabel(coachingSessionEnd(session))}`;
   return number === null ? span : `${number}. görüşme · ${span}`;
 }
 

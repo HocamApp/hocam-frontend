@@ -1,6 +1,6 @@
 import type { CoachingSessionAttendanceSummary, CoachingSessionItem } from "./coachingApi";
 import { coachingRemainingLabel, numberStudentSessions } from "./coachingStudentOverview";
-import { coachingDateTimeLabel, coachingTimeLabel } from "./coachingTime";
+import { coachingDateTimeLabel, coachingSessionEnd, coachingTimeLabel } from "./coachingTime";
 
 /**
  * What the screen after a coaching meeting says, and when each thing on it is
@@ -46,6 +46,60 @@ export function postSessionMeta(session: CoachingSessionItem, number: number | n
 }
 
 /**
+ * What the system's own cancellation says to each side, for the three reasons it
+ * has. Nobody is blamed and nothing is said about money: a student keeps the
+ * right to a meeting, a tutor is told the meeting does not count as held.
+ */
+function systemEndedBand(
+  reason: NonNullable<CoachingSessionItem["system_cancel_reason"]>,
+  role: PostSessionRole,
+  first: string | null,
+): PostSessionBand {
+  if (role === "student") {
+    switch (reason) {
+      case "both_absent":
+        return {
+          title: "Bu görüşme yapılamadı",
+          message: "İki taraf da odaya girmediği için görüşme iptal edildi. Kimse suçlanmadı; bu görüşme hakkın korunur.",
+          deadline: null,
+        };
+      case "partial_below_threshold":
+        return {
+          title: "Bu görüşme yarım kaldı",
+          message: "Birlikte yeterince kalamadığınız için görüşme iptal edildi. Kimse suçlanmadı; bu görüşme hakkın korunur.",
+          deadline: null,
+        };
+      case "tutor_absent_15_min":
+        return {
+          title: "Bu görüşme yapılamadı",
+          message: `${first ? `${first} hocan` : "Hocan"} 15 dakika içinde odaya girmediği için görüşme iptal edildi. Bu görüşme hakkın korunur.`,
+          deadline: null,
+        };
+    }
+  }
+  switch (reason) {
+    case "both_absent":
+      return {
+        title: "Görüşme iptal edildi",
+        message: "İki taraf da odaya girmediği için sistem görüşmeyi iptal etti. Kimse suçlanmadı.",
+        deadline: null,
+      };
+    case "partial_below_threshold":
+      return {
+        title: "Görüşme yarım kaldı",
+        message: "Birlikte yeterince kalınmadığı için sistem görüşmeyi iptal etti. Kimse suçlanmadı; bu görüşme tamamlanmış sayılmaz.",
+        deadline: null,
+      };
+    case "tutor_absent_15_min":
+      return {
+        title: "Görüşme kapandı",
+        message: "15 dakika içinde odaya girmediğin için görüşme sistem tarafından kapatıldı. Bu görüşme tamamlanmış sayılmaz.",
+        deadline: null,
+      };
+  }
+}
+
+/**
  * The pink band: a title that is true of this meeting's status (not always
  * "tamamlandı"), one sentence, and the report deadline the server gave. For a
  * meeting waiting for its report the sentence is Master Spec §24's promise.
@@ -63,6 +117,7 @@ export function postSessionBand({
   otherName: string | null | undefined;
 }): PostSessionBand {
   const first = firstName(otherName);
+  if (session.system_cancel_reason) return systemEndedBand(session.system_cancel_reason, role, first);
   const due = session.report_due_at ? coachingDateTimeLabel(session.report_due_at) : null;
   const planned = `Bu görüşme ${coachingDateTimeLabel(session.scheduled_start)} için planlandı.`;
 
@@ -243,7 +298,7 @@ export function postSessionNext({
       (item) =>
         item.id !== currentId &&
         UPCOMING.has(item.status) &&
-        Date.parse(item.scheduled_start) + item.duration_minutes * MINUTE_MS > t,
+        coachingSessionEnd(item) > t,
     )
     .sort((a, b) => Date.parse(a.scheduled_start) - Date.parse(b.scheduled_start))[0];
   if (!next) return { caption: "Henüz planlanmış görüşme yok.", empty: true };

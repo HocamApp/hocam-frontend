@@ -137,6 +137,58 @@ describe("postSessionBand for the student", () => {
   });
 });
 
+describe("postSessionBand for a meeting the system ended", () => {
+  const band = (role: "student" | "tutor", status: CoachingSessionItem["status"], reason: CoachingSessionItem["system_cancel_reason"]) =>
+    postSessionBand({ session: session({ status, system_cancel_reason: reason }), role, otherName: "Elif Kaya" });
+
+  it("tells a student nobody is blamed and the right is kept, in the words of what happened", () => {
+    assert.deepEqual(band("student", "cancelled", "both_absent"), {
+      title: "Bu görüşme yapılamadı",
+      message: "İki taraf da odaya girmediği için görüşme iptal edildi. Kimse suçlanmadı; bu görüşme hakkın korunur.",
+      deadline: null,
+    });
+    assert.deepEqual(band("student", "cancelled", "partial_below_threshold"), {
+      title: "Bu görüşme yarım kaldı",
+      message: "Birlikte yeterince kalamadığınız için görüşme iptal edildi. Kimse suçlanmadı; bu görüşme hakkın korunur.",
+      deadline: null,
+    });
+    assert.deepEqual(band("student", "tutor_no_show", "tutor_absent_15_min"), {
+      title: "Bu görüşme yapılamadı",
+      message: "Elif hocan 15 dakika içinde odaya girmediği için görüşme iptal edildi. Bu görüşme hakkın korunur.",
+      deadline: null,
+    });
+  });
+
+  it("tells a tutor what the system did and that the meeting is not counted as held", () => {
+    assert.deepEqual(band("tutor", "cancelled", "both_absent"), {
+      title: "Görüşme iptal edildi",
+      message: "İki taraf da odaya girmediği için sistem görüşmeyi iptal etti. Kimse suçlanmadı.",
+      deadline: null,
+    });
+    assert.deepEqual(band("tutor", "cancelled", "partial_below_threshold"), {
+      title: "Görüşme yarım kaldı",
+      message: "Birlikte yeterince kalınmadığı için sistem görüşmeyi iptal etti. Kimse suçlanmadı; bu görüşme tamamlanmış sayılmaz.",
+      deadline: null,
+    });
+    assert.deepEqual(band("tutor", "tutor_no_show", "tutor_absent_15_min"), {
+      title: "Görüşme kapandı",
+      message: "15 dakika içinde odaya girmediğin için görüşme sistem tarafından kapatıldı. Bu görüşme tamamlanmış sayılmaz.",
+      deadline: null,
+    });
+  });
+
+  it("leaves a participant's own report as it was, and never speaks of money", () => {
+    assert.equal(band("student", "tutor_no_show", null).title, "Bildirimin alındı");
+    assert.equal(band("tutor", "tutor_no_show", null).message, "Öğrenci senin katılmadığını bildirdi.");
+    for (const role of ["student", "tutor"] as const) {
+      for (const reason of ["both_absent", "partial_below_threshold", "tutor_absent_15_min"] as const) {
+        const { title, message } = band(role, "cancelled", reason);
+        assert.doesNotMatch(`${title} ${message}`, /iade|ödeme|para\b|ücret|hakediş|kazanç/i, `${role}/${reason}`);
+      }
+    }
+  });
+});
+
 describe("postSessionBand for the tutor", () => {
   const band = (overrides: Partial<CoachingSessionItem> = {}) =>
     postSessionBand({ session: session(overrides), role: "tutor", otherName: "Deniz Yıldız" });
@@ -244,6 +296,16 @@ describe("postSessionRating", () => {
       assert.equal(postSessionRating(session({ status }), "student"), "hidden", status);
     }
     assert.equal(postSessionRating(session(), "tutor"), "hidden");
+  });
+});
+
+describe("postSessionNext: a meeting still running", () => {
+  it("does not look past a meeting a late tutor ran longer, until the server's end", () => {
+    const running = session({ id: "s-5", status: "in_progress", ends_at: "2026-10-21T16:42:00Z" });
+    const during = postSessionNext({ sessions: [running], currentId: "s-3", role: "student", now: new Date("2026-10-21T16:35:00Z") });
+    assert.equal(during.empty, false);
+    const after = postSessionNext({ sessions: [running], currentId: "s-3", role: "student", now: new Date("2026-10-21T16:45:00Z") });
+    assert.equal(after.empty, true);
   });
 });
 
