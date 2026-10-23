@@ -102,7 +102,7 @@ describe("CoachingOfferCard", () => {
     );
 
     assert.ok(screen.getByText("Koçluğa dahil"));
-    for (const item of ["Çalışma programı", "Deneme değerlendirmesi", "İlerleme raporu", "Kaynak önerileri"]) {
+    for (const item of ["Çalışma programı", "Deneme değerlendirmesi", "İlerleme raporu", "Kaynak takibi ve önerileri"]) {
       assert.ok(screen.getByText(item));
     }
     const card = container.firstElementChild as HTMLElement;
