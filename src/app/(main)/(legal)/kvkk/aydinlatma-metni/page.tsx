@@ -65,6 +65,10 @@ export default function AydinlatmaMetniPage() {
             Görüntülü derslerinin ses ve görüntü kaydını almıyoruz. Yalnızca
             derse kimin ne zaman katıldığını tutuyoruz.
           </p>
+          <p className="font-medium">
+            Çalışma koçluğu görüşmelerinde de ses ve görüntü kaydı almıyoruz.
+            Görüşme odasına kimin ne zaman girip çıktığını tutuyoruz.
+          </p>
         </LegalSection>
 
         <LegalSection title="3. Neden işliyoruz">
@@ -73,6 +77,18 @@ export default function AydinlatmaMetniPage() {
             işlemlerini yürütmek, faturaları kanunun zorunlu kıldığı süre
             boyunca saklamak, şikayet ve uyuşmazlıkları incelemek, platformu
             güvende tutmak ve işleyişe dair sana bilgi vermek için.
+          </p>
+          <p>
+            Koçluk görüşmelerinde bu katılım kayıtları, görüşmenin gerçekleşip
+            gerçekleşmediğini, öğretmenin geç gelip gelmediğini ve birlikte geçen
+            süreyi belirlemek için kullanılır. Bunlara dayanarak görüşmenin
+            uzatılmasına, iptal edilmesine ve sana ek görüşme hakkı tanınmasına
+            sistem tarafından kendiliğinden karar verilebilir; dayanak
+            sözleşmenin ifasıdır (m.5/2-c). Böyle bir karar aleyhine bir sonuç
+            doğuruyorsa KVKK’nın 11. maddesinin birinci fıkrasının (g) bendi
+            uyarınca destek talebiyle ya da iletisim@hocamozelders.com adresine
+            yazarak itiraz edebilirsin; itirazın bir kişi tarafından yeniden
+            incelenir.
           </p>
           <p>
             Hesap, rezervasyon, ders, zorunlu bildirim ve ödeme işlemleri;
@@ -129,6 +145,8 @@ export default function AydinlatmaMetniPage() {
             7 gün, ret veya bekleyen başvuruda en fazla 30 gün; analitik veriler
             12 ay saklanır. Üniversite e-posta ispatı ve alan adı inceleme kaydı
             hesap süresince tutulur.
+            Koçluk görüşmesi katılım kayıtların kayıt tarihinden itibaren 2 yıl
+            saklanır.
           </p>
           <p>
             <strong>Fatura ve mali kayıtlar 10 yıl saklanır</strong> ve vergi ve

@@ -97,6 +97,10 @@ export default function TutorPrivacyNoticePage() {
             Canlı derslerin ses ve görüntü kaydını almıyoruz. Yalnızca derse
             kimin ne zaman katıldığını tutuyoruz.
           </p>
+          <p className="font-medium">
+            Koçluk görüşmelerinde de ses ve görüntü kaydı almıyoruz. Görüşme
+            odasına kimin ne zaman girip çıktığını tutuyoruz.
+          </p>
         </LegalSection>
 
         <LegalSection title="3. Neden işliyoruz">
@@ -107,6 +111,21 @@ export default function TutorPrivacyNoticePage() {
             kılmak; gelirini hesaplamak ve mali kayıtları kanunun zorunlu
             kıldığı süre boyunca saklamak; şikâyet ve uyuşmazlıkları incelemek;
             platformu güvende tutmak ve işleyişe dair sana bilgi vermek için.
+          </p>
+          <p>
+            Koçluk görüşmelerinde katılım kayıtların, görüşmenin gerçekleşip
+            gerçekleşmediğini, senin geç gelip gelmediğini ve birlikte geçen
+            süreyi belirlemek için kullanılır. Bunlara dayanarak görüşmenin
+            uzatılmasına, senin gelmediğin veya yarım kalan görüşmenin sistem
+            tarafından kendiliğinden iptal edilmesine, iptal edilen görüşme için
+            gelir yansıtılmamasına ve öğrenciye ek görüşme hakkı tanınmasına
+            karar verilebilir; dayanak sözleşmenin ifasıdır (m.5/2-c). Bu karar
+            tek başına hakkında ihlal kaydı oluşturmaz; ihlal kaydı yalnızca
+            destek ekibinin doğruladığı olayda yazılır. Karar aleyhine bir sonuç
+            doğuruyorsa KVKK’nın 11. maddesinin birinci fıkrasının (g) bendi
+            uyarınca destek talebiyle ya da iletisim@hocamozelders.com adresine
+            yazarak itiraz edebilirsin; itirazın bir kişi tarafından yeniden
+            incelenir.
           </p>
         </LegalSection>
 
@@ -164,6 +183,10 @@ export default function TutorPrivacyNoticePage() {
             <li>
               Ders ve rezervasyon kayıtların: 10 yıl. Derse katılım kayıtların:
               2 yıl.
+            </li>
+            <li>
+              Koçluk görüşmesi katılım kayıtların: kayıt tarihinden itibaren 2
+              yıl.
             </li>
             <li>Mesajların: hesap kapanışından itibaren 1 yıl.</li>
             <li>
