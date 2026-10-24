@@ -18,6 +18,7 @@ let tutorSessions: Record<string, unknown>[] = [];
 let tutorSeconds = 1800;
 let attendanceFails = false;
 let detailFails = false;
+let experienceAsk = false;
 let Page: React.ComponentType;
 
 function item(overrides: Record<string, unknown> = {}) {
@@ -90,6 +91,18 @@ before(async () => {
           });
           return { data: { student: entry(1800), tutor: entry(tutorSeconds) } };
         }
+        if (url === "/coaching/sessions/s2/experience-feedback/") {
+          return {
+            data: {
+              ask: experienceAsk,
+              answered: false,
+              reasons:
+                role === "tutor"
+                  ? ["video_audio", "connection", "files", "report_form", "other"]
+                  : ["video_audio", "connection", "files", "report_program", "other"],
+            },
+          };
+        }
         if (url === "/coaching/sessions/") return { data: studentSessions };
         if (url === "/coaching/tutor/sessions/") return { data: tutorSessions };
         throw new Error(`unexpected GET ${url}`);
@@ -107,6 +120,7 @@ beforeEach(() => {
   tutorSeconds = 1800;
   attendanceFails = false;
   detailFails = false;
+  experienceAsk = false;
   // `sequence_number` counts inside one service period (this is the first of a second one);
   // the student's plan counts in time order: this is the third meeting.
   detail = { ...item({ sequence_number: 1 }), tutor_name: "Elif Kaya", student_name: "Deniz Yıldız", viewer_role: "student", rating_submitted: false };
@@ -156,6 +170,28 @@ describe("the screen after a coaching meeting: the student", () => {
     await openProblems();
     assert.ok(await screen.findByRole("button", { name: "Öğretmen katılmadı bildir" }));
     assert.ok(screen.getByRole("button", { name: "Teknik sorun bildir" }));
+  });
+
+  it("shows the Sistem nasıldı? strip between the band and the card when the server asks, and keeps the card at its four rows", async () => {
+    experienceAsk = true;
+    tutorSeconds = 0;
+    renderPage();
+
+    const strip = await screen.findByRole("region", { name: "Sistem geri bildirimi" });
+    const band = screen.getByRole("region", { name: "Görüşme" });
+    const card = screen.getByRole("region", { name: "Görüşme sonrası" });
+    assert.ok(band.compareDocumentPosition(strip) & Node.DOCUMENT_POSITION_FOLLOWING, "after the band");
+    assert.ok(strip.compareDocumentPosition(card) & Node.DOCUMENT_POSITION_FOLLOWING, "before the card");
+    assert.equal(within(card).getAllByRole("heading", { level: 2 }).length, 4, "the strip is not a sixth option");
+    assert.equal(within(card).queryByText("Bu görüşmede sistem nasıldı?"), null);
+  });
+
+  it("does not show the strip while the server does not ask (flag off, or not every third meeting)", async () => {
+    renderPage();
+
+    await screen.findByRole("heading", { level: 1, name: "Koçluk görüşmen tamamlandı" });
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    assert.equal(screen.queryByRole("region", { name: "Sistem geri bildirimi" }), null);
   });
 
   it("opens the rating for a student who has not rated, with the seven criteria", async () => {
@@ -292,6 +328,16 @@ describe("the screen after a coaching meeting: the tutor", () => {
     const link = screen.getByRole("link", { name: "Raporu hazırla" });
     assert.equal(link.getAttribute("href"), "/dashboard/tutor/coaching/sessions/s2/report");
     assert.match(link.className, /bg-gold/);
+  });
+
+  it("asks the tutor too, with the tutor's own reasons", async () => {
+    experienceAsk = true;
+    renderPage();
+
+    await screen.findByRole("region", { name: "Sistem geri bildirimi" });
+    fireEvent.click(await screen.findByRole("button", { name: "Kötü" }));
+    assert.ok(screen.getByRole("button", { name: "Rapor formu" }));
+    assert.equal(screen.queryByRole("button", { name: "Rapor / program" }), null);
   });
 
   it("names the tutor's next meeting with its student, and offers neither a rating nor a problem report", async () => {
