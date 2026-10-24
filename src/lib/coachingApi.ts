@@ -1430,6 +1430,56 @@ export async function submitCoachingSessionRating(
   return response.data;
 }
 
+/**
+ * "Sistem nasıldı?" (apps/coaching/experience_feedback.py). The server decides
+ * who is asked: every third meeting a person took part in, once. With its flag
+ * off, or before it is deployed, `ask` is false or the call is a 404, and the
+ * strip simply is not drawn.
+ */
+export type CoachingExperienceRating = "bad" | "ok" | "good";
+
+export interface CoachingExperienceFeedbackState {
+  ask: boolean;
+  answered: boolean;
+  /** Which reasons this person's role may pick, in display order. */
+  reasons?: string[];
+}
+
+export const COACHING_EXPERIENCE_REASON_LABELS: Record<string, string> = {
+  video_audio: "Görüntü / ses",
+  connection: "Bağlantı",
+  files: "Dosyalar",
+  report_program: "Rapor / program",
+  report_form: "Rapor formu",
+  other: "Diğer",
+};
+
+export const COACHING_EXPERIENCE_COMMENT_MAX = 500;
+
+export function coachingExperienceFeedbackKey(sessionId: string) {
+  return ["coaching-session-experience-feedback", sessionId] as const;
+}
+
+export async function fetchCoachingExperienceFeedback(
+  sessionId: string
+): Promise<CoachingExperienceFeedbackState> {
+  const response = await api.get<CoachingExperienceFeedbackState>(
+    `/coaching/sessions/${sessionId}/experience-feedback/`
+  );
+  return response.data;
+}
+
+export async function submitCoachingExperienceFeedback(
+  sessionId: string,
+  answer: { rating: CoachingExperienceRating; reasons: string[]; comment: string }
+): Promise<{ id: string; rating: CoachingExperienceRating }> {
+  const response = await api.post<{ id: string; rating: CoachingExperienceRating }>(
+    `/coaching/sessions/${sessionId}/experience-feedback/`,
+    answer
+  );
+  return response.data;
+}
+
 export interface CoachingSessionAttendanceSummaryEntry {
   first_joined_at: string | null;
   last_left_at: string | null;

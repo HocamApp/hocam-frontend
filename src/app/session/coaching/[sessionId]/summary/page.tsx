@@ -12,6 +12,7 @@ import {
   PostSessionRatingRow,
   PostSessionRow,
 } from "@/components/coaching/PostSessionParts";
+import { SessionExperienceFeedback } from "@/components/coaching/SessionExperienceFeedback";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { RouteGuard } from "@/components/shared/RouteGuard";
 import { useAuth } from "@/hooks/useAuth";
@@ -46,6 +47,10 @@ import { numberStudentSessions, studentCoachingJoin } from "@/lib/coachingStuden
  * Sonraki görüşmeyi görüntüle, Koçluk desteğine git. The tutor gets the report
  * and the next meeting. Reached from the room (both sides) and, later, from the
  * student's Görüşmeler list to rate or to report.
+ *
+ * Between the band and the card sits "Sistem nasıldı?" (both sides), a strip of
+ * its own the server shows on every third meeting. It is not a sixth option of
+ * §24's card: it rates the platform, and with its flag off it is not there.
  */
 function PostSessionContent() {
   const { sessionId } = useParams<{ sessionId: string }>();
@@ -120,6 +125,8 @@ function PostSessionContent() {
           ) : undefined
         }
       />
+
+      <SessionExperienceFeedback sessionId={detail.id} />
 
       <section aria-label="Görüşme sonrası" className="overflow-hidden rounded-card border border-line bg-surface">
         {role === "student" ? (
