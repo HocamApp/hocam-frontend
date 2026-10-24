@@ -46,7 +46,7 @@ export default function DistanceSalesPage() {
 
       <div className="mt-6">
         <LegalNote>
-          İşbu sözleşme, HOCAM üzerinden ders paketi satın alan Alıcı, dersi veren
+          İşbu sözleşme, HOCAM üzerinden ders paketi ve varsa çalışma koçluğu satın alan Alıcı, dersi veren
           Sağlayıcı ve aracı hizmet sağlayıcı HOCAM arasında, 6502 sayılı
           Tüketicinin Korunması Hakkında Kanun ve Mesafeli Sözleşmeler
           Yönetmeliği uyarınca elektronik ortamda kurulur. Alıcı, ödemeye
@@ -80,6 +80,10 @@ export default function DistanceSalesPage() {
             İşbu sözleşmenin konusu, Alıcının HOCAM üzerinden elektronik ortamda
             satın aldığı ders paketine ilişkin olarak tarafların hak ve
             yükümlülüklerinin belirlenmesidir.
+          </p>
+          <p>
+            Alıcı paketle birlikte çalışma koçluğu da satın alırsa bu sözleşme
+            koçluğa da uygulanır; koçluğa özgü hükümler on birinci maddededir.
           </p>
         </LegalSection>
 
@@ -188,6 +192,11 @@ export default function DistanceSalesPage() {
             Cayma hakkının sona ermesi, Alıcının kullanılmamış dersler için iade
             talep etme hakkını ortadan kaldırmaz.
           </p>
+          <p>
+            Koçluk içeren siparişte hizmetin ifası, ilk ders ya da ilk koçluk
+            görüşmesinden hangisi önce başlarsa onun başlamasıyla başlar; cayma
+            hakkının sona ermesi de bu ana göre belirlenir.
+          </p>
           <div className="max-w-[60ch] rounded-input border border-line bg-paper p-4 text-body">
             <p className="font-medium text-ink">Örnek cayma formu</p>
             <p className="mt-2">
@@ -266,7 +275,80 @@ export default function DistanceSalesPage() {
           </p>
         </LegalSection>
 
-        <LegalSection title="11. Yürürlük ve bildirim">
+        <LegalSection title="11. Çalışma koçluğu">
+          <p>
+            Alıcı, ders paketine ek olarak aynı Hocadan çalışma koçluğu satın
+            alabilir. Koçluk, ders paketi olmadan tek başına satın alınamaz;
+            Alıcı aynı anda yalnızca bir aktif çalışma koçuna sahip olabilir.
+          </p>
+          <p>
+            Koçluk; her biri <strong>{f.coachingSessionMinutes} dakika</strong>{" "}
+            süren çevrim içi birebir görüşmelerden, çalışma programından,
+            ilerleme raporundan, gerektiğinde kaynak önerisinden ve platform içi
+            mesajlara <strong>{f.coachingMessageReplyHours} saat</strong> içinde
+            yanıttan oluşur. Görüşme sayısı, seçilen sıklığa (iki haftada bir,
+            haftada bir veya haftada iki) ve paket süresine göre belirlenir ve
+            ödemeden önce sipariş ekranında gösterilir. Koçluk hakları dönemseldir
+            ve birikmez: Alıcının katılmadığı görüşme kullanılmış sayılır, sonraki
+            döneme devretmez ve iade doğurmaz.
+          </p>
+          <p>
+            <strong>Bedel.</strong> Koçluk bedeli, Hocanın belirlediği görüşme
+            başı bedel ile görüşme sayısının çarpımından, ders paketine paket
+            süresine göre uygulanan indirim düşülerek bulunur ve toplam olarak
+            ödemeden önce sipariş ekranında gösterilir. Koçluk ücretsiz
+            sunulabilir; bu halde bedel yoktur. İade hesaplaması, Alıcının fiilen
+            ödediği koçluk bedeli üzerinden yapılır.
+          </p>
+          <p>
+            <strong>Kabul ve başlangıç.</strong> Koçluk içeren sipariş, Hocanın
+            talebi kabul etmesine bağlıdır. Hoca talebi kabul etmezse veya
+            süresinde yanıtlamazsa sipariş gerçekleşmez; Alıcı adına tahsil
+            edilmiş bir bedel varsa iade edilir. Koçluk, Alıcı Hocanın koçluk
+            müsaitliğinden düzenli görüşme saatini seçtiğinde başlar. Alıcı saati{" "}
+            <strong>{f.coachingScheduleDeadlineDays} gün</strong> içinde seçmezse
+            koçluk iptal edilir. Uygun saat bulunamaz ve Hoca, Alıcının saat
+            talebinden itibaren{" "}
+            <strong>{f.coachingTimeRequestHours} saat</strong> içinde yeni saat
+            önermezse koçluk iptal edilir. Bu hallerde koçluk bedelinin iadesi
+            gerekir; ders paketi devam eder.
+          </p>
+          <p>
+            <strong>Görüşmelerde sorun.</strong> Hocanın geç gelmesi, hiç
+            gelmemesi, görüşmenin yarım kalması ve Alıcıya ek görüşme hakkı
+            tanınması{" "}
+            <LegalLink href="/iptal-ve-iade">İptal ve İade Koşullarının</LegalLink>{" "}
+            on ikinci maddesinde düzenlenmiştir.
+          </p>
+          <p>
+            <strong>Sonlandırma ve iade.</strong> Alıcı koçluğu dilediği zaman
+            sonlandırabilir; ders paketi devam eder, eski program ve raporlar
+            silinmez. Henüz başlamamış koçluk dönemlerinin bedeli iade edilir;
+            başlamış dönemin görüşmeleri tamamlanır ve tamamlanmış dönemlerin
+            bedeli iade edilmez. Hoca kalan koçluğu sonlandırırsa başlamamış
+            dönemlerin bedeli aynı şekilde iade edilir. Başlamış dönemde hizmet
+            eksik kalırsa Alıcı şikâyet açabilir.
+          </p>
+          <p>
+            <strong>Şikâyet.</strong> Alıcı, görüşme sorununu görüşmenin bitiminden
+            itibaren <strong>{f.coachingComplaintSessionHours} saat</strong>,
+            mesaj yanıtı sorununu yanıt süresinin dolmasından itibaren{" "}
+            <strong>{f.coachingComplaintDays} gün</strong>, program veya rapor
+            eksikliğini dönemin bitiminden itibaren{" "}
+            <strong>{f.coachingComplaintDays} gün</strong> içinde destek talebiyle
+            bildirebilir. Şikâyet tek başına iade doğurmaz; destek ekibi
+            inceler. Alıcı haklı bulunursa yeniden görüşme, ilgili dönemin iadesi
+            veya kalan koçluğun sonlandırılması seçeneklerinden birini seçer.
+          </p>
+          <p>
+            Bu maddedeki iadeler için HOCAM iade yükümlülüğünü kaydeder ve iadeyi
+            ödeme hizmeti sağlayıcısı üzerinden, İptal ve İade Koşullarında
+            anlatılan usulle yapar. Bu maddedeki hükümler, Alıcının tüketici
+            mevzuatından doğan haklarını ortadan kaldırmaz.
+          </p>
+        </LegalSection>
+
+        <LegalSection title="12. Yürürlük ve bildirim">
           <p>
             İşbu sözleşme, Alıcının ön bilgileri edindiğini teyit edip ödemeyi
             tamamlamasıyla kurulur ve elektronik ortamda kayıt altına alınır.

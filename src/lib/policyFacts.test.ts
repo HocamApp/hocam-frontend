@@ -83,6 +83,20 @@ describe("policy facts mirror the backend", { skip: !backendAvailable && "Hocam_
     assert.equal(ratio * sessionMinutes, POLICY_FACTS.coachingMeetingHeldMinutes);
   });
 
+  it("coaching: scheduling deadline, proposal window, complaint windows, reply time", () => {
+    const models = read("apps/coaching/models.py");
+    const disputes = read("apps/coaching/phase8_disputes.py");
+    assert.equal(number(models, /slot_selection_deadline_days = models\.PositiveSmallIntegerField\(default=(\d+)\)/), POLICY_FACTS.coachingScheduleDeadlineDays);
+    assert.equal(number(models, /new_time_request_hours = models\.PositiveSmallIntegerField\(default=(\d+)\)/), POLICY_FACTS.coachingTimeRequestHours);
+    assert.equal(number(disputes, /_SESSION_ISSUE_WINDOW = timedelta\(hours=(\d+)\)/), POLICY_FACTS.coachingComplaintSessionHours);
+    assert.equal(number(disputes, /_MESSAGE_SLA_WINDOW = timedelta\(days=(\d+)\)/), POLICY_FACTS.coachingComplaintDays);
+    assert.equal(number(disputes, /_PERIOD_DEFICIENCY_WINDOW = timedelta\(days=(\d+)\)/), POLICY_FACTS.coachingComplaintDays);
+    assert.equal(
+      number(read("apps/coaching/contract.py"), /en geç (\d+) saat içinde yanıt verilir/),
+      POLICY_FACTS.coachingMessageReplyHours,
+    );
+  });
+
   it("the checkout summary states the same withdrawal period", () => {
     assert.equal(number(read("apps/payments/policy_copy.py"), /WITHDRAWAL_DAYS = (\d+)/), POLICY_FACTS.withdrawalDays);
   });

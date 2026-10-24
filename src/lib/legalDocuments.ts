@@ -142,9 +142,9 @@ export const LEGAL_DOCUMENTS: readonly LegalDocument[] = [
     title: "Ön Bilgilendirme Formu",
     navLabel: "Ön Bilgilendirme Formu",
     description:
-      "Ders paketi satın almadan önce verilen bilgiler: sağlayıcı, toplam fiyat, ödeme, cayma hakkı ve başvuru yolları.",
-    updatedAt: "14 Ekim 2026",
-    updatedAtIso: "2026-10-14",
+      "Ders paketi ve çalışma koçluğu satın almadan önce verilen bilgiler: sağlayıcı, toplam fiyat, ödeme, cayma hakkı ve başvuru yolları.",
+    updatedAt: "23 Ekim 2026",
+    updatedAtIso: "2026-10-23",
   },
   {
     slug: "mesafeli-satis-sozlesmesi",
@@ -152,9 +152,9 @@ export const LEGAL_DOCUMENTS: readonly LegalDocument[] = [
     title: "Mesafeli Satış Sözleşmesi",
     navLabel: "Mesafeli Satış Sözleşmesi",
     description:
-      "Ders paketi alımında taraflar, bedel, ifa ve cayma hakkına ilişkin koşullar.",
-    updatedAt: "14 Ekim 2026",
-    updatedAtIso: "2026-10-14",
+      "Ders paketi ve çalışma koçluğu alımında taraflar, bedel, ifa, cayma hakkı ve koçluğun sonlandırılmasına ilişkin koşullar.",
+    updatedAt: "23 Ekim 2026",
+    updatedAtIso: "2026-10-23",
   },
   {
     slug: "iptal-ve-iade",
